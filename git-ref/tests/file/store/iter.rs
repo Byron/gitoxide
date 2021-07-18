@@ -119,7 +119,6 @@ fn loose_iter_with_prefix() -> crate::Result {
 }
 
 #[test]
-#[ignore]
 fn overlay_iter() {
     let store = store_at("make_packed_ref_repository_for_overlay.sh").unwrap();
     let ref_names = store
@@ -128,5 +127,14 @@ fn overlay_iter() {
         .map(|r| r.map(|r| r.name().expect("valid names only").into_inner()))
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
-    assert_eq!(ref_names, vec![b"hello".as_bstr().to_owned()]);
+    assert_eq!(
+        ref_names,
+        vec![
+            b"refs/heads/main".as_bstr(),
+            "refs/heads/newer-as-loose".into(),
+            "refs/remotes/origin/HEAD".into(),
+            "refs/remotes/origin/main".into(),
+            "refs/tags/tag-object".into()
+        ]
+    );
 }

@@ -2,10 +2,13 @@ use crate::{
     mutable,
     store::{file, packed},
 };
-use std::{convert::TryInto, io::Read, iter::Peekable, path::PathBuf};
+use bstr::BString;
+use std::{cmp::Ordering, convert::TryInto, io::Read, iter::Peekable, path::PathBuf};
 
 /// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise
-/// equivalent packed references
+/// equivalent packed references.
+///
+/// All errors will be returned verbatim, while packed errors are depleted first if loose refs also error.
 pub struct Overlay<'p, 's> {
     parent: &'s file::Store,
     packed: Peekable<packed::Iter<'p>>,
@@ -54,14 +57,15 @@ impl<'p, 's> Overlay<'p, 's> {
         })
     }
 
-    fn convert_loose(&mut self, path: PathBuf) -> Result<Reference<'p, 's>, Error> {
-        std::fs::File::open(&path)
+    fn convert_loose(&mut self, res: std::io::Result<(PathBuf, Option<BString>)>) -> Result<Reference<'p, 's>, Error> {
+        let (refpath, _name) = res.map_err(Error::Traversal)?;
+        std::fs::File::open(&refpath)
             .and_then(|mut f| {
                 self.buf.clear();
                 f.read_to_end(&mut self.buf)
             })
             .map_err(Error::ReadFileContents)?;
-        let relative_path = path.strip_prefix(&self.parent.base).expect("bsae contains path");
+        let relative_path = refpath.strip_prefix(&self.parent.base).expect("base contains path");
         file::Reference::try_from_path(self.parent, relative_path, &self.buf)
             .map_err(|err| Error::ReferenceCreation {
                 err,
@@ -77,18 +81,32 @@ impl<'p, 's> Iterator for Overlay<'p, 's> {
     fn next(&mut self) -> Option<Self::Item> {
         match (self.loose.peek(), self.packed.peek()) {
             (None, None) => None,
-            (Some(_), None) => {
-                let res = self.loose.next().expect("peeked value exists");
-                Some(
-                    res.map_err(Error::Traversal)
-                        .and_then(|(refpath, _name)| self.convert_loose(refpath)),
-                )
-            }
-            (None, Some(_packed)) => {
+            (None, Some(_)) | (Some(_), Some(Err(_))) => {
                 let res = self.packed.next().expect("peeked value exists");
                 Some(self.convert_packed(res))
             }
-            (Some(_loose), Some(_packed)) => todo!("some packed and some loose"),
+            (Some(_), None) | (Some(Err(_)), Some(_)) => {
+                let res = self.loose.next().expect("peeked value exists");
+                Some(self.convert_loose(res))
+            }
+            (Some(Ok(loose)), Some(Ok(packed))) => {
+                let loose_name = loose.1.as_ref().expect("name retrieval configured");
+                match loose_name.as_slice().cmp(packed.full_name) {
+                    Ordering::Less => {
+                        let res = self.loose.next().expect("name retrieval configured");
+                        Some(self.convert_loose(res))
+                    }
+                    Ordering::Equal => {
+                        drop(self.packed.next());
+                        let res = self.loose.next().expect("peeked value exists");
+                        Some(self.convert_loose(res))
+                    }
+                    Ordering::Greater => {
+                        let res = self.packed.next().expect("name retrieval configured");
+                        Some(self.convert_packed(res))
+                    }
+                }
+            }
         }
     }
 }
@@ -99,8 +117,8 @@ impl file::Store {
     /// Note that the caller is responsible for the freshness of the `packed` references buffer.
     /// If a reference cannot be parsed or read, the error will be visible to the caller and the iteration
     /// continues.
-    /// However, as the loose ref iteration has to be performed in advance, the operation will abort if the loose file iteartion
-    /// fails. If this is undesirable, traverse loose refs directly using [`loose_iter()`][file::Store::loose_iter()].
+    ///
+    /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themeselves.
     pub fn iter<'p, 's>(&'s self, packed: &'p packed::Buffer) -> std::io::Result<Overlay<'p, 's>> {
         Ok(Overlay {
             parent: self,
