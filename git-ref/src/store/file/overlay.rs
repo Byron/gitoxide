@@ -38,7 +38,23 @@ impl<'p, 's> Reference<'p, 's> {
 }
 
 impl<'p, 's> Overlay<'p, 's> {
-    fn convert_to_loose_ref(&mut self, path: PathBuf) -> Result<Reference<'p, 's>, Error> {
+    fn convert_packed(
+        &mut self,
+        packed: Result<packed::Reference<'p>, packed::iter::Error>,
+    ) -> Result<Reference<'p, 's>, Error> {
+        packed.map(|r| Reference::Packed(r)).map_err(|err| match err {
+            packed::iter::Error::Reference {
+                invalid_line,
+                line_number,
+            } => Error::PackedReference {
+                invalid_line,
+                line_number,
+            },
+            packed::iter::Error::Header { .. } => unreachable!("this one only happens on iteration creation"),
+        })
+    }
+
+    fn convert_loose(&mut self, path: PathBuf) -> Result<Reference<'p, 's>, Error> {
         std::fs::File::open(&path)
             .and_then(|mut f| {
                 self.buf.clear();
@@ -65,10 +81,13 @@ impl<'p, 's> Iterator for Overlay<'p, 's> {
                 let res = self.loose.next().expect("peeked value exists");
                 Some(
                     res.map_err(Error::Traversal)
-                        .and_then(|(refpath, _name)| self.convert_to_loose_ref(refpath)),
+                        .and_then(|(refpath, _name)| self.convert_loose(refpath)),
                 )
             }
-            (None, Some(_packed)) => todo!("packed only"),
+            (None, Some(_packed)) => {
+                let res = self.packed.next().expect("peeked value exists");
+                Some(self.convert_packed(res))
+            }
             (Some(_loose), Some(_packed)) => todo!("some packed and some loose"),
         }
     }
@@ -98,6 +117,7 @@ impl file::Store {
 
 mod error {
     use crate::store::file;
+    use bstr::BString;
     use quick_error::quick_error;
     use std::{io, path::PathBuf};
 
@@ -115,6 +135,9 @@ mod error {
             ReferenceCreation{ err: file::reference::decode::Error, relative_path: PathBuf } {
                 display("The reference at '{}' could not be instantiated", relative_path.display())
                 source(err)
+            }
+            PackedReference { invalid_line: BString, line_number: usize } {
+                display("Invalid reference in line {}: '{}'", line_number, invalid_line)
             }
         }
     }
