@@ -86,14 +86,14 @@ impl file::Store {
 
 impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
-    pub(crate) fn ref_path(&self, name: &Path) -> PathBuf {
+    pub(crate) fn reference_path(&self, name: &Path) -> PathBuf {
         self.base.join(name)
     }
 
     /// Read the file contents with a verified full reference path and return it in the given vector if possible.
     pub(crate) fn ref_contents(&self, relative_path: &Path) -> std::io::Result<Option<Vec<u8>>> {
         let mut buf = Vec::new();
-        let ref_path = self.ref_path(&relative_path);
+        let ref_path = self.reference_path(&relative_path);
 
         match std::fs::File::open(&ref_path) {
             Ok(mut file) => {

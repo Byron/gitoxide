@@ -1,4 +1,4 @@
-use crate::file::{store, store_with_packed_refs};
+use crate::file::{store, store_at, store_with_packed_refs};
 use std::path::PathBuf;
 
 #[test]
@@ -19,7 +19,7 @@ fn packed_file_iter() -> crate::Result {
 }
 
 #[test]
-fn iter_loose_with_broken_refs() -> crate::Result {
+fn loose_iter_with_broken_refs() -> crate::Result {
     let store = store()?;
 
     let mut actual: Vec<_> = store.loose_iter()?.collect();
@@ -76,7 +76,7 @@ fn iter_loose_with_broken_refs() -> crate::Result {
 }
 
 #[test]
-fn iter_loose_with_prefix_wont_allow_absolute_paths() -> crate::Result {
+fn loose_iter_with_prefix_wont_allow_absolute_paths() -> crate::Result {
     let store = store()?;
     #[cfg(not(windows))]
     let abs_path = "/hello";
@@ -91,7 +91,7 @@ fn iter_loose_with_prefix_wont_allow_absolute_paths() -> crate::Result {
 }
 
 #[test]
-fn iter_loose_with_prefix() -> crate::Result {
+fn loose_iter_with_prefix() -> crate::Result {
     let store = store()?;
 
     let mut actual = store
@@ -117,4 +117,12 @@ fn iter_loose_with_prefix() -> crate::Result {
         "all paths are as expected"
     );
     Ok(())
+}
+
+#[test]
+#[ignore]
+fn overlay_iter() {
+    let store = store_at("make_packed_ref_repository_for_overlay.sh").unwrap();
+    let _iter = store.iter(&store.packed().unwrap().expect("packed-refs")).unwrap();
+    todo!("actual overlay iter tests")
 }

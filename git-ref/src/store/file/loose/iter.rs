@@ -8,7 +8,7 @@ use std::{
 };
 
 /// An iterator over all valid loose reference paths as seen from a particular base directory.
-struct LoosePaths {
+pub(in crate::store::file) struct LoosePaths {
     base: PathBuf,
     file_walk: DirEntryIter,
 }
@@ -131,7 +131,7 @@ impl file::Store {
         Ok(Loose::at_root(self, self.base.join(prefix), self.base.clone()))
     }
 
-    fn refs_dir(&self) -> PathBuf {
+    pub(in crate::store::file) fn refs_dir(&self) -> PathBuf {
         self.base.join("refs")
     }
 }

@@ -70,7 +70,7 @@ impl<'a> Transaction<'a> {
         let lock = match &mut change.update.change {
             Change::Delete { previous, .. } => {
                 let lock = git_lock::Marker::acquire_to_hold_resource(
-                    store.ref_path(&relative_path),
+                    store.reference_path(&relative_path),
                     lock_fail_mode,
                     Some(store.base.to_owned()),
                 )
@@ -109,7 +109,7 @@ impl<'a> Transaction<'a> {
                 mode: previous, new, ..
             } => {
                 let mut lock = git_lock::File::acquire_to_update_resource(
-                    store.ref_path(&relative_path),
+                    store.reference_path(&relative_path),
                     lock_fail_mode,
                     Some(store.base.to_owned()),
                 )
@@ -347,7 +347,7 @@ impl<'a> Transaction<'a> {
                                 }
                             }
                             if rm_ref {
-                                let reference_path = self.store.ref_path(change.update.name.to_path().as_ref());
+                                let reference_path = self.store.reference_path(change.update.name.to_path().as_ref());
                                 if let Err(err) = std::fs::remove_file(reference_path) {
                                     if err.kind() != std::io::ErrorKind::NotFound {
                                         return Err(Error::DeleteReference {

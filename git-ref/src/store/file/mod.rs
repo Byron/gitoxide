@@ -55,7 +55,13 @@ mod traits {
 }
 
 mod loose;
-pub use loose::{find, iter};
+pub use loose::find;
+///
+pub mod iter {
+    pub use super::loose::iter::{loose, Loose};
+}
+
+mod overlay;
 
 mod packed {
     use crate::store::{file, packed};
