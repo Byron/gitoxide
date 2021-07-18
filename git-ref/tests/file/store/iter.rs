@@ -121,12 +121,68 @@ fn loose_iter_with_prefix() -> crate::Result {
 }
 
 #[test]
-fn overlay_iter() {
+fn overlay_iter() -> crate::Result {
+    use git_ref::mutable::Target::*;
+
+    let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
+    let ref_names = store
+        .iter(&store.packed()?.expect("packed-refs"))?
+        .map(|r| {
+            r.map(|r| {
+                (
+                    r.name().expect("valid names only").into_inner(),
+                    r.target(),
+                    r.is_packed(),
+                )
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+    let c2 = hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7");
+    assert_eq!(
+        ref_names,
+        vec![
+            (b"refs/heads/main".as_bstr().to_owned(), Peeled(c1), true),
+            ("refs/heads/newer-as-loose".into(), Peeled(c2), false),
+            (
+                "refs/remotes/origin/HEAD".into(),
+                Symbolic("refs/remotes/origin/main".try_into()?),
+                false
+            ),
+            ("refs/remotes/origin/main".into(), Peeled(c1), true),
+            (
+                "refs/tags/tag-object".into(),
+                Peeled(hex_to_id("b3109a7e51fc593f85b145a76c70ddd1d133fafd")),
+                true
+            )
+        ]
+    );
+    Ok(())
+}
+
+#[test]
+fn overlay_iter_with_prefix_wont_allow_absolute_paths() -> crate::Result {
+    let store = store_with_packed_refs()?;
+    #[cfg(not(windows))]
+    let abs_path = "/hello";
+    #[cfg(windows)]
+    let abs_path = "c:\\hello";
+
+    match store.iter_prefixed(&store.packed()?.expect("pacekd-refs"), abs_path) {
+        Ok(_) => unreachable!("absolute paths aren't allowed"),
+        Err(err) => assert_eq!(err.to_string(), "prefix must be a relative path, like 'refs/heads'"),
+    }
+    Ok(())
+}
+
+#[test]
+fn overlay_prefixed_iter() {
     use git_ref::mutable::Target::*;
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh").unwrap();
+    let packed = store.packed().unwrap().expect("packed-refs");
     let ref_names = store
-        .iter(&store.packed().unwrap().expect("packed-refs"))
+        .iter_prefixed(&packed, "refs/heads")
         .unwrap()
         .map(|r| {
             r.map(|r| {
@@ -146,17 +202,6 @@ fn overlay_iter() {
         vec![
             (b"refs/heads/main".as_bstr().to_owned(), Peeled(c1), true),
             ("refs/heads/newer-as-loose".into(), Peeled(c2), false),
-            (
-                "refs/remotes/origin/HEAD".into(),
-                Symbolic("refs/remotes/origin/main".try_into().unwrap()),
-                false
-            ),
-            ("refs/remotes/origin/main".into(), Peeled(c1), true),
-            (
-                "refs/tags/tag-object".into(),
-                Peeled(hex_to_id("b3109a7e51fc593f85b145a76c70ddd1d133fafd")),
-                true
-            )
         ]
     );
 }

@@ -141,18 +141,30 @@ impl file::Store {
     ///
     /// Otherwise it's similar to [`loose_iter()`][file::Store::loose_iter()].
     pub fn loose_iter_prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<Loose<'_>> {
-        let prefix = prefix.as_ref();
+        let prefix = self.validate_prefix(prefix.as_ref())?;
+        Ok(Loose::at_root(self, self.base.join(prefix), self.base.clone()))
+    }
+
+    pub(in crate::store::file) fn refs_dir(&self) -> PathBuf {
+        self.base.join("refs")
+    }
+    pub(in crate::store::file) fn validate_prefix<'a>(&self, prefix: &'a Path) -> std::io::Result<&'a Path> {
         if prefix.is_absolute() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
                 "prefix must be a relative path, like 'refs/heads'",
             ));
         }
-        Ok(Loose::at_root(self, self.base.join(prefix), self.base.clone()))
-    }
-
-    pub(in crate::store::file) fn refs_dir(&self) -> PathBuf {
-        self.base.join("refs")
+        for component in prefix.components() {
+            use std::path::Component::*;
+            if matches!(component, CurDir | ParentDir) {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "Refusing to handle prefixes with relative path components",
+                ));
+            }
+        }
+        Ok(prefix)
     }
 }
 

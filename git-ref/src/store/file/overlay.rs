@@ -3,7 +3,13 @@ use crate::{
     store::{file, packed},
 };
 use bstr::BString;
-use std::{cmp::Ordering, convert::TryInto, io::Read, iter::Peekable, path::PathBuf};
+use std::{
+    cmp::Ordering,
+    convert::TryInto,
+    io::Read,
+    iter::Peekable,
+    path::{Path, PathBuf},
+};
 
 /// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise
 /// equivalent packed references.
@@ -141,6 +147,32 @@ impl file::Store {
             buf: Vec::new(),
         })
     }
+
+    /// As [`iter(…)`][file::Store::iter()], but filters by `prefix`, i.e. "refs/heads".
+    ///
+    /// Please note that "refs/heads` or "refs\\heads" is equivalent to "refs/heads/"
+    pub fn iter_prefixed<'p, 's>(
+        &'s self,
+        packed: &'p packed::Buffer,
+        prefix: impl AsRef<Path>,
+    ) -> std::io::Result<LooseThenPacked<'p, 's>> {
+        let prefix = self.validate_prefix(prefix.as_ref())?;
+        let packed_prefix = prefix.to_raw_bytes();
+        #[cfg(windows)]
+        let packed_prefix = packed_prefix.replace(b"\\", b"/");
+        #[cfg(not(windows))]
+        let packed_prefix = packed_prefix.into_owned();
+        Ok(LooseThenPacked {
+            parent: self,
+            packed: packed
+                .iter_prefixed(packed_prefix)
+                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
+                .peekable(),
+            loose: file::loose::iter::SortedLoosePaths::at_root_with_names(self.base.join(prefix), self.base.clone())
+                .peekable(),
+            buf: Vec::new(),
+        })
+    }
 }
 
 mod error {
@@ -173,3 +205,4 @@ mod error {
     }
 }
 pub use error::Error;
+use os_str_bytes::OsStrBytes;
