@@ -38,6 +38,14 @@ impl<'p, 's> Reference<'p, 's> {
             Reference::Loose(l) => Ok(l.name()),
         }
     }
+
+    /// Return the target to which the reference points to.
+    pub fn target(&self) -> mutable::Target {
+        match self {
+            Reference::Packed(p) => mutable::Target::Peeled(p.target()),
+            Reference::Loose(l) => l.target().to_owned(),
+        }
+    }
 }
 
 impl<'p, 's> Overlay<'p, 's> {

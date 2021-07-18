@@ -1,5 +1,7 @@
 use crate::file::{store, store_at, store_with_packed_refs};
 use bstr::ByteSlice;
+use git_testtools::hex_to_id;
+use std::convert::TryInto;
 use std::path::PathBuf;
 
 #[test]
@@ -120,21 +122,31 @@ fn loose_iter_with_prefix() -> crate::Result {
 
 #[test]
 fn overlay_iter() {
+    use git_ref::mutable::Target::*;
+
     let store = store_at("make_packed_ref_repository_for_overlay.sh").unwrap();
     let ref_names = store
         .iter(&store.packed().unwrap().expect("packed-refs"))
         .unwrap()
-        .map(|r| r.map(|r| r.name().expect("valid names only").into_inner()))
+        .map(|r| r.map(|r| (r.name().expect("valid names only").into_inner(), r.target())))
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
+    let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+    let c2 = hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7");
     assert_eq!(
         ref_names,
         vec![
-            b"refs/heads/main".as_bstr(),
-            "refs/heads/newer-as-loose".into(),
-            "refs/remotes/origin/HEAD".into(),
-            "refs/remotes/origin/main".into(),
-            "refs/tags/tag-object".into()
+            (b"refs/heads/main".as_bstr().to_owned(), Peeled(c1)),
+            ("refs/heads/newer-as-loose".into(), Peeled(c2)),
+            (
+                "refs/remotes/origin/HEAD".into(),
+                Symbolic("refs/remotes/origin/main".try_into().unwrap())
+            ),
+            ("refs/remotes/origin/main".into(), Peeled(c1)),
+            (
+                "refs/tags/tag-object".into(),
+                Peeled(hex_to_id("b3109a7e51fc593f85b145a76c70ddd1d133fafd"))
+            )
         ]
     );
 }
