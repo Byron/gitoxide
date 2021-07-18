@@ -2,15 +2,14 @@ use crate::{
     mutable,
     store::{file, packed},
 };
-use bstr::BString;
-use std::{convert::TryInto, path::PathBuf};
+use std::convert::TryInto;
 
 /// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise
 /// equivalent packed references
 pub struct Overlay<'p, 's> {
     _parent: &'s file::Store,
     _packed: packed::Iter<'p>,
-    _loose_paths_sorted: Vec<(PathBuf, BString)>,
+    _loose: file::loose::iter::SortedLoosePaths,
 }
 
 /// A reference returned by the [`Overlay`] iterator.
@@ -59,16 +58,8 @@ impl file::Store {
             _packed: packed
                 .iter()
                 .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?,
-            _loose_paths_sorted: self.loose_full_names_sorted()?,
+            _loose: file::loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.clone()),
         })
-    }
-
-    fn loose_full_names_sorted(&self) -> std::io::Result<Vec<(PathBuf, BString)>> {
-        let mut names = file::loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.clone())
-            .map(|r| r.map(|(path, name)| (path, name.expect("name is set as we configured it"))))
-            .collect::<Result<Vec<_>, _>>()?;
-        names.sort();
-        Ok(names)
     }
 }
 
