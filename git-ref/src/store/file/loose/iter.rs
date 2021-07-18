@@ -8,7 +8,7 @@ use std::{
 };
 
 /// An iterator over all valid loose reference paths as seen from a particular base directory.
-pub(in crate::store::file) struct LoosePaths {
+pub(in crate::store::file) struct SortedLoosePaths {
     base: PathBuf,
     file_walk: DirEntryIter,
     mode: LoosePathsMode,
@@ -19,7 +19,7 @@ enum LoosePathsMode {
     PathsAndNames,
 }
 
-impl LoosePaths {
+impl SortedLoosePaths {
     pub fn at_root(path: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
         Self::new(path.as_ref(), base.into(), LoosePathsMode::Paths)
     }
@@ -29,12 +29,12 @@ impl LoosePaths {
     }
 
     fn new(path: &Path, base: PathBuf, mode: LoosePathsMode) -> Self {
-        let file_walk = git_features::fs::walkdir_new(path).into_iter();
-        LoosePaths { base, file_walk, mode }
+        let file_walk = git_features::fs::walkdir_sorted_new(path).into_iter();
+        SortedLoosePaths { base, file_walk, mode }
     }
 }
 
-impl Iterator for LoosePaths {
+impl Iterator for SortedLoosePaths {
     type Item = std::io::Result<(PathBuf, Option<BString>)>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -73,7 +73,7 @@ impl Iterator for LoosePaths {
 /// An iterator over all loose references as seen from a particular base directory.
 pub struct Loose<'a> {
     parent: &'a file::Store,
-    ref_paths: LoosePaths,
+    ref_paths: SortedLoosePaths,
     buf: Vec<u8>,
 }
 
@@ -83,7 +83,7 @@ impl<'a> Loose<'a> {
     pub fn at_root(store: &'a file::Store, root: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
         Loose {
             parent: store,
-            ref_paths: LoosePaths::at_root(root, base),
+            ref_paths: SortedLoosePaths::at_root(root, base),
             buf: Vec::new(),
         }
     }

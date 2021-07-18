@@ -44,11 +44,10 @@ fn loose_iter_with_broken_refs() -> crate::Result {
         actual[first_error].as_ref().expect_err("unparseable ref").to_string(),
         msg
     );
-    let mut ref_paths: Vec<_> = actual
+    let ref_paths: Vec<_> = actual
         .drain(..first_error)
         .filter_map(|e| e.ok().map(|e| e.into_relative_path()))
         .collect();
-    ref_paths.sort();
 
     assert_eq!(
         ref_paths,
@@ -95,14 +94,13 @@ fn loose_iter_with_prefix_wont_allow_absolute_paths() -> crate::Result {
 fn loose_iter_with_prefix() -> crate::Result {
     let store = store()?;
 
-    let mut actual = store
+    let actual = store
         .loose_iter_prefixed("refs/heads/")?
         .collect::<Result<Vec<_>, _>>()
         .expect("no broken ref in this subset")
         .into_iter()
         .map(|e| e.into_relative_path())
         .collect::<Vec<_>>();
-    actual.sort();
 
     assert_eq!(
         actual,

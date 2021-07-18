@@ -64,7 +64,7 @@ impl file::Store {
     }
 
     fn loose_full_names_sorted(&self) -> std::io::Result<Vec<(PathBuf, BString)>> {
-        let mut names = file::loose::iter::LoosePaths::at_root_with_names(self.refs_dir(), self.base.clone())
+        let mut names = file::loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.clone())
             .map(|r| r.map(|(path, name)| (path, name.expect("name is set as we configured it"))))
             .collect::<Result<Vec<_>, _>>()?;
         names.sort();

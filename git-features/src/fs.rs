@@ -20,6 +20,11 @@ pub mod walkdir {
         WalkDir::new(root).skip_hidden(false)
     }
 
+    /// Instantiate a new directory iterator which will not skip hidden files and is sorted
+    pub fn walkdir_sorted_new(root: impl AsRef<Path>) -> WalkDir {
+        WalkDir::new(root).sort(true)
+    }
+
     /// The Iterator yielding directory items
     pub type DirEntryIter = DirEntryIterGeneric<((), ())>;
 }
@@ -35,9 +40,14 @@ pub mod walkdir {
         WalkDir::new(root)
     }
 
+    /// Instantiate a new directory iterator which will not skip hidden files and is sorted
+    pub fn walkdir_sorted_new(root: impl AsRef<Path>) -> WalkDir {
+        WalkDir::new(root).sort_by_file_name()
+    }
+
     /// The Iterator yielding directory items
     pub type DirEntryIter = walkdir::IntoIter;
 }
 
 #[cfg(any(feature = "walkdir", feature = "jwalk"))]
-pub use self::walkdir::{walkdir_new, WalkDir};
+pub use self::walkdir::{walkdir_new, walkdir_sorted_new, WalkDir};
