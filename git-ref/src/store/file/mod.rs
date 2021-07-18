@@ -56,12 +56,17 @@ mod traits {
 
 mod loose;
 pub use loose::find;
+
+mod overlay;
 ///
 pub mod iter {
     pub use super::loose::iter::{loose, Loose};
+    pub use super::overlay::LooseThenPacked;
+    ///
+    pub mod loose_then_packed {
+        pub use super::super::overlay::{Error, Reference};
+    }
 }
-
-mod overlay;
 
 ///
 pub mod reference;

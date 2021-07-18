@@ -9,16 +9,18 @@ use std::{cmp::Ordering, convert::TryInto, io::Read, iter::Peekable, path::PathB
 /// equivalent packed references.
 ///
 /// All errors will be returned verbatim, while packed errors are depleted first if loose refs also error.
-pub struct Overlay<'p, 's> {
+pub struct LooseThenPacked<'p, 's> {
     parent: &'s file::Store,
     packed: Peekable<packed::Iter<'p>>,
     loose: Peekable<file::loose::iter::SortedLoosePaths>,
     buf: Vec<u8>,
 }
 
-/// A reference returned by the [`Overlay`] iterator.
+/// A reference returned by the [`LooseThenPacked`] iterator.
 pub enum Reference<'p, 's> {
+    /// A reference originating in a pack
     Packed(packed::Reference<'p>),
+    /// A reference from the filesystem
     Loose(file::Reference<'s>),
 }
 
@@ -48,7 +50,7 @@ impl<'p, 's> Reference<'p, 's> {
     }
 }
 
-impl<'p, 's> Overlay<'p, 's> {
+impl<'p, 's> LooseThenPacked<'p, 's> {
     fn convert_packed(
         &mut self,
         packed: Result<packed::Reference<'p>, packed::iter::Error>,
@@ -83,7 +85,7 @@ impl<'p, 's> Overlay<'p, 's> {
     }
 }
 
-impl<'p, 's> Iterator for Overlay<'p, 's> {
+impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
     type Item = Result<Reference<'p, 's>, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -127,8 +129,8 @@ impl file::Store {
     /// continues.
     ///
     /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themeselves.
-    pub fn iter<'p, 's>(&'s self, packed: &'p packed::Buffer) -> std::io::Result<Overlay<'p, 's>> {
-        Ok(Overlay {
+    pub fn iter<'p, 's>(&'s self, packed: &'p packed::Buffer) -> std::io::Result<LooseThenPacked<'p, 's>> {
+        Ok(LooseThenPacked {
             parent: self,
             packed: packed
                 .iter()
@@ -148,7 +150,9 @@ mod error {
     use std::{io, path::PathBuf};
 
     quick_error! {
+        /// The error returned by the [`LooseThenPacked`][super::LooseThenPacked] iterator.
         #[derive(Debug)]
+        #[allow(missing_docs)]
         pub enum Error {
             Traversal(err: io::Error) {
                 display("The file system could not be traversed")
