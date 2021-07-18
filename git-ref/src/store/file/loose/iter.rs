@@ -1,5 +1,5 @@
 use crate::store::file;
-use bstr::ByteSlice;
+use bstr::{BString, ByteSlice};
 use git_features::fs::walkdir::DirEntryIter;
 use os_str_bytes::OsStrBytes;
 use std::{
@@ -11,20 +11,31 @@ use std::{
 pub(in crate::store::file) struct LoosePaths {
     base: PathBuf,
     file_walk: DirEntryIter,
+    mode: LoosePathsMode,
+}
+
+enum LoosePathsMode {
+    Paths,
+    PathsAndNames,
 }
 
 impl LoosePaths {
     pub fn at_root(path: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
+        Self::new(path.as_ref(), base.into(), LoosePathsMode::Paths)
+    }
+
+    pub fn at_root_with_names(path: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
+        Self::new(path.as_ref(), base.into(), LoosePathsMode::PathsAndNames)
+    }
+
+    fn new(path: &Path, base: PathBuf, mode: LoosePathsMode) -> Self {
         let file_walk = git_features::fs::walkdir_new(path).into_iter();
-        LoosePaths {
-            base: base.into(),
-            file_walk,
-        }
+        LoosePaths { base, file_walk, mode }
     }
 }
 
 impl Iterator for LoosePaths {
-    type Item = std::io::Result<PathBuf>;
+    type Item = std::io::Result<(PathBuf, Option<BString>)>;
 
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(entry) = self.file_walk.next() {
@@ -41,8 +52,13 @@ impl Iterator for LoosePaths {
                     #[cfg(windows)]
                     let full_name: Vec<u8> = full_name.into_owned().replace(b"\\", b"/");
 
+                    use LoosePathsMode::*;
                     if git_validate::reference::name_partial(full_name.as_bstr()).is_ok() {
-                        return Some(Ok(full_path));
+                        let name = match self.mode {
+                            Paths => None,
+                            PathsAndNames => Some(full_name.into_owned().into()),
+                        };
+                        return Some(Ok((full_path, name)));
                     } else {
                         continue;
                     }
@@ -78,25 +94,26 @@ impl<'a> Iterator for Loose<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.ref_paths.next().map(|res| {
-            res.map_err(loose::Error::Traversal).and_then(|validated_path| {
-                std::fs::File::open(&validated_path)
-                    .and_then(|mut f| {
-                        self.buf.clear();
-                        f.read_to_end(&mut self.buf)
-                    })
-                    .map_err(loose::Error::ReadFileContents)
-                    .and_then(|_| {
-                        let relative_path = validated_path
-                            .strip_prefix(&self.ref_paths.base)
-                            .expect("root contains path");
-                        file::Reference::try_from_path(self.parent, relative_path, &self.buf).map_err(|err| {
-                            loose::Error::ReferenceCreation {
-                                err,
-                                relative_path: relative_path.into(),
-                            }
+            res.map_err(loose::Error::Traversal)
+                .and_then(|(validated_path, _name)| {
+                    std::fs::File::open(&validated_path)
+                        .and_then(|mut f| {
+                            self.buf.clear();
+                            f.read_to_end(&mut self.buf)
                         })
-                    })
-            })
+                        .map_err(loose::Error::ReadFileContents)
+                        .and_then(|_| {
+                            let relative_path = validated_path
+                                .strip_prefix(&self.ref_paths.base)
+                                .expect("root contains path");
+                            file::Reference::try_from_path(self.parent, relative_path, &self.buf).map_err(|err| {
+                                loose::Error::ReferenceCreation {
+                                    err,
+                                    relative_path: relative_path.into(),
+                                }
+                            })
+                        })
+                })
         })
     }
 }

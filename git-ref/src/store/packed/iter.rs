@@ -3,12 +3,12 @@ use bstr::{BString, ByteSlice};
 
 /// packed-refs specific functionality
 impl packed::Buffer {
-    /// Return an iterator of references stored in this packed refs buffer.
+    /// Return an iterator of references stored in this packed refs buffer, ordered by reference name.
     pub fn iter(&self) -> Result<packed::Iter<'_>, packed::iter::Error> {
         packed::Iter::new(self.as_ref())
     }
 
-    /// Return an iterator yielding only references matching the given prefix.
+    /// Return an iterator yielding only references matching the given prefix, ordered by reference name.
     pub fn iter_prefixed(&self, prefix: impl Into<BString>) -> Result<packed::Iter<'_>, packed::iter::Error> {
         let prefix = prefix.into();
         let first_record_with_prefix = self.binary_search_by(prefix.as_bstr()).unwrap_or_else(|(_, pos)| pos);
