@@ -128,7 +128,15 @@ fn overlay_iter() {
     let ref_names = store
         .iter(&store.packed().unwrap().expect("packed-refs"))
         .unwrap()
-        .map(|r| r.map(|r| (r.name().expect("valid names only").into_inner(), r.target())))
+        .map(|r| {
+            r.map(|r| {
+                (
+                    r.name().expect("valid names only").into_inner(),
+                    r.target(),
+                    r.is_packed(),
+                )
+            })
+        })
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
@@ -136,16 +144,18 @@ fn overlay_iter() {
     assert_eq!(
         ref_names,
         vec![
-            (b"refs/heads/main".as_bstr().to_owned(), Peeled(c1)),
-            ("refs/heads/newer-as-loose".into(), Peeled(c2)),
+            (b"refs/heads/main".as_bstr().to_owned(), Peeled(c1), true),
+            ("refs/heads/newer-as-loose".into(), Peeled(c2), false),
             (
                 "refs/remotes/origin/HEAD".into(),
-                Symbolic("refs/remotes/origin/main".try_into().unwrap())
+                Symbolic("refs/remotes/origin/main".try_into().unwrap()),
+                false
             ),
-            ("refs/remotes/origin/main".into(), Peeled(c1)),
+            ("refs/remotes/origin/main".into(), Peeled(c1), true),
             (
                 "refs/tags/tag-object".into(),
-                Peeled(hex_to_id("b3109a7e51fc593f85b145a76c70ddd1d133fafd"))
+                Peeled(hex_to_id("b3109a7e51fc593f85b145a76c70ddd1d133fafd")),
+                true
             )
         ]
     );
