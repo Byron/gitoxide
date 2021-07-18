@@ -60,7 +60,10 @@ impl<'a> Reference<'a> {
         use os_str_bytes::OsStrBytes;
         let name = self.relative_path.as_path().to_raw_bytes();
         #[cfg(windows)]
-        let name = name.replace(b"\\", b"/");
+        let name = {
+            use bstr::ByteSlice;
+            name.replace(b"\\", b"/")
+        };
         FullName(name.to_vec().into())
     }
 }

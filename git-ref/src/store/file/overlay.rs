@@ -159,7 +159,10 @@ impl file::Store {
         let prefix = self.validate_prefix(prefix.as_ref())?;
         let packed_prefix = prefix.to_raw_bytes();
         #[cfg(windows)]
-        let packed_prefix = packed_prefix.replace(b"\\", b"/");
+        let packed_prefix = {
+            use bstr::ByteSlice;
+            packed_prefix.replace(b"\\", b"/")
+        };
         #[cfg(not(windows))]
         let packed_prefix = packed_prefix.into_owned();
         Ok(LooseThenPacked {
