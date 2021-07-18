@@ -45,7 +45,7 @@ impl<'p, 's> Overlay<'p, 's> {
         &mut self,
         packed: Result<packed::Reference<'p>, packed::iter::Error>,
     ) -> Result<Reference<'p, 's>, Error> {
-        packed.map(|r| Reference::Packed(r)).map_err(|err| match err {
+        packed.map(Reference::Packed).map_err(|err| match err {
             packed::iter::Error::Reference {
                 invalid_line,
                 line_number,
