@@ -1,4 +1,5 @@
 use crate::file::{store, store_at, store_with_packed_refs};
+use bstr::ByteSlice;
 use std::path::PathBuf;
 
 #[test]
@@ -123,6 +124,11 @@ fn loose_iter_with_prefix() -> crate::Result {
 #[ignore]
 fn overlay_iter() {
     let store = store_at("make_packed_ref_repository_for_overlay.sh").unwrap();
-    let _iter = store.iter(&store.packed().unwrap().expect("packed-refs")).unwrap();
-    todo!("actual overlay iter tests")
+    let ref_names = store
+        .iter(&store.packed().unwrap().expect("packed-refs"))
+        .unwrap()
+        .map(|r| r.map(|r| r.name().expect("valid names only").into_inner()))
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    assert_eq!(ref_names, vec![b"hello".as_bstr().to_owned()]);
 }

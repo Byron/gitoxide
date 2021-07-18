@@ -40,9 +40,14 @@ impl FullName {
         crate::FullName(self.0.as_bstr())
     }
 
-    /// Convert this name into the relative path identifying the reference location relative to a repository
+    /// Convert this name into the relative path, lossily, identifying the reference location relative to a repository
     pub fn to_path(&self) -> Cow<'_, Path> {
         self.0.to_path_lossy()
+    }
+
+    /// Dissolve this instance and return the buffer.
+    pub fn into_inner(self) -> BString {
+        self.0
     }
 }
 

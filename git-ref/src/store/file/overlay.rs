@@ -1,6 +1,9 @@
-use crate::store::{file, packed};
+use crate::{
+    mutable,
+    store::{file, packed},
+};
 use bstr::BString;
-use std::path::PathBuf;
+use std::{convert::TryInto, path::PathBuf};
 
 /// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise
 /// equivalent packed references
@@ -8,6 +11,38 @@ pub struct Overlay<'p, 's> {
     _parent: &'s file::Store,
     _packed: packed::Iter<'p>,
     _loose_paths_sorted: Vec<(PathBuf, BString)>,
+}
+
+/// A reference returned by the [`Overlay`] iterator.
+pub enum Reference<'p, 's> {
+    Packed(packed::Reference<'p>),
+    Loose(file::Reference<'s>),
+}
+
+impl<'p, 's> Reference<'p, 's> {
+    /// Returns true if this ref is located in a packed ref buffer.
+    pub fn is_packed(&self) -> bool {
+        match self {
+            Reference::Packed(_) => true,
+            Reference::Loose(_) => false,
+        }
+    }
+
+    /// Return the full validated name of the reference. Please note that if the reference is packed, validation can fail here.
+    pub fn name(&self) -> Result<mutable::FullName, git_validate::refname::Error> {
+        match self {
+            Reference::Packed(p) => p.full_name.try_into(),
+            Reference::Loose(l) => Ok(l.name()),
+        }
+    }
+}
+
+impl<'p, 's> Iterator for Overlay<'p, 's> {
+    type Item = Result<Reference<'p, 's>, Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!("next item in the iteration")
+    }
 }
 
 impl file::Store {
@@ -36,3 +71,15 @@ impl file::Store {
         Ok(names)
     }
 }
+
+mod error {
+    use quick_error::quick_error;
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            TBD
+        }
+    }
+}
+pub use error::Error;

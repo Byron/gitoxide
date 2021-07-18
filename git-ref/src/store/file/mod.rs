@@ -63,6 +63,15 @@ pub mod iter {
 
 mod overlay;
 
+///
+pub mod reference;
+
+///
+pub mod log;
+
+///
+pub mod transaction;
+
 mod packed {
     use crate::store::{file, packed};
     use std::path::PathBuf;
@@ -83,12 +92,3 @@ mod packed {
         }
     }
 }
-
-///
-pub mod reference;
-
-///
-pub mod log;
-
-///
-pub mod transaction;
