@@ -1,4 +1,4 @@
-use crate::store::file;
+use crate::store::{file, packed};
 use bstr::{BString, ByteSlice};
 use git_features::fs::walkdir::DirEntryIter;
 use os_str_bytes::OsStrBytes;
@@ -74,26 +74,33 @@ impl Iterator for SortedLoosePaths {
 }
 
 /// An iterator over all loose references as seen from a particular base directory.
-pub struct Loose<'a> {
-    parent: &'a file::Store,
+pub struct Loose<'s, 'p> {
+    parent: &'s file::Store,
+    packed: Option<&'p packed::Buffer>,
     ref_paths: SortedLoosePaths,
     buf: Vec<u8>,
 }
 
-impl<'a> Loose<'a> {
+impl<'s, 'p> Loose<'s, 'p> {
     /// Initialize a loose reference iterator owned by `store` at the given iteration `root`, where `base` is the
     /// path to which resulting reference names should be relative to.
-    pub fn at_root(store: &'a file::Store, root: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
+    pub fn at_root(
+        store: &'s file::Store,
+        packed: Option<&'p packed::Buffer>,
+        root: impl AsRef<Path>,
+        base: impl Into<PathBuf>,
+    ) -> Self {
         Loose {
             parent: store,
+            packed,
             ref_paths: SortedLoosePaths::at_root(root, base),
             buf: Vec::new(),
         }
     }
 }
 
-impl<'a> Iterator for Loose<'a> {
-    type Item = Result<file::Reference<'a>, loose::Error>;
+impl<'s, 'p> Iterator for Loose<'s, 'p> {
+    type Item = Result<file::Reference<'s, 'p>, loose::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.ref_paths.next().map(|res| {
