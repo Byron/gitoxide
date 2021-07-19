@@ -1,77 +1,14 @@
+use super::{LooseThenPacked, Reference};
 use crate::{
     file::path_to_name,
-    mutable,
     store::{file, packed},
 };
 use bstr::BString;
 use std::{
     cmp::Ordering,
-    convert::TryInto,
     io::Read,
-    iter::Peekable,
     path::{Path, PathBuf},
 };
-
-/// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise
-/// equivalent packed references.
-///
-/// All errors will be returned verbatim, while packed errors are depleted first if loose refs also error.
-pub struct LooseThenPacked<'p, 's> {
-    parent: &'s file::Store,
-    packed: Peekable<packed::Iter<'p>>,
-    loose: Peekable<file::loose::iter::SortedLoosePaths>,
-    buf: Vec<u8>,
-}
-
-/// A reference returned by the [`LooseThenPacked`] iterator.
-pub enum Reference<'p, 's> {
-    /// A reference originating in a pack
-    Packed(packed::Reference<'p>),
-    /// A reference from the filesystem
-    Loose(file::Reference<'s>),
-}
-
-impl<'p, 's> Reference<'p, 's> {
-    /// Returns the kind of reference
-    pub fn kind(&self) -> crate::Kind {
-        match self {
-            Reference::Loose(r) => r.kind(),
-            Reference::Packed(_) => crate::Kind::Peeled,
-        }
-    }
-
-    /// Transform this reference into an owned `Target`
-    pub fn into_target(self) -> mutable::Target {
-        match self {
-            Reference::Packed(p) => mutable::Target::Peeled(p.object()),
-            Reference::Loose(r) => r.into_target(),
-        }
-    }
-
-    /// Returns true if this ref is located in a packed ref buffer.
-    pub fn is_packed(&self) -> bool {
-        match self {
-            Reference::Packed(_) => true,
-            Reference::Loose(_) => false,
-        }
-    }
-
-    /// Return the full validated name of the reference. Please note that if the reference is packed, validation can fail here.
-    pub fn name(&self) -> Result<mutable::FullName, git_validate::refname::Error> {
-        match self {
-            Reference::Packed(p) => p.full_name.try_into(),
-            Reference::Loose(l) => Ok(l.name()),
-        }
-    }
-
-    /// Return the target to which the reference points to.
-    pub fn target(&self) -> mutable::Target {
-        match self {
-            Reference::Packed(p) => mutable::Target::Peeled(p.target()),
-            Reference::Loose(l) => l.target().to_owned(),
-        }
-    }
-}
 
 impl<'p, 's> LooseThenPacked<'p, 's> {
     fn convert_packed(
@@ -216,4 +153,5 @@ mod error {
         }
     }
 }
+
 pub use error::Error;

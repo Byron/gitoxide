@@ -60,7 +60,7 @@ pub mod iter {
 }
 ///
 pub mod loose_then_packed {
-    pub use super::overlay::{Error, Reference};
+    pub use super::overlay::{iter, Reference};
 }
 
 ///
