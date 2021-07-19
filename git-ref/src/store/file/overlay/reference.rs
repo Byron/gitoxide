@@ -1,8 +1,64 @@
 use super::Reference;
 use crate::mutable;
+use crate::store::file::{log, loose};
+use crate::store::packed;
+use git_hash::oid;
 use std::convert::TryInto;
+use std::path::Path;
 
 impl<'p, 's> Reference<'p, 's> {
+    /// Return the full name of this reference as path, only applicable if this is a loose reference.
+    pub fn relative_path(&self) -> Option<&Path> {
+        match self {
+            Reference::Loose(r) => Some(r.relative_path()),
+            Reference::Packed(_) => None,
+        }
+    }
+
+    /// For details, see [crate::file::Reference::peel_to_id_in_place].
+    pub fn peel_to_id_in_place(
+        &mut self,
+        packed: Option<&packed::Buffer>,
+    ) -> Result<&oid, crate::file::reference::peel::to_id::Error> {
+        match self {
+            Reference::Loose(r) => r.peel_to_id_in_place(packed),
+            Reference::Packed(_) => todo!("packed peel one level (yeah, it's done)"),
+        }
+    }
+
+    /// For details, see [crate::file::Reference::peel_one_level].
+    pub fn peel_one_level<'p2>(
+        &self,
+        packed: Option<&'p2 packed::Buffer>,
+    ) -> Option<Result<Reference<'p2, 's>, crate::file::reference::peel::Error>> {
+        match self {
+            Reference::Loose(r) => r.peel_one_level(packed),
+            Reference::Packed(_) => todo!("packed peel one level (yeah, it's done)"),
+        }
+    }
+    /// Obtain a reverse iterator over logs of this reference. See [crate::file::Reference::log_iter_rev()] for details.
+    pub fn log_iter_rev<'b>(
+        &self,
+        buf: &'b mut [u8],
+    ) -> Result<Option<log::iter::Reverse<'b, std::fs::File>>, loose::reflog::Error> {
+        match self {
+            Reference::Loose(r) => r.log_iter_rev(buf),
+            Reference::Packed(_) => todo!("packed log iter rev"),
+        }
+    }
+
+    /// Obtain an iterator over logs of this reference. See [crate::file::Reference::log_iter()] for details.
+    pub fn log_iter<'b>(
+        &self,
+        buf: &'b mut Vec<u8>,
+    ) -> Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>>>, loose::reflog::Error>
+    {
+        match self {
+            Reference::Loose(r) => r.log_iter(buf),
+            Reference::Packed(_) => todo!("packed log iter"),
+        }
+    }
+
     /// Returns the kind of reference
     pub fn kind(&self) -> crate::Kind {
         match self {
