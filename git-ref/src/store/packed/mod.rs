@@ -4,8 +4,9 @@ use git_hash::ObjectId;
 
 /// A buffer containing a packed-ref file that is either memory mapped or fully in-memory depending on a cutoff.
 ///
-/// The buffer is garantueed to be sorted as per the packed-ref rules which allows some operations to be more efficient.
+/// The buffer is guaranteed to be sorted as per the packed-ref rules which allows some operations to be more efficient.
 pub enum Buffer {
+    // TODO: Turn this into a struct and keep shared fields there.
     /// The buffer is loaded entirely in memory, along with the `offset` to the first record past the header.
     InMemory {
         /// The storage for the packed-refs data
@@ -25,6 +26,7 @@ pub enum Buffer {
 /// A reference as parsed from the `packed-refs` file
 #[derive(Debug, PartialEq, Eq)]
 pub struct Reference<'a> {
+    // TODO: Add back reference to owning buffer to allow calculating reflog paths
     /// The unvalidated full name of the reference.
     pub full_name: &'a BStr,
     /// The target object id of the reference, hex encoded.

@@ -20,6 +20,7 @@ impl Default for WriteReflog {
 pub struct Reference<'a> {
     parent: &'a Store,
     /// The path to uniquely identify this ref within its store.
+    // TODO: make this a FullName(BString) and remove the `relative_path()` method entirely.
     relative_path: PathBuf,
     state: reference::State,
 }
