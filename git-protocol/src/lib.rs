@@ -8,17 +8,19 @@
 /// A convenience export allowing users of git-protocol to use the transport layer without their own cargo dependency.
 pub use git_transport as transport;
 
-mod remote_progress;
-pub use remote_progress::RemoteProgress;
-
 ///
 pub mod credentials;
 ///
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub mod fetch;
 
-#[doc(inline)]
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
-pub use fetch::fetch;
+mod fetch_fn;
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
+pub use fetch_fn::fetch;
+
+mod remote_progress;
+pub use remote_progress::RemoteProgress;
 
 #[cfg(all(feature = "blocking-client", feature = "async-client"))]
 compile_error!("Cannot set both 'blocking-client' and 'async-client' features as they are mutually exclusive");

@@ -18,19 +18,12 @@ pub use delegate::{Action, DelegateBlocking, LsRefsAction};
 
 mod error;
 pub use error::Error;
-
 ///
 pub mod refs;
 pub use refs::Ref;
-
 ///
 pub mod response;
 pub use response::Response;
-
-#[cfg(any(feature = "async-client", feature = "blocking-client"))]
-mod function;
-#[cfg(any(feature = "async-client", feature = "blocking-client"))]
-pub use function::fetch;
 
 #[cfg(test)]
 mod tests;
