@@ -2147,7 +2147,6 @@ dependencies = [
  "cpufeatures",
  "digest",
  "opaque-debug",
- "sha1-asm",
 ]
 
 [[package]]
@@ -2155,15 +2154,6 @@ name = "sha1"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2579985fda508104f7587689507983eadd6a6e84dd35d6d115361f530916fa0d"
-
-[[package]]
-name = "sha1-asm"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "563d4f7100bc3fce234e5f37bbf63dc2752558964505ba6ac3f7204bdc59eaac"
-dependencies = [
- "cc",
-]
 
 [[package]]
 name = "signal-hook"
