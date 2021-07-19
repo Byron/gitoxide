@@ -17,12 +17,11 @@ impl Default for WriteReflog {
 
 /// A git _ref_ which is stored in a file.
 #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
-pub struct Reference<'s, 'p> {
-    parent: &'s Store,
+pub struct Reference<'a> {
+    parent: &'a Store,
     /// The path to uniquely identify this ref within its store.
     relative_path: PathBuf,
     state: reference::State,
-    packed: Option<&'p crate::store::packed::Buffer>,
 }
 
 /// A store for reference which uses plain files.

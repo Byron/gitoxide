@@ -28,7 +28,7 @@ pub enum Reference<'p, 's> {
     /// A reference originating in a pack
     Packed(packed::Reference<'p>),
     /// A reference from the filesystem
-    Loose(file::Reference<'s, 'p>),
+    Loose(file::Reference<'s>),
 }
 
 impl<'p, 's> Reference<'p, 's> {
