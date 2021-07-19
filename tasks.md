@@ -59,16 +59,16 @@ Probably more like a toy at first merely for testing operation against various g
   * [x] all docs, sans examples
   * [x] Rename pack data/pack index `Kind` to `Version` or similar, because that's what it really is.
 * **git-object** refactor
-  * [x] split `Id` and everything hash related into `git-id`
-  * [x] use `git-id` inside of `git-features`, remove cycle
+  * [x] split `Id` and everything hash related into `git-hash`
+  * [x] use `git-hash` inside of `git-features`, remove cycle
 * **git-config**
   * [x] Thanks to a generous contribution it's mostly done and well on the way
   * [ ] Push it towards 1.0
   * [ ] `Config` type which integrates multiple files into one interface, much like a *multi* version of `File`
   * [x] Make `gix organize` use `git-config` on single files (the repository configuration)
 * **git-ref**
-  * [ ] create ref pointing to ID
-      * _assure to keep the path towards symbolic refs open, and allow specifying if these should be followed or not_
+  * [x] transactional creation of refs
+  * [x] iteration of refs
 * **git-index**
   * [ ] Create an index from tree
   * [ ] Checkout index to worktree
@@ -89,6 +89,7 @@ Probably more like a toy at first merely for testing operation against various g
 * **multi-db** (incorporate object lookup for loose objects and packs)
   * [x] ~~single~~multi-threaded
   * [x] ~~object~~pack-cache for speedups
+  * [ ] ref-validity check by traversing everything, including reflog, checking reachability of objects accordingly
   * [ ] fs-check - verify all object content of a git repository 
      * probably this should be based on indexed pack traversal for maximum decoding speed and not on individual
        object lookup
