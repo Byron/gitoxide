@@ -47,7 +47,7 @@ where
     let repo = git_repository::discover(working_dir)?;
     let commit_id = repo
         .refs
-        .find_existing(refname.to_string_lossy().as_ref())?
+        .find_existing(refname.to_string_lossy().as_ref(), repo.refs.packed()?.as_ref())?
         .peel_to_id_in_place()?
         .to_owned();
 
