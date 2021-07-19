@@ -3,7 +3,7 @@ mod refedit_ext {
     use git_ref::{
         mutable::Target,
         transaction::{Change, RefEdit, RefEditsExt, RefLog},
-        PartialName, RefStore,
+        PartialName,
     };
     use std::{cell::RefCell, collections::BTreeMap, convert::TryInto};
 
@@ -25,16 +25,8 @@ mod refedit_ext {
                 },
             }
         }
-    }
-
-    impl RefStore for MockStore {
-        type FindExistingError = std::io::Error;
-
-        fn find_existing(&self, name: PartialName<'_>) -> Result<Target, Self::FindExistingError> {
-            self.targets
-                .borrow_mut()
-                .remove(name.as_bstr())
-                .ok_or(std::io::ErrorKind::NotFound.into())
+        fn find_existing(&self, name: PartialName<'_>) -> Option<Target> {
+            self.targets.borrow_mut().remove(name.as_bstr())
         }
     }
 
@@ -72,7 +64,9 @@ mod refedit_ext {
             },
         ];
 
-        let err = edits.pre_process(&store, |_, e| e).expect_err("duplicate detected");
+        let err = edits
+            .pre_process(|n| store.find_existing(n), |_, e| e)
+            .expect_err("duplicate detected");
         assert_eq!(
             err.to_string(),
             "A reference named 'refs/heads/main' has multiple edits"
@@ -104,11 +98,10 @@ mod refedit_ext {
     mod splitting {
         use crate::transaction::refedit_ext::MockStore;
         use git_hash::ObjectId;
-        use git_ref::transaction::{Create, LogChange};
         use git_ref::{
             mutable::Target,
-            transaction::{Change, RefEdit, RefEditsExt, RefLog},
-            FullName, PartialName, RefStore,
+            transaction::{Change, Create, LogChange, RefEdit, RefEditsExt, RefLog},
+            FullName, PartialName,
         };
         use git_testtools::hex_to_id;
         use std::{cell::Cell, convert::TryInto};
@@ -154,7 +147,10 @@ mod refedit_ext {
                 },
             ];
 
-            edits.extend_with_splits_of_symbolic_refs(&store, |_, _| panic!("should not be called"))?;
+            edits.extend_with_splits_of_symbolic_refs(
+                |n| store.find_existing(n),
+                |_, _| panic!("should not be called"),
+            )?;
             assert_eq!(edits.len(), 3, "no edit was added");
             assert!(
                 !find(&edits, "refs/heads/anything-but-not-symbolic").deref,
@@ -169,8 +165,9 @@ mod refedit_ext {
         }
         #[test]
         fn empty_inputs_are_ok() -> crate::Result {
+            let store = MockStore::default();
             Vec::<RefEdit>::new()
-                .extend_with_splits_of_symbolic_refs(&MockStore::default(), |_, e| e)
+                .extend_with_splits_of_symbolic_refs(|n| store.find_existing(n), |_, e| e)
                 .map_err(Into::into)
         }
 
@@ -180,16 +177,14 @@ mod refedit_ext {
             struct Cycler {
                 next_item: Cell<bool>,
             }
-            impl RefStore for Cycler {
-                type FindExistingError = std::convert::Infallible;
-
-                fn find_existing(&self, _name: PartialName<'_>) -> Result<Target, Self::FindExistingError> {
+            impl Cycler {
+                fn find_existing(&self, _name: PartialName<'_>) -> Option<Target> {
                     let item: bool = self.next_item.get();
                     self.next_item.set(!item);
-                    Ok(Target::Symbolic(
+                    Some(Target::Symbolic(
                         if item { "heads/refs/next" } else { "heads/refs/previous" }
                             .try_into()
-                            .unwrap(),
+                            .expect("static refs are valid"),
                     ))
                 }
             }
@@ -218,8 +213,9 @@ mod refedit_ext {
                 },
             ];
 
+            let store = Cycler::default();
             let err = edits
-                .extend_with_splits_of_symbolic_refs(&Cycler::default(), |_, e| e)
+                .extend_with_splits_of_symbolic_refs(|n| store.find_existing(n), |_, e| e)
                 .expect_err("cycle detected");
             assert_eq!(
                 err.to_string(),
@@ -287,10 +283,13 @@ mod refedit_ext {
             ];
 
             let mut indices = Vec::new();
-            edits.extend_with_splits_of_symbolic_refs(&store, |idx, e| {
-                indices.push(idx);
-                e
-            })?;
+            edits.extend_with_splits_of_symbolic_refs(
+                |n| store.find_existing(n),
+                |idx, e| {
+                    indices.push(idx);
+                    e
+                },
+            )?;
             assert_eq!(
                 indices,
                 vec![0, 1, 2, 3],

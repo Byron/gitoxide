@@ -195,13 +195,18 @@ impl<'a> Transaction<'a> {
         Ok(match self.state {
             State::Prepared => self,
             State::Open => {
+                let store = self.store;
                 self.updates
-                    .pre_process(self.store, |idx, update| Edit {
-                        update,
-                        lock: None,
-                        parent_index: Some(idx),
-                        leaf_referent_previous_oid: None,
-                    })
+                    .pre_process(
+                        // TODO: figure out how to best pass packed::Buffer here.
+                        |name| store.find_existing(name, None).map(|r| r.into_target()).ok(),
+                        |idx, update| Edit {
+                            update,
+                            lock: None,
+                            parent_index: Some(idx),
+                            leaf_referent_previous_oid: None,
+                        },
+                    )
                     .map_err(Error::PreprocessingFailed)?;
 
                 for cid in 0..self.updates.len() {

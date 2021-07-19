@@ -38,24 +38,6 @@ pub struct Store {
     pub write_reflog: WriteReflog,
 }
 
-mod traits {
-    use crate::{
-        mutable::Target,
-        store::{file, file::find},
-        PartialName,
-    };
-
-    impl crate::traits::RefStore for file::Store {
-        type FindExistingError = find::existing::Error;
-
-        fn find_existing(&self, name: PartialName<'_>) -> Result<Target, Self::FindExistingError> {
-            // TODO: remove this entire trait in favor of closures. These can keep a packed buffer alive across calls
-            self.find_existing(name, self.packed().unwrap().as_ref())
-                .map(|r| r.into_target())
-        }
-    }
-}
-
 mod loose;
 pub use loose::find;
 

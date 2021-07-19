@@ -13,6 +13,8 @@
 //! * prepared transactions are committed to finalize the change
 //!   - errors when committing while leave the ref store in an inconsistent, but operational state.
 use crate::mutable::{FullName, Target};
+use bstr::BString;
+use git_hash::ObjectId;
 
 /// A change to the reflog.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -132,10 +134,9 @@ pub enum RefLog {
 }
 
 mod ext {
-    use crate::transaction::LogChange;
     use crate::{
-        transaction::{Change, RefEdit, RefLog, Target},
-        RefStore,
+        transaction::{Change, LogChange, RefEdit, RefLog, Target},
+        PartialName,
     };
     use bstr::BString;
 
@@ -152,7 +153,7 @@ mod ext {
         /// Note no action is performed if deref isn't specified.
         fn extend_with_splits_of_symbolic_refs(
             &mut self,
-            store: &impl RefStore,
+            find: impl FnMut(PartialName<'_>) -> Option<Target>,
             make_entry: impl FnMut(usize, RefEdit) -> T,
         ) -> Result<(), std::io::Error>;
 
@@ -161,10 +162,10 @@ mod ext {
         /// Users call this to assure derefs are honored and duplicate checks are done.
         fn pre_process(
             &mut self,
-            store: &impl RefStore,
+            find: impl FnMut(PartialName<'_>) -> Option<Target>,
             make_entry: impl FnMut(usize, RefEdit) -> T,
         ) -> Result<(), std::io::Error> {
-            self.extend_with_splits_of_symbolic_refs(store, make_entry)?;
+            self.extend_with_splits_of_symbolic_refs(find, make_entry)?;
             self.assure_one_name_has_one_edit().map_err(|name| {
                 std::io::Error::new(
                     std::io::ErrorKind::AlreadyExists,
@@ -189,7 +190,7 @@ mod ext {
 
         fn extend_with_splits_of_symbolic_refs(
             &mut self,
-            store: &impl RefStore,
+            mut find: impl FnMut(PartialName<'_>) -> Option<Target>,
             mut make_entry: impl FnMut(usize, RefEdit) -> E,
         ) -> Result<(), std::io::Error> {
             let mut new_edits = Vec::new();
@@ -206,7 +207,7 @@ mod ext {
                     // In any case, we don't want the following algorithms to try dereffing it and assume they deal with
                     // broken refs gracefully.
                     edit.deref = false;
-                    if let Ok(Target::Symbolic(referent)) = store.find_existing(edit.name.to_partial()) {
+                    if let Some(Target::Symbolic(referent)) = find(edit.name.to_partial()) {
                         new_edits.push(make_entry(
                             eid,
                             match &mut edit.change {
@@ -269,6 +270,4 @@ mod ext {
         }
     }
 }
-use bstr::BString;
 pub use ext::RefEditsExt;
-use git_hash::ObjectId;
