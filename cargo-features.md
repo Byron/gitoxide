@@ -120,10 +120,10 @@ All feature toggles are additive.
 * _mutually-exclusive_
     * **fast-sha1**
         * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on
-          CPUs that support it, like AMD Ryzen or Intel Core i3.
-        * Takes precedence over `sha1` if both are specified.
+          CPUs that support it, like AMD Ryzen or Intel Core i3, as well as Apple Silicon like M1.
+        * Takes precedence over `rustsha1` if both are specified.
         * A fast SHA1 implementation is critical to `gitoxide's` performance
-    * **sha1**
+    * **rustsha1**
         * A standard and well performing pure Rust implementation of Sha1. Will significantly slow down various git operations.
 
 ### git-packetline

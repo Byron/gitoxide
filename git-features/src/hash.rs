@@ -3,13 +3,13 @@
 //! With the `fast-sha1` feature, the `Sha1` hash type will use a more elaborate implementation utilizing hardware support
 //! in case it is available. Otherwise the `sha1` feature should be set. `fast-sha1` will take precedence.
 //! Otherwise, a minimal yet performant implementation is used instead for a decent trade-off between compile times and run-time performance.
-#[cfg(all(feature = "sha1", not(feature = "fast-sha1")))]
+#[cfg(all(feature = "rustsha1", not(feature = "fast-sha1")))]
 mod _impl {
     use super::Sha1Digest;
 
     /// A implementation of the Sha1 hash, which can be used once.
     #[derive(Default, Clone)]
-    pub struct Sha1(sha1::Sha1);
+    pub struct Sha1(rustsha1::Sha1);
 
     impl Sha1 {
         /// Digest the given `bytes`.
@@ -24,17 +24,17 @@ mod _impl {
 }
 
 /// A 20 bytes digest produced by a [`Sha1`] hash implementation.
-#[cfg(any(feature = "fast-sha1", feature = "sha1"))]
+#[cfg(any(feature = "fast-sha1", feature = "rustsha1"))]
 pub type Sha1Digest = [u8; 20];
 
 #[cfg(feature = "fast-sha1")]
 mod _impl {
     use super::Sha1Digest;
-    use fastsha1::Digest;
+    use sha1::Digest;
 
     /// A implementation of the Sha1 hash, which can be used once.
     #[derive(Default, Clone)]
-    pub struct Sha1(fastsha1::Sha1);
+    pub struct Sha1(sha1::Sha1);
 
     impl Sha1 {
         /// Digest the given `bytes`.
@@ -48,7 +48,7 @@ mod _impl {
     }
 }
 
-#[cfg(any(feature = "sha1", feature = "fast-sha1"))]
+#[cfg(any(feature = "rustsha1", feature = "fast-sha1"))]
 pub use _impl::Sha1;
 
 /// Compute a CRC32 hash from the given `bytes`, returning the CRC32 hash.
@@ -83,7 +83,7 @@ pub fn crc32(bytes: &[u8]) -> u32 {
 /// * Only available with the `git-object` feature enabled due to usage of the [`git_hash::Kind`] enum and the
 ///   [`git_hash::ObjectId`] return value.
 /// * [Interrupts][crate::interrupt] are supported.
-#[cfg(all(feature = "progress", any(feature = "sha1", feature = "fast-sha1")))]
+#[cfg(all(feature = "progress", any(feature = "rustsha1", feature = "fast-sha1")))]
 pub fn bytes_of_file(
     path: impl AsRef<std::path::Path>,
     num_bytes_from_start: usize,
@@ -120,7 +120,7 @@ pub fn bytes_of_file(
     Ok(id)
 }
 
-#[cfg(any(feature = "sha1", feature = "fast-sha1"))]
+#[cfg(any(feature = "rustsha1", feature = "fast-sha1"))]
 mod write {
     use crate::hash::Sha1;
 
@@ -162,5 +162,5 @@ mod write {
         }
     }
 }
-#[cfg(any(feature = "sha1", feature = "fast-sha1"))]
+#[cfg(any(feature = "rustsha1", feature = "fast-sha1"))]
 pub use write::Write;

@@ -103,7 +103,7 @@ check: ## Build all code in suitable configurations
 			   && cargo check
 	cd git-features && cargo check --all-features \
 			   && cargo check --features parallel \
-			   && cargo check --features sha1 \
+			   && cargo check --features rustsha1 \
 			   && cargo check --features fast-sha1 \
 			   && cargo check --features progress \
 			   && cargo check --features io-pipe \

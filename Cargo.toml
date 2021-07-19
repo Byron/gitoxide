@@ -33,7 +33,7 @@ lean-termion = ["fast", "lean-cli", "prodash-render-line-termion", "prodash/prog
 
 light = ["fast", "lean-cli", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
 light-async = ["fast", "lean-cli", "gitoxide-core-tools", "gitoxide-core-async-client"]
-small = ["lean-cli", "git-features/sha1", "git-features/zlib-rust-backend"]
+small = ["lean-cli", "git-features/rustsha1", "git-features/zlib-rust-backend"]
 
 gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
 gitoxide-core-blocking-client = ["gitoxide-core/blocking-client"]
