@@ -41,6 +41,16 @@ impl file::Store {
         self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed)
     }
 
+    /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
+    pub fn loose_find<'a, Name, E>(&self, partial: Name) -> Result<Option<file::Reference<'_>>, Error>
+    where
+        Name: TryInto<PartialName<'a>, Error = E>,
+        Error: From<E>,
+    {
+        self.find(partial, None)
+            .map(|r| r.map(|r| r.try_into().expect("only loose refs are found without pack")))
+    }
+
     pub(in crate::store::file) fn find_one_with_verified_input<'p, 's>(
         &'s self,
         relative_path: &Path,
@@ -153,7 +163,7 @@ pub mod existing {
     use std::convert::TryInto;
 
     impl file::Store {
-        /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
+        /// Similar to [`file::Store::find_existing()`] but a non-existing ref is treated as error.
         pub fn find_existing<'a, 'p, 's, Name, E>(
             &'s self,
             partial: Name,
@@ -171,6 +181,16 @@ pub mod existing {
                 Ok(None) => Err(Error::NotFound(path.to_partial_path().into_owned())),
                 Err(err) => Err(err.into()),
             }
+        }
+
+        /// Similar to [`file::Store::find()`] won't handle packed-refs.
+        pub fn loose_find_existing<'a, Name, E>(&self, partial: Name) -> Result<file::Reference<'_>, Error>
+        where
+            Name: TryInto<PartialName<'a>, Error = E>,
+            crate::name::Error: From<E>,
+        {
+            self.find_existing(partial, None)
+                .map(|r| r.try_into().expect("always loose without packed"))
         }
     }
 

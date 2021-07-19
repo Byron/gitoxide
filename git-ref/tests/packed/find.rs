@@ -73,7 +73,7 @@ fn partial_name_to_full_name_conversion_rules_are_applied() -> crate::Result {
     let packed = store.packed()?.expect("packed-refs exists");
 
     assert_eq!(
-        store.find_existing("origin", None)?.relative_path(),
+        store.loose_find_existing("origin")?.relative_path(),
         Path::new("refs/remotes/origin/HEAD"),
         "a special that only applies to loose refs"
     );
@@ -82,7 +82,7 @@ fn partial_name_to_full_name_conversion_rules_are_applied() -> crate::Result {
         "packed refs don't have this special case as they don't store HEADs or symrefs"
     );
     assert_eq!(
-        store.find_existing("HEAD", None)?.relative_path(),
+        store.loose_find_existing("HEAD")?.relative_path(),
         Path::new("HEAD"),
         "HEAD can be found in loose stores"
     );

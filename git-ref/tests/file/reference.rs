@@ -23,15 +23,17 @@ mod reflog {
 mod peel {
     use crate::file;
     use git_testtools::hex_to_id;
+    use std::convert::TryFrom;
     use std::path::Path;
 
     #[test]
     fn one_level() -> crate::Result {
         let store = file::store()?;
-        let r = store.find_existing("HEAD", None)?;
+        let r = store.loose_find_existing("HEAD")?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
-        let nr = r.peel_one_level(None).expect("exists").expect("no failure");
+        let nr = git_ref::file::Reference::try_from(r.peel_one_level(None).expect("exists").expect("no failure"))
+            .expect("loose ref");
         assert!(
             matches!(nr.target(), git_ref::Target::Peeled(_)),
             "iteration peels a single level"
@@ -54,7 +56,7 @@ mod peel {
     #[test]
     fn to_id_multi_hop() -> crate::Result {
         let store = file::store()?;
-        let mut r = store.find_existing("multi-link", None)?;
+        let mut r = store.loose_find_existing("multi-link")?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
         assert_eq!(
@@ -69,7 +71,7 @@ mod peel {
     #[test]
     fn to_id_cycle() -> crate::Result {
         let store = file::store()?;
-        let mut r = store.find_existing("loop-a", None)?;
+        let mut r = store.loose_find_existing("loop-a")?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
         assert_eq!(r.relative_path(), Path::new("refs/loop-a"));
 

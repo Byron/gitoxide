@@ -10,7 +10,7 @@ mod existing {
     fn success_and_failure() -> crate::Result {
         let store = store()?;
         for (partial_name, expected_path) in &[("main", Some("refs/heads/main")), ("does-not-exist", None)] {
-            let reference = store.find_existing(*partial_name, None);
+            let reference = store.loose_find_existing(*partial_name);
             match expected_path {
                 Some(expected_path) => assert_eq!(reference?.relative_path(), Path::new(expected_path)),
                 None => match reference {
@@ -31,9 +31,10 @@ mod existing {
 fn with_packed_refs() {
     let store = store_at("make_packed_ref_repository_for_overlay.sh").unwrap();
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-    let r = store.find_existing("main", store.packed().unwrap().as_ref()).unwrap();
-    assert_eq!(r.target().as_id().expect("peeled"), c1);
-    assert_eq!(r.name().as_ref(), "refs/heads/main");
+    let packed = store.packed().unwrap();
+    let r = store.find_existing("main", packed.as_ref()).unwrap();
+    assert_eq!(r.target().borrow().as_id().expect("peeled"), c1);
+    assert_eq!(r.name().expect("valid name").as_ref(), "refs/heads/main");
 }
 
 #[test]
@@ -53,7 +54,7 @@ fn success() -> crate::Result {
         ("heads/main", "refs/heads/main", git_ref::Kind::Peeled),
         ("refs/heads/main", "refs/heads/main", git_ref::Kind::Peeled),
     ] {
-        let reference = store.find(*partial_name, None)?.expect("exists");
+        let reference = store.loose_find(*partial_name)?.expect("exists");
         assert_eq!(reference.relative_path(), Path::new(expected_path));
         assert_eq!(reference.target().kind(), *expected_ref_kind);
     }
@@ -68,7 +69,7 @@ fn failure() -> crate::Result {
         ("broken", "does not parse", true),
         ("../escaping", "an invalid ref name", true),
     ] {
-        let reference = store.find(*partial_name, None);
+        let reference = store.loose_find(*partial_name);
         if *is_err {
             assert!(reference.is_err(), "{}", reason);
         } else {

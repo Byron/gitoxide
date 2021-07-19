@@ -1,12 +1,37 @@
 use super::Reference;
-use crate::mutable;
-use crate::store::file::{log, loose};
-use crate::store::packed;
+use crate::{
+    mutable,
+    store::{
+        file::{log, loose},
+        packed,
+    },
+};
 use git_hash::oid;
-use std::convert::TryInto;
-use std::path::Path;
+use std::{
+    convert::{TryFrom, TryInto},
+    path::Path,
+};
+
+impl<'p, 's> TryFrom<Reference<'p, 's>> for crate::file::Reference<'s> {
+    type Error = ();
+
+    fn try_from(value: Reference<'p, 's>) -> Result<Self, Self::Error> {
+        match value {
+            Reference::Loose(l) => Ok(l),
+            Reference::Packed(_) => Err(()),
+        }
+    }
+}
 
 impl<'p, 's> Reference<'p, 's> {
+    /// For details, see [crate::file::Reference::log_exists()].
+    pub fn log_exists(&self) -> Result<bool, loose::reflog::Error> {
+        match self {
+            Reference::Loose(r) => r.log_exists(),
+            Reference::Packed(_) => todo!("packed log exists"),
+        }
+    }
+
     /// Return the full name of this reference as path, only applicable if this is a loose reference.
     pub fn relative_path(&self) -> Option<&Path> {
         match self {

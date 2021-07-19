@@ -56,9 +56,9 @@ fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
 #[test]
 fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.find_existing("HEAD", None)?;
+    let head = store.loose_find_existing("HEAD")?;
     assert!(head.log_exists().unwrap());
-    let _main = store.find_existing("main", None)?;
+    let _main = store.loose_find_existing("main")?;
 
     let edits = store
         .transaction(
@@ -98,7 +98,7 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
 #[test]
 fn delete_ref_with_incorrect_previous_value_fails() {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh").unwrap();
-    let head = store.find_existing("HEAD", None).unwrap();
+    let head = store.loose_find_existing("HEAD").unwrap();
     assert!(head.log_exists().unwrap());
 
     let err = store
@@ -127,7 +127,7 @@ fn delete_ref_with_incorrect_previous_value_fails() {
 #[test]
 fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.find_existing("HEAD", None)?;
+    let head = store.loose_find_existing("HEAD")?;
     assert!(head.log_exists().unwrap());
 
     let edits = store
@@ -160,7 +160,7 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
 #[test]
 fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.find_existing("HEAD", None)?;
+    let head = store.loose_find_existing("HEAD")?;
     assert!(head.log_exists()?);
 
     let edits = store
