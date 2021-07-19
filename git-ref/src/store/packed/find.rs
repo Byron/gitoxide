@@ -98,6 +98,8 @@ impl packed::Buffer {
 
 mod error {
     use quick_error::quick_error;
+    use std::convert::Infallible;
+
     quick_error! {
         /// The error returned by [`find()`][super::packed::Buffer::find()]
         #[derive(Debug)]
@@ -111,6 +113,12 @@ mod error {
             Parse {
                 display("The reference could not be parsed")
             }
+        }
+    }
+
+    impl From<Infallible> for Error {
+        fn from(_: Infallible) -> Self {
+            unreachable!("this impl is needed to allow passing a known valid partial path as parameter")
         }
     }
 }

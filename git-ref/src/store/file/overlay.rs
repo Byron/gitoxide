@@ -1,4 +1,5 @@
 use crate::{
+    file::path_to_name,
     mutable,
     store::{file, packed},
 };
@@ -156,15 +157,7 @@ impl file::Store {
         packed: &'p packed::Buffer,
         prefix: impl AsRef<Path>,
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
-        let prefix = self.validate_prefix(prefix.as_ref())?;
-        let packed_prefix = prefix.to_raw_bytes();
-        #[cfg(windows)]
-        let packed_prefix = {
-            use bstr::ByteSlice;
-            packed_prefix.replace(b"\\", b"/")
-        };
-        #[cfg(not(windows))]
-        let packed_prefix = packed_prefix.into_owned();
+        let packed_prefix = path_to_name(self.validate_prefix(prefix.as_ref())?);
         Ok(LooseThenPacked {
             parent: self,
             packed: packed
@@ -208,4 +201,3 @@ mod error {
     }
 }
 pub use error::Error;
-use os_str_bytes::OsStrBytes;

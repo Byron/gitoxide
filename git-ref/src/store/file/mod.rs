@@ -38,6 +38,17 @@ pub struct Store {
     pub write_reflog: WriteReflog,
 }
 
+pub(in crate::store::file) fn path_to_name(path: impl Into<PathBuf>) -> bstr::BString {
+    use os_str_bytes::OsStringBytes;
+    let path = path.into().into_raw_vec();
+    #[cfg(windows)]
+    let packed_prefix = {
+        use bstr::ByteSlice;
+        path.replace(b"\\", b"/")
+    };
+    path.into()
+}
+
 mod loose;
 pub use loose::find;
 

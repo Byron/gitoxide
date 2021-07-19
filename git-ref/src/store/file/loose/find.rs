@@ -1,4 +1,9 @@
-use crate::{file, store::packed, PartialName};
+use crate::{
+    file,
+    store::{file::path_to_name, packed},
+    PartialName,
+};
+use bstr::ByteSlice;
 use std::{
     convert::TryInto,
     io::{self, Read},
@@ -39,7 +44,7 @@ impl file::Store {
     pub(in crate::store::file) fn find_one_with_verified_input<'p>(
         &self,
         relative_path: &Path,
-        _packed: Option<&'p packed::Buffer>,
+        packed: Option<&'p packed::Buffer>,
     ) -> Result<Option<file::Reference<'_>>, Error> {
         let is_all_uppercase = relative_path
             .to_string_lossy()
@@ -47,42 +52,61 @@ impl file::Store {
             .chars()
             .all(|c| c.is_ascii_uppercase());
         if relative_path.components().count() == 1 && is_all_uppercase {
-            if let Some(r) = self.find_inner("", &relative_path, Transform::None)? {
+            if let Some(r) = self.find_inner("", &relative_path, None, Transform::None)? {
                 return Ok(Some(r));
             }
         }
 
         for inbetween in &["", "tags", "heads", "remotes"] {
-            match self.find_inner(*inbetween, &relative_path, Transform::EnforceRefsPrefix) {
+            match self.find_inner(*inbetween, &relative_path, packed, Transform::EnforceRefsPrefix) {
                 Ok(Some(r)) => return Ok(Some(r)),
-                Ok(None) => continue,
+                Ok(None) => {
+                    continue;
+                }
                 Err(err) => return Err(err),
             }
         }
-        self.find_inner("remotes", &relative_path.join("HEAD"), Transform::EnforceRefsPrefix)
+        self.find_inner(
+            "remotes",
+            &relative_path.join("HEAD"),
+            None,
+            Transform::EnforceRefsPrefix,
+        )
     }
 
-    fn find_inner(
+    fn find_inner<'p>(
         &self,
         inbetween: &str,
         relative_path: &Path,
+        packed: Option<&'p packed::Buffer>,
         transform: Transform,
     ) -> Result<Option<file::Reference<'_>>, Error> {
-        let relative_path = match transform {
-            Transform::EnforceRefsPrefix => {
+        let (base, is_definitely_absolute) = match transform {
+            Transform::EnforceRefsPrefix => (
                 if relative_path.starts_with("refs") {
                     PathBuf::new()
                 } else {
                     PathBuf::from("refs")
-                }
-            }
-            Transform::None => PathBuf::new(),
-        }
-        .join(inbetween)
-        .join(relative_path);
+                },
+                true,
+            ),
+            Transform::None => (PathBuf::new(), false),
+        };
+        let relative_path = base.join(inbetween).join(relative_path);
 
         let contents = match self.ref_contents(&relative_path)? {
-            None => return Ok(None),
+            None => {
+                if is_definitely_absolute {
+                    if let Some(packed) = packed {
+                        let full_name = path_to_name(relative_path);
+                        let full_name = PartialName((*full_name).as_bstr());
+                        if let Some(packed_ref) = packed.find(full_name)? {
+                            todo!("transform packed ref into standard ref")
+                        };
+                    }
+                }
+                return Ok(None);
+            }
             Some(c) => c,
         };
         Ok(Some(
@@ -120,7 +144,11 @@ impl file::Store {
 
 ///
 pub mod existing {
-    use crate::{file, file::find, PartialName};
+    use crate::{
+        file::{self, find},
+        store::packed,
+        PartialName,
+    };
     use std::convert::TryInto;
 
     impl file::Store {
@@ -166,12 +194,11 @@ pub mod existing {
             }
         }
     }
-    use crate::store::packed;
     pub use error::Error;
 }
 
 mod error {
-    use crate::file;
+    use crate::{file, store::packed};
     use quick_error::quick_error;
     use std::{convert::Infallible, io, path::PathBuf};
 
@@ -192,6 +219,11 @@ mod error {
             }
             ReferenceCreation{ err: file::reference::decode::Error, relative_path: PathBuf } {
                 display("The reference at '{}' could not be instantiated", relative_path.display())
+                source(err)
+            }
+            PackedRef(err: packed::find::Error) {
+                display("A packed ref lookup failed")
+                from()
                 source(err)
             }
         }
