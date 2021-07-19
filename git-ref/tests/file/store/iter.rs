@@ -1,8 +1,7 @@
 use crate::file::{store, store_at, store_with_packed_refs};
 use bstr::ByteSlice;
 use git_testtools::hex_to_id;
-use std::convert::TryInto;
-use std::path::PathBuf;
+use std::{convert::TryInto, path::PathBuf};
 
 #[test]
 fn no_packed_available_thus_no_iteration_possible() -> crate::Result {
@@ -176,14 +175,13 @@ fn overlay_iter_with_prefix_wont_allow_absolute_paths() -> crate::Result {
 }
 
 #[test]
-fn overlay_prefixed_iter() {
+fn overlay_prefixed_iter() -> crate::Result {
     use git_ref::mutable::Target::*;
 
-    let store = store_at("make_packed_ref_repository_for_overlay.sh").unwrap();
-    let packed = store.packed().unwrap().expect("packed-refs");
+    let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
+    let packed = store.packed()?.expect("packed-refs");
     let ref_names = store
-        .iter_prefixed(&packed, "refs/heads")
-        .unwrap()
+        .iter_prefixed(&packed, "refs/heads")?
         .map(|r| {
             r.map(|r| {
                 (
@@ -193,8 +191,7 @@ fn overlay_prefixed_iter() {
                 )
             })
         })
-        .collect::<Result<Vec<_>, _>>()
-        .unwrap();
+        .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
     let c2 = hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7");
     assert_eq!(
@@ -204,4 +201,5 @@ fn overlay_prefixed_iter() {
             ("refs/heads/newer-as-loose".into(), Peeled(c2), false),
         ]
     );
+    Ok(())
 }

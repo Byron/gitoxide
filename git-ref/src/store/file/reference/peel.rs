@@ -27,7 +27,8 @@ impl<'a> Reference<'a> {
             State::Id(_) => None,
             State::ValidatedPath(relative_path) => {
                 let path = relative_path.to_path_lossy();
-                match self.parent.find_one_with_verified_input(path.as_ref()) {
+                // TODO: use referenced packed object
+                match self.parent.find_one_with_verified_input(path.as_ref(), None) {
                     Ok(Some(next)) => Some(Ok(next)),
                     Ok(None) => Some(Err(Error::FindExisting(find::existing::Error::NotFound(
                         path.into_owned(),

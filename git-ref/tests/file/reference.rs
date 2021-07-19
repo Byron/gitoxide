@@ -4,7 +4,7 @@ mod reflog {
     #[test]
     fn iter() -> crate::Result {
         let store = file::store()?;
-        let r = store.find_existing("HEAD")?;
+        let r = store.find_existing("HEAD", None)?;
         let mut buf = Vec::new();
         assert_eq!(r.log_iter(&mut buf)?.expect("log exists").count(), 1);
         Ok(())
@@ -13,7 +13,7 @@ mod reflog {
     #[test]
     fn iter_rev() -> crate::Result {
         let store = file::store()?;
-        let r = store.find_existing("HEAD")?;
+        let r = store.find_existing("HEAD", None)?;
         let mut buf = [0u8; 256];
         assert_eq!(r.log_iter_rev(&mut buf)?.expect("log exists").count(), 1);
         Ok(())
@@ -28,7 +28,7 @@ mod peel {
     #[test]
     fn one_level() -> crate::Result {
         let store = file::store()?;
-        let r = store.find_existing("HEAD")?;
+        let r = store.find_existing("HEAD", None)?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
         let nr = r.peel_one_level().expect("exists").expect("no failure");
@@ -48,7 +48,7 @@ mod peel {
     #[test]
     fn to_id_multi_hop() -> crate::Result {
         let store = file::store()?;
-        let mut r = store.find_existing("multi-link")?;
+        let mut r = store.find_existing("multi-link", None)?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
         assert_eq!(
@@ -63,7 +63,7 @@ mod peel {
     #[test]
     fn to_id_cycle() -> crate::Result {
         let store = file::store()?;
-        let mut r = store.find_existing("loop-a")?;
+        let mut r = store.find_existing("loop-a", None)?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
         assert_eq!(r.relative_path(), Path::new("refs/loop-a"));
 

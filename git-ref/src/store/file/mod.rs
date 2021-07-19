@@ -49,7 +49,9 @@ mod traits {
         type FindExistingError = find::existing::Error;
 
         fn find_existing(&self, name: PartialName<'_>) -> Result<Target, Self::FindExistingError> {
-            self.find_existing(name).map(|r| r.into_target())
+            // TODO: remove this entire trait in favor of closures. These can keep a packed buffer alive across calls
+            self.find_existing(name, self.packed().unwrap().as_ref())
+                .map(|r| r.into_target())
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::{file, PartialName};
+use crate::{file, store::packed, PartialName};
 use std::{
     convert::TryInto,
     io::{self, Read},
@@ -13,6 +13,9 @@ enum Transform {
 impl file::Store {
     /// Find a single reference by the given `path` which is required to be a valid reference name.
     ///
+    /// If `packed` is provided, the reference search will extend to the packed buffer created with [`packed()`][file::Store::packed()].
+    /// Note that the caller is responsible for its freshness, i.e. assuring it wasn't modified since it was read.
+    ///
     /// Returns `Ok(None)` if no such ref exists.
     ///
     /// ### Note
@@ -20,18 +23,23 @@ impl file::Store {
     /// The lookup algorithm follows the one in [the git documentation][git-lookup-docs].
     ///
     /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
-    pub fn find<'a, Name, E>(&self, partial: Name) -> Result<Option<file::Reference<'_>>, Error>
+    pub fn find<'a, 'p, Name, E>(
+        &self,
+        partial: Name,
+        packed: impl Into<Option<&'p packed::Buffer>>,
+    ) -> Result<Option<file::Reference<'_>>, Error>
     where
         Name: TryInto<PartialName<'a>, Error = E>,
         Error: From<E>,
     {
         let path = partial.try_into()?;
-        self.find_one_with_verified_input(path.to_partial_path().as_ref())
+        self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed.into())
     }
 
-    pub(in crate::store::file) fn find_one_with_verified_input(
+    pub(in crate::store::file) fn find_one_with_verified_input<'p>(
         &self,
         relative_path: &Path,
+        _packed: Option<&'p packed::Buffer>,
     ) -> Result<Option<file::Reference<'_>>, Error> {
         let is_all_uppercase = relative_path
             .to_string_lossy()
@@ -117,7 +125,11 @@ pub mod existing {
 
     impl file::Store {
         /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
-        pub fn find_existing<'a, Name, E>(&self, partial: Name) -> Result<file::Reference<'_>, Error>
+        pub fn find_existing<'a, 'p, Name, E>(
+            &self,
+            partial: Name,
+            packed: impl Into<Option<&'p packed::Buffer>>,
+        ) -> Result<file::Reference<'_>, Error>
         where
             Name: TryInto<PartialName<'a>, Error = E>,
             crate::name::Error: From<E>,
@@ -125,7 +137,7 @@ pub mod existing {
             let path = partial
                 .try_into()
                 .map_err(|err| Error::Find(find::Error::RefnameValidation(err.into())))?;
-            match self.find_one_with_verified_input(path.to_partial_path().as_ref()) {
+            match self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed.into()) {
                 Ok(Some(r)) => Ok(r),
                 Ok(None) => Err(Error::NotFound(path.to_partial_path().into_owned())),
                 Err(err) => Err(err.into()),
@@ -154,6 +166,7 @@ pub mod existing {
             }
         }
     }
+    use crate::store::packed;
     pub use error::Error;
 }
 
