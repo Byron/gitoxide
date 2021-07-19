@@ -199,6 +199,7 @@ impl<'a> Transaction<'a> {
                 self.updates
                     .pre_process(
                         // TODO: figure out how to best pass packed::Buffer here.
+                        // I think we should have our own as it might need changes and needs a lock, too.
                         |name| store.find_existing(name, None).map(|r| r.into_target()).ok(),
                         |idx, update| Edit {
                             update,
