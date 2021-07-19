@@ -26,14 +26,14 @@ impl file::Store {
     pub fn find<'a, 'p, Name, E>(
         &self,
         partial: Name,
-        packed: impl Into<Option<&'p packed::Buffer>>,
+        packed: Option<&'p packed::Buffer>,
     ) -> Result<Option<file::Reference<'_>>, Error>
     where
         Name: TryInto<PartialName<'a>, Error = E>,
         Error: From<E>,
     {
         let path = partial.try_into()?;
-        self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed.into())
+        self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed)
     }
 
     pub(in crate::store::file) fn find_one_with_verified_input<'p>(
@@ -128,7 +128,7 @@ pub mod existing {
         pub fn find_existing<'a, 'p, Name, E>(
             &self,
             partial: Name,
-            packed: impl Into<Option<&'p packed::Buffer>>,
+            packed: Option<&'p packed::Buffer>,
         ) -> Result<file::Reference<'_>, Error>
         where
             Name: TryInto<PartialName<'a>, Error = E>,
@@ -137,7 +137,7 @@ pub mod existing {
             let path = partial
                 .try_into()
                 .map_err(|err| Error::Find(find::Error::RefnameValidation(err.into())))?;
-            match self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed.into()) {
+            match self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed) {
                 Ok(Some(r)) => Ok(r),
                 Ok(None) => Err(Error::NotFound(path.to_partial_path().into_owned())),
                 Err(err) => Err(err.into()),
