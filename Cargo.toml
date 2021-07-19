@@ -8,6 +8,8 @@ license = "MIT OR Apache-2.0"
 version = "0.7.0"
 default-run = "gix"
 include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
+resolver = "2"
+
 
 [[bin]]
 name = "gix"
