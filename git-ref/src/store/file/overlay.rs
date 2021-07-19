@@ -32,6 +32,22 @@ pub enum Reference<'p, 's> {
 }
 
 impl<'p, 's> Reference<'p, 's> {
+    /// Returns the kind of reference
+    pub fn kind(&self) -> crate::Kind {
+        match self {
+            Reference::Loose(r) => r.kind(),
+            Reference::Packed(_) => crate::Kind::Peeled,
+        }
+    }
+
+    /// Transform this reference into an owned `Target`
+    pub fn into_target(self) -> mutable::Target {
+        match self {
+            Reference::Packed(p) => mutable::Target::Peeled(p.object()),
+            Reference::Loose(r) => r.into_target(),
+        }
+    }
+
     /// Returns true if this ref is located in a packed ref buffer.
     pub fn is_packed(&self) -> bool {
         match self {

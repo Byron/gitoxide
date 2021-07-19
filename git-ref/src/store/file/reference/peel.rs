@@ -21,11 +21,14 @@ quick_error! {
     }
 }
 
-impl<'a> Reference<'a> {
+impl<'s> Reference<'s> {
     /// Follow this symbolic reference one level and return the ref it refers to, possibly providing access to `packed` references for lookup.
     ///
     /// Returns `None` if this is not a symbolic reference, hence the leaf of the chain.
-    pub fn peel_one_level(&self, packed: Option<&packed::Buffer>) -> Option<Result<Reference<'a>, Error>> {
+    pub fn peel_one_level<'p>(
+        &self,
+        packed: Option<&'p packed::Buffer>,
+    ) -> Option<Result<file::loose_then_packed::Reference<'p, 's>, Error>> {
         match &self.state {
             State::Id(_) => None,
             State::ValidatedPath(relative_path) => {
@@ -46,7 +49,7 @@ impl<'a> Reference<'a> {
 pub mod to_id {
     use crate::{
         file::{reference, Reference},
-        store::packed,
+        store::{file::loose_then_packed, packed},
     };
     use git_hash::oid;
     use quick_error::quick_error;
@@ -84,11 +87,17 @@ pub mod to_id {
             while let Some(next) = cursor.peel_one_level(packed) {
                 let next_ref = next?;
                 if let crate::Kind::Peeled = next_ref.kind() {
-                    *self = next_ref;
+                    match next_ref {
+                        loose_then_packed::Reference::Loose(r) => *self = r,
+                        loose_then_packed::Reference::Packed(_p) => todo!("assign state directly and convert path"),
+                    };
                     return Ok(self.state.as_id().expect("it to be present"));
                 }
                 storage = next_ref;
-                cursor = &mut storage;
+                cursor = match &mut storage {
+                    loose_then_packed::Reference::Loose(r) => r,
+                    loose_then_packed::Reference::Packed(_) => unreachable!("handled above - we are done"),
+                };
                 if seen.contains(&cursor.relative_path) {
                     return Err(Error::Cycle(cursor.parent.base.join(&cursor.relative_path)));
                 }

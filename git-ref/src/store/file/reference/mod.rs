@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 
 #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+// TODO: replace with usage of Target, which is the same but with better typing
 pub(in crate::file) enum State {
     Id(ObjectId),
     ValidatedPath(BString),

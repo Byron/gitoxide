@@ -28,11 +28,11 @@ impl file::Store {
     /// The lookup algorithm follows the one in [the git documentation][git-lookup-docs].
     ///
     /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
-    pub fn find<'a, 'p, Name, E>(
-        &self,
+    pub fn find<'a, 'p, 's, Name, E>(
+        &'s self,
         partial: Name,
         packed: Option<&'p packed::Buffer>,
-    ) -> Result<Option<file::Reference<'_>>, Error>
+    ) -> Result<Option<file::loose_then_packed::Reference<'p, 's>>, Error>
     where
         Name: TryInto<PartialName<'a>, Error = E>,
         Error: From<E>,
@@ -41,11 +41,11 @@ impl file::Store {
         self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed)
     }
 
-    pub(in crate::store::file) fn find_one_with_verified_input<'p>(
-        &self,
+    pub(in crate::store::file) fn find_one_with_verified_input<'p, 's>(
+        &'s self,
         relative_path: &Path,
         packed: Option<&'p packed::Buffer>,
-    ) -> Result<Option<file::Reference<'_>>, Error> {
+    ) -> Result<Option<file::loose_then_packed::Reference<'p, 's>>, Error> {
         let is_all_uppercase = relative_path
             .to_string_lossy()
             .as_ref()
@@ -74,13 +74,13 @@ impl file::Store {
         )
     }
 
-    fn find_inner<'p>(
-        &self,
+    fn find_inner<'p, 's>(
+        &'s self,
         inbetween: &str,
         relative_path: &Path,
         packed: Option<&'p packed::Buffer>,
         transform: Transform,
-    ) -> Result<Option<file::Reference<'_>>, Error> {
+    ) -> Result<Option<file::loose_then_packed::Reference<'p, 's>>, Error> {
         let (base, is_definitely_absolute) = match transform {
             Transform::EnforceRefsPrefix => (
                 if relative_path.starts_with("refs") {
@@ -100,8 +100,8 @@ impl file::Store {
                     if let Some(packed) = packed {
                         let full_name = path_to_name(relative_path);
                         let full_name = PartialName((*full_name).as_bstr());
-                        if let Some(_packed_ref) = packed.find(full_name)? {
-                            todo!("transform packed ref into standard ref")
+                        if let Some(packed_ref) = packed.find(full_name)? {
+                            return Ok(Some(file::loose_then_packed::Reference::Packed(packed_ref)));
                         };
                     }
                 }
@@ -111,6 +111,7 @@ impl file::Store {
         };
         Ok(Some(
             file::Reference::try_from_path(self, &relative_path, &contents)
+                .map(file::loose_then_packed::Reference::Loose)
                 .map_err(|err| Error::ReferenceCreation { err, relative_path })?,
         ))
     }
@@ -153,11 +154,11 @@ pub mod existing {
 
     impl file::Store {
         /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
-        pub fn find_existing<'a, 'p, Name, E>(
-            &self,
+        pub fn find_existing<'a, 'p, 's, Name, E>(
+            &'s self,
             partial: Name,
             packed: Option<&'p packed::Buffer>,
-        ) -> Result<file::Reference<'_>, Error>
+        ) -> Result<file::loose_then_packed::Reference<'p, 's>, Error>
         where
             Name: TryInto<PartialName<'a>, Error = E>,
             crate::name::Error: From<E>,
