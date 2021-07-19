@@ -25,10 +25,11 @@ fn main() -> anyhow::Result<()> {
         let name = args.next().ok_or_else(|| {
             anyhow!("Second argument is the name of the branch from which to start iteration, like 'main' or 'master'")
         })?;
+        let packed = repo.refs.packed()?;
         let commit_id = repo
             .refs
-            .find_existing(&name, repo.refs.packed()?.as_ref())?
-            .peel_to_id_in_place()?
+            .find_existing(&name, packed.as_ref())?
+            .peel_to_id_in_place(packed.as_ref())?
             .to_owned();
         (repo, commit_id)
     };

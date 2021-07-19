@@ -100,7 +100,7 @@ impl file::Store {
                     if let Some(packed) = packed {
                         let full_name = path_to_name(relative_path);
                         let full_name = PartialName((*full_name).as_bstr());
-                        if let Some(packed_ref) = packed.find(full_name)? {
+                        if let Some(_packed_ref) = packed.find(full_name)? {
                             todo!("transform packed ref into standard ref")
                         };
                     }

@@ -31,12 +31,12 @@ mod peel {
         let r = store.find_existing("HEAD", None)?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
-        let nr = r.peel_one_level().expect("exists").expect("no failure");
+        let nr = r.peel_one_level(None).expect("exists").expect("no failure");
         assert!(
             matches!(nr.target(), git_ref::Target::Peeled(_)),
             "iteration peels a single level"
         );
-        assert!(nr.peel_one_level().is_none(), "end of iteration");
+        assert!(nr.peel_one_level(None).is_none(), "end of iteration");
         assert_eq!(
             nr.target(),
             git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
@@ -46,13 +46,19 @@ mod peel {
     }
 
     #[test]
+    #[ignore]
+    fn peel_with_packed_involvement() {
+        todo!("follow a HEAD which points to a ref in a packed-refs buffer")
+    }
+
+    #[test]
     fn to_id_multi_hop() -> crate::Result {
         let store = file::store()?;
         let mut r = store.find_existing("multi-link", None)?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
         assert_eq!(
-            r.peel_to_id_in_place()?,
+            r.peel_to_id_in_place(None)?,
             hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")
         );
         assert_eq!(r.relative_path(), Path::new("refs/remotes/origin/multi-link-target3"));
@@ -68,7 +74,7 @@ mod peel {
         assert_eq!(r.relative_path(), Path::new("refs/loop-a"));
 
         assert!(matches!(
-            r.peel_to_id_in_place().unwrap_err(),
+            r.peel_to_id_in_place(None).unwrap_err(),
             git_ref::file::reference::peel::to_id::Error::Cycle { .. }
         ));
         assert_eq!(

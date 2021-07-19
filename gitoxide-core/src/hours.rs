@@ -45,10 +45,11 @@ where
     P: Progress,
 {
     let repo = git_repository::discover(working_dir)?;
+    let packed = repo.refs.packed()?;
     let commit_id = repo
         .refs
-        .find_existing(refname.to_string_lossy().as_ref(), repo.refs.packed()?.as_ref())?
-        .peel_to_id_in_place()?
+        .find_existing(refname.to_string_lossy().as_ref(), packed.as_ref())?
+        .peel_to_id_in_place(packed.as_ref())?
         .to_owned();
 
     let all_commits = {
