@@ -118,6 +118,19 @@ pub trait DelegateBlocking {
     /// available only on the next turn.
     fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>)
         -> io::Result<Action>;
+
+    /// Return true if the server should be informed that the operation is completed and no further commands will be issued
+    /// at the end of the fetch operation.
+    ///
+    /// This is only relevant in protocol V2 when using stateful protocols.
+    /// As an optimization, delegates can return false here as the server will also know the cilent is done if the connection is
+    /// closed.
+    ///
+    /// Note that this only an option for successful fetches, in most explicit failures modes the 'end-of-operation' note will
+    /// be sent automatically.
+    fn indicate_client_done_when_fetch_completes(&self) -> bool {
+        true
+    }
 }
 
 impl<T: DelegateBlocking> DelegateBlocking for Box<T> {

@@ -174,7 +174,7 @@ async fn ref_in_want() -> crate::Result {
 000eofs-delta
 001dwant-ref refs/heads/main
 0009done
-0000",
+00000000",
             fetch::agent().1.expect("value set")
         )
         .as_bytes()

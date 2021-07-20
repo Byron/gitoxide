@@ -190,6 +190,9 @@ where
             }
         }
     }
+    if matches!(protocol_version, git_transport::Protocol::V2) && delegate.indicate_client_done_when_fetch_completes() {
+        indicate_end_of_interaction(transport).await?;
+    }
     Ok(())
 }
 
