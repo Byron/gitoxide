@@ -15,7 +15,6 @@ mod reflog {
         }
 
         #[test]
-        #[ignore]
         fn iter_rev() -> crate::Result {
             let store = file::store_with_packed_refs()?;
             let packed = store.packed()?;

@@ -98,7 +98,7 @@ impl<'p> Reference<'p> {
     ) -> Result<Option<log::iter::Reverse<'b, std::fs::File>>, loose::reflog::Error> {
         match self {
             Reference::Loose(r) => r.log_iter_rev(store, buf),
-            Reference::Packed(_) => todo!("packed log overlay rev"),
+            Reference::Packed(p) => store.reflog_iter_rev(p.name, buf),
         }
     }
 
