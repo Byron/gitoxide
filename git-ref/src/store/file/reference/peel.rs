@@ -1,6 +1,6 @@
 use crate::{
     file::{self, find, Reference},
-    mutable,
+    mutable::Target,
     store::packed,
 };
 use quick_error::quick_error;
@@ -30,8 +30,8 @@ impl<'s> Reference<'s> {
         packed: Option<&'p packed::Buffer>,
     ) -> Option<Result<file::loose_then_packed::Reference<'p, 's>, Error>> {
         match &self.target {
-            mutable::Target::Peeled(_) => None,
-            mutable::Target::Symbolic(full_name) => {
+            Target::Peeled(_) => None,
+            Target::Symbolic(full_name) => {
                 let path = full_name.to_path();
                 match self.parent.find_one_with_verified_input(path.as_ref(), packed) {
                     Ok(Some(next)) => Some(Ok(next)),
@@ -49,6 +49,7 @@ impl<'s> Reference<'s> {
 pub mod to_id {
     use crate::{
         file::{reference, Reference},
+        mutable::Target,
         store::{file::loose_then_packed, packed},
     };
     use git_hash::oid;
@@ -89,7 +90,11 @@ pub mod to_id {
                 if let crate::Kind::Peeled = next_ref.kind() {
                     match next_ref {
                         loose_then_packed::Reference::Loose(r) => *self = r,
-                        loose_then_packed::Reference::Packed(_p) => todo!("assign state directly and convert path"),
+                        loose_then_packed::Reference::Packed(p) => {
+                            self.target = Target::Peeled(p.target());
+                            // self.name = p.name;
+                            todo!("packed name - should just be assignment")
+                        }
                     };
                     return Ok(self.target.as_id().expect("it to be present"));
                 }
