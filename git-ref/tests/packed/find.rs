@@ -41,7 +41,6 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
     assert_eq!(
         buf.find(name)?.expect("reference exists"),
         packed::Reference {
-            packed: Some(&buf),
             name: name.try_into()?,
             target: "916840c0e2f67d370291042cb5274a597f4fa9bc".into(),
             object: None
@@ -51,7 +50,6 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
     assert_eq!(
         buf.find(name)?.expect("reference exists"),
         packed::Reference {
-            packed: Some(&buf),
             name: name.try_into()?,
             target: "c4cebba92af964f2d126be90b8a6298c4cf84d45".into(),
             object: Some("13da90b54699a6b500ec5cd7d175f2cd5a1bed06".into())
@@ -61,7 +59,6 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
     assert_eq!(
         buf.find(name)?.expect("reference exists"),
         packed::Reference {
-            packed: Some(&buf),
             name: name.try_into()?,
             target: "0b92c8a256ae06c189e3b9c30b646d62ac8f7d10".into(),
             object: None
@@ -121,7 +118,6 @@ fn partial_name_to_full_name_conversion_rules_are_applied() -> crate::Result {
     assert_eq!(
         packed.find("tag-object")?.expect("present"),
         packed::Reference {
-            packed: Some(&packed),
             name: "refs/tags/tag-object".try_into()?,
             target: "b3109a7e51fc593f85b145a76c70ddd1d133fafd".into(),
             object: Some("134385f6d781b7e97062102c6a483440bfda2a03".into())
@@ -146,7 +142,6 @@ bogus refs/tags/git-actor-v0.1.0
     assert_eq!(
         buf.find(name)?.expect("reference exists"),
         packed::Reference {
-            packed: Some(&buf),
             name: name.try_into()?,
             target: "0b92c8a256ae06c189e3b9c30b646d62ac8f7d10".into(),
             object: None

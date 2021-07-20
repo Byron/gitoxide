@@ -76,15 +76,7 @@ pub fn reference<'a, E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], crate
         map_res(until_newline, crate::FullName::try_from),
     ))(input)?;
     let (rest, object) = opt(delimited(tag(b"^"), hex_hash, newline))(input)?;
-    Ok((
-        rest,
-        packed::Reference {
-            packed: None, // TODO: instead yield all fields individually
-            name,         // TODO avoid validation here
-            target,
-            object,
-        },
-    ))
+    Ok((rest, packed::Reference { name, target, object }))
 }
 
 #[cfg(test)]

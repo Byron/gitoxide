@@ -67,7 +67,6 @@ impl<'p, 's> Reference<'p, 's> {
                 .and_then(|np| {
                     p.object.and(np.object).map(|peeled| {
                         Ok(Reference::Packed(packed::Reference {
-                            packed,
                             name: np.name,
                             target: peeled,
                             object: None,
