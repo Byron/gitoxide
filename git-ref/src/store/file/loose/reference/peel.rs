@@ -16,7 +16,7 @@ quick_error! {
             display("Could not resolve symbolic reference name that is expected to exist")
             source(err)
         }
-        Decode(err: file::reference::decode::Error) {
+        Decode(err: file::loose::reference::decode::Error) {
             display("The reference could not be decoded.")
             source(err)
         }
@@ -49,14 +49,13 @@ impl<'s> Reference<'s> {
 
 ///
 pub mod to_id {
+    use git_hash::oid;
+    use quick_error::quick_error;
     use std::{collections::BTreeSet, path::PathBuf};
 
-    use quick_error::quick_error;
-
-    use git_hash::oid;
-
+    use crate::store::file::loose::reference;
     use crate::{
-        file::{reference, Reference},
+        file::Reference,
         mutable::{FullName, Target},
         store::{file::loose_then_packed, packed},
     };

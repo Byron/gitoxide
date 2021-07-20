@@ -80,7 +80,7 @@ mod peel {
 
         assert!(matches!(
             r.peel_to_id_in_place(None).unwrap_err(),
-            git_ref::file::reference::peel::to_id::Error::Cycle { .. }
+            git_ref::file::loose::reference::peel::to_id::Error::Cycle { .. }
         ));
         assert_eq!(r.name.as_bstr(), "refs/loop-a", "the ref is not changed on error");
         Ok(())

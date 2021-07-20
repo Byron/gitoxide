@@ -34,7 +34,7 @@ impl<'p, 's> Reference<'p, 's> {
     pub fn peel_to_id_in_place(
         &mut self,
         packed: Option<&packed::Buffer>,
-    ) -> Result<&oid, crate::file::reference::peel::to_id::Error> {
+    ) -> Result<&oid, crate::store::file::loose::reference::peel::to_id::Error> {
         match self {
             Reference::Loose(r) => r.peel_to_id_in_place(packed),
             Reference::Packed(_) => todo!("packed peel one level (yeah, it's done)"),
@@ -45,7 +45,7 @@ impl<'p, 's> Reference<'p, 's> {
     pub fn peel_one_level<'p2>(
         &self,
         packed: Option<&'p2 packed::Buffer>,
-    ) -> Option<Result<Reference<'p2, 's>, crate::file::reference::peel::Error>> {
+    ) -> Option<Result<Reference<'p2, 's>, crate::store::file::loose::reference::peel::Error>> {
         match self {
             Reference::Loose(r) => r.peel_one_level(packed),
             Reference::Packed(_) => todo!("packed peel one level (yeah, it's done)"),

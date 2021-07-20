@@ -3,6 +3,8 @@ pub(crate) mod reflog;
 
 ///
 pub(crate) mod iter;
+///
+pub mod reference;
 
 mod init {
     use std::path::PathBuf;

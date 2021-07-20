@@ -251,7 +251,7 @@ mod error {
                 from()
                 source(err)
             }
-            ReferenceCreation{ err: file::reference::decode::Error, relative_path: PathBuf } {
+            ReferenceCreation{ err: file::loose::reference::decode::Error, relative_path: PathBuf } {
                 display("The reference at '{}' could not be instantiated", relative_path.display())
                 source(err)
             }

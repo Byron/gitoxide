@@ -460,7 +460,7 @@ mod error {
             ReferenceOutOfDate { full_name: BString, expected: Target, actual: Target } {
                 display("The reference '{}' should have content {}, actual content was {}", full_name, expected, actual)
             }
-            ReferenceDecode(err: file::reference::decode::Error) {
+            ReferenceDecode(err: file::loose::reference::decode::Error) {
                 display("Could not read reference")
                 from()
                 source(err)
