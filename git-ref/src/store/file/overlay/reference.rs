@@ -54,28 +54,20 @@ impl<'p, 's> Reference<'p, 's> {
     ) -> Option<Result<Reference<'p2, 's>, crate::store::file::loose::reference::peel::Error>> {
         match self {
             Reference::Loose(r) => r.peel_one_level(packed),
-            Reference::Packed(p) => match packed {
-                Some(packed) => {
-                    let np = packed
-                        .find_existing(p.name)
-                        .expect("same pack to meet lifetime requirements");
-                    if p.object.is_some() {
-                        match np.object {
-                            Some(peeled) => Some(Ok(Reference::Packed(packed::Reference {
-                                name: np.name,
-                                target: peeled,
-                                object: None,
-                            }))),
-                            None => None,
-                        }
-                    } else {
-                        None
-                    }
-                }
-                None => None,
-            },
+            Reference::Packed(p) => packed
+                .and_then(|packed| packed.find(p.name).ok().flatten()) // needed to get data with 'p2 lifetime
+                .and_then(|np| {
+                    p.object.and_then(|_| np.object).map(|peeled| {
+                        Ok(Reference::Packed(packed::Reference {
+                            name: np.name,
+                            target: peeled,
+                            object: None,
+                        }))
+                    })
+                }),
         }
     }
+
     /// Obtain a reverse iterator over logs of this reference. See [crate::file::loose::Reference::log_iter_rev()] for details.
     pub fn log_iter_rev<'b>(
         &self,
