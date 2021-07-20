@@ -1,3 +1,4 @@
+use crate::FullName;
 use bstr::{BStr, BString};
 use filebuffer::FileBuffer;
 use git_hash::ObjectId;
@@ -28,7 +29,7 @@ pub enum Buffer {
 pub struct Reference<'a> {
     // TODO: Add back reference to owning buffer to allow calculating reflog paths
     /// The unvalidated full name of the reference.
-    pub full_name: &'a BStr,
+    pub name: FullName<'a>,
     /// The target object id of the reference, hex encoded.
     pub target: &'a BStr,
     /// The fully peeled object id, hex encoded, that the ref is ultimately pointing to

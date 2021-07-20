@@ -29,7 +29,7 @@ impl<'a> Iterator for packed::Iter<'a> {
                 self.cursor = rest;
                 self.current_line += 1;
                 if let Some(ref prefix) = self.prefix {
-                    if !reference.full_name.starts_with_str(prefix) {
+                    if !reference.name.as_bstr().starts_with_str(prefix) {
                         self.cursor = &[];
                         return None;
                     }

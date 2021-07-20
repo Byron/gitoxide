@@ -3,6 +3,7 @@ type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 mod reference {
     use super::Result;
     use crate::store::{packed, packed::decode};
+    use crate::FullName;
     use git_testtools::hex_to_id;
     use nom::error::VerboseError;
 
@@ -24,7 +25,7 @@ mod reference {
         assert_eq!(
             parsed,
             packed::Reference {
-                full_name: "refs/heads/alternates-after-packs-and-loose".into(),
+                name: FullName("refs/heads/alternates-after-packs-and-loose".into()),
                 target: "d53c4b0f91f1b29769c9430f2d1c0bcab1170c75".into(),
                 object: Some("e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37".into())
             }
@@ -34,7 +35,7 @@ mod reference {
 
         let (input, parsed) = decode::reference::<VerboseError<_>>(input)?;
         assert!(input.is_empty(), "exhausted");
-        assert_eq!(parsed.full_name, "refs/heads/avoid-double-lookup");
+        assert_eq!(parsed.name, FullName("refs/heads/avoid-double-lookup".into()));
         assert_eq!(parsed.target, "eaae9c1bc723209d793eb93f5587fa2604d5cd92");
         assert!(parsed.object.is_none());
         Ok(())

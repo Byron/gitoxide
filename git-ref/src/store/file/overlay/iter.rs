@@ -62,7 +62,7 @@ impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
             }
             (Some(Ok(loose)), Some(Ok(packed))) => {
                 let loose_name = loose.1.as_bstr();
-                match loose_name.cmp(packed.full_name) {
+                match loose_name.cmp(packed.name.as_bstr()) {
                     Ordering::Less => {
                         let res = self.loose.next().expect("name retrieval configured");
                         Some(self.convert_loose(res))

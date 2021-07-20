@@ -84,7 +84,7 @@ impl packed::Buffer {
             let ofs = b as *const u8 as usize - a.as_ptr() as usize;
             let line = &a[search_start_of_record(ofs)..];
             packed::decode::reference::<()>(line)
-                .map(|(_rest, r)| r.full_name.as_ref())
+                .map(|(_rest, r)| r.name.as_bstr().as_ref())
                 .map_err(|err| {
                     encountered_parse_failure = true;
                     err

@@ -1,6 +1,6 @@
 use super::Reference;
 use crate::{
-    mutable, name,
+    mutable,
     store::{
         file::{log, loose},
         packed,
@@ -8,7 +8,7 @@ use crate::{
     FullName,
 };
 use git_hash::oid;
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 
 impl<'p, 's> TryFrom<Reference<'p, 's>> for crate::file::Reference<'s> {
     type Error = ();
@@ -99,10 +99,10 @@ impl<'p, 's> Reference<'p, 's> {
     }
 
     /// Return the full validated name of the reference. Please note that if the reference is packed, validation can fail here.
-    pub fn name(&self) -> Result<FullName<'_>, name::Error> {
+    pub fn name(&self) -> FullName<'_> {
         match self {
-            Reference::Packed(p) => p.full_name.try_into(),
-            Reference::Loose(l) => Ok(l.name.borrow()),
+            Reference::Packed(p) => p.name,
+            Reference::Loose(l) => l.name.borrow(),
         }
     }
 

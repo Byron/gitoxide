@@ -3,6 +3,8 @@ use crate::{
     store::packed,
 };
 use bstr::{BStr, ByteSlice};
+use nom::combinator::map_res;
+use nom::error::FromExternalError;
 use nom::{
     bytes::complete::{tag, take_while},
     combinator::{map, opt},
@@ -10,6 +12,7 @@ use nom::{
     sequence::{delimited, preceded, terminated, tuple},
     IResult,
 };
+use std::convert::TryFrom;
 
 #[derive(Debug, PartialEq, Eq)]
 enum Peeled {
@@ -65,17 +68,15 @@ where
     Ok((rest, Header { peeled, sorted }))
 }
 
-pub fn reference<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], packed::Reference<'a>, E> {
-    let (input, (target, full_name)) = tuple((terminated(hex_hash, tag(b" ")), until_newline))(input)?;
+pub fn reference<'a, E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], crate::name::Error>>(
+    input: &'a [u8],
+) -> IResult<&'a [u8], packed::Reference<'a>, E> {
+    let (input, (target, name)) = tuple((
+        terminated(hex_hash, tag(b" ")),
+        map_res(until_newline, |name| crate::FullName::try_from(name)),
+    ))(input)?;
     let (rest, object) = opt(delimited(tag(b"^"), hex_hash, newline))(input)?;
-    Ok((
-        rest,
-        packed::Reference {
-            full_name,
-            target,
-            object,
-        },
-    ))
+    Ok((rest, packed::Reference { name, target, object }))
 }
 
 #[cfg(test)]

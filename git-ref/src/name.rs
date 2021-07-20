@@ -26,6 +26,7 @@ mod error {
     }
 }
 pub use error::Error;
+use std::convert::Infallible;
 
 impl<'a> FullName<'a> {
     /// Convert this name into the relative path identifying the reference location.
@@ -34,7 +35,7 @@ impl<'a> FullName<'a> {
     }
 
     /// Return ourselves as byte string which is a valid refname
-    pub fn as_bstr(&self) -> &BStr {
+    pub fn as_bstr(&self) -> &'a BStr {
         self.0
     }
 }
@@ -47,7 +48,7 @@ impl<'a> PartialName<'a> {
     }
 
     /// Provide the name as binary string which is known to be a valid partial ref name.
-    pub fn as_bstr(&self) -> &BStr {
+    pub fn as_bstr(&self) -> &'a BStr {
         self.0
     }
 }
@@ -59,6 +60,14 @@ impl<'a> TryFrom<&'a BStr> for FullName<'a> {
         Ok(FullName(
             git_validate::reference::name(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
         ))
+    }
+}
+
+impl<'a> TryFrom<FullName<'a>> for PartialName<'a> {
+    type Error = Infallible;
+
+    fn try_from(v: FullName<'a>) -> Result<Self, Self::Error> {
+        Ok(PartialName(v.0))
     }
 }
 

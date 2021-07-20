@@ -1,6 +1,7 @@
 use crate::file::{store_at, store_with_packed_refs};
 use bstr::ByteSlice;
 use git_ref::packed;
+use std::convert::TryInto;
 
 #[test]
 fn empty() -> crate::Result {
@@ -27,7 +28,7 @@ fn iter_prefix() -> crate::Result {
     assert_eq!(
         packed
             .iter_prefixed("refs/heads/")?
-            .map(|r| r.map(|r| r.full_name))
+            .map(|r| r.map(|r| r.name.as_bstr()))
             .collect::<Result<Vec<_>, _>>()?,
         vec![
             "refs/heads/d1".as_bytes().as_bstr(),
@@ -39,7 +40,7 @@ fn iter_prefix() -> crate::Result {
     assert_eq!(
         packed
             .iter_prefixed("refs/remotes/")?
-            .map(|r| r.map(|r| r.full_name))
+            .map(|r| r.map(|r| r.name.as_bstr()))
             .collect::<Result<Vec<_>, _>>()?,
         vec![
             "refs/remotes/origin/main".as_bytes().as_bstr(),
@@ -51,7 +52,7 @@ fn iter_prefix() -> crate::Result {
     assert_eq!(
         packed
             .iter_prefixed(last_ref_in_file)?
-            .map(|r| r.map(|r| r.full_name))
+            .map(|r| r.map(|r| r.name.as_bstr()))
             .collect::<Result<Vec<_>, _>>()?,
         vec![last_ref_in_file.as_bytes().as_bstr()],
         "prefixes which are a ref also work, this one is the last of the file"
@@ -60,7 +61,7 @@ fn iter_prefix() -> crate::Result {
     assert_eq!(
         packed
             .iter_prefixed(first_ref_in_file)?
-            .map(|r| r.map(|r| r.full_name))
+            .map(|r| r.map(|r| r.name.as_bstr()))
             .collect::<Result<Vec<_>, _>>()?,
         vec![first_ref_in_file.as_bytes().as_bstr()],
         "prefixes which are a ref also work, and this one is at the end"
@@ -78,17 +79,17 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
         packed::Iter::new(packed_refs)?.collect::<Result<Vec<_>, _>>()?,
         vec![
             packed::Reference {
-                full_name: "refs/tags/TEST-0.0.1".into(),
+                name: "refs/tags/TEST-0.0.1".try_into()?,
                 target: "916840c0e2f67d370291042cb5274a597f4fa9bc".into(),
                 object: None
             },
             packed::Reference {
-                full_name: "refs/tags/git-actor-v0.1.0".into(),
+                name: "refs/tags/git-actor-v0.1.0".try_into()?,
                 target: "c4cebba92af964f2d126be90b8a6298c4cf84d45".into(),
                 object: Some("13da90b54699a6b500ec5cd7d175f2cd5a1bed06".into())
             },
             packed::Reference {
-                full_name: "refs/tags/git-actor-v0.1.1".into(),
+                name: "refs/tags/git-actor-v0.1.1".try_into()?,
                 target: "0b92c8a256ae06c189e3b9c30b646d62ac8f7d10".into(),
                 object: None
             }

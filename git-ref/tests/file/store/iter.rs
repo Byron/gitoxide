@@ -126,15 +126,7 @@ fn overlay_iter() -> crate::Result {
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
         .iter(&store.packed()?.expect("packed-refs"))?
-        .map(|r| {
-            r.map(|r| {
-                (
-                    r.name().expect("valid names only").as_bstr().to_owned(),
-                    r.target(),
-                    r.is_packed(),
-                )
-            })
-        })
+        .map(|r| r.map(|r| (r.name().as_bstr().to_owned(), r.target(), r.is_packed())))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
     let c2 = hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7");
@@ -182,15 +174,7 @@ fn overlay_prefixed_iter() -> crate::Result {
     let packed = store.packed()?.expect("packed-refs");
     let ref_names = store
         .iter_prefixed(&packed, "refs/heads")?
-        .map(|r| {
-            r.map(|r| {
-                (
-                    r.name().expect("valid names only").as_bstr().to_owned(),
-                    r.target(),
-                    r.is_packed(),
-                )
-            })
-        })
+        .map(|r| r.map(|r| (r.name().as_bstr().to_owned(), r.target(), r.is_packed())))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
     let c2 = hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7");

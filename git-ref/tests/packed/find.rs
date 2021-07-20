@@ -3,7 +3,7 @@ use crate::{
     packed::write_packed_refs_with,
 };
 use git_ref::{packed, PartialName};
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 
 #[test]
 fn a_lock_file_would_not_be_a_valid_partial_name() {
@@ -19,9 +19,9 @@ fn all_iterable_refs_can_be_found() -> crate::Result {
 
     for reference in packed_refs.iter()? {
         let reference = reference?;
-        let found = packed_refs.find(reference.full_name)?.expect("reference exists");
+        let found = packed_refs.find(reference.name)?.expect("reference exists");
         assert_eq!(reference, found, "both refs are exactly the same");
-        let found = packed_refs.find_existing(reference.full_name)?;
+        let found = packed_refs.find_existing(reference.name)?;
         assert_eq!(reference, found);
     }
     Ok(())
@@ -41,7 +41,7 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
     assert_eq!(
         buf.find(name)?.expect("reference exists"),
         packed::Reference {
-            full_name: name.into(),
+            name: name.try_into()?,
             target: "916840c0e2f67d370291042cb5274a597f4fa9bc".into(),
             object: None
         }
@@ -50,7 +50,7 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
     assert_eq!(
         buf.find(name)?.expect("reference exists"),
         packed::Reference {
-            full_name: name.into(),
+            name: name.try_into()?,
             target: "c4cebba92af964f2d126be90b8a6298c4cf84d45".into(),
             object: Some("13da90b54699a6b500ec5cd7d175f2cd5a1bed06".into())
         }
@@ -59,7 +59,7 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
     assert_eq!(
         buf.find(name)?.expect("reference exists"),
         packed::Reference {
-            full_name: name.into(),
+            name: name.try_into()?,
             target: "0b92c8a256ae06c189e3b9c30b646d62ac8f7d10".into(),
             object: None
         }
@@ -91,34 +91,34 @@ fn partial_name_to_full_name_conversion_rules_are_applied() -> crate::Result {
         "packed refs definitely don't contain HEAD"
     );
     assert_eq!(
-        packed.find("head-or-tag")?.expect("present").full_name,
+        packed.find("head-or-tag")?.expect("present").name.as_bstr(),
         "refs/tags/head-or-tag",
         "it finds tags first"
     );
     assert_eq!(
-        packed.find("heads/head-or-tag")?.expect("present").full_name,
+        packed.find("heads/head-or-tag")?.expect("present").name.as_bstr(),
         "refs/heads/head-or-tag",
         "it finds heads when disambiguated"
     );
     assert_eq!(
-        packed.find("main")?.expect("present").full_name,
+        packed.find("main")?.expect("present").name.as_bstr(),
         "refs/heads/main",
         "it finds local heads before remote ones"
     );
     assert_eq!(
-        packed.find("origin/main")?.expect("present").full_name,
+        packed.find("origin/main")?.expect("present").name.as_bstr(),
         "refs/remotes/origin/main",
         "it finds remote heads when disambiguated"
     );
     assert_eq!(
-        packed.find("remotes/origin/main")?.expect("present").full_name,
+        packed.find("remotes/origin/main")?.expect("present").name.as_bstr(),
         "refs/remotes/origin/main",
         "more specification is possible, too"
     );
     assert_eq!(
         packed.find("tag-object")?.expect("present"),
         packed::Reference {
-            full_name: "refs/tags/tag-object".into(),
+            name: "refs/tags/tag-object".try_into()?,
             target: "b3109a7e51fc593f85b145a76c70ddd1d133fafd".into(),
             object: Some("134385f6d781b7e97062102c6a483440bfda2a03".into())
         },
@@ -142,7 +142,7 @@ bogus refs/tags/git-actor-v0.1.0
     assert_eq!(
         buf.find(name)?.expect("reference exists"),
         packed::Reference {
-            full_name: name.into(),
+            name: name.try_into()?,
             target: "0b92c8a256ae06c189e3b9c30b646d62ac8f7d10".into(),
             object: None
         }
@@ -168,11 +168,7 @@ fn find_speed() -> crate::Result {
     for r in packed.iter()?.take(10_000) {
         num_refs += 1;
         let r = r?;
-        assert_eq!(
-            packed.find(r.full_name)?.expect("ref was found"),
-            r,
-            "the refs are the same"
-        );
+        assert_eq!(packed.find(r.name)?.expect("ref was found"), r, "the refs are the same");
     }
     let elapsed = start.elapsed().as_secs_f32();
     eprintln!(

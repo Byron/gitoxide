@@ -32,7 +32,7 @@ fn with_packed_refs() -> crate::Result {
     let packed = store.packed()?;
     let r = store.find_existing("main", packed.as_ref())?;
     assert_eq!(r.target().borrow().as_id().expect("peeled"), c1);
-    assert_eq!(r.name().expect("valid name").as_bstr(), "refs/heads/main");
+    assert_eq!(r.name().as_bstr(), "refs/heads/main");
     Ok(())
 }
 
