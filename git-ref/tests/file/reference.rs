@@ -47,7 +47,6 @@ mod peel {
     }
 
     #[test]
-    #[ignore]
     fn peel_with_packed_involvement() {
         let store = store_with_packed_refs().unwrap();
         let mut head = store.loose_find_existing("HEAD").unwrap();

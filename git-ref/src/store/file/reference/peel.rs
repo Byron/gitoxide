@@ -49,7 +49,7 @@ impl<'s> Reference<'s> {
 pub mod to_id {
     use crate::{
         file::{reference, Reference},
-        mutable::Target,
+        mutable::{FullName, Target},
         store::{file::loose_then_packed, packed},
     };
     use git_hash::oid;
@@ -91,9 +91,8 @@ pub mod to_id {
                     match next_ref {
                         loose_then_packed::Reference::Loose(r) => *self = r,
                         loose_then_packed::Reference::Packed(p) => {
-                            self.target = Target::Peeled(p.target());
-                            // self.name = p.name;
-                            todo!("packed name - should just be assignment")
+                            self.target = Target::Peeled(p.object());
+                            self.name = FullName(p.name.0.to_owned());
                         }
                     };
                     return Ok(self.target.as_id().expect("it to be present"));
