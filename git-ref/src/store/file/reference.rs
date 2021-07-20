@@ -46,7 +46,7 @@ impl<'p> Reference<'p> {
     pub fn log_exists(&self, store: &file::Store) -> bool {
         match self {
             Reference::Loose(r) => r.log_exists(store),
-            Reference::Packed(_) => todo!("packed log exists"),
+            Reference::Packed(p) => store.reflog_exists(p.name).expect("infallible name conversion"),
         }
     }
 

@@ -5,6 +5,19 @@ use crate::{
 use std::{convert::TryInto, io::Read, path::PathBuf};
 
 impl file::Store {
+    /// Returns true if a reflog exists for the given reference `name`.
+    ///
+    /// Please note that this method shouldn't be used to check if a log exists before trying to read it, but instead
+    /// is meant to be the fastest possible way to determine if a log exists or not.
+    /// If the caller needs to know if it's readable, try to read the log instead with a reverse or forward iterator.
+    pub fn reflog_exists<'a, Name, E>(&self, name: Name) -> Result<bool, E>
+    where
+        Name: TryInto<FullName<'a>, Error = E>,
+        crate::name::Error: From<E>,
+    {
+        Ok(self.reflog_path(name.try_into()?).is_file())
+    }
+
     /// Return a reflog reverse iterator for the given fully qualified `name`, reading chunks from the back into the fixed buffer `buf`.
     ///
     /// The iterator will traverse log entries from most recent to oldest, reading the underlying file in chunks from the back.
