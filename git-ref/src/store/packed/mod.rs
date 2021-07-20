@@ -63,6 +63,7 @@ impl<'a> Reference<'a> {
 
 /// An iterator over references in a packed refs file
 pub struct Iter<'a> {
+    packed: &'a packed::Buffer,
     /// The position at which to parse the next reference
     cursor: &'a [u8],
     /// The next line, starting at 1
