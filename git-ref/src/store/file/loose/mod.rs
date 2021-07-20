@@ -1,15 +1,13 @@
 ///
-pub mod find;
+pub(crate) mod reflog;
 
 ///
-pub mod reflog;
-
-///
-pub mod iter;
+pub(crate) mod iter;
 
 mod init {
-    use crate::store::file;
     use std::path::PathBuf;
+
+    use crate::store::file;
 
     impl file::Store {
         /// Create a new instance at the given `git_dir`, which commonly is a standard git repository with a

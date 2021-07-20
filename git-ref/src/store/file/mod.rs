@@ -1,5 +1,6 @@
-use crate::mutable;
 use std::path::PathBuf;
+
+use crate::mutable;
 
 /// The way a file store handles the reflog
 #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
@@ -52,8 +53,6 @@ pub(in crate::store::file) fn path_to_name(path: impl Into<PathBuf>) -> bstr::BS
 }
 
 mod loose;
-pub use loose::find;
-
 mod overlay;
 ///
 pub mod iter {
@@ -72,11 +71,14 @@ pub mod reference;
 pub mod log;
 
 ///
+pub mod find;
+///
 pub mod transaction;
 
 mod packed {
-    use crate::store::{file, packed};
     use std::path::PathBuf;
+
+    use crate::store::{file, packed};
 
     impl file::Store {
         /// Return a buffer for the packed file

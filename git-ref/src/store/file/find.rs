@@ -1,13 +1,18 @@
-use crate::{
-    file,
-    store::{file::path_to_name, packed},
-    PartialName,
-};
-use bstr::ByteSlice;
 use std::{
     convert::TryInto,
     io::{self, Read},
     path::{Path, PathBuf},
+};
+
+use bstr::ByteSlice;
+
+pub use error::Error;
+
+use crate::mutable::FullName;
+use crate::{
+    file,
+    store::{file::path_to_name, packed},
+    PartialName,
 };
 
 enum Transform {
@@ -156,12 +161,16 @@ impl file::Store {
 
 ///
 pub mod existing {
+    use std::convert::TryInto;
+
+    pub use error::Error;
+
+    use crate::store::file::find;
     use crate::{
-        file::{self, find},
+        file::{self},
         store::packed,
         PartialName,
     };
-    use std::convert::TryInto;
 
     impl file::Store {
         /// Similar to [`file::Store::find_existing()`] but a non-existing ref is treated as error.
@@ -196,9 +205,11 @@ pub mod existing {
     }
 
     mod error {
-        use crate::file::find;
-        use quick_error::quick_error;
         use std::path::PathBuf;
+
+        use quick_error::quick_error;
+
+        use crate::store::file::find;
 
         quick_error! {
             /// The error returned by [file::Store::find_existing()][crate::file::Store::find_existing()].
@@ -216,13 +227,14 @@ pub mod existing {
             }
         }
     }
-    pub use error::Error;
 }
 
 mod error {
-    use crate::{file, store::packed};
-    use quick_error::quick_error;
     use std::{convert::Infallible, io, path::PathBuf};
+
+    use quick_error::quick_error;
+
+    use crate::{file, store::packed};
 
     quick_error! {
         /// The error returned by [file::Store::find()].
@@ -257,5 +269,3 @@ mod error {
         }
     }
 }
-use crate::mutable::FullName;
-pub use error::Error;

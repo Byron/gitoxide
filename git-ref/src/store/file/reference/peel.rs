@@ -1,9 +1,11 @@
+use quick_error::quick_error;
+
+use crate::store::file::find;
 use crate::{
-    file::{self, find, Reference},
+    file::{self, Reference},
     mutable::Target,
     store::packed,
 };
-use quick_error::quick_error;
 
 quick_error! {
     /// The error returned by [`Reference::peel_one_level()`].
@@ -47,14 +49,17 @@ impl<'s> Reference<'s> {
 
 ///
 pub mod to_id {
+    use std::{collections::BTreeSet, path::PathBuf};
+
+    use quick_error::quick_error;
+
+    use git_hash::oid;
+
     use crate::{
         file::{reference, Reference},
         mutable::{FullName, Target},
         store::{file::loose_then_packed, packed},
     };
-    use git_hash::oid;
-    use quick_error::quick_error;
-    use std::{collections::BTreeSet, path::PathBuf};
 
     quick_error! {
         /// The error returned by [`Reference::peel_to_id_in_place()`].
