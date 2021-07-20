@@ -49,7 +49,7 @@ where
     let commit_id = repo
         .refs
         .find_existing(refname.to_string_lossy().as_ref(), packed.as_ref())?
-        .peel_to_id_in_place(packed.as_ref())?
+        .peel_to_id_in_place(&repo.refs, packed.as_ref())?
         .to_owned();
 
     let all_commits = {

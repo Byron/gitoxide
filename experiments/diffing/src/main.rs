@@ -33,7 +33,7 @@ fn main() -> anyhow::Result<()> {
     let commit_id = repo
         .refs
         .find_existing(&name, packed.as_ref())?
-        .peel_to_id_in_place(packed.as_ref())?
+        .peel_to_id_in_place(&repo.refs, packed.as_ref())?
         .to_owned();
     let db = &repo.odb;
 
