@@ -2,26 +2,24 @@ use crate::FullName;
 use bstr::{BStr, BString};
 use filebuffer::FileBuffer;
 use git_hash::ObjectId;
+use std::path::PathBuf;
+
+enum Backing {
+    /// The buffer is loaded entirely in memory, along with the `offset` to the first record past the header.
+    InMemory(Vec<u8>),
+    /// The buffer is mapping the file on disk, along with the offset to the first record past the header
+    Mapped(FileBuffer),
+}
 
 /// A buffer containing a packed-ref file that is either memory mapped or fully in-memory depending on a cutoff.
 ///
 /// The buffer is guaranteed to be sorted as per the packed-ref rules which allows some operations to be more efficient.
-pub enum Buffer {
-    // TODO: Turn this into a struct and keep shared fields there.
-    /// The buffer is loaded entirely in memory, along with the `offset` to the first record past the header.
-    InMemory {
-        /// The storage for the packed-refs data
-        data: Vec<u8>,
-        /// The offset to the first record, how many bytes to skip past the header
-        offset: usize,
-    },
-    /// The buffer is mapping the file on disk, along with the offset to the first record past the header
-    Mapped {
-        /// The memory map holding the packed-refs data
-        map: FileBuffer,
-        /// The offset to the first record, how many bytes to skip past the header
-        offset: usize,
-    },
+pub struct Buffer {
+    data: Backing,
+    /// The offset to the first record, how many bytes to skip past the header
+    offset: usize,
+    /// The base path of the store from which it was created
+    base: PathBuf,
 }
 
 /// A reference as parsed from the `packed-refs` file

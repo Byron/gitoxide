@@ -2,9 +2,18 @@ use crate::store::packed;
 
 impl AsRef<[u8]> for packed::Buffer {
     fn as_ref(&self) -> &[u8] {
+        match &self.data {
+            packed::Backing::InMemory(data) => &data[self.offset..],
+            packed::Backing::Mapped(map) => &map[self.offset..],
+        }
+    }
+}
+
+impl AsRef<[u8]> for packed::Backing {
+    fn as_ref(&self) -> &[u8] {
         match self {
-            packed::Buffer::InMemory { data, offset } => &data[*offset..],
-            packed::Buffer::Mapped { map, offset } => &map[*offset..],
+            packed::Backing::InMemory(data) => &data,
+            packed::Backing::Mapped(map) => &map,
         }
     }
 }
@@ -23,38 +32,30 @@ pub mod open {
         /// If that's not the case, they will be sorted on the fly with the data being written into a memory buffer.
         pub fn open(path: impl AsRef<Path>, use_memory_map_if_larger_than_bytes: u64) -> Result<Self, Error> {
             let path = path.as_ref();
-            let buf = if std::fs::metadata(path)?.len() <= use_memory_map_if_larger_than_bytes {
-                packed::Buffer::InMemory {
-                    data: std::fs::read(path)?,
-                    offset: 0,
-                }
+            let backing = if std::fs::metadata(path)?.len() <= use_memory_map_if_larger_than_bytes {
+                packed::Backing::InMemory(std::fs::read(path)?)
             } else {
-                packed::Buffer::Mapped {
-                    map: FileBuffer::open(path)?,
-                    offset: 0,
-                }
+                packed::Backing::Mapped(FileBuffer::open(path)?)
             };
 
-            let (buf, sorted) = {
-                let data = buf.as_ref();
+            let (offset, sorted) = {
+                let data = backing.as_ref();
                 if *data.get(0).unwrap_or(&b' ') == b'#' {
                     let (records, header) = packed::decode::header::<()>(data).map_err(|_| Error::HeaderParsing)?;
                     let offset = records.as_ptr() as usize - data.as_ptr() as usize;
-                    (
-                        match buf {
-                            packed::Buffer::Mapped { map, .. } => packed::Buffer::Mapped { map, offset },
-                            packed::Buffer::InMemory { data, .. } => packed::Buffer::InMemory { data, offset },
-                        },
-                        header.sorted,
-                    )
+                    (offset, header.sorted)
                 } else {
-                    (buf, false)
+                    (0, false)
                 }
             };
             if !sorted {
                 return Err(Error::Unsorted);
             }
-            Ok(buf)
+            Ok(packed::Buffer {
+                offset,
+                data: backing,
+                base: path.parent().expect("assume we are in a top-level repo").into(),
+            })
         }
     }
 
