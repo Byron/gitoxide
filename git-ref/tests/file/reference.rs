@@ -48,13 +48,18 @@ mod peel {
     }
 
     #[test]
-    fn peel_with_packed_involvement() {
-        let store = store_with_packed_refs().unwrap();
-        let mut head = store.loose_find_existing("HEAD").unwrap();
-        assert_eq!(
-            head.peel_to_id_in_place(store.packed().unwrap().as_ref()).unwrap(),
-            hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")
-        );
+    fn peel_with_packed_involvement() -> crate::Result {
+        let store = store_with_packed_refs()?;
+        let mut head = store.loose_find_existing("HEAD")?;
+        let packed = store.packed()?;
+        let expected = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+        assert_eq!(head.peel_to_id_in_place(packed.as_ref())?, expected);
+        assert_eq!(head.target.as_id().map(ToOwned::to_owned), Some(expected));
+
+        let mut head = store.find_existing("dt1", packed.as_ref())?;
+        assert_eq!(head.peel_to_id_in_place(packed.as_ref())?, expected);
+        assert_eq!(head.target().as_id().map(ToOwned::to_owned), Some(expected));
+        Ok(())
     }
 
     #[test]

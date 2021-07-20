@@ -27,6 +27,6 @@ echo "ref: refs/loop-b" > .git/refs/loop-a
 echo "ref: refs/loop-a" > .git/refs/loop-b
 
 git tag t1
-git tag dt1
+git tag -m "tag object" dt1
 
 git pack-refs --all --prune

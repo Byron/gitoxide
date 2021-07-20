@@ -7,7 +7,7 @@ use crate::{
     },
     FullName,
 };
-use git_hash::oid;
+use git_hash::ObjectId;
 use std::convert::TryFrom;
 
 impl<'p, 's> TryFrom<Reference<'p, 's>> for crate::file::loose::Reference<'s> {
@@ -34,10 +34,16 @@ impl<'p, 's> Reference<'p, 's> {
     pub fn peel_to_id_in_place(
         &mut self,
         packed: Option<&packed::Buffer>,
-    ) -> Result<&oid, crate::store::file::loose::reference::peel::to_id::Error> {
+    ) -> Result<ObjectId, crate::store::file::loose::reference::peel::to_id::Error> {
         match self {
-            Reference::Loose(r) => r.peel_to_id_in_place(packed),
-            Reference::Packed(_) => todo!("packed peel one level (yeah, it's done)"),
+            Reference::Loose(r) => r.peel_to_id_in_place(packed).map(ToOwned::to_owned),
+            Reference::Packed(p) => {
+                if let Some(object) = p.object {
+                    p.target = object;
+                }
+                p.object = None;
+                Ok(p.target())
+            }
         }
     }
 
