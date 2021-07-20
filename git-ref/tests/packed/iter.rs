@@ -75,7 +75,6 @@ fn packed_refs_without_header() -> crate::Result {
 c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
 ^13da90b54699a6b500ec5cd7d175f2cd5a1bed06
 0b92c8a256ae06c189e3b9c30b646d62ac8f7d10 refs/tags/git-actor-v0.1.1\n";
-    let packed_refs = packed::Buffer::new(packed_refs)
     assert_eq!(
         packed::Iter::new(packed_refs)?.collect::<Result<Vec<_>, _>>()?,
         vec![
