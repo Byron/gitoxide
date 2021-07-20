@@ -22,6 +22,7 @@ mod reflog {
 
 mod peel {
     use crate::file;
+    use crate::file::store_with_packed_refs;
     use git_testtools::hex_to_id;
     use std::convert::TryFrom;
     use std::path::Path;
@@ -50,7 +51,12 @@ mod peel {
     #[test]
     #[ignore]
     fn peel_with_packed_involvement() {
-        todo!("follow a HEAD which points to a ref in a packed-refs buffer")
+        let store = store_with_packed_refs().unwrap();
+        let mut head = store.loose_find_existing("HEAD").unwrap();
+        assert_eq!(
+            head.peel_to_id_in_place(store.packed().unwrap().as_ref()).unwrap(),
+            hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")
+        );
     }
 
     #[test]
