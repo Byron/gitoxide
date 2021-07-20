@@ -1,5 +1,6 @@
 use crate::{
-    file::{reference::State, Reference, Store},
+    file::{Reference, Store},
+    mutable,
     parse::{hex_hash, newline},
 };
 use bstr::BString;
@@ -36,16 +37,16 @@ quick_error! {
     }
 }
 
-impl TryFrom<MaybeUnsafeState> for State {
+impl TryFrom<MaybeUnsafeState> for mutable::Target {
     type Error = Error;
 
     fn try_from(v: MaybeUnsafeState) -> Result<Self, Self::Error> {
         Ok(match v {
-            MaybeUnsafeState::Id(id) => State::Id(id),
-            MaybeUnsafeState::UnvalidatedPath(path) => {
-                State::ValidatedPath(match git_validate::refname(path.as_ref()) {
-                    Err(err) => return Err(Error::RefnameValidation { err, path }),
-                    Ok(_) => path,
+            MaybeUnsafeState::Id(id) => mutable::Target::Peeled(id),
+            MaybeUnsafeState::UnvalidatedPath(name) => {
+                mutable::Target::Symbolic(match git_validate::refname(name.as_ref()) {
+                    Ok(_) => mutable::FullName(name),
+                    Err(err) => return Err(Error::RefnameValidation { err, path: name }),
                 })
             }
         })
@@ -63,7 +64,7 @@ impl<'a> Reference<'a> {
         Ok(Reference {
             parent,
             relative_path: relative_path.into(),
-            state: parse(path_contents)
+            target: parse(path_contents)
                 .map_err(|_| Error::Parse(path_contents.into()))?
                 .1
                 .try_into()?,

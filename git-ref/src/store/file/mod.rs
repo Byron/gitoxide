@@ -1,3 +1,4 @@
+use crate::mutable;
 use std::path::PathBuf;
 
 /// The way a file store handles the reflog
@@ -22,7 +23,7 @@ pub struct Reference<'a> {
     /// The path to uniquely identify this ref within its store.
     // TODO: make this a FullName(BString) and remove the `relative_path()` method entirely.
     relative_path: PathBuf,
-    state: reference::State,
+    target: mutable::Target,
 }
 
 /// A store for reference which uses plain files.

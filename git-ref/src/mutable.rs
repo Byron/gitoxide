@@ -1,5 +1,6 @@
+use crate::Kind;
 use bstr::{BStr, BString, ByteSlice};
-use git_hash::ObjectId;
+use git_hash::{oid, ObjectId};
 use std::{borrow::Cow, convert::TryFrom, fmt, path::Path};
 
 /// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
@@ -20,6 +21,15 @@ impl TryFrom<&BStr> for FullName {
 
     fn try_from(value: &BStr) -> Result<Self, Self::Error> {
         Ok(FullName(git_validate::refname(value)?.into()))
+    }
+}
+
+impl TryFrom<BString> for FullName {
+    type Error = git_validate::refname::Error;
+
+    fn try_from(value: BString) -> Result<Self, Self::Error> {
+        git_validate::refname(value.as_ref())?;
+        Ok(FullName(value))
     }
 }
 
@@ -63,6 +73,14 @@ pub enum Target {
 }
 
 impl Target {
+    /// Returns the kind of the target the ref is pointing to.
+    pub fn kind(&self) -> Kind {
+        match self {
+            Target::Symbolic(_) => Kind::Symbolic,
+            Target::Peeled(_) => Kind::Peeled,
+        }
+    }
+
     /// Return true if this is a peeled target with a null hash
     pub fn is_null(&self) -> bool {
         match self {
@@ -76,6 +94,21 @@ impl Target {
         match self {
             Target::Peeled(oid) => crate::Target::Peeled(&oid),
             Target::Symbolic(name) => crate::Target::Symbolic(name.0.as_bstr()),
+        }
+    }
+
+    /// Interpret this target as object id which maybe `None` if it is symbolic.
+    pub fn as_id(&self) -> Option<&oid> {
+        match self {
+            Target::Symbolic(_) => None,
+            Target::Peeled(oid) => Some(oid),
+        }
+    }
+    /// Interpret this target as name of the reference it points to which maybe `None` if it an object id.
+    pub fn as_name(&self) -> Option<&BStr> {
+        match self {
+            Target::Symbolic(name) => Some(name.as_ref()),
+            Target::Peeled(_) => None,
         }
     }
 

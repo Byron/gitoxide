@@ -1,8 +1,8 @@
 use crate::{
-    file::{self, find, reference::State, Reference},
+    file::{self, find, Reference},
+    mutable,
     store::packed,
 };
-use bstr::ByteSlice;
 use quick_error::quick_error;
 
 quick_error! {
@@ -29,10 +29,10 @@ impl<'s> Reference<'s> {
         &self,
         packed: Option<&'p packed::Buffer>,
     ) -> Option<Result<file::loose_then_packed::Reference<'p, 's>, Error>> {
-        match &self.state {
-            State::Id(_) => None,
-            State::ValidatedPath(relative_path) => {
-                let path = relative_path.to_path_lossy();
+        match &self.target {
+            mutable::Target::Peeled(_) => None,
+            mutable::Target::Symbolic(full_name) => {
+                let path = full_name.to_path();
                 match self.parent.find_one_with_verified_input(path.as_ref(), packed) {
                     Ok(Some(next)) => Some(Ok(next)),
                     Ok(None) => Some(Err(Error::FindExisting(find::existing::Error::NotFound(
@@ -91,7 +91,7 @@ pub mod to_id {
                         loose_then_packed::Reference::Loose(r) => *self = r,
                         loose_then_packed::Reference::Packed(_p) => todo!("assign state directly and convert path"),
                     };
-                    return Ok(self.state.as_id().expect("it to be present"));
+                    return Ok(self.target.as_id().expect("it to be present"));
                 }
                 storage = next_ref;
                 cursor = match &mut storage {
@@ -110,7 +110,7 @@ pub mod to_id {
                     });
                 }
             }
-            Ok(self.state.as_id().expect("to be peeled"))
+            Ok(self.target.as_id().expect("to be peeled"))
         }
     }
 }
