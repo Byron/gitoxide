@@ -2,8 +2,8 @@ type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 
 mod reference {
     use super::Result;
-    use crate::store::{packed, packed::decode};
-    use crate::FullName;
+    use crate::{store::packed::decode, FullName};
+    use bstr::ByteSlice;
     use git_testtools::hex_to_id;
     use nom::error::VerboseError;
 
@@ -23,12 +23,13 @@ mod reference {
         let (input, parsed) = decode::reference::<VerboseError<_>>(input)?;
 
         assert_eq!(
-            parsed,
-            packed::Reference {
-                name: FullName("refs/heads/alternates-after-packs-and-loose".into()),
-                target: "d53c4b0f91f1b29769c9430f2d1c0bcab1170c75".into(),
-                object: Some("e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37".into())
-            }
+            parsed.name,
+            FullName("refs/heads/alternates-after-packs-and-loose".into())
+        );
+        assert_eq!(parsed.target, "d53c4b0f91f1b29769c9430f2d1c0bcab1170c75");
+        assert_eq!(
+            parsed.object,
+            Some("e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37".as_bytes().as_bstr())
         );
         assert_eq!(parsed.target(), hex_to_id("d53c4b0f91f1b29769c9430f2d1c0bcab1170c75"));
         assert_eq!(parsed.object(), hex_to_id("e9cdc958e7ce2290e2d7958cdb5aa9323ef35d37"));

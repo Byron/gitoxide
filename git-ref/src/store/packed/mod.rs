@@ -4,6 +4,7 @@ use filebuffer::FileBuffer;
 use git_hash::ObjectId;
 use std::path::PathBuf;
 
+#[derive(Debug)]
 enum Backing {
     /// The buffer is loaded entirely in memory, along with the `offset` to the first record past the header.
     InMemory(Vec<u8>),
@@ -14,6 +15,7 @@ enum Backing {
 /// A buffer containing a packed-ref file that is either memory mapped or fully in-memory depending on a cutoff.
 ///
 /// The buffer is guaranteed to be sorted as per the packed-ref rules which allows some operations to be more efficient.
+#[derive(Debug)]
 pub struct Buffer {
     data: Backing,
     /// The offset to the first record, how many bytes to skip past the header
@@ -23,9 +25,11 @@ pub struct Buffer {
 }
 
 /// A reference as parsed from the `packed-refs` file
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct Reference<'a> {
-    // TODO: Add back reference to owning buffer to allow calculating reflog paths
+    /// A back-reference to the owning buffer to get access to paths
+    /// TODO: make this NonOption once parsing is fixed
+    pub(in crate::store) packed: Option<&'a Buffer>,
     /// The unvalidated full name of the reference.
     pub name: FullName<'a>,
     /// The target object id of the reference, hex encoded.
@@ -33,6 +37,12 @@ pub struct Reference<'a> {
     /// The fully peeled object id, hex encoded, that the ref is ultimately pointing to
     /// i.e. when all indirections are removed.
     pub object: Option<&'a BStr>,
+}
+
+impl<'a> PartialEq for Reference<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.name.eq(&other.name) && self.target.eq(other.target) && self.object.eq(&other.object)
+    }
 }
 
 impl<'a> Reference<'a> {
