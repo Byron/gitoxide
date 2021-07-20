@@ -23,13 +23,7 @@ impl Reference {
         store: &file::Store,
         buf: &'b mut [u8],
     ) -> Result<Option<log::iter::Reverse<'b, std::fs::File>>, loose::reflog::Error> {
-        // NOTE: Have to repeat the implementation of store::reflog_iter here as borrow_check believes impl Iterator binds self
-        let file = match std::fs::File::open(store.reflog_path(self.name.borrow())) {
-            Ok(file) => file,
-            Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-            Err(err) => return Err(err.into()),
-        };
-        Ok(Some(log::iter::reverse(file, buf)?))
+        store.reflog_iter_rev(self.name.borrow(), buf)
     }
 
     /// Return a reflog forward iterator for this ref and write its file contents into `buf`, in the given `store`.
