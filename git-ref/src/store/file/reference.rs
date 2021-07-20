@@ -43,7 +43,7 @@ impl<'p> TryFrom<Reference<'p>> for packed::Reference<'p> {
 
 impl<'p> Reference<'p> {
     /// For details, see [loose::Reference::log_exists()].
-    pub fn log_exists(&self, store: &file::Store) -> Result<bool, loose::reflog::Error> {
+    pub fn log_exists(&self, store: &file::Store) -> bool {
         match self {
             Reference::Loose(r) => r.log_exists(store),
             Reference::Packed(_) => todo!("packed log exists"),

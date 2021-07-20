@@ -10,9 +10,9 @@ impl Reference {
     /// Please note that this method shouldn't be used to check if a log exists before trying to read it, but instead
     /// is meant to be the fastest possible way to determine if a log exists or not.
     /// If the caller needs to know if it's readable, try to read the log instead with a reverse or forward iterator.
-    pub fn log_exists(&self, store: &file::Store) -> Result<bool, loose::reflog::Error> {
+    pub fn log_exists(&self, store: &file::Store) -> bool {
         // NOTE: Have to repeat the implementation of store::reflog_iter here as borrow_check believes impl Iterator binds self
-        Ok(store.reflog_path(self.name.borrow()).is_file())
+        store.reflog_path(self.name.borrow()).is_file()
     }
     /// Return a reflog reverse iterator for this ref, reading chunks from the back into the fixed buffer `buf`, in the given `store`.
     ///

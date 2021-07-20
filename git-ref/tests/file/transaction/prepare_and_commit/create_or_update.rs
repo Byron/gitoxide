@@ -297,7 +297,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         assert_eq!(head.name.as_bstr(), "HEAD");
         assert_eq!(head.kind(), git_ref::Kind::Symbolic);
         assert_eq!(head.target.borrow().as_name(), Some(referent.as_bytes().as_bstr()));
-        assert!(!head.log_exists(&store)?, "no reflog is written for symbolic ref");
+        assert!(!head.log_exists(&store), "no reflog is written for symbolic ref");
         assert!(store.loose_find(referent)?.is_none(), "referent wasn't created");
 
         let new_oid = hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242");

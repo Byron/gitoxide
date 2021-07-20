@@ -1,22 +1,52 @@
 mod reflog {
-    use crate::file;
+    mod packedd {
+        use crate::file;
 
-    #[test]
-    fn iter() -> crate::Result {
-        let store = file::store()?;
-        let r = store.loose_find_existing("HEAD")?;
-        let mut buf = Vec::new();
-        assert_eq!(r.log_iter(&store, &mut buf)?.expect("log exists").count(), 1);
-        Ok(())
+        #[test]
+        #[ignore]
+        fn iter() -> crate::Result {
+            let store = file::store_with_packed_refs()?;
+            let packed = store.packed()?;
+            let r = store.find_existing("main", packed.as_ref())?;
+            let mut buf = Vec::new();
+            assert_eq!(r.log_iter(&store, &mut buf)?.expect("log exists").count(), 1);
+            assert!(r.log_exists(&store), "it exists if its readable");
+            Ok(())
+        }
+
+        #[test]
+        #[ignore]
+        fn iter_rev() -> crate::Result {
+            let store = file::store_with_packed_refs()?;
+            let packed = store.packed()?;
+            let r = store.find_existing("main", packed.as_ref())?;
+            let mut buf = [0u8; 256];
+            assert_eq!(r.log_iter_rev(&store, &mut buf)?.expect("log exists").count(), 1);
+            Ok(())
+        }
     }
 
-    #[test]
-    fn iter_rev() -> crate::Result {
-        let store = file::store()?;
-        let r = store.loose_find_existing("HEAD")?;
-        let mut buf = [0u8; 256];
-        assert_eq!(r.log_iter_rev(&store, &mut buf)?.expect("log exists").count(), 1);
-        Ok(())
+    mod loose {
+        use crate::file;
+
+        #[test]
+        fn iter() -> crate::Result {
+            let store = file::store()?;
+            let r = store.loose_find_existing("HEAD")?;
+            let mut buf = Vec::new();
+            assert_eq!(r.log_iter(&store, &mut buf)?.expect("log exists").count(), 1);
+            assert!(r.log_exists(&store), "it exists if its readable");
+            Ok(())
+        }
+
+        #[test]
+        fn iter_rev() -> crate::Result {
+            let store = file::store()?;
+            let r = store.loose_find_existing("HEAD")?;
+            let mut buf = [0u8; 256];
+            assert_eq!(r.log_iter_rev(&store, &mut buf)?.expect("log exists").count(), 1);
+            Ok(())
+        }
     }
 }
 
