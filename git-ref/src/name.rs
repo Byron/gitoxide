@@ -30,7 +30,7 @@ use std::convert::Infallible;
 
 impl<'a> FullName<'a> {
     /// Convert this name into the relative path identifying the reference location.
-    pub fn to_path(&self) -> Cow<'a, Path> {
+    pub fn to_path(self) -> Cow<'a, Path> {
         self.0.to_path_lossy()
     }
 
@@ -43,7 +43,7 @@ impl<'a> FullName<'a> {
 impl<'a> PartialName<'a> {
     /// Convert this name into the relative path possibly identifying the reference location.
     /// Note that it may be only a partial path though.
-    pub fn to_partial_path(&self) -> Cow<'a, Path> {
+    pub fn to_partial_path(self) -> Cow<'a, Path> {
         self.0.to_path_lossy()
     }
 

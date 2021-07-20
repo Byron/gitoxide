@@ -73,7 +73,7 @@ pub fn reference<'a, E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], crate
 ) -> IResult<&'a [u8], packed::Reference<'a>, E> {
     let (input, (target, name)) = tuple((
         terminated(hex_hash, tag(b" ")),
-        map_res(until_newline, |name| crate::FullName::try_from(name)),
+        map_res(until_newline, crate::FullName::try_from),
     ))(input)?;
     let (rest, object) = opt(delimited(tag(b"^"), hex_hash, newline))(input)?;
     Ok((rest, packed::Reference { name, target, object }))

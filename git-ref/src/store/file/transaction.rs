@@ -102,7 +102,7 @@ impl<'a> Transaction<'a> {
 
                 // Keep the previous value for the caller and ourselves. Maybe they want to keep a log of sorts.
                 if let Some(existing) = existing_ref {
-                    *previous = Some(existing.target.into());
+                    *previous = Some(existing.target);
                 }
 
                 lock
@@ -165,7 +165,7 @@ impl<'a> Transaction<'a> {
                 *previous = match existing_ref {
                     None => Create::Only,
                     Some(existing) => Create::OrUpdate {
-                        previous: Some(existing.target.into()),
+                        previous: Some(existing.target),
                     },
                 };
 
