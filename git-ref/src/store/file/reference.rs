@@ -1,4 +1,3 @@
-use super::Reference;
 use crate::{
     mutable,
     store::{
@@ -9,6 +8,15 @@ use crate::{
 };
 use git_hash::ObjectId;
 use std::convert::TryFrom;
+
+/// Either a loose or packed reference, depending on where it was found.
+#[derive(Debug)]
+pub enum Reference<'p, 's> {
+    /// A reference originating in a pack
+    Packed(packed::Reference<'p>),
+    /// A reference from the filesystem
+    Loose(loose::Reference<'s>),
+}
 
 impl<'p, 's> TryFrom<Reference<'p, 's>> for crate::file::loose::Reference<'s> {
     type Error = ();
@@ -75,7 +83,7 @@ impl<'p, 's> Reference<'p, 's> {
     ) -> Result<Option<log::iter::Reverse<'b, std::fs::File>>, loose::reflog::Error> {
         match self {
             Reference::Loose(r) => r.log_iter_rev(buf),
-            Reference::Packed(_) => todo!("packed log iter rev"),
+            Reference::Packed(_) => todo!("packed log overlay rev"),
         }
     }
 
@@ -87,7 +95,7 @@ impl<'p, 's> Reference<'p, 's> {
     {
         match self {
             Reference::Loose(r) => r.log_iter(buf),
-            Reference::Packed(_) => todo!("packed log iter"),
+            Reference::Packed(_) => todo!("packed log overlay"),
         }
     }
 

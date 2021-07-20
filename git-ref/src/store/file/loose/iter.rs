@@ -163,7 +163,7 @@ pub mod loose {
         use std::{io, path::PathBuf};
 
         quick_error! {
-            /// The error returned by [file::iter::Loose] iteration.
+            /// The error returned by [file::overlay::Loose] iteration.
             #[derive(Debug)]
             #[allow(missing_docs)]
             pub enum Error {

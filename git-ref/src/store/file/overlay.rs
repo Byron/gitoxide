@@ -1,13 +1,25 @@
-use super::{LooseThenPacked, Reference};
 use crate::{
-    file::{loose, path_to_name},
+    file::{loose, path_to_name, Reference},
+    mutable::FullName,
     store::{file, packed},
 };
 use std::{
     cmp::Ordering,
     io::Read,
+    iter::Peekable,
     path::{Path, PathBuf},
 };
+
+/// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise
+/// equivalent packed references.
+///
+/// All errors will be returned verbatim, while packed errors are depleted first if loose refs also error.
+pub struct LooseThenPacked<'p, 's> {
+    parent: &'s file::Store,
+    packed: Peekable<packed::Iter<'p>>,
+    loose: Peekable<loose::iter::SortedLoosePaths>,
+    buf: Vec<u8>,
+}
 
 impl<'p, 's> LooseThenPacked<'p, 's> {
     fn convert_packed(
@@ -154,5 +166,4 @@ mod error {
     }
 }
 
-use crate::mutable::FullName;
 pub use error::Error;

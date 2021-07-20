@@ -43,7 +43,6 @@ pub(in crate::store::file) fn path_to_name(path: impl Into<PathBuf>) -> bstr::BS
 ///
 pub mod loose;
 mod overlay;
-pub use overlay::Reference;
 
 ///
 pub mod iter {
@@ -51,9 +50,10 @@ pub mod iter {
         loose::iter::{loose, Loose},
         overlay::LooseThenPacked,
     };
+
     ///
     pub mod loose_then_packed {
-        pub use super::super::overlay::iter::Error;
+        pub use super::super::overlay::Error;
     }
 }
 
@@ -62,6 +62,10 @@ pub mod log;
 
 ///
 pub mod find;
+
+mod reference;
+pub use reference::Reference;
+
 ///
 pub mod transaction;
 
