@@ -1,6 +1,7 @@
-use crate::store::file;
 use crate::{
+    file::loose::reference::logiter::must_be_io_err,
     mutable,
+    store::file,
     store::{
         file::{log, loose},
         packed,
@@ -95,10 +96,10 @@ impl<'p> Reference<'p> {
         &self,
         store: &file::Store,
         buf: &'b mut [u8],
-    ) -> Result<Option<log::iter::Reverse<'b, std::fs::File>>, loose::reflog::Error> {
+    ) -> std::io::Result<Option<log::iter::Reverse<'b, std::fs::File>>> {
         match self {
             Reference::Loose(r) => r.log_iter_rev(store, buf),
-            Reference::Packed(p) => store.reflog_iter_rev(p.name, buf),
+            Reference::Packed(p) => store.reflog_iter_rev(p.name, buf).map_err(must_be_io_err),
         }
     }
 
@@ -107,8 +108,7 @@ impl<'p> Reference<'p> {
         &self,
         store: &file::Store,
         buf: &'b mut Vec<u8>,
-    ) -> Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>>>, loose::reflog::Error>
-    {
+    ) -> std::io::Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>>>> {
         match self {
             Reference::Loose(r) => r.log_iter(store, buf),
             Reference::Packed(_) => todo!("packed log overlay"),

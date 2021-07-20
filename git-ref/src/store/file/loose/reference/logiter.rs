@@ -4,6 +4,13 @@ use crate::store::{
 };
 use std::io::Read;
 
+pub(in crate::store::file) fn must_be_io_err(err: loose::reflog::Error) -> std::io::Error {
+    match err {
+        loose::reflog::Error::Io(err) => err,
+        loose::reflog::Error::RefnameValidation(_) => unreachable!("we are called from a valid ref"),
+    }
+}
+
 impl Reference {
     /// Returns true if a reflog exists in the given `store`.
     ///
@@ -23,8 +30,8 @@ impl Reference {
         &self,
         store: &file::Store,
         buf: &'b mut [u8],
-    ) -> Result<Option<log::iter::Reverse<'b, std::fs::File>>, loose::reflog::Error> {
-        store.reflog_iter_rev(self.name.borrow(), buf)
+    ) -> std::io::Result<Option<log::iter::Reverse<'b, std::fs::File>>> {
+        store.reflog_iter_rev(self.name.borrow(), buf).map_err(must_be_io_err)
     }
 
     /// Return a reflog forward iterator for this ref and write its file contents into `buf`, in the given `store`.
@@ -35,8 +42,7 @@ impl Reference {
         &self,
         store: &file::Store,
         buf: &'b mut Vec<u8>,
-    ) -> Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>>>, loose::reflog::Error>
-    {
+    ) -> std::io::Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>>>> {
         // NOTE: Have to repeat the implementation of store::reflog_iter here as borrow_check believes impl Iterator binds self
         match std::fs::File::open(store.reflog_path(self.name.borrow())) {
             Ok(mut file) => {
