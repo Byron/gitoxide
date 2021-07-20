@@ -6,7 +6,7 @@ mod reflog {
         let store = file::store()?;
         let r = store.loose_find_existing("HEAD")?;
         let mut buf = Vec::new();
-        assert_eq!(r.log_iter(&mut buf)?.expect("log exists").count(), 1);
+        assert_eq!(r.log_iter(&store, &mut buf)?.expect("log exists").count(), 1);
         Ok(())
     }
 
@@ -15,7 +15,7 @@ mod reflog {
         let store = file::store()?;
         let r = store.loose_find_existing("HEAD")?;
         let mut buf = [0u8; 256];
-        assert_eq!(r.log_iter_rev(&mut buf)?.expect("log exists").count(), 1);
+        assert_eq!(r.log_iter_rev(&store, &mut buf)?.expect("log exists").count(), 1);
         Ok(())
     }
 }
@@ -31,14 +31,15 @@ mod peel {
         let r = store.loose_find_existing("HEAD")?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
-        let nr =
-            git_ref::file::loose::Reference::try_from(r.peel_one_level(None).expect("exists").expect("no failure"))
-                .expect("loose ref");
+        let nr = git_ref::file::loose::Reference::try_from(
+            r.peel_one_level(&store, None).expect("exists").expect("no failure"),
+        )
+        .expect("loose ref");
         assert!(
             matches!(nr.target.borrow(), git_ref::Target::Peeled(_)),
             "iteration peels a single level"
         );
-        assert!(nr.peel_one_level(None).is_none(), "end of iteration");
+        assert!(nr.peel_one_level(&store, None).is_none(), "end of iteration");
         assert_eq!(
             nr.target.borrow(),
             git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
@@ -53,11 +54,11 @@ mod peel {
         let mut head = store.loose_find_existing("HEAD")?;
         let packed = store.packed()?;
         let expected = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-        assert_eq!(head.peel_to_id_in_place(packed.as_ref())?, expected);
+        assert_eq!(head.peel_to_id_in_place(&store, packed.as_ref())?, expected);
         assert_eq!(head.target.as_id().map(ToOwned::to_owned), Some(expected));
 
         let mut head = store.find_existing("dt1", packed.as_ref())?;
-        assert_eq!(head.peel_to_id_in_place(packed.as_ref())?, expected);
+        assert_eq!(head.peel_to_id_in_place(&store, packed.as_ref())?, expected);
         assert_eq!(head.target().as_id().map(ToOwned::to_owned), Some(expected));
         Ok(())
     }
@@ -80,7 +81,7 @@ mod peel {
         );
 
         let peeled = head
-            .peel_one_level(packed.as_ref())
+            .peel_one_level(&store, packed.as_ref())
             .expect("a peeled ref for the object")?;
         assert_eq!(
             peeled.target().as_id().map(ToOwned::to_owned),
@@ -88,7 +89,7 @@ mod peel {
             "packed refs are always peeled (at least the ones we choose to read)"
         );
         assert_eq!(peeled.kind(), git_ref::Kind::Peeled, "it's terminally peeled now");
-        assert!(peeled.peel_one_level(packed.as_ref()).is_none());
+        assert!(peeled.peel_one_level(&store, packed.as_ref()).is_none());
         Ok(())
     }
 
@@ -99,7 +100,7 @@ mod peel {
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
         assert_eq!(
-            r.peel_to_id_in_place(None)?,
+            r.peel_to_id_in_place(&store, None)?,
             hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")
         );
         assert_eq!(r.name.as_bstr(), "refs/remotes/origin/multi-link-target3");
@@ -115,7 +116,7 @@ mod peel {
         assert_eq!(r.name.as_bstr(), "refs/loop-a");
 
         assert!(matches!(
-            r.peel_to_id_in_place(None).unwrap_err(),
+            r.peel_to_id_in_place(&store, None).unwrap_err(),
             git_ref::file::loose::reference::peel::to_id::Error::Cycle { .. }
         ));
         assert_eq!(r.name.as_bstr(), "refs/loop-a", "the ref is not changed on error");
@@ -124,14 +125,7 @@ mod peel {
 }
 
 mod parse {
-    use git_ref::file::Store;
-
-    fn store() -> Store {
-        Store::at("base doesnt matter", Default::default())
-    }
-
     mod invalid {
-        use crate::file::reference::parse::store;
         use git_ref::file::loose::Reference;
 
         macro_rules! mktest {
@@ -139,13 +133,8 @@ mod parse {
                 #[test]
                 fn $name() {
                     use std::convert::TryInto;
-                    let store = store();
-                    let err = Reference::try_from_path(
-                        &store,
-                        "HEAD".try_into().expect("this is a valid name"),
-                        $input,
-                    )
-                    .unwrap_err();
+                    let err =
+                        Reference::try_from_path("HEAD".try_into().expect("this is a valid name"), $input).unwrap_err();
                     assert_eq!(err.to_string(), $err);
                 }
             };
@@ -155,7 +144,6 @@ mod parse {
         mktest!(ref_tag, b"reff: hello", "\"reff: hello\" could not be parsed");
     }
     mod valid {
-        use crate::file::reference::parse::store;
         use bstr::ByteSlice;
         use git_ref::file::loose::Reference;
         use git_testtools::hex_to_id;
@@ -165,13 +153,8 @@ mod parse {
                 #[test]
                 fn $name() {
                     use std::convert::TryInto;
-                    let store = store();
-                    let reference = Reference::try_from_path(
-                        &store,
-                        "HEAD".try_into().expect("valid static name"),
-                        $input,
-                    )
-                    .unwrap();
+                    let reference =
+                        Reference::try_from_path("HEAD".try_into().expect("valid static name"), $input).unwrap();
                     assert_eq!(reference.kind(), $kind);
                     assert_eq!(reference.target.borrow().as_id(), $id);
                     assert_eq!(reference.target.borrow().as_name(), $ref);

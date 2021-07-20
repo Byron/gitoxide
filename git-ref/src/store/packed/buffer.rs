@@ -51,11 +51,7 @@ pub mod open {
             if !sorted {
                 return Err(Error::Unsorted);
             }
-            Ok(packed::Buffer {
-                offset,
-                data: backing,
-                base: path.parent().expect("assume we are in a top-level repo").into(),
-            })
+            Ok(packed::Buffer { offset, data: backing })
         }
     }
 

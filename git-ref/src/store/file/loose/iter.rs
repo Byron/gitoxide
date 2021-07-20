@@ -12,7 +12,7 @@ use std::{
 
 /// An iterator over all valid loose reference paths as seen from a particular base directory.
 pub(in crate::store::file) struct SortedLoosePaths {
-    base: PathBuf,
+    pub(crate) base: PathBuf,
     file_walk: DirEntryIter,
 }
 
@@ -62,26 +62,24 @@ impl Iterator for SortedLoosePaths {
 }
 
 /// An iterator over all loose references as seen from a particular base directory.
-pub struct Loose<'a> {
-    parent: &'a file::Store,
+pub struct Loose {
     ref_paths: SortedLoosePaths,
     buf: Vec<u8>,
 }
 
-impl<'a> Loose<'a> {
+impl Loose {
     /// Initialize a loose reference iterator owned by `store` at the given iteration `root`, where `base` is the
     /// path to which resulting reference names should be relative to.
-    pub fn at_root(store: &'a file::Store, root: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
+    pub fn at_root(root: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
         Loose {
-            parent: store,
             ref_paths: SortedLoosePaths::at_root_with_names(root, base),
             buf: Vec::new(),
         }
     }
 }
 
-impl<'a> Iterator for Loose<'a> {
-    type Item = Result<Reference<'a>, loose::Error>;
+impl Iterator for Loose {
+    type Item = Result<Reference, loose::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.ref_paths.next().map(|res| {
@@ -96,11 +94,9 @@ impl<'a> Iterator for Loose<'a> {
                         let relative_path = validated_path
                             .strip_prefix(&self.ref_paths.base)
                             .expect("root contains path");
-                        Reference::try_from_path(self.parent, name, &self.buf).map_err(|err| {
-                            loose::Error::ReferenceCreation {
-                                err,
-                                relative_path: relative_path.into(),
-                            }
+                        Reference::try_from_path(name, &self.buf).map_err(|err| loose::Error::ReferenceCreation {
+                            err,
+                            relative_path: relative_path.into(),
                         })
                     })
             })
@@ -116,20 +112,20 @@ impl file::Store {
     /// Reference files that do not constitute valid names will be silently ignored.
     ///
     /// See [`Store::packed()`][file::Store::packed()] for interacting with packed references.
-    pub fn loose_iter(&self) -> std::io::Result<Loose<'_>> {
+    pub fn loose_iter(&self) -> std::io::Result<Loose> {
         let refs = self.refs_dir();
         if !refs.is_dir() {
             return Err(std::io::ErrorKind::NotFound.into());
         }
-        Ok(Loose::at_root(self, refs, self.base.clone()))
+        Ok(Loose::at_root(refs, self.base.clone()))
     }
 
     /// Return an iterator over all loose references that start with the given `prefix`.
     ///
     /// Otherwise it's similar to [`loose_iter()`][file::Store::loose_iter()].
-    pub fn loose_iter_prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<Loose<'_>> {
+    pub fn loose_iter_prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<Loose> {
         let prefix = self.validate_prefix(prefix.as_ref())?;
-        Ok(Loose::at_root(self, self.base.join(prefix), self.base.clone()))
+        Ok(Loose::at_root(self.base.join(prefix), self.base.clone()))
     }
 
     pub(in crate::store::file) fn refs_dir(&self) -> PathBuf {

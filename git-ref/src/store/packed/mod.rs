@@ -2,7 +2,6 @@ use crate::FullName;
 use bstr::{BStr, BString};
 use filebuffer::FileBuffer;
 use git_hash::ObjectId;
-use std::path::PathBuf;
 
 enum Backing {
     /// The buffer is loaded entirely in memory, along with the `offset` to the first record past the header.
@@ -18,14 +17,11 @@ pub struct Buffer {
     data: Backing,
     /// The offset to the first record, how many bytes to skip past the header
     offset: usize,
-    /// The base path of the store from which it was created
-    base: PathBuf,
 }
 
 /// A reference as parsed from the `packed-refs` file
 #[derive(Debug, PartialEq, Eq)]
 pub struct Reference<'a> {
-    // TODO: Add back reference to owning buffer to allow calculating reflog paths
     /// The unvalidated full name of the reference.
     pub name: FullName<'a>,
     /// The target object id of the reference, hex encoded.

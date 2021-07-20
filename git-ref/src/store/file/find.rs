@@ -40,7 +40,7 @@ impl file::Store {
         &'s self,
         partial: Name,
         packed: Option<&'p packed::Buffer>,
-    ) -> Result<Option<file::Reference<'p, 's>>, Error>
+    ) -> Result<Option<file::Reference<'p>>, Error>
     where
         Name: TryInto<PartialName<'a>, Error = E>,
         Error: From<E>,
@@ -50,7 +50,7 @@ impl file::Store {
     }
 
     /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
-    pub fn loose_find<'a, Name, E>(&self, partial: Name) -> Result<Option<loose::Reference<'_>>, Error>
+    pub fn loose_find<'a, Name, E>(&self, partial: Name) -> Result<Option<loose::Reference>, Error>
     where
         Name: TryInto<PartialName<'a>, Error = E>,
         Error: From<E>,
@@ -59,11 +59,11 @@ impl file::Store {
             .map(|r| r.map(|r| r.try_into().expect("only loose refs are found without pack")))
     }
 
-    pub(in crate::store::file) fn find_one_with_verified_input<'p, 's>(
-        &'s self,
+    pub(in crate::store::file) fn find_one_with_verified_input<'p>(
+        &self,
         relative_path: &Path,
         packed: Option<&'p packed::Buffer>,
-    ) -> Result<Option<file::Reference<'p, 's>>, Error> {
+    ) -> Result<Option<file::Reference<'p>>, Error> {
         let is_all_uppercase = relative_path
             .to_string_lossy()
             .as_ref()
@@ -92,13 +92,13 @@ impl file::Store {
         )
     }
 
-    fn find_inner<'p, 's>(
-        &'s self,
+    fn find_inner<'p>(
+        &self,
         inbetween: &str,
         relative_path: &Path,
         packed: Option<&'p packed::Buffer>,
         transform: Transform,
-    ) -> Result<Option<file::Reference<'p, 's>>, Error> {
+    ) -> Result<Option<file::Reference<'p>>, Error> {
         let (base, is_definitely_absolute) = match transform {
             Transform::EnforceRefsPrefix => (
                 if relative_path.starts_with("refs") {
@@ -129,7 +129,7 @@ impl file::Store {
         };
         Ok(Some({
             let full_name = path_to_name(&relative_path);
-            loose::Reference::try_from_path(self, FullName(full_name), &contents)
+            loose::Reference::try_from_path(FullName(full_name), &contents)
                 .map(file::Reference::Loose)
                 .map_err(|err| Error::ReferenceCreation { err, relative_path })?
         }))
@@ -183,7 +183,7 @@ pub mod existing {
             &'s self,
             partial: Name,
             packed: Option<&'p packed::Buffer>,
-        ) -> Result<file::Reference<'p, 's>, Error>
+        ) -> Result<file::Reference<'p>, Error>
         where
             Name: TryInto<PartialName<'a>, Error = E>,
             crate::name::Error: From<E>,
@@ -199,7 +199,7 @@ pub mod existing {
         }
 
         /// Similar to [`file::Store::find()`] won't handle packed-refs.
-        pub fn loose_find_existing<'a, Name, E>(&self, partial: Name) -> Result<loose::Reference<'_>, Error>
+        pub fn loose_find_existing<'a, Name, E>(&self, partial: Name) -> Result<loose::Reference, Error>
         where
             Name: TryInto<PartialName<'a>, Error = E>,
             crate::name::Error: From<E>,

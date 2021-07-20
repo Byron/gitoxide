@@ -25,19 +25,20 @@ quick_error! {
     }
 }
 
-impl<'s> loose::Reference<'s> {
+impl loose::Reference {
     /// Follow this symbolic reference one level and return the ref it refers to, possibly providing access to `packed` references for lookup.
     ///
     /// Returns `None` if this is not a symbolic reference, hence the leaf of the chain.
     pub fn peel_one_level<'p>(
         &self,
+        store: &file::Store,
         packed: Option<&'p packed::Buffer>,
-    ) -> Option<Result<file::Reference<'p, 's>, Error>> {
+    ) -> Option<Result<file::Reference<'p>, Error>> {
         match &self.target {
             Target::Peeled(_) => None,
             Target::Symbolic(full_name) => {
                 let path = full_name.to_path();
-                match self.parent.find_one_with_verified_input(path.as_ref(), packed) {
+                match store.find_one_with_verified_input(path.as_ref(), packed) {
                     Ok(Some(next)) => Some(Ok(next)),
                     Ok(None) => Some(Err(Error::FindExisting(find::existing::Error::NotFound(
                         path.into_owned(),
@@ -79,17 +80,21 @@ pub mod to_id {
         }
     }
 
-    impl<'a> loose::Reference<'a> {
+    impl loose::Reference {
         /// Peel this symbolic reference until the end of the chain is reached and an object ID is available,
         /// possibly providing access to `packed` references for lookup.
         ///
         /// If an error occurs this reference remains unchanged.
-        pub fn peel_to_id_in_place(&mut self, packed: Option<&packed::Buffer>) -> Result<&oid, Error> {
+        pub fn peel_to_id_in_place(
+            &mut self,
+            store: &file::Store,
+            packed: Option<&packed::Buffer>,
+        ) -> Result<&oid, Error> {
             let mut count = 0;
             let mut seen = BTreeSet::new();
             let mut storage;
             let mut cursor = &mut *self;
-            while let Some(next) = cursor.peel_one_level(packed) {
+            while let Some(next) = cursor.peel_one_level(store, packed) {
                 let next_ref = next?;
                 if let crate::Kind::Peeled = next_ref.kind() {
                     match next_ref {
@@ -107,7 +112,7 @@ pub mod to_id {
                     file::Reference::Packed(_) => unreachable!("handled above - we are done"),
                 };
                 if seen.contains(&cursor.name) {
-                    return Err(Error::Cycle(cursor.parent.base.join(cursor.name.to_path())));
+                    return Err(Error::Cycle(store.base.join(cursor.name.to_path())));
                 }
                 seen.insert(cursor.name.clone());
                 count += 1;

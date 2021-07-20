@@ -60,10 +60,8 @@ impl<'a> Transaction<'a> {
             .ref_contents(relative_path.as_ref())
             .map_err(Error::from)
             .and_then(|opt| {
-                opt.map(|buf| {
-                    loose::Reference::try_from_path(store, change.update.name.clone(), &buf).map_err(Error::from)
-                })
-                .transpose()
+                opt.map(|buf| loose::Reference::try_from_path(change.update.name.clone(), &buf).map_err(Error::from))
+                    .transpose()
             })
             .or_else(|err| match err {
                 Error::ReferenceDecode(_) => Ok(None),

@@ -1,5 +1,4 @@
 use crate::{
-    file::Store,
     mutable,
     parse::{hex_hash, newline},
     store::file::loose::Reference,
@@ -51,12 +50,11 @@ impl TryFrom<MaybeUnsafeState> for mutable::Target {
     }
 }
 
-impl<'a> Reference<'a> {
+impl Reference {
     /// Create a new reference of the given `parent` store with `relative_path` service as unique identifier
     /// at which the `path_contents` was read to obtain the refs value.
-    pub fn try_from_path(parent: &'a Store, name: mutable::FullName, path_contents: &[u8]) -> Result<Self, Error> {
+    pub fn try_from_path(name: mutable::FullName, path_contents: &[u8]) -> Result<Self, Error> {
         Ok(Reference {
-            parent,
             name,
             target: parse(path_contents)
                 .map_err(|_| Error::Parse(path_contents.into()))?

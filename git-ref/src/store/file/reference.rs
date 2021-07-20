@@ -1,3 +1,4 @@
+use crate::store::file;
 use crate::{
     mutable,
     store::{
@@ -11,17 +12,17 @@ use std::convert::TryFrom;
 
 /// Either a loose or packed reference, depending on where it was found.
 #[derive(Debug)]
-pub enum Reference<'p, 's> {
+pub enum Reference<'p> {
     /// A reference originating in a pack
     Packed(packed::Reference<'p>),
     /// A reference from the filesystem
-    Loose(loose::Reference<'s>),
+    Loose(loose::Reference),
 }
 
-impl<'p, 's> TryFrom<Reference<'p, 's>> for crate::file::loose::Reference<'s> {
+impl<'p> TryFrom<Reference<'p>> for loose::Reference {
     type Error = ();
 
-    fn try_from(value: Reference<'p, 's>) -> Result<Self, Self::Error> {
+    fn try_from(value: Reference<'p>) -> Result<Self, Self::Error> {
         match value {
             Reference::Loose(l) => Ok(l),
             Reference::Packed(_) => Err(()),
@@ -29,11 +30,22 @@ impl<'p, 's> TryFrom<Reference<'p, 's>> for crate::file::loose::Reference<'s> {
     }
 }
 
-impl<'p, 's> Reference<'p, 's> {
-    /// For details, see [crate::file::loose::Reference::log_exists()].
-    pub fn log_exists(&self) -> Result<bool, loose::reflog::Error> {
+impl<'p> TryFrom<Reference<'p>> for packed::Reference<'p> {
+    type Error = ();
+
+    fn try_from(value: Reference<'p>) -> Result<Self, Self::Error> {
+        match value {
+            Reference::Loose(_) => Err(()),
+            Reference::Packed(p) => Ok(p),
+        }
+    }
+}
+
+impl<'p> Reference<'p> {
+    /// For details, see [loose::Reference::log_exists()].
+    pub fn log_exists(&self, store: &file::Store) -> Result<bool, loose::reflog::Error> {
         match self {
-            Reference::Loose(r) => r.log_exists(),
+            Reference::Loose(r) => r.log_exists(store),
             Reference::Packed(_) => todo!("packed log exists"),
         }
     }
@@ -41,10 +53,11 @@ impl<'p, 's> Reference<'p, 's> {
     /// For details, see [crate::file::loose::Reference::peel_to_id_in_place].
     pub fn peel_to_id_in_place(
         &mut self,
+        store: &file::Store,
         packed: Option<&packed::Buffer>,
     ) -> Result<ObjectId, crate::store::file::loose::reference::peel::to_id::Error> {
         match self {
-            Reference::Loose(r) => r.peel_to_id_in_place(packed).map(ToOwned::to_owned),
+            Reference::Loose(r) => r.peel_to_id_in_place(store, packed).map(ToOwned::to_owned),
             Reference::Packed(p) => {
                 if let Some(object) = p.object {
                     p.target = object;
@@ -56,12 +69,13 @@ impl<'p, 's> Reference<'p, 's> {
     }
 
     /// For details, see [crate::file::loose::Reference::peel_one_level].
-    pub fn peel_one_level<'p2: 'p>(
+    pub fn peel_one_level<'p2>(
         &self,
+        store: &file::Store,
         packed: Option<&'p2 packed::Buffer>,
-    ) -> Option<Result<Reference<'p2, 's>, crate::store::file::loose::reference::peel::Error>> {
+    ) -> Option<Result<Reference<'p2>, crate::store::file::loose::reference::peel::Error>> {
         match self {
-            Reference::Loose(r) => r.peel_one_level(packed),
+            Reference::Loose(r) => r.peel_one_level(store, packed),
             Reference::Packed(p) => packed
                 .and_then(|packed| packed.find(p.name).ok().flatten()) // needed to get data with 'p2 lifetime
                 .and_then(|np| {
@@ -79,10 +93,11 @@ impl<'p, 's> Reference<'p, 's> {
     /// Obtain a reverse iterator over logs of this reference. See [crate::file::loose::Reference::log_iter_rev()] for details.
     pub fn log_iter_rev<'b>(
         &self,
+        store: &file::Store,
         buf: &'b mut [u8],
     ) -> Result<Option<log::iter::Reverse<'b, std::fs::File>>, loose::reflog::Error> {
         match self {
-            Reference::Loose(r) => r.log_iter_rev(buf),
+            Reference::Loose(r) => r.log_iter_rev(store, buf),
             Reference::Packed(_) => todo!("packed log overlay rev"),
         }
     }
@@ -90,11 +105,12 @@ impl<'p, 's> Reference<'p, 's> {
     /// Obtain an iterator over logs of this reference. See [crate::file::loose::Reference::log_iter()] for details.
     pub fn log_iter<'b>(
         &self,
+        store: &file::Store,
         buf: &'b mut Vec<u8>,
     ) -> Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>>>, loose::reflog::Error>
     {
         match self {
-            Reference::Loose(r) => r.log_iter(buf),
+            Reference::Loose(r) => r.log_iter(store, buf),
             Reference::Packed(_) => todo!("packed log overlay"),
         }
     }

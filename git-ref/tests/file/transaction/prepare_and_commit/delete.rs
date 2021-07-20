@@ -57,7 +57,7 @@ fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
 fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
     let head = store.loose_find_existing("HEAD")?;
-    assert!(head.log_exists().unwrap());
+    assert!(head.log_exists(&store).unwrap());
     let _main = store.loose_find_existing("main")?;
 
     let edits = store
@@ -99,7 +99,7 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
 fn delete_ref_with_incorrect_previous_value_fails() {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh").unwrap();
     let head = store.loose_find_existing("HEAD").unwrap();
-    assert!(head.log_exists().unwrap());
+    assert!(head.log_exists(&store).unwrap());
 
     let err = store
         .transaction(
@@ -119,16 +119,16 @@ fn delete_ref_with_incorrect_previous_value_fails() {
     assert_eq!(err.to_string(), "The reference 'refs/heads/main' should have content ref: refs/heads/main, actual content was 02a7a22d90d7c02fb494ed25551850b868e634f0");
     // everything stays as is
     let head = store.loose_find_existing("HEAD").unwrap();
-    assert!(head.log_exists().unwrap());
+    assert!(head.log_exists(&store).unwrap());
     let main = store.loose_find_existing("main").expect("referent still exists");
-    assert!(main.log_exists().unwrap());
+    assert!(main.log_exists(&store).unwrap());
 }
 
 #[test]
 fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
     let head = store.loose_find_existing("HEAD")?;
-    assert!(head.log_exists().unwrap());
+    assert!(head.log_exists(&store).unwrap());
 
     let edits = store
         .transaction(
@@ -146,12 +146,12 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
 
     assert_eq!(edits.len(), 1);
     let head = store.loose_find_existing("HEAD")?;
-    assert!(!head.log_exists().unwrap());
+    assert!(!head.log_exists(&store).unwrap());
     let main = store.loose_find_existing("main").expect("referent still exists");
-    assert!(main.log_exists()?, "log is untouched, too");
+    assert!(main.log_exists(&store)?, "log is untouched, too");
     assert_eq!(
         main.target,
-        head.peel_one_level(None).expect("a symref")?.target(),
+        head.peel_one_level(&store, None).expect("a symref")?.target(),
         "head points to main"
     );
     Ok(())
@@ -161,7 +161,7 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
 fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
     let head = store.loose_find_existing("HEAD")?;
-    assert!(head.log_exists()?);
+    assert!(head.log_exists(&store)?);
 
     let edits = store
         .transaction(
@@ -179,12 +179,12 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
 
     assert_eq!(edits.len(), 2);
     let head = store.loose_find_existing("HEAD")?;
-    assert!(!head.log_exists()?);
+    assert!(!head.log_exists(&store)?);
     let main = store.loose_find_existing("main").expect("referent still exists");
-    assert!(!main.log_exists()?, "log is removed");
+    assert!(!main.log_exists(&store)?, "log is removed");
     assert_eq!(
         main.target,
-        head.peel_one_level(None).expect("a symref")?.target(),
+        head.peel_one_level(&store, None).expect("a symref")?.target(),
         "head points to main"
     );
     Ok(())
@@ -258,7 +258,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
     for reflog_writemode in &[git_ref::file::WriteReflog::Normal, git_ref::file::WriteReflog::Disable] {
         let (_keep, mut store) = store_writable("make_repo_for_reflog.sh")?;
         store.write_reflog = *reflog_writemode;
-        assert!(store.loose_find_existing("HEAD")?.log_exists()?,);
+        assert!(store.loose_find_existing("HEAD")?.log_exists(&store)?,);
         let edits = store
             .transaction(
                 Some(RefEdit {
@@ -273,7 +273,10 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
             )
             .commit(&committer())?;
         assert_eq!(edits.len(), 1);
-        assert!(!store.loose_find_existing("HEAD")?.log_exists()?, "log was deleted");
+        assert!(
+            !store.loose_find_existing("HEAD")?.log_exists(&store)?,
+            "log was deleted"
+        );
     }
     Ok(())
 }

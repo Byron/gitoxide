@@ -15,7 +15,7 @@ use std::{
 ///
 /// All errors will be returned verbatim, while packed errors are depleted first if loose refs also error.
 pub struct LooseThenPacked<'p, 's> {
-    parent: &'s file::Store,
+    base: &'s Path,
     packed: Peekable<packed::Iter<'p>>,
     loose: Peekable<loose::iter::SortedLoosePaths>,
     buf: Vec<u8>,
@@ -25,7 +25,7 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
     fn convert_packed(
         &mut self,
         packed: Result<packed::Reference<'p>, packed::iter::Error>,
-    ) -> Result<Reference<'p, 's>, Error> {
+    ) -> Result<Reference<'p>, Error> {
         packed.map(Reference::Packed).map_err(|err| match err {
             packed::iter::Error::Reference {
                 invalid_line,
@@ -38,7 +38,7 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
         })
     }
 
-    fn convert_loose(&mut self, res: std::io::Result<(PathBuf, FullName)>) -> Result<Reference<'p, 's>, Error> {
+    fn convert_loose(&mut self, res: std::io::Result<(PathBuf, FullName)>) -> Result<Reference<'p>, Error> {
         let (refpath, name) = res.map_err(Error::Traversal)?;
         std::fs::File::open(&refpath)
             .and_then(|mut f| {
@@ -46,20 +46,17 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
                 f.read_to_end(&mut self.buf)
             })
             .map_err(Error::ReadFileContents)?;
-        loose::Reference::try_from_path(self.parent, name, &self.buf)
+        loose::Reference::try_from_path(name, &self.buf)
             .map_err(|err| Error::ReferenceCreation {
                 err,
-                relative_path: refpath
-                    .strip_prefix(&self.parent.base)
-                    .expect("base contains path")
-                    .into(),
+                relative_path: refpath.strip_prefix(&self.base).expect("base contains path").into(),
             })
             .map(Reference::Loose)
     }
 }
 
 impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
-    type Item = Result<Reference<'p, 's>, Error>;
+    type Item = Result<Reference<'p>, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match (self.loose.peek(), self.packed.peek()) {
@@ -104,12 +101,12 @@ impl file::Store {
     /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themeselves.
     pub fn iter<'p, 's>(&'s self, packed: &'p packed::Buffer) -> std::io::Result<LooseThenPacked<'p, 's>> {
         Ok(LooseThenPacked {
-            parent: self,
+            base: &self.base,
             packed: packed
                 .iter()
                 .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
                 .peekable(),
-            loose: loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.clone()).peekable(),
+            loose: loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.to_owned()).peekable(),
             buf: Vec::new(),
         })
     }
@@ -124,12 +121,12 @@ impl file::Store {
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         let packed_prefix = path_to_name(self.validate_prefix(prefix.as_ref())?);
         Ok(LooseThenPacked {
-            parent: self,
+            base: &self.base,
             packed: packed
                 .iter_prefixed(packed_prefix)
                 .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
                 .peekable(),
-            loose: loose::iter::SortedLoosePaths::at_root_with_names(self.base.join(prefix), self.base.clone())
+            loose: loose::iter::SortedLoosePaths::at_root_with_names(self.base.join(prefix), self.base.to_owned())
                 .peekable(),
             buf: Vec::new(),
         })
