@@ -57,7 +57,7 @@ impl<'p, 's> Reference<'p, 's> {
             Reference::Packed(p) => packed
                 .and_then(|packed| packed.find(p.name).ok().flatten()) // needed to get data with 'p2 lifetime
                 .and_then(|np| {
-                    p.object.and_then(|_| np.object).map(|peeled| {
+                    p.object.and(np.object).map(|peeled| {
                         Ok(Reference::Packed(packed::Reference {
                             name: np.name,
                             target: peeled,
