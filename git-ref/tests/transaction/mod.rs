@@ -110,7 +110,7 @@ mod refedit_ext {
             let name: FullName = name.try_into().unwrap();
             edits
                 .iter()
-                .find(|e| e.name.as_ref() == name.as_bstr())
+                .find(|e| e.name.as_bstr() == name.as_bstr())
                 .expect("always available")
         }
 

@@ -183,7 +183,7 @@ mod ext {
             let mut names: Vec<_> = self.iter().map(|e| &e.borrow().name).collect();
             names.sort();
             match names.windows(2).find(|v| v[0] == v[1]) {
-                Some(name) => Err(name[0].as_ref().to_owned()),
+                Some(name) => Err(name[0].as_bstr().to_owned()),
                 None => Ok(()),
             }
         }

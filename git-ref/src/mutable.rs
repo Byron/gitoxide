@@ -33,13 +33,6 @@ impl TryFrom<BString> for FullName {
     }
 }
 
-// TODO: remove this one to be consistent with borrowed version
-impl AsRef<BStr> for FullName {
-    fn as_ref(&self) -> &BStr {
-        self.0.as_bstr()
-    }
-}
-
 impl FullName {
     /// Interpret this fully qualified reference name as partial name.
     pub fn to_partial(&self) -> crate::PartialName<'_> {
@@ -112,7 +105,7 @@ impl Target {
     /// Interpret this target as name of the reference it points to which maybe `None` if it an object id.
     pub fn as_name(&self) -> Option<&BStr> {
         match self {
-            Target::Symbolic(name) => Some(name.as_ref()),
+            Target::Symbolic(name) => Some(name.as_bstr()),
             Target::Peeled(_) => None,
         }
     }
@@ -136,7 +129,7 @@ impl<'a> PartialEq<crate::Target<'a>> for Target {
     fn eq(&self, other: &crate::Target<'a>) -> bool {
         match (self, other) {
             (Target::Peeled(lhs), crate::Target::Peeled(rhs)) => lhs == rhs,
-            (Target::Symbolic(lhs), crate::Target::Symbolic(rhs)) => lhs.as_ref() == *rhs,
+            (Target::Symbolic(lhs), crate::Target::Symbolic(rhs)) => lhs.as_bstr() == *rhs,
             _ => false,
         }
     }
@@ -146,7 +139,7 @@ impl fmt::Display for Target {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Target::Peeled(oid) => oid.fmt(f),
-            Target::Symbolic(name) => write!(f, "ref: {}", name.as_ref()),
+            Target::Symbolic(name) => write!(f, "ref: {}", name.as_bstr()),
         }
     }
 }

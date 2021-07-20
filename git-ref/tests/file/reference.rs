@@ -67,7 +67,7 @@ mod peel {
             r.peel_to_id_in_place(None)?,
             hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")
         );
-        assert_eq!(r.name.as_ref(), "refs/remotes/origin/multi-link-target3");
+        assert_eq!(r.name.as_bstr(), "refs/remotes/origin/multi-link-target3");
 
         Ok(())
     }
@@ -77,13 +77,13 @@ mod peel {
         let store = file::store()?;
         let mut r = store.loose_find_existing("loop-a")?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
-        assert_eq!(r.name.as_ref(), "refs/loop-a");
+        assert_eq!(r.name.as_bstr(), "refs/loop-a");
 
         assert!(matches!(
             r.peel_to_id_in_place(None).unwrap_err(),
             git_ref::file::reference::peel::to_id::Error::Cycle { .. }
         ));
-        assert_eq!(r.name.as_ref(), "refs/loop-a", "the ref is not changed on error");
+        assert_eq!(r.name.as_bstr(), "refs/loop-a", "the ref is not changed on error");
         Ok(())
     }
 }

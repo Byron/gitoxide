@@ -11,7 +11,7 @@ mod existing {
         for (partial_name, expected_path) in &[("main", Some("refs/heads/main")), ("does-not-exist", None)] {
             let reference = store.loose_find_existing(*partial_name);
             match expected_path {
-                Some(expected_path) => assert_eq!(reference?.name.as_ref(), expected_path),
+                Some(expected_path) => assert_eq!(reference?.name.as_bstr(), expected_path),
                 None => match reference {
                     Ok(_) => panic!("Expected error"),
                     Err(git_ref::file::find::existing::Error::NotFound(name)) => {
