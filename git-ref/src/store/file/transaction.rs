@@ -60,8 +60,10 @@ impl<'a> Transaction<'a> {
             .ref_contents(relative_path.as_ref())
             .map_err(Error::from)
             .and_then(|opt| {
-                opt.map(|buf| file::Reference::try_from_path(store, relative_path.as_ref(), &buf).map_err(Error::from))
-                    .transpose()
+                opt.map(|buf| {
+                    file::Reference::try_from_path(store, change.update.name.clone(), &buf).map_err(Error::from)
+                })
+                .transpose()
             })
             .or_else(|err| match err {
                 Error::ReferenceDecode(_) => Ok(None),
@@ -87,12 +89,12 @@ impl<'a> Transaction<'a> {
                         })
                     }
                     (Some(previous), Some(existing)) => {
-                        if !previous.is_null() && *previous != existing.target() {
+                        if !previous.is_null() && *previous != existing.target {
                             let expected = previous.clone();
                             return Err(Error::ReferenceOutOfDate {
                                 full_name: change.name(),
                                 expected,
-                                actual: existing.target().to_owned(),
+                                actual: existing.target.to_owned(),
                             });
                         }
                     }
@@ -100,7 +102,7 @@ impl<'a> Transaction<'a> {
 
                 // Keep the previous value for the caller and ourselves. Maybe they want to keep a log of sorts.
                 if let Some(existing) = existing_ref {
-                    *previous = Some(existing.target().into());
+                    *previous = Some(existing.target.into());
                 }
 
                 lock
@@ -120,11 +122,11 @@ impl<'a> Transaction<'a> {
 
                 let existing_ref = existing_ref?;
                 match (&previous, &existing_ref) {
-                    (Create::Only, Some(existing)) if existing.target() != new.borrow() => {
+                    (Create::Only, Some(existing)) if existing.target != new.borrow() => {
                         let new = new.clone();
                         return Err(Error::MustNotExist {
                             full_name: change.name(),
-                            actual: existing.target().to_owned(),
+                            actual: existing.target.to_owned(),
                             new,
                         });
                     }
@@ -135,9 +137,9 @@ impl<'a> Transaction<'a> {
                         Some(existing),
                     ) => match previous {
                         Target::Peeled(oid) if oid.is_null() => {}
-                        any_target if any_target.borrow() == existing.target() => {}
+                        any_target if *any_target == existing.target => {}
                         _target_mismatch => {
-                            let actual = existing.target().to_owned();
+                            let actual = existing.target.to_owned();
                             let expected = previous.to_owned();
                             let full_name = change.name();
                             return Err(Error::ReferenceOutOfDate {
@@ -163,7 +165,7 @@ impl<'a> Transaction<'a> {
                 *previous = match existing_ref {
                     None => Create::Only,
                     Some(existing) => Create::OrUpdate {
-                        previous: Some(existing.target().into()),
+                        previous: Some(existing.target.into()),
                     },
                 };
 

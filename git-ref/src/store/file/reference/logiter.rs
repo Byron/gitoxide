@@ -1,8 +1,4 @@
-use crate::{
-    store::file::{log, loose, Reference},
-    FullName,
-};
-use bstr::ByteSlice;
+use crate::store::file::{log, loose, Reference};
 use std::io::Read;
 
 impl<'a> Reference<'a> {
@@ -13,9 +9,7 @@ impl<'a> Reference<'a> {
     /// If the caller needs to know if it's readable, try to read the log instead with a reverse or forward iterator.
     pub fn log_exists(&self) -> Result<bool, loose::reflog::Error> {
         // NOTE: Have to repeat the implementation of store::reflog_iter here as borrow_check believes impl Iterator binds self
-        use os_str_bytes::OsStrBytes;
-        let name = self.relative_path.as_path().to_raw_bytes();
-        Ok(self.parent.reflog_path(FullName(name.as_bstr())).is_file())
+        Ok(self.parent.reflog_path(self.name.borrow()).is_file())
     }
     /// Return a reflog reverse iterator for this ref, reading chunks from the back into the fixed buffer `buf`.
     ///
@@ -26,9 +20,7 @@ impl<'a> Reference<'a> {
         buf: &'b mut [u8],
     ) -> Result<Option<log::iter::Reverse<'b, std::fs::File>>, loose::reflog::Error> {
         // NOTE: Have to repeat the implementation of store::reflog_iter here as borrow_check believes impl Iterator binds self
-        use os_str_bytes::OsStrBytes;
-        let name = self.relative_path.as_path().to_raw_bytes();
-        let file = match std::fs::File::open(self.parent.reflog_path(FullName(name.as_bstr()))) {
+        let file = match std::fs::File::open(self.parent.reflog_path(self.name.borrow())) {
             Ok(file) => file,
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
             Err(err) => return Err(err.into()),
@@ -46,9 +38,7 @@ impl<'a> Reference<'a> {
     ) -> Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>>>, loose::reflog::Error>
     {
         // NOTE: Have to repeat the implementation of store::reflog_iter here as borrow_check believes impl Iterator binds self
-        use os_str_bytes::OsStrBytes;
-        let name = self.relative_path.as_path().to_raw_bytes();
-        match std::fs::File::open(self.parent.reflog_path(FullName(name.as_bstr()))) {
+        match std::fs::File::open(self.parent.reflog_path(self.name.borrow())) {
             Ok(mut file) => {
                 buf.clear();
                 file.read_to_end(buf)?;

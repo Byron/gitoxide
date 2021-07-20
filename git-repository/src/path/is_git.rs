@@ -9,8 +9,8 @@ quick_error! {
             from()
             source(err)
         }
-        MisplacedHead(relative_path: PathBuf) {
-            display("Expected HEAD at '.git/HEAD', got '.git/{}'", relative_path.display())
+        MisplacedHead(name: crate::object::bstr::BString) {
+            display("Expected HEAD at '.git/HEAD', got '.git/{}'", name)
         }
         MissingObjectsDirectory(missing: PathBuf) {
             display("Expected an objects directory at '{}'", missing.display())
@@ -42,8 +42,8 @@ pub fn is_git(git_dir: impl AsRef<Path>) -> Result<crate::Kind, Error> {
     {
         let refs = git_ref::file::Store::at(&dot_git, Default::default());
         let head = refs.loose_find_existing("HEAD")?;
-        if head.relative_path() != Path::new("HEAD") {
-            return Err(Error::MisplacedHead(head.into_relative_path()));
+        if head.name().as_bstr() != "HEAD" {
+            return Err(Error::MisplacedHead(head.into_name().into_inner()));
         }
     }
 

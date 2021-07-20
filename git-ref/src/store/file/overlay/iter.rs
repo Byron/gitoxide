@@ -3,7 +3,6 @@ use crate::{
     file::path_to_name,
     store::{file, packed},
 };
-use bstr::BString;
 use std::{
     cmp::Ordering,
     io::Read,
@@ -27,19 +26,21 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
         })
     }
 
-    fn convert_loose(&mut self, res: std::io::Result<(PathBuf, Option<BString>)>) -> Result<Reference<'p, 's>, Error> {
-        let (refpath, _name) = res.map_err(Error::Traversal)?;
+    fn convert_loose(&mut self, res: std::io::Result<(PathBuf, FullName)>) -> Result<Reference<'p, 's>, Error> {
+        let (refpath, name) = res.map_err(Error::Traversal)?;
         std::fs::File::open(&refpath)
             .and_then(|mut f| {
                 self.buf.clear();
                 f.read_to_end(&mut self.buf)
             })
             .map_err(Error::ReadFileContents)?;
-        let relative_path = refpath.strip_prefix(&self.parent.base).expect("base contains path");
-        file::Reference::try_from_path(self.parent, relative_path, &self.buf)
+        file::Reference::try_from_path(self.parent, name, &self.buf)
             .map_err(|err| Error::ReferenceCreation {
                 err,
-                relative_path: relative_path.into(),
+                relative_path: refpath
+                    .strip_prefix(&self.parent.base)
+                    .expect("base contains path")
+                    .into(),
             })
             .map(Reference::Loose)
     }
@@ -60,8 +61,8 @@ impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
                 Some(self.convert_loose(res))
             }
             (Some(Ok(loose)), Some(Ok(packed))) => {
-                let loose_name = loose.1.as_ref().expect("name retrieval configured");
-                match loose_name.as_slice().cmp(packed.full_name) {
+                let loose_name = loose.1.as_ref();
+                match loose_name.cmp(packed.full_name) {
                     Ordering::Less => {
                         let res = self.loose.next().expect("name retrieval configured");
                         Some(self.convert_loose(res))
@@ -154,4 +155,5 @@ mod error {
     }
 }
 
+use crate::mutable::FullName;
 pub use error::Error;

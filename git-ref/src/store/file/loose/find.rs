@@ -119,11 +119,12 @@ impl file::Store {
             }
             Some(c) => c,
         };
-        Ok(Some(
-            file::Reference::try_from_path(self, &relative_path, &contents)
+        Ok(Some({
+            let full_name = path_to_name(&relative_path);
+            file::Reference::try_from_path(self, FullName(full_name), &contents)
                 .map(file::loose_then_packed::Reference::Loose)
-                .map_err(|err| Error::ReferenceCreation { err, relative_path })?,
-        ))
+                .map_err(|err| Error::ReferenceCreation { err, relative_path })?
+        }))
     }
 }
 
@@ -256,4 +257,5 @@ mod error {
         }
     }
 }
+use crate::mutable::FullName;
 pub use error::Error;

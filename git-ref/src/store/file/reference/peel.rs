@@ -98,10 +98,10 @@ pub mod to_id {
                     loose_then_packed::Reference::Loose(r) => r,
                     loose_then_packed::Reference::Packed(_) => unreachable!("handled above - we are done"),
                 };
-                if seen.contains(&cursor.relative_path) {
-                    return Err(Error::Cycle(cursor.parent.base.join(&cursor.relative_path)));
+                if seen.contains(&cursor.name) {
+                    return Err(Error::Cycle(cursor.parent.base.join(cursor.name.to_path())));
                 }
-                seen.insert(cursor.relative_path.clone());
+                seen.insert(cursor.name.clone());
                 count += 1;
                 const MAX_REF_DEPTH: usize = 5;
                 if count == MAX_REF_DEPTH {

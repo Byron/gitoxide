@@ -33,6 +33,7 @@ impl TryFrom<BString> for FullName {
     }
 }
 
+// TODO: remove this one to be consistent with borrowed version
 impl AsRef<BStr> for FullName {
     fn as_ref(&self) -> &BStr {
         self.0.as_bstr()
@@ -58,6 +59,10 @@ impl FullName {
     /// Dissolve this instance and return the buffer.
     pub fn into_inner(self) -> BString {
         self.0
+    }
+    /// Return ourselves as byte string which is a valid refname
+    pub fn as_bstr(&self) -> &BStr {
+        self.0.as_bstr()
     }
 }
 

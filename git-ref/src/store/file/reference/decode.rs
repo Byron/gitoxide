@@ -12,10 +12,7 @@ use nom::{
     IResult,
 };
 use quick_error::quick_error;
-use std::{
-    convert::{TryFrom, TryInto},
-    path::PathBuf,
-};
+use std::convert::{TryFrom, TryInto};
 
 enum MaybeUnsafeState {
     Id(ObjectId),
@@ -56,14 +53,10 @@ impl TryFrom<MaybeUnsafeState> for mutable::Target {
 impl<'a> Reference<'a> {
     /// Create a new reference of the given `parent` store with `relative_path` service as unique identifier
     /// at which the `path_contents` was read to obtain the refs value.
-    pub fn try_from_path(
-        parent: &'a Store,
-        relative_path: impl Into<PathBuf>,
-        path_contents: &[u8],
-    ) -> Result<Self, Error> {
+    pub fn try_from_path(parent: &'a Store, name: mutable::FullName, path_contents: &[u8]) -> Result<Self, Error> {
         Ok(Reference {
             parent,
-            relative_path: relative_path.into(),
+            name,
             target: parse(path_contents)
                 .map_err(|_| Error::Parse(path_contents.into()))?
                 .1

@@ -4,7 +4,7 @@ mod reflog {
     #[test]
     fn iter() -> crate::Result {
         let store = file::store()?;
-        let r = store.find_existing("HEAD", None)?;
+        let r = store.loose_find_existing("HEAD")?;
         let mut buf = Vec::new();
         assert_eq!(r.log_iter(&mut buf)?.expect("log exists").count(), 1);
         Ok(())
@@ -13,7 +13,7 @@ mod reflog {
     #[test]
     fn iter_rev() -> crate::Result {
         let store = file::store()?;
-        let r = store.find_existing("HEAD", None)?;
+        let r = store.loose_find_existing("HEAD")?;
         let mut buf = [0u8; 256];
         assert_eq!(r.log_iter_rev(&mut buf)?.expect("log exists").count(), 1);
         Ok(())
@@ -21,11 +21,9 @@ mod reflog {
 }
 
 mod peel {
-    use crate::file;
-    use crate::file::store_with_packed_refs;
+    use crate::{file, file::store_with_packed_refs};
     use git_testtools::hex_to_id;
     use std::convert::TryFrom;
-    use std::path::Path;
 
     #[test]
     fn one_level() -> crate::Result {
@@ -36,12 +34,12 @@ mod peel {
         let nr = git_ref::file::Reference::try_from(r.peel_one_level(None).expect("exists").expect("no failure"))
             .expect("loose ref");
         assert!(
-            matches!(nr.target(), git_ref::Target::Peeled(_)),
+            matches!(nr.target.borrow(), git_ref::Target::Peeled(_)),
             "iteration peels a single level"
         );
         assert!(nr.peel_one_level(None).is_none(), "end of iteration");
         assert_eq!(
-            nr.target(),
+            nr.target.borrow(),
             git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
             "we still have the peeled target"
         );
@@ -69,7 +67,7 @@ mod peel {
             r.peel_to_id_in_place(None)?,
             hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")
         );
-        assert_eq!(r.relative_path(), Path::new("refs/remotes/origin/multi-link-target3"));
+        assert_eq!(r.name.as_ref(), "refs/remotes/origin/multi-link-target3");
 
         Ok(())
     }
@@ -79,17 +77,13 @@ mod peel {
         let store = file::store()?;
         let mut r = store.loose_find_existing("loop-a")?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
-        assert_eq!(r.relative_path(), Path::new("refs/loop-a"));
+        assert_eq!(r.name.as_ref(), "refs/loop-a");
 
         assert!(matches!(
             r.peel_to_id_in_place(None).unwrap_err(),
             git_ref::file::reference::peel::to_id::Error::Cycle { .. }
         ));
-        assert_eq!(
-            r.relative_path(),
-            Path::new("refs/loop-a"),
-            "the ref is not changed on error"
-        );
+        assert_eq!(r.name.as_ref(), "refs/loop-a", "the ref is not changed on error");
         Ok(())
     }
 }
@@ -109,8 +103,14 @@ mod parse {
             ($name:ident, $input:literal, $err:literal) => {
                 #[test]
                 fn $name() {
+                    use std::convert::TryInto;
                     let store = store();
-                    let err = Reference::try_from_path(&store, "name", $input).unwrap_err();
+                    let err = Reference::try_from_path(
+                        &store,
+                        "HEAD".try_into().expect("this is a valid name"),
+                        $input,
+                    )
+                    .unwrap_err();
                     assert_eq!(err.to_string(), $err);
                 }
             };
@@ -129,11 +129,17 @@ mod parse {
             ($name:ident, $input:literal, $kind:path, $id:expr, $ref:expr) => {
                 #[test]
                 fn $name() {
+                    use std::convert::TryInto;
                     let store = store();
-                    let reference = Reference::try_from_path(&store, "name", $input).unwrap();
+                    let reference = Reference::try_from_path(
+                        &store,
+                        "HEAD".try_into().expect("valid static name"),
+                        $input,
+                    )
+                    .unwrap();
                     assert_eq!(reference.kind(), $kind);
-                    assert_eq!(reference.target().as_id(), $id);
-                    assert_eq!(reference.target().as_name(), $ref);
+                    assert_eq!(reference.target.borrow().as_id(), $id);
+                    assert_eq!(reference.target.borrow().as_name(), $ref);
                 }
             };
         }

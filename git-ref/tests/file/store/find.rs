@@ -1,6 +1,5 @@
 use crate::file::{store, store_at};
 use git_testtools::hex_to_id;
-use std::path::Path;
 
 mod existing {
     use crate::file::store;
@@ -12,7 +11,7 @@ mod existing {
         for (partial_name, expected_path) in &[("main", Some("refs/heads/main")), ("does-not-exist", None)] {
             let reference = store.loose_find_existing(*partial_name);
             match expected_path {
-                Some(expected_path) => assert_eq!(reference?.relative_path(), Path::new(expected_path)),
+                Some(expected_path) => assert_eq!(reference?.name.as_ref(), expected_path),
                 None => match reference {
                     Ok(_) => panic!("Expected error"),
                     Err(git_ref::file::find::existing::Error::NotFound(name)) => {
@@ -33,7 +32,7 @@ fn with_packed_refs() -> crate::Result {
     let packed = store.packed()?;
     let r = store.find_existing("main", packed.as_ref())?;
     assert_eq!(r.target().borrow().as_id().expect("peeled"), c1);
-    assert_eq!(r.name().expect("valid name").as_ref(), "refs/heads/main");
+    assert_eq!(r.name().expect("valid name").as_bstr(), "refs/heads/main");
     Ok(())
 }
 
@@ -55,8 +54,8 @@ fn success() -> crate::Result {
         ("refs/heads/main", "refs/heads/main", git_ref::Kind::Peeled),
     ] {
         let reference = store.loose_find(*partial_name)?.expect("exists");
-        assert_eq!(reference.relative_path(), Path::new(expected_path));
-        assert_eq!(reference.target().kind(), *expected_ref_kind);
+        assert_eq!(reference.name.as_bstr(), expected_path);
+        assert_eq!(reference.target.borrow().kind(), *expected_ref_kind);
     }
     Ok(())
 }

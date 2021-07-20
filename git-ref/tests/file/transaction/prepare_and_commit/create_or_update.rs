@@ -11,7 +11,7 @@ use git_ref::{
     transaction::{Change, Create, LogChange, RefEdit, RefLog},
 };
 use git_testtools::hex_to_id;
-use std::{convert::TryInto, path::Path};
+use std::convert::TryInto;
 
 mod reference_with_equally_named {
     use crate::file::transaction::prepare_and_commit::{committer, empty_store};
@@ -50,7 +50,7 @@ mod reference_with_equally_named {
             if *is_empty {
                 let edits = edits?;
                 assert!(
-                    store.find(edits[0].name.to_partial(), None)?.is_some(),
+                    store.loose_find(edits[0].name.to_partial())?.is_some(),
                     "HEAD was created despite a directory being in the way"
                 );
             } else {
@@ -108,8 +108,8 @@ fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
 #[test]
 fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.find("HEAD", None)?.expect("head exists already");
-    let target = head.target().to_owned();
+    let head = store.loose_find("HEAD")?.expect("head exists already");
+    let target = head.target;
 
     let err = store
         .transaction(
@@ -144,8 +144,8 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
 #[test]
 fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_value_does_not_match() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.find("HEAD", None)?.expect("head exists already");
-    let target = head.target().to_owned();
+    let head = store.loose_find("HEAD")?.expect("head exists already");
+    let target = head.target;
 
     let err = store
         .transaction(
@@ -178,8 +178,8 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
 #[test]
 fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the_value_matches() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.find("HEAD", None)?.expect("head exists already");
-    let target = head.target().to_owned();
+    let head = store.loose_find("HEAD")?.expect("head exists already");
+    let target = head.target;
     let previous_reflog_count = reflog_lines(&store, "HEAD")?.len();
 
     let edits = store
@@ -258,7 +258,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         let (_keep, mut store) = empty_store()?;
         store.write_reflog = *reflog_writemode;
         let referent = "refs/heads/alt-main";
-        assert!(store.find(referent, None)?.is_none(), "the reference does not exist");
+        assert!(store.loose_find(referent)?.is_none(), "the reference does not exist");
         let log_ignored = LogChange {
             mode: RefLog::AndReference,
             force_create_reflog: false,
@@ -294,11 +294,11 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         );
 
         let head = store.loose_find_existing(edits[0].name.to_partial())?;
-        assert_eq!(head.relative_path(), Path::new("HEAD"));
+        assert_eq!(head.name.as_bstr(), "HEAD");
         assert_eq!(head.kind(), git_ref::Kind::Symbolic);
-        assert_eq!(head.target().as_name(), Some(referent.as_bytes().as_bstr()));
+        assert_eq!(head.target.borrow().as_name(), Some(referent.as_bytes().as_bstr()));
         assert!(!head.log_exists()?, "no reflog is written for symbolic ref");
-        assert!(store.find(referent, None)?.is_none(), "referent wasn't created");
+        assert!(store.loose_find(referent)?.is_none(), "referent wasn't created");
 
         let new_oid = hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242");
         let new = Target::Peeled(new_oid);
@@ -360,7 +360,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             "head is still symbolic, not detached"
         );
         assert_eq!(
-            head.target().as_name(),
+            head.target.borrow().as_name(),
             Some(referent.as_bytes().as_bstr()),
             "it still points to the referent"
         );
@@ -368,7 +368,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         let referent_ref = store.loose_find_existing(referent)?;
         assert_eq!(referent_ref.kind(), git_ref::Kind::Peeled, "referent is a peeled ref");
         assert_eq!(
-            referent_ref.target().as_id(),
+            referent_ref.target.borrow().as_id(),
             Some(new_oid.as_ref()),
             "referent points to desired hash"
         );
@@ -398,7 +398,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
 fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_though_it_should() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
     let head = store.loose_find_existing("HEAD")?;
-    let referent = head.target().as_name().expect("symbolic ref").to_owned();
+    let referent = head.target.borrow().as_name().expect("symbolic ref").to_owned();
     let previous_head_reflog = reflog_lines(&store, "HEAD")?;
 
     let new_id = hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc");

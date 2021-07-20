@@ -21,9 +21,9 @@ impl Default for WriteReflog {
 pub struct Reference<'a> {
     parent: &'a Store,
     /// The path to uniquely identify this ref within its store.
-    // TODO: make this a FullName(BString) and remove the `relative_path()` method entirely.
-    relative_path: PathBuf,
-    target: mutable::Target,
+    pub name: mutable::FullName,
+    /// The target of the reference, either a symbolic reference by full name or an object by its id.
+    pub target: mutable::Target,
 }
 
 /// A store for reference which uses plain files.

@@ -1,7 +1,7 @@
 use crate::file::{store, store_at, store_with_packed_refs};
 use bstr::ByteSlice;
 use git_testtools::hex_to_id;
-use std::{convert::TryInto, path::PathBuf};
+use std::convert::TryInto;
 
 #[test]
 fn no_packed_available_thus_no_iteration_possible() -> crate::Result {
@@ -47,7 +47,7 @@ fn loose_iter_with_broken_refs() -> crate::Result {
     );
     let ref_paths: Vec<_> = actual
         .drain(..first_error)
-        .filter_map(|e| e.ok().map(|e| e.into_relative_path()))
+        .filter_map(|e| e.ok().map(|e| e.name.into_inner()))
         .collect();
 
     assert_eq!(
@@ -69,7 +69,7 @@ fn loose_iter_with_broken_refs() -> crate::Result {
             "tags/t1"
         ]
         .into_iter()
-        .map(|p| PathBuf::from(format!("refs/{}", p)))
+        .map(|p| format!("refs/{}", p))
         .collect::<Vec<_>>(),
         "all paths are as expected"
     );
@@ -100,7 +100,7 @@ fn loose_iter_with_prefix() -> crate::Result {
         .collect::<Result<Vec<_>, _>>()
         .expect("no broken ref in this subset")
         .into_iter()
-        .map(|e| e.into_relative_path())
+        .map(|e| e.name.into_inner())
         .collect::<Vec<_>>();
 
     assert_eq!(
@@ -112,7 +112,7 @@ fn loose_iter_with_prefix() -> crate::Result {
             "refs/heads/multi-link-target1",
         ]
         .into_iter()
-        .map(PathBuf::from)
+        .map(String::from)
         .collect::<Vec<_>>(),
         "all paths are as expected"
     );
@@ -129,7 +129,7 @@ fn overlay_iter() -> crate::Result {
         .map(|r| {
             r.map(|r| {
                 (
-                    r.name().expect("valid names only").into_inner(),
+                    r.name().expect("valid names only").as_bstr().to_owned(),
                     r.target(),
                     r.is_packed(),
                 )
@@ -185,7 +185,7 @@ fn overlay_prefixed_iter() -> crate::Result {
         .map(|r| {
             r.map(|r| {
                 (
-                    r.name().expect("valid names only").into_inner(),
+                    r.name().expect("valid names only").as_bstr().to_owned(),
                     r.target(),
                     r.is_packed(),
                 )

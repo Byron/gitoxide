@@ -3,7 +3,7 @@ use crate::{
     packed::write_packed_refs_with,
 };
 use git_ref::{packed, PartialName};
-use std::{convert::TryFrom, path::Path};
+use std::convert::TryFrom;
 
 #[test]
 fn a_lock_file_would_not_be_a_valid_partial_name() {
@@ -73,8 +73,8 @@ fn partial_name_to_full_name_conversion_rules_are_applied() -> crate::Result {
     let packed = store.packed()?.expect("packed-refs exists");
 
     assert_eq!(
-        store.loose_find_existing("origin")?.relative_path(),
-        Path::new("refs/remotes/origin/HEAD"),
+        store.loose_find_existing("origin")?.name.as_bstr(),
+        "refs/remotes/origin/HEAD",
         "a special that only applies to loose refs"
     );
     assert!(
@@ -82,8 +82,8 @@ fn partial_name_to_full_name_conversion_rules_are_applied() -> crate::Result {
         "packed refs don't have this special case as they don't store HEADs or symrefs"
     );
     assert_eq!(
-        store.loose_find_existing("HEAD")?.relative_path(),
-        Path::new("HEAD"),
+        store.loose_find_existing("HEAD")?.name.as_bstr(),
+        "HEAD",
         "HEAD can be found in loose stores"
     );
     assert!(

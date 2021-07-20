@@ -1,5 +1,5 @@
-use crate::store::file;
-use bstr::{BString, ByteSlice};
+use crate::{mutable::FullName, store::file};
+use bstr::ByteSlice;
 use git_features::fs::walkdir::DirEntryIter;
 use os_str_bytes::OsStrBytes;
 use std::{
@@ -11,31 +11,20 @@ use std::{
 pub(in crate::store::file) struct SortedLoosePaths {
     base: PathBuf,
     file_walk: DirEntryIter,
-    mode: LoosePathsMode,
-}
-
-enum LoosePathsMode {
-    Paths,
-    PathsAndNames,
 }
 
 impl SortedLoosePaths {
-    pub fn at_root(path: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
-        Self::new(path.as_ref(), base.into(), LoosePathsMode::Paths)
-    }
-
     pub fn at_root_with_names(path: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
-        Self::new(path.as_ref(), base.into(), LoosePathsMode::PathsAndNames)
-    }
-
-    fn new(path: &Path, base: PathBuf, mode: LoosePathsMode) -> Self {
         let file_walk = git_features::fs::walkdir_sorted_new(path).into_iter();
-        SortedLoosePaths { base, file_walk, mode }
+        SortedLoosePaths {
+            base: base.into(),
+            file_walk,
+        }
     }
 }
 
 impl Iterator for SortedLoosePaths {
-    type Item = std::io::Result<(PathBuf, Option<BString>)>;
+    type Item = std::io::Result<(PathBuf, FullName)>;
 
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(entry) = self.file_walk.next() {
@@ -52,15 +41,11 @@ impl Iterator for SortedLoosePaths {
                     #[cfg(windows)]
                     let full_name: Vec<u8> = full_name.into_owned().replace(b"\\", b"/");
 
-                    use LoosePathsMode::*;
                     if git_validate::reference::name_partial(full_name.as_bstr()).is_ok() {
-                        let name = match self.mode {
-                            Paths => None,
-                            #[cfg(not(windows))]
-                            PathsAndNames => Some(full_name.into_owned().into()),
-                            #[cfg(windows)]
-                            PathsAndNames => Some(full_name.into()),
-                        };
+                        #[cfg(not(windows))]
+                        let name = FullName(full_name.into_owned().into());
+                        #[cfg(windows)]
+                        let name = FullName(full_name.into());
                         return Some(Ok((full_path, name)));
                     } else {
                         continue;
@@ -86,7 +71,7 @@ impl<'a> Loose<'a> {
     pub fn at_root(store: &'a file::Store, root: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
         Loose {
             parent: store,
-            ref_paths: SortedLoosePaths::at_root(root, base),
+            ref_paths: SortedLoosePaths::at_root_with_names(root, base),
             buf: Vec::new(),
         }
     }
@@ -97,26 +82,25 @@ impl<'a> Iterator for Loose<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.ref_paths.next().map(|res| {
-            res.map_err(loose::Error::Traversal)
-                .and_then(|(validated_path, _name)| {
-                    std::fs::File::open(&validated_path)
-                        .and_then(|mut f| {
-                            self.buf.clear();
-                            f.read_to_end(&mut self.buf)
+            res.map_err(loose::Error::Traversal).and_then(|(validated_path, name)| {
+                std::fs::File::open(&validated_path)
+                    .and_then(|mut f| {
+                        self.buf.clear();
+                        f.read_to_end(&mut self.buf)
+                    })
+                    .map_err(loose::Error::ReadFileContents)
+                    .and_then(|_| {
+                        let relative_path = validated_path
+                            .strip_prefix(&self.ref_paths.base)
+                            .expect("root contains path");
+                        file::Reference::try_from_path(self.parent, name, &self.buf).map_err(|err| {
+                            loose::Error::ReferenceCreation {
+                                err,
+                                relative_path: relative_path.into(),
+                            }
                         })
-                        .map_err(loose::Error::ReadFileContents)
-                        .and_then(|_| {
-                            let relative_path = validated_path
-                                .strip_prefix(&self.ref_paths.base)
-                                .expect("root contains path");
-                            file::Reference::try_from_path(self.parent, relative_path, &self.buf).map_err(|err| {
-                                loose::Error::ReferenceCreation {
-                                    err,
-                                    relative_path: relative_path.into(),
-                                }
-                            })
-                        })
-                })
+                    })
+            })
         })
     }
 }

@@ -1,16 +1,14 @@
 use super::Reference;
 use crate::{
-    mutable,
+    mutable, name,
     store::{
         file::{log, loose},
         packed,
     },
+    FullName,
 };
 use git_hash::oid;
-use std::{
-    convert::{TryFrom, TryInto},
-    path::Path,
-};
+use std::convert::{TryFrom, TryInto};
 
 impl<'p, 's> TryFrom<Reference<'p, 's>> for crate::file::Reference<'s> {
     type Error = ();
@@ -29,14 +27,6 @@ impl<'p, 's> Reference<'p, 's> {
         match self {
             Reference::Loose(r) => r.log_exists(),
             Reference::Packed(_) => todo!("packed log exists"),
-        }
-    }
-
-    /// Return the full name of this reference as path, only applicable if this is a loose reference.
-    pub fn relative_path(&self) -> Option<&Path> {
-        match self {
-            Reference::Loose(r) => Some(r.relative_path()),
-            Reference::Packed(_) => None,
         }
     }
 
@@ -96,7 +86,7 @@ impl<'p, 's> Reference<'p, 's> {
     pub fn into_target(self) -> mutable::Target {
         match self {
             Reference::Packed(p) => mutable::Target::Peeled(p.object()),
-            Reference::Loose(r) => r.into_target(),
+            Reference::Loose(r) => r.target,
         }
     }
 
@@ -109,10 +99,10 @@ impl<'p, 's> Reference<'p, 's> {
     }
 
     /// Return the full validated name of the reference. Please note that if the reference is packed, validation can fail here.
-    pub fn name(&self) -> Result<mutable::FullName, git_validate::refname::Error> {
+    pub fn name(&self) -> Result<FullName<'_>, name::Error> {
         match self {
             Reference::Packed(p) => p.full_name.try_into(),
-            Reference::Loose(l) => Ok(l.name()),
+            Reference::Loose(l) => Ok(l.name.borrow()),
         }
     }
 
@@ -120,7 +110,7 @@ impl<'p, 's> Reference<'p, 's> {
     pub fn target(&self) -> mutable::Target {
         match self {
             Reference::Packed(p) => mutable::Target::Peeled(p.target()),
-            Reference::Loose(l) => l.target().to_owned(),
+            Reference::Loose(l) => l.target.clone(),
         }
     }
 }
