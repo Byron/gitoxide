@@ -4,7 +4,7 @@ use crate::{
     file::{self},
     mutable::Target,
     store::{
-        file::{find, loose::Reference},
+        file::{find, loose},
         packed,
     },
 };
@@ -25,14 +25,14 @@ quick_error! {
     }
 }
 
-impl<'s> Reference<'s> {
+impl<'s> loose::Reference<'s> {
     /// Follow this symbolic reference one level and return the ref it refers to, possibly providing access to `packed` references for lookup.
     ///
     /// Returns `None` if this is not a symbolic reference, hence the leaf of the chain.
     pub fn peel_one_level<'p>(
         &self,
         packed: Option<&'p packed::Buffer>,
-    ) -> Option<Result<file::loose_then_packed::Reference<'p, 's>, Error>> {
+    ) -> Option<Result<file::Reference<'p, 's>, Error>> {
         match &self.target {
             Target::Peeled(_) => None,
             Target::Symbolic(full_name) => {
@@ -55,11 +55,9 @@ pub mod to_id {
     use quick_error::quick_error;
     use std::{collections::BTreeSet, path::PathBuf};
 
-    use crate::store::file::loose::reference;
-    use crate::store::file::loose::Reference;
     use crate::{
         mutable::{FullName, Target},
-        store::{file::loose_then_packed, packed},
+        store::{file, file::loose, packed},
     };
 
     quick_error! {
@@ -67,7 +65,7 @@ pub mod to_id {
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {
-            PeelOne(err: reference::peel::Error) {
+            PeelOne(err: loose::reference::peel::Error) {
                 display("Could not peel a single level of a reference")
                 from()
                 source(err)
@@ -81,7 +79,7 @@ pub mod to_id {
         }
     }
 
-    impl<'a> Reference<'a> {
+    impl<'a> loose::Reference<'a> {
         /// Peel this symbolic reference until the end of the chain is reached and an object ID is available,
         /// possibly providing access to `packed` references for lookup.
         ///
@@ -95,8 +93,8 @@ pub mod to_id {
                 let next_ref = next?;
                 if let crate::Kind::Peeled = next_ref.kind() {
                     match next_ref {
-                        loose_then_packed::Reference::Loose(r) => *self = r,
-                        loose_then_packed::Reference::Packed(p) => {
+                        file::Reference::Loose(r) => *self = r,
+                        file::Reference::Packed(p) => {
                             self.target = Target::Peeled(p.object());
                             self.name = FullName(p.name.0.to_owned());
                         }
@@ -105,8 +103,8 @@ pub mod to_id {
                 }
                 storage = next_ref;
                 cursor = match &mut storage {
-                    loose_then_packed::Reference::Loose(r) => r,
-                    loose_then_packed::Reference::Packed(_) => unreachable!("handled above - we are done"),
+                    file::Reference::Loose(r) => r,
+                    file::Reference::Packed(_) => unreachable!("handled above - we are done"),
                 };
                 if seen.contains(&cursor.name) {
                     return Err(Error::Cycle(cursor.parent.base.join(cursor.name.to_path())));

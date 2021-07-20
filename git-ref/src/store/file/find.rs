@@ -40,7 +40,7 @@ impl file::Store {
         &'s self,
         partial: Name,
         packed: Option<&'p packed::Buffer>,
-    ) -> Result<Option<file::loose_then_packed::Reference<'p, 's>>, Error>
+    ) -> Result<Option<file::Reference<'p, 's>>, Error>
     where
         Name: TryInto<PartialName<'a>, Error = E>,
         Error: From<E>,
@@ -63,7 +63,7 @@ impl file::Store {
         &'s self,
         relative_path: &Path,
         packed: Option<&'p packed::Buffer>,
-    ) -> Result<Option<file::loose_then_packed::Reference<'p, 's>>, Error> {
+    ) -> Result<Option<file::Reference<'p, 's>>, Error> {
         let is_all_uppercase = relative_path
             .to_string_lossy()
             .as_ref()
@@ -98,7 +98,7 @@ impl file::Store {
         relative_path: &Path,
         packed: Option<&'p packed::Buffer>,
         transform: Transform,
-    ) -> Result<Option<file::loose_then_packed::Reference<'p, 's>>, Error> {
+    ) -> Result<Option<file::Reference<'p, 's>>, Error> {
         let (base, is_definitely_absolute) = match transform {
             Transform::EnforceRefsPrefix => (
                 if relative_path.starts_with("refs") {
@@ -119,7 +119,7 @@ impl file::Store {
                         let full_name = path_to_name(relative_path);
                         let full_name = PartialName((*full_name).as_bstr());
                         if let Some(packed_ref) = packed.find(full_name)? {
-                            return Ok(Some(file::loose_then_packed::Reference::Packed(packed_ref)));
+                            return Ok(Some(file::Reference::Packed(packed_ref)));
                         };
                     }
                 }
@@ -130,7 +130,7 @@ impl file::Store {
         Ok(Some({
             let full_name = path_to_name(&relative_path);
             loose::Reference::try_from_path(self, FullName(full_name), &contents)
-                .map(file::loose_then_packed::Reference::Loose)
+                .map(file::Reference::Loose)
                 .map_err(|err| Error::ReferenceCreation { err, relative_path })?
         }))
     }
@@ -183,7 +183,7 @@ pub mod existing {
             &'s self,
             partial: Name,
             packed: Option<&'p packed::Buffer>,
-        ) -> Result<file::loose_then_packed::Reference<'p, 's>, Error>
+        ) -> Result<file::Reference<'p, 's>, Error>
         where
             Name: TryInto<PartialName<'a>, Error = E>,
             crate::name::Error: From<E>,
