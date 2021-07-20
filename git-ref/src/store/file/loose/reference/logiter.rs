@@ -2,7 +2,6 @@ use crate::store::{
     file,
     file::{log, loose, loose::Reference},
 };
-use std::io::Read;
 
 pub(in crate::store::file) fn must_be_io_err(err: loose::reflog::Error) -> std::io::Error {
     match err {
@@ -38,20 +37,11 @@ impl Reference {
     ///
     /// The iterator will traverse log entries from oldest to newest.
     /// Return `Ok(None)` if no reflog exists.
-    pub fn log_iter<'b>(
-        &self,
+    pub fn log_iter<'a, 'b: 'a>(
+        &'a self,
         store: &file::Store,
         buf: &'b mut Vec<u8>,
-    ) -> std::io::Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>>>> {
-        // NOTE: Have to repeat the implementation of store::reflog_iter here as borrow_check believes impl Iterator binds self
-        match std::fs::File::open(store.reflog_path(self.name.borrow())) {
-            Ok(mut file) => {
-                buf.clear();
-                file.read_to_end(buf)?;
-            }
-            Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-            Err(err) => return Err(err.into()),
-        };
-        Ok(Some(log::iter::forward(buf)))
+    ) -> std::io::Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>> + 'a>> {
+        store.reflog_iter(self.name.borrow(), buf).map_err(must_be_io_err)
     }
 }

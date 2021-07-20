@@ -3,7 +3,6 @@ mod reflog {
         use crate::file;
 
         #[test]
-        #[ignore]
         fn iter() -> crate::Result {
             let store = file::store_with_packed_refs()?;
             let packed = store.packed()?;

@@ -104,14 +104,14 @@ impl<'p> Reference<'p> {
     }
 
     /// Obtain an iterator over logs of this reference. See [crate::file::loose::Reference::log_iter()] for details.
-    pub fn log_iter<'b>(
-        &self,
+    pub fn log_iter<'a, 'b: 'a>(
+        &'a self,
         store: &file::Store,
         buf: &'b mut Vec<u8>,
-    ) -> std::io::Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>>>> {
+    ) -> std::io::Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>> + 'a>> {
         match self {
-            Reference::Loose(r) => r.log_iter(store, buf),
-            Reference::Packed(_) => todo!("packed log overlay"),
+            Reference::Loose(r) => store.reflog_iter(r.name.borrow(), buf).map_err(must_be_io_err),
+            Reference::Packed(p) => store.reflog_iter(p.name, buf).map_err(must_be_io_err),
         }
     }
 
