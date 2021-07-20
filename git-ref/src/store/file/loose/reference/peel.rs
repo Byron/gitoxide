@@ -1,10 +1,12 @@
 use quick_error::quick_error;
 
-use crate::store::file::find;
 use crate::{
-    file::{self, Reference},
+    file::{self},
     mutable::Target,
-    store::packed,
+    store::{
+        file::{find, loose::Reference},
+        packed,
+    },
 };
 
 quick_error! {
@@ -54,8 +56,8 @@ pub mod to_id {
     use std::{collections::BTreeSet, path::PathBuf};
 
     use crate::store::file::loose::reference;
+    use crate::store::file::loose::Reference;
     use crate::{
-        file::Reference,
         mutable::{FullName, Target},
         store::{file::loose_then_packed, packed},
     };

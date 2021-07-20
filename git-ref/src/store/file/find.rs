@@ -8,10 +8,13 @@ use bstr::ByteSlice;
 
 pub use error::Error;
 
-use crate::mutable::FullName;
 use crate::{
     file,
-    store::{file::path_to_name, packed},
+    mutable::FullName,
+    store::{
+        file::{loose, path_to_name},
+        packed,
+    },
     PartialName,
 };
 
@@ -47,7 +50,7 @@ impl file::Store {
     }
 
     /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
-    pub fn loose_find<'a, Name, E>(&self, partial: Name) -> Result<Option<file::Reference<'_>>, Error>
+    pub fn loose_find<'a, Name, E>(&self, partial: Name) -> Result<Option<loose::Reference<'_>>, Error>
     where
         Name: TryInto<PartialName<'a>, Error = E>,
         Error: From<E>,
@@ -126,7 +129,7 @@ impl file::Store {
         };
         Ok(Some({
             let full_name = path_to_name(&relative_path);
-            file::Reference::try_from_path(self, FullName(full_name), &contents)
+            loose::Reference::try_from_path(self, FullName(full_name), &contents)
                 .map(file::loose_then_packed::Reference::Loose)
                 .map_err(|err| Error::ReferenceCreation { err, relative_path })?
         }))
@@ -165,10 +168,12 @@ pub mod existing {
 
     pub use error::Error;
 
-    use crate::store::file::find;
     use crate::{
         file::{self},
-        store::packed,
+        store::{
+            file::{find, loose},
+            packed,
+        },
         PartialName,
     };
 
@@ -194,7 +199,7 @@ pub mod existing {
         }
 
         /// Similar to [`file::Store::find()`] won't handle packed-refs.
-        pub fn loose_find_existing<'a, Name, E>(&self, partial: Name) -> Result<file::Reference<'_>, Error>
+        pub fn loose_find_existing<'a, Name, E>(&self, partial: Name) -> Result<loose::Reference<'_>, Error>
         where
             Name: TryInto<PartialName<'a>, Error = E>,
             crate::name::Error: From<E>,

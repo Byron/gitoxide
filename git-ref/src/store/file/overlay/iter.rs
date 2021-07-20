@@ -1,6 +1,6 @@
 use super::{LooseThenPacked, Reference};
 use crate::{
-    file::path_to_name,
+    file::{loose, path_to_name},
     store::{file, packed},
 };
 use std::{
@@ -34,7 +34,7 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
                 f.read_to_end(&mut self.buf)
             })
             .map_err(Error::ReadFileContents)?;
-        file::Reference::try_from_path(self.parent, name, &self.buf)
+        loose::Reference::try_from_path(self.parent, name, &self.buf)
             .map_err(|err| Error::ReferenceCreation {
                 err,
                 relative_path: refpath
@@ -97,8 +97,7 @@ impl file::Store {
                 .iter()
                 .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
                 .peekable(),
-            loose: file::loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.clone())
-                .peekable(),
+            loose: loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.clone()).peekable(),
             buf: Vec::new(),
         })
     }
@@ -118,7 +117,7 @@ impl file::Store {
                 .iter_prefixed(packed_prefix)
                 .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
                 .peekable(),
-            loose: file::loose::iter::SortedLoosePaths::at_root_with_names(self.base.join(prefix), self.base.clone())
+            loose: loose::iter::SortedLoosePaths::at_root_with_names(self.base.join(prefix), self.base.clone())
                 .peekable(),
             buf: Vec::new(),
         })

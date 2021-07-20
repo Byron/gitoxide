@@ -1,4 +1,4 @@
-use crate::store::file::{log, loose, Reference};
+use crate::store::file::{log, loose, loose::Reference};
 use std::io::Read;
 
 impl<'a> Reference<'a> {

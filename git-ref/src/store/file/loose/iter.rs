@@ -1,4 +1,7 @@
-use crate::{mutable::FullName, store::file};
+use crate::{
+    mutable::FullName,
+    store::file::{self, loose::Reference},
+};
 use bstr::ByteSlice;
 use git_features::fs::walkdir::DirEntryIter;
 use os_str_bytes::OsStrBytes;
@@ -78,7 +81,7 @@ impl<'a> Loose<'a> {
 }
 
 impl<'a> Iterator for Loose<'a> {
-    type Item = Result<file::Reference<'a>, loose::Error>;
+    type Item = Result<Reference<'a>, loose::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.ref_paths.next().map(|res| {
@@ -93,7 +96,7 @@ impl<'a> Iterator for Loose<'a> {
                         let relative_path = validated_path
                             .strip_prefix(&self.ref_paths.base)
                             .expect("root contains path");
-                        file::Reference::try_from_path(self.parent, name, &self.buf).map_err(|err| {
+                        Reference::try_from_path(self.parent, name, &self.buf).map_err(|err| {
                             loose::Error::ReferenceCreation {
                                 err,
                                 relative_path: relative_path.into(),

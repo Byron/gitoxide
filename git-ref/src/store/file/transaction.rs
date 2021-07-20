@@ -1,6 +1,6 @@
 use crate::{
     mutable::Target,
-    store::file,
+    store::{file, file::loose},
     transaction::{Change, Create, RefEdit, RefEditsExt, RefLog},
 };
 use bstr::BString;
@@ -61,7 +61,7 @@ impl<'a> Transaction<'a> {
             .map_err(Error::from)
             .and_then(|opt| {
                 opt.map(|buf| {
-                    file::Reference::try_from_path(store, change.update.name.clone(), &buf).map_err(Error::from)
+                    loose::Reference::try_from_path(store, change.update.name.clone(), &buf).map_err(Error::from)
                 })
                 .transpose()
             })

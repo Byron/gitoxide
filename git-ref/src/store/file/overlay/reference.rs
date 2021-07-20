@@ -10,7 +10,7 @@ use crate::{
 use git_hash::oid;
 use std::convert::TryFrom;
 
-impl<'p, 's> TryFrom<Reference<'p, 's>> for crate::file::Reference<'s> {
+impl<'p, 's> TryFrom<Reference<'p, 's>> for crate::file::loose::Reference<'s> {
     type Error = ();
 
     fn try_from(value: Reference<'p, 's>) -> Result<Self, Self::Error> {

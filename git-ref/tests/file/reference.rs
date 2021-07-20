@@ -31,8 +31,9 @@ mod peel {
         let r = store.loose_find_existing("HEAD")?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
-        let nr = git_ref::file::Reference::try_from(r.peel_one_level(None).expect("exists").expect("no failure"))
-            .expect("loose ref");
+        let nr =
+            git_ref::file::loose::Reference::try_from(r.peel_one_level(None).expect("exists").expect("no failure"))
+                .expect("loose ref");
         assert!(
             matches!(nr.target.borrow(), git_ref::Target::Peeled(_)),
             "iteration peels a single level"
@@ -96,7 +97,7 @@ mod parse {
 
     mod invalid {
         use crate::file::reference::parse::store;
-        use git_ref::file::Reference;
+        use git_ref::file::loose::Reference;
 
         macro_rules! mktest {
             ($name:ident, $input:literal, $err:literal) => {
@@ -121,7 +122,7 @@ mod parse {
     mod valid {
         use crate::file::reference::parse::store;
         use bstr::ByteSlice;
-        use git_ref::file::Reference;
+        use git_ref::file::loose::Reference;
         use git_testtools::hex_to_id;
 
         macro_rules! mktest {

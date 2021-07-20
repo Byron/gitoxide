@@ -1,7 +1,5 @@
 use std::path::PathBuf;
 
-use crate::mutable;
-
 /// The way a file store handles the reflog
 #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
 pub enum WriteReflog {
@@ -15,16 +13,6 @@ impl Default for WriteReflog {
     fn default() -> Self {
         WriteReflog::Normal
     }
-}
-
-/// A git _ref_ which is stored in a file.
-#[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
-pub struct Reference<'a> {
-    parent: &'a Store,
-    /// The path to uniquely identify this ref within its store.
-    pub name: mutable::FullName,
-    /// The target of the reference, either a symbolic reference by full name or an object by its id.
-    pub target: mutable::Target,
 }
 
 /// A store for reference which uses plain files.

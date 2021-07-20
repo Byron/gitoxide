@@ -1,4 +1,4 @@
-use crate::store::{file, packed};
+use crate::store::{file, file::loose, packed};
 use std::iter::Peekable;
 
 /// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise
@@ -8,7 +8,7 @@ use std::iter::Peekable;
 pub struct LooseThenPacked<'p, 's> {
     parent: &'s file::Store,
     packed: Peekable<packed::Iter<'p>>,
-    loose: Peekable<file::loose::iter::SortedLoosePaths>,
+    loose: Peekable<loose::iter::SortedLoosePaths>,
     buf: Vec<u8>,
 }
 
@@ -17,7 +17,7 @@ pub enum Reference<'p, 's> {
     /// A reference originating in a pack
     Packed(packed::Reference<'p>),
     /// A reference from the filesystem
-    Loose(file::Reference<'s>),
+    Loose(loose::Reference<'s>),
 }
 
 mod reference;

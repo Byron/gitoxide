@@ -1,7 +1,8 @@
 use crate::{
-    file::{Reference, Store},
+    file::Store,
     mutable,
     parse::{hex_hash, newline},
+    store::file::loose::Reference,
 };
 use bstr::BString;
 use git_hash::ObjectId;
