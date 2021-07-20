@@ -33,7 +33,7 @@ pub(in crate::store::file) fn path_to_name(path: impl Into<PathBuf>) -> bstr::BS
     use os_str_bytes::OsStringBytes;
     let path = path.into().into_raw_vec();
     #[cfg(windows)]
-    let packed_prefix = {
+    let path = {
         use bstr::ByteSlice;
         path.replace(b"\\", b"/")
     };
