@@ -22,7 +22,7 @@ impl<'p, 's> TryFrom<Reference<'p, 's>> for crate::file::loose::Reference<'s> {
 }
 
 impl<'p, 's> Reference<'p, 's> {
-    /// For details, see [crate::file::Reference::log_exists()].
+    /// For details, see [crate::file::loose::Reference::log_exists()].
     pub fn log_exists(&self) -> Result<bool, loose::reflog::Error> {
         match self {
             Reference::Loose(r) => r.log_exists(),
@@ -30,7 +30,7 @@ impl<'p, 's> Reference<'p, 's> {
         }
     }
 
-    /// For details, see [crate::file::Reference::peel_to_id_in_place].
+    /// For details, see [crate::file::loose::Reference::peel_to_id_in_place].
     pub fn peel_to_id_in_place(
         &mut self,
         packed: Option<&packed::Buffer>,
@@ -47,17 +47,36 @@ impl<'p, 's> Reference<'p, 's> {
         }
     }
 
-    /// For details, see [crate::file::Reference::peel_one_level].
-    pub fn peel_one_level<'p2>(
+    /// For details, see [crate::file::loose::Reference::peel_one_level].
+    pub fn peel_one_level<'p2: 'p>(
         &self,
         packed: Option<&'p2 packed::Buffer>,
     ) -> Option<Result<Reference<'p2, 's>, crate::store::file::loose::reference::peel::Error>> {
         match self {
             Reference::Loose(r) => r.peel_one_level(packed),
-            Reference::Packed(_) => todo!("packed peel one level (yeah, it's done)"),
+            Reference::Packed(p) => match packed {
+                Some(packed) => {
+                    let np = packed
+                        .find_existing(p.name)
+                        .expect("same pack to meet lifetime requirements");
+                    if p.object.is_some() {
+                        match np.object {
+                            Some(peeled) => Some(Ok(Reference::Packed(packed::Reference {
+                                name: np.name,
+                                target: peeled,
+                                object: None,
+                            }))),
+                            None => None,
+                        }
+                    } else {
+                        None
+                    }
+                }
+                None => None,
+            },
         }
     }
-    /// Obtain a reverse iterator over logs of this reference. See [crate::file::Reference::log_iter_rev()] for details.
+    /// Obtain a reverse iterator over logs of this reference. See [crate::file::loose::Reference::log_iter_rev()] for details.
     pub fn log_iter_rev<'b>(
         &self,
         buf: &'b mut [u8],
@@ -68,7 +87,7 @@ impl<'p, 's> Reference<'p, 's> {
         }
     }
 
-    /// Obtain an iterator over logs of this reference. See [crate::file::Reference::log_iter()] for details.
+    /// Obtain an iterator over logs of this reference. See [crate::file::loose::Reference::log_iter()] for details.
     pub fn log_iter<'b>(
         &self,
         buf: &'b mut Vec<u8>,

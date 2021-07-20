@@ -13,6 +13,7 @@ pub struct LooseThenPacked<'p, 's> {
 }
 
 /// A reference returned by the [`LooseThenPacked`] iterator.
+#[derive(Debug)]
 pub enum Reference<'p, 's> {
     /// A reference originating in a pack
     Packed(packed::Reference<'p>),

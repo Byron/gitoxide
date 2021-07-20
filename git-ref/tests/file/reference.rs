@@ -63,6 +63,36 @@ mod peel {
     }
 
     #[test]
+    fn peel_one_level_with_pack() -> crate::Result {
+        let store = store_with_packed_refs()?;
+        let packed = store.packed()?;
+
+        let head = store.find_existing("dt1", packed.as_ref())?;
+        assert!(head.is_packed());
+        assert_eq!(
+            head.target().as_id().map(ToOwned::to_owned),
+            Some(hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3"))
+        );
+        assert_eq!(
+            head.kind(),
+            git_ref::Kind::Peeled,
+            "its peeled, but does have another step to peel to"
+        );
+
+        let peeled = head
+            .peel_one_level(packed.as_ref())
+            .expect("a peeled ref for the object")?;
+        assert_eq!(
+            peeled.target().as_id().map(ToOwned::to_owned),
+            Some(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
+            "packed refs are always peeled (at least the ones we choose to read)"
+        );
+        assert_eq!(peeled.kind(), git_ref::Kind::Peeled, "it's terminally peeled now");
+        assert!(peeled.peel_one_level(packed.as_ref()).is_none());
+        Ok(())
+    }
+
+    #[test]
     fn to_id_multi_hop() -> crate::Result {
         let store = file::store()?;
         let mut r = store.loose_find_existing("multi-link")?;
