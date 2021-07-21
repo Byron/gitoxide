@@ -88,8 +88,9 @@ impl output::Entry {
             Blob => Some(output::entry::Kind::Base(git_object::Kind::Blob)),
             Tag => Some(output::entry::Kind::Base(git_object::Kind::Tag)),
             OfsDelta { base_distance } => {
-                let pack_offset = count.entry_pack_location.as_ref().expect("packed").pack_offset;
-                let base_offset = pack_offset
+                let pack_location = count.entry_pack_location.as_ref().expect("packed");
+                let base_offset = pack_location
+                    .pack_offset
                     .checked_sub(base_distance)
                     .expect("pack-offset - distance is firmly within the pack");
                 potential_bases
@@ -106,7 +107,7 @@ impl output::Entry {
                     })
                     .or_else(|| {
                         if allow_thin_pack {
-                            todo!("find id in pack by looking up pack offset to id")
+                            todo!("find id in pack by looking up id by pack offset")
                         } else {
                             None
                         }

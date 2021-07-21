@@ -117,8 +117,7 @@ fn traversals() -> crate::Result {
             false,
         ),
         (
-            // TODO: trigger thin pack code
-            count::iter_from_objects::ObjectExpansion::TreeContents,
+            count::iter_from_objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
             Count {
                 trees: 8,
                 commits: 2, // todo: why more?
@@ -128,16 +127,16 @@ fn traversals() -> crate::Result {
                 delta_oid: 0,
             },
             ObjectCount {
-                trees: 9,
-                commits: 2,
-                blobs: 601,
-                tags: 1,
+                trees: 5,
+                commits: 2, // todo: figure out why its more than expected
+                blobs: 96,
+                tags: 0,
             },
             output::count::iter_from_objects::Outcome {
-                input_objects: 2, // todo: figure out why its more than expected
-                expanded_objects: 611,
-                decoded_objects: 12,
-                total_objects: 613,
+                input_objects: 1,
+                expanded_objects: 102,
+                decoded_objects: 18,
+                total_objects: 103,
             },
             output::entry::iter_from_counts::Outcome {
                 decoded_and_recompressed_objects: 0,
@@ -201,7 +200,12 @@ fn traversals() -> crate::Result {
             || pack::cache::Never,
             commits
                 .into_iter()
-                .chain(std::iter::once(hex_to_id("e3fb53cbb4c346d48732a24f09cf445e49bc63d6"))),
+                .chain(std::iter::once(hex_to_id(if allow_thin_pack {
+                    "0000000000000000000000000000000000000000"
+                } else {
+                    "e3fb53cbb4c346d48732a24f09cf445e49bc63d6"
+                })))
+                .filter(|o| !o.is_null()),
             progress::Discard,
             count::iter_from_objects::Options {
                 input_object_expansion: expansion_mode,
