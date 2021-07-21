@@ -139,8 +139,8 @@ where
                                 count,
                                 counts_in_pack,
                                 base_index_offset,
-                                if allow_thin_pack {
-                                    Some(|pack_id, base_offset| {
+                                allow_thin_pack.then(|| {
+                                    |pack_id, base_offset| {
                                         // TODO: definitely build a cache on demand, just a single pack is needed at a time
                                         db.bundle_by_pack_id(pack_id).and_then(|b| {
                                             b.index.iter().find_map(|e| {
@@ -151,10 +151,8 @@ where
                                                 }
                                             })
                                         })
-                                    })
-                                } else {
-                                    None
-                                },
+                                    }
+                                }),
                                 version,
                             ) {
                                 Some(entry) => {
