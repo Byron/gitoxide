@@ -52,7 +52,7 @@ impl crate::Find for linked::Store {
         Ok(None)
     }
 
-    fn location_by_id(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<pack::bundle::Location> {
+    fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<pack::bundle::Location> {
         let id = id.as_ref();
         for db in self.dbs.iter() {
             if let Some(compound::find::PackLocation {
@@ -109,8 +109,8 @@ impl crate::Find for &linked::Store {
         (*self).find(id, buffer, pack_cache)
     }
 
-    fn location_by_id(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
-        (*self).location_by_id(id, buf)
+    fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
+        (*self).location_by_oid(id, buf)
     }
 
     fn entry_by_location(&self, location: &pack::bundle::Location) -> Option<Entry<'_>> {
