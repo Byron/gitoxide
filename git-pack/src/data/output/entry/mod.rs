@@ -80,7 +80,7 @@ impl output::Entry {
         if pack_entry.header.is_base() {
             Some(Ok(output::Entry {
                 id: count.id.to_owned(),
-                object_kind: pack_entry.header.as_kind().expect("valid object only"),
+                object_kind: pack_entry.header.as_kind().expect("base object only"),
                 kind: output::entry::Kind::Base,
                 decompressed_size: pack_entry.decompressed_size as usize,
                 compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),

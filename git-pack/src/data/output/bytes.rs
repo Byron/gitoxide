@@ -62,7 +62,7 @@ where
         );
         assert!(
             matches!(hash_kind, git_hash::Kind::Sha1),
-            "currently only Sha1 is supported",
+            "currently only Sha1 is supported, right now we don't know how other hashes are encoded",
         );
         FromEntriesIter {
             input,
@@ -98,7 +98,7 @@ where
             Some(entries) => {
                 for entry in entries.map_err(Error::Input)? {
                     let header = entry.to_entry_header(self.entry_version, |_index_offset| {
-                        unimplemented!("a way to calculate pack offsets from object index offsets")
+                        todo!("a way to calculate pack offsets from object index offsets")
                     });
                     written += header.write_to(entry.decompressed_size as u64, &mut self.output)? as u64;
                     written += std::io::copy(&mut &*entry.compressed_data, &mut self.output)? as u64;

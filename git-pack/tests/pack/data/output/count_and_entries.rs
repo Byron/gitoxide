@@ -164,7 +164,7 @@ fn traversals() -> crate::Result {
     Ok(())
 }
 
-fn write_and_verify(entries: Vec<output::Entry>, _expected_pack_hash: git_hash::ObjectId) -> crate::Result {
+fn write_and_verify(entries: Vec<output::Entry>, expected_pack_hash: git_hash::ObjectId) -> crate::Result {
     let tmp_dir = tempfile::TempDir::new()?;
     let pack_file_path = tmp_dir.path().join("new.pack");
     let mut pack_file = std::fs::OpenOptions::new()
@@ -205,7 +205,7 @@ fn write_and_verify(entries: Vec<output::Entry>, _expected_pack_hash: git_hash::
         "the trailer of the pack matches the actually written trailer"
     );
 
-    assert_eq!(hash, _expected_pack_hash, "pack hashes are stable if the input is");
+    assert_eq!(hash, expected_pack_hash, "pack hashes are stable if the input is");
 
     // Re-generate the index from the pack for validation.
     let bundle = pack::Bundle::at(

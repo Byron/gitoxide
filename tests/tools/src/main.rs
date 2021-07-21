@@ -11,7 +11,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let scmd = args.next().expect("sub command");
     match &*scmd {
         "mess-in-the-middle" => mess_in_the_middle(PathBuf::from(args.next().expect("path to file to mess with")))?,
-        _ => unimplemented!("Unknown subcommand: {}", scmd),
+        _ => unreachable!("Unknown subcommand: {}", scmd),
     };
     Ok(())
 }
