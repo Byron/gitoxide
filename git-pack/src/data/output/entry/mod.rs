@@ -105,9 +105,11 @@ impl output::Entry {
                     .map(|idx| output::entry::Kind::DeltaRef {
                         object_index: idx + bases_index_offset,
                     })
-                    .or(pack_offset_to_oid
-                        .and_then(|mut f| f(pack_location.pack_id, base_offset))
-                        .map(|id| output::entry::Kind::DeltaOid { id }))
+                    .or_else(|| {
+                        pack_offset_to_oid
+                            .and_then(|mut f| f(pack_location.pack_id, base_offset))
+                            .map(|id| output::entry::Kind::DeltaOid { id })
+                    })
             }
             RefDelta { base_id: _ } => None,
         }
