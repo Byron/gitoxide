@@ -90,8 +90,8 @@ pub struct EstimateHours {
     #[clap(validator_os = validator::is_repo)]
     #[clap(default_value = ".")]
     pub working_dir: PathBuf,
-    /// The name of the ref like 'main' or 'master' at which to start iterating the commit graph.
-    #[clap(default_value("main"))]
+    /// The name of the ref like 'HEAD' or 'main' at which to start iterating the commit graph.
+    #[clap(default_value("HEAD"))]
     pub refname: OsString,
     /// Show personally identifiable information before the summary. Includes names and email addresses.
     #[clap(short = 'p', long)]

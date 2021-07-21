@@ -304,6 +304,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 
 ### git-ref
 * [ ] Prepare code for arrival of longer hashes like Sha256. It's part of the [V2 proposal][reftable-v2] but should work for loose refs as well.
+* [ ] **revparse** - obtain an object ID from short or long hashes, reference names or reference log [or more][revparse].
 * **Stores**
   * [ ] disable transactions during [quarantine]
   * **loose file**
@@ -335,6 +336,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 * [x] API documentation
     * [ ] Some examples
 
+[revparse]: https://git-scm.com/docs/git-rev-parse#Documentation/git-rev-parse.txt-emem
 [reftable-spec]: https://github.com/eclipse/jgit/blob/master/Documentation/technical/reftable.md
 [reftable-impl]: https://github.com/google/reftable
 [reftable-v2]: https://github.com/google/reftable/blob/master/reftable-v2-proposal.md

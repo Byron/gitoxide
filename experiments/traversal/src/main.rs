@@ -22,9 +22,7 @@ fn main() -> anyhow::Result<()> {
             .nth(1)
             .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))?;
         let repo = git_repository::discover(directory)?;
-        let name = args.next().ok_or_else(|| {
-            anyhow!("Second argument is the name of the branch from which to start iteration, like 'main' or 'master'")
-        })?;
+        let name = args.next().unwrap_or("HEAD".into());
         let packed = repo.refs.packed()?;
         let commit_id = repo
             .refs
