@@ -25,5 +25,5 @@ impl Count {
 }
 
 ///
-pub mod from_objects_iter;
-pub use from_objects_iter::from_objects_iter;
+pub mod iter_from_objects;
+pub use iter_from_objects::iter_from_objects;

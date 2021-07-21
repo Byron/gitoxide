@@ -19,7 +19,7 @@ use std::sync::Arc;
 ///   * a way to obtain progress information
 /// * `options`
 ///   * more configuration
-pub fn from_objects_iter<Find, Iter, Oid, Cache>(
+pub fn iter_from_objects<Find, Iter, Oid, Cache>(
     db: Find,
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
     objects_ids: Iter,
@@ -421,7 +421,7 @@ mod util {
 }
 
 mod types {
-    /// Information gathered during the run of [`from_objects_iter()`][super::from_objects_iter()].
+    /// Information gathered during the run of [`iter_from_objects()`][super::iter_from_objects()].
     #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub struct Outcome {
@@ -486,6 +486,8 @@ mod types {
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub struct Options {
         /// The amount of threads to use at most when resolving the pack. If `None`, all logical cores are used.
+        /// If more than one thread is used, the order of returned [counts][crate::data::output::Count] is not deterministic anymore
+        /// especially when tree traversal is involved. Thus deterministic ordering requires `Some(1)` to be set.
         pub thread_limit: Option<usize>,
         /// The amount of objects per chunk or unit of work to be sent to threads for processing
         /// TODO: could this become the window size?

@@ -4,8 +4,8 @@ use git_hash::ObjectId;
 use std::io::Write;
 
 ///
-pub mod from_counts_iter;
-pub use from_counts_iter::from_counts_iter;
+pub mod iter_from_counts;
+pub use iter_from_counts::iter_from_counts;
 
 /// An entry to be written to a file.
 ///

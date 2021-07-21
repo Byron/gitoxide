@@ -15,7 +15,6 @@ use std::sync::atomic::AtomicBool;
 
 #[test]
 fn traversals() -> crate::Result {
-    let db = db(DbKind::DeterministicGeneratedContent)?;
     #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
     struct Count {
         trees: usize,
@@ -43,52 +42,53 @@ fn traversals() -> crate::Result {
         blobs: 811,
         tags: 1,
     };
+    let db = db(DbKind::DeterministicGeneratedContent)?;
     for (expansion_mode, expected_count, expected_counts_outcome, expected_entries_outcome, expected_pack_hash) in [
         (
-            count::from_objects_iter::ObjectExpansion::AsIs,
+            count::iter_from_objects::ObjectExpansion::AsIs,
             Count {
                 trees: 0,
                 commits: 15,
                 blobs: 0,
                 tags: 1,
             },
-            output::count::from_objects_iter::Outcome {
+            output::count::iter_from_objects::Outcome {
                 input_objects: 16,
                 expanded_objects: 0,
                 decoded_objects: 16,
                 total_objects: 16,
             },
-            output::entry::from_counts_iter::Outcome {
+            output::entry::iter_from_counts::Outcome {
                 decoded_and_recompressed_objects: 0,
                 objects_copied_from_pack: 16,
             },
             hex_to_id("a84ddea36a6504a7385761ede0ccc8eb4451392e"),
         ),
         (
-            count::from_objects_iter::ObjectExpansion::TreeContents,
+            count::iter_from_objects::ObjectExpansion::TreeContents,
             whole_pack,
-            output::count::from_objects_iter::Outcome {
+            output::count::iter_from_objects::Outcome {
                 input_objects: 16,
                 expanded_objects: 852,
                 decoded_objects: 57,
                 total_objects: 868,
             },
-            output::entry::from_counts_iter::Outcome {
+            output::entry::iter_from_counts::Outcome {
                 decoded_and_recompressed_objects: 542,
                 objects_copied_from_pack: 326,
             },
             hex_to_id("c0f566c050fc5ff41d1b68cc56e13f5aa96c2df7"),
         ),
         (
-            count::from_objects_iter::ObjectExpansion::TreeAdditionsComparedToAncestor,
+            count::iter_from_objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
             whole_pack,
-            output::count::from_objects_iter::Outcome {
+            output::count::iter_from_objects::Outcome {
                 input_objects: 16,
                 expanded_objects: 866,
                 decoded_objects: 208,
                 total_objects: 868,
             },
-            output::entry::from_counts_iter::Outcome {
+            output::entry::iter_from_counts::Outcome {
                 decoded_and_recompressed_objects: 542,
                 objects_copied_from_pack: 326,
             },
@@ -106,12 +106,12 @@ fn traversals() -> crate::Result {
         .map(Result::unwrap);
 
         let deterministic_count_needs_single_thread = Some(1);
-        let mut counts_iter = output::count::from_objects_iter(
+        let mut counts_iter = output::count::iter_from_objects(
             db.clone(),
             || pack::cache::Never,
             commits.chain(std::iter::once(hex_to_id("e3fb53cbb4c346d48732a24f09cf445e49bc63d6"))),
             progress::Discard,
-            count::from_objects_iter::Options {
+            count::iter_from_objects::Options {
                 input_object_expansion: expansion_mode,
                 thread_limit: deterministic_count_needs_single_thread,
                 ..Default::default()
@@ -138,12 +138,12 @@ fn traversals() -> crate::Result {
         assert_eq!(stats, expected_counts_outcome);
         assert_eq!(stats.total_objects, expected_count.total());
 
-        let mut entries_iter = output::entry::from_counts_iter(
+        let mut entries_iter = output::entry::iter_from_counts(
             counts,
             db.clone(),
             || pack::cache::Never,
             progress::Discard,
-            output::entry::from_counts_iter::Options::default(),
+            output::entry::iter_from_counts::Options::default(),
         );
         let entries: Vec<_> = output::InOrderIter::from(entries_iter.by_ref())
             .collect::<Result<Vec<_>, _>>()?
@@ -174,7 +174,7 @@ fn write_and_verify(entries: Vec<output::Entry>, _expected_pack_hash: git_hash::
     let (num_written_bytes, pack_hash) = {
         let num_entries = entries.len();
         let mut pack_writer = output::bytes::FromEntriesIter::new(
-            std::iter::once(Ok::<_, entry::from_counts_iter::Error<compound::find::Error>>(entries)),
+            std::iter::once(Ok::<_, entry::iter_from_counts::Error<compound::find::Error>>(entries)),
             &mut pack_file,
             num_entries as u32,
             pack::data::Version::V2,

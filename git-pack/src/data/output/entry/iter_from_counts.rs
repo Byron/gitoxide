@@ -35,7 +35,7 @@ use std::sync::Arc;
 ///   so with minimal overhead (especially compared to `gixp index-from-pack`)~~ Probably works now by chaining Iterators
 ///  or keeping enough state to write a pack and then generate an index with recorded data.
 ///
-pub fn from_counts_iter<Find, Cache>(
+pub fn iter_from_counts<Find, Cache>(
     counts: Vec<output::Count>,
     db: Find,
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
@@ -188,7 +188,7 @@ mod reduce {
 mod types {
     use crate::data::output::entry;
 
-    /// Information gathered during the run of [`from_counts_iter()`][super::from_counts_iter()].
+    /// Information gathered during the run of [`iter_from_counts()`][super::iter_from_counts()].
     #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub struct Outcome {
@@ -235,7 +235,7 @@ mod types {
         }
     }
 
-    /// The error returned by the pack generation function [`to_entry_iter()`][crate::data::output::entry::from_counts_iter()].
+    /// The error returned by the pack generation function [`to_entry_iter()`][crate::data::output::entry::iter_from_counts()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error<FindErr>

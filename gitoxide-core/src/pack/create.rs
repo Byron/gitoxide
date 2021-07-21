@@ -47,9 +47,9 @@ impl FromStr for ObjectExpansion {
     }
 }
 
-impl From<ObjectExpansion> for pack::data::output::count::from_objects_iter::ObjectExpansion {
+impl From<ObjectExpansion> for pack::data::output::count::iter_from_objects::ObjectExpansion {
     fn from(v: ObjectExpansion) -> Self {
-        use pack::data::output::count::from_objects_iter::ObjectExpansion::*;
+        use pack::data::output::count::iter_from_objects::ObjectExpansion::*;
         match v {
             ObjectExpansion::None => AsIs,
             ObjectExpansion::TreeTraversal => TreeContents,
@@ -137,12 +137,12 @@ where
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
         let mut interruptible_counts_iter = interrupt::Iter::new(
-            pack::data::output::count::from_objects_iter(
+            pack::data::output::count::iter_from_objects(
                 Arc::clone(&db),
                 pack::cache::lru::StaticLinkedList::<64>::default,
                 input,
                 progress.add_child("threads"),
-                pack::data::output::count::from_objects_iter::Options {
+                pack::data::output::count::iter_from_objects::Options {
                     thread_limit: if nondeterministic_count || matches!(expansion, ObjectExpansion::None) {
                         thread_limit
                     } else {
@@ -170,12 +170,12 @@ where
     let num_objects = counts.len();
     let mut in_order_entries = {
         let progress = progress.add_child("creating entries");
-        pack::data::output::InOrderIter::from(pack::data::output::entry::from_counts_iter(
+        pack::data::output::InOrderIter::from(pack::data::output::entry::iter_from_counts(
             counts,
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
             progress,
-            git_repository::odb::data::output::entry::from_counts_iter::Options {
+            git_repository::odb::data::output::entry::iter_from_counts::Options {
                 thread_limit,
                 chunk_size,
                 version: Default::default(),
@@ -262,14 +262,14 @@ fn print(stats: Statistics, format: OutputFormat, out: impl std::io::Write) -> a
 fn human_output(
     Statistics {
         counts:
-            pack::data::output::count::from_objects_iter::Outcome {
+            pack::data::output::count::iter_from_objects::Outcome {
                 input_objects,
                 expanded_objects,
                 decoded_objects,
                 total_objects,
             },
         entries:
-            pack::data::output::entry::from_counts_iter::Outcome {
+            pack::data::output::entry::iter_from_counts::Outcome {
                 decoded_and_recompressed_objects,
                 objects_copied_from_pack,
             },
@@ -303,6 +303,6 @@ fn human_output(
 #[derive(Default)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 struct Statistics {
-    counts: pack::data::output::count::from_objects_iter::Outcome,
-    entries: pack::data::output::entry::from_counts_iter::Outcome,
+    counts: pack::data::output::count::iter_from_objects::Outcome,
+    entries: pack::data::output::entry::iter_from_counts::Outcome,
 }

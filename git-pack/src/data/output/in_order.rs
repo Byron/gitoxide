@@ -6,7 +6,7 @@ pub type ChunkId = usize;
 /// An iterator which olds iterated items with a **sequential** ID starting at 0 long enough to dispense them in order.
 ///
 /// Note that this iterator is made specifically to support the signature of the iterator returned
-/// by [from_counts_iter(…)][super::entry::from_counts_iter()].
+/// by [from_counts_iter(…)][super::entry::iter_from_counts()].
 pub struct InOrderIter<T, I> {
     /// The iterator yielding the out-of-order elements we are to yield in order.
     pub inner: I,
