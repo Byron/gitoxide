@@ -57,7 +57,7 @@ where
         matches!(version, crate::data::Version::V2),
         "currently we can only write version 2"
     );
-    match mode {
+    let _counts_range_by_pack_id = match mode {
         Mode::PackCopyAndBaseObjects => {
             let mut progress = progress.add_child("sorting");
             progress.init(Some(counts.len()), git_features::progress::count("counts"));
@@ -72,10 +72,26 @@ where
                     .cmp(&rhs.pack_id)
                     .then(lhs.pack_offset.cmp(&rhs.pack_offset)),
             });
+
+            let mut index: Vec<(u32, std::ops::Range<usize>)> = Vec::new();
+            let mut pack_start = counts.partition_point(|e| e.entry_pack_location.is_none());
+            let mut slice = &counts[pack_start..];
+            while !slice.is_empty() {
+                let current_pack_id = slice[0].entry_pack_location.as_ref().expect("packed object").pack_id;
+                let pack_end = slice.partition_point(|e| {
+                    e.entry_pack_location.as_ref().expect("packed object").pack_id == current_pack_id
+                });
+                index.push((current_pack_id, pack_start..pack_end));
+                slice = &slice[pack_end..];
+                pack_start = pack_end;
+            }
+
             progress.set(counts.len());
             progress.show_throughput(start);
+
+            index
         }
-    }
+    };
     let counts = Arc::new(counts);
     let (chunk_size, thread_limit, _) =
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
