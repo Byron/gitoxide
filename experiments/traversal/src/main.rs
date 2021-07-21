@@ -22,7 +22,7 @@ fn main() -> anyhow::Result<()> {
             .nth(1)
             .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))?;
         let repo = git_repository::discover(directory)?;
-        let name = args.next().unwrap_or("HEAD".into());
+        let name = args.next().unwrap_or_else(|| "HEAD".into());
         let packed = repo.refs.packed()?;
         let commit_id = repo
             .refs
