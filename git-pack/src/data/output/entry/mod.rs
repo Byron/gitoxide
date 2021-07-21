@@ -17,7 +17,7 @@ pub struct Entry {
     /// The hash of the object to write
     pub id: ObjectId,
     /// The kind of packed object
-    pub object_kind: git_object::Kind,
+    pub object_kind: git_object::Kind, // TODO: this should probably be part of `Kind::Base` as it's really only used then
     /// The kind of entry represented by `data`. It's used alongside with it to complete the pack entry
     /// at rest or in transit.
     pub kind: Kind,
@@ -66,32 +66,60 @@ impl output::Entry {
     pub fn from_pack_entry(
         entry: find::Entry<'_>,
         count: &output::Count,
-        _potential_bases: &[output::Count],
-        _allow_thin_pack: bool,
+        potential_bases: &[output::Count],
+        allow_thin_pack: bool,
         target_version: crate::data::Version,
     ) -> Option<Result<Self, Error>> {
         if entry.version != target_version {
             return None;
         };
 
-        let pack_entry = crate::data::Entry::from_bytes(entry.data, 0);
+        let pack_offset_must_be_zero = 0;
+        let pack_entry = crate::data::Entry::from_bytes(entry.data, pack_offset_must_be_zero);
         if let Some(expected) = entry.crc32 {
             let actual = hash::crc32(entry.data);
             if actual != expected {
                 return Some(Err(Error::PackToPackCopyCrc32Mismatch { actual, expected }));
             }
         }
-        if pack_entry.header.is_base() {
-            Some(Ok(output::Entry {
+        use crate::data::entry::Header::*;
+        match pack_entry.header {
+            Commit | Tree | Blob | Tag => Some(output::entry::Kind::Base),
+            OfsDelta { base_distance } => {
+                let pack_offset = count.entry_pack_location.as_ref().expect("packed").pack_offset;
+                let base_offset = pack_offset
+                    .checked_sub(base_distance)
+                    .expect("pack-offset - distance is firmily within the pack");
+                potential_bases
+                    .binary_search_by(|e| {
+                        e.entry_pack_location
+                            .as_ref()
+                            .expect("packed")
+                            .pack_offset
+                            .cmp(&base_offset)
+                    })
+                    .ok()
+                    .map(|idx| output::entry::Kind::DeltaRef { object_index: idx })
+                    .or_else(|| {
+                        if allow_thin_pack {
+                            todo!("find id in pack by looking up pack offset to id")
+                        } else {
+                            None
+                        }
+                    })
+            }
+            RefDelta { base_id: _ } => None,
+        }
+        .map(|kind| {
+            Ok(output::Entry {
                 id: count.id.to_owned(),
-                object_kind: pack_entry.header.as_kind().expect("base object only"),
-                kind: output::entry::Kind::Base,
+                // object_kind: pack_entry.header.as_kind().expect("base object only"),
+                object_kind: pack_entry.header.as_kind().unwrap_or(git_object::Kind::Blob), // TODO: fix, see field todo
+                kind,
                 decompressed_size: pack_entry.decompressed_size as usize,
                 compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),
-            }))
-        } else {
-            None
-        }
+            })
+        })
     }
 
     /// Create a new instance from the given `oid` and its corresponding git `obj`ect data.
