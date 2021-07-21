@@ -175,8 +175,9 @@ where
             Arc::clone(&db),
             pack::cache::lru::StaticLinkedList::<64>::default,
             progress,
-            git_repository::odb::data::output::entry::iter_from_counts::Options {
+            pack::data::output::entry::iter_from_counts::Options {
                 thread_limit,
+                mode: pack::data::output::entry::iter_from_counts::Mode::PackCopyAndBaseObjects,
                 chunk_size,
                 version: Default::default(),
             },

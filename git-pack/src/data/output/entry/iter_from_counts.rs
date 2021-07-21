@@ -42,6 +42,7 @@ pub fn iter_from_counts<Find, Cache>(
     progress: impl Progress,
     Options {
         version,
+        mode: _mode,
         thread_limit,
         chunk_size,
     }: Options,
@@ -212,16 +213,29 @@ mod types {
         }
     }
 
+    /// The way the iterator operates.
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub enum Mode {
+        /// Copy base objects and deltas from packs, while non-packed objects will be treated as base objects
+        /// (i.e. without trying to delta compress them). This is a fast way of obtaining a back while benefitting
+        /// from existing pack compression and spending the smallest possible time on compressing unpacked objects at
+        /// the cost of bandwidth.
+        PackCopyAndBaseObjects,
+    }
+
     /// Configuration options for the pack generation functions provied in [this module][crate::data::output].
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub struct Options {
         /// The amount of threads to use at most when resolving the pack. If `None`, all logical cores are used.
         pub thread_limit: Option<usize>,
+        /// The algorithm to produce a pack
+        pub mode: Mode,
         /// The amount of objects per chunk or unit of work to be sent to threads for processing
         /// TODO: could this become the window size?
         pub chunk_size: usize,
-        /// The pack data version to produce
+        /// The pack data version to produce for each entry
         pub version: crate::data::Version,
     }
 
@@ -229,6 +243,7 @@ mod types {
         fn default() -> Self {
             Options {
                 thread_limit: None,
+                mode: Mode::PackCopyAndBaseObjects,
                 chunk_size: 10,
                 version: Default::default(),
             }
@@ -248,4 +263,4 @@ mod types {
         NewEntry(#[from] entry::Error),
     }
 }
-pub use types::{Error, Options, Outcome};
+pub use types::{Error, Mode, Options, Outcome};

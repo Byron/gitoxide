@@ -62,6 +62,7 @@ pub struct Location {
     pub index_file_id: u32,
     /// The size of the entry of disk so that the range of bytes of the entry is `pack_offset..pack_offset + entry_size`.
     pub entry_size: usize,
+    // TODO: Add pack offset here to help finding additional information of delta objects by their pack offset
 }
 
 impl Location {
