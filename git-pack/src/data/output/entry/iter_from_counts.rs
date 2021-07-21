@@ -140,7 +140,18 @@ where
                                 counts_in_pack,
                                 base_index_offset,
                                 if allow_thin_pack {
-                                    Some(|base_offset| todo!("lookup offset -> id"))
+                                    Some(|pack_id, base_offset| {
+                                        // TODO: definitely build a cache on demand, just a single pack is needed at a time
+                                        db.bundle_by_pack_id(pack_id).and_then(|b| {
+                                            b.index.iter().find_map(|e| {
+                                                if e.pack_offset == base_offset {
+                                                    Some(e.oid)
+                                                } else {
+                                                    None
+                                                }
+                                            })
+                                        })
+                                    })
                                 } else {
                                     None
                                 },

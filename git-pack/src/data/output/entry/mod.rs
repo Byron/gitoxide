@@ -66,7 +66,7 @@ impl output::Entry {
         count: &output::Count,
         potential_bases: &[output::Count],
         bases_index_offset: usize,
-        pack_offset_to_oid: Option<impl Fn(u64) -> Option<ObjectId>>,
+        pack_offset_to_oid: Option<impl FnMut(u32, u64) -> Option<ObjectId>>,
         target_version: crate::data::Version,
     ) -> Option<Result<Self, Error>> {
         if entry.version != target_version {
@@ -106,7 +106,7 @@ impl output::Entry {
                         object_index: idx + bases_index_offset,
                     })
                     .or(pack_offset_to_oid
-                        .and_then(|f| f(base_offset))
+                        .and_then(|mut f| f(pack_location.pack_id, base_offset))
                         .map(|id| output::entry::Kind::DeltaOid { id }))
             }
             RefDelta { base_id: _ } => None,

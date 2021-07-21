@@ -119,12 +119,12 @@ fn traversals() -> crate::Result {
         (
             count::iter_from_objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
             Count {
-                trees: 8,
+                trees: 3,
                 commits: 2, // todo: why more?
-                blobs: 158,
-                tags: 1,
-                delta_ref: 444,
-                delta_oid: 0,
+                blobs: 19,
+                tags: 0,
+                delta_ref: 5,
+                delta_oid: 74,
             },
             ObjectCount {
                 trees: 5,
@@ -140,7 +140,7 @@ fn traversals() -> crate::Result {
             },
             output::entry::iter_from_counts::Outcome {
                 decoded_and_recompressed_objects: 0,
-                objects_copied_from_pack: 613,
+                objects_copied_from_pack: 103,
             },
             hex_to_id("d2ea809066bec3f5f2a38ef4adba7ebd4f2eda22"),
             true,
