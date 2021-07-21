@@ -66,7 +66,7 @@ impl output::Entry {
         count: &output::Count,
         potential_bases: &[output::Count],
         bases_index_offset: usize,
-        db: Option<impl crate::Find>,
+        pack_offset_to_oid: Option<impl Fn(u64) -> Option<ObjectId>>,
         target_version: crate::data::Version,
     ) -> Option<Result<Self, Error>> {
         if entry.version != target_version {
@@ -105,12 +105,9 @@ impl output::Entry {
                     .map(|idx| output::entry::Kind::DeltaRef {
                         object_index: idx + bases_index_offset,
                     })
-                    .or_else(|| match db {
-                        Some(db) => {
-                            todo!("find id in pack by looking up id by pack offset")
-                        }
-                        None => None,
-                    })
+                    .or(pack_offset_to_oid
+                        .and_then(|f| f(base_offset))
+                        .map(|id| output::entry::Kind::DeltaOid { id }))
             }
             RefDelta { base_id: _ } => None,
         }

@@ -139,7 +139,11 @@ where
                                 count,
                                 counts_in_pack,
                                 base_index_offset,
-                                if allow_thin_pack { Some(&db) } else { None },
+                                if allow_thin_pack {
+                                    Some(|base_offset| todo!("lookup offset -> id"))
+                                } else {
+                                    None
+                                },
                                 version,
                             ) {
                                 Some(entry) => {
