@@ -197,6 +197,7 @@ where
             pack::data::output::entry::iter_from_counts::Options {
                 thread_limit,
                 mode: pack::data::output::entry::iter_from_counts::Mode::PackCopyAndBaseObjects,
+                allow_thin_pack: false, // todo: make this configurable
                 chunk_size,
                 version: Default::default(),
             },

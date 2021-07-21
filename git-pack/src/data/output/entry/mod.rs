@@ -16,8 +16,6 @@ pub use iter_from_counts::iter_from_counts;
 pub struct Entry {
     /// The hash of the object to write
     pub id: ObjectId,
-    /// The kind of packed object
-    pub object_kind: git_object::Kind, // TODO: this should probably be part of `Kind::Base` as it's really only used then
     /// The kind of entry represented by `data`. It's used alongside with it to complete the pack entry
     /// at rest or in transit.
     pub kind: Kind,
@@ -31,8 +29,8 @@ pub struct Entry {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
-    /// A complete base object
-    Base,
+    /// A complete base object, including its kind
+    Base(git_object::Kind),
     /// A delta against the object with the given index. It's always an index that was already encountered to refer only
     /// to object we have written already.
     DeltaRef {
@@ -84,7 +82,9 @@ impl output::Entry {
         }
         use crate::data::entry::Header::*;
         match pack_entry.header {
-            Commit | Tree | Blob | Tag => Some(output::entry::Kind::Base),
+            Commit | Tree | Blob | Tag => Some(output::entry::Kind::Base(
+                pack_entry.header.as_kind().expect("object kind"),
+            )),
             OfsDelta { base_distance } => {
                 let pack_offset = count.entry_pack_location.as_ref().expect("packed").pack_offset;
                 let base_offset = pack_offset
@@ -113,8 +113,6 @@ impl output::Entry {
         .map(|kind| {
             Ok(output::Entry {
                 id: count.id.to_owned(),
-                // object_kind: pack_entry.header.as_kind().expect("base object only"),
-                object_kind: pack_entry.header.as_kind().unwrap_or(git_object::Kind::Blob), // TODO: fix, see field todo
                 kind,
                 decompressed_size: pack_entry.decompressed_size as usize,
                 compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),
@@ -126,8 +124,7 @@ impl output::Entry {
     pub fn from_data(count: &output::Count, obj: &data::Object<'_>) -> Result<Self, Error> {
         Ok(output::Entry {
             id: count.id.to_owned(),
-            object_kind: obj.kind,
-            kind: Kind::Base,
+            kind: Kind::Base(obj.kind),
             decompressed_size: obj.data.len(),
             compressed_data: {
                 let mut out = git_features::zlib::stream::deflate::Write::new(Vec::new());
@@ -160,9 +157,9 @@ impl output::Entry {
 
         use Kind::*;
         match self.kind {
-            Base => {
+            Base(kind) => {
                 use git_object::Kind::*;
-                match self.object_kind {
+                match kind {
                     Tree => data::entry::Header::Tree,
                     Blob => data::entry::Header::Blob,
                     Commit => data::entry::Header::Commit,
