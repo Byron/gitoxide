@@ -120,7 +120,7 @@ where
                 let mut stats = Outcome::default();
                 progress.init(Some(chunk.len()), git_features::progress::count("objects"));
 
-                for (count_id, count) in chunk.iter().enumerate().map(|(idx, c)| (idx, c)) {
+                for count in chunk {
                     out.push(match count
                         .entry_pack_location
                         .as_ref()
@@ -136,7 +136,6 @@ where
                             match output::Entry::from_pack_entry(
                                 pack_entry,
                                 count,
-                                count_id,
                                 counts_in_pack,
                                 allow_thin_pack,
                                 version,

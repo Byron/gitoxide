@@ -66,7 +66,6 @@ impl output::Entry {
     pub fn from_pack_entry(
         entry: find::Entry<'_>,
         count: &output::Count,
-        _count_id: usize,
         _potential_bases: &[output::Count],
         _allow_thin_pack: bool,
         target_version: crate::data::Version,
