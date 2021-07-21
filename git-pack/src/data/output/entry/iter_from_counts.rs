@@ -3,7 +3,7 @@ use crate::{
     find, FindExt,
 };
 use git_features::{parallel, progress::Progress};
-use std::sync::Arc;
+use std::{cmp::Ordering, sync::Arc};
 
 /// Given a known list of object `counts`, calculate entries ready to be put into a data pack.
 ///
@@ -36,13 +36,13 @@ use std::sync::Arc;
 ///  or keeping enough state to write a pack and then generate an index with recorded data.
 ///
 pub fn iter_from_counts<Find, Cache>(
-    counts: Vec<output::Count>,
+    mut counts: Vec<output::Count>,
     db: Find,
     make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
-    progress: impl Progress,
+    mut progress: impl Progress,
     Options {
         version,
-        mode: _mode,
+        mode,
         thread_limit,
         chunk_size,
     }: Options,
@@ -57,6 +57,25 @@ where
         matches!(version, crate::data::Version::V2),
         "currently we can only write version 2"
     );
+    match mode {
+        Mode::PackCopyAndBaseObjects => {
+            let mut progress = progress.add_child("sorting");
+            progress.init(Some(counts.len()), git_features::progress::count("counts"));
+            let start = std::time::Instant::now();
+
+            counts.sort_by(|lhs, rhs| match (&lhs.entry_pack_location, &rhs.entry_pack_location) {
+                (None, None) => Ordering::Equal,
+                (Some(_), None) => Ordering::Greater,
+                (None, Some(_)) => Ordering::Less,
+                (Some(lhs), Some(rhs)) => lhs
+                    .pack_id
+                    .cmp(&rhs.pack_id)
+                    .then(lhs.pack_offset.cmp(&rhs.pack_offset)),
+            });
+            progress.set(counts.len());
+            progress.show_throughput(start);
+        }
+    }
     let counts = Arc::new(counts);
     let (chunk_size, thread_limit, _) =
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);

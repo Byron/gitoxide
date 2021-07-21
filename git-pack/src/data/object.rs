@@ -110,6 +110,6 @@ mod tests {
 
     #[test]
     fn size_of_object() {
-        assert_eq!(std::mem::size_of::<Object<'_>>(), 48, "this shouldn't change unnoticed");
+        assert_eq!(std::mem::size_of::<Object<'_>>(), 56, "this shouldn't change unnoticed");
     }
 }

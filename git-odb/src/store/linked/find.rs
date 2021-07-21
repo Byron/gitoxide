@@ -64,13 +64,14 @@ impl crate::Find for linked::Store {
                 let pack_offset = bundle.index.pack_offset_at_index(entry_index);
                 let entry = bundle.pack.entry(pack_offset);
 
-                buf.resize(entry.decompressed_size.try_into().expect("representable szie"), 0);
+                buf.resize(entry.decompressed_size.try_into().expect("representable size"), 0);
                 return bundle
                     .pack
                     .decompress_entry(&entry, buf)
                     .ok()
                     .map(|entry_size_past_header| pack::bundle::Location {
                         pack_id: bundle.pack.id,
+                        pack_offset,
                         index_file_id: entry_index,
                         entry_size: entry.header_size() + entry_size_past_header,
                     });

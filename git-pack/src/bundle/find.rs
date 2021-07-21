@@ -51,6 +51,7 @@ impl crate::Bundle {
                 data: out.as_slice(),
                 pack_location: Some(crate::bundle::Location {
                     pack_id: self.pack.id,
+                    pack_offset: ofs,
                     index_file_id: idx,
                     entry_size: r.compressed_size + header_size,
                 }),

@@ -62,7 +62,7 @@ fn traversals() -> crate::Result {
                 decoded_and_recompressed_objects: 0,
                 objects_copied_from_pack: 16,
             },
-            hex_to_id("a84ddea36a6504a7385761ede0ccc8eb4451392e"),
+            hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3"),
         ),
         (
             count::iter_from_objects::ObjectExpansion::TreeContents,
@@ -77,7 +77,7 @@ fn traversals() -> crate::Result {
                 decoded_and_recompressed_objects: 542,
                 objects_copied_from_pack: 326,
             },
-            hex_to_id("c0f566c050fc5ff41d1b68cc56e13f5aa96c2df7"),
+            hex_to_id("d2ea809066bec3f5f2a38ef4adba7ebd4f2eda22"),
         ),
         (
             count::iter_from_objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
@@ -92,7 +92,7 @@ fn traversals() -> crate::Result {
                 decoded_and_recompressed_objects: 542,
                 objects_copied_from_pack: 326,
             },
-            hex_to_id("e3134a132fd77335d4b99f60f8ed3698d4babc89"),
+            hex_to_id("d2ea809066bec3f5f2a38ef4adba7ebd4f2eda22"),
         ),
     ]
     .iter()

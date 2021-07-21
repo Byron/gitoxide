@@ -16,7 +16,7 @@ fn size_of_entry() {
 fn size_of_count() {
     assert_eq!(
         std::mem::size_of::<output::Count>(),
-        48,
+        56,
         "The size of the structure shouldn't change unexpectedly"
     )
 }
