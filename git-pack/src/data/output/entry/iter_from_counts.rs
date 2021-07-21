@@ -118,6 +118,7 @@ where
                 let mut out = Vec::new();
                 let chunk = &counts[chunk];
                 let mut stats = Outcome::default();
+                let mut pack_offsets_to_id = None;
                 progress.init(Some(chunk.len()), git_features::progress::count("objects"));
 
                 for count in chunk {
@@ -127,6 +128,11 @@ where
                         .and_then(|l| db.entry_by_location(l).map(|pe| (l, pe)))
                     {
                         Some((location, pack_entry)) => {
+                            if let Some((cached_pack_id, _)) = &pack_offsets_to_id {
+                                if *cached_pack_id != location.pack_id {
+                                    pack_offsets_to_id = None;
+                                }
+                            }
                             let pack_range = counts_range_by_pack_id[counts_range_by_pack_id
                                 .binary_search_by_key(&location.pack_id, |e| e.0)
                                 .expect("pack-id always present")]
@@ -141,16 +147,24 @@ where
                                 base_index_offset,
                                 allow_thin_pack.then(|| {
                                     |pack_id, base_offset| {
-                                        // TODO: definitely build a cache on demand, just a single pack is needed at a time
-                                        db.bundle_by_pack_id(pack_id).and_then(|b| {
-                                            b.index.iter().find_map(|e| {
-                                                if e.pack_offset == base_offset {
-                                                    Some(e.oid)
-                                                } else {
-                                                    None
-                                                }
-                                            })
-                                        })
+                                        let (cached_pack_id, cache) = pack_offsets_to_id.get_or_insert_with(|| {
+                                            db.bundle_by_pack_id(pack_id)
+                                                .map(|b| {
+                                                    let mut v = b
+                                                        .index
+                                                        .iter()
+                                                        .map(|e| (e.pack_offset, e.oid))
+                                                        .collect::<Vec<_>>();
+                                                    v.sort_by_key(|e| e.0);
+                                                    (pack_id, v)
+                                                })
+                                                .expect("pack used for counts is still available")
+                                        });
+                                        debug_assert_eq!(*cached_pack_id, pack_id);
+                                        cache
+                                            .binary_search_by_key(&base_offset, |e| e.0)
+                                            .ok()
+                                            .map(|idx| cache[idx].1)
                                     }
                                 }),
                                 version,
