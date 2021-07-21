@@ -78,7 +78,7 @@ impl File {
 
         // Bisect using indices
         // TODO: Performance of V2 could possibly be better if we would be able to do a binary search
-        // on 20 byte chunks directly, but doing so requires transmuting and that is unsafe, even though
+        // on 20 byte chunks directly, but doing so requires transmuting and that is not safe, even though
         // it should not be if the bytes match up and the type has no destructor.
         while lower_bound < upper_bound {
             let mid = (lower_bound + upper_bound) / 2;
