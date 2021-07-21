@@ -58,9 +58,9 @@ pub enum Error {
 pub struct Location {
     /// The id of the pack containing the object
     pub pack_id: u32,
-    /// The index at which the object can be fonud in the index file
+    /// The index at which the object can be found in the index file corresponding to the `pack_id`.
     pub index_file_id: u32,
-    /// The size of the entry of disk
+    /// The size of the entry of disk so that the range of bytes of the entry is `pack_offset..pack_offset + entry_size`.
     pub entry_size: usize,
 }
 

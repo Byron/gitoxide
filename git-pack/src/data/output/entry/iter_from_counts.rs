@@ -59,7 +59,7 @@ where
     let counts = Arc::new(counts);
     let (chunk_size, thread_limit, _) =
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
-    let chunks = util::Chunks::new(chunk_size, counts.len()).enumerate();
+    let chunks = util::ChunkRanges::new(chunk_size, counts.len()).enumerate();
     let progress = Arc::new(parking_lot::Mutex::new(progress));
 
     parallel::reduce::Stepwise::new(
@@ -114,15 +114,15 @@ where
 }
 
 mod util {
-    pub struct Chunks {
+    pub struct ChunkRanges {
         cursor: usize,
         size: usize,
         len: usize,
     }
 
-    impl Chunks {
+    impl ChunkRanges {
         pub fn new(size: usize, total: usize) -> Self {
-            Chunks {
+            ChunkRanges {
                 cursor: 0,
                 size,
                 len: total,
@@ -130,7 +130,7 @@ mod util {
         }
     }
 
-    impl Iterator for Chunks {
+    impl Iterator for ChunkRanges {
         type Item = std::ops::Range<usize>;
 
         fn next(&mut self) -> Option<Self::Item> {
