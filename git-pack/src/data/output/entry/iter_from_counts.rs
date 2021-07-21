@@ -139,7 +139,7 @@ where
                                 count,
                                 counts_in_pack,
                                 base_index_offset,
-                                allow_thin_pack,
+                                if allow_thin_pack { Some(&db) } else { None },
                                 version,
                             ) {
                                 Some(entry) => {

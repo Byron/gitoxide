@@ -56,7 +56,7 @@ pub enum Error {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Location {
-    /// The id of the pack containing the object
+    /// The id of the pack containing the object //TODO: this should  probably at least by a typedef or even an opaque type
     pub pack_id: u32,
     /// The index at which the object can be found in the index file corresponding to the `pack_id`.
     pub index_file_id: u32,

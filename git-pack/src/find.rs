@@ -31,6 +31,11 @@ pub trait Find {
     /// _Note_ that the object database may have no notion of packs and thus always returns `None`.
     fn location_by_oid(&self, id: impl AsRef<git_hash::oid>, buf: &mut Vec<u8>) -> Option<crate::bundle::Location>;
 
+    /// Find the bundle matching `pack_id`, or `None` if there is no such pack.
+    ///
+    /// _Note_ that the object database may have no notion of packs and thus always returns `None`.
+    fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&crate::Bundle>;
+
     /// Return the [`Entry`] for `location` if it is backed by a pack.
     ///
     /// Note that this is only in the interest of avoiding duplicate work during pack generation.
@@ -223,7 +228,7 @@ pub struct Entry<'a> {
 
 mod find_impls {
     use crate::bundle::Location;
-    use crate::{data::Object, find::Entry};
+    use crate::{data::Object, find::Entry, Bundle};
     use git_hash::oid;
     use std::ops::Deref;
 
@@ -244,6 +249,10 @@ mod find_impls {
 
         fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
             self.deref().location_by_oid(id, buf)
+        }
+
+        fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&Bundle> {
+            self.deref().bundle_by_pack_id(pack_id)
         }
 
         fn entry_by_location(&self, object: &crate::bundle::Location) -> Option<Entry<'_>> {
@@ -268,6 +277,10 @@ mod find_impls {
 
         fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
             self.deref().location_by_oid(id, buf)
+        }
+
+        fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&Bundle> {
+            self.deref().bundle_by_pack_id(pack_id)
         }
 
         fn entry_by_location(&self, location: &crate::bundle::Location) -> Option<Entry<'_>> {

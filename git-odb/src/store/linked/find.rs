@@ -1,6 +1,7 @@
 use git_hash::oid;
 use std::convert::TryInto;
 
+use crate::pack::Bundle;
 use crate::{
     pack,
     pack::bundle::Location,
@@ -80,6 +81,12 @@ impl crate::Find for linked::Store {
         None
     }
 
+    fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&Bundle> {
+        self.dbs
+            .iter()
+            .find_map(|db| db.bundles.iter().find(|b| b.pack.id == pack_id))
+    }
+
     fn entry_by_location(&self, location: &pack::bundle::Location) -> Option<Entry<'_>> {
         self.dbs
             .iter()
@@ -111,6 +118,10 @@ impl crate::Find for &linked::Store {
 
     fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
         (*self).location_by_oid(id, buf)
+    }
+
+    fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&Bundle> {
+        (*self).bundle_by_pack_id(pack_id)
     }
 
     fn entry_by_location(&self, location: &pack::bundle::Location) -> Option<Entry<'_>> {

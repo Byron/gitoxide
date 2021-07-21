@@ -66,7 +66,7 @@ impl output::Entry {
         count: &output::Count,
         potential_bases: &[output::Count],
         bases_index_offset: usize,
-        allow_thin_pack: bool,
+        db: Option<impl crate::Find>,
         target_version: crate::data::Version,
     ) -> Option<Result<Self, Error>> {
         if entry.version != target_version {
@@ -105,12 +105,11 @@ impl output::Entry {
                     .map(|idx| output::entry::Kind::DeltaRef {
                         object_index: idx + bases_index_offset,
                     })
-                    .or_else(|| {
-                        if allow_thin_pack {
+                    .or_else(|| match db {
+                        Some(db) => {
                             todo!("find id in pack by looking up id by pack offset")
-                        } else {
-                            None
                         }
+                        None => None,
                     })
             }
             RefDelta { base_id: _ } => None,
