@@ -132,11 +132,13 @@ where
                                 .expect("pack-id always present")]
                             .1
                             .clone();
+                            let base_index_offset = pack_range.start;
                             let counts_in_pack = &counts[pack_range];
                             match output::Entry::from_pack_entry(
                                 pack_entry,
                                 count,
                                 counts_in_pack,
+                                base_index_offset,
                                 allow_thin_pack,
                                 version,
                             ) {

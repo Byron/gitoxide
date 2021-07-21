@@ -14,7 +14,6 @@ use git_traverse::commit;
 use std::sync::atomic::AtomicBool;
 
 #[test]
-#[ignore]
 fn traversals() -> crate::Result {
     #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
     struct Count {

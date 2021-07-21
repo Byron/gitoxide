@@ -65,6 +65,7 @@ impl output::Entry {
         entry: find::Entry<'_>,
         count: &output::Count,
         potential_bases: &[output::Count],
+        bases_index_offset: usize,
         allow_thin_pack: bool,
         target_version: crate::data::Version,
     ) -> Option<Result<Self, Error>> {
@@ -82,14 +83,15 @@ impl output::Entry {
         }
         use crate::data::entry::Header::*;
         match pack_entry.header {
-            Commit | Tree | Blob | Tag => Some(output::entry::Kind::Base(
-                pack_entry.header.as_kind().expect("object kind"),
-            )),
+            Commit => Some(output::entry::Kind::Base(git_object::Kind::Commit)),
+            Tree => Some(output::entry::Kind::Base(git_object::Kind::Tree)),
+            Blob => Some(output::entry::Kind::Base(git_object::Kind::Blob)),
+            Tag => Some(output::entry::Kind::Base(git_object::Kind::Tag)),
             OfsDelta { base_distance } => {
                 let pack_offset = count.entry_pack_location.as_ref().expect("packed").pack_offset;
                 let base_offset = pack_offset
                     .checked_sub(base_distance)
-                    .expect("pack-offset - distance is firmily within the pack");
+                    .expect("pack-offset - distance is firmly within the pack");
                 potential_bases
                     .binary_search_by(|e| {
                         e.entry_pack_location
@@ -99,7 +101,9 @@ impl output::Entry {
                             .cmp(&base_offset)
                     })
                     .ok()
-                    .map(|idx| output::entry::Kind::DeltaRef { object_index: idx })
+                    .map(|idx| output::entry::Kind::DeltaRef {
+                        object_index: idx + bases_index_offset,
+                    })
                     .or_else(|| {
                         if allow_thin_pack {
                             todo!("find id in pack by looking up pack offset to id")
