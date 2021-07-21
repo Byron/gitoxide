@@ -43,6 +43,7 @@ pub fn iter_from_counts<Find, Cache>(
     Options {
         version,
         mode,
+        allow_thin_pack: _,
         thread_limit,
         chunk_size,
     }: Options,
@@ -267,6 +268,14 @@ mod types {
         pub thread_limit: Option<usize>,
         /// The algorithm to produce a pack
         pub mode: Mode,
+        /// If set, the resulting back can have deltas that refer to an object which is not in the pack. This can happen
+        /// if the initial counted objects do not contain an object that an existing packed delta refers to, for example, because
+        /// it wasn't part of the iteration, for instance when the iteration was performed on tree deltas or only a part of the
+        /// commit graph. Please note that thin packs are not valid packs when stored on disk, thus they are only valid for packs
+        /// that are being send over the wire.
+        ///
+        /// If set to false, delta objects will be decompressed and recompressed as base objects.
+        pub allow_thin_pack: bool,
         /// The amount of objects per chunk or unit of work to be sent to threads for processing
         /// TODO: could this become the window size?
         pub chunk_size: usize,
@@ -279,6 +288,7 @@ mod types {
             Options {
                 thread_limit: None,
                 mode: Mode::PackCopyAndBaseObjects,
+                allow_thin_pack: false,
                 chunk_size: 10,
                 version: Default::default(),
             }

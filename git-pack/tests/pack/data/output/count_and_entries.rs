@@ -43,128 +43,147 @@ fn traversals() -> crate::Result {
         tags: 1,
     };
     let db = db(DbKind::DeterministicGeneratedContent)?;
-    for (expansion_mode, expected_count, expected_counts_outcome, expected_entries_outcome, expected_pack_hash) in [
-        (
-            count::iter_from_objects::ObjectExpansion::AsIs,
-            Count {
-                trees: 0,
-                commits: 15,
-                blobs: 0,
-                tags: 1,
-            },
-            output::count::iter_from_objects::Outcome {
-                input_objects: 16,
-                expanded_objects: 0,
-                decoded_objects: 16,
-                total_objects: 16,
-            },
-            output::entry::iter_from_counts::Outcome {
-                decoded_and_recompressed_objects: 0,
-                objects_copied_from_pack: 16,
-            },
-            hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3"),
-        ),
-        (
-            count::iter_from_objects::ObjectExpansion::TreeContents,
-            whole_pack,
-            output::count::iter_from_objects::Outcome {
-                input_objects: 16,
-                expanded_objects: 852,
-                decoded_objects: 57,
-                total_objects: 868,
-            },
-            output::entry::iter_from_counts::Outcome {
-                decoded_and_recompressed_objects: 542,
-                objects_copied_from_pack: 326,
-            },
-            hex_to_id("d2ea809066bec3f5f2a38ef4adba7ebd4f2eda22"),
-        ),
-        (
-            count::iter_from_objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
-            whole_pack,
-            output::count::iter_from_objects::Outcome {
-                input_objects: 16,
-                expanded_objects: 866,
-                decoded_objects: 208,
-                total_objects: 868,
-            },
-            output::entry::iter_from_counts::Outcome {
-                decoded_and_recompressed_objects: 542,
-                objects_copied_from_pack: 326,
-            },
-            hex_to_id("d2ea809066bec3f5f2a38ef4adba7ebd4f2eda22"),
-        ),
-    ]
-    .iter()
-    .copied()
-    {
-        let head = hex_to_id("dfcb5e39ac6eb30179808bbab721e8a28ce1b52e");
-        let commits = commit::Ancestors::new(Some(head), commit::ancestors::State::default(), {
-            let db = Arc::clone(&db);
-            move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
-        })
-        .map(Result::unwrap);
+    for allow_thin_pack in &[false, true] {
+        for (
+            expansion_mode,
+            expected_count,
+            expected_counts_outcome,
+            expected_entries_outcome,
+            expected_pack_hash,
+            expects_thin_pack,
+        ) in [
+            (
+                count::iter_from_objects::ObjectExpansion::AsIs,
+                Count {
+                    trees: 0,
+                    commits: 15,
+                    blobs: 0,
+                    tags: 1,
+                },
+                output::count::iter_from_objects::Outcome {
+                    input_objects: 16,
+                    expanded_objects: 0,
+                    decoded_objects: 16,
+                    total_objects: 16,
+                },
+                output::entry::iter_from_counts::Outcome {
+                    decoded_and_recompressed_objects: 0,
+                    objects_copied_from_pack: 16,
+                },
+                hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3"),
+                true,
+            ),
+            (
+                count::iter_from_objects::ObjectExpansion::TreeContents,
+                whole_pack,
+                output::count::iter_from_objects::Outcome {
+                    input_objects: 16,
+                    expanded_objects: 852,
+                    decoded_objects: 57,
+                    total_objects: 868,
+                },
+                output::entry::iter_from_counts::Outcome {
+                    decoded_and_recompressed_objects: 542,
+                    objects_copied_from_pack: 326,
+                },
+                hex_to_id("d2ea809066bec3f5f2a38ef4adba7ebd4f2eda22"),
+                false,
+            ),
+            (
+                count::iter_from_objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
+                whole_pack,
+                output::count::iter_from_objects::Outcome {
+                    input_objects: 16,
+                    expanded_objects: 866,
+                    decoded_objects: 208,
+                    total_objects: 868,
+                },
+                output::entry::iter_from_counts::Outcome {
+                    decoded_and_recompressed_objects: 542,
+                    objects_copied_from_pack: 326,
+                },
+                hex_to_id("d2ea809066bec3f5f2a38ef4adba7ebd4f2eda22"),
+                false,
+            ),
+        ]
+        .iter()
+        .copied()
+        {
+            let head = hex_to_id("dfcb5e39ac6eb30179808bbab721e8a28ce1b52e");
+            let commits = commit::Ancestors::new(Some(head), commit::ancestors::State::default(), {
+                let db = Arc::clone(&db);
+                move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
+            })
+            .map(Result::unwrap);
 
-        let deterministic_count_needs_single_thread = Some(1);
-        let mut counts_iter = output::count::iter_from_objects(
-            db.clone(),
-            || pack::cache::Never,
-            commits.chain(std::iter::once(hex_to_id("e3fb53cbb4c346d48732a24f09cf445e49bc63d6"))),
-            progress::Discard,
-            count::iter_from_objects::Options {
-                input_object_expansion: expansion_mode,
-                thread_limit: deterministic_count_needs_single_thread,
-                ..Default::default()
-            },
-        );
-        let counts: Vec<_> = counts_iter
-            .by_ref()
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .flatten()
-            .collect();
-        let actual_count = counts.iter().fold(Count::default(), |mut c, e| {
-            let mut buf = Vec::new();
-            if let Some(obj) = db.find_existing(e.id, &mut buf, &mut pack::cache::Never).ok() {
-                c.add(obj.kind);
-            }
-            c
-        });
-        assert_eq!(actual_count, expected_count);
-        let counts_len = counts.len();
-        assert_eq!(counts_len, expected_count.total());
+            let deterministic_count_needs_single_thread = Some(1);
+            let mut counts_iter = output::count::iter_from_objects(
+                db.clone(),
+                || pack::cache::Never,
+                commits.chain(std::iter::once(hex_to_id("e3fb53cbb4c346d48732a24f09cf445e49bc63d6"))),
+                progress::Discard,
+                count::iter_from_objects::Options {
+                    input_object_expansion: expansion_mode,
+                    thread_limit: deterministic_count_needs_single_thread,
+                    ..Default::default()
+                },
+            );
+            let counts: Vec<_> = counts_iter
+                .by_ref()
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .flatten()
+                .collect();
+            let actual_count = counts.iter().fold(Count::default(), |mut c, e| {
+                let mut buf = Vec::new();
+                if let Some(obj) = db.find_existing(e.id, &mut buf, &mut pack::cache::Never).ok() {
+                    c.add(obj.kind);
+                }
+                c
+            });
+            assert_eq!(actual_count, expected_count);
+            let counts_len = counts.len();
+            assert_eq!(counts_len, expected_count.total());
 
-        let stats = counts_iter.finalize()?;
-        assert_eq!(stats, expected_counts_outcome);
-        assert_eq!(stats.total_objects, expected_count.total());
+            let stats = counts_iter.finalize()?;
+            assert_eq!(stats, expected_counts_outcome);
+            assert_eq!(stats.total_objects, expected_count.total());
 
-        let mut entries_iter = output::entry::iter_from_counts(
-            counts,
-            db.clone(),
-            || pack::cache::Never,
-            progress::Discard,
-            output::entry::iter_from_counts::Options::default(),
-        );
-        let entries: Vec<_> = output::InOrderIter::from(entries_iter.by_ref())
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .flatten()
-            .collect();
-        let actual_count = entries.iter().fold(Count::default(), |mut c, e| {
-            c.add(e.object_kind);
-            c
-        });
-        assert_eq!(actual_count, expected_count);
-        assert_eq!(counts_len, expected_count.total());
-        let stats = entries_iter.finalize()?;
-        assert_eq!(stats, expected_entries_outcome);
+            let mut entries_iter = output::entry::iter_from_counts(
+                counts,
+                db.clone(),
+                || pack::cache::Never,
+                progress::Discard,
+                output::entry::iter_from_counts::Options {
+                    allow_thin_pack: *allow_thin_pack,
+                    ..Default::default()
+                },
+            );
+            let entries: Vec<_> = output::InOrderIter::from(entries_iter.by_ref())
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .flatten()
+                .collect();
+            let actual_count = entries.iter().fold(Count::default(), |mut c, e| {
+                c.add(e.object_kind);
+                c
+            });
+            assert_eq!(actual_count, expected_count);
+            assert_eq!(counts_len, expected_count.total());
+            let stats = entries_iter.finalize()?;
+            assert_eq!(stats, expected_entries_outcome);
 
-        write_and_verify(entries, expected_pack_hash)?;
+            write_and_verify(entries, expected_pack_hash, expects_thin_pack)?;
+        }
     }
     Ok(())
 }
 
-fn write_and_verify(entries: Vec<output::Entry>, expected_pack_hash: git_hash::ObjectId) -> crate::Result {
+fn write_and_verify(
+    entries: Vec<output::Entry>,
+    expected_pack_hash: git_hash::ObjectId,
+    allow_thin_pack: bool,
+) -> crate::Result {
     let tmp_dir = tempfile::TempDir::new()?;
     let pack_file_path = tmp_dir.path().join("new.pack");
     let mut pack_file = std::fs::OpenOptions::new()
@@ -207,25 +226,28 @@ fn write_and_verify(entries: Vec<output::Entry>, expected_pack_hash: git_hash::O
 
     assert_eq!(hash, expected_pack_hash, "pack hashes are stable if the input is");
 
-    // Re-generate the index from the pack for validation.
-    let bundle = pack::Bundle::at(
-        pack::Bundle::write_to_directory(
-            std::io::BufReader::new(std::fs::File::open(pack_file_path)?),
-            Some(tmp_dir.path()),
-            progress::Discard,
-            &should_interrupt,
-            pack::bundle::write::Options::default(),
-        )?
-        .data_path
-        .expect("directory set"),
-    )?;
-    bundle.verify_integrity(
-        pack::index::verify::Mode::Sha1Crc32DecodeEncode,
-        pack::index::traverse::Algorithm::DeltaTreeLookup,
-        || pack::cache::Never,
-        None,
-        progress::Discard.into(),
-        Arc::new(should_interrupt),
-    )?;
+    // TODO: when thin pack writing is supported, let it fail if it's a thin back even though it shouldn't be
+    if !allow_thin_pack {
+        // Re-generate the index from the pack for validation.
+        let bundle = pack::Bundle::at(
+            pack::Bundle::write_to_directory(
+                std::io::BufReader::new(std::fs::File::open(pack_file_path)?),
+                Some(tmp_dir.path()),
+                progress::Discard,
+                &should_interrupt,
+                pack::bundle::write::Options::default(),
+            )?
+            .data_path
+            .expect("directory set"),
+        )?;
+        bundle.verify_integrity(
+            pack::index::verify::Mode::Sha1Crc32DecodeEncode,
+            pack::index::traverse::Algorithm::DeltaTreeLookup,
+            || pack::cache::Never,
+            None,
+            progress::Discard.into(),
+            Arc::new(should_interrupt),
+        )?;
+    }
     Ok(())
 }
