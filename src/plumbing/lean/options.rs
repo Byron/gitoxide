@@ -1,7 +1,6 @@
 use argh::FromArgs;
 use gitoxide_core as core;
-use std::ffi::OsString;
-use std::path::PathBuf;
+use std::{ffi::OsString, path::PathBuf};
 
 #[derive(FromArgs)]
 #[argh(name = "gix-plumbing")]
@@ -192,7 +191,8 @@ pub struct PackCreate {
     #[argh(option, short = 'o')]
     pub output_directory: Option<PathBuf>,
 
-    /// the tips from which to start the commit graph iteration.
+    /// the tips from which to start the commit graph iteration, either as fully qualified commit hashes
+    /// or as branch names.
     ///
     /// If empty, we expect to read objects on stdin and default to 'none' as expansion mode.
     /// Otherwise the expansion mode is 'tree-traversal' by default.

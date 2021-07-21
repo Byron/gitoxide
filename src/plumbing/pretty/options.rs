@@ -72,7 +72,8 @@ pub enum Subcommands {
         #[clap(long, short = 'o')]
         output_directory: Option<PathBuf>,
 
-        /// the tips from which to start the commit graph iteration.
+        /// The tips from which to start the commit graph iteration, either as fully qualified commit hashes
+        /// or as branch names.
         ///
         /// If empty, we expect to read objects on stdin and default to 'none' as expansion mode.
         /// Otherwise the expansion mode is 'tree-traversal' by default.

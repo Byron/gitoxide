@@ -5,7 +5,7 @@ use git_repository::{
     hash::ObjectId,
     interrupt,
     object::bstr::ByteVec,
-    odb::{linked, pack},
+    odb::pack,
     prelude::{Finalize, FindExt},
     progress, traverse, Progress,
 };
@@ -79,7 +79,7 @@ pub struct Context<W> {
 }
 
 pub fn create<W>(
-    repository: impl AsRef<Path>,
+    repository_path: impl AsRef<Path>,
     tips: impl IntoIterator<Item = impl AsRef<OsStr>>,
     input: Option<impl io::BufRead + Send + 'static>,
     output_directory: Option<impl AsRef<Path>>,
@@ -95,7 +95,7 @@ pub fn create<W>(
 where
     W: std::io::Write,
 {
-    let db = Arc::new(find_db(repository)?);
+    let repo = Arc::new(git_repository::discover(repository_path)?);
     progress.init(Some(4), progress::steps());
     let tips = tips.into_iter();
     let make_cancellation_err = || anyhow!("Cancelled by user");
@@ -106,12 +106,26 @@ where
             let start = Instant::now();
             let iter = interrupt::Iter::new(
                 traverse::commit::Ancestors::new(
-                    tips.map(|t| ObjectId::from_hex(&Vec::from_os_str_lossy(t.as_ref())))
-                        .collect::<Result<Vec<_>, _>>()?,
+                    tips.map(|tip| {
+                        ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else({
+                            let packed = repo.refs.packed().ok().flatten();
+                            let refs = &repo.refs;
+                            move |_| {
+                                refs.find_existing(tip.as_ref().to_string_lossy().as_ref(), packed.as_ref())
+                                    .map_err(anyhow::Error::from)
+                                    .and_then(|mut r| {
+                                        r.peel_to_id_in_place(refs, packed.as_ref())
+                                            .map(|oid| oid.to_owned())
+                                            .map_err(anyhow::Error::from)
+                                    })
+                            }
+                        })
+                    })
+                    .collect::<Result<Vec<_>, _>>()?,
                     traverse::commit::ancestors::State::default(),
                     {
-                        let db = Arc::clone(&db);
-                        move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
+                        let db = Arc::clone(&repo);
+                        move |oid, buf| db.odb.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
                     },
                 )
                 .inspect(|_| progress.inc()),
@@ -133,6 +147,11 @@ where
     let mut stats = Statistics::default();
     let chunk_size = 200;
     let start = Instant::now();
+    let db = match Arc::try_unwrap(repo) {
+        Ok(db) => db,
+        Err(_) => unreachable!("there is only one instance left here"),
+    };
+    let db = Arc::new(db.odb);
     let counts = {
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
@@ -241,15 +260,6 @@ where
         print(stats, format, out)?;
     }
     Ok(())
-}
-
-fn find_db(repository: impl AsRef<Path>) -> anyhow::Result<linked::Store> {
-    let path = repository.as_ref();
-    Ok(linked::Store::at(
-        git_repository::path::discover::existing(path)?
-            .into_repository_directory()
-            .join("objects"),
-    )?)
 }
 
 fn print(stats: Statistics, format: OutputFormat, out: impl std::io::Write) -> anyhow::Result<()> {
