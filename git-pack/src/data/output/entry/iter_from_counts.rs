@@ -43,7 +43,7 @@ pub fn iter_from_counts<Find, Cache>(
     Options {
         version,
         mode,
-        allow_thin_pack: _,
+        allow_thin_pack,
         thread_limit,
         chunk_size,
     }: Options,
@@ -58,7 +58,7 @@ where
         matches!(version, crate::data::Version::V2),
         "currently we can only write version 2"
     );
-    let _counts_range_by_pack_id = match mode {
+    let counts_range_by_pack_id = match mode {
         Mode::PackCopyAndBaseObjects => {
             let mut progress = progress.add_child("sorting");
             progress.init(Some(counts.len()), git_features::progress::count("counts"));
@@ -120,10 +120,27 @@ where
                 let mut stats = Outcome::default();
                 progress.init(Some(chunk.len()), git_features::progress::count("objects"));
 
-                for count in chunk {
-                    out.push(
-                        match count.entry_pack_location.as_ref().and_then(|l| db.entry_by_location(l)) {
-                            Some(pack_entry) => match output::Entry::from_pack_entry(pack_entry, count, version) {
+                for (count_id, count) in chunk.iter().enumerate().map(|(idx, c)| (idx, c)) {
+                    out.push(match count
+                        .entry_pack_location
+                        .as_ref()
+                        .and_then(|l| db.entry_by_location(l).map(|pe| (l, pe)))
+                    {
+                        Some((location, pack_entry)) => {
+                            let pack_range = counts_range_by_pack_id[counts_range_by_pack_id
+                                .binary_search_by_key(&location.pack_id, |e| e.0)
+                                .expect("pack-id always present")]
+                            .1
+                            .clone();
+                            let counts_in_pack = &counts[pack_range];
+                            match output::Entry::from_pack_entry(
+                                pack_entry,
+                                count,
+                                count_id,
+                                counts_in_pack,
+                                allow_thin_pack,
+                                version,
+                            ) {
                                 Some(entry) => {
                                     stats.objects_copied_from_pack += 1;
                                     entry
@@ -133,14 +150,14 @@ where
                                     stats.decoded_and_recompressed_objects += 1;
                                     output::Entry::from_data(count, &obj)
                                 }
-                            },
-                            None => {
-                                let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
-                                stats.decoded_and_recompressed_objects += 1;
-                                output::Entry::from_data(count, &obj)
                             }
-                        }?,
-                    );
+                        }
+                        None => {
+                            let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
+                            stats.decoded_and_recompressed_objects += 1;
+                            output::Entry::from_data(count, &obj)
+                        }
+                    }?);
                     progress.inc();
                 }
                 Ok((chunk_id, out, stats))

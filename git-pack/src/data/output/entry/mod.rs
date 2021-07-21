@@ -33,13 +33,15 @@ pub struct Entry {
 pub enum Kind {
     /// A complete base object
     Base,
-    /// A delta against the object encountered `n` objects before (in this iteration)
+    /// A delta against the object with the given index. It's always an index that was already encountered to refer only
+    /// to object we have written already.
     DeltaRef {
-        /// Never 0, and 1 would mean the previous object acts as base object.
-        nth_before: usize,
+        /// The absolute index to the object to serve as base. It's up to the writer to maintain enough state to allow producing
+        /// a packed delta object from it.
+        object_index: usize,
     },
     /// A delta against the given object as identified by its `ObjectId`.
-    /// This is the case for thin packs only.
+    /// This is the case for thin packs only, i.e. those that are sent over the wire.
     /// Note that there is the option of the `ObjectId` being used to refer to an object within
     /// the same pack, but it's a discontinued practice which won't be encountered here.
     DeltaOid {
@@ -64,6 +66,9 @@ impl output::Entry {
     pub fn from_pack_entry(
         entry: find::Entry<'_>,
         count: &output::Count,
+        _count_id: usize,
+        _potential_bases: &[output::Count],
+        _allow_thin_pack: bool,
         target_version: crate::data::Version,
     ) -> Option<Result<Self, Error>> {
         if entry.version != target_version {
@@ -113,8 +118,9 @@ impl output::Entry {
 
     /// Transform ourselves into pack entry header of `version` which can be written into a pack.
     ///
-    /// `index_to_pack(nth_before) -> pack_offset` is a function to convert the base object's offset as index into an
-    /// array to an offset into the pack. This information is known to the one calling the method.
+    /// `index_to_pack(object_index) -> pack_offset` is a function to convert the base object's index into
+    /// the input object array (if each object is numbered) to an offset into the pack.
+    /// This information is known to the one calling the method.
     pub fn to_entry_header(
         &self,
         version: crate::data::Version,
@@ -137,8 +143,8 @@ impl output::Entry {
                 }
             }
             DeltaOid { id } => data::entry::Header::RefDelta { base_id: id.to_owned() },
-            DeltaRef { nth_before } => data::entry::Header::OfsDelta {
-                base_distance: index_to_pack(nth_before),
+            DeltaRef { object_index } => data::entry::Header::OfsDelta {
+                base_distance: index_to_pack(object_index),
             },
         }
     }
