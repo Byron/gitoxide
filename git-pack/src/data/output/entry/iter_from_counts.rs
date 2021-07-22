@@ -75,19 +75,16 @@ where
             });
 
             let mut index: Vec<(u32, std::ops::Range<usize>)> = Vec::new();
-            let mut pack_start = counts.partition_point(|e| e.entry_pack_location.is_none());
-            let mut slice = &counts[pack_start..];
+            let mut chunks_pack_start = counts.partition_point(|e| e.entry_pack_location.is_none());
+            let mut slice = &counts[chunks_pack_start..];
             while !slice.is_empty() {
                 let current_pack_id = slice[0].entry_pack_location.as_ref().expect("packed object").pack_id;
                 let pack_end = slice.partition_point(|e| {
                     e.entry_pack_location.as_ref().expect("packed object").pack_id == current_pack_id
                 });
-                index.push((
-                    current_pack_id,
-                    pack_start..if pack_end <= pack_start { counts.len() } else { pack_end },
-                ));
+                index.push((current_pack_id, chunks_pack_start..chunks_pack_start + pack_end));
                 slice = &slice[pack_end..];
-                pack_start = pack_end;
+                chunks_pack_start = chunks_pack_start + pack_end;
             }
 
             progress.set(counts.len());
