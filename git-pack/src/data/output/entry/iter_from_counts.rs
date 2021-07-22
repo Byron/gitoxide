@@ -95,7 +95,6 @@ where
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
     let chunks = util::ChunkRanges::new(chunk_size, counts.len()).enumerate();
     let progress = Arc::new(parking_lot::Mutex::new(progress));
-    let bad_objects = Arc::new(DashSet::new());
 
     parallel::reduce::Stepwise::new(
         chunks,
@@ -112,7 +111,6 @@ where
         },
         {
             let counts = Arc::clone(&counts);
-            let bad_objects = Arc::clone(&bad_objects);
             move |(chunk_id, chunk_range): (ChunkId, std::ops::Range<usize>), (buf, cache, progress)| {
                 let mut out = Vec::new();
                 let chunk = &counts[chunk_range.clone()];
@@ -120,7 +118,7 @@ where
                 let mut pack_offsets_to_id = None;
                 progress.init(Some(chunk.len()), git_features::progress::count("objects"));
 
-                for (count_idx, count) in chunk.iter().enumerate() {
+                for count in chunk.iter() {
                     out.push(match count
                         .entry_pack_location
                         .as_ref()
@@ -144,7 +142,6 @@ where
                                 count,
                                 counts_in_pack,
                                 base_index_offset,
-                                &bad_objects,
                                 allow_thin_pack.then(|| {
                                     |pack_id, base_offset| {
                                         let (cached_pack_id, cache) = pack_offsets_to_id.get_or_insert_with(|| {
@@ -179,9 +176,8 @@ where
                                         output::Entry::from_data(count, &obj)
                                     }
                                     None => {
-                                        bad_objects.insert(chunk_range.start + count_idx);
                                         stats.missing_objects += 1;
-                                        continue;
+                                        todo!("add a dud");
                                     }
                                 },
                             }
@@ -192,9 +188,8 @@ where
                                 output::Entry::from_data(count, &obj)
                             }
                             None => {
-                                bad_objects.insert(chunk_range.start + count_idx);
                                 stats.missing_objects += 1;
-                                continue;
+                                todo!("add a dud");
                             }
                         },
                     }?);
@@ -369,5 +364,4 @@ mod types {
         NewEntry(#[from] entry::Error),
     }
 }
-use dashmap::DashSet;
 pub use types::{Error, Mode, Options, Outcome};
