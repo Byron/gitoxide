@@ -311,7 +311,7 @@ fn traversals() -> crate::Result {
 }
 
 fn write_and_verify(
-    _db: Arc<linked::Store>,
+    db: Arc<linked::Store>,
     entries: Vec<output::Entry>,
     expected_pack_hash: git_hash::ObjectId,
 ) -> crate::Result {
@@ -364,6 +364,7 @@ fn write_and_verify(
             Some(tmp_dir.path()),
             progress::Discard,
             &should_interrupt,
+            |oid, buf| db.find_existing(oid, buf, &mut git_pack::cache::Never).ok(),
             pack::bundle::write::Options::default(),
         )?
         .data_path

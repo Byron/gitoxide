@@ -59,24 +59,12 @@ where
                             let base_entry = match (self.lookup)(base_id, &mut self.buf) {
                                 Some(obj) => {
                                     let header = to_header(obj.kind);
-                                    let compressed = {
-                                        let mut out = git_features::zlib::stream::deflate::Write::new(Vec::new());
-                                        if let Err(err) = std::io::copy(&mut &*obj.data, &mut out) {
-                                            match err.kind() {
-                                                std::io::ErrorKind::Other => return Some(Err(input::Error::Io(err))),
-                                                err => {
-                                                    unreachable!(
-                                                        "Should never see other errors than zlib, but got {:?}",
-                                                        err,
-                                                    )
-                                                }
-                                            }
-                                        };
-                                        out.flush().expect("zlib flush should never fail");
-                                        out.into_inner()
+                                    let compressed = match compress_data(&obj) {
+                                        Err(err) => return Some(Err(err)),
+                                        Ok(c) => c,
                                     };
                                     let compressed_size = compressed.len() as u64;
-                                    let entry = input::Entry {
+                                    let mut entry = input::Entry {
                                         header,
                                         header_size: header.size(obj.data.len() as u64) as u16,
                                         pack_offset: entry.pack_offset,
@@ -86,6 +74,7 @@ where
                                         decompressed_size: obj.data.len() as u64,
                                         trailer: None,
                                     };
+                                    entry.crc32 = Some(crc32(&entry));
                                     self.inserted_entry_length_at_offset.push((
                                         entry.pack_offset,
                                         entry.bytes_in_pack(),
@@ -133,6 +122,10 @@ where
             other => other,
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
 }
 
 fn to_header(kind: git_object::Kind) -> Header {
@@ -143,4 +136,28 @@ fn to_header(kind: git_object::Kind) -> Header {
         Commit => Header::Commit,
         Tag => Header::Tag,
     }
+}
+
+fn crc32(entry: &input::Entry) -> u32 {
+    let mut header_buf = [0u8; 32];
+    let header_len = entry
+        .header
+        .write_to(entry.decompressed_size, header_buf.as_mut())
+        .expect("write to memory will not fail");
+    let state = git_features::hash::crc32_update(0, &header_buf[..header_len]);
+    git_features::hash::crc32_update(state, entry.compressed.as_ref().expect("we always set it"))
+}
+
+fn compress_data(obj: &data::Object<'_>) -> Result<Vec<u8>, input::Error> {
+    let mut out = git_features::zlib::stream::deflate::Write::new(Vec::new());
+    if let Err(err) = std::io::copy(&mut &*obj.data, &mut out) {
+        match err.kind() {
+            std::io::ErrorKind::Other => return Err(input::Error::Io(err)),
+            err => {
+                unreachable!("Should never see other errors than zlib, but got {:?}", err,)
+            }
+        }
+    };
+    out.flush().expect("zlib flush should never fail");
+    Ok(out.into_inner())
 }

@@ -1,5 +1,6 @@
 use filebuffer::FileBuffer;
 
+use crate::data;
 use git_features::{interrupt, progress, progress::Progress};
 use std::{
     io,
@@ -22,13 +23,17 @@ impl crate::Bundle {
     ///
     /// `progress` provides detailed progress information which can be discarded with [`git_features::progress::Discard`].
     /// `options` further configure how the task is performed.
-    pub fn write_to_directory(
+    pub fn write_to_directory<LFn>(
         pack: impl io::BufRead,
         directory: Option<impl AsRef<Path>>,
         mut progress: impl Progress,
         should_interrupt: &AtomicBool,
+        thin_pack_object_lookup: LFn,
         options: Options,
-    ) -> Result<Outcome, Error> {
+    ) -> Result<Outcome, Error>
+    where
+        LFn: for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>>,
+    {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(None, progress::bytes());
         let pack = progress::Read {
@@ -53,12 +58,15 @@ impl crate::Bundle {
         // However, this is exactly what's happening in the ZipReader implementation that is eventually used.
         // The performance impact of this is probably negligible, compared to all the other work that is done anyway :D.
         let buffered_pack = io::BufReader::new(pack);
-        let pack_entries_iter = crate::data::BytesToEntriesIter::new_from_header(
-            buffered_pack,
-            options.iteration_mode,
-            crate::data::input::EntryDataMode::Crc32,
-        )?;
-        let pack_kind = pack_entries_iter.kind();
+        let pack_entries_iter = crate::data::LookupRefDeltaObjectsIter::new(
+            crate::data::BytesToEntriesIter::new_from_header(
+                buffered_pack,
+                options.iteration_mode,
+                crate::data::input::EntryDataMode::Crc32,
+            )?,
+            thin_pack_object_lookup,
+        );
+        let pack_kind = pack_entries_iter.inner.kind();
         let (outcome, data_path, index_path) = crate::Bundle::inner_write(
             directory,
             progress,
@@ -84,14 +92,18 @@ impl crate::Bundle {
     /// As it sends portions of the input to a thread it requires the 'static lifetime for the interrupt flags. This can only
     /// be satisfied by a static AtomicBool which is only suitable for programs that only run one of these operations at a time
     /// or don't mind that all of them abort when the flag is set.
-    pub fn write_to_directory_eagerly(
+    pub fn write_to_directory_eagerly<LFn>(
         pack: impl io::Read + Send + 'static,
         pack_size: Option<u64>,
         directory: Option<impl AsRef<Path>>,
         mut progress: impl Progress,
         should_interrupt: &'static AtomicBool,
+        thin_pack_object_lookup: LFn,
         options: Options,
-    ) -> Result<Outcome, Error> {
+    ) -> Result<Outcome, Error>
+    where
+        LFn: for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>> + Send + 'static,
+    {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
         let pack = progress::Read {
@@ -113,12 +125,15 @@ impl crate::Bundle {
         };
         let eight_pages = 4096 * 8;
         let buffered_pack = io::BufReader::with_capacity(eight_pages, pack);
-        let pack_entries_iter = crate::data::BytesToEntriesIter::new_from_header(
-            buffered_pack,
-            options.iteration_mode,
-            crate::data::input::EntryDataMode::Crc32,
-        )?;
-        let pack_kind = pack_entries_iter.kind();
+        let pack_entries_iter = crate::data::LookupRefDeltaObjectsIter::new(
+            crate::data::BytesToEntriesIter::new_from_header(
+                buffered_pack,
+                options.iteration_mode,
+                crate::data::input::EntryDataMode::Crc32,
+            )?,
+            thin_pack_object_lookup,
+        );
+        let pack_kind = pack_entries_iter.inner.kind();
         let num_objects = pack_entries_iter.size_hint().0;
         let pack_entries_iter =
             git_features::parallel::EagerIterIf::new(move || num_objects > 25_000, pack_entries_iter, 5_000, 5);

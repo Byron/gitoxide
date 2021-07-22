@@ -109,6 +109,7 @@ mod blocking_io {
                 self.directory.take(),
                 progress,
                 &self.ctx.should_interrupt,
+                |_, _| unreachable!("clones never send thin packs"),
                 options,
             )
             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
@@ -199,6 +200,7 @@ mod async_io {
                 self.directory.take(),
                 progress,
                 &self.ctx.should_interrupt,
+                |_, _| unreachable!("clones never send thin packs"),
                 options,
             )
             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;

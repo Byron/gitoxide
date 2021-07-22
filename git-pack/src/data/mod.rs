@@ -21,7 +21,7 @@ pub use object::Object;
 ///
 pub mod input;
 #[doc(inline)]
-pub use input::BytesToEntriesIter;
+pub use input::{BytesToEntriesIter, LookupRefDeltaObjectsIter};
 
 /// Utilities to encode pack data entries and write them to a `Write` implementation to resemble a pack data file.
 pub mod output;

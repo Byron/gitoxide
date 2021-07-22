@@ -97,12 +97,19 @@ pub fn from_pack(
                 directory,
                 progress,
                 ctx.should_interrupt,
+                |_, _| unreachable!("disk packs never ask for ref object resolution, or they are very very old"),
                 options,
             )
         }
-        PathOrRead::Read(input) => {
-            pack::Bundle::write_to_directory_eagerly(input, None, directory, progress, ctx.should_interrupt, options)
-        }
+        PathOrRead::Read(input) => pack::Bundle::write_to_directory_eagerly(
+            input,
+            None,
+            directory,
+            progress,
+            ctx.should_interrupt,
+            |_, _| unreachable!("disk packs never ask for ref object resolution, or they are very very old"),
+            options,
+        ),
     }
     .with_context(|| "Failed to write pack and index")?;
     match format {
