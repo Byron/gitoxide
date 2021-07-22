@@ -1,8 +1,8 @@
 use crate::{data::output, find, FindExt};
-use dashmap::DashSet;
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
 use git_object::immutable;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 /// Generate [`Count`][output::Count] from input `objects` with object expansion based on [`options`][Options]
@@ -49,7 +49,7 @@ where
         iter: objects_ids,
         size: chunk_size,
     };
-    let seen_objs = Arc::new(dashmap::DashSet::<ObjectId>::new());
+    let seen_objs = Arc::new(parking_lot::Mutex::new(HashSet::<ObjectId>::new()));
     let progress = Arc::new(parking_lot::Mutex::new(progress));
 
     parallel::reduce::Stepwise::new(
@@ -252,21 +252,21 @@ where
 
 mod tree {
     pub mod changes {
-        use dashmap::DashSet;
         use git_diff::tree::{
             visit::{Action, Change},
             Visit,
         };
         use git_hash::ObjectId;
         use git_object::bstr::BStr;
+        use std::collections::HashSet;
 
         pub struct AllNew<'a> {
             pub objects: Vec<ObjectId>,
-            all_seen: &'a DashSet<ObjectId>,
+            all_seen: &'a parking_lot::Mutex<HashSet<ObjectId>>,
         }
 
         impl<'a> AllNew<'a> {
-            pub fn new(all_seen: &'a DashSet<ObjectId>) -> Self {
+            pub fn new(all_seen: &'a parking_lot::Mutex<HashSet<ObjectId>>) -> Self {
                 AllNew {
                     objects: Default::default(),
                     all_seen,
@@ -289,7 +289,7 @@ mod tree {
             fn visit(&mut self, change: Change) -> Action {
                 match change {
                     Change::Addition { oid, .. } | Change::Modification { oid, .. } => {
-                        let inserted = self.all_seen.insert(oid);
+                        let inserted = self.all_seen.lock().insert(oid);
                         if inserted {
                             self.objects.push(oid);
                         }
@@ -302,18 +302,18 @@ mod tree {
     }
 
     pub mod traverse {
-        use dashmap::DashSet;
         use git_hash::ObjectId;
         use git_object::{bstr::BStr, immutable::tree::Entry};
         use git_traverse::tree::visit::{Action, Visit};
+        use std::collections::HashSet;
 
         pub struct AllUnseen<'a> {
             pub objects: Vec<ObjectId>,
-            all_seen: &'a DashSet<ObjectId>,
+            all_seen: &'a parking_lot::Mutex<HashSet<ObjectId>>,
         }
 
         impl<'a> AllUnseen<'a> {
-            pub fn new(all_seen: &'a DashSet<ObjectId>) -> Self {
+            pub fn new(all_seen: &'a parking_lot::Mutex<HashSet<ObjectId>>) -> Self {
                 AllUnseen {
                     objects: Default::default(),
                     all_seen,
@@ -334,7 +334,7 @@ mod tree {
             fn pop_path_component(&mut self) {}
 
             fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
-                let inserted = self.all_seen.insert(entry.oid.to_owned());
+                let inserted = self.all_seen.lock().insert(entry.oid.to_owned());
                 if inserted {
                     self.objects.push(entry.oid.to_owned());
                     Action::Continue
@@ -344,7 +344,7 @@ mod tree {
             }
 
             fn visit_nontree(&mut self, entry: &Entry<'_>) -> Action {
-                let inserted = self.all_seen.insert(entry.oid.to_owned());
+                let inserted = self.all_seen.lock().insert(entry.oid.to_owned());
                 if inserted {
                     self.objects.push(entry.oid.to_owned());
                 }
@@ -356,14 +356,14 @@ mod tree {
 
 fn push_obj_count_unique(
     out: &mut Vec<output::Count>,
-    all_seen: &DashSet<ObjectId>,
+    all_seen: &parking_lot::Mutex<HashSet<ObjectId>>,
     id: &oid,
     obj: &crate::data::Object<'_>,
     progress: &mut impl Progress,
     statistics: &mut Outcome,
     count_expanded: bool,
 ) {
-    let inserted = all_seen.insert(id.to_owned());
+    let inserted = all_seen.lock().insert(id.to_owned());
     if inserted {
         progress.inc();
         statistics.decoded_objects += 1;
