@@ -5,8 +5,8 @@ use std::io::Write;
 
 ///
 pub mod iter_from_counts;
-use dashmap::DashSet;
 pub use iter_from_counts::iter_from_counts;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 /// An entry to be written to a file.
@@ -68,7 +68,7 @@ impl output::Entry {
         count: &output::Count,
         potential_bases: &[output::Count],
         bases_index_offset: usize,
-        bad_objects: &Arc<DashSet<usize>>,
+        bad_objects: &Arc<parking_lot::RwLock<HashSet<usize>>>,
         pack_offset_to_oid: Option<impl FnMut(u32, u64) -> Option<ObjectId>>,
         target_version: crate::data::Version,
     ) -> Option<Result<Self, Error>> {
@@ -107,10 +107,11 @@ impl output::Entry {
                     .ok()
                     .and_then(|idx| {
                         let object_index = idx + bases_index_offset;
+                        let bad_objects = bad_objects.read();
                         if !bad_objects.contains(&object_index) {
                             Some(output::entry::Kind::DeltaRef {
                                 object_index: object_index - bad_objects.len(),
-                            }) // todo: fix race
+                            })
                         } else {
                             None
                         }
