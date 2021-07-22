@@ -51,6 +51,7 @@ where
     };
     let seen_objs = Arc::new(dashmap::DashSet::<ObjectId>::new());
     let progress = Arc::new(parking_lot::Mutex::new(progress));
+    let is_single_threaded = thread_limit.unwrap_or(0) == 1;
 
     parallel::reduce::Stepwise::new(
         chunks,
@@ -189,7 +190,13 @@ where
                                             &changes_delegate.objects
                                         };
                                         for id in objects.iter() {
-                                            out.push(id_to_count(&db, buf2, id, progress, stats));
+                                            out.push(id_to_count(
+                                                is_single_threaded.then(|| &db),
+                                                buf2,
+                                                id,
+                                                progress,
+                                                stats,
+                                            ));
                                         }
                                         break;
                                     }
@@ -216,7 +223,13 @@ where
                                         )
                                         .map_err(Error::TreeTraverse)?;
                                         for id in traverse_delegate.objects.iter() {
-                                            out.push(id_to_count(&db, buf1, id, progress, stats));
+                                            out.push(id_to_count(
+                                                is_single_threaded.then(|| &db),
+                                                buf1,
+                                                id,
+                                                progress,
+                                                stats,
+                                            ));
                                         }
                                         break;
                                     }
@@ -375,7 +388,7 @@ fn push_obj_count_unique(
 }
 
 fn id_to_count<Find: crate::Find>(
-    db: &Find,
+    db: Option<&Find>,
     buf: &mut Vec<u8>,
     id: &oid,
     progress: &mut impl Progress,
@@ -385,7 +398,7 @@ fn id_to_count<Find: crate::Find>(
     statistics.expanded_objects += 1;
     output::Count {
         id: id.to_owned(),
-        entry_pack_location: db.location_by_oid(id, buf),
+        entry_pack_location: db.and_then(|db| db.location_by_oid(id, buf)),
     }
 }
 
