@@ -82,7 +82,10 @@ where
                 let pack_end = slice.partition_point(|e| {
                     e.entry_pack_location.as_ref().expect("packed object").pack_id == current_pack_id
                 });
-                index.push((current_pack_id, pack_start..pack_end));
+                index.push((
+                    current_pack_id,
+                    pack_start..if pack_end <= pack_start { counts.len() } else { pack_end },
+                ));
                 slice = &slice[pack_end..];
                 pack_start = pack_end;
             }
@@ -93,7 +96,6 @@ where
             index
         }
     };
-    dbg!(&counts_range_by_pack_id);
     let counts = Arc::new(counts);
     let (chunk_size, thread_limit, _) =
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
