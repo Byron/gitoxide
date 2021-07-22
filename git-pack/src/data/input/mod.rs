@@ -26,6 +26,13 @@ pub struct Entry {
     pub trailer: Option<git_hash::ObjectId>,
 }
 
+impl Entry {
+    /// The amount of bytes this entry may consume in a pack data file
+    pub fn bytes_in_pack(&self) -> u64 {
+        self.header_size as u64 + self.compressed_size
+    }
+}
+
 mod types;
 pub use types::{EntryDataMode, Error, Mode};
 

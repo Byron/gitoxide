@@ -120,4 +120,10 @@ impl Header {
         }
         Ok(written)
     }
+
+    /// The size of the header in bytes when serialized
+    pub fn size(&self, decompressed_size: u64) -> usize {
+        self.write_to(decompressed_size, io::sink())
+            .expect("io::sink() to never fail")
+    }
 }

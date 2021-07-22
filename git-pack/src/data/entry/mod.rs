@@ -1,5 +1,4 @@
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use std::io;
 
 const _TYPE_EXT1: u8 = 0;
 const COMMIT: u8 = 1;
@@ -35,9 +34,7 @@ impl Entry {
     }
     /// The amount of bytes used to describe this entry in the pack. The header starts at [`Self::pack_offset()`]
     pub fn header_size(&self) -> usize {
-        self.header
-            .write_to(self.decompressed_size, io::sink())
-            .expect("io::sink() to never fail")
+        self.header.size(self.decompressed_size)
     }
 }
 
