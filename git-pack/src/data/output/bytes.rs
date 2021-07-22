@@ -113,7 +113,7 @@ where
                     let header = entry.to_entry_header(self.entry_version, |index| {
                         let (base_offset, is_valid_object) = self.pack_offsets_and_validity[index];
                         if !is_valid_object {
-                            todo!("lookup this object and keep it as base object")
+                            unreachable!("if you see this the object database is correct as a delta refers to a non-existing object")
                         }
                         self.written - base_offset
                     });
