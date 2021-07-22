@@ -1,5 +1,6 @@
 use crate::OutputFormat;
 use anyhow::anyhow;
+use git_repository::odb::pack::cache::DecodeEntry;
 use git_repository::{
     hash,
     hash::ObjectId,
@@ -158,7 +159,14 @@ where
         let mut interruptible_counts_iter = interrupt::Iter::new(
             pack::data::output::count::iter_from_objects(
                 Arc::clone(&db),
-                pack::cache::lru::StaticLinkedList::<64>::default,
+                move || {
+                    if nondeterministic_count {
+                        Box::new(pack::cache::lru::StaticLinkedList::<64>::default()) as Box<dyn DecodeEntry>
+                    } else {
+                        Box::new(pack::cache::lru::MemoryCappedHashmap::new(400 * 1024 * 1024)) as Box<dyn DecodeEntry>
+                        // todo: Make that configurable
+                    }
+                },
                 input,
                 progress.add_child("threads"),
                 pack::data::output::count::iter_from_objects::Options {
