@@ -33,7 +33,8 @@ pub struct FromEntriesIter<I, W> {
     written: u64,
     /// Required to quickly find offsets by object IDs, as future objects may refer to those in the past to become a delta offset base.
     /// It stores the pack offsets at which objects begin.
-    pack_offsets: Vec<u64>,
+    /// Additionally we store if an object was invalid, and if so we will not write it nor will we allow delta objects to it.
+    pack_offsets_and_validity: Vec<(u64, bool)>,
     /// If we are done, no additional writes will occour
     is_done: bool,
 }
@@ -74,7 +75,7 @@ where
             output: hash::Write::new(output, hash_kind),
             trailer: None,
             entry_version: version,
-            pack_offsets: Vec::with_capacity(num_entries as usize),
+            pack_offsets_and_validity: Vec::with_capacity(num_entries as usize),
             written: 0,
             header_info: Some((version, num_entries)),
             is_done: false,
@@ -104,9 +105,18 @@ where
         match self.input.next() {
             Some(entries) => {
                 for entry in entries.map_err(Error::Input)? {
-                    self.pack_offsets.push(self.written);
-                    let header =
-                        entry.to_entry_header(self.entry_version, |index| self.written - self.pack_offsets[index]);
+                    if entry.is_invalid() {
+                        self.pack_offsets_and_validity.push((0, false));
+                        continue;
+                    };
+                    self.pack_offsets_and_validity.push((self.written, true));
+                    let header = entry.to_entry_header(self.entry_version, |index| {
+                        let (base_offset, is_valid_object) = self.pack_offsets_and_validity[index];
+                        if !is_valid_object {
+                            todo!("lookup this object and keep it as base object")
+                        }
+                        self.written - base_offset
+                    });
                     self.written += header.write_to(entry.decompressed_size as u64, &mut self.output)? as u64;
                     self.written += std::io::copy(&mut &*entry.compressed_data, &mut self.output)? as u64;
                 }

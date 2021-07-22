@@ -177,7 +177,7 @@ where
                                     }
                                     None => {
                                         stats.missing_objects += 1;
-                                        todo!("add a dud");
+                                        Ok(output::Entry::invalid())
                                     }
                                 },
                             }
@@ -189,7 +189,7 @@ where
                             }
                             None => {
                                 stats.missing_objects += 1;
-                                todo!("add a dud");
+                                Ok(output::Entry::invalid())
                             }
                         },
                     }?);

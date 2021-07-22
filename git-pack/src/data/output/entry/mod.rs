@@ -59,6 +59,21 @@ pub enum Error {
 }
 
 impl output::Entry {
+    /// An object which can be identified as invalid easily which happens if objects didn't exist even if they were referred to.
+    pub fn invalid() -> Entry {
+        Entry {
+            id: ObjectId::null_sha1(),
+            kind: Kind::Base(git_object::Kind::Blob),
+            decompressed_size: 0,
+            compressed_data: vec![],
+        }
+    }
+
+    /// Returns true if this object doesn't really exist but still has to be handled responsibly
+    pub fn is_invalid(&self) -> bool {
+        self.id.is_null()
+    }
+
     /// Create an Entry from a previously counted object which is located in a pack. It's `entry` is provided here.
     /// The `version` specifies what kind of target `Entry` version the caller desires.
     pub fn from_pack_entry(
