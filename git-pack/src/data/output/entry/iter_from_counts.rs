@@ -1,6 +1,6 @@
 use crate::data::{output, output::ChunkId};
 use git_features::{parallel, progress::Progress};
-use std::{cmp::Ordering, collections::HashSet, sync::Arc};
+use std::{cmp::Ordering, sync::Arc};
 
 /// Given a known list of object `counts`, calculate entries ready to be put into a data pack.
 ///
@@ -95,7 +95,7 @@ where
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
     let chunks = util::ChunkRanges::new(chunk_size, counts.len()).enumerate();
     let progress = Arc::new(parking_lot::Mutex::new(progress));
-    let bad_objects = Arc::new(parking_lot::RwLock::new(HashSet::new()));
+    let bad_objects = Arc::new(DashSet::new());
 
     parallel::reduce::Stepwise::new(
         chunks,
@@ -179,7 +179,7 @@ where
                                         output::Entry::from_data(count, &obj)
                                     }
                                     None => {
-                                        bad_objects.write().insert(chunk_range.start + count_idx);
+                                        bad_objects.insert(chunk_range.start + count_idx);
                                         stats.missing_objects += 1;
                                         continue;
                                     }
@@ -192,7 +192,7 @@ where
                                 output::Entry::from_data(count, &obj)
                             }
                             None => {
-                                bad_objects.write().insert(chunk_range.start + count_idx);
+                                bad_objects.insert(chunk_range.start + count_idx);
                                 stats.missing_objects += 1;
                                 continue;
                             }
@@ -369,4 +369,5 @@ mod types {
         NewEntry(#[from] entry::Error),
     }
 }
+use dashmap::DashSet;
 pub use types::{Error, Mode, Options, Outcome};
