@@ -151,7 +151,7 @@ impl output::Entry {
     pub fn to_entry_header(
         &self,
         version: crate::data::Version,
-        index_to_pack: impl FnOnce(usize) -> u64,
+        index_to_base_distance: impl FnOnce(usize) -> u64,
     ) -> crate::data::entry::Header {
         assert!(
             matches!(version, data::Version::V2),
@@ -171,7 +171,7 @@ impl output::Entry {
             }
             DeltaOid { id } => data::entry::Header::RefDelta { base_id: id.to_owned() },
             DeltaRef { object_index } => data::entry::Header::OfsDelta {
-                base_distance: index_to_pack(object_index),
+                base_distance: index_to_base_distance(object_index),
             },
         }
     }

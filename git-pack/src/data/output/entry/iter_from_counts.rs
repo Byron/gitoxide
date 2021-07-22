@@ -276,7 +276,7 @@ mod types {
     pub struct Outcome {
         /// The amount of fully decoded objects. These are the most expensive as they are fully decoded.
         pub decoded_and_recompressed_objects: usize,
-        /// The amount of objects that could be copied directly from the pack. These are cheapest as they
+        /// The amount of base or delta objects that could be copied directly from the pack. These are cheapest as they
         /// only cost a memory copy for the most part.
         pub objects_copied_from_pack: usize,
     }

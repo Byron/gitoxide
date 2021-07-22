@@ -29,6 +29,11 @@ pub struct FromEntriesIter<I, W> {
     header_info: Option<(crate::data::Version, u32)>,
     /// The pack data version with which pack entries should be written.
     entry_version: crate::data::Version,
+    /// The amount of written bytes thus far
+    written: u64,
+    /// Required to quickly find offsets by object IDs, as future objects may refer to those in the past to become a delta offset base.
+    /// It stores the pack offsets at which objects begin.
+    pack_offsets: Vec<u64>,
     /// If we are done, no additional writes will occour
     is_done: bool,
 }
@@ -69,6 +74,8 @@ where
             output: hash::Write::new(output, hash_kind),
             trailer: None,
             entry_version: version,
+            pack_offsets: Vec::with_capacity(num_entries as usize),
+            written: 0,
             header_info: Some((version, num_entries)),
             is_done: false,
         }
@@ -88,32 +95,32 @@ where
     }
 
     fn next_inner(&mut self) -> Result<u64, Error<E>> {
-        let mut written = 0u64;
+        let previous_written = self.written;
         if let Some((version, num_entries)) = self.header_info.take() {
             let header_bytes = crate::data::header::encode(version, num_entries);
             self.output.write_all(&header_bytes[..])?;
-            written += header_bytes.len() as u64;
+            self.written += header_bytes.len() as u64;
         }
         match self.input.next() {
             Some(entries) => {
                 for entry in entries.map_err(Error::Input)? {
-                    let header = entry.to_entry_header(self.entry_version, |_index_offset| {
-                        todo!("a way to calculate pack offsets from object index offsets")
-                    });
-                    written += header.write_to(entry.decompressed_size as u64, &mut self.output)? as u64;
-                    written += std::io::copy(&mut &*entry.compressed_data, &mut self.output)? as u64;
+                    self.pack_offsets.push(self.written);
+                    let header =
+                        entry.to_entry_header(self.entry_version, |index| self.written - self.pack_offsets[index]);
+                    self.written += header.write_to(entry.decompressed_size as u64, &mut self.output)? as u64;
+                    self.written += std::io::copy(&mut &*entry.compressed_data, &mut self.output)? as u64;
                 }
             }
             None => {
                 let digest = self.output.hash.clone().digest();
                 self.output.write_all(&digest[..])?;
-                written += digest.len() as u64;
+                self.written += digest.len() as u64;
                 self.output.flush()?;
                 self.is_done = true;
                 self.trailer = Some(git_hash::ObjectId::from(digest));
             }
         };
-        Ok(written)
+        Ok(self.written - previous_written)
     }
 }
 

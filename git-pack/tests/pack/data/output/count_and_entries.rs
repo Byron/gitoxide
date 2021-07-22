@@ -14,7 +14,6 @@ use git_traverse::commit;
 use std::sync::atomic::AtomicBool;
 
 #[test]
-#[ignore]
 fn traversals() -> crate::Result {
     #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
     struct Count {
@@ -143,7 +142,7 @@ fn traversals() -> crate::Result {
                 decoded_and_recompressed_objects: 0,
                 objects_copied_from_pack: 103,
             },
-            hex_to_id("d2ea809066bec3f5f2a38ef4adba7ebd4f2eda22"),
+            hex_to_id("25114bd8820b393c402cd53ad8ec7f6a84bb0633"),
             true,
         ),
         (
@@ -160,7 +159,7 @@ fn traversals() -> crate::Result {
                 decoded_and_recompressed_objects: 0,
                 objects_copied_from_pack: 868,
             },
-            hex_to_id("d2ea809066bec3f5f2a38ef4adba7ebd4f2eda22"),
+            hex_to_id("542ad1d1c7c762ea4e36907570ff9e4b5b7dde1b"),
             false,
         ),
         (
@@ -177,7 +176,7 @@ fn traversals() -> crate::Result {
                 decoded_and_recompressed_objects: 0,
                 objects_copied_from_pack: 868,
             },
-            hex_to_id("d2ea809066bec3f5f2a38ef4adba7ebd4f2eda22"),
+            hex_to_id("542ad1d1c7c762ea4e36907570ff9e4b5b7dde1b"),
             false,
         ),
     ]
