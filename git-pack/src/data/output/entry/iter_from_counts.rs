@@ -93,6 +93,7 @@ where
             index
         }
     };
+    dbg!(&counts_range_by_pack_id);
     let counts = Arc::new(counts);
     let (chunk_size, thread_limit, _) =
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);

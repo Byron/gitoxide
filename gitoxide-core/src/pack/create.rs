@@ -96,62 +96,62 @@ where
     W: std::io::Write,
 {
     let repo = Arc::new(git_repository::discover(repository_path)?);
-    progress.init(Some(4), progress::steps());
+    progress.init(Some(2), progress::steps());
     let tips = tips.into_iter();
     let make_cancellation_err = || anyhow!("Cancelled by user");
-    let input: Box<dyn Iterator<Item = ObjectId> + Send + 'static> = match input {
-        None => Box::new({
+    let (db, input): (_, Box<dyn Iterator<Item = ObjectId> + Send + 'static>) = match input {
+        None => {
             let mut progress = progress.add_child("traversing");
             progress.init(None, progress::count("commits"));
-            let start = Instant::now();
-            let iter = interrupt::Iter::new(
-                traverse::commit::Ancestors::new(
-                    tips.map(|tip| {
-                        ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else({
-                            let packed = repo.refs.packed().ok().flatten();
-                            let refs = &repo.refs;
-                            move |_| {
-                                refs.find_existing(tip.as_ref().to_string_lossy().as_ref(), packed.as_ref())
-                                    .map_err(anyhow::Error::from)
-                                    .and_then(|mut r| {
-                                        r.peel_to_id_in_place(refs, packed.as_ref())
-                                            .map(|oid| oid.to_owned())
-                                            .map_err(anyhow::Error::from)
-                                    })
-                            }
-                        })
+            let tips = tips
+                .map(|tip| {
+                    ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else({
+                        let packed = repo.refs.packed().ok().flatten();
+                        let refs = &repo.refs;
+                        move |_| {
+                            refs.find_existing(tip.as_ref().to_string_lossy().as_ref(), packed.as_ref())
+                                .map_err(anyhow::Error::from)
+                                .and_then(|mut r| {
+                                    r.peel_to_id_in_place(refs, packed.as_ref())
+                                        .map(|oid| oid.to_owned())
+                                        .map_err(anyhow::Error::from)
+                                })
+                        }
                     })
-                    .collect::<Result<Vec<_>, _>>()?,
-                    traverse::commit::ancestors::State::default(),
-                    {
-                        let db = Arc::clone(&repo);
-                        move |oid, buf| db.odb.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
-                    },
-                )
-                .inspect(|_| progress.inc()),
-                make_cancellation_err,
-            )
-            .collect::<Result<Result<Vec<_>, _>, _>>()??
-            .into_iter();
-            progress.show_throughput(start);
-            iter
-        }),
-        Some(input) => Box::new(input.lines().filter_map(|hex_id| {
-            hex_id
-                .ok()
-                .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).ok())
-        })),
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            let db = match Arc::try_unwrap(repo) {
+                Ok(repo) => Arc::new(repo.odb),
+                Err(_) => unreachable!("there is only one instance left here"),
+            };
+            let iter = Box::new(
+                traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), {
+                    let db = Arc::clone(&db);
+                    move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
+                })
+                .inspect(move |_| progress.inc())
+                .map(Result::unwrap),
+            ); // todo: should there be a better way, maybe let input support Option or Result
+            (db, iter)
+        }
+        Some(input) => {
+            let db = match Arc::try_unwrap(repo) {
+                Ok(repo) => Arc::new(repo.odb),
+                Err(_) => unreachable!("there is only one instance left here"),
+            };
+            let iter = Box::new(input.lines().filter_map(|hex_id| {
+                hex_id
+                    .ok()
+                    .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).ok())
+                // todo: should there be a better way, maybe let input support Option or Result
+            }));
+            (db, iter)
+        }
     };
-    progress.inc();
 
     let mut stats = Statistics::default();
     let chunk_size = 200;
     let start = Instant::now();
-    let db = match Arc::try_unwrap(repo) {
-        Ok(db) => db,
-        Err(_) => unreachable!("there is only one instance left here"),
-    };
-    let db = Arc::new(db.odb);
     let counts = {
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
@@ -204,7 +204,6 @@ where
         ))
     };
 
-    progress.inc();
     let mut entries_progress = progress.add_child("consumed");
     entries_progress.init(Some(num_objects), progress::count("entries"));
     let mut write_progress = progress.add_child("writing");
@@ -260,6 +259,7 @@ where
     if let Some(format) = statistics {
         print(stats, format, out)?;
     }
+    progress.inc();
     Ok(())
 }
 
