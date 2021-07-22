@@ -1,7 +1,4 @@
-use crate::{
-    data::{output, output::ChunkId},
-    find, FindExt,
-};
+use crate::data::{output, output::ChunkId};
 use git_features::{parallel, progress::Progress};
 use std::{cmp::Ordering, sync::Arc};
 
@@ -47,8 +44,8 @@ pub fn iter_from_counts<Find, Cache>(
         thread_limit,
         chunk_size,
     }: Options,
-) -> impl Iterator<Item = Result<(ChunkId, Vec<output::Entry>), Error<find::existing::Error<Find::Error>>>>
-       + parallel::reduce::Finalize<Reduce = reduce::Statistics<Error<find::existing::Error<Find::Error>>>>
+) -> impl Iterator<Item = Result<(ChunkId, Vec<output::Entry>), Error<Find::Error>>>
+       + parallel::reduce::Finalize<Reduce = reduce::Statistics<Error<Find::Error>>>
 where
     Find: crate::Find + Clone + Send + Sync + 'static,
     <Find as crate::Find>::Error: Send,
@@ -98,6 +95,7 @@ where
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
     let chunks = util::ChunkRanges::new(chunk_size, counts.len()).enumerate();
     let progress = Arc::new(parking_lot::Mutex::new(progress));
+    let bad_objects = Arc::new(DashSet::new());
 
     parallel::reduce::Stepwise::new(
         chunks,
@@ -114,14 +112,15 @@ where
         },
         {
             let counts = Arc::clone(&counts);
-            move |(chunk_id, chunk): (ChunkId, std::ops::Range<usize>), (buf, cache, progress)| {
+            let bad_objects = Arc::clone(&bad_objects);
+            move |(chunk_id, chunk_range): (ChunkId, std::ops::Range<usize>), (buf, cache, progress)| {
                 let mut out = Vec::new();
-                let chunk = &counts[chunk];
+                let chunk = &counts[chunk_range.clone()];
                 let mut stats = Outcome::default();
                 let mut pack_offsets_to_id = None;
                 progress.init(Some(chunk.len()), git_features::progress::count("objects"));
 
-                for count in chunk {
+                for (count_idx, count) in chunk.iter().enumerate() {
                     out.push(match count
                         .entry_pack_location
                         .as_ref()
@@ -145,6 +144,7 @@ where
                                 count,
                                 counts_in_pack,
                                 base_index_offset,
+                                &bad_objects,
                                 allow_thin_pack.then(|| {
                                     |pack_id, base_offset| {
                                         let (cached_pack_id, cache) = pack_offsets_to_id.get_or_insert_with(|| {
@@ -173,18 +173,30 @@ where
                                     stats.objects_copied_from_pack += 1;
                                     entry
                                 }
-                                None => {
-                                    let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
-                                    stats.decoded_and_recompressed_objects += 1;
-                                    output::Entry::from_data(count, &obj)
-                                }
+                                None => match db.find(count.id, buf, cache).map_err(Error::FindExisting)? {
+                                    Some(obj) => {
+                                        stats.decoded_and_recompressed_objects += 1;
+                                        output::Entry::from_data(count, &obj)
+                                    }
+                                    None => {
+                                        bad_objects.insert(chunk_range.start + count_idx);
+                                        stats.missing_objects += 1;
+                                        continue;
+                                    }
+                                },
                             }
                         }
-                        None => {
-                            let obj = db.find_existing(count.id, buf, cache).map_err(Error::FindExisting)?;
-                            stats.decoded_and_recompressed_objects += 1;
-                            output::Entry::from_data(count, &obj)
-                        }
+                        None => match db.find(count.id, buf, cache).map_err(Error::FindExisting)? {
+                            Some(obj) => {
+                                stats.decoded_and_recompressed_objects += 1;
+                                output::Entry::from_data(count, &obj)
+                            }
+                            None => {
+                                bad_objects.insert(chunk_range.start + count_idx);
+                                stats.missing_objects += 1;
+                                continue;
+                            }
+                        },
                     }?);
                     progress.inc();
                 }
@@ -276,6 +288,8 @@ mod types {
     pub struct Outcome {
         /// The amount of fully decoded objects. These are the most expensive as they are fully decoded.
         pub decoded_and_recompressed_objects: usize,
+        /// The amount of objects that could not be located despite them being mentioned during iteration
+        pub missing_objects: usize,
         /// The amount of base or delta objects that could be copied directly from the pack. These are cheapest as they
         /// only cost a memory copy for the most part.
         pub objects_copied_from_pack: usize,
@@ -286,10 +300,12 @@ mod types {
             &mut self,
             Outcome {
                 decoded_and_recompressed_objects: decoded_objects,
+                missing_objects,
                 objects_copied_from_pack,
             }: Self,
         ) {
             self.decoded_and_recompressed_objects += decoded_objects;
+            self.missing_objects += missing_objects;
             self.objects_copied_from_pack += objects_copied_from_pack;
         }
     }
@@ -353,4 +369,5 @@ mod types {
         NewEntry(#[from] entry::Error),
     }
 }
+use dashmap::DashSet;
 pub use types::{Error, Mode, Options, Outcome};

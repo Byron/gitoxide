@@ -291,6 +291,7 @@ fn human_output(
         entries:
             pack::data::output::entry::iter_from_counts::Outcome {
                 decoded_and_recompressed_objects,
+                missing_objects,
                 objects_copied_from_pack,
             },
     }: Statistics,
@@ -312,9 +313,10 @@ fn human_output(
     #[rustfmt::skip]
     writeln!(
         out,
-        "\t{:<width$} {}\n\t{:<width$} {}",
+        "\t{:<width$} {}\n\t{:<width$} {}\n\t{:<width$} {}",
         "decoded and recompressed", decoded_and_recompressed_objects,
         "pack-to-pack copies", objects_copied_from_pack,
+        "missing objects", missing_objects,
         width = width
     )?;
     Ok(())

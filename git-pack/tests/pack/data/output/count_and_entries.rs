@@ -111,6 +111,7 @@ fn traversals() -> crate::Result {
             },
             output::entry::iter_from_counts::Outcome {
                 decoded_and_recompressed_objects: 0,
+                missing_objects: 0,
                 objects_copied_from_pack: 16,
             },
             hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3"),
@@ -141,6 +142,7 @@ fn traversals() -> crate::Result {
             },
             output::entry::iter_from_counts::Outcome {
                 decoded_and_recompressed_objects: 0,
+                missing_objects: 0,
                 objects_copied_from_pack: 103,
             },
             hex_to_id("25114bd8820b393c402cd53ad8ec7f6a84bb0633"),
@@ -171,6 +173,7 @@ fn traversals() -> crate::Result {
             },
             output::entry::iter_from_counts::Outcome {
                 decoded_and_recompressed_objects: 74,
+                missing_objects: 0,
                 objects_copied_from_pack: 29,
             },
             hex_to_id("d83d42128e40957c5174920189a0390b5a70f446"),
@@ -189,6 +192,7 @@ fn traversals() -> crate::Result {
             },
             output::entry::iter_from_counts::Outcome {
                 decoded_and_recompressed_objects: 0,
+                missing_objects: 0,
                 objects_copied_from_pack: 868,
             },
             hex_to_id("542ad1d1c7c762ea4e36907570ff9e4b5b7dde1b"),
@@ -207,6 +211,7 @@ fn traversals() -> crate::Result {
             },
             output::entry::iter_from_counts::Outcome {
                 decoded_and_recompressed_objects: 0,
+                missing_objects: 0,
                 objects_copied_from_pack: 868,
             },
             hex_to_id("542ad1d1c7c762ea4e36907570ff9e4b5b7dde1b"),
