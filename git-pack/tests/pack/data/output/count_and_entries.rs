@@ -77,7 +77,6 @@ fn traversals() -> crate::Result {
         tags: 1,
     };
     let db = db(DbKind::DeterministicGeneratedContent)?;
-    let some_input_objects = 1;
     for (
         expansion_mode,
         expected_count,
@@ -85,6 +84,7 @@ fn traversals() -> crate::Result {
         expected_counts_outcome,
         expected_entries_outcome,
         expected_pack_hash,
+        take,
         allow_thin_pack,
     ) in [
         (
@@ -114,6 +114,7 @@ fn traversals() -> crate::Result {
                 objects_copied_from_pack: 16,
             },
             hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3"),
+            None,
             false,
         ),
         (
@@ -143,7 +144,38 @@ fn traversals() -> crate::Result {
                 objects_copied_from_pack: 103,
             },
             hex_to_id("25114bd8820b393c402cd53ad8ec7f6a84bb0633"),
+            Some(1),
             true,
+        ),
+        (
+            count::iter_from_objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
+            Count {
+                trees: 5,
+                commits: 2, // todo: why more?
+                blobs: 91,
+                tags: 0,
+                delta_ref: 5,
+                delta_oid: 0,
+            },
+            ObjectCount {
+                trees: 5,
+                commits: 2, // todo: figure out why its more than expected
+                blobs: 96,
+                tags: 0,
+            },
+            output::count::iter_from_objects::Outcome {
+                input_objects: 1,
+                expanded_objects: 102,
+                decoded_objects: 18,
+                total_objects: 103,
+            },
+            output::entry::iter_from_counts::Outcome {
+                decoded_and_recompressed_objects: 74,
+                objects_copied_from_pack: 29,
+            },
+            hex_to_id("d83d42128e40957c5174920189a0390b5a70f446"),
+            Some(1),
+            false,
         ),
         (
             count::iter_from_objects::ObjectExpansion::TreeContents,
@@ -160,6 +192,7 @@ fn traversals() -> crate::Result {
                 objects_copied_from_pack: 868,
             },
             hex_to_id("542ad1d1c7c762ea4e36907570ff9e4b5b7dde1b"),
+            None,
             false,
         ),
         (
@@ -177,6 +210,7 @@ fn traversals() -> crate::Result {
                 objects_copied_from_pack: 868,
             },
             hex_to_id("542ad1d1c7c762ea4e36907570ff9e4b5b7dde1b"),
+            None,
             false,
         ),
     ]
@@ -190,8 +224,8 @@ fn traversals() -> crate::Result {
         })
         .map(Result::unwrap)
         .collect::<Vec<_>>();
-        if allow_thin_pack {
-            commits.resize(some_input_objects, git_hash::ObjectId::null_sha1());
+        if let Some(take) = take {
+            commits.resize(take, git_hash::ObjectId::null_sha1());
         }
 
         let deterministic_count_needs_single_thread = Some(1);
@@ -200,7 +234,7 @@ fn traversals() -> crate::Result {
             || pack::cache::Never,
             commits
                 .into_iter()
-                .chain(std::iter::once(hex_to_id(if allow_thin_pack {
+                .chain(std::iter::once(hex_to_id(if take.is_some() {
                     "0000000000000000000000000000000000000000"
                 } else {
                     "e3fb53cbb4c346d48732a24f09cf445e49bc63d6"
