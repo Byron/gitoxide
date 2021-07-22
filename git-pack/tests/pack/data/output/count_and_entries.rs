@@ -5,7 +5,7 @@ use crate::pack::{
     hex_to_id,
 };
 use git_features::{parallel::reduce::Finalize, progress};
-use git_odb::{compound, pack, FindExt};
+use git_odb::{compound, linked, pack, FindExt};
 use git_pack::data::{
     output,
     output::{count, entry},
@@ -14,6 +14,7 @@ use git_traverse::commit;
 use std::sync::atomic::AtomicBool;
 
 #[test]
+#[ignore]
 fn traversals() -> crate::Result {
     #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
     struct Count {
@@ -303,16 +304,16 @@ fn traversals() -> crate::Result {
             "two different ways of counting, still the same in the end"
         );
 
-        write_and_verify(entries, expected_pack_hash, allow_thin_pack)?;
+        write_and_verify(Arc::clone(&db), entries, expected_pack_hash)?;
     }
 
     Ok(())
 }
 
 fn write_and_verify(
+    _db: Arc<linked::Store>,
     entries: Vec<output::Entry>,
     expected_pack_hash: git_hash::ObjectId,
-    allow_thin_pack: bool,
 ) -> crate::Result {
     let tmp_dir = tempfile::TempDir::new()?;
     let pack_file_path = tmp_dir.path().join("new.pack");
@@ -356,28 +357,26 @@ fn write_and_verify(
 
     assert_eq!(hash, expected_pack_hash, "pack hashes are stable if the input is");
 
-    // TODO: when thin pack writing is supported, let it fail if it's a thin back even though it shouldn't be
-    if !allow_thin_pack {
-        // Re-generate the index from the pack for validation.
-        let bundle = pack::Bundle::at(
-            pack::Bundle::write_to_directory(
-                std::io::BufReader::new(std::fs::File::open(pack_file_path)?),
-                Some(tmp_dir.path()),
-                progress::Discard,
-                &should_interrupt,
-                pack::bundle::write::Options::default(),
-            )?
-            .data_path
-            .expect("directory set"),
-        )?;
-        bundle.verify_integrity(
-            pack::index::verify::Mode::Sha1Crc32DecodeEncode,
-            pack::index::traverse::Algorithm::DeltaTreeLookup,
-            || pack::cache::Never,
-            None,
-            progress::Discard.into(),
-            Arc::new(should_interrupt),
-        )?;
-    }
+    // Re-generate the index from the pack for validation.
+    let bundle = pack::Bundle::at(
+        pack::Bundle::write_to_directory(
+            std::io::BufReader::new(std::fs::File::open(pack_file_path)?),
+            Some(tmp_dir.path()),
+            progress::Discard,
+            &should_interrupt,
+            pack::bundle::write::Options::default(),
+        )?
+        .data_path
+        .expect("directory set"),
+    )?;
+    bundle.verify_integrity(
+        pack::index::verify::Mode::Sha1Crc32DecodeEncode,
+        pack::index::traverse::Algorithm::DeltaTreeLookup,
+        || pack::cache::Never,
+        None,
+        progress::Discard.into(),
+        Arc::new(should_interrupt),
+    )?;
+
     Ok(())
 }

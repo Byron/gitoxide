@@ -29,5 +29,5 @@ pub struct Entry {
 mod types;
 pub use types::{EntryDataMode, Error, Mode};
 
-mod iter;
-pub use iter::BytesToEntriesIter;
+mod bytes_to_entries;
+pub use bytes_to_entries::BytesToEntriesIter;

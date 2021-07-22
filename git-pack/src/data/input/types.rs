@@ -16,6 +16,8 @@ pub enum Error {
     },
     #[error("pack is incomplete: it was decompressed into {actual} bytes but {expected} bytes where expected.")]
     IncompletePack { actual: u64, expected: u64 },
+    #[error("The object {object_id} could not be decoded or wasn't found")]
+    NotFound { object_id: git_hash::ObjectId },
 }
 
 /// Iteration Mode
