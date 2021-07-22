@@ -81,7 +81,7 @@ where
                 });
                 index.push((current_pack_id, chunks_pack_start..chunks_pack_start + pack_end));
                 slice = &slice[pack_end..];
-                chunks_pack_start = chunks_pack_start + pack_end;
+                chunks_pack_start += pack_end;
             }
 
             progress.set(counts.len());
@@ -113,7 +113,7 @@ where
             let counts = Arc::clone(&counts);
             move |(chunk_id, chunk_range): (ChunkId, std::ops::Range<usize>), (buf, cache, progress)| {
                 let mut out = Vec::new();
-                let chunk = &counts[chunk_range.clone()];
+                let chunk = &counts[chunk_range];
                 let mut stats = Outcome::default();
                 let mut pack_offsets_to_id = None;
                 progress.init(Some(chunk.len()), git_features::progress::count("objects"));
