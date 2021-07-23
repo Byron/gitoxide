@@ -40,6 +40,30 @@ where
         let new_ofs = pack_offset as i64 + self.inserted_entries_length_in_bytes;
         new_ofs.try_into().expect("offset value is never becomes negative")
     }
+
+    /// positive `change` values mean an object grew or was more commonly, was inserted. Negative values
+    /// mean the object shrunk, usually because there header changed from ref-deltas to ofs deltas.
+    fn track_change(&mut self, pack_offset: u64, change: i64, oid: impl Into<Option<ObjectId>>) {
+        if change == 0 {
+            return;
+        }
+        self.inserted_entry_length_at_offset.push(Change {
+            at_pack_offset: pack_offset,
+            _change_in_bytes: change,
+            oid: oid.into().unwrap_or_else(ObjectId::null_sha1),
+        });
+        self.inserted_entries_length_in_bytes += change;
+    }
+
+    fn shift_entry_and_point_to_base_by_offset(&mut self, entry: &mut input::Entry, base_distance: u64) {
+        entry.pack_offset = self.shift_pack_offset(entry.pack_offset);
+        entry.header = Header::OfsDelta { base_distance };
+        let previous_header_size = entry.header_size;
+        entry.header_size = entry.header.size(entry.decompressed_size) as u16;
+
+        let change = entry.header_size as i64 - previous_header_size as i64;
+        self.track_change(entry.pack_offset, change, None);
+    }
 }
 
 impl<I, LFn> Iterator for LookupRefDeltaObjectsIter<I, LFn>
@@ -69,12 +93,7 @@ where
                                         Ok(e) => e,
                                     };
                                     entry.pack_offset = self.shift_pack_offset(current_pack_offset);
-                                    self.inserted_entry_length_at_offset.push(Change {
-                                        at_pack_offset: entry.pack_offset,
-                                        _change_in_bytes: entry.bytes_in_pack() as i64,
-                                        oid: base_id,
-                                    });
-                                    self.inserted_entries_length_in_bytes += entry.bytes_in_pack() as i64;
+                                    self.track_change(entry.pack_offset, entry.bytes_in_pack() as i64, base_id);
                                     entry
                                 }
                                 None => {
@@ -84,44 +103,25 @@ where
                             };
 
                             {
-                                entry.header = Header::OfsDelta {
-                                    base_distance: base_entry.bytes_in_pack(),
-                                };
-                                let previous_headersize = entry.header_size;
-                                entry.header_size = entry.header.size(entry.decompressed_size) as u16;
-                                assert!(
-                                    self.inserted_entries_length_in_bytes >= 0,
-                                    "we should never have a negative value here"
-                                );
-                                entry.pack_offset += self.inserted_entries_length_in_bytes.unsigned_abs();
-
-                                let change = entry.header_size as i64 - previous_headersize as i64;
-                                self.inserted_entry_length_at_offset.push(Change {
-                                    at_pack_offset: entry.pack_offset,
-                                    _change_in_bytes: change,
-                                    oid: ObjectId::null_sha1(),
-                                });
-                                self.inserted_entries_length_in_bytes += change;
+                                self.shift_entry_and_point_to_base_by_offset(&mut entry, base_entry.bytes_in_pack());
                                 self.next_delta = Some(entry);
                             }
                             Some(Ok(base_entry))
                         }
                         Some(base_entry) => {
-                            entry.pack_offset = self.shift_pack_offset(entry.pack_offset);
-                            entry.header = Header::OfsDelta {
-                                base_distance: entry.pack_offset - base_entry.at_pack_offset,
-                            };
-                            entry.header_size = entry.header.size(entry.decompressed_size) as u16;
+                            let base_distance = self.shift_pack_offset(entry.pack_offset) - base_entry.at_pack_offset;
+                            self.shift_entry_and_point_to_base_by_offset(&mut entry, base_distance);
                             Some(Ok(entry))
                         }
                     }
                 }
                 _ => {
                     if self.inserted_entries_length_in_bytes != 0 {
-                        if let Header::OfsDelta { base_distance: _ } = entry.header {
-                            todo!("add all objects that have been added since to the  delta offset")
-                        }
                         entry.pack_offset = self.shift_pack_offset(entry.pack_offset);
+                        if let Header::OfsDelta { base_distance: _ } = entry.header {
+                            // self.inserted_entry_length_at_offset.partition_point()
+                            // todo!("add all objects that have been added since to the  delta offset, compute new size and adjust")
+                        }
                     }
                     Some(Ok(entry))
                 }

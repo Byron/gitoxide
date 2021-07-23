@@ -18,9 +18,9 @@ mod lookup_ref_delta_objects {
         Header::RefDelta { base_id: id }
     }
 
-    fn extract_delta_offset(header: &Header) -> u64 {
+    fn extract_delta_offset(header: Header) -> u64 {
         match header {
-            Header::OfsDelta { base_distance } => *base_distance,
+            Header::OfsDelta { base_distance } => base_distance,
             _ => unreachable!("this is supposed to be an offset header, was {:?}", header),
         }
     }
@@ -71,13 +71,9 @@ mod lookup_ref_delta_objects {
 
         let inserted_data = D_D;
         let mut inserted = entry(base(), inserted_data);
-        let mut last_entry = entry(base(), D_C);
-        // todo: let's have an ofs delta point at the altered entry, maybe even last_entry
-        let input = compute_offsets(vec![
-            first.clone(),
-            entry(delta_ref(second_id), D_B),
-            last_entry.clone(),
-        ]);
+        let second = entry(delta_ref(second_id), D_B);
+        let mut last_entry = entry(delta_ofs(second.bytes_in_pack()), D_C);
+        let input = compute_offsets(vec![first.clone(), second, last_entry.clone()]);
 
         let mut calls = 0;
         let actual = LookupRefDeltaObjectsIter::new(into_results_iter(input), |_oid, buf| {
@@ -100,7 +96,7 @@ mod lookup_ref_delta_objects {
 
         let altered = &actual[1];
         assert_eq!(
-            extract_delta_offset(&altered.header),
+            extract_delta_offset(altered.header),
             inserted.bytes_in_pack(),
             "former first entry is now an offset delta pointing at the item before"
         );
@@ -116,7 +112,7 @@ mod lookup_ref_delta_objects {
         let first_altered_len = altered.bytes_in_pack();
         let altered = &actual[3];
         assert_eq!(
-            extract_delta_offset(&altered.header),
+            extract_delta_offset(altered.header),
             inserted.bytes_in_pack(),
             "former second entry is now an offset delta pointing at the inserted item before"
         );
@@ -132,11 +128,16 @@ mod lookup_ref_delta_objects {
             &actual[4], &last_entry,
             "the last entry was offset and is otherwise unchanged"
         );
+        assert_eq!(
+            extract_delta_offset(last_entry.header),
+            altered.bytes_in_pack(),
+            "delta offset was adjusted to deal with change in size of predecessor(s)"
+        );
     }
 
     #[test]
     #[ignore]
-    fn ref_deltas_have_their_existing_base_injected_to_avoid_duplicate_injection() {}
+    fn ref_deltas_have_an_existing_base_injected_to_avoid_duplicate_injection() {}
 
     #[test]
     #[ignore]
