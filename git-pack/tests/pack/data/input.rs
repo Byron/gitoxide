@@ -63,12 +63,18 @@ mod lookup_ref_delta_objects {
 
     #[test]
     fn ref_deltas_have_their_base_injected_if_not_done_before_and_all_future_entries_are_offset() {
-        let inserted = entry(base(), D_B);
+        let first = entry(base(), D_C);
+        let mut inserted = entry(base(), D_B);
         let mut last_entry = entry(base(), D_C);
-        let input = vec![entry(delta_ref(ObjectId::null_sha1()), D_A), last_entry.clone()];
+        // todo: let's have an ofs delta point at the altered entry, maybe even last_entry
+        let input = compute_offsets(vec![
+            first.clone(),
+            entry(delta_ref(ObjectId::null_sha1()), D_A),
+            last_entry.clone(),
+        ]);
 
         let mut calls = 0;
-        let actual = LookupRefDeltaObjectsIter::new(into_results_iter(compute_offsets(input)), |_oid, buf| {
+        let actual = LookupRefDeltaObjectsIter::new(into_results_iter(input), |_oid, buf| {
             calls += 1;
             buf.resize(D_B.len(), 0);
             buf.copy_from_slice(&D_B);
@@ -80,24 +86,29 @@ mod lookup_ref_delta_objects {
         })
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
+
         assert_eq!(calls, 1, "there is only one object to replace");
-        assert_eq!(actual.len(), 3, "one object was inserted");
-        assert_eq!(&actual[0], &inserted);
-        let altered = &actual[1];
+        assert_eq!(actual.len(), 4, "one object was inserted");
+        assert_eq!(&actual[0], &first, "first object is unchanged");
+
+        inserted.pack_offset += first.bytes_in_pack();
+        assert_eq!(&actual[1], &inserted, "second object is the inserted one");
+
+        let altered = &actual[2];
         assert_eq!(
             extract_delta_offset(&altered.header),
             inserted.bytes_in_pack(),
-            "former first entry is now an offset delta"
+            "former second entry is now an offset delta pointing at the item before"
         );
         assert_eq!(
             altered.pack_offset,
-            inserted.bytes_in_pack(),
-            "the pack offset was adjusted to accommodate for the inserted object"
+            first.bytes_in_pack() + inserted.bytes_in_pack(),
+            "the pack offset was adjusted to accommodate for the first and inserted object"
         );
 
-        last_entry.pack_offset = inserted.bytes_in_pack() + altered.bytes_in_pack();
+        last_entry.pack_offset = first.bytes_in_pack() + inserted.bytes_in_pack() + altered.bytes_in_pack();
         assert_eq!(
-            &actual[2], &last_entry,
+            &actual[3], &last_entry,
             "the last entry was offset and is otherwise unchanged"
         );
     }
