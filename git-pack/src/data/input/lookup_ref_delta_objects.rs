@@ -35,6 +35,11 @@ where
             buf: Vec::new(),
         }
     }
+
+    fn shift_pack_offset(&self, pack_offset: u64) -> u64 {
+        let new_ofs = pack_offset as i64 + self.inserted_entries_length_in_bytes;
+        new_ofs.try_into().expect("offset value is never becomes negative")
+    }
 }
 
 impl<I, LFn> Iterator for LookupRefDeltaObjectsIter<I, LFn>
@@ -58,10 +63,12 @@ where
                         None => {
                             let base_entry = match (self.lookup)(base_id, &mut self.buf) {
                                 Some(obj) => {
-                                    let entry = match input::Entry::from_data_obj(&obj, entry.pack_offset) {
+                                    let current_pack_offset = entry.pack_offset;
+                                    let mut entry = match input::Entry::from_data_obj(&obj, 0) {
                                         Err(err) => return Some(Err(err)),
                                         Ok(e) => e,
                                     };
+                                    entry.pack_offset = self.shift_pack_offset(current_pack_offset);
                                     self.inserted_entry_length_at_offset.push(Change {
                                         at_pack_offset: entry.pack_offset,
                                         _change_in_bytes: entry.bytes_in_pack() as i64,
@@ -100,10 +107,7 @@ where
                             Some(Ok(base_entry))
                         }
                         Some(base_entry) => {
-                            entry.pack_offset = {
-                                let new_ofs = entry.pack_offset as i64 + self.inserted_entries_length_in_bytes;
-                                new_ofs.try_into().expect("offset value is never becomes negative")
-                            };
+                            entry.pack_offset = self.shift_pack_offset(entry.pack_offset);
                             entry.header = Header::OfsDelta {
                                 base_distance: entry.pack_offset - base_entry.at_pack_offset,
                             };
@@ -117,10 +121,7 @@ where
                         if let Header::OfsDelta { base_distance: _ } = entry.header {
                             todo!("add all objects that have been added since to the  delta offset")
                         }
-                        entry.pack_offset = {
-                            let new_ofs = entry.pack_offset as i64 + self.inserted_entries_length_in_bytes;
-                            new_ofs.try_into().expect("offset value is never becomes negative")
-                        };
+                        entry.pack_offset = self.shift_pack_offset(entry.pack_offset);
                     }
                     Some(Ok(entry))
                 }
@@ -134,6 +135,7 @@ where
     }
 }
 
+#[derive(Debug)]
 struct Change {
     at_pack_offset: u64,
     _change_in_bytes: i64,
