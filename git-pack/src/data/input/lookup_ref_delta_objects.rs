@@ -56,7 +56,7 @@ where
         self.inserted_entry_length_at_offset.push(Change {
             shifted_pack_offset,
             pack_offset,
-            _change_in_bytes: change,
+            change_in_bytes: change,
             oid: oid.into().unwrap_or_else(ObjectId::null_sha1),
         });
         self.inserted_entries_length_in_bytes += change;
@@ -136,17 +136,39 @@ where
                                 .pack_offset
                                 .checked_sub(base_distance)
                                 .expect("distance to be in range of pack");
-                            entry.pack_offset = self.shift_pack_offset(entry.pack_offset);
                             dbg!(base_pack_offset, entry.pack_offset);
                             match self
                                 .inserted_entry_length_at_offset
                                 .binary_search_by_key(&base_pack_offset, |c| c.pack_offset)
                             {
                                 Ok(index) => {
-                                    dbg!(index, &self.inserted_entry_length_at_offset[index..]);
-                                    todo!("we point exactly at an entry that changed, but this one might be inserted")
+                                    let index = self
+                                        .inserted_entry_length_at_offset
+                                        .get(index + 1)
+                                        .and_then(|c| {
+                                            if c.pack_offset == base_pack_offset {
+                                                Some(index + 1)
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                        .unwrap_or(index);
+                                    let base_pack_offset = base_pack_offset as i64
+                                        + self.inserted_entry_length_at_offset[index..]
+                                            .iter()
+                                            .map(|c| c.change_in_bytes)
+                                            .sum::<i64>();
+                                    assert!(base_pack_offset >= 0, "something when horribly wrong");
+                                    let new_distance = entry
+                                        .pack_offset
+                                        .checked_sub(base_pack_offset as u64)
+                                        .expect("a base that is behind us in the pack");
+                                    dbg!(base_pack_offset, new_distance);
+                                    self.shift_entry_and_point_to_base_by_offset(&mut entry, new_distance);
+                                    todo!("fix this")
                                 }
                                 Err(_index) => {
+                                    entry.pack_offset = self.shift_pack_offset(entry.pack_offset);
                                     todo!("close, aggregate the size changes since then to know where we are pointing")
                                 }
                             }
@@ -170,6 +192,6 @@ where
 struct Change {
     pack_offset: u64,
     shifted_pack_offset: u64,
-    _change_in_bytes: i64,
+    change_in_bytes: i64,
     oid: ObjectId,
 }
