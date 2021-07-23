@@ -1,10 +1,12 @@
 mod lookup_ref_delta_objects {
+    use crate::pack::hex_to_id;
     use git_hash::ObjectId;
     use git_pack::data::{self, entry::Header, input, LookupRefDeltaObjectsIter};
 
     const D_A: &[u8] = b"a";
     const D_B: &[u8] = b"bb";
     const D_C: &[u8] = b"ccc";
+    const D_D: &[u8] = b"dddd";
 
     fn base() -> Header {
         Header::Blob
@@ -63,21 +65,25 @@ mod lookup_ref_delta_objects {
 
     #[test]
     fn ref_deltas_have_their_base_injected_if_not_done_before_and_all_future_entries_are_offset() {
-        let first = entry(base(), D_C);
-        let mut inserted = entry(base(), D_B);
+        let first_id = hex_to_id("0000000000000000000000000000000000000001");
+        let second_id = hex_to_id("0000000000000000000000000000000000000002");
+        let first = entry(delta_ref(first_id), D_A);
+
+        let inserted_data = D_D;
+        let mut inserted = entry(base(), inserted_data);
         let mut last_entry = entry(base(), D_C);
         // todo: let's have an ofs delta point at the altered entry, maybe even last_entry
         let input = compute_offsets(vec![
             first.clone(),
-            entry(delta_ref(ObjectId::null_sha1()), D_A),
+            entry(delta_ref(second_id), D_B),
             last_entry.clone(),
         ]);
 
         let mut calls = 0;
         let actual = LookupRefDeltaObjectsIter::new(into_results_iter(input), |_oid, buf| {
             calls += 1;
-            buf.resize(D_B.len(), 0);
-            buf.copy_from_slice(&D_B);
+            buf.resize(inserted_data.len(), 0);
+            buf.copy_from_slice(inserted_data);
             Some(data::Object {
                 kind: git_object::Kind::Blob,
                 data: buf.as_slice(),
@@ -87,28 +93,43 @@ mod lookup_ref_delta_objects {
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
 
-        assert_eq!(calls, 1, "there is only one object to replace");
-        assert_eq!(actual.len(), 4, "one object was inserted");
-        assert_eq!(&actual[0], &first, "first object is unchanged");
+        assert_eq!(calls, 2, "there is only two objects to replace");
+        assert_eq!(actual.len(), 5, "two object was inserted");
 
-        inserted.pack_offset += first.bytes_in_pack();
-        assert_eq!(&actual[1], &inserted, "second object is the inserted one");
+        assert_eq!(&actual[0], &inserted, "first object is inserted one");
 
-        let altered = &actual[2];
+        let altered = &actual[1];
         assert_eq!(
             extract_delta_offset(&altered.header),
             inserted.bytes_in_pack(),
-            "former second entry is now an offset delta pointing at the item before"
+            "former first entry is now an offset delta pointing at the item before"
         );
         assert_eq!(
             altered.pack_offset,
-            first.bytes_in_pack() + inserted.bytes_in_pack(),
-            "the pack offset was adjusted to accommodate for the first and inserted object"
+            inserted.bytes_in_pack(),
+            "the pack offset was adjusted to accommodate for the inserted object"
         );
 
-        last_entry.pack_offset = first.bytes_in_pack() + inserted.bytes_in_pack() + altered.bytes_in_pack();
+        inserted.pack_offset = inserted.bytes_in_pack() + altered.bytes_in_pack();
+        assert_eq!(&actual[2], &inserted, "third object is a newly inserted one, too");
+
+        let first_altered_len = altered.bytes_in_pack();
+        let altered = &actual[3];
         assert_eq!(
-            &actual[3], &last_entry,
+            extract_delta_offset(&altered.header),
+            inserted.bytes_in_pack(),
+            "former second entry is now an offset delta pointing at the inserted item before"
+        );
+        assert_eq!(
+            altered.pack_offset,
+            inserted.bytes_in_pack() + first_altered_len + inserted.bytes_in_pack(),
+            "the pack offset was adjusted to accommodate for preceding objects"
+        );
+
+        last_entry.pack_offset =
+            inserted.bytes_in_pack() + first_altered_len + inserted.bytes_in_pack() + altered.bytes_in_pack();
+        assert_eq!(
+            &actual[4], &last_entry,
             "the last entry was offset and is otherwise unchanged"
         );
     }

@@ -64,11 +64,11 @@ where
                             let base_entry = match (self.lookup)(base_id, &mut self.buf) {
                                 Some(obj) => {
                                     let current_pack_offset = entry.pack_offset;
-                                    let mut entry = match input::Entry::from_data_obj(&obj, entry.pack_offset) {
+                                    let mut entry = match input::Entry::from_data_obj(&obj, 0) {
                                         Err(err) => return Some(Err(err)),
                                         Ok(e) => e,
                                     };
-                                    // entry.pack_offset = self.shift_pack_offset(current_pack_offset);
+                                    entry.pack_offset = self.shift_pack_offset(current_pack_offset);
                                     self.inserted_entry_length_at_offset.push(Change {
                                         at_pack_offset: entry.pack_offset,
                                         _change_in_bytes: entry.bytes_in_pack() as i64,
