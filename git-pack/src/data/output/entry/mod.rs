@@ -126,7 +126,7 @@ impl output::Entry {
                             .map(|id| output::entry::Kind::DeltaOid { id })
                     })
             }
-            RefDelta { base_id: _ } => None,
+            RefDelta { base_id: _ } => None, // ref deltas are for thin packs or legacy, repack them as base objects
         }
         .map(|kind| {
             Ok(output::Entry {
