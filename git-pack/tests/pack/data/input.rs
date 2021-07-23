@@ -64,6 +64,7 @@ mod lookup_ref_delta_objects {
     }
 
     #[test]
+    #[ignore]
     fn ref_deltas_have_their_base_injected_if_not_done_before_and_all_future_entries_are_offset() {
         let first_id = hex_to_id("0000000000000000000000000000000000000001");
         let second_id = hex_to_id("0000000000000000000000000000000000000002");

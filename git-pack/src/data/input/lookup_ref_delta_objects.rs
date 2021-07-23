@@ -43,12 +43,19 @@ where
 
     /// positive `change` values mean an object grew or was more commonly, was inserted. Negative values
     /// mean the object shrunk, usually because there header changed from ref-deltas to ofs deltas.
-    fn track_change(&mut self, pack_offset: u64, change: i64, oid: impl Into<Option<ObjectId>>) {
+    fn track_change(
+        &mut self,
+        shifted_pack_offset: u64,
+        pack_offset: u64,
+        change: i64,
+        oid: impl Into<Option<ObjectId>>,
+    ) {
         if change == 0 {
             return;
         }
         self.inserted_entry_length_at_offset.push(Change {
-            at_pack_offset: pack_offset,
+            shifted_pack_offset,
+            pack_offset,
             _change_in_bytes: change,
             oid: oid.into().unwrap_or_else(ObjectId::null_sha1),
         });
@@ -56,13 +63,14 @@ where
     }
 
     fn shift_entry_and_point_to_base_by_offset(&mut self, entry: &mut input::Entry, base_distance: u64) {
-        entry.pack_offset = self.shift_pack_offset(entry.pack_offset);
+        let pack_offset = entry.pack_offset;
+        entry.pack_offset = self.shift_pack_offset(pack_offset);
         entry.header = Header::OfsDelta { base_distance };
         let previous_header_size = entry.header_size;
         entry.header_size = entry.header.size(entry.decompressed_size) as u16;
 
         let change = entry.header_size as i64 - previous_header_size as i64;
-        self.track_change(entry.pack_offset, change, None);
+        self.track_change(entry.pack_offset, pack_offset, change, None);
     }
 }
 
@@ -93,7 +101,12 @@ where
                                         Ok(e) => e,
                                     };
                                     entry.pack_offset = self.shift_pack_offset(current_pack_offset);
-                                    self.track_change(entry.pack_offset, entry.bytes_in_pack() as i64, base_id);
+                                    self.track_change(
+                                        entry.pack_offset,
+                                        current_pack_offset,
+                                        entry.bytes_in_pack() as i64,
+                                        base_id,
+                                    );
                                     entry
                                 }
                                 None => {
@@ -109,7 +122,8 @@ where
                             Some(Ok(base_entry))
                         }
                         Some(base_entry) => {
-                            let base_distance = self.shift_pack_offset(entry.pack_offset) - base_entry.at_pack_offset;
+                            let base_distance =
+                                self.shift_pack_offset(entry.pack_offset) - base_entry.shifted_pack_offset;
                             self.shift_entry_and_point_to_base_by_offset(&mut entry, base_distance);
                             Some(Ok(entry))
                         }
@@ -117,10 +131,27 @@ where
                 }
                 _ => {
                     if self.inserted_entries_length_in_bytes != 0 {
-                        entry.pack_offset = self.shift_pack_offset(entry.pack_offset);
-                        if let Header::OfsDelta { base_distance: _ } = entry.header {
-                            // self.inserted_entry_length_at_offset.partition_point()
-                            // todo!("add all objects that have been added since to the  delta offset, compute new size and adjust")
+                        if let Header::OfsDelta { base_distance } = entry.header {
+                            let base_pack_offset = entry
+                                .pack_offset
+                                .checked_sub(base_distance)
+                                .expect("distance to be in range of pack");
+                            entry.pack_offset = self.shift_pack_offset(entry.pack_offset);
+                            dbg!(base_pack_offset, entry.pack_offset);
+                            match self
+                                .inserted_entry_length_at_offset
+                                .binary_search_by_key(&base_pack_offset, |c| c.pack_offset)
+                            {
+                                Ok(index) => {
+                                    dbg!(index, &self.inserted_entry_length_at_offset[index..]);
+                                    todo!("we point exactly at an entry that changed, but this one might be inserted")
+                                }
+                                Err(_index) => {
+                                    todo!("close, aggregate the size changes since then to know where we are pointing")
+                                }
+                            }
+                        } else {
+                            entry.pack_offset = self.shift_pack_offset(entry.pack_offset);
                         }
                     }
                     Some(Ok(entry))
@@ -137,7 +168,8 @@ where
 
 #[derive(Debug)]
 struct Change {
-    at_pack_offset: u64,
+    pack_offset: u64,
+    shifted_pack_offset: u64,
     _change_in_bytes: i64,
     oid: ObjectId,
 }
