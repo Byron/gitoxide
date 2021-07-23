@@ -79,7 +79,15 @@ where
                                 entry.header = Header::OfsDelta {
                                     base_distance: base_entry.bytes_in_pack(),
                                 };
+                                let previous_headersize = entry.header_size;
                                 entry.header_size = entry.header.size(entry.decompressed_size) as u16;
+                                let change = (previous_headersize
+                                    .checked_sub(entry.header_size)
+                                    .expect("new headers always shrink"))
+                                    as u64;
+                                // dbg!(self.inserted_entries_length_in_bytes, change);
+                                // self.inserted_entries_length_in_bytes -= change;
+                                // self.inserted_entry_length_at_offset.last_mut().expect("just pushed").1 -= change;
                                 entry.pack_offset += self.inserted_entries_length_in_bytes;
                                 self.next_delta = Some(entry);
                             }
