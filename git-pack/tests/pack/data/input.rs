@@ -62,7 +62,6 @@ mod lookup_ref_delta_objects {
     }
 
     #[test]
-    #[ignore]
     fn ref_deltas_have_their_base_injected_if_not_done_before_and_all_future_entries_are_offset() {
         let inserted = entry(base(), D_B);
         let mut last_entry = entry(base(), D_C);

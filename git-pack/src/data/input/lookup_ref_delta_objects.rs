@@ -2,6 +2,7 @@
 
 use crate::data::{self, entry::Header, input};
 use git_hash::ObjectId;
+use std::convert::TryInto;
 
 pub struct LookupRefDeltaObjectsIter<I, LFn> {
     pub inner: I,
@@ -12,9 +13,9 @@ pub struct LookupRefDeltaObjectsIter<I, LFn> {
     error: bool,
     /// The overall pack-offset we accumulated thus far. Each inserted entry offsets all following
     /// objects by its length. We need to determine exactly where the object was inserted to see if its affected at all.
-    inserted_entry_length_at_offset: Vec<(u64, u64, ObjectId)>,
+    inserted_entry_length_at_offset: Vec<Change>,
     /// The sum of all entries added so far, as a cache
-    inserted_entries_length_in_bytes: u64,
+    inserted_entries_length_in_bytes: i64,
     buf: Vec<u8>,
 }
 
@@ -53,7 +54,7 @@ where
         match self.inner.next() {
             Some(Ok(mut entry)) => match entry.header {
                 Header::RefDelta { base_id } => {
-                    match self.inserted_entry_length_at_offset.iter().rfind(|e| e.2 == base_id) {
+                    match self.inserted_entry_length_at_offset.iter().rfind(|e| e.oid == base_id) {
                         None => {
                             let base_entry = match (self.lookup)(base_id, &mut self.buf) {
                                 Some(obj) => {
@@ -61,12 +62,12 @@ where
                                         Err(err) => return Some(Err(err)),
                                         Ok(e) => e,
                                     };
-                                    self.inserted_entry_length_at_offset.push((
-                                        entry.pack_offset,
-                                        entry.bytes_in_pack(),
-                                        base_id,
-                                    ));
-                                    self.inserted_entries_length_in_bytes += entry.bytes_in_pack();
+                                    self.inserted_entry_length_at_offset.push(Change {
+                                        at_pack_offset: entry.pack_offset,
+                                        _change_in_bytes: entry.bytes_in_pack() as i64,
+                                        oid: base_id,
+                                    });
+                                    self.inserted_entries_length_in_bytes += entry.bytes_in_pack() as i64;
                                     entry
                                 }
                                 None => {
@@ -81,22 +82,30 @@ where
                                 };
                                 let previous_headersize = entry.header_size;
                                 entry.header_size = entry.header.size(entry.decompressed_size) as u16;
-                                let change = (previous_headersize
-                                    .checked_sub(entry.header_size)
-                                    .expect("new headers always shrink"))
-                                    as u64;
-                                // dbg!(self.inserted_entries_length_in_bytes, change);
-                                // self.inserted_entries_length_in_bytes -= change;
-                                // self.inserted_entry_length_at_offset.last_mut().expect("just pushed").1 -= change;
-                                entry.pack_offset += self.inserted_entries_length_in_bytes;
+                                assert!(
+                                    self.inserted_entries_length_in_bytes >= 0,
+                                    "we should never have a negative value here"
+                                );
+                                entry.pack_offset += self.inserted_entries_length_in_bytes.unsigned_abs();
+
+                                let change = entry.header_size as i64 - previous_headersize as i64;
+                                self.inserted_entry_length_at_offset.push(Change {
+                                    at_pack_offset: entry.pack_offset,
+                                    _change_in_bytes: change,
+                                    oid: ObjectId::null_sha1(),
+                                });
+                                self.inserted_entries_length_in_bytes += change;
                                 self.next_delta = Some(entry);
                             }
                             Some(Ok(base_entry))
                         }
                         Some(base_entry) => {
-                            entry.pack_offset += self.inserted_entries_length_in_bytes;
+                            entry.pack_offset = {
+                                let new_ofs = entry.pack_offset as i64 + self.inserted_entries_length_in_bytes;
+                                new_ofs.try_into().expect("offset value is never becomes negative")
+                            };
                             entry.header = Header::OfsDelta {
-                                base_distance: entry.pack_offset - base_entry.0,
+                                base_distance: entry.pack_offset - base_entry.at_pack_offset,
                             };
                             entry.header_size = entry.header.size(entry.decompressed_size) as u16;
                             Some(Ok(entry))
@@ -108,7 +117,10 @@ where
                         if let Header::OfsDelta { base_distance: _ } = entry.header {
                             todo!("add all objects that have been added since to the  delta offset")
                         }
-                        entry.pack_offset += self.inserted_entries_length_in_bytes;
+                        entry.pack_offset = {
+                            let new_ofs = entry.pack_offset as i64 + self.inserted_entries_length_in_bytes;
+                            new_ofs.try_into().expect("offset value is never becomes negative")
+                        };
                     }
                     Some(Ok(entry))
                 }
@@ -120,4 +132,10 @@ where
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.inner.size_hint()
     }
+}
+
+struct Change {
+    at_pack_offset: u64,
+    _change_in_bytes: i64,
+    oid: ObjectId,
 }
