@@ -39,7 +39,7 @@ btoi = "0.4.2"
 
 # for async-client
 async-trait = { version = "0.1.50", optional = true }
-futures-io = { version = "0.3.15", optional = true }
+futures-io = { version = "0.3.16", optional = true }
 futures-lite = { version  = "1.12.0", optional = true }
 maybe-async = "0.2.6"
 
