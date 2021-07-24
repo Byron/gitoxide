@@ -69,6 +69,12 @@ impl crate::Bundle {
                     thin_pack_lookup_fn,
                 );
                 let pack_kind = pack_entries_iter.inner.kind();
+                // let pack_entries_iter = data::input::EntriesToBytesIter::new(
+                //     pack_entries_iter,
+                //     data_file.lock(),
+                //     pack_kind,
+                //     git_hash::Kind::Sha1,
+                // );
                 // TODO: wrap this entries iter into data_file, including the header, so it becomes suitable for lookup
                 (Box::new(pack_entries_iter), pack_kind)
             }

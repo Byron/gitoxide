@@ -1,42 +1,39 @@
 use crate::data::input;
-use git_features::hash;
-use std::io::Write;
 
 /// An implementation of [`Iterator`] to write [encoded entries][output::Entry] to an inner implementation each time
 /// `next()` is called.
-pub struct FromEntriesIter<I, W> {
+pub struct EntriesToBytesIter<I, W> {
     /// An iterator for input [`output::Entry`] instances
     pub input: I,
     /// A way of writing encoded bytes.
-    output: hash::Write<W>,
+    output: W,
     /// Our trailing hash when done writing all input entries
     trailer: Option<git_hash::ObjectId>,
     /// The amount of objects in the iteration and the version of the packfile to be written.
     /// Will be `None` to signal the header was written already.
-    header_info: Option<(crate::data::Version, u32)>,
+    data_version: crate::data::Version,
+    /// The amount of entries seen so far
+    num_entries: u32,
     /// If we are done, no additional writes will occour
     is_done: bool,
+    /// The kind of hash to use for the digest
+    _hash_kind: git_hash::Kind,
 }
 
-impl<I, W> FromEntriesIter<I, W>
+impl<I, W> EntriesToBytesIter<I, W>
 where
     I: Iterator<Item = Result<input::Entry, input::Error>>,
-    W: std::io::Write,
+    W: std::io::Write + std::io::Seek,
 {
     /// Create a new instance reading [entries][input::Entry] from an `input` iterator and write pack data bytes to
-    /// `output` writer, resembling a pack of `version` with exactly `num_entries` amount of objects contained in it.
+    /// `output` writer, resembling a pack of `version`. The amonut of entries will be dynaimcally determined and
+    /// the pack is completed once the last entry was written.
     /// `hash_kind` is the kind of hash to use for the pack checksum and maybe other places, depending on the version.
     ///
     /// # Panics
     ///
     /// Not all combinations of `hash_kind` and `version` are supported currently triggering assertion errors.
-    pub fn new(
-        input: I,
-        output: W,
-        num_entries: u32,
-        version: crate::data::Version,
-        hash_kind: git_hash::Kind,
-    ) -> Self {
+    pub fn new(input: I, output: W, version: crate::data::Version, hash_kind: git_hash::Kind) -> Self {
         assert!(
             matches!(version, crate::data::Version::V2),
             "currently only pack version 2 can be written",
@@ -45,20 +42,15 @@ where
             matches!(hash_kind, git_hash::Kind::Sha1),
             "currently only Sha1 is supported, right now we don't know how other hashes are encoded",
         );
-        FromEntriesIter {
+        EntriesToBytesIter {
             input,
-            output: hash::Write::new(output, hash_kind),
+            output,
+            _hash_kind: hash_kind,
+            num_entries: 0,
             trailer: None,
-            header_info: Some((version, num_entries)),
+            data_version: version,
             is_done: false,
         }
-    }
-
-    /// Consume this instance and return the `output` implementation.
-    ///
-    /// _Note_ that the `input` iterator can be moved out of this instance beforehand.
-    pub fn into_write(self) -> W {
-        self.output.inner
     }
 
     /// Returns the trailing hash over all ~ entries once done.
@@ -68,10 +60,11 @@ where
     }
 
     fn next_inner(&mut self, entry: input::Entry) -> Result<input::Entry, input::Error> {
-        if let Some((version, num_entries)) = self.header_info.take() {
-            let header_bytes = crate::data::header::encode(version, num_entries);
+        if self.num_entries == 0 {
+            let header_bytes = crate::data::header::encode(self.data_version, 0);
             self.output.write_all(&header_bytes[..])?;
         }
+        self.num_entries += 1;
         entry
             .header
             .write_to(entry.decompressed_size as u64, &mut self.output)?;
@@ -85,20 +78,28 @@ where
         Ok(entry)
     }
 
-    fn write_digest(&mut self) -> Result<(), input::Error> {
-        let digest = self.output.hash.clone().digest();
-        self.output.inner.write_all(&digest[..])?;
-        self.output.inner.flush()?;
+    fn write_header_and_digest(&mut self) -> Result<(), input::Error> {
+        self.output.seek(std::io::SeekFrom::Start(0))?;
+        let header_bytes = crate::data::header::encode(self.data_version, self.num_entries);
+        self.output.write_all(&header_bytes[..])?;
+        // TODO: hash everything thus far
+        self.output.seek(std::io::SeekFrom::End(0))?;
+        self.output.flush()?;
+
+        // let digest = self.output.hash.clone().digest();
+        // self.output.write_all(&digest[..])?;
+        // self.output.flush()?;
+
         self.is_done = true;
-        self.trailer = Some(git_hash::ObjectId::from(digest));
+        // self.trailer = Some(git_hash::ObjectId::from(digest));
         Ok(())
     }
 }
 
-impl<I, W> Iterator for FromEntriesIter<I, W>
+impl<I, W> Iterator for EntriesToBytesIter<I, W>
 where
     I: Iterator<Item = Result<input::Entry, input::Error>>,
-    W: std::io::Write,
+    W: std::io::Write + std::io::Seek,
 {
     /// The amount of bytes written to `out` if `Ok` or the error `E` received from the input.
     type Item = Result<input::Entry, input::Error>;
@@ -114,7 +115,7 @@ where
                 self.is_done = true;
                 Some(Err(err))
             }
-            None => self.write_digest().err().map(Err),
+            None => self.write_header_and_digest().err().map(Err),
         }
     }
 }
