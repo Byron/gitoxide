@@ -37,4 +37,5 @@ pub use bytes_to_entries::BytesToEntriesIter;
 mod lookup_ref_delta_objects;
 pub use lookup_ref_delta_objects::LookupRefDeltaObjectsIter;
 
-mod bytes;
+///
+pub mod bytes;

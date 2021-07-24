@@ -84,7 +84,7 @@ where
 
     /// Consume this instance and return the `output` implementation.
     ///
-    /// _Note_ that the input can be moved out of this instance beforehand.
+    /// _Note_ that the `input` iterator can be moved out of this instance beforehand.
     pub fn into_write(self) -> W {
         self.output.inner
     }
