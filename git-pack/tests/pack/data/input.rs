@@ -137,19 +137,11 @@ mod lookup_ref_delta_objects {
         assert_eq!(
             fifth.pack_offset - extract_delta_offset(fifth.header),
             actual[2].pack_offset,
-            "the fifth entry points exactly to the second inserted object"
+            "the fifth entry points exactly to the second inserted object, as objects are inserted only once"
         );
 
         validate_pack_offsets(&actual);
     }
-
-    #[test]
-    #[ignore]
-    fn ref_deltas_have_an_existing_base_injected_to_avoid_duplicate_injection() {}
-
-    #[test]
-    #[ignore]
-    fn offset_deltas_are_extended_by_the_necessary_amount_of_injected_entries_inbetween() {}
 
     #[test]
     fn lookup_errors_trigger_a_fuse_and_stop_iteration() {
