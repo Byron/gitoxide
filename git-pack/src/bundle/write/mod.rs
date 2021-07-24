@@ -31,7 +31,7 @@ impl crate::Bundle {
         directory: Option<impl AsRef<Path>>,
         mut progress: impl Progress,
         should_interrupt: &AtomicBool,
-        mut thin_pack_base_object_lookup_fn: Option<
+        thin_pack_base_object_lookup_fn: Option<
             Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>>>,
         >,
         options: Options,
@@ -48,29 +48,50 @@ impl crate::Bundle {
             None => NamedTempFile::new()?,
         }));
         let data_path: PathBuf = data_file.lock().path().into();
-        let pack = PassThrough {
-            reader: interrupt::Read {
-                inner: pack,
-                should_interrupt,
-            },
-            writer: Some(data_file.clone()),
+        let (pack_entries_iter, pack_kind): (
+            Box<dyn Iterator<Item = Result<data::input::Entry, data::input::Error>>>,
+            _,
+        ) = match thin_pack_base_object_lookup_fn {
+            Some(thin_pack_lookup_fn) => {
+                let pack = interrupt::Read {
+                    inner: pack,
+                    should_interrupt,
+                };
+                let buffered_pack = io::BufReader::new(pack);
+                let pack_entries_iter = data::LookupRefDeltaObjectsIter::new(
+                    data::BytesToEntriesIter::new_from_header(
+                        buffered_pack,
+                        options.iteration_mode,
+                        data::input::EntryDataMode::Crc32,
+                    )?,
+                    thin_pack_lookup_fn,
+                );
+                let pack_kind = pack_entries_iter.inner.kind();
+                // TODO: wrap this entries iter into data_file, including the header, so it becomes suitable for lookup
+                (Box::new(pack_entries_iter), pack_kind)
+            }
+            None => {
+                let pack = PassThrough {
+                    reader: interrupt::Read {
+                        inner: pack,
+                        should_interrupt,
+                    },
+                    writer: Some(data_file.clone()),
+                };
+                // This buff-reader is required to assure we call 'read()' in order to fill the (extra) buffer. Otherwise all the counting
+                // we do with the wrapped pack reader doesn't work as it does not expect anyone to call BufRead functions directly.
+                // However, this is exactly what's happening in the ZipReader implementation that is eventually used.
+                // The performance impact of this is probably negligible, compared to all the other work that is done anyway :D.
+                let buffered_pack = io::BufReader::new(pack);
+                let pack_entries_iter = data::BytesToEntriesIter::new_from_header(
+                    buffered_pack,
+                    options.iteration_mode,
+                    data::input::EntryDataMode::Crc32,
+                )?;
+                let pack_kind = pack_entries_iter.kind();
+                (Box::new(pack_entries_iter), pack_kind)
+            }
         };
-        // This buff-reader is required to assure we call 'read()' in order to fill the (extra) buffer. Otherwise all the counting
-        // we do with the wrapped pack reader doesn't work as it does not expect anyone to call BufRead functions directly.
-        // However, this is exactly what's happening in the ZipReader implementation that is eventually used.
-        // The performance impact of this is probably negligible, compared to all the other work that is done anyway :D.
-        let buffered_pack = io::BufReader::new(pack);
-        let pack_entries_iter = crate::data::LookupRefDeltaObjectsIter::new(
-            crate::data::BytesToEntriesIter::new_from_header(
-                buffered_pack,
-                options.iteration_mode,
-                crate::data::input::EntryDataMode::Crc32,
-            )?,
-            thin_pack_base_object_lookup_fn
-                .take()
-                .unwrap_or_else(|| Box::new(|_, _| unreachable!("not expected to be called"))),
-        );
-        let pack_kind = pack_entries_iter.inner.kind();
         let (outcome, data_path, index_path) = crate::Bundle::inner_write(
             directory,
             progress,
@@ -102,7 +123,7 @@ impl crate::Bundle {
         directory: Option<impl AsRef<Path>>,
         mut progress: impl Progress,
         should_interrupt: &'static AtomicBool,
-        mut thin_pack_base_object_lookup_fn: Option<
+        thin_pack_base_object_lookup_fn: Option<
             Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>> + Send + 'static>,
         >,
         options: Options,
@@ -119,26 +140,47 @@ impl crate::Bundle {
             None => NamedTempFile::new()?,
         }));
         let data_path: PathBuf = data_file.lock().path().into();
-        let pack = PassThrough {
-            reader: interrupt::Read {
-                inner: pack,
-                should_interrupt,
-            },
-            writer: Some(data_file.clone()),
-        };
         let eight_pages = 4096 * 8;
-        let buffered_pack = io::BufReader::with_capacity(eight_pages, pack);
-        let pack_entries_iter = crate::data::LookupRefDeltaObjectsIter::new(
-            crate::data::BytesToEntriesIter::new_from_header(
-                buffered_pack,
-                options.iteration_mode,
-                crate::data::input::EntryDataMode::Crc32,
-            )?,
-            thin_pack_base_object_lookup_fn
-                .take()
-                .unwrap_or_else(|| Box::new(|_, _| unreachable!("not expected to be called"))),
-        ); // todo: integrate lookup iter API with builder, it's common and they are entangeled through input::Entry
-        let pack_kind = pack_entries_iter.inner.kind();
+        let (pack_entries_iter, pack_kind): (
+            Box<dyn Iterator<Item = Result<data::input::Entry, data::input::Error>> + Send + 'static>,
+            _,
+        ) = match thin_pack_base_object_lookup_fn {
+            Some(thin_pack_lookup_fn) => {
+                let pack = interrupt::Read {
+                    inner: pack,
+                    should_interrupt,
+                };
+                let buffered_pack = io::BufReader::with_capacity(eight_pages, pack);
+                let pack_entries_iter = data::LookupRefDeltaObjectsIter::new(
+                    data::BytesToEntriesIter::new_from_header(
+                        buffered_pack,
+                        options.iteration_mode,
+                        data::input::EntryDataMode::KeepAndCrc32,
+                    )?,
+                    thin_pack_lookup_fn,
+                );
+                let pack_kind = pack_entries_iter.inner.kind();
+                // TODO: wrap this entries iter into data_file, including the header, so it becomes suitable for lookup
+                (Box::new(pack_entries_iter), pack_kind)
+            }
+            None => {
+                let pack = PassThrough {
+                    reader: interrupt::Read {
+                        inner: pack,
+                        should_interrupt,
+                    },
+                    writer: Some(data_file.clone()),
+                };
+                let buffered_pack = io::BufReader::with_capacity(eight_pages, pack);
+                let pack_entries_iter = data::BytesToEntriesIter::new_from_header(
+                    buffered_pack,
+                    options.iteration_mode,
+                    data::input::EntryDataMode::Crc32,
+                )?;
+                let pack_kind = pack_entries_iter.kind();
+                (Box::new(pack_entries_iter), pack_kind)
+            }
+        };
         let num_objects = pack_entries_iter.size_hint().0;
         let pack_entries_iter =
             git_features::parallel::EagerIterIf::new(move || num_objects > 25_000, pack_entries_iter, 5_000, 5);
@@ -171,7 +213,7 @@ impl crate::Bundle {
         }: Options,
         data_file: Arc<parking_lot::Mutex<NamedTempFile>>,
         data_path: PathBuf,
-        pack_entries_iter: impl Iterator<Item = Result<crate::data::input::Entry, crate::data::input::Error>>,
+        pack_entries_iter: impl Iterator<Item = Result<data::input::Entry, data::input::Error>>,
         should_interrupt: &AtomicBool,
     ) -> Result<(crate::index::write::Outcome, Option<PathBuf>, Option<PathBuf>), Error> {
         let indexing_progress = progress.add_child("create index file");
@@ -227,7 +269,7 @@ impl crate::Bundle {
 
 fn new_pack_file_resolver(
     data_path: PathBuf,
-) -> io::Result<impl Fn(crate::data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Sync> {
+) -> io::Result<impl Fn(data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Sync> {
     let mapped_file = FileBuffer::open(data_path)?;
     let pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
         mapped_file

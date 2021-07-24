@@ -144,7 +144,7 @@ mod write_to_directory {
             directory,
             progress::Discard,
             &SHOULD_INTERRUPT,
-            Some(Box::new(|_, _| unreachable!("not a thin pack"))),
+            None,
             pack::bundle::write::Options {
                 thread_limit: None,
                 iteration_mode: pack::data::input::Mode::Verify,
