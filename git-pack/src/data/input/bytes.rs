@@ -6,7 +6,7 @@ use std::io::Write;
 /// `next()` is called.
 pub struct FromEntriesIter<I, W> {
     /// An iterator for input [`output::Entry`] instances
-    pub inner: I,
+    pub input: I,
     /// A way of writing encoded bytes.
     output: hash::Write<W>,
     /// Our trailing hash when done writing all input entries
@@ -46,7 +46,7 @@ where
             "currently only Sha1 is supported, right now we don't know how other hashes are encoded",
         );
         FromEntriesIter {
-            inner: input,
+            input,
             output: hash::Write::new(output, hash_kind),
             trailer: None,
             header_info: Some((version, num_entries)),
@@ -56,7 +56,7 @@ where
 
     /// Consume this instance and return the `output` implementation.
     ///
-    /// _Note_ that the `inner` iterator can be moved out of this instance beforehand.
+    /// _Note_ that the `input` iterator can be moved out of this instance beforehand.
     pub fn into_write(self) -> W {
         self.output.inner
     }
@@ -108,7 +108,7 @@ where
             return None;
         }
 
-        match self.inner.next() {
+        match self.input.next() {
             Some(Ok(entry)) => Some(self.next_inner(entry)),
             Some(Err(err)) => {
                 self.is_done = true;
