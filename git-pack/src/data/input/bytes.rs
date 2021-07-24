@@ -74,12 +74,11 @@ where
         }
         entry
             .header
-            .write_to(entry.decompressed_size as u64, &mut self.output)? as u64;
+            .write_to(entry.decompressed_size as u64, &mut self.output)?;
         std::io::copy(
             &mut &*entry
                 .compressed
-                .as_ref()
-                .map(|v| v.as_slice())
+                .as_deref()
                 .expect("caller must configure generator to keep compressed bytes"),
             &mut self.output,
         )?;
