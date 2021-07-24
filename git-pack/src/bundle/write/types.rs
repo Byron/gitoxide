@@ -1,3 +1,4 @@
+use std::io::SeekFrom;
 use std::{io, path::PathBuf, sync::Arc};
 use tempfile::NamedTempFile;
 
@@ -75,5 +76,25 @@ where
 
     fn consume(&mut self, amt: usize) {
         self.reader.consume(amt)
+    }
+}
+
+pub(crate) struct LockWriter {
+    pub writer: Arc<parking_lot::Mutex<NamedTempFile>>,
+}
+
+impl io::Write for LockWriter {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.writer.lock().write(buf)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.writer.lock().flush()
+    }
+}
+
+impl io::Seek for LockWriter {
+    fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
+        self.writer.lock().seek(pos)
     }
 }

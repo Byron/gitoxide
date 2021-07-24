@@ -13,7 +13,7 @@ mod error;
 use error::Error;
 
 mod types;
-use types::PassThrough;
+use types::{LockWriter, PassThrough};
 pub use types::{Options, Outcome};
 
 type ThinPackLookupFn = Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>>>;
@@ -64,17 +64,19 @@ impl crate::Bundle {
                     data::BytesToEntriesIter::new_from_header(
                         buffered_pack,
                         options.iteration_mode,
-                        data::input::EntryDataMode::Crc32,
+                        data::input::EntryDataMode::KeepAndCrc32,
                     )?,
                     thin_pack_lookup_fn,
                 );
                 let pack_kind = pack_entries_iter.inner.kind();
-                // let pack_entries_iter = data::input::EntriesToBytesIter::new(
-                //     pack_entries_iter,
-                //     data_file.lock(),
-                //     pack_kind,
-                //     git_hash::Kind::Sha1,
-                // );
+                let pack_entries_iter = data::input::EntriesToBytesIter::new(
+                    pack_entries_iter,
+                    LockWriter {
+                        writer: data_file.clone(),
+                    },
+                    pack_kind,
+                    git_hash::Kind::Sha1,
+                );
                 // TODO: wrap this entries iter into data_file, including the header, so it becomes suitable for lookup
                 (Box::new(pack_entries_iter), pack_kind)
             }
