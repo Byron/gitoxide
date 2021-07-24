@@ -36,7 +36,7 @@ where
         }
     }
 
-    fn shift_pack_offset(&self, pack_offset: u64) -> u64 {
+    fn shifted_pack_offset(&self, pack_offset: u64) -> u64 {
         let new_ofs = pack_offset as i64 + self.inserted_entries_length_in_bytes;
         new_ofs.try_into().expect("offset value is never becomes negative")
     }
@@ -47,24 +47,24 @@ where
         &mut self,
         shifted_pack_offset: u64,
         pack_offset: u64,
-        change: i64,
+        size_change: i64,
         oid: impl Into<Option<ObjectId>>,
     ) {
-        if change == 0 {
+        if size_change == 0 {
             return;
         }
         self.inserted_entry_length_at_offset.push(Change {
             shifted_pack_offset,
             pack_offset,
-            change_in_bytes: change,
+            size_change_in_bytes: size_change,
             oid: oid.into().unwrap_or_else(ObjectId::null_sha1),
         });
-        self.inserted_entries_length_in_bytes += change;
+        self.inserted_entries_length_in_bytes += size_change;
     }
 
     fn shift_entry_and_point_to_base_by_offset(&mut self, entry: &mut input::Entry, base_distance: u64) {
         let pack_offset = entry.pack_offset;
-        entry.pack_offset = self.shift_pack_offset(pack_offset);
+        entry.pack_offset = self.shifted_pack_offset(pack_offset);
         entry.header = Header::OfsDelta { base_distance };
         let previous_header_size = entry.header_size;
         entry.header_size = entry.header.size(entry.decompressed_size) as u16;
@@ -100,7 +100,7 @@ where
                                         Err(err) => return Some(Err(err)),
                                         Ok(e) => e,
                                     };
-                                    entry.pack_offset = self.shift_pack_offset(current_pack_offset);
+                                    entry.pack_offset = self.shifted_pack_offset(current_pack_offset);
                                     self.track_change(
                                         entry.pack_offset,
                                         current_pack_offset,
@@ -123,7 +123,7 @@ where
                         }
                         Some(base_entry) => {
                             let base_distance =
-                                self.shift_pack_offset(entry.pack_offset) - base_entry.shifted_pack_offset;
+                                self.shifted_pack_offset(entry.pack_offset) - base_entry.shifted_pack_offset;
                             self.shift_entry_and_point_to_base_by_offset(&mut entry, base_distance);
                             Some(Ok(entry))
                         }
@@ -136,44 +136,37 @@ where
                                 .pack_offset
                                 .checked_sub(base_distance)
                                 .expect("distance to be in range of pack");
-                            dbg!(base_pack_offset, entry.pack_offset);
                             match self
                                 .inserted_entry_length_at_offset
                                 .binary_search_by_key(&base_pack_offset, |c| c.pack_offset)
                             {
                                 Ok(index) => {
-                                    let index = self
-                                        .inserted_entry_length_at_offset
-                                        .get(index + 1)
-                                        .and_then(|c| {
-                                            if c.pack_offset == base_pack_offset {
-                                                Some(index + 1)
-                                            } else {
-                                                None
-                                            }
-                                        })
-                                        .unwrap_or(index);
-                                    let base_pack_offset = base_pack_offset as i64
-                                        + self.inserted_entry_length_at_offset[index..]
-                                            .iter()
-                                            .map(|c| c.change_in_bytes)
-                                            .sum::<i64>();
-                                    assert!(base_pack_offset >= 0, "something when horribly wrong");
-                                    let new_distance = entry
-                                        .pack_offset
-                                        .checked_sub(base_pack_offset as u64)
+                                    let index = {
+                                        let maybe_index_of_actual_entry = index + 1;
+                                        self.inserted_entry_length_at_offset
+                                            .get(maybe_index_of_actual_entry)
+                                            .and_then(|c| {
+                                                if c.pack_offset == base_pack_offset {
+                                                    Some(maybe_index_of_actual_entry)
+                                                } else {
+                                                    None
+                                                }
+                                            })
+                                            .unwrap_or(index)
+                                    };
+                                    let new_distance = self
+                                        .shifted_pack_offset(entry.pack_offset)
+                                        .checked_sub(self.inserted_entry_length_at_offset[index].shifted_pack_offset)
                                         .expect("a base that is behind us in the pack");
-                                    dbg!(base_pack_offset, new_distance);
                                     self.shift_entry_and_point_to_base_by_offset(&mut entry, new_distance);
-                                    todo!("fix this")
                                 }
                                 Err(_index) => {
-                                    entry.pack_offset = self.shift_pack_offset(entry.pack_offset);
+                                    entry.pack_offset = self.shifted_pack_offset(entry.pack_offset);
                                     todo!("close, aggregate the size changes since then to know where we are pointing")
                                 }
                             }
                         } else {
-                            entry.pack_offset = self.shift_pack_offset(entry.pack_offset);
+                            entry.pack_offset = self.shifted_pack_offset(entry.pack_offset);
                         }
                     }
                     Some(Ok(entry))
@@ -192,6 +185,6 @@ where
 struct Change {
     pack_offset: u64,
     shifted_pack_offset: u64,
-    change_in_bytes: i64,
+    size_change_in_bytes: i64,
     oid: ObjectId,
 }

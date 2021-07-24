@@ -64,7 +64,6 @@ mod lookup_ref_delta_objects {
     }
 
     #[test]
-    #[ignore]
     fn ref_deltas_have_their_base_injected_if_not_done_before_and_all_future_entries_are_offset() {
         let first_id = hex_to_id("0000000000000000000000000000000000000001");
         let second_id = hex_to_id("0000000000000000000000000000000000000002");
@@ -123,16 +122,17 @@ mod lookup_ref_delta_objects {
             "the pack offset was adjusted to accommodate for preceding objects"
         );
 
+        let actual_last = &actual[4];
         last_entry.pack_offset =
             inserted.bytes_in_pack() + first_altered_len + inserted.bytes_in_pack() + altered.bytes_in_pack();
         assert_eq!(
-            &actual[4], &last_entry,
-            "the last entry was offset and is otherwise unchanged"
-        );
-        assert_eq!(
-            extract_delta_offset(last_entry.header),
+            extract_delta_offset(actual_last.header),
             altered.bytes_in_pack(),
             "delta offset was adjusted to deal with change in size of predecessor(s)"
+        );
+        assert_eq!(
+            actual_last.pack_offset, last_entry.pack_offset,
+            "last entry is at the right position in the pack"
         );
     }
 
