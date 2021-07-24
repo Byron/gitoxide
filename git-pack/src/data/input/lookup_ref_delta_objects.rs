@@ -121,12 +121,11 @@ where
                             }
                             Some(Ok(base_entry))
                         }
-                        Some(_base_entry) => {
-                            todo!("need a test for reusing existing inserted bases")
-                            // let base_distance =
-                            //     self.shifted_pack_offset(entry.pack_offset) - base_entry.shifted_pack_offset;
-                            // self.shift_entry_and_point_to_base_by_offset(&mut entry, base_distance);
-                            // Some(Ok(entry))
+                        Some(base_entry) => {
+                            let base_distance =
+                                self.shifted_pack_offset(entry.pack_offset) - base_entry.shifted_pack_offset;
+                            self.shift_entry_and_point_to_base_by_offset(&mut entry, base_distance);
+                            Some(Ok(entry))
                         }
                     }
                 }

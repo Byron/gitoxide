@@ -81,7 +81,8 @@ mod lookup_ref_delta_objects {
         let second = entry(delta_ref(second_id), D_B);
         let third_entry = entry(delta_ofs(second.bytes_in_pack()), D_C);
         let fourth_entry = entry(delta_ofs(third_entry.bytes_in_pack()), D_D);
-        let input = compute_offsets(vec![first.clone(), second, third_entry, fourth_entry]);
+        let fifth = entry(delta_ref(second_id), D_A);
+        let input = compute_offsets(vec![first.clone(), second, third_entry, fourth_entry, fifth]);
 
         let mut calls = 0;
         let actual = LookupRefDeltaObjectsIter::new(into_results_iter(input), |_oid, buf| {
@@ -97,8 +98,8 @@ mod lookup_ref_delta_objects {
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
 
-        assert_eq!(calls, 2, "there is only two objects to replace");
-        assert_eq!(actual.len(), 6, "two object was inserted");
+        assert_eq!(calls, 2, "there is only two objects to insert");
+        assert_eq!(actual.len(), 7, "two object was inserted");
 
         assert_eq!(&actual[0], &inserted, "first object is inserted one");
 
@@ -130,28 +131,35 @@ mod lookup_ref_delta_objects {
             "the pack offset was adjusted to accommodate for preceding objects"
         );
 
-        let actual_third = &actual[4];
+        let third = &actual[4];
         let third_entry_pack_offset =
             inserted.bytes_in_pack() + first_altered_len + inserted.bytes_in_pack() + altered.bytes_in_pack();
         assert_eq!(
-            extract_delta_offset(actual_third.header),
+            extract_delta_offset(third.header),
             altered.bytes_in_pack(),
             "delta offset was adjusted to deal with change in size of predecessor(s)"
         );
         assert_eq!(
-            actual_third.pack_offset, third_entry_pack_offset,
-            "last entry is at the right position in the pack"
+            third.pack_offset, third_entry_pack_offset,
+            "third entry is at the right position in the pack"
         );
-        let actual_fourth = &actual[5];
-        let fourth_entry_pack_offset = third_entry_pack_offset + actual_third.bytes_in_pack();
+        let fourth = &actual[5];
+        let fourth_entry_pack_offset = third_entry_pack_offset + third.bytes_in_pack();
         assert_eq!(
-            actual_fourth.pack_offset, fourth_entry_pack_offset,
+            fourth.pack_offset, fourth_entry_pack_offset,
             "the fourth entry was moved as well"
         );
         assert_eq!(
-            extract_delta_offset(actual_fourth.header),
-            actual_third.bytes_in_pack(),
+            extract_delta_offset(fourth.header),
+            third.bytes_in_pack(),
             "the fourth header base distance was adjusted accordingly"
+        );
+
+        let fifth = &actual[6];
+        assert_eq!(
+            fifth.pack_offset - extract_delta_offset(fifth.header),
+            actual[2].pack_offset,
+            "the fifth entry points exactly to the second inserted object"
         );
 
         validate_pack_offsets(&actual);
