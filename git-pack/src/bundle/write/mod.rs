@@ -21,19 +21,21 @@ impl crate::Bundle {
     ///
     /// In the latter case, the functionality provided here is more akind of pack data stream validation.
     ///
-    /// `progress` provides detailed progress information which can be discarded with [`git_features::progress::Discard`].
+    /// * `progress` provides detailed progress information which can be discarded with [`git_features::progress::Discard`].
+    /// * `should_interrupt` is checked regularly and when true, the whole operation will stop.
+    /// * `thin_pack_base_object_lookup_fn` If set, we expect to see a thin-pack with objects that reference their base object by object id which is
+    /// expected to exist in the object database the bundle is contained within.
     /// `options` further configure how the task is performed.
-    pub fn write_to_directory<LFn>(
+    pub fn write_to_directory(
         pack: impl io::BufRead,
         directory: Option<impl AsRef<Path>>,
         mut progress: impl Progress,
         should_interrupt: &AtomicBool,
-        thin_pack_object_lookup: LFn,
+        mut thin_pack_base_object_lookup_fn: Option<
+            Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>>>,
+        >,
         options: Options,
-    ) -> Result<Outcome, Error>
-    where
-        LFn: for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>>,
-    {
+    ) -> Result<Outcome, Error> {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(None, progress::bytes());
         let pack = progress::Read {
@@ -64,7 +66,9 @@ impl crate::Bundle {
                 options.iteration_mode,
                 crate::data::input::EntryDataMode::Crc32,
             )?,
-            thin_pack_object_lookup,
+            thin_pack_base_object_lookup_fn
+                .take()
+                .unwrap_or_else(|| Box::new(|_, _| unreachable!("not expected to be called"))),
         );
         let pack_kind = pack_entries_iter.inner.kind();
         let (outcome, data_path, index_path) = crate::Bundle::inner_write(
@@ -92,18 +96,17 @@ impl crate::Bundle {
     /// As it sends portions of the input to a thread it requires the 'static lifetime for the interrupt flags. This can only
     /// be satisfied by a static AtomicBool which is only suitable for programs that only run one of these operations at a time
     /// or don't mind that all of them abort when the flag is set.
-    pub fn write_to_directory_eagerly<LFn>(
+    pub fn write_to_directory_eagerly(
         pack: impl io::Read + Send + 'static,
         pack_size: Option<u64>,
         directory: Option<impl AsRef<Path>>,
         mut progress: impl Progress,
         should_interrupt: &'static AtomicBool,
-        thin_pack_object_lookup: LFn,
+        mut thin_pack_base_object_lookup_fn: Option<
+            Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>> + Send + 'static>,
+        >,
         options: Options,
-    ) -> Result<Outcome, Error>
-    where
-        LFn: for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>> + Send + 'static,
-    {
+    ) -> Result<Outcome, Error> {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
         let pack = progress::Read {
@@ -131,8 +134,10 @@ impl crate::Bundle {
                 options.iteration_mode,
                 crate::data::input::EntryDataMode::Crc32,
             )?,
-            thin_pack_object_lookup,
-        );
+            thin_pack_base_object_lookup_fn
+                .take()
+                .unwrap_or_else(|| Box::new(|_, _| unreachable!("not expected to be called"))),
+        ); // todo: integrate lookup iter API with builder, it's common and they are entangeled through input::Entry
         let pack_kind = pack_entries_iter.inner.kind();
         let num_objects = pack_entries_iter.size_hint().0;
         let pack_entries_iter =
