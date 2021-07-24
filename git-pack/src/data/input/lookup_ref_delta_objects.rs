@@ -41,7 +41,7 @@ where
         new_ofs.try_into().expect("offset value is never becomes negative")
     }
 
-    /// positive `change` values mean an object grew or was more commonly, was inserted. Negative values
+    /// positive `size_change` values mean an object grew or was more commonly, was inserted. Negative values
     /// mean the object shrunk, usually because there header changed from ref-deltas to ofs deltas.
     fn track_change(
         &mut self,
@@ -121,11 +121,12 @@ where
                             }
                             Some(Ok(base_entry))
                         }
-                        Some(base_entry) => {
-                            let base_distance =
-                                self.shifted_pack_offset(entry.pack_offset) - base_entry.shifted_pack_offset;
-                            self.shift_entry_and_point_to_base_by_offset(&mut entry, base_distance);
-                            Some(Ok(entry))
+                        Some(_base_entry) => {
+                            todo!("need a test for reusing existing inserted bases")
+                            // let base_distance =
+                            //     self.shifted_pack_offset(entry.pack_offset) - base_entry.shifted_pack_offset;
+                            // self.shift_entry_and_point_to_base_by_offset(&mut entry, base_distance);
+                            // Some(Ok(entry))
                         }
                     }
                 }
@@ -160,9 +161,17 @@ where
                                         .expect("a base that is behind us in the pack");
                                     self.shift_entry_and_point_to_base_by_offset(&mut entry, new_distance);
                                 }
-                                Err(_index) => {
-                                    entry.pack_offset = self.shifted_pack_offset(entry.pack_offset);
-                                    todo!("close, aggregate the size changes since then to know where we are pointing")
+                                Err(index) => {
+                                    let change_since_offset = self.inserted_entry_length_at_offset[index..]
+                                        .iter()
+                                        .map(|c| c.size_change_in_bytes)
+                                        .sum::<i64>();
+                                    let new_distance: u64 = {
+                                        (base_distance as i64 + change_since_offset)
+                                            .try_into()
+                                            .expect("it still points behind us")
+                                    };
+                                    self.shift_entry_and_point_to_base_by_offset(&mut entry, new_distance);
                                 }
                             }
                         } else {

@@ -46,21 +46,28 @@ mod lookup_ref_delta_objects {
         entries
     }
 
+    fn validate_pack_offsets(entries: &[input::Entry]) {
+        let mut offset = 0;
+        for (eid, entry) in entries.iter().enumerate() {
+            assert_eq!(entry.pack_offset, offset, "invalid pack offset for entry {}", eid);
+            offset += entry.bytes_in_pack();
+        }
+    }
+
     fn into_results_iter(entries: Vec<input::Entry>) -> impl Iterator<Item = Result<input::Entry, input::Error>> {
         entries.into_iter().map(Ok)
     }
 
     #[test]
-    fn only_ref_deltas_are_handled() {
+    fn only_ref_deltas_are_handled() -> crate::Result {
         let input = compute_offsets(vec![entry(base(), D_A), entry(delta_ofs(100), D_B)]);
         let expected = input.clone();
-        assert_eq!(
+        let actual =
             LookupRefDeltaObjectsIter::new(into_results_iter(input), |_, _| unreachable!("not going to be called"))
-                .collect::<Result<Vec<_>, _>>()
-                .unwrap(),
-            expected,
-            "it won't change the input at all"
-        )
+                .collect::<Result<Vec<_>, _>>()?;
+        assert_eq!(actual, expected, "it won't change the input at all");
+        validate_pack_offsets(&actual);
+        Ok(())
     }
 
     #[test]
@@ -72,8 +79,9 @@ mod lookup_ref_delta_objects {
         let inserted_data = D_D;
         let mut inserted = entry(base(), inserted_data);
         let second = entry(delta_ref(second_id), D_B);
-        let mut last_entry = entry(delta_ofs(second.bytes_in_pack()), D_C);
-        let input = compute_offsets(vec![first.clone(), second, last_entry.clone()]);
+        let third_entry = entry(delta_ofs(second.bytes_in_pack()), D_C);
+        let fourth_entry = entry(delta_ofs(third_entry.bytes_in_pack()), D_D);
+        let input = compute_offsets(vec![first.clone(), second, third_entry, fourth_entry]);
 
         let mut calls = 0;
         let actual = LookupRefDeltaObjectsIter::new(into_results_iter(input), |_oid, buf| {
@@ -90,7 +98,7 @@ mod lookup_ref_delta_objects {
         .unwrap();
 
         assert_eq!(calls, 2, "there is only two objects to replace");
-        assert_eq!(actual.len(), 5, "two object was inserted");
+        assert_eq!(actual.len(), 6, "two object was inserted");
 
         assert_eq!(&actual[0], &inserted, "first object is inserted one");
 
@@ -122,18 +130,31 @@ mod lookup_ref_delta_objects {
             "the pack offset was adjusted to accommodate for preceding objects"
         );
 
-        let actual_last = &actual[4];
-        last_entry.pack_offset =
+        let actual_third = &actual[4];
+        let third_entry_pack_offset =
             inserted.bytes_in_pack() + first_altered_len + inserted.bytes_in_pack() + altered.bytes_in_pack();
         assert_eq!(
-            extract_delta_offset(actual_last.header),
+            extract_delta_offset(actual_third.header),
             altered.bytes_in_pack(),
             "delta offset was adjusted to deal with change in size of predecessor(s)"
         );
         assert_eq!(
-            actual_last.pack_offset, last_entry.pack_offset,
+            actual_third.pack_offset, third_entry_pack_offset,
             "last entry is at the right position in the pack"
         );
+        let actual_fourth = &actual[5];
+        let fourth_entry_pack_offset = third_entry_pack_offset + actual_third.bytes_in_pack();
+        assert_eq!(
+            actual_fourth.pack_offset, fourth_entry_pack_offset,
+            "the fourth entry was moved as well"
+        );
+        assert_eq!(
+            extract_delta_offset(actual_fourth.header),
+            actual_third.bytes_in_pack(),
+            "the fourth header base distance was adjusted accordingly"
+        );
+
+        validate_pack_offsets(&actual);
     }
 
     #[test]
