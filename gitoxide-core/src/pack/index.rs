@@ -97,7 +97,7 @@ pub fn from_pack(
                 directory,
                 progress,
                 ctx.should_interrupt,
-                |_, _| unreachable!("disk packs never ask for ref object resolution, or they are very very old"),
+                None,
                 options,
             )
         }
@@ -107,7 +107,7 @@ pub fn from_pack(
             directory,
             progress,
             ctx.should_interrupt,
-            |_, _| unreachable!("disk packs never ask for ref object resolution, or they are very very old"),
+            None,
             options,
         ),
     }
