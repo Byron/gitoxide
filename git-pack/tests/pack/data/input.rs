@@ -109,46 +109,24 @@ mod lookup_ref_delta_objects {
             inserted.bytes_in_pack(),
             "former first entry is now an offset delta pointing at the item before"
         );
-        assert_eq!(
-            altered.pack_offset,
-            inserted.bytes_in_pack(),
-            "the pack offset was adjusted to accommodate for the inserted object"
-        );
 
         inserted.pack_offset = inserted.bytes_in_pack() + altered.bytes_in_pack();
         assert_eq!(&actual[2], &inserted, "third object is a newly inserted one, too");
 
-        let first_altered_len = altered.bytes_in_pack();
         let altered = &actual[3];
         assert_eq!(
             extract_delta_offset(altered.header),
             inserted.bytes_in_pack(),
             "former second entry is now an offset delta pointing at the inserted item before"
         );
-        assert_eq!(
-            altered.pack_offset,
-            inserted.bytes_in_pack() + first_altered_len + inserted.bytes_in_pack(),
-            "the pack offset was adjusted to accommodate for preceding objects"
-        );
 
         let third = &actual[4];
-        let third_entry_pack_offset =
-            inserted.bytes_in_pack() + first_altered_len + inserted.bytes_in_pack() + altered.bytes_in_pack();
         assert_eq!(
             extract_delta_offset(third.header),
             altered.bytes_in_pack(),
             "delta offset was adjusted to deal with change in size of predecessor(s)"
         );
-        assert_eq!(
-            third.pack_offset, third_entry_pack_offset,
-            "third entry is at the right position in the pack"
-        );
         let fourth = &actual[5];
-        let fourth_entry_pack_offset = third_entry_pack_offset + third.bytes_in_pack();
-        assert_eq!(
-            fourth.pack_offset, fourth_entry_pack_offset,
-            "the fourth entry was moved as well"
-        );
         assert_eq!(
             extract_delta_offset(fourth.header),
             third.bytes_in_pack(),
