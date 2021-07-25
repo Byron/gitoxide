@@ -143,7 +143,10 @@ impl crate::index::File {
             objects_progress.inc();
         }
         if num_objects != anticipated_num_objects {
-            objects_progress.info(format!(" {} objects, got {}", anticipated_num_objects, num_objects));
+            objects_progress.info(format!(
+                "{} objects where resolved into {} objects during thin-pack resolution",
+                anticipated_num_objects, num_objects
+            ));
         }
         let num_objects: u32 = num_objects
             .try_into()

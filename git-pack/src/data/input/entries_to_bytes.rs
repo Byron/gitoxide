@@ -123,20 +123,19 @@ where
             return None;
         }
 
-        match self.input.next() {
-            Some(Ok(entry)) => Some(self.next_inner(entry).and_then(|mut entry| {
+        self.input.next().map(|res| match res {
+            Ok(entry) => self.next_inner(entry).and_then(|mut entry| {
                 if self.input.peek().is_none() {
                     self.write_header_and_digest(&mut entry).map(|_| entry)
                 } else {
                     Ok(entry)
                 }
-            })),
-            Some(Err(err)) => {
+            }),
+            Err(err) => {
                 self.is_done = true;
-                Some(Err(err))
+                Err(err)
             }
-            None => None,
-        }
+        })
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
