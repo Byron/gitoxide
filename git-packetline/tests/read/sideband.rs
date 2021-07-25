@@ -54,13 +54,13 @@ async fn read_pack_with_progress_extraction() -> crate::Result {
     };
     let pack_read = rd.as_read_with_sidebands(&mut do_nothing);
     #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
-    let pack_entries = pack::data::BytesToEntriesIter::new_from_header(
+    let pack_entries = pack::data::input::BytesToEntriesIter::new_from_header(
         util::BlockOn(pack_read),
         pack::data::input::Mode::Verify,
         pack::data::input::EntryDataMode::Ignore,
     )?;
     #[cfg(feature = "blocking-io")]
-    let pack_entries = pack::data::BytesToEntriesIter::new_from_header(
+    let pack_entries = pack::data::input::BytesToEntriesIter::new_from_header(
         pack_read,
         pack::data::input::Mode::Verify,
         pack::data::input::EntryDataMode::Ignore,

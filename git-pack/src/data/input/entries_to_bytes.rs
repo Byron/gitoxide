@@ -8,7 +8,7 @@ use std::iter::Peekable;
 /// It is able to deal with an unknown amount of objects as it will rewrite the pack header once the entries iterator
 /// is depleted and compute the hash in one go by re-reading the whole file.
 pub struct EntriesToBytesIter<I: Iterator, W> {
-    /// An iterator for input [`output::Entry`] instances
+    /// An iterator for input [`input::Entry`] instances
     pub input: Peekable<I>,
     /// A way of writing encoded bytes.
     output: W,
