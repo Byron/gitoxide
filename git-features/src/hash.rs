@@ -74,6 +74,7 @@ pub fn crc32(bytes: &[u8]) -> u32 {
 }
 
 /// Produce a hasher suitable for the given kind of hash.
+#[cfg(any(feature = "rustsha1", feature = "fast-sha1"))]
 pub fn hasher(kind: git_hash::Kind) -> Sha1 {
     match kind {
         git_hash::Kind::Sha1 => Sha1::default(),
