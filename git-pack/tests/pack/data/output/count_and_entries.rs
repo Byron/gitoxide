@@ -14,6 +14,7 @@ use git_traverse::commit;
 use std::sync::atomic::AtomicBool;
 
 #[test]
+#[ignore]
 fn traversals() -> crate::Result {
     #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
     struct Count {
@@ -387,17 +388,16 @@ fn write_and_verify(
             actual_checksum, thin_pack_checksum,
             "the thin pack is written reproducibly and checksums pan out"
         );
-    } else {
-        // TODO: run this unconditionally, after all this check should also pan out
-        bundle.verify_integrity(
-            pack::index::verify::Mode::Sha1Crc32DecodeEncode,
-            pack::index::traverse::Algorithm::Lookup,
-            || pack::cache::Never,
-            None,
-            progress::Discard.into(),
-            Arc::new(should_interrupt),
-        )?;
     }
+    // TODO: run this unconditionally, after all this check should also pan out
+    bundle.verify_integrity(
+        pack::index::verify::Mode::Sha1Crc32DecodeEncode,
+        pack::index::traverse::Algorithm::Lookup,
+        || pack::cache::Never,
+        None,
+        progress::Discard.into(),
+        Arc::new(should_interrupt),
+    )?;
 
     Ok(())
 }

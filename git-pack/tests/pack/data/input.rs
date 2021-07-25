@@ -1,7 +1,7 @@
 mod lookup_ref_delta_objects {
     use crate::pack::hex_to_id;
     use git_hash::ObjectId;
-    use git_pack::data::{self, entry::Header, input, LookupRefDeltaObjectsIter};
+    use git_pack::data::{self, entry::Header, input, input::LookupRefDeltaObjectsIter};
 
     const D_A: &[u8] = b"a";
     const D_B: &[u8] = b"bb";

@@ -21,7 +21,7 @@ mod new_from_header {
     fn header_encode() -> Result<(), Box<dyn std::error::Error>> {
         for (_, data_file) in V2_PACKS_AND_INDICES {
             let data = fs::read(fixture_path(data_file))?;
-            for entry in pack::data::BytesToEntriesIter::new_from_header(
+            for entry in pack::data::input::BytesToEntriesIter::new_from_header(
                 std::io::BufReader::new(data.as_slice()),
                 Mode::AsIs,
                 EntryDataMode::Ignore,
@@ -56,7 +56,7 @@ mod new_from_header {
             EntryDataMode::KeepAndCrc32,
         ] {
             for trailer_mode in &[Mode::AsIs, Mode::Verify, Mode::Restore] {
-                let mut iter = pack::data::BytesToEntriesIter::new_from_header(
+                let mut iter = pack::data::input::BytesToEntriesIter::new_from_header(
                     std::io::BufReader::new(fs::File::open(fixture_path(SMALL_PACK))?),
                     *trailer_mode,
                     *compression_mode,
@@ -97,7 +97,7 @@ mod new_from_header {
     #[test]
     fn restore_missing_trailer() -> Result<(), Box<dyn std::error::Error>> {
         let pack = fs::read(fixture_path(SMALL_PACK))?;
-        let mut iter = pack::data::BytesToEntriesIter::new_from_header(
+        let mut iter = pack::data::input::BytesToEntriesIter::new_from_header(
             std::io::BufReader::new(&pack[..pack.len() - 20]),
             Mode::Restore,
             EntryDataMode::Ignore,
@@ -115,7 +115,7 @@ mod new_from_header {
     #[test]
     fn restore_partial_pack() -> Result<(), Box<dyn std::error::Error>> {
         let pack = fs::read(fixture_path(SMALL_PACK))?;
-        let mut iter = pack::data::BytesToEntriesIter::new_from_header(
+        let mut iter = pack::data::input::BytesToEntriesIter::new_from_header(
             std::io::BufReader::new(&pack[..pack.len() / 2]),
             Mode::Restore,
             EntryDataMode::Ignore,

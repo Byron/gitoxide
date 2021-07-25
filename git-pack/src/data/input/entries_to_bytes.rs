@@ -1,8 +1,11 @@
 use crate::data::input;
 use git_features::hash;
 
-/// An implementation of [`Iterator`] to write [encoded entries][output::Entry] to an inner implementation each time
+/// An implementation of [`Iterator`] to write [encoded entries][input::Entry] to an inner implementation each time
 /// `next()` is called.
+///
+/// It is able to deal with an unknown amount of objects as it will rewrite the pack header once the entries iterator
+/// is depleted and compute the hash in one go by re-reading the whole file.
 pub struct EntriesToBytesIter<I, W> {
     /// An iterator for input [`output::Entry`] instances
     pub input: I,

@@ -60,8 +60,8 @@ impl crate::Bundle {
                     should_interrupt,
                 };
                 let buffered_pack = io::BufReader::new(pack);
-                let pack_entries_iter = data::LookupRefDeltaObjectsIter::new(
-                    data::BytesToEntriesIter::new_from_header(
+                let pack_entries_iter = data::input::LookupRefDeltaObjectsIter::new(
+                    data::input::BytesToEntriesIter::new_from_header(
                         buffered_pack,
                         options.iteration_mode,
                         data::input::EntryDataMode::KeepAndCrc32,
@@ -92,7 +92,7 @@ impl crate::Bundle {
                 // However, this is exactly what's happening in the ZipReader implementation that is eventually used.
                 // The performance impact of this is probably negligible, compared to all the other work that is done anyway :D.
                 let buffered_pack = io::BufReader::new(pack);
-                let pack_entries_iter = data::BytesToEntriesIter::new_from_header(
+                let pack_entries_iter = data::input::BytesToEntriesIter::new_from_header(
                     buffered_pack,
                     options.iteration_mode,
                     data::input::EntryDataMode::Crc32,
@@ -158,8 +158,8 @@ impl crate::Bundle {
                     should_interrupt,
                 };
                 let buffered_pack = io::BufReader::with_capacity(eight_pages, pack);
-                let pack_entries_iter = data::LookupRefDeltaObjectsIter::new(
-                    data::BytesToEntriesIter::new_from_header(
+                let pack_entries_iter = data::input::LookupRefDeltaObjectsIter::new(
+                    data::input::BytesToEntriesIter::new_from_header(
                         buffered_pack,
                         options.iteration_mode,
                         data::input::EntryDataMode::KeepAndCrc32,
@@ -179,7 +179,7 @@ impl crate::Bundle {
                     writer: Some(data_file.clone()),
                 };
                 let buffered_pack = io::BufReader::with_capacity(eight_pages, pack);
-                let pack_entries_iter = data::BytesToEntriesIter::new_from_header(
+                let pack_entries_iter = data::input::BytesToEntriesIter::new_from_header(
                     buffered_pack,
                     options.iteration_mode,
                     data::input::EntryDataMode::Crc32,
