@@ -388,7 +388,7 @@ fn write_and_verify(
             "the thin pack is written reproducibly and checksums pan out"
         );
     }
-    // TODO: run this unconditionally, after all this check should also pan out
+
     bundle.verify_integrity(
         pack::index::verify::Mode::Sha1Crc32DecodeEncode,
         pack::index::traverse::Algorithm::Lookup,

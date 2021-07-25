@@ -19,12 +19,24 @@ impl input::Entry {
             decompressed_size: obj.data.len() as u64,
             trailer: None,
         };
-        entry.crc32 = Some(crc32(&entry));
+        entry.update_crc32();
         Ok(entry)
     }
     /// The amount of bytes this entry may consume in a pack data file
     pub fn bytes_in_pack(&self) -> u64 {
         self.header_size as u64 + self.compressed_size
+    }
+
+    /// Update our CRC value by recalculating it from our header and compressed data.
+    pub fn update_crc32(&mut self) {
+        let mut header_buf = [0u8; 32];
+        let header_len = self
+            .header
+            .write_to(self.decompressed_size, header_buf.as_mut())
+            .expect("write to memory will not fail");
+        let state = git_features::hash::crc32_update(0, &header_buf[..header_len]);
+        let new_crc32 = git_features::hash::crc32_update(state, self.compressed.as_ref().expect("we always set it"));
+        self.crc32 = Some(new_crc32);
     }
 }
 
@@ -36,16 +48,6 @@ fn to_header(kind: git_object::Kind) -> Header {
         Commit => Header::Commit,
         Tag => Header::Tag,
     }
-}
-
-fn crc32(entry: &input::Entry) -> u32 {
-    let mut header_buf = [0u8; 32];
-    let header_len = entry
-        .header
-        .write_to(entry.decompressed_size, header_buf.as_mut())
-        .expect("write to memory will not fail");
-    let state = git_features::hash::crc32_update(0, &header_buf[..header_len]);
-    git_features::hash::crc32_update(state, entry.compressed.as_ref().expect("we always set it"))
 }
 
 fn compress_data(obj: &data::Object<'_>) -> Result<Vec<u8>, input::Error> {
