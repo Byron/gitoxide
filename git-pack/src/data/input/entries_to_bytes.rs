@@ -1,14 +1,15 @@
 use crate::data::input;
 use git_features::hash;
+use std::iter::Peekable;
 
 /// An implementation of [`Iterator`] to write [encoded entries][input::Entry] to an inner implementation each time
 /// `next()` is called.
 ///
 /// It is able to deal with an unknown amount of objects as it will rewrite the pack header once the entries iterator
 /// is depleted and compute the hash in one go by re-reading the whole file.
-pub struct EntriesToBytesIter<I, W> {
+pub struct EntriesToBytesIter<I: Iterator, W> {
     /// An iterator for input [`output::Entry`] instances
-    pub input: I,
+    pub input: Peekable<I>,
     /// A way of writing encoded bytes.
     output: W,
     /// Our trailing hash when done writing all input entries
@@ -47,7 +48,7 @@ where
             "currently only Sha1 is supported, right now we don't know how other hashes are encoded",
         );
         EntriesToBytesIter {
-            input,
+            input: input.peekable(),
             output,
             hash_kind,
             num_entries: 0,
@@ -82,7 +83,7 @@ where
         Ok(entry)
     }
 
-    fn write_header_and_digest(&mut self) -> Result<(), input::Error> {
+    fn write_header_and_digest(&mut self, last_entry: &mut input::Entry) -> Result<(), input::Error> {
         let num_bytes_written = self.output.stream_position()?;
 
         self.output.seek(std::io::SeekFrom::Start(0))?;
@@ -103,6 +104,7 @@ where
         self.output.flush()?;
 
         self.is_done = true;
+        last_entry.trailer = Some(digest);
         self.trailer = Some(digest);
         Ok(())
     }
@@ -122,12 +124,18 @@ where
         }
 
         match self.input.next() {
-            Some(Ok(entry)) => Some(self.next_inner(entry)),
+            Some(Ok(entry)) => Some(self.next_inner(entry).and_then(|mut entry| {
+                if self.input.peek().is_none() {
+                    self.write_header_and_digest(&mut entry).map(|_| entry)
+                } else {
+                    Ok(entry)
+                }
+            })),
             Some(Err(err)) => {
                 self.is_done = true;
                 Some(Err(err))
             }
-            None => self.write_header_and_digest().err().map(Err),
+            None => None,
         }
     }
 
