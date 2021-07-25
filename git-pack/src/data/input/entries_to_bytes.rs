@@ -1,4 +1,5 @@
 use crate::data::input;
+use git_features::hash;
 
 /// An implementation of [`Iterator`] to write [encoded entries][output::Entry] to an inner implementation each time
 /// `next()` is called.
@@ -17,13 +18,13 @@ pub struct EntriesToBytesIter<I, W> {
     /// If we are done, no additional writes will occour
     is_done: bool,
     /// The kind of hash to use for the digest
-    _hash_kind: git_hash::Kind,
+    hash_kind: git_hash::Kind,
 }
 
 impl<I, W> EntriesToBytesIter<I, W>
 where
     I: Iterator<Item = Result<input::Entry, input::Error>>,
-    W: std::io::Write + std::io::Seek,
+    W: std::io::Read + std::io::Write + std::io::Seek,
 {
     /// Create a new instance reading [entries][input::Entry] from an `input` iterator and write pack data bytes to
     /// `output` writer, resembling a pack of `version`. The amonut of entries will be dynaimcally determined and
@@ -45,7 +46,7 @@ where
         EntriesToBytesIter {
             input,
             output,
-            _hash_kind: hash_kind,
+            hash_kind,
             num_entries: 0,
             trailer: None,
             data_version: version,
@@ -79,19 +80,27 @@ where
     }
 
     fn write_header_and_digest(&mut self) -> Result<(), input::Error> {
+        let num_bytes_written = self.output.stream_position()?;
+
         self.output.seek(std::io::SeekFrom::Start(0))?;
         let header_bytes = crate::data::header::encode(self.data_version, self.num_entries);
         self.output.write_all(&header_bytes[..])?;
-        // TODO: hash everything thus far
-        self.output.seek(std::io::SeekFrom::End(0))?;
         self.output.flush()?;
 
-        // let digest = self.output.hash.clone().digest();
-        // self.output.write_all(&digest[..])?;
-        // self.output.flush()?;
+        self.output.seek(std::io::SeekFrom::Start(0))?;
+        let interrupt_never = std::sync::atomic::AtomicBool::new(false);
+        let digest = hash::bytes(
+            &mut self.output,
+            num_bytes_written as usize,
+            self.hash_kind,
+            &mut git_features::progress::Discard,
+            &interrupt_never,
+        )?;
+        self.output.write_all(digest.as_slice())?;
+        self.output.flush()?;
 
         self.is_done = true;
-        // self.trailer = Some(git_hash::ObjectId::from(digest));
+        self.trailer = Some(digest);
         Ok(())
     }
 }
@@ -99,7 +108,7 @@ where
 impl<I, W> Iterator for EntriesToBytesIter<I, W>
 where
     I: Iterator<Item = Result<input::Entry, input::Error>>,
-    W: std::io::Write + std::io::Seek,
+    W: std::io::Read + std::io::Write + std::io::Seek,
 {
     /// The amount of bytes written to `out` if `Ok` or the error `E` received from the input.
     type Item = Result<input::Entry, input::Error>;

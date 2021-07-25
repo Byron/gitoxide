@@ -77,7 +77,6 @@ impl crate::Bundle {
                     pack_kind,
                     git_hash::Kind::Sha1,
                 );
-                // TODO: wrap this entries iter into data_file, including the header, so it becomes suitable for lookup
                 (Box::new(pack_entries_iter), pack_kind)
             }
             None => {

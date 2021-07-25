@@ -93,6 +93,12 @@ impl io::Write for LockWriter {
     }
 }
 
+impl io::Read for LockWriter {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.writer.lock().read(buf)
+    }
+}
+
 impl io::Seek for LockWriter {
     fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
         self.writer.lock().seek(pos)

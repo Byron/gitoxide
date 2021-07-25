@@ -14,7 +14,6 @@ use git_traverse::commit;
 use std::sync::atomic::AtomicBool;
 
 #[test]
-#[ignore]
 fn traversals() -> crate::Result {
     #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
     struct Count {
@@ -85,6 +84,7 @@ fn traversals() -> crate::Result {
         expected_counts_outcome,
         expected_entries_outcome,
         expected_pack_hash,
+        expected_thin_pack_hash,
         take,
         allow_thin_pack,
     ) in [
@@ -117,6 +117,7 @@ fn traversals() -> crate::Result {
             },
             hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3"),
             None,
+            None,
             false,
         ),
         (
@@ -147,6 +148,7 @@ fn traversals() -> crate::Result {
                 objects_copied_from_pack: 103,
             },
             hex_to_id("25114bd8820b393c402cd53ad8ec7f6a84bb0633"),
+            Some(hex_to_id("29ab9797aff1ca826afb699680356695d19c5acb")),
             Some(1),
             true,
         ),
@@ -178,6 +180,7 @@ fn traversals() -> crate::Result {
                 objects_copied_from_pack: 29,
             },
             hex_to_id("d83d42128e40957c5174920189a0390b5a70f446"),
+            None,
             Some(1),
             false,
         ),
@@ -198,6 +201,7 @@ fn traversals() -> crate::Result {
             },
             hex_to_id("542ad1d1c7c762ea4e36907570ff9e4b5b7dde1b"),
             None,
+            None,
             false,
         ),
         (
@@ -216,6 +220,7 @@ fn traversals() -> crate::Result {
                 objects_copied_from_pack: 868,
             },
             hex_to_id("542ad1d1c7c762ea4e36907570ff9e4b5b7dde1b"),
+            None,
             None,
             false,
         ),
@@ -304,7 +309,7 @@ fn traversals() -> crate::Result {
             "two different ways of counting, still the same in the end"
         );
 
-        write_and_verify(Arc::clone(&db), entries, expected_pack_hash)?;
+        write_and_verify(Arc::clone(&db), entries, expected_pack_hash, expected_thin_pack_hash)?;
     }
 
     Ok(())
@@ -314,6 +319,7 @@ fn write_and_verify(
     db: Arc<linked::Store>,
     entries: Vec<output::Entry>,
     expected_pack_hash: git_hash::ObjectId,
+    expected_thin_pack_hash: Option<git_hash::ObjectId>,
 ) -> crate::Result {
     let tmp_dir = tempfile::TempDir::new()?;
     let pack_file_path = tmp_dir.path().join("new.pack");
@@ -372,14 +378,26 @@ fn write_and_verify(
         .data_path
         .expect("directory set"),
     )?;
-    bundle.verify_integrity(
-        pack::index::verify::Mode::Sha1Crc32DecodeEncode,
-        pack::index::traverse::Algorithm::DeltaTreeLookup,
-        || pack::cache::Never,
-        None,
-        progress::Discard.into(),
-        Arc::new(should_interrupt),
-    )?;
+    if let Some(thin_pack_checksum) = expected_thin_pack_hash {
+        let actual_checksum = bundle
+            .pack
+            .verify_checksum(progress::Discard, &should_interrupt)
+            .unwrap();
+        assert_eq!(
+            actual_checksum, thin_pack_checksum,
+            "the thin pack is written reproducibly and checksums pan out"
+        );
+    } else {
+        // TODO: run this unconditionally, after all this check should also pan out
+        bundle.verify_integrity(
+            pack::index::verify::Mode::Sha1Crc32DecodeEncode,
+            pack::index::traverse::Algorithm::Lookup,
+            || pack::cache::Never,
+            None,
+            progress::Discard.into(),
+            Arc::new(should_interrupt),
+        )?;
+    }
 
     Ok(())
 }

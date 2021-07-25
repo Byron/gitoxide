@@ -73,10 +73,18 @@ pub fn crc32(bytes: &[u8]) -> u32 {
     h.finalize()
 }
 
+/// Produce a hasher suitable for the given kind of hash.
+pub fn hasher(kind: git_hash::Kind) -> Sha1 {
+    match kind {
+        git_hash::Kind::Sha1 => Sha1::default(),
+    }
+}
+
 /// Compute the hash of `kind` for the bytes in the file at `path`, hashing only the first `num_bytes_from_start`
 /// while initializing and calling `progress`.
 ///
-/// `num_bytes_from_start` is useful to avoid reading trailing hashes, which are never part of the hash itself.
+/// `num_bytes_from_start` is useful to avoid reading trailing hashes, which are never part of the hash itself,
+/// denoting the amount of bytes to hash starting from the beginning of the file.
 ///
 /// # Note
 ///
@@ -91,22 +99,36 @@ pub fn bytes_of_file(
     progress: &mut impl crate::progress::Progress,
     should_interrupt: &std::sync::atomic::AtomicBool,
 ) -> std::io::Result<git_hash::ObjectId> {
-    let mut hasher = match kind {
-        git_hash::Kind::Sha1 => crate::hash::Sha1::default(),
-    };
+    bytes(
+        std::fs::File::open(path)?,
+        num_bytes_from_start,
+        kind,
+        progress,
+        should_interrupt,
+    )
+}
+
+/// Similar to [`bytes_of_file`], but operates on an already open file.
+#[cfg(all(feature = "progress", any(feature = "rustsha1", feature = "fast-sha1")))]
+pub fn bytes(
+    mut read: impl std::io::Read,
+    num_bytes_from_start: usize,
+    kind: git_hash::Kind,
+    progress: &mut impl crate::progress::Progress,
+    should_interrupt: &std::sync::atomic::AtomicBool,
+) -> std::io::Result<git_hash::ObjectId> {
+    let mut hasher = hasher(kind);
     let start = std::time::Instant::now();
     // init progress before the possibility for failure, as convenience in case people want to recover
     progress.init(Some(num_bytes_from_start), crate::progress::bytes());
 
-    let mut file = std::fs::File::open(path)?;
-    use std::io::Read;
     const BUF_SIZE: usize = u16::MAX as usize;
     let mut buf = [0u8; BUF_SIZE];
     let mut bytes_left = num_bytes_from_start;
 
     while bytes_left > 0 {
         let out = &mut buf[..BUF_SIZE.min(bytes_left)];
-        file.read_exact(out)?;
+        read.read_exact(out)?;
         bytes_left -= out.len();
         progress.inc_by(out.len());
         hasher.update(out);
