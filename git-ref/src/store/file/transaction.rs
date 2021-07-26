@@ -39,6 +39,7 @@ impl std::borrow::BorrowMut<RefEdit> for Edit {
 /// A transaction on a file store
 pub struct Transaction<'s> {
     store: &'s file::Store,
+    packed_transaction: Option<packed::Transaction>,
     packed: Option<packed::Buffer>,
     updates: Vec<Edit>,
     state: State,
@@ -48,7 +49,6 @@ pub struct Transaction<'s> {
 impl<'s> Transaction<'s> {
     fn lock_ref_and_apply_change(
         store: &file::Store,
-        _packed: Option<&packed::Buffer>,
         lock_fail_mode: git_lock::acquire::Fail,
         change: &mut Edit,
     ) -> Result<(), Error> {
@@ -223,39 +223,46 @@ impl<'s> Transaction<'s> {
                     )
                     .map_err(Error::PreprocessingFailed)?;
 
-                // let mut needs_packed_transaction = false;
-                for edit in self.updates.iter() {
-                    let log_mode = match edit.update.change {
-                        Change::Update {
-                            log: LogChange { mode, .. },
-                            ..
-                        } => mode,
-                        Change::Delete { log, .. } => log,
-                    };
-                    if log_mode == RefLog::Only {
-                        continue;
-                    }
-                    match edit.update.change {
-                        Change::Delete { previous: None, .. } => {
-                            if self.packed.is_none() {
-                                self.packed = store.packed()?;
-                            }
-                            // TODO: check if ref for deletion is actually present in pack, if so put it onto a transaction
+                if let Some(packed) = self.store.packed()? {
+                    let mut edits_for_packed_transaction = Vec::<RefEdit>::new();
+                    for edit in self.updates.iter() {
+                        let log_mode = match edit.update.change {
+                            Change::Update {
+                                log: LogChange { mode, .. },
+                                ..
+                            } => mode,
+                            Change::Delete { log, .. } => log,
+                        };
+                        if log_mode == RefLog::Only {
                             continue;
                         }
-                        Change::Update {
-                            mode: Create::OrUpdate { previous: None },
-                            ..
-                        } => continue,
-                        _ => {}
+                        match edit.update.change {
+                            Change::Update {
+                                mode: Create::OrUpdate { previous: None },
+                                ..
+                            } => continue,
+                            Change::Delete { .. } => {
+                                edits_for_packed_transaction.push(edit.update.clone());
+                            }
+                            _ => {}
+                        }
+                    }
+
+                    if !edits_for_packed_transaction.is_empty() {
+                        self.packed_transaction = Some(
+                            packed
+                                .into_transaction(edits_for_packed_transaction, self.lock_fail_mode)
+                                .map_err(Error::PackedTransactionAcquire)?
+                                .prepare()?,
+                        );
+                    } else {
+                        self.packed = Some(packed);
                     }
                 }
 
                 for cid in 0..self.updates.len() {
                     let change = &mut self.updates[cid];
-                    if let Err(err) =
-                        Self::lock_ref_and_apply_change(self.store, self.packed.as_ref(), self.lock_fail_mode, change)
-                    {
+                    if let Err(err) = Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, change) {
                         let err = match err {
                             Error::LockAcquire { err, full_name: _bogus } => Error::LockAcquire {
                                 err,
@@ -410,7 +417,10 @@ impl<'s> Transaction<'s> {
                         }
                     }
                 }
-                Ok((self.updates.into_iter().map(|edit| edit.update).collect(), self.packed))
+                Ok((
+                    self.updates.into_iter().map(|edit| edit.update).collect(),
+                    self.packed_transaction.map(|t| t.buffer),
+                ))
             }
         }
     }
@@ -437,6 +447,7 @@ impl file::Store {
     ) -> Transaction<'_> {
         Transaction {
             store: self,
+            packed_transaction: None,
             packed: None,
             updates: edits
                 .into_iter()
@@ -468,6 +479,15 @@ mod error {
         pub enum Error {
             Packed(err: packed::buffer::open::Error) {
                 display("The packed ref buffer could not be loaded")
+                from()
+                source(err)
+            }
+            PackedTransactionAcquire(err: git_lock::acquire::Error) {
+                display("The lock for the packed-ref file could not be obtained")
+                source(err)
+            }
+            PackedTransactionPrepare(err: packed::transaction::prepare::Error) {
+                display("The packed transaction could not be prepared")
                 from()
                 source(err)
             }

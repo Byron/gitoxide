@@ -22,7 +22,7 @@ impl AsRef<[u8]> for packed::Backing {
 pub mod open {
     use crate::store::packed;
     use filebuffer::FileBuffer;
-    use std::path::Path;
+    use std::path::PathBuf;
 
     /// Initialization
     impl packed::Buffer {
@@ -30,12 +30,12 @@ pub mod open {
         ///
         /// In order to allow fast lookups and optimizations, the contents of the packed refs must be sorted.
         /// If that's not the case, they will be sorted on the fly with the data being written into a memory buffer.
-        pub fn open(path: impl AsRef<Path>, use_memory_map_if_larger_than_bytes: u64) -> Result<Self, Error> {
-            let path = path.as_ref();
-            let backing = if std::fs::metadata(path)?.len() <= use_memory_map_if_larger_than_bytes {
-                packed::Backing::InMemory(std::fs::read(path)?)
+        pub fn open(path: impl Into<PathBuf>, use_memory_map_if_larger_than_bytes: u64) -> Result<Self, Error> {
+            let path = path.into();
+            let backing = if std::fs::metadata(&path)?.len() <= use_memory_map_if_larger_than_bytes {
+                packed::Backing::InMemory(std::fs::read(&path)?)
             } else {
-                packed::Backing::Mapped(FileBuffer::open(path)?)
+                packed::Backing::Mapped(FileBuffer::open(&path)?)
             };
 
             let (offset, sorted) = {
@@ -51,7 +51,11 @@ pub mod open {
             if !sorted {
                 return Err(Error::Unsorted);
             }
-            Ok(packed::Buffer { offset, data: backing })
+            Ok(packed::Buffer {
+                offset,
+                data: backing,
+                path,
+            })
         }
     }
 

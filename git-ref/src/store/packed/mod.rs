@@ -1,7 +1,8 @@
-use crate::FullName;
+use crate::{transaction::RefEdit, FullName};
 use bstr::{BStr, BString};
 use filebuffer::FileBuffer;
 use git_hash::ObjectId;
+use std::path::PathBuf;
 
 enum Backing {
     /// The buffer is loaded entirely in memory, along with the `offset` to the first record past the header.
@@ -17,6 +18,17 @@ pub struct Buffer {
     data: Backing,
     /// The offset to the first record, how many bytes to skip past the header
     offset: usize,
+    /// The path from which we were loaded
+    path: PathBuf,
+}
+
+/// A transaction for editing packed references
+pub struct Transaction {
+    /// Probably soon private and returned as part of a commit
+    pub buffer: Buffer,
+    edits: Vec<RefEdit>,
+    #[allow(dead_code)]
+    lock: git_lock::File,
 }
 
 /// A reference as parsed from the `packed-refs` file
@@ -67,3 +79,6 @@ pub mod buffer;
 
 ///
 pub mod find;
+
+///
+pub mod transaction;
