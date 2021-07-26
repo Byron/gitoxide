@@ -1,6 +1,6 @@
 use crate::{
     mutable::Target,
-    store::{file, file::loose},
+    store::{file, file::loose, packed},
     transaction::{Change, Create, RefEdit, RefEditsExt, RefLog},
 };
 use bstr::BString;
@@ -37,16 +37,18 @@ impl std::borrow::BorrowMut<RefEdit> for Edit {
     }
 }
 /// A transaction on a file store
-pub struct Transaction<'a> {
-    store: &'a file::Store,
+pub struct Transaction<'s> {
+    store: &'s file::Store,
+    packed: Option<packed::Buffer>,
     updates: Vec<Edit>,
     state: State,
     lock_fail_mode: git_lock::acquire::Fail,
 }
 
-impl<'a> Transaction<'a> {
+impl<'s> Transaction<'s> {
     fn lock_ref_and_apply_change(
         store: &file::Store,
+        _packed: Option<&packed::Buffer>,
         lock_fail_mode: git_lock::acquire::Fail,
         change: &mut Edit,
     ) -> Result<(), Error> {
@@ -56,12 +58,17 @@ impl<'a> Transaction<'a> {
         );
 
         let relative_path = change.update.name.to_path();
-        // todo: why not use find() here, incorporate packed-refs as well.
+        // todo: incorporate packed-refs as well.
         let existing_ref = store
             .ref_contents(relative_path.as_ref())
             .map_err(Error::from)
-            .and_then(|opt| {
-                opt.map(|buf| loose::Reference::try_from_path(change.update.name.clone(), &buf).map_err(Error::from))
+            .and_then(|maybe_loose| {
+                maybe_loose
+                    .map(|buf| {
+                        loose::Reference::try_from_path(change.update.name.clone(), &buf)
+                            .map(file::Reference::Loose)
+                            .map_err(Error::from)
+                    })
                     .transpose()
             })
             .or_else(|err| match err {
@@ -88,12 +95,13 @@ impl<'a> Transaction<'a> {
                         })
                     }
                     (Some(previous), Some(existing)) => {
-                        if !previous.is_null() && *previous != existing.target {
+                        let actual = existing.target();
+                        if !previous.is_null() && *previous != actual {
                             let expected = previous.clone();
                             return Err(Error::ReferenceOutOfDate {
                                 full_name: change.name(),
                                 expected,
-                                actual: existing.target.to_owned(),
+                                actual,
                             });
                         }
                     }
@@ -101,7 +109,7 @@ impl<'a> Transaction<'a> {
 
                 // Keep the previous value for the caller and ourselves. Maybe they want to keep a log of sorts.
                 if let Some(existing) = existing_ref {
-                    *previous = Some(existing.target);
+                    *previous = Some(existing.target());
                 }
 
                 lock
@@ -121,11 +129,11 @@ impl<'a> Transaction<'a> {
 
                 let existing_ref = existing_ref?;
                 match (&previous, &existing_ref) {
-                    (Create::Only, Some(existing)) if existing.target != new.borrow() => {
+                    (Create::Only, Some(existing)) if existing.target() != new.borrow() => {
                         let new = new.clone();
                         return Err(Error::MustNotExist {
                             full_name: change.name(),
-                            actual: existing.target.to_owned(),
+                            actual: existing.target(),
                             new,
                         });
                     }
@@ -136,9 +144,9 @@ impl<'a> Transaction<'a> {
                         Some(existing),
                     ) => match previous {
                         Target::Peeled(oid) if oid.is_null() => {}
-                        any_target if *any_target == existing.target => {}
+                        any_target if *any_target == existing.target() => {}
                         _target_mismatch => {
-                            let actual = existing.target.to_owned();
+                            let actual = existing.target();
                             let expected = previous.to_owned();
                             let full_name = change.name();
                             return Err(Error::ReferenceOutOfDate {
@@ -164,7 +172,7 @@ impl<'a> Transaction<'a> {
                 *previous = match existing_ref {
                     None => Create::Only,
                     Some(existing) => Create::OrUpdate {
-                        previous: Some(existing.target),
+                        previous: Some(existing.target()),
                     },
                 };
 
@@ -181,7 +189,7 @@ impl<'a> Transaction<'a> {
     }
 }
 
-impl<'a> Transaction<'a> {
+impl<'s> Transaction<'s> {
     /// Discard the transaction and re-obtain the initial edits
     pub fn into_edits(self) -> Vec<RefEdit> {
         self.updates.into_iter().map(|e| e.update).collect()
@@ -217,7 +225,9 @@ impl<'a> Transaction<'a> {
 
                 for cid in 0..self.updates.len() {
                     let change = &mut self.updates[cid];
-                    if let Err(err) = Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, change) {
+                    if let Err(err) =
+                        Self::lock_ref_and_apply_change(self.store, self.packed.as_ref(), self.lock_fail_mode, change)
+                    {
                         let err = match err {
                             Error::LockAcquire { err, full_name: _bogus } => Error::LockAcquire {
                                 err,
@@ -276,7 +286,7 @@ impl<'a> Transaction<'a> {
     ///   along with empty parent directories
     ///
     /// Note that transactions will be prepared automatically as needed.
-    pub fn commit(mut self, committer: &git_actor::Signature) -> Result<Vec<RefEdit>, Error> {
+    pub fn commit(mut self, committer: &git_actor::Signature) -> Result<(Vec<RefEdit>, Option<packed::Buffer>), Error> {
         match self.state {
             State::Open => self.prepare()?.commit(committer),
             State::Prepared => {
@@ -372,7 +382,7 @@ impl<'a> Transaction<'a> {
                         }
                     }
                 }
-                Ok(self.updates.into_iter().map(|edit| edit.update).collect())
+                Ok((self.updates.into_iter().map(|edit| edit.update).collect(), self.packed))
             }
         }
     }
@@ -389,13 +399,17 @@ enum State {
 /// Edits
 impl file::Store {
     /// Open a transaction with the given `edits`, and determine how to fail if a `lock` cannot be obtained.
+    /// A snapshot of packed references will be obtained automatically if needed to fulfill this transaction
+    /// and will be provided as result of a successful transaction. Note that upon transaction failure, packed-refs
+    /// will never have been altered.
     pub fn transaction(
         &self,
         edits: impl IntoIterator<Item = RefEdit>,
         lock: git_lock::acquire::Fail,
-    ) -> Transaction<'_> {
-        Transaction {
+    ) -> Result<Transaction<'_>, packed::buffer::open::Error> {
+        Ok(Transaction {
             store: self,
+            packed: None,
             updates: edits
                 .into_iter()
                 .map(|update| Edit {
@@ -407,7 +421,7 @@ impl file::Store {
                 .collect(),
             state: State::Open,
             lock_fail_mode: lock,
-        }
+        })
     }
 }
 

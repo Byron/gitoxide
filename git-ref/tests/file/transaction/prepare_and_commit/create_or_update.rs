@@ -45,19 +45,18 @@ mod reference_with_equally_named {
                         deref: false,
                     }),
                     Fail::Immediately,
-                )
+                )?
                 .commit(&committer());
             if *is_empty {
-                let edits = edits?;
+                let edits = edits?.0;
                 assert!(
                     store.loose_find(edits[0].name.to_partial())?.is_some(),
                     "HEAD was created despite a directory being in the way"
                 );
             } else {
-                let err = edits.unwrap_err();
-                match err {
+                match edits {
                     #[cfg_attr(target_os = "windows", allow(unused_variables))]
-                    transaction::Error::LockCommit { err, full_name } => {
+                    Err(transaction::Error::LockCommit { err, full_name }) => {
                         assert_eq!(full_name, "HEAD");
                         #[cfg(not(target_os = "windows"))]
                         assert_eq!(err.to_string(), "Directory not empty");
@@ -74,7 +73,7 @@ mod reference_with_equally_named {
 fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
     let (_keep, store) = empty_store()?;
 
-    let err = store
+    let res = store
         .transaction(
             Some(
                 RefEdit {
@@ -91,16 +90,15 @@ fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
                 .clone(),
             ),
             Fail::Immediately,
-        )
-        .commit(&committer())
-        .expect_err("cannot create a ref that should exist but didn't");
+        )?
+        .commit(&committer());
 
-    match err {
-        transaction::Error::MustExist { full_name, expected } => {
+    match res {
+        Err(transaction::Error::MustExist { full_name, expected }) => {
             assert_eq!(full_name, "HEAD");
             assert_eq!(expected, Target::must_exist());
         }
-        err => unreachable!("unexpected error: {:?}", err),
+        _ => unreachable!("unexpected result"),
     }
     Ok(())
 }
@@ -111,7 +109,7 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
     let head = store.loose_find("HEAD")?.expect("head exists already");
     let target = head.target;
 
-    let err = store
+    let res = store
         .transaction(
             Some(
                 RefEdit {
@@ -128,15 +126,14 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
                 .clone(),
             ),
             Fail::Immediately,
-        )
-        .commit(&committer())
-        .expect_err("cannot overwrite with an edit that specifies a previous value that does not match");
-    match err {
-        transaction::Error::ReferenceOutOfDate { full_name, actual, .. } => {
+        )?
+        .commit(&committer());
+    match res {
+        Err(transaction::Error::ReferenceOutOfDate { full_name, actual, .. }) => {
             assert_eq!(full_name, "HEAD");
             assert_eq!(actual, target);
         }
-        err => unreachable!("unexpected error: {:?}", err),
+        _ => unreachable!("unexpected result"),
     }
     Ok(())
 }
@@ -147,7 +144,7 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
     let head = store.loose_find("HEAD")?.expect("head exists already");
     let target = head.target;
 
-    let err = store
+    let res = store
         .transaction(
             Some(
                 RefEdit {
@@ -162,15 +159,14 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
                 .clone(),
             ),
             Fail::Immediately,
-        )
-        .commit(&committer())
-        .expect_err("cannot overwrite with a create-only edit");
-    match err {
-        transaction::Error::MustNotExist { full_name, actual, .. } => {
+        )?
+        .commit(&committer());
+    match res {
+        Err(transaction::Error::MustNotExist { full_name, actual, .. }) => {
             assert_eq!(full_name, "HEAD");
             assert_eq!(actual, target);
         }
-        err => unreachable!("unexpected error: {:?}", err),
+        _ => unreachable!("unexpected result"),
     }
     Ok(())
 }
@@ -197,8 +193,9 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the
                 .clone(),
             ),
             Fail::Immediately,
-        )
-        .commit(&committer())?;
+        )?
+        .commit(&committer())?
+        .0;
 
     assert_eq!(
         edits,
@@ -236,7 +233,7 @@ fn cancellation_after_preparation_leaves_no_change() -> crate::Result {
             deref: false,
         }),
         Fail::Immediately,
-    );
+    )?;
 
     assert_eq!(
         std::fs::read_dir(dir.path())?.count(),
@@ -277,8 +274,9 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     deref: false,
                 }),
                 Fail::Immediately,
-            )
-            .commit(&committer())?;
+            )?
+            .commit(&committer())?
+            .0;
         assert_eq!(
             edits,
             vec![RefEdit {
@@ -324,8 +322,9 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     deref: true,
                 }),
                 Fail::Immediately,
-            )
-            .commit(&committer())?;
+            )?
+            .commit(&committer())?
+            .0;
 
         assert_eq!(
             edits,
@@ -420,8 +419,9 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
                 deref: false,
             }),
             Fail::Immediately,
-        )
-        .commit(&committer())?;
+        )?
+        .commit(&committer())?
+        .0;
 
     assert_eq!(edits.len(), 1, "HEAD wasn't update");
     assert_eq!(
