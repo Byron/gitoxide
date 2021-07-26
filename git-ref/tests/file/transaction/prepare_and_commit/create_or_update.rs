@@ -34,7 +34,8 @@ mod reference_with_equally_named {
             }
 
             let edits = store
-                .transaction(
+                .transaction()
+                .prepare(
                     Some(RefEdit {
                         change: Change::Update {
                             log: LogChange::default(),
@@ -45,7 +46,7 @@ mod reference_with_equally_named {
                         deref: false,
                     }),
                     Fail::Immediately,
-                )
+                )?
                 .commit(&committer());
             if *is_empty {
                 let edits = edits?.0;
@@ -73,25 +74,23 @@ mod reference_with_equally_named {
 fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
     let (_keep, store) = empty_store()?;
 
-    let res = store
-        .transaction(
-            Some(
-                RefEdit {
-                    change: Change::Update {
-                        log: LogChange::default(),
-                        new: Target::Peeled(ObjectId::null_sha1()),
-                        mode: Create::OrUpdate {
-                            previous: Some(Target::must_exist()),
-                        },
+    let res = store.transaction().prepare(
+        Some(
+            RefEdit {
+                change: Change::Update {
+                    log: LogChange::default(),
+                    new: Target::Peeled(ObjectId::null_sha1()),
+                    mode: Create::OrUpdate {
+                        previous: Some(Target::must_exist()),
                     },
-                    name: "HEAD".try_into()?,
-                    deref: false,
-                }
-                .clone(),
-            ),
-            Fail::Immediately,
-        )
-        .commit(&committer());
+                },
+                name: "HEAD".try_into()?,
+                deref: false,
+            }
+            .clone(),
+        ),
+        Fail::Immediately,
+    );
 
     match res {
         Err(transaction::Error::MustExist { full_name, expected }) => {
@@ -109,25 +108,23 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
     let head = store.loose_find("HEAD")?.expect("head exists already");
     let target = head.target;
 
-    let res = store
-        .transaction(
-            Some(
-                RefEdit {
-                    change: Change::Update {
-                        log: LogChange::default(),
-                        new: Target::Peeled(ObjectId::null_sha1()),
-                        mode: Create::OrUpdate {
-                            previous: Some(Target::Peeled(hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"))),
-                        },
+    let res = store.transaction().prepare(
+        Some(
+            RefEdit {
+                change: Change::Update {
+                    log: LogChange::default(),
+                    new: Target::Peeled(ObjectId::null_sha1()),
+                    mode: Create::OrUpdate {
+                        previous: Some(Target::Peeled(hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"))),
                     },
-                    name: "HEAD".try_into()?,
-                    deref: false,
-                }
-                .clone(),
-            ),
-            Fail::Immediately,
-        )
-        .commit(&committer());
+                },
+                name: "HEAD".try_into()?,
+                deref: false,
+            }
+            .clone(),
+        ),
+        Fail::Immediately,
+    );
     match res {
         Err(transaction::Error::ReferenceOutOfDate { full_name, actual, .. }) => {
             assert_eq!(full_name, "HEAD");
@@ -144,23 +141,21 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
     let head = store.loose_find("HEAD")?.expect("head exists already");
     let target = head.target;
 
-    let res = store
-        .transaction(
-            Some(
-                RefEdit {
-                    change: Change::Update {
-                        log: LogChange::default(),
-                        new: Target::Peeled(ObjectId::null_sha1()),
-                        mode: Create::Only,
-                    },
-                    name: "HEAD".try_into()?,
-                    deref: false,
-                }
-                .clone(),
-            ),
-            Fail::Immediately,
-        )
-        .commit(&committer());
+    let res = store.transaction().prepare(
+        Some(
+            RefEdit {
+                change: Change::Update {
+                    log: LogChange::default(),
+                    new: Target::Peeled(ObjectId::null_sha1()),
+                    mode: Create::Only,
+                },
+                name: "HEAD".try_into()?,
+                deref: false,
+            }
+            .clone(),
+        ),
+        Fail::Immediately,
+    );
     match res {
         Err(transaction::Error::MustNotExist { full_name, actual, .. }) => {
             assert_eq!(full_name, "HEAD");
@@ -179,7 +174,8 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the
     let previous_reflog_count = reflog_lines(&store, "HEAD")?.len();
 
     let edits = store
-        .transaction(
+        .transaction()
+        .prepare(
             Some(
                 RefEdit {
                     change: Change::Update {
@@ -193,7 +189,7 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the
                 .clone(),
             ),
             Fail::Immediately,
-        )
+        )?
         .commit(&committer())?
         .0;
 
@@ -222,7 +218,15 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the
 fn cancellation_after_preparation_leaves_no_change() -> crate::Result {
     let (dir, store) = empty_store()?;
 
-    let tx = store.transaction(
+    let tx = store.transaction();
+
+    assert_eq!(
+        std::fs::read_dir(dir.path())?.count(),
+        0,
+        "nothing happens before preparation"
+    );
+
+    let tx = tx.prepare(
         Some(RefEdit {
             change: Change::Update {
                 log: LogChange::default(),
@@ -233,15 +237,7 @@ fn cancellation_after_preparation_leaves_no_change() -> crate::Result {
             deref: false,
         }),
         Fail::Immediately,
-    );
-
-    assert_eq!(
-        std::fs::read_dir(dir.path())?.count(),
-        0,
-        "nothing happens before preparation"
-    );
-
-    let tx = tx.prepare()?;
+    )?;
     assert_eq!(std::fs::read_dir(dir.path())?.count(), 1, "the lock file was created");
 
     drop(tx);
@@ -263,7 +259,8 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         };
         let new_head_value = Target::Symbolic(referent.try_into().unwrap());
         let edits = store
-            .transaction(
+            .transaction()
+            .prepare(
                 Some(RefEdit {
                     change: Change::Update {
                         log: log_ignored.clone(),
@@ -274,7 +271,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     deref: false,
                 }),
                 Fail::Immediately,
-            )
+            )?
             .commit(&committer())?
             .0;
         assert_eq!(
@@ -311,7 +308,8 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             l
         };
         let edits = store
-            .transaction(
+            .transaction()
+            .prepare(
                 Some(RefEdit {
                     change: Change::Update {
                         log: log.clone(),
@@ -322,7 +320,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     deref: true,
                 }),
                 Fail::Immediately,
-            )
+            )?
             .commit(&committer())?
             .0;
 
@@ -402,7 +400,8 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
 
     let new_id = hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc");
     let edits = store
-        .transaction(
+        .transaction()
+        .prepare(
             Some(RefEdit {
                 change: Change::Update {
                     log: LogChange {
@@ -419,7 +418,7 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
                 deref: false,
             }),
             Fail::Immediately,
-        )
+        )?
         .commit(&committer())?
         .0;
 

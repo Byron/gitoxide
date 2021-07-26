@@ -41,9 +41,7 @@ pub struct Transaction<'s> {
     store: &'s file::Store,
     packed_transaction: Option<packed::Transaction>,
     packed: Option<packed::Buffer>,
-    updates: Vec<Edit>,
-    state: State,
-    lock_fail_mode: git_lock::acquire::Fail,
+    updates: Option<Vec<Edit>>,
 }
 
 impl<'s> Transaction<'s> {
@@ -190,22 +188,29 @@ impl<'s> Transaction<'s> {
 }
 
 impl<'s> Transaction<'s> {
-    /// Discard the transaction and re-obtain the initial edits
-    pub fn into_edits(self) -> Vec<RefEdit> {
-        self.updates.into_iter().map(|e| e.update).collect()
-    }
-
     /// Prepare for calling [`commit(…)`][Transaction::commit()] in a way that can be rolled back perfectly.
     ///
     /// If the operation succeeds, the transaction can be committed or dropped to cause a rollback automatically.
     /// Rollbacks happen automatically on failure and they tend to be perfect.
     /// This method is idempotent.
-    pub fn prepare(mut self) -> Result<Self, Error> {
-        Ok(match self.state {
-            State::Prepared => self,
-            State::Open => {
+    pub fn prepare(
+        mut self,
+        edits: impl IntoIterator<Item = RefEdit>,
+        lock_fail_mode: git_lock::acquire::Fail,
+    ) -> Result<Self, Error> {
+        match self.updates {
+            None => {
                 let store = self.store;
-                self.updates
+                let mut updates: Vec<_> = edits
+                    .into_iter()
+                    .map(|update| Edit {
+                        update,
+                        lock: None,
+                        parent_index: None,
+                        leaf_referent_previous_oid: None,
+                    })
+                    .collect();
+                updates
                     .pre_process(
                         |name| {
                             let symbolic_refs_are_never_packed = None;
@@ -225,7 +230,7 @@ impl<'s> Transaction<'s> {
 
                 if let Some(packed) = self.store.packed()? {
                     let mut edits_for_packed_transaction = Vec::<RefEdit>::new();
-                    for edit in self.updates.iter() {
+                    for edit in updates.iter() {
                         let log_mode = match edit.update.change {
                             Change::Update {
                                 log: LogChange { mode, .. },
@@ -251,7 +256,7 @@ impl<'s> Transaction<'s> {
                     if !edits_for_packed_transaction.is_empty() {
                         self.packed_transaction = Some(
                             packed
-                                .into_transaction(self.lock_fail_mode)
+                                .into_transaction(lock_fail_mode)
                                 .map_err(Error::PackedTransactionAcquire)?
                                 .prepare(edits_for_packed_transaction)?,
                         );
@@ -260,9 +265,9 @@ impl<'s> Transaction<'s> {
                     }
                 }
 
-                for cid in 0..self.updates.len() {
-                    let change = &mut self.updates[cid];
-                    if let Err(err) = Self::lock_ref_and_apply_change(self.store, self.lock_fail_mode, change) {
+                for cid in 0..updates.len() {
+                    let change = &mut updates[cid];
+                    if let Err(err) = Self::lock_ref_and_apply_change(self.store, lock_fail_mode, change) {
                         let err = match err {
                             Error::LockAcquire { err, full_name: _bogus } => Error::LockAcquire {
                                 err,
@@ -270,7 +275,7 @@ impl<'s> Transaction<'s> {
                                     let mut cursor = change.parent_index;
                                     let mut ref_name = change.name();
                                     while let Some(parent_idx) = cursor {
-                                        let parent = &self.updates[parent_idx];
+                                        let parent = &updates[parent_idx];
                                         if parent.parent_index.is_none() {
                                             ref_name = parent.name();
                                         } else {
@@ -292,16 +297,19 @@ impl<'s> Transaction<'s> {
                     {
                         let oid = oid.to_owned();
                         let mut parent_idx_cursor = Some(parent_idx);
-                        while let Some(parent) = parent_idx_cursor.take().map(|idx| &mut self.updates[idx]) {
+                        while let Some(parent) = parent_idx_cursor.take().map(|idx| &mut updates[idx]) {
                             parent_idx_cursor = parent.parent_index;
                             parent.leaf_referent_previous_oid = Some(oid);
                         }
                     }
                 }
-                self.state = State::Prepared;
-                self
+                self.updates = Some(updates);
+                Ok(self)
             }
-        })
+            Some(_) => {
+                panic!("BUG: Must not call prepare(…) multiple times")
+            }
+        }
     }
 
     /// Make all [prepared][Transaction::prepare()] permanent and return the performed edits which represent the current
@@ -321,12 +329,11 @@ impl<'s> Transaction<'s> {
     ///   along with empty parent directories
     ///
     /// Note that transactions will be prepared automatically as needed.
-    pub fn commit(mut self, committer: &git_actor::Signature) -> Result<(Vec<RefEdit>, Option<packed::Buffer>), Error> {
-        match self.state {
-            State::Open => self.prepare()?.commit(committer),
-            State::Prepared => {
+    pub fn commit(self, committer: &git_actor::Signature) -> Result<(Vec<RefEdit>, Option<packed::Buffer>), Error> {
+        match self.updates {
+            Some(mut updates) => {
                 // Perform updates first so live commits remain referenced
-                for change in self.updates.iter_mut() {
+                for change in updates.iter_mut() {
                     assert!(!change.update.deref, "Deref mode is turned into splits and turned off");
                     match &change.update.change {
                         // reflog first, then reference
@@ -379,7 +386,7 @@ impl<'s> Transaction<'s> {
                     }
                 }
 
-                for change in self.updates.iter_mut() {
+                for change in updates.iter_mut() {
                     match &change.update.change {
                         Change::Update { .. } => {}
                         Change::Delete { log: mode, .. } => {
@@ -421,18 +428,11 @@ impl<'s> Transaction<'s> {
                     Some(transaction) => Some(transaction.commit().map_err(Error::PackedTransactionCommit)?.1),
                     None => self.packed,
                 };
-                Ok((self.updates.into_iter().map(|edit| edit.update).collect(), packed))
+                Ok((updates.into_iter().map(|edit| edit.update).collect(), packed))
             }
+            None => panic!("BUG: must call prepare before commit"),
         }
     }
-}
-
-/// The state of a [`Transaction`]
-enum State {
-    /// The transaction was just created but isn't prepared yet.
-    Open,
-    /// The transaction is ready to be committed.
-    Prepared,
 }
 
 /// Edits
@@ -441,26 +441,12 @@ impl file::Store {
     /// A snapshot of packed references will be obtained automatically if needed to fulfill this transaction
     /// and will be provided as result of a successful transaction. Note that upon transaction failure, packed-refs
     /// will never have been altered.
-    pub fn transaction(
-        &self,
-        edits: impl IntoIterator<Item = RefEdit>,
-        lock: git_lock::acquire::Fail,
-    ) -> Transaction<'_> {
+    pub fn transaction(&self) -> Transaction<'_> {
         Transaction {
             store: self,
             packed_transaction: None,
             packed: None,
-            updates: edits
-                .into_iter()
-                .map(|update| Edit {
-                    update,
-                    lock: None,
-                    parent_index: None,
-                    leaf_referent_previous_oid: None,
-                })
-                .collect(),
-            state: State::Open,
-            lock_fail_mode: lock,
+            updates: None,
         }
     }
 }

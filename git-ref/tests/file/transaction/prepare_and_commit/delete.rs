@@ -11,7 +11,8 @@ use std::convert::TryInto;
 fn delete_a_ref_which_is_gone_succeeds() -> crate::Result {
     let (_keep, store) = empty_store()?;
     let edits = store
-        .transaction(
+        .transaction()
+        .prepare(
             Some(RefEdit {
                 change: Change::Delete {
                     previous: None,
@@ -21,7 +22,7 @@ fn delete_a_ref_which_is_gone_succeeds() -> crate::Result {
                 deref: false,
             }),
             Fail::Immediately,
-        )
+        )?
         .commit(&committer())?
         .0;
     assert_eq!(edits.len(), 1);
@@ -31,19 +32,17 @@ fn delete_a_ref_which_is_gone_succeeds() -> crate::Result {
 #[test]
 fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
     let (_keep, store) = empty_store()?;
-    let res = store
-        .transaction(
-            Some(RefEdit {
-                change: Change::Delete {
-                    previous: Some(Target::must_exist()),
-                    log: RefLog::AndReference,
-                },
-                name: "DOES_NOT_EXIST".try_into()?,
-                deref: false,
-            }),
-            Fail::Immediately,
-        )
-        .commit(&committer());
+    let res = store.transaction().prepare(
+        Some(RefEdit {
+            change: Change::Delete {
+                previous: Some(Target::must_exist()),
+                log: RefLog::AndReference,
+            },
+            name: "DOES_NOT_EXIST".try_into()?,
+            deref: false,
+        }),
+        Fail::Immediately,
+    );
     match res {
         Ok(_) => unreachable!("must exist, but it doesn't actually exist"),
         Err(err) => assert_eq!(
@@ -62,7 +61,8 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
     let _main = store.loose_find_existing("main")?;
 
     let edits = store
-        .transaction(
+        .transaction()
+        .prepare(
             Some(RefEdit {
                 change: Change::Delete {
                     previous: Some(Target::must_exist()),
@@ -72,7 +72,7 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
                 deref: false,
             }),
             Fail::Immediately,
-        )
+        )?
         .commit(&committer())?
         .0;
 
@@ -103,19 +103,17 @@ fn delete_ref_with_incorrect_previous_value_fails() -> crate::Result {
     let head = store.loose_find_existing("HEAD")?;
     assert!(head.log_exists(&store));
 
-    let res = store
-        .transaction(
-            Some(RefEdit {
-                change: Change::Delete {
-                    previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
-                    log: RefLog::Only,
-                },
-                name: head.name.clone(),
-                deref: true,
-            }),
-            Fail::Immediately,
-        )
-        .commit(&committer());
+    let res = store.transaction().prepare(
+        Some(RefEdit {
+            change: Change::Delete {
+                previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
+                log: RefLog::Only,
+            },
+            name: head.name.clone(),
+            deref: true,
+        }),
+        Fail::Immediately,
+    );
 
     match res {
         Err(err) => {
@@ -138,7 +136,8 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
     assert!(head.log_exists(&store));
 
     let edits = store
-        .transaction(
+        .transaction()
+        .prepare(
             Some(RefEdit {
                 change: Change::Delete {
                     previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
@@ -148,7 +147,7 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
                 deref: false,
             }),
             Fail::Immediately,
-        )
+        )?
         .commit(&committer())?
         .0;
 
@@ -172,7 +171,8 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
     assert!(head.log_exists(&store));
 
     let edits = store
-        .transaction(
+        .transaction()
+        .prepare(
             Some(RefEdit {
                 change: Change::Delete {
                     previous: Some(Target::must_exist()),
@@ -182,7 +182,7 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
                 deref: true,
             }),
             Fail::Immediately,
-        )
+        )?
         .commit(&committer())?
         .0;
 
@@ -206,19 +206,17 @@ fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() -> crate::Res
     std::fs::write(store.base.join("HEAD"), &b"broken")?;
     assert!(store.loose_find("HEAD").is_err(), "the ref is truly broken");
 
-    let res = store
-        .transaction(
-            Some(RefEdit {
-                change: Change::Delete {
-                    previous: Some(Target::must_exist()),
-                    log: RefLog::AndReference,
-                },
-                name: "HEAD".try_into()?,
-                deref: true,
-            }),
-            Fail::Immediately,
-        )
-        .commit(&committer());
+    let res = store.transaction().prepare(
+        Some(RefEdit {
+            change: Change::Delete {
+                previous: Some(Target::must_exist()),
+                log: RefLog::AndReference,
+            },
+            name: "HEAD".try_into()?,
+            deref: true,
+        }),
+        Fail::Immediately,
+    );
     match res {
         Err(err) => {
             assert_eq!(
@@ -239,7 +237,8 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Res
     assert!(store.loose_find("HEAD").is_err(), "the ref is truly broken");
 
     let edits = store
-        .transaction(
+        .transaction()
+        .prepare(
             Some(RefEdit {
                 change: Change::Delete {
                     previous: None,
@@ -249,7 +248,7 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Res
                 deref: true,
             }),
             Fail::Immediately,
-        )
+        )?
         .commit(&committer())?
         .0;
 
@@ -275,7 +274,8 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
         store.write_reflog = *reflog_writemode;
         assert!(store.loose_find_existing("HEAD")?.log_exists(&store));
         let edits = store
-            .transaction(
+            .transaction()
+            .prepare(
                 Some(RefEdit {
                     change: Change::Delete {
                         previous: None,
@@ -285,7 +285,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
                     deref: false,
                 }),
                 Fail::Immediately,
-            )
+            )?
             .commit(&committer())?
             .0;
         assert_eq!(edits.len(), 1);
