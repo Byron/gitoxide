@@ -45,7 +45,7 @@ mod reference_with_equally_named {
                         deref: false,
                     }),
                     Fail::Immediately,
-                )?
+                )
                 .commit(&committer());
             if *is_empty {
                 let edits = edits?.0;
@@ -90,7 +90,7 @@ fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
                 .clone(),
             ),
             Fail::Immediately,
-        )?
+        )
         .commit(&committer());
 
     match res {
@@ -126,7 +126,7 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
                 .clone(),
             ),
             Fail::Immediately,
-        )?
+        )
         .commit(&committer());
     match res {
         Err(transaction::Error::ReferenceOutOfDate { full_name, actual, .. }) => {
@@ -159,7 +159,7 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
                 .clone(),
             ),
             Fail::Immediately,
-        )?
+        )
         .commit(&committer());
     match res {
         Err(transaction::Error::MustNotExist { full_name, actual, .. }) => {
@@ -193,7 +193,7 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the
                 .clone(),
             ),
             Fail::Immediately,
-        )?
+        )
         .commit(&committer())?
         .0;
 
@@ -233,7 +233,7 @@ fn cancellation_after_preparation_leaves_no_change() -> crate::Result {
             deref: false,
         }),
         Fail::Immediately,
-    )?;
+    );
 
     assert_eq!(
         std::fs::read_dir(dir.path())?.count(),
@@ -274,7 +274,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     deref: false,
                 }),
                 Fail::Immediately,
-            )?
+            )
             .commit(&committer())?
             .0;
         assert_eq!(
@@ -322,7 +322,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     deref: true,
                 }),
                 Fail::Immediately,
-            )?
+            )
             .commit(&committer())?
             .0;
 
@@ -419,7 +419,7 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
                 deref: false,
             }),
             Fail::Immediately,
-        )?
+        )
         .commit(&committer())?
         .0;
 

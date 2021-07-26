@@ -1,7 +1,7 @@
 use crate::{
     mutable::Target,
     store::{file, file::loose, packed},
-    transaction::{Change, Create, RefEdit, RefEditsExt, RefLog},
+    transaction::{Change, Create, LogChange, RefEdit, RefEditsExt, RefLog},
 };
 use bstr::BString;
 use git_hash::ObjectId;
@@ -223,6 +223,34 @@ impl<'s> Transaction<'s> {
                     )
                     .map_err(Error::PreprocessingFailed)?;
 
+                // let mut needs_packed_transaction = false;
+                for edit in self.updates.iter() {
+                    let log_mode = match edit.update.change {
+                        Change::Update {
+                            log: LogChange { mode, .. },
+                            ..
+                        } => mode,
+                        Change::Delete { log, .. } => log,
+                    };
+                    if log_mode == RefLog::Only {
+                        continue;
+                    }
+                    match edit.update.change {
+                        Change::Delete { previous: None, .. } => {
+                            if self.packed.is_none() {
+                                self.packed = store.packed()?;
+                            }
+                            // TODO: check if ref for deletion is actually present in pack, if so put it onto a transaction
+                            continue;
+                        }
+                        Change::Update {
+                            mode: Create::OrUpdate { previous: None },
+                            ..
+                        } => continue,
+                        _ => {}
+                    }
+                }
+
                 for cid in 0..self.updates.len() {
                     let change = &mut self.updates[cid];
                     if let Err(err) =
@@ -406,8 +434,8 @@ impl file::Store {
         &self,
         edits: impl IntoIterator<Item = RefEdit>,
         lock: git_lock::acquire::Fail,
-    ) -> Result<Transaction<'_>, packed::buffer::open::Error> {
-        Ok(Transaction {
+    ) -> Transaction<'_> {
+        Transaction {
             store: self,
             packed: None,
             updates: edits
@@ -421,12 +449,15 @@ impl file::Store {
                 .collect(),
             state: State::Open,
             lock_fail_mode: lock,
-        })
+        }
     }
 }
 
 mod error {
-    use crate::{mutable::Target, store::file};
+    use crate::{
+        mutable::Target,
+        store::{file, packed},
+    };
     use bstr::BString;
     use quick_error::quick_error;
 
@@ -435,6 +466,11 @@ mod error {
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {
+            Packed(err: packed::buffer::open::Error) {
+                display("The packed ref buffer could not be loaded")
+                from()
+                source(err)
+            }
             PreprocessingFailed(err: std::io::Error) {
                 display("Edit preprocessing failed with error: {}", err.to_string())
                 source(err)

@@ -311,7 +311,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
     * [x] ref validation
     * [x] find single ref by name
     * [ ] special handling of `FETCH_HEAD` and `MERGE_HEAD`
-    * [ ] iterate refs with optional prefix
+    * [x] iterate refs with optional prefix
     * [ ] [worktree support]
     * ~~symbolic ref support, using symbolic links~~
         * This is a legacy feature which is not in use anymore.
@@ -320,7 +320,8 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
       * [x] set any valid ref value (not just object ids)
       * [x] reflog changes can be entirely disabled (i.e. for bare repos)
       * [ ] rename or copy references
-      * [ ] transparent handling of packed-refs
+      * [ ] transparent handling of packed-refs during deletion
+          * [ ] a way to disable the above to allow pruning loose refs
       * [ ] initial transaction optimization (a faster way to create clones with a lot of refs)
     * **log**
       * [x] forward iteration
@@ -329,8 +330,11 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
     * **ref**
       * [x] peel to id
     * **packed**
-      * [ ] find single ref by name
-      * [x] iterate
+      * [x] find single ref by name
+      * [x] iterate refs with optional prefix
+      * **transactions**
+        * [ ] delete
+        * [ ] create or udpate
   * [ ] **[reftable][reftable-spec]**, 
     * see [here for a Go/C implementation][reftable-impl]
 * [x] API documentation
