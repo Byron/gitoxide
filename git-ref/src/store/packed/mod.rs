@@ -25,10 +25,10 @@ pub struct Buffer {
 /// A transaction for editing packed references
 pub struct Transaction {
     /// Probably soon private and returned as part of a commit
-    pub buffer: Buffer,
-    edits: Vec<RefEdit>,
-    #[allow(dead_code)]
-    lock: git_lock::File,
+    buffer: Buffer,
+    edits: Option<Vec<RefEdit>>,
+    lock: Option<git_lock::File>,
+    closed_lock: Option<git_lock::Marker>,
 }
 
 /// A reference as parsed from the `packed-refs` file

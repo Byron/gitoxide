@@ -12,27 +12,50 @@ impl packed::Transaction {
     }
 
     /// Prepare the transaction by checking all edits for applicability.
-    pub fn prepare(mut self) -> Result<Self, prepare::Error> {
-        // Remove all edits which are deletions that aren't here in the first place
-        let buffer = &self.buffer;
-        self.edits.retain(|edit| {
-            if let Change::Delete { .. } = edit.change {
-                buffer.find_existing(edit.name.borrow()).is_ok()
-            } else {
-                true
+    pub fn prepare(mut self, edits: impl IntoIterator<Item = RefEdit>) -> Result<Self, prepare::Error> {
+        match self.edits {
+            None => {
+                let mut edits: Vec<_> = edits.into_iter().collect();
+                // Remove all edits which are deletions that aren't here in the first place
+                let buffer = &self.buffer;
+                edits.retain(|edit| {
+                    if let Change::Delete { .. } = edit.change {
+                        buffer.find_existing(edit.name.borrow()).is_ok()
+                    } else {
+                        true
+                    }
+                });
+                if edits.is_empty() {
+                    self.closed_lock = self
+                        .lock
+                        .take()
+                        .map(|l| l.close())
+                        .transpose()
+                        .map_err(prepare::Error::CloseLock)?;
+                } else {
+                    // TODO: check preconditions and requirements to some extend,
+                }
+                self.edits = Some(edits);
             }
-        });
-        // TODO: check preconditions and requirements to some extend,
+            Some(_) => {
+                panic!("BUG: cannot call prepare(…) more than once")
+            }
+        }
         Ok(self)
     }
 
     /// Commit the prepare transaction
     pub fn commit(self) -> Result<(Vec<RefEdit>, packed::Buffer), git_lock::commit::Error<git_lock::File>> {
-        // TODO: change transaction layout to allow detection of prepare/commit state
-        if self.edits.is_empty() {
-            Ok((self.edits, self.buffer))
-        } else {
-            todo!("actual packed ref commit")
+        match self.edits {
+            Some(edits) => {
+                if edits.is_empty() {
+                    Ok((edits, self.buffer))
+                } else {
+                    let _file = self.lock.expect("a write lock for applying changes");
+                    todo!("actual packed ref commit")
+                }
+            }
+            None => panic!("BUG: cannot call commit() before prepare(…)"),
         }
     }
 }
@@ -41,14 +64,14 @@ impl packed::Buffer {
     /// Convert this buffer to be used as the basis for a transaction.
     pub fn into_transaction(
         self,
-        edits: impl IntoIterator<Item = RefEdit>,
         lock_mode: git_lock::acquire::Fail,
     ) -> Result<packed::Transaction, git_lock::acquire::Error> {
         let lock = git_lock::File::acquire_to_update_resource(&self.path, lock_mode, None)?;
         Ok(packed::Transaction {
             buffer: self,
-            lock,
-            edits: edits.into_iter().collect(),
+            lock: Some(lock),
+            closed_lock: None,
+            edits: None,
         })
     }
 }
@@ -59,7 +82,10 @@ pub mod prepare {
     quick_error! {
         #[derive(Debug)]
         pub enum Error {
-            TBD
+            CloseLock(err: std::io::Error) {
+                display("Could not close a lock which won't ever be committed")
+                source(err)
+            }
         }
     }
 }

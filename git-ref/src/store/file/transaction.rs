@@ -251,9 +251,9 @@ impl<'s> Transaction<'s> {
                     if !edits_for_packed_transaction.is_empty() {
                         self.packed_transaction = Some(
                             packed
-                                .into_transaction(edits_for_packed_transaction, self.lock_fail_mode)
+                                .into_transaction(self.lock_fail_mode)
                                 .map_err(Error::PackedTransactionAcquire)?
-                                .prepare()?,
+                                .prepare(edits_for_packed_transaction)?,
                         );
                     } else {
                         self.packed = Some(packed);
@@ -417,10 +417,11 @@ impl<'s> Transaction<'s> {
                         }
                     }
                 }
-                Ok((
-                    self.updates.into_iter().map(|edit| edit.update).collect(),
-                    self.packed_transaction.map(|t| t.buffer),
-                ))
+                let packed = match self.packed_transaction {
+                    Some(transaction) => Some(transaction.commit().map_err(Error::PackedTransactionCommit)?.1),
+                    None => self.packed,
+                };
+                Ok((self.updates.into_iter().map(|edit| edit.update).collect(), packed))
             }
         }
     }
@@ -484,6 +485,10 @@ mod error {
             }
             PackedTransactionAcquire(err: git_lock::acquire::Error) {
                 display("The lock for the packed-ref file could not be obtained")
+                source(err)
+            }
+            PackedTransactionCommit(err: git_lock::commit::Error<git_lock::File>) {
+                display("The packed-ref transaction could not be committed")
                 source(err)
             }
             PackedTransactionPrepare(err: packed::transaction::prepare::Error) {
