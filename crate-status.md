@@ -38,7 +38,7 @@
             * [x] `Read` to `Iterator` of entries
                 * _read as is, verify hash, and restore partial packs_
         * [x] create index from pack alone (_much faster than git_)
-            * [ ] resolve 'thin' packs
+            * [x] resolve 'thin' packs
     * **encode**
         * [x] Add support for zlib-ng for 2.5x _compression_ performance
         * [x] objects to entries iterator
@@ -46,7 +46,7 @@
             * [ ] pack only changed objects as derived from input
             * [x] base object compression
             * [ ] delta compression
-                * [ ] create 'thin' pack, i.e. deltas that are based on objects the other side has.
+            * [x] create 'thin' pack, i.e. deltas that are based on objects the other side has.
             * [x] parallel implementation that scales perfectly
         * [x] entries to pack data iterator
     * [x] **verify** pack with statistics

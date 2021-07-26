@@ -56,6 +56,7 @@ impl<'a> Transaction<'a> {
         );
 
         let relative_path = change.update.name.to_path();
+        // todo: why not use find() here, incorporate packed-refs as well.
         let existing_ref = store
             .ref_contents(relative_path.as_ref())
             .map_err(Error::from)
@@ -198,9 +199,13 @@ impl<'a> Transaction<'a> {
                 let store = self.store;
                 self.updates
                     .pre_process(
-                        // TODO: figure out how to best pass packed::Buffer here.
-                        // I think we should have our own as it might need changes and needs a lock, too.
-                        |name| store.find_existing(name, None).map(|r| r.into_target()).ok(),
+                        |name| {
+                            let symbolic_refs_are_never_packed = None;
+                            store
+                                .find_existing(name, symbolic_refs_are_never_packed)
+                                .map(|r| r.into_target())
+                                .ok()
+                        },
                         |idx, update| Edit {
                             update,
                             lock: None,
