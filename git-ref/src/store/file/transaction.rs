@@ -48,6 +48,7 @@ impl<'s> Transaction<'s> {
     fn lock_ref_and_apply_change(
         store: &file::Store,
         lock_fail_mode: git_lock::acquire::Fail,
+        packed: Option<&packed::Buffer>,
         change: &mut Edit,
     ) -> Result<(), Error> {
         assert!(
@@ -72,6 +73,20 @@ impl<'s> Transaction<'s> {
             .or_else(|err| match err {
                 Error::ReferenceDecode(_) => Ok(None),
                 other => Err(other),
+            })
+            .and_then(|maybe_loose| {
+                if maybe_loose.is_none() {
+                    if let Some(packed) = packed {
+                        packed
+                            .find(change.update.name.borrow())
+                            .map(|opt| opt.map(file::Reference::Packed))
+                            .map_err(Error::from)
+                    } else {
+                        Ok(None)
+                    }
+                } else {
+                    Ok(maybe_loose)
+                }
             });
         let lock = match &mut change.update.change {
             Change::Delete { previous, .. } => {
@@ -267,7 +282,15 @@ impl<'s> Transaction<'s> {
 
                 for cid in 0..updates.len() {
                     let change = &mut updates[cid];
-                    if let Err(err) = Self::lock_ref_and_apply_change(self.store, lock_fail_mode, change) {
+                    if let Err(err) = Self::lock_ref_and_apply_change(
+                        self.store,
+                        lock_fail_mode,
+                        self.packed_transaction
+                            .as_ref()
+                            .map(|t| t.buffer())
+                            .or_else(|| self.packed.as_ref()),
+                        change,
+                    ) {
                         let err = match err {
                             Error::LockAcquire { err, full_name: _bogus } => Error::LockAcquire {
                                 err,
@@ -481,6 +504,11 @@ mod error {
                 display("The packed transaction could not be prepared")
                 from()
                 source(err)
+            }
+            PackedFind(err: packed::find::Error) {
+                display("The packed ref file could not be parsed")
+                source(err)
+                from()
             }
             PreprocessingFailed(err: std::io::Error) {
                 display("Edit preprocessing failed with error: {}", err.to_string())
