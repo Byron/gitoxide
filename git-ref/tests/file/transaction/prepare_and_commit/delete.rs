@@ -5,6 +5,7 @@ use git_ref::{
     mutable::Target,
     transaction::{Change, RefEdit, RefLog},
 };
+use git_testtools::hex_to_id;
 use std::convert::TryInto;
 
 #[test]
@@ -295,4 +296,37 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
         );
     }
     Ok(())
+}
+
+#[test]
+#[ignore]
+fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_deleted_and_are_deleted_from_packed_ref_file()
+{
+    let (_keep, store) = store_writable("make_packed_ref_repository.sh").unwrap();
+    assert!(
+        store.loose_find("main").unwrap().is_none(),
+        "no loose main available, it's packed"
+    );
+
+    let old_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+    let (edits, packed) = store
+        .transaction()
+        .prepare(
+            Some(RefEdit {
+                change: Change::Delete {
+                    previous: Some(Target::Peeled(old_id)),
+                    log: RefLog::AndReference,
+                },
+                name: "refs/heads/main".try_into().unwrap(),
+                deref: false,
+            }),
+            git_lock::acquire::Fail::Immediately,
+        )
+        .unwrap()
+        .commit(&committer())
+        .unwrap();
+
+    assert_eq!(edits.len(), 1, "an edit was performed in the packed refs store");
+    let packed = packed.expect("packed ref present");
+    assert!(packed.find("main").unwrap().is_none(), "no main present after deletion");
 }
