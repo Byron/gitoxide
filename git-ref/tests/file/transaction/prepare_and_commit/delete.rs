@@ -299,6 +299,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
 }
 
 #[test]
+#[ignore]
 fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_deleted_and_are_deleted_from_packed_ref_file()
 {
     let (_keep, store) = store_writable("make_packed_ref_repository.sh").unwrap();

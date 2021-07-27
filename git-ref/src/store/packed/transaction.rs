@@ -6,6 +6,7 @@ use crate::{
     store::packed,
     transaction::{Change, RefEdit},
 };
+use std::io::Write;
 
 /// Access and instantiation
 impl packed::Transaction {
@@ -109,27 +110,54 @@ impl packed::Transaction {
     /// Commit the prepare transaction
     pub fn commit(self) -> Result<(Vec<RefEdit>, Option<packed::Buffer>), commit::Error> {
         match self.edits {
-            Some(edits) => {
+            Some(mut edits) => {
                 if edits.is_empty() {
                     Ok((edits, self.buffer))
                 } else {
-                    let _file = self.lock.expect("a write lock for applying changes");
-                    let mut refs_sorted = match self.buffer.as_ref() {
-                        Some(buffer) => buffer
-                            .iter()?
-                            .map(|res| res.map(|r| packed::mutable::Reference::from(r)))
-                            .collect::<Result<Vec<_>, _>>()?,
-                        None => Vec::new(),
-                    };
-                    for edit in edits.iter() {
-                        match edit.change {
-                            Change::Update { .. } => {
-                                todo!("packed update")
+                    let mut file = self.lock.expect("a write lock for applying changes");
+                    let refs_sorted: Box<dyn Iterator<Item = Result<packed::Reference<'_>, packed::iter::Error>>> =
+                        match self.buffer.as_ref() {
+                            Some(buffer) => Box::new(buffer.iter()?),
+                            None => Box::new(std::iter::empty()),
+                        };
+
+                    let mut refs_sorted = refs_sorted.peekable();
+
+                    edits.sort_by(|l, r| l.name.as_bstr().cmp(r.name.as_bstr()));
+                    let mut peekable_sorted_edits = edits.iter().peekable();
+
+                    let header_line = b"# pack-refs with: peeled fully-peeled sorted \n";
+                    file.with_mut(|f| f.write_all(header_line))?;
+
+                    let _num_written_lines = 0;
+                    loop {
+                        if let Some(Err(err)) = refs_sorted.next_if(|res| res.is_err()) {
+                            return Err(commit::Error::Iteration(err));
+                        }
+                        match (refs_sorted.peek(), peekable_sorted_edits.peek()) {
+                            (Some(Err(_)), _) => unreachable!("we abort on the first iterator error"),
+                            (None, None) => break,
+                            (Some(Ok(_)), None) => {
+                                let _exr = refs_sorted.next().expect("next").expect("no err");
+                                todo!("write ref right away, but also write header if necessary")
                             }
-                            Change::Delete { .. } => {}
+                            (Some(Ok(_)), Some(_edit)) => {
+                                todo!("compare both, advance whichever necessary and make edits live")
+                            }
+                            (None, Some(_)) => {
+                                let _edit = peekable_sorted_edits.next().expect("next");
+                                todo!("single edit application without packed-ref match")
+                            }
                         }
                     }
-                    todo!("actual packed ref commit")
+
+                    if _num_written_lines == 0 {
+                        todo!("delete packed refs file, don't commit lock")
+                    } else {
+                        file.commit()?;
+                        drop(refs_sorted);
+                        Ok((edits, self.buffer))
+                    }
                 }
             }
             None => panic!("BUG: cannot call commit() before prepare(…)"),
@@ -186,6 +214,11 @@ pub mod commit {
             }
             Iteration(err: packed::iter::Error) {
                 display("Some references in the packed refs buffer could not be parsed")
+                from()
+                source(err)
+            }
+            Io(err: std::io::Error) {
+                display("Failed to write a ref line to the packed ref file")
                 from()
                 source(err)
             }
