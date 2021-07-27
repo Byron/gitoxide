@@ -40,7 +40,6 @@ impl std::borrow::BorrowMut<RefEdit> for Edit {
 pub struct Transaction<'s> {
     store: &'s file::Store,
     packed_transaction: Option<packed::Transaction>,
-    packed: Option<packed::Buffer>,
     updates: Option<Vec<Edit>>,
 }
 
@@ -236,8 +235,9 @@ impl<'s> Transaction<'s> {
                     )
                     .map_err(Error::PreprocessingFailed)?;
 
-                if let Some(packed) = self.store.packed()? {
+                if self.store.packed_refs_path().is_file() {
                     let mut edits_for_packed_transaction = Vec::<RefEdit>::new();
+                    let mut needs_packed_refs_lookups = false;
                     for edit in updates.iter() {
                         let log_mode = match edit.update.change {
                             Change::Update {
@@ -257,19 +257,23 @@ impl<'s> Transaction<'s> {
                             Change::Delete { .. } => {
                                 edits_for_packed_transaction.push(edit.update.clone());
                             }
-                            _ => {}
+                            _ => {
+                                needs_packed_refs_lookups = true;
+                            }
                         }
                     }
 
-                    if !edits_for_packed_transaction.is_empty() {
-                        self.packed_transaction = Some(
-                            packed
-                                .into_transaction(lock_fail_mode)
-                                .map_err(Error::PackedTransactionAcquire)?
-                                .prepare(edits_for_packed_transaction)?,
-                        );
-                    } else {
-                        self.packed = Some(packed);
+                    // We create a transaction even for empty packed edits to assure nobody else can change
+                    // it while we perform checks against previous values.
+                    if !edits_for_packed_transaction.is_empty() || needs_packed_refs_lookups {
+                        if let Some(packed) = self.store.packed()? {
+                            self.packed_transaction = Some(
+                                packed
+                                    .into_transaction(lock_fail_mode)
+                                    .map_err(Error::PackedTransactionAcquire)?
+                                    .prepare(edits_for_packed_transaction)?,
+                            );
+                        }
                     }
                 }
 
@@ -278,10 +282,7 @@ impl<'s> Transaction<'s> {
                     if let Err(err) = Self::lock_ref_and_apply_change(
                         self.store,
                         lock_fail_mode,
-                        self.packed_transaction
-                            .as_ref()
-                            .map(|t| t.buffer())
-                            .or_else(|| self.packed.as_ref()),
+                        self.packed_transaction.as_ref().map(|t| t.buffer()),
                         change,
                     ) {
                         let err = match err {
@@ -440,10 +441,10 @@ impl<'s> Transaction<'s> {
                         }
                     }
                 }
-                let packed = match self.packed_transaction {
-                    Some(transaction) => Some(transaction.commit().map_err(Error::PackedTransactionCommit)?.1),
-                    None => self.packed,
-                };
+                let packed = self
+                    .packed_transaction
+                    .map(|t| t.commit().map(|r| r.1).map_err(Error::PackedTransactionCommit))
+                    .transpose()?;
                 Ok((updates.into_iter().map(|edit| edit.update).collect(), packed))
             }
             None => panic!("BUG: must call prepare before commit"),
@@ -461,7 +462,6 @@ impl file::Store {
         Transaction {
             store: self,
             packed_transaction: None,
-            packed: None,
             updates: None,
         }
     }
