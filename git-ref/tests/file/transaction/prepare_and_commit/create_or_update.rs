@@ -457,3 +457,59 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
     );
     Ok(())
 }
+
+mod packed {
+    use crate::file::{store_writable, transaction::prepare_and_commit::committer};
+    use git_ref::{
+        mutable::Target,
+        transaction::{Change, Create, LogChange, RefEdit, RefLog},
+    };
+    use git_testtools::hex_to_id;
+    use std::convert::TryInto;
+
+    #[test]
+    fn packed_refs_are_looked_up_when_checking_existing_values() {
+        let (_keep, store) = store_writable("make_packed_ref_repository.sh").unwrap();
+        assert!(
+            store.loose_find("main").unwrap().is_none(),
+            "no loose main available, it's packed"
+        );
+        let new_id = hex_to_id("0000000000000000000000000000000000000001");
+        let old_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+        let (_edits, packed) = store
+            .transaction()
+            .prepare(
+                Some(RefEdit {
+                    change: Change::Update {
+                        log: LogChange {
+                            mode: RefLog::AndReference,
+                            force_create_reflog: false,
+                            message: "for pack".into(),
+                        },
+                        mode: Create::OrUpdate {
+                            previous: Some(Target::Peeled(old_id)),
+                        },
+                        new: Target::Peeled(new_id),
+                    },
+                    name: "refs/heads/main".try_into().unwrap(),
+                    deref: false,
+                }),
+                git_lock::acquire::Fail::Immediately,
+            )
+            .unwrap()
+            .commit(&committer())
+            .unwrap();
+
+        let packed = packed.expect("packed refs is available");
+        assert_eq!(
+            packed.find_existing("main").unwrap().target(),
+            old_id,
+            "packed refs aren't rewritten, the change goes into the loose ref instead which shadows packed refs of same name"
+        );
+        assert_eq!(
+            store.loose_find_existing("main").unwrap().target.as_id(),
+            Some(new_id.as_ref()),
+            "the new id was written to the loose ref"
+        );
+    }
+}
