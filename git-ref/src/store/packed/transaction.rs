@@ -107,11 +107,11 @@ impl packed::Transaction {
     }
 
     /// Commit the prepare transaction
-    pub fn commit(self) -> Result<(Vec<RefEdit>, Option<packed::Buffer>), commit::Error> {
+    pub fn commit(self) -> Result<Vec<RefEdit>, commit::Error> {
         match self.edits {
             Some(mut edits) => {
                 if edits.is_empty() {
-                    Ok((edits, self.buffer))
+                    Ok(edits)
                 } else {
                     let mut file = self.lock.expect("a write lock for applying changes");
                     let refs_sorted: Box<dyn Iterator<Item = Result<packed::Reference<'_>, packed::iter::Error>>> =
@@ -174,7 +174,7 @@ impl packed::Transaction {
                     } else {
                         file.commit()?;
                         drop(refs_sorted);
-                        Ok((edits, self.buffer))
+                        Ok(edits)
                     }
                 }
             }

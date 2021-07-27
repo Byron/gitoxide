@@ -347,7 +347,7 @@ impl<'s> Transaction<'s> {
     ///   along with empty parent directories
     ///
     /// Note that transactions will be prepared automatically as needed.
-    pub fn commit(self, committer: &git_actor::Signature) -> Result<(Vec<RefEdit>, Option<packed::Buffer>), Error> {
+    pub fn commit(self, committer: &git_actor::Signature) -> Result<Vec<RefEdit>, Error> {
         match self.updates {
             Some(mut updates) => {
                 // Perform updates first so live commits remain referenced
@@ -430,11 +430,9 @@ impl<'s> Transaction<'s> {
                     }
                 }
 
-                let packed = self
-                    .packed_transaction
-                    .map(|t| t.commit().map(|r| r.1).map_err(Error::PackedTransactionCommit))
-                    .transpose()?
-                    .flatten();
+                if let Some(t) = self.packed_transaction {
+                    t.commit().map_err(Error::PackedTransactionCommit)?;
+                }
 
                 for change in updates.iter_mut() {
                     match &change.update.change {
@@ -456,7 +454,7 @@ impl<'s> Transaction<'s> {
                         }
                     }
                 }
-                Ok((updates.into_iter().map(|edit| edit.update).collect(), packed))
+                Ok(updates.into_iter().map(|edit| edit.update).collect())
             }
             None => panic!("BUG: must call prepare before commit"),
         }

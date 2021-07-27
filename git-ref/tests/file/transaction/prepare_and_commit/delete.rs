@@ -24,8 +24,7 @@ fn delete_a_ref_which_is_gone_succeeds() -> crate::Result {
             }),
             Fail::Immediately,
         )?
-        .commit(&committer())?
-        .0;
+        .commit(&committer())?;
     assert_eq!(edits.len(), 1);
     Ok(())
 }
@@ -74,8 +73,7 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
             }),
             Fail::Immediately,
         )?
-        .commit(&committer())?
-        .0;
+        .commit(&committer())?;
 
     assert_eq!(
         edits,
@@ -149,8 +147,7 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
             }),
             Fail::Immediately,
         )?
-        .commit(&committer())?
-        .0;
+        .commit(&committer())?;
 
     assert_eq!(edits.len(), 1);
     let head = store.loose_find_existing("HEAD")?;
@@ -184,8 +181,7 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
             }),
             Fail::Immediately,
         )?
-        .commit(&committer())?
-        .0;
+        .commit(&committer())?;
 
     assert_eq!(edits.len(), 2);
     let head = store.loose_find_existing("HEAD")?;
@@ -250,8 +246,7 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Res
             }),
             Fail::Immediately,
         )?
-        .commit(&committer())?
-        .0;
+        .commit(&committer())?;
 
     assert!(store.loose_find("HEAD")?.is_none(), "the ref was deleted");
     assert_eq!(
@@ -287,8 +282,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
                 }),
                 Fail::Immediately,
             )?
-            .commit(&committer())?
-            .0;
+            .commit(&committer())?;
         assert_eq!(edits.len(), 1);
         assert!(
             !store.loose_find_existing("HEAD")?.log_exists(&store),
@@ -313,7 +307,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
     );
 
     let old_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-    let (edits, packed) = store
+    let edits = store
         .transaction()
         .prepare(
             Some(RefEdit {
@@ -331,7 +325,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
         .unwrap();
 
     assert_eq!(edits.len(), 1, "an edit was performed in the packed refs store");
-    let packed = packed.expect("packed ref present");
+    let packed = store.packed().unwrap().expect("packed ref present");
     assert!(packed.find("main").unwrap().is_none(), "no main present after deletion");
 }
 

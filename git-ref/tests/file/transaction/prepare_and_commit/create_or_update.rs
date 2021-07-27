@@ -49,7 +49,7 @@ mod reference_with_equally_named {
                 )?
                 .commit(&committer());
             if *is_empty {
-                let edits = edits?.0;
+                let edits = edits?;
                 assert!(
                     store.loose_find(edits[0].name.to_partial())?.is_some(),
                     "HEAD was created despite a directory being in the way"
@@ -190,8 +190,7 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the
             ),
             Fail::Immediately,
         )?
-        .commit(&committer())?
-        .0;
+        .commit(&committer())?;
 
     assert_eq!(
         edits,
@@ -272,8 +271,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                 }),
                 Fail::Immediately,
             )?
-            .commit(&committer())?
-            .0;
+            .commit(&committer())?;
         assert_eq!(
             edits,
             vec![RefEdit {
@@ -321,8 +319,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                 }),
                 Fail::Immediately,
             )?
-            .commit(&committer())?
-            .0;
+            .commit(&committer())?;
 
         assert_eq!(
             edits,
@@ -419,8 +416,7 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
             }),
             Fail::Immediately,
         )?
-        .commit(&committer())?
-        .0;
+        .commit(&committer())?;
 
     assert_eq!(edits.len(), 1, "HEAD wasn't update");
     assert_eq!(
@@ -467,7 +463,7 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
     );
     let new_id = hex_to_id("0000000000000000000000000000000000000001");
     let old_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-    let (edits, packed) = store
+    let edits = store
         .transaction()
         .prepare(
             Some(RefEdit {
@@ -491,7 +487,7 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
 
     assert_eq!(edits.len(), 1, "only one edit was performed in the loose refs store");
 
-    let packed = packed.expect("packed refs is available");
+    let packed = store.packed().unwrap().expect("packed refs is available");
     assert_eq!(
             packed.find_existing("main")?.target(),
             old_id,
