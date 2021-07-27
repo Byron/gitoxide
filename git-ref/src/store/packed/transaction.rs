@@ -1,10 +1,9 @@
 #![allow(missing_docs)]
 
-use crate::mutable::Target;
-use crate::transaction::RefEditsExt;
 use crate::{
+    mutable::Target,
     store::packed,
-    transaction::{Change, RefEdit},
+    transaction::{Change, RefEdit, RefEditsExt},
 };
 use std::io::Write;
 
@@ -129,29 +128,48 @@ impl packed::Transaction {
                     let header_line = b"# pack-refs with: peeled fully-peeled sorted \n";
                     file.with_mut(|f| f.write_all(header_line))?;
 
-                    let _num_written_lines = 0;
+                    let mut num_written_lines = 0;
                     loop {
-                        if let Some(Err(err)) = refs_sorted.next_if(|res| res.is_err()) {
-                            return Err(commit::Error::Iteration(err));
-                        }
+                        // TODO: a way to resolve/peel target objects
+                        num_written_lines += 1;
                         match (refs_sorted.peek(), peekable_sorted_edits.peek()) {
-                            (Some(Err(_)), _) => unreachable!("we abort on the first iterator error"),
-                            (None, None) => break,
-                            (Some(Ok(_)), None) => {
-                                let _exr = refs_sorted.next().expect("next").expect("no err");
-                                todo!("write ref right away, but also write header if necessary")
+                            (Some(Err(_)), _) => {
+                                let err = refs_sorted.next().expect("next").expect_err("err");
+                                return Err(commit::Error::Iteration(err));
                             }
-                            (Some(Ok(_)), Some(_edit)) => {
-                                todo!("compare both, advance whichever necessary and make edits live")
+                            (None, None) => {
+                                num_written_lines -= 1;
+                                break;
+                            }
+                            (Some(Ok(_)), None) => {
+                                let pref = refs_sorted.next().expect("next").expect("no err");
+                                write_packed_ref(&mut file, pref)?;
+                            }
+                            (Some(Ok(pref)), Some(edit)) => {
+                                use std::cmp::Ordering::*;
+                                match pref.name.as_bstr().cmp(edit.name.as_bstr()) {
+                                    Less => {
+                                        let pref = refs_sorted.next().expect("next").expect("valid");
+                                        write_packed_ref(&mut file, pref)?;
+                                    }
+                                    Greater => {
+                                        let edit = peekable_sorted_edits.next().expect("next");
+                                        write_edit(&mut file, edit)?;
+                                    }
+                                    Equal => {
+                                        let _pref = refs_sorted.next().expect("next").expect("valid");
+                                        let edit = peekable_sorted_edits.next().expect("next");
+                                        write_edit(&mut file, edit)?;
+                                    }
+                                }
                             }
                             (None, Some(_)) => {
-                                let _edit = peekable_sorted_edits.next().expect("next");
-                                todo!("single edit application without packed-ref match")
+                                write_edit(&mut file, peekable_sorted_edits.next().expect("next"))?;
                             }
                         }
                     }
 
-                    if _num_written_lines == 0 {
+                    if num_written_lines == 0 {
                         todo!("delete packed refs file, don't commit lock")
                     } else {
                         file.commit()?;
@@ -163,6 +181,38 @@ impl packed::Transaction {
             None => panic!("BUG: cannot call commit() before prepare(…)"),
         }
     }
+}
+
+fn write_packed_ref(file: &mut git_lock::File, pref: packed::Reference<'_>) -> std::io::Result<()> {
+    file.with_mut(|out| {
+        write!(out, "{} ", pref.target)?;
+        out.write_all(pref.name.as_bstr())?;
+        out.write_all(b"\n")?;
+        if let Some(object) = pref.object {
+            writeln!(out, "^{}\n", object)?;
+        }
+        Ok(())
+    })
+}
+
+fn write_edit(file: &mut git_lock::File, edit: &RefEdit) -> std::io::Result<()> {
+    match edit.change {
+        Change::Delete { .. } => {}
+        Change::Update {
+            new: Target::Peeled(target_oid),
+            ..
+        } => file.with_mut(|out| {
+            write!(out, "{} ", target_oid)?;
+            out.write_all(edit.name.as_bstr())?;
+            out.write_all(b"\n")
+            // TODO: write peeled
+        })?,
+        Change::Update {
+            new: Target::Symbolic(_),
+            ..
+        } => unreachable!("BUG: packed refs cannot contain symbolic refs, catch that in prepare(…)"),
+    }
+    Ok(())
 }
 
 impl packed::Buffer {

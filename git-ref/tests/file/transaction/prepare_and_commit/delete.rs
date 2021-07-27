@@ -307,6 +307,10 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
         store.loose_find("main").unwrap().is_none(),
         "no loose main available, it's packed"
     );
+    assert!(
+        store.packed().unwrap().expect("packed").find("main").unwrap().is_some(),
+        "packed main is available"
+    );
 
     let old_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
     let (edits, packed) = store
