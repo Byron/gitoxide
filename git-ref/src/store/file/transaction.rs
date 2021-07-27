@@ -57,7 +57,6 @@ impl<'s> Transaction<'s> {
         );
 
         let relative_path = change.update.name.to_path();
-        // todo: incorporate packed-refs as well.
         let existing_ref = store
             .ref_contents(relative_path.as_ref())
             .map_err(Error::from)
@@ -74,15 +73,13 @@ impl<'s> Transaction<'s> {
                 Error::ReferenceDecode(_) => Ok(None),
                 other => Err(other),
             })
-            .and_then(|maybe_loose| match maybe_loose {
-                None => match packed {
-                    Some(packed) => packed
-                        .find(change.update.name.borrow())
-                        .map(|opt| opt.map(file::Reference::Packed))
-                        .map_err(Error::from),
-                    None => Ok(None),
-                },
-                maybe_loose => Ok(maybe_loose),
+            .and_then(|maybe_loose| match (maybe_loose, packed) {
+                (None, Some(packed)) => packed
+                    .find(change.update.name.borrow())
+                    .map(|opt| opt.map(file::Reference::Packed))
+                    .map_err(Error::from),
+                (None, None) => Ok(None),
+                (maybe_loose, _) => Ok(maybe_loose),
             });
         let lock = match &mut change.update.change {
             Change::Delete { previous, .. } => {
