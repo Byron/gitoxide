@@ -216,7 +216,7 @@ where
                                 // once the state is set to Idle. In other words, either one or the other are
                                 // accessible, never both at the same time.
                                 // Also: We keep a pointer around which is protected by borrowcheck since it's created
-                                // from a legal mutable reference which is moved into the read_line future - we it was manually
+                                // from a legal mutable reference which is moved into the read_line future - if it was manually
                                 // implemented we would be able to re-obtain it from there.
                                 #[allow(unsafe_code)]
                                 let parent = unsafe { &mut *parent };

@@ -74,19 +74,15 @@ impl<'s> Transaction<'s> {
                 Error::ReferenceDecode(_) => Ok(None),
                 other => Err(other),
             })
-            .and_then(|maybe_loose| {
-                if maybe_loose.is_none() {
-                    if let Some(packed) = packed {
-                        packed
-                            .find(change.update.name.borrow())
-                            .map(|opt| opt.map(file::Reference::Packed))
-                            .map_err(Error::from)
-                    } else {
-                        Ok(None)
-                    }
-                } else {
-                    Ok(maybe_loose)
-                }
+            .and_then(|maybe_loose| match maybe_loose {
+                None => match packed {
+                    Some(packed) => packed
+                        .find(change.update.name.borrow())
+                        .map(|opt| opt.map(file::Reference::Packed))
+                        .map_err(Error::from),
+                    None => Ok(None),
+                },
+                maybe_loose => Ok(maybe_loose),
             });
         let lock = match &mut change.update.change {
             Change::Delete { previous, .. } => {

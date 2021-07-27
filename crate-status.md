@@ -332,6 +332,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
     * **packed**
       * [x] find single ref by name
       * [x] iterate refs with optional prefix
+      * [ ] create `packed-refs` from loose refs (using transactions)
       * **transactions**
         * [ ] delete
         * [ ] create or udpate
