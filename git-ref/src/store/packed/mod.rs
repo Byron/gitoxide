@@ -25,7 +25,7 @@ pub struct Buffer {
 /// A transaction for editing packed references
 pub struct Transaction {
     /// Probably soon private and returned as part of a commit
-    buffer: Buffer,
+    buffer: Option<Buffer>,
     edits: Option<Vec<RefEdit>>,
     lock: Option<git_lock::File>,
     closed_lock: Option<git_lock::Marker>,

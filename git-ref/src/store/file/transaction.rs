@@ -282,7 +282,7 @@ impl<'s> Transaction<'s> {
                     if let Err(err) = Self::lock_ref_and_apply_change(
                         self.store,
                         lock_fail_mode,
-                        self.packed_transaction.as_ref().map(|t| t.buffer()),
+                        self.packed_transaction.as_ref().and_then(|t| t.buffer()),
                         change,
                     ) {
                         let err = match err {
@@ -444,7 +444,8 @@ impl<'s> Transaction<'s> {
                 let packed = self
                     .packed_transaction
                     .map(|t| t.commit().map(|r| r.1).map_err(Error::PackedTransactionCommit))
-                    .transpose()?;
+                    .transpose()?
+                    .flatten();
                 Ok((updates.into_iter().map(|edit| edit.update).collect(), packed))
             }
             None => panic!("BUG: must call prepare before commit"),

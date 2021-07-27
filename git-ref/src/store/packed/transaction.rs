@@ -5,12 +5,39 @@ use crate::{
     transaction::{Change, RefEdit},
 };
 
+/// Access and instantiation
 impl packed::Transaction {
-    /// Returns our packed buffer
-    pub fn buffer(&self) -> &packed::Buffer {
-        &self.buffer
+    /// Create an entirely new packfile using the given `lock` representing the resource to write.
+    /// Note that it's up to the caller to assure a race cannot occur.
+    pub(crate) fn new_empty(lock: git_lock::File) -> Self {
+        packed::Transaction {
+            buffer: None,
+            edits: None,
+            lock: Some(lock),
+            closed_lock: None,
+        }
     }
 
+    pub(crate) fn new_from_pack_and_lock(buffer: packed::Buffer, lock: git_lock::File) -> Self {
+        packed::Transaction {
+            buffer: Some(buffer),
+            edits: None,
+            lock: Some(lock),
+            closed_lock: None,
+        }
+    }
+}
+
+/// Access
+impl packed::Transaction {
+    /// Returns our packed buffer
+    pub fn buffer(&self) -> Option<&packed::Buffer> {
+        self.buffer.as_ref()
+    }
+}
+
+/// Lifecycle
+impl packed::Transaction {
     /// Prepare the transaction by checking all edits for applicability.
     pub fn prepare(mut self, edits: impl IntoIterator<Item = RefEdit>) -> Result<Self, prepare::Error> {
         match self.edits {
@@ -20,7 +47,9 @@ impl packed::Transaction {
                 let buffer = &self.buffer;
                 edits.retain(|edit| {
                     if let Change::Delete { .. } = edit.change {
-                        buffer.find_existing(edit.name.borrow()).is_ok()
+                        buffer
+                            .as_ref()
+                            .map_or(true, |b| b.find_existing(edit.name.borrow()).is_ok())
                     } else {
                         true
                     }
@@ -45,7 +74,7 @@ impl packed::Transaction {
     }
 
     /// Commit the prepare transaction
-    pub fn commit(self) -> Result<(Vec<RefEdit>, packed::Buffer), git_lock::commit::Error<git_lock::File>> {
+    pub fn commit(self) -> Result<(Vec<RefEdit>, Option<packed::Buffer>), git_lock::commit::Error<git_lock::File>> {
         match self.edits {
             Some(edits) => {
                 if edits.is_empty() {
@@ -68,7 +97,7 @@ impl packed::Buffer {
     ) -> Result<packed::Transaction, git_lock::acquire::Error> {
         let lock = git_lock::File::acquire_to_update_resource(&self.path, lock_mode, None)?;
         Ok(packed::Transaction {
-            buffer: self,
+            buffer: Some(self),
             lock: Some(lock),
             closed_lock: None,
             edits: None,
