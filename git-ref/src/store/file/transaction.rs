@@ -339,9 +339,10 @@ impl<'s> Transaction<'s> {
     ///
     /// In this stage, we perform the following operations:
     ///
-    /// * write the ref log
+    /// * update the ref log
     /// * move updated refs into place
-    /// * delete reflogs
+    /// * delete reflogs and empty parent directories
+    /// * delete packed refs
     /// * delete their corresponding reference (if applicable)
     ///   along with empty parent directories
     ///
@@ -403,30 +404,44 @@ impl<'s> Transaction<'s> {
                     }
                 }
 
+                let reflog_root = self.store.reflog_root();
+                for change in updates.iter_mut() {
+                    match &change.update.change {
+                        Change::Update { .. } => {}
+                        Change::Delete { .. } => {
+                            // Reflog deletion happens first in case it fails a ref without log is less terrible than
+                            // a log without a reference.
+                            let reflog_path = self.store.reflog_path(change.update.name.borrow());
+                            if let Err(err) = std::fs::remove_file(&reflog_path) {
+                                if err.kind() != std::io::ErrorKind::NotFound {
+                                    return Err(Error::DeleteReflog {
+                                        err,
+                                        full_name: change.name(),
+                                    });
+                                }
+                            } else {
+                                git_tempfile::remove_dir::empty_upward_until_boundary(
+                                    reflog_path.parent().expect("never without parent"),
+                                    &reflog_root,
+                                )
+                                .ok();
+                            }
+                        }
+                    }
+                }
+
+                let packed = self
+                    .packed_transaction
+                    .map(|t| t.commit().map(|r| r.1).map_err(Error::PackedTransactionCommit))
+                    .transpose()?
+                    .flatten();
+
                 for change in updates.iter_mut() {
                     match &change.update.change {
                         Change::Update { .. } => {}
                         Change::Delete { log: mode, .. } => {
                             let lock = change.lock.take().expect("each ref is locked, even deletions");
-                            let (rm_reflog, rm_ref) = match mode {
-                                RefLog::AndReference => (true, true),
-                                RefLog::Only => (true, false),
-                            };
-
-                            // Reflog deletion happens first in case it fails a ref without log is less terrible than
-                            // a log without a reference.
-                            if rm_reflog {
-                                let reflog_path = self.store.reflog_path(change.update.name.borrow());
-                                if let Err(err) = std::fs::remove_file(reflog_path) {
-                                    if err.kind() != std::io::ErrorKind::NotFound {
-                                        return Err(Error::DeleteReflog {
-                                            err,
-                                            full_name: change.name(),
-                                        });
-                                    }
-                                }
-                            }
-                            if rm_ref {
+                            if *mode == RefLog::AndReference {
                                 let reference_path = self.store.reference_path(change.update.name.to_path().as_ref());
                                 if let Err(err) = std::fs::remove_file(reference_path) {
                                     if err.kind() != std::io::ErrorKind::NotFound {
@@ -441,11 +456,6 @@ impl<'s> Transaction<'s> {
                         }
                     }
                 }
-                let packed = self
-                    .packed_transaction
-                    .map(|t| t.commit().map(|r| r.1).map_err(Error::PackedTransactionCommit))
-                    .transpose()?
-                    .flatten();
                 Ok((updates.into_iter().map(|edit| edit.update).collect(), packed))
             }
             None => panic!("BUG: must call prepare before commit"),

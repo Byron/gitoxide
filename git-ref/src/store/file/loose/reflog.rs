@@ -197,7 +197,12 @@ pub mod create_or_update {
 
         /// Returns the base and a full path (including the base) to the reflog for a ref of the given `full_name`
         pub(in crate::store::file::loose::reflog) fn reflog_path_inner(&self, full_name: &Path) -> PathBuf {
-            self.base.join("logs").join(full_name)
+            self.reflog_root().join(full_name)
+        }
+
+        /// Returns the base paths for all reflogs
+        pub(in crate::store::file) fn reflog_root(&self) -> PathBuf {
+            self.base.join("logs")
         }
     }
 
