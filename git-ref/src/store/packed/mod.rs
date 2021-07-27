@@ -59,35 +59,6 @@ impl<'a> Reference<'a> {
     }
 }
 
-///
-pub mod mutable {
-    use crate::mutable::FullName;
-    use git_hash::ObjectId;
-
-    /// A mutable version of the borrowed [`Reference`][super::Reference].
-    pub struct Reference {
-        /// The validated full name of the reference.
-        pub name: FullName,
-        /// The target object id of the reference.
-        pub target: ObjectId,
-        /// The fully peeled object id, hex encoded, that the ref is ultimately pointing to
-        /// i.e. when all indirections are removed.
-        pub object: Option<ObjectId>,
-    }
-
-    impl<'a> From<super::Reference<'a>> for Reference {
-        fn from(r: super::Reference<'a>) -> Self {
-            Reference {
-                name: r.name.into(),
-                target: r.target(),
-                object: r
-                    .object
-                    .map(|obj| ObjectId::from_hex(obj).expect("parser validated input")),
-            }
-        }
-    }
-}
-
 /// An iterator over references in a packed refs file
 pub struct Iter<'a> {
     /// The position at which to parse the next reference
