@@ -189,7 +189,7 @@ fn write_packed_ref(file: &mut git_lock::File, pref: packed::Reference<'_>) -> s
         out.write_all(pref.name.as_bstr())?;
         out.write_all(b"\n")?;
         if let Some(object) = pref.object {
-            write!(out, "^{}\n", object)?;
+            writeln!(out, "^{}", object)?;
         }
         Ok(())
     })
