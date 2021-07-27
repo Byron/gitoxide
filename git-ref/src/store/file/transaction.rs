@@ -490,7 +490,7 @@ mod error {
                 display("The lock for the packed-ref file could not be obtained")
                 source(err)
             }
-            PackedTransactionCommit(err: git_lock::commit::Error<git_lock::File>) {
+            PackedTransactionCommit(err: packed::transaction::commit::Error) {
                 display("The packed-ref transaction could not be committed")
                 source(err)
             }

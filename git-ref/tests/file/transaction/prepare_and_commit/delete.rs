@@ -299,7 +299,6 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
 }
 
 #[test]
-#[ignore]
 fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_deleted_and_are_deleted_from_packed_ref_file()
 {
     let (_keep, store) = store_writable("make_packed_ref_repository.sh").unwrap();
@@ -329,4 +328,10 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
     assert_eq!(edits.len(), 1, "an edit was performed in the packed refs store");
     let packed = packed.expect("packed ref present");
     assert!(packed.find("main").unwrap().is_none(), "no main present after deletion");
+}
+
+#[test]
+#[ignore]
+fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_refs() {
+    todo!("use overlay repository as baseline and delete shadowed value by name")
 }

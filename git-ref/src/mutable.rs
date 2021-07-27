@@ -33,6 +33,12 @@ impl TryFrom<BString> for FullName {
     }
 }
 
+impl<'a> From<crate::FullName<'a>> for FullName {
+    fn from(value: crate::FullName<'a>) -> Self {
+        FullName(value.as_bstr().into())
+    }
+}
+
 impl FullName {
     /// Interpret this fully qualified reference name as partial name.
     pub fn to_partial(&self) -> crate::PartialName<'_> {

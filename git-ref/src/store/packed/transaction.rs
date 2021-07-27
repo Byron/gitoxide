@@ -1,5 +1,7 @@
 #![allow(missing_docs)]
 
+use crate::mutable::Target;
+use crate::transaction::RefEditsExt;
 use crate::{
     store::packed,
     transaction::{Change, RefEdit},
@@ -42,7 +44,18 @@ impl packed::Transaction {
     pub fn prepare(mut self, edits: impl IntoIterator<Item = RefEdit>) -> Result<Self, prepare::Error> {
         match self.edits {
             None => {
-                let mut edits: Vec<_> = edits.into_iter().collect();
+                let mut edits: Vec<RefEdit> = edits.into_iter().collect();
+                edits
+                    .pre_process(
+                        |name| {
+                            self.buffer
+                                .as_ref()
+                                .and_then(|b| b.find_existing(name).map(|r| Target::Peeled(r.target())).ok())
+                        },
+                        |_idx, update| update,
+                    )
+                    .map_err(prepare::Error::PreprocessingFailed)?;
+
                 // Remove all edits which are deletions that aren't here in the first place
                 let buffer = &self.buffer;
                 edits.retain(|edit| {
@@ -62,7 +75,27 @@ impl packed::Transaction {
                         .transpose()
                         .map_err(prepare::Error::CloseLock)?;
                 } else {
-                    // TODO: check preconditions and requirements to some extend,
+                    for edit in edits.iter_mut() {
+                        let existing = self
+                            .buffer
+                            .as_ref()
+                            .and_then(|p| p.find_existing(edit.name.to_partial()).ok());
+                        match (existing, &mut edit.change) {
+                            (
+                                Some(existing),
+                                Change::Delete {
+                                    previous: Some(Target::Peeled(desired_oid)),
+                                    ..
+                                },
+                            ) => {
+                                if !desired_oid.is_null() && *desired_oid != existing.target() {
+                                    todo!("delete existing mismatch")
+                                }
+                                *desired_oid = existing.target();
+                            }
+                            _ => todo!("all other cases"),
+                        }
+                    }
                 }
                 self.edits = Some(edits);
             }
@@ -74,13 +107,28 @@ impl packed::Transaction {
     }
 
     /// Commit the prepare transaction
-    pub fn commit(self) -> Result<(Vec<RefEdit>, Option<packed::Buffer>), git_lock::commit::Error<git_lock::File>> {
+    pub fn commit(self) -> Result<(Vec<RefEdit>, Option<packed::Buffer>), commit::Error> {
         match self.edits {
             Some(edits) => {
                 if edits.is_empty() {
                     Ok((edits, self.buffer))
                 } else {
                     let _file = self.lock.expect("a write lock for applying changes");
+                    let mut refs_sorted = match self.buffer.as_ref() {
+                        Some(buffer) => buffer
+                            .iter()?
+                            .map(|res| res.map(|r| packed::mutable::Reference::from(r)))
+                            .collect::<Result<Vec<_>, _>>()?,
+                        None => Vec::new(),
+                    };
+                    for edit in edits.iter() {
+                        match edit.change {
+                            Change::Update { .. } => {
+                                todo!("packed update")
+                            }
+                            Change::Delete { .. } => {}
+                        }
+                    }
                     todo!("actual packed ref commit")
                 }
             }
@@ -113,6 +161,32 @@ pub mod prepare {
         pub enum Error {
             CloseLock(err: std::io::Error) {
                 display("Could not close a lock which won't ever be committed")
+                source(err)
+            }
+            PreprocessingFailed(err: std::io::Error) {
+                display("Edit preprocessing failed with error: {}", err.to_string())
+                source(err)
+            }
+        }
+    }
+}
+
+///
+pub mod commit {
+    use crate::store::packed;
+    use quick_error::quick_error;
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            Commit(err: git_lock::commit::Error<git_lock::File>) {
+                display("Changes to the resource could not be comitted")
+                from()
+                source(err)
+            }
+            Iteration(err: packed::iter::Error) {
+                display("Some references in the packed refs buffer could not be parsed")
+                from()
                 source(err)
             }
         }

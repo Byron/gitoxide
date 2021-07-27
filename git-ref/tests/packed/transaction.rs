@@ -23,9 +23,8 @@ mod delete {
 
     #[test]
     #[ignore]
-    fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_refs() {
-        todo!("use overlay repository as baseline and delete shadowed value by name")
-    }
+    fn failure_if_target_does_not_have_desired_value() {}
+
     #[test]
     #[ignore]
     fn all_contained_references_deletes_the_packed_ref_file_too() {}
