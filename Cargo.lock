@@ -1083,6 +1083,7 @@ dependencies = [
  "git-features",
  "git-hash",
  "git-lock",
+ "git-object",
  "git-tempfile",
  "git-testtools",
  "git-validate",

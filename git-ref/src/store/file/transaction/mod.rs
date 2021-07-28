@@ -5,12 +5,11 @@ use crate::{
 use bstr::BString;
 use git_hash::ObjectId;
 
-/// A function receiving an object id to resolve.
+/// A function receiving an object id to resolve, returning its decompressed bytes.
 ///
-/// Resolution means to follow tag objects until the end of the chain. Not that cycle protection is required.
-/// Return Ok(None) the given object id is already the end of the object chain.
+/// Resolution means to follow tag objects until the end of the chain.
 pub type ObjectResolveFn =
-    dyn FnMut(&git_hash::oid) -> Result<Option<git_hash::ObjectId>, Box<dyn std::error::Error + 'static>>;
+    dyn FnMut(&git_hash::oid) -> Result<Option<(git_object::Kind, &'_ [u8])>, Box<dyn std::error::Error + 'static>>;
 
 /// How to handle packed refs during a transaction
 pub enum PackedRefs {
