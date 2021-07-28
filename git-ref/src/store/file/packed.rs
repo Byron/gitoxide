@@ -5,7 +5,8 @@ use crate::store::{file, packed};
 impl file::Store {
     /// Return a packed transaction ready to receive updates. Use this to create or update `packed-refs`.
     /// Note that if you already have a [`packed::Buffer`] then use its [`packed::Buffer::into_transaction()`] method instead.
-    pub fn packed_transaction(
+    #[allow(unused)] // TODO: use this in related purge functionality.
+    pub(crate) fn packed_transaction(
         &self,
         lock_mode: git_lock::acquire::Fail,
     ) -> Result<packed::Transaction, transaction::Error> {

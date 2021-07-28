@@ -75,27 +75,9 @@ impl packed::Transaction {
                         .transpose()
                         .map_err(prepare::Error::CloseLock)?;
                 } else {
-                    for edit in edits.iter_mut() {
-                        let existing = self
-                            .buffer
-                            .as_ref()
-                            .and_then(|p| p.find_existing(edit.name.to_partial()).ok());
-                        match (existing, &mut edit.change) {
-                            (
-                                Some(existing),
-                                Change::Delete {
-                                    previous: Some(Target::Peeled(desired_oid)),
-                                    ..
-                                },
-                            ) => {
-                                if !desired_oid.is_null() && *desired_oid != existing.target() {
-                                    todo!("delete existing mismatch")
-                                }
-                                *desired_oid = existing.target();
-                            }
-                            _ => todo!("all other cases"),
-                        }
-                    }
+                    // NOTE that we don't do any additional checks here but apply all edits unconditionally.
+                    // This is because this transaction system is internal and will be used correctly from the
+                    // loose ref store transactions, which do the necessary checking.
                 }
                 self.edits = Some(edits);
             }
@@ -217,7 +199,7 @@ fn write_edit(file: &mut git_lock::File, edit: &RefEdit) -> std::io::Result<()> 
 
 impl packed::Buffer {
     /// Convert this buffer to be used as the basis for a transaction.
-    pub fn into_transaction(
+    pub(crate) fn into_transaction(
         self,
         lock_mode: git_lock::acquire::Fail,
     ) -> Result<packed::Transaction, git_lock::acquire::Error> {

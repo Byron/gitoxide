@@ -269,6 +269,8 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
         let (_keep, mut store) = store_writable("make_repo_for_reflog.sh")?;
         store.write_reflog = *reflog_writemode;
         assert!(store.loose_find_existing("HEAD")?.log_exists(&store));
+        assert!(store.packed()?.is_none(), "there is no pack");
+
         let edits = store
             .transaction()
             .prepare(
@@ -288,6 +290,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
             !store.loose_find_existing("HEAD")?.log_exists(&store),
             "log was deleted"
         );
+        assert!(store.packed()?.is_none(), "there still is no pack");
     }
     Ok(())
 }
@@ -329,7 +332,48 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
 }
 
 #[test]
-#[ignore]
 fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_refs() {
-    todo!("use overlay repository as baseline and delete shadowed value by name")
+    let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh").unwrap();
+    let packed = store.packed().unwrap().expect("packed-refs");
+    let branch = store.find_existing("newer-as-loose", Some(&packed)).unwrap();
+    let branch_id = branch.target().as_id().map(ToOwned::to_owned).expect("peeled");
+    assert_ne!(
+        packed.find_existing("newer-as-loose").unwrap().target(),
+        branch_id,
+        "the packed ref is outdated"
+    );
+
+    let edits = store
+        .transaction()
+        .prepare(
+            Some(RefEdit {
+                change: Change::Delete {
+                    previous: Some(Target::Peeled(branch_id)),
+                    log: RefLog::AndReference,
+                },
+                name: branch.name().into(),
+                deref: false,
+            }),
+            git_lock::acquire::Fail::Immediately,
+        )
+        .unwrap()
+        .commit(&committer())
+        .unwrap();
+
+    assert_eq!(
+        edits.len(),
+        1,
+        "only one edit even though technically two places were changed"
+    );
+    assert!(
+        store
+            .find("newer-as-loose", store.packed().unwrap().as_ref())
+            .unwrap()
+            .is_none(),
+        "reference is deleted everywhere"
+    );
 }
+
+#[test]
+#[ignore]
+fn all_contained_references_deletes_the_packed_ref_file_too() {}

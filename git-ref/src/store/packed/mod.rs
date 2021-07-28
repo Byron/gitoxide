@@ -23,7 +23,7 @@ pub struct Buffer {
 }
 
 /// A transaction for editing packed references
-pub struct Transaction {
+pub(crate) struct Transaction {
     /// Probably soon private and returned as part of a commit
     buffer: Option<Buffer>,
     edits: Option<Vec<RefEdit>>,
