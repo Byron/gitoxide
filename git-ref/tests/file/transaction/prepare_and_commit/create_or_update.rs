@@ -57,7 +57,7 @@ mod reference_with_equally_named {
             } else {
                 match edits {
                     #[cfg_attr(target_os = "windows", allow(unused_variables))]
-                    Err(transaction::Error::LockCommit { err, full_name }) => {
+                    Err(transaction::commit::Error::LockCommit { err, full_name }) => {
                         assert_eq!(full_name, "HEAD");
                         #[cfg(not(target_os = "windows"))]
                         assert_eq!(err.to_string(), "Directory not empty");
@@ -93,7 +93,7 @@ fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
     );
 
     match res {
-        Err(transaction::Error::MustExist { full_name, expected }) => {
+        Err(transaction::prepare::Error::MustExist { full_name, expected }) => {
             assert_eq!(full_name, "HEAD");
             assert_eq!(expected, Target::must_exist());
         }
@@ -126,7 +126,7 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
         Fail::Immediately,
     );
     match res {
-        Err(transaction::Error::ReferenceOutOfDate { full_name, actual, .. }) => {
+        Err(transaction::prepare::Error::ReferenceOutOfDate { full_name, actual, .. }) => {
             assert_eq!(full_name, "HEAD");
             assert_eq!(actual, target);
         }
@@ -157,7 +157,7 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
         Fail::Immediately,
     );
     match res {
-        Err(transaction::Error::MustNotExist { full_name, actual, .. }) => {
+        Err(transaction::prepare::Error::MustNotExist { full_name, actual, .. }) => {
             assert_eq!(full_name, "HEAD");
             assert_eq!(actual, target);
         }
