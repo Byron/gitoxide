@@ -1,5 +1,7 @@
-use crate::file::transaction::prepare_and_commit::committer;
-use crate::file::{store_writable, transaction::prepare_and_commit::empty_store};
+use crate::file::{
+    store_writable,
+    transaction::prepare_and_commit::{committer, empty_store},
+};
 use git_lock::acquire::Fail;
 use git_ref::{
     mutable::Target,
@@ -296,15 +298,15 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
 }
 
 #[test]
-fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_deleted_and_are_deleted_from_packed_ref_file()
-{
-    let (_keep, store) = store_writable("make_packed_ref_repository.sh").unwrap();
+fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_deleted_and_are_deleted_from_packed_ref_file(
+) -> crate::Result {
+    let (_keep, store) = store_writable("make_packed_ref_repository.sh")?;
     assert!(
-        store.loose_find("main").unwrap().is_none(),
+        store.loose_find("main")?.is_none(),
         "no loose main available, it's packed"
     );
     assert!(
-        store.packed().unwrap().expect("packed").find("main").unwrap().is_some(),
+        store.packed()?.expect("packed").find("main")?.is_some(),
         "packed main is available"
     );
 
@@ -317,28 +319,27 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
                     previous: Some(Target::Peeled(old_id)),
                     log: RefLog::AndReference,
                 },
-                name: "refs/heads/main".try_into().unwrap(),
+                name: "refs/heads/main".try_into()?,
                 deref: false,
             }),
             git_lock::acquire::Fail::Immediately,
-        )
-        .unwrap()
-        .commit(&committer())
-        .unwrap();
+        )?
+        .commit(&committer())?;
 
     assert_eq!(edits.len(), 1, "an edit was performed in the packed refs store");
-    let packed = store.packed().unwrap().expect("packed ref present");
-    assert!(packed.find("main").unwrap().is_none(), "no main present after deletion");
+    let packed = store.packed()?.expect("packed ref present");
+    assert!(packed.find("main")?.is_none(), "no main present after deletion");
+    Ok(())
 }
 
 #[test]
-fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_refs() {
-    let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh").unwrap();
-    let packed = store.packed().unwrap().expect("packed-refs");
-    let branch = store.find_existing("newer-as-loose", Some(&packed)).unwrap();
+fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_refs() -> crate::Result {
+    let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
+    let packed = store.packed()?.expect("packed-refs");
+    let branch = store.find_existing("newer-as-loose", Some(&packed))?;
     let branch_id = branch.target().as_id().map(ToOwned::to_owned).expect("peeled");
     assert_ne!(
-        packed.find_existing("newer-as-loose").unwrap().target(),
+        packed.find_existing("newer-as-loose")?.target(),
         branch_id,
         "the packed ref is outdated"
     );
@@ -355,10 +356,8 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
                 deref: false,
             }),
             git_lock::acquire::Fail::Immediately,
-        )
-        .unwrap()
-        .commit(&committer())
-        .unwrap();
+        )?
+        .commit(&committer())?;
 
     assert_eq!(
         edits.len(),
@@ -366,14 +365,44 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
         "only one edit even though technically two places were changed"
     );
     assert!(
-        store
-            .find("newer-as-loose", store.packed().unwrap().as_ref())
-            .unwrap()
-            .is_none(),
+        store.find("newer-as-loose", store.packed()?.as_ref())?.is_none(),
         "reference is deleted everywhere"
     );
+    Ok(())
 }
 
 #[test]
-#[ignore]
-fn all_contained_references_deletes_the_packed_ref_file_too() {}
+fn all_contained_references_deletes_the_packed_ref_file_too() {
+    let (_keep, store) = store_writable("make_packed_ref_repository.sh").unwrap();
+
+    let edits = store
+        .transaction()
+        .prepare(
+            store.packed().unwrap().expect("packed-refs").iter().unwrap().map(|r| {
+                let r = r.expect("valid ref");
+                RefEdit {
+                    change: Change::Delete {
+                        previous: Target::Peeled(r.target()).into(),
+                        log: RefLog::AndReference,
+                    },
+                    name: r.name.into(),
+                    deref: false,
+                }
+            }),
+            git_lock::acquire::Fail::Immediately,
+        )
+        .unwrap()
+        .commit(&committer())
+        .unwrap();
+
+    assert!(!store.packed_refs_path().is_file(), "packed-refs was entirely removed");
+
+    let packed = store.packed().unwrap();
+    assert!(packed.is_none(), "it won't make up packed refs");
+    for edit in edits {
+        assert!(
+            store.find(edit.name.to_partial(), packed.as_ref()).unwrap().is_none(),
+            "delete ref cannot be found"
+        );
+    }
+}

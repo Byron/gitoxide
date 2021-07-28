@@ -102,18 +102,17 @@ impl packed::Transaction {
                     let mut num_written_lines = 0;
                     loop {
                         // TODO: a way to resolve/peel target objects
-                        num_written_lines += 1;
                         match (refs_sorted.peek(), peekable_sorted_edits.peek()) {
                             (Some(Err(_)), _) => {
                                 let err = refs_sorted.next().expect("next").expect_err("err");
                                 return Err(commit::Error::Iteration(err));
                             }
                             (None, None) => {
-                                num_written_lines -= 1;
                                 break;
                             }
                             (Some(Ok(_)), None) => {
                                 let pref = refs_sorted.next().expect("next").expect("no err");
+                                num_written_lines += 1;
                                 write_packed_ref(&mut file, pref)?;
                             }
                             (Some(Ok(pref)), Some(edit)) => {
@@ -121,32 +120,34 @@ impl packed::Transaction {
                                 match pref.name.as_bstr().cmp(edit.name.as_bstr()) {
                                     Less => {
                                         let pref = refs_sorted.next().expect("next").expect("valid");
+                                        num_written_lines += 1;
                                         write_packed_ref(&mut file, pref)?;
                                     }
                                     Greater => {
                                         let edit = peekable_sorted_edits.next().expect("next");
-                                        write_edit(&mut file, edit)?;
+                                        write_edit(&mut file, edit, &mut num_written_lines)?;
                                     }
                                     Equal => {
                                         let _pref = refs_sorted.next().expect("next").expect("valid");
                                         let edit = peekable_sorted_edits.next().expect("next");
-                                        write_edit(&mut file, edit)?;
+                                        write_edit(&mut file, edit, &mut num_written_lines)?;
                                     }
                                 }
                             }
                             (None, Some(_)) => {
-                                write_edit(&mut file, peekable_sorted_edits.next().expect("next"))?;
+                                let edit = peekable_sorted_edits.next().expect("next");
+                                write_edit(&mut file, edit, &mut num_written_lines)?;
                             }
                         }
                     }
 
                     if num_written_lines == 0 {
-                        todo!("delete packed refs file, don't commit lock")
+                        std::fs::remove_file(file.resource_path())?;
                     } else {
                         file.commit()?;
-                        drop(refs_sorted);
-                        Ok(edits)
                     }
+                    drop(refs_sorted);
+                    Ok(edits)
                 }
             }
             None => panic!("BUG: cannot call commit() before prepare(…)"),
@@ -166,18 +167,21 @@ fn write_packed_ref(file: &mut git_lock::File, pref: packed::Reference<'_>) -> s
     })
 }
 
-fn write_edit(file: &mut git_lock::File, edit: &RefEdit) -> std::io::Result<()> {
+fn write_edit(file: &mut git_lock::File, edit: &RefEdit, lines_written: &mut i32) -> std::io::Result<()> {
     match edit.change {
         Change::Delete { .. } => {}
         Change::Update {
             new: Target::Peeled(target_oid),
             ..
-        } => file.with_mut(|out| {
-            write!(out, "{} ", target_oid)?;
-            out.write_all(edit.name.as_bstr())?;
-            out.write_all(b"\n")
-            // TODO: write peeled
-        })?,
+        } => {
+            file.with_mut(|out| {
+                write!(out, "{} ", target_oid)?;
+                out.write_all(edit.name.as_bstr())?;
+                out.write_all(b"\n")
+                // TODO: write peeled
+            })?;
+            *lines_written += 1;
+        }
         Change::Update {
             new: Target::Symbolic(_),
             ..
