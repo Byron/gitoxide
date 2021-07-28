@@ -172,128 +172,122 @@ impl<'s> Transaction<'s> {
         edits: impl IntoIterator<Item = RefEdit>,
         lock_fail_mode: git_lock::acquire::Fail,
     ) -> Result<Self, Error> {
-        match self.updates {
-            None => {
-                let store = self.store;
-                let mut updates: Vec<_> = edits
-                    .into_iter()
-                    .map(|update| Edit {
-                        update,
-                        lock: None,
-                        parent_index: None,
-                        leaf_referent_previous_oid: None,
-                    })
-                    .collect();
-                updates
-                    .pre_process(
-                        |name| {
-                            let symbolic_refs_are_never_packed = None;
-                            store
-                                .find_existing(name, symbolic_refs_are_never_packed)
-                                .map(|r| r.into_target())
-                                .ok()
-                        },
-                        |idx, update| Edit {
-                            update,
-                            lock: None,
-                            parent_index: Some(idx),
-                            leaf_referent_previous_oid: None,
-                        },
-                    )
-                    .map_err(Error::PreprocessingFailed)?;
+        assert!(self.updates.is_none(), "BUG: Must not call prepare(…) multiple times");
+        let store = self.store;
+        let mut updates: Vec<_> = edits
+            .into_iter()
+            .map(|update| Edit {
+                update,
+                lock: None,
+                parent_index: None,
+                leaf_referent_previous_oid: None,
+            })
+            .collect();
+        updates
+            .pre_process(
+                |name| {
+                    let symbolic_refs_are_never_packed = None;
+                    store
+                        .find_existing(name, symbolic_refs_are_never_packed)
+                        .map(|r| r.into_target())
+                        .ok()
+                },
+                |idx, update| Edit {
+                    update,
+                    lock: None,
+                    parent_index: Some(idx),
+                    leaf_referent_previous_oid: None,
+                },
+            )
+            .map_err(Error::PreprocessingFailed)?;
 
-                if self.store.packed_refs_path().is_file() {
-                    let mut edits_for_packed_transaction = Vec::<RefEdit>::new();
-                    let mut needs_packed_refs_lookups = false;
-                    for edit in updates.iter() {
-                        let log_mode = match edit.update.change {
-                            Change::Update {
-                                log: LogChange { mode, .. },
-                                ..
-                            } => mode,
-                            Change::Delete { log, .. } => log,
-                        };
-                        if log_mode == RefLog::Only {
-                            continue;
-                        }
-                        match edit.update.change {
-                            Change::Update {
-                                mode: Create::OrUpdate { previous: None },
-                                ..
-                            } => continue,
-                            Change::Delete { .. } => {
-                                edits_for_packed_transaction.push(edit.update.clone());
-                            }
-                            _ => {
-                                needs_packed_refs_lookups = true;
-                            }
-                        }
+        if self.store.packed_refs_path().is_file() {
+            let mut edits_for_packed_transaction = Vec::<RefEdit>::new();
+            let mut needs_packed_refs_lookups = false;
+            for edit in updates.iter() {
+                let log_mode = match edit.update.change {
+                    Change::Update {
+                        log: LogChange { mode, .. },
+                        ..
+                    } => mode,
+                    Change::Delete { log, .. } => log,
+                };
+                if log_mode == RefLog::Only {
+                    continue;
+                }
+                match edit.update.change {
+                    Change::Update {
+                        mode: Create::OrUpdate { previous: None },
+                        ..
+                    } => continue,
+                    Change::Delete { .. } => {
+                        edits_for_packed_transaction.push(edit.update.clone());
                     }
-
-                    // We create a transaction even for empty packed edits to assure nobody else can change
-                    // it while we perform checks against previous values.
-                    if !edits_for_packed_transaction.is_empty() || needs_packed_refs_lookups {
-                        if let Some(packed) = self.store.packed()? {
-                            self.packed_transaction = Some(
-                                packed
-                                    .into_transaction(lock_fail_mode)
-                                    .map_err(Error::PackedTransactionAcquire)?
-                                    .prepare(edits_for_packed_transaction)?,
-                            );
-                        }
+                    _ => {
+                        needs_packed_refs_lookups = true;
                     }
                 }
-
-                for cid in 0..updates.len() {
-                    let change = &mut updates[cid];
-                    if let Err(err) = Self::lock_ref_and_apply_change(
-                        self.store,
-                        lock_fail_mode,
-                        self.packed_transaction.as_ref().and_then(|t| t.buffer()),
-                        change,
-                    ) {
-                        let err = match err {
-                            Error::LockAcquire { err, full_name: _bogus } => Error::LockAcquire {
-                                err,
-                                full_name: {
-                                    let mut cursor = change.parent_index;
-                                    let mut ref_name = change.name();
-                                    while let Some(parent_idx) = cursor {
-                                        let parent = &updates[parent_idx];
-                                        if parent.parent_index.is_none() {
-                                            ref_name = parent.name();
-                                        } else {
-                                            cursor = parent.parent_index;
-                                        }
-                                    }
-                                    ref_name
-                                },
-                            },
-                            other => other,
-                        };
-                        return Err(err);
-                    };
-
-                    // traverse parent chain from leaf/peeled ref and set the leaf previous oid accordingly
-                    // to help with their reflog entries
-                    if let (Some(crate::Target::Peeled(oid)), Some(parent_idx)) =
-                        (change.update.change.previous_value(), change.parent_index)
-                    {
-                        let oid = oid.to_owned();
-                        let mut parent_idx_cursor = Some(parent_idx);
-                        while let Some(parent) = parent_idx_cursor.take().map(|idx| &mut updates[idx]) {
-                            parent_idx_cursor = parent.parent_index;
-                            parent.leaf_referent_previous_oid = Some(oid);
-                        }
-                    }
-                }
-                self.updates = Some(updates);
-                Ok(self)
             }
-            Some(_) => {
-                panic!("BUG: Must not call prepare(…) multiple times")
+
+            // We create a transaction even for empty packed edits to assure nobody else can change
+            // it while we perform checks against previous values.
+            if !edits_for_packed_transaction.is_empty() || needs_packed_refs_lookups {
+                if let Some(packed) = self.store.packed()? {
+                    self.packed_transaction = Some(
+                        packed
+                            .into_transaction(lock_fail_mode)
+                            .map_err(Error::PackedTransactionAcquire)?
+                            .prepare(edits_for_packed_transaction)?,
+                    );
+                }
             }
         }
+
+        for cid in 0..updates.len() {
+            let change = &mut updates[cid];
+            if let Err(err) = Self::lock_ref_and_apply_change(
+                self.store,
+                lock_fail_mode,
+                self.packed_transaction.as_ref().and_then(|t| t.buffer()),
+                change,
+            ) {
+                let err = match err {
+                    Error::LockAcquire { err, full_name: _bogus } => Error::LockAcquire {
+                        err,
+                        full_name: {
+                            let mut cursor = change.parent_index;
+                            let mut ref_name = change.name();
+                            while let Some(parent_idx) = cursor {
+                                let parent = &updates[parent_idx];
+                                if parent.parent_index.is_none() {
+                                    ref_name = parent.name();
+                                } else {
+                                    cursor = parent.parent_index;
+                                }
+                            }
+                            ref_name
+                        },
+                    },
+                    other => other,
+                };
+                return Err(err);
+            };
+
+            // traverse parent chain from leaf/peeled ref and set the leaf previous oid accordingly
+            // to help with their reflog entries
+            if let (Some(crate::Target::Peeled(oid)), Some(parent_idx)) =
+                (change.update.change.previous_value(), change.parent_index)
+            {
+                let oid = oid.to_owned();
+                let mut parent_idx_cursor = Some(parent_idx);
+                while let Some(parent) = parent_idx_cursor.take().map(|idx| &mut updates[idx]) {
+                    parent_idx_cursor = parent.parent_index;
+                    parent.leaf_referent_previous_oid = Some(oid);
+                }
+            }
+        }
+        self.updates = Some(updates);
+        Ok(self)
     }
 }
 

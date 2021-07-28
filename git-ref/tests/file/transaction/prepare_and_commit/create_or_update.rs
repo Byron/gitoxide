@@ -509,7 +509,6 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
 }
 
 #[test]
-#[ignore]
 fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() {
     let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh").unwrap();
     let branch = store.find_existing("newer-as-loose", None).unwrap();

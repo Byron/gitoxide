@@ -42,116 +42,106 @@ impl packed::Transaction {
 impl packed::Transaction {
     /// Prepare the transaction by checking all edits for applicability.
     pub fn prepare(mut self, edits: impl IntoIterator<Item = RefEdit>) -> Result<Self, prepare::Error> {
-        match self.edits {
-            None => {
-                let mut edits: Vec<RefEdit> = edits.into_iter().collect();
-                // Remove all edits which are deletions that aren't here in the first place
-                let buffer = &self.buffer;
-                edits.retain(|edit| {
-                    if let Change::Delete { .. } = edit.change {
-                        buffer
-                            .as_ref()
-                            .map_or(true, |b| b.find_existing(edit.name.borrow()).is_ok())
-                    } else {
-                        true
-                    }
-                });
-                if edits.is_empty() {
-                    self.closed_lock = self
-                        .lock
-                        .take()
-                        .map(|l| l.close())
-                        .transpose()
-                        .map_err(prepare::Error::CloseLock)?;
-                } else {
-                    // NOTE that we don't do any additional checks here but apply all edits unconditionally.
-                    // This is because this transaction system is internal and will be used correctly from the
-                    // loose ref store transactions, which do the necessary checking.
-                }
-                self.edits = Some(edits);
+        assert!(self.edits.is_none(), "BUG: cannot call prepare(…) more than once");
+        let mut edits: Vec<RefEdit> = edits.into_iter().collect();
+        // Remove all edits which are deletions that aren't here in the first place
+        let buffer = &self.buffer;
+        edits.retain(|edit| {
+            if let Change::Delete { .. } = edit.change {
+                buffer
+                    .as_ref()
+                    .map_or(true, |b| b.find_existing(edit.name.borrow()).is_ok())
+            } else {
+                true
             }
-            Some(_) => {
-                panic!("BUG: cannot call prepare(…) more than once")
-            }
+        });
+        if edits.is_empty() {
+            self.closed_lock = self
+                .lock
+                .take()
+                .map(|l| l.close())
+                .transpose()
+                .map_err(prepare::Error::CloseLock)?;
+        } else {
+            // NOTE that we don't do any additional checks here but apply all edits unconditionally.
+            // This is because this transaction system is internal and will be used correctly from the
+            // loose ref store transactions, which do the necessary checking.
         }
+        self.edits = Some(edits);
         Ok(self)
     }
 
     /// Commit the prepare transaction
     pub fn commit(self) -> Result<Vec<RefEdit>, commit::Error> {
-        match self.edits {
-            Some(mut edits) => {
-                if edits.is_empty() {
-                    Ok(edits)
-                } else {
-                    let mut file = self.lock.expect("a write lock for applying changes");
-                    let refs_sorted: Box<dyn Iterator<Item = Result<packed::Reference<'_>, packed::iter::Error>>> =
-                        match self.buffer.as_ref() {
-                            Some(buffer) => Box::new(buffer.iter()?),
-                            None => Box::new(std::iter::empty()),
-                        };
+        let mut edits = self.edits.expect("BUG: cannot call commit() before prepare(…)");
+        if edits.is_empty() {
+            return Ok(edits);
+        }
 
-                    let mut refs_sorted = refs_sorted.peekable();
+        let mut file = self.lock.expect("a write lock for applying changes");
+        let refs_sorted: Box<dyn Iterator<Item = Result<packed::Reference<'_>, packed::iter::Error>>> =
+            match self.buffer.as_ref() {
+                Some(buffer) => Box::new(buffer.iter()?),
+                None => Box::new(std::iter::empty()),
+            };
 
-                    edits.sort_by(|l, r| l.name.as_bstr().cmp(r.name.as_bstr()));
-                    let mut peekable_sorted_edits = edits.iter().peekable();
+        let mut refs_sorted = refs_sorted.peekable();
 
-                    let header_line = b"# pack-refs with: peeled fully-peeled sorted \n";
-                    file.with_mut(|f| f.write_all(header_line))?;
+        edits.sort_by(|l, r| l.name.as_bstr().cmp(r.name.as_bstr()));
+        let mut peekable_sorted_edits = edits.iter().peekable();
 
-                    let mut num_written_lines = 0;
-                    loop {
-                        // TODO: a way to resolve/peel target objects
-                        match (refs_sorted.peek(), peekable_sorted_edits.peek()) {
-                            (Some(Err(_)), _) => {
-                                let err = refs_sorted.next().expect("next").expect_err("err");
-                                return Err(commit::Error::Iteration(err));
-                            }
-                            (None, None) => {
-                                break;
-                            }
-                            (Some(Ok(_)), None) => {
-                                let pref = refs_sorted.next().expect("next").expect("no err");
-                                num_written_lines += 1;
-                                write_packed_ref(&mut file, pref)?;
-                            }
-                            (Some(Ok(pref)), Some(edit)) => {
-                                use std::cmp::Ordering::*;
-                                match pref.name.as_bstr().cmp(edit.name.as_bstr()) {
-                                    Less => {
-                                        let pref = refs_sorted.next().expect("next").expect("valid");
-                                        num_written_lines += 1;
-                                        write_packed_ref(&mut file, pref)?;
-                                    }
-                                    Greater => {
-                                        let edit = peekable_sorted_edits.next().expect("next");
-                                        write_edit(&mut file, edit, &mut num_written_lines)?;
-                                    }
-                                    Equal => {
-                                        let _pref = refs_sorted.next().expect("next").expect("valid");
-                                        let edit = peekable_sorted_edits.next().expect("next");
-                                        write_edit(&mut file, edit, &mut num_written_lines)?;
-                                    }
-                                }
-                            }
-                            (None, Some(_)) => {
-                                let edit = peekable_sorted_edits.next().expect("next");
-                                write_edit(&mut file, edit, &mut num_written_lines)?;
-                            }
+        let header_line = b"# pack-refs with: peeled fully-peeled sorted \n";
+        file.with_mut(|f| f.write_all(header_line))?;
+
+        let mut num_written_lines = 0;
+        loop {
+            // TODO: a way to resolve/peel target objects
+            match (refs_sorted.peek(), peekable_sorted_edits.peek()) {
+                (Some(Err(_)), _) => {
+                    let err = refs_sorted.next().expect("next").expect_err("err");
+                    return Err(commit::Error::Iteration(err));
+                }
+                (None, None) => {
+                    break;
+                }
+                (Some(Ok(_)), None) => {
+                    let pref = refs_sorted.next().expect("next").expect("no err");
+                    num_written_lines += 1;
+                    write_packed_ref(&mut file, pref)?;
+                }
+                (Some(Ok(pref)), Some(edit)) => {
+                    use std::cmp::Ordering::*;
+                    match pref.name.as_bstr().cmp(edit.name.as_bstr()) {
+                        Less => {
+                            let pref = refs_sorted.next().expect("next").expect("valid");
+                            num_written_lines += 1;
+                            write_packed_ref(&mut file, pref)?;
+                        }
+                        Greater => {
+                            let edit = peekable_sorted_edits.next().expect("next");
+                            write_edit(&mut file, edit, &mut num_written_lines)?;
+                        }
+                        Equal => {
+                            let _pref = refs_sorted.next().expect("next").expect("valid");
+                            let edit = peekable_sorted_edits.next().expect("next");
+                            write_edit(&mut file, edit, &mut num_written_lines)?;
                         }
                     }
-
-                    if num_written_lines == 0 {
-                        std::fs::remove_file(file.resource_path())?;
-                    } else {
-                        file.commit()?;
-                    }
-                    drop(refs_sorted);
-                    Ok(edits)
+                }
+                (None, Some(_)) => {
+                    let edit = peekable_sorted_edits.next().expect("next");
+                    write_edit(&mut file, edit, &mut num_written_lines)?;
                 }
             }
-            None => panic!("BUG: cannot call commit() before prepare(…)"),
         }
+
+        if num_written_lines == 0 {
+            std::fs::remove_file(file.resource_path())?;
+        } else {
+            file.commit()?;
+        }
+        drop(refs_sorted);
+        Ok(edits)
     }
 }
 

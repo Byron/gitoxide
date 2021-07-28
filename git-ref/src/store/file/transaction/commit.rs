@@ -24,120 +24,117 @@ impl<'s> Transaction<'s> {
     ///
     /// Note that transactions will be prepared automatically as needed.
     pub fn commit(self, committer: &git_actor::Signature) -> Result<Vec<RefEdit>, Error> {
-        match self.updates {
-            Some(mut updates) => {
-                // Perform updates first so live commits remain referenced
-                for change in updates.iter_mut() {
-                    assert!(!change.update.deref, "Deref mode is turned into splits and turned off");
-                    match &change.update.change {
-                        // reflog first, then reference
-                        Change::Update { log, new, mode } => {
-                            let lock = change.lock.take().expect("each ref is locked");
-                            let (update_ref, update_reflog) = match log.mode {
-                                RefLog::Only => (false, true),
-                                RefLog::AndReference => (true, true),
-                            };
-                            if update_reflog {
-                                match new {
-                                    Target::Symbolic(_) => {} // no reflog for symref changes
-                                    Target::Peeled(new_oid) => {
-                                        let previous = mode.previous_oid().or(change.leaf_referent_previous_oid);
-                                        let do_update = previous.as_ref().map_or(true, |previous| previous != new_oid);
-                                        if do_update {
-                                            self.store.reflog_create_or_append(
-                                                &lock,
-                                                previous,
-                                                new_oid,
-                                                committer,
-                                                log.message.as_ref(),
-                                                log.force_create_reflog,
-                                            )?;
-                                        }
-                                    }
-                                }
-                            }
-                            if update_ref {
-                                if let Err(err) = lock.commit() {
-                                    #[cfg(not(target_os = "windows"))]
-                                    let special_kind = std::io::ErrorKind::Other;
-                                    #[cfg(target_os = "windows")]
-                                    let special_kind = std::io::ErrorKind::PermissionDenied;
-                                    let err = if err.error.kind() == special_kind {
-                                        git_tempfile::remove_dir::empty_depth_first(err.instance.resource_path())
-                                            .map_err(|io_err| std::io::Error::new(std::io::ErrorKind::Other, io_err))
-                                            .and_then(|_| err.instance.commit().map_err(|err| err.error))
-                                            .err()
-                                    } else {
-                                        Some(err.error)
-                                    };
+        let mut updates = self.updates.expect("BUG: must call prepare before commit");
 
-                                    if let Some(err) = err {
-                                        return Err(Error::LockCommit {
-                                            err,
-                                            full_name: change.name(),
-                                        });
-                                    }
-                                };
+        // Perform updates first so live commits remain referenced
+        for change in updates.iter_mut() {
+            assert!(!change.update.deref, "Deref mode is turned into splits and turned off");
+            match &change.update.change {
+                // reflog first, then reference
+                Change::Update { log, new, mode } => {
+                    let lock = change.lock.take().expect("each ref is locked");
+                    let (update_ref, update_reflog) = match log.mode {
+                        RefLog::Only => (false, true),
+                        RefLog::AndReference => (true, true),
+                    };
+                    if update_reflog {
+                        match new {
+                            Target::Symbolic(_) => {} // no reflog for symref changes
+                            Target::Peeled(new_oid) => {
+                                let previous = mode.previous_oid().or(change.leaf_referent_previous_oid);
+                                let do_update = previous.as_ref().map_or(true, |previous| previous != new_oid);
+                                if do_update {
+                                    self.store.reflog_create_or_append(
+                                        &lock,
+                                        previous,
+                                        new_oid,
+                                        committer,
+                                        log.message.as_ref(),
+                                        log.force_create_reflog,
+                                    )?;
+                                }
                             }
                         }
-                        Change::Delete { .. } => {}
                     }
-                }
-
-                let reflog_root = self.store.reflog_root();
-                for change in updates.iter_mut() {
-                    match &change.update.change {
-                        Change::Update { .. } => {}
-                        Change::Delete { .. } => {
-                            // Reflog deletion happens first in case it fails a ref without log is less terrible than
-                            // a log without a reference.
-                            let reflog_path = self.store.reflog_path(change.update.name.borrow());
-                            if let Err(err) = std::fs::remove_file(&reflog_path) {
-                                if err.kind() != std::io::ErrorKind::NotFound {
-                                    return Err(Error::DeleteReflog {
-                                        err,
-                                        full_name: change.name(),
-                                    });
-                                }
+                    if update_ref {
+                        if let Err(err) = lock.commit() {
+                            #[cfg(not(target_os = "windows"))]
+                            let special_kind = std::io::ErrorKind::Other;
+                            #[cfg(target_os = "windows")]
+                            let special_kind = std::io::ErrorKind::PermissionDenied;
+                            let err = if err.error.kind() == special_kind {
+                                git_tempfile::remove_dir::empty_depth_first(err.instance.resource_path())
+                                    .map_err(|io_err| std::io::Error::new(std::io::ErrorKind::Other, io_err))
+                                    .and_then(|_| err.instance.commit().map_err(|err| err.error))
+                                    .err()
                             } else {
-                                git_tempfile::remove_dir::empty_upward_until_boundary(
-                                    reflog_path.parent().expect("never without parent"),
-                                    &reflog_root,
-                                )
-                                .ok();
+                                Some(err.error)
+                            };
+
+                            if let Some(err) = err {
+                                return Err(Error::LockCommit {
+                                    err,
+                                    full_name: change.name(),
+                                });
                             }
-                        }
+                        };
                     }
                 }
-
-                if let Some(t) = self.packed_transaction {
-                    t.commit().map_err(Error::PackedTransactionCommit)?;
-                }
-
-                for change in updates.iter_mut() {
-                    match &change.update.change {
-                        Change::Update { .. } => {}
-                        Change::Delete { log: mode, .. } => {
-                            let lock = change.lock.take().expect("each ref is locked, even deletions");
-                            if *mode == RefLog::AndReference {
-                                let reference_path = self.store.reference_path(change.update.name.to_path().as_ref());
-                                if let Err(err) = std::fs::remove_file(reference_path) {
-                                    if err.kind() != std::io::ErrorKind::NotFound {
-                                        return Err(Error::DeleteReference {
-                                            err,
-                                            full_name: change.name(),
-                                        });
-                                    }
-                                }
-                            }
-                            drop(lock); // allow deletion of empty leading directories
-                        }
-                    }
-                }
-                Ok(updates.into_iter().map(|edit| edit.update).collect())
+                Change::Delete { .. } => {}
             }
-            None => panic!("BUG: must call prepare before commit"),
         }
+
+        let reflog_root = self.store.reflog_root();
+        for change in updates.iter_mut() {
+            match &change.update.change {
+                Change::Update { .. } => {}
+                Change::Delete { .. } => {
+                    // Reflog deletion happens first in case it fails a ref without log is less terrible than
+                    // a log without a reference.
+                    let reflog_path = self.store.reflog_path(change.update.name.borrow());
+                    if let Err(err) = std::fs::remove_file(&reflog_path) {
+                        if err.kind() != std::io::ErrorKind::NotFound {
+                            return Err(Error::DeleteReflog {
+                                err,
+                                full_name: change.name(),
+                            });
+                        }
+                    } else {
+                        git_tempfile::remove_dir::empty_upward_until_boundary(
+                            reflog_path.parent().expect("never without parent"),
+                            &reflog_root,
+                        )
+                        .ok();
+                    }
+                }
+            }
+        }
+
+        if let Some(t) = self.packed_transaction {
+            t.commit().map_err(Error::PackedTransactionCommit)?;
+        }
+
+        for change in updates.iter_mut() {
+            match &change.update.change {
+                Change::Update { .. } => {}
+                Change::Delete { log: mode, .. } => {
+                    let lock = change.lock.take().expect("each ref is locked, even deletions");
+                    if *mode == RefLog::AndReference {
+                        let reference_path = self.store.reference_path(change.update.name.to_path().as_ref());
+                        if let Err(err) = std::fs::remove_file(reference_path) {
+                            if err.kind() != std::io::ErrorKind::NotFound {
+                                return Err(Error::DeleteReference {
+                                    err,
+                                    full_name: change.name(),
+                                });
+                            }
+                        }
+                    }
+                    drop(lock); // allow deletion of empty leading directories
+                }
+            }
+        }
+        Ok(updates.into_iter().map(|edit| edit.update).collect())
     }
 }
 mod error {
