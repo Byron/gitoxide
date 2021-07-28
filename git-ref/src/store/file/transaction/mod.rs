@@ -5,6 +5,24 @@ use crate::{
 use bstr::BString;
 use git_hash::ObjectId;
 
+/// How to handle packed refs during a transaction
+#[derive(Debug, Clone, Copy)]
+pub enum PackedRefs {
+    /// Only propagate deletions of references. This is the default
+    DeletionsOnly,
+    /// Propagate deletions as well as updates to references which are peeled, that is contain an object id
+    DeletionsAndNonSymbolicUpdates,
+    /// Propagate deletions as well as updates to references which are peeled, that is contain an object id. Furthermore delete the
+    /// reference which is originally updated if it exists. If it doesn't, the new value will be written into the packed ref right away.
+    DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference,
+}
+
+impl Default for PackedRefs {
+    fn default() -> Self {
+        PackedRefs::DeletionsOnly
+    }
+}
+
 #[derive(Debug)]
 pub(in crate::store::file) struct Edit {
     update: RefEdit,
@@ -46,7 +64,16 @@ impl file::Store {
             store: self,
             packed_transaction: None,
             updates: None,
+            packed_refs: PackedRefs::default(),
         }
+    }
+}
+
+impl<'s> Transaction<'s> {
+    /// Configure the way packed refs are handled during the transaction
+    pub fn packed_refs(mut self, packed_refs: PackedRefs) -> Self {
+        self.packed_refs = packed_refs;
+        self
     }
 }
 

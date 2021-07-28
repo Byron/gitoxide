@@ -6,7 +6,10 @@ use bstr::ByteSlice;
 use git_hash::ObjectId;
 use git_lock::acquire::Fail;
 use git_ref::{
-    file::{transaction, WriteReflog},
+    file::{
+        transaction::{self, PackedRefs},
+        WriteReflog,
+    },
     mutable::Target,
     transaction::{Change, Create, LogChange, RefEdit, RefLog},
 };
@@ -504,7 +507,7 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
 #[test]
 #[ignore]
 fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs() {
-    // Also: make sure tags are going to be peeled
+    // TODO: Also: make sure tags are going to be peeled
     todo!("use file::Store::packed_transaction(), figure out how to incorporate this into loose transactions to support purge/purge-delete-original")
 }
 
@@ -540,15 +543,15 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
 
     let edits = store
         .transaction()
-        // .packed_refs(PackedRefs::Update)
+        .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates)
         .prepare(edits, git_lock::acquire::Fail::Immediately)
         .unwrap()
         .commit(&committer())
         .unwrap();
     assert_eq!(
         edits.len(),
-        1,
-        "there really is just one ref that needs updating, symbolic refs are ignored if they don't change the value"
+        2,
+        "it claims to have performed all desired operations, even though some don't make it into the pack as 'side-car'"
     );
 
     assert_eq!(

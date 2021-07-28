@@ -4,7 +4,10 @@ use crate::{
     store::{
         file,
         file::loose,
-        file::{transaction::Edit, Transaction},
+        file::{
+            transaction::{Edit, PackedRefs},
+            Transaction,
+        },
     },
     transaction::{Change, Create, LogChange, RefEdit, RefEditsExt, RefLog},
 };
@@ -213,6 +216,19 @@ impl<'s> Transaction<'s> {
                     Change::Delete { log, .. } => log,
                 };
                 if log_mode == RefLog::Only {
+                    continue;
+                }
+                if matches!(
+                    self.packed_refs,
+                    PackedRefs::DeletionsAndNonSymbolicUpdates
+                        | PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference
+                ) {
+                    if let Change::Update {
+                        new: Target::Peeled(_), ..
+                    } = edit.update.change
+                    {
+                        edits_for_packed_transaction.push(edit.update.clone());
+                    }
                     continue;
                 }
                 match edit.update.change {
