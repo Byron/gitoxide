@@ -543,7 +543,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
 
     let edits = store
         .transaction()
-        .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates)
+        .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_| Ok(None))))
         .prepare(edits, git_lock::acquire::Fail::Immediately)
         .unwrap()
         .commit(&committer())

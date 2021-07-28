@@ -220,8 +220,8 @@ impl<'s> Transaction<'s> {
                 }
                 if matches!(
                     self.packed_refs,
-                    PackedRefs::DeletionsAndNonSymbolicUpdates
-                        | PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference
+                    PackedRefs::DeletionsAndNonSymbolicUpdates(_)
+                        | PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(_)
                 ) {
                     if let Change::Update {
                         new: Target::Peeled(_), ..
@@ -249,11 +249,17 @@ impl<'s> Transaction<'s> {
             // it while we perform checks against previous values.
             if !edits_for_packed_transaction.is_empty() || needs_packed_refs_lookups {
                 if let Some(packed) = self.store.packed()? {
+                    let object_resolve_fn: Option<&mut ObjectResolveFn> = match &mut self.packed_refs {
+                        PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(f)
+                        | PackedRefs::DeletionsAndNonSymbolicUpdates(f) => Some(f),
+                        PackedRefs::DeletionsOnly => None,
+                    };
+
                     self.packed_transaction = Some(
                         packed
                             .into_transaction(lock_fail_mode)
                             .map_err(Error::PackedTransactionAcquire)?
-                            .prepare(edits_for_packed_transaction)?,
+                            .prepare(edits_for_packed_transaction, object_resolve_fn)?,
                     );
                 }
             }
@@ -373,4 +379,5 @@ mod error {
     }
 }
 
+use crate::file::transaction::ObjectResolveFn;
 pub use error::Error;

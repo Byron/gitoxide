@@ -5,16 +5,22 @@ use crate::{
 use bstr::BString;
 use git_hash::ObjectId;
 
+/// A function receiving an object id to resolve.
+///
+/// Resolution means to follow tag objects until the end of the chain. Not that cycle protection is required.
+/// Return Ok(None) the given object id is already the end of the object chain.
+pub type ObjectResolveFn =
+    dyn FnMut(&git_hash::oid) -> Result<Option<git_hash::ObjectId>, Box<dyn std::error::Error + 'static>>;
+
 /// How to handle packed refs during a transaction
-#[derive(Debug, Clone, Copy)]
 pub enum PackedRefs {
     /// Only propagate deletions of references. This is the default
     DeletionsOnly,
     /// Propagate deletions as well as updates to references which are peeled, that is contain an object id
-    DeletionsAndNonSymbolicUpdates,
+    DeletionsAndNonSymbolicUpdates(Box<ObjectResolveFn>),
     /// Propagate deletions as well as updates to references which are peeled, that is contain an object id. Furthermore delete the
     /// reference which is originally updated if it exists. If it doesn't, the new value will be written into the packed ref right away.
-    DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference,
+    DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box<ObjectResolveFn>),
 }
 
 impl Default for PackedRefs {

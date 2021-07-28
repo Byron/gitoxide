@@ -2,7 +2,7 @@
 
 use crate::{
     mutable::Target,
-    store::packed,
+    store::{file::transaction::ObjectResolveFn, packed},
     transaction::{Change, RefEdit},
 };
 use std::io::Write;
@@ -41,7 +41,11 @@ impl packed::Transaction {
 /// Lifecycle
 impl packed::Transaction {
     /// Prepare the transaction by checking all edits for applicability.
-    pub fn prepare(mut self, edits: impl IntoIterator<Item = RefEdit>) -> Result<Self, prepare::Error> {
+    pub fn prepare(
+        mut self,
+        edits: impl IntoIterator<Item = RefEdit>,
+        _resolve: Option<&mut ObjectResolveFn>, // TODO: test and actually use it.
+    ) -> Result<Self, prepare::Error> {
         assert!(self.edits.is_none(), "BUG: cannot call prepare(…) more than once");
         let mut edits: Vec<RefEdit> = edits.into_iter().collect();
         // Remove all edits which are deletions that aren't here in the first place
