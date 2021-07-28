@@ -500,3 +500,17 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
     );
     Ok(())
 }
+
+#[test]
+#[ignore]
+fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs() {
+    // Also: make sure tags are going to be peeled
+    todo!("use file::Store::packed_transaction(), figure out how to incorporate this into loose transactions to support purge/purge-delete-original")
+}
+
+#[test]
+#[ignore]
+fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() {
+    // Also: make sure tags are going to be peeled
+    todo!("use file::Store::packed_transaction()")
+}

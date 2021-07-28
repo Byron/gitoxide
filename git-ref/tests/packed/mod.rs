@@ -10,4 +10,3 @@ pub fn write_packed_refs_with(input: &[u8]) -> crate::Result<(tempfile::TempDir,
 mod find;
 pub mod iter;
 mod open;
-mod transaction;
