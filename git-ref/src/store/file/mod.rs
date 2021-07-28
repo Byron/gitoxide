@@ -29,6 +29,13 @@ pub struct Store {
     pub write_reflog: WriteReflog,
 }
 
+/// A transaction on a file store
+pub struct Transaction<'s> {
+    store: &'s Store,
+    packed_transaction: Option<crate::store::packed::Transaction>,
+    updates: Option<Vec<transaction::Edit>>,
+}
+
 pub(in crate::store::file) fn path_to_name(path: impl Into<PathBuf>) -> bstr::BString {
     use os_str_bytes::OsStringBytes;
     let path = path.into().into_raw_vec();
