@@ -65,6 +65,11 @@ impl<'a> Capability<'a> {
     pub fn values(&self) -> Option<impl Iterator<Item = &BStr>> {
         self.value().map(|v| v.split(|b| *b == b' ').map(|s| s.as_bstr()))
     }
+    /// Returns true if its space-separated [`value()`][Capability::value()] contains the given `want`ed capability.
+    pub fn supports(&self, want: impl Into<&'a BStr>) -> Option<bool> {
+        let want = want.into();
+        self.values().map(|mut iter| iter.any(|v| v == want))
+    }
 }
 
 impl Capabilities {
