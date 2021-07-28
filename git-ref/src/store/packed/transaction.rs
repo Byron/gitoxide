@@ -3,7 +3,7 @@
 use crate::{
     mutable::Target,
     store::packed,
-    transaction::{Change, RefEdit, RefEditsExt},
+    transaction::{Change, RefEdit},
 };
 use std::io::Write;
 
@@ -45,17 +45,6 @@ impl packed::Transaction {
         match self.edits {
             None => {
                 let mut edits: Vec<RefEdit> = edits.into_iter().collect();
-                edits
-                    .pre_process(
-                        |name| {
-                            self.buffer
-                                .as_ref()
-                                .and_then(|b| b.find_existing(name).map(|r| Target::Peeled(r.target())).ok())
-                        },
-                        |_idx, update| update,
-                    )
-                    .map_err(prepare::Error::PreprocessingFailed)?;
-
                 // Remove all edits which are deletions that aren't here in the first place
                 let buffer = &self.buffer;
                 edits.retain(|edit| {
@@ -221,10 +210,6 @@ pub mod prepare {
         pub enum Error {
             CloseLock(err: std::io::Error) {
                 display("Could not close a lock which won't ever be committed")
-                source(err)
-            }
-            PreprocessingFailed(err: std::io::Error) {
-                display("Edit preprocessing failed with error: {}", err.to_string())
                 source(err)
             }
         }
