@@ -364,15 +364,19 @@ impl<'s> Transaction<'s> {
                             if update_reflog {
                                 match new {
                                     Target::Symbolic(_) => {} // no reflog for symref changes
-                                    Target::Peeled(oid) => {
-                                        self.store.reflog_create_or_append(
-                                            &lock,
-                                            mode.previous_oid().or(change.leaf_referent_previous_oid),
-                                            oid,
-                                            committer,
-                                            log.message.as_ref(),
-                                            log.force_create_reflog,
-                                        )?;
+                                    Target::Peeled(new_oid) => {
+                                        let previous = mode.previous_oid().or(change.leaf_referent_previous_oid);
+                                        let do_update = previous.as_ref().map_or(true, |previous| previous != new_oid);
+                                        if do_update {
+                                            self.store.reflog_create_or_append(
+                                                &lock,
+                                                previous,
+                                                new_oid,
+                                                committer,
+                                                log.message.as_ref(),
+                                                log.force_create_reflog,
+                                            )?;
+                                        }
                                     }
                                 }
                             }

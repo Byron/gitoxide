@@ -511,6 +511,72 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
 #[test]
 #[ignore]
 fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() {
-    // Also: make sure tags are going to be peeled
-    todo!("use file::Store::packed_transaction()")
+    let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh").unwrap();
+    let branch = store.find_existing("newer-as-loose", None).unwrap();
+    let packed = store.packed().unwrap().expect("packed-refs");
+    assert_ne!(
+        packed.find_existing("newer-as-loose").unwrap().target(),
+        branch.target().as_id().expect("peeled"),
+        "the packed ref is outdated"
+    );
+    let mut buf = Vec::new();
+    let previous_reflog_entries = branch.log_iter(&store, &mut buf).unwrap().expect("log").count();
+    let previous_packed_refs = packed.iter().unwrap().filter_map(Result::ok).count();
+
+    let edits = store
+        .loose_iter()
+        .unwrap()
+        .map(|r| r.expect("valid ref"))
+        .map(|r| RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                mode: Create::OrUpdate {
+                    previous: r.target.clone().into(),
+                },
+                new: r.target,
+            },
+            name: r.name,
+            deref: false,
+        });
+
+    let edits = store
+        .transaction()
+        // .packed_refs(PackedRefs::Update)
+        .prepare(edits, git_lock::acquire::Fail::Immediately)
+        .unwrap()
+        .commit(&committer())
+        .unwrap();
+    assert_eq!(
+        edits.len(),
+        1,
+        "there really is just one ref that needs updating, symbolic refs are ignored if they don't change the value"
+    );
+
+    assert_eq!(
+        store.loose_iter().unwrap().filter_map(Result::ok).count(),
+        edits.len(),
+        "the amount of loose refs didn't change and having symbolic ones isn't a problem"
+    );
+    assert_eq!(
+        branch.log_iter(&store, &mut buf).unwrap().expect("log").count(),
+        previous_reflog_entries,
+        "reflog isn't adjusted as there is no change"
+    );
+
+    let packed = store.packed().unwrap().expect("packed-refs");
+    assert_eq!(
+        packed.iter().unwrap().filter_map(Result::ok).count(),
+        previous_packed_refs,
+        "the amount of packed refs doesn't change"
+    );
+    assert_eq!(
+        packed.find_existing("newer-as-loose").unwrap().target(),
+        store
+            .find_existing("newer-as-loose", None)
+            .unwrap()
+            .target()
+            .as_id()
+            .expect("peeled"),
+        "the packed ref is now up to date and the loose ref definitely still exists"
+    );
 }
