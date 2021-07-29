@@ -5,11 +5,9 @@ use git_repository::{
     hash::ObjectId,
     interrupt,
     object::bstr::ByteVec,
-    odb::{pack, pack::cache::DecodeEntry},
+    odb::{pack, pack::cache::DecodeEntry, Find},
     prelude::{Finalize, FindExt},
-    progress,
-    refs::file::loose::reference::peel,
-    traverse, Progress,
+    progress, traverse, Progress,
 };
 use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc, time::Instant};
 
@@ -110,13 +108,18 @@ where
                     ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else({
                         let packed = repo.refs.packed().ok().flatten();
                         let refs = &repo.refs;
+                        let repo = Arc::clone(&repo);
                         move |_| {
                             refs.find_existing(tip.as_ref().to_string_lossy().as_ref(), packed.as_ref())
                                 .map_err(anyhow::Error::from)
                                 .and_then(|mut r| {
-                                    r.peel_to_id_in_place(refs, packed.as_ref(), peel::none)
-                                        .map(|oid| oid.to_owned())
-                                        .map_err(anyhow::Error::from)
+                                    r.peel_to_id_in_place(refs, packed.as_ref(), |oid, buf| {
+                                        repo.odb
+                                            .find(oid, buf, &mut pack::cache::Never)
+                                            .map(|obj| obj.map(|obj| (obj.kind, obj.data)))
+                                    })
+                                    .map(|oid| oid.to_owned())
+                                    .map_err(anyhow::Error::from)
                                 })
                         }
                     })

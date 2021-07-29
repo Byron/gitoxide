@@ -1,8 +1,6 @@
 use anyhow::{anyhow, bail};
 use bstr::BString;
-use git_repository::{
-    actor, interrupt, object, odb, prelude::*, progress, refs::file::loose::reference::peel, Progress,
-};
+use git_repository::{actor, interrupt, object, odb, odb::pack, prelude::*, progress, Progress};
 use itertools::Itertools;
 use rayon::prelude::*;
 use std::{
@@ -51,7 +49,11 @@ where
     let commit_id = repo
         .refs
         .find_existing(refname.to_string_lossy().as_ref(), packed.as_ref())?
-        .peel_to_id_in_place(&repo.refs, packed.as_ref(), peel::none)?
+        .peel_to_id_in_place(&repo.refs, packed.as_ref(), |oid, buf| {
+            repo.odb
+                .find(oid, buf, &mut pack::cache::Never)
+                .map(|obj| obj.map(|obj| (obj.kind, obj.data)))
+        })?
         .to_owned();
 
     let all_commits = {
