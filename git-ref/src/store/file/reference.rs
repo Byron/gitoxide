@@ -76,7 +76,7 @@ impl<'p> Reference<'p> {
         packed: Option<&'p2 packed::Buffer>,
     ) -> Option<Result<Reference<'p2>, crate::store::file::loose::reference::peel::Error>> {
         match self {
-            Reference::Loose(r) => r.peel_one_level(store, packed),
+            Reference::Loose(r) => r.follow_symbolic(store, packed),
             Reference::Packed(p) => packed
                 .and_then(|packed| packed.find(p.name).ok().flatten()) // needed to get data with 'p2 lifetime
                 .and_then(|np| {

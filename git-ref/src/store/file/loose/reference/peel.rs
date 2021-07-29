@@ -29,7 +29,7 @@ impl loose::Reference {
     /// Follow this symbolic reference one level and return the ref it refers to, possibly providing access to `packed` references for lookup.
     ///
     /// Returns `None` if this is not a symbolic reference, hence the leaf of the chain.
-    pub fn peel_one_level<'p>(
+    pub fn follow_symbolic<'p>(
         &self,
         store: &file::Store,
         packed: Option<&'p packed::Buffer>,
@@ -81,8 +81,8 @@ pub mod to_id {
     }
 
     impl loose::Reference {
-        /// Peel this symbolic reference until the end of the chain is reached and an object ID is available,
-        /// possibly providing access to `packed` references for lookup.
+        /// Follow this symbolic reference until the end of the chain is reached and an object ID is available,
+        /// and possibly peel this object until the final target object is revealed.
         ///
         /// If an error occurs this reference remains unchanged.
         pub fn peel_to_id_in_place(
@@ -90,11 +90,10 @@ pub mod to_id {
             store: &file::Store,
             packed: Option<&packed::Buffer>,
         ) -> Result<&oid, Error> {
-            let mut count = 0;
             let mut seen = BTreeSet::new();
             let mut storage;
             let mut cursor = &mut *self;
-            while let Some(next) = cursor.peel_one_level(store, packed) {
+            while let Some(next) = cursor.follow_symbolic(store, packed) {
                 let next_ref = next?;
                 if let crate::Kind::Peeled = next_ref.kind() {
                     match next_ref {
@@ -104,7 +103,7 @@ pub mod to_id {
                             self.name = FullName(p.name.0.to_owned());
                         }
                     };
-                    return Ok(self.target.as_id().expect("it to be present"));
+                    break;
                 }
                 storage = next_ref;
                 cursor = match &mut storage {
@@ -115,9 +114,8 @@ pub mod to_id {
                     return Err(Error::Cycle(store.base.join(cursor.name.to_path())));
                 }
                 seen.insert(cursor.name.clone());
-                count += 1;
                 const MAX_REF_DEPTH: usize = 5;
-                if count == MAX_REF_DEPTH {
+                if seen.len() == MAX_REF_DEPTH {
                     return Err(Error::DepthLimitExceeded {
                         max_depth: MAX_REF_DEPTH,
                     });

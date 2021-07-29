@@ -1,6 +1,6 @@
 use crate::{
     mutable::Target,
-    store::{file::transaction::ObjectResolveFn, packed, packed::Edit},
+    store::{file::transaction::FindObjectFn, packed, packed::Edit},
     transaction::{Change, RefEdit},
 };
 use std::io::Write;
@@ -42,7 +42,7 @@ impl packed::Transaction {
     pub fn prepare(
         mut self,
         edits: impl IntoIterator<Item = RefEdit>,
-        find: &mut ObjectResolveFn,
+        find: &mut FindObjectFn,
     ) -> Result<Self, prepare::Error> {
         assert!(self.edits.is_none(), "BUG: cannot call prepare(…) more than once");
         let buffer = &self.buffer;

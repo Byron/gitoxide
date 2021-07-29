@@ -158,7 +158,7 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
     assert!(main.log_exists(&store), "log is untouched, too");
     assert_eq!(
         main.target,
-        head.peel_one_level(&store, None).expect("a symref")?.target(),
+        head.follow_symbolic(&store, None).expect("a symref")?.target(),
         "head points to main"
     );
     Ok(())
@@ -192,7 +192,7 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
     assert!(!main.log_exists(&store), "log is removed");
     assert_eq!(
         main.target,
-        head.peel_one_level(&store, None).expect("a symref")?.target(),
+        head.follow_symbolic(&store, None).expect("a symref")?.target(),
         "head points to main"
     );
     Ok(())

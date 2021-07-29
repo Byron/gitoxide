@@ -60,14 +60,14 @@ mod peel {
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
         let nr = git_ref::file::loose::Reference::try_from(
-            r.peel_one_level(&store, None).expect("exists").expect("no failure"),
+            r.follow_symbolic(&store, None).expect("exists").expect("no failure"),
         )
         .expect("loose ref");
         assert!(
             matches!(nr.target.borrow(), git_ref::Target::Peeled(_)),
             "iteration peels a single level"
         );
-        assert!(nr.peel_one_level(&store, None).is_none(), "end of iteration");
+        assert!(nr.follow_symbolic(&store, None).is_none(), "end of iteration");
         assert_eq!(
             nr.target.borrow(),
             git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),

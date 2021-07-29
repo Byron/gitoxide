@@ -8,7 +8,7 @@ use git_hash::ObjectId;
 /// A function receiving an object id to resolve, returning its decompressed bytes.
 ///
 /// Resolution means to follow tag objects until the end of the chain.
-pub type ObjectResolveFn = dyn FnMut(
+pub type FindObjectFn = dyn FnMut(
     git_hash::ObjectId,
     &mut Vec<u8>,
 ) -> Result<Option<git_object::Kind>, Box<dyn std::error::Error + 'static>>;
@@ -18,10 +18,10 @@ pub enum PackedRefs {
     /// Only propagate deletions of references. This is the default
     DeletionsOnly,
     /// Propagate deletions as well as updates to references which are peeled, that is contain an object id
-    DeletionsAndNonSymbolicUpdates(Box<ObjectResolveFn>),
+    DeletionsAndNonSymbolicUpdates(Box<FindObjectFn>),
     /// Propagate deletions as well as updates to references which are peeled, that is contain an object id. Furthermore delete the
     /// reference which is originally updated if it exists. If it doesn't, the new value will be written into the packed ref right away.
-    DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box<ObjectResolveFn>),
+    DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box<FindObjectFn>),
 }
 
 impl Default for PackedRefs {
