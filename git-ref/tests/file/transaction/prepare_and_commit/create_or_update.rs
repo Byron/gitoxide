@@ -523,8 +523,8 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
             Box::new(move |oid, buf| {
                 odb.find(oid, buf, &mut git_odb::pack::cache::Never)
-                    .map_err(|err| Box::new(err) as Box<dyn std::error::Error>)
                     .map(|obj| obj.map(|obj| obj.kind))
+                    .map_err(|err| Box::new(err) as Box<dyn std::error::Error>)
             }),
         ))
         .prepare(
@@ -555,23 +555,18 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
         "there are a certain amount of loose refs that are packed"
     );
 
-    assert_eq!(
+    assert!(
         store
             .loose_iter()
             .unwrap()
             .filter_map(Result::ok)
-            .map(|r| (r.kind(), r.name))
-            .collect::<Vec<_>>(),
-        vec![
-            (git_ref::Kind::Symbolic, "HEAD".try_into().unwrap()),
-            (git_ref::Kind::Symbolic, "refs/remotes/origin/HEAD".try_into().unwrap())
-        ],
+            .all(|r| r.kind() == git_ref::Kind::Symbolic),
         "only symbolic refs are left"
     );
 
+    let other_store = store_with_packed_refs().unwrap();
+    let expected_pack_data: BString = std::fs::read(other_store.packed_refs_path()).unwrap().into();
     let actual_packed_data: BString = std::fs::read(store.packed_refs_path()).unwrap().into();
-    let store = store_with_packed_refs().unwrap();
-    let expected_pack_data: BString = std::fs::read(store.packed_refs_path()).unwrap().into();
     assert_eq!(
         actual_packed_data, expected_pack_data,
         "both gitoxide and git must agree on the packed refs file perfectly"

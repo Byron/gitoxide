@@ -1,7 +1,7 @@
 use crate::{
     mutable::Target,
-    store::file::Transaction,
-    transaction::{Change, RefEdit, RefLog},
+    store::file::{transaction::PackedRefs, Transaction},
+    transaction::{Change, LogChange, RefEdit, RefLog},
 };
 
 impl<'s> Transaction<'s> {
@@ -25,6 +25,10 @@ impl<'s> Transaction<'s> {
     /// Note that transactions will be prepared automatically as needed.
     pub fn commit(self, committer: &git_actor::Signature) -> Result<Vec<RefEdit>, Error> {
         let mut updates = self.updates.expect("BUG: must call prepare before commit");
+        let delete_loose_refs = matches!(
+            self.packed_refs,
+            PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(_)
+        );
 
         // Perform updates first so live commits remain referenced
         for change in updates.iter_mut() {
@@ -55,6 +59,13 @@ impl<'s> Transaction<'s> {
                                 }
                             }
                         }
+                    }
+                    // Don't do anything else while keeping the lock after potentially updating the reflog.
+                    // We delay deletion of the reference and dropping the lock to after the packed-refs were
+                    // safely written.
+                    if delete_loose_refs {
+                        change.lock = Some(lock);
+                        continue;
                     }
                     if update_ref {
                         if let Err(err) = lock.commit() {
@@ -115,23 +126,25 @@ impl<'s> Transaction<'s> {
         }
 
         for change in updates.iter_mut() {
-            match &change.update.change {
-                Change::Update { .. } => {}
-                Change::Delete { log: mode, .. } => {
-                    let lock = change.lock.take().expect("each ref is locked, even deletions");
-                    if *mode == RefLog::AndReference {
-                        let reference_path = self.store.reference_path(change.update.name.to_path().as_ref());
-                        if let Err(err) = std::fs::remove_file(reference_path) {
-                            if err.kind() != std::io::ErrorKind::NotFound {
-                                return Err(Error::DeleteReference {
-                                    err,
-                                    full_name: change.name(),
-                                });
-                            }
-                        }
+            let take_lock_and_delete = match &change.update.change {
+                Change::Update {
+                    log: LogChange { mode, .. },
+                    ..
+                } => delete_loose_refs && *mode == RefLog::AndReference,
+                Change::Delete { log: mode, .. } => *mode == RefLog::AndReference,
+            };
+            if take_lock_and_delete {
+                let lock = change.lock.take().expect("lock must still be present in delete mode");
+                let reference_path = self.store.reference_path(change.update.name.to_path().as_ref());
+                if let Err(err) = std::fs::remove_file(reference_path) {
+                    if err.kind() != std::io::ErrorKind::NotFound {
+                        return Err(Error::DeleteReference {
+                            err,
+                            full_name: change.name(),
+                        });
                     }
-                    drop(lock); // allow deletion of empty leading directories
                 }
+                drop(lock)
             }
         }
         Ok(updates.into_iter().map(|edit| edit.update).collect())
