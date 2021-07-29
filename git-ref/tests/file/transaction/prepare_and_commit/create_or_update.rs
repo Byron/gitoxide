@@ -506,8 +506,7 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
 }
 
 #[test]
-#[ignore]
-fn packed_refs_creation_with_tag_loop_fails_due_to_peeling_loop_protection() {}
+fn packed_refs_creation_with_tag_loop_are_not_handled_and_cannot_exist_due_to_object_hashes() {}
 
 #[test]
 fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs() {
