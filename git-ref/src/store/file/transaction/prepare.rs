@@ -251,29 +251,27 @@ impl<'s> Transaction<'s> {
                 // What follows means that we will only create a transaction if we have to access packed refs for looking
                 // up current ref values, or that we definitely have a transaction if we need to make updates. Otherwise
                 // we may have no transaction at all which isn't required if we had none and would only try making deletions.
-                let packed_transaction = match maybe_updates_for_packed_refs {
-                    Some(updates) if updates > 0 => {
-                        // We have to create a packed-ref even if it doesn't exist
-                        Some(self.store.packed_transaction(lock_fail_mode).map_err(|err| match err {
+                let packed_transaction: Option<_> = if maybe_updates_for_packed_refs.unwrap_or(0) > 0 {
+                    // We have to create a packed-ref even if it doesn't exist
+                    self.store
+                        .packed_transaction(lock_fail_mode)
+                        .map_err(|err| match err {
                             file::packed::transaction::Error::BufferOpen(err) => Error::from(err),
                             file::packed::transaction::Error::TransactionLock(err) => {
                                 Error::PackedTransactionAcquire(err)
                             }
-                        })?)
-                    }
-                    _ => {
-                        // A packed transaction is optional - we only have deletions that can't be made if
-                        // no packed-ref file exists anyway
-                        if let Some(packed) = self.store.packed()? {
-                            Some(
-                                packed
-                                    .into_transaction(lock_fail_mode)
-                                    .map_err(Error::PackedTransactionAcquire)?,
-                            )
-                        } else {
-                            None
-                        }
-                    }
+                        })?
+                        .into()
+                } else {
+                    // A packed transaction is optional - we only have deletions that can't be made if
+                    // no packed-ref file exists anyway
+                    self.store
+                        .packed()?
+                        .map(|p| {
+                            p.into_transaction(lock_fail_mode)
+                                .map_err(Error::PackedTransactionAcquire)
+                        })
+                        .transpose()?
                 };
                 if let Some(transaction) = packed_transaction {
                     let object_resolve_fn: Option<&mut ObjectResolveFn> = match &mut self.packed_refs {
