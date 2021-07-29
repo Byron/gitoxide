@@ -43,4 +43,5 @@ filebuffer = "0.4.0"
 
 [dev-dependencies]
 git-testtools = { version = "^0.3", path = "../tests/tools" }
+git-odb = { version = "^0.16", path = "../git-odb" }
 tempfile = "3.2.0"

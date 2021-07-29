@@ -1,10 +1,11 @@
 use crate::file::{
-    store_writable,
+    store_with_packed_refs, store_writable,
     transaction::prepare_and_commit::{committer, empty_store, log_line, reflog_lines},
 };
 use bstr::ByteSlice;
 use git_hash::ObjectId;
 use git_lock::acquire::Fail;
+use git_object::bstr::BString;
 use git_ref::{
     file::{
         transaction::{self, PackedRefs},
@@ -506,48 +507,108 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
 
 #[test]
 #[ignore]
+fn packed_refs_creation_with_tag_loop_fails_due_to_peeling_loop_protection() {}
+
+#[test]
+#[ignore]
 fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs() {
-    // TODO: Also: make sure tags are going to be peeled
-    todo!("use file::Store::packed_transaction(), figure out how to incorporate this into loose transactions to support purge/purge-delete-original")
+    let (_keep, store) = store_writable("make_ref_repository.sh").unwrap();
+    assert!(
+        store.packed().unwrap().is_none(),
+        "there should be no packed refs to start out with"
+    );
+    let odb = git_odb::compound::Store::at(&store.base).unwrap();
+    let edits = store
+        .transaction()
+        .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
+            Box::new(move |oid, buf| {
+                odb.find(oid, buf, &mut git_odb::pack::cache::Never)
+                    .map_err(|err| Box::new(err) as Box<dyn std::error::Error>)
+                    .map(|obj| obj.map(|obj| obj.kind))
+            }),
+        ))
+        .prepare(
+            store
+                .loose_iter()
+                .unwrap()
+                .filter_map(|r| r.ok().filter(|r| r.kind() == git_ref::Kind::Peeled))
+                .map(|r| RefEdit {
+                    change: Change::Update {
+                        log: LogChange::default(),
+                        mode: Create::OrUpdate {
+                            previous: Some(r.target.clone()),
+                        },
+                        new: r.target,
+                    },
+                    name: r.name.into(),
+                    deref: false,
+                }),
+            git_lock::acquire::Fail::Immediately,
+        )
+        .unwrap()
+        .commit(&committer())
+        .unwrap();
+
+    assert_eq!(
+        edits.len(),
+        8,
+        "there are a certain amount of loose refs that are packed"
+    );
+
+    assert_eq!(
+        store
+            .loose_iter()
+            .unwrap()
+            .filter_map(Result::ok)
+            .map(|r| (r.kind(), r.name))
+            .collect::<Vec<_>>(),
+        vec![
+            (git_ref::Kind::Symbolic, "HEAD".try_into().unwrap()),
+            (git_ref::Kind::Symbolic, "refs/remotes/origin/HEAD".try_into().unwrap())
+        ],
+        "only symbolic refs are left"
+    );
+
+    let actual_packed_data: BString = std::fs::read(store.packed_refs_path()).unwrap().into();
+    let store = store_with_packed_refs().unwrap();
+    let expected_pack_data: BString = std::fs::read(store.packed_refs_path()).unwrap().into();
+    assert_eq!(
+        actual_packed_data, expected_pack_data,
+        "both gitoxide and git must agree on the packed refs file perfectly"
+    );
 }
 
 #[test]
-fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() {
-    let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh").unwrap();
-    let branch = store.find_existing("newer-as-loose", None).unwrap();
-    let packed = store.packed().unwrap().expect("packed-refs");
+fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() -> crate::Result {
+    let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
+    let branch = store.find_existing("newer-as-loose", None)?;
+    let packed = store.packed()?.expect("packed-refs");
     assert_ne!(
-        packed.find_existing("newer-as-loose").unwrap().target(),
+        packed.find_existing("newer-as-loose")?.target(),
         branch.target().as_id().expect("peeled"),
         "the packed ref is outdated"
     );
     let mut buf = Vec::new();
-    let previous_reflog_entries = branch.log_iter(&store, &mut buf).unwrap().expect("log").count();
-    let previous_packed_refs = packed.iter().unwrap().filter_map(Result::ok).count();
+    let previous_reflog_entries = branch.log_iter(&store, &mut buf)?.expect("log").count();
+    let previous_packed_refs = packed.iter()?.filter_map(Result::ok).count();
 
-    let edits = store
-        .loose_iter()
-        .unwrap()
-        .map(|r| r.expect("valid ref"))
-        .map(|r| RefEdit {
-            change: Change::Update {
-                log: LogChange::default(),
-                mode: Create::OrUpdate {
-                    previous: r.target.clone().into(),
-                },
-                new: r.target,
+    let edits = store.loose_iter()?.map(|r| r.expect("valid ref")).map(|r| RefEdit {
+        change: Change::Update {
+            log: LogChange::default(),
+            mode: Create::OrUpdate {
+                previous: r.target.clone().into(),
             },
-            name: r.name,
-            deref: false,
-        });
+            new: r.target,
+        },
+        name: r.name,
+        deref: false,
+    });
 
     let edits = store
         .transaction()
-        .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_| Ok(None))))
-        .prepare(edits, git_lock::acquire::Fail::Immediately)
-        .unwrap()
-        .commit(&committer())
-        .unwrap();
+        .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| Ok(None))))
+        .prepare(edits, git_lock::acquire::Fail::Immediately)?
+        .commit(&committer())?;
     assert_eq!(
         edits.len(),
         2,
@@ -555,30 +616,30 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
     );
 
     assert_eq!(
-        store.loose_iter().unwrap().filter_map(Result::ok).count(),
+        store.loose_iter()?.filter_map(Result::ok).count(),
         edits.len(),
         "the amount of loose refs didn't change and having symbolic ones isn't a problem"
     );
     assert_eq!(
-        branch.log_iter(&store, &mut buf).unwrap().expect("log").count(),
+        branch.log_iter(&store, &mut buf)?.expect("log").count(),
         previous_reflog_entries,
         "reflog isn't adjusted as there is no change"
     );
 
-    let packed = store.packed().unwrap().expect("packed-refs");
+    let packed = store.packed()?.expect("packed-refs");
     assert_eq!(
-        packed.iter().unwrap().filter_map(Result::ok).count(),
+        packed.iter()?.filter_map(Result::ok).count(),
         previous_packed_refs,
         "the amount of packed refs doesn't change"
     );
     assert_eq!(
-        packed.find_existing("newer-as-loose").unwrap().target(),
+        packed.find_existing("newer-as-loose")?.target(),
         store
-            .find_existing("newer-as-loose", None)
-            .unwrap()
+            .find_existing("newer-as-loose", None)?
             .target()
             .as_id()
             .expect("peeled"),
         "the packed ref is now up to date and the loose ref definitely still exists"
     );
+    Ok(())
 }
