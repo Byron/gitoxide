@@ -2,7 +2,7 @@
 
 use crate::{
     mutable::Target,
-    store::{file::transaction::ObjectResolveFn, packed},
+    store::{file::transaction::ObjectResolveFn, packed, packed::Edit},
     transaction::{Change, RefEdit},
 };
 use std::io::Write;
@@ -44,21 +44,64 @@ impl packed::Transaction {
     pub fn prepare(
         mut self,
         edits: impl IntoIterator<Item = RefEdit>,
-        _resolve: Option<&mut ObjectResolveFn>, // TODO: test and actually use it.
+        find: Option<&mut ObjectResolveFn>,
     ) -> Result<Self, prepare::Error> {
         assert!(self.edits.is_none(), "BUG: cannot call prepare(…) more than once");
-        let mut edits: Vec<RefEdit> = edits.into_iter().collect();
-        // Remove all edits which are deletions that aren't here in the first place
         let buffer = &self.buffer;
-        edits.retain(|edit| {
-            if let Change::Delete { .. } = edit.change {
-                buffer
-                    .as_ref()
-                    .map_or(true, |b| b.find_existing(edit.name.borrow()).is_ok())
-            } else {
-                true
+        // Remove all edits which are deletions that aren't here in the first place
+        let mut edits: Vec<Edit> = edits
+            .into_iter()
+            .filter(|edit| {
+                if let Change::Delete { .. } = edit.change {
+                    buffer
+                        .as_ref()
+                        .map_or(true, |b| b.find_existing(edit.name.borrow()).is_ok())
+                } else {
+                    true
+                }
+            })
+            .map(|change| Edit {
+                inner: change,
+                peeled: None,
+            })
+            .collect();
+
+        // TODO: make non-optional
+        if let Some(find) = find {
+            let mut buf = Vec::new();
+            for edit in edits.iter_mut() {
+                if let Change::Update {
+                    new: Target::Peeled(new),
+                    ..
+                } = edit.inner.change
+                {
+                    let mut next_id = new;
+                    edit.peeled = loop {
+                        let kind = find(next_id, &mut buf)?;
+                        match kind {
+                            Some(kind) if kind == git_object::Kind::Tag => {
+                                next_id = git_object::immutable::TagIter::from_bytes(&buf)
+                                    .target_id()
+                                    .ok_or_else(|| {
+                                        prepare::Error::Resolve(
+                                            format!("Couldn't get target object id from tag {}", next_id).into(),
+                                        )
+                                    })?;
+                            }
+                            Some(_) => {
+                                break if next_id == new { None } else { Some(next_id) };
+                            }
+                            None => {
+                                return Err(prepare::Error::Resolve(
+                                    format!("Couldn't find object with id {}", next_id).into(),
+                                ))
+                            }
+                        }
+                    };
+                }
             }
-        });
+        }
+
         if edits.is_empty() {
             self.closed_lock = self
                 .lock
@@ -76,10 +119,10 @@ impl packed::Transaction {
     }
 
     /// Commit the prepare transaction
-    pub fn commit(self) -> Result<Vec<RefEdit>, commit::Error> {
+    pub fn commit(self) -> Result<(), commit::Error> {
         let mut edits = self.edits.expect("BUG: cannot call commit() before prepare(…)");
         if edits.is_empty() {
-            return Ok(edits);
+            return Ok(());
         }
 
         let mut file = self.lock.expect("a write lock for applying changes");
@@ -91,7 +134,7 @@ impl packed::Transaction {
 
         let mut refs_sorted = refs_sorted.peekable();
 
-        edits.sort_by(|l, r| l.name.as_bstr().cmp(r.name.as_bstr()));
+        edits.sort_by(|l, r| l.inner.name.as_bstr().cmp(r.inner.name.as_bstr()));
         let mut peekable_sorted_edits = edits.iter().peekable();
 
         let header_line = b"# pack-refs with: peeled fully-peeled sorted \n";
@@ -99,7 +142,6 @@ impl packed::Transaction {
 
         let mut num_written_lines = 0;
         loop {
-            // TODO: a way to resolve/peel target objects
             match (refs_sorted.peek(), peekable_sorted_edits.peek()) {
                 (Some(Err(_)), _) => {
                     let err = refs_sorted.next().expect("next").expect_err("err");
@@ -115,7 +157,7 @@ impl packed::Transaction {
                 }
                 (Some(Ok(pref)), Some(edit)) => {
                     use std::cmp::Ordering::*;
-                    match pref.name.as_bstr().cmp(edit.name.as_bstr()) {
+                    match pref.name.as_bstr().cmp(edit.inner.name.as_bstr()) {
                         Less => {
                             let pref = refs_sorted.next().expect("next").expect("valid");
                             num_written_lines += 1;
@@ -145,7 +187,7 @@ impl packed::Transaction {
             file.commit()?;
         }
         drop(refs_sorted);
-        Ok(edits)
+        Ok(())
     }
 }
 
@@ -161,8 +203,8 @@ fn write_packed_ref(file: &mut git_lock::File, pref: packed::Reference<'_>) -> s
     })
 }
 
-fn write_edit(file: &mut git_lock::File, edit: &RefEdit, lines_written: &mut i32) -> std::io::Result<()> {
-    match edit.change {
+fn write_edit(file: &mut git_lock::File, edit: &Edit, lines_written: &mut i32) -> std::io::Result<()> {
+    match edit.inner.change {
         Change::Delete { .. } => {}
         Change::Update {
             new: Target::Peeled(target_oid),
@@ -170,9 +212,12 @@ fn write_edit(file: &mut git_lock::File, edit: &RefEdit, lines_written: &mut i32
         } => {
             file.with_mut(|out| {
                 write!(out, "{} ", target_oid)?;
-                out.write_all(edit.name.as_bstr())?;
-                out.write_all(b"\n")
-                // TODO: write peeled
+                out.write_all(edit.inner.name.as_bstr())?;
+                out.write_all(b"\n")?;
+                if let Some(object) = edit.peeled {
+                    writeln!(out, "^{}", object)?;
+                }
+                Ok(())
             })?;
             *lines_written += 1;
         }
@@ -209,6 +254,11 @@ pub mod prepare {
             CloseLock(err: std::io::Error) {
                 display("Could not close a lock which won't ever be committed")
                 source(err)
+            }
+            Resolve(err: Box<dyn std::error::Error + 'static>) {
+                display("The lookup of an object failed while peeling it")
+                from()
+                source(&**err)
             }
         }
     }

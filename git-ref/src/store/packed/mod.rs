@@ -22,11 +22,16 @@ pub struct Buffer {
     path: PathBuf,
 }
 
+struct Edit {
+    inner: RefEdit,
+    peeled: Option<ObjectId>,
+}
+
 /// A transaction for editing packed references
 pub(crate) struct Transaction {
     /// Probably soon private and returned as part of a commit
     buffer: Option<Buffer>,
-    edits: Option<Vec<RefEdit>>,
+    edits: Option<Vec<Edit>>,
     lock: Option<git_lock::File>,
     closed_lock: Option<git_lock::Marker>,
 }

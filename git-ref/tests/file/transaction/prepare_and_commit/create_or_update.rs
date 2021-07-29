@@ -510,14 +510,13 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
 fn packed_refs_creation_with_tag_loop_fails_due_to_peeling_loop_protection() {}
 
 #[test]
-#[ignore]
 fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs() {
     let (_keep, store) = store_writable("make_ref_repository.sh").unwrap();
     assert!(
         store.packed().unwrap().is_none(),
         "there should be no packed refs to start out with"
     );
-    let odb = git_odb::compound::Store::at(&store.base).unwrap();
+    let odb = git_odb::compound::Store::at(store.base.join("objects")).unwrap();
     let edits = store
         .transaction()
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
@@ -601,7 +600,9 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
 
     let edits = store
         .transaction()
-        .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| Ok(None))))
+        .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| {
+            Ok(Some(git_object::Kind::Commit))
+        })))
         .prepare(edits, git_lock::acquire::Fail::Immediately)?
         .commit(&committer())?;
     assert_eq!(
