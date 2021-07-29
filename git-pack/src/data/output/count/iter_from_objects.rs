@@ -148,7 +148,7 @@ where
                                                     push_obj_count_unique(
                                                         &mut out,
                                                         seen_objs,
-                                                        &commit_id,
+                                                        commit_id,
                                                         &parent_commit_obj,
                                                         progress,
                                                         stats,
@@ -370,7 +370,7 @@ fn push_obj_count_unique(
         if count_expanded {
             statistics.expanded_objects += 1;
         }
-        out.push(output::Count::from_data(id, &obj));
+        out.push(output::Count::from_data(id, obj));
     }
 }
 
@@ -404,7 +404,7 @@ mod util {
         fn next(&mut self) -> Option<Self::Item> {
             let mut res = Vec::with_capacity(self.size);
             let mut items_left = self.size;
-            while let Some(item) = self.iter.next() {
+            for item in &mut self.iter {
                 res.push(item);
                 items_left -= 1;
                 if items_left == 0 {

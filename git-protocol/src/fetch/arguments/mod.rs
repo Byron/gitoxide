@@ -113,7 +113,7 @@ impl Arguments {
     pub fn deepen_not(&mut self, ref_path: &BStr) {
         assert!(self.deepen_not, "'deepen-not' feature required");
         let mut line = BString::from("deepen-not ");
-        line.extend_from_slice(&ref_path);
+        line.extend_from_slice(ref_path);
         self.args.push(line);
     }
     /// Set the given filter `spec` when listing references.

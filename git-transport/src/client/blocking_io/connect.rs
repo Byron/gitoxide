@@ -27,7 +27,7 @@ pub fn connect(url: &[u8], desired_version: crate::Protocol) -> Result<Box<dyn T
         }
         git_url::Scheme::Ssh => Box::new(
             crate::client::blocking_io::ssh::connect(
-                &url.host.as_ref().expect("host is present in url"),
+                url.host.as_ref().expect("host is present in url"),
                 url.path,
                 desired_version,
                 url.user.as_deref(),
@@ -41,7 +41,7 @@ pub fn connect(url: &[u8], desired_version: crate::Protocol) -> Result<Box<dyn T
             }
             Box::new(
                 crate::client::git::connect(
-                    &url.host.as_ref().expect("host is present in url"),
+                    url.host.as_ref().expect("host is present in url"),
                     url.path,
                     desired_version,
                     url.port,

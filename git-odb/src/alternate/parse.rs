@@ -6,7 +6,7 @@ use std::{borrow::Cow, path::PathBuf};
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
-    #[error("Could not obtain an object path for the alternate directory '{}'", String::from_utf8_lossy(&.0))]
+    #[error("Could not obtain an object path for the alternate directory '{}'", String::from_utf8_lossy(.0))]
     PathConversion(Vec<u8>),
     #[error("Could not unquote alternate path")]
     Unquote(#[from] unquote::Error),

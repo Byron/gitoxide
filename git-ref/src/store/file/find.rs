@@ -70,13 +70,13 @@ impl file::Store {
             .chars()
             .all(|c| c.is_ascii_uppercase());
         if relative_path.components().count() == 1 && is_all_uppercase {
-            if let Some(r) = self.find_inner("", &relative_path, None, Transform::None)? {
+            if let Some(r) = self.find_inner("", relative_path, None, Transform::None)? {
                 return Ok(Some(r));
             }
         }
 
         for inbetween in &["", "tags", "heads", "remotes"] {
-            match self.find_inner(*inbetween, &relative_path, packed, Transform::EnforceRefsPrefix) {
+            match self.find_inner(*inbetween, relative_path, packed, Transform::EnforceRefsPrefix) {
                 Ok(Some(r)) => return Ok(Some(r)),
                 Ok(None) => {
                     continue;
@@ -145,7 +145,7 @@ impl file::Store {
     /// Read the file contents with a verified full reference path and return it in the given vector if possible.
     pub(crate) fn ref_contents(&self, relative_path: &Path) -> std::io::Result<Option<Vec<u8>>> {
         let mut buf = Vec::new();
-        let ref_path = self.reference_path(&relative_path);
+        let ref_path = self.reference_path(relative_path);
 
         match std::fs::File::open(&ref_path) {
             Ok(mut file) => {

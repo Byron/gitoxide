@@ -189,7 +189,7 @@ impl index::File {
         process_entry(
             check,
             object_kind,
-            &buf,
+            buf,
             progress,
             header_buf,
             index_entry,
@@ -244,5 +244,5 @@ where
             }
         }
     }
-    processor(object_kind, decompressed, &index_entry, progress).map_err(Error::Processor)
+    processor(object_kind, decompressed, index_entry, progress).map_err(Error::Processor)
 }

@@ -5,11 +5,11 @@ impl<'a> Line<'a> {
     /// The previous object id of the ref. It will be a null hash if there was no previous id as
     /// this ref is being created.
     pub fn previous_oid(&self) -> ObjectId {
-        ObjectId::from_hex(&self.previous_oid).expect("parse validation")
+        ObjectId::from_hex(self.previous_oid).expect("parse validation")
     }
     /// The new object id of the ref, or a null hash if it is removed.
     pub fn new_oid(&self) -> ObjectId {
-        ObjectId::from_hex(&self.new_oid).expect("parse validation")
+        ObjectId::from_hex(self.new_oid).expect("parse validation")
     }
 }
 

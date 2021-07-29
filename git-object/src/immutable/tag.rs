@@ -98,7 +98,7 @@ mod decode {
             }
             // an empty signature message signals that there is none - the function signature is needed
             // to work with 'alt(…)'. PGP signatures are never empty
-            Ok((&[], (&i, &[])))
+            Ok((&[], (i, &[])))
         }
         let (i, (message, signature)) = alt((
             tuple((

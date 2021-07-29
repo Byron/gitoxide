@@ -4,9 +4,9 @@ use std::io::Read;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("{message}: {:?}", String::from_utf8_lossy(&.input))]
+    #[error("{message}: {:?}", String::from_utf8_lossy(.input))]
     InvalidInput { message: String, input: Vec<u8> },
-    #[error("Invalid escaped value {byte} in input {:?}", String::from_utf8_lossy(&.input))]
+    #[error("Invalid escaped value {byte} in input {:?}", String::from_utf8_lossy(.input))]
     UnsupportedEscapeByte { byte: u8, input: Vec<u8> },
 }
 

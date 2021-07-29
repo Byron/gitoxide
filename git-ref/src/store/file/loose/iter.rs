@@ -30,7 +30,7 @@ impl Iterator for SortedLoosePaths {
     type Item = std::io::Result<(PathBuf, FullName)>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while let Some(entry) = self.file_walk.next() {
+        for entry in self.file_walk.by_ref() {
             match entry {
                 Ok(entry) => {
                     if !entry.file_type().is_file() {

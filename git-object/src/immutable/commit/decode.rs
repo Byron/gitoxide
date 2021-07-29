@@ -26,7 +26,7 @@ pub fn message<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]
         )));
     }
     let (i, _) = context("a newline separates headers from the message", tag(NL))(i)?;
-    Ok((&[], &i.as_bstr()))
+    Ok((&[], i.as_bstr()))
 }
 
 pub fn commit<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], Commit<'_>, E> {

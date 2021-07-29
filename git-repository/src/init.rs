@@ -60,7 +60,7 @@ impl<'a> PathCursor<'a> {
 impl<'a> NewDir<'a> {
     fn at(self, component: &str) -> Result<Self, Error> {
         self.0.push(component);
-        create_dir(&self.0)?;
+        create_dir(self.0)?;
         Ok(self)
     }
     fn as_mut(&mut self) -> &mut PathBuf {

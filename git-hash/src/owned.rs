@@ -70,7 +70,7 @@ impl ObjectId {
     /// Panics if this instance is not a sha1 hash.
     pub fn sha1(&self) -> &[u8; SIZE_OF_SHA1_DIGEST] {
         match self {
-            Self::Sha1(b) => &b,
+            Self::Sha1(b) => b,
         }
     }
 

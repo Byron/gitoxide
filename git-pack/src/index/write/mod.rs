@@ -231,6 +231,6 @@ fn modify_base(
     }
 
     let object_kind = pack_entry.header.as_kind().expect("base object as source of iteration");
-    let id = compute_hash(object_kind, &decompressed, hash);
+    let id = compute_hash(object_kind, decompressed, hash);
     entry.id = id;
 }

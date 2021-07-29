@@ -89,7 +89,7 @@ mod async_io {
                     return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));
                 }
                 git_connect(
-                    &url.host.as_ref().expect("host is present in url"),
+                    url.host.as_ref().expect("host is present in url"),
                     url.path,
                     desired_version,
                     url.port,

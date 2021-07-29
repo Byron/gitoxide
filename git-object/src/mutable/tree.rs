@@ -90,7 +90,7 @@ impl Tree {
             if filename.find_byte(b'\n').is_some() {
                 return Err(Error::NewlineInFilename(filename.to_owned()).into());
             }
-            out.write_all(&filename)?;
+            out.write_all(filename)?;
             out.write_all(&[b'\0'])?;
 
             out.write_all(oid.as_bytes())?;

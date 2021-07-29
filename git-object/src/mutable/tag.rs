@@ -58,7 +58,7 @@ impl Tag {
         }
         if let Some(ref message) = self.pgp_signature {
             out.write_all(NL)?;
-            out.write_all(&message)?;
+            out.write_all(message)?;
         }
         Ok(())
     }

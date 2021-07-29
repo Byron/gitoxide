@@ -50,7 +50,7 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         _refs: &[Ref],
     ) -> io::Result<Action> {
         if version == transport::Protocol::V1 {
-            self.ref_filter = Some(&FILTER);
+            self.ref_filter = Some(FILTER);
         }
         Ok(Action::Continue)
     }
@@ -213,9 +213,9 @@ mod async_io {
                 };
                 for r in refs {
                     let (path, content) = match r {
-                        Ref::Symbolic { path, target, .. } => (assure_dir_exists(&path)?, format!("ref: {}", target)),
+                        Ref::Symbolic { path, target, .. } => (assure_dir_exists(path)?, format!("ref: {}", target)),
                         Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
-                            (assure_dir_exists(&path)?, object.to_string())
+                            (assure_dir_exists(path)?, object.to_string())
                         }
                     };
                     std::fs::write(path, content.as_bytes())?;

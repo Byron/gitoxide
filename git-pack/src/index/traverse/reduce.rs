@@ -46,7 +46,7 @@ where
             ..Default::default()
         };
         Reducer {
-            progress: &progress,
+            progress,
             check,
             then: Instant::now(),
             entries_seen: 0,

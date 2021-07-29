@@ -1030,7 +1030,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
     /// This will panic if the index is out of range.
     #[inline]
     pub fn set_string(&mut self, index: usize, input: String) {
-        self.set_bytes(index, input.into_bytes())
+        self.set_bytes(index, input.into_bytes());
     }
 
     /// Sets the value at the given index.
@@ -1040,7 +1040,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
     /// This will panic if the index is out of range.
     #[inline]
     pub fn set_bytes(&mut self, index: usize, input: Vec<u8>) {
-        self.set_value(index, Cow::Owned(input))
+        self.set_value(index, Cow::Owned(input));
     }
 
     /// Sets the value at the given index.
@@ -1099,7 +1099,7 @@ impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
     /// input for all values.
     #[inline]
     pub fn set_str_all(&mut self, input: &str) {
-        self.set_owned_values_all(input.as_bytes())
+        self.set_owned_values_all(input.as_bytes());
     }
 
     /// Sets all values in this multivar to the provided one by copying the
@@ -1721,7 +1721,7 @@ impl<'event> GitConfig<'event> {
                 }
             }
             if !found_node {
-                lookup.push(LookupTreeNode::Terminal(vec![new_section_id]))
+                lookup.push(LookupTreeNode::Terminal(vec![new_section_id]));
             }
         }
         self.section_order.push_back(new_section_id);

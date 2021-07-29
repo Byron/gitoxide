@@ -120,6 +120,6 @@ impl linked::Store {
     ///
     /// Useful in conjunction with `'static threads`.
     pub fn arc_iter(self: &Arc<linked::Store>) -> AllObjects<Arc<linked::Store>> {
-        AllObjects::new(Arc::clone(&self))
+        AllObjects::new(Arc::clone(self))
     }
 }

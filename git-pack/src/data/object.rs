@@ -90,7 +90,7 @@ pub mod verify {
             let mut sink = hash::Write::new(io::sink(), desired.kind());
 
             loose::object::header::encode(self.kind, self.data.len() as u64, &mut sink).expect("hash to always work");
-            sink.hash.update(&self.data);
+            sink.hash.update(self.data);
 
             let actual_id = git_hash::ObjectId::from(sink.hash.digest());
             if desired != actual_id {

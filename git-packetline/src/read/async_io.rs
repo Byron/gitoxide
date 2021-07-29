@@ -102,7 +102,7 @@ where
             let (is_done, stopped_at, res) = Self::read_line_inner_exhaustive(
                 &mut self.read,
                 &mut self.buf,
-                &self.delimiters,
+                self.delimiters,
                 self.fail_on_err_lines,
                 false,
             )
@@ -125,7 +125,7 @@ where
             let (is_done, stopped_at, res) = Self::read_line_inner_exhaustive(
                 &mut self.read,
                 &mut self.peek_buf,
-                &self.delimiters,
+                self.delimiters,
                 self.fail_on_err_lines,
                 true,
             )

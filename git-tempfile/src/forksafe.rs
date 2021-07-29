@@ -83,7 +83,7 @@ impl ForksafeTempfile {
             TempfileOrTemppath::Temppath(path) => path.to_path_buf(),
         };
         let parent_directory = file_path.parent().expect("every tempfile has a parent directory");
-        self.cleanup.execute_best_effort(&parent_directory);
+        self.cleanup.execute_best_effort(parent_directory);
     }
 
     pub fn drop_without_deallocation(self) {

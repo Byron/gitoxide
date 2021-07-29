@@ -12,8 +12,8 @@ impl AsRef<[u8]> for packed::Buffer {
 impl AsRef<[u8]> for packed::Backing {
     fn as_ref(&self) -> &[u8] {
         match self {
-            packed::Backing::InMemory(data) => &data,
-            packed::Backing::Mapped(map) => &map,
+            packed::Backing::InMemory(data) => data,
+            packed::Backing::Mapped(map) => map,
         }
     }
 }

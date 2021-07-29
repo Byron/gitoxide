@@ -7,7 +7,7 @@ pub enum Error {
     #[error(transparent)]
     PackIter(#[from] crate::data::input::Error),
     #[error("Could not move a temporary file into its desired place")]
-    PeristError(#[from] tempfile::PersistError),
+    Perist(#[from] tempfile::PersistError),
     #[error(transparent)]
     IndexWrite(#[from] crate::index::write::Error),
 }

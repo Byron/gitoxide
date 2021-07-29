@@ -137,7 +137,7 @@ impl index::File {
             let mid_sha = self.oid_at_index(mid);
 
             use std::cmp::Ordering::*;
-            match id.cmp(&mid_sha) {
+            match id.cmp(mid_sha) {
                 Less => upper_bound = mid,
                 Equal => return Some(mid),
                 Greater => lower_bound = mid + 1,

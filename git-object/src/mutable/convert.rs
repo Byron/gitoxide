@@ -11,7 +11,7 @@ impl From<immutable::Tag<'_>> for mutable::Tag {
             pgp_signature,
         } = other;
         mutable::Tag {
-            target: git_hash::ObjectId::from_hex(&target).expect("40 bytes hex sha1"),
+            target: git_hash::ObjectId::from_hex(target).expect("40 bytes hex sha1"),
             name: name.to_owned(),
             target_kind,
             message: message.to_owned(),
@@ -33,7 +33,7 @@ impl From<immutable::Commit<'_>> for mutable::Commit {
             extra_headers,
         } = other;
         mutable::Commit {
-            tree: git_hash::ObjectId::from_hex(&tree).expect("40 bytes hex sha1"),
+            tree: git_hash::ObjectId::from_hex(tree).expect("40 bytes hex sha1"),
             parents: parents
                 .iter()
                 .map(|parent| git_hash::ObjectId::from_hex(parent).expect("40 bytes hex sha1"))

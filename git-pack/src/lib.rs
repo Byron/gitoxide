@@ -19,8 +19,8 @@ pub use crate::bundle::Bundle;
 
 ///
 pub mod find;
-pub use find::{Find, FindExt};
 #[doc(inline)]
+pub use find::{Find, FindExt};
 
 ///
 pub mod cache;

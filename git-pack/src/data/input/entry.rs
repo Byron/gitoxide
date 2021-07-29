@@ -7,7 +7,7 @@ impl input::Entry {
     /// This method is useful when arbitrary base entries are created
     pub fn from_data_obj(obj: &data::Object<'_>, pack_offset: u64) -> Result<Self, input::Error> {
         let header = to_header(obj.kind);
-        let compressed = compress_data(&obj)?;
+        let compressed = compress_data(obj)?;
         let compressed_size = compressed.len() as u64;
         let mut entry = input::Entry {
             header,

@@ -196,7 +196,7 @@ impl Response {
         shallows: &mut Vec<ShallowUpdate>,
         peeked_line: &str,
     ) -> bool {
-        match Acknowledgement::from_line(&peeked_line) {
+        match Acknowledgement::from_line(peeked_line) {
             Ok(ack) => match ack.id() {
                 Some(id) => {
                     if !acks.iter().any(|a| a.id() == Some(id)) {
@@ -205,7 +205,7 @@ impl Response {
                 }
                 None => acks.push(ack),
             },
-            Err(_) => match ShallowUpdate::from_line(&peeked_line) {
+            Err(_) => match ShallowUpdate::from_line(peeked_line) {
                 Ok(shallow) => {
                     shallows.push(shallow);
                 }

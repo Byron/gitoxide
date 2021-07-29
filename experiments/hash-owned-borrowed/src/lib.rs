@@ -38,7 +38,7 @@ impl AsRef<Borrowed> for Owned {
     fn as_ref(&self) -> &Borrowed {
         match self {
             Owned::Sha1(b) => Borrowed::from_bytes(b.as_ref()),
-            Owned::Sha256(b) => Borrowed::from_bytes(&b.as_ref()),
+            Owned::Sha256(b) => Borrowed::from_bytes(b.as_ref()),
         }
     }
 }
