@@ -52,11 +52,11 @@ impl<'p> Reference<'p> {
     }
 
     /// For details, see [crate::file::loose::Reference::peel_to_id_in_place].
-    pub fn peel_to_id_in_place(
+    pub fn peel_to_id_in_place<E: std::error::Error + 'static>(
         &mut self,
         store: &file::Store,
         packed: Option<&packed::Buffer>,
-        find: impl FnMut(&git_hash::oid) -> Result<Option<(git_object::Kind, &[u8])>, Box<dyn std::error::Error>>,
+        find: impl FnMut(&git_hash::oid) -> Result<Option<(git_object::Kind, &[u8])>, E>,
     ) -> Result<ObjectId, crate::store::file::loose::reference::peel::to_id::Error> {
         match self {
             Reference::Loose(r) => r.peel_to_id_in_place(store, packed, find).map(ToOwned::to_owned),

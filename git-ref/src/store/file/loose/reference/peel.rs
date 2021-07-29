@@ -26,7 +26,7 @@ quick_error! {
 }
 
 /// A function for use in [`loose::Reference::peel_to_id_in_place()`] to indicate no peeling should happen.
-pub fn none(_id: &git_hash::oid) -> Result<Option<(git_object::Kind, &'_ [u8])>, Box<dyn std::error::Error>> {
+pub fn none(_id: &git_hash::oid) -> Result<Option<(git_object::Kind, &'_ [u8])>, std::convert::Infallible> {
     Ok(Some((git_object::Kind::Commit, &[])))
 }
 
@@ -90,11 +90,11 @@ pub mod to_id {
         /// and possibly peel this object until the final target object is revealed.
         ///
         /// If an error occurs this reference remains unchanged.
-        pub fn peel_to_id_in_place(
+        pub fn peel_to_id_in_place<E: std::error::Error + 'static>(
             &mut self,
             store: &file::Store,
             packed: Option<&packed::Buffer>,
-            _find: impl FnMut(&git_hash::oid) -> Result<Option<(git_object::Kind, &[u8])>, Box<dyn std::error::Error>>,
+            _find: impl FnMut(&git_hash::oid) -> Result<Option<(git_object::Kind, &[u8])>, E>,
         ) -> Result<&oid, Error> {
             let mut seen = BTreeSet::new();
             let mut storage;
