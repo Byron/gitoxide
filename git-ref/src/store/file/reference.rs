@@ -56,9 +56,10 @@ impl<'p> Reference<'p> {
         &mut self,
         store: &file::Store,
         packed: Option<&packed::Buffer>,
+        find: impl FnMut(&git_hash::oid) -> Result<Option<(git_object::Kind, &[u8])>, Box<dyn std::error::Error>>,
     ) -> Result<ObjectId, crate::store::file::loose::reference::peel::to_id::Error> {
         match self {
-            Reference::Loose(r) => r.peel_to_id_in_place(store, packed).map(ToOwned::to_owned),
+            Reference::Loose(r) => r.peel_to_id_in_place(store, packed, find).map(ToOwned::to_owned),
             Reference::Packed(p) => {
                 if let Some(object) = p.object {
                     p.target = object;
@@ -69,7 +70,7 @@ impl<'p> Reference<'p> {
         }
     }
 
-    /// For details, see [crate::file::loose::Reference::peel_one_level].
+    /// For details, see [crate::file::loose::Reference::follow_symbolic()].
     pub fn peel_one_level<'p2>(
         &self,
         store: &file::Store,

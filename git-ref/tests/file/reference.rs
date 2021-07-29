@@ -50,6 +50,7 @@ mod reflog {
 
 mod peel {
     use crate::{file, file::store_with_packed_refs};
+    use git_ref::file::loose::reference::peel;
     use git_testtools::hex_to_id;
     use std::convert::TryFrom;
 
@@ -82,11 +83,11 @@ mod peel {
         let mut head = store.loose_find_existing("HEAD")?;
         let packed = store.packed()?;
         let expected = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-        assert_eq!(head.peel_to_id_in_place(&store, packed.as_ref())?, expected);
+        assert_eq!(head.peel_to_id_in_place(&store, packed.as_ref(), peel::none)?, expected);
         assert_eq!(head.target.as_id().map(ToOwned::to_owned), Some(expected));
 
         let mut head = store.find_existing("dt1", packed.as_ref())?;
-        assert_eq!(head.peel_to_id_in_place(&store, packed.as_ref())?, expected);
+        assert_eq!(head.peel_to_id_in_place(&store, packed.as_ref(), peel::none)?, expected);
         assert_eq!(head.target().as_id().map(ToOwned::to_owned), Some(expected));
         Ok(())
     }
@@ -128,7 +129,7 @@ mod peel {
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
         assert_eq!(
-            r.peel_to_id_in_place(&store, None)?,
+            r.peel_to_id_in_place(&store, None, peel::none)?,
             hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")
         );
         assert_eq!(r.name.as_bstr(), "refs/remotes/origin/multi-link-target3");
@@ -144,7 +145,7 @@ mod peel {
         assert_eq!(r.name.as_bstr(), "refs/loop-a");
 
         assert!(matches!(
-            r.peel_to_id_in_place(&store, None).unwrap_err(),
+            r.peel_to_id_in_place(&store, None, peel::none).unwrap_err(),
             git_ref::file::loose::reference::peel::to_id::Error::Cycle { .. }
         ));
         assert_eq!(r.name.as_bstr(), "refs/loop-a", "the ref is not changed on error");

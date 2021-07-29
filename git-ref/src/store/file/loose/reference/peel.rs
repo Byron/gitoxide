@@ -1,7 +1,7 @@
 use quick_error::quick_error;
 
 use crate::{
-    file::{self},
+    file,
     mutable::Target,
     store::{
         file::{find, loose},
@@ -10,7 +10,7 @@ use crate::{
 };
 
 quick_error! {
-    /// The error returned by [`Reference::peel_one_level()`].
+    /// The error returned by [`loose::Reference::follow_symbolic()`].
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -18,11 +18,16 @@ quick_error! {
             display("Could not resolve symbolic reference name that is expected to exist")
             source(err)
         }
-        Decode(err: file::loose::reference::decode::Error) {
+        Decode(err: loose::reference::decode::Error) {
             display("The reference could not be decoded.")
             source(err)
         }
     }
+}
+
+/// A function for use in [`loose::Reference::peel_to_id_in_place()`] to indicate no peeling should happen.
+pub fn none(_id: &git_hash::oid) -> Result<Option<(git_object::Kind, &'_ [u8])>, Box<dyn std::error::Error>> {
+    Ok(Some((git_object::Kind::Commit, &[])))
 }
 
 impl loose::Reference {
@@ -89,6 +94,7 @@ pub mod to_id {
             &mut self,
             store: &file::Store,
             packed: Option<&packed::Buffer>,
+            _find: impl FnMut(&git_hash::oid) -> Result<Option<(git_object::Kind, &[u8])>, Box<dyn std::error::Error>>,
         ) -> Result<&oid, Error> {
             let mut seen = BTreeSet::new();
             let mut storage;

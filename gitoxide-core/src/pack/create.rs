@@ -1,14 +1,15 @@
 use crate::OutputFormat;
 use anyhow::anyhow;
-use git_repository::odb::pack::cache::DecodeEntry;
 use git_repository::{
     hash,
     hash::ObjectId,
     interrupt,
     object::bstr::ByteVec,
-    odb::pack,
+    odb::{pack, pack::cache::DecodeEntry},
     prelude::{Finalize, FindExt},
-    progress, traverse, Progress,
+    progress,
+    refs::file::loose::reference::peel,
+    traverse, Progress,
 };
 use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc, time::Instant};
 
@@ -113,7 +114,7 @@ where
                             refs.find_existing(tip.as_ref().to_string_lossy().as_ref(), packed.as_ref())
                                 .map_err(anyhow::Error::from)
                                 .and_then(|mut r| {
-                                    r.peel_to_id_in_place(refs, packed.as_ref())
+                                    r.peel_to_id_in_place(refs, packed.as_ref(), peel::none)
                                         .map(|oid| oid.to_owned())
                                         .map_err(anyhow::Error::from)
                                 })
