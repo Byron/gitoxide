@@ -204,7 +204,12 @@ impl<'s> Transaction<'s> {
             )
             .map_err(Error::PreprocessingFailed)?;
 
-        if self.store.packed_refs_path().is_file() {
+        let mut maybe_updates_for_packed_refs = match self.packed_refs {
+            PackedRefs::DeletionsAndNonSymbolicUpdates(_)
+            | PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(_) => Some(0_usize),
+            PackedRefs::DeletionsOnly => None,
+        };
+        if maybe_updates_for_packed_refs.is_some() || self.store.packed_refs_path().is_file() {
             let mut edits_for_packed_transaction = Vec::<RefEdit>::new();
             let mut needs_packed_refs_lookups = false;
             for edit in updates.iter() {
@@ -218,16 +223,13 @@ impl<'s> Transaction<'s> {
                 if log_mode == RefLog::Only {
                     continue;
                 }
-                if matches!(
-                    self.packed_refs,
-                    PackedRefs::DeletionsAndNonSymbolicUpdates(_)
-                        | PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(_)
-                ) {
+                if let Some(ref mut num_updates) = maybe_updates_for_packed_refs {
                     if let Change::Update {
                         new: Target::Peeled(_), ..
                     } = edit.update.change
                     {
                         edits_for_packed_transaction.push(edit.update.clone());
+                        *num_updates += 1;
                     }
                     continue;
                 }
@@ -245,22 +247,43 @@ impl<'s> Transaction<'s> {
                 }
             }
 
-            // We create a transaction even for empty packed edits to assure nobody else can change
-            // it while we perform checks against previous values.
             if !edits_for_packed_transaction.is_empty() || needs_packed_refs_lookups {
-                if let Some(packed) = self.store.packed()? {
+                // What follows means that we will only create a transaction if we have to access packed refs for looking
+                // up current ref values, or that we definitely have a transaction if we need to make updates. Otherwise
+                // we may have no transaction at all which isn't required if we had none and would only try making deletions.
+                let packed_transaction = match maybe_updates_for_packed_refs {
+                    Some(updates) if updates > 0 => {
+                        // We have to create a packed-ref even if it doesn't exist
+                        Some(self.store.packed_transaction(lock_fail_mode).map_err(|err| match err {
+                            file::packed::transaction::Error::BufferOpen(err) => Error::from(err),
+                            file::packed::transaction::Error::TransactionLock(err) => {
+                                Error::PackedTransactionAcquire(err)
+                            }
+                        })?)
+                    }
+                    _ => {
+                        // A packed transaction is optional - we only have deletions that can't be made if
+                        // no packed-ref file exists anyway
+                        if let Some(packed) = self.store.packed()? {
+                            Some(
+                                packed
+                                    .into_transaction(lock_fail_mode)
+                                    .map_err(Error::PackedTransactionAcquire)?,
+                            )
+                        } else {
+                            None
+                        }
+                    }
+                };
+                if let Some(transaction) = packed_transaction {
                     let object_resolve_fn: Option<&mut ObjectResolveFn> = match &mut self.packed_refs {
                         PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(f)
                         | PackedRefs::DeletionsAndNonSymbolicUpdates(f) => Some(f),
                         PackedRefs::DeletionsOnly => None,
                     };
 
-                    self.packed_transaction = Some(
-                        packed
-                            .into_transaction(lock_fail_mode)
-                            .map_err(Error::PackedTransactionAcquire)?
-                            .prepare(edits_for_packed_transaction, object_resolve_fn)?,
-                    );
+                    self.packed_transaction =
+                        Some(transaction.prepare(edits_for_packed_transaction, object_resolve_fn)?);
                 }
             }
         }
