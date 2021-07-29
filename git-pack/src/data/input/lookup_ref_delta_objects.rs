@@ -1,10 +1,10 @@
-#![allow(missing_docs)]
-
 use crate::data::{self, entry::Header, input};
 use git_hash::ObjectId;
 use std::convert::TryInto;
 
+/// An iterator to resolve thin packs on the fly.
 pub struct LookupRefDeltaObjectsIter<I, LFn> {
+    /// The inner iterator whose entries we will resolve.
     pub inner: I,
     lookup: LFn,
     /// The cached delta to provide next time we are called
@@ -24,6 +24,8 @@ where
     I: Iterator<Item = Result<input::Entry, input::Error>>,
     LFn: for<'a> FnMut(ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>>,
 {
+    /// Create a new instance wrapping `iter` and using `lookup` as function to retrieve objects that will serve as bases
+    /// for ref deltas seen while traversing `iter`.
     pub fn new(iter: I, lookup: LFn) -> Self {
         LookupRefDeltaObjectsIter {
             inner: iter,

@@ -1,5 +1,3 @@
-#![allow(missing_docs)]
-
 use crate::{
     mutable::Target,
     store::{file::transaction::ObjectResolveFn, packed, packed::Edit},
@@ -246,7 +244,9 @@ impl packed::Buffer {
 pub mod prepare {
     use quick_error::quick_error;
     quick_error! {
+        /// The error used in [`Transaction::prepare(…)`][super::packed::Transaction::prepare()].
         #[derive(Debug)]
+        #[allow(missing_docs)]
         pub enum Error {
             CloseLock(err: std::io::Error) {
                 display("Could not close a lock which won't ever be committed")
@@ -267,7 +267,9 @@ pub mod commit {
     use quick_error::quick_error;
 
     quick_error! {
+        /// The error used in [`Transaction::commit(…)`][super::packed::Transaction::commit()].
         #[derive(Debug)]
+        #[allow(missing_docs)]
         pub enum Error {
             Commit(err: git_lock::commit::Error<git_lock::File>) {
                 display("Changes to the resource could not be comitted")
