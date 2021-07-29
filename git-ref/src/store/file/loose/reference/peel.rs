@@ -26,7 +26,10 @@ quick_error! {
 }
 
 /// A function for use in [`loose::Reference::peel_to_id_in_place()`] to indicate no peeling should happen.
-pub fn none(_id: &git_hash::oid) -> Result<Option<(git_object::Kind, &'_ [u8])>, std::convert::Infallible> {
+pub fn none(
+    _id: git_hash::ObjectId,
+    _buf: &mut Vec<u8>,
+) -> Result<Option<(git_object::Kind, &[u8])>, std::convert::Infallible> {
     Ok(Some((git_object::Kind::Commit, &[])))
 }
 
@@ -57,6 +60,7 @@ impl loose::Reference {
 
 ///
 pub mod to_id {
+    use bstr::BString;
     use git_hash::oid;
     use quick_error::quick_error;
     use std::{collections::BTreeSet, path::PathBuf};
@@ -71,8 +75,8 @@ pub mod to_id {
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {
-            PeelOne(err: loose::reference::peel::Error) {
-                display("Could not peel a single level of a reference")
+            Follow(err: loose::reference::peel::Error) {
+                display("Could not follow a single level of a symbolic reference")
                 from()
                 source(err)
             }
@@ -82,6 +86,14 @@ pub mod to_id {
             DepthLimitExceeded{  max_depth: usize  } {
                 display("Refusing to follow more than {} levels of indirection", max_depth)
             }
+            Find(err: Box<dyn std::error::Error + Send + Sync + 'static>) {
+                display("An error occurred when trying to resolve an object a refererence points to")
+                from()
+                source(&**err)
+            }
+            NotFound{oid: git_hash::ObjectId, name: BString} {
+                display("Object {} as referred to by '{}' could not be found", oid, name)
+            }
         }
     }
 
@@ -89,12 +101,14 @@ pub mod to_id {
         /// Follow this symbolic reference until the end of the chain is reached and an object ID is available,
         /// and possibly peel this object until the final target object is revealed.
         ///
+        /// Use [`peel::none()`][super::none()]
+        ///
         /// If an error occurs this reference remains unchanged.
-        pub fn peel_to_id_in_place<E: std::error::Error + 'static>(
+        pub fn peel_to_id_in_place<E: std::error::Error + Send + Sync + 'static>(
             &mut self,
             store: &file::Store,
             packed: Option<&packed::Buffer>,
-            _find: impl FnMut(&git_hash::oid) -> Result<Option<(git_object::Kind, &[u8])>, E>,
+            mut find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
         ) -> Result<&oid, Error> {
             let mut seen = BTreeSet::new();
             let mut storage;
@@ -103,13 +117,16 @@ pub mod to_id {
                 let next_ref = next?;
                 if let crate::Kind::Peeled = next_ref.kind() {
                     match next_ref {
-                        file::Reference::Loose(r) => *self = r,
+                        file::Reference::Loose(r) => {
+                            *self = r;
+                            break;
+                        }
                         file::Reference::Packed(p) => {
                             self.target = Target::Peeled(p.object());
                             self.name = FullName(p.name.0.to_owned());
+                            return Ok(self.target.as_id().expect("we just set a peeled id"));
                         }
                     };
-                    break;
                 }
                 storage = next_ref;
                 cursor = match &mut storage {
@@ -127,6 +144,28 @@ pub mod to_id {
                     });
                 }
             }
+
+            let mut buf = Vec::new();
+            let mut oid = self.target.as_id().expect("peeled ref").to_owned();
+            self.target = Target::Peeled(loop {
+                let (kind, data) = find(oid, &mut buf)
+                    .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)?
+                    .ok_or_else(|| Error::NotFound {
+                        oid,
+                        name: self.name.0.clone(),
+                    })?;
+                match kind {
+                    git_object::Kind::Tag => {
+                        oid = git_object::immutable::TagIter::from_bytes(data)
+                            .target_id()
+                            .ok_or_else(|| Error::NotFound {
+                                oid,
+                                name: self.name.0.clone(),
+                            })?;
+                    }
+                    _ => break oid,
+                };
+            });
             Ok(self.target.as_id().expect("to be peeled"))
         }
     }

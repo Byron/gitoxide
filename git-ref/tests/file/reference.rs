@@ -50,6 +50,7 @@ mod reflog {
 
 mod peel {
     use crate::{file, file::store_with_packed_refs};
+    use git_odb::Find;
     use git_ref::file::loose::reference::peel;
     use git_testtools::hex_to_id;
     use std::convert::TryFrom;
@@ -128,11 +129,26 @@ mod peel {
         let mut r = store.loose_find_existing("multi-link")?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
+        let commit = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+        assert_eq!(r.peel_to_id_in_place(&store, None, peel::none)?, commit);
+        assert_eq!(r.name.as_bstr(), "refs/remotes/origin/multi-link-target3");
+
+        let mut r = store.loose_find_existing("dt1")?;
         assert_eq!(
             r.peel_to_id_in_place(&store, None, peel::none)?,
-            hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")
+            hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3"),
+            "points to a tag object without actual object lookup"
         );
-        assert_eq!(r.name.as_bstr(), "refs/remotes/origin/multi-link-target3");
+
+        let odb = git_odb::linked::Store::at(store.base.join("objects"))?;
+        assert_eq!(
+            r.peel_to_id_in_place(&store, None, |oid, buf| {
+                odb.find(oid, buf, &mut git_odb::pack::cache::Never)
+                    .map(|obj| obj.map(|obj| (obj.kind, obj.data)))
+            })?,
+            commit,
+            "points to the commit with lookup"
+        );
 
         Ok(())
     }

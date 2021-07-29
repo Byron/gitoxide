@@ -7,6 +7,7 @@ use git_repository::{
     object::{bstr::BStr, immutable},
     odb,
     prelude::*,
+    refs::file::loose::reference::peel,
 };
 use rayon::prelude::*;
 use std::time::Instant;
@@ -31,7 +32,7 @@ fn main() -> anyhow::Result<()> {
     let commit_id = repo
         .refs
         .find_existing(&name, packed.as_ref())?
-        .peel_to_id_in_place(&repo.refs, packed.as_ref())?
+        .peel_to_id_in_place(&repo.refs, packed.as_ref(), peel::none)?
         .to_owned();
     let db = &repo.odb;
 
