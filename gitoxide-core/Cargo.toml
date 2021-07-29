@@ -35,7 +35,7 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 anyhow = "1.0.42"
 quick-error = "2.0.0"
 bytesize = "1.0.1"
-serde_json = { version = "1.0.56", optional = true }
+serde_json = { version = "1.0.65", optional = true }
 tempfile = "3.1.0"
 
 # for async-client
