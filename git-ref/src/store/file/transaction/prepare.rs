@@ -274,14 +274,16 @@ impl<'s> Transaction<'s> {
                         .transpose()?
                 };
                 if let Some(transaction) = packed_transaction {
-                    let object_resolve_fn: Option<&mut ObjectResolveFn> = match &mut self.packed_refs {
+                    self.packed_transaction = Some(match &mut self.packed_refs {
                         PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(f)
-                        | PackedRefs::DeletionsAndNonSymbolicUpdates(f) => Some(f),
-                        PackedRefs::DeletionsOnly => None,
-                    };
-
-                    self.packed_transaction =
-                        Some(transaction.prepare(edits_for_packed_transaction, object_resolve_fn)?);
+                        | PackedRefs::DeletionsAndNonSymbolicUpdates(f) => {
+                            transaction.prepare(edits_for_packed_transaction, f)?
+                        }
+                        PackedRefs::DeletionsOnly => transaction
+                            .prepare(edits_for_packed_transaction, &mut |_, _| {
+                                unreachable!("BUG: deletions never trigger object lookups")
+                            })?,
+                    });
                 }
             }
         }
@@ -400,5 +402,4 @@ mod error {
     }
 }
 
-use crate::file::transaction::ObjectResolveFn;
 pub use error::Error;

@@ -44,7 +44,7 @@ impl packed::Transaction {
     pub fn prepare(
         mut self,
         edits: impl IntoIterator<Item = RefEdit>,
-        find: Option<&mut ObjectResolveFn>,
+        find: &mut ObjectResolveFn,
     ) -> Result<Self, prepare::Error> {
         assert!(self.edits.is_none(), "BUG: cannot call prepare(…) more than once");
         let buffer = &self.buffer;
@@ -66,39 +66,36 @@ impl packed::Transaction {
             })
             .collect();
 
-        // TODO: make non-optional
-        if let Some(find) = find {
-            let mut buf = Vec::new();
-            for edit in edits.iter_mut() {
-                if let Change::Update {
-                    new: Target::Peeled(new),
-                    ..
-                } = edit.inner.change
-                {
-                    let mut next_id = new;
-                    edit.peeled = loop {
-                        let kind = find(next_id, &mut buf)?;
-                        match kind {
-                            Some(kind) if kind == git_object::Kind::Tag => {
-                                next_id = git_object::immutable::TagIter::from_bytes(&buf)
-                                    .target_id()
-                                    .ok_or_else(|| {
-                                        prepare::Error::Resolve(
-                                            format!("Couldn't get target object id from tag {}", next_id).into(),
-                                        )
-                                    })?;
-                            }
-                            Some(_) => {
-                                break if next_id == new { None } else { Some(next_id) };
-                            }
-                            None => {
-                                return Err(prepare::Error::Resolve(
-                                    format!("Couldn't find object with id {}", next_id).into(),
-                                ))
-                            }
+        let mut buf = Vec::new();
+        for edit in edits.iter_mut() {
+            if let Change::Update {
+                new: Target::Peeled(new),
+                ..
+            } = edit.inner.change
+            {
+                let mut next_id = new;
+                edit.peeled = loop {
+                    let kind = find(next_id, &mut buf)?;
+                    match kind {
+                        Some(kind) if kind == git_object::Kind::Tag => {
+                            next_id = git_object::immutable::TagIter::from_bytes(&buf)
+                                .target_id()
+                                .ok_or_else(|| {
+                                    prepare::Error::Resolve(
+                                        format!("Couldn't get target object id from tag {}", next_id).into(),
+                                    )
+                                })?;
                         }
-                    };
-                }
+                        Some(_) => {
+                            break if next_id == new { None } else { Some(next_id) };
+                        }
+                        None => {
+                            return Err(prepare::Error::Resolve(
+                                format!("Couldn't find object with id {}", next_id).into(),
+                            ))
+                        }
+                    }
+                };
             }
         }
 
