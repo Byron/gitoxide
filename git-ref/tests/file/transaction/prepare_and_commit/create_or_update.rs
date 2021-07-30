@@ -79,20 +79,17 @@ fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
     let (_keep, store) = empty_store()?;
 
     let res = store.transaction().prepare(
-        Some(
-            RefEdit {
-                change: Change::Update {
-                    log: LogChange::default(),
-                    new: Target::Peeled(ObjectId::null_sha1()),
-                    mode: Create::OrUpdate {
-                        previous: Some(Target::must_exist()),
-                    },
+        Some(RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                new: Target::Peeled(ObjectId::null_sha1()),
+                mode: Create::OrUpdate {
+                    previous: Some(Target::must_exist()),
                 },
-                name: "HEAD".try_into()?,
-                deref: false,
-            }
-            .clone(),
-        ),
+            },
+            name: "HEAD".try_into()?,
+            deref: false,
+        }),
         Fail::Immediately,
     );
 
@@ -113,20 +110,17 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
     let target = head.target;
 
     let res = store.transaction().prepare(
-        Some(
-            RefEdit {
-                change: Change::Update {
-                    log: LogChange::default(),
-                    new: Target::Peeled(ObjectId::null_sha1()),
-                    mode: Create::OrUpdate {
-                        previous: Some(Target::Peeled(hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"))),
-                    },
+        Some(RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                new: Target::Peeled(ObjectId::null_sha1()),
+                mode: Create::OrUpdate {
+                    previous: Some(Target::Peeled(hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"))),
                 },
-                name: "HEAD".try_into()?,
-                deref: false,
-            }
-            .clone(),
-        ),
+            },
+            name: "HEAD".try_into()?,
+            deref: false,
+        }),
         Fail::Immediately,
     );
     match res {
@@ -146,18 +140,15 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
     let target = head.target;
 
     let res = store.transaction().prepare(
-        Some(
-            RefEdit {
-                change: Change::Update {
-                    log: LogChange::default(),
-                    new: Target::Peeled(ObjectId::null_sha1()),
-                    mode: Create::Only,
-                },
-                name: "HEAD".try_into()?,
-                deref: false,
-            }
-            .clone(),
-        ),
+        Some(RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                new: Target::Peeled(ObjectId::null_sha1()),
+                mode: Create::Only,
+            },
+            name: "HEAD".try_into()?,
+            deref: false,
+        }),
         Fail::Immediately,
     );
     match res {
@@ -180,18 +171,15 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the
     let edits = store
         .transaction()
         .prepare(
-            Some(
-                RefEdit {
-                    change: Change::Update {
-                        log: LogChange::default(),
-                        new: target.clone(),
-                        mode: Create::Only,
-                    },
-                    name: "HEAD".try_into()?,
-                    deref: false,
-                }
-                .clone(),
-            ),
+            Some(RefEdit {
+                change: Change::Update {
+                    log: LogChange::default(),
+                    new: target.clone(),
+                    mode: Create::Only,
+                },
+                name: "HEAD".try_into()?,
+                deref: false,
+            }),
             Fail::Immediately,
         )?
         .commit(&committer())?;
@@ -538,7 +526,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
                         },
                         new: r.target,
                     },
-                    name: r.name.into(),
+                    name: r.name,
                     deref: false,
                 }),
             git_lock::acquire::Fail::Immediately,

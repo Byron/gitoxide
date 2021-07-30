@@ -29,14 +29,12 @@ fn from_bytes() -> crate::Result {
         .collect::<Vec<_>>()
     );
     let object_format = caps.capability("object-format").expect("cap exists");
-    assert_eq!(
+    assert!(
         object_format.supports("sha1").expect("there is a value"),
-        true,
         "sha1 is supported"
     );
-    assert_eq!(
-        object_format.supports("sha2").expect("there is a value"),
-        false,
+    assert!(
+        !object_format.supports("sha2").expect("there is a value"),
         "sha2 is not supported"
     );
     assert_eq!(

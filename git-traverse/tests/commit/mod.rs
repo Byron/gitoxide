@@ -152,7 +152,7 @@ mod ancestor {
             ],
             move |id| {
                 if id == hex_to_id("9556057aee5abb06912922e9f26c46386a816822") {
-                    assert_eq!(seen, false);
+                    assert!(!seen);
                     seen = true;
                     false
                 } else {

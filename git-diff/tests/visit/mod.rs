@@ -26,7 +26,7 @@ mod changes {
         ) -> crate::Result<immutable::TreeIter<'a>> {
             let tree_id = db
                 .find(commit, buf, &mut pack::cache::Never)?
-                .ok_or_else(|| String::from(format!("start commit {:?} to be present", commit)))?
+                .ok_or_else(|| format!("start commit {:?} to be present", commit))?
                 .decode()?
                 .into_commit()
                 .expect("id is actually a commit")
@@ -66,7 +66,7 @@ mod changes {
             let (main_tree_id, parent_commit_id) = {
                 let commit = db
                     .find(commit_id, &mut buf, &mut pack::cache::Never)?
-                    .ok_or_else(|| String::from(format!("start commit {:?} to be present", commit_id)))?
+                    .ok_or_else(|| format!("start commit {:?} to be present", commit_id))?
                     .decode()?
                     .into_commit()
                     .expect("id is actually a commit");
@@ -109,7 +109,7 @@ mod changes {
 
         fn head_of(db: &linked::Store) -> ObjectId {
             ObjectId::from_hex(
-                &std::fs::read(
+                std::fs::read(
                     db.dbs[0]
                         .loose
                         .path
@@ -238,14 +238,14 @@ mod changes {
                         previous_entry_mode: EntryMode::Tree,
                         previous_oid: hex_to_id("849bd76db90b65ebbd2e6d3970ca70c96ee5592c"),
                         entry_mode: EntryMode::Tree,
-                        oid: tree_with_link_id.clone(),
+                        oid: tree_with_link_id,
                         path: "f".into()
                     },
                     Modification {
                         previous_entry_mode: EntryMode::Blob,
                         previous_oid: hex_to_id("13c2aca72ab576cb5f22dc8e7f8ba8ddab553a8a"),
                         entry_mode: link_entry_mode,
-                        oid: link_entry_oid.clone(),
+                        oid: link_entry_oid,
                         path: "f/f".into()
                     },
                 ],
@@ -507,7 +507,7 @@ mod changes {
                 diff_commits(
                     &db,
                     all_commits[0].to_owned(),
-                    &all_commits.last().expect("we have many commits")
+                    all_commits.last().expect("we have many commits")
                 )?,
                 vec![
                     Addition {

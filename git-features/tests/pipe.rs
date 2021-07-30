@@ -81,10 +81,10 @@ mod io {
     #[test]
     fn continue_on_empty_writes() {
         let (mut writer, mut reader) = io::pipe::unidirectional(2);
-        writer.write(&[]).expect("write successful and non-blocking");
+        writer.write_all(&[]).expect("write successful and non-blocking");
         let input = b"hello";
         writer
-            .write(input)
+            .write_all(input)
             .expect("second write works as well as there is capacity");
         let mut buf = vec![0u8; input.len()];
         assert_eq!(reader.read(&mut buf).expect("read succeeds"), input.len());

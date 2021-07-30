@@ -327,7 +327,7 @@ mod refedit_ext {
                     RefEdit {
                         change: Change::Update {
                             mode: Create::Only,
-                            log: log_only.clone(),
+                            log: log_only,
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },
                         name: "refs/heads/update-symbolic-2".try_into()?,
@@ -344,7 +344,7 @@ mod refedit_ext {
                     RefEdit {
                         change: Change::Update {
                             mode: Create::Only,
-                            log: log.clone(),
+                            log,
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },
                         name: "refs/heads/update-symbolic-3".try_into()?,

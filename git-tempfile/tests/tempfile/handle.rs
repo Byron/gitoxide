@@ -21,7 +21,7 @@ mod mark_path {
         let handle = err.handle;
         std::fs::remove_dir(&new_filename)?;
 
-        drop(handle.take().expect("still there").persist(&new_filename)?);
+        handle.take().expect("still there").persist(&new_filename)?;
         assert!(!target.exists(), "tempfile was renamed");
         assert!(
             new_filename.is_file(),
@@ -72,7 +72,7 @@ mod at_path {
         )?;
         file.with_mut(|f| f.as_file_mut().write_all(b"hello world"))??;
         let mark = file.close()?;
-        drop(mark.take().expect("still there").persist(&new_filename)?);
+        mark.take().expect("still there").persist(&new_filename)?;
         assert!(!target.exists(), "tempfile was renamed");
         assert!(
             new_filename.is_file(),

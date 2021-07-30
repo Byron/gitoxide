@@ -1441,12 +1441,12 @@ mod section_headers {
 
     #[test]
     fn newline_in_header() {
-        assert!(section_header(b"[hello\n]").is_err())
+        assert!(section_header(b"[hello\n]").is_err());
     }
 
     #[test]
     fn null_byte_in_header() {
-        assert!(section_header(b"[hello\0]").is_err())
+        assert!(section_header(b"[hello\0]").is_err());
     }
 
     #[test]
@@ -1476,7 +1476,7 @@ mod config_name {
 
     #[test]
     fn cannot_be_empty() {
-        assert!(config_name(b"").is_err())
+        assert!(config_name(b"").is_err());
     }
 }
 
@@ -1727,7 +1727,7 @@ mod section {
                 },
                 3
             ))
-        )
+        );
     }
 
     #[test]
@@ -1840,7 +1840,7 @@ mod section {
                 },
                 0
             ))
-        )
+        );
     }
 
     #[test]

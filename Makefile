@@ -68,9 +68,9 @@ doc: ## Run cargo doc on all crates
 	cargo doc --features=max,lean,light,small
 
 clippy: ## Run cargo clippy on all crates
-	cargo clippy --all
+	cargo clippy --all --tests
 	cargo clippy --all --no-default-features --features small
-	cargo clippy --all --no-default-features --features light-async
+	cargo clippy --all --no-default-features --features light-async --tests
 
 check: ## Build all code in suitable configurations
 	cargo check --all

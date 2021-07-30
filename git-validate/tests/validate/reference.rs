@@ -1,7 +1,6 @@
 mod name_partial {
     mod valid {
         use bstr::ByteSlice;
-        use git_validate;
         macro_rules! mktest {
             ($name:ident, $input:expr) => {
                 #[test]
@@ -81,7 +80,6 @@ mod name_partial {
 mod name {
     mod valid {
         use bstr::ByteSlice;
-        use git_validate;
         macro_rules! mktest {
             ($name:ident, $input:expr) => {
                 #[test]

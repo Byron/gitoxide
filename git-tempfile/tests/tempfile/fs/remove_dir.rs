@@ -99,9 +99,7 @@ mod empty_depth_first {
         touch(&tree_parent.join("a").join("b"), "hello.ext")?;
         create_dir_all(tree_parent.join("one").join("two").join("empty"))?;
 
-        for non_empty in &[nested_parent] {
-            assert!(git_tempfile::remove_dir::empty_depth_first(non_empty).is_err());
-        }
+        assert!(git_tempfile::remove_dir::empty_depth_first(nested_parent).is_err());
         Ok(())
     }
 

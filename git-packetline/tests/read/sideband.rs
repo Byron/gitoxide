@@ -54,19 +54,21 @@ async fn read_pack_with_progress_extraction() -> crate::Result {
     };
     let pack_read = rd.as_read_with_sidebands(&mut do_nothing);
     #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
-    let pack_entries = pack::data::input::BytesToEntriesIter::new_from_header(
+    let mut pack_entries = pack::data::input::BytesToEntriesIter::new_from_header(
         util::BlockOn(pack_read),
         pack::data::input::Mode::Verify,
         pack::data::input::EntryDataMode::Ignore,
     )?;
     #[cfg(feature = "blocking-io")]
-    let pack_entries = pack::data::input::BytesToEntriesIter::new_from_header(
+    let mut pack_entries = pack::data::input::BytesToEntriesIter::new_from_header(
         pack_read,
         pack::data::input::Mode::Verify,
         pack::data::input::EntryDataMode::Ignore,
     )?;
     let all_but_last = pack_entries.size_hint().0 - 1;
-    let last = pack_entries.skip(all_but_last).next().expect("last entry")?;
+    let last = pack_entries.nth(all_but_last).expect("last entry")?;
+    drop(pack_entries);
+
     assert_eq!(
         last.trailer
             .expect("trailer to exist on last entry")

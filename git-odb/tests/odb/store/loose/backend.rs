@@ -43,7 +43,7 @@ mod write {
         let mut buf2 = Vec::new();
 
         for oid in object_ids() {
-            let obj = locate_oid(oid.clone(), &mut buf);
+            let obj = locate_oid(oid, &mut buf);
             let actual = db.write(&obj.decode()?.into(), git_hash::Kind::Sha1)?;
             assert_eq!(actual, oid);
             assert_eq!(db.find(oid, &mut buf2)?.expect("id present").decode()?, obj.decode()?);

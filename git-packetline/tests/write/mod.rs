@@ -8,6 +8,7 @@ use std::io::Write;
 const MAX_DATA_LEN: usize = 65516;
 const MAX_LINE_LEN: usize = 4 + MAX_DATA_LEN;
 
+#[allow(clippy::unused_io_amount)] // under test
 #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
 async fn each_write_results_in_one_line() -> crate::Result {
     let mut w = Writer::new(Vec::new());
@@ -18,6 +19,7 @@ async fn each_write_results_in_one_line() -> crate::Result {
     Ok(())
 }
 
+#[allow(clippy::unused_io_amount)] // under test
 #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
 async fn write_text_and_write_binary() -> crate::Result {
     let buf = {
@@ -31,6 +33,7 @@ async fn write_text_and_write_binary() -> crate::Result {
     Ok(())
 }
 
+#[allow(clippy::unused_io_amount)] // under test
 #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
 async fn huge_writes_are_split_into_lines() -> crate::Result {
     let buf = {

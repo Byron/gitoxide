@@ -110,7 +110,7 @@ fn delete_ref_with_incorrect_previous_value_fails() -> crate::Result {
                 previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
                 log: RefLog::Only,
             },
-            name: head.name.clone(),
+            name: head.name,
             deref: true,
         }),
         Fail::Immediately,

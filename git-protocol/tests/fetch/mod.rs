@@ -180,7 +180,7 @@ mod blocking_io {
             for wanted in previous.wanted_refs() {
                 self.wanted_refs.push(fetch::Ref::Direct {
                     path: wanted.path.clone(),
-                    object: wanted.id.clone(),
+                    object: wanted.id,
                 });
             }
             self.pack_bytes = io::copy(&mut input, &mut io::sink())? as usize;
@@ -239,7 +239,7 @@ mod async_io {
             for wanted in previous.wanted_refs() {
                 self.wanted_refs.push(fetch::Ref::Direct {
                     path: wanted.path.clone(),
-                    object: wanted.id.clone(),
+                    object: wanted.id,
                 });
             }
             self.pack_bytes = futures_lite::io::copy(&mut input, &mut futures_lite::io::sink()).await? as usize;
@@ -266,7 +266,7 @@ pub fn oid(hex_sha: &str) -> git_hash::ObjectId {
 }
 
 #[cfg(feature = "async-client")]
-pub fn transport<'a, W: futures_io::AsyncWrite + Unpin>(
+pub fn transport<W: futures_io::AsyncWrite + Unpin>(
     out: W,
     path: &str,
     desired_version: git_transport::Protocol,
@@ -284,7 +284,7 @@ pub fn transport<'a, W: futures_io::AsyncWrite + Unpin>(
 }
 
 #[cfg(feature = "blocking-client")]
-pub fn transport<'a, W: std::io::Write>(
+pub fn transport<W: std::io::Write>(
     out: W,
     path: &str,
     version: git_transport::Protocol,

@@ -200,7 +200,7 @@ pub mod streaming_peek_iter {
     #[maybe_async::maybe_async]
     async fn exhaust(rd: &mut git_packetline::StreamingPeekableIter<&[u8]>) -> i32 {
         let mut count = 0;
-        while let Some(_) = rd.read_line().await {
+        while rd.read_line().await.is_some() {
             count += 1;
         }
         count
