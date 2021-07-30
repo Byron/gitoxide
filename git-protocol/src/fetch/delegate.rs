@@ -46,10 +46,7 @@ pub trait DelegateBlocking {
     /// Note that some arguments are preset based on typical use, and `features` are preset to maximize options.
     /// The `server` capabilities can be used to see which additional capabilities the server supports as per the handshake which happened prior.
     ///
-    /// If the delegate returns [`LsRefsAction::Skip`], no 'ls-refs` command is sent to the server. This is valid if the
-    /// 'ref-in-want' capability is supported by the server, and the client takes advantage of that by sending 'want-ref's
-    /// in [`DelegateBlocking::negotiate`]. The delegate must check for the presence of 'ref-in-want' in `features`, and
-    /// otherwise ensure that 'ls-refs` is executed.
+    /// If the delegate returns [`LsRefsAction::Skip`], no 'ls-refs` command is sent to the server.
     ///
     /// Note that this is called only if we are using protocol version 2.
     fn prepare_ls_refs(
@@ -109,13 +106,6 @@ pub trait DelegateBlocking {
     /// This method is called until the other side signals they are ready to send a pack.
     /// Return `Action::Close` if you want to give up before finding a common base. This can happen if the remote repository
     /// has radically changed so there are no bases, or they are very far in the past, causing all objects to be sent.
-    ///
-    /// ### 'ref-in-want'
-    ///
-    /// The 'ref-in-want' feature requires special attention: 'want-refs' need to be
-    /// [added to the arguments][Arguments::want_ref()] on the **first** call of this method (when `previous` is
-    /// `None`). The `Action` must in this case be [`Action::Continue`], as the server's 'wanted-refs' response will be
-    /// available only on the next turn.
     fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>)
         -> io::Result<Action>;
 

@@ -80,27 +80,12 @@ impl fetch::DelegateBlocking for CloneRefInWantDelegate {
         Ok(Action::Continue)
     }
 
-    fn negotiate(
-        &mut self,
-        _refs: &[Ref],
-        arguments: &mut Arguments,
-        previous_result: Option<&Response>,
-    ) -> io::Result<Action> {
-        match previous_result {
-            None => {
-                for wanted_ref in &self.want_refs {
-                    arguments.want_ref(wanted_ref.as_ref())
-                }
-                Ok(Action::Cancel)
-            }
-            Some(resp) => {
-                if resp.wanted_refs().is_empty() {
-                    Ok(Action::Continue)
-                } else {
-                    Ok(Action::Cancel)
-                }
-            }
+    fn negotiate(&mut self, _refs: &[Ref], arguments: &mut Arguments, _prev: Option<&Response>) -> io::Result<Action> {
+        for wanted_ref in &self.want_refs {
+            arguments.want_ref(wanted_ref.as_ref())
         }
+
+        Ok(Action::Cancel)
     }
 }
 
@@ -175,9 +160,9 @@ mod blocking_io {
             mut input: impl io::BufRead,
             _progress: impl Progress,
             _refs: &[Ref],
-            previous: &Response,
+            response: &Response,
         ) -> io::Result<()> {
-            for wanted in previous.wanted_refs() {
+            for wanted in response.wanted_refs() {
                 self.wanted_refs.push(fetch::Ref::Direct {
                     path: wanted.path.clone(),
                     object: wanted.id,
@@ -234,9 +219,9 @@ mod async_io {
             mut input: impl AsyncBufRead + Unpin + 'async_trait,
             _progress: impl Progress,
             _refs: &[Ref],
-            previous: &Response,
+            response: &Response,
         ) -> io::Result<()> {
-            for wanted in previous.wanted_refs() {
+            for wanted in response.wanted_refs() {
                 self.wanted_refs.push(fetch::Ref::Direct {
                     path: wanted.path.clone(),
                     object: wanted.id,
