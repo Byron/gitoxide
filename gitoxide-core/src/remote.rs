@@ -33,7 +33,7 @@ pub mod refs {
             &mut self,
             _refs: &[Ref],
             _arguments: &mut Arguments,
-            _previous_result: Option<&Response>,
+            _previous_response: Option<&Response>,
         ) -> io::Result<Action> {
             unreachable!("not to be called due to Action::Close in `prepare_fetch`")
         }
@@ -59,7 +59,7 @@ pub mod refs {
                 input: impl AsyncBufRead + Unpin + 'async_trait,
                 progress: impl Progress,
                 refs: &[Ref],
-                previous: &Response,
+                previous_response: &Response,
             ) -> io::Result<()> {
                 unreachable!("not called for ls-refs")
             }
@@ -119,7 +119,7 @@ pub mod refs {
                 _input: impl io::BufRead,
                 _progress: impl Progress,
                 _refs: &[Ref],
-                _previous: &Response,
+                _previous_response: &Response,
             ) -> io::Result<()> {
                 unreachable!("not called for ls-refs")
             }

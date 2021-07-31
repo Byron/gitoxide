@@ -59,7 +59,7 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         &mut self,
         refs: &[Ref],
         arguments: &mut Arguments,
-        _previous: Option<&Response>,
+        _previous_response: Option<&Response>,
     ) -> io::Result<Action> {
         for r in refs {
             let (path, id) = r.unpack();
@@ -97,7 +97,7 @@ mod blocking_io {
             input: impl BufRead,
             progress: impl Progress,
             refs: &[Ref],
-            _previous: &Response,
+            _previous_response: &Response,
         ) -> io::Result<()> {
             let options = pack::bundle::write::Options {
                 thread_limit: self.ctx.thread_limit,
@@ -188,7 +188,7 @@ mod async_io {
             input: impl AsyncBufRead + Unpin + 'async_trait,
             progress: impl Progress,
             refs: &[Ref],
-            _previous: &Response,
+            _previous_response: &Response,
         ) -> io::Result<()> {
             let options = pack::bundle::write::Options {
                 thread_limit: self.ctx.thread_limit,

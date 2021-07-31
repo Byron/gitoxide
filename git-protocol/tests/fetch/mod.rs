@@ -34,7 +34,7 @@ impl fetch::DelegateBlocking for CloneDelegate {
         &mut self,
         refs: &[Ref],
         arguments: &mut Arguments,
-        _previous_result: Option<&Response>,
+        _previous_response: Option<&Response>,
     ) -> io::Result<Action> {
         for r in refs {
             arguments.want(r.unpack().1);
@@ -125,7 +125,7 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
         &mut self,
         _refs: &[Ref],
         _arguments: &mut Arguments,
-        _previous_result: Option<&Response>,
+        _previous_response: Option<&Response>,
     ) -> io::Result<Action> {
         unreachable!("this must not be called after closing the connection in `prepare_fetch(…)`")
     }
@@ -147,7 +147,7 @@ mod blocking_io {
             mut input: impl io::BufRead,
             _progress: impl Progress,
             _refs: &[Ref],
-            _previous: &Response,
+            _previous_response: &Response,
         ) -> io::Result<()> {
             self.pack_bytes = io::copy(&mut input, &mut io::sink())? as usize;
             Ok(())
@@ -179,7 +179,7 @@ mod blocking_io {
             _input: impl io::BufRead,
             _progress: impl Progress,
             _refs: &[Ref],
-            _previous: &Response,
+            _previous_response: &Response,
         ) -> io::Result<()> {
             unreachable!("Should not be called for ls-refs");
         }
@@ -205,7 +205,7 @@ mod async_io {
             mut input: impl AsyncBufRead + Unpin + 'async_trait,
             _progress: impl Progress,
             _refs: &[Ref],
-            _previous: &Response,
+            _previous_response: &Response,
         ) -> io::Result<()> {
             self.pack_bytes = futures_lite::io::copy(&mut input, &mut futures_lite::io::sink()).await? as usize;
             Ok(())
@@ -239,7 +239,7 @@ mod async_io {
             _input: impl AsyncBufRead + Unpin + 'async_trait,
             _progress: impl Progress,
             _refs: &[Ref],
-            _previous: &Response,
+            _previous_response: &Response,
         ) -> io::Result<()> {
             unreachable!("Should not be called for ls-refs");
         }

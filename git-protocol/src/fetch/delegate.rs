@@ -81,10 +81,10 @@ pub trait DelegateBlocking {
 
     /// A method called repeatedly to negotiate the objects to receive in [`receive_pack(…)`][Delegate::receive_pack()].
     ///
-    /// The first call has `previous` set to `None` as there was no previous response. Every call that follows `previous`
+    /// The first call has `previous_response` set to `None` as there was no previous response. Every call that follows `previous_response`
     /// will be set to `Some`.
     ///
-    /// ### If `previous` is `None`…
+    /// ### If `previous_response` is `None`…
     ///
     /// Given a list of `arguments` to populate with wants, want-refs, shallows, filters and other contextual information to be
     /// sent to the server. This method is called once.
@@ -97,17 +97,21 @@ pub trait DelegateBlocking {
     /// Return `Action::Close` if you know that there are no `haves` on your end to allow the server to send all of its objects
     /// as is the case during initial clones.
     ///
-    /// ### If `previous` is `Some`…
+    /// ### If `previous_response` is `Some`…
     ///
     /// Populate `arguments` with the objects you `have` starting from the tips of _your_ refs, taking into consideration
-    /// the `previous` response of the server to see which objects they acknowledged to have. You have to maintain
+    /// the `previous_response` response of the server to see which objects they acknowledged to have. You have to maintain
     /// enough state to be able to walk down from your tips on each call, if they are not in common, and keep setting `have`
     /// for those which are in common if that helps teaching the server about our state and to acknowledge their existence on _their_ end.
     /// This method is called until the other side signals they are ready to send a pack.
     /// Return `Action::Close` if you want to give up before finding a common base. This can happen if the remote repository
     /// has radically changed so there are no bases, or they are very far in the past, causing all objects to be sent.
-    fn negotiate(&mut self, refs: &[Ref], arguments: &mut Arguments, previous: Option<&Response>)
-        -> io::Result<Action>;
+    fn negotiate(
+        &mut self,
+        refs: &[Ref],
+        arguments: &mut Arguments,
+        previous_response: Option<&Response>,
+    ) -> io::Result<Action>;
 
     /// Return true if the server should be informed that the operation is completed and no further commands will be issued
     /// at the end of the fetch operation.
@@ -151,9 +155,9 @@ impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
         &mut self,
         refs: &[Ref],
         arguments: &mut Arguments,
-        previous: Option<&Response>,
+        previous_response: Option<&Response>,
     ) -> io::Result<Action> {
-        self.deref_mut().negotiate(refs, arguments, previous)
+        self.deref_mut().negotiate(refs, arguments, previous_response)
     }
 }
 
@@ -185,9 +189,9 @@ impl<T: DelegateBlocking> DelegateBlocking for &mut T {
         &mut self,
         refs: &[Ref],
         arguments: &mut Arguments,
-        previous: Option<&Response>,
+        previous_response: Option<&Response>,
     ) -> io::Result<Action> {
-        self.deref_mut().negotiate(refs, arguments, previous)
+        self.deref_mut().negotiate(refs, arguments, previous_response)
     }
 }
 
@@ -212,14 +216,14 @@ mod blocking_io {
         ///
         /// Use `progress` to emit your own progress messages when decoding the pack.
         ///
-        /// `refs` of the remote side are provided for convenience, along with the parsed `previous` response in case you want
+        /// `refs` of the remote side are provided for convenience, along with the parsed `previous_response` response in case you want
         /// to check additional acks.
         fn receive_pack(
             &mut self,
             input: impl io::BufRead,
             progress: impl Progress,
             refs: &[Ref],
-            previous: &Response,
+            previous_response: &Response,
         ) -> io::Result<()>;
     }
 
@@ -229,9 +233,9 @@ mod blocking_io {
             input: impl BufRead,
             progress: impl Progress,
             refs: &[Ref],
-            previous: &Response,
+            previous_response: &Response,
         ) -> io::Result<()> {
-            self.deref_mut().receive_pack(input, progress, refs, previous)
+            self.deref_mut().receive_pack(input, progress, refs, previous_response)
         }
     }
 
@@ -241,9 +245,9 @@ mod blocking_io {
             input: impl BufRead,
             progress: impl Progress,
             refs: &[Ref],
-            previous: &Response,
+            previous_response: &Response,
         ) -> io::Result<()> {
-            self.deref_mut().receive_pack(input, progress, refs, previous)
+            self.deref_mut().receive_pack(input, progress, refs, previous_response)
         }
     }
 }
@@ -272,14 +276,14 @@ mod async_io {
         ///
         /// Use `progress` to emit your own progress messages when decoding the pack.
         ///
-        /// `refs` of the remote side are provided for convenience, along with the parsed `previous` response in case you want
+        /// `refs` of the remote side are provided for convenience, along with the parsed `previous_response` response in case you want
         /// to check additional acks.
         async fn receive_pack(
             &mut self,
             input: impl AsyncBufRead + Unpin + 'async_trait,
             progress: impl Progress,
             refs: &[Ref],
-            previous: &Response,
+            previous_response: &Response,
         ) -> io::Result<()>;
     }
     #[async_trait(?Send)]
@@ -289,9 +293,11 @@ mod async_io {
             input: impl AsyncBufRead + Unpin + 'async_trait,
             progress: impl Progress,
             refs: &[Ref],
-            previous: &Response,
+            previous_response: &Response,
         ) -> io::Result<()> {
-            self.deref_mut().receive_pack(input, progress, refs, previous).await
+            self.deref_mut()
+                .receive_pack(input, progress, refs, previous_response)
+                .await
         }
     }
 
@@ -302,9 +308,11 @@ mod async_io {
             input: impl AsyncBufRead + Unpin + 'async_trait,
             progress: impl Progress,
             refs: &[Ref],
-            previous: &Response,
+            previous_response: &Response,
         ) -> io::Result<()> {
-            self.deref_mut().receive_pack(input, progress, refs, previous).await
+            self.deref_mut()
+                .receive_pack(input, progress, refs, previous_response)
+                .await
         }
     }
 }
