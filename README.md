@@ -85,6 +85,7 @@ Follow linked crate name for detailed status.
   
 ### Ideas for Examples
 
+  * [ ] `gix tool open-remote` open the URL of the remote, possibly after applying known transformations to go from `ssh` to `https`.
   * [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
         as well. What would an MVP look like? Maybe even something that could ship with gitoxide.
   * [ ] A [syncthing] like client/server application. This is to demonstrate how lower-level crates can be combined into custom applications that use
