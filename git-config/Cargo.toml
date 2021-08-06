@@ -25,3 +25,4 @@ criterion = "0.3"
 [[bench]]
 name = "large_config_file"
 harness = false
+path = "."
