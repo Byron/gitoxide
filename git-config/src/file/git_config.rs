@@ -1,428 +1,13 @@
-//! This module provides a high level wrapper around a single `git-config` file.
-
+use crate::file::error::{GitConfigError, GitConfigFromEnvError};
+use crate::file::section::{MutableSection, SectionBody};
+use crate::file::value::{EntryData, MutableMultiValue, MutableValue};
 use crate::parser::{
     parse_from_bytes, parse_from_str, Error, Event, Key, ParsedSectionHeader, Parser, SectionHeaderName,
 };
-use crate::values::{normalize_bytes, normalize_cow, normalize_vec};
-use std::borrow::{Borrow, Cow};
+use std::borrow::Cow;
 use std::collections::{HashMap, VecDeque};
 use std::convert::TryFrom;
 use std::fmt::Display;
-use std::ops::{Deref, DerefMut, Range};
-
-/// All possible error types that may occur from interacting with [`GitConfig`].
-#[derive(PartialEq, Eq, Hash, Clone, PartialOrd, Ord, Debug)]
-pub enum GitConfigError<'a> {
-    /// The requested section does not exist.
-    SectionDoesNotExist(SectionHeaderName<'a>),
-    /// The requested subsection does not exist.
-    SubSectionDoesNotExist(Option<&'a str>),
-    /// The key does not exist in the requested section.
-    KeyDoesNotExist,
-    /// The conversion into the provided type for methods such as
-    /// [`GitConfig::value`] failed.
-    FailedConversion,
-}
-
-impl Display for GitConfigError<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::SectionDoesNotExist(s) => write!(f, "Section '{}' does not exist.", s),
-            Self::SubSectionDoesNotExist(s) => match s {
-                Some(s) => write!(f, "Subsection '{}' does not exist.", s),
-                None => write!(f, "Top level section does not exist."),
-            },
-            Self::KeyDoesNotExist => write!(f, "The name for a value provided does not exist."),
-            Self::FailedConversion => write!(f, "Failed to convert to specified type."),
-        }
-    }
-}
-
-impl std::error::Error for GitConfigError<'_> {}
-
-/// A opaque type that represents a mutable reference to a section.
-#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
-pub struct MutableSection<'borrow, 'event> {
-    section: &'borrow mut SectionBody<'event>,
-    implicit_newline: bool,
-    whitespace: usize,
-}
-
-impl<'borrow, 'event> MutableSection<'borrow, 'event> {
-    /// Adds an entry to the end of this section.
-    pub fn push(&mut self, key: Key<'event>, value: Cow<'event, [u8]>) {
-        if self.whitespace > 0 {
-            self.section
-                .0
-                .push(Event::Whitespace(" ".repeat(self.whitespace).into()));
-        }
-
-        self.section.0.push(Event::Key(key));
-        self.section.0.push(Event::KeyValueSeparator);
-        self.section.0.push(Event::Value(value));
-        if self.implicit_newline {
-            self.section.0.push(Event::Newline("\n".into()));
-        }
-    }
-
-    /// Removes all events until a key value pair is removed. This will also
-    /// remove the whitespace preceding the key value pair, if any is found.
-    pub fn pop(&mut self) -> Option<(Key, Cow<'event, [u8]>)> {
-        let mut values = vec![];
-        // events are popped in reverse order
-        while let Some(e) = self.section.0.pop() {
-            match e {
-                Event::Key(k) => {
-                    // pop leading whitespace
-                    if let Some(Event::Whitespace(_)) = self.section.0.last() {
-                        self.section.0.pop();
-                    }
-
-                    if values.len() == 1 {
-                        let value = values.pop().expect("vec is non-empty but popped to empty value");
-                        return Some((k, normalize_cow(value)));
-                    }
-
-                    return Some((
-                        k,
-                        normalize_vec(values.into_iter().rev().flat_map(|v: Cow<[u8]>| v.to_vec()).collect()),
-                    ));
-                }
-                Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => values.push(v),
-                _ => (),
-            }
-        }
-        None
-    }
-
-    /// Sets the last key value pair if it exists, or adds the new value.
-    /// Returns the previous value if it replaced a value, or None if it adds
-    /// the value.
-    pub fn set(&mut self, key: Key<'event>, value: Cow<'event, [u8]>) -> Option<Cow<'event, [u8]>> {
-        let range = self.get_value_range_by_key(&key);
-        if range.is_empty() {
-            self.push(key, value);
-            return None;
-        }
-        let range_start = range.start;
-        let ret = self.remove_internal(range);
-        self.section.0.insert(range_start, Event::Value(value));
-        Some(ret)
-    }
-
-    /// Removes the latest value by key and returns it, if it exists.
-    pub fn remove(&mut self, key: &Key<'event>) -> Option<Cow<'event, [u8]>> {
-        let range = self.get_value_range_by_key(key);
-        if range.is_empty() {
-            return None;
-        }
-        Some(self.remove_internal(range))
-    }
-
-    /// Performs the removal, assuming the range is valid. This is used to
-    /// avoid duplicating searching for the range in [`Self::set`].
-    fn remove_internal(&mut self, range: Range<usize>) -> Cow<'event, [u8]> {
-        self.section
-            .0
-            .drain(range)
-            .fold(Cow::<[u8]>::Owned(vec![]), |acc, e| match e {
-                Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => {
-                    // This is fine because we start out with an owned
-                    // variant, so we never actually clone the
-                    // accumulator.
-                    let mut acc = acc.into_owned();
-                    acc.extend(&*v);
-                    Cow::Owned(acc)
-                }
-                _ => acc,
-            })
-    }
-
-    /// Adds a new line event. Note that you don't need to call this unless
-    /// you've disabled implicit newlines.
-    #[inline]
-    pub fn push_newline(&mut self) {
-        self.section.0.push(Event::Newline("\n".into()));
-    }
-
-    /// Enables or disables automatically adding newline events after adding
-    /// a value. This is enabled by default.
-    #[inline]
-    pub fn implicit_newline(&mut self, on: bool) {
-        self.implicit_newline = on;
-    }
-
-    /// Sets the number of spaces before the start of a key value. By default,
-    /// this is set to two. Set to 0 to disable adding whitespace before a key
-    /// value.
-    #[inline]
-    pub fn set_whitespace(&mut self, num: usize) {
-        self.whitespace = num;
-    }
-
-    /// Returns the number of whitespace this section will insert before the
-    /// beginning of a key.
-    #[inline]
-    #[must_use]
-    pub const fn whitespace(&self) -> usize {
-        self.whitespace
-    }
-}
-
-// Internal methods that may require exact indices for faster operations.
-impl<'borrow, 'event> MutableSection<'borrow, 'event> {
-    #[inline]
-    fn new(section: &'borrow mut SectionBody<'event>) -> Self {
-        Self {
-            section,
-            implicit_newline: true,
-            whitespace: 2,
-        }
-    }
-
-    fn get<'key>(&self, key: &Key<'key>, start: usize, end: usize) -> Result<Cow<'_, [u8]>, GitConfigError<'key>> {
-        let mut found_key = false;
-        let mut latest_value = None;
-        let mut partial_value = None;
-        // section_id is guaranteed to exist in self.sections, else we have a
-        // violated invariant.
-
-        for event in &self.section.0[start..=end] {
-            match event {
-                Event::Key(event_key) if event_key == key => found_key = true,
-                Event::Value(v) if found_key => {
-                    found_key = false;
-                    // Clones the Cow, doesn't copy underlying value if borrowed
-                    latest_value = Some(v.clone());
-                }
-                Event::ValueNotDone(v) if found_key => {
-                    latest_value = None;
-                    partial_value = Some((*v).to_vec());
-                }
-                Event::ValueDone(v) if found_key => {
-                    found_key = false;
-                    partial_value.as_mut().unwrap().extend(&**v);
-                }
-                _ => (),
-            }
-        }
-
-        latest_value
-            .map(normalize_cow)
-            .or_else(|| partial_value.map(normalize_vec))
-            .ok_or(GitConfigError::KeyDoesNotExist)
-    }
-
-    #[inline]
-    fn delete(&mut self, start: usize, end: usize) {
-        self.section.0.drain(start..=end);
-    }
-
-    fn set_internal(&mut self, index: usize, key: Key<'event>, value: Vec<u8>) {
-        self.section.0.insert(index, Event::Value(Cow::Owned(value)));
-        self.section.0.insert(index, Event::KeyValueSeparator);
-        self.section.0.insert(index, Event::Key(key));
-    }
-}
-
-impl<'event> Deref for MutableSection<'_, 'event> {
-    type Target = SectionBody<'event>;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        self.section
-    }
-}
-
-/// A opaque type that represents a section body.
-#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug, Default)]
-pub struct SectionBody<'event>(Vec<Event<'event>>);
-
-impl<'event> SectionBody<'event> {
-    /// Constructs a new empty section body.
-    #[inline]
-    fn new() -> Self {
-        Self::default()
-    }
-
-    /// Retrieves the last matching value in a section with the given key.
-    /// Returns None if the key was not found.
-    // We hit this lint because of the unreachable!() call may panic, but this
-    // is a clippy bug (rust-clippy#6699), so we allow this lint for this
-    // function.
-    #[allow(clippy::missing_panics_doc)]
-    #[must_use]
-    pub fn value(&self, key: &Key) -> Option<Cow<'event, [u8]>> {
-        let range = self.get_value_range_by_key(key);
-        if range.is_empty() {
-            return None;
-        }
-
-        if range.end - range.start == 1 {
-            return self.0.get(range.start).map(|e| match e {
-                Event::Value(v) => v.clone(),
-                // range only has one element so we know it's a value event, so
-                // it's impossible to reach this code.
-                _ => unreachable!(),
-            });
-        }
-
-        Some(normalize_cow(self.0[range].iter().fold(
-            Cow::<[u8]>::Owned(vec![]),
-            |acc, e| match e {
-                Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => {
-                    // This is fine because we start out with an owned
-                    // variant, so we never actually clone the
-                    // accumulator.
-                    let mut acc = acc.into_owned();
-                    acc.extend(&**v);
-                    Cow::Owned(acc)
-                }
-                _ => acc,
-            },
-        )))
-    }
-
-    /// Retrieves the last matching value in a section with the given key, and
-    /// attempts to convert the value into the provided type.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the key was not found, or if the conversion failed.
-    #[inline]
-    pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<T, GitConfigError<'event>> {
-        T::try_from(self.value(key).ok_or(GitConfigError::KeyDoesNotExist)?)
-            .map_err(|_| GitConfigError::FailedConversion)
-    }
-
-    /// Retrieves all values that have the provided key name. This may return
-    /// an empty vec, which implies there was values with the provided key.
-    #[must_use]
-    pub fn values(&self, key: &Key) -> Vec<Cow<'event, [u8]>> {
-        let mut values = vec![];
-        let mut found_key = false;
-        let mut partial_value = None;
-
-        // This can iterate forwards because we need to iterate over the whole
-        // section anyways
-        for event in &self.0 {
-            match event {
-                Event::Key(event_key) if event_key == key => found_key = true,
-                Event::Value(v) if found_key => {
-                    found_key = false;
-                    // Clones the Cow, doesn't copy underlying value if borrowed
-                    values.push(normalize_cow(v.clone()));
-                    partial_value = None;
-                }
-                Event::ValueNotDone(v) if found_key => {
-                    partial_value = Some((*v).to_vec());
-                }
-                Event::ValueDone(v) if found_key => {
-                    found_key = false;
-                    let mut value = partial_value
-                        .take()
-                        .expect("ValueDone event called before ValueNotDone");
-                    value.extend(&**v);
-                    values.push(normalize_cow(Cow::Owned(value)));
-                }
-                _ => (),
-            }
-        }
-
-        values
-    }
-
-    /// Retrieves all values that have the provided key name. This may return
-    /// an empty vec, which implies there was values with the provided key.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the conversion failed.
-    #[inline]
-    pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<Vec<T>, GitConfigError<'event>> {
-        self.values(key)
-            .into_iter()
-            .map(T::try_from)
-            .collect::<Result<Vec<T>, _>>()
-            .map_err(|_| GitConfigError::FailedConversion)
-    }
-
-    /// Returns an iterator visiting all keys in order.
-    #[inline]
-    pub fn keys(&self) -> impl Iterator<Item = &Key<'event>> {
-        self.0
-            .iter()
-            .filter_map(|e| if let Event::Key(k) = e { Some(k) } else { None })
-    }
-
-    /// Checks if the section contains the provided key.
-    #[must_use]
-    pub fn contains_key(&self, key: &Key) -> bool {
-        for e in &self.0 {
-            if let Event::Key(k) = e {
-                if k == key {
-                    return true;
-                }
-            }
-        }
-        false
-    }
-
-    /// Returns the number of entries in the section.
-    #[inline]
-    #[must_use]
-    pub fn len(&self) -> usize {
-        self.0.iter().filter(|e| matches!(e, Event::Key(_))).count()
-    }
-
-    /// Returns if the section is empty.
-    #[inline]
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    /// Returns the the range containing the value events for the section.
-    /// If the value is not found, then this returns an empty range.
-    fn get_value_range_by_key(&self, key: &Key<'event>) -> Range<usize> {
-        let mut values_start = 0;
-        // value end needs to be offset by one so that the last value's index
-        // is included in the range
-        let mut values_end = 0;
-        for (i, e) in self.0.iter().enumerate().rev() {
-            match e {
-                Event::Key(k) => {
-                    if k == key {
-                        break;
-                    }
-                    values_start = 0;
-                    values_end = 0;
-                }
-                Event::Value(_) => {
-                    values_end = i + 1;
-                    values_start = i;
-                }
-                Event::ValueNotDone(_) | Event::ValueDone(_) => {
-                    if values_end == 0 {
-                        values_end = i + 1;
-                    } else {
-                        values_start = i;
-                    }
-                }
-                _ => (),
-            }
-        }
-
-        values_start..values_end
-    }
-}
-
-impl<'event> From<Vec<Event<'event>>> for SectionBody<'event> {
-    #[inline]
-    fn from(e: Vec<Event<'event>>) -> Self {
-        Self(e)
-    }
-}
 
 /// The section ID is a monotonically increasing ID used to refer to sections.
 /// This value does not imply any ordering between sections, as new sections
@@ -436,7 +21,7 @@ impl<'event> From<Vec<Event<'event>>> for SectionBody<'event> {
 /// words, it's possible that a section may have an ID of 3 but the next section
 /// has an ID of 5.
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
-struct SectionId(usize);
+pub(super) struct SectionId(usize);
 
 /// Internal data structure for the section id lookup tree used by
 /// [`GitConfig`]. Note that order in Vec matters as it represents the order
@@ -870,384 +455,6 @@ impl<'event> GitConfig<'event> {
     }
 }
 
-/// An intermediate representation of a mutable value obtained from
-/// [`GitConfig`].
-///
-/// This holds a mutable reference to the underlying data structure of
-/// [`GitConfig`], and thus guarantees through Rust's borrower checker that
-/// multiple mutable references to [`GitConfig`] cannot be owned at the same
-/// time.
-#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
-pub struct MutableValue<'borrow, 'lookup, 'event> {
-    section: MutableSection<'borrow, 'event>,
-    key: Key<'lookup>,
-    index: usize,
-    size: usize,
-}
-
-impl MutableValue<'_, '_, '_> {
-    /// Returns the actual value. This is computed each time this is called, so
-    /// it's best to reuse this value or own it if an allocation is acceptable.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the lookup failed.
-    #[inline]
-    pub fn get(&self) -> Result<Cow<'_, [u8]>, GitConfigError> {
-        self.section.get(&self.key, self.index, self.index + self.size)
-    }
-
-    /// Update the value to the provided one. This modifies the value such that
-    /// the Value event(s) are replaced with a single new event containing the
-    /// new value.
-    #[inline]
-    pub fn set_string(&mut self, input: String) {
-        self.set_bytes(input.into_bytes());
-    }
-
-    /// Update the value to the provided one. This modifies the value such that
-    /// the Value event(s) are replaced with a single new event containing the
-    /// new value.
-    pub fn set_bytes(&mut self, input: Vec<u8>) {
-        if self.size > 0 {
-            self.section.delete(self.index, self.index + self.size);
-        }
-        self.size = 3;
-        self.section
-            .set_internal(self.index, Key(Cow::Owned(self.key.to_string())), input);
-    }
-
-    /// Removes the value. Does nothing when called multiple times in
-    /// succession.
-    pub fn delete(&mut self) {
-        if self.size > 0 {
-            self.section.delete(self.index, self.index + self.size);
-            self.size = 0;
-        }
-    }
-}
-
-/// Internal data structure for [`MutableMultiValue`]
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-struct EntryData {
-    section_id: SectionId,
-    offset_index: usize,
-}
-
-/// An intermediate representation of a mutable multivar obtained from
-/// [`GitConfig`].
-///
-/// This holds a mutable reference to the underlying data structure of
-/// [`GitConfig`], and thus guarantees through Rust's borrower checker that
-/// multiple mutable references to [`GitConfig`] cannot be owned at the same
-/// time.
-#[derive(PartialEq, Eq, Debug)]
-pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
-    section: &'borrow mut HashMap<SectionId, SectionBody<'event>>,
-    key: Key<'lookup>,
-    /// Each entry data struct provides sufficient information to index into
-    /// [`Self::offsets`]. This layer of indirection is used for users to index
-    /// into the offsets rather than leaking the internal data structures.
-    indices_and_sizes: Vec<EntryData>,
-    /// Each offset represents the size of a event slice and whether or not the
-    /// event slice is significant or not. This is used to index into the
-    /// actual section.
-    offsets: HashMap<SectionId, Vec<usize>>,
-}
-
-impl<'lookup, 'event> MutableMultiValue<'_, 'lookup, 'event> {
-    /// Returns the actual values. This is computed each time this is called.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the lookup failed.
-    pub fn get(&self) -> Result<Vec<Cow<'_, [u8]>>, GitConfigError> {
-        let mut found_key = false;
-        let mut values = vec![];
-        let mut partial_value = None;
-        // section_id is guaranteed to exist in self.sections, else we have a
-        // violated invariant.
-        for EntryData {
-            section_id,
-            offset_index,
-        } in &self.indices_and_sizes
-        {
-            let (offset, size) = MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
-            for event in &self
-                .section
-                .get(section_id)
-                .expect("sections does not have section id from section ids")
-                .0[offset..offset + size]
-            {
-                match event {
-                    Event::Key(event_key) if *event_key == self.key => found_key = true,
-                    Event::Value(v) if found_key => {
-                        found_key = false;
-                        values.push(normalize_bytes(v.borrow()));
-                    }
-                    Event::ValueNotDone(v) if found_key => {
-                        partial_value = Some((*v).to_vec());
-                    }
-                    Event::ValueDone(v) if found_key => {
-                        found_key = false;
-                        let mut value = partial_value
-                            .take()
-                            .expect("Somehow got ValueDone before ValueNotDone event");
-                        value.extend(&**v);
-                        values.push(normalize_vec(value));
-                    }
-                    _ => (),
-                }
-            }
-        }
-
-        if values.is_empty() {
-            return Err(GitConfigError::KeyDoesNotExist);
-        }
-
-        Ok(values)
-    }
-
-    /// Returns the size of values the multivar has.
-    #[inline]
-    #[must_use]
-    pub fn len(&self) -> usize {
-        self.indices_and_sizes.len()
-    }
-
-    /// Returns if the multivar has any values. This might occur if the value
-    /// was deleted but not set with a new value.
-    #[inline]
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.indices_and_sizes.is_empty()
-    }
-
-    /// Sets the value at the given index.
-    ///
-    /// # Safety
-    ///
-    /// This will panic if the index is out of range.
-    #[inline]
-    pub fn set_string(&mut self, index: usize, input: String) {
-        self.set_bytes(index, input.into_bytes());
-    }
-
-    /// Sets the value at the given index.
-    ///
-    /// # Safety
-    ///
-    /// This will panic if the index is out of range.
-    #[inline]
-    pub fn set_bytes(&mut self, index: usize, input: Vec<u8>) {
-        self.set_value(index, Cow::Owned(input));
-    }
-
-    /// Sets the value at the given index.
-    ///
-    /// # Safety
-    ///
-    /// This will panic if the index is out of range.
-    pub fn set_value<'a: 'event>(&mut self, index: usize, input: Cow<'a, [u8]>) {
-        let EntryData {
-            section_id,
-            offset_index,
-        } = self.indices_and_sizes[index];
-        MutableMultiValue::set_value_inner(
-            &self.key,
-            &mut self.offsets,
-            self.section
-                .get_mut(&section_id)
-                .expect("sections does not have section id from section ids"),
-            section_id,
-            offset_index,
-            input,
-        );
-    }
-
-    /// Sets all values to the provided values. Note that this follows [`zip`]
-    /// logic: if the number of values in the input is less than the number of
-    /// values currently existing, then only the first `n` values are modified.
-    /// If more values are provided than there currently are, then the
-    /// remaining values are ignored.
-    ///
-    /// [`zip`]: std::iter::Iterator::zip
-    #[inline]
-    pub fn set_values<'a: 'event>(&mut self, input: impl Iterator<Item = Cow<'a, [u8]>>) {
-        for (
-            EntryData {
-                section_id,
-                offset_index,
-            },
-            value,
-        ) in self.indices_and_sizes.iter().zip(input)
-        {
-            Self::set_value_inner(
-                &self.key,
-                &mut self.offsets,
-                self.section
-                    .get_mut(section_id)
-                    .expect("sections does not have section id from section ids"),
-                *section_id,
-                *offset_index,
-                value,
-            );
-        }
-    }
-
-    /// Sets all values in this multivar to the provided one by copying the
-    /// input for all values.
-    #[inline]
-    pub fn set_str_all(&mut self, input: &str) {
-        self.set_owned_values_all(input.as_bytes());
-    }
-
-    /// Sets all values in this multivar to the provided one by copying the
-    /// input bytes for all values.
-    #[inline]
-    pub fn set_owned_values_all(&mut self, input: &[u8]) {
-        for EntryData {
-            section_id,
-            offset_index,
-        } in &self.indices_and_sizes
-        {
-            Self::set_value_inner(
-                &self.key,
-                &mut self.offsets,
-                self.section
-                    .get_mut(section_id)
-                    .expect("sections does not have section id from section ids"),
-                *section_id,
-                *offset_index,
-                Cow::Owned(input.to_vec()),
-            );
-        }
-    }
-
-    /// Sets all values in this multivar to the provided one without owning the
-    /// provided input. Note that this requires `input` to last longer than
-    /// [`GitConfig`]. Consider using [`Self::set_owned_values_all`] or
-    /// [`Self::set_str_all`] unless you have a strict performance or memory
-    /// need for a more ergonomic interface.
-    #[inline]
-    pub fn set_values_all<'a: 'event>(&mut self, input: &'a [u8]) {
-        for EntryData {
-            section_id,
-            offset_index,
-        } in &self.indices_and_sizes
-        {
-            Self::set_value_inner(
-                &self.key,
-                &mut self.offsets,
-                self.section
-                    .get_mut(section_id)
-                    .expect("sections does not have section id from section ids"),
-                *section_id,
-                *offset_index,
-                Cow::Borrowed(input),
-            );
-        }
-    }
-
-    fn set_value_inner<'a: 'event>(
-        key: &Key<'lookup>,
-        offsets: &mut HashMap<SectionId, Vec<usize>>,
-        section: &mut SectionBody<'event>,
-        section_id: SectionId,
-        offset_index: usize,
-        input: Cow<'a, [u8]>,
-    ) {
-        let (offset, size) = MutableMultiValue::get_index_and_size(offsets, section_id, offset_index);
-        section.0.drain(offset..offset + size);
-
-        MutableMultiValue::set_offset(offsets, section_id, offset_index, 3);
-        section.0.insert(offset, Event::Value(input));
-        section.0.insert(offset, Event::KeyValueSeparator);
-        section.0.insert(offset, Event::Key(Key(Cow::Owned(key.0.to_string()))));
-    }
-
-    /// Removes the value at the given index. Does nothing when called multiple
-    /// times in succession.
-    ///
-    /// # Safety
-    ///
-    /// This will panic if the index is out of range.
-    pub fn delete(&mut self, index: usize) {
-        let EntryData {
-            section_id,
-            offset_index,
-        } = &self.indices_and_sizes[index];
-        let (offset, size) = MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
-        if size > 0 {
-            self.section
-                .get_mut(section_id)
-                .expect("sections does not have section id from section ids")
-                .0
-                .drain(offset..offset + size);
-
-            Self::set_offset(&mut self.offsets, *section_id, *offset_index, 0);
-            self.indices_and_sizes.remove(index);
-        }
-    }
-
-    /// Removes all values. Does nothing when called multiple times in
-    /// succession.
-    pub fn delete_all(&mut self) {
-        for EntryData {
-            section_id,
-            offset_index,
-        } in &self.indices_and_sizes
-        {
-            let (offset, size) = MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
-            if size > 0 {
-                self.section
-                    .get_mut(section_id)
-                    .expect("sections does not have section id from section ids")
-                    .0
-                    .drain(offset..offset + size);
-                Self::set_offset(&mut self.offsets, *section_id, *offset_index, 0);
-            }
-        }
-        self.indices_and_sizes.clear();
-    }
-
-    // SectionId is the same size as a reference, which means it's just as
-    // efficient passing in a value instead of a reference.
-    #[inline]
-    fn get_index_and_size(
-        offsets: &'lookup HashMap<SectionId, Vec<usize>>,
-        section_id: SectionId,
-        offset_index: usize,
-    ) -> (usize, usize) {
-        offsets
-            .get(&section_id)
-            .expect("sections does not have section id from section ids")
-            .iter()
-            .take(offset_index + 1)
-            .fold((0, 0), |(old, new), offset| (old + new, *offset))
-    }
-
-    // This must be an associated function rather than a method to allow Rust
-    // to split mutable borrows.
-    //
-    // SectionId is the same size as a reference, which means it's just as
-    // efficient passing in a value instead of a reference.
-    #[inline]
-    fn set_offset(
-        offsets: &mut HashMap<SectionId, Vec<usize>>,
-        section_id: SectionId,
-        offset_index: usize,
-        value: usize,
-    ) {
-        *offsets
-            .get_mut(&section_id)
-            .expect("sections does not have section id from section ids")
-            .get_mut(offset_index)
-            .unwrap()
-            .deref_mut() = value;
-    }
-}
-
 /// # Raw value API
 ///
 /// These functions are the raw value API. Instead of returning Rust structures,
@@ -1319,7 +526,7 @@ impl<'event> GitConfig<'event> {
                 .sections
                 .get(section_id)
                 .expect("sections does not have section id from section ids")
-                .0
+                .as_ref()
                 .iter()
                 .enumerate()
             {
@@ -1344,8 +551,8 @@ impl<'event> GitConfig<'event> {
                 continue;
             }
 
-            return Ok(MutableValue {
-                section: MutableSection::new(
+            return Ok(MutableValue::new(
+                MutableSection::new(
                     self.sections
                         .get_mut(section_id)
                         .expect("sections does not have section id from section ids"),
@@ -1353,7 +560,7 @@ impl<'event> GitConfig<'event> {
                 key,
                 size,
                 index,
-            });
+            ));
         }
 
         Err(GitConfigError::KeyDoesNotExist)
@@ -1499,7 +706,7 @@ impl<'event> GitConfig<'event> {
                 .sections
                 .get(section_id)
                 .expect("sections does not have section id from section ids")
-                .0
+                .as_ref()
                 .iter()
                 .enumerate()
             {
@@ -1512,10 +719,7 @@ impl<'event> GitConfig<'event> {
                     }
                     Event::Value(_) | Event::ValueDone(_) if found_key => {
                         found_key = false;
-                        entries.push(EntryData {
-                            section_id: *section_id,
-                            offset_index,
-                        });
+                        entries.push(EntryData::new(*section_id, offset_index));
                         offset_list.push(i - last_boundary + 1);
                         offset_index += 1;
                         last_boundary = i + 1;
@@ -1531,12 +735,7 @@ impl<'event> GitConfig<'event> {
         if entries.is_empty() {
             Err(GitConfigError::KeyDoesNotExist)
         } else {
-            Ok(MutableMultiValue {
-                section: &mut self.sections,
-                key,
-                indices_and_sizes: entries,
-                offsets,
-            })
+            Ok(MutableMultiValue::new(&mut self.sections, key, entries, offsets))
         }
     }
 
@@ -1848,9 +1047,9 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
                 | e @ Event::Value(_)
                 | e @ Event::ValueNotDone(_)
                 | e @ Event::ValueDone(_)
-                | e @ Event::KeyValueSeparator => section_events.0.push(e),
+                | e @ Event::KeyValueSeparator => section_events.as_mut().push(e),
                 e @ Event::Comment(_) | e @ Event::Newline(_) | e @ Event::Whitespace(_) => {
-                    section_events.0.push(e);
+                    section_events.as_mut().push(e);
                 }
             }
         }
@@ -1878,7 +1077,7 @@ impl From<&GitConfig<'_>> for Vec<u8> {
     fn from(config: &GitConfig) -> Self {
         let mut value = Self::new();
 
-        for events in &config.frontmatter_events.0 {
+        for events in config.frontmatter_events.as_ref() {
             value.extend(events.to_vec());
         }
 
@@ -1891,11 +1090,11 @@ impl From<&GitConfig<'_>> for Vec<u8> {
                     .to_vec(),
             );
 
-            for event in &config
+            for event in config
                 .sections
                 .get(section_id)
                 .expect("sections does not contain section id from section_order")
-                .0
+                .as_ref()
             {
                 value.extend(event.to_vec());
             }
@@ -1910,13 +1109,13 @@ impl Display for GitConfig<'_> {
     /// there are non UTF-8 values in your config, this will _NOT_ render as
     /// read.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for front_matter in &self.frontmatter_events.0 {
+        for front_matter in self.frontmatter_events.as_ref() {
             front_matter.fmt(f)?;
         }
 
         for section_id in &self.section_order {
             self.section_headers.get(section_id).unwrap().fmt(f)?;
-            for event in &self.sections.get(section_id).unwrap().0 {
+            for event in self.sections.get(section_id).unwrap().as_ref() {
                 event.fmt(f)?;
             }
         }
@@ -1924,8 +1123,6 @@ impl Display for GitConfig<'_> {
         Ok(())
     }
 }
-
-// todo impl serialize
 
 #[cfg(test)]
 mod mutable_value {
