@@ -121,6 +121,64 @@ impl<'event> GitConfig<'event> {
         parse_from_path(path).map(Self::from)
     }
 
+    /// Generates a config from the environment variables. This is neither
+    /// zero-copy nor zero-alloc. See [`git-config`'s documentation] on
+    /// environment variable for more information.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `GIT_CONFIG_COUNT` set and is not a number, or if
+    /// there was an invalid key value pair.
+    ///
+    /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
+    pub fn from_env() -> Result<Option<Self>, GitConfigFromEnvError> {
+        use std::env;
+        let count: usize = match env::var("GIT_CONFIG_COUNT") {
+            Ok(v) => v.parse().map_err(|_| GitConfigFromEnvError::ParseError(v))?,
+            Err(_) => return Ok(None),
+        };
+
+        let mut config = Self::new();
+
+        for i in 0..count {
+            let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| GitConfigFromEnvError::InvalidKeyId(i))?;
+            let value =
+                env::var(format!("GIT_CONFIG_VALUE_{}", i)).map_err(|_| GitConfigFromEnvError::InvalidValueId(i))?;
+            if let Some((section, maybe_subsection)) = key.split_once('.') {
+                let (subsection, key) = if let Some((subsection, key)) = maybe_subsection.rsplit_once('.') {
+                    (Some(subsection), key)
+                } else {
+                    (None, maybe_subsection)
+                };
+
+                let mut section = if let Ok(section) = config.section_mut(section, subsection) {
+                    section
+                } else {
+                    // Need to have config own the section and subsection names
+                    // else they get dropped at the end of the loop.
+                    config.new_section(
+                        section.to_string(),
+                        subsection.map(|subsection| Cow::Owned(subsection.to_string())),
+                    )
+                };
+
+                section.push(
+                    Cow::<str>::Owned(key.to_string()).into(),
+                    Cow::Owned(value.into_bytes()),
+                );
+            } else {
+                return Err(GitConfigFromEnvError::InvalidKeyValue(key.to_string()));
+            }
+        }
+
+        // This occurs when `GIT_CONFIG_COUNT` is set to zero.
+        if config.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(config))
+        }
+    }
+
     /// Returns an interpreted value given a section, an optional subsection and
     /// key.
     ///
