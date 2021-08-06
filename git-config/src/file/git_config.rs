@@ -117,7 +117,7 @@ impl<'event> GitConfig<'event> {
     /// git-config file.
     #[inline]
     #[must_use]
-    pub fn open(path: &Path) -> Result<Self, ParserOrIoError> {
+    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, ParserOrIoError<'static>> {
         parse_from_path(path).map(Self::from)
     }
 

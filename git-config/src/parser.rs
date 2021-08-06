@@ -540,6 +540,15 @@ pub enum ParserOrIoError<'a> {
     Io(std::io::Error),
 }
 
+impl ParserOrIoError<'_> {
+    pub fn into_owned(self) -> ParserOrIoError<'static> {
+        match self {
+            ParserOrIoError::Parser(error) => ParserOrIoError::Parser(error.to_owned()),
+            ParserOrIoError::Io(error) => ParserOrIoError::Io(error),
+        }
+    }
+}
+
 impl Display for ParserOrIoError<'_> {
     #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -884,7 +893,7 @@ impl<'a> TryFrom<&'a [u8]> for Parser<'a> {
 /// Returns an error if there was an IO error or the read file is not a valid
 /// `git-config` This generally is due to either invalid names or if there's
 /// extraneous data succeeding valid `git-config` data.
-pub fn parse_from_path(path: &Path) -> Result<Parser<'static>, ParserOrIoError> {
+pub fn parse_from_path<P: AsRef<Path>>(path: P) -> Result<Parser<'static>, ParserOrIoError<'static>> {
     let mut bytes = vec![];
     let mut file = std::fs::File::open(path)?;
     file.read_to_end(&mut bytes)?;

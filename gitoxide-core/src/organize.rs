@@ -1,9 +1,6 @@
 use git_config::file::GitConfig;
 use git_repository::{object::bstr::ByteSlice, progress, Progress};
-use std::{
-    convert::TryFrom,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Mode {
@@ -103,12 +100,8 @@ where
 }
 
 fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
-    let config_bytes;
-    let config = {
-        let non_bare = repo.join(".git").join("config");
-        config_bytes = std::fs::read(non_bare).or_else(|_| std::fs::read(repo.join("config")))?;
-        GitConfig::try_from(&config_bytes).map_err(|e| e.to_owned())?
-    };
+    let non_bare = repo.join(".git").join("config");
+    let config = GitConfig::open(non_bare.as_path()).or_else(|_| GitConfig::open(repo.join("config").as_path()))?;
     Ok(config.value("remote", Some("origin"), "url").ok())
 }
 
