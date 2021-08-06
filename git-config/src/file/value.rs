@@ -14,6 +14,8 @@ use std::ops::DerefMut;
 /// [`GitConfig`], and thus guarantees through Rust's borrower checker that
 /// multiple mutable references to [`GitConfig`] cannot be owned at the same
 /// time.
+///
+/// [`GitConfig`]: super::GitConfig
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
 pub struct MutableValue<'borrow, 'lookup, 'event> {
     section: MutableSection<'borrow, 'event>,
@@ -96,6 +98,8 @@ impl EntryData {
 /// [`GitConfig`], and thus guarantees through Rust's borrower checker that
 /// multiple mutable references to [`GitConfig`] cannot be owned at the same
 /// time.
+///
+/// [`GitConfig`]: super::GitConfig
 #[derive(PartialEq, Eq, Debug)]
 pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
     section: &'borrow mut HashMap<SectionId, SectionBody<'event>>,
@@ -298,6 +302,8 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     /// [`GitConfig`]. Consider using [`Self::set_owned_values_all`] or
     /// [`Self::set_str_all`] unless you have a strict performance or memory
     /// need for a more ergonomic interface.
+    ///
+    /// [`GitConfig`]: super::GitConfig
     #[inline]
     pub fn set_values_all<'a: 'event>(&mut self, input: &'a [u8]) {
         for EntryData {

@@ -1,7 +1,8 @@
 use crate::parser::SectionHeaderName;
 use std::fmt::Display;
 
-/// All possible error types that may occur from interacting with [`GitConfig`].
+/// All possible error types that may occur from interacting with
+/// [`GitConfig`](super::GitConfig).
 #[derive(PartialEq, Eq, Hash, Clone, PartialOrd, Ord, Debug)]
 pub enum GitConfigError<'a> {
     /// The requested section does not exist.
@@ -11,7 +12,7 @@ pub enum GitConfigError<'a> {
     /// The key does not exist in the requested section.
     KeyDoesNotExist,
     /// The conversion into the provided type for methods such as
-    /// [`GitConfig::value`] failed.
+    /// [`GitConfig::value`](super::GitConfig::value) failed.
     FailedConversion,
 }
 
