@@ -1,6 +1,7 @@
 use crate::file::error::{GitConfigError, GitConfigFromEnvError};
 use crate::file::section::{MutableSection, SectionBody};
 use crate::file::value::{EntryData, MutableMultiValue, MutableValue};
+use crate::file::{Index, Size};
 use crate::parser::{
     parse_from_bytes, parse_from_path, parse_from_str, Error, Event, Key, ParsedSectionHeader, Parser, ParserOrIoError,
     SectionHeaderName,
@@ -602,8 +603,8 @@ impl<'event> GitConfig<'event> {
         let key = Key(key.into());
 
         for section_id in section_ids.iter().rev() {
-            let mut size = 0;
-            let mut index = 0;
+            let mut size = Size(0);
+            let mut index = Index(0);
             let mut found_key = false;
             // todo: iter backwards
             for (i, event) in self
@@ -617,8 +618,8 @@ impl<'event> GitConfig<'event> {
                 match event {
                     Event::Key(event_key) if *event_key == key => {
                         found_key = true;
-                        size = 1;
-                        index = i;
+                        size = Size(1);
+                        index = Index(i);
                     }
                     Event::Newline(_) | Event::Whitespace(_) | Event::ValueNotDone(_) if found_key => {
                         size += 1;
@@ -631,7 +632,7 @@ impl<'event> GitConfig<'event> {
                 }
             }
 
-            if size == 0 {
+            if size.0 == 0 {
                 continue;
             }
 
@@ -642,8 +643,8 @@ impl<'event> GitConfig<'event> {
                         .expect("sections does not have section id from section ids"),
                 ),
                 key,
-                size,
                 index,
+                size,
             ));
         }
 

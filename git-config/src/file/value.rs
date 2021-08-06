@@ -1,6 +1,7 @@
 use crate::file::error::GitConfigError;
 use crate::file::git_config::SectionId;
 use crate::file::section::{MutableSection, SectionBody};
+use crate::file::{Index, Size};
 use crate::parser::{Event, Key};
 use crate::values::{normalize_bytes, normalize_vec};
 use std::borrow::{Borrow, Cow};
@@ -20,12 +21,12 @@ use std::ops::DerefMut;
 pub struct MutableValue<'borrow, 'lookup, 'event> {
     section: MutableSection<'borrow, 'event>,
     key: Key<'lookup>,
-    index: usize,
-    size: usize,
+    index: Index,
+    size: Size,
 }
 
 impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
-    pub(super) fn new(section: MutableSection<'borrow, 'event>, key: Key<'lookup>, index: usize, size: usize) -> Self {
+    pub(super) fn new(section: MutableSection<'borrow, 'event>, key: Key<'lookup>, index: Index, size: Size) -> Self {
         Self {
             section,
             key,
@@ -57,10 +58,10 @@ impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
     pub fn set_bytes(&mut self, input: Vec<u8>) {
-        if self.size > 0 {
+        if self.size.0 > 0 {
             self.section.delete(self.index, self.index + self.size);
         }
-        self.size = 3;
+        self.size = Size(3);
         self.section
             .set_internal(self.index, Key(Cow::Owned(self.key.to_string())), input);
     }
@@ -68,9 +69,9 @@ impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
     /// Removes the value. Does nothing when called multiple times in
     /// succession.
     pub fn delete(&mut self) {
-        if self.size > 0 {
+        if self.size.0 > 0 {
             self.section.delete(self.index, self.index + self.size);
-            self.size = 0;
+            self.size = Size(0);
         }
     }
 }

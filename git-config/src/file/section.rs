@@ -1,4 +1,5 @@
 use crate::file::error::GitConfigError;
+use crate::file::Index;
 use crate::parser::{Event, Key};
 use crate::values::{normalize_cow, normalize_vec};
 use std::borrow::Cow;
@@ -148,8 +149,8 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     pub(super) fn get<'key>(
         &self,
         key: &Key<'key>,
-        start: usize,
-        end: usize,
+        start: Index,
+        end: Index,
     ) -> Result<Cow<'_, [u8]>, GitConfigError<'key>> {
         let mut found_key = false;
         let mut latest_value = None;
@@ -157,7 +158,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         // section_id is guaranteed to exist in self.sections, else we have a
         // violated invariant.
 
-        for event in &self.section.0[start..=end] {
+        for event in &self.section.0[start.0..=end.0] {
             match event {
                 Event::Key(event_key) if event_key == key => found_key = true,
                 Event::Value(v) if found_key => {
@@ -184,14 +185,14 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     }
 
     #[inline]
-    pub(super) fn delete(&mut self, start: usize, end: usize) {
-        self.section.0.drain(start..=end);
+    pub(super) fn delete(&mut self, start: Index, end: Index) {
+        self.section.0.drain(start.0..=end.0);
     }
 
-    pub(super) fn set_internal(&mut self, index: usize, key: Key<'event>, value: Vec<u8>) {
-        self.section.0.insert(index, Event::Value(Cow::Owned(value)));
-        self.section.0.insert(index, Event::KeyValueSeparator);
-        self.section.0.insert(index, Event::Key(key));
+    pub(super) fn set_internal(&mut self, index: Index, key: Key<'event>, value: Vec<u8>) {
+        self.section.0.insert(index.0, Event::Value(Cow::Owned(value)));
+        self.section.0.insert(index.0, Event::KeyValueSeparator);
+        self.section.0.insert(index.0, Event::Key(key));
     }
 }
 
