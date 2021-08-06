@@ -1,6 +1,6 @@
 [package]
 name = "git-config"
-version = "0.1.1"
+version = "0.1.2"
 repository = "https://github.com/Byron/gitoxide"
 description = "A git-config file parser and editor from the gitoxide project"
 license = "MIT OR Apache-2.0"
