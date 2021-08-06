@@ -88,16 +88,24 @@ Follow linked crate name for detailed status.
   * [ ] `gix tool open-remote` open the URL of the remote, possibly after applying known transformations to go from `ssh` to `https`.
   * [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
         as well. What would an MVP look like? Maybe even something that could ship with gitoxide.
-  * [ ] A [syncthing] like client/server application. This is to demonstrate how lower-level crates can be combined into custom applications that use
-        only part of git's technology to achieve their very own thing. Watch out for big file support, multi-device cross-syncing, the possibility for
-        untrusted destinations using full-encryption, case-insensitive and sensitive filesystems, and extended file attributes as well as ignore files.
-  * [ ] A truly awesome history rewriter which makes it easy to understand what happened while avoiding all pitfals. Think BFG, but more awesome, if that's possible.
+  * [ ] A truly awesome history rewriter which makes it easy to understand what happened while avoiding all pitfalls. Think BFG, but more awesome, if that's possible.
   * [ ] `git-tui` should learn a lot from [fossil-scm] regarding the presentation of data. Maybe [this](https://github.com/Lutetium-Vanadium/requestty/) can be used for prompts.
   * [ ] Can markdown be used as database so issue-trackers along with meta-data could just be markdown files which are mostly human-editable? Could user interfaces
         be meta-data aware and just hide the meta-data chunks which are now editable in the GUI itself? Doing this would make conflicts easier to resolve than an `sqlite`
         database.
       * ~~A git-backend for `sqlite` which should allow embedding sqlite databases into git repositories, which in turn can be used for bug-trackers, wikis or other
         features, making for a fully distributed github like experience, maybe.~~
+
+### Ideas for Spin-Offs
+
+* [ ] A system to integrate tightly with `git-lfs` to allow a multi-tier architecture so that assets can be stored in git and are accessible quickly from an intranet location
+  (for example by accessing the storage read-only over the network) while changes are pushed immediately by the server to other edge locations, like _the cloud_ or backups. Sparse checkouts along with explorer/finder integrations
+  make it convenient to only work on a small subset of files locally. Clones can contain all configuration somebody would need to work efficiently from their location,
+  and authentication for the git history as well as LFS resources make the system secure. One could imagine encryption support for untrusted locations in _the cloud_
+  even though more research would have to be done to make it truly secure.
+* [ ] A [syncthing] like client/server application. This is to demonstrate how lower-level crates can be combined into custom applications that use
+  only part of git's technology to achieve their very own thing. Watch out for big file support, multi-device cross-syncing, the possibility for
+  untrusted destinations using full-encryption, case-insensitive and sensitive filesystems, and extended file attributes as well as ignore files.
 
 [syncthing]: https://github.com/syncthing/syncthing
 [fossil-scm]: https://www.fossil-scm.org
