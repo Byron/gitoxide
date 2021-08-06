@@ -5,5 +5,7 @@ mod git_config;
 mod section;
 mod value;
 
-pub use error::GitConfigError;
-pub use git_config::GitConfig;
+pub use error::*;
+pub use git_config::*;
+pub use section::*;
+pub use value::*;
