@@ -2,12 +2,14 @@ use crate::file::error::{GitConfigError, GitConfigFromEnvError};
 use crate::file::section::{MutableSection, SectionBody};
 use crate::file::value::{EntryData, MutableMultiValue, MutableValue};
 use crate::parser::{
-    parse_from_bytes, parse_from_str, Error, Event, Key, ParsedSectionHeader, Parser, SectionHeaderName,
+    parse_from_bytes, parse_from_path, parse_from_str, Error, Event, Key, ParsedSectionHeader, Parser, ParserOrIoError,
+    SectionHeaderName,
 };
 use std::borrow::Cow;
 use std::collections::{HashMap, VecDeque};
 use std::convert::TryFrom;
 use std::fmt::Display;
+use std::path::Path;
 
 /// The section ID is a monotonically increasing ID used to refer to sections.
 /// This value does not imply any ordering between sections, as new sections
@@ -105,6 +107,18 @@ impl<'event> GitConfig<'event> {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Constructs a `git-config` file from the provided path.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if there was an IO error or if the file wasn't a valid
+    /// git-config file.
+    #[inline]
+    #[must_use]
+    pub fn open(path: &Path) -> Result<Self, ParserOrIoError> {
+        parse_from_path(path).map(Self::from)
     }
 
     /// Returns an interpreted value given a section, an optional subsection and
