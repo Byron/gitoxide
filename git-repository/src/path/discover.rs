@@ -20,12 +20,21 @@ pub mod existing {
 
 /// Returns the working tree if possible and the found repository is not bare or the git repository itself.
 pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, existing::Error> {
+    // Canonicalize the path so that `Path::parent` _actually_ gives
+    // us the parent directory. (`Path::parent` just strips off the last
+    // path component, which means it will not do what you expect when
+    // working with paths paths that contain '..'.)
     let directory = directory.as_ref();
-    if !directory.is_dir() {
+    let directory = if let Ok(directory) = directory.canonicalize() {
+        directory
+    } else {
         return Err(existing::Error::InaccessibleDirectory(directory.into()));
+    };
+    if !directory.is_dir() {
+        return Err(existing::Error::InaccessibleDirectory(directory));
     }
 
-    let mut cursor = directory;
+    let mut cursor: &Path = &directory;
     loop {
         if let Ok(kind) = path::is_git(cursor) {
             break Ok(crate::Path::from_dot_git_dir(cursor, kind));
