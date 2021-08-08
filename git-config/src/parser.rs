@@ -541,6 +541,20 @@ pub enum ParserOrIoError<'a> {
 }
 
 impl ParserOrIoError<'_> {
+    /// Coerces into an owned instance. This differs from the standard [`clone`]
+    /// implementation as calling clone will _not_ copy the borrowed variant,
+    /// while this method will. In other words:
+    ///
+    /// | Borrow type | `.clone()` | `to_owned()` |
+    /// | ----------- | ---------- | ------------ |
+    /// | Borrowed    | Borrowed   | Owned        |
+    /// | Owned       | Owned      | Owned        |
+    ///
+    /// This can be most effectively seen by the differing lifetimes between the
+    /// two. This method guarantees a `'static` lifetime, while `clone` does
+    /// not.
+    ///
+    /// [`clone`]: std::clone::Clone::clone
     pub fn into_owned(self) -> ParserOrIoError<'static> {
         match self {
             ParserOrIoError::Parser(error) => ParserOrIoError::Parser(error.to_owned()),

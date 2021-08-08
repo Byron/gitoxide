@@ -14,8 +14,9 @@ include = ["src/**/*", "LICENSE-*", "README.md"]
 # serde = ["serde_crate"]
 
 [dependencies]
-memchr = "2"
+dirs = "3"
 nom = { version = "6", default_features = false, features = ["std"] }
+memchr = "2"
 serde_crate = { version = "1", package = "serde", optional = true }
 
 [dev-dependencies]

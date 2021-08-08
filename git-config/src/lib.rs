@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
-// #![deny(missing_docs)]
-// #![warn(clippy::pedantic, clippy::nursery)] // TODO: fix all warnings when enabled
+#![warn(missing_docs)]
+#![warn(clippy::pedantic, clippy::nursery)]
 
 //! # `git_config`
 //!
@@ -56,6 +56,7 @@
 extern crate serde_crate as serde;
 
 pub mod file;
+pub mod fs;
 pub mod parser;
 pub mod values;
 
