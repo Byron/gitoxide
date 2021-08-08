@@ -24,12 +24,10 @@ pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, existing::Er
     // us the parent directory. (`Path::parent` just strips off the last
     // path component, which means it will not do what you expect when
     // working with paths paths that contain '..'.)
-    let directory = directory.as_ref();
-    let directory = if let Ok(directory) = directory.canonicalize() {
-        directory
-    } else {
-        return Err(existing::Error::InaccessibleDirectory(directory.into()));
-    };
+    let directory = directory
+        .as_ref()
+        .canonicalize()
+        .map_err(|_| existing::Error::InaccessibleDirectory(directory.as_ref().into()))?;
     if !directory.is_dir() {
         return Err(existing::Error::InaccessibleDirectory(directory));
     }
