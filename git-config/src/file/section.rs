@@ -2,8 +2,10 @@ use crate::file::error::GitConfigError;
 use crate::file::Index;
 use crate::parser::{Event, Key};
 use crate::values::{normalize_cow, normalize_vec};
-use std::borrow::Cow;
+use std::borrow::{Borrow, Cow};
+use std::collections::VecDeque;
 use std::convert::TryFrom;
+use std::iter::FusedIterator;
 use std::ops::{Deref, Range};
 
 /// A opaque type that represents a mutable reference to a section.
@@ -217,9 +219,7 @@ impl<'event> SectionBody<'event> {
     pub(super) fn as_mut(&mut self) -> &mut Vec<Event<'event>> {
         &mut self.0
     }
-}
 
-impl<'event> SectionBody<'event> {
     /// Constructs a new empty section body.
     #[inline]
     pub(super) fn new() -> Self {
@@ -339,14 +339,7 @@ impl<'event> SectionBody<'event> {
     /// Checks if the section contains the provided key.
     #[must_use]
     pub fn contains_key(&self, key: &Key) -> bool {
-        for e in &self.0 {
-            if let Event::Key(k) = e {
-                if k == key {
-                    return true;
-                }
-            }
-        }
-        false
+        self.0.iter().any(|e| *e == Event::Key(*key))
     }
 
     /// Returns the number of entries in the section.
@@ -397,6 +390,51 @@ impl<'event> SectionBody<'event> {
         values_start..values_end
     }
 }
+
+impl<'event> IntoIterator for SectionBody<'event> {
+    type Item = (Key<'event>, Cow<'event, [u8]>);
+
+    type IntoIter = SectionBodyIter<'event>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        SectionBodyIter(self.0.into())
+    }
+}
+
+/// An owning iterator of a section body. Created by [`SectionBody::into_iter`].
+pub struct SectionBodyIter<'event>(VecDeque<Event<'event>>);
+
+impl<'event> Iterator for SectionBodyIter<'event> {
+    type Item = (Key<'event>, Cow<'event, [u8]>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut key = None;
+        let mut partial_value: Vec<u8> = Vec::new();
+        let mut value = None;
+
+        while let Some(event) = self.0.pop_front() {
+            match event {
+                Event::Key(k) => key = Some(k),
+                Event::Value(v) => {
+                    value = Some(v);
+                    break;
+                }
+                Event::ValueNotDone(v) => partial_value.extend::<&[u8]>(v.borrow()),
+                Event::ValueDone(v) => {
+                    partial_value.extend::<&[u8]>(v.borrow());
+                    value = Some(Cow::Owned(partial_value));
+                    break;
+                }
+                _ => (),
+            }
+        }
+
+        key.zip(value.map(normalize_cow))
+    }
+}
+
+impl FusedIterator for SectionBodyIter<'_> {}
 
 impl<'event> From<Vec<Event<'event>>> for SectionBody<'event> {
     #[inline]
