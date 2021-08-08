@@ -339,7 +339,11 @@ impl<'event> SectionBody<'event> {
     /// Checks if the section contains the provided key.
     #[must_use]
     pub fn contains_key(&self, key: &Key) -> bool {
-        self.0.iter().any(|e| *e == Event::Key(*key))
+        self.0.iter().any(|e| {
+            matches!(e,
+                Event::Key(k) if k == key
+            )
+        })
     }
 
     /// Returns the number of entries in the section.
