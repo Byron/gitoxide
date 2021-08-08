@@ -83,7 +83,7 @@ mod maybe_canonicalize {
     #[test]
     fn paths_starting_with_dot_but_end_with_normal_path_are_not_canonicalized() {
         assert_eq!(
-            relative_component_count(maybe_canonicalize(Path::new("./hello")).unwrap()),
+            relative_component_count(maybe_canonicalize(&Path::new(".").join("hello")).unwrap()),
             1,
         );
     }
@@ -91,7 +91,7 @@ mod maybe_canonicalize {
     #[test]
     fn paths_ending_with_non_normal_component_are_canonicalized() {
         assert_eq!(
-            relative_component_count(maybe_canonicalize(Path::new("./.")).unwrap()),
+            relative_component_count(maybe_canonicalize(&Path::new(".").join(".")).unwrap()),
             0,
         );
     }
