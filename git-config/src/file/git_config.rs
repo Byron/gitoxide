@@ -117,7 +117,6 @@ impl<'event> GitConfig<'event> {
     /// Returns an error if there was an IO error or if the file wasn't a valid
     /// git-config file.
     #[inline]
-    #[must_use]
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, ParserOrIoError<'static>> {
         parse_from_path(path).map(Self::from)
     }

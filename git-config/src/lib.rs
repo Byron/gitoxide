@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 // #![deny(missing_docs)]
-#![warn(clippy::pedantic, clippy::nursery)]
+// #![warn(clippy::pedantic, clippy::nursery)] // TODO: fix all warnings when enabled
 
 //! # `git_config`
 //!
