@@ -167,7 +167,7 @@ impl<'event> GitConfig<'event> {
                     Cow::Owned(value.into_bytes()),
                 );
             } else {
-                return Err(GitConfigFromEnvError::InvalidKeyValue(key.to_string()));
+                return Err(GitConfigFromEnvError::InvalidKeyValue(i, key.to_string()));
             }
         }
 
