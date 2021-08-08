@@ -1,5 +1,5 @@
 use crate::path;
-use std::path::Path;
+use std::{borrow::Cow, path::Path};
 
 pub mod existing {
     use quick_error::quick_error;
@@ -24,12 +24,10 @@ pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, existing::Er
     // us the parent directory. (`Path::parent` just strips off the last
     // path component, which means it will not do what you expect when
     // working with paths paths that contain '..'.)
-    let directory = directory
-        .as_ref()
-        .canonicalize()
+    let directory = maybe_canonicalize(directory.as_ref())
         .map_err(|_| existing::Error::InaccessibleDirectory(directory.as_ref().into()))?;
     if !directory.is_dir() {
-        return Err(existing::Error::InaccessibleDirectory(directory));
+        return Err(existing::Error::InaccessibleDirectory(directory.into_owned()));
     }
 
     let mut cursor: &Path = &directory;
@@ -43,7 +41,11 @@ pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, existing::Er
         }
         match cursor.parent() {
             Some(parent) => cursor = parent,
-            None => break Err(existing::Error::NoGitRepository(directory.to_owned())),
+            None => break Err(existing::Error::NoGitRepository(directory.into_owned())),
         }
     }
+}
+
+fn maybe_canonicalize(path: &Path) -> std::io::Result<Cow<'_, Path>> {
+    path.canonicalize().map(Into::into)
 }
