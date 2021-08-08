@@ -6,7 +6,7 @@ mod tree {
 
     pub trait Sealed {}
 
-    pub trait TreeExt: Sealed {
+    pub trait TreeIterExt: Sealed {
         fn changes_needed<FindFn, R, StateMut>(
             &self,
             other: immutable::TreeIter<'_>,
@@ -34,7 +34,7 @@ mod tree {
 
     impl<'d> Sealed for immutable::TreeIter<'d> {}
 
-    impl<'d> TreeExt for immutable::TreeIter<'d> {
+    impl<'d> TreeIterExt for immutable::TreeIter<'d> {
         fn changes_needed<FindFn, R, StateMut>(
             &self,
             other: immutable::TreeIter<'_>,
@@ -65,7 +65,7 @@ mod tree {
         }
     }
 }
-pub use tree::TreeExt;
+pub use tree::TreeIterExt;
 
 mod object_id {
     use git_hash::{oid, ObjectId};
