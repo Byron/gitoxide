@@ -50,17 +50,49 @@ pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, existing::Er
 }
 
 fn maybe_canonicalize(path: &Path) -> std::io::Result<Cow<'_, Path>> {
-    let (total_components, relative_components) = path.components().fold((0_usize, 0_usize), |(mut tc, mut rc), c| {
-        tc += 1;
-        rc += match c {
-            Component::CurDir | Component::ParentDir => 1,
-            _ => 0,
-        };
-        (tc, rc)
-    });
-    if relative_components == 0 && total_components > 0 {
-        Ok(path.into())
-    } else {
+    let ends_with_relative_component = path
+        .components()
+        .last()
+        .map_or(true, |c| matches!(c, Component::CurDir | Component::ParentDir));
+    if ends_with_relative_component {
         path.canonicalize().map(Into::into)
+    } else {
+        Ok(path.into())
+    }
+}
+
+#[cfg(test)]
+mod maybe_canonicalize {
+    use super::*;
+
+    fn relative_component_count(path: impl AsRef<Path>) -> usize {
+        path.as_ref()
+            .components()
+            .filter(|c| matches!(c, Component::CurDir | Component::ParentDir))
+            .count()
+    }
+
+    #[test]
+    fn empty_paths_are_invalid() {
+        assert!(
+            maybe_canonicalize(Path::new("")).is_err(),
+            "empty paths are not equivalent to '.' but are non-existing"
+        );
+    }
+
+    #[test]
+    fn paths_starting_with_dot_but_end_with_normal_path_are_not_canonicalized() {
+        assert_eq!(
+            relative_component_count(maybe_canonicalize(Path::new("./hello")).unwrap()),
+            1,
+        );
+    }
+
+    #[test]
+    fn paths_ending_with_non_normal_component_are_canonicalized() {
+        assert_eq!(
+            relative_component_count(maybe_canonicalize(Path::new("./.")).unwrap()),
+            0,
+        );
     }
 }
