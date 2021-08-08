@@ -1,5 +1,8 @@
 use crate::path;
-use std::{borrow::Cow, path::Path};
+use std::{
+    borrow::Cow,
+    path::{Component, Path},
+};
 
 pub mod existing {
     use quick_error::quick_error;
@@ -47,5 +50,17 @@ pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, existing::Er
 }
 
 fn maybe_canonicalize(path: &Path) -> std::io::Result<Cow<'_, Path>> {
-    path.canonicalize().map(Into::into)
+    let (total_components, relative_components) = path.components().fold((0_usize, 0_usize), |(mut tc, mut rc), c| {
+        tc += 1;
+        rc += match c {
+            Component::CurDir | Component::ParentDir => 1,
+            _ => 0,
+        };
+        (tc, rc)
+    });
+    if relative_components == 0 && total_components > 0 {
+        Ok(path.into())
+    } else {
+        path.canonicalize().map(Into::into)
+    }
 }
