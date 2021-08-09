@@ -140,12 +140,19 @@ impl<'p> Reference<'p> {
         }
     }
 
-    /// Return the full validated name of the reference. Please note that if the reference is packed, validation can fail here.
+    /// Return the full validated name of the reference, which may include a namespace.
     pub fn name(&self) -> FullName<'_> {
         match self {
             Reference::Packed(p) => p.name,
             Reference::Loose(l) => l.name.borrow(),
         }
+    }
+
+    /// Return the full validated name of the reference, with the given namespace stripped if possible.
+    ///
+    /// If the reference name wasn't prefixed with `namespace`, `None` is returned instead.
+    pub fn name_without_namespace(&self, _namespace_todo_type: &str) -> Option<FullName<'_>> {
+        todo!("name without namespace")
     }
 
     /// Return the target to which the reference points to.

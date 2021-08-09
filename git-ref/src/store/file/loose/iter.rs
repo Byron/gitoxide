@@ -138,14 +138,12 @@ impl file::Store {
                 "prefix must be a relative path, like 'refs/heads'",
             ));
         }
-        for component in prefix.components() {
-            use std::path::Component::*;
-            if matches!(component, CurDir | ParentDir) {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidInput,
-                    "Refusing to handle prefixes with relative path components",
-                ));
-            }
+        use std::path::Component::*;
+        if prefix.components().any(|c| matches!(c, CurDir | ParentDir)) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Refusing to handle prefixes with relative path components",
+            ));
         }
         Ok(prefix)
     }
