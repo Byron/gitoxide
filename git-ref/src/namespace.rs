@@ -32,10 +32,5 @@ where
         out.push_str(component);
         out.push_str(b"/");
     }
-    out.pop();
-    debug_assert!(
-        git_validate::reference::name(out.as_ref()).is_ok(),
-        "we always produce valid ref names"
-    );
     Ok(Namespace(out))
 }

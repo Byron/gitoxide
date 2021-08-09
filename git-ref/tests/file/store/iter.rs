@@ -5,6 +5,7 @@ use std::convert::TryInto;
 
 mod with_namespace {
     use crate::file::store_at;
+    use bstr::BString;
     use git_object::bstr::ByteSlice;
 
     #[test]
@@ -21,10 +22,10 @@ mod with_namespace {
                 .map(|r: git_ref::file::Reference| r.name().as_bstr().to_owned())
                 .collect::<Vec<_>>(),
             vec![
-                "refs/namespaces/bar/heads/multi-link-target1",
-                "refs/namespaces/bar/multi-link",
-                "refs/namespaces/bar/remotes/origin/multi-link-target3",
-                "refs/namespaces/bar/tags/multi-link-target2"
+                "refs/namespaces/bar/refs/heads/multi-link-target1",
+                "refs/namespaces/bar/refs/multi-link",
+                "refs/namespaces/bar/refs/remotes/origin/multi-link-target3",
+                "refs/namespaces/bar/refs/tags/multi-link-target2"
             ]
         );
 
@@ -34,12 +35,24 @@ mod with_namespace {
                 .iter_prefixed(packed.as_ref(), ns_one.to_path())
                 .unwrap()
                 .map(Result::unwrap)
-                .map(|r: git_ref::file::Reference| r.name().as_bstr().to_owned())
+                .map(|r: git_ref::file::Reference| (
+                    r.name().as_bstr().to_owned(),
+                    r.name_without_namespace(&ns_one)
+                        .expect("stripping correct namespace always works")
+                        .as_bstr()
+                        .to_owned()
+                ))
                 .collect::<Vec<_>>(),
             vec![
-                "refs/namespaces/foo/d1",
-                "refs/namespaces/foo/remotes/origin/HEAD",
-                "refs/namespaces/foo/remotes/origin/main"
+                (BString::from("refs/namespaces/foo/refs/d1"), BString::from("refs/d1")),
+                (
+                    "refs/namespaces/foo/refs/remotes/origin/HEAD".into(),
+                    "refs/remotes/origin/HEAD".into()
+                ),
+                (
+                    "refs/namespaces/foo/refs/remotes/origin/main".into(),
+                    "refs/remotes/origin/main".into()
+                )
             ]
         );
 

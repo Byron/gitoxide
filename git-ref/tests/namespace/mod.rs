@@ -1,9 +1,17 @@
 mod expand {
     #[test]
+    fn components_end_with_trailing_slash_to_help_with_prefix_stripping() {
+        assert_eq!(
+            git_ref::namespace::expand("foo").unwrap().as_bstr(),
+            "refs/namespaces/foo/"
+        )
+    }
+
+    #[test]
     fn each_component_expands_to_the_namespace_prefix_individually() {
         assert_eq!(
             git_ref::namespace::expand("foo/bar").unwrap().as_bstr(),
-            "refs/namespaces/foo/refs/namespaces/bar"
+            "refs/namespaces/foo/refs/namespaces/bar/"
         )
     }
 

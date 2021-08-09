@@ -6,8 +6,9 @@ use crate::{
         file::{log, loose},
         packed,
     },
-    FullName,
+    FullName, Namespace,
 };
+use bstr::ByteSlice;
 use git_hash::ObjectId;
 use std::convert::TryFrom;
 
@@ -151,8 +152,12 @@ impl<'p> Reference<'p> {
     /// Return the full validated name of the reference, with the given namespace stripped if possible.
     ///
     /// If the reference name wasn't prefixed with `namespace`, `None` is returned instead.
-    pub fn name_without_namespace(&self, _namespace_todo_type: &str) -> Option<FullName<'_>> {
-        todo!("name without namespace")
+    pub fn name_without_namespace(&self, namespace: &Namespace) -> Option<FullName<'_>> {
+        self.name()
+            .0
+            .as_bstr()
+            .strip_prefix(namespace.0.as_bstr().as_ref())
+            .map(|stripped| FullName(stripped.as_bstr()))
     }
 
     /// Return the target to which the reference points to.
