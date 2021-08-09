@@ -16,7 +16,7 @@ use std::{
 /// All errors will be returned verbatim, while packed errors are depleted first if loose refs also error.
 pub struct LooseThenPacked<'p, 's> {
     base: &'s Path,
-    packed: Peekable<packed::Iter<'p>>,
+    packed: Option<Peekable<packed::Iter<'p>>>,
     loose: Peekable<loose::iter::SortedLoosePaths>,
     buf: Vec<u8>,
 }
@@ -59,34 +59,37 @@ impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
     type Item = Result<Reference<'p>, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match (self.loose.peek(), self.packed.peek()) {
-            (None, None) => None,
-            (None, Some(_)) | (Some(_), Some(Err(_))) => {
-                let res = self.packed.next().expect("peeked value exists");
-                Some(self.convert_packed(res))
-            }
-            (Some(_), None) | (Some(Err(_)), Some(_)) => {
-                let res = self.loose.next().expect("peeked value exists");
-                Some(self.convert_loose(res))
-            }
-            (Some(Ok(loose)), Some(Ok(packed))) => {
-                let loose_name = loose.1.as_bstr();
-                match loose_name.cmp(packed.name.as_bstr()) {
-                    Ordering::Less => {
-                        let res = self.loose.next().expect("name retrieval configured");
-                        Some(self.convert_loose(res))
-                    }
-                    Ordering::Equal => {
-                        drop(self.packed.next());
-                        let res = self.loose.next().expect("peeked value exists");
-                        Some(self.convert_loose(res))
-                    }
-                    Ordering::Greater => {
-                        let res = self.packed.next().expect("name retrieval configured");
-                        Some(self.convert_packed(res))
+        match self.packed.as_mut() {
+            Some(packed_iter) => match (self.loose.peek(), packed_iter.peek()) {
+                (None, None) => None,
+                (None, Some(_)) | (Some(_), Some(Err(_))) => {
+                    let res = packed_iter.next().expect("peeked value exists");
+                    Some(self.convert_packed(res))
+                }
+                (Some(_), None) | (Some(Err(_)), Some(_)) => {
+                    let res = self.loose.next().expect("peeked value exists");
+                    Some(self.convert_loose(res))
+                }
+                (Some(Ok(loose)), Some(Ok(packed))) => {
+                    let loose_name = loose.1.as_bstr();
+                    match loose_name.cmp(packed.name.as_bstr()) {
+                        Ordering::Less => {
+                            let res = self.loose.next().expect("name retrieval configured");
+                            Some(self.convert_loose(res))
+                        }
+                        Ordering::Equal => {
+                            drop(packed_iter.next());
+                            let res = self.loose.next().expect("peeked value exists");
+                            Some(self.convert_loose(res))
+                        }
+                        Ordering::Greater => {
+                            let res = packed_iter.next().expect("name retrieval configured");
+                            Some(self.convert_packed(res))
+                        }
                     }
                 }
-            }
+            },
+            None => self.loose.next().map(|res| self.convert_loose(res)),
         }
     }
 }
@@ -99,13 +102,18 @@ impl file::Store {
     /// continues.
     ///
     /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themeselves.
-    pub fn iter<'p, 's>(&'s self, packed: &'p packed::Buffer) -> std::io::Result<LooseThenPacked<'p, 's>> {
+    pub fn iter<'p, 's>(&'s self, packed: Option<&'p packed::Buffer>) -> std::io::Result<LooseThenPacked<'p, 's>> {
         Ok(LooseThenPacked {
             base: &self.base,
-            packed: packed
-                .iter()
-                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
-                .peekable(),
+            packed: match packed {
+                Some(packed) => Some(
+                    packed
+                        .iter()
+                        .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
+                        .peekable(),
+                ),
+                None => None,
+            },
             loose: loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.to_owned()).peekable(),
             buf: Vec::new(),
         })
@@ -116,16 +124,21 @@ impl file::Store {
     /// Please note that "refs/heads` or "refs\\heads" is equivalent to "refs/heads/"
     pub fn iter_prefixed<'p, 's>(
         &'s self,
-        packed: &'p packed::Buffer,
+        packed: Option<&'p packed::Buffer>,
         prefix: impl AsRef<Path>,
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         let packed_prefix = path_to_name(self.validate_prefix(prefix.as_ref())?);
         Ok(LooseThenPacked {
             base: &self.base,
-            packed: packed
-                .iter_prefixed(packed_prefix)
-                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
-                .peekable(),
+            packed: match packed {
+                Some(packed) => Some(
+                    packed
+                        .iter_prefixed(packed_prefix)
+                        .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
+                        .peekable(),
+                ),
+                None => None,
+            },
             loose: loose::iter::SortedLoosePaths::at_root_with_names(self.base.join(prefix), self.base.to_owned())
                 .peekable(),
             buf: Vec::new(),

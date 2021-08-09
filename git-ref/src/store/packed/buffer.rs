@@ -20,7 +20,7 @@ impl AsRef<[u8]> for packed::Backing {
 
 ///
 pub mod open {
-    use crate::store::{packed, packed::transaction::HEADER_LINE};
+    use crate::store::packed;
     use filebuffer::FileBuffer;
     use std::path::PathBuf;
 
@@ -56,16 +56,6 @@ pub mod open {
                 data: backing,
                 path,
             })
-        }
-    }
-
-    impl packed::Buffer {
-        pub(crate) fn empty(path: impl Into<PathBuf>) -> Self {
-            packed::Buffer {
-                data: packed::Backing::InMemory(HEADER_LINE.into()),
-                offset: HEADER_LINE.len(),
-                path: path.into(),
-            }
         }
     }
 

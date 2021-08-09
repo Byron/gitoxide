@@ -138,7 +138,7 @@ fn overlay_iter() -> crate::Result {
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
-        .iter(&store.packed()?.expect("packed-refs"))?
+        .iter(store.packed()?.as_ref())?
         .map(|r| r.map(|r| (r.name().as_bstr().to_owned(), r.target(), r.is_packed())))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
@@ -172,7 +172,7 @@ fn overlay_iter_with_prefix_wont_allow_absolute_paths() -> crate::Result {
     #[cfg(windows)]
     let abs_path = "c:\\hello";
 
-    match store.iter_prefixed(&store.packed()?.expect("pacekd-refs"), abs_path) {
+    match store.iter_prefixed(store.packed()?.as_ref(), abs_path) {
         Ok(_) => unreachable!("absolute paths aren't allowed"),
         Err(err) => assert_eq!(err.to_string(), "prefix must be a relative path, like 'refs/heads'"),
     }
@@ -184,9 +184,8 @@ fn overlay_prefixed_iter() -> crate::Result {
     use git_ref::mutable::Target::*;
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
-    let packed = store.packed()?.expect("packed-refs");
     let ref_names = store
-        .iter_prefixed(&packed, "refs/heads")?
+        .iter_prefixed(store.packed()?.as_ref(), "refs/heads")?
         .map(|r| r.map(|r| (r.name().as_bstr().to_owned(), r.target(), r.is_packed())))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
