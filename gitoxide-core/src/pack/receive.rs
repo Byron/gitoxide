@@ -117,7 +117,7 @@ mod blocking_io {
             if let Some(directory) = self.refs_directory.take() {
                 let assure_dir = |path: &BString| {
                     assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
-                    let path = directory.join(path.to_path_lossy());
+                    let path = directory.join(path.to_path().expect("UTF-8 conversion succeeds"));
                     std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
                 };
                 for r in refs {
@@ -208,7 +208,7 @@ mod async_io {
             if let Some(directory) = self.refs_directory.take() {
                 let assure_dir_exists = |path: &BString| {
                     assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
-                    let path = directory.join(path.to_path_lossy());
+                    let path = directory.join(path.to_path().expect("UTF-8 conversion succeeds"));
                     std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
                 };
                 for r in refs {
