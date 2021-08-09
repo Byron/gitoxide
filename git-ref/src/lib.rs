@@ -28,6 +28,8 @@ pub mod mutable;
 ///
 pub mod name;
 ///
+pub mod namespace;
+///
 pub mod transaction;
 
 /// A validated and potentially partial reference name - it can safely be used for common operations.

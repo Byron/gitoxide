@@ -9,6 +9,7 @@ mod error {
 
     quick_error! {
         /// The error used in the [`PartialName`][super::PartialName]::try_from(…) implementations.
+        /// TODO: remove this error, turning it into the inner one. This is an unnecessary proxy
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {
