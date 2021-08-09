@@ -1,9 +1,10 @@
-#![allow(missing_docs)]
-
 use crate::PartialName;
 use bstr::{BString, ByteSlice, ByteVec};
 use std::convert::TryInto;
 
+/// Given a `namespace` 'foo we output 'refs/namespaces/foo', and given 'foo/bar' we output 'refs/namespaces/foo/refs/namespaces/bar'.
+///
+/// For more information, consult the [git namespace documentation](https://git-scm.com/docs/gitnamespaces).
 pub fn expand<'a, Name, E>(namespace: Name) -> Result<crate::mutable::FullName, git_validate::refname::Error>
 where
     Name: TryInto<PartialName<'a>, Error = E>,
