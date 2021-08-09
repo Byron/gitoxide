@@ -5,14 +5,66 @@ use std::convert::TryInto;
 
 mod with_namespace {
     use crate::file::store_at;
+    use git_object::bstr::ByteSlice;
 
     #[test]
-    #[ignore]
     fn general_iteration_can_trivially_use_namespaces_as_prefixes() {
-        let ns_one = git_ref::namespace::expand("foo").unwrap();
         let store = store_at("make_namespaced_packed_ref_repository.sh").unwrap();
         let packed = store.packed().unwrap();
-        // store.iter_prefixed(packed.as_ref(), ns_one.to_path())
+
+        let ns_two = git_ref::namespace::expand("bar").unwrap();
+        assert_eq!(
+            store
+                .iter_prefixed(packed.as_ref(), ns_two.to_path())
+                .unwrap()
+                .map(Result::unwrap)
+                .map(|r: git_ref::file::Reference| r.name().as_bstr().to_owned())
+                .collect::<Vec<_>>(),
+            vec![
+                "refs/namespaces/bar/heads/multi-link-target1",
+                "refs/namespaces/bar/multi-link",
+                "refs/namespaces/bar/remotes/origin/multi-link-target3",
+                "refs/namespaces/bar/tags/multi-link-target2"
+            ]
+        );
+
+        let ns_one = git_ref::namespace::expand("foo").unwrap();
+        assert_eq!(
+            store
+                .iter_prefixed(packed.as_ref(), ns_one.to_path())
+                .unwrap()
+                .map(Result::unwrap)
+                .map(|r: git_ref::file::Reference| r.name().as_bstr().to_owned())
+                .collect::<Vec<_>>(),
+            vec![
+                "refs/namespaces/foo/d1",
+                "refs/namespaces/foo/remotes/origin/HEAD",
+                "refs/namespaces/foo/remotes/origin/main"
+            ]
+        );
+
+        assert_eq!(
+            store
+                .iter(packed.as_ref())
+                .unwrap()
+                .map(Result::unwrap)
+                .filter_map(
+                    |r: git_ref::file::Reference| if r.name().as_bstr().starts_with_str("refs/namespaces") {
+                        None
+                    } else {
+                        Some(r.name().as_bstr().to_owned())
+                    }
+                )
+                .collect::<Vec<_>>(),
+            vec![
+                "refs/heads/d1",
+                "refs/heads/dt1",
+                "refs/heads/main",
+                "refs/tags/dt1",
+                "refs/tags/t1"
+            ],
+            "we can find refs without namespace by manual filter, really just for testing purposes"
+        );
     }
 }
 
