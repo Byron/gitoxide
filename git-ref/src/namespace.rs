@@ -4,10 +4,10 @@ use crate::PartialName;
 use bstr::{BString, ByteSlice, ByteVec};
 use std::convert::TryInto;
 
-pub fn expand<'a, Name, E>(namespace: Name) -> Result<crate::mutable::FullName, expand::Error>
+pub fn expand<'a, Name, E>(namespace: Name) -> Result<crate::mutable::FullName, git_validate::refname::Error>
 where
     Name: TryInto<PartialName<'a>, Error = E>,
-    expand::Error: From<E>,
+    git_validate::refname::Error: From<E>,
 {
     let namespace = namespace.try_into()?.0;
     let mut out = BString::default();
@@ -22,26 +22,4 @@ where
         "we always produce valid ref names"
     );
     Ok(crate::mutable::FullName(out))
-}
-
-pub mod expand {
-    use quick_error::quick_error;
-    use std::convert::Infallible;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            RefnameValidation(err: crate::name::Error) {
-                display("The ref name or path is not a valid ref name")
-                from()
-                source(err)
-            }
-        }
-    }
-
-    impl From<Infallible> for Error {
-        fn from(_: Infallible) -> Self {
-            unreachable!("this impl is needed to allow passing a known valid partial path as parameter")
-        }
-    }
 }

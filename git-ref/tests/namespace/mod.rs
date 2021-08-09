@@ -1,4 +1,4 @@
-od expand {
+mod expand {
     #[test]
     fn each_component_expands_to_the_namespace_prefix_individually() {
         assert_eq!(
@@ -11,9 +11,9 @@ od expand {
     fn backslashes_are_no_component_separators_and_invalid() {
         assert!(matches!(
             git_ref::namespace::expand("foo\\bar").expect_err("empty invalid"),
-            git_ref::namespace::expand::Error::RefnameValidation(git_validate::refname::Error::Tag(
+            git_validate::refname::Error::Tag(
                 git_validate::tag::name::Error::InvalidByte(byte)
-            ))if byte == "\\"
+            ) if byte == "\\"
         ));
     }
 
@@ -21,9 +21,7 @@ od expand {
     fn trailing_slashes_are_not_allowed() {
         assert!(matches!(
             git_ref::namespace::expand("foo/").expect_err("empty invalid"),
-            git_ref::namespace::expand::Error::RefnameValidation(git_validate::refname::Error::Tag(
-                git_validate::tag::name::Error::EndsWithSlash
-            ))
+            git_validate::refname::Error::Tag(git_validate::tag::name::Error::EndsWithSlash)
         ));
     }
 
@@ -31,25 +29,21 @@ od expand {
     fn empty_namespaces_are_not_allowed() {
         assert!(matches!(
             git_ref::namespace::expand("").expect_err("empty invalid"),
-            git_ref::namespace::expand::Error::RefnameValidation(git_validate::refname::Error::Tag(
-                git_validate::tag::name::Error::Empty
-            ))
+            git_validate::refname::Error::Tag(git_validate::tag::name::Error::Empty)
         ));
     }
     #[test]
     fn bare_slashes_are_not_allowed() {
         assert!(matches!(
             git_ref::namespace::expand("/").expect_err("empty invalid"),
-            git_ref::namespace::expand::Error::RefnameValidation(git_validate::refname::Error::Tag(
-                git_validate::tag::name::Error::EndsWithSlash
-            ))
+            git_validate::refname::Error::Tag(git_validate::tag::name::Error::EndsWithSlash)
         ));
     }
     #[test]
     fn repeated_slashes_are_invalid() {
         assert!(matches!(
             git_ref::namespace::expand("foo//bar").expect_err("empty invalid"),
-            git_ref::namespace::expand::Error::RefnameValidation(git_validate::refname::Error::RepeatedSlash)
+            git_validate::refname::Error::RepeatedSlash
         ));
     }
 }
