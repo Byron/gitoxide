@@ -150,7 +150,15 @@ where
     let fetch = Command::Fetch;
     let mut fetch_features = fetch.default_features(protocol_version, &capabilities);
     match delegate.prepare_fetch(protocol_version, &capabilities, &mut fetch_features, &parsed_refs) {
-        Ok(Action::Cancel) => return indicate_end_of_interaction(transport).await,
+        Ok(Action::Cancel) => {
+            return if matches!(protocol_version, git_transport::Protocol::V1)
+                || delegate.indicate_client_done_when_fetch_completes()
+            {
+                indicate_end_of_interaction(transport).await
+            } else {
+                Ok(())
+            };
+        }
         Ok(Action::Continue) => {
             fetch.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &[], &fetch_features);
         }

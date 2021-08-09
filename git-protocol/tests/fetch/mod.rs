@@ -120,7 +120,6 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
         self.refs = refs.to_owned();
         Ok(fetch::Action::Cancel)
     }
-
     fn negotiate(
         &mut self,
         _refs: &[Ref],
@@ -128,6 +127,10 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
         _previous_response: Option<&Response>,
     ) -> io::Result<Action> {
         unreachable!("this must not be called after closing the connection in `prepare_fetch(…)`")
+    }
+
+    fn indicate_client_done_when_fetch_completes(&self) -> bool {
+        false
     }
 }
 

@@ -89,11 +89,12 @@ async fn ls_remote() -> crate::Result {
 001aagent={}
 0001000csymrefs
 0009peel
-00000000",
+0000",
             fetch::agent().1.expect("value set")
         )
         .as_bytes()
-        .as_bstr()
+        .as_bstr(),
+        "the delegate is configured to not emit the final flush message, to potentially run more commands on this connection"
     );
     Ok(())
 }
