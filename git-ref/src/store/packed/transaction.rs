@@ -5,6 +5,8 @@ use crate::{
 };
 use std::io::Write;
 
+pub(crate) const HEADER_LINE: &[u8] = b"# pack-refs with: peeled fully-peeled sorted \n";
+
 /// Access and instantiation
 impl packed::Transaction {
     /// Create an entirely new packfile using the given `lock` representing the resource to write.
@@ -132,8 +134,7 @@ impl packed::Transaction {
         edits.sort_by(|l, r| l.inner.name.as_bstr().cmp(r.inner.name.as_bstr()));
         let mut peekable_sorted_edits = edits.iter().peekable();
 
-        let header_line = b"# pack-refs with: peeled fully-peeled sorted \n";
-        file.with_mut(|f| f.write_all(header_line))?;
+        file.with_mut(|f| f.write_all(HEADER_LINE))?;
 
         let mut num_written_lines = 0;
         loop {
