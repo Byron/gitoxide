@@ -1,6 +1,7 @@
 ///
 pub mod name {
     use quick_error::quick_error;
+    use std::convert::Infallible;
 
     quick_error! {
         /// The error used in [name()][super::name()] and [name_partial()][super::name_partial()]
@@ -24,7 +25,12 @@ pub mod name {
             SingleDot {
                 display("Names must not be a single '.', but may contain it.")
             }
+        }
+    }
 
+    impl From<Infallible> for Error {
+        fn from(_: Infallible) -> Self {
+            unreachable!("this impl is needed to allow passing a known valid partial path as parameter")
         }
     }
 }

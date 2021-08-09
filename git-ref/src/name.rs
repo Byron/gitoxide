@@ -1,33 +1,9 @@
 use crate::{FullName, PartialName};
 use bstr::{BStr, ByteSlice};
-use std::{borrow::Cow, convert::TryFrom, path::Path};
+use std::{borrow::Cow, convert::Infallible, convert::TryFrom, path::Path};
 
-mod error {
-    use bstr::BString;
-    use quick_error::quick_error;
-    use std::convert::Infallible;
-
-    quick_error! {
-        /// The error used in the [`PartialName`][super::PartialName]::try_from(…) implementations.
-        /// TODO: remove this error, turning it into the inner one. This is an unnecessary proxy
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            RefnameValidation{err: git_validate::reference::name::Error, path: BString} {
-                display("The reference name '{}' is invalid", path)
-                source(err)
-            }
-        }
-    }
-
-    impl From<Infallible> for Error {
-        fn from(_: Infallible) -> Self {
-            unreachable!("this impl is needed to allow passing a known valid partial path as parameter")
-        }
-    }
-}
-pub use error::Error;
-use std::convert::Infallible;
+/// The error used in the [`PartialName`][super::PartialName]::try_from(…) implementations.
+pub type Error = git_validate::reference::name::Error;
 
 impl<'a> FullName<'a> {
     /// Convert this name into the relative path identifying the reference location.
@@ -58,9 +34,7 @@ impl<'a> TryFrom<&'a BStr> for FullName<'a> {
     type Error = Error;
 
     fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
-        Ok(FullName(
-            git_validate::reference::name(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
-        ))
+        Ok(FullName(git_validate::reference::name(v)?))
     }
 }
 
@@ -76,9 +50,7 @@ impl<'a> TryFrom<&'a BStr> for PartialName<'a> {
     type Error = Error;
 
     fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
-        Ok(PartialName(
-            git_validate::reference::name_partial(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
-        ))
+        Ok(PartialName(git_validate::reference::name_partial(v)?))
     }
 }
 
@@ -87,9 +59,7 @@ impl<'a> TryFrom<&'a str> for FullName<'a> {
 
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(FullName(
-            git_validate::reference::name(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
-        ))
+        Ok(FullName(git_validate::reference::name(v)?))
     }
 }
 
@@ -98,9 +68,7 @@ impl<'a> TryFrom<&'a str> for PartialName<'a> {
 
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(PartialName(
-            git_validate::reference::name_partial(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
-        ))
+        Ok(PartialName(git_validate::reference::name_partial(v)?))
     }
 }
 
@@ -109,9 +77,7 @@ impl<'a> TryFrom<&'a String> for FullName<'a> {
 
     fn try_from(v: &'a String) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(FullName(
-            git_validate::reference::name(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
-        ))
+        Ok(FullName(git_validate::reference::name(v)?))
     }
 }
 
@@ -120,8 +86,6 @@ impl<'a> TryFrom<&'a String> for PartialName<'a> {
 
     fn try_from(v: &'a String) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(PartialName(
-            git_validate::reference::name_partial(v).map_err(|err| Error::RefnameValidation { err, path: v.into() })?,
-        ))
+        Ok(PartialName(git_validate::reference::name_partial(v)?))
     }
 }

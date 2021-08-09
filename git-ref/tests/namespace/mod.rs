@@ -19,10 +19,9 @@ mod expand {
     fn empty_namespaces_are_not_allowed() {
         assert!(matches!(
             git_ref::namespace::expand("").expect_err("empty invalid"),
-            git_ref::namespace::expand::Error::RefnameValidation(git_ref::name::Error::RefnameValidation {
-                err: git_validate::refname::Error::Tag(git_validate::tag::name::Error::Empty),
-                ..
-            })
-        ))
+            git_ref::namespace::expand::Error::RefnameValidation(git_validate::refname::Error::Tag(
+                git_validate::tag::name::Error::Empty
+            ))
+        ));
     }
 }
