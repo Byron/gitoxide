@@ -1,19 +1,31 @@
-mod expand {
+od expand {
     #[test]
     fn each_component_expands_to_the_namespace_prefix_individually() {
         assert_eq!(
             git_ref::namespace::expand("foo/bar").unwrap().as_bstr(),
-            "refs/namespaces/foo/refs/namespaces/bar/"
+            "refs/namespaces/foo/refs/namespaces/bar"
         )
     }
 
     #[test]
-    #[ignore]
-    fn only_backslashes_are_valid_component_separators() {}
+    fn backslashes_are_no_component_separators_and_invalid() {
+        assert!(matches!(
+            git_ref::namespace::expand("foo\\bar").expect_err("empty invalid"),
+            git_ref::namespace::expand::Error::RefnameValidation(git_validate::refname::Error::Tag(
+                git_validate::tag::name::Error::InvalidByte(byte)
+            ))if byte == "\\"
+        ));
+    }
 
     #[test]
-    #[ignore]
-    fn trailing_slashes_do_nothing() {}
+    fn trailing_slashes_are_not_allowed() {
+        assert!(matches!(
+            git_ref::namespace::expand("foo/").expect_err("empty invalid"),
+            git_ref::namespace::expand::Error::RefnameValidation(git_validate::refname::Error::Tag(
+                git_validate::tag::name::Error::EndsWithSlash
+            ))
+        ));
+    }
 
     #[test]
     fn empty_namespaces_are_not_allowed() {
@@ -22,6 +34,22 @@ mod expand {
             git_ref::namespace::expand::Error::RefnameValidation(git_validate::refname::Error::Tag(
                 git_validate::tag::name::Error::Empty
             ))
+        ));
+    }
+    #[test]
+    fn bare_slashes_are_not_allowed() {
+        assert!(matches!(
+            git_ref::namespace::expand("/").expect_err("empty invalid"),
+            git_ref::namespace::expand::Error::RefnameValidation(git_validate::refname::Error::Tag(
+                git_validate::tag::name::Error::EndsWithSlash
+            ))
+        ));
+    }
+    #[test]
+    fn repeated_slashes_are_invalid() {
+        assert!(matches!(
+            git_ref::namespace::expand("foo//bar").expect_err("empty invalid"),
+            git_ref::namespace::expand::Error::RefnameValidation(git_validate::refname::Error::RepeatedSlash)
         ));
     }
 }

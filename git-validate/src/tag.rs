@@ -51,7 +51,7 @@ pub fn name(bytes: &BStr) -> Result<&BStr, name::Error> {
     for byte in bytes.iter() {
         match byte {
             b'\\' | b'^' | b':' | b'[' | b'?' | b' ' | b'~' | b'\0'..=b'\x1F' | b'\x7F' => {
-                return Err(name::Error::InvalidByte(bytes.into()))
+                return Err(name::Error::InvalidByte((&[*byte][..]).into()))
             }
             b'*' => return Err(name::Error::Asterisk),
             b'.' if previous == b'.' => return Err(name::Error::DoubleDot),
