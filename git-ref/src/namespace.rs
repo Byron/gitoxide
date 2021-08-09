@@ -1,6 +1,6 @@
 use crate::{Namespace, PartialName};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
-use std::convert::TryInto;
+use std::{borrow::Cow, convert::TryInto, path::Path};
 
 impl Namespace {
     /// Dissolve ourselves into the interior representation
@@ -10,6 +10,10 @@ impl Namespace {
     /// Return ourselves as
     pub fn as_bstr(&self) -> &BStr {
         self.0.as_ref()
+    }
+    /// Return ourselves as a path for use within the filesystem.
+    pub fn to_path(&self) -> Cow<'_, Path> {
+        self.0.to_path().expect("UTF-8 conversion succeeds").into()
     }
 }
 

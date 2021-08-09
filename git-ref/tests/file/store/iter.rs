@@ -3,6 +3,19 @@ use bstr::ByteSlice;
 use git_testtools::hex_to_id;
 use std::convert::TryInto;
 
+mod with_namespace {
+    use crate::file::store_at;
+
+    #[test]
+    #[ignore]
+    fn general_iteration_can_trivially_use_namespaces_as_prefixes() {
+        let ns_one = git_ref::namespace::expand("foo").unwrap();
+        let store = store_at("make_namespaced_packed_ref_repository.sh").unwrap();
+        let packed = store.packed().unwrap();
+        // store.iter_prefixed(packed.as_ref(), ns_one.to_path())
+    }
+}
+
 #[test]
 fn no_packed_available_thus_no_iteration_possible() -> crate::Result {
     let store_without_packed = store()?;
