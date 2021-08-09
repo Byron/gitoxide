@@ -8,7 +8,7 @@ pub type Error = git_validate::reference::name::Error;
 impl<'a> FullName<'a> {
     /// Convert this name into the relative path identifying the reference location.
     pub fn to_path(self) -> Cow<'a, Path> {
-        self.0.to_path_lossy()
+        self.0.to_path().expect("UTF-8 conversion always succeeds").into()
     }
 
     /// Return ourselves as byte string which is a valid refname
@@ -21,7 +21,7 @@ impl<'a> PartialName<'a> {
     /// Convert this name into the relative path possibly identifying the reference location.
     /// Note that it may be only a partial path though.
     pub fn to_partial_path(self) -> Cow<'a, Path> {
-        self.0.to_path_lossy()
+        self.0.to_path().expect("UTF-8 conversion always succeeds").into()
     }
 
     /// Provide the name as binary string which is known to be a valid partial ref name.
