@@ -223,6 +223,7 @@ Tempfiles can also be used as locks as only one tempfile can exist at a given pa
    * [x] mark paths with a closed temporary file
 * [x] persist temporary files to prevent them from perishing.
 * [x] signal-handler integration with `git-repository` to clean lockfiles before the process is aborted.
+* [x] use a temporary file transparently due thanks to implementations of `std::io` traits
 
 ### git-lock
 
@@ -249,7 +250,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
     * [x] Some examples
 
 ### git-repository
-* [x] utilities for applications to make long running operations interruptiple gracefully and to support timeouts in servers.
+* [x] utilities for applications to make long running operations interruptible gracefully and to support timeouts in servers.
 * [x] discovery
   * [ ] option to not cross file systems
   * [ ] handle git-common-dir

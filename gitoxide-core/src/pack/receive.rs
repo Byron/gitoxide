@@ -78,12 +78,9 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
-    #[cfg(feature = "serde1")]
-    use super::JsonOutcome;
-    use super::{print, write_raw_refs, CloneDelegate, Context};
-    use crate::{net, OutputFormat};
+    use super::{receive_pack_blocking, CloneDelegate, Context};
+    use crate::net;
     use git_repository::{
-        odb::pack,
         protocol,
         protocol::fetch::{Ref, Response},
         Progress,
@@ -98,33 +95,14 @@ mod blocking_io {
             refs: &[Ref],
             _previous_response: &Response,
         ) -> io::Result<()> {
-            let options = pack::bundle::write::Options {
-                thread_limit: self.ctx.thread_limit,
-                index_kind: pack::index::Version::V2,
-                iteration_mode: pack::data::input::Mode::Verify,
-            };
-            let outcome = pack::bundle::Bundle::write_to_directory(
-                input,
+            receive_pack_blocking(
                 self.directory.take(),
+                self.refs_directory.take(),
+                &mut self.ctx,
+                input,
                 progress,
-                &self.ctx.should_interrupt,
-                None,
-                options,
+                &refs,
             )
-            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
-
-            if let Some(directory) = self.refs_directory.take() {
-                write_raw_refs(refs, directory)?;
-            }
-
-            match self.ctx.format {
-                OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, refs)),
-                #[cfg(feature = "serde1")]
-                OutputFormat::Json => {
-                    serde_json::to_writer_pretty(&mut self.ctx.out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
-                }
-            };
-            Ok(())
         }
     }
 
@@ -147,14 +125,13 @@ mod blocking_io {
         Ok(())
     }
 }
+
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::receive;
 
 #[cfg(feature = "async-client")]
 mod async_io {
-    #[cfg(feature = "serde1")]
-    use super::JsonOutcome;
-    use super::{print, write_raw_refs, CloneDelegate, Context};
+    use super::{print, receive_pack_blocking, write_raw_refs, CloneDelegate, Context};
     use crate::{net, OutputFormat};
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
@@ -176,35 +153,14 @@ mod async_io {
             refs: &[Ref],
             _previous_response: &Response,
         ) -> io::Result<()> {
-            let options = pack::bundle::write::Options {
-                thread_limit: self.ctx.thread_limit,
-                index_kind: pack::index::Version::V2,
-                iteration_mode: pack::data::input::Mode::Verify,
-            };
-            let outcome = pack::Bundle::write_to_directory(
-                futures_lite::io::BlockOn::new(input),
+            receive_pack_blocking(
                 self.directory.take(),
+                self.refs_directory.take(),
+                &mut self.ctx,
+                futures_lite::io::BlockOn::new(input),
                 progress,
-                &self.ctx.should_interrupt,
-                None,
-                options,
+                &refs,
             )
-            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
-
-            if let Some(directory) = self.refs_directory.take() {
-                write_raw_refs(refs, directory)?;
-            }
-
-            let refs = refs.to_owned();
-            match self.ctx.format {
-                OutputFormat::Human => drop(print(&mut self.ctx.out, outcome, &refs)),
-                #[cfg(feature = "serde1")]
-                OutputFormat::Json => serde_json::to_writer_pretty(
-                    &mut self.ctx.out,
-                    &JsonOutcome::from_outcome_and_refs(outcome, &refs),
-                )?,
-            };
-            Ok(())
         }
     }
 
@@ -312,5 +268,42 @@ fn write_raw_refs(refs: &[Ref], directory: PathBuf) -> std::io::Result<()> {
         };
         std::fs::write(path, content.as_bytes())?;
     }
+    Ok(())
+}
+
+fn receive_pack_blocking<W: io::Write>(
+    mut directory: Option<PathBuf>,
+    mut refs_directory: Option<PathBuf>,
+    ctx: &mut Context<W>,
+    input: impl io::BufRead,
+    progress: impl git_repository::Progress,
+    refs: &[Ref],
+) -> io::Result<()> {
+    let options = pack::bundle::write::Options {
+        thread_limit: ctx.thread_limit,
+        index_kind: pack::index::Version::V2,
+        iteration_mode: pack::data::input::Mode::Verify,
+    };
+    let outcome = pack::bundle::Bundle::write_to_directory(
+        input,
+        directory.take(),
+        progress,
+        &ctx.should_interrupt,
+        None,
+        options,
+    )
+    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+
+    if let Some(directory) = refs_directory.take() {
+        write_raw_refs(refs, directory)?;
+    }
+
+    match ctx.format {
+        OutputFormat::Human => drop(print(&mut ctx.out, outcome, refs)),
+        #[cfg(feature = "serde1")]
+        OutputFormat::Json => {
+            serde_json::to_writer_pretty(&mut ctx.out, &JsonOutcome::from_outcome_and_refs(outcome, refs))?
+        }
+    };
     Ok(())
 }
