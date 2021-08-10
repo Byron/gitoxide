@@ -944,9 +944,9 @@ version = "0.4.0"
 dependencies = [
  "git-hash 0.5.0",
  "git-object 0.10.0",
- "git-odb 0.16.0",
+ "git-odb 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-testtools",
- "git-traverse 0.3.0",
+ "git-traverse 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "quick-error",
 ]
 
@@ -1117,7 +1117,7 @@ dependencies = [
  "git-features 0.16.0",
  "git-hash 0.5.0",
  "git-object 0.10.0",
- "git-odb 0.16.0",
+ "git-odb 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-tempfile 0.5.0",
  "git-testtools",
  "git-traverse 0.3.0",
@@ -1304,7 +1304,7 @@ version = "0.3.0"
 dependencies = [
  "git-hash 0.5.0",
  "git-object 0.10.0",
- "git-odb 0.16.0",
+ "git-odb 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-testtools",
  "quick-error",
 ]
