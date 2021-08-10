@@ -963,21 +963,6 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aff16015fe56832e7fef9e5b6124ce640074c2f68ceff24c4abacae76cc3cb9e"
-dependencies = [
- "crc32fast",
- "flate2",
- "git-hash 0.4.0",
- "prodash",
- "quick-error",
- "sha1",
- "walkdir",
-]
-
-[[package]]
-name = "git-features"
 version = "0.16.1"
 dependencies = [
  "bytes",
@@ -996,13 +981,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-hash"
-version = "0.4.0"
+name = "git-features"
+version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86ec3fc430ae8a05b18d907cc6ad1929a44f8ea523bd496b36488317869b2932"
+checksum = "a9ef52b155dd8096e614bab86358eb7f903e211e72c0e109452aa9771c8e1bd4"
 dependencies = [
- "hex",
+ "crc32fast",
+ "flate2",
+ "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "prodash",
  "quick-error",
+ "sha1",
+ "walkdir",
 ]
 
 [[package]]
@@ -1094,7 +1084,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "849a471db0853851238f1fadda7bca0f6719d6254ad075996b146d97bfc830d9"
 dependencies = [
  "btoi",
- "git-features 0.16.0",
+ "git-features 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-pack 0.3.0",
@@ -1114,7 +1104,7 @@ dependencies = [
  "dashmap",
  "filebuffer",
  "git-diff 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-features 0.16.0",
+ "git-features 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-tempfile 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
