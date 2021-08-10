@@ -201,6 +201,7 @@ impl<'s> Transaction<'s> {
                     parent_index: Some(idx),
                     leaf_referent_previous_oid: None,
                 },
+                self.namespace.take(),
             )
             .map_err(Error::PreprocessingFailed)?;
 

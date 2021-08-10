@@ -65,7 +65,7 @@ mod refedit_ext {
         ];
 
         let err = edits
-            .pre_process(|n| store.find_existing(n), |_, e| e)
+            .pre_process(|n| store.find_existing(n), |_, e| e, None)
             .expect_err("duplicate detected");
         assert_eq!(
             err.to_string(),
@@ -94,6 +94,10 @@ mod refedit_ext {
             "a correctly named duplicate"
         );
     }
+
+    #[test]
+    #[ignore]
+    fn namespaces_are_rewriting_names_and_symbolic_ref_targets_when_provided() {}
 
     mod splitting {
         use crate::transaction::refedit_ext::MockStore;
