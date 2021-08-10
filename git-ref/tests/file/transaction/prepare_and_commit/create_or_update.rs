@@ -541,16 +541,18 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
 }
 
 #[test]
-fn packed_refs_creation_with_tag_loop_are_not_handled_and_cannot_exist_due_to_object_hashes() {}
+fn packed_refs_creation_with_tag_loop_are_not_handled_and_cannot_exist_due_to_object_hashes() {
+    // Tag loops cannot exist as you cannot create them thanks to hashing.
+}
 
 #[test]
-fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs() {
-    let (_keep, store) = store_writable("make_ref_repository.sh").unwrap();
+fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs() -> crate::Result {
+    let (_keep, store) = store_writable("make_ref_repository.sh")?;
     assert!(
-        store.packed().unwrap().is_none(),
+        store.packed()?.is_none(),
         "there should be no packed refs to start out with"
     );
-    let odb = git_odb::compound::Store::at(store.base.join("objects")).unwrap();
+    let odb = git_odb::compound::Store::at(store.base.join("objects"))?;
     let edits = store
         .transaction()
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
@@ -562,8 +564,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
         ))
         .prepare(
             store
-                .loose_iter()
-                .unwrap()
+                .loose_iter()?
                 .filter_map(|r| r.ok().filter(|r| r.kind() == git_ref::Kind::Peeled))
                 .map(|r| RefEdit {
                     change: Change::Update {
@@ -577,10 +578,8 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
                     deref: false,
                 }),
             git_lock::acquire::Fail::Immediately,
-        )
-        .unwrap()
-        .commit(&committer())
-        .unwrap();
+        )?
+        .commit(&committer())?;
 
     assert_eq!(
         edits.len(),
@@ -590,20 +589,20 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
 
     assert!(
         store
-            .loose_iter()
-            .unwrap()
+            .loose_iter()?
             .filter_map(Result::ok)
             .all(|r| r.kind() == git_ref::Kind::Symbolic),
         "only symbolic refs are left"
     );
 
-    let other_store = store_with_packed_refs().unwrap();
-    let expected_pack_data: BString = std::fs::read(other_store.packed_refs_path()).unwrap().into();
-    let actual_packed_data: BString = std::fs::read(store.packed_refs_path()).unwrap().into();
+    let other_store = store_with_packed_refs()?;
+    let expected_pack_data: BString = std::fs::read(other_store.packed_refs_path())?.into();
+    let actual_packed_data: BString = std::fs::read(store.packed_refs_path())?.into();
     assert_eq!(
         actual_packed_data, expected_pack_data,
         "both gitoxide and git must agree on the packed refs file perfectly"
     );
+    Ok(())
 }
 
 #[test]
