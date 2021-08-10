@@ -174,6 +174,33 @@ impl Handle<Writable> {
     }
 }
 
+mod io_impls {
+    use super::{Handle, Writable};
+    use std::{io, io::SeekFrom};
+
+    impl io::Write for Handle<Writable> {
+        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+            self.with_mut(|f| f.write(buf))?
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            self.with_mut(|f| f.flush())?
+        }
+    }
+
+    impl io::Seek for Handle<Writable> {
+        fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
+            self.with_mut(|f| f.seek(pos))?
+        }
+    }
+
+    impl io::Read for Handle<Writable> {
+        fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+            self.with_mut(|f| f.read(buf))?
+        }
+    }
+}
+
 ///
 pub mod persist {
     use crate::{
