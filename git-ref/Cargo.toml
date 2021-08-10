@@ -25,7 +25,7 @@ required-features = ["internal-testing-git-features-parallel"]
 
 [dependencies]
 git-features = { version = "^0.16.0", path = "../git-features", features = ["walkdir"]}
-git-hash = { version = "^0.4.0", path = "../git-hash" }
+git-hash = { version = "^0.5.0", path = "../git-hash" }
 git-object = { version = "^0.10.0", path = "../git-object" }
 git-validate = { version = "^0.4.0", path = "../git-validate" }
 git-actor = { version = "^0.2.0", path = "../git-actor" }
