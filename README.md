@@ -68,8 +68,8 @@ Follow linked crate name for detailed status.
   * [git-features](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-features)
   * [git-tempfile](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tempfile)
   * [git-lock](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-lock)
-* **very early**    
   * [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
+* **very early**    
   * [git-repository](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-repository)
 * **idea**
   * [git-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-index)

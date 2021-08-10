@@ -307,6 +307,8 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 * [ ] **revparse** - obtain an object ID from short or long hashes, reference names or reference log [or more][revparse].
 * **Stores**
   * [ ] disable transactions during [quarantine]
+  * [x] namespaces
+    * a server-side feature to transparently isolate refs in a single shared repository, allowing all forks to live in the same condensed repository.
   * **loose file**
     * [x] ref validation
     * [x] find single ref by name
@@ -320,8 +322,8 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
       * [x] set any valid ref value (not just object ids)
       * [x] reflog changes can be entirely disabled (i.e. for bare repos)
       * [ ] rename or copy references
-      * [ ] transparent handling of packed-refs during deletion
-          * [ ] a way to disable the above to allow pruning loose refs
+      * [x] transparent handling of packed-refs during deletion
+      * [x] writing loose refs into packed-refs and optionally delete them
       * [ ] initial transaction optimization (a faster way to create clones with a lot of refs)
     * **log**
       * [x] forward iteration
@@ -332,10 +334,6 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
     * **packed**
       * [x] find single ref by name
       * [x] iterate refs with optional prefix
-      * [ ] create `packed-refs` from loose refs (using transactions)
-      * **transactions**
-        * [ ] delete
-        * [ ] create or udpate
   * [ ] **[reftable][reftable-spec]**, 
     * see [here for a Go/C implementation][reftable-impl]
 * [x] API documentation
