@@ -1080,7 +1080,7 @@ dependencies = [
  "git-features 0.16.0",
  "git-hash 0.5.0",
  "git-object 0.10.0",
- "git-pack 0.3.0",
+ "git-pack 0.3.1",
  "git-testtools",
  "pretty_assertions",
  "tempfile",
@@ -1097,7 +1097,7 @@ dependencies = [
  "git-features 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-pack 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-pack 0.3.0",
  "tempfile",
  "thiserror",
 ]
@@ -1105,6 +1105,29 @@ dependencies = [
 [[package]]
 name = "git-pack"
 version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "440003b7a285382e9f8bb09de873690d699806398bb62b86d1535c86a160f0e6"
+dependencies = [
+ "btoi",
+ "byteorder",
+ "bytesize",
+ "dashmap",
+ "filebuffer",
+ "git-diff 0.4.0",
+ "git-features 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-tempfile 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-traverse 0.3.0",
+ "itoa",
+ "parking_lot",
+ "smallvec",
+ "thiserror",
+]
+
+[[package]]
+name = "git-pack"
+version = "0.3.1"
 dependencies = [
  "bstr",
  "btoi",
@@ -1130,29 +1153,6 @@ dependencies = [
  "tempfile",
  "thiserror",
  "uluru",
-]
-
-[[package]]
-name = "git-pack"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "440003b7a285382e9f8bb09de873690d699806398bb62b86d1535c86a160f0e6"
-dependencies = [
- "btoi",
- "byteorder",
- "bytesize",
- "dashmap",
- "filebuffer",
- "git-diff 0.4.0",
- "git-features 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-tempfile 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-traverse 0.3.0",
- "itoa",
- "parking_lot",
- "smallvec",
- "thiserror",
 ]
 
 [[package]]
@@ -1225,7 +1225,7 @@ dependencies = [
  "git-hash 0.5.0",
  "git-object 0.10.0",
  "git-odb 0.16.0",
- "git-pack 0.3.0",
+ "git-pack 0.3.1",
  "git-protocol",
  "git-ref",
  "git-tempfile 0.5.0",
@@ -1288,7 +1288,7 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "git-features 0.16.0",
- "git-pack 0.3.0",
+ "git-pack 0.3.1",
  "git-packetline",
  "git-url",
  "maybe-async",
