@@ -152,40 +152,60 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
 }
 
 #[test]
-fn namespaced_updates_cause_reference_names_to_be_rewritten_and_observable_in_the_output() {
-    let (_keep, store) = empty_store().unwrap();
+fn namespaced_updates_or_deletions_cause_reference_names_to_be_rewritten_and_observable_in_the_output() -> crate::Result
+{
+    let (_keep, store) = empty_store()?;
 
     let edits = store
         .transaction()
-        .namespace(git_ref::namespace::expand("foo").unwrap())
+        .namespace(git_ref::namespace::expand("foo")?)
         .prepare(
-            Some(RefEdit {
-                change: Change::Update {
-                    log: LogChange::default(),
-                    new: Target::Symbolic("refs/heads/hello".try_into().unwrap()),
-                    mode: Create::Only,
+            vec![
+                RefEdit {
+                    change: Change::Delete {
+                        previous: None,
+                        log: RefLog::AndReference,
+                    },
+                    name: "refs/for/deletion".try_into()?,
+                    deref: false,
                 },
-                name: "HEAD".try_into().unwrap(),
-                deref: false,
-            }),
+                RefEdit {
+                    change: Change::Update {
+                        log: LogChange::default(),
+                        new: Target::Symbolic("refs/heads/hello".try_into()?),
+                        mode: Create::Only,
+                    },
+                    name: "HEAD".try_into()?,
+                    deref: false,
+                },
+            ],
             Fail::Immediately,
-        )
-        .unwrap()
-        .commit(&committer())
-        .unwrap();
+        )?
+        .commit(&committer())?;
 
     assert_eq!(
         edits,
-        vec![RefEdit {
-            change: Change::Update {
-                log: LogChange::default(),
-                new: Target::Symbolic("refs/namespaces/foo/refs/heads/hello".try_into().unwrap()),
-                mode: Create::Only,
+        vec![
+            RefEdit {
+                change: Change::Delete {
+                    previous: None,
+                    log: RefLog::AndReference,
+                },
+                name: "refs/namespaces/foo/refs/for/deletion".try_into()?,
+                deref: false,
             },
-            name: "refs/namespaces/foo/HEAD".try_into().unwrap(),
-            deref: false,
-        }]
+            RefEdit {
+                change: Change::Update {
+                    log: LogChange::default(),
+                    new: Target::Symbolic("refs/namespaces/foo/refs/heads/hello".try_into()?),
+                    mode: Create::Only,
+                },
+                name: "refs/namespaces/foo/HEAD".try_into()?,
+                deref: false,
+            }
+        ]
     );
+    Ok(())
 }
 
 #[test]

@@ -1,5 +1,6 @@
 mod refedit_ext {
     use bstr::{BString, ByteSlice};
+    use git_ref::transaction::Create;
     use git_ref::{
         mutable::Target,
         transaction::{Change, RefEdit, RefEditsExt, RefLog},
@@ -96,8 +97,52 @@ mod refedit_ext {
     }
 
     #[test]
-    #[ignore]
-    fn namespaces_are_rewriting_names_and_symbolic_ref_targets_when_provided() {}
+    fn namespaces_are_rewriting_names_and_symbolic_ref_targets_when_provided() -> crate::Result {
+        let mut edits = vec![
+            RefEdit {
+                change: Change::Delete {
+                    previous: None,
+                    log: RefLog::AndReference,
+                },
+                name: "refs/tags/deleted".try_into()?,
+                deref: false,
+            },
+            RefEdit {
+                change: Change::Update {
+                    log: Default::default(),
+                    mode: Create::Only,
+                    new: Target::Symbolic("refs/heads/main".try_into()?),
+                },
+                name: "HEAD".try_into()?,
+                deref: false,
+            },
+        ];
+        edits.adjust_namespace(git_ref::namespace::expand("foo")?.into());
+        assert_eq!(
+            edits,
+            vec![
+                RefEdit {
+                    change: Change::Delete {
+                        previous: None,
+                        log: RefLog::AndReference,
+                    },
+                    name: "refs/namespaces/foo/refs/tags/deleted".try_into()?,
+                    deref: false,
+                },
+                RefEdit {
+                    change: Change::Update {
+                        log: Default::default(),
+                        mode: Create::Only,
+                        new: Target::Symbolic("refs/namespaces/foo/refs/heads/main".try_into()?),
+                    },
+                    name: "refs/namespaces/foo/HEAD".try_into()?,
+                    deref: false,
+                }
+            ],
+            "it rewrites both names as well as symbolic ref targets"
+        );
+        Ok(())
+    }
 
     mod splitting {
         use crate::transaction::refedit_ext::MockStore;
