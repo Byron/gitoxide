@@ -901,27 +901,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-actor"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1729828a533de213213c8bebc4f5f34215d1ad9f12cf2f44cadf20ffbd05c583"
-dependencies = [
- "bstr",
- "btoi",
- "itoa",
- "nom",
- "quick-error",
-]
-
-[[package]]
 name = "git-commitgraph"
 version = "0.4.0"
 dependencies = [
  "bstr",
  "byteorder",
  "filebuffer",
- "git-features 0.16.1",
- "git-hash 0.5.0",
+ "git-features",
+ "git-hash",
  "git-testtools",
  "serde",
  "thiserror",
@@ -942,22 +929,11 @@ dependencies = [
 name = "git-diff"
 version = "0.4.1"
 dependencies = [
- "git-hash 0.5.0",
- "git-object 0.10.0",
- "git-odb 0.16.0",
+ "git-hash",
+ "git-object",
+ "git-odb",
  "git-testtools",
- "git-traverse 0.3.1",
- "quick-error",
-]
-
-[[package]]
-name = "git-diff"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d07fffb9a61e91ce4989fd8781d84f9b242450a153589ef30989b4ed8ff61c17"
-dependencies = [
- "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-traverse",
  "quick-error",
 ]
 
@@ -970,27 +946,12 @@ dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",
  "flate2",
- "git-hash 0.5.0",
+ "git-hash",
  "jwalk",
  "num_cpus",
  "prodash",
  "quick-error",
  "sha-1",
- "sha1",
- "walkdir",
-]
-
-[[package]]
-name = "git-features"
-version = "0.16.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9ef52b155dd8096e614bab86358eb7f903e211e72c0e109452aa9771c8e1bd4"
-dependencies = [
- "crc32fast",
- "flate2",
- "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "prodash",
- "quick-error",
  "sha1",
  "walkdir",
 ]
@@ -1002,16 +963,6 @@ dependencies = [
  "hex",
  "quick-error",
  "serde",
-]
-
-[[package]]
-name = "git-hash"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14bec5275b6e62d4bf0c61492d8f5d4c770d94ff3416eae4860e17d33ca86a1f"
-dependencies = [
- "hex",
- "quick-error",
 ]
 
 [[package]]
@@ -1023,7 +974,7 @@ name = "git-lock"
 version = "0.2.0"
 dependencies = [
  "fastrand",
- "git-tempfile 0.5.0",
+ "git-tempfile",
  "quick-error",
  "tempfile",
 ]
@@ -1033,10 +984,10 @@ name = "git-object"
 version = "0.10.0"
 dependencies = [
  "bstr",
- "git-actor 0.2.0",
- "git-hash 0.5.0",
+ "git-actor",
+ "git-hash",
  "git-testtools",
- "git-validate 0.4.0",
+ "git-validate",
  "hex",
  "nom",
  "pretty_assertions",
@@ -1046,48 +997,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-object"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea512d5ebf31c6c7a148052ad987f3daa1bf82b357d8ca30f752ae29f704e09d"
-dependencies = [
- "bstr",
- "git-actor 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-validate 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "hex",
- "nom",
- "quick-error",
- "smallvec",
-]
-
-[[package]]
 name = "git-odb"
 version = "0.16.0"
 dependencies = [
  "btoi",
- "git-actor 0.2.0",
- "git-features 0.16.1",
- "git-hash 0.5.0",
- "git-object 0.10.0",
- "git-pack 0.3.1",
+ "git-actor",
+ "git-features",
+ "git-hash",
+ "git-object",
+ "git-pack",
  "git-testtools",
  "pretty_assertions",
- "tempfile",
- "thiserror",
-]
-
-[[package]]
-name = "git-odb"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "849a471db0853851238f1fadda7bca0f6719d6254ad075996b146d97bfc830d9"
-dependencies = [
- "btoi",
- "git-features 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-pack 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile",
  "thiserror",
 ]
@@ -1103,14 +1023,14 @@ dependencies = [
  "common_macros",
  "dashmap",
  "filebuffer",
- "git-diff 0.4.1",
- "git-features 0.16.1",
- "git-hash 0.5.0",
- "git-object 0.10.0",
- "git-odb 0.16.0",
- "git-tempfile 0.5.0",
+ "git-diff",
+ "git-features",
+ "git-hash",
+ "git-object",
+ "git-odb",
+ "git-tempfile",
  "git-testtools",
- "git-traverse 0.3.1",
+ "git-traverse",
  "hex",
  "itoa",
  "memory-lru",
@@ -1123,29 +1043,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-pack"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ee8b9f0c0c9fba74c96bd1900499651f8a5ad3bf0422674b11db5b1d944b6ce"
-dependencies = [
- "btoi",
- "byteorder",
- "bytesize",
- "dashmap",
- "filebuffer",
- "git-diff 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-features 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-tempfile 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-traverse 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "itoa",
- "parking_lot",
- "smallvec",
- "thiserror",
-]
-
-[[package]]
 name = "git-packetline"
 version = "0.6.0"
 dependencies = [
@@ -1153,7 +1050,7 @@ dependencies = [
  "bstr",
  "futures-io",
  "futures-lite",
- "git-odb 0.16.0",
+ "git-odb",
  "hex",
  "maybe-async",
  "pin-project-lite",
@@ -1171,8 +1068,8 @@ dependencies = [
  "btoi",
  "futures-io",
  "futures-lite",
- "git-features 0.16.1",
- "git-hash 0.5.0",
+ "git-features",
+ "git-hash",
  "git-packetline",
  "git-testtools",
  "git-transport",
@@ -1188,15 +1085,15 @@ version = "0.5.1"
 dependencies = [
  "bstr",
  "filebuffer",
- "git-actor 0.2.0",
- "git-features 0.16.1",
- "git-hash 0.5.0",
+ "git-actor",
+ "git-features",
+ "git-hash",
  "git-lock",
- "git-object 0.10.0",
- "git-odb 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-tempfile 0.5.0",
+ "git-object",
+ "git-odb",
+ "git-tempfile",
  "git-testtools",
- "git-validate 0.4.0",
+ "git-validate",
  "nom",
  "os_str_bytes 3.1.0",
  "quick-error",
@@ -1209,18 +1106,18 @@ name = "git-repository"
 version = "0.6.0"
 dependencies = [
  "anyhow",
- "git-actor 0.2.0",
- "git-diff 0.4.1",
- "git-features 0.16.1",
- "git-hash 0.5.0",
- "git-object 0.10.0",
- "git-odb 0.16.0",
- "git-pack 0.3.1",
+ "git-actor",
+ "git-diff",
+ "git-features",
+ "git-hash",
+ "git-object",
+ "git-odb",
+ "git-pack",
  "git-protocol",
  "git-ref",
- "git-tempfile 0.5.0",
+ "git-tempfile",
  "git-testtools",
- "git-traverse 0.3.1",
+ "git-traverse",
  "git-url",
  "quick-error",
  "signal-hook",
@@ -1239,27 +1136,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-tempfile"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "415694cc14a2aa0625acdc8bee2d5ef41eb97e21075fd35ac46d5bc5756457f9"
-dependencies = [
- "dashmap",
- "libc",
- "once_cell",
- "signal-hook",
- "signal-hook-registry",
- "tempfile",
-]
-
-[[package]]
 name = "git-testtools"
 version = "0.3.0"
 dependencies = [
  "bstr",
  "crc",
  "fs_extra",
- "git-hash 0.5.0",
+ "git-hash",
  "nom",
  "once_cell",
  "tempfile",
@@ -1277,8 +1160,8 @@ dependencies = [
  "curl",
  "futures-io",
  "futures-lite",
- "git-features 0.16.1",
- "git-pack 0.3.1",
+ "git-features",
+ "git-pack",
  "git-packetline",
  "git-url",
  "maybe-async",
@@ -1292,21 +1175,10 @@ dependencies = [
 name = "git-traverse"
 version = "0.3.1"
 dependencies = [
- "git-hash 0.5.0",
- "git-object 0.10.0",
- "git-odb 0.16.0",
+ "git-hash",
+ "git-object",
+ "git-odb",
  "git-testtools",
- "quick-error",
-]
-
-[[package]]
-name = "git-traverse"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0d1984c180aef7a53706771289a0417557896b3666f9781d78cd96fcdf1d52b"
-dependencies = [
- "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "quick-error",
 ]
 
@@ -1331,16 +1203,6 @@ version = "0.4.0"
 dependencies = [
  "bstr",
  "git-testtools",
- "quick-error",
-]
-
-[[package]]
-name = "git-validate"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68f4b4bcfbfeacf6c76622e5d4a2b1407dbd07c42ec174c7c3fbf22ffcee1c0b"
-dependencies = [
- "bstr",
  "quick-error",
 ]
 
@@ -1370,7 +1232,7 @@ dependencies = [
  "crosstermion",
  "env_logger",
  "futures-lite",
- "git-features 0.16.1",
+ "git-features",
  "git-repository",
  "git-transport",
  "gitoxide-core",
