@@ -1103,7 +1103,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "git-actor",
