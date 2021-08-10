@@ -1188,7 +1188,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-url"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "bstr",
  "home",

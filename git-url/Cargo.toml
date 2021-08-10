@@ -1,6 +1,6 @@
 [package]
 name = "git-url"
-version = "0.3.1"
+version = "0.3.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project implementing parsing and serialization of git-url"
