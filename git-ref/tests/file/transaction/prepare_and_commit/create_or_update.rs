@@ -17,61 +17,51 @@ use git_ref::{
 use git_testtools::hex_to_id;
 use std::convert::TryInto;
 
-mod reference_with_equally_named {
-    use crate::file::transaction::prepare_and_commit::{committer, empty_store};
-    use git_lock::acquire::Fail;
-    use git_ref::{
-        file::transaction,
-        mutable::Target,
-        transaction::{Change, Create, LogChange, RefEdit},
-    };
-    use std::convert::TryInto;
-
-    #[test]
-    fn empty_or_non_empty_directory_already_in_place() -> crate::Result {
-        for is_empty in &[true, false] {
-            let (dir, store) = empty_store()?;
-            let head_dir = dir.path().join("HEAD");
-            std::fs::create_dir_all(head_dir.join("a").join("b").join("also-empty"))?;
-            if !*is_empty {
-                std::fs::write(head_dir.join("file.ext"), "".as_bytes())?;
-            }
-
-            let edits = store
-                .transaction()
-                .prepare(
-                    Some(RefEdit {
-                        change: Change::Update {
-                            log: LogChange::default(),
-                            mode: Create::Only,
-                            new: Target::Symbolic("refs/heads/main".try_into().unwrap()),
-                        },
-                        name: "HEAD".try_into()?,
-                        deref: false,
-                    }),
-                    Fail::Immediately,
-                )?
-                .commit(&committer());
-            if *is_empty {
-                let edits = edits?;
-                assert!(
-                    store.loose_find(edits[0].name.to_partial())?.is_some(),
-                    "HEAD was created despite a directory being in the way"
-                );
-            } else {
-                match edits {
-                    #[cfg_attr(target_os = "windows", allow(unused_variables))]
-                    Err(transaction::commit::Error::LockCommit { err, full_name }) => {
-                        assert_eq!(full_name, "HEAD");
-                        #[cfg(not(target_os = "windows"))]
-                        assert_eq!(err.to_string(), "Directory not empty");
-                    }
-                    _ => unreachable!("other errors shouldn't happen here"),
-                };
-            }
+#[test]
+fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_can_potentially_recover() -> crate::Result
+{
+    for is_empty in &[true, false] {
+        let (dir, store) = empty_store()?;
+        let head_dir = dir.path().join("HEAD");
+        std::fs::create_dir_all(head_dir.join("a").join("b").join("also-empty"))?;
+        if !*is_empty {
+            std::fs::write(head_dir.join("file.ext"), "".as_bytes())?;
         }
-        Ok(())
+
+        let edits = store
+            .transaction()
+            .prepare(
+                Some(RefEdit {
+                    change: Change::Update {
+                        log: LogChange::default(),
+                        mode: Create::Only,
+                        new: Target::Symbolic("refs/heads/main".try_into().unwrap()),
+                    },
+                    name: "HEAD".try_into()?,
+                    deref: false,
+                }),
+                Fail::Immediately,
+            )?
+            .commit(&committer());
+        if *is_empty {
+            let edits = edits?;
+            assert!(
+                store.loose_find(edits[0].name.to_partial())?.is_some(),
+                "HEAD was created despite a directory being in the way"
+            );
+        } else {
+            match edits {
+                #[cfg_attr(target_os = "windows", allow(unused_variables))]
+                Err(transaction::commit::Error::LockCommit { err, full_name }) => {
+                    assert_eq!(full_name, "HEAD");
+                    #[cfg(not(target_os = "windows"))]
+                    assert_eq!(err.to_string(), "Directory not empty");
+                }
+                _ => unreachable!("other errors shouldn't happen here"),
+            };
+        }
     }
+    Ok(())
 }
 
 #[test]
