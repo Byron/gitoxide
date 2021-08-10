@@ -82,6 +82,7 @@ check: ## Build all code in suitable configurations
 	cargo check --no-default-features --features lean-termion
 	cargo check --no-default-features --features max
 	cargo check --no-default-features --features max-termion
+	cd git-actor && cargo check
 	cd gitoxide-core && cargo check \
                      && cargo check --features blocking-client \
                      && cargo check --features async-client

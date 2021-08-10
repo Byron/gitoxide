@@ -1,6 +1,6 @@
 [package]
 name = "git-actor"
-version = "0.1.1"
+version = "0.2.0"
 description = "A way to identify git actors"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/gitoxide"
@@ -20,7 +20,7 @@ all-features = true
 [dependencies]
 quick-error = "2.0.0"
 btoi = "0.4.2"
-bstr = { version = "0.2.13", default-features = false }
+bstr = { version = "0.2.13", default-features = false, features = ["std"]}
 nom = { version = "6", default-features = false, features = ["std", "alloc"]}
 itoa = "0.4.6"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
