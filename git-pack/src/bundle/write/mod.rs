@@ -2,12 +2,12 @@ use filebuffer::FileBuffer;
 
 use crate::data;
 use git_features::{interrupt, progress, progress::Progress};
+use git_tempfile::{handle::Writable, AutoRemove, ContainingDirectory};
 use std::{
     io,
     path::{Path, PathBuf},
     sync::{atomic::AtomicBool, Arc},
 };
-use tempfile::NamedTempFile;
 
 mod error;
 use error::Error;
@@ -46,10 +46,9 @@ impl crate::Bundle {
         };
 
         let data_file = Arc::new(parking_lot::Mutex::new(match directory.as_ref() {
-            Some(directory) => NamedTempFile::new_in(directory.as_ref())?,
-            None => NamedTempFile::new()?,
+            Some(directory) => git_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?,
+            None => git_tempfile::new(std::env::temp_dir(), ContainingDirectory::Exists, AutoRemove::Tempfile)?,
         }));
-        let data_path: PathBuf = data_file.lock().path().into();
         let (pack_entries_iter, pack_kind): (
             Box<dyn Iterator<Item = Result<data::input::Entry, data::input::Error>>>,
             _,
@@ -106,7 +105,6 @@ impl crate::Bundle {
             progress,
             options,
             data_file,
-            data_path,
             pack_entries_iter,
             should_interrupt,
         )?;
@@ -143,10 +141,9 @@ impl crate::Bundle {
         };
 
         let data_file = Arc::new(parking_lot::Mutex::new(match directory.as_ref() {
-            Some(directory) => NamedTempFile::new_in(directory.as_ref())?,
-            None => NamedTempFile::new()?,
+            Some(directory) => git_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?,
+            None => git_tempfile::new(std::env::temp_dir(), ContainingDirectory::Exists, AutoRemove::Tempfile)?,
         }));
-        let data_path: PathBuf = data_file.lock().path().into();
         let eight_pages = 4096 * 8;
         let (pack_entries_iter, pack_kind): (
             Box<dyn Iterator<Item = Result<data::input::Entry, data::input::Error>> + Send + 'static>,
@@ -167,7 +164,6 @@ impl crate::Bundle {
                     thin_pack_lookup_fn,
                 );
                 let pack_kind = pack_entries_iter.inner.kind();
-                // TODO: wrap this entries iter into data_file, including the header, so it becomes suitable for lookup
                 (Box::new(pack_entries_iter), pack_kind)
             }
             None => {
@@ -197,7 +193,6 @@ impl crate::Bundle {
             progress,
             options,
             data_file,
-            data_path,
             pack_entries_iter,
             should_interrupt,
         )?;
@@ -218,8 +213,7 @@ impl crate::Bundle {
             iteration_mode: _,
             index_kind,
         }: Options,
-        data_file: Arc<parking_lot::Mutex<NamedTempFile>>,
-        data_path: PathBuf,
+        data_file: Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>,
         pack_entries_iter: impl Iterator<Item = Result<data::input::Entry, data::input::Error>>,
         should_interrupt: &AtomicBool,
     ) -> Result<(crate::index::write::Outcome, Option<PathBuf>, Option<PathBuf>), Error> {
@@ -227,11 +221,14 @@ impl crate::Bundle {
         Ok(match directory {
             Some(directory) => {
                 let directory = directory.as_ref();
-                let mut index_file = NamedTempFile::new_in(directory)?;
+                let mut index_file = git_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
 
                 let outcome = crate::index::File::write_data_iter_to_stream(
                     index_kind,
-                    move || new_pack_file_resolver(data_path),
+                    {
+                        let data_file = Arc::clone(&data_file);
+                        move || new_pack_file_resolver(data_file)
+                    },
                     pack_entries_iter,
                     thread_limit,
                     indexing_progress,
@@ -260,7 +257,7 @@ impl crate::Bundle {
             None => (
                 crate::index::File::write_data_iter_to_stream(
                     index_kind,
-                    move || new_pack_file_resolver(data_path),
+                    move || new_pack_file_resolver(data_file),
                     pack_entries_iter,
                     thread_limit,
                     indexing_progress,
@@ -275,9 +272,9 @@ impl crate::Bundle {
 }
 
 fn new_pack_file_resolver(
-    data_path: PathBuf,
+    data_file: Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>,
 ) -> io::Result<impl Fn(data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Sync> {
-    let mapped_file = FileBuffer::open(data_path)?;
+    let mapped_file = FileBuffer::open(data_file.lock().with_mut(|f| f.path().to_owned())?)?;
     let pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
         mapped_file
             .get(range.start as usize..range.end as usize)

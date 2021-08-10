@@ -1028,6 +1028,7 @@ dependencies = [
  "git-hash",
  "git-object",
  "git-odb",
+ "git-tempfile",
  "git-testtools",
  "git-traverse",
  "hex",

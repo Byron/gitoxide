@@ -1,6 +1,5 @@
-use std::io::SeekFrom;
-use std::{io, path::PathBuf, sync::Arc};
-use tempfile::NamedTempFile;
+use git_tempfile::handle::Writable;
+use std::{io, io::SeekFrom, path::PathBuf, sync::Arc};
 
 /// Configuration for [write_to_directory][crate::Bundle::write_to_directory()] or
 /// [write_to_directory_eagerly][crate::Bundle::write_to_directory_eagerly()]
@@ -50,7 +49,7 @@ impl Outcome {
 
 pub(crate) struct PassThrough<R> {
     pub reader: R,
-    pub writer: Option<Arc<parking_lot::Mutex<NamedTempFile>>>,
+    pub writer: Option<Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>>,
 }
 
 impl<R> io::Read for PassThrough<R>
@@ -60,7 +59,7 @@ where
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let bytes_read = self.reader.read(buf)?;
         if let Some(writer) = self.writer.as_mut() {
-            use io::Write;
+            use std::io::Write;
             writer.lock().write_all(&buf[..bytes_read])?;
         }
         Ok(bytes_read)
@@ -80,7 +79,7 @@ where
 }
 
 pub(crate) struct LockWriter {
-    pub writer: Arc<parking_lot::Mutex<NamedTempFile>>,
+    pub writer: Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>,
 }
 
 impl io::Write for LockWriter {

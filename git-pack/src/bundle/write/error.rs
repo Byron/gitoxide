@@ -1,3 +1,4 @@
+use git_tempfile::handle::Writable;
 use std::io;
 
 #[derive(thiserror::Error, Debug)]
@@ -7,7 +8,7 @@ pub enum Error {
     #[error(transparent)]
     PackIter(#[from] crate::data::input::Error),
     #[error("Could not move a temporary file into its desired place")]
-    Perist(#[from] tempfile::PersistError),
+    Perist(#[from] git_tempfile::handle::persist::Error<Writable>),
     #[error(transparent)]
     IndexWrite(#[from] crate::index::write::Error),
 }
