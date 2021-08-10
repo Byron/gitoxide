@@ -80,10 +80,9 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
 mod blocking_io {
     #[cfg(feature = "serde1")]
     use super::JsonOutcome;
-    use super::{CloneDelegate, Context};
-    use crate::{net, pack::receive::print, OutputFormat};
+    use super::{print, write_raw_refs, CloneDelegate, Context};
+    use crate::{net, OutputFormat};
     use git_repository::{
-        object::bstr::{BString, ByteSlice},
         odb::pack,
         protocol,
         protocol::fetch::{Ref, Response},
@@ -115,20 +114,7 @@ mod blocking_io {
             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
 
             if let Some(directory) = self.refs_directory.take() {
-                let assure_dir = |path: &BString| {
-                    assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
-                    let path = directory.join(path.to_path().expect("UTF-8 conversion succeeds"));
-                    std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
-                };
-                for r in refs {
-                    let (path, content) = match r {
-                        Ref::Symbolic { path, target, .. } => (assure_dir(path)?, format!("ref: {}", target)),
-                        Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
-                            (assure_dir(path)?, object.to_string())
-                        }
-                    };
-                    std::fs::write(path, content.as_bytes())?;
-                }
+                write_raw_refs(refs, directory)?;
             }
 
             match self.ctx.format {
@@ -168,8 +154,8 @@ pub use blocking_io::receive;
 mod async_io {
     #[cfg(feature = "serde1")]
     use super::JsonOutcome;
-    use super::{CloneDelegate, Context};
-    use crate::{net, pack::receive::print, OutputFormat};
+    use super::{print, write_raw_refs, CloneDelegate, Context};
+    use crate::{net, OutputFormat};
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
     use git_repository::{
@@ -206,20 +192,7 @@ mod async_io {
             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
 
             if let Some(directory) = self.refs_directory.take() {
-                let assure_dir_exists = |path: &BString| {
-                    assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
-                    let path = directory.join(path.to_path().expect("UTF-8 conversion succeeds"));
-                    std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
-                };
-                for r in refs {
-                    let (path, content) = match r {
-                        Ref::Symbolic { path, target, .. } => (assure_dir_exists(path)?, format!("ref: {}", target)),
-                        Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
-                            (assure_dir_exists(path)?, object.to_string())
-                        }
-                    };
-                    std::fs::write(path, content.as_bytes())?;
-                }
+                write_raw_refs(refs, directory)?;
             }
 
             let refs = refs.to_owned();
@@ -262,6 +235,7 @@ mod async_io {
         Ok(())
     }
 }
+
 #[cfg(feature = "async-client")]
 pub use self::async_io::receive;
 
@@ -320,5 +294,23 @@ fn print(out: &mut impl io::Write, res: pack::bundle::write::Outcome, refs: &[Re
     print_hash_and_path(out, "pack", res.index.data_hash, res.data_path)?;
     writeln!(out)?;
     crate::remote::refs::print(out, refs)?;
+    Ok(())
+}
+
+fn write_raw_refs(refs: &[Ref], directory: PathBuf) -> std::io::Result<()> {
+    let assure_dir_exists = |path: &BString| {
+        assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
+        let path = directory.join(path.to_path().expect("UTF-8 conversion succeeds"));
+        std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
+    };
+    for r in refs {
+        let (path, content) = match r {
+            Ref::Symbolic { path, target, .. } => (assure_dir_exists(path)?, format!("ref: {}", target)),
+            Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
+                (assure_dir_exists(path)?, object.to_string())
+            }
+        };
+        std::fs::write(path, content.as_bytes())?;
+    }
     Ok(())
 }
