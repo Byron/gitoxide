@@ -152,6 +152,51 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
 }
 
 #[test]
+#[ignore]
+fn namespaced_updates_cause_reference_names_to_be_rewritten_and_observable_in_the_output() {
+    let (_keep, store) = empty_store().unwrap();
+
+    let target = Target::Symbolic("hello/world".try_into().unwrap());
+    let edits = store
+        .transaction()
+        .namespace(git_ref::namespace::expand("foo").unwrap())
+        .prepare(
+            Some(RefEdit {
+                change: Change::Update {
+                    log: LogChange::default(),
+                    new: target.clone(),
+                    mode: Create::Only,
+                },
+                name: "HEAD".try_into().unwrap(),
+                deref: false,
+            }),
+            Fail::Immediately,
+        )
+        .unwrap()
+        .commit(&committer())
+        .unwrap();
+
+    assert_eq!(
+        edits,
+        vec![RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                new: target,
+                mode: Create::Only,
+            },
+            name: "refs/namespaces/foo/refs/HEAD".try_into().unwrap(),
+            deref: false,
+        }]
+    );
+
+    assert_eq!(
+        reflog_lines(&store, "refs/namespaces/foo/refs/HEAD").unwrap().len(),
+        1,
+        "a reflog was created too"
+    );
+}
+
+#[test]
 fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the_value_matches() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
     let head = store.loose_find("HEAD")?.expect("head exists already");

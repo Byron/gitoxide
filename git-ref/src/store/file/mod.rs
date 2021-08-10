@@ -35,6 +35,7 @@ pub struct Transaction<'s> {
     packed_transaction: Option<crate::store::packed::Transaction>,
     updates: Option<Vec<transaction::Edit>>,
     packed_refs: transaction::PackedRefs,
+    namespace: Option<crate::Namespace>,
 }
 
 pub(in crate::store::file) fn path_to_name(path: impl Into<PathBuf>) -> bstr::BString {

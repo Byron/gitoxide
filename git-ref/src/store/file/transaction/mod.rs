@@ -1,6 +1,7 @@
 use crate::{
     store::{file, file::Transaction},
     transaction::RefEdit,
+    Namespace,
 };
 use bstr::BString;
 use git_hash::ObjectId;
@@ -72,6 +73,7 @@ impl file::Store {
             packed_transaction: None,
             updates: None,
             packed_refs: PackedRefs::default(),
+            namespace: None,
         }
     }
 }
@@ -85,11 +87,13 @@ impl<'s> Transaction<'s> {
 
     /// Configure the namespace within which all edits should take place.
     /// For example, with namespace `foo`, edits destined for `HEAD` will affect `refs/namespaces/foo/HEAD` instead.
+    /// Set `None` to not use any namespace, which also is the default.
     ///
     /// This also means that edits returned when [`commit(…)`ing](Transaction::commit()) will have their name altered to include
     /// the namespace automatically, so it must be stripped when returning them to the user to keep them 'invisible'.
-    pub fn namespace(self, _namespace: &str) -> Self {
-        todo!("store namespace and make it affect everything")
+    pub fn namespace(mut self, namespace: impl Into<Option<Namespace>>) -> Self {
+        self.namespace = namespace.into();
+        self
     }
 }
 
