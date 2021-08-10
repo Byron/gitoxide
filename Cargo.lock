@@ -944,9 +944,9 @@ version = "0.4.1"
 dependencies = [
  "git-hash 0.5.0",
  "git-object 0.10.0",
- "git-odb 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-odb 0.16.0",
  "git-testtools",
- "git-traverse 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-traverse 0.3.1",
  "quick-error",
 ]
 
@@ -1087,31 +1087,8 @@ dependencies = [
  "git-features 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-pack 0.3.0",
+ "git-pack 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile",
- "thiserror",
-]
-
-[[package]]
-name = "git-pack"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "440003b7a285382e9f8bb09de873690d699806398bb62b86d1535c86a160f0e6"
-dependencies = [
- "btoi",
- "byteorder",
- "bytesize",
- "dashmap",
- "filebuffer",
- "git-diff 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-features 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-tempfile 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-traverse 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "itoa",
- "parking_lot",
- "smallvec",
  "thiserror",
 ]
 
@@ -1130,7 +1107,7 @@ dependencies = [
  "git-features 0.16.1",
  "git-hash 0.5.0",
  "git-object 0.10.0",
- "git-odb 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-odb 0.16.0",
  "git-tempfile 0.5.0",
  "git-testtools",
  "git-traverse 0.3.1",
@@ -1143,6 +1120,29 @@ dependencies = [
  "tempfile",
  "thiserror",
  "uluru",
+]
+
+[[package]]
+name = "git-pack"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ee8b9f0c0c9fba74c96bd1900499651f8a5ad3bf0422674b11db5b1d944b6ce"
+dependencies = [
+ "btoi",
+ "byteorder",
+ "bytesize",
+ "dashmap",
+ "filebuffer",
+ "git-diff 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-features 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-tempfile 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-traverse 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "itoa",
+ "parking_lot",
+ "smallvec",
+ "thiserror",
 ]
 
 [[package]]
@@ -1294,7 +1294,7 @@ version = "0.3.1"
 dependencies = [
  "git-hash 0.5.0",
  "git-object 0.10.0",
- "git-odb 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-odb 0.16.0",
  "git-testtools",
  "quick-error",
 ]
