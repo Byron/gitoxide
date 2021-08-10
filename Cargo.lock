@@ -941,23 +941,23 @@ dependencies = [
 [[package]]
 name = "git-diff"
 version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "afb8ebf561f954fcc22827c1d3987a71ff740e37c22c17891e38cca47434aaf4"
+dependencies = [
+ "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "quick-error",
+]
+
+[[package]]
+name = "git-diff"
+version = "0.4.1"
 dependencies = [
  "git-hash 0.5.0",
  "git-object 0.10.0",
  "git-odb 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-testtools",
  "git-traverse 0.3.0",
- "quick-error",
-]
-
-[[package]]
-name = "git-diff"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afb8ebf561f954fcc22827c1d3987a71ff740e37c22c17891e38cca47434aaf4"
-dependencies = [
- "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "quick-error",
 ]
 
@@ -1113,7 +1113,7 @@ dependencies = [
  "common_macros",
  "dashmap",
  "filebuffer",
- "git-diff 0.4.0",
+ "git-diff 0.4.1",
  "git-features 0.16.0",
  "git-hash 0.5.0",
  "git-object 0.10.0",
@@ -1143,7 +1143,7 @@ dependencies = [
  "bytesize",
  "dashmap",
  "filebuffer",
- "git-diff 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-diff 0.4.0",
  "git-features 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-hash 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-object 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1220,7 +1220,7 @@ version = "0.6.0"
 dependencies = [
  "anyhow",
  "git-actor 0.2.0",
- "git-diff 0.4.0",
+ "git-diff 0.4.1",
  "git-features 0.16.0",
  "git-hash 0.5.0",
  "git-object 0.10.0",
