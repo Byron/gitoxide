@@ -94,7 +94,7 @@ fn release_depth_first(dry_run: bool, meta: &Metadata, crate_name: &str, bump_sp
             .find(|p| &p.name == crate_name)
             .expect("crate still there");
 
-        if needs_release(package, &mut state)? {
+        if needs_release(package, &state)? {
             let (new_version, commit_id) = perform_release(meta, package, dry_run, bump_spec, &state)?;
             ref_edits.push(RefEdit {
                 change: Change::Update {
@@ -222,19 +222,20 @@ fn update_package_dependency(
     let manifest = std::fs::read_to_string(&package_to_update.manifest_path)?;
     let mut doc = toml_edit::Document::from_str(&manifest)?;
     for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {
-        doc.as_table_mut()
+        if let Some(version) = doc
+            .as_table_mut()
             .get_mut(dep_type)
             .and_then(|deps| deps.as_table_mut())
             .and_then(|deps| deps.get_mut(name_to_find))
-            .map(|version| {
-                log::info!(
-                    "Updated {} dependency in {} crate to version {}",
-                    name_to_find,
-                    package_to_update.name,
-                    new_version
-                );
-                *version = toml_edit::value(new_version)
-            });
+        {
+            log::info!(
+                "Updated {} dependency in {} crate to version {}",
+                name_to_find,
+                package_to_update.name,
+                new_version
+            );
+            *version = toml_edit::value(new_version)
+        }
     }
     out.write_all(doc.to_string_in_original_order().as_bytes())?;
 
