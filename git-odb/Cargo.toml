@@ -39,5 +39,5 @@ thiserror = "1.0.26"
 
 [dev-dependencies]
 git-testtools = { version = "^0.4", path = "../tests/tools"}
-git-actor = { version = "^0.2.0", path = "../git-actor" }
+git-actor = { version = "^0.3.0", path = "../git-actor" }
 pretty_assertions = "0.7.1"
