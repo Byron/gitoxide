@@ -1,11 +1,10 @@
+#![allow(unused)]
 use anyhow::{anyhow, bail};
-use cargo_metadata::camino::Utf8Path;
 use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package, PackageId};
-use git_repository::hash::ObjectId;
-use git_repository::object::immutable;
-use git_repository::odb::data;
 use git_repository::{
+    hash::ObjectId,
     object,
+    object::immutable,
     odb::{pack, Find, FindExt},
     Repository,
 };
@@ -98,10 +97,10 @@ fn needs_release(package: &Package, state: &State) -> anyhow::Result<bool> {
 fn resolve_tree_id_from_id(mut id: ObjectId, repo: &Repository, buf: &mut Vec<u8>) -> anyhow::Result<ObjectId> {
     let mut cursor = repo.odb.find_existing(id, buf, &mut pack::cache::Never)?;
     loop {
-        match cursor.decode()? {
-            immutable::Object::Tree(tree) => return Ok(id),
-            immutable::Object::Commit(commit) => {
-                id = commit.tree();
+        match cursor.kind {
+            object::Kind::Tree => return Ok(id),
+            object::Kind::Commit => {
+                id = cursor.into_commit_iter().expect("commit").tree_id().expect("id");
                 cursor = repo.odb.find_existing(id, buf, &mut pack::cache::Never)?;
                 continue;
             }
