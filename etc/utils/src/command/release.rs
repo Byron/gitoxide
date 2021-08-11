@@ -73,11 +73,11 @@ fn release_depth_first(
     }
 
     if needs_release(package, state)? {
-        log::info!("{} needs a release", crate_name);
+        log::info!("{} will be released", crate_name);
         run_cargo_release(package, dry_run, bump_spec)?;
     } else {
         log::info!(
-            "Skipped release of {} v{} as it didn't change",
+            "{} v{}  - skipped release as it didn't change",
             package.name,
             package.version
         );

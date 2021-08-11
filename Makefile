@@ -6,11 +6,8 @@ always:
 
 ##@ Publishing
 
-target/debug/utils:
-	cargo build --package utils
-
-publish-all: target/debug/utils ## Publish all crates in the currently set version if they are not published yet.
-	etc/release.sh $< --no-confirm --skip-push --sign-tag
+try-publish-all: target/debug/utils ## Dry-run publish all crates in the currently set version if they are not published yet.
+	cargo run --bin utils  --package utils -- release minor gitoxide
 
 ##@ Release Builds
 
