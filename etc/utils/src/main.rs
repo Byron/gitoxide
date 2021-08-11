@@ -9,10 +9,10 @@ fn main() -> anyhow::Result<()> {
 
     match args.subcommand {
         SubCommands::Release(Release {
-            dry_run,
+            execute,
             version_bump_spec,
             crates,
-        }) => command::release(dry_run, version_bump_spec, crates)?,
+        }) => command::release(!execute, version_bump_spec, crates)?,
     }
     Ok(())
 }

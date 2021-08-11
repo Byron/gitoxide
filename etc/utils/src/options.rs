@@ -18,9 +18,9 @@ pub enum SubCommands {
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "release")]
 pub struct Release {
-    /// don't actually perform a release.
+    /// actually perform a release. Dry-run mode is the default
     #[argh(switch, short = 'n')]
-    pub dry_run: bool,
+    pub execute: bool,
 
     /// a specification of the kind of version bump you seek for the crate and potentially it's dependencies.
     ///

@@ -36,6 +36,9 @@ impl State {
 }
 
 pub fn release(dry_run: bool, version_bump_spec: String, crates: Vec<String>) -> anyhow::Result<()> {
+    if crates.is_empty() {
+        bail!("Please provide at least one crate name which also is a workspace member");
+    }
     let meta = cargo_metadata::MetadataCommand::new().exec()?;
     let mut state = State::new(std::env::current_dir()?)?;
     for crate_name in crates {
