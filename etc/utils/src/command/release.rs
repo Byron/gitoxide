@@ -97,8 +97,8 @@ fn needs_release(package: &Package, state: &State) -> anyhow::Result<bool> {
         .strip_prefix(&state.root)
         .expect("workspace members are releative to the root directory");
 
-    let target = peel_ref_fully(&mut state.repo.refs.find_existing("HEAD", None)?, &state)?;
-    let released_target = peel_ref_fully(&mut tag_ref, &state)?;
+    let target = peel_ref_fully(&mut state.repo.refs.find_existing("HEAD", None)?, state)?;
+    let released_target = peel_ref_fully(&mut tag_ref, state)?;
 
     let mut buf = Vec::new();
     log::info!("{}", repo_relative_crate_dir);
@@ -132,7 +132,7 @@ fn find_directory_id_in_tree(
             Utf8Component::Normal(c) => {
                 let mut tree_iter = repo
                     .odb
-                    .find_existing(tree_id.take().unwrap_or_else(|| id), buf, &mut pack::cache::Never)?
+                    .find_existing(tree_id.take().unwrap_or(id), buf, &mut pack::cache::Never)?
                     .into_tree_iter()
                     .expect("tree");
                 tree_id = tree_iter
@@ -144,8 +144,7 @@ fn find_directory_id_in_tree(
                             None
                         }
                     })
-                    .map(ToOwned::to_owned)
-                    .into();
+                    .map(ToOwned::to_owned);
                 if tree_id.is_none() {
                     break;
                 }
@@ -157,7 +156,7 @@ fn find_directory_id_in_tree(
         }
     }
 
-    Ok(tree_id.ok_or_else(|| anyhow!("path '{}' didn't exist in tree {}", path, id))?)
+    tree_id.ok_or_else(|| anyhow!("path '{}' didn't exist in tree {}", path, id))
 }
 
 fn peel_ref_fully(reference: &mut file::Reference<'_>, state: &State) -> anyhow::Result<ObjectId> {
