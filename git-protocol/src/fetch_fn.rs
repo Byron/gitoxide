@@ -11,6 +11,33 @@ use git_transport::{
 use maybe_async::maybe_async;
 use std::io;
 
+/// A way to indicate how to treat the connection underlying the transport, potentially allowing to reuse it.
+pub enum FetchConnection {
+    /// Use this variant if server should be informed that the operation is completed and no further commands will be issued
+    /// at the end of the fetch operation or after deciding that no fetch operation should happen after references were listed.
+    ///
+    /// When indicating the end-of-fetch, this flag is only relevant in protocol V2.
+    /// Generally it only applies when using persistent transports.
+    ///
+    /// In most explicit client side failures modes the end-of-operation' notification will be sent to the server automatically.
+    TerminateOnSuccessfulCompletion,
+
+    /// Indicate that persistent transport connections can be reused by not sending an 'end-of-operation' notification to the server.
+    /// This is useful if multiple `fetch(…)` calls are used in succession.
+    ///
+    /// Note that this has no effect in case of non-persistent connections, like the ones over HTTP.
+    ///
+    /// As an optimization, callers can use `AllowReuse` here as the server will also know the client is done
+    /// if the connection is closed.
+    AllowReuse,
+}
+
+impl Default for FetchConnection {
+    fn default() -> Self {
+        FetchConnection::TerminateOnSuccessfulCompletion
+    }
+}
+
 /// Perform a 'fetch' operation with the server using `transport`, with `delegate` handling all server interactions.
 /// **Note** that `delegate` has blocking operations and thus this entire call should be on an executor which can handle
 /// that. This could be the current thread blocking, or another thread.
@@ -26,6 +53,7 @@ pub async fn fetch<F, D, T>(
     mut delegate: D,
     mut authenticate: F,
     mut progress: impl Progress,
+    fetch_mode: FetchConnection,
 ) -> Result<(), Error>
 where
     F: FnMut(credentials::Action<'_>) -> credentials::Result,
@@ -152,7 +180,7 @@ where
     match delegate.prepare_fetch(protocol_version, &capabilities, &mut fetch_features, &parsed_refs) {
         Ok(Action::Cancel) => {
             return if matches!(protocol_version, git_transport::Protocol::V1)
-                || delegate.indicate_client_done_when_fetch_completes()
+                || matches!(fetch_mode, FetchConnection::TerminateOnSuccessfulCompletion)
             {
                 indicate_end_of_interaction(transport).await
             } else {
@@ -198,7 +226,9 @@ where
             }
         }
     }
-    if matches!(protocol_version, git_transport::Protocol::V2) && delegate.indicate_client_done_when_fetch_completes() {
+    if matches!(protocol_version, git_transport::Protocol::V2)
+        && matches!(fetch_mode, FetchConnection::TerminateOnSuccessfulCompletion)
+    {
         indicate_end_of_interaction(transport).await?;
     }
     Ok(())

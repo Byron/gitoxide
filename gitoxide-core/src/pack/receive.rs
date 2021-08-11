@@ -121,7 +121,13 @@ mod blocking_io {
             refs_directory,
             ref_filter: None,
         };
-        protocol::fetch(transport, delegate, protocol::credentials::helper, progress)?;
+        protocol::fetch(
+            transport,
+            delegate,
+            protocol::credentials::helper,
+            progress,
+            protocol::FetchConnection::TerminateOnSuccessfulCompletion,
+        )?;
         Ok(())
     }
 }
@@ -185,6 +191,7 @@ mod async_io {
                 delegate,
                 protocol::credentials::helper,
                 progress,
+                protocol::FetchConnection::TerminateOnSuccessfulCompletion,
             ))
         })
         .await?;

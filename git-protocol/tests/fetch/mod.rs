@@ -128,10 +128,6 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
     ) -> io::Result<Action> {
         unreachable!("this must not be called after closing the connection in `prepare_fetch(…)`")
     }
-
-    fn indicate_client_done_when_fetch_completes(&self) -> bool {
-        false
-    }
 }
 
 #[cfg(feature = "blocking-client")]

@@ -1,7 +1,7 @@
 use crate::fetch::{oid, transport, CloneDelegate, LsRemoteDelegate};
 use bstr::ByteSlice;
 use git_features::progress;
-use git_protocol::fetch;
+use git_protocol::{fetch, FetchConnection};
 use git_transport::Protocol;
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
@@ -18,6 +18,7 @@ async fn clone() -> crate::Result {
         &mut dlg,
         git_protocol::credentials::helper,
         progress::Discard,
+        FetchConnection::TerminateOnSuccessfulCompletion,
     )
     .await?;
     assert_eq!(dlg.pack_bytes, 876, "It be able to read pack bytes");
@@ -39,6 +40,7 @@ async fn ls_remote() -> crate::Result {
         &mut delegate,
         git_protocol::credentials::helper,
         progress::Discard,
+        FetchConnection::AllowReuse,
     )
     .await?;
 
@@ -79,6 +81,7 @@ async fn ls_remote_handshake_failure_due_to_downgrade() -> crate::Result {
         delegate,
         git_protocol::credentials::helper,
         progress::Discard,
+        FetchConnection::AllowReuse,
     )
     .await
     {

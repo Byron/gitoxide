@@ -112,20 +112,6 @@ pub trait DelegateBlocking {
         arguments: &mut Arguments,
         previous_response: Option<&Response>,
     ) -> io::Result<Action>;
-
-    /// Return true if the server should be informed that the operation is completed and no further commands will be issued
-    /// at the end of the fetch operation or after deciding that no fetch operation should happen after references were listed.
-    ///
-    /// When indicating the end-of-fetch, this flag is only relevant in protocol V2.
-    /// Generally it only applies when using stateful protocols.
-    ///
-    /// As an optimization, delegates can return false here as the server will also know the cilent is done if the connection is
-    /// closed.
-    ///
-    /// In most explicit failures modes the 'end-of-operation' notification will be sent to the server automatically.
-    fn indicate_client_done_when_fetch_completes(&self) -> bool {
-        true
-    }
 }
 
 impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
@@ -160,9 +146,6 @@ impl<T: DelegateBlocking> DelegateBlocking for Box<T> {
     ) -> io::Result<Action> {
         self.deref_mut().negotiate(refs, arguments, previous_response)
     }
-    fn indicate_client_done_when_fetch_completes(&self) -> bool {
-        self.deref().indicate_client_done_when_fetch_completes()
-    }
 }
 
 impl<T: DelegateBlocking> DelegateBlocking for &mut T {
@@ -196,10 +179,6 @@ impl<T: DelegateBlocking> DelegateBlocking for &mut T {
         previous_response: Option<&Response>,
     ) -> io::Result<Action> {
         self.deref_mut().negotiate(refs, arguments, previous_response)
-    }
-
-    fn indicate_client_done_when_fetch_completes(&self) -> bool {
-        self.deref().indicate_client_done_when_fetch_completes()
     }
 }
 

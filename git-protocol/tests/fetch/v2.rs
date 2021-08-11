@@ -1,7 +1,7 @@
 use crate::fetch::{oid, transport, CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
 use bstr::ByteSlice;
 use git_features::progress;
-use git_protocol::fetch;
+use git_protocol::{fetch, FetchConnection};
 use git_transport::Protocol;
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
@@ -22,6 +22,7 @@ async fn clone_abort_prep() -> crate::Result {
         &mut dlg,
         git_protocol::credentials::helper,
         progress::Discard,
+        FetchConnection::TerminateOnSuccessfulCompletion,
     )
     .await
     .expect_err("fetch aborted");
@@ -65,6 +66,7 @@ async fn ls_remote() -> crate::Result {
         &mut delegate,
         git_protocol::credentials::helper,
         progress::Discard,
+        FetchConnection::AllowReuse,
     )
     .await?;
 
@@ -117,6 +119,7 @@ async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
         &mut delegate,
         git_protocol::credentials::helper,
         progress::Discard,
+        FetchConnection::AllowReuse,
     )
     .await
     .expect_err("ls-refs preparation is aborted");
@@ -155,6 +158,7 @@ async fn ref_in_want() -> crate::Result {
         &mut delegate,
         git_protocol::credentials::helper,
         progress::Discard,
+        FetchConnection::TerminateOnSuccessfulCompletion,
     )
     .await?;
 
