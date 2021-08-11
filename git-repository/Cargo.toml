@@ -45,7 +45,7 @@ git-pack = { version = "^0.3", path = "../git-pack" }
 git-url = { version = "0.3.0", path = "../git-url", optional = true }
 git-traverse = { version = "^0.4", path = "../git-traverse", optional = true }
 git-protocol = { version = "^0.8.0", path = "../git-protocol", optional = true }
-git-diff = { version = "^0.4", path = "../git-diff", optional = true }
+git-diff = { version = "^0.5", path = "../git-diff", optional = true }
 git-features = { version = "^0.16.0", path = "../git-features", features = ["progress"] }
 
 signal-hook = { version = "0.3.9", default-features = false }
