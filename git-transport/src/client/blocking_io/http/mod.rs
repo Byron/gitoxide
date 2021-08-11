@@ -157,7 +157,7 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
         &self.supported_versions
     }
 
-    fn is_stateful(&self) -> bool {
+    fn connection_persists_across_multiple_requests(&self) -> bool {
         false
     }
 }

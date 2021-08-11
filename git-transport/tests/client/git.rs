@@ -28,7 +28,10 @@ async fn handshake_v1_and_request() -> crate::Result {
         Some(("example.org", None)),
         git::ConnectMode::Daemon,
     );
-    assert!(c.is_stateful(), "tcp connections are stateful");
+    assert!(
+        c.connection_persists_across_multiple_requests(),
+        "tcp connections are stateful"
+    );
     let c = c.custom_url(Some("anything".into()));
     assert_eq!(c.to_url(), "anything");
     let mut c = c.custom_url(None);
@@ -217,7 +220,7 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
         git::ConnectMode::Daemon,
     );
     assert!(
-        c.is_stateful(),
+        c.connection_persists_across_multiple_requests(),
         "tcp connections are stateful despite the protocol version"
     );
     let res = c.handshake(Service::UploadPack, &[]).await?;

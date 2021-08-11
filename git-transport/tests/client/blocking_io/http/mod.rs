@@ -107,7 +107,10 @@ fn handshake_v1() -> crate::Result {
         "path/not/important/due/to/mock",
         Protocol::V1,
     )?;
-    assert!(!c.is_stateful(), "http connections are never stateful");
+    assert!(
+        !c.connection_persists_across_multiple_requests(),
+        "http connections are never stateful"
+    );
     let SetServiceResponse {
         actual_protocol,
         capabilities,
@@ -306,7 +309,10 @@ fn handshake_and_lsrefs_and_fetch_v2() -> crate::Result {
         "path/not/important/due/to/mock",
         Protocol::V2,
     )?;
-    assert!(!c.is_stateful(), "http connections are never stateful");
+    assert!(
+        !c.connection_persists_across_multiple_requests(),
+        "http connections are never stateful"
+    );
     let SetServiceResponse {
         actual_protocol,
         capabilities,

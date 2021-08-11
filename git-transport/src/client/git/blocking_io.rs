@@ -52,7 +52,7 @@ where
         }
     }
 
-    fn is_stateful(&self) -> bool {
+    fn connection_persists_across_multiple_requests(&self) -> bool {
         true
     }
 }
