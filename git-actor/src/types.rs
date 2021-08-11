@@ -1,5 +1,20 @@
-use crate::{Sign, Time, SPACE};
+use crate::{Sign, Signature, Time, SPACE};
 use std::io;
+
+impl Signature {
+    /// An empty signature, similar to 'null'.
+    pub fn empty() -> Self {
+        Signature {
+            name: Default::default(),
+            email: Default::default(),
+            time: Time {
+                time: 0,
+                offset: 0,
+                sign: Sign::Plus,
+            },
+        }
+    }
+}
 
 impl Time {
     /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags.

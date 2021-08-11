@@ -16,6 +16,15 @@ impl TryFrom<&str> for FullName {
     }
 }
 
+impl TryFrom<String> for FullName {
+    type Error = git_validate::refname::Error;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        git_validate::refname(value.as_bytes().as_bstr())?;
+        Ok(FullName(value.into()))
+    }
+}
+
 impl TryFrom<&BStr> for FullName {
     type Error = git_validate::refname::Error;
 

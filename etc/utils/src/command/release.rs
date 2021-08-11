@@ -5,13 +5,21 @@ use cargo_metadata::{
 };
 use dia_semver::Semver;
 use git_repository::{
+    actor,
     hash::ObjectId,
     object,
     odb::{pack, Find, FindExt},
-    refs::{file, packed},
+    refs::{
+        file,
+        file::loose::reference::peel,
+        mutable::Target,
+        packed,
+        transaction::{Change, Create, RefEdit},
+    },
     Repository,
 };
-use std::{collections::BTreeSet, convert::TryInto, path::PathBuf, str::FromStr};
+use std::process::Stdio;
+use std::{collections::BTreeSet, convert::TryInto, path::PathBuf, process::Command, str::FromStr};
 
 struct State {
     root: Utf8PathBuf,
@@ -78,6 +86,7 @@ fn release_depth_first(dry_run: bool, meta: &Metadata, crate_name: &str, bump_sp
         index += 1;
     }
 
+    let mut ref_edits = Vec::new();
     for crate_name in names_to_publish.iter().rev() {
         let package = meta
             .packages
@@ -86,7 +95,16 @@ fn release_depth_first(dry_run: bool, meta: &Metadata, crate_name: &str, bump_sp
             .expect("crate still there");
 
         if needs_release(package, &mut state)? {
-            perform_release(meta, package, dry_run, bump_spec)?;
+            let (new_version, commit_id) = perform_release(meta, package, dry_run, bump_spec, &state)?;
+            ref_edits.push(RefEdit {
+                change: Change::Update {
+                    log: Default::default(),
+                    mode: Create::Only,
+                    new: Target::Peeled(commit_id),
+                },
+                name: format!("{}-{}", package.name, new_version).try_into()?,
+                deref: false,
+            });
         } else {
             log::info!(
                 "{} v{}  - skipped release as it didn't change",
@@ -95,15 +113,36 @@ fn release_depth_first(dry_run: bool, meta: &Metadata, crate_name: &str, bump_sp
             );
         }
     }
+    if dry_run {
+        for tag in ref_edits {
+            log::info!("Won't create tag {}", tag.name.as_bstr());
+        }
+    } else {
+        for tag in state
+            .repo
+            .refs
+            .transaction()
+            .prepare(ref_edits, git_lock::acquire::Fail::Immediately)?
+            .commit(&actor::Signature::empty())?
+        {
+            log::info!("created tag {}", tag.name.as_bstr());
+        }
+    }
 
     Ok(())
 }
 
-fn perform_release(meta: &Metadata, package: &Package, dry_run: bool, bump_spec: &str) -> anyhow::Result<()> {
+fn perform_release(
+    meta: &Metadata,
+    package: &Package,
+    dry_run: bool,
+    bump_spec: &str,
+    state: &State,
+) -> anyhow::Result<(Semver, ObjectId)> {
     let new_version = bump_version(&package.version.to_string(), bump_spec)?;
     log::info!("{} v{} will be released", package.name, new_version);
-    edit_manifest_and_fixup_dependent_crates(meta, package, &new_version, dry_run)?;
-    Ok(())
+    let commit_id = edit_manifest_and_fixup_dependent_crates(meta, package, &new_version, dry_run, state)?;
+    Ok((new_version, commit_id))
 }
 
 fn edit_manifest_and_fixup_dependent_crates(
@@ -111,7 +150,8 @@ fn edit_manifest_and_fixup_dependent_crates(
     package: &Package,
     new_version: &Semver,
     dry_run: bool,
-) -> anyhow::Result<()> {
+    state: &State,
+) -> anyhow::Result<ObjectId> {
     log::trace!("Preparing {} for version update", package.manifest_path);
     let mut package_manifest_lock =
         git_lock::File::acquire_to_update_resource(&package.manifest_path, git_lock::acquire::Fail::Immediately, None)?;
@@ -140,15 +180,37 @@ fn edit_manifest_and_fixup_dependent_crates(
     }
 
     if dry_run {
-        log::info!("Won't write changed manifests in dry-run mode")
+        log::info!("Won't write changed manifests in dry-run mode");
+        Ok(ObjectId::null_sha1())
     } else {
-        log::info!("Committing chnages to manifests");
+        log::info!("Committing changes to manifests");
+        package_manifest_lock.commit()?;
         for (_, lock) in packages_to_fix {
             lock.commit()?;
         }
+        commit_changes(format!("Release {}-{}", package.name, new_version), state)
     }
-    // Run cargo manifest to assure everything is in order
-    Ok(())
+}
+
+fn commit_changes(message: impl AsRef<str>, state: &State) -> anyhow::Result<ObjectId> {
+    // TODO: replace with gitoxide one day
+    if !Command::new("git")
+        .arg("commit")
+        .arg("-am")
+        .arg(message.as_ref())
+        .stderr(Stdio::inherit())
+        .output()?
+        .status
+        .success()
+    {
+        bail!("Failed to commit changed manifests");
+    }
+    Ok(state
+        .repo
+        .refs
+        .loose_find_existing("HEAD")?
+        .peel_to_id_in_place(&state.repo.refs, state.packed_refs.as_ref(), peel::none)?
+        .to_owned())
 }
 
 fn update_package_dependency(

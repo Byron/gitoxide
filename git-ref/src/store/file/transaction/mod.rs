@@ -9,10 +9,11 @@ use git_hash::ObjectId;
 /// A function receiving an object id to resolve, returning its decompressed bytes.
 ///
 /// Resolution means to follow tag objects until the end of the chain.
-pub type FindObjectFn = dyn FnMut(
-    git_hash::ObjectId,
-    &mut Vec<u8>,
-) -> Result<Option<git_object::Kind>, Box<dyn std::error::Error + 'static>>;
+pub type FindObjectFn =
+    dyn FnMut(
+        git_hash::ObjectId,
+        &mut Vec<u8>,
+    ) -> Result<Option<git_object::Kind>, Box<dyn std::error::Error + Send + Sync + 'static>>;
 
 /// How to handle packed refs during a transaction
 pub enum PackedRefs {

@@ -253,7 +253,7 @@ pub mod prepare {
                 display("Could not close a lock which won't ever be committed")
                 source(err)
             }
-            Resolve(err: Box<dyn std::error::Error + 'static>) {
+            Resolve(err: Box<dyn std::error::Error + Send + Sync + 'static>) {
                 display("The lookup of an object failed while peeling it")
                 from()
                 source(&**err)
