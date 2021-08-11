@@ -101,7 +101,6 @@ fn needs_release(package: &Package, state: &State) -> anyhow::Result<bool> {
     let released_target = peel_ref_fully(&mut tag_ref, state)?;
 
     let mut buf = Vec::new();
-    log::info!("{}", repo_relative_crate_dir);
 
     let current_dir_id = find_directory_id_in_tree(
         repo_relative_crate_dir,
@@ -109,14 +108,14 @@ fn needs_release(package: &Package, state: &State) -> anyhow::Result<bool> {
         &state.repo,
         &mut buf,
     )?;
-    let released_tree_id = find_directory_id_in_tree(
+    let released_dir_id = find_directory_id_in_tree(
         repo_relative_crate_dir,
         resolve_tree_id_from_ref_target(released_target, &state.repo, &mut buf)?,
         &state.repo,
         &mut buf,
     )?;
 
-    Ok(true)
+    Ok(released_dir_id != current_dir_id)
 }
 
 fn find_directory_id_in_tree(
