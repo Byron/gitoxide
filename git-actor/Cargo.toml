@@ -27,4 +27,4 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 
 [dev-dependencies]
 pretty_assertions = "0.7.1"
-git-testtools = { version = "^0.3", path = "../tests/tools"}
+git-testtools = { version = "^0.4", path = "../tests/tools"}
