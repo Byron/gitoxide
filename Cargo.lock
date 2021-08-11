@@ -2544,7 +2544,9 @@ name = "utils"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "argh",
  "cargo_toml",
+ "env_logger",
 ]
 
 [[package]]
