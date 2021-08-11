@@ -74,7 +74,19 @@ fn release_depth_first(
 
     if needs_release(package, state)? {
         log::info!("{} will be released", crate_name);
-        run_cargo_release(package, dry_run, bump_spec)?;
+        let max_attempts = 2;
+        for attempt in 1..=max_attempts {
+            let res = run_cargo_release(package, dry_run, bump_spec);
+            match res {
+                Ok(()) => break,
+                Err(err) => {
+                    if attempt == max_attempts {
+                        log::error!("{}: Giving up after {} release attemps", package.name, attempt);
+                        return Err(err);
+                    }
+                }
+            }
+        }
     } else {
         log::info!(
             "{} v{}  - skipped release as it didn't change",
