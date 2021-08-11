@@ -1,7 +1,7 @@
 use anyhow::{anyhow, bail};
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path, Utf8PathBuf},
-    Metadata, Package,
+    DependencyKind, Metadata, Package,
 };
 use dia_semver::Semver;
 use git_repository::{
@@ -68,7 +68,7 @@ fn release_depth_first(
         .iter()
         .find(|p| p.name == crate_name)
         .ok_or_else(|| anyhow!("workspace member must be a listed package: '{}'", crate_name))?;
-    for dependency in &package.dependencies {
+    for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
         if state.seen.contains(&dependency.name) || !is_workspace_member(meta, &dependency.name) {
             continue;
         }
