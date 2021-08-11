@@ -41,12 +41,11 @@ pub fn release(dry_run: bool, version_bump_spec: String, crates: Vec<String>) ->
         bail!("Please provide at least one crate name which also is a workspace member");
     }
     let meta = cargo_metadata::MetadataCommand::new().exec()?;
-    let mut state = State::new(std::env::current_dir()?)?;
     for crate_name in crates {
         if !is_workspace_member(&meta, &crate_name) {
             bail!("Package to release must be a workspace member: '{}'", crate_name);
         }
-        release_depth_first(dry_run, &meta, &crate_name, &version_bump_spec, &mut state)?;
+        release_depth_first(dry_run, &meta, &crate_name, &version_bump_spec)?;
     }
     Ok(())
 }
@@ -58,35 +57,45 @@ fn is_workspace_member(meta: &Metadata, crate_name: &str) -> bool {
         .map_or(false, |p| meta.workspace_members.iter().any(|m| m == &p.id))
 }
 
-fn release_depth_first(
-    dry_run: bool,
-    meta: &Metadata,
-    crate_name: &str,
-    bump_spec: &str,
-    state: &mut State,
-) -> anyhow::Result<()> {
-    let package = meta
-        .packages
-        .iter()
-        .find(|p| p.name == crate_name)
-        .ok_or_else(|| anyhow!("workspace member must be a listed package: '{}'", crate_name))?;
-    for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
-        if state.seen.contains(&dependency.name) || !is_workspace_member(meta, &dependency.name) {
-            continue;
+fn release_depth_first(dry_run: bool, meta: &Metadata, crate_name: &str, bump_spec: &str) -> anyhow::Result<()> {
+    let mut state = State::new(std::env::current_dir()?)?;
+    let mut names_to_publish = vec![crate_name.to_owned()];
+
+    let mut index = 0;
+    while let Some(crate_name) = names_to_publish.get(index) {
+        let package = meta
+            .packages
+            .iter()
+            .find(|p| &p.name == crate_name)
+            .ok_or_else(|| anyhow!("workspace member must be a listed package: '{}'", crate_name))?;
+        for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
+            if state.seen.contains(&dependency.name) || !is_workspace_member(meta, &dependency.name) {
+                continue;
+            }
+            state.seen.insert(dependency.name.clone());
+            names_to_publish.push(dependency.name.clone());
         }
-        state.seen.insert(dependency.name.clone());
-        release_depth_first(dry_run, meta, &dependency.name, bump_spec, state)?;
+        index += 1;
     }
 
-    if needs_release(package, state)? {
-        perform_release(meta, package, dry_run, bump_spec)?;
-    } else {
-        log::info!(
-            "{} v{}  - skipped release as it didn't change",
-            package.name,
-            package.version
-        );
+    for crate_name in names_to_publish.iter().rev() {
+        let package = meta
+            .packages
+            .iter()
+            .find(|p| &p.name == crate_name)
+            .expect("crate still there");
+
+        if needs_release(package, &mut state)? {
+            perform_release(meta, package, dry_run, bump_spec)?;
+        } else {
+            log::info!(
+                "{} v{}  - skipped release as it didn't change",
+                package.name,
+                package.version
+            );
+        }
     }
+
     Ok(())
 }
 
