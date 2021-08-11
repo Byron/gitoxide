@@ -61,13 +61,11 @@ where
             had_error: false,
             kind,
             objects_left: num_objects,
-            hash: if mode != input::Mode::AsIs {
+            hash: (mode != input::Mode::AsIs).then(|| {
                 let mut hash = Sha1::default();
                 hash.update(&header_data);
-                Some(hash)
-            } else {
-                None
-            },
+                hash
+            }),
             mode,
             compressed_buf: None,
         })

@@ -137,11 +137,7 @@ fn find_directory_id_in_tree(
                 tree_id = tree_iter
                     .find_map(|e| {
                         let e = e.expect("tree parseable");
-                        if e.filename == c {
-                            Some(e.oid)
-                        } else {
-                            None
-                        }
+                        (e.filename == c).then(|| e.oid)
                     })
                     .map(ToOwned::to_owned);
                 if tree_id.is_none() {

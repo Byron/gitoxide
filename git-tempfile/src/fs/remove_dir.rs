@@ -52,13 +52,7 @@ impl<'a> Iterator for Iter<'a> {
                     },
                 };
                 self.cursor = match dir.parent() {
-                    Some(parent) => {
-                        if parent == self.boundary {
-                            None
-                        } else {
-                            Some(parent)
-                        }
-                    },
+                    Some(parent) => (parent != self.boundary).then(||parent),
                     None => unreachable!("directory {:?} ran out of parents, this really shouldn't happen before hitting the boundary {:?}"),
                 };
                 next

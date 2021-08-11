@@ -45,11 +45,7 @@ impl Store {
             }
             git_hash::ObjectId::null_sha1()
         });
-        if is_valid_path {
-            Some(e)
-        } else {
-            None
-        }
+        is_valid_path.then(|| e)
     }
 
     /// Return an iterator over all objects contained in the database.

@@ -411,11 +411,7 @@ mod util {
                     break;
                 }
             }
-            if res.is_empty() {
-                None
-            } else {
-                Some(res)
-            }
+            (!res.is_empty()).then(|| res)
         }
     }
 }
