@@ -111,7 +111,7 @@ fn resolve_tree_id_from_id(mut id: ObjectId, repo: &Repository, buf: &mut Vec<u8
 
 fn to_name(p: &PackageId) -> &str {
     p.repr
-        .splitn(2, " ")
+        .splitn(2, ' ')
         .next()
         .expect("crate-name <additional data we don't need>")
 }
