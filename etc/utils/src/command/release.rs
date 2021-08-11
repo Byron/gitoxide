@@ -1,9 +1,11 @@
+#![allow(unused)]
 use anyhow::{anyhow, bail};
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path, Utf8PathBuf},
     DependencyKind, Metadata, Package,
 };
 use dia_semver::Semver;
+use git_lock::File;
 use git_repository::{
     hash::ObjectId,
     object,
@@ -88,10 +90,46 @@ fn release_depth_first(
     Ok(())
 }
 
-fn perform_release(_meta: &Metadata, package: &Package, _dry_run: bool, bump_spec: &str) -> anyhow::Result<()> {
+fn perform_release(meta: &Metadata, package: &Package, dry_run: bool, bump_spec: &str) -> anyhow::Result<()> {
     let new_version = bump_version(&package.version.to_string(), bump_spec)?;
     log::info!("{} v{} will be released", package.name, new_version);
+    edit_manifest_and_fixup_dependent_crates(meta, package, &new_version, dry_run)?;
     Ok(())
+}
+
+fn edit_manifest_and_fixup_dependent_crates(
+    meta: &Metadata,
+    package: &Package,
+    new_version: &Semver,
+    dry_run: bool,
+) -> anyhow::Result<()> {
+    let mut package_manifest_lock =
+        git_lock::File::acquire_to_update_resource(&package.manifest_path, git_lock::acquire::Fail::Immediately, None)?;
+    let packages_to_fix = meta
+        .workspace_members
+        .iter()
+        .filter(|id| *id != &package.id)
+        .map(|id| {
+            meta.packages
+                .iter()
+                .find(|p| &p.id == id)
+                .expect("workspace members are in packages")
+        })
+        .map(|p| {
+            git_lock::File::acquire_to_update_resource(&p.manifest_path, git_lock::acquire::Fail::Immediately, None)
+                .map(|l| (p, l))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let new_version = new_version.to_string();
+    set_manifest_version(&package.manifest_path, &new_version, &mut package_manifest_lock)?;
+    /// Run cargo manifest to assure everything is in order
+    Ok(())
+}
+
+fn set_manifest_version(manifest: &Utf8PathBuf, new_version: &str, lock: &mut git_lock::File) -> anyhow::Result<()> {
+    // toml_edit::Document::from_str()
+    todo!()
 }
 
 fn bump_version(version: &str, bump_spec: &str) -> anyhow::Result<Semver> {
