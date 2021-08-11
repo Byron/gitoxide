@@ -1,11 +1,9 @@
-#![allow(unused)]
 use anyhow::{anyhow, bail};
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path, Utf8PathBuf},
     DependencyKind, Metadata, Package,
 };
 use dia_semver::Semver;
-use git_lock::File;
 use git_repository::{
     hash::ObjectId,
     object,
@@ -13,7 +11,7 @@ use git_repository::{
     refs::{file, packed},
     Repository,
 };
-use std::{collections::BTreeSet, convert::TryInto, path::PathBuf};
+use std::{collections::BTreeSet, convert::TryInto, path::PathBuf, str::FromStr};
 
 struct State {
     root: Utf8PathBuf,
@@ -36,6 +34,8 @@ impl State {
     }
 }
 
+/// In order to try dealing with https://github.com/sunng87/cargo-release/issues/224 and also to make workspace
+/// releases more selective.
 pub fn release(dry_run: bool, version_bump_spec: String, crates: Vec<String>) -> anyhow::Result<()> {
     if crates.is_empty() {
         bail!("Please provide at least one crate name which also is a workspace member");
@@ -103,9 +103,10 @@ fn edit_manifest_and_fixup_dependent_crates(
     new_version: &Semver,
     dry_run: bool,
 ) -> anyhow::Result<()> {
+    log::trace!("Preparing {} for version update", package.manifest_path);
     let mut package_manifest_lock =
         git_lock::File::acquire_to_update_resource(&package.manifest_path, git_lock::acquire::Fail::Immediately, None)?;
-    let packages_to_fix = meta
+    let mut packages_to_fix = meta
         .workspace_members
         .iter()
         .filter(|id| *id != &package.id)
@@ -115,21 +116,67 @@ fn edit_manifest_and_fixup_dependent_crates(
                 .find(|p| &p.id == id)
                 .expect("workspace members are in packages")
         })
+        .filter(|p| p.dependencies.iter().any(|dep| dep.name == package.name))
         .map(|p| {
+            log::trace!("Preparing {} for dependency version update", p.manifest_path);
             git_lock::File::acquire_to_update_resource(&p.manifest_path, git_lock::acquire::Fail::Immediately, None)
                 .map(|l| (p, l))
         })
         .collect::<Result<Vec<_>, _>>()?;
 
     let new_version = new_version.to_string();
-    set_manifest_version(&package.manifest_path, &new_version, &mut package_manifest_lock)?;
-    /// Run cargo manifest to assure everything is in order
+    set_manifest_version(package, &new_version, &mut package_manifest_lock)?;
+    for (package_to_update, out) in packages_to_fix.iter_mut() {
+        update_package_dependency(package_to_update, &package.name, &new_version, out)?;
+    }
+
+    if dry_run {
+        log::info!("Won't write changed manifests in dry-run mode")
+    } else {
+        log::info!("Committing chnages to manifests");
+        for (_, lock) in packages_to_fix {
+            lock.commit()?;
+        }
+    }
+    // Run cargo manifest to assure everything is in order
     Ok(())
 }
 
-fn set_manifest_version(manifest: &Utf8PathBuf, new_version: &str, out: impl std::io::Write) -> anyhow::Result<()> {
-    // toml_edit::Document::from_str()
-    todo!()
+fn update_package_dependency(
+    package_to_update: &Package,
+    name_to_find: &str,
+    new_version: &str,
+    mut out: impl std::io::Write,
+) -> anyhow::Result<()> {
+    let manifest = std::fs::read_to_string(&package_to_update.manifest_path)?;
+    let mut doc = toml_edit::Document::from_str(&manifest)?;
+    for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {
+        doc.as_table_mut()
+            .get_mut(dep_type)
+            .and_then(|deps| deps.as_table_mut())
+            .and_then(|deps| deps.get_mut(name_to_find))
+            .map(|version| {
+                log::info!(
+                    "Updated {} dependency in {} crate to version {}",
+                    name_to_find,
+                    package_to_update.name,
+                    new_version
+                );
+                *version = toml_edit::value(new_version)
+            });
+    }
+    out.write_all(doc.to_string_in_original_order().as_bytes())?;
+
+    Ok(())
+}
+
+fn set_manifest_version(package: &Package, new_version: &str, mut out: impl std::io::Write) -> anyhow::Result<()> {
+    let manifest = std::fs::read_to_string(&package.manifest_path)?;
+    let mut doc = toml_edit::Document::from_str(&manifest)?;
+    doc["package"]["version"] = toml_edit::value(new_version);
+    log::info!("Updated {} to version {}", package.name, new_version);
+    out.write_all(doc.to_string_in_original_order().as_bytes())?;
+    Ok(())
 }
 
 fn bump_version(version: &str, bump_spec: &str) -> anyhow::Result<Semver> {
