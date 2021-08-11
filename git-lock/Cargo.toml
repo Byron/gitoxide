@@ -1,6 +1,6 @@
 [package]
 name = "git-lock"
-version = "0.3.0"
+version = "0.3.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A git-style lock-file implementation"
