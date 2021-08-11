@@ -2561,6 +2561,7 @@ dependencies = [
  "argh",
  "cargo_metadata",
  "env_logger",
+ "git-repository",
  "log",
 ]
 
