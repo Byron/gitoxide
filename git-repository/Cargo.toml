@@ -40,7 +40,7 @@ git-odb = { version = "^0.17", path = "../git-odb" }
 git-hash = { version = "^0.5.0", path = "../git-hash" }
 git-object = { version = "^0.11", path = "../git-object" }
 git-actor = { version = "^0.3", path = "../git-actor" }
-git-pack = { version = "^0.5", path = "../git-pack" }
+git-pack = { version = "^0.6", path = "../git-pack" }
 
 git-url = { version = "0.3.0", path = "../git-url", optional = true }
 git-traverse = { version = "^0.5", path = "../git-traverse", optional = true }
