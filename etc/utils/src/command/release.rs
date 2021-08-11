@@ -89,6 +89,7 @@ fn run_cargo_release(package: &Package, dry_run: bool, bump_spec: &str) -> anyho
     let mut cmd = Command::new("cargo");
     cmd.current_dir(&package.manifest_path.parent().expect("every manifest has a parent"))
         .arg("release")
+        .arg("--no-confirm")
         .arg(bump_spec)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
