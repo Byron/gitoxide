@@ -1219,7 +1219,7 @@ dependencies = [
 
 [[package]]
 name = "git-validate"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "bstr",
  "git-testtools",
