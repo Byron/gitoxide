@@ -127,7 +127,7 @@ fn edit_manifest_and_fixup_dependent_crates(
     Ok(())
 }
 
-fn set_manifest_version(manifest: &Utf8PathBuf, new_version: &str, lock: &mut git_lock::File) -> anyhow::Result<()> {
+fn set_manifest_version(manifest: &Utf8PathBuf, new_version: &str, out: impl std::io::Write) -> anyhow::Result<()> {
     // toml_edit::Document::from_str()
     todo!()
 }

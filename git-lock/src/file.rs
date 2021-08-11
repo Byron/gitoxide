@@ -36,6 +36,33 @@ impl File {
     }
 }
 
+mod io_impls {
+    use super::File;
+    use std::{io, io::SeekFrom};
+
+    impl io::Write for File {
+        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+            self.inner.with_mut(|f| f.write(buf))?
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            self.inner.with_mut(|f| f.flush())?
+        }
+    }
+
+    impl io::Seek for File {
+        fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
+            self.inner.with_mut(|f| f.seek(pos))?
+        }
+    }
+
+    impl io::Read for File {
+        fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+            self.inner.with_mut(|f| f.read(buf))?
+        }
+    }
+}
+
 impl Marker {
     /// Return the path at which the lock file resides
     pub fn lock_path(&self) -> &Path {
