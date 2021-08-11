@@ -750,6 +750,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "dia-semver"
+version = "9.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e54d0c7ae86943f5e2d4cb3b7a2f54e60d17a3b85b63ef8bfdfadba8edee726"
+
+[[package]]
 name = "diff"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2620,7 +2626,9 @@ dependencies = [
  "anyhow",
  "argh",
  "cargo_metadata",
+ "dia-semver",
  "env_logger",
+ "git-lock",
  "git-repository",
  "log",
  "toml_edit",

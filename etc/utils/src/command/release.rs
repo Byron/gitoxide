@@ -3,6 +3,7 @@ use cargo_metadata::{
     camino::{Utf8Component, Utf8Path, Utf8PathBuf},
     Metadata, Package,
 };
+use dia_semver::Semver;
 use git_repository::{
     hash::ObjectId,
     object,
@@ -10,12 +11,7 @@ use git_repository::{
     refs::{file, packed},
     Repository,
 };
-use std::{
-    collections::BTreeSet,
-    convert::TryInto,
-    path::PathBuf,
-    process::{Command, Stdio},
-};
+use std::{collections::BTreeSet, convert::TryInto, path::PathBuf};
 
 struct State {
     root: Utf8PathBuf,
@@ -81,8 +77,7 @@ fn release_depth_first(
     }
 
     if needs_release(package, state)? {
-        log::info!("{} will be released", crate_name);
-        perform_release(package, dry_run, bump_spec)?;
+        perform_release(meta, package, dry_run, bump_spec)?;
     } else {
         log::info!(
             "{} v{}  - skipped release as it didn't change",
@@ -93,21 +88,21 @@ fn release_depth_first(
     Ok(())
 }
 
-fn perform_release(package: &Package, dry_run: bool, bump_spec: &str) -> anyhow::Result<()> {
-    let mut cmd = Command::new("cargo");
-    cmd.current_dir(&package.manifest_path.parent().expect("every manifest has a parent"))
-        .arg("release")
-        .arg("--no-confirm")
-        .arg(bump_spec)
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit());
-    if dry_run {
-        cmd.arg("--dry-run");
-    }
-    if !cmd.output()?.status.success() {
-        bail!("cargo-release failed");
-    }
+fn perform_release(_meta: &Metadata, package: &Package, _dry_run: bool, bump_spec: &str) -> anyhow::Result<()> {
+    let new_version = bump_version(&package.version.to_string(), bump_spec)?;
+    log::info!("{} v{} will be released", package.name, new_version);
     Ok(())
+}
+
+fn bump_version(version: &str, bump_spec: &str) -> anyhow::Result<Semver> {
+    let v = Semver::parse(version).map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err.to_string()))?;
+    Ok(match bump_spec {
+        "major" => v.new_major(),
+        "minor" => v.new_minor(),
+        "patch" => v.new_patch(),
+        _ => bail!("Invalid version specification: '{}'", bump_spec),
+    }
+    .expect("no overflow"))
 }
 
 fn needs_release(package: &Package, state: &State) -> anyhow::Result<bool> {
