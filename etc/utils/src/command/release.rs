@@ -1,19 +1,17 @@
-#![allow(unused)]
 use anyhow::{anyhow, bail};
 use cargo_metadata::camino::Utf8Path;
 use cargo_metadata::{
     camino::{Utf8Component, Utf8PathBuf},
     Metadata, Package, PackageId,
 };
-use git_repository::object::mutable::Object;
-use git_repository::refs::file;
-use git_repository::refs::packed;
 use git_repository::{
     hash::ObjectId,
     object,
     odb::{pack, Find, FindExt},
+    refs::{file, packed},
     Repository,
 };
+use std::process::{Command, Stdio};
 use std::{collections::BTreeSet, convert::TryInto, path::PathBuf};
 
 struct State {
@@ -73,6 +71,29 @@ fn release_depth_first(
 
     if needs_release(package, state)? {
         log::info!("{} needs a release", crate_name);
+        run_cargo_release(package, dry_run, bump_spec)?;
+    } else {
+        log::info!(
+            "Skipped release of {} v{} as it didn't change",
+            package.name,
+            package.version
+        );
+    }
+    Ok(())
+}
+
+fn run_cargo_release(package: &Package, dry_run: bool, bump_spec: &str) -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.current_dir(&package.manifest_path.parent().expect("every manifest has a parent"))
+        .arg("release")
+        .arg(bump_spec)
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit());
+    if dry_run {
+        cmd.arg("--dry-run");
+    }
+    if !cmd.output()?.status.success() {
+        bail!("cargo-release failed");
     }
     Ok(())
 }
