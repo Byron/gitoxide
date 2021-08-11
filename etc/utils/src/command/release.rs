@@ -1,8 +1,7 @@
 use anyhow::{anyhow, bail};
-use cargo_metadata::camino::Utf8Path;
 use cargo_metadata::{
-    camino::{Utf8Component, Utf8PathBuf},
-    Metadata, Package, PackageId,
+    camino::{Utf8Component, Utf8Path, Utf8PathBuf},
+    Metadata, Package,
 };
 use git_repository::{
     hash::ObjectId,
@@ -11,8 +10,12 @@ use git_repository::{
     refs::{file, packed},
     Repository,
 };
-use std::process::{Command, Stdio};
-use std::{collections::BTreeSet, convert::TryInto, path::PathBuf};
+use std::{
+    collections::BTreeSet,
+    convert::TryInto,
+    path::PathBuf,
+    process::{Command, Stdio},
+};
 
 struct State {
     root: Utf8PathBuf,
@@ -42,12 +45,19 @@ pub fn release(dry_run: bool, version_bump_spec: String, crates: Vec<String>) ->
     let meta = cargo_metadata::MetadataCommand::new().exec()?;
     let mut state = State::new(std::env::current_dir()?)?;
     for crate_name in crates {
-        if !meta.workspace_members.iter().any(|p| to_name(p) == crate_name) {
+        if !is_workspace_member(&meta, &crate_name) {
             bail!("Package to release must be a workspace member: '{}'", crate_name);
         }
         release_depth_first(dry_run, &meta, &crate_name, &version_bump_spec, &mut state)?;
     }
     Ok(())
+}
+
+fn is_workspace_member(meta: &Metadata, crate_name: &str) -> bool {
+    meta.packages
+        .iter()
+        .find(|p| p.name == crate_name)
+        .map_or(false, |p| meta.workspace_members.iter().any(|m| m == &p.id))
 }
 
 fn release_depth_first(
@@ -63,9 +73,7 @@ fn release_depth_first(
         .find(|p| p.name == crate_name)
         .ok_or_else(|| anyhow!("workspace member must be a listed package: '{}'", crate_name))?;
     for dependency in &package.dependencies {
-        if state.seen.contains(&dependency.name)
-            || !meta.workspace_members.iter().any(|p| to_name(p) == dependency.name)
-        {
+        if state.seen.contains(&dependency.name) || !is_workspace_member(meta, &dependency.name) {
             continue;
         }
         state.seen.insert(dependency.name.clone());
@@ -74,7 +82,7 @@ fn release_depth_first(
 
     if needs_release(package, state)? {
         log::info!("{} will be released", crate_name);
-        run_cargo_release(package, dry_run, bump_spec)?;
+        perform_release(package, dry_run, bump_spec)?;
     } else {
         log::info!(
             "{} v{}  - skipped release as it didn't change",
@@ -85,7 +93,7 @@ fn release_depth_first(
     Ok(())
 }
 
-fn run_cargo_release(package: &Package, dry_run: bool, bump_spec: &str) -> anyhow::Result<()> {
+fn perform_release(package: &Package, dry_run: bool, bump_spec: &str) -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
     cmd.current_dir(&package.manifest_path.parent().expect("every manifest has a parent"))
         .arg("release")
@@ -210,11 +218,4 @@ fn resolve_tree_id_from_ref_target(mut id: ObjectId, repo: &Repository, buf: &mu
             }
         }
     }
-}
-
-fn to_name(p: &PackageId) -> &str {
-    p.repr
-        .splitn(2, ' ')
-        .next()
-        .expect("crate-name <additional data we don't need>")
 }

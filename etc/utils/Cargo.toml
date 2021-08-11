@@ -13,3 +13,4 @@ argh = { version = "0.1.5", default-features = false }
 env_logger = { version = "0.9.0", default-features = false, features = ["humantime", "termcolor", "atty"] }
 cargo_metadata = "0.14.0"
 log = "0.4.14"
+toml_edit = "0.2.1"
