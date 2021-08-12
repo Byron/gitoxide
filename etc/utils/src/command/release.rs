@@ -86,7 +86,6 @@ fn release_depth_first(dry_run: bool, meta: &Metadata, crate_name: &str, bump_sp
         index += 1;
     }
 
-    let mut ref_edits = Vec::new();
     for crate_name in names_to_publish.iter().rev() {
         let package = meta
             .packages
@@ -96,36 +95,37 @@ fn release_depth_first(dry_run: bool, meta: &Metadata, crate_name: &str, bump_sp
 
         if needs_release(package, &state)? {
             let (new_version, commit_id) = perform_release(meta, package, dry_run, bump_spec, &state)?;
-            ref_edits.push(RefEdit {
-                change: Change::Update {
-                    log: Default::default(),
-                    mode: Create::Only,
-                    new: Target::Peeled(commit_id),
-                },
-                name: format!("{}-{}", package.name, new_version).try_into()?,
-                deref: false,
-            });
+            let tag_name = format!("{}-{}", package.name, new_version);
+            if dry_run {
+                log::info!("Won't create tag {}", tag_name);
+            } else {
+                for tag in state
+                    .repo
+                    .refs
+                    .transaction()
+                    .prepare(
+                        Some(RefEdit {
+                            change: Change::Update {
+                                log: Default::default(),
+                                mode: Create::Only,
+                                new: Target::Peeled(commit_id),
+                            },
+                            name: format!("refs/tags/{}", tag_name).try_into()?,
+                            deref: false,
+                        }),
+                        git_lock::acquire::Fail::Immediately,
+                    )?
+                    .commit(&actor::Signature::empty())?
+                {
+                    log::info!("created tag {}", tag.name.as_bstr());
+                }
+            }
         } else {
             log::info!(
                 "{} v{}  - skipped release as it didn't change",
                 package.name,
                 package.version
             );
-        }
-    }
-    if dry_run {
-        for tag in ref_edits {
-            log::info!("Won't create tag {}", tag.name.as_bstr());
-        }
-    } else {
-        for tag in state
-            .repo
-            .refs
-            .transaction()
-            .prepare(ref_edits, git_lock::acquire::Fail::Immediately)?
-            .commit(&actor::Signature::empty())?
-        {
-            log::info!("created tag {}", tag.name.as_bstr());
         }
     }
 
