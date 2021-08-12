@@ -359,6 +359,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "cargo-smart-release"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "argh",
+ "bstr",
+ "cargo_metadata",
+ "dia-semver",
+ "env_logger",
+ "git-lock",
+ "git-repository",
+ "log",
+ "toml_edit",
+]
+
+[[package]]
 name = "cargo_metadata"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2617,22 +2633,6 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
-]
-
-[[package]]
-name = "utils"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "argh",
- "bstr",
- "cargo_metadata",
- "dia-semver",
- "env_logger",
- "git-lock",
- "git-repository",
- "log",
- "toml_edit",
 ]
 
 [[package]]

@@ -123,6 +123,7 @@ members = [
     "experiments/traversal",
     "experiments/hash-owned-borrowed",
 
+    "cargo-smart-release",
+
     "tests/tools",
-    "etc/utils"
 ]

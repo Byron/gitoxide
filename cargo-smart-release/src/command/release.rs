@@ -515,7 +515,7 @@ fn assure_clean_working_tree() -> anyhow::Result<()> {
         .status()?
         .success();
     if tracked_changed {
-        bail!("Detected working tree changes. Please commit beforehand as otherwise these would be committed as part of manifest changes.")
+        bail!("Detected working tree changes. Please commit beforehand as otherwise these would be committed as part of manifest changes, or use --allow-dirty to force it.")
     }
 
     let has_untracked = !Command::new("git")

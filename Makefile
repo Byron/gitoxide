@@ -7,7 +7,7 @@ always:
 ##@ Publishing
 
 try-publish-all: target/debug/utils ## Dry-run publish all crates in the currently set version if they are not published yet.
-	cargo run --bin utils  --package utils -- release minor gitoxide
+	cargo run --package cargo-smart-release -- release minor gitoxide
 
 ##@ Release Builds
 
