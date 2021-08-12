@@ -274,25 +274,30 @@ fn hops_for_dependency_to_link_back_to_publishee<'a>(
 
 fn perform_release(
     meta: &Metadata,
-    package: &Package,
+    publishee: &Package,
     options: Options,
     bump_spec: &str,
     state: &State,
 ) -> anyhow::Result<(Semver, ObjectId)> {
-    let new_version = bump_version(&package.version.to_string(), bump_spec)?;
-    log::info!("{} release {} v{}", will(options.dry_run), package.name, new_version);
-    let commit_id = edit_manifest_and_fixup_dependent_crates(meta, package, &new_version, options, state)?;
-    publish_crate(package, options)?;
+    let new_version = bump_version(&publishee.version.to_string(), bump_spec)?;
+    log::info!("{} release {} v{}", will(options.dry_run), publishee.name, new_version);
+    let commit_id = edit_manifest_and_fixup_dependent_crates(meta, publishee, &new_version, options, state)?;
+    publish_crate(publishee, &[], options)?;
     Ok((new_version, commit_id))
 }
 
 fn publish_crate(
-    package: &Package,
+    publishee: &Package,
+    other_publishee_names: &[String],
     Options {
         dry_run, allow_dirty, ..
     }: Options,
 ) -> anyhow::Result<()> {
     let max_attempts = 3;
+    let must_not_validate = publishee
+        .dependencies
+        .iter()
+        .any(|dep| other_publishee_names.contains(&dep.name));
     for attempt in 1..=max_attempts {
         let mut c = Command::new("cargo");
         c.arg("publish");
@@ -300,7 +305,10 @@ fn publish_crate(
         if allow_dirty {
             c.arg("--allow-dirty");
         }
-        c.arg("--manifest-path").arg(&package.manifest_path);
+        if must_not_validate {
+            c.arg("--no-validate");
+        }
+        c.arg("--manifest-path").arg(&publishee.manifest_path);
         log::info!("{} run {:?}", will(dry_run), c);
         if dry_run || c.status()?.success() {
             break;
