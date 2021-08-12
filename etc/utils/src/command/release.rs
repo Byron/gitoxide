@@ -113,6 +113,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
     }
     changed_crate_names_to_publish = reorder_according_to_resolution_order(&meta, &changed_crate_names_to_publish);
 
+    let mut crates_to_publish_additionally_to_avoid_instability = Vec::new();
     for publishee_name in changed_crate_names_to_publish.iter() {
         let publishee = package_by_name(&meta, publishee_name).expect("exists");
         let cycles = workspace_members_referring_to_publishee(&meta, publishee);
@@ -130,8 +131,17 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
                         format!("via {} hops", hops)
                     }
                 );
+                if !changed_crate_names_to_publish.contains(&from.name) {
+                    crates_to_publish_additionally_to_avoid_instability.push(from.name.clone());
+                }
             }
         }
+    }
+    if !crates_to_publish_additionally_to_avoid_instability.is_empty() && !options.ignore_instability {
+        bail!(
+            "Refusing to publish unless --ignore-instability is provided or crate(s) {} are included in the publish",
+            crates_to_publish_additionally_to_avoid_instability.join(", ")
+        )
     }
 
     for publishee_name in changed_crate_names_to_publish.iter() {
@@ -259,7 +269,12 @@ fn perform_release(
     Ok((new_version, commit_id))
 }
 
-fn publish_crate(package: &Package, Options { dry_run, allow_dirty }: Options) -> anyhow::Result<()> {
+fn publish_crate(
+    package: &Package,
+    Options {
+        dry_run, allow_dirty, ..
+    }: Options,
+) -> anyhow::Result<()> {
     let max_attempts = 3;
     for attempt in 1..=max_attempts {
         let mut c = Command::new("cargo");
@@ -289,7 +304,9 @@ fn edit_manifest_and_fixup_dependent_crates(
     meta: &Metadata,
     publishee: &Package,
     new_version: &Semver,
-    Options { dry_run, allow_dirty }: Options,
+    Options {
+        dry_run, allow_dirty, ..
+    }: Options,
     state: &State,
 ) -> anyhow::Result<ObjectId> {
     if !allow_dirty {

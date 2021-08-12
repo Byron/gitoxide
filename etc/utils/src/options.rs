@@ -26,6 +26,14 @@ pub struct Release {
     #[argh(switch)]
     pub allow_dirty: bool,
 
+    /// if set it will be allowed to publish crates with cycles to other workspace crates which are not published.
+    ///
+    /// Doing so causes repeated publishes to never stabilize, as one set of dependencies destabilizes another set.
+    /// A possible fix is to bump version numbers of all crates in the set at once and publishing those who would
+    /// depend on an unpublished version with "--no-validate".
+    #[argh(switch)]
+    pub ignore_instability: bool,
+
     /// a specification of the kind of version bump you seek for the crate and potentially it's dependencies.
     ///
     /// Can be 'major', 'minor' or 'patch'

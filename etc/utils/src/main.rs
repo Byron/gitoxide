@@ -13,10 +13,12 @@ fn main() -> anyhow::Result<()> {
             version_bump_spec,
             crates,
             allow_dirty,
+            ignore_instability,
         }) => command::release(
             command::release::Options {
                 dry_run: !execute,
                 allow_dirty,
+                ignore_instability,
             },
             version_bump_spec,
             crates,
