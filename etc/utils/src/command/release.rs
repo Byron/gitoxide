@@ -78,6 +78,13 @@ fn workspace_package_by_name<'a>(meta: &'a Metadata, crate_name: &str) -> Option
         .filter(|p| meta.workspace_members.iter().any(|m| m == &p.id))
 }
 
+fn workspace_package_by_id<'a>(meta: &'a Metadata, id: &PackageId) -> Option<&'a Package> {
+    meta.packages
+        .iter()
+        .find(|p| &p.id == id)
+        .filter(|p| meta.workspace_members.iter().any(|m| m == &p.id))
+}
+
 fn package_by_name<'a>(meta: &'a Metadata, name: &str) -> anyhow::Result<&'a Package> {
     meta.packages
         .iter()
@@ -273,8 +280,8 @@ fn workspace_members_referring_to_publishee<'a>(meta: &'a Metadata, publishee: &
                 && meta
                     .workspace_members
                     .iter()
-                    .map(|id| id_to_package(meta, id))
-                    .any(|potential_cycle| potential_cycle.name == dep.name)
+                    .map(|id| package_by_id(meta, id))
+                    .any(|potential_cycle| package_eq_dependency(potential_cycle, dep))
         })
         .filter_map(|dep| {
             hops_for_dependency_to_link_back_to_publishee(meta, dep, publishee).map(|hops| Cycle {
@@ -285,31 +292,46 @@ fn workspace_members_referring_to_publishee<'a>(meta: &'a Metadata, publishee: &
         .collect()
 }
 
+fn package_eq_dependency(package: &Package, dependency: &Dependency) -> bool {
+    package.name == dependency.name
+}
+
 fn hops_for_dependency_to_link_back_to_publishee<'a>(
     meta: &'a Metadata,
     source: &Dependency,
     destination: &Package,
 ) -> Option<usize> {
-    let source = meta
-        .packages
-        .iter()
-        .find(|p| p.name == source.name)
-        .expect("source is always a member");
-
-    let mut package_names = vec![(0, &source.name)];
+    let source = package_for_dependency(meta, source);
+    let mut package_ids = vec![(0, &source.id)];
     let mut seen = BTreeSet::new();
-    while let Some((level, name)) = package_names.pop() {
-        if !seen.insert(name) {
+    while let Some((level, id)) = package_ids.pop() {
+        if !seen.insert(id) {
             continue;
         }
-        if let Some(package) = workspace_package_by_name(meta, name) {
-            if package.dependencies.iter().any(|dep| dep.name == destination.name) {
+        if let Some(package) = workspace_package_by_id(meta, id) {
+            if package
+                .dependencies
+                .iter()
+                .any(|dep| package_eq_dependency(destination, dep))
+            {
                 return Some(level + 1);
             }
-            package_names.extend(package.dependencies.iter().map(|dep| (level + 1, &dep.name)));
+            package_ids.extend(
+                package
+                    .dependencies
+                    .iter()
+                    .map(|dep| (level + 1, &package_for_dependency(meta, dep).id)),
+            );
         };
     }
     None
+}
+
+fn package_for_dependency<'a>(meta: &'a Metadata, dep: &Dependency) -> &'a Package {
+    meta.packages
+        .iter()
+        .find(|p| package_eq_dependency(p, dep))
+        .expect("dependency always available as package")
 }
 
 fn perform_single_release(
@@ -398,11 +420,13 @@ fn edit_manifest_and_fixup_dependent_crates(
     for package_to_fix in meta
         .workspace_members
         .iter()
-        .map(|id| id_to_package(meta, id))
+        .map(|id| package_by_id(meta, id))
         .filter(|p| {
-            p.dependencies
-                .iter()
-                .any(|dep| publishees.iter().any(|(publishee, _)| dep.name == publishee.name))
+            p.dependencies.iter().any(|dep| {
+                publishees
+                    .iter()
+                    .any(|(publishee, _)| package_eq_dependency(publishee, dep))
+            })
         })
     {
         if locks_by_manifest_path.contains_key(&package_to_fix.manifest_path) {
@@ -453,7 +477,7 @@ fn names_and_versions(publishees: &[(&Package, String)]) -> String {
         .join(", ")
 }
 
-fn id_to_package<'a>(meta: &'a Metadata, id: &PackageId) -> &'a Package {
+fn package_by_id<'a>(meta: &'a Metadata, id: &PackageId) -> &'a Package {
     meta.packages
         .iter()
         .find(|p| &p.id == id)
