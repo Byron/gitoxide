@@ -376,6 +376,7 @@ fn publish_crate(
         skip_publish,
         dry_run,
         allow_dirty,
+        no_verify,
         ..
     }: Options,
 ) -> anyhow::Result<()> {
@@ -391,7 +392,7 @@ fn publish_crate(
         if allow_dirty {
             c.arg("--allow-dirty");
         }
-        if must_not_verify {
+        if no_verify || must_not_verify {
             c.arg("--no-verify");
         }
         c.arg("--manifest-path").arg(&publishee.manifest_path);

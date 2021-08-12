@@ -5,6 +5,8 @@ pub mod release {
         pub allow_dirty: bool,
         pub ignore_instability: bool,
         pub skip_publish: bool,
+        /// Pass --no-verify unconditionally to cargo publish. Really just for fixing things
+        pub no_verify: bool,
     }
 }
 

@@ -15,12 +15,14 @@ fn main() -> anyhow::Result<()> {
             allow_dirty,
             ignore_instability,
             skip_publish,
+            dangerously_pass_no_verify,
         }) => command::release(
             command::release::Options {
                 dry_run: !execute,
                 allow_dirty,
                 ignore_instability,
                 skip_publish,
+                no_verify: dangerously_pass_no_verify,
             },
             version_bump_spec,
             crates,
