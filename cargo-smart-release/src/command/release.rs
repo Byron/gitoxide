@@ -174,7 +174,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
         let publishee = package_by_name(&meta, publishee_name).expect("exists");
 
         let (new_version, commit_id) = perform_single_release(&meta, publishee, options, bump_spec, &state)?;
-        create_version_tag(publishee, &new_version, commit_id, &state.repo, options.dry_run)?;
+        create_version_tag(publishee, &new_version, commit_id, &state.repo, options)?;
     }
 
     if !crates_to_publish_together.is_empty() {
@@ -207,7 +207,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
                 .map(|(p, _)| p.name.to_owned())
                 .collect();
             publish_crate(publishee, &unpublished_crates, options)?;
-            create_version_tag(publishee, &new_version, commit_id, &state.repo, options.dry_run)?;
+            create_version_tag(publishee, &new_version, commit_id, &state.repo, options)?;
         }
     }
 
@@ -219,8 +219,11 @@ fn create_version_tag(
     new_version: &str,
     commit_id: ObjectId,
     repo: &Repository,
-    dry_run: bool,
+    Options { dry_run, skip_tag, .. }: Options,
 ) -> anyhow::Result<()> {
+    if skip_tag {
+        return Ok(());
+    }
     let tag_name = tag_name_for(&publishee.name, new_version);
     if dry_run {
         log::info!("WOULD create tag {}", tag_name);
@@ -380,6 +383,9 @@ fn publish_crate(
         ..
     }: Options,
 ) -> anyhow::Result<()> {
+    if skip_publish {
+        return Ok(());
+    }
     let max_attempts = 3;
     let must_not_verify = publishee
         .dependencies
@@ -397,7 +403,7 @@ fn publish_crate(
         }
         c.arg("--manifest-path").arg(&publishee.manifest_path);
         log::info!("{} run {:?}", will(dry_run), c);
-        if skip_publish || dry_run || c.status()?.success() {
+        if dry_run || c.status()?.success() {
             break;
         } else if attempt == max_attempts {
             bail!("Could not successfully execute 'cargo publish' even ")

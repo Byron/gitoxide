@@ -14,6 +14,7 @@ fn main() -> anyhow::Result<()> {
         allow_dirty,
         ignore_instability,
         skip_publish,
+        skip_tag,
         dangerously_pass_no_verify,
     } = args;
 
@@ -23,6 +24,7 @@ fn main() -> anyhow::Result<()> {
             allow_dirty,
             ignore_instability,
             skip_publish,
+            skip_tag,
             no_verify: dangerously_pass_no_verify,
         },
         bump.unwrap_or_else(|| "keep".into()),

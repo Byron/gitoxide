@@ -2,7 +2,9 @@ use argh::FromArgs;
 
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(name = "cargo smart-release")]
-/// Release workspace crates fearlessly
+/// Release workspace crates fearlessly.
+///
+/// Use --execute to actually perform the operation.
 pub struct Args {
     /// actually perform a release. Dry-run mode is the default
     #[argh(switch, short = 'n')]
@@ -15,6 +17,11 @@ pub struct Args {
     /// don't actually publish, but perform all other operations like manifest adjustments and tag creation.
     #[argh(switch)]
     pub skip_publish: bool,
+
+    /// don't create tags indicating the version numbers of all crates that are to be published after changing
+    /// their manifests.
+    #[argh(switch)]
+    pub skip_tag: bool,
 
     /// pass --no-verify to 'cargo publish' which should only be a last resort when fixing up packages that
     /// otherwise wouldn't publish, but need to be publish to resolve the situation.
