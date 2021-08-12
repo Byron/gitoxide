@@ -111,8 +111,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
         }
         state.seen.insert(crate_name);
     }
-    changed_crate_names_to_publish.reverse();
-    // dbg!(&changed_crate_names_to_publish);
+    changed_crate_names_to_publish = reorder_according_to_resolution_order(&meta, &changed_crate_names_to_publish);
 
     for publishee_name in changed_crate_names_to_publish.iter() {
         let publishee = package_by_name(&meta, publishee_name).expect("exists");
@@ -167,6 +166,30 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
     }
 
     Ok(())
+}
+
+fn reorder_according_to_resolution_order(meta: &Metadata, workspace_members: &[String]) -> Vec<String> {
+    let mut out = Vec::new();
+    for package_in_resolve_order in meta
+        .resolve
+        .as_ref()
+        .expect("resolve_data")
+        .nodes
+        .iter()
+        .filter_map(|node| {
+            meta.workspace_members.contains(&node.id).then(|| {
+                meta.packages
+                    .iter()
+                    .find(|p| p.id == node.id)
+                    .expect("node always present")
+            })
+        })
+    {
+        if workspace_members.contains(&package_in_resolve_order.name) {
+            out.push(package_in_resolve_order.name.clone())
+        }
+    }
+    out
 }
 
 struct Cycle<'a> {
