@@ -1,11 +1,27 @@
 use argh::FromArgs;
 
-#[derive(FromArgs, PartialEq, Debug)]
+#[derive(FromArgs)]
 #[argh(name = "cargo smart-release")]
 /// Release workspace crates fearlessly.
 ///
 /// Use --execute to actually perform the operation.
 pub struct Args {
+    #[argh(subcommand)]
+    pub subcommands: SubCommands,
+}
+
+#[derive(FromArgs)]
+#[argh(subcommand)]
+pub enum SubCommands {
+    SmartRelease(SmartRelease),
+}
+
+#[derive(FromArgs)]
+#[argh(subcommand, name = "smart-release")]
+/// Release workspace crates fearlessly.
+///
+/// Use --execute to actually perform the operation.
+pub struct SmartRelease {
     /// actually perform a release. Dry-run mode is the default
     #[argh(switch, short = 'n')]
     pub execute: bool,

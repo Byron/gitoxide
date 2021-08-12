@@ -50,7 +50,7 @@ Here is what `cargo smart-release` does differently: "It tries really hard to do
 
 * it's very young and probably tries to eat underwear
 * it's tested only by using it on `gitoxide`, there are no regression tests at all
-* it was hacked together in two days.
+* it was hacked together in two days, and there definitely are rough edges and assumptions
 
 ### Acknowledgements
 
