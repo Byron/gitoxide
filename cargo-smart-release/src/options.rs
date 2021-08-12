@@ -1,23 +1,9 @@
 use argh::FromArgs;
 
-#[derive(FromArgs)]
-#[argh(name = "utils")]
-/// Utilities for maintaining the gitoxide project
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(name = "cargo smart-release")]
+/// Release workspace crates fearlessly
 pub struct Args {
-    #[argh(subcommand)]
-    pub subcommand: SubCommands,
-}
-
-#[derive(FromArgs, PartialEq, Debug)]
-#[argh(subcommand)]
-pub enum SubCommands {
-    Release(Release),
-}
-
-/// Verify a pack
-#[derive(FromArgs, PartialEq, Debug)]
-#[argh(subcommand, name = "release")]
-pub struct Release {
     /// actually perform a release. Dry-run mode is the default
     #[argh(switch, short = 'n')]
     pub execute: bool,
