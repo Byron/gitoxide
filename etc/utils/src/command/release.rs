@@ -149,45 +149,58 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
 }
 
 fn check_cycles_to_workspace_members(meta: &Metadata, publishee: &Package) -> anyhow::Result<()> {
-    for workspace_member_referring_to_us in publishee.dependencies.iter().filter(|dep| {
-        dep.kind != DependencyKind::Normal
-            && meta
-                .workspace_members
-                .iter()
-                .map(|id| id_to_package(&meta, id))
-                .any(|potential_cycle| potential_cycle.name == dep.name)
-            && dependency_links_back_to_us(meta, dep, publishee)
-    }) {
+    for (hops, workspace_member_referring_to_us) in publishee
+        .dependencies
+        .iter()
+        .filter(|dep| {
+            dep.kind != DependencyKind::Normal
+                && meta
+                    .workspace_members
+                    .iter()
+                    .map(|id| id_to_package(&meta, id))
+                    .any(|potential_cycle| potential_cycle.name == dep.name)
+        })
+        .filter_map(|dep| hops_for_dependency_to_link_back_to_us(meta, dep, publishee).map(|hops| (hops, dep)))
+    {
         log::warn!(
-            "Workspace member '{}' links back to '{}' causing publishes to never settle.",
+            "Workspace member '{}' links back to '{}' {} causing publishes to never settle.",
             workspace_member_referring_to_us.name,
-            publishee.name
+            publishee.name,
+            if hops == 1 {
+                "directly".to_string()
+            } else {
+                format!("via {} hops", hops)
+            }
         );
     }
     Ok(())
 }
 
-fn dependency_links_back_to_us<'a>(meta: &'a Metadata, source: &Dependency, destination: &Package) -> bool {
+fn hops_for_dependency_to_link_back_to_us<'a>(
+    meta: &'a Metadata,
+    source: &Dependency,
+    destination: &Package,
+) -> Option<usize> {
     let source = meta
         .packages
         .iter()
         .find(|p| p.name == source.name)
         .expect("source is always a member");
 
-    let mut package_names = vec![&source.name];
+    let mut package_names = vec![(0, &source.name)];
     let mut seen = BTreeSet::new();
-    while let Some(name) = package_names.pop() {
+    while let Some((level, name)) = package_names.pop() {
         if !seen.insert(name) {
             continue;
         }
         if let Some(package) = workspace_package_by_name(meta, &name) {
             if package.dependencies.iter().any(|dep| dep.name == destination.name) {
-                return true;
+                return Some(level + 1);
             }
-            package_names.extend(package.dependencies.iter().map(|dep| &dep.name));
+            package_names.extend(package.dependencies.iter().map(|dep| (level + 1, &dep.name)));
         };
     }
-    false
+    None
 }
 
 fn perform_release(
