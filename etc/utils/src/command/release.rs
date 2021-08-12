@@ -203,12 +203,12 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
 
 fn create_version_tag(
     publishee: &Package,
-    new_version: &String,
+    new_version: &str,
     commit_id: ObjectId,
     repo: &Repository,
     dry_run: bool,
 ) -> anyhow::Result<()> {
-    let tag_name = tag_name_for(&publishee.name, &new_version);
+    let tag_name = tag_name_for(&publishee.name, new_version);
     if dry_run {
         log::info!("WOULD create tag {}", tag_name);
     } else {
