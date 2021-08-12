@@ -293,7 +293,8 @@ fn update_package_dependency(
             .as_table_mut()
             .get_mut(dep_type)
             .and_then(|deps| deps.as_table_mut())
-            .and_then(|deps| deps.get_mut(name_to_find))
+            .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_table_mut()))
+            .and_then(|table| table.get_mut("version"))
         {
             log::info!(
                 "Updated {} dependency in {} crate to version {}",
