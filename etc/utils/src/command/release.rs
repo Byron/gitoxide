@@ -281,7 +281,7 @@ fn perform_release(
 ) -> anyhow::Result<(Semver, ObjectId)> {
     let new_version = bump_version(&publishee.version.to_string(), bump_spec)?;
     log::info!("{} release {} v{}", will(options.dry_run), publishee.name, new_version);
-    let commit_id = edit_manifest_and_fixup_dependent_crates(meta, publishee, &new_version, options, state)?;
+    let commit_id = edit_manifest_and_fixup_dependent_crates(meta, &[(publishee, &new_version)], options, state)?;
     publish_crate(publishee, &[], options)?;
     Ok((new_version, commit_id))
 }
@@ -327,8 +327,7 @@ fn publish_crate(
 
 fn edit_manifest_and_fixup_dependent_crates(
     meta: &Metadata,
-    publishee: &Package,
-    new_version: &Semver,
+    publishees: &[(&Package, &Semver)],
     Options {
         dry_run, allow_dirty, ..
     }: Options,
@@ -337,40 +336,58 @@ fn edit_manifest_and_fixup_dependent_crates(
     if !allow_dirty {
         assure_clean_working_tree()?;
     }
-    let mut package_manifest_lock = git_lock::File::acquire_to_update_resource(
-        &publishee.manifest_path,
-        git_lock::acquire::Fail::Immediately,
-        None,
-    )?;
+    let mut publishees_with_manifest_locks = publishees
+        .iter()
+        .map(|(publishee, new_version)| {
+            git_lock::File::acquire_to_update_resource(
+                &publishee.manifest_path,
+                git_lock::acquire::Fail::Immediately,
+                None,
+            )
+            .map(|lock| (*publishee, *new_version, lock))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
     let mut packages_to_fix = meta
         .workspace_members
         .iter()
-        .filter(|id| *id != &publishee.id)
         .map(|id| id_to_package(meta, id))
-        .filter(|p| p.dependencies.iter().any(|dep| dep.name == publishee.name))
+        .filter(|p| {
+            p.dependencies
+                .iter()
+                .any(|dep| publishees.iter().any(|(publishee, _)| dep.name == publishee.name))
+        })
         .map(|p| {
             git_lock::File::acquire_to_update_resource(&p.manifest_path, git_lock::acquire::Fail::Immediately, None)
                 .map(|l| (p, l))
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    let new_version = new_version.to_string();
-    set_manifest_version(publishee, &new_version, &mut package_manifest_lock)?;
-    for (package_to_update, out) in packages_to_fix.iter_mut() {
-        update_package_dependency(package_to_update, &publishee.name, &new_version, out)?;
+    for (publishee, new_version, manifest_lock) in publishees_with_manifest_locks.iter_mut() {
+        set_manifest_version(publishee, &new_version.to_string(), manifest_lock)?;
     }
 
-    let message = format!("Release {} v{}", publishee.name, new_version);
+    for (package_to_update, out) in packages_to_fix.iter_mut() {
+        update_package_dependency(package_to_update, publishees, out)?;
+    }
+
+    let names_and_versions = publishees
+        .iter()
+        .map(|(p, nv)| format!("{} v{}", p.name, nv))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let message = format!("Release {}", names_and_versions);
     if dry_run {
         log::info!("WOULD commit changes to manifests with {:?}", message);
         Ok(ObjectId::null_sha1())
     } else {
         log::info!("Committing changes to manifests");
-        package_manifest_lock.commit()?;
+        for (_, _, publishee_manifest_lock) in publishees_with_manifest_locks {
+            publishee_manifest_lock.commit()?;
+        }
         for (_, lock) in packages_to_fix {
             lock.commit()?;
         }
-        refresh_cargo_lock(publishee)?;
+        refresh_cargo_lock()?;
         commit_changes(message, state)
     }
 }
@@ -382,10 +399,8 @@ fn id_to_package<'a>(meta: &'a Metadata, id: &PackageId) -> &'a Package {
         .expect("workspace members are in packages")
 }
 
-fn refresh_cargo_lock(package: &Package) -> anyhow::Result<()> {
-    cargo_metadata::MetadataCommand::new()
-        .manifest_path(&package.manifest_path)
-        .exec()?;
+fn refresh_cargo_lock() -> anyhow::Result<()> {
+    cargo_metadata::MetadataCommand::new().exec()?;
     Ok(())
 }
 
@@ -438,27 +453,30 @@ fn commit_changes(message: impl AsRef<str>, state: &State) -> anyhow::Result<Obj
 
 fn update_package_dependency(
     package_to_update: &Package,
-    name_to_find: &str,
-    new_version: &str,
+    publishees: &[(&Package, &Semver)],
     mut out: impl std::io::Write,
 ) -> anyhow::Result<()> {
     let manifest = std::fs::read_to_string(&package_to_update.manifest_path)?;
     let mut doc = toml_edit::Document::from_str(&manifest)?;
     for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {
-        if let Some(name_table) = doc
-            .as_table_mut()
-            .get_mut(dep_type)
-            .and_then(|deps| deps.as_table_mut())
-            .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_inline_table_mut()))
-        {
-            log::info!(
-                "Pending '{}' manifest {} update: '{} = \"{}\"'",
-                package_to_update.name,
-                dep_type,
-                name_to_find,
-                new_version,
-            );
-            *name_table.get_or_insert("version", new_version) = toml_edit::Value::from(new_version);
+        for (name_to_find, new_version) in publishees.iter().map(|(p, nv)| (&p.name, nv)) {
+            if let Some(name_table) = doc
+                .as_table_mut()
+                .get_mut(dep_type)
+                .and_then(|deps| deps.as_table_mut())
+                .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_inline_table_mut()))
+            {
+                log::info!(
+                    "Pending '{}' manifest {} update: '{} = \"{}\"'",
+                    package_to_update.name,
+                    dep_type,
+                    name_to_find,
+                    new_version,
+                );
+                let new_version = new_version.to_string();
+                *name_table.get_or_insert("version", new_version.as_str()) =
+                    toml_edit::Value::from(new_version.as_str());
+            }
         }
     }
     out.write_all(doc.to_string_in_original_order().as_bytes())?;
