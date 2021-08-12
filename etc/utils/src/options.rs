@@ -40,7 +40,7 @@ pub struct Release {
 
     /// a specification of the kind of version bump you seek for the crate and potentially it's dependencies.
     ///
-    /// Can be 'major', 'minor' or 'patch'
+    /// Can be 'major', 'minor' or 'patch', or 'keep' which doesn't alter the version.
     #[argh(positional)]
     pub version_bump_spec: String,
 

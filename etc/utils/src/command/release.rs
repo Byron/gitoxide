@@ -192,7 +192,13 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
             names_and_versions(&crates_to_publish_together)
         );
 
-        let commit_id = edit_manifest_and_fixup_dependent_crates(&meta, &crates_to_publish_together, options, &state)?;
+        let commit_id = edit_manifest_and_fixup_dependent_crates(
+            &meta,
+            &crates_to_publish_together,
+            bump_spec_may_cause_empty_commits(bump_spec),
+            options,
+            &state,
+        )?;
 
         crates_to_publish_together.reverse();
         while let Some((publishee, new_version)) = crates_to_publish_together.pop() {
@@ -334,6 +340,10 @@ fn package_for_dependency<'a>(meta: &'a Metadata, dep: &Dependency) -> &'a Packa
         .expect("dependency always available as package")
 }
 
+pub fn bump_spec_may_cause_empty_commits(bump_spec: &str) -> bool {
+    bump_spec == "keep"
+}
+
 fn perform_single_release(
     meta: &Metadata,
     publishee: &Package,
@@ -348,8 +358,13 @@ fn perform_single_release(
         publishee.name,
         new_version
     );
-    let commit_id =
-        edit_manifest_and_fixup_dependent_crates(meta, &[(publishee, new_version.clone())], options, state)?;
+    let commit_id = edit_manifest_and_fixup_dependent_crates(
+        meta,
+        &[(publishee, new_version.clone())],
+        bump_spec_may_cause_empty_commits(bump_spec),
+        options,
+        state,
+    )?;
     publish_crate(publishee, &[], options)?;
     Ok((new_version, commit_id))
 }
@@ -399,6 +414,7 @@ fn publish_crate(
 fn edit_manifest_and_fixup_dependent_crates(
     meta: &Metadata,
     publishees: &[(&Package, String)],
+    empty_commit_possible: bool,
     Options {
         dry_run, allow_dirty, ..
     }: Options,
@@ -465,7 +481,7 @@ fn edit_manifest_and_fixup_dependent_crates(
             manifest_lock.commit()?;
         }
         refresh_cargo_lock()?;
-        commit_changes(message, state)
+        commit_changes(message, empty_commit_possible, state)
     }
 }
 
@@ -517,15 +533,14 @@ fn assure_clean_working_tree() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn commit_changes(message: impl AsRef<str>, state: &State) -> anyhow::Result<ObjectId> {
+fn commit_changes(message: impl AsRef<str>, empty_commit_possible: bool, state: &State) -> anyhow::Result<ObjectId> {
     // TODO: replace with gitoxide one day
-    if !Command::new("git")
-        .arg("commit")
-        .arg("-am")
-        .arg(message.as_ref())
-        .status()?
-        .success()
-    {
+    let mut cmd = Command::new("git");
+    cmd.arg("commit").arg("-am").arg(message.as_ref());
+    if empty_commit_possible {
+        cmd.arg("--allow-empty");
+    }
+    if !cmd.status()?.success() {
         bail!("Failed to commit changed manifests");
     }
     Ok(state
@@ -585,6 +600,7 @@ fn bump_version(version: &str, bump_spec: &str) -> anyhow::Result<Semver> {
         "major" => v.new_major(),
         "minor" => v.new_minor(),
         "patch" => v.new_patch(),
+        "keep" => v.into(),
         _ => bail!("Invalid version specification: '{}'", bump_spec),
     }
     .expect("no overflow"))
