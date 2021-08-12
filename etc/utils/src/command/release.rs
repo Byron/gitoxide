@@ -336,7 +336,10 @@ fn publish_crate(
     publishee: &Package,
     other_publishee_names: &[String],
     Options {
-        dry_run, allow_dirty, ..
+        skip_publish,
+        dry_run,
+        allow_dirty,
+        ..
     }: Options,
 ) -> anyhow::Result<()> {
     let max_attempts = 3;
@@ -356,7 +359,7 @@ fn publish_crate(
         }
         c.arg("--manifest-path").arg(&publishee.manifest_path);
         log::info!("{} run {:?}", will(dry_run), c);
-        if dry_run || c.status()?.success() {
+        if skip_publish || dry_run || c.status()?.success() {
             break;
         } else if attempt == max_attempts {
             bail!("Could not successfully execute 'cargo publish' even ")
@@ -392,7 +395,7 @@ fn edit_manifest_and_fixup_dependent_crates(
         locks_by_manifest_path.insert(&publishee.manifest_path, lock);
     }
     let mut packages_to_fix = Vec::new();
-    for package in meta
+    for package_to_fix in meta
         .workspace_members
         .iter()
         .map(|id| id_to_package(meta, id))
@@ -402,16 +405,16 @@ fn edit_manifest_and_fixup_dependent_crates(
                 .any(|dep| publishees.iter().any(|(publishee, _)| dep.name == publishee.name))
         })
     {
-        if locks_by_manifest_path.contains_key(&package.manifest_path) {
+        if locks_by_manifest_path.contains_key(&package_to_fix.manifest_path) {
             continue;
         }
         let lock = git_lock::File::acquire_to_update_resource(
-            &package.manifest_path,
+            &package_to_fix.manifest_path,
             git_lock::acquire::Fail::Immediately,
             None,
         )?;
-        locks_by_manifest_path.insert(&package.manifest_path, lock);
-        packages_to_fix.push(package);
+        locks_by_manifest_path.insert(&package_to_fix.manifest_path, lock);
+        packages_to_fix.push(package_to_fix);
     }
 
     let mut locks_to_commit = Vec::new();
@@ -430,6 +433,7 @@ fn edit_manifest_and_fixup_dependent_crates(
         update_package_dependency(package_to_update, publishees, &mut lock)?;
         locks_to_commit.push(lock);
     }
+    assert_eq!(locks_by_manifest_path.len(), 0, "Should have used up all locks by now");
     drop(locks_by_manifest_path);
 
     let message = format!("Release {}", names_and_versions(publishees));

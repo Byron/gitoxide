@@ -4,6 +4,7 @@ pub mod release {
         pub dry_run: bool,
         pub allow_dirty: bool,
         pub ignore_instability: bool,
+        pub skip_publish: bool,
     }
 }
 

@@ -26,6 +26,10 @@ pub struct Release {
     #[argh(switch)]
     pub allow_dirty: bool,
 
+    /// don't actually publish, but perform all other operations like manifest adjustments and tag creation.
+    #[argh(switch)]
+    pub skip_publish: bool,
+
     /// if set it will be allowed to publish crates with cycles to other workspace crates which are not published.
     ///
     /// Doing so causes repeated publishes to never stabilize, as one set of dependencies destabilizes another set.
