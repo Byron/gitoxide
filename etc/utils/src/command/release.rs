@@ -97,7 +97,7 @@ fn release_depth_first(options: Options, meta: &Metadata, crate_name: &str, bump
         if needs_release(package, &state)? {
             let (new_version, commit_id) = perform_release(meta, package, options, bump_spec, &state)?;
 
-            let tag_name = format!("{}-{}", package.name, new_version);
+            let tag_name = tag_name_for(package, &new_version);
             if options.dry_run {
                 log::info!("Won't create tag {}", tag_name);
             } else {
@@ -226,7 +226,7 @@ fn edit_manifest_and_fixup_dependent_crates(
     }
 }
 
-pub fn refresh_cargo_lock(package: &Package) -> anyhow::Result<()> {
+fn refresh_cargo_lock(package: &Package) -> anyhow::Result<()> {
     cargo_metadata::MetadataCommand::new()
         .manifest_path(&package.manifest_path)
         .exec()?;
@@ -329,8 +329,19 @@ fn bump_version(version: &str, bump_spec: &str) -> anyhow::Result<Semver> {
     .expect("no overflow"))
 }
 
+fn tag_name_for<'a>(package: &Package, version: impl Into<Option<&'a Semver>>) -> String {
+    format!(
+        "{}-v{}",
+        package.name,
+        version
+            .into()
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| package.version.to_string())
+    )
+}
+
 fn needs_release(package: &Package, state: &State) -> anyhow::Result<bool> {
-    let version_tag_name = format!("{}-v{}", package.name, package.version);
+    let version_tag_name = tag_name_for(package, None);
     let mut tag_ref = match state.repo.refs.find(&version_tag_name, state.packed_refs.as_ref())? {
         None => {
             log::info!(
