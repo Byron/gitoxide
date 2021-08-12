@@ -289,12 +289,11 @@ fn update_package_dependency(
     let manifest = std::fs::read_to_string(&package_to_update.manifest_path)?;
     let mut doc = toml_edit::Document::from_str(&manifest)?;
     for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {
-        if let Some(version) = doc
+        if let Some(name_table) = doc
             .as_table_mut()
             .get_mut(dep_type)
             .and_then(|deps| deps.as_table_mut())
-            .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_table_mut()))
-            .and_then(|table| table.get_mut("version"))
+            .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_inline_table_mut()))
         {
             log::info!(
                 "Updated {} dependency in {} crate to version {}",
@@ -302,7 +301,7 @@ fn update_package_dependency(
                 package_to_update.name,
                 new_version
             );
-            *version = toml_edit::value(new_version)
+            *name_table.get_or_insert("version", new_version) = toml_edit::Value::from(new_version);
         }
     }
     out.write_all(doc.to_string_in_original_order().as_bytes())?;
