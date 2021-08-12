@@ -145,7 +145,38 @@ fn perform_release(
     log::info!("{} v{} will be released", package.name, new_version);
     let commit_id = edit_manifest_and_fixup_dependent_crates(meta, package, &new_version, options, state)?;
 
+    publish_crate(package, options)?;
     Ok((new_version, commit_id))
+}
+
+fn publish_crate(package: &Package, Options { dry_run, allow_dirty }: Options) -> anyhow::Result<()> {
+    let max_attempts = 3;
+    for attempt in 1..=max_attempts {
+        let mut c = Command::new("cargo");
+        c.arg("publish");
+
+        if allow_dirty {
+            c.arg("--allow-dirty");
+        }
+        c.arg("--manifest-path").arg(&package.manifest_path);
+        log::info!("About to run {:?}", c);
+        if dry_run {
+            break;
+        } else {
+            if c.status()?.success() {
+                break;
+            } else if attempt == max_attempts {
+                bail!("Could not successfully execute 'cargo publish' even ")
+            } else {
+                log::warn!(
+                    "'cargo publish' run {} failed but we retry up to {} times to rule out flakiness",
+                    attempt,
+                    max_attempts
+                );
+            }
+        }
+    }
+    Ok(())
 }
 
 fn edit_manifest_and_fixup_dependent_crates(
