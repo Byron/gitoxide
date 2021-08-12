@@ -20,7 +20,13 @@ use git_repository::{
     },
     Repository,
 };
-use std::{collections::BTreeSet, convert::TryInto, path::PathBuf, process::Command, str::FromStr};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    convert::TryInto,
+    path::PathBuf,
+    process::Command,
+    str::FromStr,
+};
 
 struct State {
     root: Utf8PathBuf,
@@ -376,18 +382,17 @@ fn edit_manifest_and_fixup_dependent_crates(
     if !allow_dirty {
         assure_clean_working_tree()?;
     }
-    let mut publishees_with_manifest_locks = publishees
-        .iter()
-        .map(|(publishee, new_version)| {
-            git_lock::File::acquire_to_update_resource(
-                &publishee.manifest_path,
-                git_lock::acquire::Fail::Immediately,
-                None,
-            )
-            .map(|lock| (*publishee, new_version, lock))
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    let mut packages_to_fix = meta
+    let mut locks_by_manifest_path = BTreeMap::new();
+    for (publishee, _) in publishees {
+        let lock = git_lock::File::acquire_to_update_resource(
+            &publishee.manifest_path,
+            git_lock::acquire::Fail::Immediately,
+            None,
+        )?;
+        locks_by_manifest_path.insert(&publishee.manifest_path, lock);
+    }
+    let mut packages_to_fix = Vec::new();
+    for package in meta
         .workspace_members
         .iter()
         .map(|id| id_to_package(meta, id))
@@ -396,19 +401,36 @@ fn edit_manifest_and_fixup_dependent_crates(
                 .iter()
                 .any(|dep| publishees.iter().any(|(publishee, _)| dep.name == publishee.name))
         })
-        .map(|p| {
-            git_lock::File::acquire_to_update_resource(&p.manifest_path, git_lock::acquire::Fail::Immediately, None)
-                .map(|l| (p, l))
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-
-    for (publishee, new_version, manifest_lock) in publishees_with_manifest_locks.iter_mut() {
-        set_manifest_version(publishee, &new_version.to_string(), manifest_lock)?;
+    {
+        if locks_by_manifest_path.contains_key(&package.manifest_path) {
+            continue;
+        }
+        let lock = git_lock::File::acquire_to_update_resource(
+            &package.manifest_path,
+            git_lock::acquire::Fail::Immediately,
+            None,
+        )?;
+        locks_by_manifest_path.insert(&package.manifest_path, lock);
+        packages_to_fix.push(package);
     }
 
-    for (package_to_update, out) in packages_to_fix.iter_mut() {
-        update_package_dependency(package_to_update, publishees, out)?;
+    let mut locks_to_commit = Vec::new();
+    for (publishee, new_version) in publishees {
+        let mut lock = locks_by_manifest_path
+            .remove(&publishee.manifest_path)
+            .expect("lock written once");
+        set_manifest_version(publishee, &new_version.to_string(), &mut lock)?;
+        locks_to_commit.push(lock);
     }
+
+    for package_to_update in packages_to_fix.iter_mut() {
+        let mut lock = locks_by_manifest_path
+            .remove(&package_to_update.manifest_path)
+            .expect("lock written once");
+        update_package_dependency(package_to_update, publishees, &mut lock)?;
+        locks_to_commit.push(lock);
+    }
+    drop(locks_by_manifest_path);
 
     let message = format!("Release {}", names_and_versions(publishees));
     if dry_run {
@@ -416,11 +438,8 @@ fn edit_manifest_and_fixup_dependent_crates(
         Ok(ObjectId::null_sha1())
     } else {
         log::info!("Committing changes to manifests");
-        for (_, _, publishee_manifest_lock) in publishees_with_manifest_locks {
-            publishee_manifest_lock.commit()?;
-        }
-        for (_, lock) in packages_to_fix {
-            lock.commit()?;
+        for manifest_lock in locks_to_commit {
+            manifest_lock.commit()?;
         }
         refresh_cargo_lock()?;
         commit_changes(message, state)
