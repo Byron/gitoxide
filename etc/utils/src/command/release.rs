@@ -160,38 +160,73 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
     {
         let publishee = package_by_name(&meta, publishee_name).expect("exists");
 
-        let (new_version, commit_id) = perform_release(&meta, publishee, options, bump_spec, &state)?;
-        let tag_name = tag_name_for(&publishee.name, &new_version.to_string());
-        if options.dry_run {
-            log::info!("WOULD create tag {}", tag_name);
-        } else {
-            for tag in state
-                .repo
-                .refs
-                .transaction()
-                .prepare(
-                    Some(RefEdit {
-                        change: Change::Update {
-                            log: Default::default(),
-                            mode: Create::Only,
-                            new: Target::Peeled(commit_id),
-                        },
-                        name: format!("refs/tags/{}", tag_name).try_into()?,
-                        deref: false,
-                    }),
-                    git_lock::acquire::Fail::Immediately,
-                )?
-                .commit(&actor::Signature::empty())?
-            {
-                log::info!("Created tag {}", tag.name.as_bstr());
-            }
-        }
+        let (new_version, commit_id) = perform_single_release(&meta, publishee, options, bump_spec, &state)?;
+        create_version_tag(publishee, &new_version, commit_id, &mut state, options)?;
     }
 
     if !crates_to_publish_together.is_empty() {
-        todo!("group publishing: {:?}", crates_to_publish_together);
+        let mut crates_to_publish_together = crates_to_publish_together
+            .into_iter()
+            .map(|name| {
+                let p = package_by_name(&meta, &name).expect("package present");
+                bump_version(&p.version.to_string(), bump_spec).map(|v| (p, v.to_string()))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        log::info!(
+            "{} prepare releases of {}",
+            will(options.dry_run),
+            names_and_versions(&crates_to_publish_together)
+        );
+
+        let commit_id = edit_manifest_and_fixup_dependent_crates(&meta, &crates_to_publish_together, options, &state)?;
+
+        crates_to_publish_together.reverse();
+        while let Some((publishee, new_version)) = crates_to_publish_together.pop() {
+            let unpublished_crates: Vec<_> = crates_to_publish_together
+                .iter()
+                .map(|(p, _)| p.name.to_owned())
+                .collect();
+            publish_crate(publishee, &unpublished_crates, options)?;
+            create_version_tag(publishee, &new_version, commit_id, &mut state, options)?;
+        }
     }
 
+    Ok(())
+}
+
+fn create_version_tag(
+    publishee: &Package,
+    new_version: &String,
+    commit_id: ObjectId,
+    state: &mut State,
+    options: Options,
+) -> anyhow::Result<()> {
+    let tag_name = tag_name_for(&publishee.name, &new_version);
+    if options.dry_run {
+        log::info!("WOULD create tag {}", tag_name);
+    } else {
+        for tag in state
+            .repo
+            .refs
+            .transaction()
+            .prepare(
+                Some(RefEdit {
+                    change: Change::Update {
+                        log: Default::default(),
+                        mode: Create::Only,
+                        new: Target::Peeled(commit_id),
+                    },
+                    name: format!("refs/tags/{}", tag_name).try_into()?,
+                    deref: false,
+                }),
+                git_lock::acquire::Fail::Immediately,
+            )?
+            .commit(&actor::Signature::empty())?
+        {
+            log::info!("Created tag {}", tag.name.as_bstr());
+        }
+    }
     Ok(())
 }
 
@@ -272,16 +307,22 @@ fn hops_for_dependency_to_link_back_to_publishee<'a>(
     None
 }
 
-fn perform_release(
+fn perform_single_release(
     meta: &Metadata,
     publishee: &Package,
     options: Options,
     bump_spec: &str,
     state: &State,
-) -> anyhow::Result<(Semver, ObjectId)> {
-    let new_version = bump_version(&publishee.version.to_string(), bump_spec)?;
-    log::info!("{} release {} v{}", will(options.dry_run), publishee.name, new_version);
-    let commit_id = edit_manifest_and_fixup_dependent_crates(meta, &[(publishee, &new_version)], options, state)?;
+) -> anyhow::Result<(String, ObjectId)> {
+    let new_version = bump_version(&publishee.version.to_string(), bump_spec)?.to_string();
+    log::info!(
+        "{} prepare release of {} v{}",
+        will(options.dry_run),
+        publishee.name,
+        new_version
+    );
+    let commit_id =
+        edit_manifest_and_fixup_dependent_crates(meta, &[(publishee, new_version.clone())], options, state)?;
     publish_crate(publishee, &[], options)?;
     Ok((new_version, commit_id))
 }
@@ -327,7 +368,7 @@ fn publish_crate(
 
 fn edit_manifest_and_fixup_dependent_crates(
     meta: &Metadata,
-    publishees: &[(&Package, &Semver)],
+    publishees: &[(&Package, String)],
     Options {
         dry_run, allow_dirty, ..
     }: Options,
@@ -344,7 +385,7 @@ fn edit_manifest_and_fixup_dependent_crates(
                 git_lock::acquire::Fail::Immediately,
                 None,
             )
-            .map(|lock| (*publishee, *new_version, lock))
+            .map(|lock| (*publishee, new_version, lock))
         })
         .collect::<Result<Vec<_>, _>>()?;
     let mut packages_to_fix = meta
@@ -370,12 +411,7 @@ fn edit_manifest_and_fixup_dependent_crates(
         update_package_dependency(package_to_update, publishees, out)?;
     }
 
-    let names_and_versions = publishees
-        .iter()
-        .map(|(p, nv)| format!("{} v{}", p.name, nv))
-        .collect::<Vec<_>>()
-        .join(", ");
-    let message = format!("Release {}", names_and_versions);
+    let message = format!("Release {}", names_and_versions(publishees));
     if dry_run {
         log::info!("WOULD commit changes to manifests with {:?}", message);
         Ok(ObjectId::null_sha1())
@@ -390,6 +426,14 @@ fn edit_manifest_and_fixup_dependent_crates(
         refresh_cargo_lock()?;
         commit_changes(message, state)
     }
+}
+
+fn names_and_versions(publishees: &[(&Package, String)]) -> String {
+    publishees
+        .iter()
+        .map(|(p, nv)| format!("{} v{}", p.name, nv))
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 fn id_to_package<'a>(meta: &'a Metadata, id: &PackageId) -> &'a Package {
@@ -453,7 +497,7 @@ fn commit_changes(message: impl AsRef<str>, state: &State) -> anyhow::Result<Obj
 
 fn update_package_dependency(
     package_to_update: &Package,
-    publishees: &[(&Package, &Semver)],
+    publishees: &[(&Package, String)],
     mut out: impl std::io::Write,
 ) -> anyhow::Result<()> {
     let manifest = std::fs::read_to_string(&package_to_update.manifest_path)?;
@@ -473,7 +517,6 @@ fn update_package_dependency(
                     name_to_find,
                     new_version,
                 );
-                let new_version = new_version.to_string();
                 *name_table.get_or_insert("version", new_version.as_str()) =
                     toml_edit::Value::from(new_version.as_str());
             }
@@ -497,6 +540,7 @@ fn set_manifest_version(package: &Package, new_version: &str, mut out: impl std:
     Ok(())
 }
 
+/// TODO: Potentially just use existing semver here to avoid conversions and reduce complexity
 fn bump_version(version: &str, bump_spec: &str) -> anyhow::Result<Semver> {
     let v = Semver::parse(version).map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err.to_string()))?;
     Ok(match bump_spec {
