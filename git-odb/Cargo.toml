@@ -30,7 +30,7 @@ all-features = true
 [dependencies]
 git-features = { version = "^0.16.0", path = "../git-features", features = ["rustsha1", "walkdir", "zlib"] }
 git-hash = { version = "^0.5.0", path = "../git-hash" }
-git-object = { version = "^0.11.0", path = "../git-object" }
+git-object = { version ="0.12.0", path = "../git-object" }
 git-pack = { version = "^0.6", path = "../git-pack" }
 
 btoi = "0.4.2"

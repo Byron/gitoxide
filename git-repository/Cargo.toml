@@ -38,7 +38,7 @@ git-tempfile = { version = "^0.6.0", path = "../git-tempfile" }
 
 git-odb = { version = "^0.18", path = "../git-odb" }
 git-hash = { version = "^0.5.0", path = "../git-hash" }
-git-object = { version = "^0.11", path = "../git-object" }
+git-object = { version ="0.12.0", path = "../git-object" }
 git-actor = { version ="0.3.1", path = "../git-actor" }
 git-pack = { version = "^0.6", path = "../git-pack" }
 

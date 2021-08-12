@@ -441,7 +441,7 @@ fn edit_manifest_and_fixup_dependent_crates(
         log::info!("WOULD commit changes to manifests with {:?}", message);
         Ok(ObjectId::null_sha1())
     } else {
-        log::info!("Committing changes to manifests");
+        log::info!("Persisting changes to manifests");
         for manifest_lock in locks_to_commit {
             manifest_lock.commit()?;
         }
