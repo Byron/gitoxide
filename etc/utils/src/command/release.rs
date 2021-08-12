@@ -49,13 +49,7 @@ pub fn release(options: Options, version_bump_spec: String, crates: Vec<String>)
     if crates.is_empty() {
         bail!("Please provide at least one crate name which also is a workspace member");
     }
-    let meta = cargo_metadata::MetadataCommand::new().exec()?;
-    for crate_name in crates {
-        if !is_workspace_member(&meta, &crate_name) {
-            bail!("Package to release must be a workspace member: '{}'", crate_name);
-        }
-        release_depth_first(options, &meta, &crate_name, &version_bump_spec)?;
-    }
+    release_depth_first(options, crates, &version_bump_spec)?;
     Ok(())
 }
 
@@ -66,25 +60,28 @@ fn is_workspace_member(meta: &Metadata, crate_name: &str) -> bool {
         .map_or(false, |p| meta.workspace_members.iter().any(|m| m == &p.id))
 }
 
-fn release_depth_first(options: Options, meta: &Metadata, crate_name: &str, bump_spec: &str) -> anyhow::Result<()> {
+fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &str) -> anyhow::Result<()> {
+    let meta = cargo_metadata::MetadataCommand::new().exec()?;
     let mut state = State::new(std::env::current_dir()?)?;
-    let mut names_to_publish = vec![crate_name.to_owned()];
-
+    let mut names_to_publish = Vec::new();
     let mut index = 0;
-    while let Some(crate_name) = names_to_publish.get(index) {
-        let package = meta
-            .packages
-            .iter()
-            .find(|p| &p.name == crate_name)
-            .ok_or_else(|| anyhow!("workspace member must be a listed package: '{}'", crate_name))?;
-        for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
-            if state.seen.contains(&dependency.name) || !is_workspace_member(meta, &dependency.name) {
-                continue;
+    for crate_name in crate_names {
+        names_to_publish.push(crate_name);
+        while let Some(crate_name) = names_to_publish.get(index) {
+            let package = meta
+                .packages
+                .iter()
+                .find(|p| &p.name == crate_name)
+                .ok_or_else(|| anyhow!("workspace member must be a listed package: '{}'", crate_name))?;
+            for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
+                if state.seen.contains(&dependency.name) || !is_workspace_member(&meta, &dependency.name) {
+                    continue;
+                }
+                state.seen.insert(dependency.name.clone());
+                names_to_publish.push(dependency.name.clone());
             }
-            state.seen.insert(dependency.name.clone());
-            names_to_publish.push(dependency.name.clone());
+            index += 1;
         }
-        index += 1;
     }
 
     for crate_name in names_to_publish.iter().rev() {
@@ -94,10 +91,10 @@ fn release_depth_first(options: Options, meta: &Metadata, crate_name: &str, bump
             .find(|p| &p.name == crate_name)
             .expect("crate still there");
 
-        if needs_release(package, &state)? {
-            let (new_version, commit_id) = perform_release(meta, package, options, bump_spec, &state)?;
+        if changed_since_last_release(package, &state)? {
+            let (new_version, commit_id) = perform_release(&meta, package, options, bump_spec, &state)?;
 
-            let tag_name = tag_name_for(package, &new_version);
+            let tag_name = tag_name_for(&package.name, &new_version.to_string());
             if options.dry_run {
                 log::info!("Won't create tag {}", tag_name);
             } else {
@@ -144,7 +141,6 @@ fn perform_release(
     let new_version = bump_version(&package.version.to_string(), bump_spec)?;
     log::info!("{} v{} will be released", package.name, new_version);
     let commit_id = edit_manifest_and_fixup_dependent_crates(meta, package, &new_version, options, state)?;
-
     publish_crate(package, options)?;
     Ok((new_version, commit_id))
 }
@@ -329,19 +325,12 @@ fn bump_version(version: &str, bump_spec: &str) -> anyhow::Result<Semver> {
     .expect("no overflow"))
 }
 
-fn tag_name_for<'a>(package: &Package, version: impl Into<Option<&'a Semver>>) -> String {
-    format!(
-        "{}-v{}",
-        package.name,
-        version
-            .into()
-            .map(|v| v.to_string())
-            .unwrap_or_else(|| package.version.to_string())
-    )
+fn tag_name_for(package: &str, version: &str) -> String {
+    format!("{}-v{}", package, version)
 }
 
-fn needs_release(package: &Package, state: &State) -> anyhow::Result<bool> {
-    let version_tag_name = tag_name_for(package, None);
+fn changed_since_last_release(package: &Package, state: &State) -> anyhow::Result<bool> {
+    let version_tag_name = tag_name_for(&package.name, &package.version.to_string());
     let mut tag_ref = match state.repo.refs.find(&version_tag_name, state.packed_refs.as_ref())? {
         None => {
             log::info!(
