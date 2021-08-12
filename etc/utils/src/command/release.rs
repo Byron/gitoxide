@@ -113,38 +113,51 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
     }
     changed_crate_names_to_publish = reorder_according_to_resolution_order(&meta, &changed_crate_names_to_publish);
 
-    let mut crates_to_publish_additionally_to_avoid_instability = Vec::new();
-    for publishee_name in changed_crate_names_to_publish.iter() {
-        let publishee = package_by_name(&meta, publishee_name).expect("exists");
-        let cycles = workspace_members_referring_to_publishee(&meta, publishee);
-        if cycles.is_empty() {
-            log::debug!("'{}' is cycle-free", publishee.name);
-        } else {
-            for Cycle { from, hops } in cycles {
-                log::warn!(
-                    "'{}' links to '{}' {} causing publishes to never settle.",
-                    publishee.name,
-                    from.name,
-                    if hops == 1 {
-                        "directly".to_string()
+    let crates_to_publish_together = {
+        let mut crates_to_publish_additionally_to_avoid_instability = Vec::new();
+        let mut publish_group = Vec::<String>::new();
+        for publishee_name in changed_crate_names_to_publish.iter() {
+            let publishee = package_by_name(&meta, publishee_name).expect("exists");
+            let cycles = workspace_members_referring_to_publishee(&meta, publishee);
+            if cycles.is_empty() {
+                log::debug!("'{}' is cycle-free", publishee.name);
+            } else {
+                for Cycle { from, hops } in cycles {
+                    log::warn!(
+                        "'{}' links to '{}' {} causing publishes to never settle.",
+                        publishee.name,
+                        from.name,
+                        if hops == 1 {
+                            "directly".to_string()
+                        } else {
+                            format!("via {} hops", hops)
+                        }
+                    );
+                    if !changed_crate_names_to_publish.contains(&from.name) {
+                        crates_to_publish_additionally_to_avoid_instability.push(from.name.clone());
                     } else {
-                        format!("via {} hops", hops)
+                        for name in &[&from.name, &publishee.name] {
+                            if !publish_group.contains(name) {
+                                publish_group.push(name.to_string())
+                            }
+                        }
                     }
-                );
-                if !changed_crate_names_to_publish.contains(&from.name) {
-                    crates_to_publish_additionally_to_avoid_instability.push(from.name.clone());
                 }
             }
         }
-    }
-    if !crates_to_publish_additionally_to_avoid_instability.is_empty() && !options.ignore_instability {
-        bail!(
-            "Refusing to publish unless --ignore-instability is provided or crate(s) {} are included in the publish",
-            crates_to_publish_additionally_to_avoid_instability.join(", ")
-        )
-    }
+        if !crates_to_publish_additionally_to_avoid_instability.is_empty() && !options.ignore_instability {
+            bail!(
+                "Refusing to publish unless --ignore-instability is provided or crate(s) {} is/are included in the publish",
+                crates_to_publish_additionally_to_avoid_instability.join(", ")
+            )
+        }
+        reorder_according_to_resolution_order(&meta, &publish_group)
+    };
 
-    for publishee_name in changed_crate_names_to_publish.iter() {
+    for publishee_name in changed_crate_names_to_publish
+        .iter()
+        .filter(|n| !crates_to_publish_together.contains(n))
+    {
         let publishee = package_by_name(&meta, publishee_name).expect("exists");
 
         let (new_version, commit_id) = perform_release(&meta, publishee, options, bump_spec, &state)?;
@@ -173,6 +186,10 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
                 log::info!("Created tag {}", tag.name.as_bstr());
             }
         }
+    }
+
+    if !crates_to_publish_together.is_empty() {
+        todo!("group publishing: {:?}", crates_to_publish_together);
     }
 
     Ok(())
