@@ -3,7 +3,7 @@ use anyhow::{anyhow, bail};
 use bstr::ByteSlice;
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path, Utf8PathBuf},
-    DependencyKind, Metadata, Package,
+    DependencyKind, Metadata, Package, PackageId,
 };
 use dia_semver::Semver;
 use git_repository::{
@@ -181,7 +181,7 @@ fn publish_crate(package: &Package, Options { dry_run, allow_dirty }: Options) -
 
 fn edit_manifest_and_fixup_dependent_crates(
     meta: &Metadata,
-    package: &Package,
+    publishee: &Package,
     new_version: &Semver,
     Options { dry_run, allow_dirty }: Options,
     state: &State,
@@ -189,34 +189,30 @@ fn edit_manifest_and_fixup_dependent_crates(
     if !allow_dirty {
         assure_clean_working_tree()?;
     }
-    log::trace!("Preparing {} for version update", package.manifest_path);
-    let mut package_manifest_lock =
-        git_lock::File::acquire_to_update_resource(&package.manifest_path, git_lock::acquire::Fail::Immediately, None)?;
+    let mut package_manifest_lock = git_lock::File::acquire_to_update_resource(
+        &publishee.manifest_path,
+        git_lock::acquire::Fail::Immediately,
+        None,
+    )?;
     let mut packages_to_fix = meta
         .workspace_members
         .iter()
-        .filter(|id| *id != &package.id)
-        .map(|id| {
-            meta.packages
-                .iter()
-                .find(|p| &p.id == id)
-                .expect("workspace members are in packages")
-        })
-        .filter(|p| p.dependencies.iter().any(|dep| dep.name == package.name))
+        .filter(|id| *id != &publishee.id)
+        .map(|id| id_to_package(meta, id))
+        .filter(|p| p.dependencies.iter().any(|dep| dep.name == publishee.name))
         .map(|p| {
-            log::trace!("Preparing {} for dependency version update", p.manifest_path);
             git_lock::File::acquire_to_update_resource(&p.manifest_path, git_lock::acquire::Fail::Immediately, None)
                 .map(|l| (p, l))
         })
         .collect::<Result<Vec<_>, _>>()?;
 
     let new_version = new_version.to_string();
-    set_manifest_version(package, &new_version, &mut package_manifest_lock)?;
+    set_manifest_version(publishee, &new_version, &mut package_manifest_lock)?;
     for (package_to_update, out) in packages_to_fix.iter_mut() {
-        update_package_dependency(package_to_update, &package.name, &new_version, out)?;
+        update_package_dependency(package_to_update, &publishee.name, &new_version, out)?;
     }
 
-    let message = format!("Release {} v{}", package.name, new_version);
+    let message = format!("Release {} v{}", publishee.name, new_version);
     if dry_run {
         log::info!("WOULD commit changes to manifests with {:?}", message);
         Ok(ObjectId::null_sha1())
@@ -226,9 +222,16 @@ fn edit_manifest_and_fixup_dependent_crates(
         for (_, lock) in packages_to_fix {
             lock.commit()?;
         }
-        refresh_cargo_lock(package)?;
+        refresh_cargo_lock(publishee)?;
         commit_changes(message, state)
     }
+}
+
+fn id_to_package<'a>(meta: &'a Metadata, id: &PackageId) -> &'a Package {
+    meta.packages
+        .iter()
+        .find(|p| &p.id == id)
+        .expect("workspace members are in packages")
 }
 
 fn refresh_cargo_lock(package: &Package) -> anyhow::Result<()> {
