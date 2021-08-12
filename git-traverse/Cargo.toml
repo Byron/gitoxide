@@ -1,6 +1,6 @@
 [package]
 name = "git-traverse"
-version = "0.6.0"
+version = "0.7.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project"
@@ -20,4 +20,4 @@ quick-error = "2.0.0"
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
-git-odb = { version ="0.19.0", path = "../git-odb" }
+git-odb = { version ="0.20.0", path = "../git-odb" }

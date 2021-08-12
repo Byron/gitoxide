@@ -1,6 +1,6 @@
 [package]
 name = "git-diff"
-version = "0.7.0"
+version = "0.8.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "Calculate differences between various git objects"
@@ -19,6 +19,6 @@ git-object = { version ="0.12.0", path = "../git-object" }
 quick-error = "2.0.0"
 
 [dev-dependencies]
-git-odb = { version ="0.19.0", path = "../git-odb" }
-git-traverse = { version ="0.6.0", path = "../git-traverse" }
+git-odb = { version ="0.20.0", path = "../git-odb" }
+git-traverse = { version ="0.7.0", path = "../git-traverse" }
 git-testtools = { path = "../tests/tools" }

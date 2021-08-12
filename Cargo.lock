@@ -976,7 +976,7 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1047,7 +1047,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.19.0"
+version = "0.20.0"
 dependencies = [
  "btoi",
  "git-actor",
@@ -1063,7 +1063,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -1222,7 +1222,7 @@ dependencies = [
 
 [[package]]
 name = "git-traverse"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "git-hash",
  "git-object",

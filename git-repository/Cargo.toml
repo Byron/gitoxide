@@ -36,16 +36,16 @@ one-stop-shop = [
 git-ref = { version = "0.5.0", path = "../git-ref" }
 git-tempfile = { version = "^0.6.0", path = "../git-tempfile" }
 
-git-odb = { version ="0.19.0", path = "../git-odb" }
+git-odb = { version ="0.20.0", path = "../git-odb" }
 git-hash = { version = "^0.5.0", path = "../git-hash" }
 git-object = { version ="0.12.0", path = "../git-object" }
 git-actor = { version ="0.3.1", path = "../git-actor" }
-git-pack = { version ="0.7.0", path = "../git-pack" }
+git-pack = { version ="0.8.0", path = "../git-pack" }
 
 git-url = { version = "0.3.0", path = "../git-url", optional = true }
-git-traverse = { version ="0.6.0", path = "../git-traverse", optional = true }
+git-traverse = { version ="0.7.0", path = "../git-traverse", optional = true }
 git-protocol = { version = "^0.8.0", path = "../git-protocol", optional = true }
-git-diff = { version ="0.7.0", path = "../git-diff", optional = true }
+git-diff = { version ="0.8.0", path = "../git-diff", optional = true }
 git-features = { version = "^0.16.0", path = "../git-features", features = ["progress"] }
 
 signal-hook = { version = "0.3.9", default-features = false }

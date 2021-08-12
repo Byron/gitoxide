@@ -1,6 +1,6 @@
 [package]
 name = "git-odb"
-version = "0.19.0"
+version = "0.20.0"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
@@ -31,7 +31,7 @@ all-features = true
 git-features = { version = "^0.16.0", path = "../git-features", features = ["rustsha1", "walkdir", "zlib"] }
 git-hash = { version = "^0.5.0", path = "../git-hash" }
 git-object = { version ="0.12.0", path = "../git-object" }
-git-pack = { version ="0.7.0", path = "../git-pack" }
+git-pack = { version ="0.8.0", path = "../git-pack" }
 
 btoi = "0.4.2"
 tempfile = "3.1.0"
