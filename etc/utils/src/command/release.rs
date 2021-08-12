@@ -108,24 +108,29 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
         }
     }
 
-    for crate_name in changed_crate_names_to_publish.iter().rev() {
-        let publishee = package_by_name(&meta, crate_name).expect("exists");
-        for Cycle { from, hops } in workspace_members_referring_to_us(&meta, publishee) {
-            log::warn!(
-                "Workspace member '{}' links back to '{}' {} causing publishes to never settle.",
-                from.name,
-                publishee.name,
-                if hops == 1 {
-                    "directly".to_string()
-                } else {
-                    format!("via {} hops", hops)
-                }
-            );
+    for publishee_name in changed_crate_names_to_publish.iter().rev() {
+        let publishee = package_by_name(&meta, publishee_name).expect("exists");
+        let cycles = workspace_members_referring_to_publishee(&meta, publishee);
+        if cycles.is_empty() {
+            log::debug!("'{}' is cycle-free", publishee.name);
+        } else {
+            for Cycle { from, hops } in cycles {
+                log::warn!(
+                    "'{}' links to '{}' {} causing publishes to never settle.",
+                    publishee.name,
+                    from.name,
+                    if hops == 1 {
+                        "directly".to_string()
+                    } else {
+                        format!("via {} hops", hops)
+                    }
+                );
+            }
         }
     }
 
-    for crate_name in changed_crate_names_to_publish.iter().rev() {
-        let publishee = package_by_name(&meta, crate_name).expect("exists");
+    for publishee_name in changed_crate_names_to_publish.iter().rev() {
+        let publishee = package_by_name(&meta, publishee_name).expect("exists");
 
         let (new_version, commit_id) = perform_release(&meta, publishee, options, bump_spec, &state)?;
         let tag_name = tag_name_for(&publishee.name, &new_version.to_string());
@@ -163,7 +168,7 @@ struct Cycle<'a> {
     hops: usize,
 }
 
-fn workspace_members_referring_to_us<'a>(meta: &'a Metadata, publishee: &Package) -> Vec<Cycle<'a>> {
+fn workspace_members_referring_to_publishee<'a>(meta: &'a Metadata, publishee: &Package) -> Vec<Cycle<'a>> {
     publishee
         .dependencies
         .iter()
@@ -176,7 +181,7 @@ fn workspace_members_referring_to_us<'a>(meta: &'a Metadata, publishee: &Package
                     .any(|potential_cycle| potential_cycle.name == dep.name)
         })
         .filter_map(|dep| {
-            hops_for_dependency_to_link_back_to_us(meta, dep, publishee).map(|hops| Cycle {
+            hops_for_dependency_to_link_back_to_publishee(meta, dep, publishee).map(|hops| Cycle {
                 hops,
                 from: package_by_name(meta, &dep.name).expect("package exists"),
             })
@@ -184,7 +189,7 @@ fn workspace_members_referring_to_us<'a>(meta: &'a Metadata, publishee: &Package
         .collect()
 }
 
-fn hops_for_dependency_to_link_back_to_us<'a>(
+fn hops_for_dependency_to_link_back_to_publishee<'a>(
     meta: &'a Metadata,
     source: &Dependency,
     destination: &Package,
