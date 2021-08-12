@@ -161,7 +161,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
         let publishee = package_by_name(&meta, publishee_name).expect("exists");
 
         let (new_version, commit_id) = perform_single_release(&meta, publishee, options, bump_spec, &state)?;
-        create_version_tag(publishee, &new_version, commit_id, &mut state, options)?;
+        create_version_tag(publishee, &new_version, commit_id, &state.repo, options.dry_run)?;
     }
 
     if !crates_to_publish_together.is_empty() {
@@ -188,7 +188,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
                 .map(|(p, _)| p.name.to_owned())
                 .collect();
             publish_crate(publishee, &unpublished_crates, options)?;
-            create_version_tag(publishee, &new_version, commit_id, &mut state, options)?;
+            create_version_tag(publishee, &new_version, commit_id, &state.repo, options.dry_run)?;
         }
     }
 
@@ -199,15 +199,14 @@ fn create_version_tag(
     publishee: &Package,
     new_version: &String,
     commit_id: ObjectId,
-    state: &mut State,
-    options: Options,
+    repo: &Repository,
+    dry_run: bool,
 ) -> anyhow::Result<()> {
     let tag_name = tag_name_for(&publishee.name, &new_version);
-    if options.dry_run {
+    if dry_run {
         log::info!("WOULD create tag {}", tag_name);
     } else {
-        for tag in state
-            .repo
+        for tag in repo
             .refs
             .transaction()
             .prepare(
