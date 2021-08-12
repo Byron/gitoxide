@@ -82,74 +82,89 @@ fn package_by_name<'a>(meta: &'a Metadata, name: &str) -> anyhow::Result<&'a Pac
 fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &str) -> anyhow::Result<()> {
     let meta = cargo_metadata::MetadataCommand::new().exec()?;
     let mut state = State::new(std::env::current_dir()?)?;
-    let mut names_to_publish = Vec::new();
+    let mut changed_crate_names_to_publish = Vec::new();
     let mut index = 0;
     for crate_name in crate_names {
-        names_to_publish.push(crate_name);
-        while let Some(crate_name) = names_to_publish.get(index) {
+        changed_crate_names_to_publish.push(crate_name);
+        while let Some(crate_name) = changed_crate_names_to_publish.get(index) {
             let package = package_by_name(&meta, crate_name)?;
             for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
                 if state.seen.contains(&dependency.name) || !is_workspace_member(&meta, &dependency.name) {
                     continue;
                 }
                 state.seen.insert(dependency.name.clone());
-                names_to_publish.push(dependency.name.clone());
+                let dep_package = package_by_name(&meta, &dependency.name).expect("exists");
+                if has_changed_since_last_release(dep_package, &state)? {
+                    changed_crate_names_to_publish.push(dependency.name.clone());
+                } else {
+                    log::info!(
+                        "{} v{}  - skipped release as it didn't change",
+                        dep_package.name,
+                        dep_package.version
+                    );
+                }
             }
             index += 1;
         }
     }
 
-    for crate_name in names_to_publish.iter().rev() {
-        let publishee = meta
-            .packages
-            .iter()
-            .find(|p| &p.name == crate_name)
-            .expect("crate still there");
-
-        check_cycles_to_workspace_members(&meta, publishee)?;
-
-        if changed_since_last_release(publishee, &state)? {
-            let (new_version, commit_id) = perform_release(&meta, publishee, options, bump_spec, &state)?;
-
-            let tag_name = tag_name_for(&publishee.name, &new_version.to_string());
-            if options.dry_run {
-                log::info!("WOULD create tag {}", tag_name);
-            } else {
-                for tag in state
-                    .repo
-                    .refs
-                    .transaction()
-                    .prepare(
-                        Some(RefEdit {
-                            change: Change::Update {
-                                log: Default::default(),
-                                mode: Create::Only,
-                                new: Target::Peeled(commit_id),
-                            },
-                            name: format!("refs/tags/{}", tag_name).try_into()?,
-                            deref: false,
-                        }),
-                        git_lock::acquire::Fail::Immediately,
-                    )?
-                    .commit(&actor::Signature::empty())?
-                {
-                    log::info!("Created tag {}", tag.name.as_bstr());
-                }
-            }
-        } else {
-            log::info!(
-                "{} v{}  - skipped release as it didn't change",
+    for crate_name in changed_crate_names_to_publish.iter().rev() {
+        let publishee = package_by_name(&meta, crate_name).expect("exists");
+        for Cycle { from, hops } in workspace_members_referring_to_us(&meta, publishee) {
+            log::warn!(
+                "Workspace member '{}' links back to '{}' {} causing publishes to never settle.",
+                from.name,
                 publishee.name,
-                publishee.version
+                if hops == 1 {
+                    "directly".to_string()
+                } else {
+                    format!("via {} hops", hops)
+                }
             );
+        }
+    }
+
+    for crate_name in changed_crate_names_to_publish.iter().rev() {
+        let publishee = package_by_name(&meta, crate_name).expect("exists");
+
+        let (new_version, commit_id) = perform_release(&meta, publishee, options, bump_spec, &state)?;
+        let tag_name = tag_name_for(&publishee.name, &new_version.to_string());
+        if options.dry_run {
+            log::info!("WOULD create tag {}", tag_name);
+        } else {
+            for tag in state
+                .repo
+                .refs
+                .transaction()
+                .prepare(
+                    Some(RefEdit {
+                        change: Change::Update {
+                            log: Default::default(),
+                            mode: Create::Only,
+                            new: Target::Peeled(commit_id),
+                        },
+                        name: format!("refs/tags/{}", tag_name).try_into()?,
+                        deref: false,
+                    }),
+                    git_lock::acquire::Fail::Immediately,
+                )?
+                .commit(&actor::Signature::empty())?
+            {
+                log::info!("Created tag {}", tag.name.as_bstr());
+            }
         }
     }
 
     Ok(())
 }
 
-fn check_cycles_to_workspace_members(meta: &Metadata, publishee: &Package) -> anyhow::Result<()> {
-    for (hops, workspace_member_referring_to_us) in publishee
+struct Cycle<'a> {
+    from: &'a Package,
+    hops: usize,
+}
+
+fn workspace_members_referring_to_us<'a>(meta: &'a Metadata, publishee: &Package) -> Vec<Cycle<'a>> {
+    publishee
         .dependencies
         .iter()
         .filter(|dep| {
@@ -160,20 +175,13 @@ fn check_cycles_to_workspace_members(meta: &Metadata, publishee: &Package) -> an
                     .map(|id| id_to_package(&meta, id))
                     .any(|potential_cycle| potential_cycle.name == dep.name)
         })
-        .filter_map(|dep| hops_for_dependency_to_link_back_to_us(meta, dep, publishee).map(|hops| (hops, dep)))
-    {
-        log::warn!(
-            "Workspace member '{}' links back to '{}' {} causing publishes to never settle.",
-            workspace_member_referring_to_us.name,
-            publishee.name,
-            if hops == 1 {
-                "directly".to_string()
-            } else {
-                format!("via {} hops", hops)
-            }
-        );
-    }
-    Ok(())
+        .filter_map(|dep| {
+            hops_for_dependency_to_link_back_to_us(meta, dep, publishee).map(|hops| Cycle {
+                hops,
+                from: package_by_name(meta, &dep.name).expect("package exists"),
+            })
+        })
+        .collect()
 }
 
 fn hops_for_dependency_to_link_back_to_us<'a>(
@@ -410,7 +418,7 @@ fn tag_name_for(package: &str, version: &str) -> String {
     format!("{}-v{}", package, version)
 }
 
-fn changed_since_last_release(package: &Package, state: &State) -> anyhow::Result<bool> {
+fn has_changed_since_last_release(package: &Package, state: &State) -> anyhow::Result<bool> {
     let version_tag_name = tag_name_for(&package.name, &package.version.to_string());
     let mut tag_ref = match state.repo.refs.find(&version_tag_name, state.packed_refs.as_ref())? {
         None => {
