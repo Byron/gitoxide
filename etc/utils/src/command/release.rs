@@ -43,6 +43,14 @@ impl State {
     }
 }
 
+fn will(not_really: bool) -> &'static str {
+    if not_really {
+        "WOULD"
+    } else {
+        "Will"
+    }
+}
+
 /// In order to try dealing with https://github.com/sunng87/cargo-release/issues/224 and also to make workspace
 /// releases more selective.
 pub fn release(options: Options, version_bump_spec: String, crates: Vec<String>) -> anyhow::Result<()> {
@@ -96,7 +104,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
 
             let tag_name = tag_name_for(&package.name, &new_version.to_string());
             if options.dry_run {
-                log::info!("Won't create tag {}", tag_name);
+                log::info!("WOULD create tag {}", tag_name);
             } else {
                 for tag in state
                     .repo
@@ -116,7 +124,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
                     )?
                     .commit(&actor::Signature::empty())?
                 {
-                    log::info!("created tag {}", tag.name.as_bstr());
+                    log::info!("Created tag {}", tag.name.as_bstr());
                 }
             }
         } else {
@@ -139,7 +147,7 @@ fn perform_release(
     state: &State,
 ) -> anyhow::Result<(Semver, ObjectId)> {
     let new_version = bump_version(&package.version.to_string(), bump_spec)?;
-    log::info!("{} v{} will be released", package.name, new_version);
+    log::info!("{} release {} v{}", will(options.dry_run), package.name, new_version);
     let commit_id = edit_manifest_and_fixup_dependent_crates(meta, package, &new_version, options, state)?;
     publish_crate(package, options)?;
     Ok((new_version, commit_id))
@@ -155,7 +163,7 @@ fn publish_crate(package: &Package, Options { dry_run, allow_dirty }: Options) -
             c.arg("--allow-dirty");
         }
         c.arg("--manifest-path").arg(&package.manifest_path);
-        log::info!("About to run {:?}", c);
+        log::info!("{} run {:?}", will(dry_run), c);
         if dry_run || c.status()?.success() {
             break;
         } else if attempt == max_attempts {
@@ -208,8 +216,9 @@ fn edit_manifest_and_fixup_dependent_crates(
         update_package_dependency(package_to_update, &package.name, &new_version, out)?;
     }
 
+    let message = format!("Release {} v{}", package.name, new_version);
     if dry_run {
-        log::info!("Won't write changed manifests in dry-run mode");
+        log::info!("WOULD commit changes to manifests with {:?}", message);
         Ok(ObjectId::null_sha1())
     } else {
         log::info!("Committing changes to manifests");
@@ -218,7 +227,7 @@ fn edit_manifest_and_fixup_dependent_crates(
             lock.commit()?;
         }
         refresh_cargo_lock(package)?;
-        commit_changes(format!("Release {}-{}", package.name, new_version), state)
+        commit_changes(message, state)
     }
 }
 
@@ -292,10 +301,11 @@ fn update_package_dependency(
             .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_inline_table_mut()))
         {
             log::info!(
-                "Updated {} dependency in {} crate to version {}",
-                name_to_find,
+                "Pending '{}' manifest {} update: '{} = \"{}\"'",
                 package_to_update.name,
-                new_version
+                dep_type,
+                name_to_find,
+                new_version,
             );
             *name_table.get_or_insert("version", new_version) = toml_edit::Value::from(new_version);
         }
@@ -309,7 +319,11 @@ fn set_manifest_version(package: &Package, new_version: &str, mut out: impl std:
     let manifest = std::fs::read_to_string(&package.manifest_path)?;
     let mut doc = toml_edit::Document::from_str(&manifest)?;
     doc["package"]["version"] = toml_edit::value(new_version);
-    log::info!("Updated {} to version {}", package.name, new_version);
+    log::info!(
+        "Pending '{}' manifest version update: \"{}\"",
+        package.name,
+        new_version
+    );
     out.write_all(doc.to_string_in_original_order().as_bytes())?;
     Ok(())
 }
