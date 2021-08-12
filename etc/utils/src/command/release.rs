@@ -221,8 +221,16 @@ fn edit_manifest_and_fixup_dependent_crates(
         for (_, lock) in packages_to_fix {
             lock.commit()?;
         }
+        refresh_cargo_lock(package)?;
         commit_changes(format!("Release {}-{}", package.name, new_version), state)
     }
+}
+
+pub fn refresh_cargo_lock(package: &Package) -> anyhow::Result<()> {
+    cargo_metadata::MetadataCommand::new()
+        .manifest_path(&package.manifest_path)
+        .exec()?;
+    Ok(())
 }
 
 fn assure_clean_working_tree() -> anyhow::Result<()> {
