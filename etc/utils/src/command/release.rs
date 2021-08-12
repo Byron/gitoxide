@@ -3,7 +3,7 @@ use anyhow::{anyhow, bail};
 use bstr::ByteSlice;
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path, Utf8PathBuf},
-    DependencyKind, Metadata, Package, PackageId,
+    Dependency, DependencyKind, Metadata, Package, PackageId,
 };
 use dia_semver::Semver;
 use git_repository::{
@@ -62,10 +62,21 @@ pub fn release(options: Options, version_bump_spec: String, crates: Vec<String>)
 }
 
 fn is_workspace_member(meta: &Metadata, crate_name: &str) -> bool {
+    workspace_package_by_name(meta, crate_name).is_some()
+}
+
+fn workspace_package_by_name<'a>(meta: &'a Metadata, crate_name: &str) -> Option<&'a Package> {
     meta.packages
         .iter()
         .find(|p| p.name == crate_name)
-        .map_or(false, |p| meta.workspace_members.iter().any(|m| m == &p.id))
+        .filter(|p| meta.workspace_members.iter().any(|m| m == &p.id))
+}
+
+fn package_by_name<'a>(meta: &'a Metadata, name: &str) -> anyhow::Result<&'a Package> {
+    meta.packages
+        .iter()
+        .find(|p| &p.name == name)
+        .ok_or_else(|| anyhow!("workspace member must be a listed package: '{}'", name))
 }
 
 fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &str) -> anyhow::Result<()> {
@@ -76,11 +87,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
     for crate_name in crate_names {
         names_to_publish.push(crate_name);
         while let Some(crate_name) = names_to_publish.get(index) {
-            let package = meta
-                .packages
-                .iter()
-                .find(|p| &p.name == crate_name)
-                .ok_or_else(|| anyhow!("workspace member must be a listed package: '{}'", crate_name))?;
+            let package = package_by_name(&meta, crate_name)?;
             for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
                 if state.seen.contains(&dependency.name) || !is_workspace_member(&meta, &dependency.name) {
                     continue;
@@ -93,16 +100,18 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
     }
 
     for crate_name in names_to_publish.iter().rev() {
-        let package = meta
+        let publishee = meta
             .packages
             .iter()
             .find(|p| &p.name == crate_name)
             .expect("crate still there");
 
-        if changed_since_last_release(package, &state)? {
-            let (new_version, commit_id) = perform_release(&meta, package, options, bump_spec, &state)?;
+        check_cycles_to_workspace_members(&meta, publishee)?;
 
-            let tag_name = tag_name_for(&package.name, &new_version.to_string());
+        if changed_since_last_release(publishee, &state)? {
+            let (new_version, commit_id) = perform_release(&meta, publishee, options, bump_spec, &state)?;
+
+            let tag_name = tag_name_for(&publishee.name, &new_version.to_string());
             if options.dry_run {
                 log::info!("WOULD create tag {}", tag_name);
             } else {
@@ -130,13 +139,55 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
         } else {
             log::info!(
                 "{} v{}  - skipped release as it didn't change",
-                package.name,
-                package.version
+                publishee.name,
+                publishee.version
             );
         }
     }
 
     Ok(())
+}
+
+fn check_cycles_to_workspace_members(meta: &Metadata, publishee: &Package) -> anyhow::Result<()> {
+    for workspace_member_referring_to_us in publishee.dependencies.iter().filter(|dep| {
+        dep.kind != DependencyKind::Normal
+            && meta
+                .workspace_members
+                .iter()
+                .map(|id| id_to_package(&meta, id))
+                .any(|potential_cycle| potential_cycle.name == dep.name)
+            && dependency_links_back_to_us(meta, dep, publishee)
+    }) {
+        log::warn!(
+            "Workspace member '{}' links back to '{}' causing publishes to never settle.",
+            workspace_member_referring_to_us.name,
+            publishee.name
+        );
+    }
+    Ok(())
+}
+
+fn dependency_links_back_to_us<'a>(meta: &'a Metadata, source: &Dependency, destination: &Package) -> bool {
+    let source = meta
+        .packages
+        .iter()
+        .find(|p| p.name == source.name)
+        .expect("source is always a member");
+
+    let mut package_names = vec![&source.name];
+    let mut seen = BTreeSet::new();
+    while let Some(name) = package_names.pop() {
+        if !seen.insert(name) {
+            continue;
+        }
+        if let Some(package) = workspace_package_by_name(meta, &name) {
+            if package.dependencies.iter().any(|dep| dep.name == destination.name) {
+                return true;
+            }
+            package_names.extend(package.dependencies.iter().map(|dep| &dep.name));
+        };
+    }
+    false
 }
 
 fn perform_release(
