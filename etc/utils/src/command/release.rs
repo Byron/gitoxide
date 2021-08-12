@@ -417,24 +417,19 @@ fn edit_manifest_and_fixup_dependent_crates(
         packages_to_fix.push(package_to_fix);
     }
 
-    let mut locks_to_commit = Vec::new();
     for (publishee, new_version) in publishees {
         let mut lock = locks_by_manifest_path
-            .remove(&publishee.manifest_path)
-            .expect("lock written once");
-        set_manifest_version(publishee, &new_version.to_string(), &mut lock)?;
-        locks_to_commit.push(lock);
+            .get_mut(&publishee.manifest_path)
+            .expect("lock available");
+        set_version_and_update_package_dependency(publishee, Some(&new_version.to_string()), publishees, &mut lock)?;
     }
 
     for package_to_update in packages_to_fix.iter_mut() {
         let mut lock = locks_by_manifest_path
-            .remove(&package_to_update.manifest_path)
+            .get_mut(&package_to_update.manifest_path)
             .expect("lock written once");
-        update_package_dependency(package_to_update, publishees, &mut lock)?;
-        locks_to_commit.push(lock);
+        set_version_and_update_package_dependency(package_to_update, None, publishees, &mut lock)?;
     }
-    assert_eq!(locks_by_manifest_path.len(), 0, "Should have used up all locks by now");
-    drop(locks_by_manifest_path);
 
     let message = format!("Release {}", names_and_versions(publishees));
     if dry_run {
@@ -442,7 +437,7 @@ fn edit_manifest_and_fixup_dependent_crates(
         Ok(ObjectId::null_sha1())
     } else {
         log::info!("Persisting changes to manifests");
-        for manifest_lock in locks_to_commit {
+        for manifest_lock in locks_by_manifest_path.into_values() {
             manifest_lock.commit()?;
         }
         refresh_cargo_lock()?;
@@ -517,13 +512,23 @@ fn commit_changes(message: impl AsRef<str>, state: &State) -> anyhow::Result<Obj
         .to_owned())
 }
 
-fn update_package_dependency(
+fn set_version_and_update_package_dependency(
     package_to_update: &Package,
+    new_version: Option<&str>,
     publishees: &[(&Package, String)],
     mut out: impl std::io::Write,
 ) -> anyhow::Result<()> {
     let manifest = std::fs::read_to_string(&package_to_update.manifest_path)?;
     let mut doc = toml_edit::Document::from_str(&manifest)?;
+
+    if let Some(new_version) = new_version {
+        doc["package"]["version"] = toml_edit::value(new_version);
+        log::info!(
+            "Pending '{}' manifest version update: \"{}\"",
+            package_to_update.name,
+            new_version
+        );
+    }
     for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {
         for (name_to_find, new_version) in publishees.iter().map(|(p, nv)| (&p.name, nv)) {
             if let Some(name_table) = doc
@@ -546,19 +551,6 @@ fn update_package_dependency(
     }
     out.write_all(doc.to_string_in_original_order().as_bytes())?;
 
-    Ok(())
-}
-
-fn set_manifest_version(package: &Package, new_version: &str, mut out: impl std::io::Write) -> anyhow::Result<()> {
-    let manifest = std::fs::read_to_string(&package.manifest_path)?;
-    let mut doc = toml_edit::Document::from_str(&manifest)?;
-    doc["package"]["version"] = toml_edit::value(new_version);
-    log::info!(
-        "Pending '{}' manifest version update: \"{}\"",
-        package.name,
-        new_version
-    );
-    out.write_all(doc.to_string_in_original_order().as_bytes())?;
     Ok(())
 }
 
