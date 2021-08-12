@@ -75,7 +75,7 @@ fn workspace_package_by_name<'a>(meta: &'a Metadata, crate_name: &str) -> Option
 fn package_by_name<'a>(meta: &'a Metadata, name: &str) -> anyhow::Result<&'a Package> {
     meta.packages
         .iter()
-        .find(|p| &p.name == name)
+        .find(|p| p.name == name)
         .ok_or_else(|| anyhow!("workspace member must be a listed package: '{}'", name))
 }
 
@@ -172,7 +172,7 @@ fn workspace_members_referring_to_us<'a>(meta: &'a Metadata, publishee: &Package
                 && meta
                     .workspace_members
                     .iter()
-                    .map(|id| id_to_package(&meta, id))
+                    .map(|id| id_to_package(meta, id))
                     .any(|potential_cycle| potential_cycle.name == dep.name)
         })
         .filter_map(|dep| {
@@ -201,7 +201,7 @@ fn hops_for_dependency_to_link_back_to_us<'a>(
         if !seen.insert(name) {
             continue;
         }
-        if let Some(package) = workspace_package_by_name(meta, &name) {
+        if let Some(package) = workspace_package_by_name(meta, name) {
             if package.dependencies.iter().any(|dep| dep.name == destination.name) {
                 return Some(level + 1);
             }
