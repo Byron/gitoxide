@@ -85,7 +85,10 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
     let mut changed_crate_names_to_publish = Vec::new();
     let mut index = 0;
     for crate_name in crate_names {
-        changed_crate_names_to_publish.push(crate_name);
+        if state.seen.contains(&crate_name) {
+            continue;
+        }
+        changed_crate_names_to_publish.push(crate_name.clone());
         while let Some(crate_name) = changed_crate_names_to_publish.get(index) {
             let package = package_by_name(&meta, crate_name)?;
             for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
@@ -106,9 +109,12 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
             }
             index += 1;
         }
+        state.seen.insert(crate_name);
     }
+    changed_crate_names_to_publish.reverse();
+    // dbg!(&changed_crate_names_to_publish);
 
-    for publishee_name in changed_crate_names_to_publish.iter().rev() {
+    for publishee_name in changed_crate_names_to_publish.iter() {
         let publishee = package_by_name(&meta, publishee_name).expect("exists");
         let cycles = workspace_members_referring_to_publishee(&meta, publishee);
         if cycles.is_empty() {
@@ -129,7 +135,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
         }
     }
 
-    for publishee_name in changed_crate_names_to_publish.iter().rev() {
+    for publishee_name in changed_crate_names_to_publish.iter() {
         let publishee = package_by_name(&meta, publishee_name).expect("exists");
 
         let (new_version, commit_id) = perform_release(&meta, publishee, options, bump_spec, &state)?;
