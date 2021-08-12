@@ -12,7 +12,15 @@ fn main() -> anyhow::Result<()> {
             execute,
             version_bump_spec,
             crates,
-        }) => command::release(!execute, version_bump_spec, crates)?,
+            allow_dirty,
+        }) => command::release(
+            command::release::Options {
+                dry_run: !execute,
+                allow_dirty,
+            },
+            version_bump_spec,
+            crates,
+        )?,
     }
     Ok(())
 }

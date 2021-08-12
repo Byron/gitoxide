@@ -1,4 +1,6 @@
+use crate::command::release::Options;
 use anyhow::{anyhow, bail};
+use bstr::ByteSlice;
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path, Utf8PathBuf},
     DependencyKind, Metadata, Package,
@@ -18,7 +20,6 @@ use git_repository::{
     },
     Repository,
 };
-use std::process::Stdio;
 use std::{collections::BTreeSet, convert::TryInto, path::PathBuf, process::Command, str::FromStr};
 
 struct State {
@@ -44,7 +45,7 @@ impl State {
 
 /// In order to try dealing with https://github.com/sunng87/cargo-release/issues/224 and also to make workspace
 /// releases more selective.
-pub fn release(dry_run: bool, version_bump_spec: String, crates: Vec<String>) -> anyhow::Result<()> {
+pub fn release(options: Options, version_bump_spec: String, crates: Vec<String>) -> anyhow::Result<()> {
     if crates.is_empty() {
         bail!("Please provide at least one crate name which also is a workspace member");
     }
@@ -53,7 +54,7 @@ pub fn release(dry_run: bool, version_bump_spec: String, crates: Vec<String>) ->
         if !is_workspace_member(&meta, &crate_name) {
             bail!("Package to release must be a workspace member: '{}'", crate_name);
         }
-        release_depth_first(dry_run, &meta, &crate_name, &version_bump_spec)?;
+        release_depth_first(options, &meta, &crate_name, &version_bump_spec)?;
     }
     Ok(())
 }
@@ -65,7 +66,7 @@ fn is_workspace_member(meta: &Metadata, crate_name: &str) -> bool {
         .map_or(false, |p| meta.workspace_members.iter().any(|m| m == &p.id))
 }
 
-fn release_depth_first(dry_run: bool, meta: &Metadata, crate_name: &str, bump_spec: &str) -> anyhow::Result<()> {
+fn release_depth_first(options: Options, meta: &Metadata, crate_name: &str, bump_spec: &str) -> anyhow::Result<()> {
     let mut state = State::new(std::env::current_dir()?)?;
     let mut names_to_publish = vec![crate_name.to_owned()];
 
@@ -94,9 +95,10 @@ fn release_depth_first(dry_run: bool, meta: &Metadata, crate_name: &str, bump_sp
             .expect("crate still there");
 
         if needs_release(package, &state)? {
-            let (new_version, commit_id) = perform_release(meta, package, dry_run, bump_spec, &state)?;
+            let (new_version, commit_id) = perform_release(meta, package, options, bump_spec, &state)?;
+
             let tag_name = format!("{}-{}", package.name, new_version);
-            if dry_run {
+            if options.dry_run {
                 log::info!("Won't create tag {}", tag_name);
             } else {
                 for tag in state
@@ -135,13 +137,14 @@ fn release_depth_first(dry_run: bool, meta: &Metadata, crate_name: &str, bump_sp
 fn perform_release(
     meta: &Metadata,
     package: &Package,
-    dry_run: bool,
+    options: Options,
     bump_spec: &str,
     state: &State,
 ) -> anyhow::Result<(Semver, ObjectId)> {
     let new_version = bump_version(&package.version.to_string(), bump_spec)?;
     log::info!("{} v{} will be released", package.name, new_version);
-    let commit_id = edit_manifest_and_fixup_dependent_crates(meta, package, &new_version, dry_run, state)?;
+    let commit_id = edit_manifest_and_fixup_dependent_crates(meta, package, &new_version, options, state)?;
+
     Ok((new_version, commit_id))
 }
 
@@ -149,9 +152,12 @@ fn edit_manifest_and_fixup_dependent_crates(
     meta: &Metadata,
     package: &Package,
     new_version: &Semver,
-    dry_run: bool,
+    Options { dry_run, allow_dirty }: Options,
     state: &State,
 ) -> anyhow::Result<ObjectId> {
+    if !allow_dirty {
+        assure_clean_working_tree()?;
+    }
     log::trace!("Preparing {} for version update", package.manifest_path);
     let mut package_manifest_lock =
         git_lock::File::acquire_to_update_resource(&package.manifest_path, git_lock::acquire::Fail::Immediately, None)?;
@@ -192,15 +198,41 @@ fn edit_manifest_and_fixup_dependent_crates(
     }
 }
 
+fn assure_clean_working_tree() -> anyhow::Result<()> {
+    let tracked_changed = !Command::new("git")
+        .arg("diff")
+        .arg("HEAD")
+        .arg("--exit-code")
+        .arg("--name-only")
+        .status()?
+        .success();
+    if tracked_changed {
+        bail!("Detected working tree changes. Please commit beforehand as otherwise these would be committed as part of manifest changes.")
+    }
+
+    let has_untracked = !Command::new("git")
+        .arg("ls-files")
+        .arg("--exclude-standard")
+        .arg("--others")
+        .output()?
+        .stdout
+        .as_slice()
+        .trim()
+        .is_empty();
+
+    if has_untracked {
+        bail!("Found untracked files which would possibly be packaged when publishing.")
+    }
+    Ok(())
+}
+
 fn commit_changes(message: impl AsRef<str>, state: &State) -> anyhow::Result<ObjectId> {
     // TODO: replace with gitoxide one day
     if !Command::new("git")
         .arg("commit")
         .arg("-am")
         .arg(message.as_ref())
-        .stderr(Stdio::inherit())
-        .output()?
-        .status
+        .status()?
         .success()
     {
         bail!("Failed to commit changed manifests");

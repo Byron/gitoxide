@@ -22,6 +22,10 @@ pub struct Release {
     #[argh(switch, short = 'n')]
     pub execute: bool,
 
+    /// allow publishes to take place on a dirty working tree. Really not recommended alongside --execute.
+    #[argh(switch)]
+    pub allow_dirty: bool,
+
     /// a specification of the kind of version bump you seek for the crate and potentially it's dependencies.
     ///
     /// Can be 'major', 'minor' or 'patch'
