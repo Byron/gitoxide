@@ -365,7 +365,7 @@ fn publish_crate(
     }: Options,
 ) -> anyhow::Result<()> {
     let max_attempts = 3;
-    let must_not_validate = publishee
+    let must_not_verify = publishee
         .dependencies
         .iter()
         .any(|dep| other_publishee_names.contains(&dep.name));
@@ -376,8 +376,8 @@ fn publish_crate(
         if allow_dirty {
             c.arg("--allow-dirty");
         }
-        if must_not_validate {
-            c.arg("--no-validate");
+        if must_not_verify {
+            c.arg("--no-verify");
         }
         c.arg("--manifest-path").arg(&publishee.manifest_path);
         log::info!("{} run {:?}", will(dry_run), c);
