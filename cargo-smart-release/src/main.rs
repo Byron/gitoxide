@@ -9,7 +9,7 @@ fn main() -> anyhow::Result<()> {
 
     let Args {
         execute,
-        version_bump_spec,
+        bump,
         crates,
         allow_dirty,
         ignore_instability,
@@ -25,7 +25,7 @@ fn main() -> anyhow::Result<()> {
             skip_publish,
             no_verify: dangerously_pass_no_verify,
         },
-        version_bump_spec,
+        bump.unwrap_or_else(|| "keep".into()),
         crates,
     )?;
 

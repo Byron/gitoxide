@@ -29,11 +29,12 @@ pub struct Args {
     #[argh(switch)]
     pub ignore_instability: bool,
 
-    /// a specification of the kind of version bump you seek for the crate and potentially it's dependencies.
+    /// specify the kind of version bump you seek for the crate and potentially it's dependencies.
     ///
     /// Can be 'major', 'minor' or 'patch', or 'keep' which doesn't alter the version.
-    #[argh(positional)]
-    pub version_bump_spec: String,
+    /// If unspecified, the current version will be kept, useful if versions are specified manually.
+    #[argh(option, short = 'b')]
+    pub bump: Option<String>,
 
     /// the name of the crates to be released, along with all of their dependencies if needed, using `cargo release`
     #[argh(positional)]
