@@ -160,20 +160,16 @@ fn publish_crate(package: &Package, Options { dry_run, allow_dirty }: Options) -
         }
         c.arg("--manifest-path").arg(&package.manifest_path);
         log::info!("About to run {:?}", c);
-        if dry_run {
+        if dry_run || c.status()?.success() {
             break;
+        } else if attempt == max_attempts {
+            bail!("Could not successfully execute 'cargo publish' even ")
         } else {
-            if c.status()?.success() {
-                break;
-            } else if attempt == max_attempts {
-                bail!("Could not successfully execute 'cargo publish' even ")
-            } else {
-                log::warn!(
-                    "'cargo publish' run {} failed but we retry up to {} times to rule out flakiness",
-                    attempt,
-                    max_attempts
-                );
-            }
+            log::warn!(
+                "'cargo publish' run {} failed but we retry up to {} times to rule out flakiness",
+                attempt,
+                max_attempts
+            );
         }
     }
     Ok(())
