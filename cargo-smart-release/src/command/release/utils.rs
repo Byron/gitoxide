@@ -1,5 +1,6 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use cargo_metadata::{Dependency, Metadata, Package, PackageId};
+use dia_semver::Semver;
 
 pub fn will(not_really: bool) -> &'static str {
     if not_really {
@@ -7,6 +8,23 @@ pub fn will(not_really: bool) -> &'static str {
     } else {
         "Will"
     }
+}
+
+pub fn bump_spec_may_cause_empty_commits(bump_spec: &str) -> bool {
+    bump_spec == "keep"
+}
+
+/// TODO: Potentially just use existing semver here to avoid conversions and reduce complexity
+pub fn bump_version(version: &str, bump_spec: &str) -> anyhow::Result<Semver> {
+    let v = Semver::parse(version).map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err.to_string()))?;
+    Ok(match bump_spec {
+        "major" => v.new_major(),
+        "minor" => v.new_minor(),
+        "patch" => v.new_patch(),
+        "keep" => v.into(),
+        _ => bail!("Invalid version specification: '{}'", bump_spec),
+    }
+    .expect("no overflow"))
 }
 
 pub fn is_workspace_member(meta: &Metadata, crate_name: &str) -> bool {

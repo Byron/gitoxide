@@ -1,6 +1,7 @@
 use super::{Options, State};
 use crate::command::release_impl::tag_name_for;
 use anyhow::{anyhow, bail};
+use bstr::ByteSlice;
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path},
     Package,
@@ -62,6 +63,34 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
     )?;
 
     Ok(released_dir_id != current_dir_id)
+}
+
+pub fn assure_clean_working_tree() -> anyhow::Result<()> {
+    let tracked_changed = !Command::new("git")
+        .arg("diff")
+        .arg("HEAD")
+        .arg("--exit-code")
+        .arg("--name-only")
+        .status()?
+        .success();
+    if tracked_changed {
+        bail!("Detected working tree changes. Please commit beforehand as otherwise these would be committed as part of manifest changes, or use --allow-dirty to force it.")
+    }
+
+    let has_untracked = !Command::new("git")
+        .arg("ls-files")
+        .arg("--exclude-standard")
+        .arg("--others")
+        .output()?
+        .stdout
+        .as_slice()
+        .trim()
+        .is_empty();
+
+    if has_untracked {
+        bail!("Found untracked files which would possibly be packaged when publishing.")
+    }
+    Ok(())
 }
 
 fn find_directory_id_in_tree(
