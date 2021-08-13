@@ -156,6 +156,8 @@ pub(in crate::command::release_impl) fn edit_manifest_and_fixup_dependent_crates
         for manifest_lock in locks_by_manifest_path.into_values() {
             manifest_lock.commit()?;
         }
+        // This is dangerous as incompatibilities can happen here, leaving the working tree dirty.
+        // For now we leave it that way without auto-restoring originals to facilitate debugging.
         refresh_cargo_lock()?;
         git::commit_changes(message, empty_commit_possible, ctx)
     }
