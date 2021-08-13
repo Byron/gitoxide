@@ -41,6 +41,9 @@ impl Context {
 /// In order to try dealing with https://github.com/sunng87/cargo-release/issues/224 and also to make workspace
 /// releases more selective.
 pub fn release(options: Options, version_bump_spec: String, mut crates: Vec<String>) -> anyhow::Result<()> {
+    if options.no_dry_run_cargo_publish && !options.dry_run {
+        bail!("The --no-dry-run-cargo-publish flag is only effective without --execute")
+    }
     let ctx = Context::new()?;
     if crates.is_empty() {
         let crate_name = std::env::current_dir()?
