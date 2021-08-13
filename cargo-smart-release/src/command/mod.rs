@@ -10,7 +10,6 @@ pub mod release {
         pub skip_tag: bool,
     }
 }
-
-#[path = "release.rs"]
+#[path = "release/mod.rs"]
 mod release_impl;
 pub use release_impl::release;

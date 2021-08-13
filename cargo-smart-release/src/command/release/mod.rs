@@ -3,7 +3,7 @@ use anyhow::{anyhow, bail};
 use bstr::ByteSlice;
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path, Utf8PathBuf},
-    Dependency, DependencyKind, Metadata, Package, PackageId,
+    Dependency, DependencyKind, Metadata, Package,
 };
 use dia_semver::Semver;
 use git_repository::{
@@ -28,6 +28,12 @@ use std::{
     str::FromStr,
 };
 
+mod utils;
+pub use utils::{
+    is_workspace_member, names_and_versions, package_by_id, package_by_name, package_eq_dependency,
+    package_for_dependency, tag_name_for, will, workspace_package_by_id,
+};
+
 struct State {
     root: Utf8PathBuf,
     seen: BTreeSet<String>,
@@ -49,14 +55,6 @@ impl State {
     }
 }
 
-fn will(not_really: bool) -> &'static str {
-    if not_really {
-        "WOULD"
-    } else {
-        "Will"
-    }
-}
-
 /// In order to try dealing with https://github.com/sunng87/cargo-release/issues/224 and also to make workspace
 /// releases more selective.
 pub fn release(options: Options, version_bump_spec: String, crates: Vec<String>) -> anyhow::Result<()> {
@@ -65,31 +63,6 @@ pub fn release(options: Options, version_bump_spec: String, crates: Vec<String>)
     }
     release_depth_first(options, crates, &version_bump_spec)?;
     Ok(())
-}
-
-fn is_workspace_member(meta: &Metadata, crate_name: &str) -> bool {
-    workspace_package_by_name(meta, crate_name).is_some()
-}
-
-fn workspace_package_by_name<'a>(meta: &'a Metadata, crate_name: &str) -> Option<&'a Package> {
-    meta.packages
-        .iter()
-        .find(|p| p.name == crate_name)
-        .filter(|p| meta.workspace_members.iter().any(|m| m == &p.id))
-}
-
-fn workspace_package_by_id<'a>(meta: &'a Metadata, id: &PackageId) -> Option<&'a Package> {
-    meta.packages
-        .iter()
-        .find(|p| &p.id == id)
-        .filter(|p| meta.workspace_members.iter().any(|m| m == &p.id))
-}
-
-fn package_by_name<'a>(meta: &'a Metadata, name: &str) -> anyhow::Result<&'a Package> {
-    meta.packages
-        .iter()
-        .find(|p| p.name == name)
-        .ok_or_else(|| anyhow!("workspace member must be a listed package: '{}'", name))
 }
 
 fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &str) -> anyhow::Result<()> {
@@ -301,10 +274,6 @@ fn workspace_members_referring_to_publishee<'a>(meta: &'a Metadata, publishee: &
         .collect()
 }
 
-fn package_eq_dependency(package: &Package, dependency: &Dependency) -> bool {
-    package.name == dependency.name
-}
-
 fn hops_for_dependency_to_link_back_to_publishee<'a>(
     meta: &'a Metadata,
     source: &Dependency,
@@ -334,13 +303,6 @@ fn hops_for_dependency_to_link_back_to_publishee<'a>(
         };
     }
     None
-}
-
-fn package_for_dependency<'a>(meta: &'a Metadata, dep: &Dependency) -> &'a Package {
-    meta.packages
-        .iter()
-        .find(|p| package_eq_dependency(p, dep))
-        .expect("dependency always available as package")
 }
 
 pub fn bump_spec_may_cause_empty_commits(bump_spec: &str) -> bool {
@@ -492,21 +454,6 @@ fn edit_manifest_and_fixup_dependent_crates(
     }
 }
 
-fn names_and_versions(publishees: &[(&Package, String)]) -> String {
-    publishees
-        .iter()
-        .map(|(p, nv)| format!("{} v{}", p.name, nv))
-        .collect::<Vec<_>>()
-        .join(", ")
-}
-
-fn package_by_id<'a>(meta: &'a Metadata, id: &PackageId) -> &'a Package {
-    meta.packages
-        .iter()
-        .find(|p| &p.id == id)
-        .expect("workspace members are in packages")
-}
-
 fn refresh_cargo_lock() -> anyhow::Result<()> {
     cargo_metadata::MetadataCommand::new().exec()?;
     Ok(())
@@ -611,10 +558,6 @@ fn bump_version(version: &str, bump_spec: &str) -> anyhow::Result<Semver> {
         _ => bail!("Invalid version specification: '{}'", bump_spec),
     }
     .expect("no overflow"))
-}
-
-fn tag_name_for(package: &str, version: &str) -> String {
-    format!("{}-v{}", package, version)
 }
 
 fn has_changed_since_last_release(package: &Package, state: &State) -> anyhow::Result<bool> {
