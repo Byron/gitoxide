@@ -5,6 +5,7 @@ use super::{
 };
 use cargo_metadata::{Metadata, Package};
 use git_repository::hash::ObjectId;
+use semver::{Version, VersionReq};
 use std::{collections::BTreeMap, str::FromStr};
 
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates(
@@ -102,6 +103,7 @@ fn set_version_and_update_package_dependency(
     }
     for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {
         for (name_to_find, new_version) in publishees.iter().map(|(p, nv)| (&p.name, nv)) {
+            let new_version = Version::parse(new_version)?;
             for name_to_find in package_to_update
                 .dependencies
                 .iter()
@@ -115,15 +117,18 @@ fn set_version_and_update_package_dependency(
                     .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_inline_table_mut()))
                     .and_then(|name_table| name_table.get_mut("version"))
                 {
-                    log::info!(
-                        "Pending '{}' manifest {} update: '{} = \"{}\"' (from {})",
-                        package_to_update.name,
-                        dep_type,
-                        name_to_find,
-                        new_version,
-                        current_version
-                    );
-                    *current_version = toml_edit::Value::from(new_version.as_str());
+                    let version_req = VersionReq::parse(&current_version.as_str().expect("versions are strings"))?;
+                    if !version_req.matches(&new_version) {
+                        log::info!(
+                            "Pending '{}' manifest {} update: '{} = \"{}\"' (from {})",
+                            package_to_update.name,
+                            dep_type,
+                            name_to_find,
+                            new_version,
+                            current_version
+                        );
+                        *current_version = toml_edit::Value::from(new_version.to_string().as_str());
+                    }
                 }
             }
         }
