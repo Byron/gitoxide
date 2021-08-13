@@ -18,10 +18,11 @@ pub(in crate::command::release_impl) struct Context {
     root: Utf8PathBuf,
     repo: Repository,
     packed_refs: Option<packed::Buffer>,
+    crate_names: Vec<String>,
 }
 
 impl Context {
-    fn new(repo_path: impl Into<PathBuf>) -> anyhow::Result<Self> {
+    fn new(repo_path: impl Into<PathBuf>, crate_names: Vec<String>) -> anyhow::Result<Self> {
         let root = repo_path.into();
         let repo = git_repository::discover(&root)?;
         let packed_refs = repo.refs.packed()?;
@@ -29,6 +30,7 @@ impl Context {
             root: root.try_into()?,
             repo,
             packed_refs,
+            crate_names,
         })
     }
 }
@@ -45,9 +47,8 @@ pub fn release(options: Options, version_bump_spec: String, crates: Vec<String>)
 
 fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &str) -> anyhow::Result<()> {
     let meta = cargo_metadata::MetadataCommand::new().exec()?;
-    let state = Context::new(std::env::current_dir()?)?;
-    let changed_crate_names_to_publish =
-        traverse_dependencies_and_find_crates_for_publishing(&crate_names, &meta, &state)?;
+    let state = Context::new(std::env::current_dir()?, crate_names)?;
+    let changed_crate_names_to_publish = traverse_dependencies_and_find_crates_for_publishing(&meta, &state)?;
 
     let crates_to_publish_together =
         resolve_cycles_with_publish_group(&meta, &changed_crate_names_to_publish, options)?;
@@ -107,8 +108,8 @@ fn resolve_cycles_with_publish_group(
     let mut crates_to_publish_additionally_to_avoid_instability = Vec::new();
     let mut publish_group = Vec::<String>::new();
     for publishee_name in changed_crate_names_to_publish.iter() {
-        let publishee = package_by_name(&meta, publishee_name).expect("exists");
-        let cycles = workspace_members_referring_to_publishee(&meta, publishee);
+        let publishee = package_by_name(meta, publishee_name).expect("exists");
+        let cycles = workspace_members_referring_to_publishee(meta, publishee);
         if cycles.is_empty() {
             log::debug!("'{}' is cycle-free", publishee.name);
         } else {
@@ -142,24 +143,23 @@ fn resolve_cycles_with_publish_group(
         )
     }
     Ok(reorder_according_to_existing_order(
-        &changed_crate_names_to_publish,
+        changed_crate_names_to_publish,
         &publish_group,
     ))
 }
 
 fn traverse_dependencies_and_find_crates_for_publishing(
-    crate_names: &[String],
     meta: &Metadata,
     state: &Context,
 ) -> anyhow::Result<Vec<String>> {
     let mut seen = BTreeSet::new();
     let mut changed_crate_names_to_publish = Vec::new();
     let mut index = 0;
-    for crate_name in crate_names {
+    for crate_name in &state.crate_names {
         if seen.contains(crate_name) {
             continue;
         }
-        if dependency_tree_has_link_to_existing_crate_names(&meta, &crate_name, &changed_crate_names_to_publish) {
+        if dependency_tree_has_link_to_existing_crate_names(meta, crate_name, &changed_crate_names_to_publish) {
             // redo all work which includes the previous tree. Could be more efficient but that would be more complicated.
             seen.clear();
             changed_crate_names_to_publish.clear();
@@ -167,14 +167,14 @@ fn traverse_dependencies_and_find_crates_for_publishing(
         }
         changed_crate_names_to_publish.push(crate_name.to_owned());
         while let Some(crate_name) = changed_crate_names_to_publish.get(index) {
-            let package = package_by_name(&meta, crate_name)?;
+            let package = package_by_name(meta, crate_name)?;
             for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
-                if seen.contains(&dependency.name) || !is_workspace_member(&meta, &dependency.name) {
+                if seen.contains(&dependency.name) || !is_workspace_member(meta, &dependency.name) {
                     continue;
                 }
                 seen.insert(dependency.name.clone());
-                let dep_package = package_by_name(&meta, &dependency.name).expect("exists");
-                if git::has_changed_since_last_release(dep_package, &state)? {
+                let dep_package = package_by_name(meta, &dependency.name).expect("exists");
+                if git::has_changed_since_last_release(dep_package, state)? {
                     changed_crate_names_to_publish.push(dependency.name.clone());
                 } else {
                     log::info!(
