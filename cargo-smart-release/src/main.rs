@@ -18,6 +18,7 @@ fn main() -> anyhow::Result<()> {
             skip_tag,
             dangerously_pass_no_verify,
             allow_auto_publish_of_stable_crates,
+            no_dry_run_cargo_publish,
         }) => command::release(
             command::release::Options {
                 dry_run: !execute,
@@ -25,6 +26,7 @@ fn main() -> anyhow::Result<()> {
                 ignore_instability,
                 skip_publish,
                 skip_tag,
+                no_dry_run_cargo_publish,
                 no_verify: dangerously_pass_no_verify,
                 allow_auto_publish_of_stable_crates,
             },
