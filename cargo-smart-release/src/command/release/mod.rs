@@ -54,6 +54,12 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
         if state.seen.contains(&crate_name) {
             continue;
         }
+        if dependency_tree_has_link_to_existing_crate_names(&meta, &crate_name, &changed_crate_names_to_publish) {
+            // redo all work which includes the previous tree. Could be more efficient but that would be more complicated.
+            state.seen.clear();
+            changed_crate_names_to_publish.clear();
+            index = 0;
+        }
         changed_crate_names_to_publish.push(crate_name.clone());
         while let Some(crate_name) = changed_crate_names_to_publish.get(index) {
             let package = package_by_name(&meta, crate_name)?;
@@ -165,6 +171,32 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
     }
 
     Ok(())
+}
+
+fn dependency_tree_has_link_to_existing_crate_names(
+    meta: &Metadata,
+    root_name: &str,
+    existing_names: &[String],
+) -> bool {
+    let mut dependency_names = vec![root_name];
+    let mut seen = BTreeSet::new();
+    while let Some(crate_name) = dependency_names.pop() {
+        if !seen.insert(crate_name) {
+            continue;
+        }
+        if existing_names.iter().any(|n| n == crate_name) {
+            return true;
+        }
+        dependency_names.extend(
+            package_by_name(meta, crate_name)
+                .expect("exists")
+                .dependencies
+                .iter()
+                .filter(|dep| is_workspace_member(meta, &dep.name))
+                .map(|dep| dep.name.as_str()),
+        )
+    }
+    false
 }
 
 fn reorder_according_to_resolution_order(meta: &Metadata, workspace_members: &[String]) -> Vec<String> {
