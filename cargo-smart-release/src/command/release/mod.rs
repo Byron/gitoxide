@@ -5,6 +5,7 @@ use git_repository::{refs::packed, Repository};
 use std::collections::BTreeSet;
 
 mod utils;
+use crates_index::Index;
 use git_repository::hash::ObjectId;
 use utils::{
     bump_spec_may_cause_empty_commits, bump_version, is_dependency_with_version_requirement, is_workspace_member,
@@ -21,6 +22,7 @@ pub(in crate::command::release_impl) struct Context {
     meta: Metadata,
     repo: Repository,
     packed_refs: Option<packed::Buffer>,
+    index: Index,
 }
 
 impl Context {
@@ -29,11 +31,13 @@ impl Context {
         let root = meta.workspace_root.clone();
         let repo = git_repository::discover(&root)?;
         let packed_refs = repo.refs.packed()?;
+        let index = Index::new_cargo_default();
         Ok(Context {
             root,
             repo,
             meta,
             packed_refs,
+            index,
         })
     }
 }
@@ -45,6 +49,13 @@ pub fn release(options: Options, version_bump_spec: String, mut crates: Vec<Stri
         bail!("The --no-dry-run-cargo-publish flag is only effective without --execute")
     }
     let ctx = Context::new()?;
+    if options.update_crates_index {
+        log::info!("Updating crates-io index at '{}'", ctx.index.path().display());
+        ctx.index.update()?;
+    } else if !ctx.index.exists() {
+        log::warn!("Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already");
+    }
+
     if crates.is_empty() {
         let crate_name = std::env::current_dir()?
             .file_name()
@@ -381,13 +392,28 @@ fn perform_single_release(
     bump_spec: &str,
     ctx: &Context,
 ) -> anyhow::Result<(String, ObjectId)> {
-    let new_version = bump_version(&publishee.version.to_string(), bump_spec)?.to_string();
+    let new_version = bump_version(&publishee.version.to_string(), bump_spec)?;
+    match ctx.index.crate_(&publishee.name) {
+        Some(existing_release) => {
+            let existing_version = semver::Version::parse(existing_release.latest_version().version())?;
+            if existing_version >= new_version {
+                bail!(
+                    "Latest published version of '{}' is {}, the new version is {}. Consider using --bump <level>.",
+                    publishee.name,
+                    existing_release.latest_version().version(),
+                    new_version
+                );
+            }
+        }
+        None => log::info!("Congratulations for the new release of '{}' 🎉", publishee.name),
+    };
     log::info!(
         "{} prepare release of {} v{}",
         will(options.dry_run),
         publishee.name,
         new_version
     );
+    let new_version = new_version.to_string();
     let commit_id = manifest::edit_version_and_fixup_dependent_crates(
         meta,
         &[(publishee, new_version.clone())],

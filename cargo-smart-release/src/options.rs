@@ -34,6 +34,11 @@ pub struct SmartRelease {
     #[argh(switch)]
     pub allow_dirty: bool,
 
+    /// always update the crates-index beforehand. It is used to determine if the computed version to be published was
+    /// already published.
+    #[argh(switch, short = 'u')]
+    pub update_crates_index: bool,
+
     /// allow discovery of changed crates to also publish stable crates, bumping their version according to --bump <spec>.
     #[argh(switch)]
     pub allow_auto_publish_of_stable_crates: bool,

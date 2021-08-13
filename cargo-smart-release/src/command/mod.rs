@@ -10,6 +10,7 @@ pub mod release {
         pub no_verify: bool,
         pub skip_tag: bool,
         pub allow_auto_publish_of_stable_crates: bool,
+        pub update_crates_index: bool,
     }
 }
 #[path = "release/mod.rs"]
