@@ -22,26 +22,23 @@ fn main() -> anyhow::Result<()> {
             dry_run_cargo_publish,
             update_crates_index,
             no_bump_on_demand,
-        }) => {
-            let bump = bump.unwrap_or_else(|| "keep".into());
-            command::release(
-                command::release::Options {
-                    dry_run: !execute,
-                    no_bump_on_demand,
-                    allow_dirty,
-                    ignore_instability,
-                    skip_publish,
-                    skip_tag,
-                    dry_run_cargo_publish,
-                    no_verify: dangerously_pass_no_verify,
-                    allow_auto_publish_of_stable_crates,
-                    update_crates_index,
-                },
-                crates,
-                bump.clone(),
-                bump_dependencies.unwrap_or(bump),
-            )?
-        }
+        }) => command::release(
+            command::release::Options {
+                dry_run: !execute,
+                no_bump_on_demand,
+                allow_dirty,
+                ignore_instability,
+                skip_publish,
+                skip_tag,
+                dry_run_cargo_publish,
+                no_verify: dangerously_pass_no_verify,
+                allow_auto_publish_of_stable_crates,
+                update_crates_index,
+            },
+            crates,
+            bump.unwrap_or_else(|| "keep".into()),
+            bump_dependencies.unwrap_or_else(|| "keep".into()),
+        )?,
     };
 
     Ok(())

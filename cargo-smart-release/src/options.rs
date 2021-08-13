@@ -80,7 +80,7 @@ pub struct SmartRelease {
     /// specify the kind of version bump to apply to dependencies only.
     ///
     /// Can be 'major', 'minor' or 'patch', or 'keep' which doesn't alter the version.
-    /// If unspecified, the value of --bump will be used.
+    /// If unspecified, "keep" will be used.
     #[argh(option, short = 'b')]
     pub bump_dependencies: Option<String>,
 
