@@ -240,8 +240,8 @@ fn traverse_dependencies_and_find_crates_for_publishing(
                     crate_package.name,
                     crate_package.version
                 );
+                continue;
             }
-            continue;
         }
         changed_crate_names_to_publish.push(crate_name.to_owned());
         seen.insert(crate_name.to_owned());
