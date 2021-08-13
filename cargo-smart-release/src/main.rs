@@ -11,6 +11,7 @@ fn main() -> anyhow::Result<()> {
         SubCommands::SmartRelease(SmartRelease {
             execute,
             bump,
+            bump_dependencies,
             crates,
             allow_dirty,
             ignore_instability,
@@ -20,21 +21,25 @@ fn main() -> anyhow::Result<()> {
             allow_auto_publish_of_stable_crates,
             no_dry_run_cargo_publish,
             update_crates_index,
-        }) => command::release(
-            command::release::Options {
-                dry_run: !execute,
-                allow_dirty,
-                ignore_instability,
-                skip_publish,
-                skip_tag,
-                no_dry_run_cargo_publish,
-                no_verify: dangerously_pass_no_verify,
-                allow_auto_publish_of_stable_crates,
-                update_crates_index,
-            },
-            bump.unwrap_or_else(|| "keep".into()),
-            crates,
-        )?,
+        }) => {
+            let bump = bump.unwrap_or_else(|| "keep".into());
+            command::release(
+                command::release::Options {
+                    dry_run: !execute,
+                    allow_dirty,
+                    ignore_instability,
+                    skip_publish,
+                    skip_tag,
+                    no_dry_run_cargo_publish,
+                    no_verify: dangerously_pass_no_verify,
+                    allow_auto_publish_of_stable_crates,
+                    update_crates_index,
+                },
+                crates,
+                bump.clone(),
+                bump_dependencies.unwrap_or(bump),
+            )?
+        }
     };
 
     Ok(())

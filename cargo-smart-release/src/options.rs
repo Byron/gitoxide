@@ -72,6 +72,13 @@ pub struct SmartRelease {
     #[argh(option, short = 'b')]
     pub bump: Option<String>,
 
+    /// specify the kind of version bump to apply to dependencies only.
+    ///
+    /// Can be 'major', 'minor' or 'patch', or 'keep' which doesn't alter the version.
+    /// If unspecified, the value of --bump will be used.
+    #[argh(option, short = 'b')]
+    pub bump_dependencies: Option<String>,
+
     /// the name of the crates to be released, along with all of their dependencies if needed, using `cargo release`
     #[argh(positional)]
     pub crates: Vec<String>,

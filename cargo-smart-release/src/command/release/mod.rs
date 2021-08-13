@@ -1,6 +1,6 @@
 use crate::command::release::Options;
 use anyhow::bail;
-use cargo_metadata::{camino::Utf8PathBuf, Dependency, DependencyKind, Metadata, Package};
+use cargo_metadata::{camino::Utf8PathBuf, Dependency, DependencyKind, Metadata, Package, Version};
 use git_repository::{refs::packed, Repository};
 use std::collections::BTreeSet;
 
@@ -23,10 +23,13 @@ pub(in crate::command::release_impl) struct Context {
     repo: Repository,
     packed_refs: Option<packed::Buffer>,
     index: Index,
+    crate_names: Vec<String>,
+    bump: String,
+    bump_dependencies: String,
 }
 
 impl Context {
-    fn new() -> anyhow::Result<Self> {
+    fn new(crate_names: Vec<String>, bump: String, bump_dependencies: String) -> anyhow::Result<Self> {
         let meta = cargo_metadata::MetadataCommand::new().exec()?;
         let root = meta.workspace_root.clone();
         let repo = git_repository::discover(&root)?;
@@ -38,17 +41,20 @@ impl Context {
             meta,
             packed_refs,
             index,
+            crate_names,
+            bump,
+            bump_dependencies,
         })
     }
 }
 
 /// In order to try dealing with https://github.com/sunng87/cargo-release/issues/224 and also to make workspace
 /// releases more selective.
-pub fn release(options: Options, version_bump_spec: String, mut crates: Vec<String>) -> anyhow::Result<()> {
+pub fn release(options: Options, crates: Vec<String>, bump: String, bump_dependencies: String) -> anyhow::Result<()> {
     if options.no_dry_run_cargo_publish && !options.dry_run {
         bail!("The --no-dry-run-cargo-publish flag is only effective without --execute")
     }
-    let ctx = Context::new()?;
+    let mut ctx = Context::new(crates, bump, bump_dependencies)?;
     if options.update_crates_index {
         log::info!("Updating crates-io index at '{}'", ctx.index.path().display());
         ctx.index.update()?;
@@ -56,7 +62,7 @@ pub fn release(options: Options, version_bump_spec: String, mut crates: Vec<Stri
         log::warn!("Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already");
     }
 
-    if crates.is_empty() {
+    if ctx.crate_names.is_empty() {
         let crate_name = std::env::current_dir()?
             .file_name()
             .expect("a valid directory with a name")
@@ -67,21 +73,16 @@ pub fn release(options: Options, version_bump_spec: String, mut crates: Vec<Stri
             "Using '{}' as crate name as no one was provided. Specify one if this isn't correct",
             crate_name
         );
-        crates = vec![crate_name];
+        ctx.crate_names = vec![crate_name];
     }
-    release_depth_first(ctx, crates, &version_bump_spec, options)?;
+    release_depth_first(ctx, options)?;
     Ok(())
 }
 
-fn release_depth_first(
-    ctx: Context,
-    crate_names: Vec<String>,
-    bump_spec: &str,
-    options: Options,
-) -> anyhow::Result<()> {
+fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     let meta = &ctx.meta;
     let changed_crate_names_to_publish =
-        traverse_dependencies_and_find_crates_for_publishing(meta, &crate_names, &ctx, options)?;
+        traverse_dependencies_and_find_crates_for_publishing(meta, &ctx.crate_names, &ctx, options)?;
 
     let crates_to_publish_together = resolve_cycles_with_publish_group(meta, &changed_crate_names_to_publish, options)?;
 
@@ -91,12 +92,12 @@ fn release_depth_first(
     {
         let publishee = package_by_name(meta, publishee_name)?;
 
-        let (new_version, commit_id) = perform_single_release(meta, publishee, options, bump_spec, &ctx)?;
+        let (new_version, commit_id) = perform_single_release(meta, publishee, options, &ctx)?;
         git::create_version_tag(publishee, &new_version, commit_id, &ctx.repo, options)?;
     }
 
     if !crates_to_publish_together.is_empty() {
-        perforrm_multi_version_release(&ctx, bump_spec, options, meta, crates_to_publish_together)?;
+        perforrm_multi_version_release(&ctx, options, meta, crates_to_publish_together)?;
     }
 
     Ok(())
@@ -104,7 +105,6 @@ fn release_depth_first(
 
 fn perforrm_multi_version_release(
     ctx: &Context,
-    bump_spec: &str,
     options: Options,
     meta: &Metadata,
     crates_to_publish_together: Vec<String>,
@@ -113,7 +113,8 @@ fn perforrm_multi_version_release(
         .into_iter()
         .map(|name| {
             let p = package_by_name(meta, &name)?;
-            bump_version(&p.version.to_string(), bump_spec).map(|v| (p, v.to_string()))
+            let new_version = bump_version(&p.version.to_string(), select_publishee_bump_spec(&name, ctx))?;
+            validated_new_version(&p, new_version, ctx).map(|v| (p, v.to_string()))
         })
         .collect::<Result<Vec<_>, _>>()?;
 
@@ -126,7 +127,7 @@ fn perforrm_multi_version_release(
     let commit_id = manifest::edit_version_and_fixup_dependent_crates(
         meta,
         &crates_to_publish_together,
-        bump_spec_may_cause_empty_commits(bump_spec),
+        bump_spec_may_cause_empty_commits(&ctx.bump) && bump_spec_may_cause_empty_commits(&ctx.bump_dependencies),
         options,
         &ctx,
     )?;
@@ -385,28 +386,26 @@ fn hops_for_dependency_to_link_back_to_publishee<'a>(
     None
 }
 
+fn select_publishee_bump_spec<'a>(name: &String, ctx: &'a Context) -> &'a str {
+    if ctx.crate_names.contains(name) {
+        &ctx.bump
+    } else {
+        &ctx.bump_dependencies
+    }
+}
+
 fn perform_single_release(
     meta: &Metadata,
     publishee: &Package,
     options: Options,
-    bump_spec: &str,
     ctx: &Context,
 ) -> anyhow::Result<(String, ObjectId)> {
-    let new_version = bump_version(&publishee.version.to_string(), bump_spec)?;
-    match ctx.index.crate_(&publishee.name) {
-        Some(existing_release) => {
-            let existing_version = semver::Version::parse(existing_release.latest_version().version())?;
-            if existing_version >= new_version {
-                bail!(
-                    "Latest published version of '{}' is {}, the new version is {}. Consider using --bump <level>.",
-                    publishee.name,
-                    existing_release.latest_version().version(),
-                    new_version
-                );
-            }
-        }
-        None => log::info!("Congratulations for the new release of '{}' 🎉", publishee.name),
-    };
+    let bump_spec = select_publishee_bump_spec(&publishee.name, ctx);
+    let new_version = validated_new_version(
+        &publishee,
+        bump_version(&publishee.version.to_string(), bump_spec)?,
+        ctx,
+    )?;
     log::info!(
         "{} prepare release of {} v{}",
         will(options.dry_run),
@@ -423,4 +422,22 @@ fn perform_single_release(
     )?;
     cargo::publish_crate(publishee, &[], options)?;
     Ok((new_version, commit_id))
+}
+
+fn validated_new_version(publishee: &Package, new_version: Version, ctx: &Context) -> anyhow::Result<Version> {
+    match ctx.index.crate_(&publishee.name) {
+        Some(existing_release) => {
+            let existing_version = semver::Version::parse(existing_release.latest_version().version())?;
+            if &existing_version >= &new_version {
+                bail!(
+                    "Latest published version of '{}' is {}, the new version is {}. Consider using --bump <level> or --bump-dependencies <level>.",
+                    publishee.name,
+                    existing_release.latest_version().version(),
+                    new_version
+                );
+            }
+        }
+        None => log::info!("Congratulations for the new release of '{}' 🎉", publishee.name),
+    };
+    Ok(new_version)
 }
