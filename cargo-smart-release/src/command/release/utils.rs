@@ -1,6 +1,6 @@
 use anyhow::{anyhow, bail};
 use cargo_metadata::{Dependency, Metadata, Package, PackageId};
-use dia_semver::Semver;
+use semver::{BuildMetadata, Prerelease, Version};
 
 pub fn will(not_really: bool) -> &'static str {
     if not_really {
@@ -18,17 +18,31 @@ pub fn bump_spec_may_cause_empty_commits(bump_spec: &str) -> bool {
     bump_spec == "keep"
 }
 
-/// TODO: Potentially just use existing semver here to avoid conversions and reduce complexity
-pub fn bump_version(version: &str, bump_spec: &str) -> anyhow::Result<Semver> {
-    let v = Semver::parse(version).map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err.to_string()))?;
-    Ok(match bump_spec {
-        "major" => v.new_major(),
-        "minor" => v.new_minor(),
-        "patch" => v.new_patch(),
-        "keep" => v.into(),
+pub fn bump_version(version: &str, bump_spec: &str) -> anyhow::Result<Version> {
+    let mut v = Version::parse(version)?;
+    match bump_spec {
+        "major" => {
+            v.major += 1;
+            v.minor = 0;
+            v.patch = 0;
+            v.build = BuildMetadata::EMPTY;
+            v.pre = Prerelease::EMPTY;
+        }
+        "minor" => {
+            v.minor += 1;
+            v.patch = 0;
+            v.build = BuildMetadata::EMPTY;
+            v.pre = Prerelease::EMPTY;
+        }
+        "patch" => {
+            v.patch += 1;
+            v.build = BuildMetadata::EMPTY;
+            v.pre = Prerelease::EMPTY;
+        }
+        "keep" => {}
         _ => bail!("Invalid version specification: '{}'", bump_spec),
-    }
-    .expect("no overflow"))
+    };
+    Ok(v)
 }
 
 pub fn is_workspace_member(meta: &Metadata, crate_name: &str) -> bool {
