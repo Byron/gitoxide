@@ -3,7 +3,7 @@ use super::{
     utils::{
         bump_spec_may_cause_empty_commits, bump_version, names_and_versions, package_by_id, package_eq_dependency, will,
     },
-    Options, State,
+    Context, Options,
 };
 use anyhow::bail;
 use cargo_metadata::{Metadata, Package};
@@ -15,7 +15,7 @@ pub(in crate::command::release_impl) fn perform_single_release(
     publishee: &Package,
     options: Options,
     bump_spec: &str,
-    state: &State,
+    state: &Context,
 ) -> anyhow::Result<(String, ObjectId)> {
     let new_version = bump_version(&publishee.version.to_string(), bump_spec)?.to_string();
     log::info!(
@@ -88,7 +88,7 @@ pub(in crate::command::release_impl) fn edit_manifest_and_fixup_dependent_crates
     Options {
         dry_run, allow_dirty, ..
     }: Options,
-    state: &State,
+    state: &Context,
 ) -> anyhow::Result<ObjectId> {
     if !allow_dirty {
         git::assure_clean_working_tree()?;

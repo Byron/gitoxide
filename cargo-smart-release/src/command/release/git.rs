@@ -1,4 +1,4 @@
-use super::{Options, State};
+use super::{Context, Options};
 use crate::command::release_impl::tag_name_for;
 use anyhow::{anyhow, bail};
 use bstr::ByteSlice;
@@ -23,7 +23,7 @@ use std::{convert::TryInto, process::Command};
 
 pub(in crate::command::release_impl) fn has_changed_since_last_release(
     package: &Package,
-    state: &State,
+    state: &Context,
 ) -> anyhow::Result<bool> {
     let version_tag_name = tag_name_for(&package.name, &package.version.to_string());
     let mut tag_ref = match state.repo.refs.find(&version_tag_name, state.packed_refs.as_ref())? {
@@ -129,7 +129,7 @@ fn find_directory_id_in_tree(
     tree_id.ok_or_else(|| anyhow!("path '{}' didn't exist in tree {}", path, id))
 }
 
-fn peel_ref_fully(reference: &mut file::Reference<'_>, state: &State) -> anyhow::Result<ObjectId> {
+fn peel_ref_fully(reference: &mut file::Reference<'_>, state: &Context) -> anyhow::Result<ObjectId> {
     reference
         .peel_to_id_in_place(&state.repo.refs, state.packed_refs.as_ref(), |oid, buf| {
             state
@@ -165,7 +165,7 @@ fn resolve_tree_id_from_ref_target(mut id: ObjectId, repo: &Repository, buf: &mu
 pub(in crate::command::release_impl) fn commit_changes(
     message: impl AsRef<str>,
     empty_commit_possible: bool,
-    state: &State,
+    state: &Context,
 ) -> anyhow::Result<ObjectId> {
     // TODO: replace with gitoxide one day
     let mut cmd = Command::new("git");
