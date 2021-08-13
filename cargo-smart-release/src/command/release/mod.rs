@@ -2,7 +2,7 @@ use crate::command::release::Options;
 use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Dependency, DependencyKind, Metadata, Package};
 use git_repository::{refs::packed, Repository};
-use std::{collections::BTreeSet, convert::TryInto, path::PathBuf};
+use std::collections::BTreeSet;
 
 mod utils;
 use git_repository::hash::ObjectId;
@@ -18,18 +18,21 @@ mod manifest;
 
 pub(in crate::command::release_impl) struct Context {
     root: Utf8PathBuf,
+    meta: Metadata,
     repo: Repository,
     packed_refs: Option<packed::Buffer>,
 }
 
 impl Context {
-    fn new(repo_path: impl Into<PathBuf>) -> anyhow::Result<Self> {
-        let root = repo_path.into();
+    fn new() -> anyhow::Result<Self> {
+        let meta = cargo_metadata::MetadataCommand::new().exec()?;
+        let root = meta.workspace_root.clone();
         let repo = git_repository::discover(&root)?;
         let packed_refs = repo.refs.packed()?;
         Ok(Context {
-            root: root.try_into()?,
+            root,
             repo,
+            meta,
             packed_refs,
         })
     }
@@ -46,8 +49,8 @@ pub fn release(options: Options, version_bump_spec: String, crates: Vec<String>)
 }
 
 fn release_depth_first(crate_names: Vec<String>, bump_spec: &str, options: Options) -> anyhow::Result<()> {
-    let meta = cargo_metadata::MetadataCommand::new().exec()?;
-    let context = Context::new(std::env::current_dir()?)?;
+    let context = Context::new()?;
+    let meta = &context.meta;
     let changed_crate_names_to_publish =
         traverse_dependencies_and_find_crates_for_publishing(&meta, &crate_names, &context, options)?;
 
