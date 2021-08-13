@@ -58,7 +58,7 @@ fn release_depth_first(crate_names: Vec<String>, bump_spec: &str, options: Optio
         .iter()
         .filter(|n| !crates_to_publish_together.contains(n))
     {
-        let publishee = package_by_name(&meta, publishee_name).expect("exists");
+        let publishee = package_by_name(&meta, publishee_name)?;
 
         let (new_version, commit_id) = perform_single_release(&meta, publishee, options, bump_spec, &context)?;
         git::create_version_tag(publishee, &new_version, commit_id, &context.repo, options)?;
@@ -68,7 +68,7 @@ fn release_depth_first(crate_names: Vec<String>, bump_spec: &str, options: Optio
         let mut crates_to_publish_together = crates_to_publish_together
             .into_iter()
             .map(|name| {
-                let p = package_by_name(&meta, &name).expect("package present");
+                let p = package_by_name(&meta, &name)?;
                 bump_version(&p.version.to_string(), bump_spec).map(|v| (p, v.to_string()))
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -109,7 +109,7 @@ fn resolve_cycles_with_publish_group(
     let mut crates_to_publish_additionally_to_avoid_instability = Vec::new();
     let mut publish_group = Vec::<String>::new();
     for publishee_name in changed_crate_names_to_publish.iter() {
-        let publishee = package_by_name(meta, publishee_name).expect("exists");
+        let publishee = package_by_name(meta, publishee_name)?;
         let cycles = workspace_members_referring_to_publishee(meta, publishee);
         if cycles.is_empty() {
             log::debug!("'{}' is cycle-free", publishee.name);
@@ -172,6 +172,7 @@ fn traverse_dependencies_and_find_crates_for_publishing(
             index = 0;
         }
         changed_crate_names_to_publish.push(crate_name.to_owned());
+        let index_of_unconditionally_published_crate = index;
         while let Some(crate_name) = changed_crate_names_to_publish.get(index) {
             let package = package_by_name(meta, crate_name)?;
             for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
@@ -179,7 +180,7 @@ fn traverse_dependencies_and_find_crates_for_publishing(
                     continue;
                 }
                 seen.insert(dependency.name.clone());
-                let dep_package = package_by_name(meta, &dependency.name).expect("exists");
+                let dep_package = package_by_name(meta, &dependency.name)?;
                 if git::has_changed_since_last_release(dep_package, ctx)? {
                     if dep_package.version.major == 0 || allow_auto_publish_of_stable_crates {
                         log::info!(
@@ -204,6 +205,18 @@ fn traverse_dependencies_and_find_crates_for_publishing(
                 }
             }
             index += 1;
+        }
+        if index - 1 == index_of_unconditionally_published_crate {
+            let crate_package = package_by_name(&meta, crate_name)?;
+            if !git::has_changed_since_last_release(crate_package, &ctx)? {
+                log::info!(
+                    "Skipping provided {} v{} hasn't changed since last released",
+                    crate_package.name,
+                    crate_package.version
+                );
+                changed_crate_names_to_publish.pop();
+                index -= 1;
+            }
         }
         seen.insert(crate_name.to_owned());
     }
