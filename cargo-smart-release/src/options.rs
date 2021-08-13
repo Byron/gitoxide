@@ -26,6 +26,11 @@ pub struct SmartRelease {
     #[argh(switch, short = 'n')]
     pub execute: bool,
 
+    /// even without --execute actually run 'cargo publish' in dry-run mode, but without having altered any manifest files
+    /// to contain new versions.
+    #[argh(switch)]
+    pub dry_run_cargo_publish: bool,
+
     /// allow publishes to take place on a dirty working tree. Really not recommended alongside --execute.
     #[argh(switch)]
     pub allow_dirty: bool,

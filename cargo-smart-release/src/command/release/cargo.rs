@@ -41,6 +41,7 @@ pub(in crate::command::release_impl) fn publish_crate(
     Options {
         skip_publish,
         dry_run,
+        dry_run_cargo_publish,
         allow_dirty,
         no_verify,
         ..
@@ -64,12 +65,12 @@ pub(in crate::command::release_impl) fn publish_crate(
         if no_verify || must_not_verify {
             c.arg("--no-verify");
         }
-        if dry_run {
+        if dry_run_cargo_publish {
             c.arg("--dry-run");
         }
         c.arg("--manifest-path").arg(&publishee.manifest_path);
         log::info!("Will run {:?}", c);
-        if c.status()?.success() {
+        if (dry_run_cargo_publish && c.status()?.success()) || (dry_run || c.status()?.success()) {
             break;
         } else if attempt == max_attempts || dry_run {
             bail!("Could not successfully execute 'cargo publish'")
