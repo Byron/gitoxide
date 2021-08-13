@@ -77,7 +77,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
         }
         state.seen.insert(crate_name);
     }
-    changed_crate_names_to_publish = reorder_according_to_resolution_order(&meta, &changed_crate_names_to_publish);
+    changed_crate_names_to_publish.reverse();
 
     let crates_to_publish_together = {
         let mut crates_to_publish_additionally_to_avoid_instability = Vec::new();
