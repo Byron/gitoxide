@@ -123,7 +123,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
                 crates_to_publish_additionally_to_avoid_instability.join(", ")
             )
         }
-        reorder_according_to_resolution_order(&meta, &publish_group)
+        reorder_according_to_existing_order(&changed_crate_names_to_publish, &publish_group)
     };
 
     for publishee_name in changed_crate_names_to_publish
@@ -199,20 +199,12 @@ fn dependency_tree_has_link_to_existing_crate_names(
     false
 }
 
-fn reorder_according_to_resolution_order(meta: &Metadata, workspace_members: &[String]) -> Vec<String> {
-    meta.resolve
-        .as_ref()
-        .expect("resolve_data")
-        .nodes
+fn reorder_according_to_existing_order(reference_order: &[String], workspace_members: &[String]) -> Vec<String> {
+    reference_order
         .iter()
-        .filter_map(|node| {
-            meta.workspace_members
-                .contains(&node.id)
-                .then(|| package_by_id(meta, &node.id))
-                .filter(|p| workspace_members.contains(&p.name))
-        })
-        .fold(Vec::new(), |mut acc, item| {
-            acc.push(item.name.clone());
+        .filter(|name| workspace_members.contains(name))
+        .fold(Vec::new(), |mut acc, name| {
+            acc.push(name.clone());
             acc
         })
 }
