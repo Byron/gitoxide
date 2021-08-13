@@ -71,7 +71,7 @@ pub fn package_by_name<'a>(meta: &'a Metadata, name: &str) -> anyhow::Result<&'a
     meta.packages
         .iter()
         .find(|p| p.name == name)
-        .ok_or_else(|| anyhow!("workspace member must be a listed package: '{}'", name))
+        .ok_or_else(|| anyhow!("workspace member '{}' must be a listed package", name))
 }
 
 pub fn package_for_dependency<'a>(meta: &'a Metadata, dep: &Dependency) -> &'a Package {

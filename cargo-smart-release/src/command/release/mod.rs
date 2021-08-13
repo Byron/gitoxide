@@ -40,19 +40,34 @@ impl Context {
 
 /// In order to try dealing with https://github.com/sunng87/cargo-release/issues/224 and also to make workspace
 /// releases more selective.
-pub fn release(options: Options, version_bump_spec: String, crates: Vec<String>) -> anyhow::Result<()> {
+pub fn release(options: Options, version_bump_spec: String, mut crates: Vec<String>) -> anyhow::Result<()> {
+    let ctx = Context::new()?;
     if crates.is_empty() {
-        bail!("Please provide at least one crate name which also is a workspace member");
+        let crate_name = std::env::current_dir()?
+            .file_name()
+            .expect("a valid directory with a name")
+            .to_str()
+            .expect("directory is UTF8 representable")
+            .to_owned();
+        log::warn!(
+            "Using '{}' as crate name as no one was provided. Specify one if this isn't correct",
+            crate_name
+        );
+        crates = vec![crate_name];
     }
-    release_depth_first(crates, &version_bump_spec, options)?;
+    release_depth_first(ctx, crates, &version_bump_spec, options)?;
     Ok(())
 }
 
-fn release_depth_first(crate_names: Vec<String>, bump_spec: &str, options: Options) -> anyhow::Result<()> {
-    let context = Context::new()?;
-    let meta = &context.meta;
+fn release_depth_first(
+    ctx: Context,
+    crate_names: Vec<String>,
+    bump_spec: &str,
+    options: Options,
+) -> anyhow::Result<()> {
+    let meta = &ctx.meta;
     let changed_crate_names_to_publish =
-        traverse_dependencies_and_find_crates_for_publishing(&meta, &crate_names, &context, options)?;
+        traverse_dependencies_and_find_crates_for_publishing(&meta, &crate_names, &ctx, options)?;
 
     let crates_to_publish_together =
         resolve_cycles_with_publish_group(&meta, &changed_crate_names_to_publish, options)?;
@@ -63,8 +78,8 @@ fn release_depth_first(crate_names: Vec<String>, bump_spec: &str, options: Optio
     {
         let publishee = package_by_name(&meta, publishee_name)?;
 
-        let (new_version, commit_id) = perform_single_release(&meta, publishee, options, bump_spec, &context)?;
-        git::create_version_tag(publishee, &new_version, commit_id, &context.repo, options)?;
+        let (new_version, commit_id) = perform_single_release(&meta, publishee, options, bump_spec, &ctx)?;
+        git::create_version_tag(publishee, &new_version, commit_id, &ctx.repo, options)?;
     }
 
     if !crates_to_publish_together.is_empty() {
@@ -87,7 +102,7 @@ fn release_depth_first(crate_names: Vec<String>, bump_spec: &str, options: Optio
             &crates_to_publish_together,
             bump_spec_may_cause_empty_commits(bump_spec),
             options,
-            &context,
+            &ctx,
         )?;
 
         crates_to_publish_together.reverse();
@@ -97,7 +112,7 @@ fn release_depth_first(crate_names: Vec<String>, bump_spec: &str, options: Optio
                 .map(|(p, _)| p.name.to_owned())
                 .collect();
             cargo::publish_crate(publishee, &unpublished_crates, options)?;
-            git::create_version_tag(publishee, &new_version, commit_id, &context.repo, options)?;
+            git::create_version_tag(publishee, &new_version, commit_id, &ctx.repo, options)?;
         }
     }
 
@@ -168,7 +183,7 @@ fn traverse_dependencies_and_find_crates_for_publishing(
         if seen.contains(crate_name) {
             continue;
         }
-        if dependency_tree_has_link_to_existing_crate_names(meta, crate_name, &changed_crate_names_to_publish) {
+        if dependency_tree_has_link_to_existing_crate_names(meta, crate_name, &changed_crate_names_to_publish)? {
             // redo all work which includes the previous tree. Could be more efficient but that would be more complicated.
             seen.clear();
             changed_crate_names_to_publish.clear();
@@ -231,7 +246,7 @@ fn dependency_tree_has_link_to_existing_crate_names(
     meta: &Metadata,
     root_name: &str,
     existing_names: &[String],
-) -> bool {
+) -> anyhow::Result<bool> {
     let mut dependency_names = vec![root_name];
     let mut seen = BTreeSet::new();
     while let Some(crate_name) = dependency_names.pop() {
@@ -239,18 +254,17 @@ fn dependency_tree_has_link_to_existing_crate_names(
             continue;
         }
         if existing_names.iter().any(|n| n == crate_name) {
-            return true;
+            return Ok(true);
         }
         dependency_names.extend(
-            package_by_name(meta, crate_name)
-                .expect("exists")
+            package_by_name(meta, crate_name)?
                 .dependencies
                 .iter()
                 .filter(|dep| is_workspace_member(meta, &dep.name))
                 .map(|dep| dep.name.as_str()),
         )
     }
-    false
+    Ok(false)
 }
 
 fn reorder_according_to_existing_order(reference_order: &[String], names_to_order: &[String]) -> Vec<String> {
