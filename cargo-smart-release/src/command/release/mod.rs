@@ -6,8 +6,9 @@ use std::{collections::BTreeSet, convert::TryInto, path::PathBuf};
 
 mod utils;
 use utils::{
-    bump_spec_may_cause_empty_commits, bump_version, is_workspace_member, names_and_versions, package_by_id,
-    package_by_name, package_eq_dependency, package_for_dependency, tag_name_for, will, workspace_package_by_id,
+    bump_spec_may_cause_empty_commits, bump_version, is_dependency_with_version_requirement, is_workspace_member,
+    names_and_versions, package_by_id, package_by_name, package_eq_dependency, package_for_dependency, tag_name_for,
+    will, workspace_package_by_id,
 };
 
 mod cargo;
@@ -199,6 +200,7 @@ fn workspace_members_referring_to_publishee<'a>(meta: &'a Metadata, publishee: &
     publishee
         .dependencies
         .iter()
+        .filter(|dep| is_dependency_with_version_requirement(dep)) // unspecified versions don't matter for publishing
         .filter(|dep| {
             dep.kind != DependencyKind::Normal
                 && meta
