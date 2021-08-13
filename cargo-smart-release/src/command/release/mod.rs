@@ -168,27 +168,21 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
 }
 
 fn reorder_according_to_resolution_order(meta: &Metadata, workspace_members: &[String]) -> Vec<String> {
-    let mut out = Vec::new();
-    for package_in_resolve_order in meta
-        .resolve
+    meta.resolve
         .as_ref()
         .expect("resolve_data")
         .nodes
         .iter()
         .filter_map(|node| {
-            meta.workspace_members.contains(&node.id).then(|| {
-                meta.packages
-                    .iter()
-                    .find(|p| p.id == node.id)
-                    .expect("node always present")
-            })
+            meta.workspace_members
+                .contains(&node.id)
+                .then(|| package_by_id(meta, &node.id))
+                .filter(|p| workspace_members.contains(&p.name))
         })
-    {
-        if workspace_members.contains(&package_in_resolve_order.name) {
-            out.push(package_in_resolve_order.name.clone())
-        }
-    }
-    out
+        .fold(Vec::new(), |mut acc, item| {
+            acc.push(item.name.clone());
+            acc
+        })
 }
 
 struct Cycle<'a> {
