@@ -109,7 +109,7 @@ fn set_version_and_update_package_dependency(
                 .dependencies
                 .iter()
                 .filter(|dep| &dep.name == name_to_find)
-                .map(|dep| dep.rename.as_ref().unwrap_or_else(|| &dep.name))
+                .map(|dep| dep.rename.as_ref().unwrap_or(&dep.name))
             {
                 if let Some(current_version_req) = doc
                     .as_table_mut()
@@ -118,7 +118,7 @@ fn set_version_and_update_package_dependency(
                     .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_inline_table_mut()))
                     .and_then(|name_table| name_table.get_mut("version"))
                 {
-                    let version_req = VersionReq::parse(&current_version_req.as_str().expect("versions are strings"))?;
+                    let version_req = VersionReq::parse(current_version_req.as_str().expect("versions are strings"))?;
                     if !version_req.matches(&new_version) {
                         let supported_op = Op::Caret;
                         if version_req.comparators.is_empty()

@@ -67,18 +67,17 @@ fn release_depth_first(
 ) -> anyhow::Result<()> {
     let meta = &ctx.meta;
     let changed_crate_names_to_publish =
-        traverse_dependencies_and_find_crates_for_publishing(&meta, &crate_names, &ctx, options)?;
+        traverse_dependencies_and_find_crates_for_publishing(meta, &crate_names, &ctx, options)?;
 
-    let crates_to_publish_together =
-        resolve_cycles_with_publish_group(&meta, &changed_crate_names_to_publish, options)?;
+    let crates_to_publish_together = resolve_cycles_with_publish_group(meta, &changed_crate_names_to_publish, options)?;
 
     for publishee_name in changed_crate_names_to_publish
         .iter()
         .filter(|n| !crates_to_publish_together.contains(n))
     {
-        let publishee = package_by_name(&meta, publishee_name)?;
+        let publishee = package_by_name(meta, publishee_name)?;
 
-        let (new_version, commit_id) = perform_single_release(&meta, publishee, options, bump_spec, &ctx)?;
+        let (new_version, commit_id) = perform_single_release(meta, publishee, options, bump_spec, &ctx)?;
         git::create_version_tag(publishee, &new_version, commit_id, &ctx.repo, options)?;
     }
 
@@ -86,7 +85,7 @@ fn release_depth_first(
         let mut crates_to_publish_together = crates_to_publish_together
             .into_iter()
             .map(|name| {
-                let p = package_by_name(&meta, &name)?;
+                let p = package_by_name(meta, &name)?;
                 bump_version(&p.version.to_string(), bump_spec).map(|v| (p, v.to_string()))
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -98,7 +97,7 @@ fn release_depth_first(
         );
 
         let commit_id = manifest::edit_version_and_fixup_dependent_crates(
-            &meta,
+            meta,
             &crates_to_publish_together,
             bump_spec_may_cause_empty_commits(bump_spec),
             options,
@@ -225,8 +224,8 @@ fn traverse_dependencies_and_find_crates_for_publishing(
             index += 1;
         }
         if index - 1 == index_of_unconditionally_published_crate {
-            let crate_package = package_by_name(&meta, crate_name)?;
-            if !git::has_changed_since_last_release(crate_package, &ctx)? {
+            let crate_package = package_by_name(meta, crate_name)?;
+            if !git::has_changed_since_last_release(crate_package, ctx)? {
                 log::info!(
                     "Skipping provided {} v{} hasn't changed since last released",
                     crate_package.name,
