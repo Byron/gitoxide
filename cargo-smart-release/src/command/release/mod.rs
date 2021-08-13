@@ -8,9 +8,9 @@ mod utils;
 use crates_index::Index;
 use git_repository::hash::ObjectId;
 use utils::{
-    bump_spec_may_cause_empty_commits, bump_version, is_dependency_with_version_requirement, is_workspace_member,
-    names_and_versions, package_by_id, package_by_name, package_eq_dependency, package_for_dependency, tag_name_for,
-    will, workspace_package_by_id,
+    bump_spec_may_cause_empty_commits, is_dependency_with_version_requirement, is_workspace_member, names_and_versions,
+    package_by_id, package_by_name, package_eq_dependency, package_for_dependency, tag_name_for, will,
+    workspace_package_by_id,
 };
 
 mod cargo;
@@ -118,8 +118,13 @@ fn perforrm_multi_version_release(
         .into_iter()
         .map(|name| {
             let p = package_by_name(meta, &name)?;
-            let new_version = bump_version(&p.version.to_string(), select_publishee_bump_spec(&name, ctx))?;
-            validated_new_version(&p, new_version, ctx, options.no_bump_on_demand).map(|v| (p, v.to_string()))
+            bump_to_valid_version(
+                &p,
+                select_publishee_bump_spec(&p.name, ctx),
+                ctx,
+                options.no_bump_on_demand,
+            )
+            .map(|v| (p, v.to_string()))
         })
         .collect::<Result<Vec<_>, _>>()?;
 
@@ -406,12 +411,7 @@ fn perform_single_release(
     ctx: &Context,
 ) -> anyhow::Result<(String, ObjectId)> {
     let bump_spec = select_publishee_bump_spec(&publishee.name, ctx);
-    let new_version = validated_new_version(
-        &publishee,
-        bump_version(&publishee.version.to_string(), bump_spec)?,
-        ctx,
-        options.no_bump_on_demand,
-    )?;
+    let new_version = bump_to_valid_version(publishee, bump_spec, ctx, options.no_bump_on_demand)?;
     log::info!(
         "{} prepare release of {} v{}",
         will(options.dry_run),
@@ -430,45 +430,78 @@ fn perform_single_release(
     Ok((new_version, commit_id))
 }
 
-fn validated_new_version(
+fn bump_to_valid_version(
     publishee: &Package,
-    mut new_version: Version,
+    bump_spec: &str,
     ctx: &Context,
     no_bump_on_demand: bool,
 ) -> anyhow::Result<Version> {
-    let bump_on_demand = !no_bump_on_demand;
-    match ctx.index.crate_(&publishee.name) {
-        Some(existing_release) => {
-            let existing_version = semver::Version::parse(existing_release.latest_version().version())?;
-            if &existing_version >= &new_version {
-                bail!(
+    fn validated_new_version(
+        publishee: &Package,
+        mut new_version: Version,
+        ctx: &Context,
+        no_bump_on_demand: bool,
+    ) -> anyhow::Result<Version> {
+        let bump_on_demand = !no_bump_on_demand;
+        match ctx.index.crate_(&publishee.name) {
+            Some(existing_release) => {
+                let existing_version = semver::Version::parse(existing_release.latest_version().version())?;
+                if &existing_version >= &new_version {
+                    bail!(
                     "Latest published version of '{}' is {}, the new version is {}. Consider using --bump <level> or --bump-dependencies <level>.",
                     publishee.name,
                     existing_release.latest_version().version(),
                     new_version
                 );
+                }
+                if bump_on_demand && publishee.version > existing_version {
+                    log::info!(
+                        "Using unpublished version {} of crate {} instead of bumped version {}",
+                        publishee.version,
+                        publishee.name,
+                        new_version
+                    );
+                    new_version = publishee.version.clone();
+                }
             }
-            if bump_on_demand && publishee.version > existing_version {
-                log::info!(
-                    "Using unpublished version {} of crate {} instead of bumped version {}",
-                    publishee.version,
-                    publishee.name,
-                    new_version
-                );
-                new_version = publishee.version.clone();
+            None => {
+                if bump_on_demand {
+                    log::info!(
+                        "Using current version {} instead of bumped one {}.",
+                        publishee.version,
+                        new_version
+                    );
+                    new_version = publishee.version.clone();
+                }
+                log::info!("Congratulations for the new release of '{}' 🎉", publishee.name);
             }
+        };
+        Ok(new_version)
+    }
+    use semver::{BuildMetadata, Prerelease};
+
+    let mut v = publishee.version.clone();
+    match bump_spec {
+        "major" => {
+            v.major += 1;
+            v.minor = 0;
+            v.patch = 0;
+            v.build = BuildMetadata::EMPTY;
+            v.pre = Prerelease::EMPTY;
         }
-        None => {
-            if bump_on_demand {
-                log::info!(
-                    "Using current version {} instead of bumped one {}.",
-                    publishee.version,
-                    new_version
-                );
-                new_version = publishee.version.clone();
-            }
-            log::info!("Congratulations for the new release of '{}' 🎉", publishee.name);
+        "minor" => {
+            v.minor += 1;
+            v.patch = 0;
+            v.build = BuildMetadata::EMPTY;
+            v.pre = Prerelease::EMPTY;
         }
+        "patch" => {
+            v.patch += 1;
+            v.build = BuildMetadata::EMPTY;
+            v.pre = Prerelease::EMPTY;
+        }
+        "keep" => {}
+        _ => bail!("Invalid version specification: '{}'", bump_spec),
     };
-    Ok(new_version)
+    validated_new_version(publishee, v, ctx, no_bump_on_demand)
 }

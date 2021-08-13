@@ -1,6 +1,5 @@
-use anyhow::{anyhow, bail};
+use anyhow::anyhow;
 use cargo_metadata::{Dependency, Metadata, Package, PackageId};
-use semver::{BuildMetadata, Prerelease, Version};
 
 pub fn will(not_really: bool) -> &'static str {
     if not_really {
@@ -16,33 +15,6 @@ pub fn is_dependency_with_version_requirement(dep: &Dependency) -> bool {
 
 pub fn bump_spec_may_cause_empty_commits(bump_spec: &str) -> bool {
     bump_spec == "keep"
-}
-
-pub fn bump_version(version: &str, bump_spec: &str) -> anyhow::Result<Version> {
-    let mut v = Version::parse(version)?;
-    match bump_spec {
-        "major" => {
-            v.major += 1;
-            v.minor = 0;
-            v.patch = 0;
-            v.build = BuildMetadata::EMPTY;
-            v.pre = Prerelease::EMPTY;
-        }
-        "minor" => {
-            v.minor += 1;
-            v.patch = 0;
-            v.build = BuildMetadata::EMPTY;
-            v.pre = Prerelease::EMPTY;
-        }
-        "patch" => {
-            v.patch += 1;
-            v.build = BuildMetadata::EMPTY;
-            v.pre = Prerelease::EMPTY;
-        }
-        "keep" => {}
-        _ => bail!("Invalid version specification: '{}'", bump_spec),
-    };
-    Ok(v)
 }
 
 pub fn is_workspace_member(meta: &Metadata, crate_name: &str) -> bool {
