@@ -19,7 +19,7 @@ fn main() -> anyhow::Result<()> {
             skip_tag,
             dangerously_pass_no_verify,
             allow_auto_publish_of_stable_crates,
-            no_dry_run_cargo_publish,
+            dry_run_cargo_publish,
             update_crates_index,
             no_bump_on_demand,
         }) => {
@@ -32,7 +32,7 @@ fn main() -> anyhow::Result<()> {
                     ignore_instability,
                     skip_publish,
                     skip_tag,
-                    no_dry_run_cargo_publish,
+                    dry_run_cargo_publish,
                     no_verify: dangerously_pass_no_verify,
                     allow_auto_publish_of_stable_crates,
                     update_crates_index,

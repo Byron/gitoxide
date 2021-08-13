@@ -9,7 +9,7 @@ pub(in crate::command::release_impl) fn publish_crate(
     Options {
         skip_publish,
         dry_run,
-        no_dry_run_cargo_publish,
+        dry_run_cargo_publish,
         allow_dirty,
         no_verify,
         ..
@@ -23,7 +23,7 @@ pub(in crate::command::release_impl) fn publish_crate(
         .dependencies
         .iter()
         .any(|dep| other_publishee_names.contains(&dep.name));
-    let uses_cargo_dry_run = dry_run && !no_dry_run_cargo_publish;
+    let uses_cargo_dry_run = dry_run && dry_run_cargo_publish;
     let cargo_must_run = !dry_run || uses_cargo_dry_run;
     for attempt in 1..=max_attempts {
         let mut c = Command::new("cargo");

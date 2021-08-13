@@ -30,9 +30,10 @@ pub struct SmartRelease {
     #[argh(switch, short = 'd')]
     pub no_bump_on_demand: bool,
 
-    /// do not run 'cargo publish --dry-run' even without --execute. This is useful for getting all program output fast.
+    /// additionally run 'cargo publish --dry-run' when --execute is not set. This can be useful to see which local
+    /// crates do not build with the released versions of their workspace dependencies anymore.
     #[argh(switch)]
-    pub no_dry_run_cargo_publish: bool,
+    pub dry_run_cargo_publish: bool,
 
     /// allow publishes to take place on a dirty working tree. Really not recommended alongside --execute.
     #[argh(switch)]

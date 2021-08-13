@@ -11,18 +11,15 @@ Via `cargo`, which can be obtained using [rustup][rustup]
 cargo install cargo-smart-release
 ```
 
-### Usage
+### Preferred workflow
 
-```bash
-# simulate the release process but don't persist operations
-cargo smart-release workspace-package-1 another-workspace-package
+When developing various crates in a workspace I tend to edit code, and depending on the kind of edit, either increase the patch level, minor version or major version
+right after, depending on the basic rules of `semver`.
 
-# perform the actual release, resulting in all changed dependent workspace crates to be published.
-cargo smart-release workspace-package-1 another-workspace-package --execute
-
-# learn more…
-cargo smart-release --help
-```
+When ready for relasing a particular crate or set of crates of interest, run `cargo smart-release [<crate-name> ...]` to simulate a release. For particularly thorough
+but error-prone simulations (as in false positives) one could run `cargo smart-release --dry-run-cargo-publish`. After evaluating the release procedure and following
+instructions, one should end up with a fully automatic release of multiple crates. There are various other options that shouldn't be needed in the common case, use
+`cargo smart-release --help` to see them.
 
 ### Features
 

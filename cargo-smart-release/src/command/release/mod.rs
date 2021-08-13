@@ -51,7 +51,7 @@ impl Context {
 /// In order to try dealing with https://github.com/sunng87/cargo-release/issues/224 and also to make workspace
 /// releases more selective.
 pub fn release(options: Options, crates: Vec<String>, bump: String, bump_dependencies: String) -> anyhow::Result<()> {
-    if options.no_dry_run_cargo_publish && !options.dry_run {
+    if options.dry_run_cargo_publish && !options.dry_run {
         bail!("The --no-dry-run-cargo-publish flag is only effective without --execute")
     }
     let mut ctx = Context::new(crates, bump, bump_dependencies)?;
