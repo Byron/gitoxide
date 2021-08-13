@@ -1251,7 +1251,7 @@ dependencies = [
 
 [[package]]
 name = "git-traverse"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "git-hash",
  "git-object",
