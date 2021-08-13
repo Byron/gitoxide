@@ -26,6 +26,10 @@ pub struct SmartRelease {
     #[argh(switch, short = 'n')]
     pub execute: bool,
 
+    /// always bump versions as specified by --bump or --bump-dependencies even if this is not required.
+    #[argh(switch, short = 'd')]
+    pub no_bump_on_demand: bool,
+
     /// do not run 'cargo publish --dry-run' even without --execute. This is useful for getting all program output fast.
     #[argh(switch)]
     pub no_dry_run_cargo_publish: bool,

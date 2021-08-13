@@ -58,7 +58,12 @@ pub fn release(options: Options, crates: Vec<String>, bump: String, bump_depende
     if options.update_crates_index {
         log::info!("Updating crates-io index at '{}'", ctx.index.path().display());
         ctx.index.update()?;
-    } else if !ctx.index.exists() {
+    } else if !options.no_bump_on_demand {
+        log::warn!(
+            "Consider running with --update-crates-index to assure bumping on demand uses the latest information"
+        );
+    }
+    if !ctx.index.exists() {
         log::warn!("Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already");
     }
 
@@ -114,7 +119,7 @@ fn perforrm_multi_version_release(
         .map(|name| {
             let p = package_by_name(meta, &name)?;
             let new_version = bump_version(&p.version.to_string(), select_publishee_bump_spec(&name, ctx))?;
-            validated_new_version(&p, new_version, ctx).map(|v| (p, v.to_string()))
+            validated_new_version(&p, new_version, ctx, options.no_bump_on_demand).map(|v| (p, v.to_string()))
         })
         .collect::<Result<Vec<_>, _>>()?;
 
@@ -405,6 +410,7 @@ fn perform_single_release(
         &publishee,
         bump_version(&publishee.version.to_string(), bump_spec)?,
         ctx,
+        options.no_bump_on_demand,
     )?;
     log::info!(
         "{} prepare release of {} v{}",
@@ -424,7 +430,13 @@ fn perform_single_release(
     Ok((new_version, commit_id))
 }
 
-fn validated_new_version(publishee: &Package, new_version: Version, ctx: &Context) -> anyhow::Result<Version> {
+fn validated_new_version(
+    publishee: &Package,
+    mut new_version: Version,
+    ctx: &Context,
+    no_bump_on_demand: bool,
+) -> anyhow::Result<Version> {
+    let bump_on_demand = !no_bump_on_demand;
     match ctx.index.crate_(&publishee.name) {
         Some(existing_release) => {
             let existing_version = semver::Version::parse(existing_release.latest_version().version())?;
@@ -436,8 +448,27 @@ fn validated_new_version(publishee: &Package, new_version: Version, ctx: &Contex
                     new_version
                 );
             }
+            if bump_on_demand && publishee.version > existing_version {
+                log::info!(
+                    "Using unpublished version {} of crate {} instead of bumped version {}",
+                    publishee.version,
+                    publishee.name,
+                    new_version
+                );
+                new_version = publishee.version.clone();
+            }
         }
-        None => log::info!("Congratulations for the new release of '{}' 🎉", publishee.name),
+        None => {
+            if bump_on_demand {
+                log::info!(
+                    "Using current version {} instead of bumped one {}.",
+                    publishee.version,
+                    new_version
+                );
+                new_version = publishee.version.clone();
+            }
+            log::info!("Congratulations for the new release of '{}' 🎉", publishee.name);
+        }
     };
     Ok(new_version)
 }
