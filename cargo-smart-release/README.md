@@ -14,7 +14,8 @@ cargo install cargo-smart-release
 ### Preferred workflow
 
 When developing various crates in a workspace I tend to edit code, and depending on the kind of edit, either increase the patch level, minor version or major version
-right after, depending on the basic rules of `semver`.
+right after, depending on the basic rules of `semver`. Use `cargo smart-release --bump minor --skip-tag --skip-publish --execute` for this which has the benefit of 
+it automatically adjusting other workspace dependencies when needed.
 
 When ready for relasing a particular crate or set of crates of interest, run `cargo smart-release [<crate-name> ...]` to simulate a release. For particularly thorough
 but error-prone simulations (as in false positives) one could run `cargo smart-release --dry-run-cargo-publish`. After evaluating the release procedure and following
