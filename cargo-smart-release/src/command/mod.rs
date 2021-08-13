@@ -8,6 +8,7 @@ pub mod release {
         /// Pass --no-verify unconditionally to cargo publish. Really just for fixing things
         pub no_verify: bool,
         pub skip_tag: bool,
+        pub allow_auto_publish_of_stable_crates: bool,
     }
 }
 #[path = "release/mod.rs"]

@@ -17,6 +17,7 @@ fn main() -> anyhow::Result<()> {
             skip_publish,
             skip_tag,
             dangerously_pass_no_verify,
+            allow_auto_publish_of_stable_crates,
         }) => command::release(
             command::release::Options {
                 dry_run: !execute,
@@ -25,6 +26,7 @@ fn main() -> anyhow::Result<()> {
                 skip_publish,
                 skip_tag,
                 no_verify: dangerously_pass_no_verify,
+                allow_auto_publish_of_stable_crates,
             },
             bump.unwrap_or_else(|| "keep".into()),
             crates,

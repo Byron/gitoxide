@@ -30,6 +30,10 @@ pub struct SmartRelease {
     #[argh(switch)]
     pub allow_dirty: bool,
 
+    /// allow discovery of changed crates to also publish stable crates, bumping their version according to --bump <spec>.
+    #[argh(switch)]
+    pub allow_auto_publish_of_stable_crates: bool,
+
     /// don't actually publish, but perform all other operations like manifest adjustments and tag creation.
     #[argh(switch)]
     pub skip_publish: bool,

@@ -39,15 +39,15 @@ pub fn release(options: Options, version_bump_spec: String, crates: Vec<String>)
     if crates.is_empty() {
         bail!("Please provide at least one crate name which also is a workspace member");
     }
-    release_depth_first(options, crates, &version_bump_spec)?;
+    release_depth_first(crates, &version_bump_spec, options)?;
     Ok(())
 }
 
-fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &str) -> anyhow::Result<()> {
+fn release_depth_first(crate_names: Vec<String>, bump_spec: &str, options: Options) -> anyhow::Result<()> {
     let meta = cargo_metadata::MetadataCommand::new().exec()?;
     let context = Context::new(std::env::current_dir()?)?;
     let changed_crate_names_to_publish =
-        traverse_dependencies_and_find_crates_for_publishing(&meta, &crate_names, &context)?;
+        traverse_dependencies_and_find_crates_for_publishing(&meta, &crate_names, &context, options)?;
 
     let crates_to_publish_together =
         resolve_cycles_with_publish_group(&meta, &changed_crate_names_to_publish, options)?;
@@ -151,6 +151,10 @@ fn traverse_dependencies_and_find_crates_for_publishing(
     meta: &Metadata,
     crate_names: &[String],
     ctx: &Context,
+    Options {
+        allow_auto_publish_of_stable_crates,
+        ..
+    }: Options,
 ) -> anyhow::Result<Vec<String>> {
     let mut seen = BTreeSet::new();
     let mut changed_crate_names_to_publish = Vec::new();
@@ -175,7 +179,7 @@ fn traverse_dependencies_and_find_crates_for_publishing(
                 seen.insert(dependency.name.clone());
                 let dep_package = package_by_name(meta, &dependency.name).expect("exists");
                 if git::has_changed_since_last_release(dep_package, ctx)? {
-                    if dep_package.version.major == 0 {
+                    if dep_package.version.major == 0 || allow_auto_publish_of_stable_crates {
                         log::info!(
                             "Adding {} v{} to set of published crates as it changed since last release",
                             dep_package.name,
