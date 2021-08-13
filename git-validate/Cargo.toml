@@ -19,4 +19,4 @@ quick-error = "2.0.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 
 [dev-dependencies]
-git-testtools = { version = "^0.4", path = "../tests/tools" }
+git-testtools = { path = "../tests/tools" }

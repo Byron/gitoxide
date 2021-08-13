@@ -26,4 +26,4 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 thiserror = "1.0.26"
 
 [dev-dependencies]
-git-testtools = { version = "^0.4", path = "../tests/tools" }
+git-testtools = { path = "../tests/tools" }

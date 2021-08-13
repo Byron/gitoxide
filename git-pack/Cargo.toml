@@ -53,8 +53,8 @@ memory-lru = { version = "0.1.0", optional = true }
 dashmap = "4.0.2"
 
 [dev-dependencies]
-git-testtools = { version = "^0.4", path = "../tests/tools"}
-git-odb = { version ="0.20.0", path = "../git-odb" }
+git-testtools = { path = "../tests/tools"}
+git-odb = { path = "../git-odb" }
 tempfile = "3.1.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 hex = "0.4.2"

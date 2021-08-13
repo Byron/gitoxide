@@ -29,6 +29,7 @@ cargo smart-release --help
 * [x] safe to use as actually performing an operation requires the `--execute` flag
 * [x] avoid inconsistent states by making operations as atomic as possible, leveraging `gitoxide` technology to the fullest
 * [x] handle workspace dependencies and cycles gracefully, allowing one invocation to publish multiple crates
+* [x] automatically release dependent workspace pre-release crates along with the desired one if they changed since their last release
 * [x] automatically adjust manifest versions and update manifests of crates which use those whose versions were incremented
 * [x] use git tags to know if a crate changed at all, skipping publishes if there is no code change at all
 * [ ] Automatically detect if crate changes are breaking to suggest the correct version increment
