@@ -56,7 +56,6 @@ Here is what `cargo smart-release` does differently: "It tries really hard to do
 * it requires tables to be used when specifying versions, i.e. `crate = { version = "1" }` instead of `crate  = "1".
 * it gracefully fails when encountering version requirement comparators which are not `^`, like `=`
 * it's tested only by using it on `gitoxide`, there are no regression tests at all
-* it was hacked together in two days, and there definitely are rough edges and assumptions
 
 ### Acknowledgements
 
