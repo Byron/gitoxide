@@ -182,21 +182,28 @@ fn set_version_and_update_package_dependency(
     }
     for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {
         for (name_to_find, new_version) in publishees.iter().map(|(p, nv)| (&p.name, nv)) {
-            if let Some(name_table) = doc
-                .as_table_mut()
-                .get_mut(dep_type)
-                .and_then(|deps| deps.as_table_mut())
-                .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_inline_table_mut()))
+            for name_to_find in package_to_update
+                .dependencies
+                .iter()
+                .filter(|dep| &dep.name == name_to_find)
+                .map(|dep| dep.rename.as_ref().unwrap_or_else(|| &dep.name))
             {
-                log::info!(
-                    "Pending '{}' manifest {} update: '{} = \"{}\"'",
-                    package_to_update.name,
-                    dep_type,
-                    name_to_find,
-                    new_version,
-                );
-                *name_table.get_or_insert("version", new_version.as_str()) =
-                    toml_edit::Value::from(new_version.as_str());
+                if let Some(name_table) = doc
+                    .as_table_mut()
+                    .get_mut(dep_type)
+                    .and_then(|deps| deps.as_table_mut())
+                    .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_inline_table_mut()))
+                {
+                    log::info!(
+                        "Pending '{}' manifest {} update: '{} = \"{}\"'",
+                        package_to_update.name,
+                        dep_type,
+                        name_to_find,
+                        new_version,
+                    );
+                    *name_table.get_or_insert("version", new_version.as_str()) =
+                        toml_edit::Value::from(new_version.as_str());
+                }
             }
         }
     }
