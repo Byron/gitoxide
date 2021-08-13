@@ -199,14 +199,20 @@ fn dependency_tree_has_link_to_existing_crate_names(
     false
 }
 
-fn reorder_according_to_existing_order(reference_order: &[String], workspace_members: &[String]) -> Vec<String> {
-    reference_order
+fn reorder_according_to_existing_order(reference_order: &[String], names_to_order: &[String]) -> Vec<String> {
+    let new_order = reference_order
         .iter()
-        .filter(|name| workspace_members.contains(name))
+        .filter(|name| names_to_order.contains(name))
         .fold(Vec::new(), |mut acc, name| {
             acc.push(name.clone());
             acc
-        })
+        });
+    assert_eq!(
+        new_order.len(),
+        names_to_order.len(),
+        "the reference order must contain all items to be ordered"
+    );
+    new_order
 }
 
 struct Cycle<'a> {
