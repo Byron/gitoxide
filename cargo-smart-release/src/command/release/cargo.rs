@@ -188,21 +188,22 @@ fn set_version_and_update_package_dependency(
                 .filter(|dep| &dep.name == name_to_find)
                 .map(|dep| dep.rename.as_ref().unwrap_or_else(|| &dep.name))
             {
-                if let Some(name_table) = doc
+                if let Some(current_version) = doc
                     .as_table_mut()
                     .get_mut(dep_type)
                     .and_then(|deps| deps.as_table_mut())
                     .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_inline_table_mut()))
+                    .and_then(|name_table| name_table.get_mut("version"))
                 {
                     log::info!(
-                        "Pending '{}' manifest {} update: '{} = \"{}\"'",
+                        "Pending '{}' manifest {} update: '{} = \"{}\"' (from {})",
                         package_to_update.name,
                         dep_type,
                         name_to_find,
                         new_version,
+                        current_version
                     );
-                    *name_table.get_or_insert("version", new_version.as_str()) =
-                        toml_edit::Value::from(new_version.as_str());
+                    *current_version = toml_edit::Value::from(new_version.as_str());
                 }
             }
         }
