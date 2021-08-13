@@ -11,8 +11,8 @@ use git_repository::{
     hash::ObjectId,
     object,
     odb::{pack, Find, FindExt},
-    refs::file,
     refs::{
+        file,
         file::loose::reference::peel,
         mutable::Target,
         transaction::{Change, Create, RefEdit},
@@ -23,10 +23,10 @@ use std::{convert::TryInto, process::Command};
 
 pub(in crate::command::release_impl) fn has_changed_since_last_release(
     package: &Package,
-    state: &Context,
+    ctx: &Context,
 ) -> anyhow::Result<bool> {
     let version_tag_name = tag_name_for(&package.name, &package.version.to_string());
-    let mut tag_ref = match state.repo.refs.find(&version_tag_name, state.packed_refs.as_ref())? {
+    let mut tag_ref = match ctx.repo.refs.find(&version_tag_name, ctx.packed_refs.as_ref())? {
         None => {
             log::info!(
                 "Package {} wasn't tagged with {} yet and thus needs a release",
@@ -41,24 +41,24 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
         .manifest_path
         .parent()
         .expect("parent of a file is always present")
-        .strip_prefix(&state.root)
+        .strip_prefix(&ctx.root)
         .expect("workspace members are releative to the root directory");
 
-    let target = peel_ref_fully(&mut state.repo.refs.find_existing("HEAD", None)?, state)?;
-    let released_target = peel_ref_fully(&mut tag_ref, state)?;
+    let target = peel_ref_fully(&mut ctx.repo.refs.find_existing("HEAD", None)?, ctx)?;
+    let released_target = peel_ref_fully(&mut tag_ref, ctx)?;
 
     let mut buf = Vec::new();
 
     let current_dir_id = find_directory_id_in_tree(
         repo_relative_crate_dir,
-        resolve_tree_id_from_ref_target(target, &state.repo, &mut buf)?,
-        &state.repo,
+        resolve_tree_id_from_ref_target(target, &ctx.repo, &mut buf)?,
+        &ctx.repo,
         &mut buf,
     )?;
     let released_dir_id = find_directory_id_in_tree(
         repo_relative_crate_dir,
-        resolve_tree_id_from_ref_target(released_target, &state.repo, &mut buf)?,
-        &state.repo,
+        resolve_tree_id_from_ref_target(released_target, &ctx.repo, &mut buf)?,
+        &ctx.repo,
         &mut buf,
     )?;
 
@@ -129,11 +129,10 @@ fn find_directory_id_in_tree(
     tree_id.ok_or_else(|| anyhow!("path '{}' didn't exist in tree {}", path, id))
 }
 
-fn peel_ref_fully(reference: &mut file::Reference<'_>, state: &Context) -> anyhow::Result<ObjectId> {
+fn peel_ref_fully(reference: &mut file::Reference<'_>, ctx: &Context) -> anyhow::Result<ObjectId> {
     reference
-        .peel_to_id_in_place(&state.repo.refs, state.packed_refs.as_ref(), |oid, buf| {
-            state
-                .repo
+        .peel_to_id_in_place(&ctx.repo.refs, ctx.packed_refs.as_ref(), |oid, buf| {
+            ctx.repo
                 .odb
                 .find(oid, buf, &mut pack::cache::Never)
                 .map(|r| r.map(|obj| (obj.kind, obj.data)))
@@ -165,7 +164,7 @@ fn resolve_tree_id_from_ref_target(mut id: ObjectId, repo: &Repository, buf: &mu
 pub(in crate::command::release_impl) fn commit_changes(
     message: impl AsRef<str>,
     empty_commit_possible: bool,
-    state: &Context,
+    ctx: &Context,
 ) -> anyhow::Result<ObjectId> {
     // TODO: replace with gitoxide one day
     let mut cmd = Command::new("git");
@@ -176,11 +175,11 @@ pub(in crate::command::release_impl) fn commit_changes(
     if !cmd.status()?.success() {
         bail!("Failed to commit changed manifests");
     }
-    Ok(state
+    Ok(ctx
         .repo
         .refs
         .loose_find_existing("HEAD")?
-        .peel_to_id_in_place(&state.repo.refs, state.packed_refs.as_ref(), peel::none)?
+        .peel_to_id_in_place(&ctx.repo.refs, ctx.packed_refs.as_ref(), peel::none)?
         .to_owned())
 }
 

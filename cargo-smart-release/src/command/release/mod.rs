@@ -18,11 +18,10 @@ pub(in crate::command::release_impl) struct Context {
     root: Utf8PathBuf,
     repo: Repository,
     packed_refs: Option<packed::Buffer>,
-    crate_names: Vec<String>,
 }
 
 impl Context {
-    fn new(repo_path: impl Into<PathBuf>, crate_names: Vec<String>) -> anyhow::Result<Self> {
+    fn new(repo_path: impl Into<PathBuf>) -> anyhow::Result<Self> {
         let root = repo_path.into();
         let repo = git_repository::discover(&root)?;
         let packed_refs = repo.refs.packed()?;
@@ -30,7 +29,6 @@ impl Context {
             root: root.try_into()?,
             repo,
             packed_refs,
-            crate_names,
         })
     }
 }
@@ -47,8 +45,9 @@ pub fn release(options: Options, version_bump_spec: String, crates: Vec<String>)
 
 fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &str) -> anyhow::Result<()> {
     let meta = cargo_metadata::MetadataCommand::new().exec()?;
-    let state = Context::new(std::env::current_dir()?, crate_names)?;
-    let changed_crate_names_to_publish = traverse_dependencies_and_find_crates_for_publishing(&meta, &state)?;
+    let context = Context::new(std::env::current_dir()?)?;
+    let changed_crate_names_to_publish =
+        traverse_dependencies_and_find_crates_for_publishing(&meta, &crate_names, &context)?;
 
     let crates_to_publish_together =
         resolve_cycles_with_publish_group(&meta, &changed_crate_names_to_publish, options)?;
@@ -59,8 +58,8 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
     {
         let publishee = package_by_name(&meta, publishee_name).expect("exists");
 
-        let (new_version, commit_id) = cargo::perform_single_release(&meta, publishee, options, bump_spec, &state)?;
-        git::create_version_tag(publishee, &new_version, commit_id, &state.repo, options)?;
+        let (new_version, commit_id) = cargo::perform_single_release(&meta, publishee, options, bump_spec, &context)?;
+        git::create_version_tag(publishee, &new_version, commit_id, &context.repo, options)?;
     }
 
     if !crates_to_publish_together.is_empty() {
@@ -83,7 +82,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
             &crates_to_publish_together,
             bump_spec_may_cause_empty_commits(bump_spec),
             options,
-            &state,
+            &context,
         )?;
 
         crates_to_publish_together.reverse();
@@ -93,7 +92,7 @@ fn release_depth_first(options: Options, crate_names: Vec<String>, bump_spec: &s
                 .map(|(p, _)| p.name.to_owned())
                 .collect();
             cargo::publish_crate(publishee, &unpublished_crates, options)?;
-            git::create_version_tag(publishee, &new_version, commit_id, &state.repo, options)?;
+            git::create_version_tag(publishee, &new_version, commit_id, &context.repo, options)?;
         }
     }
 
@@ -150,12 +149,13 @@ fn resolve_cycles_with_publish_group(
 
 fn traverse_dependencies_and_find_crates_for_publishing(
     meta: &Metadata,
-    state: &Context,
+    crate_names: &[String],
+    ctx: &Context,
 ) -> anyhow::Result<Vec<String>> {
     let mut seen = BTreeSet::new();
     let mut changed_crate_names_to_publish = Vec::new();
     let mut index = 0;
-    for crate_name in &state.crate_names {
+    for crate_name in crate_names {
         if seen.contains(crate_name) {
             continue;
         }
@@ -174,7 +174,7 @@ fn traverse_dependencies_and_find_crates_for_publishing(
                 }
                 seen.insert(dependency.name.clone());
                 let dep_package = package_by_name(meta, &dependency.name).expect("exists");
-                if git::has_changed_since_last_release(dep_package, state)? {
+                if git::has_changed_since_last_release(dep_package, ctx)? {
                     changed_crate_names_to_publish.push(dependency.name.clone());
                 } else {
                     log::info!(

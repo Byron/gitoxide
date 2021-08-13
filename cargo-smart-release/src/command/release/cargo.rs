@@ -15,7 +15,7 @@ pub(in crate::command::release_impl) fn perform_single_release(
     publishee: &Package,
     options: Options,
     bump_spec: &str,
-    state: &Context,
+    ctx: &Context,
 ) -> anyhow::Result<(String, ObjectId)> {
     let new_version = bump_version(&publishee.version.to_string(), bump_spec)?.to_string();
     log::info!(
@@ -29,7 +29,7 @@ pub(in crate::command::release_impl) fn perform_single_release(
         &[(publishee, new_version.clone())],
         bump_spec_may_cause_empty_commits(bump_spec),
         options,
-        state,
+        ctx,
     )?;
     publish_crate(publishee, &[], options)?;
     Ok((new_version, commit_id))
@@ -88,7 +88,7 @@ pub(in crate::command::release_impl) fn edit_manifest_and_fixup_dependent_crates
     Options {
         dry_run, allow_dirty, ..
     }: Options,
-    state: &Context,
+    ctx: &Context,
 ) -> anyhow::Result<ObjectId> {
     if !allow_dirty {
         git::assure_clean_working_tree()?;
@@ -151,7 +151,7 @@ pub(in crate::command::release_impl) fn edit_manifest_and_fixup_dependent_crates
             manifest_lock.commit()?;
         }
         refresh_cargo_lock()?;
-        git::commit_changes(message, empty_commit_possible, state)
+        git::commit_changes(message, empty_commit_possible, ctx)
     }
 }
 
