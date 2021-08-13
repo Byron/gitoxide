@@ -119,7 +119,7 @@ fn perforrm_multi_version_release(
         .map(|name| {
             let p = package_by_name(meta, &name)?;
             bump_to_valid_version(
-                &p,
+                p,
                 select_publishee_bump_spec(&p.name, ctx),
                 ctx,
                 options.no_bump_on_demand,
@@ -139,7 +139,7 @@ fn perforrm_multi_version_release(
         &crates_to_publish_together,
         bump_spec_may_cause_empty_commits(&ctx.bump) && bump_spec_may_cause_empty_commits(&ctx.bump_dependencies),
         options,
-        &ctx,
+        ctx,
     )?;
 
     crates_to_publish_together.reverse();
@@ -396,6 +396,7 @@ fn hops_for_dependency_to_link_back_to_publishee<'a>(
     None
 }
 
+#[allow(clippy::ptr_arg)]
 fn select_publishee_bump_spec<'a>(name: &String, ctx: &'a Context) -> &'a str {
     if ctx.crate_names.contains(name) {
         &ctx.bump
@@ -446,7 +447,7 @@ fn bump_to_valid_version(
         match ctx.index.crate_(&publishee.name) {
             Some(existing_release) => {
                 let existing_version = semver::Version::parse(existing_release.latest_version().version())?;
-                if &existing_version >= &new_version {
+                if existing_version >= new_version {
                     bail!(
                     "Latest published version of '{}' is {}, the new version is {}. Consider using --bump <level> or --bump-dependencies <level>.",
                     publishee.name,
