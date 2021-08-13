@@ -180,7 +180,6 @@ fn traverse_dependencies_and_find_crates_for_publishing(
 ) -> anyhow::Result<Vec<String>> {
     let mut seen = BTreeSet::new();
     let mut changed_crate_names_to_publish = Vec::new();
-    let mut index = 0;
     for crate_name in crate_names {
         if seen.contains(crate_name) {
             continue;
@@ -189,44 +188,18 @@ fn traverse_dependencies_and_find_crates_for_publishing(
             // redo all work which includes the previous tree. Could be more efficient but that would be more complicated.
             seen.clear();
             changed_crate_names_to_publish.clear();
-            index = 0;
         }
-        changed_crate_names_to_publish.push(crate_name.to_owned());
-        let index_of_unconditionally_published_crate = index;
-        while let Some(crate_name) = changed_crate_names_to_publish.get(index) {
-            let package = package_by_name(meta, crate_name)?;
-            for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
-                if seen.contains(&dependency.name) || !is_workspace_member(meta, &dependency.name) {
-                    continue;
-                }
-                seen.insert(dependency.name.clone());
-                let dep_package = package_by_name(meta, &dependency.name)?;
-                if git::has_changed_since_last_release(dep_package, ctx)? {
-                    if dep_package.version.major == 0 || allow_auto_publish_of_stable_crates {
-                        log::info!(
-                            "Adding {} v{} to set of published crates as it changed since last release",
-                            dep_package.name,
-                            dep_package.version
-                        );
-                        changed_crate_names_to_publish.push(dependency.name.clone());
-                    } else {
-                        log::warn!(
-                            "{} v{} changed since last release - consider releasing it beforehand.",
-                            dep_package.name,
-                            dep_package.version
-                        );
-                    }
-                } else {
-                    log::info!(
-                        "{} v{}  - skipped release as it didn't change",
-                        dep_package.name,
-                        dep_package.version
-                    );
-                }
-            }
-            index += 1;
-        }
-        if index - 1 == index_of_unconditionally_published_crate {
+        let num_crates_for_publishing_without_dependencies = changed_crate_names_to_publish.len();
+        let package = package_by_name(meta, crate_name)?;
+        depth_first_traversal(
+            meta,
+            ctx,
+            allow_auto_publish_of_stable_crates,
+            &mut seen,
+            &mut changed_crate_names_to_publish,
+            package,
+        )?;
+        if num_crates_for_publishing_without_dependencies == changed_crate_names_to_publish.len() {
             let crate_package = package_by_name(meta, crate_name)?;
             if !git::has_changed_since_last_release(crate_package, ctx)? {
                 log::info!(
@@ -234,14 +207,61 @@ fn traverse_dependencies_and_find_crates_for_publishing(
                     crate_package.name,
                     crate_package.version
                 );
-                changed_crate_names_to_publish.pop();
-                index -= 1;
             }
+            continue;
         }
+        changed_crate_names_to_publish.push(crate_name.to_owned());
         seen.insert(crate_name.to_owned());
     }
-    changed_crate_names_to_publish.reverse();
     Ok(changed_crate_names_to_publish)
+}
+
+fn depth_first_traversal(
+    meta: &Metadata,
+    ctx: &Context,
+    allow_auto_publish_of_stable_crates: bool,
+    seen: &mut BTreeSet<String>,
+    changed_crate_names_to_publish: &mut Vec<String>,
+    package: &Package,
+) -> anyhow::Result<()> {
+    for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
+        if seen.contains(&dependency.name) || !is_workspace_member(meta, &dependency.name) {
+            continue;
+        }
+        seen.insert(dependency.name.clone());
+        let dep_package = package_by_name(meta, &dependency.name)?;
+        depth_first_traversal(
+            meta,
+            ctx,
+            allow_auto_publish_of_stable_crates,
+            seen,
+            changed_crate_names_to_publish,
+            dep_package,
+        )?;
+        if git::has_changed_since_last_release(dep_package, ctx)? {
+            if dep_package.version.major == 0 || allow_auto_publish_of_stable_crates {
+                log::info!(
+                    "Adding {} v{} to set of published crates as it changed since last release",
+                    dep_package.name,
+                    dep_package.version
+                );
+                changed_crate_names_to_publish.push(dependency.name.clone());
+            } else {
+                log::warn!(
+                    "{} v{} changed since last release - consider releasing it beforehand.",
+                    dep_package.name,
+                    dep_package.version
+                );
+            }
+        } else {
+            log::info!(
+                "{} v{}  - skipped release as it didn't change",
+                dep_package.name,
+                dep_package.version
+            );
+        }
+    }
+    Ok(())
 }
 
 fn dependency_tree_has_link_to_existing_crate_names(
