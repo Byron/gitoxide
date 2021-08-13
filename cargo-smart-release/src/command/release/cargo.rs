@@ -64,12 +64,15 @@ pub(in crate::command::release_impl) fn publish_crate(
         if no_verify || must_not_verify {
             c.arg("--no-verify");
         }
+        if dry_run {
+            c.arg("--dry-run");
+        }
         c.arg("--manifest-path").arg(&publishee.manifest_path);
-        log::info!("{} run {:?}", will(dry_run), c);
-        if dry_run || c.status()?.success() {
+        log::info!("Will run {:?}", c);
+        if c.status()?.success() {
             break;
-        } else if attempt == max_attempts {
-            bail!("Could not successfully execute 'cargo publish' even ")
+        } else if attempt == max_attempts || dry_run {
+            bail!("Could not successfully execute 'cargo publish'")
         } else {
             log::warn!(
                 "'cargo publish' run {} failed but we retry up to {} times to rule out flakiness",
