@@ -59,7 +59,7 @@ Here is what `cargo smart-release` does differently: "It tries really hard to do
 
 ### Acknowledgements
 
-Thanks to [cargo release] for showing the way, but also motivating me to finally take full control of releases.
+Thanks to [cargo-release] for showing the way and for incredible fast response times. I'd recommend everyone to participate there instead of writing your own.
 
 [cargo-release]: https://github.com/sunng87/cargo-release/issues/224
 [rustup]: https://rustup.rs/
