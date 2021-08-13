@@ -85,39 +85,50 @@ fn release_depth_first(
     }
 
     if !crates_to_publish_together.is_empty() {
-        let mut crates_to_publish_together = crates_to_publish_together
-            .into_iter()
-            .map(|name| {
-                let p = package_by_name(meta, &name)?;
-                bump_version(&p.version.to_string(), bump_spec).map(|v| (p, v.to_string()))
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        log::info!(
-            "{} prepare releases of {}",
-            will(options.dry_run),
-            names_and_versions(&crates_to_publish_together)
-        );
-
-        let commit_id = manifest::edit_version_and_fixup_dependent_crates(
-            meta,
-            &crates_to_publish_together,
-            bump_spec_may_cause_empty_commits(bump_spec),
-            options,
-            &ctx,
-        )?;
-
-        crates_to_publish_together.reverse();
-        while let Some((publishee, new_version)) = crates_to_publish_together.pop() {
-            let unpublished_crates: Vec<_> = crates_to_publish_together
-                .iter()
-                .map(|(p, _)| p.name.to_owned())
-                .collect();
-            cargo::publish_crate(publishee, &unpublished_crates, options)?;
-            git::create_version_tag(publishee, &new_version, commit_id, &ctx.repo, options)?;
-        }
+        perforrm_multi_version_release(&ctx, bump_spec, options, meta, crates_to_publish_together)?;
     }
 
+    Ok(())
+}
+
+fn perforrm_multi_version_release(
+    ctx: &Context,
+    bump_spec: &str,
+    options: Options,
+    meta: &Metadata,
+    crates_to_publish_together: Vec<String>,
+) -> anyhow::Result<()> {
+    let mut crates_to_publish_together = crates_to_publish_together
+        .into_iter()
+        .map(|name| {
+            let p = package_by_name(meta, &name)?;
+            bump_version(&p.version.to_string(), bump_spec).map(|v| (p, v.to_string()))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    log::info!(
+        "{} prepare releases of {}",
+        will(options.dry_run),
+        names_and_versions(&crates_to_publish_together)
+    );
+
+    let commit_id = manifest::edit_version_and_fixup_dependent_crates(
+        meta,
+        &crates_to_publish_together,
+        bump_spec_may_cause_empty_commits(bump_spec),
+        options,
+        &ctx,
+    )?;
+
+    crates_to_publish_together.reverse();
+    while let Some((publishee, new_version)) = crates_to_publish_together.pop() {
+        let unpublished_crates: Vec<_> = crates_to_publish_together
+            .iter()
+            .map(|(p, _)| p.name.to_owned())
+            .collect();
+        cargo::publish_crate(publishee, &unpublished_crates, options)?;
+        git::create_version_tag(publishee, &new_version, commit_id, &ctx.repo, options)?;
+    }
     Ok(())
 }
 
@@ -159,7 +170,7 @@ fn resolve_cycles_with_publish_group(
     }
     if !crates_to_publish_additionally_to_avoid_instability.is_empty() && !options.ignore_instability {
         bail!(
-            "Refusing to publish unless --ignore-instability is provided or crate(s) {} is/are included in the publish",
+            "Refusing to publish unless --ignore-instability is provided or crate(s) {} is/are included in the publish. To avoid this, don't specify versions in your dev dependencies.",
             crates_to_publish_additionally_to_avoid_instability.join(", ")
         )
     }
