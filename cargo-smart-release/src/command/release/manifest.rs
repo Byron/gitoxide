@@ -3,9 +3,10 @@ use super::{
     utils::{names_and_versions, package_by_id, package_eq_dependency},
     Context, Options,
 };
+use anyhow::bail;
 use cargo_metadata::{Metadata, Package};
 use git_repository::hash::ObjectId;
-use semver::{Version, VersionReq};
+use semver::{Op, Version, VersionReq};
 use std::{collections::BTreeMap, str::FromStr};
 
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates(
@@ -110,24 +111,32 @@ fn set_version_and_update_package_dependency(
                 .filter(|dep| &dep.name == name_to_find)
                 .map(|dep| dep.rename.as_ref().unwrap_or_else(|| &dep.name))
             {
-                if let Some(current_version) = doc
+                if let Some(current_version_req) = doc
                     .as_table_mut()
                     .get_mut(dep_type)
                     .and_then(|deps| deps.as_table_mut())
                     .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_inline_table_mut()))
                     .and_then(|name_table| name_table.get_mut("version"))
                 {
-                    let version_req = VersionReq::parse(&current_version.as_str().expect("versions are strings"))?;
+                    let version_req = VersionReq::parse(&current_version_req.as_str().expect("versions are strings"))?;
                     if !version_req.matches(&new_version) {
+                        let supported_op = Op::Caret;
+                        if version_req.comparators.is_empty()
+                            || (version_req.comparators.len() > 1)
+                            || version_req.comparators.last().expect("exists").op != supported_op
+                        {
+                            bail!("{} has it's {} dependency set to a version requirement with comparator {} - cannot currently handle that.", package_to_update.name, name_to_find, current_version_req);
+                        }
+                        let new_version = format!("^{}", new_version);
                         log::info!(
                             "Pending '{}' manifest {} update: '{} = \"{}\"' (from {})",
                             package_to_update.name,
                             dep_type,
                             name_to_find,
                             new_version,
-                            current_version
+                            current_version_req.to_string()
                         );
-                        *current_version = toml_edit::Value::from(new_version.to_string().as_str());
+                        *current_version_req = toml_edit::Value::from(new_version.as_str());
                     }
                 }
             }
