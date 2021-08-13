@@ -5,6 +5,7 @@ use git_repository::{refs::packed, Repository};
 use std::{collections::BTreeSet, convert::TryInto, path::PathBuf};
 
 mod utils;
+use git_repository::hash::ObjectId;
 use utils::{
     bump_spec_may_cause_empty_commits, bump_version, is_dependency_with_version_requirement, is_workspace_member,
     names_and_versions, package_by_id, package_by_name, package_eq_dependency, package_for_dependency, tag_name_for,
@@ -13,6 +14,7 @@ use utils::{
 
 mod cargo;
 mod git;
+mod manifest;
 
 pub(in crate::command::release_impl) struct Context {
     root: Utf8PathBuf,
@@ -58,7 +60,7 @@ fn release_depth_first(crate_names: Vec<String>, bump_spec: &str, options: Optio
     {
         let publishee = package_by_name(&meta, publishee_name).expect("exists");
 
-        let (new_version, commit_id) = cargo::perform_single_release(&meta, publishee, options, bump_spec, &context)?;
+        let (new_version, commit_id) = perform_single_release(&meta, publishee, options, bump_spec, &context)?;
         git::create_version_tag(publishee, &new_version, commit_id, &context.repo, options)?;
     }
 
@@ -77,7 +79,7 @@ fn release_depth_first(crate_names: Vec<String>, bump_spec: &str, options: Optio
             names_and_versions(&crates_to_publish_together)
         );
 
-        let commit_id = cargo::edit_manifest_and_fixup_dependent_crates(
+        let commit_id = manifest::edit_version_and_fixup_dependent_crates(
             &meta,
             &crates_to_publish_together,
             bump_spec_may_cause_empty_commits(bump_spec),
@@ -307,4 +309,29 @@ fn hops_for_dependency_to_link_back_to_publishee<'a>(
         };
     }
     None
+}
+
+fn perform_single_release(
+    meta: &Metadata,
+    publishee: &Package,
+    options: Options,
+    bump_spec: &str,
+    ctx: &Context,
+) -> anyhow::Result<(String, ObjectId)> {
+    let new_version = bump_version(&publishee.version.to_string(), bump_spec)?.to_string();
+    log::info!(
+        "{} prepare release of {} v{}",
+        will(options.dry_run),
+        publishee.name,
+        new_version
+    );
+    let commit_id = manifest::edit_version_and_fixup_dependent_crates(
+        meta,
+        &[(publishee, new_version.clone())],
+        bump_spec_may_cause_empty_commits(bump_spec),
+        options,
+        ctx,
+    )?;
+    cargo::publish_crate(publishee, &[], options)?;
+    Ok((new_version, commit_id))
 }
