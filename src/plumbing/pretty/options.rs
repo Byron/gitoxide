@@ -44,7 +44,7 @@ pub struct Args {
 #[derive(Debug, Clap)]
 pub enum Subcommands {
     #[clap(setting = AppSettings::ColoredHelp)]
-    #[clap(setting = AppSettings::DisableVersion)]
+    #[clap(setting = AppSettings::DisableVersionFlag)]
     PackCreate {
         #[clap(long, short = 'r')]
         /// the directory containing the '.git' repository from which objects should be read.
@@ -80,7 +80,7 @@ pub enum Subcommands {
         tips: Vec<OsString>,
     },
     #[clap(setting = AppSettings::ColoredHelp)]
-    #[clap(setting = AppSettings::DisableVersion)]
+    #[clap(setting = AppSettings::DisableVersionFlag)]
     #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     PackReceive {
         /// The protocol version to use. Valid values are 1 and 2
@@ -108,7 +108,7 @@ pub enum Subcommands {
     /// This is the plumbing equivalent of `git ls-remote`.
     /// Supported URLs are documented here: <https://www.git-scm.com/docs/git-clone#_git_urls>
     #[clap(setting = AppSettings::ColoredHelp)]
-    #[clap(setting = AppSettings::DisableVersion)]
+    #[clap(setting = AppSettings::DisableVersionFlag)]
     #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     RemoteRefList {
         /// The protocol version to use. Valid values are 1 and 2
@@ -121,7 +121,7 @@ pub enum Subcommands {
         url: String,
     },
     #[clap(setting = AppSettings::ColoredHelp)]
-    #[clap(setting = AppSettings::DisableVersion)]
+    #[clap(setting = AppSettings::DisableVersionFlag)]
     PackIndexFromData {
         /// Specify how to iterate the pack, defaults to 'verify'
         ///
@@ -152,7 +152,7 @@ pub enum Subcommands {
     },
     /// Verify the integrity of a pack or index file
     #[clap(setting = AppSettings::ColoredHelp)]
-    #[clap(setting = AppSettings::DisableVersion)]
+    #[clap(setting = AppSettings::DisableVersionFlag)]
     PackExplode {
         #[clap(long)]
         /// Read written objects back and assert they match their source. Fail the operation otherwise.
@@ -191,7 +191,7 @@ pub enum Subcommands {
     },
     /// Verify the integrity of a pack or index file
     #[clap(setting = AppSettings::ColoredHelp)]
-    #[clap(setting = AppSettings::DisableVersion)]
+    #[clap(setting = AppSettings::DisableVersionFlag)]
     PackVerify {
         /// output statistical information about the pack
         #[clap(long, short = 's')]
@@ -227,7 +227,7 @@ pub enum Subcommands {
     },
     /// Verify the integrity of a commit graph
     #[clap(setting = AppSettings::ColoredHelp)]
-    #[clap(setting = AppSettings::DisableVersion)]
+    #[clap(setting = AppSettings::DisableVersionFlag)]
     CommitGraphVerify {
         /// The path to '.git/objects/info/', '.git/objects/info/commit-graphs/', or '.git/objects/info/commit-graph' to validate.
         #[clap(parse(from_os_str))]

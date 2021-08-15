@@ -29,7 +29,7 @@ pub struct Args {
 pub enum Subcommands {
     /// Initialize the repository in the current directory.
     #[clap(visible_alias = "initialize")]
-    #[clap(setting = AppSettings::ColoredHelp, setting = AppSettings::DisableVersion)]
+    #[clap(setting = AppSettings::ColoredHelp, setting = AppSettings::DisableVersionFlag)]
     Init {
         /// The directory in which to initialize a new git repository.
         ///
@@ -37,17 +37,18 @@ pub enum Subcommands {
         directory: Option<PathBuf>,
     },
     /// A selection of useful tools
-    #[clap(setting = AppSettings::ColoredHelp, setting = AppSettings::DisableVersion, setting = AppSettings::SubcommandRequired)]
-    #[clap(visible_alias = "t")]
+    #[clap(subcommand)]
     Tools(ToolCommands),
     #[cfg(debug_assertions)]
     Panic,
 }
 
 #[derive(Debug, Clap)]
+#[clap(setting = AppSettings::ColoredHelp, setting = AppSettings::DisableVersionFlag, setting = AppSettings::SubcommandRequired)]
+#[clap(visible_alias = "t")]
 pub enum ToolCommands {
     /// Find all repositories in a given directory.
-    #[clap(setting = AppSettings::ColoredHelp, setting = AppSettings::DisableVersion)]
+    #[clap(setting = AppSettings::ColoredHelp, setting = AppSettings::DisableVersionFlag)]
     Find {
         /// The directory in which to find all git repositories.
         ///
@@ -55,7 +56,7 @@ pub enum ToolCommands {
         root: Option<PathBuf>,
     },
     /// Move all repositories found in a directory into a structure matching their clone URLs.
-    #[clap(setting = AppSettings::ColoredHelp, setting = AppSettings::DisableVersion)]
+    #[clap(setting = AppSettings::ColoredHelp, setting = AppSettings::DisableVersionFlag)]
     Organize {
         #[clap(long)]
         /// The operation will be in dry-run mode unless this flag is set.
