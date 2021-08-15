@@ -14,7 +14,10 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates(
     publishees: &[(&Package, String)],
     empty_commit_possible: bool,
     Options {
-        dry_run, allow_dirty, ..
+        verbose,
+        dry_run,
+        allow_dirty,
+        ..
     }: Options,
     ctx: &Context,
 ) -> anyhow::Result<ObjectId> {
@@ -59,22 +62,30 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates(
         let mut lock = locks_by_manifest_path
             .get_mut(&publishee.manifest_path)
             .expect("lock available");
-        set_version_and_update_package_dependency(publishee, Some(&new_version.to_string()), publishees, &mut lock)?;
+        set_version_and_update_package_dependency(
+            publishee,
+            Some(&new_version.to_string()),
+            publishees,
+            &mut lock,
+            verbose,
+        )?;
     }
 
     for package_to_update in packages_to_fix.iter_mut() {
         let mut lock = locks_by_manifest_path
             .get_mut(&package_to_update.manifest_path)
             .expect("lock written once");
-        set_version_and_update_package_dependency(package_to_update, None, publishees, &mut lock)?;
+        set_version_and_update_package_dependency(package_to_update, None, publishees, &mut lock, verbose)?;
     }
 
     let message = format!("Release {}", names_and_versions(publishees));
     if dry_run {
-        log::info!("WOULD commit changes to manifests with {:?}", message);
+        if verbose {
+            log::info!("WOULD commit changes to manifests with {:?}", message);
+        }
         Ok(ObjectId::null_sha1())
     } else {
-        log::info!("Persisting changes to manifests");
+        log::info!("Will persist changes to manifests");
         for manifest_lock in locks_by_manifest_path.into_values() {
             manifest_lock.commit()?;
         }
@@ -90,17 +101,20 @@ fn set_version_and_update_package_dependency(
     new_version: Option<&str>,
     publishees: &[(&Package, String)],
     mut out: impl std::io::Write,
+    verbose: bool,
 ) -> anyhow::Result<()> {
     let manifest = std::fs::read_to_string(&package_to_update.manifest_path)?;
     let mut doc = toml_edit::Document::from_str(&manifest)?;
 
     if let Some(new_version) = new_version {
         doc["package"]["version"] = toml_edit::value(new_version);
-        log::info!(
-            "Pending '{}' manifest version update: \"{}\"",
-            package_to_update.name,
-            new_version
-        );
+        if verbose {
+            log::info!(
+                "Pending '{}' manifest version update: \"{}\"",
+                package_to_update.name,
+                new_version
+            );
+        }
     }
     for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {
         for (name_to_find, new_version) in publishees.iter().map(|(p, nv)| (&p.name, nv)) {
@@ -128,14 +142,16 @@ fn set_version_and_update_package_dependency(
                             bail!("{} has it's {} dependency set to a version requirement with comparator {} - cannot currently handle that.", package_to_update.name, name_to_find, current_version_req);
                         }
                         let new_version = format!("^{}", new_version);
-                        log::info!(
-                            "Pending '{}' manifest {} update: '{} = \"{}\"' (from {})",
-                            package_to_update.name,
-                            dep_type,
-                            name_to_find,
-                            new_version,
-                            current_version_req.to_string()
-                        );
+                        if verbose {
+                            log::info!(
+                                "Pending '{}' manifest {} update: '{} = \"{}\"' (from {})",
+                                package_to_update.name,
+                                dep_type,
+                                name_to_find,
+                                new_version,
+                                current_version_req.to_string()
+                            );
+                        }
                         *current_version_req = toml_edit::Value::from(new_version.as_str());
                     }
                 }

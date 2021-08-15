@@ -10,6 +10,7 @@ fn main() -> anyhow::Result<()> {
     match args.subcommands {
         SubCommands::SmartRelease(SmartRelease {
             execute,
+            verbose,
             bump,
             bump_dependencies,
             crates,
@@ -25,6 +26,7 @@ fn main() -> anyhow::Result<()> {
         }) => command::release(
             command::release::Options {
                 dry_run: !execute,
+                verbose: execute || verbose,
                 no_bump_on_demand,
                 allow_dirty,
                 ignore_instability,

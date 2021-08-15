@@ -44,6 +44,12 @@ pub struct SmartRelease {
     #[argh(switch, short = 'u')]
     pub update_crates_index: bool,
 
+    /// provide more detailed messages on the INFO log level in dry-run mode.
+    ///
+    /// Note --verbose is implied with --execute.
+    #[argh(switch, short = 'v')]
+    pub verbose: bool,
+
     /// allow discovery of changed crates to also publish stable crates, bumping their version according to --bump <spec>.
     #[argh(switch)]
     pub allow_auto_publish_of_stable_crates: bool,

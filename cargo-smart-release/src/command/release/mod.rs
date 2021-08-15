@@ -207,6 +207,7 @@ fn traverse_dependencies_and_find_crates_for_publishing(
     crate_names: &[String],
     ctx: &Context,
     Options {
+        verbose,
         allow_auto_publish_of_stable_crates,
         ..
     }: Options,
@@ -224,17 +225,24 @@ fn traverse_dependencies_and_find_crates_for_publishing(
         }
         let num_crates_for_publishing_without_dependencies = changed_crate_names_to_publish.len();
         let package = package_by_name(meta, crate_name)?;
-        depth_first_traversal(
+        let skipped = depth_first_traversal(
             meta,
             ctx,
             allow_auto_publish_of_stable_crates,
             &mut seen,
             &mut changed_crate_names_to_publish,
             package,
+            verbose,
         )?;
+        if !verbose && skipped > 0 {
+            log::info!(
+                "Skipped {} dependent crates as they didn't change since their last release. Use --verbose/-v to see much more.",
+                skipped
+            );
+        }
         if num_crates_for_publishing_without_dependencies == changed_crate_names_to_publish.len() {
             let crate_package = package_by_name(meta, crate_name)?;
-            if !git::has_changed_since_last_release(crate_package, ctx)? {
+            if !git::has_changed_since_last_release(crate_package, ctx, verbose)? {
                 log::info!(
                     "Skipping provided {} v{} hasn't changed since last released",
                     crate_package.name,
@@ -256,22 +264,25 @@ fn depth_first_traversal(
     seen: &mut BTreeSet<String>,
     changed_crate_names_to_publish: &mut Vec<String>,
     package: &Package,
-) -> anyhow::Result<()> {
+    verbose: bool,
+) -> anyhow::Result<usize> {
+    let mut skipped = 0;
     for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
         if seen.contains(&dependency.name) || !is_workspace_member(meta, &dependency.name) {
             continue;
         }
         seen.insert(dependency.name.clone());
         let dep_package = package_by_name(meta, &dependency.name)?;
-        depth_first_traversal(
+        skipped += depth_first_traversal(
             meta,
             ctx,
             allow_auto_publish_of_stable_crates,
             seen,
             changed_crate_names_to_publish,
             dep_package,
+            verbose,
         )?;
-        if git::has_changed_since_last_release(dep_package, ctx)? {
+        if git::has_changed_since_last_release(dep_package, ctx, verbose)? {
             if dep_package.version.major == 0 || allow_auto_publish_of_stable_crates {
                 log::info!(
                     "Adding {} v{} to set of published crates as it changed since last release",
@@ -287,14 +298,17 @@ fn depth_first_traversal(
                 );
             }
         } else {
-            log::info!(
-                "{} v{}  - skipped release as it didn't change",
-                dep_package.name,
-                dep_package.version
-            );
+            if verbose {
+                log::info!(
+                    "{} v{}  - skipped release as it didn't change",
+                    dep_package.name,
+                    dep_package.version
+                );
+            }
+            skipped += 1;
         }
     }
-    Ok(())
+    Ok(skipped)
 }
 
 fn dependency_tree_has_link_to_existing_crate_names(

@@ -12,6 +12,7 @@ pub(in crate::command::release_impl) fn publish_crate(
         dry_run_cargo_publish,
         allow_dirty,
         no_verify,
+        verbose,
         ..
     }: Options,
 ) -> anyhow::Result<()> {
@@ -39,7 +40,9 @@ pub(in crate::command::release_impl) fn publish_crate(
             c.arg("--dry-run");
         }
         c.arg("--manifest-path").arg(&publishee.manifest_path);
-        log::info!("{} run {:?}", will(!cargo_must_run), c);
+        if verbose {
+            log::info!("{} run {:?}", will(!cargo_must_run), c);
+        }
         if !cargo_must_run || c.status()?.success() {
             break;
         } else if attempt == max_attempts || dry_run {

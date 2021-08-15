@@ -24,15 +24,18 @@ use std::{convert::TryInto, process::Command};
 pub(in crate::command::release_impl) fn has_changed_since_last_release(
     package: &Package,
     ctx: &Context,
+    verbose: bool,
 ) -> anyhow::Result<bool> {
     let version_tag_name = tag_name_for(&package.name, &package.version.to_string());
     let mut tag_ref = match ctx.repo.refs.find(&version_tag_name, ctx.packed_refs.as_ref())? {
         None => {
-            log::info!(
-                "Package {} wasn't tagged with {} yet and thus needs a release",
-                package.name,
-                version_tag_name
-            );
+            if verbose {
+                log::info!(
+                    "Package {} wasn't tagged with {} yet and thus needs a release",
+                    package.name,
+                    version_tag_name
+                );
+            }
             return Ok(true);
         }
         Some(r) => r,
@@ -192,14 +195,21 @@ pub fn create_version_tag(
     new_version: &str,
     commit_id: ObjectId,
     repo: &Repository,
-    Options { dry_run, skip_tag, .. }: Options,
+    Options {
+        verbose,
+        dry_run,
+        skip_tag,
+        ..
+    }: Options,
 ) -> anyhow::Result<()> {
     if skip_tag {
         return Ok(());
     }
     let tag_name = tag_name_for(&publishee.name, new_version);
     if dry_run {
-        log::info!("WOULD create tag {}", tag_name);
+        if verbose {
+            log::info!("WOULD create tag {}", tag_name);
+        }
     } else {
         for tag in repo
             .refs
