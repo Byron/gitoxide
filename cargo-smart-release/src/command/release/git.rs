@@ -47,7 +47,7 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
     let target = peel_ref_fully(&mut ctx.repo.refs.find_existing("HEAD", None)?, ctx)?;
     let released_target = peel_ref_fully(&mut tag_ref, ctx)?;
 
-    if repo_relative_crate_dir.as_os_str().len() == 0 {
+    if repo_relative_crate_dir.as_os_str().is_empty() {
         Ok(target != released_target)
     } else {
         let mut buf = Vec::new();
