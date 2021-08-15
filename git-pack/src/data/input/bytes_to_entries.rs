@@ -1,10 +1,12 @@
-use crate::data::input;
+use std::{fs, io};
+
 use git_features::{
     hash,
     hash::Sha1,
     zlib::{stream::inflate::ReadBoxed, Decompress},
 };
-use std::{fs, io};
+
+use crate::data::input;
 
 /// An iterator over [`Entries`][input::Entry] in a byte stream.
 ///

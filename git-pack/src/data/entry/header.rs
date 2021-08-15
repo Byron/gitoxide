@@ -1,5 +1,6 @@
-use super::{BLOB, COMMIT, OFS_DELTA, REF_DELTA, TAG, TREE};
 use std::io;
+
+use super::{BLOB, COMMIT, OFS_DELTA, REF_DELTA, TAG, TREE};
 
 /// The header portion of a pack data entry, identifying the kind of stored object.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]

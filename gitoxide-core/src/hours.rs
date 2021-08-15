@@ -1,8 +1,3 @@
-use anyhow::{anyhow, bail};
-use bstr::BString;
-use git_repository::{actor, interrupt, object, odb, odb::pack, prelude::*, progress, Progress};
-use itertools::Itertools;
-use rayon::prelude::*;
 use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::OsStr,
@@ -12,6 +7,12 @@ use std::{
     path::Path,
     time::Instant,
 };
+
+use anyhow::{anyhow, bail};
+use bstr::BString;
+use git_repository::{actor, interrupt, object, odb, odb::pack, prelude::*, progress, Progress};
+use itertools::Itertools;
+use rayon::prelude::*;
 
 /// Additional configuration for the hours estimation functionality.
 pub struct Context<W> {

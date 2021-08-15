@@ -1,10 +1,11 @@
-use crate::{
-    client::{Error, MessageKind},
-    Protocol,
-};
 use std::{
     io,
     ops::{Deref, DerefMut},
+};
+
+use crate::{
+    client::{Error, MessageKind},
+    Protocol,
 };
 /// A function `f(is_error, text)` receiving progress or error information.
 pub type HandleProgress = Box<dyn FnMut(bool, &[u8])>;

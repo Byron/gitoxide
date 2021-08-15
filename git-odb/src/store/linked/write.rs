@@ -1,5 +1,6 @@
-use git_object::{mutable, Kind};
 use std::io::Read;
+
+use git_object::{mutable, Kind};
 
 use crate::store::{linked, loose};
 

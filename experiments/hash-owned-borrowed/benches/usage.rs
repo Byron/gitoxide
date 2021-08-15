@@ -1,5 +1,6 @@
-use criterion::*;
 use std::borrow::Borrow;
+
+use criterion::*;
 
 fn use_owned_by_ref(id: &hash::Owned) {
     black_box(id);

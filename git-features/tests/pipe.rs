@@ -1,6 +1,7 @@
 mod io {
-    use git_features::io;
     use std::io::{BufRead, ErrorKind, Read, Write};
+
+    use git_features::io;
 
     #[test]
     fn threaded_read_to_end() {

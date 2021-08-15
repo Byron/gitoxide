@@ -1,6 +1,7 @@
+use std::{ffi::OsString, path::PathBuf};
+
 use argh::FromArgs;
 use gitoxide_core as core;
-use std::{ffi::OsString, path::PathBuf};
 
 #[derive(FromArgs)]
 #[argh(name = "gix-plumbing")]

@@ -1,5 +1,6 @@
-use git_object::Kind;
 use std::ops::DerefMut;
+
+use git_object::Kind;
 
 /// A trait to model putting objects at a given pack `offset` into a cache, and fetching them.
 ///

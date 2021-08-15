@@ -1,5 +1,6 @@
-use crate::client::{ExtendedBufRead, MessageKind, WriteMode};
 use std::io;
+
+use crate::client::{ExtendedBufRead, MessageKind, WriteMode};
 
 /// A [`Write`][io::Write] implementation optimized for writing packet lines.
 /// A type implementing `Write` for packet lines, which when done can be transformed into a `Read` for

@@ -1,11 +1,13 @@
+use std::{convert::TryInto, ops::Range};
+
+use git_features::zlib;
+use smallvec::SmallVec;
+
 use super::ResolvedBase;
 use crate::{
     cache,
     data::{delta, File},
 };
-use git_features::zlib;
-use smallvec::SmallVec;
-use std::{convert::TryInto, ops::Range};
 
 /// Returned by [`File::decompress_entry()`] and [`File::decode_entry()`]
 #[derive(thiserror::Error, Debug)]

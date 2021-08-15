@@ -13,8 +13,10 @@ mod all {
 mod iter {
     pub use std::io::ErrorKind::*;
 
-    use git_tempfile::create_dir;
-    use git_tempfile::create_dir::{Error::*, Retries};
+    use git_tempfile::{
+        create_dir,
+        create_dir::{Error::*, Retries},
+    };
 
     #[test]
     fn an_existing_directory_causes_immediate_success() -> crate::Result {

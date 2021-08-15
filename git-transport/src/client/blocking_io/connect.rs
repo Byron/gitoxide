@@ -1,6 +1,5 @@
-use crate::client::Transport;
-
 pub use crate::client::non_io_types::connect::Error;
+use crate::client::Transport;
 
 /// A general purpose connector connecting to a repository identified by the given `url`.
 ///

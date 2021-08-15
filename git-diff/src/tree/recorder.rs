@@ -1,10 +1,12 @@
-use crate::tree::visit;
+use std::collections::{BTreeMap, VecDeque};
+
 use git_hash::ObjectId;
 use git_object::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
     tree,
 };
-use std::collections::{BTreeMap, VecDeque};
+
+use crate::tree::visit;
 
 /// A Change as observed by a call to [`visit(…)`][visit::Visit::visit()], enhanced with the path affected by the change.
 /// Its similar to [visit::Change] but includes the path that changed.

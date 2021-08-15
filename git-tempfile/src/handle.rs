@@ -1,7 +1,9 @@
 //!
-use crate::{AutoRemove, ContainingDirectory, ForksafeTempfile, Handle, NEXT_MAP_INDEX, REGISTER};
 use std::{io, path::Path};
+
 use tempfile::{NamedTempFile, TempPath};
+
+use crate::{AutoRemove, ContainingDirectory, ForksafeTempfile, Handle, NEXT_MAP_INDEX, REGISTER};
 
 /// Marker to signal the Registration is an open file able to be written to.
 #[derive(Debug)]
@@ -175,8 +177,9 @@ impl Handle<Writable> {
 }
 
 mod io_impls {
-    use super::{Handle, Writable};
     use std::{io, io::SeekFrom};
+
+    use super::{Handle, Writable};
 
     impl io::Write for Handle<Writable> {
         fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
@@ -203,15 +206,17 @@ mod io_impls {
 
 ///
 pub mod persist {
+    use std::path::Path;
+
     use crate::{
         handle::{expect_none, Closed, Writable},
         Handle, REGISTER,
     };
-    use std::path::Path;
 
     mod error {
-        use crate::Handle;
         use std::fmt::{self, Debug, Display};
+
+        use crate::Handle;
 
         /// The error returned by various [`persist(…)`][Handle<crate::handle::Writable>::persist()] methods
         #[derive(Debug)]

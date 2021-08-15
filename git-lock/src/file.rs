@@ -1,5 +1,6 @@
-use crate::{File, Marker, DOT_LOCK_SUFFIX};
 use std::path::{Path, PathBuf};
+
+use crate::{File, Marker, DOT_LOCK_SUFFIX};
 
 fn strip_lock_suffix(lock_path: &Path) -> PathBuf {
     lock_path.with_extension(lock_path.extension().map_or("".to_string(), |ext| {
@@ -37,8 +38,9 @@ impl File {
 }
 
 mod io_impls {
-    use super::File;
     use std::{io, io::SeekFrom};
+
+    use super::File;
 
     impl io::Write for File {
         fn write(&mut self, buf: &[u8]) -> io::Result<usize> {

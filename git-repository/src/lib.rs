@@ -72,10 +72,11 @@ pub mod interrupt;
 #[cfg(feature = "git-traverse")]
 pub mod ext;
 pub mod prelude {
-    #[cfg(all(feature = "git-traverse"))]
-    pub use crate::ext::*;
     pub use git_features::parallel::reduce::Finalize;
     pub use git_odb::{Find, FindExt, Write};
+
+    #[cfg(all(feature = "git-traverse"))]
+    pub use crate::ext::*;
 }
 
 pub mod init;

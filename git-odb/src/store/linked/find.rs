@@ -1,13 +1,13 @@
-use git_hash::oid;
 use std::convert::TryInto;
 
-use crate::pack::Bundle;
+use git_hash::oid;
+use git_pack::{data::Object, find::Entry};
+
 use crate::{
     pack,
-    pack::bundle::Location,
+    pack::{bundle::Location, Bundle},
     store::{compound, linked},
 };
-use git_pack::{data::Object, find::Entry};
 
 impl linked::Store {
     /// Return true if the given object `id` is contained in the store.

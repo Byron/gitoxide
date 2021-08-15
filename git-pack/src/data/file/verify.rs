@@ -1,7 +1,9 @@
-use crate::data::File;
+use std::sync::atomic::AtomicBool;
+
 use git_features::progress::Progress;
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use std::sync::atomic::AtomicBool;
+
+use crate::data::File;
 
 /// Returned by [`File::verify_checksum()`]
 #[derive(thiserror::Error, Debug)]

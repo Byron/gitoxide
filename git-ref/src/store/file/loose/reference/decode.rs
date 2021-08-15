@@ -1,8 +1,5 @@
-use crate::{
-    mutable,
-    parse::{hex_hash, newline},
-    store::file::loose::Reference,
-};
+use std::convert::{TryFrom, TryInto};
+
 use bstr::BString;
 use git_hash::ObjectId;
 use nom::{
@@ -12,7 +9,12 @@ use nom::{
     IResult,
 };
 use quick_error::quick_error;
-use std::convert::{TryFrom, TryInto};
+
+use crate::{
+    mutable,
+    parse::{hex_hash, newline},
+    store::file::loose::Reference,
+};
 
 enum MaybeUnsafeState {
     Id(ObjectId),

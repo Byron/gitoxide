@@ -1,5 +1,6 @@
-use bstr::{BStr, BString, ByteVec};
 use std::fmt;
+
+use bstr::{BStr, BString, ByteVec};
 
 /// The arguments passed to a server command.
 pub struct Arguments {
@@ -169,9 +170,10 @@ impl Arguments {
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod shared {
-    use crate::fetch::Arguments;
     use bstr::{BString, ByteSlice};
     use git_transport::{client, client::MessageKind};
+
+    use crate::fetch::Arguments;
 
     impl Arguments {
         pub(in crate::fetch::arguments) fn prepare_v1(

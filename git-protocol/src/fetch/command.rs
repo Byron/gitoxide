@@ -22,9 +22,10 @@ impl Command {
 
 #[cfg(any(test, feature = "async-client", feature = "blocking-client"))]
 mod with_io {
-    use crate::fetch::{agent, command::Feature, Command};
     use bstr::{BString, ByteSlice};
     use git_transport::client::Capabilities;
+
+    use crate::fetch::{agent, command::Feature, Command};
 
     impl Command {
         /// Only V2

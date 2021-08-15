@@ -33,23 +33,20 @@ impl<'a> Tag<'a> {
 }
 
 mod decode {
-    use nom::bytes::complete::take_while;
     use nom::{
         branch::alt,
-        bytes::complete::{tag, take_until, take_while1},
+        bytes::complete::{tag, take_until, take_while, take_while1},
         character::is_alphabetic,
         combinator::{all_consuming, opt, recognize},
-        error::context,
+        error::{context, ContextError, ParseError},
         sequence::{preceded, tuple},
         IResult,
     };
 
-    use crate::immutable::Tag;
     use crate::{
-        immutable::{parse, parse::NL},
+        immutable::{parse, parse::NL, Tag},
         BStr, ByteSlice,
     };
-    use nom::error::{ContextError, ParseError};
 
     pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Tag<'a>, E> {
         let (i, target) = context("object <40 lowercase hex char>", |i| {
@@ -132,19 +129,19 @@ mod decode {
 
 ///
 pub mod iter {
-    use crate::{
-        bstr::ByteSlice,
-        immutable::{object, parse, parse::NL, tag::decode},
-        Kind,
-    };
     use bstr::BStr;
     use git_hash::{oid, ObjectId};
-    use nom::error::ParseError;
     use nom::{
         bytes::complete::take_while1,
         character::is_alphabetic,
         combinator::{all_consuming, opt},
-        error::context,
+        error::{context, ParseError},
+    };
+
+    use crate::{
+        bstr::ByteSlice,
+        immutable::{object, parse, parse::NL, tag::decode},
+        Kind,
     };
 
     enum State {

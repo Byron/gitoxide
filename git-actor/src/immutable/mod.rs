@@ -1,6 +1,7 @@
 //!
-use crate::Time;
 use bstr::BStr;
+
+use crate::Time;
 
 /// A signature is created by an actor at a certain time.
 ///

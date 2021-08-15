@@ -1,6 +1,7 @@
 mod empty_upwards_until_boundary {
-    use git_tempfile::remove_dir;
     use std::{io, path::Path};
+
+    use git_tempfile::remove_dir;
 
     #[test]
     fn boundary_must_contain_target_dir() -> crate::Result {
@@ -126,8 +127,9 @@ mod empty_depth_first {
 /// We assume that all checks above also apply to the iterator, so won't repeat them here
 /// Test outside interference only
 mod iter {
-    use git_tempfile::remove_dir;
     use std::io;
+
+    use git_tempfile::remove_dir;
 
     #[test]
     fn racy_directory_creation_during_deletion_always_wins_immediately() -> crate::Result {

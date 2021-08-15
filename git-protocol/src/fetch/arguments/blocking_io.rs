@@ -1,6 +1,8 @@
-use crate::fetch::{Arguments, Command};
-use git_transport::{client, client::TransportV2Ext};
 use std::io::Write;
+
+use git_transport::{client, client::TransportV2Ext};
+
+use crate::fetch::{Arguments, Command};
 
 impl Arguments {
     pub(crate) fn send<'a, T: client::Transport + 'a>(

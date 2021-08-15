@@ -1,8 +1,9 @@
+use git_pack::data;
+
 use crate::{
     pack,
     store::{compound, loose},
 };
-use git_pack::data;
 
 /// Returned by [`compound::Store::find()`]
 #[derive(thiserror::Error, Debug)]

@@ -1,12 +1,15 @@
-use crate::file::{store, store_at, store_with_packed_refs};
-use bstr::ByteSlice;
-use git_testtools::hex_to_id;
 use std::convert::TryInto;
 
+use bstr::ByteSlice;
+use git_testtools::hex_to_id;
+
+use crate::file::{store, store_at, store_with_packed_refs};
+
 mod with_namespace {
-    use crate::file::store_at;
     use bstr::BString;
     use git_object::bstr::ByteSlice;
+
+    use crate::file::store_at;
 
     #[test]
     fn general_iteration_can_trivially_use_namespaces_as_prefixes() {

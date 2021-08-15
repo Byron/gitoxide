@@ -1,5 +1,6 @@
-use git_object::mutable;
 use std::io;
+
+use git_object::mutable;
 
 /// Describe the capability to write git objects into an object store.
 pub trait Write {

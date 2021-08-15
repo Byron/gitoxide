@@ -1,5 +1,6 @@
-use crate::{Channel, ERR_PREFIX};
 use bstr::BStr;
+
+use crate::{Channel, ERR_PREFIX};
 
 /// A borrowed packet line as it refers to a slice of data by reference.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]

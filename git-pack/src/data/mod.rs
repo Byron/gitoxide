@@ -2,7 +2,6 @@
 use std::{convert::TryInto, path::Path};
 
 use filebuffer::FileBuffer;
-
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 
 mod file;

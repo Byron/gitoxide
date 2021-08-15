@@ -1,8 +1,10 @@
 //! Various `prodash` types along with various utilities for comfort.
 use std::io;
 
-pub use prodash::progress::{Discard, DoOrDiscard, Either, ThroughputOnDrop};
-pub use prodash::{unit, Progress, Unit};
+pub use prodash::{
+    progress::{Discard, DoOrDiscard, Either, ThroughputOnDrop},
+    unit, Progress, Unit,
+};
 
 /// A unit for displaying bytes with throughput and progress percentage.
 pub fn bytes() -> Option<Unit> {

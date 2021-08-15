@@ -1,5 +1,6 @@
-use git_repository::tempfile::{AutoRemove, ContainingDirectory};
 use std::path::Path;
+
+use git_repository::tempfile::{AutoRemove, ContainingDirectory};
 
 fn main() -> anyhow::Result<()> {
     git_repository::interrupt::init_handler(|| {})?;

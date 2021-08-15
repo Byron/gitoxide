@@ -1,7 +1,8 @@
 use std::convert::TryFrom;
 
-use crate::{immutable::object, tree};
 use bstr::BStr;
+
+use crate::{immutable::object, tree};
 
 /// A directory snapshot containing files (blobs), directories (trees) and submodules (commits).
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -108,10 +109,6 @@ impl<'a> TryFrom<&'a [u8]> for tree::EntryMode {
 mod decode {
     use std::convert::TryFrom;
 
-    use crate::{
-        immutable::{parse::SPACE, tree::Entry, Tree},
-        tree,
-    };
     use bstr::ByteSlice;
     use nom::{
         bytes::complete::{tag, take, take_while1, take_while_m_n},
@@ -121,6 +118,11 @@ mod decode {
         multi::many0,
         sequence::terminated,
         IResult,
+    };
+
+    use crate::{
+        immutable::{parse::SPACE, tree::Entry, Tree},
+        tree,
     };
 
     const NULL: &[u8] = b"\0";

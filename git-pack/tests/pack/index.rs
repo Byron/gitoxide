@@ -1,17 +1,18 @@
 mod file {
-    use crate::{
-        fixture_path, hex_to_id,
-        pack::{INDEX_V1, PACK_FOR_INDEX_V1},
-        pack::{SMALL_PACK, SMALL_PACK_INDEX},
-    };
     use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
     use git_object::{self as object};
     use git_odb::pack;
 
+    use crate::{
+        fixture_path, hex_to_id,
+        pack::{INDEX_V1, PACK_FOR_INDEX_V1, SMALL_PACK, SMALL_PACK_INDEX},
+    };
+
     mod method {
         mod v1 {
-            use crate::{fixture_path, pack::INDEX_V1};
             use git_pack::index;
+
+            use crate::{fixture_path, pack::INDEX_V1};
 
             #[test]
             fn lookup() -> Result<(), Box<dyn std::error::Error>> {
@@ -39,8 +40,9 @@ mod file {
         }
 
         mod v2 {
-            use crate::{fixture_path, pack::INDEX_V2};
             use git_pack::index;
+
+            use crate::{fixture_path, pack::INDEX_V2};
 
             #[test]
             fn lookup() -> Result<(), Box<dyn std::error::Error>> {
@@ -68,12 +70,14 @@ mod file {
         }
 
         mod any {
-            use crate::{fixture_path, pack::V2_PACKS_AND_INDICES};
+            use std::{fs, io, sync::atomic::AtomicBool};
+
             use filebuffer::FileBuffer;
             use git_features::progress;
             use git_odb::pack;
             use git_pack::data::{input, EntryRange};
-            use std::{fs, io, sync::atomic::AtomicBool};
+
+            use crate::{fixture_path, pack::V2_PACKS_AND_INDICES};
 
             #[test]
             fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {
@@ -180,12 +184,11 @@ mod file {
         }
     }
 
-    use crate::pack::{INDEX_V2, PACK_FOR_INDEX_V2};
     use common_macros::b_tree_map;
     use git_features::progress;
-    use git_pack::cache;
-    use git_pack::data::decode_entry::Outcome;
-    use git_pack::index;
+    use git_pack::{cache, data::decode_entry::Outcome, index};
+
+    use crate::pack::{INDEX_V2, PACK_FOR_INDEX_V2};
 
     static ALGORITHMS: &[index::traverse::Algorithm] = &[
         index::traverse::Algorithm::Lookup,

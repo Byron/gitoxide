@@ -1,11 +1,13 @@
-use crate::client::{ExtendedBufRead, MessageKind, WriteMode};
-use futures_io::AsyncWrite;
-use pin_project_lite::pin_project;
 use std::{
     io,
     pin::Pin,
     task::{Context, Poll},
 };
+
+use futures_io::AsyncWrite;
+use pin_project_lite::pin_project;
+
+use crate::client::{ExtendedBufRead, MessageKind, WriteMode};
 
 pin_project! {
     /// A [`Write`][io::Write] implementation optimized for writing packet lines.

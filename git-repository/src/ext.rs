@@ -1,8 +1,9 @@
 mod tree {
+    use std::borrow::BorrowMut;
+
     use git_hash::oid;
     use git_object::immutable;
     use git_traverse::tree::breadthfirst;
-    use std::borrow::BorrowMut;
 
     pub trait Sealed {}
 

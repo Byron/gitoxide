@@ -3,10 +3,9 @@
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 
-use bstr::{BStr, BString, ByteSlice};
-
 /// For convenience to allow using `bstr` without adding it to own cargo manifest.
 pub use bstr;
+use bstr::{BStr, BString, ByteSlice};
 
 pub mod immutable;
 pub mod mutable;

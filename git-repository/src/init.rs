@@ -1,10 +1,10 @@
-use quick_error::quick_error;
 use std::{
     fs::{self, OpenOptions},
     io::Write,
-    path::Path,
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
+
+use quick_error::quick_error;
 
 quick_error! {
     #[derive(Debug)]

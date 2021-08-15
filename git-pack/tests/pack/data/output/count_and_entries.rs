@@ -1,9 +1,5 @@
-use std::sync::Arc;
+use std::sync::{atomic::AtomicBool, Arc};
 
-use crate::pack::{
-    data::output::{db, DbKind},
-    hex_to_id,
-};
 use git_features::{parallel::reduce::Finalize, progress};
 use git_odb::{compound, linked, pack, FindExt};
 use git_pack::data::{
@@ -11,7 +7,11 @@ use git_pack::data::{
     output::{count, entry},
 };
 use git_traverse::commit;
-use std::sync::atomic::AtomicBool;
+
+use crate::pack::{
+    data::output::{db, DbKind},
+    hex_to_id,
+};
 
 #[test]
 fn traversals() -> crate::Result {

@@ -1,5 +1,6 @@
-use crate::Kind;
 use std::path::PathBuf;
+
+use crate::Kind;
 
 pub mod discover;
 pub mod is_git;

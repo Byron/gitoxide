@@ -52,12 +52,12 @@ mod init {
         Ok(())
     }
 }
-pub use init::init_handler;
-
 use std::{
     io,
     sync::atomic::{AtomicBool, Ordering},
 };
+
+pub use init::init_handler;
 
 /// A wrapper for an inner iterator which will check for interruptions on each iteration.
 pub struct Iter<I, EFN> {

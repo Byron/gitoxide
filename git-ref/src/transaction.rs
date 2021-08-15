@@ -12,9 +12,10 @@
 //!   - errors during preparations will cause a perfect rollback
 //! * prepared transactions are committed to finalize the change
 //!   - errors when committing while leave the ref store in an inconsistent, but operational state.
-use crate::mutable::{FullName, Target};
 use bstr::BString;
 use git_hash::ObjectId;
+
+use crate::mutable::{FullName, Target};
 
 /// A change to the reflog.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -134,11 +135,12 @@ pub enum RefLog {
 }
 
 mod ext {
+    use bstr::{BString, ByteVec};
+
     use crate::{
         transaction::{Change, LogChange, RefEdit, RefLog, Target},
         Namespace, PartialName,
     };
-    use bstr::{BString, ByteVec};
 
     /// An extension trait to perform commonly used operations on edits across different ref stores.
     pub trait RefEditsExt<T>

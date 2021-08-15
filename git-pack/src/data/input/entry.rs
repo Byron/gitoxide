@@ -1,5 +1,6 @@
-use crate::data::{self, entry::Header, input};
 use std::io::Write;
+
+use crate::data::{self, entry::Header, input};
 
 impl input::Entry {
     /// Create a new input entry from a given data `obj` set to be placed at the given `pack_offset`.

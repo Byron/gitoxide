@@ -1,12 +1,14 @@
-use crate::path;
 use std::{
     borrow::Cow,
     path::{Component, Path},
 };
 
+use crate::path;
+
 pub mod existing {
-    use quick_error::quick_error;
     use std::path::PathBuf;
+
+    use quick_error::quick_error;
 
     quick_error! {
         #[derive(Debug)]

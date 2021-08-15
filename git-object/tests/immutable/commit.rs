@@ -131,9 +131,10 @@ dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
 =T+RI
 -----END PGP SIGNATURE-----";
 mod method {
-    use crate::{hex_to_id, immutable::fixture_bytes};
     use git_object::immutable::Commit;
     use pretty_assertions::assert_eq;
+
+    use crate::{hex_to_id, immutable::fixture_bytes};
 
     #[test]
     fn tree() -> crate::Result {
@@ -146,6 +147,11 @@ mod method {
 }
 
 mod iter {
+    use git_object::{
+        bstr::ByteSlice,
+        immutable::{commit::iter::Token, CommitIter},
+    };
+
     use crate::{
         hex_to_id,
         immutable::{
@@ -153,7 +159,6 @@ mod iter {
             fixture_bytes, linus_signature, signature,
         },
     };
-    use git_object::{bstr::ByteSlice, immutable::commit::iter::Token, immutable::CommitIter};
 
     #[test]
     fn newline_right_after_signature_multiline_header() -> crate::Result {
@@ -302,11 +307,12 @@ mod iter {
     }
 
     mod method {
+        use git_object::immutable::CommitIter;
+
         use crate::{
             hex_to_id,
             immutable::{fixture_bytes, signature},
         };
-        use git_object::immutable::CommitIter;
 
         #[test]
         fn tree_id() -> crate::Result {
@@ -337,12 +343,13 @@ mod iter {
 }
 
 mod from_bytes {
+    use git_object::{bstr::ByteSlice, immutable::Commit};
+    use smallvec::SmallVec;
+
     use crate::immutable::{
         commit::{LONG_MESSAGE, MERGE_TAG, SIGNATURE},
         fixture_bytes, linus_signature, signature,
     };
-    use git_object::{bstr::ByteSlice, immutable::Commit};
-    use smallvec::SmallVec;
 
     #[test]
     fn unsigned() -> crate::Result {

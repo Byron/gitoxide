@@ -1,10 +1,12 @@
+use std::{io, io::Write};
+
+use bstr::BString;
+use git_packetline::PacketLine;
+
 use crate::{
     client::{self, capabilities, git, Capabilities, SetServiceResponse},
     Protocol, Service,
 };
-use bstr::BString;
-use git_packetline::PacketLine;
-use std::{io, io::Write};
 
 impl<R, W> client::TransportWithoutIO for git::Connection<R, W>
 where
@@ -144,9 +146,10 @@ pub mod connect {
         net::{TcpStream, ToSocketAddrs},
     };
 
-    use crate::client::git;
     use bstr::BString;
     use quick_error::quick_error;
+
+    use crate::client::git;
     quick_error! {
         /// The error used in [`connect()`].
         #[derive(Debug)]

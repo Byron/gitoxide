@@ -26,14 +26,15 @@
 //! [signal-hook]: https://docs.rs/signal-hook
 #![deny(missing_docs, unsafe_code, rust_2018_idioms)]
 
-use dashmap::DashMap;
-use once_cell::sync::Lazy;
 use std::{
     io,
     marker::PhantomData,
     path::{Path, PathBuf},
     sync::atomic::AtomicUsize,
 };
+
+use dashmap::DashMap;
+use once_cell::sync::Lazy;
 
 mod fs;
 pub use fs::{create_dir, remove_dir};

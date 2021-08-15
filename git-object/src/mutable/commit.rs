@@ -1,10 +1,12 @@
+use std::io;
+
+use bstr::{BStr, BString, ByteSlice};
+use smallvec::SmallVec;
+
 use crate::{
     commit,
     mutable::{encode, NL},
 };
-use bstr::{BStr, BString, ByteSlice};
-use smallvec::SmallVec;
-use std::io;
 
 /// A mutable git commit, representing an annotated state of a working tree along with a reference to its historical commits.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

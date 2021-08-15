@@ -1,10 +1,12 @@
+use std::io;
+
+use git_transport::{client, Protocol};
+
 use crate::fetch::{
     response,
     response::{Acknowledgement, ShallowUpdate, WantedRef},
     Response,
 };
-use git_transport::{client, Protocol};
-use std::io;
 
 fn parse_v2_section<T>(
     line: &mut String,

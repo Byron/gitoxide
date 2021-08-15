@@ -1,7 +1,9 @@
-use crate::Kind;
+use std::{borrow::Cow, convert::TryFrom, fmt, path::Path};
+
 use bstr::{BStr, BString, ByteSlice};
 use git_hash::{oid, ObjectId};
-use std::{borrow::Cow, convert::TryFrom, fmt, path::Path};
+
+use crate::Kind;
 
 /// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
 /// of a symbolic reference

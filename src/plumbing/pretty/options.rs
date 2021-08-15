@@ -1,7 +1,7 @@
+use std::{ffi::OsString, path::PathBuf};
+
 use clap::{AppSettings, Clap};
 use gitoxide_core as core;
-use std::ffi::OsString;
-use std::path::PathBuf;
 
 #[derive(Debug, Clap)]
 #[clap(name = "gix-plumbing", about = "The git underworld", version = clap::crate_version!())]

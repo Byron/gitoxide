@@ -1,5 +1,6 @@
-use quick_error::quick_error;
 use std::path::{Path, PathBuf};
+
+use quick_error::quick_error;
 
 quick_error! {
     #[derive(Debug)]

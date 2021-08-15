@@ -1,11 +1,13 @@
+use std::io;
+
+use futures_lite::AsyncBufReadExt;
+use git_transport::{client, Protocol};
+
 use crate::fetch::{
     response,
     response::{Acknowledgement, ShallowUpdate, WantedRef},
     Response,
 };
-use futures_lite::AsyncBufReadExt;
-use git_transport::{client, Protocol};
-use std::io;
 
 async fn parse_v2_section<T>(
     line: &mut String,

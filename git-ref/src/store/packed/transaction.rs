@@ -1,9 +1,10 @@
+use std::io::Write;
+
 use crate::{
     mutable::Target,
     store::{file::transaction::FindObjectFn, packed, packed::Edit},
     transaction::{Change, RefEdit},
 };
-use std::io::Write;
 
 pub(crate) const HEADER_LINE: &[u8] = b"# pack-refs with: peeled fully-peeled sorted \n";
 
@@ -264,8 +265,9 @@ pub mod prepare {
 
 ///
 pub mod commit {
-    use crate::store::packed;
     use quick_error::quick_error;
+
+    use crate::store::packed;
 
     quick_error! {
         /// The error used in [`Transaction::commit(…)`][super::packed::Transaction::commit()].

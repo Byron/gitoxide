@@ -1,12 +1,13 @@
 ///
 pub mod ancestors {
-    use git_hash::{oid, ObjectId};
-    use git_object::immutable;
-    use quick_error::quick_error;
     use std::{
         borrow::BorrowMut,
         collections::{BTreeSet, VecDeque},
     };
+
+    use git_hash::{oid, ObjectId};
+    use git_object::immutable;
+    use quick_error::quick_error;
 
     quick_error! {
         /// The error is part of the item returned by the [Ancestors] iterator.

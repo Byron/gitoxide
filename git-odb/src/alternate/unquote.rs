@@ -1,6 +1,6 @@
+use std::{borrow::Cow, io::Read};
+
 use git_object::bstr::{BStr, BString, ByteSlice};
-use std::borrow::Cow;
-use std::io::Read;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -99,8 +99,9 @@ pub fn ansi_c(input: &BStr) -> Result<Cow<'_, BStr>, Error> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use git_object::bstr::ByteSlice;
+
+    use super::*;
 
     macro_rules! test {
         ($name:ident, $input:literal, $expected:literal) => {

@@ -1,8 +1,7 @@
-use crate::{
-    PacketLine, {DELIMITER_LINE, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, RESPONSE_END_LINE, U16_HEX_BYTES},
-};
 use bstr::BString;
 use quick_error::quick_error;
+
+use crate::{PacketLine, DELIMITER_LINE, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, RESPONSE_END_LINE, U16_HEX_BYTES};
 
 quick_error! {
     /// The error used in the [`decode`][crate::decode] module

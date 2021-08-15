@@ -1,6 +1,12 @@
-use crate::{FullName, PartialName};
+use std::{
+    borrow::Cow,
+    convert::{Infallible, TryFrom},
+    path::Path,
+};
+
 use bstr::{BStr, ByteSlice};
-use std::{borrow::Cow, convert::Infallible, convert::TryFrom, path::Path};
+
+use crate::{FullName, PartialName};
 
 /// The error used in the [`PartialName`][super::PartialName]::try_from(…) implementations.
 pub type Error = git_validate::reference::name::Error;

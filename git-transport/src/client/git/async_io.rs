@@ -1,12 +1,13 @@
-use crate::{
-    client::{self, capabilities, git, Capabilities, SetServiceResponse},
-    Protocol, Service,
-};
 use async_trait::async_trait;
 use bstr::BString;
 use futures_io::{AsyncRead, AsyncWrite};
 use futures_lite::AsyncWriteExt;
 use git_packetline::PacketLine;
+
+use crate::{
+    client::{self, capabilities, git, Capabilities, SetServiceResponse},
+    Protocol, Service,
+};
 
 impl<R, W> client::TransportWithoutIO for git::Connection<R, W>
 where

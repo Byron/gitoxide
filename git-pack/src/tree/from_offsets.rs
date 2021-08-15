@@ -1,5 +1,3 @@
-use crate::{index::access::PackOffset, tree::Tree};
-use git_features::progress::{self, Progress};
 use std::{
     convert::TryFrom,
     fs, io,
@@ -7,6 +5,10 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
     time::Instant,
 };
+
+use git_features::progress::{self, Progress};
+
+use crate::{index::access::PackOffset, tree::Tree};
 
 /// Returned by [`Tree::from_offsets_in_pack()`]
 #[derive(thiserror::Error, Debug)]

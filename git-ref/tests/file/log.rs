@@ -144,9 +144,10 @@ mod iter {
         }
     }
     mod forward {
-        use crate::file::log::iter::reflog;
         use bstr::B;
         use git_hash::ObjectId;
+
+        use crate::file::log::iter::reflog;
 
         #[test]
         fn all_success() -> crate::Result {

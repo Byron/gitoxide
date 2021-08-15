@@ -1,6 +1,5 @@
-use super::{Context, Options};
-use crate::command::release_impl::tag_name_for;
-use crate::command::release_impl::utils::will;
+use std::{convert::TryInto, process::Command};
+
 use anyhow::{anyhow, bail};
 use bstr::ByteSlice;
 use cargo_metadata::{
@@ -20,7 +19,9 @@ use git_repository::{
     },
     Repository,
 };
-use std::{convert::TryInto, process::Command};
+
+use super::{Context, Options};
+use crate::command::release_impl::{tag_name_for, utils::will};
 
 pub(in crate::command::release_impl) fn has_changed_since_last_release(
     package: &Package,

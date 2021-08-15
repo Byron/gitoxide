@@ -1,5 +1,6 @@
-use quick_error::quick_error;
 use std::io;
+
+use quick_error::quick_error;
 
 quick_error! {
     /// The error used by the [Http] trait.

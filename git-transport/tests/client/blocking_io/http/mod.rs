@@ -8,7 +8,6 @@ use std::{
 };
 
 use bstr::ByteSlice;
-
 use git_transport::{
     client::{self, http, Identity, SetServiceResponse, Transport, TransportV2Ext, TransportWithoutIO},
     Protocol, Service,

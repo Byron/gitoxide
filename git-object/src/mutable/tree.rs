@@ -1,8 +1,9 @@
-use crate::{mutable::SPACE, tree::EntryMode};
+use std::{cmp::Ordering, io};
+
 use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
-use std::cmp::Ordering;
-use std::io;
+
+use crate::{mutable::SPACE, tree::EntryMode};
 
 quick_error! {
     /// The Error used in [`Tree::write_to()`].

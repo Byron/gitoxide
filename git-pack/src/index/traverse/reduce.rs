@@ -1,9 +1,11 @@
-use crate::{data, index::traverse};
-use git_features::{parallel, progress::Progress};
 use std::{
     sync::atomic::{AtomicBool, Ordering},
     time::Instant,
 };
+
+use git_features::{parallel, progress::Progress};
+
+use crate::{data, index::traverse};
 
 fn add_decode_result(lhs: &mut data::decode_entry::Outcome, rhs: data::decode_entry::Outcome) {
     lhs.num_deltas += rhs.num_deltas;

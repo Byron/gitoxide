@@ -1,8 +1,9 @@
-use git_tempfile::{AutoRemove, ContainingDirectory};
 use std::{
     io::{stdout, Write},
     path::PathBuf,
 };
+
+use git_tempfile::{AutoRemove, ContainingDirectory};
 
 fn main() -> std::io::Result<()> {
     let filepath = PathBuf::new().join("tempfile.ext");

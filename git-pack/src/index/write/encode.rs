@@ -1,10 +1,12 @@
-use crate::index::{util::Count, V2_SIGNATURE};
+use std::{cmp::Ordering, collections::VecDeque, io};
+
 use byteorder::{BigEndian, WriteBytesExt};
 use git_features::{
     hash,
     progress::{self, Progress},
 };
-use std::{cmp::Ordering, collections::VecDeque, io};
+
+use crate::index::{util::Count, V2_SIGNATURE};
 
 pub(crate) fn write_to(
     out: impl io::Write,

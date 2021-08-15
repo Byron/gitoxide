@@ -14,10 +14,12 @@ mod convert {
 }
 
 mod write {
-    use crate::{Signature, SPACE};
+    use std::io;
+
     use bstr::{BStr, ByteSlice};
     use quick_error::quick_error;
-    use std::io;
+
+    use crate::{Signature, SPACE};
 
     quick_error! {
         /// The Error produced by [`Signature::write_to()`].

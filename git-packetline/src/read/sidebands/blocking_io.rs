@@ -1,8 +1,9 @@
+use std::{io, io::BufRead};
+
 use crate::{
     immutable::{Band, Text},
     PacketLine, StreamingPeekableIter, U16_HEX_BYTES,
 };
-use std::{io, io::BufRead};
 
 /// An implementor of [`BufRead`][io::BufRead] yielding packet lines on each call to [`read_line()`][io::BufRead::read_line()].
 /// It's also possible to hide the underlying packet lines using the [`Read`][io::Read] implementation which is useful

@@ -10,12 +10,17 @@ fn size_of_entry() {
 }
 
 mod new_from_header {
-    use crate::{fixture_path, pack::SMALL_PACK, pack::V2_PACKS_AND_INDICES};
+    use std::fs;
+
     use git_odb::{
         pack,
         pack::data::input::{EntryDataMode, Mode},
     };
-    use std::fs;
+
+    use crate::{
+        fixture_path,
+        pack::{SMALL_PACK, V2_PACKS_AND_INDICES},
+    };
 
     #[test]
     fn header_encode() -> Result<(), Box<dyn std::error::Error>> {

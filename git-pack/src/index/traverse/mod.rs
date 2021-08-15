@@ -1,9 +1,11 @@
-use crate::index;
+use std::sync::{atomic::AtomicBool, Arc};
+
 use git_features::{
     parallel,
     progress::{self, Progress},
 };
-use std::sync::{atomic::AtomicBool, Arc};
+
+use crate::index;
 
 ///
 mod indexed;
@@ -19,8 +21,9 @@ mod types;
 pub use types::{Algorithm, Outcome, SafetyCheck};
 
 mod options {
-    use crate::index::traverse::{Algorithm, SafetyCheck};
     use std::sync::{atomic::AtomicBool, Arc};
+
+    use crate::index::traverse::{Algorithm, SafetyCheck};
 
     /// Traversal options for [`traverse()`][crate::index::File::traverse()]
     #[derive(Debug, Clone)]

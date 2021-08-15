@@ -1,8 +1,10 @@
-use crate::tree::visit::Visit;
+use std::{borrow::BorrowMut, collections::VecDeque};
+
 use git_hash::{oid, ObjectId};
 use git_object::{immutable, tree};
 use quick_error::quick_error;
-use std::{borrow::BorrowMut, collections::VecDeque};
+
+use crate::tree::visit::Visit;
 
 quick_error! {
     /// The error is part of the item returned by the [`traverse()`] function.

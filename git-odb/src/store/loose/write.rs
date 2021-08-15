@@ -1,8 +1,10 @@
+use std::{fs, io, io::Write, path::PathBuf};
+
+use git_features::{hash, zlib::stream::deflate};
+use tempfile::NamedTempFile;
+
 use super::Store;
 use crate::store::loose;
-use git_features::{hash, zlib::stream::deflate};
-use std::{fs, io, io::Write, path::PathBuf};
-use tempfile::NamedTempFile;
 
 /// Returned by the [`crate::Write`] trait implementation of [`Store`]
 #[derive(thiserror::Error, Debug)]

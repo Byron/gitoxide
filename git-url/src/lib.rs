@@ -2,11 +2,12 @@
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
 
-use bstr::ByteSlice;
 use std::{
     convert::TryFrom,
     fmt::{self, Write},
 };
+
+use bstr::ByteSlice;
 
 ///
 pub mod parse;

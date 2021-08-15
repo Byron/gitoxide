@@ -3,8 +3,9 @@ mod access;
 mod init;
 pub mod verify;
 
-use crate::file::File;
 use std::fmt;
+
+use crate::file::File;
 
 /// A complete commit graph.
 ///

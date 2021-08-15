@@ -1,12 +1,12 @@
 mod refedit_ext {
+    use std::{cell::RefCell, collections::BTreeMap, convert::TryInto};
+
     use bstr::{BString, ByteSlice};
-    use git_ref::transaction::Create;
     use git_ref::{
         mutable::Target,
-        transaction::{Change, RefEdit, RefEditsExt, RefLog},
+        transaction::{Change, Create, RefEdit, RefEditsExt, RefLog},
         PartialName,
     };
-    use std::{cell::RefCell, collections::BTreeMap, convert::TryInto};
 
     #[derive(Default)]
     struct MockStore {
@@ -145,7 +145,8 @@ mod refedit_ext {
     }
 
     mod splitting {
-        use crate::transaction::refedit_ext::MockStore;
+        use std::{cell::Cell, convert::TryInto};
+
         use git_hash::ObjectId;
         use git_ref::{
             mutable::Target,
@@ -153,7 +154,8 @@ mod refedit_ext {
             FullName, PartialName,
         };
         use git_testtools::hex_to_id;
-        use std::{cell::Cell, convert::TryInto};
+
+        use crate::transaction::refedit_ext::MockStore;
 
         fn find<'a>(edits: &'a [RefEdit], name: &str) -> &'a RefEdit {
             let name: FullName = name.try_into().unwrap();

@@ -1,8 +1,10 @@
-use crate::index::{self, Version, FAN_LEN, V2_SIGNATURE};
+use std::{convert::TryFrom, mem::size_of, path::Path};
+
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use std::{convert::TryFrom, mem::size_of, path::Path};
+
+use crate::index::{self, Version, FAN_LEN, V2_SIGNATURE};
 
 /// Returned by [`index::File::at()`].
 #[derive(thiserror::Error, Debug)]

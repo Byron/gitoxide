@@ -1,9 +1,13 @@
+use std::{
+    collections::BTreeMap,
+    path::{Path, PathBuf},
+    sync::Mutex,
+};
+
+pub use bstr;
 use bstr::{BStr, ByteSlice};
 use nom::error::VerboseError;
 use once_cell::sync::Lazy;
-use std::{collections::BTreeMap, path::Path, path::PathBuf, sync::Mutex};
-
-pub use bstr;
 pub use tempfile;
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));

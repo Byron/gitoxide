@@ -1,6 +1,6 @@
+use std::{ffi::OsString, path::PathBuf};
+
 use clap::{AppSettings, Clap};
-use std::ffi::OsString;
-use std::path::PathBuf;
 
 #[derive(Debug, Clap)]
 #[clap(about = "The rusty git", version = clap::crate_version!())]
@@ -104,8 +104,9 @@ pub struct EstimateHours {
 }
 
 mod validator {
-    use anyhow::Context;
     use std::{ffi::OsStr, path::PathBuf};
+
+    use anyhow::Context;
 
     fn is_repo_inner(dir: &OsStr) -> anyhow::Result<()> {
         let git_dir = PathBuf::from(dir).join(".git");

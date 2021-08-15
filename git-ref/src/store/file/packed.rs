@@ -33,8 +33,9 @@ impl file::Store {
 
 ///
 pub mod transaction {
-    use crate::store::packed;
     use quick_error::quick_error;
+
+    use crate::store::packed;
 
     quick_error! {
         /// The error returned by [`file::Store::packed_transaction`][crate::file::Store::packed_transaction()].

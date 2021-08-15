@@ -1,12 +1,3 @@
-use anyhow::Result;
-use clap::Clap;
-use gitoxide_core as core;
-
-use crate::{
-    plumbing::pretty::options::{Args, Subcommands},
-    shared::pretty::prepare_and_run,
-};
-use gitoxide_core::pack::verify;
 use std::{
     io::{stdin, BufReader},
     path::PathBuf,
@@ -14,6 +5,16 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
+};
+
+use anyhow::Result;
+use clap::Clap;
+use gitoxide_core as core;
+use gitoxide_core::pack::verify;
+
+use crate::{
+    plumbing::pretty::options::{Args, Subcommands},
+    shared::pretty::prepare_and_run,
 };
 
 pub fn main() -> Result<()> {

@@ -1,5 +1,6 @@
-use crate::{ObjectId, SIZE_OF_SHA1_DIGEST};
 use std::{convert::TryInto, fmt};
+
+use crate::{ObjectId, SIZE_OF_SHA1_DIGEST};
 
 /// A borrowed reference to a hash identifying objects.
 ///

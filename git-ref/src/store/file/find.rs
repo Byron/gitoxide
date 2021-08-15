@@ -5,7 +5,6 @@ use std::{
 };
 
 use bstr::ByteSlice;
-
 pub use error::Error;
 
 use crate::{

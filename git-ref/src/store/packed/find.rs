@@ -1,6 +1,8 @@
-use crate::{store::packed, PartialName};
-use bstr::{BStr, BString, ByteSlice};
 use std::{borrow::Cow, convert::TryInto};
+
+use bstr::{BStr, BString, ByteSlice};
+
+use crate::{store::packed, PartialName};
 
 /// packed-refs specific functionality
 impl packed::Buffer {
@@ -97,8 +99,9 @@ impl packed::Buffer {
 }
 
 mod error {
-    use quick_error::quick_error;
     use std::convert::Infallible;
+
+    use quick_error::quick_error;
 
     quick_error! {
         /// The error returned by [`find()`][super::packed::Buffer::find()]

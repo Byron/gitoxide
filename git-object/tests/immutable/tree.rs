@@ -1,10 +1,11 @@
 mod iter {
-    use crate::{hex_to_id, immutable::fixture_bytes};
     use git_object::{
         bstr::ByteSlice,
         immutable::{tree::Entry, TreeIter},
         tree,
     };
+
+    use crate::{hex_to_id, immutable::fixture_bytes};
 
     #[test]
     fn empty() {
@@ -59,12 +60,13 @@ mod iter {
 }
 
 mod from_bytes {
-    use crate::{hex_to_id, immutable::fixture_bytes};
     use git_object::{
         bstr::ByteSlice,
         immutable::{tree::Entry, Tree},
         tree,
     };
+
+    use crate::{hex_to_id, immutable::fixture_bytes};
 
     #[test]
     fn empty() -> crate::Result {

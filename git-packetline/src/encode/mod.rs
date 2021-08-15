@@ -1,5 +1,6 @@
-use crate::MAX_DATA_LEN;
 use quick_error::quick_error;
+
+use crate::MAX_DATA_LEN;
 
 quick_error! {
     /// The error returned by most functions in the [`encode`][crate::encode] module

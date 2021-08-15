@@ -1,7 +1,5 @@
-use crate::{
-    credentials,
-    fetch::{refs, Action, Arguments, Command, Delegate, Error, LsRefsAction, Response},
-};
+use std::io;
+
 use git_features::{progress, progress::Progress};
 use git_transport::{
     client,
@@ -9,7 +7,11 @@ use git_transport::{
     Service,
 };
 use maybe_async::maybe_async;
-use std::io;
+
+use crate::{
+    credentials,
+    fetch::{refs, Action, Arguments, Command, Delegate, Error, LsRefsAction, Response},
+};
 
 /// A way to indicate how to treat the connection underlying the transport, potentially allowing to reuse it.
 pub enum FetchConnection {

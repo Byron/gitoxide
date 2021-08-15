@@ -212,6 +212,7 @@ mod stepped {
 }
 
 use std::marker::PhantomData;
+
 pub use stepped::Stepwise;
 
 /// An trait for aggregating items commonly produced in threads into a single result, without itself

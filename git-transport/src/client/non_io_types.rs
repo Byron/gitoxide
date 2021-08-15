@@ -79,10 +79,11 @@ pub(crate) mod connect {
 }
 
 mod error {
+    use bstr::BString;
+
     use crate::client::capabilities;
     #[cfg(feature = "http-client-curl")]
     use crate::client::http;
-    use bstr::BString;
 
     #[cfg(feature = "http-client-curl")]
     type HttpError = http::Error;

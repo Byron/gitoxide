@@ -1,10 +1,12 @@
-use crate::{tree::visit, tree::visit::Action};
+use std::collections::VecDeque;
+
 use git_hash::ObjectId;
 use git_object::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
     immutable, tree,
 };
-use std::collections::VecDeque;
+
+use crate::tree::{visit, visit::Action};
 
 /// An owned entry as observed by a call to [`visit_(tree|nontree)(…)`][visit::Visit::visit_tree()], enhanced with the full path to it.
 /// Otherwise similar to [`immutable::tree::Entry`][git_object::immutable::tree::Entry].

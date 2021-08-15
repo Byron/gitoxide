@@ -1,9 +1,9 @@
-use bstr::BString;
-use quick_error::quick_error;
 use std::borrow::Cow;
 
-use crate::client::blocking_io;
-use crate::Protocol;
+use bstr::BString;
+use quick_error::quick_error;
+
+use crate::{client::blocking_io, Protocol};
 
 quick_error! {
     /// The error used in [`connect()`].
@@ -95,8 +95,7 @@ pub fn connect(
 mod tests {
     use bstr::ByteSlice;
 
-    use crate::client::blocking_io::ssh::connect;
-    use crate::Protocol;
+    use crate::{client::blocking_io::ssh::connect, Protocol};
 
     #[test]
     fn connect_with_tilde_in_path() {

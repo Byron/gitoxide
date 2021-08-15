@@ -1,7 +1,8 @@
 //! Functions for expanding repository paths.
+use std::path::{Path, PathBuf};
+
 use bstr::{BStr, BString, ByteSlice};
 use quick_error::quick_error;
-use std::path::{Path, PathBuf};
 
 /// Whether a repository is resolving for the current user, or the given one.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

@@ -1,6 +1,7 @@
 mod init {
-    use crate::Repository;
     use std::path::Path;
+
+    use crate::Repository;
 
     impl Repository {
         /// Really just a sketch at this point to help guide the API.
@@ -13,9 +14,11 @@ mod init {
 }
 
 pub mod discover {
-    use crate::{path::discover, Repository};
-    use quick_error::quick_error;
     use std::path::Path;
+
+    use quick_error::quick_error;
+
+    use crate::{path::discover, Repository};
 
     quick_error! {
         #[derive(Debug)]

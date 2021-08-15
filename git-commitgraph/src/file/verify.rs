@@ -1,14 +1,16 @@
 //! Auxiliary types used in commit graph file verification methods.
-use crate::{
-    file::{self, File},
-    GENERATION_NUMBER_INFINITY, GENERATION_NUMBER_MAX,
-};
-use bstr::ByteSlice;
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use std::{
     cmp::{max, min},
     collections::HashMap,
     path::Path,
+};
+
+use bstr::ByteSlice;
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+
+use crate::{
+    file::{self, File},
+    GENERATION_NUMBER_INFINITY, GENERATION_NUMBER_MAX,
 };
 
 /// The error used in [`File::traverse()`].

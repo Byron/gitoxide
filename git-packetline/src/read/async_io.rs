@@ -1,12 +1,14 @@
+use std::io;
+
+use bstr::ByteSlice;
+use futures_io::AsyncRead;
+use futures_lite::AsyncReadExt;
+
 use crate::{
     decode,
     read::{ExhaustiveOutcome, WithSidebands},
     PacketLine, StreamingPeekableIter, MAX_LINE_LEN, U16_HEX_BYTES,
 };
-use bstr::ByteSlice;
-use futures_io::AsyncRead;
-use futures_lite::AsyncReadExt;
-use std::io;
 
 /// Non-IO methods
 impl<T> StreamingPeekableIter<T>

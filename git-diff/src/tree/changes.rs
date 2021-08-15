@@ -1,11 +1,13 @@
+use std::{borrow::BorrowMut, collections::VecDeque};
+
+use git_hash::{oid, ObjectId};
+use git_object::immutable;
+use quick_error::quick_error;
+
 use crate::{
     tree,
     tree::{visit::Change, TreeInfoPair},
 };
-use git_hash::{oid, ObjectId};
-use git_object::immutable;
-use quick_error::quick_error;
-use std::{borrow::BorrowMut, collections::VecDeque};
 
 quick_error! {
     /// The error returned by [tree::Changes::needed_to_obtain()].

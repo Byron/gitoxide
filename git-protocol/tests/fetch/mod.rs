@@ -1,6 +1,6 @@
-use bstr::{BString, ByteSlice};
 use std::io;
 
+use bstr::{BString, ByteSlice};
 use git_protocol::fetch::{self, Action, Arguments, LsRefsAction, Ref, Response};
 use git_transport::client::Capabilities;
 
@@ -132,13 +132,15 @@ impl fetch::DelegateBlocking for LsRemoteDelegate {
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
-    use crate::fetch::{CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
+    use std::io;
+
     use git_features::progress::Progress;
     use git_protocol::{
         fetch,
         fetch::{Ref, Response},
     };
-    use std::io;
+
+    use crate::fetch::{CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
 
     impl fetch::Delegate for CloneDelegate {
         fn receive_pack(
@@ -187,7 +189,8 @@ mod blocking_io {
 
 #[cfg(feature = "async-client")]
 mod async_io {
-    use crate::fetch::{CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
+    use std::io;
+
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
     use git_features::progress::Progress;
@@ -195,7 +198,8 @@ mod async_io {
         fetch,
         fetch::{Ref, Response},
     };
-    use std::io;
+
+    use crate::fetch::{CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
 
     #[async_trait(?Send)]
     impl fetch::Delegate for CloneDelegate {

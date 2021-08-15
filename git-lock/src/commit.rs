@@ -1,5 +1,6 @@
-use crate::{File, Marker};
 use std::path::PathBuf;
+
+use crate::{File, Marker};
 
 mod error {
     use std::{

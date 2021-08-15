@@ -1,10 +1,11 @@
 mod streaming {
-    use crate::assert_err_display;
     use git_packetline::{
         decode::{self, streaming, Stream},
         immutable::Error,
         PacketLine,
     };
+
+    use crate::assert_err_display;
 
     fn assert_complete(
         res: Result<Stream, decode::Error>,
@@ -22,9 +23,10 @@ mod streaming {
     }
 
     mod round_trip {
-        use crate::decode::streaming::assert_complete;
         use bstr::ByteSlice;
         use git_packetline::{decode, decode::streaming, Channel, PacketLine};
+
+        use crate::decode::streaming::assert_complete;
 
         #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
         async fn trailing_line_feeds_are_removed_explicitly() -> crate::Result {

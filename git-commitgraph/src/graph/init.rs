@@ -1,11 +1,12 @@
-use crate::{
-    file::{self, File},
-    Graph, MAX_COMMITS,
-};
 use std::{
     convert::TryFrom,
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
+};
+
+use crate::{
+    file::{self, File},
+    Graph, MAX_COMMITS,
 };
 
 /// The error used in the [`graph`][crate::graph] module.

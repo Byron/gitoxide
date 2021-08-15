@@ -1,6 +1,7 @@
-use crate::fetch;
 use bstr::ByteSlice;
 use git_transport::Protocol;
+
+use crate::fetch;
 
 fn arguments_v1(features: impl IntoIterator<Item = &'static str>) -> fetch::Arguments {
     fetch::Arguments::new(Protocol::V1, features.into_iter().map(|n| (n, None)).collect())
@@ -17,12 +18,13 @@ struct Transport<T> {
 
 #[cfg(feature = "blocking-client")]
 mod impls {
-    use crate::fetch::tests::arguments::Transport;
     use git_transport::{
         client,
         client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
         Protocol, Service,
     };
+
+    use crate::fetch::tests::arguments::Transport;
 
     impl<T: client::TransportWithoutIO> client::TransportWithoutIO for Transport<T> {
         fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
@@ -59,13 +61,14 @@ mod impls {
 
 #[cfg(feature = "async-client")]
 mod impls {
-    use crate::fetch::tests::arguments::Transport;
     use async_trait::async_trait;
     use git_transport::{
         client,
         client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
         Protocol, Service,
     };
+
+    use crate::fetch::tests::arguments::Transport;
     impl<T: client::TransportWithoutIO + Send> client::TransportWithoutIO for Transport<T> {
         fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
             self.inner.set_identity(identity)
@@ -122,8 +125,9 @@ fn id(hex: &str) -> git_hash::ObjectId {
 }
 
 mod v1 {
-    use crate::fetch::tests::arguments::{arguments_v1, id, transport};
     use bstr::ByteSlice;
+
+    use crate::fetch::tests::arguments::{arguments_v1, id, transport};
 
     #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
     async fn haves_and_wants_for_clone() {
@@ -207,8 +211,9 @@ mod v1 {
 }
 
 mod v2 {
-    use crate::fetch::tests::arguments::{arguments_v2, id, transport};
     use bstr::ByteSlice;
+
+    use crate::fetch::tests::arguments::{arguments_v2, id, transport};
 
     #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
     async fn haves_and_wants_for_clone_stateful() {

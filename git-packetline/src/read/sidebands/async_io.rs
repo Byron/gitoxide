@@ -1,14 +1,16 @@
-use crate::{
-    decode,
-    immutable::{Band, Text},
-    PacketLine, StreamingPeekableIter, U16_HEX_BYTES,
-};
-use futures_io::{AsyncBufRead, AsyncRead};
-use futures_lite::ready;
 use std::{
     future::Future,
     pin::Pin,
     task::{Context, Poll},
+};
+
+use futures_io::{AsyncBufRead, AsyncRead};
+use futures_lite::ready;
+
+use crate::{
+    decode,
+    immutable::{Band, Text},
+    PacketLine, StreamingPeekableIter, U16_HEX_BYTES,
 };
 
 type ReadLineResult<'a> = Option<std::io::Result<Result<PacketLine<'a>, decode::Error>>>;
@@ -188,8 +190,9 @@ where
     F: FnMut(bool, &[u8]) + Unpin,
 {
     fn poll_fill_buf(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<&[u8]>> {
-        use futures_lite::FutureExt;
         use std::io;
+
+        use futures_lite::FutureExt;
         {
             let this = self.as_mut().get_mut();
             if this.pos >= this.cap {

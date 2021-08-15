@@ -35,8 +35,9 @@ mod invalid;
 mod ssh;
 
 mod radicle {
-    use crate::parse::{assert_url_roundtrip, url};
     use git_url::Scheme;
+
+    use crate::parse::{assert_url_roundtrip, url};
 
     #[test]
     fn basic() -> crate::Result {
@@ -45,8 +46,9 @@ mod radicle {
 }
 
 mod http {
-    use crate::parse::{assert_url_roundtrip, url};
     use git_url::Scheme;
+
+    use crate::parse::{assert_url_roundtrip, url};
 
     #[test]
     fn username_expansion_is_unsupported() -> crate::Result {
@@ -64,8 +66,9 @@ mod http {
     }
 }
 mod git {
-    use crate::parse::{assert_url_roundtrip, url};
     use git_url::Scheme;
+
+    use crate::parse::{assert_url_roundtrip, url};
 
     #[test]
     fn username_expansion_with_username() -> crate::Result {

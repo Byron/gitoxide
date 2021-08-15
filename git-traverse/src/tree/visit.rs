@@ -1,5 +1,4 @@
-use git_object::bstr::BStr;
-use git_object::immutable;
+use git_object::{bstr::BStr, immutable};
 
 /// What to do after an entry was [recorded][Visit::visit_tree()].
 #[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]

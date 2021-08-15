@@ -1,11 +1,13 @@
+use std::ops::DerefMut;
+
+use async_trait::async_trait;
+use bstr::BString;
+use futures_lite::io::AsyncWriteExt;
+
 use crate::{
     client::{Capabilities, Error, ExtendedBufRead, MessageKind, TransportWithoutIO, WriteMode},
     Protocol, Service,
 };
-use async_trait::async_trait;
-use bstr::BString;
-use futures_lite::io::AsyncWriteExt;
-use std::ops::DerefMut;
 
 /// The response of the [`handshake()`][Transport::handshake()] method.
 pub struct SetServiceResponse<'a> {

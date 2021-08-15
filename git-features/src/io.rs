@@ -3,8 +3,9 @@
 /// A unidirectional pipe for bytes, analogous to a unix pipe. Available with the `io-pipe` feature toggle.
 #[cfg(feature = "io-pipe")]
 pub mod pipe {
-    use bytes::{Buf, BufMut, BytesMut};
     use std::io;
+
+    use bytes::{Buf, BufMut, BytesMut};
 
     /// The write-end of the pipe, receiving items to become available in the [`Reader`].
     ///

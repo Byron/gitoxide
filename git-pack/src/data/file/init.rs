@@ -1,7 +1,12 @@
-use crate::data;
+use std::{
+    convert::{TryFrom, TryInto},
+    path::Path,
+};
+
 use filebuffer::FileBuffer;
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use std::{convert::TryFrom, convert::TryInto, path::Path};
+
+use crate::data;
 
 /// Instantiation
 impl data::File {

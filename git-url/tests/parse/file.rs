@@ -1,5 +1,6 @@
-use crate::parse::{assert_url_and, assert_url_roundtrip, url};
 use git_url::Scheme;
+
+use crate::parse::{assert_url_and, assert_url_roundtrip, url};
 
 #[test]
 fn file_path_with_protocol() -> crate::Result {
@@ -67,8 +68,9 @@ fn interior_relative_file_path_without_protocol() -> crate::Result {
 }
 
 mod windows {
-    use crate::parse::{assert_url_and, assert_url_roundtrip, url};
     use git_url::Scheme;
+
+    use crate::parse::{assert_url_and, assert_url_roundtrip, url};
 
     #[test]
     fn file_path_without_protocol() -> crate::Result {

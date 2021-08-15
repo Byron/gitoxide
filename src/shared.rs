@@ -66,12 +66,14 @@ pub mod lean {
 
 #[cfg(feature = "pretty-cli")]
 pub mod pretty {
-    use crate::shared::ProgressRange;
-    use anyhow::{anyhow, Result};
     use std::{
         io::{stderr, stdout, Write},
         panic::UnwindSafe,
     };
+
+    use anyhow::{anyhow, Result};
+
+    use crate::shared::ProgressRange;
 
     pub fn prepare_and_run<T: Send + 'static>(
         name: &str,

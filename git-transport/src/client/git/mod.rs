@@ -1,5 +1,6 @@
-use crate::Protocol;
 use bstr::BString;
+
+use crate::Protocol;
 
 /// The way to connect to a process speaking the `git` protocol.
 #[derive(PartialEq, Eq, Clone, Copy)]
@@ -43,8 +44,9 @@ impl<R, W> Connection<R, W> {
 }
 
 mod message {
-    use crate::{Protocol, Service};
     use bstr::{BString, ByteVec};
+
+    use crate::{Protocol, Service};
 
     pub fn connect(
         service: Service,

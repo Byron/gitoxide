@@ -1,10 +1,12 @@
-use crate::fetch::{Arguments, Ref, Response};
-use bstr::BString;
-use git_transport::client::Capabilities;
 use std::{
     io,
     ops::{Deref, DerefMut},
 };
+
+use bstr::BString;
+use git_transport::client::Capabilities;
+
+use crate::fetch::{Arguments, Ref, Response};
 
 /// Defines what to do next after certain [`Delegate`] operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -184,12 +186,14 @@ impl<T: DelegateBlocking> DelegateBlocking for &mut T {
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
-    use crate::fetch::{DelegateBlocking, Ref, Response};
-    use git_features::progress::Progress;
     use std::{
         io::{self, BufRead},
         ops::DerefMut,
     };
+
+    use git_features::progress::Progress;
+
+    use crate::fetch::{DelegateBlocking, Ref, Response};
 
     /// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
     ///
@@ -243,11 +247,13 @@ pub use blocking_io::Delegate;
 
 #[cfg(feature = "async-client")]
 mod async_io {
-    use crate::fetch::{DelegateBlocking, Ref, Response};
+    use std::{io, ops::DerefMut};
+
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
     use git_features::progress::Progress;
-    use std::{io, ops::DerefMut};
+
+    use crate::fetch::{DelegateBlocking, Ref, Response};
 
     /// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
     ///

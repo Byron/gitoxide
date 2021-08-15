@@ -1,6 +1,7 @@
+use std::io;
+
 use super::{BLOB, COMMIT, OFS_DELTA, REF_DELTA, SHA1_SIZE, TAG, TREE};
 use crate::data;
-use std::io;
 
 /// Decoding
 impl data::Entry {

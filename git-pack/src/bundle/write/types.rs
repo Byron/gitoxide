@@ -1,5 +1,6 @@
-use git_tempfile::handle::Writable;
 use std::{io, io::SeekFrom, path::PathBuf, sync::Arc};
+
+use git_tempfile::handle::Writable;
 
 /// Configuration for [write_to_directory][crate::Bundle::write_to_directory()] or
 /// [write_to_directory_eagerly][crate::Bundle::write_to_directory_eagerly()]

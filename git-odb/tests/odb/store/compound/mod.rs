@@ -18,8 +18,7 @@ mod init {
 mod locate {
     use git_odb::compound::Store;
 
-    use crate::hex_to_id;
-    use crate::odb::store::compound::db;
+    use crate::{hex_to_id, odb::store::compound::db};
 
     fn can_locate(db: &Store, hex_id: &str) {
         let mut buf = vec![];

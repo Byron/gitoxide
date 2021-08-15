@@ -1,9 +1,10 @@
 use git_object::{bstr::ByteSlice, immutable::Tag, Kind};
 
 mod method {
-    use crate::{hex_to_id, immutable::fixture_bytes};
     use git_object::immutable::Tag;
     use pretty_assertions::assert_eq;
+
+    use crate::{hex_to_id, immutable::fixture_bytes};
 
     #[test]
     fn target() -> crate::Result {
@@ -16,14 +17,15 @@ mod method {
 }
 
 mod iter {
-    use crate::{
-        hex_to_id,
-        immutable::{fixture_bytes, signature},
-    };
     use git_object::{
         bstr::ByteSlice,
         immutable::{tag::iter::Token, TagIter},
         Kind,
+    };
+
+    use crate::{
+        hex_to_id,
+        immutable::{fixture_bytes, signature},
     };
 
     #[test]
@@ -112,8 +114,9 @@ KLMHist5yj0sw1E4hDTyQa0=
 }
 
 mod from_bytes {
-    use crate::immutable::{fixture_bytes, signature, tag::tag_fixture};
     use git_object::{bstr::ByteSlice, immutable::Tag, Kind};
+
+    use crate::immutable::{fixture_bytes, signature, tag::tag_fixture};
 
     #[test]
     fn signed() -> crate::Result {

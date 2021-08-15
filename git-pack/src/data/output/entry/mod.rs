@@ -1,7 +1,9 @@
-use crate::{data, data::output, find};
+use std::io::Write;
+
 use git_features::hash;
 use git_hash::ObjectId;
-use std::io::Write;
+
+use crate::{data, data::output, find};
 
 ///
 pub mod iter_from_counts;

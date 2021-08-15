@@ -1,6 +1,7 @@
+use std::collections::VecDeque;
+
 use git_hash::ObjectId;
 use git_object::immutable;
-use std::collections::VecDeque;
 
 /// The state required to visit [Changes] to be instantiated with `State::default()`.
 #[derive(Default, Clone)]

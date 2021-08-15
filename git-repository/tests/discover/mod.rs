@@ -1,6 +1,7 @@
 mod existing {
-    use git_repository::Kind;
     use std::path::{Component, PathBuf};
+
+    use git_repository::Kind;
 
     #[test]
     fn from_bare_git_dir() -> crate::Result {

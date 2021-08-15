@@ -1,6 +1,7 @@
+use std::io;
+
 use super::u16_to_hex;
 use crate::{encode::Error, Channel, DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, RESPONSE_END_LINE};
-use std::io;
 
 /// Write a response-end message to `out`.
 pub fn response_end_to_write(mut out: impl io::Write) -> io::Result<usize> {

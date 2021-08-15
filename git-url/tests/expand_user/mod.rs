@@ -1,6 +1,7 @@
+use std::path::Path;
+
 use bstr::ByteSlice;
 use git_url::{expand_path, expand_path::ForUser};
-use std::path::Path;
 
 #[cfg(windows)]
 fn expected_path() -> std::path::PathBuf {

@@ -1,13 +1,14 @@
-use crate::{
-    file::{loose, path_to_name, Reference},
-    mutable::FullName,
-    store::{file, packed},
-};
 use std::{
     cmp::Ordering,
     io::Read,
     iter::Peekable,
     path::{Path, PathBuf},
+};
+
+use crate::{
+    file::{loose, path_to_name, Reference},
+    mutable::FullName,
+    store::{file, packed},
 };
 
 /// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise
@@ -147,10 +148,12 @@ impl file::Store {
 }
 
 mod error {
-    use crate::store::file;
+    use std::{io, path::PathBuf};
+
     use bstr::BString;
     use quick_error::quick_error;
-    use std::{io, path::PathBuf};
+
+    use crate::store::file;
 
     quick_error! {
         /// The error returned by the [`LooseThenPacked`][super::LooseThenPacked] iterator.

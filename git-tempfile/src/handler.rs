@@ -42,8 +42,9 @@ pub(crate) fn cleanup_tempfiles_windows() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{AutoRemove, ContainingDirectory};
     use std::path::Path;
+
+    use crate::{AutoRemove, ContainingDirectory};
 
     fn filecount_in(path: impl AsRef<Path>) -> usize {
         std::fs::read_dir(path).expect("valid dir").count()

@@ -60,10 +60,11 @@ impl loose::Reference {
 
 ///
 pub mod to_id {
+    use std::{collections::BTreeSet, path::PathBuf};
+
     use bstr::BString;
     use git_hash::oid;
     use quick_error::quick_error;
-    use std::{collections::BTreeSet, path::PathBuf};
 
     use crate::{
         mutable::{FullName, Target},

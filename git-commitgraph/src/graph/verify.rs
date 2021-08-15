@@ -1,13 +1,14 @@
 //! Auxiliary types used by graph verification methods.
-use crate::{
-    file::{self, commit},
-    graph, Graph, GENERATION_NUMBER_MAX,
-};
 use std::{
     cmp::{max, min},
     collections::BTreeMap,
     convert::TryInto,
     path::PathBuf,
+};
+
+use crate::{
+    file::{self, commit},
+    graph, Graph, GENERATION_NUMBER_MAX,
 };
 
 /// The error used in [`verify_integrity()`][Graph::verify_integrity].

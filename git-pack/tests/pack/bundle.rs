@@ -1,8 +1,9 @@
 mod locate {
-    use crate::{fixture_path, hex_to_id, pack::SMALL_PACK_INDEX};
     use bstr::ByteSlice;
     use git_object::Kind;
     use git_odb::pack;
+
+    use crate::{fixture_path, hex_to_id, pack::SMALL_PACK_INDEX};
 
     fn locate<'a>(hex_id: &str, out: &'a mut Vec<u8>) -> git_pack::data::Object<'a> {
         let bundle = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX)).expect("pack and idx");
@@ -13,8 +14,9 @@ mod locate {
     }
 
     mod locate_and_verify {
-        use crate::{fixture_path, pack::PACKS_AND_INDICES};
         use git_odb::pack;
+
+        use crate::{fixture_path, pack::PACKS_AND_INDICES};
 
         #[test]
         fn all() -> Result<(), Box<dyn std::error::Error>> {
@@ -73,12 +75,16 @@ mod locate {
 }
 
 mod write_to_directory {
-    use crate::{fixture_path, pack::SMALL_PACK, pack::SMALL_PACK_INDEX};
+    use std::{fs, path::Path, sync::atomic::AtomicBool};
+
     use git_features::progress;
     use git_odb::pack;
-    use std::sync::atomic::AtomicBool;
-    use std::{fs, path::Path};
     use tempfile::TempDir;
+
+    use crate::{
+        fixture_path,
+        pack::{SMALL_PACK, SMALL_PACK_INDEX},
+    };
 
     fn expected_outcome() -> Result<pack::bundle::write::Outcome, Box<dyn std::error::Error>> {
         Ok(pack::bundle::write::Outcome {

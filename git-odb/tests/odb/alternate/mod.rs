@@ -1,8 +1,9 @@
-use git_odb::alternate;
 use std::{
     fs, io,
     path::{Path, PathBuf},
 };
+
+use git_odb::alternate;
 
 pub fn alternate(
     objects_at: impl Into<PathBuf>,

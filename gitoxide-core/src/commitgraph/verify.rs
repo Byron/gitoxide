@@ -1,7 +1,9 @@
-use crate::OutputFormat;
+use std::{io, path::Path};
+
 use anyhow::{Context as AnyhowContext, Result};
 use git_commitgraph::{graph::verify::Outcome, Graph};
-use std::{io, path::Path};
+
+use crate::OutputFormat;
 
 /// A general purpose context for many operations provided here
 pub struct Context<W1: io::Write, W2: io::Write> {

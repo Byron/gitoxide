@@ -8,8 +8,9 @@ mod find;
 pub mod write;
 
 mod verify {
-    use git_features::progress::Progress;
     use std::sync::{atomic::AtomicBool, Arc};
+
+    use git_features::progress::Progress;
 
     impl super::Bundle {
         /// Similar to [`crate::index::File::verify_integrity()`] but more convenient to call as the presence of the

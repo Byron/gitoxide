@@ -1,9 +1,10 @@
-use git_features::zlib::stream::deflate;
 use std::{
     cell::RefCell,
     convert::TryInto,
     io::{self, Write},
 };
+
+use git_features::zlib::stream::deflate;
 
 /// An object database equivalent to `/dev/null`, dropping all objects stored into it.
 ///

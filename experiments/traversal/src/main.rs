@@ -1,3 +1,8 @@
+use std::{
+    collections::HashSet,
+    time::{Duration, Instant},
+};
+
 use anyhow::anyhow;
 use dashmap::DashSet;
 use git_repository::{
@@ -7,10 +12,6 @@ use git_repository::{
     prelude::*,
     refs::file::loose::reference::peel,
     traverse::{tree, tree::visit::Action},
-};
-use std::{
-    collections::HashSet,
-    time::{Duration, Instant},
 };
 
 const GITOXIDE_STATIC_CACHE_SIZE: usize = 64;

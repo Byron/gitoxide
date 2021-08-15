@@ -1,7 +1,14 @@
-use crate::{data::EntryRange, tree::traverse::Context, tree::traverse::Error};
-use git_features::progress::{unit, Progress};
-use git_features::zlib;
 use std::{cell::RefCell, collections::BTreeMap};
+
+use git_features::{
+    progress::{unit, Progress},
+    zlib,
+};
+
+use crate::{
+    data::EntryRange,
+    tree::traverse::{Context, Error},
+};
 
 pub(crate) fn deltas<T, F, P, MBFN, S, E>(
     nodes: crate::tree::Chunk<'_, T>,

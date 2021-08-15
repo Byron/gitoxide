@@ -1,12 +1,14 @@
-use super::u16_to_hex;
-use crate::{encode::Error, Channel, DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, RESPONSE_END_LINE};
-use futures_io::AsyncWrite;
-use futures_lite::AsyncWriteExt;
 use std::{
     io,
     pin::Pin,
     task::{Context, Poll},
 };
+
+use futures_io::AsyncWrite;
+use futures_lite::AsyncWriteExt;
+
+use super::u16_to_hex;
+use crate::{encode::Error, Channel, DELIMITER_LINE, ERR_PREFIX, FLUSH_LINE, MAX_DATA_LEN, RESPONSE_END_LINE};
 
 #[allow(missing_docs)]
 pin_project_lite::pin_project! {

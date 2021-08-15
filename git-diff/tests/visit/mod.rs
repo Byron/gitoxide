@@ -3,8 +3,7 @@ mod changes {
         use git_diff::tree::{recorder, recorder::Change::*};
         use git_hash::{oid, ObjectId};
         use git_object::{bstr::ByteSlice, immutable, tree::EntryMode};
-        use git_odb::linked;
-        use git_odb::{pack, Find};
+        use git_odb::{linked, pack, Find};
 
         use crate::hex_to_id;
 

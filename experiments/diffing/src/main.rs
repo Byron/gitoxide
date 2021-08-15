@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use anyhow::anyhow;
 use diff::tree::visit::{Action, Change};
 use git_repository::{
@@ -10,7 +12,6 @@ use git_repository::{
     refs::file::loose::reference::peel,
 };
 use rayon::prelude::*;
-use std::time::Instant;
 
 const GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES: usize = 60_000_000;
 

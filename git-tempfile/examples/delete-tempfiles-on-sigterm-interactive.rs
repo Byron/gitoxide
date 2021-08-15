@@ -1,5 +1,6 @@
-use git_tempfile::{AutoRemove, ContainingDirectory};
 use std::path::PathBuf;
+
+use git_tempfile::{AutoRemove, ContainingDirectory};
 
 fn main() -> std::io::Result<()> {
     let filepath = PathBuf::new().join("writable-tempfile.ext");

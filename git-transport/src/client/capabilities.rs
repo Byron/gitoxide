@@ -1,9 +1,11 @@
+use std::io;
+
+use bstr::{BStr, BString, ByteSlice};
+use quick_error::quick_error;
+
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 use crate::client;
 use crate::Protocol;
-use bstr::{BStr, BString, ByteSlice};
-use quick_error::quick_error;
-use std::io;
 
 quick_error! {
     /// The error used in [`Capabilities::from_bytes()`] and [`Capabilities::from_lines()`].
@@ -167,8 +169,9 @@ impl Capabilities {
 #[cfg(feature = "blocking-client")]
 ///
 pub mod recv {
-    use crate::{client, client::Capabilities, Protocol};
     use std::{io, io::BufRead};
+
+    use crate::{client, client::Capabilities, Protocol};
 
     /// Success outcome of [`Capabilities::from_lines_with_version_detection`].
     pub struct Outcome<'a> {
@@ -230,9 +233,10 @@ pub mod recv {
 #[allow(missing_docs)]
 ///
 pub mod recv {
-    use crate::{client, client::Capabilities, Protocol};
     use futures_io::{AsyncBufRead, AsyncRead};
     use futures_lite::{AsyncBufReadExt, StreamExt};
+
+    use crate::{client, client::Capabilities, Protocol};
 
     /// Success outcome of [`Capabilities::from_lines_with_version_detection`].
     pub struct Outcome<'a> {

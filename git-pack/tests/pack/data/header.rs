@@ -1,5 +1,6 @@
-use crate::pack::fixture_path;
 use std::convert::TryInto;
+
+use crate::pack::fixture_path;
 
 #[test]
 fn encode_decode_roundtrip() -> crate::Result {

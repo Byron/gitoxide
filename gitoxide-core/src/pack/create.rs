@@ -1,4 +1,5 @@
-use crate::OutputFormat;
+use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc, time::Instant};
+
 use anyhow::anyhow;
 use git_repository::{
     hash,
@@ -9,7 +10,8 @@ use git_repository::{
     prelude::{Finalize, FindExt},
     progress, traverse, Progress,
 };
-use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc, time::Instant};
+
+use crate::OutputFormat;
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 

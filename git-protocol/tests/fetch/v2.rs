@@ -1,8 +1,9 @@
-use crate::fetch::{oid, transport, CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
 use bstr::ByteSlice;
 use git_features::progress;
 use git_protocol::{fetch, FetchConnection};
 use git_transport::Protocol;
+
+use crate::fetch::{oid, transport, CloneDelegate, CloneRefInWantDelegate, LsRemoteDelegate};
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn clone_abort_prep() -> crate::Result {

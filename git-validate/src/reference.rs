@@ -1,7 +1,8 @@
 ///
 pub mod name {
-    use quick_error::quick_error;
     use std::convert::Infallible;
+
+    use quick_error::quick_error;
 
     quick_error! {
         /// The error used in [name()][super::name()] and [name_partial()][super::name_partial()]

@@ -1,10 +1,11 @@
+use std::convert::TryFrom;
+
 use bstr::ByteSlice;
 use nom::{
     bytes::complete::{tag, take_till, take_till1},
     combinator::{map_res, opt},
     sequence::{preceded, terminated},
 };
-use std::convert::TryFrom;
 
 /// The information usually found in remote progress messages as sent by a git server during
 /// fetch, clone and push operations.

@@ -29,8 +29,9 @@ pub type Sha1Digest = [u8; 20];
 
 #[cfg(feature = "fast-sha1")]
 mod _impl {
-    use super::Sha1Digest;
     use sha1::Digest;
+
+    use super::Sha1Digest;
 
     /// A implementation of the Sha1 hash, which can be used once.
     #[derive(Default, Clone)]

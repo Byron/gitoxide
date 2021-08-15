@@ -1,10 +1,3 @@
-use crate::{
-    plumbing::lean::options::{self, Args, SubCommands},
-    shared::lean::prepare,
-};
-use anyhow::Result;
-use git_features::progress::DoOrDiscard;
-use gitoxide_core::{self as core, OutputFormat};
 use std::{
     io::{self, stderr, stdin, stdout},
     path::PathBuf,
@@ -12,6 +5,15 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
+};
+
+use anyhow::Result;
+use git_features::progress::DoOrDiscard;
+use gitoxide_core::{self as core, OutputFormat};
+
+use crate::{
+    plumbing::lean::options::{self, Args, SubCommands},
+    shared::lean::prepare,
 };
 #[cfg(all(feature = "gitoxide-core-blocking-client", feature = "gitoxide-core-async-client"))]
 compile_error!("Please set only one of the client networking options.");

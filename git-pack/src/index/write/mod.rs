@@ -1,9 +1,11 @@
+use std::{convert::TryInto, io, sync::atomic::AtomicBool};
+
+use git_features::progress::{self, Progress};
+
 use crate::{
     loose,
     tree::{traverse::Context, Tree},
 };
-use git_features::progress::{self, Progress};
-use std::{convert::TryInto, io, sync::atomic::AtomicBool};
 
 mod encode;
 mod error;

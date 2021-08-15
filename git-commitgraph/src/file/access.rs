@@ -1,10 +1,12 @@
-use crate::file::{self, commit::Commit, File, COMMIT_DATA_ENTRY_SIZE};
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use std::{
     convert::TryInto,
     fmt::{Debug, Formatter},
     path::Path,
 };
+
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+
+use crate::file::{self, commit::Commit, File, COMMIT_DATA_ENTRY_SIZE};
 
 /// Access
 impl File {

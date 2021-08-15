@@ -1,5 +1,6 @@
-use crate::data;
 use byteorder::{BigEndian, ByteOrder};
+
+use crate::data;
 
 pub(crate) const N32_SIZE: usize = std::mem::size_of::<u32>();
 

@@ -1,5 +1,6 @@
-use crate::{check_common, inspect_refs, make_readonly_repo};
 use git_commitgraph::Graph;
+
+use crate::{check_common, inspect_refs, make_readonly_repo};
 
 #[test]
 fn single_parent() -> crate::Result {

@@ -1,6 +1,7 @@
-use crate::fetch::{Arguments, Command};
 use futures_lite::io::AsyncWriteExt;
 use git_transport::{client, client::TransportV2Ext};
+
+use crate::fetch::{Arguments, Command};
 
 impl Arguments {
     pub(crate) async fn send<'a, T: client::Transport + 'a>(

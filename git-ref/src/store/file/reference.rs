@@ -1,16 +1,18 @@
+use std::convert::TryFrom;
+
+use bstr::ByteSlice;
+use git_hash::ObjectId;
+
 use crate::{
     file::loose::reference::logiter::must_be_io_err,
     mutable,
-    store::file,
     store::{
+        file,
         file::{log, loose},
         packed,
     },
     FullName, Namespace,
 };
-use bstr::ByteSlice;
-use git_hash::ObjectId;
-use std::convert::TryFrom;
 
 /// Either a loose or packed reference, depending on where it was found.
 #[derive(Debug)]

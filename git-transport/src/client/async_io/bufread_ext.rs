@@ -1,12 +1,14 @@
-use crate::{
-    client::{Error, MessageKind},
-    Protocol,
-};
-use async_trait::async_trait;
-use futures_io::{AsyncBufRead, AsyncRead};
 use std::{
     io,
     ops::{Deref, DerefMut},
+};
+
+use async_trait::async_trait;
+use futures_io::{AsyncBufRead, AsyncRead};
+
+use crate::{
+    client::{Error, MessageKind},
+    Protocol,
 };
 
 /// A function `f(is_error, text)` receiving progress or error information.

@@ -1,6 +1,3 @@
-use crate::client::blocking_io::http;
-use curl::easy::Easy2;
-use git_features::io::pipe;
 use std::{
     io,
     io::{Read, Write},
@@ -8,6 +5,11 @@ use std::{
     thread,
     time::Duration,
 };
+
+use curl::easy::Easy2;
+use git_features::io::pipe;
+
+use crate::client::blocking_io::http;
 
 #[derive(Default)]
 struct Handler {

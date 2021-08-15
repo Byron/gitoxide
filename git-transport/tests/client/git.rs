@@ -1,12 +1,13 @@
-#[cfg(feature = "async-client")]
-use futures_lite::{AsyncBufReadExt, AsyncWriteExt, StreamExt};
 #[cfg(feature = "blocking-client")]
 use std::io::{BufRead, Write};
-
-use std::ops::Deref;
+use std::{
+    ops::Deref,
+    sync::{Arc, Mutex},
+};
 
 use bstr::ByteSlice;
-
+#[cfg(feature = "async-client")]
+use futures_lite::{AsyncBufReadExt, AsyncWriteExt, StreamExt};
 use git_transport::{
     client,
     client::{git, Transport, TransportV2Ext, TransportWithoutIO},
@@ -14,7 +15,6 @@ use git_transport::{
 };
 
 use crate::fixture_bytes;
-use std::sync::{Arc, Mutex};
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn handshake_v1_and_request() -> crate::Result {

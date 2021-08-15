@@ -1,9 +1,10 @@
-use git_transport::client;
-use quick_error::quick_error;
 use std::{
     io::{self, Write},
     process::{Command, Stdio},
 };
+
+use git_transport::client;
+use quick_error::quick_error;
 
 /// The result used in [`helper()`].
 pub type Result = std::result::Result<Option<Outcome>, Error>;

@@ -1,8 +1,10 @@
-use crate::fetch::command::Feature;
+use std::io;
+
 use bstr::BString;
 use git_transport::{client, Protocol};
 use quick_error::quick_error;
-use std::io;
+
+use crate::fetch::command::Feature;
 
 quick_error! {
     /// The error used in the [response module][crate::fetch::response].

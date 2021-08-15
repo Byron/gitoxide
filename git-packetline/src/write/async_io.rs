@@ -1,10 +1,12 @@
-use crate::{encode, MAX_DATA_LEN, U16_HEX_BYTES};
-use futures_io::AsyncWrite;
 use std::{
     io,
     pin::Pin,
     task::{Context, Poll},
 };
+
+use futures_io::AsyncWrite;
+
+use crate::{encode, MAX_DATA_LEN, U16_HEX_BYTES};
 
 pin_project_lite::pin_project! {
     /// An implementor of [`Write`][io::Write] which passes all input to an inner `Write` in packet line data encoding,

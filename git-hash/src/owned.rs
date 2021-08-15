@@ -1,5 +1,6 @@
-use crate::{borrowed::oid, SIZE_OF_SHA1_DIGEST};
 use std::{borrow::Borrow, fmt, io, ops::Deref};
+
+use crate::{borrowed::oid, SIZE_OF_SHA1_DIGEST};
 
 /// An owned hash identifying objects, most commonly Sha1
 #[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]

@@ -1,15 +1,17 @@
-use super::{Error, SafetyCheck};
-use crate::{
-    index::{self, util::index_entries_sorted_by_offset_ascending},
-    tree::traverse::Context,
-};
-use git_features::{parallel, progress::Progress};
 use std::{
     collections::VecDeque,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
+};
+
+use git_features::{parallel, progress::Progress};
+
+use super::{Error, SafetyCheck};
+use crate::{
+    index::{self, util::index_entries_sorted_by_offset_ascending},
+    tree::traverse::Context,
 };
 
 /// Traversal with index

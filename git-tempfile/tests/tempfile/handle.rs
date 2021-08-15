@@ -171,11 +171,12 @@ mod at_path {
 }
 
 mod new {
-    use git_tempfile::{AutoRemove, ContainingDirectory};
     use std::{
         io::{ErrorKind, Write},
         path::Path,
     };
+
+    use git_tempfile::{AutoRemove, ContainingDirectory};
 
     fn filecount_in(path: impl AsRef<Path>) -> usize {
         std::fs::read_dir(path).expect("valid dir").count()

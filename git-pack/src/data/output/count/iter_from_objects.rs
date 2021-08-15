@@ -1,9 +1,11 @@
-use crate::{data::output, find, FindExt};
+use std::sync::Arc;
+
 use dashmap::DashSet;
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
 use git_object::immutable;
-use std::sync::Arc;
+
+use crate::{data::output, find, FindExt};
 
 /// Generate [`Count`][output::Count] from input `objects` with object expansion based on [`options`][Options]
 /// to learn which objects would be part of a pack.
@@ -522,10 +524,12 @@ mod types {
 pub use types::{Error, ObjectExpansion, Options, Outcome};
 
 mod reduce {
+    use std::marker::PhantomData;
+
+    use git_features::parallel;
+
     use super::Outcome;
     use crate::data::output;
-    use git_features::parallel;
-    use std::marker::PhantomData;
 
     pub struct Statistics<E> {
         total: Outcome,

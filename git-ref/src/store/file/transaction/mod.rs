@@ -1,10 +1,11 @@
+use bstr::BString;
+use git_hash::ObjectId;
+
 use crate::{
     store::{file, file::Transaction},
     transaction::RefEdit,
     Namespace,
 };
-use bstr::BString;
-use git_hash::ObjectId;
 
 /// A function receiving an object id to resolve, returning its decompressed bytes.
 ///

@@ -1,13 +1,14 @@
-use filebuffer::FileBuffer;
-
-use crate::data;
-use git_features::{interrupt, progress, progress::Progress};
-use git_tempfile::{handle::Writable, AutoRemove, ContainingDirectory};
 use std::{
     io,
     path::{Path, PathBuf},
     sync::{atomic::AtomicBool, Arc},
 };
+
+use filebuffer::FileBuffer;
+use git_features::{interrupt, progress, progress::Progress};
+use git_tempfile::{handle::Writable, AutoRemove, ContainingDirectory};
+
+use crate::data;
 
 mod error;
 use error::Error;

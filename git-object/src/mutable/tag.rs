@@ -1,7 +1,9 @@
-use crate::mutable::{encode, NL};
+use std::io;
+
 use bstr::{BStr, BString};
 use quick_error::quick_error;
-use std::io;
+
+use crate::mutable::{encode, NL};
 
 quick_error! {
     /// An Error used in [`Tag::write_to()`].

@@ -15,8 +15,9 @@
 //! * The limitations of `git-tempfile` apply.
 #![deny(missing_docs, unsafe_code, rust_2018_idioms)]
 
-use git_tempfile::handle::{Closed, Writable};
 use std::path::PathBuf;
+
+use git_tempfile::handle::{Closed, Writable};
 
 const DOT_LOCK_SUFFIX: &str = ".lock";
 

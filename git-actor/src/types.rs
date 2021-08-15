@@ -1,5 +1,6 @@
-use crate::{Sign, Signature, Time, SPACE};
 use std::io;
+
+use crate::{Sign, Signature, Time, SPACE};
 
 impl Signature {
     /// An empty signature, similar to 'null'.

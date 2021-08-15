@@ -1,10 +1,12 @@
+use std::io;
+
+use futures_io::AsyncWrite;
+
 use crate::{
     encode,
     immutable::{Band, Error, Text},
     Channel, PacketLine,
 };
-use futures_io::AsyncWrite;
-use std::io;
 
 impl<'a> Band<'a> {
     /// Serialize this instance to `out`, returning the amount of bytes written.

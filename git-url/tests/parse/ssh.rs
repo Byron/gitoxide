@@ -1,5 +1,6 @@
-use crate::parse::{assert_url_and, assert_url_roundtrip, url};
 use git_url::Scheme;
+
+use crate::parse::{assert_url_and, assert_url_roundtrip, url};
 
 #[test]
 fn without_user_and_without_port() -> crate::Result {

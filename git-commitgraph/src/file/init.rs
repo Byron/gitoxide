@@ -1,13 +1,15 @@
-use crate::file::{File, COMMIT_DATA_ENTRY_SIZE, FAN_LEN, SIGNATURE};
-use bstr::ByteSlice;
-use byteorder::{BigEndian, ByteOrder};
-use filebuffer::FileBuffer;
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use std::{
     convert::{TryFrom, TryInto},
     ops::Range,
     path::Path,
 };
+
+use bstr::ByteSlice;
+use byteorder::{BigEndian, ByteOrder};
+use filebuffer::FileBuffer;
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+
+use crate::file::{File, COMMIT_DATA_ENTRY_SIZE, FAN_LEN, SIGNATURE};
 
 type ChunkId = [u8; 4];
 

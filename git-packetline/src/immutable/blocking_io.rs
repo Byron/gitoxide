@@ -1,9 +1,10 @@
+use std::io;
+
 use crate::{
     encode,
     immutable::{Band, Error, Text},
     Channel, PacketLine,
 };
-use std::io;
 
 impl<'a> Band<'a> {
     /// Serialize this instance to `out`, returning the amount of bytes written.

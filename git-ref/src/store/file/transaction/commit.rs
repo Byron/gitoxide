@@ -151,9 +151,10 @@ impl<'s> Transaction<'s> {
     }
 }
 mod error {
-    use crate::store::{file, packed};
     use bstr::BString;
     use quick_error::quick_error;
+
+    use crate::store::{file, packed};
 
     quick_error! {
         /// The error returned by various [`Transaction`][super::Transaction] methods.

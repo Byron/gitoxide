@@ -1,6 +1,8 @@
-use crate::data::{self, entry::Header, input};
-use git_hash::ObjectId;
 use std::convert::TryInto;
+
+use git_hash::ObjectId;
+
+use crate::data::{self, entry::Header, input};
 
 /// An iterator to resolve thin packs on the fly.
 pub struct LookupRefDeltaObjectsIter<I, LFn> {

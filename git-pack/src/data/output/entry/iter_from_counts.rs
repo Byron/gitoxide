@@ -1,6 +1,8 @@
-use crate::data::{output, output::ChunkId};
-use git_features::{parallel, progress::Progress};
 use std::{cmp::Ordering, sync::Arc};
+
+use git_features::{parallel, progress::Progress};
+
+use crate::data::{output, output::ChunkId};
 
 /// Given a known list of object `counts`, calculate entries ready to be put into a data pack.
 ///
@@ -236,10 +238,12 @@ mod util {
 }
 
 mod reduce {
+    use std::marker::PhantomData;
+
+    use git_features::parallel;
+
     use super::{ChunkId, Outcome};
     use crate::data::output;
-    use git_features::parallel;
-    use std::marker::PhantomData;
 
     pub struct Statistics<E> {
         total: Outcome,

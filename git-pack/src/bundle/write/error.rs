@@ -1,5 +1,6 @@
-use git_tempfile::handle::Writable;
 use std::io;
+
+use git_tempfile::handle::Writable;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

@@ -1,17 +1,20 @@
-use crate::read::streaming_peek_iter::fixture_bytes;
+#[cfg(feature = "blocking-io")]
+use std::io::{BufRead, Read};
+
 use bstr::{BString, ByteSlice};
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
 use futures_lite::io::AsyncReadExt;
 use git_odb::pack;
 use git_packetline::PacketLine;
-#[cfg(feature = "blocking-io")]
-use std::io::{BufRead, Read};
+
+use crate::read::streaming_peek_iter::fixture_bytes;
 
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
 mod util {
+    use std::{io::Result, pin::Pin};
+
     use futures_io::{AsyncBufRead, AsyncRead};
     use futures_lite::{future, AsyncBufReadExt, AsyncReadExt};
-    use std::{io::Result, pin::Pin};
 
     pub struct BlockOn<T>(pub T);
 

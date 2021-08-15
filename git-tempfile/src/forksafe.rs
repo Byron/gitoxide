@@ -1,7 +1,8 @@
-use crate::{handle, AutoRemove};
-use std::io::Write;
-use std::path::Path;
+use std::{io::Write, path::Path};
+
 use tempfile::{NamedTempFile, TempPath};
+
+use crate::{handle, AutoRemove};
 
 enum TempfileOrTemppath {
     Tempfile(NamedTempFile),

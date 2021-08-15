@@ -1,7 +1,8 @@
 mod close {
 
-    use git_lock::acquire::Fail;
     use std::io::Write;
+
+    use git_lock::acquire::Fail;
 
     #[test]
     fn acquire_close_commit_to_existing_file() -> crate::Result {
@@ -86,8 +87,9 @@ mod commit {
 }
 
 mod acquire {
-    use git_lock::acquire;
     use std::io::{ErrorKind, Write};
+
+    use git_lock::acquire;
 
     fn fail_immediately() -> git_lock::acquire::Fail {
         acquire::Fail::Immediately

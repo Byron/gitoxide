@@ -16,8 +16,9 @@
 //! ```
 //!
 //! Based on the [canonical implementation](https://github.com/git/git/blob/master/sha1-file.c#L598:L609).
-use crate::store::compound;
 use std::{fs, io, path::PathBuf};
+
+use crate::store::compound;
 
 ///
 pub mod parse;

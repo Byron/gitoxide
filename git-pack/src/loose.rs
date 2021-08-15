@@ -67,8 +67,9 @@ pub mod object {
         #[cfg(test)]
         mod tests {
             mod encode_decode_round_trip {
-                use crate::loose::object::header;
                 use git_object::bstr::ByteSlice;
+
+                use crate::loose::object::header;
 
                 #[test]
                 fn all() -> Result<(), Box<dyn std::error::Error>> {

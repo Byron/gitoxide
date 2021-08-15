@@ -1,11 +1,13 @@
 mod method {
     mod from_offsets_in_pack {
+        use std::sync::atomic::AtomicBool;
+
+        use git_odb::pack;
+
         use crate::{
             fixture_path,
             pack::{INDEX_V1, PACK_FOR_INDEX_V1, SMALL_PACK, SMALL_PACK_INDEX},
         };
-        use git_odb::pack;
-        use std::sync::atomic::AtomicBool;
 
         #[test]
         fn v1() -> Result<(), Box<dyn std::error::Error>> {

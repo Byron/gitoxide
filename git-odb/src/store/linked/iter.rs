@@ -1,8 +1,8 @@
-use git_hash::ObjectId;
 use std::{borrow::Borrow, option::Option::None, sync::Arc};
 
-use crate::store::linked;
-use crate::store::loose;
+use git_hash::ObjectId;
+
+use crate::store::{linked, loose};
 
 #[allow(clippy::large_enum_variant)]
 enum DbState {

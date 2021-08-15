@@ -1,8 +1,9 @@
+use std::{convert::TryInto, io::Read, path::PathBuf};
+
 use crate::{
     store::{file, file::log},
     FullName,
 };
-use std::{convert::TryInto, io::Read, path::PathBuf};
 
 impl file::Store {
     /// Returns true if a reflog exists for the given reference `name`.
@@ -83,13 +84,15 @@ impl file::Store {
 
 ///
 pub mod create_or_update {
-    use crate::store::{file, file::WriteReflog};
-    use bstr::BStr;
-    use git_hash::{oid, ObjectId};
     use std::{
         io::Write,
         path::{Path, PathBuf},
     };
+
+    use bstr::BStr;
+    use git_hash::{oid, ObjectId};
+
+    use crate::store::{file, file::WriteReflog};
 
     impl file::Store {
         pub(crate) fn reflog_create_or_append(
@@ -210,8 +213,9 @@ pub mod create_or_update {
     mod tests;
 
     mod error {
-        use quick_error::quick_error;
         use std::path::PathBuf;
+
+        use quick_error::quick_error;
 
         quick_error! {
             /// The error returned when creating or appending to a reflog
@@ -236,8 +240,9 @@ pub mod create_or_update {
 }
 
 mod error {
-    use quick_error::quick_error;
     use std::io;
+
+    use quick_error::quick_error;
 
     quick_error! {
         /// The error returned by [crate::file::Store::reflog_iter()].

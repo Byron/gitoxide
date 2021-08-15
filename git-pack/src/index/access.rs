@@ -1,7 +1,9 @@
-use crate::index::{self, FAN_LEN};
+use std::{convert::TryInto, mem::size_of};
+
 use byteorder::{BigEndian, ByteOrder};
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use std::{convert::TryInto, mem::size_of};
+
+use crate::index::{self, FAN_LEN};
 
 const N32_SIZE: usize = size_of::<u32>();
 const N64_SIZE: usize = size_of::<u64>();

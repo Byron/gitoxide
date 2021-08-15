@@ -13,9 +13,11 @@ pub use owned::ObjectId;
 
 #[allow(missing_docs)]
 pub mod decode {
-    use crate::owned::ObjectId;
-    use quick_error::quick_error;
     use std::str::FromStr;
+
+    use quick_error::quick_error;
+
+    use crate::owned::ObjectId;
 
     quick_error! {
         /// An error returned by [`ObjectId::from_40_bytes_in_hex()`]

@@ -1,5 +1,6 @@
-use crate::data;
 use git_hash::ObjectId;
+
+use crate::data;
 
 /// An item representing a future Entry in the leanest way possible.
 ///

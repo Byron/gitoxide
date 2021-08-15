@@ -1,6 +1,7 @@
 mod existing {
-    use crate::file::store_at;
     use git_testtools::hex_to_id;
+
+    use crate::file::store_at;
 
     #[test]
     fn with_packed_refs() -> crate::Result {
@@ -18,8 +19,9 @@ mod loose {
     use crate::file::store;
 
     mod existing {
-        use crate::file::store;
         use std::path::Path;
+
+        use crate::file::store;
 
         #[test]
         fn success_and_failure() -> crate::Result {

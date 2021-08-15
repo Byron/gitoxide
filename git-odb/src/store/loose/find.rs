@@ -1,7 +1,9 @@
-use crate::store::loose::{sha1_path, Store, HEADER_READ_UNCOMPRESSED_BYTES};
+use std::{convert::TryInto, fs, io::Read, path::PathBuf};
+
 use git_features::zlib;
 use git_pack::{data, loose::object::header};
-use std::{convert::TryInto, fs, io::Read, path::PathBuf};
+
+use crate::store::loose::{sha1_path, Store, HEADER_READ_UNCOMPRESSED_BYTES};
 
 /// Returned by [`Store::find()`]
 #[derive(thiserror::Error, Debug)]

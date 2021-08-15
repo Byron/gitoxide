@@ -12,7 +12,9 @@ fn id(hex: &str) -> git_hash::ObjectId {
 
 mod v1 {
     mod from_line_reader {
-        use crate::fetch::response::{id, mock_reader};
+        #[cfg(feature = "blocking-client")]
+        use std::io::Read;
+
         #[cfg(feature = "async-client")]
         use futures_lite::io::AsyncReadExt;
         use git_protocol::fetch::{
@@ -20,8 +22,8 @@ mod v1 {
             response::{Acknowledgement, ShallowUpdate},
         };
         use git_transport::Protocol;
-        #[cfg(feature = "blocking-client")]
-        use std::io::Read;
+
+        use crate::fetch::response::{id, mock_reader};
 
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn clone() -> crate::Result {
@@ -107,7 +109,9 @@ mod v1 {
 }
 mod v2 {
     mod from_line_reader {
-        use crate::fetch::response::{id, mock_reader};
+        #[cfg(feature = "blocking-client")]
+        use std::io::Read;
+
         #[cfg(feature = "async-client")]
         use futures_lite::io::AsyncReadExt;
         use git_protocol::fetch::{
@@ -115,8 +119,8 @@ mod v2 {
             response::{Acknowledgement, ShallowUpdate},
         };
         use git_transport::Protocol;
-        #[cfg(feature = "blocking-client")]
-        use std::io::Read;
+
+        use crate::fetch::response::{id, mock_reader};
 
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn clone() -> crate::Result {

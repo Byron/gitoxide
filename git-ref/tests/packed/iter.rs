@@ -1,7 +1,9 @@
-use crate::file::{store_at, store_with_packed_refs};
+use std::convert::TryInto;
+
 use bstr::ByteSlice;
 use git_ref::packed;
-use std::convert::TryInto;
+
+use crate::file::{store_at, store_with_packed_refs};
 
 #[test]
 fn empty() -> crate::Result {

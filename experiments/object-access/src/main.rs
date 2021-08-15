@@ -1,6 +1,7 @@
+use std::{path::Path, time::Instant};
+
 use anyhow::anyhow;
 use git_repository::{hash::ObjectId, odb, prelude::*, Repository};
-use std::{path::Path, time::Instant};
 
 const GITOXIDE_STATIC_CACHE_SIZE: usize = 64;
 const GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES: usize = 60_000_000;

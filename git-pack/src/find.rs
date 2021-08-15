@@ -49,8 +49,9 @@ pub trait Find {
 }
 
 mod ext {
-    use crate::{data, find};
     use git_object::{immutable, Kind};
+
+    use crate::{data, find};
 
     macro_rules! make_obj_lookup {
         ($method:ident, $object_variant:path, $object_kind:path, $object_type:ty) => {
@@ -227,10 +228,11 @@ pub struct Entry<'a> {
 }
 
 mod find_impls {
-    use crate::bundle::Location;
-    use crate::{data::Object, find::Entry, Bundle};
-    use git_hash::oid;
     use std::ops::Deref;
+
+    use git_hash::oid;
+
+    use crate::{bundle::Location, data::Object, find::Entry, Bundle};
 
     impl<T> super::Find for std::sync::Arc<T>
     where

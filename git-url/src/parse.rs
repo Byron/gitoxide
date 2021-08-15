@@ -1,7 +1,9 @@
-use crate::Scheme;
+use std::borrow::Cow;
+
 use bstr::ByteSlice;
 use quick_error::quick_error;
-use std::borrow::Cow;
+
+use crate::Scheme;
 
 quick_error! {
     /// The Error returned by [`parse()`]

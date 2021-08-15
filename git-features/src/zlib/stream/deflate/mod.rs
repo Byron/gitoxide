@@ -12,9 +12,11 @@ pub struct Write<W> {
 }
 
 mod impls {
-    use crate::zlib::stream::deflate;
-    use flate2::{Compress, Compression, FlushCompress, Status};
     use std::io;
+
+    use flate2::{Compress, Compression, FlushCompress, Status};
+
+    use crate::zlib::stream::deflate;
 
     impl<W> deflate::Write<W>
     where

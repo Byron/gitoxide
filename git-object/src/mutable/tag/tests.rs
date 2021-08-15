@@ -1,7 +1,8 @@
 mod validated_name {
     mod invalid {
-        use super::super::super::*;
         use bstr::ByteSlice;
+
+        use super::super::super::*;
 
         #[test]
         fn only_dash() {
@@ -14,8 +15,9 @@ mod validated_name {
     }
 
     mod valid {
-        use super::super::super::*;
         use bstr::ByteSlice;
+
+        use super::super::super::*;
 
         #[test]
         fn version() {

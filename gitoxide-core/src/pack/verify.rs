@@ -1,4 +1,10 @@
-use crate::OutputFormat;
+use std::{
+    io,
+    path::Path,
+    str::FromStr,
+    sync::{atomic::AtomicBool, Arc},
+};
+
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
 use git_repository::{
@@ -7,14 +13,9 @@ use git_repository::{
     odb::{pack, pack::index},
     progress, Progress,
 };
-use std::{
-    io,
-    path::Path,
-    str::FromStr,
-    sync::{atomic::AtomicBool, Arc},
-};
-
 pub use index::verify::Mode;
+
+use crate::OutputFormat;
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Algorithm {

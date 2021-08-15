@@ -9,8 +9,9 @@
 #[cfg(feature = "parallel")]
 ///
 pub mod walkdir {
-    pub use jwalk::{DirEntry as DirEntryGeneric, DirEntryIter as DirEntryIterGeneric, Error, WalkDir};
     use std::path::Path;
+
+    pub use jwalk::{DirEntry as DirEntryGeneric, DirEntryIter as DirEntryIterGeneric, Error, WalkDir};
 
     /// An alias for an uncustomized directory entry to match the one of the non-parallel version offered by `walkdir`.
     pub type DirEntry = DirEntryGeneric<((), ())>;
@@ -33,6 +34,7 @@ pub mod walkdir {
 ///
 pub mod walkdir {
     use std::path::Path;
+
     pub use walkdir::{DirEntry, Error, WalkDir};
 
     /// Instantiate a new directory iterator which will not skip hidden files.

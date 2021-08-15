@@ -1,5 +1,6 @@
-use git_actor::{Sign, Time};
 use std::path::PathBuf;
+
+use git_actor::{Sign, Time};
 
 mod commit;
 mod tag;

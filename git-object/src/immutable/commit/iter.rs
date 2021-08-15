@@ -1,7 +1,5 @@
-use crate::{
-    bstr::ByteSlice,
-    immutable::{commit::decode, object, parse, parse::NL},
-};
+use std::borrow::Cow;
+
 use bstr::BStr;
 use git_hash::{oid, ObjectId};
 use nom::{
@@ -10,7 +8,11 @@ use nom::{
     combinator::{all_consuming, opt},
     error::context,
 };
-use std::borrow::Cow;
+
+use crate::{
+    bstr::ByteSlice,
+    immutable::{commit::decode, object, parse, parse::NL},
+};
 
 #[derive(Copy, Clone)]
 enum SignatureKind {

@@ -11,8 +11,9 @@ mod encode_message {
     }
 
     mod invalid {
-        use git_protocol::credentials;
         use std::io;
+
+        use git_protocol::credentials;
 
         #[test]
         fn contains_null() {
@@ -63,8 +64,9 @@ this=is-skipped-past-empty-line"
     }
 
     mod invalid {
-        use git_protocol::credentials;
         use std::io;
+
+        use git_protocol::credentials;
 
         #[test]
         fn null_in_key() -> crate::Result {

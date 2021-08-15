@@ -1,5 +1,6 @@
-use crate::store::{file::log, file::log::iter::decode::LineNumber};
 use bstr::ByteSlice;
+
+use crate::store::file::{log, log::iter::decode::LineNumber};
 
 ///
 pub mod decode {

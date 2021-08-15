@@ -1,18 +1,18 @@
+use std::convert::TryFrom;
+
+use bstr::{BStr, ByteSlice};
+use nom::{
+    bytes::complete::{tag, take_while},
+    combinator::{map, map_res, opt},
+    error::{FromExternalError, ParseError},
+    sequence::{delimited, preceded, terminated, tuple},
+    IResult,
+};
+
 use crate::{
     parse::{hex_hash, newline},
     store::packed,
 };
-use bstr::{BStr, ByteSlice};
-use nom::combinator::map_res;
-use nom::error::FromExternalError;
-use nom::{
-    bytes::complete::{tag, take_while},
-    combinator::{map, opt},
-    error::ParseError,
-    sequence::{delimited, preceded, terminated, tuple},
-    IResult,
-};
-use std::convert::TryFrom;
 
 #[derive(Debug, PartialEq, Eq)]
 enum Peeled {

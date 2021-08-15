@@ -1,13 +1,15 @@
+use std::{collections::BTreeMap, str::FromStr};
+
+use anyhow::bail;
+use cargo_metadata::{Metadata, Package};
+use git_repository::hash::ObjectId;
+use semver::{Op, Version, VersionReq};
+
 use super::{
     cargo, git,
     utils::{names_and_versions, package_by_id, package_eq_dependency},
     Context, Options,
 };
-use anyhow::bail;
-use cargo_metadata::{Metadata, Package};
-use git_repository::hash::ObjectId;
-use semver::{Op, Version, VersionReq};
-use std::{collections::BTreeMap, str::FromStr};
 
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates(
     meta: &Metadata,

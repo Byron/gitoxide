@@ -1,4 +1,3 @@
-use git_commitgraph::{graph::Position as GraphPosition, Graph};
 use std::{
     collections::{HashMap, HashSet},
     convert::{TryFrom, TryInto},
@@ -7,6 +6,8 @@ use std::{
     path::Path,
     process::Command,
 };
+
+use git_commitgraph::{graph::Position as GraphPosition, Graph};
 
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 

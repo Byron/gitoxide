@@ -1,9 +1,10 @@
+#[cfg(feature = "blocking-io")]
+use std::io::Write;
+
 use bstr::ByteSlice;
 #[cfg(all(feature = "async-io", not(feature = "blocking-io")))]
 use futures_lite::prelude::*;
 use git_packetline::Writer;
-#[cfg(feature = "blocking-io")]
-use std::io::Write;
 
 const MAX_DATA_LEN: usize = 65516;
 const MAX_LINE_LEN: usize = 4 + MAX_DATA_LEN;

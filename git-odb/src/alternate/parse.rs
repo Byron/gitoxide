@@ -1,6 +1,8 @@
-use crate::alternate::unquote;
-use git_object::bstr::ByteSlice;
 use std::{borrow::Cow, path::PathBuf};
+
+use git_object::bstr::ByteSlice;
+
+use crate::alternate::unquote;
 
 /// Returned as part of [`crate::alternate::Error::Parse`]
 #[derive(thiserror::Error, Debug)]

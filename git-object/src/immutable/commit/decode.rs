@@ -2,10 +2,9 @@ use std::borrow::Cow;
 
 use nom::{
     branch::alt,
-    bytes::{complete::is_not, complete::tag},
+    bytes::complete::{is_not, tag},
     combinator::{all_consuming, opt},
-    error::context,
-    error::{ContextError, ParseError},
+    error::{context, ContextError, ParseError},
     multi::many0,
     IResult,
 };

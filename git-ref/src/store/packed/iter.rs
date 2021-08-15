@@ -1,5 +1,6 @@
-use crate::store::{packed, packed::decode};
 use bstr::{BString, ByteSlice};
+
+use crate::store::{packed, packed::decode};
 
 /// packed-refs specific functionality
 impl packed::Buffer {

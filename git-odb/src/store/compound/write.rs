@@ -1,7 +1,8 @@
 use std::io::Read;
 
-use crate::store::{compound, loose};
 use git_object::{mutable, Kind};
+
+use crate::store::{compound, loose};
 
 impl crate::write::Write for compound::Store {
     type Error = loose::write::Error;

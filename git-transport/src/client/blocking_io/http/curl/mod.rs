@@ -1,9 +1,11 @@
-use crate::client::blocking_io::http;
-use git_features::io;
 use std::{
     sync::mpsc::{Receiver, SyncSender},
     thread,
 };
+
+use git_features::io;
+
+use crate::client::blocking_io::http;
 
 mod remote;
 

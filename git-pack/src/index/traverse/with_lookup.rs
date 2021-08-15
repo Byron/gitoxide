@@ -1,14 +1,17 @@
-use super::{Error, Reducer};
-use crate::{data, index, index::util};
+use std::sync::Arc;
+
 use git_features::{
     parallel::{self, in_parallel_if},
     progress::{self, unit, Progress},
 };
-use std::sync::Arc;
+
+use super::{Error, Reducer};
+use crate::{data, index, index::util};
 
 mod options {
-    use crate::index::traverse::SafetyCheck;
     use std::sync::{atomic::AtomicBool, Arc};
+
+    use crate::index::traverse::SafetyCheck;
 
     /// Traversal options for [`traverse()`][crate::index::File::traverse_with_lookup()]
     #[derive(Debug, Clone)]
@@ -33,8 +36,9 @@ mod options {
         }
     }
 }
-pub use options::Options;
 use std::sync::atomic::Ordering;
+
+pub use options::Options;
 
 /// Verify and validate the content of the index file
 impl index::File {

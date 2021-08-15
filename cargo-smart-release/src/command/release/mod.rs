@@ -1,8 +1,10 @@
-use crate::command::release::Options;
+use std::collections::BTreeSet;
+
 use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Dependency, DependencyKind, Metadata, Package, Version};
 use git_repository::{refs::packed, Repository};
-use std::collections::BTreeSet;
+
+use crate::command::release::Options;
 
 mod utils;
 use crates_index::Index;

@@ -1,6 +1,5 @@
-use pretty_assertions::assert_eq;
-
 use git_odb::loose::Store;
+use pretty_assertions::assert_eq;
 
 use crate::{fixture_path, hex_to_id};
 

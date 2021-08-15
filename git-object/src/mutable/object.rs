@@ -1,5 +1,6 @@
-use crate::mutable;
 use std::io;
+
+use crate::mutable;
 
 /// A mutable object representing [`Trees`][mutable::Tree], [`Blobs`][mutable::Blob], [`Commits`][mutable::Commit] or [`Tags`][mutable::Tag].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -68,8 +69,9 @@ impl Object {
 }
 
 mod convert {
-    use crate::mutable::{Blob, Commit, Object, Tag, Tree};
     use std::convert::TryFrom;
+
+    use crate::mutable::{Blob, Commit, Object, Tag, Tree};
 
     impl From<Tag> for Object {
         fn from(v: Tag) -> Self {

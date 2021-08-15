@@ -56,10 +56,12 @@ pub mod mutable {
     }
 
     mod write {
-        use super::Line;
+        use std::io;
+
         use bstr::{BStr, ByteSlice};
         use quick_error::quick_error;
-        use std::io;
+
+        use super::Line;
 
         quick_error! {
             /// The Error produced by [`Line::write_to()`] (but wrapped in an io error).

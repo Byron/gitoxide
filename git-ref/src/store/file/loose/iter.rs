@@ -1,13 +1,15 @@
-use crate::{
-    mutable::FullName,
-    store::file::{self, loose::Reference},
-};
-use bstr::ByteSlice;
-use git_features::fs::walkdir::DirEntryIter;
-use os_str_bytes::OsStrBytes;
 use std::{
     io::Read,
     path::{Path, PathBuf},
+};
+
+use bstr::ByteSlice;
+use git_features::fs::walkdir::DirEntryIter;
+use os_str_bytes::OsStrBytes;
+
+use crate::{
+    mutable::FullName,
+    store::file::{self, loose::Reference},
 };
 
 /// An iterator over all valid loose reference paths as seen from a particular base directory.
@@ -152,9 +154,11 @@ impl file::Store {
 ///
 pub mod loose {
     mod error {
-        use crate::file;
-        use quick_error::quick_error;
         use std::{io, path::PathBuf};
+
+        use quick_error::quick_error;
+
+        use crate::file;
 
         quick_error! {
             /// The error returned by [file::overlay::Loose] iteration.

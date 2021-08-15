@@ -1,9 +1,11 @@
+use std::{io, io::Write, ops::DerefMut};
+
+use bstr::BString;
+
 use crate::{
     client::{Capabilities, Error, ExtendedBufRead, MessageKind, TransportWithoutIO, WriteMode},
     Protocol, Service,
 };
-use bstr::BString;
-use std::{io, io::Write, ops::DerefMut};
 
 /// The response of the [`handshake()`][Transport::handshake()] method.
 pub struct SetServiceResponse<'a> {

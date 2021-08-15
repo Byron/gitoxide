@@ -1,10 +1,12 @@
+use std::io;
+
+use bstr::ByteSlice;
+
 use crate::{
     decode,
     read::{ExhaustiveOutcome, WithSidebands},
     PacketLine, StreamingPeekableIter, MAX_LINE_LEN, U16_HEX_BYTES,
 };
-use bstr::ByteSlice;
-use std::io;
 
 /// Non-IO methods
 impl<T> StreamingPeekableIter<T>

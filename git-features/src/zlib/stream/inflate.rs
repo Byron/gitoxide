@@ -1,5 +1,6 @@
-use flate2::{Decompress, FlushDecompress, Status};
 use std::{io, io::BufRead};
+
+use flate2::{Decompress, FlushDecompress, Status};
 
 /// The boxed variant is faster for what we do (moving the decompressor in and out a lot)
 pub struct ReadBoxed<R> {

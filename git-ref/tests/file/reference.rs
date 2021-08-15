@@ -49,11 +49,13 @@ mod reflog {
 }
 
 mod peel {
-    use crate::{file, file::store_with_packed_refs};
+    use std::convert::TryFrom;
+
     use git_odb::Find;
     use git_ref::file::loose::reference::peel;
     use git_testtools::hex_to_id;
-    use std::convert::TryFrom;
+
+    use crate::{file, file::store_with_packed_refs};
 
     #[test]
     fn one_level() -> crate::Result {

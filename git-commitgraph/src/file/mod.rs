@@ -8,15 +8,15 @@ pub use commit::Commit;
 mod init;
 pub mod verify;
 
-pub use init::Error;
-
-use filebuffer::FileBuffer;
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use std::{
     fmt::{Display, Formatter},
     ops::Range,
     path::PathBuf,
 };
+
+use filebuffer::FileBuffer;
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+pub use init::Error;
 
 const COMMIT_DATA_ENTRY_SIZE: usize = SHA1_SIZE + 16;
 const FAN_LEN: usize = 256;

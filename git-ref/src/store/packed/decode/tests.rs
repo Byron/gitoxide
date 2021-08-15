@@ -1,11 +1,14 @@
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 
 mod reference {
-    use super::Result;
-    use crate::store::{packed, packed::decode};
-    use crate::FullName;
     use git_testtools::hex_to_id;
     use nom::error::VerboseError;
+
+    use super::Result;
+    use crate::{
+        store::{packed, packed::decode},
+        FullName,
+    };
 
     #[test]
     fn invalid() {
@@ -43,13 +46,14 @@ mod reference {
 }
 
 mod header {
+    use bstr::ByteSlice;
+    use git_testtools::to_bstr_err;
+
     use super::Result;
     use crate::store::packed::{
         decode,
         decode::{Header, Peeled},
     };
-    use bstr::ByteSlice;
-    use git_testtools::to_bstr_err;
 
     #[test]
     fn invalid() {

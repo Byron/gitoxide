@@ -1,9 +1,10 @@
 mod sideband;
 
 pub mod streaming_peek_iter {
+    use std::{io, path::PathBuf};
+
     use bstr::ByteSlice;
     use git_packetline::PacketLine;
-    use std::{io, path::PathBuf};
 
     fn fixture_path(path: &str) -> PathBuf {
         PathBuf::from("tests/fixtures").join(path)

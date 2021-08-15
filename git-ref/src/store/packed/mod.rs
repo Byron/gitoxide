@@ -1,8 +1,10 @@
-use crate::{transaction::RefEdit, FullName};
+use std::path::PathBuf;
+
 use bstr::{BStr, BString};
 use filebuffer::FileBuffer;
 use git_hash::ObjectId;
-use std::path::PathBuf;
+
+use crate::{transaction::RefEdit, FullName};
 
 enum Backing {
     /// The buffer is loaded entirely in memory, along with the `offset` to the first record past the header.

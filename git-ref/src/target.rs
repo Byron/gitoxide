@@ -1,6 +1,7 @@
-use crate::{Kind, Target};
 use bstr::BStr;
 use git_hash::oid;
+
+use crate::{Kind, Target};
 
 impl<'a> Target<'a> {
     /// Returns the kind of the target the ref is pointing to.

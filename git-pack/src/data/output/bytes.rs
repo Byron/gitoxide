@@ -1,6 +1,8 @@
-use crate::data::output;
-use git_features::hash;
 use std::io::Write;
+
+use git_features::hash;
+
+use crate::data::output;
 
 /// The error returned by `next()` in the [`FromEntriesIter`] iterator.
 #[allow(missing_docs)]

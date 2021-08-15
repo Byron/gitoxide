@@ -1,15 +1,19 @@
-use crate::fixture_path;
-use git_odb::pack;
 use std::convert::TryFrom;
+
+use git_odb::pack;
+
+use crate::fixture_path;
 
 fn pack_at(at: &str) -> pack::data::File {
     pack::data::File::try_from(fixture_path(at).as_path()).expect("valid pack file")
 }
 
 mod method {
-    use crate::{pack::data::file::pack_at, pack::SMALL_PACK};
-    use git_features::progress;
     use std::sync::atomic::AtomicBool;
+
+    use git_features::progress;
+
+    use crate::pack::{data::file::pack_at, SMALL_PACK};
 
     #[test]
     fn checksum() {
@@ -41,10 +45,13 @@ mod method {
 
 /// All hardcoded offsets are obtained via `git pack-verify --verbose  tests/fixtures/packs/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx`
 mod decode_entry {
-    use crate::{fixture_path, fixup, pack::data::file::pack_at, pack::SMALL_PACK};
     use bstr::ByteSlice;
-    use git_pack::cache;
-    use git_pack::data::ResolvedBase;
+    use git_pack::{cache, data::ResolvedBase};
+
+    use crate::{
+        fixture_path, fixup,
+        pack::{data::file::pack_at, SMALL_PACK},
+    };
 
     fn content_of(path: &str) -> Vec<u8> {
         fixup(std::fs::read(fixture_path(path)).expect("valid fixture"))
@@ -98,8 +105,9 @@ mod decode_entry {
 }
 
 mod decompress_entry {
-    use crate::{pack::data::file::pack_at, pack::SMALL_PACK};
     use git_object::bstr::ByteSlice;
+
+    use crate::pack::{data::file::pack_at, SMALL_PACK};
 
     #[test]
     fn commit() {

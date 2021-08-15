@@ -1,4 +1,9 @@
-use crate::{remote::refs::JsonRef, OutputFormat};
+use std::{
+    io,
+    path::PathBuf,
+    sync::{atomic::AtomicBool, Arc},
+};
+
 use git_repository::{
     hash::ObjectId,
     object::bstr::{BString, ByteSlice},
@@ -10,7 +15,8 @@ use git_repository::{
         transport::client::Capabilities,
     },
 };
-use std::{io, path::PathBuf, sync::atomic::AtomicBool, sync::Arc};
+
+use crate::{remote::refs::JsonRef, OutputFormat};
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
@@ -78,14 +84,16 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
-    use super::{receive_pack_blocking, CloneDelegate, Context};
-    use crate::net;
+    use std::{io, io::BufRead, path::PathBuf};
+
     use git_repository::{
         protocol,
         protocol::fetch::{Ref, Response},
         Progress,
     };
-    use std::{io, io::BufRead, path::PathBuf};
+
+    use super::{receive_pack_blocking, CloneDelegate, Context};
+    use crate::net;
 
     impl<W: io::Write> protocol::fetch::Delegate for CloneDelegate<W> {
         fn receive_pack(
@@ -137,8 +145,8 @@ pub use blocking_io::receive;
 
 #[cfg(feature = "async-client")]
 mod async_io {
-    use super::{print, receive_pack_blocking, write_raw_refs, CloneDelegate, Context};
-    use crate::{net, OutputFormat};
+    use std::{io, io::BufRead, path::PathBuf};
+
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
     use git_repository::{
@@ -148,7 +156,9 @@ mod async_io {
         protocol::fetch::{Ref, Response},
         Progress,
     };
-    use std::{io, io::BufRead, path::PathBuf};
+
+    use super::{print, receive_pack_blocking, write_raw_refs, CloneDelegate, Context};
+    use crate::{net, OutputFormat};
 
     #[async_trait(?Send)]
     impl<W: io::Write + Send + 'static> protocol::fetch::Delegate for CloneDelegate<W> {

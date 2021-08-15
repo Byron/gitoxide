@@ -1,14 +1,16 @@
-use crate::{
-    porcelain::options::{Args, EstimateHours, Subcommands, ToolCommands},
-    shared::pretty::prepare_and_run,
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
 };
+
 use anyhow::Result;
 use clap::Clap;
 use git_features::progress::DoOrDiscard;
 use gitoxide_core as core;
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
+
+use crate::{
+    porcelain::options::{Args, EstimateHours, Subcommands, ToolCommands},
+    shared::pretty::prepare_and_run,
 };
 
 pub fn main() -> Result<()> {

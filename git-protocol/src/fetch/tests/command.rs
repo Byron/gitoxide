@@ -119,8 +119,7 @@ mod v2 {
         mod validate {
             use bstr::ByteSlice;
 
-            use crate::fetch::tests::command::v2::capabilities;
-            use crate::fetch::Command;
+            use crate::fetch::{tests::command::v2::capabilities, Command};
 
             #[test]
             fn ref_prefixes_can_always_be_used() {

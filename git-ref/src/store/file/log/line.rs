@@ -1,5 +1,6 @@
-use crate::store::file::log::Line;
 use git_hash::ObjectId;
+
+use crate::store::file::log::Line;
 
 impl<'a> Line<'a> {
     /// The previous object id of the ref. It will be a null hash if there was no previous id as
@@ -15,16 +16,16 @@ impl<'a> Line<'a> {
 
 ///
 pub mod decode {
-    use crate::{file::log::Line, parse::hex_hash};
-
     use bstr::{BStr, ByteSlice};
     use nom::{
-        bytes::{complete::tag, complete::take_while},
+        bytes::complete::{tag, take_while},
         combinator::opt,
         error::{context, ContextError, ParseError},
         sequence::{terminated, tuple},
         IResult,
     };
+
+    use crate::{file::log::Line, parse::hex_hash};
 
     ///
     mod error {
@@ -110,10 +111,11 @@ pub mod decode {
 
     #[cfg(test)]
     mod test {
-        use super::*;
         use bstr::ByteSlice;
         use git_actor::{Sign, Time};
         use git_hash::ObjectId;
+
+        use super::*;
 
         fn hex_to_oid(hex: &str) -> ObjectId {
             ObjectId::from_hex(hex.as_bytes()).unwrap()
@@ -125,10 +127,10 @@ pub mod decode {
         }
 
         mod invalid {
-            use super::one;
-
             use git_testtools::to_bstr_err;
             use nom::error::VerboseError;
+
+            use super::one;
 
             #[test]
             fn completely_bogus_shows_error_with_context() {

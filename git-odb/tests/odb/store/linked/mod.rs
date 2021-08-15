@@ -33,8 +33,9 @@ mod iter {
 }
 
 mod locate {
-    use crate::{hex_to_id, odb::store::linked::db};
     use git_odb::{linked::Store, pack, Find};
+
+    use crate::{hex_to_id, odb::store::linked::db};
 
     fn can_locate(db: &Store, hex_id: &str) {
         let mut buf = vec![];
@@ -58,11 +59,11 @@ mod locate {
 }
 
 mod init {
-    use git_odb::linked;
     use std::convert::TryFrom;
 
-    use crate::odb::alternate::alternate;
-    use crate::odb::store::linked::db;
+    use git_odb::linked;
+
+    use crate::odb::{alternate::alternate, store::linked::db};
 
     #[test]
     fn multiple_linked_repositories_via_alternates() -> crate::Result {

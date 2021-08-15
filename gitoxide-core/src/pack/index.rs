@@ -1,7 +1,8 @@
-use crate::OutputFormat;
+use std::{fs, io, path::PathBuf, str::FromStr, sync::atomic::AtomicBool};
+
 use git_repository::{odb::pack, Progress};
-use std::sync::atomic::AtomicBool;
-use std::{fs, io, path::PathBuf, str::FromStr};
+
+use crate::OutputFormat;
 
 #[derive(PartialEq, Debug)]
 pub enum IterationMode {

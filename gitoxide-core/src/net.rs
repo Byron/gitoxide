@@ -20,8 +20,9 @@ impl FromStr for Protocol {
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod impls {
-    use super::Protocol;
     use git_repository::protocol::transport;
+
+    use super::Protocol;
 
     impl From<Protocol> for transport::Protocol {
         fn from(v: Protocol) -> Self {
@@ -42,16 +43,20 @@ impl Default for Protocol {
 }
 #[cfg(feature = "async-client")]
 mod async_io {
+    use std::{io, time::Duration};
+
     use async_net::TcpStream;
     use futures_lite::FutureExt;
     use git_repository::{
         object::bstr::BString,
         protocol::{
             transport,
-            transport::{client, client::connect::Error, client::git},
+            transport::{
+                client,
+                client::{connect::Error, git},
+            },
         },
     };
-    use std::{io, time::Duration};
 
     async fn git_connect(
         host: &str,
@@ -100,8 +105,8 @@ mod async_io {
         })
     }
 }
-#[cfg(feature = "async-client")]
-pub use self::async_io::connect;
-
 #[cfg(feature = "blocking-client")]
 pub use git_repository::protocol::transport::connect;
+
+#[cfg(feature = "async-client")]
+pub use self::async_io::connect;

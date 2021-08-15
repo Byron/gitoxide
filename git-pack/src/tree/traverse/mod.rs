@@ -1,15 +1,17 @@
-use crate::{
-    data::EntryRange,
-    tree::{Item, Tree},
+use std::{
+    collections::VecDeque,
+    sync::atomic::{AtomicBool, Ordering},
 };
+
 use git_features::{
     parallel,
     parallel::in_parallel_if,
     progress::{self, Progress},
 };
-use std::{
-    collections::VecDeque,
-    sync::atomic::{AtomicBool, Ordering},
+
+use crate::{
+    data::EntryRange,
+    tree::{Item, Tree},
 };
 
 mod resolve;

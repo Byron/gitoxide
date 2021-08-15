@@ -1,5 +1,4 @@
 pub mod refs {
-    use crate::OutputFormat;
     use git_repository::{
         protocol,
         protocol::{
@@ -7,6 +6,8 @@ pub mod refs {
             transport,
         },
     };
+
+    use crate::OutputFormat;
 
     pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 
@@ -41,8 +42,8 @@ pub mod refs {
 
     #[cfg(feature = "async-client")]
     mod async_io {
-        use super::{Context, LsRemotes};
-        use crate::{net, remote::refs::print, OutputFormat};
+        use std::io;
+
         use async_trait::async_trait;
         use futures_io::AsyncBufRead;
         use git_repository::{
@@ -50,7 +51,9 @@ pub mod refs {
             protocol::fetch::{Ref, Response},
             Progress,
         };
-        use std::io;
+
+        use super::{Context, LsRemotes};
+        use crate::{net, remote::refs::print, OutputFormat};
 
         #[async_trait(?Send)]
         impl protocol::fetch::Delegate for LsRemotes {
@@ -109,16 +112,18 @@ pub mod refs {
 
     #[cfg(feature = "blocking-client")]
     mod blocking_io {
-        #[cfg(feature = "serde1")]
-        use super::JsonRef;
-        use super::{print, Context, LsRemotes};
-        use crate::{net, OutputFormat};
+        use std::io;
+
         use git_repository::{
             protocol,
             protocol::fetch::{Ref, Response},
             Progress,
         };
-        use std::io;
+
+        #[cfg(feature = "serde1")]
+        use super::JsonRef;
+        use super::{print, Context, LsRemotes};
+        use crate::{net, OutputFormat};
 
         impl protocol::fetch::Delegate for LsRemotes {
             fn receive_pack(

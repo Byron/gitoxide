@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod acquire {
-    use git_lock::acquire::Fail;
     use std::time::{Duration, Instant};
+
+    use git_lock::acquire::Fail;
 
     #[test]
     fn fail_mode_immediately_produces_a_descriptive_error() -> crate::Result {

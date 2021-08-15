@@ -1,11 +1,13 @@
-use crate::{backoff, File, Marker, DOT_LOCK_SUFFIX};
-use git_tempfile::{AutoRemove, ContainingDirectory};
-use quick_error::quick_error;
 use std::{
     fmt,
     path::{Path, PathBuf},
     time::Duration,
 };
+
+use git_tempfile::{AutoRemove, ContainingDirectory};
+use quick_error::quick_error;
+
+use crate::{backoff, File, Marker, DOT_LOCK_SUFFIX};
 
 /// Describe what to do if a lock cannot be obtained as it's already held elsewhere.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]

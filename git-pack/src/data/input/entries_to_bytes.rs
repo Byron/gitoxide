@@ -1,6 +1,8 @@
-use crate::data::input;
-use git_features::hash;
 use std::iter::Peekable;
+
+use git_features::hash;
+
+use crate::data::input;
 
 /// An implementation of [`Iterator`] to write [encoded entries][input::Entry] to an inner implementation each time
 /// `next()` is called.

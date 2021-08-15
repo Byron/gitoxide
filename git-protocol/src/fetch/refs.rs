@@ -1,6 +1,7 @@
+use std::io;
+
 use bstr::BString;
 use quick_error::quick_error;
-use std::io;
 
 quick_error! {
     /// The error returned when parsing References/refs from the server response.
@@ -80,8 +81,9 @@ impl Ref {
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub(crate) mod shared {
-    use crate::fetch::{refs, Ref};
     use bstr::{BString, ByteSlice};
+
+    use crate::fetch::{refs, Ref};
 
     impl From<InternalRef> for Ref {
         fn from(v: InternalRef) -> Self {
@@ -265,9 +267,10 @@ pub(crate) mod shared {
 
 #[cfg(feature = "async-client")]
 mod async_io {
-    use crate::fetch::{refs, Ref};
     use futures_io::AsyncBufRead;
     use futures_lite::AsyncBufReadExt;
+
+    use crate::fetch::{refs, Ref};
 
     /// Parse refs from the given input line by line. Protocol V2 is required for this to succeed.
     pub async fn from_v2_refs(in_refs: &mut (dyn AsyncBufRead + Unpin)) -> Result<Vec<Ref>, refs::Error> {
@@ -315,8 +318,9 @@ pub use async_io::{from_v1_refs_received_as_part_of_handshake_and_capabilities, 
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io {
-    use crate::fetch::{refs, Ref};
     use std::io;
+
+    use crate::fetch::{refs, Ref};
 
     /// Parse refs from the given input line by line. Protocol V2 is required for this to succeed.
     pub fn from_v2_refs(in_refs: &mut dyn io::BufRead) -> Result<Vec<Ref>, refs::Error> {

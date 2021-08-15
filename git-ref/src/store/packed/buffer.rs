@@ -17,9 +17,11 @@ impl AsRef<[u8]> for packed::Backing {
 
 ///
 pub mod open {
-    use crate::store::packed;
-    use filebuffer::FileBuffer;
     use std::path::PathBuf;
+
+    use filebuffer::FileBuffer;
+
+    use crate::store::packed;
 
     /// Initialization
     impl packed::Buffer {
@@ -77,8 +79,9 @@ pub mod open {
     }
 
     mod error {
-        use crate::packed;
         use quick_error::quick_error;
+
+        use crate::packed;
 
         quick_error! {
             /// The error returned by [`open()`][super::packed::Buffer::open()].
@@ -101,6 +104,7 @@ pub mod open {
             }
         }
     }
-    use crate::packed::Backing;
     pub use error::Error;
+
+    use crate::packed::Backing;
 }

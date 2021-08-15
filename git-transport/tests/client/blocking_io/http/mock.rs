@@ -5,7 +5,6 @@ use std::{
 };
 
 use bstr::ByteVec;
-
 use git_transport::{
     client::{http, TransportWithoutIO},
     Protocol,

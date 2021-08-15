@@ -26,8 +26,9 @@ impl Default for Retries {
 }
 
 mod error {
-    use crate::fs::create_dir::Retries;
     use std::{fmt, path::Path};
+
+    use crate::fs::create_dir::Retries;
 
     /// The error returned by [all()][super::all()].
     #[allow(missing_docs)]

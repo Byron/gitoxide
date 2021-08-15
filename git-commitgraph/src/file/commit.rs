@@ -1,14 +1,16 @@
 //! Low-level operations on individual commits.
-use crate::{
-    file::{self, File},
-    graph,
-};
-use byteorder::{BigEndian, ByteOrder};
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use std::{
     convert::TryInto,
     fmt::{Debug, Formatter},
     slice::Chunks,
+};
+
+use byteorder::{BigEndian, ByteOrder};
+use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+
+use crate::{
+    file::{self, File},
+    graph,
 };
 
 /// The error used in the [`file::commit`][self] module.

@@ -1,10 +1,12 @@
+use std::io;
+
+use git_transport::client;
+use quick_error::quick_error;
+
 use crate::{
     credentials,
     fetch::{refs, response},
 };
-use git_transport::client;
-use quick_error::quick_error;
-use std::io;
 
 quick_error! {
     /// The error used in [`fetch()`][super::fetch].

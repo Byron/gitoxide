@@ -1,8 +1,6 @@
 mod decode {
-    use btoi::btoi;
-
-    use crate::{immutable::Signature, Sign, Time};
     use bstr::ByteSlice;
+    use btoi::btoi;
     use nom::{
         branch::alt,
         bytes::complete::{tag, take, take_until, take_while_m_n},
@@ -11,6 +9,8 @@ mod decode {
         sequence::{terminated, tuple},
         IResult,
     };
+
+    use crate::{immutable::Signature, Sign, Time};
 
     const SPACE: &[u8] = b" ";
 
@@ -65,10 +65,14 @@ mod decode {
     #[cfg(test)]
     mod tests {
         mod parse_signature {
-            use crate::{immutable::signature, immutable::Signature, Sign, Time};
             use bstr::ByteSlice;
             use git_testtools::to_bstr_err;
             use nom::IResult;
+
+            use crate::{
+                immutable::{signature, Signature},
+                Sign, Time,
+            };
 
             fn decode(i: &[u8]) -> IResult<&[u8], Signature<'_>, nom::error::VerboseError<&[u8]>> {
                 signature::decode(i)

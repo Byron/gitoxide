@@ -3,8 +3,8 @@ use crate::{
     packed,
     store::{
         file,
-        file::loose,
         file::{
+            loose,
             transaction::{Edit, PackedRefs},
             Transaction,
         },
@@ -338,12 +338,13 @@ impl<'s> Transaction<'s> {
 }
 
 mod error {
+    use bstr::BString;
+    use quick_error::quick_error;
+
     use crate::{
         mutable::Target,
         store::{file, packed},
     };
-    use bstr::BString;
-    use quick_error::quick_error;
 
     quick_error! {
         /// The error returned by various [`Transaction`][super::Transaction] methods.

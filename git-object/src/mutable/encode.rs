@@ -1,7 +1,9 @@
-use crate::mutable::{NL, SPACE};
+use std::io;
+
 use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
-use std::io;
+
+use crate::mutable::{NL, SPACE};
 
 quick_error! {
     #[derive(Debug)]

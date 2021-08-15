@@ -1,5 +1,6 @@
-use quick_error::quick_error;
 use std::fmt;
+
+use quick_error::quick_error;
 
 /// The four types of objects that git differentiates.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
