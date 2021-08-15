@@ -207,27 +207,25 @@ pub fn create_version_tag(
         return Ok(None);
     }
     let tag_name = tag_name_for(&publishee.name, new_version);
+    let edit = RefEdit {
+        change: Change::Update {
+            log: Default::default(),
+            mode: Create::Only,
+            new: Target::Peeled(commit_id),
+        },
+        name: format!("refs/tags/{}", tag_name).try_into()?,
+        deref: false,
+    };
     if dry_run {
         if verbose {
             log::info!("WOULD create tag {}", tag_name);
         }
-        Ok(None)
+        Ok(Some(edit.name))
     } else {
         let edits = repo
             .refs
             .transaction()
-            .prepare(
-                Some(RefEdit {
-                    change: Change::Update {
-                        log: Default::default(),
-                        mode: Create::Only,
-                        new: Target::Peeled(commit_id),
-                    },
-                    name: format!("refs/tags/{}", tag_name).try_into()?,
-                    deref: false,
-                }),
-                git_lock::acquire::Fail::Immediately,
-            )?
+            .prepare(Some(edit), git_lock::acquire::Fail::Immediately)?
             .commit(&actor::Signature::empty())?;
         assert_eq!(edits.len(), 1, "We create only one tag and there is no expansion");
         let tag = edits.into_iter().next().expect("the promised tag");
@@ -237,13 +235,19 @@ pub fn create_version_tag(
 }
 
 // TODO: Make this gitoxide
-pub fn push_tag_and_head(tag_name: refs::mutable::FullName, options: Options) -> anyhow::Result<()> {
+pub fn push_tags_and_head(
+    tag_names: impl IntoIterator<Item = refs::mutable::FullName>,
+    options: Options,
+) -> anyhow::Result<()> {
     if options.skip_push {
         return Ok(());
     }
 
     let mut cmd = Command::new("git");
-    cmd.arg("push").arg(tag_name.as_bstr().to_str()?).arg("HEAD");
+    cmd.arg("push").arg("HEAD");
+    for tag_name in tag_names {
+        cmd.arg(tag_name.as_bstr().to_str()?);
+    }
 
     if options.verbose {
         log::info!("{} run {:?}", will(options.dry_run), cmd);

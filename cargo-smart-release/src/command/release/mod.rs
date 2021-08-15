@@ -99,9 +99,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
 
         let (new_version, commit_id) = perform_single_release(meta, publishee, options, &ctx)?;
         let tag_name = git::create_version_tag(publishee, &new_version, commit_id, &ctx.repo, options)?;
-        if let Some(tag_name) = tag_name {
-            git::push_tag_and_head(tag_name, options)?;
-        }
+        git::push_tags_and_head(tag_name, options)?;
     }
 
     if !crates_to_publish_together.is_empty() {
@@ -146,14 +144,19 @@ fn perforrm_multi_version_release(
     )?;
 
     crates_to_publish_together.reverse();
+    let mut tag_names = Vec::new();
     while let Some((publishee, new_version)) = crates_to_publish_together.pop() {
         let unpublished_crates: Vec<_> = crates_to_publish_together
             .iter()
             .map(|(p, _)| p.name.to_owned())
             .collect();
+
         cargo::publish_crate(publishee, &unpublished_crates, options)?;
-        git::create_version_tag(publishee, &new_version, commit_id, &ctx.repo, options)?;
+        if let Some(tag_name) = git::create_version_tag(publishee, &new_version, commit_id, &ctx.repo, options)? {
+            tag_names.push(tag_name);
+        };
     }
+    git::push_tags_and_head(tag_names, options)?;
     Ok(())
 }
 
