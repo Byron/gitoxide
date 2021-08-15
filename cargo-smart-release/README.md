@@ -32,6 +32,7 @@ instructions, one should end up with a fully automatic release of multiple crate
 * [x] automatically release dependent workspace pre-release crates along with the desired one if they changed since their last release
 * [x] automatically adjust manifest versions and update manifests of crates which use those whose versions were incremented
 * [x] use git tags to know if a crate changed at all, skipping publishes if there is no code change at all
+* [ ] Support other remote names than 'origin' - currently the latter name is assumed. Fix by getting the remote of the currently checked out branch.
 * [ ] handle version specifications correctly [(tables vs values)](https://github.com/Byron/cargo-release/blob/master/src/cargo.rs#L179:L207)
 * [ ] handle all version comparators correctly (see [here](https://github.com/Byron/cargo-release/blob/master/src/version.rs#L192:L226) for how it's done)
 * [ ] Automatically detect if crate changes are breaking to suggest the correct version increment

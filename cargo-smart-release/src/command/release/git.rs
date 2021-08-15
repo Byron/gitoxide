@@ -244,7 +244,7 @@ pub fn push_tags_and_head(
     }
 
     let mut cmd = Command::new("git");
-    cmd.arg("push").arg("HEAD");
+    cmd.arg("push").arg("origin").arg("HEAD");
     for tag_name in tag_names {
         cmd.arg(tag_name.as_bstr().to_str()?);
     }
@@ -255,6 +255,6 @@ pub fn push_tags_and_head(
     if options.dry_run || cmd.status()?.success() {
         Ok(())
     } else {
-        bail!("'git push' invocation failed. Try to push manually and repeat the smart-release invocation to resume.");
+        bail!("'git push' invocation failed. Try to push manually and repeat the smart-release invocation to resume, possibly with --skip-push.");
     }
 }
