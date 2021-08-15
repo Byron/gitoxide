@@ -335,6 +335,7 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
     * **packed**
       * [x] find single ref by name
       * [x] iterate refs with optional prefix
+      * [x] handle unsorted packed refs and those without a header
   * [ ] **[reftable][reftable-spec]**, 
     * see [here for a Go/C implementation][reftable-impl]
 * [x] API documentation
