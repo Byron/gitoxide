@@ -63,6 +63,10 @@ pub struct SmartRelease {
     #[argh(switch)]
     pub skip_tag: bool,
 
+    /// don't push tags and the HEAD branch after any successful run of `cargo publish`.
+    #[argh(switch)]
+    pub skip_push: bool,
+
     /// pass --no-verify to 'cargo publish' which should only be a last resort when fixing up packages that
     /// otherwise wouldn't publish, but need to be publish to resolve the situation.
     #[argh(switch)]

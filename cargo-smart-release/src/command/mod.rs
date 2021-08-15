@@ -13,6 +13,7 @@ pub mod release {
         pub update_crates_index: bool,
         pub no_bump_on_demand: bool,
         pub verbose: bool,
+        pub skip_push: bool,
     }
 }
 #[path = "release/mod.rs"]

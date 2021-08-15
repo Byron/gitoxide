@@ -1,5 +1,6 @@
 use super::{Context, Options};
 use crate::command::release_impl::tag_name_for;
+use crate::command::release_impl::utils::will;
 use anyhow::{anyhow, bail};
 use bstr::ByteSlice;
 use cargo_metadata::{
@@ -12,7 +13,7 @@ use git_repository::{
     object,
     odb::{pack, Find, FindExt},
     refs::{
-        file,
+        self, file,
         file::loose::reference::peel,
         mutable::Target,
         transaction::{Change, Create, RefEdit},
@@ -201,17 +202,18 @@ pub fn create_version_tag(
         skip_tag,
         ..
     }: Options,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<Option<refs::mutable::FullName>> {
     if skip_tag {
-        return Ok(());
+        return Ok(None);
     }
     let tag_name = tag_name_for(&publishee.name, new_version);
     if dry_run {
         if verbose {
             log::info!("WOULD create tag {}", tag_name);
         }
+        Ok(None)
     } else {
-        for tag in repo
+        let edits = repo
             .refs
             .transaction()
             .prepare(
@@ -226,10 +228,29 @@ pub fn create_version_tag(
                 }),
                 git_lock::acquire::Fail::Immediately,
             )?
-            .commit(&actor::Signature::empty())?
-        {
-            log::info!("Created tag {}", tag.name.as_bstr());
-        }
+            .commit(&actor::Signature::empty())?;
+        assert_eq!(edits.len(), 1, "We create only one tag and there is no expansion");
+        let tag = edits.into_iter().next().expect("the promised tag");
+        log::info!("Created tag {}", tag.name.as_bstr());
+        Ok(Some(tag.name))
     }
-    Ok(())
+}
+
+// TODO: Make this gitoxide
+pub fn push_tag_and_head(tag_name: refs::mutable::FullName, options: Options) -> anyhow::Result<()> {
+    if options.skip_push {
+        return Ok(());
+    }
+
+    let mut cmd = Command::new("git");
+    cmd.arg("push").arg(tag_name.as_bstr().to_str()?).arg("HEAD");
+
+    if options.verbose {
+        log::info!("{} run {:?}", will(options.dry_run), cmd);
+    }
+    if options.dry_run || cmd.status()?.success() {
+        Ok(())
+    } else {
+        bail!("'git push' invocation failed. Try to push manually and repeat the smart-release invocation to resume.");
+    }
 }
