@@ -47,22 +47,26 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
     let target = peel_ref_fully(&mut ctx.repo.refs.find_existing("HEAD", None)?, ctx)?;
     let released_target = peel_ref_fully(&mut tag_ref, ctx)?;
 
-    let mut buf = Vec::new();
+    if repo_relative_crate_dir.as_os_str().len() == 0 {
+        Ok(target != released_target)
+    } else {
+        let mut buf = Vec::new();
 
-    let current_dir_id = find_directory_id_in_tree(
-        repo_relative_crate_dir,
-        resolve_tree_id_from_ref_target(target, &ctx.repo, &mut buf)?,
-        &ctx.repo,
-        &mut buf,
-    )?;
-    let released_dir_id = find_directory_id_in_tree(
-        repo_relative_crate_dir,
-        resolve_tree_id_from_ref_target(released_target, &ctx.repo, &mut buf)?,
-        &ctx.repo,
-        &mut buf,
-    )?;
+        let current_dir_id = find_directory_id_in_tree(
+            repo_relative_crate_dir,
+            resolve_tree_id_from_ref_target(target, &ctx.repo, &mut buf)?,
+            &ctx.repo,
+            &mut buf,
+        )?;
+        let released_dir_id = find_directory_id_in_tree(
+            repo_relative_crate_dir,
+            resolve_tree_id_from_ref_target(released_target, &ctx.repo, &mut buf)?,
+            &ctx.repo,
+            &mut buf,
+        )?;
 
-    Ok(released_dir_id != current_dir_id)
+        Ok(released_dir_id != current_dir_id)
+    }
 }
 
 pub fn assure_clean_working_tree() -> anyhow::Result<()> {
