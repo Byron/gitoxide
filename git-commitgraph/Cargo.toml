@@ -1,6 +1,6 @@
 [package]
 name = "git-commitgraph"
-version = "0.4.0"
+version = "0.4.1"
 repository = "https://github.com/Byron/gitoxide"
 documentation = "https://git-scm.com/docs/commit-graph#:~:text=The%20commit-graph%20file%20is%20a%20supplemental%20data%20structure,or%20in%20the%20info%20directory%20of%20an%20alternate."
 license = "MIT/Apache-2.0"
