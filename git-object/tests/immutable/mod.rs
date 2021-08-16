@@ -48,17 +48,3 @@ fn linus_signature(time: u32) -> git_actor::immutable::Signature<'static> {
         },
     }
 }
-
-#[cfg(not(feature = "verbose-object-parsing-errors"))]
-mod object {
-    use git_object::immutable::Object;
-
-    #[test]
-    fn size_in_memory() {
-        assert_eq!(
-            std::mem::size_of::<Object>(),
-            216,
-            "Prevent unexpected growth of what should be lightweight objects"
-        )
-    }
-}

@@ -62,18 +62,3 @@ impl<'a> Commit<'a> {
         crate::commit::ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (*k, v.as_ref())))
     }
 }
-
-#[cfg(test)]
-#[cfg(not(feature = "verbose-object-parsing-errors"))]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn size_of_commit() {
-        assert_eq!(
-            std::mem::size_of::<Commit<'_>>(),
-            216,
-            "the size of an immutable commit shouldn't change unnoticed"
-        );
-    }
-}
