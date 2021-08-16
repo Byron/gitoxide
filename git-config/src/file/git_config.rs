@@ -38,12 +38,18 @@ pub(super) struct SectionId(usize);
 /// of section ids with the matched section and name, and is used for precedence
 /// management.
 #[derive(PartialEq, Eq, Clone, Debug)]
-enum LookupTreeNode<'a> {
+pub(super) enum LookupTreeNode<'a> {
     Terminal(Vec<SectionId>),
     NonTerminal(HashMap<Cow<'a, str>, Vec<SectionId>>),
 }
 
 /// High level `git-config` reader and writer.
+///
+/// This is the full-featured implementation that can deserialize, serialize,
+/// and edit `git-config` files without loss of whitespace or comments. As a
+/// result, it's lot more complex than it's read-only variant,
+/// [`ResolvedGitConfig`] that exposes a [`HashMap`]-like interface. Users that
+/// only need to read `git-config` files should use that instead.
 ///
 /// Internally, this uses various acceleration data structures to improve
 /// performance of the typical usage behavior of many lookups and relatively
@@ -85,6 +91,7 @@ enum LookupTreeNode<'a> {
 /// Consider the `multi` variants of the methods instead, if you want to work
 /// with all values instead.
 ///
+/// [`ResolvedGitConfig`]: crate::file::resolved::ResolvedGitConfig
 /// [`get_raw_value`]: Self::get_raw_value
 #[derive(PartialEq, Eq, Clone, Debug, Default)]
 pub struct GitConfig<'event> {
@@ -95,13 +102,13 @@ pub struct GitConfig<'event> {
     /// Section name and subsection name to section id lookup tree. This is
     /// effectively a n-tree (opposed to a binary tree) that can have a height
     /// of at most three (including an implicit root node).
-    section_lookup_tree: HashMap<SectionHeaderName<'event>, Vec<LookupTreeNode<'event>>>,
+    pub(super) section_lookup_tree: HashMap<SectionHeaderName<'event>, Vec<LookupTreeNode<'event>>>,
     /// SectionId to section mapping. The value of this HashMap contains actual
     /// events.
     ///
     /// This indirection with the SectionId as the key is critical to flexibly
     /// supporting `git-config` sections, as duplicated keys are permitted.
-    sections: HashMap<SectionId, SectionBody<'event>>,
+    pub(super) sections: HashMap<SectionId, SectionBody<'event>>,
     section_headers: HashMap<SectionId, ParsedSectionHeader<'event>>,
     /// Internal monotonically increasing counter for section ids.
     section_id_counter: usize,

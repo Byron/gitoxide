@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 // #![warn(missing_docs)]
-#![warn(clippy::pedantic, clippy::nursery)]
+// #![warn(clippy::pedantic, clippy::nursery)]
 
 //! # `git_config`
 //!

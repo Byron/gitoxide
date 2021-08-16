@@ -1,14 +1,12 @@
-use std::borrow::Cow;
-use std::collections::HashMap;
-use std::convert::TryFrom;
-use std::path::Path;
+use std::{borrow::Cow, collections::HashMap, convert::TryFrom, path::Path};
 
 use smallvec::SmallVec;
 
-use crate::file::LookupTreeNode;
-use crate::parser::{Key, ParserOrIoError, SectionHeaderName};
-
 use super::GitConfig;
+use crate::{
+    file::LookupTreeNode,
+    parser::{Key, ParserOrIoError, SectionHeaderName},
+};
 
 enum ResolvedTreeNode<'event> {
     Terminal(HashMap<Key<'event>, Cow<'event, [u8]>>),
