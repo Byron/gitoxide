@@ -118,13 +118,14 @@ mod easy {
         };
         use std::cell::RefCell;
         use std::convert::TryInto;
+        use std::rc::Rc;
 
         /// Obtain and alter references comfortably
         impl Easy {
-            pub fn find_reference<'a, Name, E>(
-                &mut self,
+            pub fn find_reference<'a, 'p, Name, E>(
+                self: &'p Rc<RefCell<Self>>,
                 name: Name,
-            ) -> Result<Option<Reference<'_>>, crate::reference::find::Error>
+            ) -> Result<Option<Reference<'p>>, crate::reference::find::Error>
             where
                 Name: TryInto<PartialName<'a>, Error = E>,
                 Error: From<E>,
@@ -134,7 +135,7 @@ mod easy {
                     Ok(r) => match r {
                         Some(r) => Ok(Some(Reference {
                             backing: Backing::File(r),
-                            repo: &self.repo,
+                            repo: Rc::clone(self),
                         })),
                         None => Ok(None),
                     },
@@ -148,7 +149,7 @@ mod easy {
 #[derive(Default)]
 pub struct Cache {
     packed_refs: Option<refs::packed::Buffer>,
-    pack: odb::pack::cache::Never, // TODO: choose great alround cache
+    pack: odb::pack::cache::Never, // TODO: choose great allround cache
     buf: Vec<u8>,
 }
 
@@ -199,8 +200,9 @@ mod object_impl {
 pub use object_impl::Object;
 
 mod reference {
-    use crate::{refs, Object, Repository};
+    use crate::{refs, Easy, Object, Repository};
     use std::cell::RefCell;
+    use std::rc::Rc;
 
     pub(crate) enum Backing<'p> {
         File(refs::file::Reference<'p>),
@@ -208,7 +210,7 @@ mod reference {
 
     pub struct Reference<'p> {
         pub(crate) backing: Backing<'p>,
-        pub(crate) repo: &'p RefCell<Repository>,
+        pub(crate) repo: Rc<RefCell<Easy>>,
     }
 
     // impl<'p> Reference<'p> {
