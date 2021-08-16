@@ -71,7 +71,7 @@ mod tests {
     fn size_of_commit() {
         assert_eq!(
             std::mem::size_of::<Commit<'_>>(),
-            216,
+            208,
             "the size of an immutable commit shouldn't change unnoticed"
         );
     }
