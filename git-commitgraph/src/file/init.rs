@@ -9,9 +9,11 @@ use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 
-use crate::file::{File, COMMIT_DATA_ENTRY_SIZE, FAN_LEN, SIGNATURE};
-
-type ChunkId = [u8; 4];
+use crate::file::{
+    ChunkId, File, BASE_GRAPHS_LIST_CHUNK_ID, CHUNK_LOOKUP_SIZE, COMMIT_DATA_CHUNK_ID, COMMIT_DATA_ENTRY_SIZE,
+    EXTENDED_EDGES_LIST_CHUNK_ID, FAN_LEN, HEADER_LEN, OID_FAN_CHUNK_ID, OID_LOOKUP_CHUNK_ID, OID_LOOKUP_ENTRY_SIZE,
+    SENTINEL_CHUNK_ID, SIGNATURE,
+};
 
 /// The error used in [`File::at()`].
 #[derive(thiserror::Error, Debug)]
@@ -51,20 +53,11 @@ pub enum Error {
     UnsupportedVersion(u8),
 }
 
-const CHUNK_LOOKUP_SIZE: usize = 12;
-const HEADER_LEN: usize = 8;
 const TRAILER_LEN: usize = SHA1_SIZE;
 const MIN_FILE_SIZE: usize = HEADER_LEN + ((MIN_CHUNKS + 1) * CHUNK_LOOKUP_SIZE) + TRAILER_LEN;
-const OID_LOOKUP_ENTRY_SIZE: usize = SHA1_SIZE;
 
 // Required chunks: OIDF, OIDL, CDAT
 const MIN_CHUNKS: usize = 3;
-const BASE_GRAPHS_LIST_CHUNK_ID: ChunkId = *b"BASE";
-const COMMIT_DATA_CHUNK_ID: ChunkId = *b"CDAT";
-const EXTENDED_EDGES_LIST_CHUNK_ID: ChunkId = *b"EDGE";
-const OID_FAN_CHUNK_ID: ChunkId = *b"OIDF";
-const OID_LOOKUP_CHUNK_ID: ChunkId = *b"OIDL";
-const SENTINEL_CHUNK_ID: ChunkId = [0u8; 4];
 
 impl File {
     /// Try to parse the commit graph file at `path`.

@@ -1,12 +1,6 @@
 //! Operations on a single commit-graph file.
 
-mod access;
-
-pub mod commit;
-pub use commit::Commit;
-
-mod init;
-pub mod verify;
+pub use self::{commit::Commit, init::Error};
 
 use std::{
     fmt::{Display, Formatter},
@@ -16,11 +10,33 @@ use std::{
 
 use filebuffer::FileBuffer;
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-pub use init::Error;
 
+mod access;
+pub mod commit;
+mod init;
+pub mod verify;
+
+const CHUNK_LOOKUP_SIZE: usize = 12;
 const COMMIT_DATA_ENTRY_SIZE: usize = SHA1_SIZE + 16;
 const FAN_LEN: usize = 256;
+const HEADER_LEN: usize = 8;
+const OID_LOOKUP_ENTRY_SIZE: usize = SHA1_SIZE;
+
 const SIGNATURE: &[u8] = b"CGPH";
+
+type ChunkId = [u8; 4];
+const BASE_GRAPHS_LIST_CHUNK_ID: ChunkId = *b"BASE";
+const COMMIT_DATA_CHUNK_ID: ChunkId = *b"CDAT";
+const EXTENDED_EDGES_LIST_CHUNK_ID: ChunkId = *b"EDGE";
+const OID_FAN_CHUNK_ID: ChunkId = *b"OIDF";
+const OID_LOOKUP_CHUNK_ID: ChunkId = *b"OIDL";
+const SENTINEL_CHUNK_ID: ChunkId = [0u8; 4];
+
+// Note that git's commit-graph-format.txt as of v2.28.0 gives an incorrect value 0x0700_0000 for
+// NO_PARENT. Fixed in https://github.com/git/git/commit/4d515253afcef985e94400adbfed7044959f9121 .
+const NO_PARENT: u32 = 0x7000_0000;
+const EXTENDED_EDGES_MASK: u32 = 0x8000_0000;
+const LAST_EXTENDED_EDGE_MASK: u32 = 0x8000_0000;
 
 /// A single commit-graph file.
 ///

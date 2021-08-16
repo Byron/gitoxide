@@ -9,7 +9,7 @@ use byteorder::{BigEndian, ByteOrder};
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 
 use crate::{
-    file::{self, File},
+    file::{self, File, EXTENDED_EDGES_MASK, LAST_EXTENDED_EDGE_MASK, NO_PARENT},
     graph,
 };
 
@@ -26,11 +26,6 @@ pub enum Error {
     #[error("commit {0} has a second parent but not a first parent")]
     SecondParentWithoutFirstParent(git_hash::ObjectId),
 }
-
-// Note that git's commit-graph-format.txt as of v2.28.0 gives an incorrect value 0x0700_0000 for
-// NO_PARENT. Fixed in https://github.com/git/git/commit/4d515253afcef985e94400adbfed7044959f9121 .
-const NO_PARENT: u32 = 0x7000_0000;
-const EXTENDED_EDGES_MASK: u32 = 0x8000_0000;
 
 /// A commit as stored in a [`File`].
 pub struct Commit<'a> {
@@ -239,8 +234,6 @@ impl ParentEdge {
         }
     }
 }
-
-const LAST_EXTENDED_EDGE_MASK: u32 = 0x8000_0000;
 
 enum ExtraEdge {
     Internal(graph::Position),
