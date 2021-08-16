@@ -68,6 +68,10 @@ pub fn package_by_id<'a>(meta: &'a Metadata, id: &PackageId) -> &'a Package {
         .expect("workspace members are in packages")
 }
 
-pub fn tag_name_for(package: &str, version: &str) -> String {
-    format!("{}-v{}", package, version)
+pub fn tag_name_for(package: &str, version: &str, is_single_package_workspace: bool) -> String {
+    if is_single_package_workspace {
+        format!("v{}", version)
+    } else {
+        format!("{}-v{}", package, version)
+    }
 }

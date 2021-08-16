@@ -107,7 +107,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
         let publishee = package_by_name(meta, publishee_name)?;
 
         let (new_version, commit_id) = perform_single_release(meta, publishee, options, &ctx)?;
-        let tag_name = git::create_version_tag(publishee, &new_version, commit_id, &ctx.repo, options)?;
+        let tag_name = git::create_version_tag(publishee, &new_version, commit_id, &ctx, options)?;
         git::push_tags_and_head(tag_name, options)?;
     }
 
@@ -161,7 +161,7 @@ fn perforrm_multi_version_release(
             .collect();
 
         cargo::publish_crate(publishee, &unpublished_crates, options)?;
-        if let Some(tag_name) = git::create_version_tag(publishee, &new_version, commit_id, &ctx.repo, options)? {
+        if let Some(tag_name) = git::create_version_tag(publishee, &new_version, commit_id, &ctx, options)? {
             tag_names.push(tag_name);
         };
     }

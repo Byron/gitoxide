@@ -4,7 +4,7 @@ use anyhow::{anyhow, bail};
 use bstr::ByteSlice;
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path},
-    Package,
+    Metadata, Package,
 };
 use git_repository::{
     actor,
@@ -23,12 +23,20 @@ use git_repository::{
 use super::{Context, Options};
 use crate::command::release_impl::{tag_name_for, utils::will};
 
+fn is_single_package_workspace(meta: &Metadata) -> bool {
+    meta.workspace_members.len() == 1
+}
+
 pub(in crate::command::release_impl) fn has_changed_since_last_release(
     package: &Package,
     ctx: &Context,
     verbose: bool,
 ) -> anyhow::Result<bool> {
-    let version_tag_name = tag_name_for(&package.name, &package.version.to_string());
+    let version_tag_name = tag_name_for(
+        &package.name,
+        &package.version.to_string(),
+        is_single_package_workspace(&ctx.meta),
+    );
     let mut tag_ref = match ctx.repo.refs.find(&version_tag_name, ctx.packed_refs.as_ref())? {
         None => {
             if verbose {
@@ -192,11 +200,11 @@ pub(in crate::command::release_impl) fn commit_changes(
         .to_owned())
 }
 
-pub fn create_version_tag(
+pub(in crate::command::release_impl) fn create_version_tag(
     publishee: &Package,
     new_version: &str,
     commit_id: ObjectId,
-    repo: &Repository,
+    ctx: &Context,
     Options {
         verbose,
         dry_run,
@@ -207,7 +215,7 @@ pub fn create_version_tag(
     if skip_tag {
         return Ok(None);
     }
-    let tag_name = tag_name_for(&publishee.name, new_version);
+    let tag_name = tag_name_for(&publishee.name, new_version, is_single_package_workspace(&ctx.meta));
     let edit = RefEdit {
         change: Change::Update {
             log: Default::default(),
@@ -223,7 +231,8 @@ pub fn create_version_tag(
         }
         Ok(Some(edit.name))
     } else {
-        let edits = repo
+        let edits = ctx
+            .repo
             .refs
             .transaction()
             .prepare(Some(edit), git_lock::acquire::Fail::Immediately)?
