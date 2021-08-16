@@ -170,21 +170,20 @@ pub use object_impl::Object;
 
 mod reference {
     use crate::{refs, Access, Object};
-    pub(crate) enum Backing<'p> {
+    enum Backing<'p> {
         File(refs::file::Reference<'p>),
     }
 
-    pub struct Reference<'p> {
-        pub(crate) backing: Backing<'p>,
-        // pub(crate) access: &'p mut A,
-        pub(crate) access: (),
+    pub struct Reference<'p, A> {
+        backing: Backing<'p>,
+        access: &'p mut A,
     }
 
-    // impl<'p, A: Access> Reference<'p, A> {
-    //     pub fn peel_to_end(&mut self) -> Result<Object<'p, A>, ()> {
-    //         todo!("peel and get lazy object")
-    //     }
-    // }
+    impl<'p, A: Access> Reference<'p, A> {
+        pub fn peel_to_end(&mut self) -> Result<Object<'p, A>, ()> {
+            todo!("peel and get lazy object")
+        }
+    }
 
     pub mod find {
         mod error {
@@ -223,7 +222,7 @@ mod reference {
             fn find_reference<'a, Name, E>(
                 &mut self,
                 name: Name,
-            ) -> Result<Option<Reference<'_>>, crate::reference::find::Error>
+            ) -> Result<Option<Reference<'_, Self>>, crate::reference::find::Error>
             where
                 Name: TryInto<PartialName<'a>, Error = E>,
                 Error: From<E>,
@@ -236,7 +235,7 @@ mod reference {
                     Ok(r) => match r {
                         Some(r) => Ok(Some(Reference {
                             backing: Backing::File(r),
-                            access: (),
+                            access: self,
                         })),
                         None => Ok(None),
                     },
