@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::path::Path;
+use std::path::PathBuf;
 
 use crate::file::{GitConfig, GitConfigError};
 
@@ -24,18 +25,17 @@ pub enum ConfigSource {
     Cli,
 }
 
-#[derive(Debug, PartialEq, Clone, Copy, Eq, Hash, Default)]
-pub struct ConfigBuilder<'system_conf_path, 'global_conf_path, 'user_conf_path> {
+#[derive(Debug, PartialEq, Clone, Eq, Hash, Default)]
+pub struct ConfigBuilder {
     no_system: bool,
     load_env_conf: bool,
-    override_system_config: Option<&'system_conf_path Path>,
-    override_global_config: Option<&'global_conf_path Path>,
-    override_repo_config: Option<&'user_conf_path Path>,
+    override_system_config: Option<PathBuf>,
+    override_global_config: Option<PathBuf>,
+    override_repo_config: Option<PathBuf>,
 }
 
-impl<'system_conf_path, 'global_conf_path, 'user_conf_path>
-    ConfigBuilder<'system_conf_path, 'global_conf_path, 'user_conf_path>
-{
+impl ConfigBuilder {
+    /// Constructs a new builder that finds the default location
     #[inline]
     pub fn new() -> Self {
         Self {
@@ -61,14 +61,14 @@ impl<'system_conf_path, 'global_conf_path, 'user_conf_path>
 
     /// Override the system-wide configuration file location. Providing [`None`]
     /// or not calling this method will use the default location.
-    pub fn system_config_path(&mut self, path: Option<&'system_conf_path Path>) -> &mut Self {
+    pub fn system_config_path(&mut self, path: Option<PathBuf>) -> &mut Self {
         self.override_system_config = path;
         self
     }
 
     /// Override the global (user) configuration file location. Providing
     /// [`None`] or not calling this method will use the default location.
-    pub fn global_config_path(&mut self, path: Option<&'global_conf_path Path>) -> &mut Self {
+    pub fn global_config_path(&mut self, path: Option<PathBuf>) -> &mut Self {
         self.override_global_config = path;
         self
     }
@@ -76,7 +76,7 @@ impl<'system_conf_path, 'global_conf_path, 'user_conf_path>
     /// Sets where to read the repository-specific configuration file. This
     /// is equivalent to setting `GIT_CONFIG`. If none is provided, then the
     /// builder will look in the default location, `.git/config`.
-    pub fn repository_config_path(&mut self, path: Option<&'user_conf_path Path>) -> &mut Self {
+    pub fn repository_config_path(&mut self, path: Option<PathBuf>) -> &mut Self {
         self.override_repo_config = path;
         self
     }
@@ -86,8 +86,8 @@ impl<'system_conf_path, 'global_conf_path, 'user_conf_path>
         let system_conf = if self.no_system { None } else { todo!() };
 
         let global_conf = {
-            let path = if let Some(path) = self.override_global_config {
-                path
+            let path = if let Some(ref path) = self.override_global_config {
+                path.as_path()
             } else {
                 Path::new(".git/config")
             };
@@ -100,6 +100,8 @@ impl<'system_conf_path, 'global_conf_path, 'user_conf_path>
         } else {
             None
         };
+
+        // let user_conf = if self.
 
         Config {
             system_conf,

@@ -56,7 +56,7 @@
 extern crate serde_crate as serde;
 
 pub mod file;
-pub mod fs;
+// pub mod fs;
 pub mod parser;
 pub mod values;
 
