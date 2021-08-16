@@ -90,7 +90,59 @@ pub struct Repository {
     pub refs: git_ref::file::Store,
     pub odb: git_odb::linked::Store,
     pub working_tree: Option<PathBuf>,
-    pub cache: Cache,
+}
+
+pub struct Easy {
+    inner: RefCell<Repository>,
+    cache: Cache,
+}
+
+mod easy {
+    use crate::{Easy, Repository};
+    use std::cell::RefCell;
+
+    impl Into<Easy> for Repository {
+        fn into(self) -> Easy {
+            Easy {
+                inner: RefCell::new(self),
+                cache: Default::default(),
+            }
+        }
+    }
+
+    mod references {
+        use crate::{
+            reference::Backing,
+            refs::{file::find::Error, PartialName},
+            Easy, Reference, Repository,
+        };
+        use std::cell::RefCell;
+        use std::convert::TryInto;
+
+        /// Obtain and alter references comfortably
+        impl Easy {
+            pub fn find_reference<'a, Name, E>(
+                &mut self,
+                name: Name,
+            ) -> Result<Option<Reference<'_>>, crate::reference::find::Error>
+            where
+                Name: TryInto<PartialName<'a>, Error = E>,
+                Error: From<E>,
+            {
+                let repo = self.inner.borrow();
+                match repo.refs.find(name, self.cache.packed_refs(&repo.refs)?) {
+                    Ok(r) => match r {
+                        Some(r) => Ok(Some(Reference {
+                            backing: Backing::File(r),
+                            repo: &self.inner,
+                        })),
+                        None => Ok(None),
+                    },
+                    Err(err) => Err(err.into()),
+                }
+            }
+        }
+    }
 }
 
 #[derive(Default)]
@@ -190,6 +242,7 @@ mod reference {
     }
 }
 pub use reference::Reference;
+use std::cell::RefCell;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Kind {

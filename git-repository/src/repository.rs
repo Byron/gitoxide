@@ -20,39 +20,6 @@ mod access {
     }
 }
 
-mod references {
-    use crate::{
-        reference::Backing,
-        refs::{file::find::Error, PartialName},
-        Reference, Repository,
-    };
-    use std::cell::RefCell;
-    use std::convert::TryInto;
-
-    /// Obtain and alter references comfortably
-    impl Repository {
-        fn find_reference<'a, 's, Name, E>(
-            self: &'s RefCell<Self>,
-            name: Name,
-        ) -> Result<Option<Reference<'s>>, crate::reference::find::Error>
-        where
-            Name: TryInto<PartialName<'a>, Error = E>,
-            Error: From<E>,
-        {
-            match self.refs.find(name, self.cache.packed_refs(&self.refs)?) {
-                Ok(r) => match r {
-                    Some(r) => Ok(Some(Reference {
-                        backing: Backing::File(r),
-                        repo: self,
-                    })),
-                    None => Ok(None),
-                },
-                Err(err) => Err(err.into()),
-            }
-        }
-    }
-}
-
 mod init {
     use std::path::Path;
 
@@ -109,7 +76,6 @@ pub mod discover {
                     },
                 ),
                 working_tree,
-                cache: Default::default(),
             })
         }
     }
