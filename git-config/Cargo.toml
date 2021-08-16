@@ -18,7 +18,6 @@ dirs = "3"
 nom = { version = "6", default_features = false, features = [ "std" ] }
 memchr = "2"
 serde_crate = { version = "1", package = "serde", optional = true }
-smallvec = { version = "1", features = [ "union" ] }
 
 [dev-dependencies]
 serde_derive = "1.0"

@@ -2,13 +2,14 @@
 
 mod error;
 mod git_config;
-pub mod resolved;
+mod resolved;
 mod section;
 mod value;
 
 use std::ops::{Add, AddAssign};
 
 pub use error::*;
+pub use resolved::*;
 pub use section::*;
 pub use value::*;
 

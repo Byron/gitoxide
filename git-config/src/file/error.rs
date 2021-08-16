@@ -4,6 +4,7 @@ use crate::parser::SectionHeaderName;
 
 /// All possible error types that may occur from interacting with
 /// [`GitConfig`](super::GitConfig).
+#[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Hash, Clone, PartialOrd, Ord, Debug)]
 pub enum GitConfigError<'a> {
     /// The requested section does not exist.
@@ -36,6 +37,7 @@ impl Error for GitConfigError<'_> {}
 /// Represents the errors that may occur when calling [`GitConfig::from_env`].
 ///
 /// [`GitConfig::from_env`]: crate::file::GitConfig::from_env
+#[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Hash, Clone, PartialOrd, Ord, Debug)]
 pub enum GitConfigFromEnvError {
     /// `GIT_CONFIG_COUNT` was not a positive integer

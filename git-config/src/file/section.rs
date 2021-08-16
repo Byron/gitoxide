@@ -13,6 +13,7 @@ use crate::{
 };
 
 /// A opaque type that represents a mutable reference to a section.
+#[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
 pub struct MutableSection<'borrow, 'event> {
     section: &'borrow mut SectionBody<'event>,
@@ -212,6 +213,7 @@ impl<'event> Deref for MutableSection<'_, 'event> {
 }
 
 /// A opaque type that represents a section body.
+#[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug, Default)]
 pub struct SectionBody<'event>(Vec<Event<'event>>);
 
@@ -411,6 +413,7 @@ impl<'event> IntoIterator for SectionBody<'event> {
 }
 
 /// An owning iterator of a section body. Created by [`SectionBody::into_iter`].
+#[allow(clippy::module_name_repetitions)]
 pub struct SectionBodyIter<'event>(VecDeque<Event<'event>>);
 
 impl<'event> Iterator for SectionBodyIter<'event> {

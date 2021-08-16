@@ -24,6 +24,7 @@ use crate::{
 /// time.
 ///
 /// [`GitConfig`]: super::GitConfig
+#[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
 pub struct MutableValue<'borrow, 'lookup, 'event> {
     section: MutableSection<'borrow, 'event>,
@@ -33,7 +34,12 @@ pub struct MutableValue<'borrow, 'lookup, 'event> {
 }
 
 impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
-    pub(super) fn new(section: MutableSection<'borrow, 'event>, key: Key<'lookup>, index: Index, size: Size) -> Self {
+    pub(super) const fn new(
+        section: MutableSection<'borrow, 'event>,
+        key: Key<'lookup>,
+        index: Index,
+        size: Size,
+    ) -> Self {
         Self {
             section,
             key,
@@ -91,7 +97,7 @@ pub(super) struct EntryData {
 }
 
 impl EntryData {
-    pub(super) fn new(section_id: SectionId, offset_index: usize) -> Self {
+    pub(super) const fn new(section_id: SectionId, offset_index: usize) -> Self {
         Self {
             section_id,
             offset_index,
@@ -108,6 +114,7 @@ impl EntryData {
 /// time.
 ///
 /// [`GitConfig`]: super::GitConfig
+#[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Debug)]
 pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
     section: &'borrow mut HashMap<SectionId, SectionBody<'event>>,

@@ -1,3 +1,6 @@
+#![allow(unused)]
+#![allow(clippy::result_unit_err)]
+
 use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::path::Path;
@@ -37,16 +40,18 @@ pub struct ConfigBuilder {
 impl ConfigBuilder {
     /// Constructs a new builder that finds the default location
     #[inline]
+    #[must_use]
     pub fn new() -> Self {
         Self {
             load_env_conf: true,
-            ..Default::default()
+            ..Self::default()
         }
     }
 
     /// Whether or not to skip reading settings from the system-wide
     /// `$(prefix)/etc/gitconfig` file. This corresponds to setting the
     /// `GIT_CONFIG_NOSYSTEM` environment variable.
+    #[must_use]
     pub fn no_system(&mut self, no_system: bool) -> &mut Self {
         self.no_system = no_system;
         self
@@ -54,6 +59,7 @@ impl ConfigBuilder {
 
     /// Whether or not to respect `GIT_CONFIG_COUNT`, `GIT_CONFIG_KEY_<n>`, and
     /// `GIT_CONFIG_VALUE_<n>` environment variables. By default, this is true.
+    #[must_use]
     pub fn load_environment_entries(&mut self, load_conf: bool) -> &mut Self {
         self.load_env_conf = load_conf;
         self
@@ -61,6 +67,7 @@ impl ConfigBuilder {
 
     /// Override the system-wide configuration file location. Providing [`None`]
     /// or not calling this method will use the default location.
+    #[must_use]
     pub fn system_config_path(&mut self, path: Option<PathBuf>) -> &mut Self {
         self.override_system_config = path;
         self
@@ -68,6 +75,7 @@ impl ConfigBuilder {
 
     /// Override the global (user) configuration file location. Providing
     /// [`None`] or not calling this method will use the default location.
+    #[must_use]
     pub fn global_config_path(&mut self, path: Option<PathBuf>) -> &mut Self {
         self.override_global_config = path;
         self
@@ -76,21 +84,22 @@ impl ConfigBuilder {
     /// Sets where to read the repository-specific configuration file. This
     /// is equivalent to setting `GIT_CONFIG`. If none is provided, then the
     /// builder will look in the default location, `.git/config`.
+    #[must_use]
     pub fn repository_config_path(&mut self, path: Option<PathBuf>) -> &mut Self {
         self.override_repo_config = path;
         self
     }
 
     /// Builds a config, ignoring any failed configuration files.
+    #[must_use]
     pub fn build(&self) -> Config {
         let system_conf = if self.no_system { None } else { todo!() };
 
         let global_conf = {
-            let path = if let Some(ref path) = self.override_global_config {
-                path.as_path()
-            } else {
-                Path::new(".git/config")
-            };
+            let path = self
+                .override_global_config
+                .as_ref()
+                .map_or_else(|| Path::new(".git/config"), PathBuf::as_path);
 
             GitConfig::open(path).ok()
         };
@@ -136,6 +145,7 @@ pub struct Config<'config> {
 
 impl<'config> Config<'config> {
     #[inline]
+    #[must_use]
     pub fn value<T: TryFrom<Cow<'config, [u8]>>>(
         &'config self,
         section_name: &str,
@@ -214,6 +224,7 @@ impl<'config> Config<'config> {
 impl<'config> Config<'config> {
     /// Retrieves the underlying [`GitConfig`] object, if one was found during
     /// initialization.
+    #[must_use]
     pub fn get_config(&self, source: ConfigSource) -> Option<&GitConfig<'config>> {
         match source {
             ConfigSource::System => self.system_conf.as_ref(),
@@ -227,6 +238,7 @@ impl<'config> Config<'config> {
 
     /// Retrieves the underlying [`GitConfig`] object as a mutable reference,
     /// if one was found during initialization.
+    #[must_use]
     pub fn get_config_mut(&mut self, source: ConfigSource) -> Option<&mut GitConfig<'config>> {
         match source {
             ConfigSource::System => self.system_conf.as_mut(),

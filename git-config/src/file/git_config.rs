@@ -91,7 +91,7 @@ pub(super) enum LookupTreeNode<'a> {
 /// Consider the `multi` variants of the methods instead, if you want to work
 /// with all values instead.
 ///
-/// [`ResolvedGitConfig`]: crate::file::resolved::ResolvedGitConfig
+/// [`ResolvedGitConfig`]: crate::file::ResolvedGitConfig
 /// [`get_raw_value`]: Self::get_raw_value
 #[derive(PartialEq, Eq, Clone, Debug, Default)]
 pub struct GitConfig<'event> {
@@ -542,14 +542,16 @@ impl<'event> GitConfig<'event> {
 
     /// Returns the number of entries in the config. This ignores any comments.
     /// For example, a config with multiple empty sections will return 0.
+    #[must_use]
     pub fn len(&self) -> usize {
         self.sections.values().fold(0, |acc, section| acc + section.len())
     }
 
     /// Returns if there are no entries in the config. This will return true
     /// if there are only empty sections or comments.
+    #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.sections.values().all(|section| section.is_empty())
+        self.sections.values().all(SectionBody::is_empty)
     }
 }
 

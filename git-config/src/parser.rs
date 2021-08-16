@@ -557,6 +557,7 @@ impl ParserOrIoError<'_> {
     /// not.
     ///
     /// [`clone`]: std::clone::Clone::clone
+    #[must_use]
     pub fn into_owned(self) -> ParserOrIoError<'static> {
         match self {
             ParserOrIoError::Parser(error) => ParserOrIoError::Parser(error.to_owned()),
