@@ -161,7 +161,7 @@ fn perforrm_multi_version_release(
             .collect();
 
         cargo::publish_crate(publishee, &unpublished_crates, options)?;
-        if let Some(tag_name) = git::create_version_tag(publishee, &new_version, commit_id, &ctx, options)? {
+        if let Some(tag_name) = git::create_version_tag(publishee, &new_version, commit_id, ctx, options)? {
             tag_names.push(tag_name);
         };
     }
