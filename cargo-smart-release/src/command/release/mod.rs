@@ -70,12 +70,19 @@ pub fn release(options: Options, crates: Vec<String>, bump: String, bump_depende
     }
 
     if ctx.crate_names.is_empty() {
-        let crate_name = std::env::current_dir()?
+        let current_dir = std::env::current_dir()?;
+        let manifest = current_dir.join("Cargo.toml");
+        let dir_name = current_dir
             .file_name()
             .expect("a valid directory with a name")
             .to_str()
-            .expect("directory is UTF8 representable")
-            .to_owned();
+            .expect("directory is UTF8 representable");
+        let crate_name = if manifest.is_file() {
+            let manifest = cargo_toml::Manifest::from_path(manifest)?;
+            manifest.package.map_or(dir_name.to_owned(), |p| p.name)
+        } else {
+            dir_name.to_owned()
+        };
         log::warn!(
             "Using '{}' as crate name as no one was provided. Specify one if this isn't correct",
             crate_name
