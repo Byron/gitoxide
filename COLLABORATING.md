@@ -1,8 +1,8 @@
 
 ### Guide
 
-- we do trunk based development
-- `main` must never be broken or show warnings. An easy way to achieve this is to run `make tests check-size` before pushing.
+- we do trunk-based development. Long lasting feature branches are discouraged, and instead small, atomic commits to `main` is preferred.
+- `main` must never be broken or show warnings. An easy way to achieve this is to run `make tests check-size` before pushing. If you're unsure about remembering to do this, a pre-commit git hook is recommended.
 - if `main` breaks which can happen nonetheless, please fix the issue right away.
 - for crates **you own**
     - feel free to make any kind of changes to it, including major ones.
@@ -13,5 +13,4 @@
     - for minor code changes, if they are minor, feel free to make any kind of change you need.
 
 The workflow can be changed after public discussion, just open a PR for it to get started.
-
 
