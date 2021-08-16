@@ -148,7 +148,7 @@ mod easy {
 #[derive(Default)]
 pub struct Cache {
     packed_refs: Option<refs::packed::Buffer>,
-    pack: odb::pack::cache::lru::StaticLinkedList<64>,
+    pack: odb::pack::cache::Never, // TODO: choose great alround cache
     buf: Vec<u8>,
 }
 
