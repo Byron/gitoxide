@@ -26,14 +26,15 @@ mod references {
         refs::{file::find::Error, PartialName},
         Reference, Repository,
     };
+    use std::cell::RefCell;
     use std::convert::TryInto;
 
     /// Obtain and alter references comfortably
     impl Repository {
-        fn find_reference<'a, Name, E>(
-            &mut self,
+        fn find_reference<'a, 's, Name, E>(
+            self: &'s RefCell<Self>,
             name: Name,
-        ) -> Result<Option<Reference<'_>>, crate::reference::find::Error>
+        ) -> Result<Option<Reference<'s>>, crate::reference::find::Error>
         where
             Name: TryInto<PartialName<'a>, Error = E>,
             Error: From<E>,
@@ -42,7 +43,7 @@ mod references {
                 Ok(r) => match r {
                     Some(r) => Ok(Some(Reference {
                         backing: Backing::File(r),
-                        access: self,
+                        repo: self,
                     })),
                     None => Ok(None),
                 },

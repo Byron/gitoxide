@@ -148,6 +148,7 @@ pub use object_impl::Object;
 
 mod reference {
     use crate::{refs, Object, Repository};
+    use std::cell::RefCell;
 
     pub(crate) enum Backing<'p> {
         File(refs::file::Reference<'p>),
@@ -155,7 +156,7 @@ mod reference {
 
     pub struct Reference<'p> {
         pub(crate) backing: Backing<'p>,
-        pub(crate) access: &'p Repository,
+        pub(crate) repo: &'p RefCell<Repository>,
     }
 
     impl<'p> Reference<'p> {
