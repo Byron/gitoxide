@@ -1,8 +1,8 @@
-use git_repository::{Easy, Repository};
+use git_repository::Repository;
 
-fn repo() -> crate::Result<Easy> {
+fn repo() -> crate::Result<Repository> {
     let repo_path = git_testtools::scripted_fixture_repo_read_only("make_references_repo.sh")?;
-    Ok(Repository::discover(repo_path)?.into())
+    Ok(Repository::discover(repo_path)?)
 }
 
 mod find {

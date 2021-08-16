@@ -35,12 +35,55 @@ mod init {
     }
 }
 
+mod references {
+    use crate::hash::ObjectId;
+    use crate::{
+        reference::Backing,
+        refs,
+        refs::{file::find::Error, PartialName},
+        Reference, Repository,
+    };
+    use std::cell::RefCell;
+    use std::convert::TryInto;
+
+    /// Obtain and alter references comfortably
+    impl Repository {
+        pub fn find_reference<'a, Name, E>(
+            &mut self,
+            name: Name,
+        ) -> Result<Option<Reference<'_>>, crate::reference::find::Error>
+        where
+            Name: TryInto<PartialName<'a>, Error = E>,
+            Error: From<E>,
+        {
+            match self.refs.find(name, self.cache.packed_refs(&self.refs)?) {
+                Ok(r) => match r {
+                    Some(r) => Ok(Some(Reference {
+                        backing: match r {
+                            refs::file::Reference::Packed(p) => Backing::OwnedPacked {
+                                name: p.name.into(),
+                                target: p.target(),
+                                object: p.object.map(|hex| ObjectId::from_hex(hex).unwrap()),
+                            },
+                            refs::file::Reference::Loose(l) => Backing::LooseFile(l),
+                        },
+                        repo: self,
+                    })),
+                    None => Ok(None),
+                },
+                Err(err) => Err(err.into()),
+            }
+        }
+    }
+}
+
 pub mod discover {
     use std::path::Path;
 
     use quick_error::quick_error;
 
     use crate::{path::discover, Repository};
+    use std::cell::RefCell;
 
     quick_error! {
         #[derive(Debug)]
@@ -76,6 +119,7 @@ pub mod discover {
                     },
                 ),
                 working_tree,
+                cache: Default::default(),
             })
         }
     }

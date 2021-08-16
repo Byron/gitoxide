@@ -90,62 +90,7 @@ pub struct Repository {
     pub refs: git_ref::file::Store,
     pub odb: git_odb::linked::Store,
     pub working_tree: Option<PathBuf>,
-}
-
-pub struct Easy {
-    pub repo: Repository,
-    pub cache: RefCell<Cache>,
-}
-
-mod easy {
-    use crate::{Easy, Repository};
-    use std::cell::RefCell;
-
-    impl From<Repository> for Easy {
-        fn from(v: Repository) -> Self {
-            Easy {
-                repo: v,
-                cache: RefCell::new(Default::default()),
-            }
-        }
-    }
-
-    mod references {
-        use crate::{
-            reference::Backing,
-            refs::{file::find::Error, PartialName},
-            Easy, Reference, Repository,
-        };
-        use std::cell::RefCell;
-        use std::convert::TryInto;
-
-        /// Obtain and alter references comfortably
-        impl Easy {
-            pub fn find_reference<'a, Name, E>(
-                &mut self,
-                name: Name,
-            ) -> Result<Option<Reference<'_>>, crate::reference::find::Error>
-            where
-                Name: TryInto<PartialName<'a>, Error = E>,
-                Error: From<E>,
-            {
-                match self
-                    .repo
-                    .refs
-                    .find(name, self.cache.borrow_mut().packed_refs(&self.repo.refs)?)
-                {
-                    Ok(r) => match r {
-                        Some(r) => Ok(Some(Reference {
-                            backing: Backing::File(r),
-                            repo: &self,
-                        })),
-                        None => Ok(None),
-                    },
-                    Err(err) => Err(err.into()),
-                }
-            }
-        }
-    }
+    pub cache: Cache,
 }
 
 #[derive(Default)]
@@ -202,16 +147,27 @@ mod object_impl {
 pub use object_impl::Object;
 
 mod reference {
-    use crate::{refs, Easy, Object, Repository};
+    use crate::refs::mutable;
+    use crate::{refs, Object, Repository};
+    use git_hash::ObjectId;
     use std::cell::RefCell;
 
-    pub(crate) enum Backing<'p> {
-        File(refs::file::Reference<'p>),
+    pub(crate) enum Backing {
+        OwnedPacked {
+            /// The validated full name of the reference.
+            name: mutable::FullName,
+            /// The target object id of the reference, hex encoded.
+            target: ObjectId,
+            /// The fully peeled object id, hex encoded, that the ref is ultimately pointing to
+            /// i.e. when all indirections are removed.
+            object: Option<ObjectId>,
+        },
+        LooseFile(refs::file::loose::Reference),
     }
 
-    pub struct Reference<'p> {
-        pub(crate) backing: Backing<'p>,
-        pub(crate) repo: &'p Easy,
+    pub struct Reference<'r> {
+        pub(crate) backing: Backing,
+        pub(crate) repo: &'r Repository,
     }
 
     // impl<'p> Reference<'p> {
