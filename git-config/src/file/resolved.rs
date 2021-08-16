@@ -1,3 +1,5 @@
+#![allow(unused)]
+#![allow(clippy::type_complexity)]
 use std::{borrow::Cow, collections::HashMap, convert::TryFrom, path::Path};
 
 use smallvec::SmallVec;
@@ -18,7 +20,7 @@ enum ResolvedTreeNode<'event> {
 /// same guarantees as [`GitConfig`]; namely, it does not remember comments nor
 /// whitespace. Additionally, values are normalized upon creation, so it's not
 /// possible to retrieve the original value.
-struct ResolvedGitConfig<'data>(HashMap<(SectionHeaderName<'data>, Option<Cow<'data, [u8]>>), Cow<'data, [u8]>>);
+pub struct ResolvedGitConfig<'data>(HashMap<(SectionHeaderName<'data>, Option<Cow<'data, [u8]>>), Cow<'data, [u8]>>);
 
 impl ResolvedGitConfig<'static> {
     #[inline]
