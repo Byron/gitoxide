@@ -1033,6 +1033,7 @@ dependencies = [
  "nom",
  "serde",
  "serde_derive",
+ "smallvec",
 ]
 
 [[package]]

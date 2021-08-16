@@ -48,12 +48,7 @@ impl<'data> ResolvedGitConfig<'data> {
                 LookupTreeNode::Terminal(items) => {
                     let items: HashMap<Key, Cow<[u8]>> = items
                         .into_iter()
-                        .flat_map(|section_id| {
-                            sections
-                                .get(&section_id)
-                                .expect("GitConfig invariant failed")
-                                .into_iter()
-                        })
+                        .flat_map(|section_id| sections.get(&section_id).expect("GitConfig invariant failed").iter())
                         // Copy the Cow struct, not the underlying slice.
                         .map(|(key, value)| (key.clone(), Cow::clone(value)))
                         .collect();

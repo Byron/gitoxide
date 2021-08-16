@@ -2,7 +2,7 @@
 
 mod error;
 mod git_config;
-mod resolved;
+// mod resolved;
 mod section;
 mod value;
 
