@@ -15,17 +15,9 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates(
     meta: &Metadata,
     publishees: &[(&Package, String)],
     empty_commit_possible: bool,
-    Options {
-        verbose,
-        dry_run,
-        allow_dirty,
-        ..
-    }: Options,
+    Options { verbose, dry_run, .. }: Options,
     ctx: &Context,
 ) -> anyhow::Result<ObjectId> {
-    if !allow_dirty {
-        git::assure_clean_working_tree()?;
-    }
     let mut locks_by_manifest_path = BTreeMap::new();
     for (publishee, _) in publishees {
         let lock = git_lock::File::acquire_to_update_resource(

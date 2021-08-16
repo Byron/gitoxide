@@ -100,6 +100,8 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
 
     let crates_to_publish_together = resolve_cycles_with_publish_group(meta, &changed_crate_names_to_publish, options)?;
 
+    assure_working_tree_is_unchanged(options)?;
+
     for publishee_name in changed_crate_names_to_publish
         .iter()
         .filter(|n| !crates_to_publish_together.contains(n))
@@ -115,6 +117,19 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
         perforrm_multi_version_release(&ctx, options, meta, crates_to_publish_together)?;
     }
 
+    Ok(())
+}
+
+fn assure_working_tree_is_unchanged(options: Options) -> anyhow::Result<()> {
+    if !options.allow_dirty {
+        if let Err(err) = git::assure_clean_working_tree() {
+            if options.dry_run {
+                log::warn!("The working tree has changes which will prevent a release with --execute unless --allow-dirty is also specified. The latter isn't recommended.")
+            } else {
+                return Err(err);
+            }
+        }
+    }
     Ok(())
 }
 
