@@ -73,11 +73,13 @@ impl packed::Buffer {
                 .rfind(b"\n")
                 .and_then(|pos| {
                     let candidate = pos + 1;
-                    if a[candidate] == b'^' {
-                        a[..pos].rfind(b"\n").map(|pos| pos + 1)
-                    } else {
-                        Some(candidate)
-                    }
+                    a.get(candidate).and_then(|b| {
+                        if *b == b'^' {
+                            a[..pos].rfind(b"\n").map(|pos| pos + 1)
+                        } else {
+                            Some(candidate)
+                        }
+                    })
                 })
                 .unwrap_or(0)
         };

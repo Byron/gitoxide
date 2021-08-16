@@ -6,6 +6,7 @@ use crate::{
     file::{store_at, store_with_packed_refs},
     packed::write_packed_refs_with,
 };
+use git_testtools::fixture_path;
 
 #[test]
 fn a_lock_file_would_not_be_a_valid_partial_name() {
@@ -26,6 +27,13 @@ fn all_iterable_refs_can_be_found() -> crate::Result {
         let found = packed_refs.find_existing(reference.name)?;
         assert_eq!(reference, found);
     }
+    Ok(())
+}
+
+#[test]
+fn binary_search_a_name_past_the_end_of_the_packed_refs_file() -> crate::Result {
+    let packed_refs = packed::Buffer::open(fixture_path("packed-refs").join("triggers-out-of-bounds"), 32)?;
+    assert!(packed_refs.find("v0.0.1")?.is_none());
     Ok(())
 }
 
