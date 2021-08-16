@@ -1,5 +1,4 @@
-use crate::traits::Access;
-use crate::{Cache, Repository};
+use crate::{Access, Cache, Repository};
 
 impl Access for crate::Repository {
     fn repo(&self) -> &Repository {
@@ -8,6 +7,26 @@ impl Access for crate::Repository {
 
     fn cache_mut(&mut self) -> &mut Cache {
         &mut self.cache
+    }
+}
+
+mod access {
+    use crate::{Kind, Repository};
+
+    impl Repository {
+        pub fn kind(&self) -> Kind {
+            match self.working_tree {
+                Some(_) => Kind::WorkingTree,
+                None => Kind::Bare,
+            }
+        }
+
+        pub fn git_dir(&self) -> &std::path::Path {
+            &self.refs.base
+        }
+        pub fn objects_dir(&self) -> &std::path::Path {
+            &self.odb.dbs[0].loose.path
+        }
     }
 }
 

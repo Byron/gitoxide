@@ -100,11 +100,35 @@ pub struct Cache {
     buf: Vec<u8>,
 }
 
+mod cache {
+    use crate::{
+        refs::{file, packed},
+        Cache,
+    };
+
+    impl Cache {
+        pub fn packed_refs(
+            &mut self,
+            file: &file::Store,
+        ) -> Result<Option<&packed::Buffer>, packed::buffer::open::Error> {
+            match self.packed_refs {
+                Some(ref packed) => return Ok(Some(packed)),
+                None => {
+                    self.packed_refs = file.packed()?;
+                    Ok(self.packed_refs.as_ref())
+                }
+            }
+        }
+    }
+}
+
 mod traits {
     use crate::{Cache, Repository};
 
     pub trait Access {
+        /// The shared repository.
         fn repo(&self) -> &Repository;
+        /// The mutable cache to help accessing the repository.
         fn cache_mut(&mut self) -> &mut Cache;
     }
 }
@@ -161,40 +185,70 @@ mod reference {
         }
     }
 
-    mod find {
+    pub mod find {
         mod error {
+            use crate::refs;
             use quick_error::quick_error;
+
+            quick_error! {
+                #[derive(Debug)]
+                pub enum Error {
+                    Find(err: refs::file::find::Error) {
+                        display("An error occurred when trying to find a reference")
+                        from()
+                        source(err)
+                    }
+                    PackedRefsOpen(err: refs::packed::buffer::open::Error) {
+                        display("The packed-refs file could not be opened")
+                        from()
+                        source(err)
+                    }
+                }
+            }
         }
+        pub use error::Error;
     }
 
     mod ext {
-        use crate::{Access, Reference};
+        use crate::{
+            reference::Backing,
+            refs::{file::find::Error, PartialName},
+            Access, Reference,
+        };
+        use std::convert::TryInto;
 
         /// Obtain and alter references comfortably
         pub trait ReferenceExt: Access + Sized {
-            fn find_reference(&mut self, name: &str) -> Result<Option<Reference<'_, Self>>, ()> {
-                todo!("find an actual reference")
+            fn find_reference<'a, Name, E>(
+                &mut self,
+                name: Name,
+            ) -> Result<Option<Reference<'_, Self>>, crate::reference::find::Error>
+            where
+                Name: TryInto<PartialName<'a>, Error = E>,
+                Error: From<E>,
+            {
+                match self
+                    .repo()
+                    .refs
+                    .find(name, self.cache_mut().packed_refs(&self.repo().refs)?)
+                {
+                    Ok(r) => match r {
+                        Some(r) => Ok(Some(Reference {
+                            backing: Backing::File(r),
+                            access: self,
+                        })),
+                        None => Ok(None),
+                    },
+                    Err(err) => Err(err.into()),
+                }
             }
         }
-    }
-}
-pub use reference::Reference;
 
-impl Repository {
-    pub fn kind(&self) -> Kind {
-        match self.working_tree {
-            Some(_) => Kind::WorkingTree,
-            None => Kind::Bare,
-        }
+        impl<A: Access + Sized> ReferenceExt for A {}
     }
-
-    pub fn git_dir(&self) -> &std::path::Path {
-        &self.refs.base
-    }
-    pub fn objects_dir(&self) -> &std::path::Path {
-        &self.odb.dbs[0].loose.path
-    }
+    pub use ext::ReferenceExt;
 }
+pub use reference::{Reference, ReferenceExt};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Kind {
