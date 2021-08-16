@@ -1,11 +1,9 @@
 //! Rust containers for valid `git-config` types.
 
+use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
+
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
-use std::borrow::Cow;
-use std::convert::TryFrom;
-use std::fmt::Display;
-use std::str::FromStr;
 
 /// Removes quotes, if any, from the provided inputs. This assumes the input
 /// contains a even number of unescaped quotes, and will unescape escaped
@@ -1128,8 +1126,9 @@ impl TryFrom<&[u8]> for ColorAttribute {
 
 #[cfg(test)]
 mod normalize {
-    use super::normalize_str;
     use std::borrow::Cow;
+
+    use super::normalize_str;
 
     #[test]
     fn not_modified_is_borrowed() {
@@ -1289,8 +1288,9 @@ mod integer {
 
 #[cfg(test)]
 mod color_value {
-    use super::ColorValue;
     use std::str::FromStr;
+
+    use super::ColorValue;
 
     #[test]
     fn non_bright() {
@@ -1344,8 +1344,9 @@ mod color_value {
 
 #[cfg(test)]
 mod color_attribute {
-    use super::ColorAttribute;
     use std::str::FromStr;
+
+    use super::ColorAttribute;
 
     #[test]
     fn non_inverted() {

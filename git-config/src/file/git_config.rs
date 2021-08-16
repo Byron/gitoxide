@@ -1,16 +1,23 @@
-use crate::file::error::{GitConfigError, GitConfigFromEnvError};
-use crate::file::section::{MutableSection, SectionBody};
-use crate::file::value::{EntryData, MutableMultiValue, MutableValue};
-use crate::file::{Index, Size};
-use crate::parser::{
-    parse_from_bytes, parse_from_path, parse_from_str, Error, Event, Key, ParsedSectionHeader, Parser, ParserOrIoError,
-    SectionHeaderName,
+use std::{
+    borrow::Cow,
+    collections::{HashMap, VecDeque},
+    convert::TryFrom,
+    fmt::Display,
+    path::Path,
 };
-use std::borrow::Cow;
-use std::collections::{HashMap, VecDeque};
-use std::convert::TryFrom;
-use std::fmt::Display;
-use std::path::Path;
+
+use crate::{
+    file::{
+        error::{GitConfigError, GitConfigFromEnvError},
+        section::{MutableSection, SectionBody},
+        value::{EntryData, MutableMultiValue, MutableValue},
+        Index, Size,
+    },
+    parser::{
+        parse_from_bytes, parse_from_path, parse_from_str, Error, Event, Key, ParsedSectionHeader, Parser,
+        ParserOrIoError, SectionHeaderName,
+    },
+};
 
 /// The section ID is a monotonically increasing ID used to refer to sections.
 /// This value does not imply any ordering between sections, as new sections
@@ -1210,8 +1217,9 @@ impl Display for GitConfig<'_> {
 
 #[cfg(test)]
 mod mutable_value {
-    use super::GitConfig;
     use std::convert::TryFrom;
+
+    use super::GitConfig;
 
     fn init_config() -> GitConfig<'static> {
         GitConfig::try_from(
@@ -1347,8 +1355,9 @@ b
 
 #[cfg(test)]
 mod mutable_multi_value {
-    use super::GitConfig;
     use std::{borrow::Cow, convert::TryFrom};
+
+    use super::GitConfig;
 
     fn init_config() -> GitConfig<'static> {
         GitConfig::try_from(
@@ -1488,8 +1497,10 @@ a"#,
 #[cfg(test)]
 mod from_parser {
     use super::{Cow, Event, GitConfig, HashMap, LookupTreeNode, SectionBody, SectionId, TryFrom};
-    use crate::parser::SectionHeaderName;
-    use crate::test_util::{name_event, newline_event, section_header, value_event};
+    use crate::{
+        parser::SectionHeaderName,
+        test_util::{name_event, newline_event, section_header, value_event},
+    };
 
     #[test]
     fn parse_empty() {
@@ -1744,9 +1755,10 @@ mod get_raw_value {
 
 #[cfg(test)]
 mod get_value {
+    use std::error::Error;
+
     use super::{Cow, GitConfig, TryFrom};
     use crate::values::{Boolean, TrueVariant, Value};
-    use std::error::Error;
 
     #[test]
     fn single_section() -> Result<(), Box<dyn Error>> {

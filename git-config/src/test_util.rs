@@ -1,8 +1,9 @@
 //! This module is only included for tests, and contains common unit test helper
 //! functions.
 
-use crate::parser::{Event, Key, ParsedComment, ParsedSectionHeader};
 use std::borrow::Cow;
+
+use crate::parser::{Event, Key, ParsedComment, ParsedSectionHeader};
 
 pub fn section_header_event(name: &str, subsection: impl Into<Option<(&'static str, &'static str)>>) -> Event<'_> {
     Event::SectionHeader(section_header(name, subsection))

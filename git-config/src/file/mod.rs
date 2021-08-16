@@ -7,10 +7,11 @@ mod value;
 
 use std::ops::{Add, AddAssign};
 
-pub use self::git_config::*;
 pub use error::*;
 pub use section::*;
 pub use value::*;
+
+pub use self::git_config::*;
 
 /// Newtype to represent an index into some range. This is to differentiate
 /// between raw usizes when multiple are present.

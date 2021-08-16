@@ -1,12 +1,19 @@
-use crate::file::error::GitConfigError;
-use crate::file::git_config::SectionId;
-use crate::file::section::{MutableSection, SectionBody};
-use crate::file::{Index, Size};
-use crate::parser::{Event, Key};
-use crate::values::{normalize_bytes, normalize_vec};
-use std::borrow::{Borrow, Cow};
-use std::collections::HashMap;
-use std::ops::DerefMut;
+use std::{
+    borrow::{Borrow, Cow},
+    collections::HashMap,
+    ops::DerefMut,
+};
+
+use crate::{
+    file::{
+        error::GitConfigError,
+        git_config::SectionId,
+        section::{MutableSection, SectionBody},
+        Index, Size,
+    },
+    parser::{Event, Key},
+    values::{normalize_bytes, normalize_vec},
+};
 
 /// An intermediate representation of a mutable value obtained from
 /// [`GitConfig`].

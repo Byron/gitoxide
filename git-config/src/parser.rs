@@ -9,19 +9,21 @@
 //!
 //! [`GitConfig`]: crate::file::GitConfig
 
-use nom::branch::alt;
-use nom::bytes::complete::{escaped, tag, take_till, take_while};
-use nom::character::complete::{char, none_of, one_of};
-use nom::character::{is_newline, is_space};
-use nom::combinator::{map, opt};
-use nom::error::{Error as NomError, ErrorKind};
-use nom::multi::{many0, many1};
-use nom::sequence::delimited;
-use nom::IResult;
-use std::iter::FusedIterator;
-use std::{borrow::Cow, hash::Hash};
-use std::{convert::TryFrom, path::Path};
-use std::{fmt::Display, io::Read};
+use std::{borrow::Cow, convert::TryFrom, fmt::Display, hash::Hash, io::Read, iter::FusedIterator, path::Path};
+
+use nom::{
+    branch::alt,
+    bytes::complete::{escaped, tag, take_till, take_while},
+    character::{
+        complete::{char, none_of, one_of},
+        is_newline, is_space,
+    },
+    combinator::{map, opt},
+    error::{Error as NomError, ErrorKind},
+    multi::{many0, many1},
+    sequence::delimited,
+    IResult,
+};
 
 /// Syntactic events that occurs in the config. Despite all these variants
 /// holding a [`Cow`] instead over a simple reference, the parser will only emit

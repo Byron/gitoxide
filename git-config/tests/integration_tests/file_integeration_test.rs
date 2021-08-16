@@ -1,7 +1,6 @@
-use git_config::file::GitConfig;
-use git_config::values::*;
-use std::borrow::Cow;
-use std::convert::TryFrom;
+use std::{borrow::Cow, convert::TryFrom};
+
+use git_config::{file::GitConfig, values::*};
 
 /// Asserts we can cast into all variants of our type
 #[test]

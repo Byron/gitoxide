@@ -1,5 +1,6 @@
-use git_config::parser::{parse_from_str, Event, Key, ParsedSectionHeader, SectionHeaderName};
 use std::borrow::Cow;
+
+use git_config::parser::{parse_from_str, Event, Key, ParsedSectionHeader, SectionHeaderName};
 
 pub fn section_header_event(name: &str, subsection: impl Into<Option<(&'static str, &'static str)>>) -> Event<'_> {
     Event::SectionHeader(section_header(name, subsection))

@@ -1,12 +1,16 @@
-use crate::file::error::GitConfigError;
-use crate::file::Index;
-use crate::parser::{Event, Key};
-use crate::values::{normalize_cow, normalize_vec};
-use std::borrow::{Borrow, Cow};
-use std::collections::VecDeque;
-use std::convert::TryFrom;
-use std::iter::FusedIterator;
-use std::ops::{Deref, Range};
+use std::{
+    borrow::{Borrow, Cow},
+    collections::VecDeque,
+    convert::TryFrom,
+    iter::FusedIterator,
+    ops::{Deref, Range},
+};
+
+use crate::{
+    file::{error::GitConfigError, Index},
+    parser::{Event, Key},
+    values::{normalize_cow, normalize_vec},
+};
 
 /// A opaque type that represents a mutable reference to a section.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
