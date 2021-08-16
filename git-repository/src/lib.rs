@@ -93,8 +93,8 @@ pub struct Repository {
 }
 
 pub struct Easy {
-    pub repo: RefCell<Repository>,
-    pub cache: Cache,
+    pub repo: Repository,
+    pub cache: RefCell<Cache>,
 }
 
 mod easy {
@@ -104,8 +104,8 @@ mod easy {
     impl From<Repository> for Easy {
         fn from(v: Repository) -> Self {
             Easy {
-                repo: RefCell::new(v),
-                cache: Default::default(),
+                repo: v,
+                cache: RefCell::new(Default::default()),
             }
         }
     }
@@ -129,12 +129,15 @@ mod easy {
                 Name: TryInto<PartialName<'a>, Error = E>,
                 Error: From<E>,
             {
-                let repo = self.repo.borrow();
-                match repo.refs.find(name, self.cache.packed_refs(&repo.refs)?) {
+                match self
+                    .repo
+                    .refs
+                    .find(name, self.cache.borrow_mut().packed_refs(&self.repo.refs)?)
+                {
                     Ok(r) => match r {
                         Some(r) => Ok(Some(Reference {
                             backing: Backing::File(r),
-                            repo: &self.repo,
+                            repo: &self,
                         })),
                         None => Ok(None),
                     },
@@ -199,7 +202,7 @@ mod object_impl {
 pub use object_impl::Object;
 
 mod reference {
-    use crate::{refs, Object, Repository};
+    use crate::{refs, Easy, Object, Repository};
     use std::cell::RefCell;
 
     pub(crate) enum Backing<'p> {
@@ -208,7 +211,7 @@ mod reference {
 
     pub struct Reference<'p> {
         pub(crate) backing: Backing<'p>,
-        pub(crate) repo: &'p RefCell<Repository>,
+        pub(crate) repo: &'p Easy,
     }
 
     // impl<'p> Reference<'p> {
