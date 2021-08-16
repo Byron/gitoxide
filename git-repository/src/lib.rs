@@ -93,8 +93,8 @@ pub struct Repository {
 }
 
 pub struct Easy {
-    inner: RefCell<Repository>,
-    cache: Cache,
+    pub repo: RefCell<Repository>,
+    pub cache: Cache,
 }
 
 mod easy {
@@ -104,7 +104,7 @@ mod easy {
     impl Into<Easy> for Repository {
         fn into(self) -> Easy {
             Easy {
-                inner: RefCell::new(self),
+                repo: RefCell::new(self),
                 cache: Default::default(),
             }
         }
@@ -129,12 +129,12 @@ mod easy {
                 Name: TryInto<PartialName<'a>, Error = E>,
                 Error: From<E>,
             {
-                let repo = self.inner.borrow();
+                let repo = self.repo.borrow();
                 match repo.refs.find(name, self.cache.packed_refs(&repo.refs)?) {
                     Ok(r) => match r {
                         Some(r) => Ok(Some(Reference {
                             backing: Backing::File(r),
-                            repo: &self.inner,
+                            repo: &self.repo,
                         })),
                         None => Ok(None),
                     },
