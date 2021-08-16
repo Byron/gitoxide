@@ -44,7 +44,7 @@
 //!   * [`transport`][protocol::transport]
 //!
 #![deny(unsafe_code, rust_2018_idioms)]
-#![allow(missing_docs)]
+#![allow(missing_docs, unused)]
 
 use std::path::PathBuf;
 
@@ -88,9 +88,97 @@ pub mod repository;
 
 pub struct Repository {
     pub refs: git_ref::file::Store,
-    pub working_tree: Option<PathBuf>,
     pub odb: git_odb::linked::Store,
+    pub working_tree: Option<PathBuf>,
+    pub cache: Cache,
 }
+
+#[derive(Default)]
+pub struct Cache {
+    packed_refs: Option<refs::packed::Buffer>,
+    pack: odb::pack::cache::lru::StaticLinkedList<64>,
+    buf: Vec<u8>,
+}
+
+mod traits {
+    use crate::{Cache, Repository};
+
+    pub trait Access {
+        fn repo(&self) -> &Repository;
+        fn cache_mut(&mut self) -> &mut Cache;
+    }
+}
+pub use traits::Access;
+
+mod handle {
+    use crate::{Access, Cache, Repository};
+    /// A handle is what threaded programs would use to have thread-local but otherwise shared versions the same `Repository`.
+    ///
+    /// Mutable data present in the `Handle` itself while keeping the parent `Repository` (which has its own cache) shared.
+    /// Otherwise handles reflect the API of a `Repository`.
+    pub struct Handle<'a> {
+        parent: &'a Repository,
+        cache: Cache,
+    }
+
+    impl<'a> Access for Handle<'a> {
+        fn repo(&self) -> &Repository {
+            self.parent
+        }
+
+        fn cache_mut(&mut self) -> &mut Cache {
+            &mut self.cache
+        }
+    }
+}
+
+mod object_impl {
+    use crate::odb::pack;
+    use git_hash::ObjectId;
+
+    pub struct Object<'a, A> {
+        id: ObjectId,
+        data: pack::data::Object<'a>,
+        access: &'a mut A,
+    }
+}
+pub use object_impl::Object;
+
+mod reference {
+    use crate::{refs, Access, Object};
+    enum Backing<'p> {
+        File(refs::file::Reference<'p>),
+    }
+
+    pub struct Reference<'p, A> {
+        backing: Backing<'p>,
+        access: &'p mut A,
+    }
+
+    impl<'p, A: Access> Reference<'p, A> {
+        pub fn peel_to_end(&mut self) -> Result<Object<'p, A>, ()> {
+            todo!("peel and get lazy object")
+        }
+    }
+
+    mod find {
+        mod error {
+            use quick_error::quick_error;
+        }
+    }
+
+    mod ext {
+        use crate::{Access, Reference};
+
+        /// Obtain and alter references comfortably
+        pub trait ReferenceExt: Access + Sized {
+            fn find_reference(&mut self, name: &str) -> Result<Option<Reference<'_, Self>>, ()> {
+                todo!("find an actual reference")
+            }
+        }
+    }
+}
+pub use reference::Reference;
 
 impl Repository {
     pub fn kind(&self) -> Kind {

@@ -1,3 +1,16 @@
+use crate::traits::Access;
+use crate::{Cache, Repository};
+
+impl Access for crate::Repository {
+    fn repo(&self) -> &Repository {
+        self
+    }
+
+    fn cache_mut(&mut self) -> &mut Cache {
+        &mut self.cache
+    }
+}
+
 mod init {
     use std::path::Path;
 
@@ -54,6 +67,7 @@ pub mod discover {
                     },
                 ),
                 working_tree,
+                cache: Default::default(),
             })
         }
     }
