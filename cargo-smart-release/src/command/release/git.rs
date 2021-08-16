@@ -4,7 +4,7 @@ use anyhow::{anyhow, bail};
 use bstr::ByteSlice;
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path},
-    Metadata, Package,
+    Package,
 };
 use git_repository::{
     actor,
@@ -23,8 +23,10 @@ use git_repository::{
 use super::{Context, Options};
 use crate::command::release_impl::{tag_name_for, utils::will};
 
-fn is_single_package_workspace(meta: &Metadata) -> bool {
-    meta.workspace_members.len() == 1
+fn is_top_level_package(manifest_path: &Utf8Path, repo: &Repository) -> bool {
+    manifest_path
+        .strip_prefix(repo.working_tree.as_ref().expect("repo with working tree"))
+        .map_or(false, |p| p.components().count() == 1)
 }
 
 pub(in crate::command::release_impl) fn has_changed_since_last_release(
@@ -35,7 +37,7 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
     let version_tag_name = tag_name_for(
         &package.name,
         &package.version.to_string(),
-        is_single_package_workspace(&ctx.meta),
+        is_top_level_package(&package.manifest_path, &ctx.repo),
     );
     let mut tag_ref = match ctx.repo.refs.find(&version_tag_name, ctx.packed_refs.as_ref())? {
         None => {
@@ -215,7 +217,11 @@ pub(in crate::command::release_impl) fn create_version_tag(
     if skip_tag {
         return Ok(None);
     }
-    let tag_name = tag_name_for(&publishee.name, new_version, is_single_package_workspace(&ctx.meta));
+    let tag_name = tag_name_for(
+        &publishee.name,
+        new_version,
+        is_top_level_package(&publishee.manifest_path, &ctx.repo),
+    );
     let edit = RefEdit {
         change: Change::Update {
             log: Default::default(),
