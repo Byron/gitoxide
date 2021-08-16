@@ -487,12 +487,22 @@ fn bump_to_valid_version(
                 );
                 }
                 if bump_on_demand && publishee.version > existing_version {
-                    log::info!(
-                        "Using unpublished version {} of crate {} instead of bumped version {}",
-                        publishee.version,
-                        publishee.name,
-                        new_version
-                    );
+                    if new_version > publishee.version {
+                        log::info!(
+                            "Using manifest version {} of crate {} instead of new version {} as it is sufficient to succeed latest published version {}.",
+                            publishee.version,
+                            publishee.name,
+                            new_version,
+                            existing_version
+                        );
+                    } else {
+                        log::info!(
+                            "Using manifest version {} of crate {} as it is sufficient to succeed latest published version {}.",
+                            publishee.version,
+                            publishee.name,
+                            existing_version
+                        );
+                    }
                     new_version = publishee.version.clone();
                 }
             }
