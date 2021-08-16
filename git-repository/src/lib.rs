@@ -101,10 +101,10 @@ mod easy {
     use crate::{Easy, Repository};
     use std::cell::RefCell;
 
-    impl Into<Easy> for Repository {
-        fn into(self) -> Easy {
+    impl From<Repository> for Easy {
+        fn from(v: Repository) -> Self {
             Easy {
-                repo: RefCell::new(self),
+                repo: RefCell::new(v),
                 cache: Default::default(),
             }
         }
@@ -164,7 +164,7 @@ mod cache {
             file: &file::Store,
         ) -> Result<Option<&packed::Buffer>, packed::buffer::open::Error> {
             match self.packed_refs {
-                Some(ref packed) => return Ok(Some(packed)),
+                Some(ref packed) => Ok(Some(packed)),
                 None => {
                     self.packed_refs = file.packed()?;
                     Ok(self.packed_refs.as_ref())
@@ -211,11 +211,11 @@ mod reference {
         pub(crate) repo: &'p RefCell<Repository>,
     }
 
-    impl<'p> Reference<'p> {
-        pub fn peel_to_end(&mut self) -> Result<Object<'p>, ()> {
-            todo!("peel and get lazy object")
-        }
-    }
+    // impl<'p> Reference<'p> {
+    //     pub fn peel_to_end(&mut self) -> Result<Object<'p>, ()> {
+    //         todo!("peel and get lazy object")
+    //     }
+    // }
 
     pub mod find {
         mod error {
