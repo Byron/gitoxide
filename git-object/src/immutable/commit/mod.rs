@@ -64,6 +64,7 @@ impl<'a> Commit<'a> {
 }
 
 #[cfg(test)]
+#[cfg(not(feature = "verbose-object-parsing-errors"))]
 mod tests {
     use super::*;
 
@@ -71,7 +72,7 @@ mod tests {
     fn size_of_commit() {
         assert_eq!(
             std::mem::size_of::<Commit<'_>>(),
-            208,
+            216,
             "the size of an immutable commit shouldn't change unnoticed"
         );
     }

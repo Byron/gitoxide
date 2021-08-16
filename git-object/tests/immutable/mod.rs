@@ -49,6 +49,7 @@ fn linus_signature(time: u32) -> git_actor::immutable::Signature<'static> {
     }
 }
 
+#[cfg(not(feature = "verbose-object-parsing-errors"))]
 mod object {
     use git_object::immutable::Object;
 
