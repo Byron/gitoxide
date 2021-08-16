@@ -1,14 +1,4 @@
-use crate::{Access, Cache, Repository};
-
-impl Access for crate::Repository {
-    fn repo(&self) -> &Repository {
-        self
-    }
-
-    fn cache_mut(&mut self) -> &mut Cache {
-        &mut self.cache
-    }
-}
+use crate::{Cache, Repository};
 
 mod access {
     use crate::{Kind, Repository};
@@ -26,6 +16,38 @@ mod access {
         }
         pub fn objects_dir(&self) -> &std::path::Path {
             &self.odb.dbs[0].loose.path
+        }
+    }
+}
+
+mod references {
+    use crate::{
+        reference::Backing,
+        refs::{file::find::Error, PartialName},
+        Reference, Repository,
+    };
+    use std::convert::TryInto;
+
+    /// Obtain and alter references comfortably
+    impl Repository {
+        fn find_reference<'a, Name, E>(
+            &mut self,
+            name: Name,
+        ) -> Result<Option<Reference<'_>>, crate::reference::find::Error>
+        where
+            Name: TryInto<PartialName<'a>, Error = E>,
+            Error: From<E>,
+        {
+            match self.refs.find(name, self.cache.packed_refs(&self.refs)?) {
+                Ok(r) => match r {
+                    Some(r) => Ok(Some(Reference {
+                        backing: Backing::File(r),
+                        access: self,
+                    })),
+                    None => Ok(None),
+                },
+                Err(err) => Err(err.into()),
+            }
         }
     }
 }

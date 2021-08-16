@@ -122,20 +122,8 @@ mod cache {
     }
 }
 
-mod traits {
-    use crate::{Cache, Repository};
-
-    pub trait Access {
-        /// The shared repository.
-        fn repo(&self) -> &Repository;
-        /// The mutable cache to help accessing the repository.
-        fn cache_mut(&mut self) -> &mut Cache;
-    }
-}
-pub use traits::Access;
-
 mod handle {
-    use crate::{Access, Cache, Repository};
+    use crate::{Cache, Repository};
     /// A handle is what threaded programs would use to have thread-local but otherwise shared versions the same `Repository`.
     ///
     /// Mutable data present in the `Handle` itself while keeping the parent `Repository` (which has its own cache) shared.
@@ -144,43 +132,34 @@ mod handle {
         parent: &'a Repository,
         cache: Cache,
     }
-
-    impl<'a> Access for Handle<'a> {
-        fn repo(&self) -> &Repository {
-            self.parent
-        }
-
-        fn cache_mut(&mut self) -> &mut Cache {
-            &mut self.cache
-        }
-    }
 }
 
 mod object_impl {
-    use crate::odb::pack;
+    use crate::{odb::pack, Repository};
     use git_hash::ObjectId;
 
-    pub struct Object<'a, A> {
+    pub struct Object<'a> {
         id: ObjectId,
         data: pack::data::Object<'a>,
-        access: &'a mut A,
+        access: &'a mut Repository,
     }
 }
 pub use object_impl::Object;
 
 mod reference {
-    use crate::{refs, Access, Object};
-    enum Backing<'p> {
+    use crate::{refs, Object, Repository};
+
+    pub(crate) enum Backing<'p> {
         File(refs::file::Reference<'p>),
     }
 
-    pub struct Reference<'p, A> {
-        backing: Backing<'p>,
-        access: &'p mut A,
+    pub struct Reference<'p> {
+        pub(crate) backing: Backing<'p>,
+        pub(crate) access: &'p Repository,
     }
 
-    impl<'p, A: Access> Reference<'p, A> {
-        pub fn peel_to_end(&mut self) -> Result<Object<'p, A>, ()> {
+    impl<'p> Reference<'p> {
+        pub fn peel_to_end(&mut self) -> Result<Object<'p>, ()> {
             todo!("peel and get lazy object")
         }
     }
@@ -208,47 +187,8 @@ mod reference {
         }
         pub use error::Error;
     }
-
-    mod ext {
-        use crate::{
-            reference::Backing,
-            refs::{file::find::Error, PartialName},
-            Access, Reference,
-        };
-        use std::convert::TryInto;
-
-        /// Obtain and alter references comfortably
-        pub trait ReferenceExt: Access + Sized {
-            fn find_reference<'a, Name, E>(
-                &mut self,
-                name: Name,
-            ) -> Result<Option<Reference<'_, Self>>, crate::reference::find::Error>
-            where
-                Name: TryInto<PartialName<'a>, Error = E>,
-                Error: From<E>,
-            {
-                match self
-                    .repo()
-                    .refs
-                    .find(name, self.cache_mut().packed_refs(&self.repo().refs)?)
-                {
-                    Ok(r) => match r {
-                        Some(r) => Ok(Some(Reference {
-                            backing: Backing::File(r),
-                            access: self,
-                        })),
-                        None => Ok(None),
-                    },
-                    Err(err) => Err(err.into()),
-                }
-            }
-        }
-
-        impl<A: Access + Sized> ReferenceExt for A {}
-    }
-    pub use ext::ReferenceExt;
 }
-pub use reference::{Reference, ReferenceExt};
+pub use reference::Reference;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Kind {
