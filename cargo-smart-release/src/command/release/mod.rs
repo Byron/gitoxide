@@ -299,11 +299,13 @@ fn depth_first_traversal(
         )?;
         if git::has_changed_since_last_release(dep_package, ctx, verbose)? {
             if dep_package.version.major == 0 || allow_auto_publish_of_stable_crates {
-                log::info!(
-                    "Adding {} v{} to set of published crates as it changed since last release",
-                    dep_package.name,
-                    dep_package.version
-                );
+                if verbose {
+                    log::info!(
+                        "Adding {} v{} to set of published crates as it changed since last release",
+                        dep_package.name,
+                        dep_package.version
+                    );
+                }
                 changed_crate_names_to_publish.push(dependency.name.clone());
             } else {
                 log::warn!(
