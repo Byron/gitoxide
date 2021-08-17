@@ -1,12 +1,12 @@
 use std::convert::{TryFrom, TryInto};
 
 use git_ref::{packed, PartialName};
+use git_testtools::fixture_path;
 
 use crate::{
     file::{store_at, store_with_packed_refs},
     packed::write_packed_refs_with,
 };
-use git_testtools::fixture_path;
 
 #[test]
 fn a_lock_file_would_not_be_a_valid_partial_name() {

@@ -6,12 +6,13 @@ fn repo() -> crate::Result<git_repository::Shared> {
 }
 
 mod find {
-    use crate::reference::repo;
     use git_repository::prelude::*;
+
+    use crate::reference::repo;
 
     #[test]
     fn find_and_peel() {
         let mut repo = repo().unwrap();
-        let _tag_ref = repo.find_reference("dt1").unwrap().expect("tag to exist");
+        let tag_ref = repo.find_reference("dt1").unwrap().expect("tag to exist");
     }
 }

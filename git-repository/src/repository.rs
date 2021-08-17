@@ -36,12 +36,11 @@ mod init {
 }
 
 pub mod discover {
-    use std::path::Path;
+    use std::{cell::RefCell, path::Path};
 
     use quick_error::quick_error;
 
     use crate::{path::discover, Repository};
-    use std::cell::RefCell;
 
     quick_error! {
         #[derive(Debug)]

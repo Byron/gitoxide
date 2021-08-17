@@ -47,10 +47,7 @@
 #![allow(missing_docs, unused)]
 
 use crate::hash::ObjectId;
-use std::cell::RefCell;
-use std::path::PathBuf;
-use std::rc::Rc;
-use std::sync::Arc;
+use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
@@ -98,10 +95,9 @@ pub struct Repository {
 }
 
 mod handles {
+    use std::{cell::RefCell, rc::Rc, sync::Arc};
+
     use crate::{Cache, Repository};
-    use std::cell::RefCell;
-    use std::rc::Rc;
-    use std::sync::Arc;
 
     pub struct Shared {
         pub repo: Rc<Repository>,
@@ -168,13 +164,14 @@ pub use handles::{Shared, SharedArc};
 #[derive(Default)]
 pub struct Cache {
     packed_refs: Option<refs::packed::Buffer>,
-    pack: odb::pack::cache::Never, // TODO: choose great alround cache
-    buf: Vec<u8>,
+    pub pack: odb::pack::cache::Never, // TODO: choose great alround cache
+    pub buf: Vec<u8>,
 }
 
 mod traits {
-    use crate::{Cache, Repository, Shared, SharedArc};
     use std::cell::RefMut;
+
+    use crate::{Cache, Repository, Shared, SharedArc};
 
     pub trait Access {
         fn repo(&self) -> &Repository;
@@ -225,10 +222,10 @@ mod cache {
     }
 }
 
-pub struct Object<'a> {
+pub struct Object<'r, A> {
     id: ObjectId,
-    data: odb::pack::data::Object<'a>,
-    access: &'a mut Repository,
+    // data: odb::pack::data::Object<'a>,
+    access: &'r A,
 }
 
 pub struct Reference<'r, A> {
@@ -237,10 +234,11 @@ pub struct Reference<'r, A> {
 }
 
 pub mod reference {
-    use crate::refs::mutable;
-    use crate::{refs, Object, Repository};
-    use git_hash::ObjectId;
     use std::cell::RefCell;
+
+    use git_hash::ObjectId;
+
+    use crate::{refs, refs::mutable, Access, Object, Reference, Repository};
 
     pub(crate) enum Backing {
         OwnedPacked {
@@ -255,28 +253,69 @@ pub mod reference {
         LooseFile(refs::file::loose::Reference),
     }
 
-    // impl<'p> Reference<'p> {
-    //     pub fn peel_to_end(&mut self) -> Result<Object<'p>, ()> {
-    //         todo!("peel and get lazy object")
-    //     }
-    // }
+    pub mod peel_to_id_in_place {
+        use quick_error::quick_error;
+
+        use crate::refs;
+
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                LoosePeelToId(err: refs::file::loose::reference::peel::to_id::Error) {
+                    display("Could not peel loose reference")
+                    from()
+                    source(err)
+                }
+                PackedRefsOpen(err: refs::packed::buffer::open::Error) {
+                    display("The packed-refs file could not be opened")
+                    from()
+                    source(err)
+                }
+            }
+        }
+    }
+
+    impl<'r, A> Reference<'r, A>
+    where
+        A: Access + Sized,
+    {
+        pub fn peel_to_id_in_place(&mut self) -> Result<Object<'r, A>, peel_to_id_in_place::Error> {
+            let repo = self.access.repo();
+            match &mut self.backing {
+                Backing::LooseFile(r) => {
+                    let oid = r.peel_to_id_in_place(
+                        &repo.refs,
+                        self.access.cache_mut().packed_refs(&repo.refs)?,
+                        |oid, buf| {
+                            repo.odb
+                                .find(oid, buf, &mut self.access.cache_mut().pack)
+                                .map(|po| po.map(|o| (o.kind, o.data)))
+                        },
+                    )?;
+                    todo!("loose")
+                }
+                Backing::OwnedPacked { name, target, object } => {
+                    todo!("packed")
+                }
+            }
+        }
+    }
 
     mod access {
-        use crate::hash::ObjectId;
-        use crate::Access;
+        use std::{cell::RefCell, convert::TryInto};
+
         use crate::{
+            hash::ObjectId,
             reference::Backing,
             refs,
             refs::{file::find::Error, PartialName},
-            Reference, Repository,
+            Access, Reference, Repository,
         };
-        use std::cell::RefCell;
-        use std::convert::TryInto;
 
         /// Obtain and alter references comfortably
         pub trait ReferencesExt: Access + Sized {
             fn find_reference<'a, Name, E>(
-                &mut self,
+                &self,
                 name: Name,
             ) -> Result<Option<Reference<'_, Self>>, crate::reference::find::Error>
             where
@@ -311,30 +350,29 @@ pub mod reference {
 
         impl<A> ReferencesExt for A where A: Access + Sized {}
     }
+    use crate::odb::Find;
     pub use access::ReferencesExt;
 
     pub mod find {
-        mod error {
-            use crate::refs;
-            use quick_error::quick_error;
+        use quick_error::quick_error;
 
-            quick_error! {
-                #[derive(Debug)]
-                pub enum Error {
-                    Find(err: refs::file::find::Error) {
-                        display("An error occurred when trying to find a reference")
-                        from()
-                        source(err)
-                    }
-                    PackedRefsOpen(err: refs::packed::buffer::open::Error) {
-                        display("The packed-refs file could not be opened")
-                        from()
-                        source(err)
-                    }
+        use crate::refs;
+
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                Find(err: refs::file::find::Error) {
+                    display("An error occurred when trying to find a reference")
+                    from()
+                    source(err)
+                }
+                PackedRefsOpen(err: refs::packed::buffer::open::Error) {
+                    display("The packed-refs file could not be opened")
+                    from()
+                    source(err)
                 }
             }
         }
-        pub use error::Error;
     }
 }
 
