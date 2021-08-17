@@ -1,6 +1,6 @@
 [package]
 name = "git-pack"
-version = "0.8.1"
+version = "0.8.2"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
