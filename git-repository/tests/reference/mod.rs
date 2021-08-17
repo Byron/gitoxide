@@ -34,10 +34,7 @@ mod find {
             "peeling again yields the same object"
         );
 
-        let mut symbolic_ref = repo
-            .find_reference("multi-link-target1")
-            .unwrap()
-            .expect("symbolic ref to exist");
+        let mut symbolic_ref = repo.find_existing_reference("multi-link-target1").unwrap();
         assert_eq!(symbolic_ref.name(), "refs/heads/multi-link-target1".try_into().unwrap());
         assert_eq!(symbolic_ref.peel_to_object_in_place().unwrap().id(), the_commit);
         assert_eq!(

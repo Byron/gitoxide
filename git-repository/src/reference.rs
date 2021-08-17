@@ -113,6 +113,7 @@ mod access {
 
     use crate::{
         hash::ObjectId,
+        reference,
         reference::Backing,
         refs,
         refs::{file::find::Error, PartialName},
@@ -121,10 +122,20 @@ mod access {
 
     /// Obtain and alter references comfortably
     pub trait ReferencesExt: Access + Sized {
-        fn find_reference<'a, Name, E>(
+        fn find_existing_reference<'a, Name, E>(
             &self,
             name: Name,
-        ) -> Result<Option<Reference<'_, Self>>, crate::reference::find::Error>
+        ) -> Result<Reference<'_, Self>, reference::find::existing::Error>
+        where
+            Name: TryInto<PartialName<'a>, Error = E>,
+            Error: From<E>,
+        {
+            Ok(self
+                .find_reference(name)?
+                .ok_or_else(|| reference::find::existing::Error::NotFound)?)
+        }
+
+        fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_, Self>>, reference::find::Error>
         where
             Name: TryInto<PartialName<'a>, Error = E>,
             Error: From<E>,
@@ -150,6 +161,25 @@ pub mod find {
     use quick_error::quick_error;
 
     use crate::refs;
+
+    pub mod existing {
+        use crate::reference::find;
+        use quick_error::quick_error;
+
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                Find(err: find::Error) {
+                    display("An error occurred when trying to find a reference")
+                    from()
+                    source(err)
+                }
+                NotFound {
+                    display("The reference did not exist even though that was expected")
+                }
+            }
+        }
+    }
 
     quick_error! {
         #[derive(Debug)]

@@ -10,9 +10,9 @@ use git_repository::{
     actor,
     hash::ObjectId,
     object,
-    odb::{pack, Find, FindExt},
+    odb::{pack, FindExt},
     refs::{
-        self, file,
+        self,
         file::loose::reference::peel,
         mutable::Target,
         transaction::{Change, Create, RefEdit},
@@ -21,6 +21,7 @@ use git_repository::{
 
 use super::{Context, Options};
 use crate::command::release_impl::{tag_name_for, utils::will};
+use git_repository::reference::ReferencesExt;
 
 fn is_top_level_package(manifest_path: &Utf8Path, shared: &git_repository::Easy) -> bool {
     manifest_path
@@ -38,12 +39,7 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
         &package.version.to_string(),
         is_top_level_package(&package.manifest_path, &ctx.git_easy),
     );
-    let mut tag_ref = match ctx
-        .git_easy
-        .repo
-        .refs
-        .find(&version_tag_name, ctx.packed_refs.as_ref())?
-    {
+    let mut tag_ref = match ctx.git_easy.find_reference(&version_tag_name)? {
         None => {
             if verbose {
                 log::info!(
@@ -63,8 +59,13 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
         .strip_prefix(&ctx.root)
         .expect("workspace members are releative to the root directory");
 
-    let target = peel_ref_fully(&mut ctx.git_easy.repo.refs.find_existing("HEAD", None)?, ctx)?;
-    let released_target = peel_ref_fully(&mut tag_ref, ctx)?;
+    let target = ctx
+        .git_easy
+        .find_existing_reference("HEAD")?
+        .peel_to_object_in_place()?
+        .id()
+        .to_owned();
+    let released_target = tag_ref.peel_to_object_in_place()?.id().to_owned();
 
     if repo_relative_crate_dir.as_os_str().is_empty() {
         Ok(target != released_target)
@@ -151,18 +152,6 @@ fn find_directory_id_in_tree(
     }
 
     tree_id.ok_or_else(|| anyhow!("path '{}' didn't exist in tree {}", path, id))
-}
-
-fn peel_ref_fully(reference: &mut file::Reference<'_>, ctx: &Context) -> anyhow::Result<ObjectId> {
-    reference
-        .peel_to_id_in_place(&ctx.git_easy.repo.refs, ctx.packed_refs.as_ref(), |oid, buf| {
-            ctx.git_easy
-                .repo
-                .odb
-                .find(oid, buf, &mut pack::cache::Never)
-                .map(|r| r.map(|obj| (obj.kind, obj.data)))
-        })
-        .map_err(Into::into)
 }
 
 /// Note that borrowchk doesn't like us to return an immutable, decoded tree which we would otherwise do. Chalk/polonius could allow that,
