@@ -20,6 +20,11 @@ impl<'repo, A> std::fmt::Debug for Object<'repo, A> {
     }
 }
 
+pub struct Data<'repo> {
+    pub kind: Kind,
+    pub data: Ref<'repo, [u8]>,
+}
+
 pub mod find {
     pub mod existing {
         use crate::odb;
@@ -60,7 +65,7 @@ where
     }
 
     /// Makes all lower level objects and iterators accessible
-    fn raw(&self) -> Result<(object::Kind, Ref<'_, [u8]>), find::existing::Error> {
+    fn raw(&self) -> Result<Data<'repo>, find::existing::Error> {
         let mut buf = self.access.cache().buf.borrow_mut();
         let kind = {
             let obj = self.access.repo().odb.find_existing(
@@ -71,7 +76,10 @@ where
             obj.kind
         };
 
-        Ok((kind, Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice())))
+        Ok(Data {
+            kind,
+            data: Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice()),
+        })
     }
 
     // TODO: tests
