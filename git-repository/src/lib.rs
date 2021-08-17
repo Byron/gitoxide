@@ -95,71 +95,7 @@ pub struct Repository {
     pub working_tree: Option<PathBuf>,
 }
 
-mod handles {
-    use std::{cell::RefCell, rc::Rc, sync::Arc};
-
-    use crate::{Cache, Repository};
-
-    pub struct Shared {
-        pub repo: Rc<Repository>,
-        pub cache: Cache,
-    }
-
-    /// A handle is what threaded programs would use to have thread-local but otherwise shared versions the same `Repository`.
-    ///
-    /// Mutable data present in the `Handle` itself while keeping the parent `Repository` (which has its own cache) shared.
-    /// Otherwise handles reflect the API of a `Repository`.
-    pub struct SharedArc {
-        pub repo: Arc<Repository>,
-        pub cache: Cache,
-    }
-
-    impl Clone for Shared {
-        fn clone(&self) -> Self {
-            Shared {
-                repo: Rc::clone(&self.repo),
-                cache: Default::default(),
-            }
-        }
-    }
-
-    impl Clone for SharedArc {
-        fn clone(&self) -> Self {
-            SharedArc {
-                repo: Arc::clone(&self.repo),
-                cache: Default::default(),
-            }
-        }
-    }
-
-    impl From<Repository> for Shared {
-        fn from(repo: Repository) -> Self {
-            Shared {
-                repo: Rc::new(repo),
-                cache: Default::default(),
-            }
-        }
-    }
-
-    impl From<Repository> for SharedArc {
-        fn from(repo: Repository) -> Self {
-            SharedArc {
-                repo: Arc::new(repo),
-                cache: Default::default(),
-            }
-        }
-    }
-
-    impl Repository {
-        pub fn into_shared(self) -> Shared {
-            self.into()
-        }
-
-        pub fn into_shared_arc(self) -> SharedArc {
-            self.into()
-        }
-    }
-}
+mod handles;
 pub use handles::{Shared, SharedArc};
 
 #[derive(Default)]
@@ -168,38 +104,6 @@ pub struct Cache {
     pub(crate) pack: RefCell<odb::pack::cache::Never>, // TODO: choose great all-round cache
     pub(crate) buf: RefCell<Vec<u8>>,
 }
-
-mod traits {
-    use std::cell::RefMut;
-
-    use crate::{Cache, Repository, Shared, SharedArc};
-
-    pub trait Access {
-        fn repo(&self) -> &Repository;
-        fn cache(&self) -> &Cache;
-    }
-
-    impl Access for Shared {
-        fn repo(&self) -> &Repository {
-            self.repo.as_ref()
-        }
-
-        fn cache(&self) -> &Cache {
-            &self.cache
-        }
-    }
-
-    impl Access for SharedArc {
-        fn repo(&self) -> &Repository {
-            self.repo.as_ref()
-        }
-
-        fn cache(&self) -> &Cache {
-            &self.cache
-        }
-    }
-}
-pub(crate) use traits::Access;
 
 mod cache {
     use std::{cell::Ref, ops::DerefMut};
@@ -220,219 +124,24 @@ mod cache {
     }
 }
 
+mod traits;
+pub(crate) use traits::Access;
+
 pub struct Object<'r, A> {
     id: ObjectId,
     // data: odb::pack::data::Object<'a>,
     access: &'r A,
 }
 
-mod object_impl {
-    use crate::{
-        hash::{oid, ObjectId},
-        Access, Object,
-    };
-
-    impl<'repo, A, B> PartialEq<Object<'repo, A>> for Object<'repo, B> {
-        fn eq(&self, other: &Object<'repo, A>) -> bool {
-            self.id == other.id
-        }
-    }
-
-    impl<'repo, A> std::fmt::Debug for Object<'repo, A> {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            self.id.fmt(f)
-        }
-    }
-
-    impl<'repo, A> Object<'repo, A>
-    where
-        A: Access + Sized,
-    {
-        pub(crate) fn try_from_oid(oid: impl Into<ObjectId>, access: &'repo A) -> Result<Self, ()> {
-            Ok(Object { id: oid.into(), access })
-        }
-
-        pub fn id(&self) -> &oid {
-            &self.id
-        }
-    }
-}
+#[path = "object.rs"]
+mod object_impl;
 
 pub struct Reference<'r, A> {
     pub(crate) backing: Option<reference::Backing>,
     pub(crate) access: &'r A,
 }
 
-pub mod reference {
-    use std::{cell::RefCell, ops::DerefMut};
-
-    use crate::{hash::ObjectId, odb::Find, refs, refs::mutable, Access, Object, Reference, Repository};
-
-    pub(crate) enum Backing {
-        OwnedPacked {
-            /// The validated full name of the reference.
-            name: mutable::FullName,
-            /// The target object id of the reference, hex encoded.
-            target: ObjectId,
-            /// The fully peeled object id, hex encoded, that the ref is ultimately pointing to
-            /// i.e. when all indirections are removed.
-            object: Option<ObjectId>,
-        },
-        LooseFile(refs::file::loose::Reference),
-    }
-
-    pub mod peel_to_id_in_place {
-        use quick_error::quick_error;
-
-        use crate::refs;
-
-        quick_error! {
-            #[derive(Debug)]
-            pub enum Error {
-                LoosePeelToId(err: refs::file::loose::reference::peel::to_id::Error) {
-                    display("Could not peel loose reference")
-                    from()
-                    source(err)
-                }
-                PackedRefsOpen(err: refs::packed::buffer::open::Error) {
-                    display("The packed-refs file could not be opened")
-                    from()
-                    source(err)
-                }
-            }
-        }
-    }
-
-    impl<'repo, A> Reference<'repo, A>
-    where
-        A: Access + Sized,
-    {
-        pub(crate) fn from_ref(reference: refs::file::Reference<'_>, access: &'repo A) -> Self {
-            Reference {
-                backing: match reference {
-                    refs::file::Reference::Packed(p) => Backing::OwnedPacked {
-                        name: p.name.into(),
-                        target: p.target(),
-                        object: p
-                            .object
-                            .map(|hex| ObjectId::from_hex(hex).expect("a hash kind we know")),
-                    },
-                    refs::file::Reference::Loose(l) => Backing::LooseFile(l),
-                }
-                .into(),
-                access,
-            }
-        }
-        pub fn target(&self) -> refs::mutable::Target {
-            match self.backing.as_ref().expect("always set") {
-                Backing::OwnedPacked { target, .. } => mutable::Target::Peeled(target.to_owned()),
-                Backing::LooseFile(r) => r.target.clone(),
-            }
-        }
-
-        pub fn name(&self) -> refs::FullName<'_> {
-            match self.backing.as_ref().expect("always set") {
-                Backing::OwnedPacked { name, .. } => &name,
-                Backing::LooseFile(r) => &r.name,
-            }
-            .borrow()
-        }
-
-        pub fn peel_to_object_in_place(&mut self) -> Result<Object<'repo, A>, peel_to_id_in_place::Error> {
-            let repo = self.access.repo();
-            match self.backing.take().expect("a ref must be set") {
-                Backing::LooseFile(mut r) => {
-                    let cache = self.access.cache();
-                    cache.assure_packed_refs_present(&repo.refs)?;
-                    let oid = r
-                        .peel_to_id_in_place(&repo.refs, cache.packed_refs.borrow().as_ref(), |oid, buf| {
-                            repo.odb
-                                .find(oid, buf, cache.pack.borrow_mut().deref_mut())
-                                .map(|po| po.map(|o| (o.kind, o.data)))
-                        })?
-                        .to_owned();
-                    self.backing = Backing::LooseFile(r).into();
-                    Ok(Object::try_from_oid(oid, self.access).unwrap())
-                }
-                Backing::OwnedPacked {
-                    mut target,
-                    mut object,
-                    name,
-                } => {
-                    if let Some(peeled_id) = object.take() {
-                        target = peeled_id;
-                    }
-                    self.backing = Backing::OwnedPacked {
-                        name,
-                        target,
-                        object: None,
-                    }
-                    .into();
-                    Ok(Object::try_from_oid(target, self.access).unwrap())
-                }
-            }
-        }
-    }
-
-    mod access {
-        use std::{cell::RefCell, convert::TryInto};
-
-        use crate::{
-            hash::ObjectId,
-            reference::Backing,
-            refs,
-            refs::{file::find::Error, PartialName},
-            Access, Reference, Repository,
-        };
-
-        /// Obtain and alter references comfortably
-        pub trait ReferencesExt: Access + Sized {
-            fn find_reference<'a, Name, E>(
-                &self,
-                name: Name,
-            ) -> Result<Option<Reference<'_, Self>>, crate::reference::find::Error>
-            where
-                Name: TryInto<PartialName<'a>, Error = E>,
-                Error: From<E>,
-            {
-                let cache = self.cache();
-                cache.assure_packed_refs_present(&self.repo().refs)?;
-                match self.repo().refs.find(name, cache.packed_refs.borrow().as_ref()) {
-                    Ok(r) => match r {
-                        Some(r) => Ok(Some(Reference::from_ref(r, self))),
-                        None => Ok(None),
-                    },
-                    Err(err) => Err(err.into()),
-                }
-            }
-        }
-
-        impl<A> ReferencesExt for A where A: Access + Sized {}
-    }
-    pub use access::ReferencesExt;
-
-    pub mod find {
-        use quick_error::quick_error;
-
-        use crate::refs;
-
-        quick_error! {
-            #[derive(Debug)]
-            pub enum Error {
-                Find(err: refs::file::find::Error) {
-                    display("An error occurred when trying to find a reference")
-                    from()
-                    source(err)
-                }
-                PackedRefsOpen(err: refs::packed::buffer::open::Error) {
-                    display("The packed-refs file could not be opened")
-                    from()
-                    source(err)
-                }
-            }
-        }
-    }
-}
+pub mod reference;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Kind {
