@@ -1235,7 +1235,7 @@ dependencies = [
 
 [[package]]
 name = "git-tempfile"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "dashmap",
  "libc",
