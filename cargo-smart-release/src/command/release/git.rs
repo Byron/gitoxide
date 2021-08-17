@@ -122,27 +122,27 @@ fn find_directory_id_in_tree(
     buf: &mut Vec<u8>,
 ) -> anyhow::Result<ObjectId> {
     let id = id.into();
-    let mut tree_id = None::<ObjectId>;
+    let mut tree_id = Some(id);
 
     for component in path.components() {
         match component {
-            Utf8Component::Normal(c) => {
-                let mut tree_iter = shared
-                    .repo
-                    .odb
-                    .find_existing(tree_id.take().unwrap_or(id), buf, &mut pack::cache::Never)?
-                    .into_tree_iter()
-                    .expect("tree");
-                tree_id = tree_iter
-                    .find_map(|e| {
-                        let e = e.expect("tree parseable");
-                        (e.filename == c).then(|| e.oid)
-                    })
-                    .map(ToOwned::to_owned);
-                if tree_id.is_none() {
-                    break;
+            Utf8Component::Normal(c) => match tree_id {
+                None => break,
+                Some(id) => {
+                    let mut tree_iter = shared
+                        .repo
+                        .odb
+                        .find_existing(id, buf, &mut pack::cache::Never)?
+                        .into_tree_iter()
+                        .expect("tree");
+                    tree_id = tree_iter
+                        .find_map(|e| {
+                            let e = e.expect("tree parseable");
+                            (e.filename == c).then(|| e.oid)
+                        })
+                        .map(ToOwned::to_owned);
                 }
-            }
+            },
             _ => panic!(
                 "only normal components are expected in relative manifest paths: '{}'",
                 path
