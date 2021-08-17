@@ -229,7 +229,7 @@ pub struct Object<'r, A> {
 }
 
 pub struct Reference<'r, A> {
-    pub(crate) backing: reference::Backing,
+    pub(crate) backing: Option<reference::Backing>,
     pub(crate) access: &'r A,
 }
 
@@ -281,7 +281,7 @@ pub mod reference {
     {
         pub fn peel_to_id_in_place(&mut self) -> Result<Object<'r, A>, peel_to_id_in_place::Error> {
             let repo = self.access.repo();
-            match &mut self.backing {
+            match &mut self.backing.take().expect("a ref must be set") {
                 Backing::LooseFile(r) => {
                     let oid = r.peel_to_id_in_place(
                         &repo.refs,
@@ -292,10 +292,10 @@ pub mod reference {
                                 .map(|po| po.map(|o| (o.kind, o.data)))
                         },
                     )?;
-                    todo!("loose")
+                    todo!("loose peeling")
                 }
                 Backing::OwnedPacked { name, target, object } => {
-                    todo!("packed")
+                    todo!("packed peeling")
                 }
             }
         }
@@ -338,7 +338,8 @@ pub mod reference {
                                         .map(|hex| ObjectId::from_hex(hex).expect("a hash kind we know")),
                                 },
                                 refs::file::Reference::Loose(l) => Backing::LooseFile(l),
-                            },
+                            }
+                            .into(),
                             access: self,
                         })),
                         None => Ok(None),
