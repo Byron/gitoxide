@@ -77,9 +77,9 @@ pub mod prelude {
     pub use git_features::parallel::reduce::Finalize;
     pub use git_odb::{Find, FindExt, Write};
 
+    pub use crate::ext::access::reference::ReferenceExt;
     #[cfg(all(feature = "git-traverse"))]
     pub use crate::ext::*;
-    pub use crate::reference::ReferencesExt;
 }
 
 pub mod init;

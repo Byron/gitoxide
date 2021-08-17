@@ -11,6 +11,7 @@ use git_repository::{
     hash::ObjectId,
     object,
     odb::{pack, FindExt},
+    prelude::ReferenceExt,
     refs::{
         self,
         file::loose::reference::peel,
@@ -21,7 +22,6 @@ use git_repository::{
 
 use super::{Context, Options};
 use crate::command::release_impl::{tag_name_for, utils::will};
-use git_repository::reference::ReferencesExt;
 
 fn is_top_level_package(manifest_path: &Utf8Path, shared: &git_repository::Easy) -> bool {
     manifest_path

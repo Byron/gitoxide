@@ -108,55 +108,6 @@ where
     }
 }
 
-mod access {
-    use std::{cell::RefCell, convert::TryInto};
-
-    use crate::{
-        hash::ObjectId,
-        reference,
-        reference::Backing,
-        refs,
-        refs::{file::find::Error, PartialName},
-        Access, Reference, Repository,
-    };
-
-    /// Obtain and alter references comfortably
-    pub trait ReferencesExt: Access + Sized {
-        fn find_existing_reference<'a, Name, E>(
-            &self,
-            name: Name,
-        ) -> Result<Reference<'_, Self>, reference::find::existing::Error>
-        where
-            Name: TryInto<PartialName<'a>, Error = E>,
-            Error: From<E>,
-        {
-            Ok(self
-                .find_reference(name)?
-                .ok_or_else(|| reference::find::existing::Error::NotFound)?)
-        }
-
-        fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_, Self>>, reference::find::Error>
-        where
-            Name: TryInto<PartialName<'a>, Error = E>,
-            Error: From<E>,
-        {
-            let cache = self.cache();
-            cache.assure_packed_refs_present(&self.repo().refs)?;
-            match self.repo().refs.find(name, cache.packed_refs.borrow().as_ref()) {
-                Ok(r) => match r {
-                    Some(r) => Ok(Some(Reference::from_ref(r, self))),
-                    None => Ok(None),
-                },
-                Err(err) => Err(err.into()),
-            }
-        }
-    }
-
-    impl<A> ReferencesExt for A where A: Access + Sized {}
-}
-
-pub use access::ReferencesExt;
-
 pub mod find {
     use quick_error::quick_error;
 
