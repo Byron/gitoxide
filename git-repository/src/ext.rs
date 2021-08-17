@@ -101,7 +101,7 @@ mod object_id {
 }
 pub use object_id::ObjectIdExt;
 
-pub(crate) mod access {
+mod access {
     pub(crate) mod reference {
         use std::{cell::RefCell, convert::TryInto};
 
@@ -151,3 +151,4 @@ pub(crate) mod access {
         impl<A> ReferenceExt for A where A: Access + Sized {}
     }
 }
+pub use access::reference::ReferenceExt;
