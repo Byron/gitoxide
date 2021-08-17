@@ -1,12 +1,13 @@
 use git_repository::Repository;
 
-fn repo() -> crate::Result<Repository> {
+fn repo() -> crate::Result<git_repository::Shared> {
     let repo_path = git_testtools::scripted_fixture_repo_read_only("make_references_repo.sh")?;
-    Ok(Repository::discover(repo_path)?)
+    Ok(Repository::discover(repo_path)?.into())
 }
 
 mod find {
     use crate::reference::repo;
+    use git_repository::prelude::*;
 
     #[test]
     fn find_and_peel() {

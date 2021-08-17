@@ -46,7 +46,11 @@
 #![deny(unsafe_code, rust_2018_idioms)]
 #![allow(missing_docs, unused)]
 
+use crate::hash::ObjectId;
+use std::cell::RefCell;
 use std::path::PathBuf;
+use std::rc::Rc;
+use std::sync::Arc;
 
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
@@ -77,6 +81,7 @@ pub mod prelude {
 
     #[cfg(all(feature = "git-traverse"))]
     pub use crate::ext::*;
+    pub use crate::reference::ReferencesExt;
 }
 
 pub mod init;
@@ -90,8 +95,75 @@ pub struct Repository {
     pub refs: git_ref::file::Store,
     pub odb: git_odb::linked::Store,
     pub working_tree: Option<PathBuf>,
-    pub cache: Cache,
 }
+
+mod handles {
+    use crate::{Cache, Repository};
+    use std::cell::RefCell;
+    use std::rc::Rc;
+    use std::sync::Arc;
+
+    pub struct Shared {
+        pub repo: Rc<Repository>,
+        pub cache: RefCell<Cache>,
+    }
+
+    /// A handle is what threaded programs would use to have thread-local but otherwise shared versions the same `Repository`.
+    ///
+    /// Mutable data present in the `Handle` itself while keeping the parent `Repository` (which has its own cache) shared.
+    /// Otherwise handles reflect the API of a `Repository`.
+    pub struct SharedArc {
+        pub repo: Arc<Repository>,
+        pub cache: RefCell<Cache>,
+    }
+
+    impl Clone for Shared {
+        fn clone(&self) -> Self {
+            Shared {
+                repo: Rc::clone(&self.repo),
+                cache: RefCell::new(Default::default()),
+            }
+        }
+    }
+
+    impl Clone for SharedArc {
+        fn clone(&self) -> Self {
+            SharedArc {
+                repo: Arc::clone(&self.repo),
+                cache: RefCell::new(Default::default()),
+            }
+        }
+    }
+
+    impl From<Repository> for Shared {
+        fn from(repo: Repository) -> Self {
+            Shared {
+                repo: Rc::new(repo),
+                cache: RefCell::new(Default::default()),
+            }
+        }
+    }
+
+    impl From<Repository> for SharedArc {
+        fn from(repo: Repository) -> Self {
+            SharedArc {
+                repo: Arc::new(repo),
+                cache: RefCell::new(Default::default()),
+            }
+        }
+    }
+
+    impl Repository {
+        pub fn into_shared(self) -> Shared {
+            self.into()
+        }
+
+        pub fn into_shared_arc(self) -> SharedArc {
+            self.into()
+        }
+    }
+}
+pub use handles::{Shared, SharedArc};
 
 #[derive(Default)]
 pub struct Cache {
@@ -99,6 +171,37 @@ pub struct Cache {
     pack: odb::pack::cache::Never, // TODO: choose great alround cache
     buf: Vec<u8>,
 }
+
+mod traits {
+    use crate::{Cache, Repository, Shared, SharedArc};
+    use std::cell::RefMut;
+
+    pub trait Access {
+        fn repo(&self) -> &Repository;
+        fn cache_mut(&self) -> RefMut<'_, Cache>;
+    }
+
+    impl Access for Shared {
+        fn repo(&self) -> &Repository {
+            self.repo.as_ref()
+        }
+
+        fn cache_mut(&self) -> RefMut<'_, Cache> {
+            self.cache.borrow_mut()
+        }
+    }
+
+    impl Access for SharedArc {
+        fn repo(&self) -> &Repository {
+            self.repo.as_ref()
+        }
+
+        fn cache_mut(&self) -> RefMut<'_, Cache> {
+            self.cache.borrow_mut()
+        }
+    }
+}
+pub use traits::Access;
 
 mod cache {
     use crate::{
@@ -122,31 +225,18 @@ mod cache {
     }
 }
 
-mod handle {
-    use crate::{Cache, Repository};
-    /// A handle is what threaded programs would use to have thread-local but otherwise shared versions the same `Repository`.
-    ///
-    /// Mutable data present in the `Handle` itself while keeping the parent `Repository` (which has its own cache) shared.
-    /// Otherwise handles reflect the API of a `Repository`.
-    pub struct Handle<'a> {
-        parent: &'a Repository,
-        cache: Cache,
-    }
+pub struct Object<'a> {
+    id: ObjectId,
+    data: odb::pack::data::Object<'a>,
+    access: &'a mut Repository,
 }
 
-mod object_impl {
-    use crate::{odb::pack, Repository};
-    use git_hash::ObjectId;
-
-    pub struct Object<'a> {
-        id: ObjectId,
-        data: pack::data::Object<'a>,
-        access: &'a mut Repository,
-    }
+pub struct Reference<'r, A> {
+    pub(crate) backing: reference::Backing,
+    pub(crate) access: &'r A,
 }
-pub use object_impl::Object;
 
-mod reference {
+pub mod reference {
     use crate::refs::mutable;
     use crate::{refs, Object, Repository};
     use git_hash::ObjectId;
@@ -165,16 +255,63 @@ mod reference {
         LooseFile(refs::file::loose::Reference),
     }
 
-    pub struct Reference<'r> {
-        pub(crate) backing: Backing,
-        pub(crate) repo: &'r Repository,
-    }
-
     // impl<'p> Reference<'p> {
     //     pub fn peel_to_end(&mut self) -> Result<Object<'p>, ()> {
     //         todo!("peel and get lazy object")
     //     }
     // }
+
+    mod access {
+        use crate::hash::ObjectId;
+        use crate::Access;
+        use crate::{
+            reference::Backing,
+            refs,
+            refs::{file::find::Error, PartialName},
+            Reference, Repository,
+        };
+        use std::cell::RefCell;
+        use std::convert::TryInto;
+
+        /// Obtain and alter references comfortably
+        pub trait ReferencesExt: Access + Sized {
+            fn find_reference<'a, Name, E>(
+                &mut self,
+                name: Name,
+            ) -> Result<Option<Reference<'_, Self>>, crate::reference::find::Error>
+            where
+                Name: TryInto<PartialName<'a>, Error = E>,
+                Error: From<E>,
+            {
+                match self
+                    .repo()
+                    .refs
+                    .find(name, self.cache_mut().packed_refs(&self.repo().refs)?)
+                {
+                    Ok(r) => match r {
+                        Some(r) => Ok(Some(Reference {
+                            backing: match r {
+                                refs::file::Reference::Packed(p) => Backing::OwnedPacked {
+                                    name: p.name.into(),
+                                    target: p.target(),
+                                    object: p
+                                        .object
+                                        .map(|hex| ObjectId::from_hex(hex).expect("a hash kind we know")),
+                                },
+                                refs::file::Reference::Loose(l) => Backing::LooseFile(l),
+                            },
+                            access: self,
+                        })),
+                        None => Ok(None),
+                    },
+                    Err(err) => Err(err.into()),
+                }
+            }
+        }
+
+        impl<A> ReferencesExt for A where A: Access + Sized {}
+    }
+    pub use access::ReferencesExt;
 
     pub mod find {
         mod error {
@@ -200,8 +337,6 @@ mod reference {
         pub use error::Error;
     }
 }
-pub use reference::Reference;
-use std::cell::RefCell;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Kind {
