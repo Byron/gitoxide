@@ -46,7 +46,6 @@
 #![deny(unsafe_code, rust_2018_idioms)]
 #![allow(missing_docs, unused)]
 
-use crate::hash::ObjectId;
 use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
@@ -67,6 +66,8 @@ pub use git_tempfile as tempfile;
 pub use git_traverse as traverse;
 #[cfg(feature = "git-url")]
 pub use git_url as url;
+
+use crate::hash::ObjectId;
 
 pub mod interrupt;
 
@@ -101,7 +102,7 @@ mod handles {
 
     pub struct Shared {
         pub repo: Rc<Repository>,
-        pub cache: RefCell<Cache>,
+        pub cache: Cache,
     }
 
     /// A handle is what threaded programs would use to have thread-local but otherwise shared versions the same `Repository`.
@@ -110,14 +111,14 @@ mod handles {
     /// Otherwise handles reflect the API of a `Repository`.
     pub struct SharedArc {
         pub repo: Arc<Repository>,
-        pub cache: RefCell<Cache>,
+        pub cache: Cache,
     }
 
     impl Clone for Shared {
         fn clone(&self) -> Self {
             Shared {
                 repo: Rc::clone(&self.repo),
-                cache: RefCell::new(Default::default()),
+                cache: Default::default(),
             }
         }
     }
@@ -126,7 +127,7 @@ mod handles {
         fn clone(&self) -> Self {
             SharedArc {
                 repo: Arc::clone(&self.repo),
-                cache: RefCell::new(Default::default()),
+                cache: Default::default(),
             }
         }
     }
@@ -135,7 +136,7 @@ mod handles {
         fn from(repo: Repository) -> Self {
             Shared {
                 repo: Rc::new(repo),
-                cache: RefCell::new(Default::default()),
+                cache: Default::default(),
             }
         }
     }
@@ -144,7 +145,7 @@ mod handles {
         fn from(repo: Repository) -> Self {
             SharedArc {
                 repo: Arc::new(repo),
-                cache: RefCell::new(Default::default()),
+                cache: Default::default(),
             }
         }
     }
@@ -163,9 +164,9 @@ pub use handles::{Shared, SharedArc};
 
 #[derive(Default)]
 pub struct Cache {
-    packed_refs: Option<refs::packed::Buffer>,
-    pub pack: odb::pack::cache::Never, // TODO: choose great alround cache
-    pub buf: Vec<u8>,
+    packed_refs: RefCell<Option<refs::packed::Buffer>>,
+    pub pack: RefCell<odb::pack::cache::Never>, // TODO: choose great all-round cache
+    pub buf: RefCell<Vec<u8>>,
 }
 
 mod traits {
@@ -175,7 +176,7 @@ mod traits {
 
     pub trait Access {
         fn repo(&self) -> &Repository;
-        fn cache_mut(&self) -> RefMut<'_, Cache>;
+        fn cache(&self) -> &Cache;
     }
 
     impl Access for Shared {
@@ -183,8 +184,8 @@ mod traits {
             self.repo.as_ref()
         }
 
-        fn cache_mut(&self) -> RefMut<'_, Cache> {
-            self.cache.borrow_mut()
+        fn cache(&self) -> &Cache {
+            &self.cache
         }
     }
 
@@ -193,31 +194,28 @@ mod traits {
             self.repo.as_ref()
         }
 
-        fn cache_mut(&self) -> RefMut<'_, Cache> {
-            self.cache.borrow_mut()
+        fn cache(&self) -> &Cache {
+            &self.cache
         }
     }
 }
 pub use traits::Access;
 
 mod cache {
+    use std::{cell::Ref, ops::DerefMut};
+
     use crate::{
         refs::{file, packed},
         Cache,
     };
 
     impl Cache {
-        pub fn packed_refs(
-            &mut self,
-            file: &file::Store,
-        ) -> Result<Option<&packed::Buffer>, packed::buffer::open::Error> {
-            match self.packed_refs {
-                Some(ref packed) => Ok(Some(packed)),
-                None => {
-                    self.packed_refs = file.packed()?;
-                    Ok(self.packed_refs.as_ref())
-                }
+        pub fn assure_packed_refs_present(&self, file: &file::Store) -> Result<(), packed::buffer::open::Error> {
+            use std::ops::Deref;
+            if self.packed_refs.borrow().is_none() {
+                *self.packed_refs.borrow_mut().deref_mut() = file.packed()?;
             }
+            Ok(())
         }
     }
 }
@@ -266,8 +264,9 @@ pub struct Reference<'r, A> {
 }
 
 pub mod reference {
-    use crate::{hash::ObjectId, refs, refs::mutable, Access, Object, Reference, Repository};
-    use std::cell::RefCell;
+    use std::{cell::RefCell, ops::DerefMut};
+
+    use crate::{hash::ObjectId, odb::Find, refs, refs::mutable, Access, Object, Reference, Repository};
 
     pub(crate) enum Backing {
         OwnedPacked {
@@ -343,16 +342,14 @@ pub mod reference {
             let repo = self.access.repo();
             match self.backing.take().expect("a ref must be set") {
                 Backing::LooseFile(mut r) => {
+                    let cache = self.access.cache();
+                    cache.assure_packed_refs_present(&repo.refs)?;
                     let oid = r
-                        .peel_to_id_in_place(
-                            &repo.refs,
-                            self.access.cache_mut().packed_refs(&repo.refs)?,
-                            |oid, buf| {
-                                repo.odb
-                                    .find(oid, buf, &mut self.access.cache_mut().pack)
-                                    .map(|po| po.map(|o| (o.kind, o.data)))
-                            },
-                        )?
+                        .peel_to_id_in_place(&repo.refs, cache.packed_refs.borrow().as_ref(), |oid, buf| {
+                            repo.odb
+                                .find(oid, buf, cache.pack.borrow_mut().deref_mut())
+                                .map(|po| po.map(|o| (o.kind, o.data)))
+                        })?
                         .to_owned();
                     self.backing = Backing::LooseFile(r).into();
                     Ok(Object::try_from_oid(oid, self.access).unwrap())
@@ -398,11 +395,9 @@ pub mod reference {
                 Name: TryInto<PartialName<'a>, Error = E>,
                 Error: From<E>,
             {
-                match self
-                    .repo()
-                    .refs
-                    .find(name, self.cache_mut().packed_refs(&self.repo().refs)?)
-                {
+                let cache = self.cache();
+                cache.assure_packed_refs_present(&self.repo().refs)?;
+                match self.repo().refs.find(name, cache.packed_refs.borrow().as_ref()) {
                     Ok(r) => match r {
                         Some(r) => Ok(Some(Reference::from_ref(r, self))),
                         None => Ok(None),
@@ -414,7 +409,6 @@ pub mod reference {
 
         impl<A> ReferencesExt for A where A: Access + Sized {}
     }
-    use crate::odb::Find;
     pub use access::ReferencesExt;
 
     pub mod find {

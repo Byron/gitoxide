@@ -6,15 +6,14 @@ fn repo() -> crate::Result<git_repository::Shared> {
 }
 
 mod find {
-    use git_repository::prelude::*;
-
-    use crate::reference::repo;
-    use git_repository::refs;
-    use git_testtools::hex_to_id;
     use std::convert::TryInto;
 
+    use git_repository::{prelude::*, refs};
+    use git_testtools::hex_to_id;
+
+    use crate::reference::repo;
+
     #[test]
-    #[ignore]
     fn find_and_peel() {
         let repo = repo().unwrap();
         let mut packed_tag_ref = repo.find_reference("dt1").unwrap().expect("tag to exist");
