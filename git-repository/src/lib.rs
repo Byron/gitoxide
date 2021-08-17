@@ -127,7 +127,6 @@ pub(crate) use traits::Access;
 
 pub struct Object<'r, A> {
     id: ObjectId,
-    // data: odb::pack::data::Object<'a>,
     access: &'r A,
 }
 

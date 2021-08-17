@@ -22,7 +22,7 @@ impl<'repo, A> std::fmt::Debug for Object<'repo, A> {
 
 pub struct Data<'repo> {
     pub kind: Kind,
-    pub data: Ref<'repo, [u8]>,
+    pub bytes: Ref<'repo, [u8]>,
 }
 
 pub mod find {
@@ -86,12 +86,12 @@ where
 
         Ok(Data {
             kind,
-            data: Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice()),
+            bytes: Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice()),
         })
     }
 
     // TODO: tests
-    pub fn peel_to_kind(&self, kind: Kind) -> Result<Self, peel_to_kind::Error> {
+    pub fn peel_to_kind(&self, kind: Kind) -> Result<(Self, Data<'repo>), peel_to_kind::Error> {
         let mut id = self.id;
         let mut buf = self.access.cache().buf.borrow_mut();
         let mut cursor =
@@ -101,7 +101,17 @@ where
                 .find_existing(&id, &mut buf, self.access.cache().pack.borrow_mut().deref_mut())?;
         loop {
             match cursor.kind {
-                any_kind if kind == any_kind => return Ok(Object::from_id(id, self.access)),
+                any_kind if kind == any_kind => {
+                    let kind = cursor.kind;
+                    drop(cursor);
+                    return Ok((
+                        Object::from_id(id, self.access),
+                        Data {
+                            kind,
+                            bytes: Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice()),
+                        },
+                    ));
+                }
                 Kind::Commit => {
                     id = cursor.into_commit_iter().expect("commit").tree_id().expect("id");
                     cursor = self.access.repo().odb.find_existing(
