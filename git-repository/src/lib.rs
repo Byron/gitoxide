@@ -165,8 +165,8 @@ pub use handles::{Shared, SharedArc};
 #[derive(Default)]
 pub struct Cache {
     packed_refs: RefCell<Option<refs::packed::Buffer>>,
-    pub pack: RefCell<odb::pack::cache::Never>, // TODO: choose great all-round cache
-    pub buf: RefCell<Vec<u8>>,
+    pub(crate) pack: RefCell<odb::pack::cache::Never>, // TODO: choose great all-round cache
+    pub(crate) buf: RefCell<Vec<u8>>,
 }
 
 mod traits {
@@ -199,7 +199,7 @@ mod traits {
         }
     }
 }
-pub use traits::Access;
+pub(crate) use traits::Access;
 
 mod cache {
     use std::{cell::Ref, ops::DerefMut};
