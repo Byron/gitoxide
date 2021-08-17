@@ -74,6 +74,7 @@ mod tree {
 pub use tree::TreeIterExt;
 
 mod object_id {
+    use crate::{Access, Object};
     use git_hash::{oid, ObjectId};
     use git_object::immutable;
     #[cfg(feature = "git-traverse")]
@@ -86,6 +87,8 @@ mod object_id {
         fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&oid) -> bool, State>
         where
             Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>;
+
+        fn attach<A: Access + Sized>(self, access: &A) -> Object<'_, A>;
     }
 
     impl Sealed for ObjectId {}
@@ -96,6 +99,10 @@ mod object_id {
             Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>,
         {
             Ancestors::new(Some(self), State::default(), find)
+        }
+
+        fn attach<A: Access + Sized>(self, access: &A) -> Object<'_, A> {
+            Object::from_id(self, access)
         }
     }
 }

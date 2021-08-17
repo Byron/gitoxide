@@ -64,6 +64,14 @@ where
         &self.id
     }
 
+    pub fn into_id(self) -> ObjectId {
+        self.id
+    }
+
+    pub fn detach(self) -> ObjectId {
+        self.id
+    }
+
     /// Makes all lower level objects and iterators accessible
     fn raw(&self) -> Result<Data<'repo>, find::existing::Error> {
         let mut buf = self.access.cache().buf.borrow_mut();
