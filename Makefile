@@ -4,10 +4,16 @@ help:  ## Display this help
 
 always:
 
-##@ Publishing
+##@ Publishing & Versioning
 
-try-publish-all: target/debug/utils ## Dry-run publish all crates in the currently set version if they are not published yet.
+try-publish-all: ## Dry-run publish all crates in the currently set version if they are not published yet.
 	cargo run --package cargo-smart-release -- smart-release gitoxide
+
+try-bump-minor-version: ## Show how updating the minor version of PACKAGE=<name> would look like.
+	cargo run --package cargo-smart-release -- smart-release --update-crates-index --bump minor --skip-dependencies --skip-publish --skip-tag --skip-push -v $(PACKAGE)
+
+bump-minor-version: ## Similar to try-bump-minor-version, but actually performs the operation on PACKAGE=<name>
+	cargo run --package cargo-smart-release -- smart-release --update-crates-index --bump minor --skip-dependencies --skip-publish --skip-tag --skip-push -v $(PACKAGE) --execute
 
 ##@ Release Builds
 

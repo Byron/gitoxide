@@ -95,8 +95,11 @@ pub fn release(options: Options, crates: Vec<String>, bump: String, bump_depende
 
 fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     let meta = &ctx.meta;
-    let changed_crate_names_to_publish =
-        traverse_dependencies_and_find_crates_for_publishing(meta, &ctx.crate_names, &ctx, options)?;
+    let changed_crate_names_to_publish = if options.skip_dependencies {
+        ctx.crate_names.clone()
+    } else {
+        traverse_dependencies_and_find_crates_for_publishing(meta, &ctx.crate_names, &ctx, options)?
+    };
 
     let crates_to_publish_together = resolve_cycles_with_publish_group(meta, &changed_crate_names_to_publish, options)?;
 

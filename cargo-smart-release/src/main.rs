@@ -24,6 +24,7 @@ fn main() -> anyhow::Result<()> {
             dry_run_cargo_publish,
             update_crates_index,
             no_bump_on_demand,
+            skip_dependencies,
         }) => command::release(
             command::release::Options {
                 dry_run: !execute,
@@ -34,6 +35,7 @@ fn main() -> anyhow::Result<()> {
                 skip_publish,
                 skip_tag,
                 skip_push,
+                skip_dependencies,
                 dry_run_cargo_publish,
                 no_verify: dangerously_pass_no_verify,
                 allow_auto_publish_of_stable_crates,

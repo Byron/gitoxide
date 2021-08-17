@@ -26,7 +26,15 @@ pub struct SmartRelease {
     #[argh(switch, short = 'n')]
     pub execute: bool,
 
+    /// provide more detailed messages on the INFO log level in dry-run mode.
+    ///
+    /// Note --verbose is implied with --execute.
+    #[argh(switch, short = 'v')]
+    pub verbose: bool,
+
     /// always bump versions as specified by --bump or --bump-dependencies even if this is not required.
+    ///
+    /// If it's required or not is determined by looking at the published versions in the crates index.
     #[argh(switch, short = 'd')]
     pub no_bump_on_demand: bool,
 
@@ -44,12 +52,6 @@ pub struct SmartRelease {
     #[argh(switch, short = 'u')]
     pub update_crates_index: bool,
 
-    /// provide more detailed messages on the INFO log level in dry-run mode.
-    ///
-    /// Note --verbose is implied with --execute.
-    #[argh(switch, short = 'v')]
-    pub verbose: bool,
-
     /// allow discovery of changed crates to also publish stable crates, bumping their version according to --bump <spec>.
     #[argh(switch)]
     pub allow_auto_publish_of_stable_crates: bool,
@@ -66,6 +68,12 @@ pub struct SmartRelease {
     /// don't push tags and the HEAD branch after any successful run of `cargo publish`.
     #[argh(switch)]
     pub skip_push: bool,
+
+    /// do not take into consideration any dependencies of the crates to publish.
+    ///
+    /// This flag is useful when various `--skip-X` are specified in order to bump versions only, without publishing.
+    #[argh(switch)]
+    pub skip_dependencies: bool,
 
     /// pass --no-verify to 'cargo publish' which should only be a last resort when fixing up packages that
     /// otherwise wouldn't publish, but need to be publish to resolve the situation.

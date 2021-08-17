@@ -1,3 +1,9 @@
+### v0.2.5 (2021-08-XX)
+
+- add `--skip-dependencies` flag
+- add `--verbose` flag and be less verbose in dry-runs by default to provide only essential information
+- improvements to notification clarity
+
 ### v0.2.4 (2021-08-15)
 
 - Fix auto-push functionality

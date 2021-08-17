@@ -14,6 +14,7 @@ pub mod release {
         pub no_bump_on_demand: bool,
         pub verbose: bool,
         pub skip_push: bool,
+        pub skip_dependencies: bool,
     }
 }
 #[path = "release/mod.rs"]
