@@ -228,17 +228,46 @@ pub struct Object<'r, A> {
     access: &'r A,
 }
 
+mod object_impl {
+    use crate::{
+        hash::{oid, ObjectId},
+        Access, Object,
+    };
+
+    impl<'repo, A, B> PartialEq<Object<'repo, A>> for Object<'repo, B> {
+        fn eq(&self, other: &Object<'repo, A>) -> bool {
+            self.id == other.id
+        }
+    }
+
+    impl<'repo, A> std::fmt::Debug for Object<'repo, A> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            self.id.fmt(f)
+        }
+    }
+
+    impl<'repo, A> Object<'repo, A>
+    where
+        A: Access + Sized,
+    {
+        pub(crate) fn try_from_oid(oid: impl Into<ObjectId>, access: &'repo A) -> Result<Self, ()> {
+            Ok(Object { id: oid.into(), access })
+        }
+
+        pub fn id(&self) -> &oid {
+            &self.id
+        }
+    }
+}
+
 pub struct Reference<'r, A> {
     pub(crate) backing: Option<reference::Backing>,
     pub(crate) access: &'r A,
 }
 
 pub mod reference {
+    use crate::{hash::ObjectId, refs, refs::mutable, Access, Object, Reference, Repository};
     use std::cell::RefCell;
-
-    use git_hash::ObjectId;
-
-    use crate::{refs, refs::mutable, Access, Object, Reference, Repository};
 
     pub(crate) enum Backing {
         OwnedPacked {
@@ -275,27 +304,74 @@ pub mod reference {
         }
     }
 
-    impl<'r, A> Reference<'r, A>
+    impl<'repo, A> Reference<'repo, A>
     where
         A: Access + Sized,
     {
-        pub fn peel_to_id_in_place(&mut self) -> Result<Object<'r, A>, peel_to_id_in_place::Error> {
-            let repo = self.access.repo();
-            match &mut self.backing.take().expect("a ref must be set") {
-                Backing::LooseFile(r) => {
-                    let oid = r.peel_to_id_in_place(
-                        &repo.refs,
-                        self.access.cache_mut().packed_refs(&repo.refs)?,
-                        |oid, buf| {
-                            repo.odb
-                                .find(oid, buf, &mut self.access.cache_mut().pack)
-                                .map(|po| po.map(|o| (o.kind, o.data)))
-                        },
-                    )?;
-                    todo!("loose peeling")
+        pub(crate) fn from_ref(reference: refs::file::Reference<'_>, access: &'repo A) -> Self {
+            Reference {
+                backing: match reference {
+                    refs::file::Reference::Packed(p) => Backing::OwnedPacked {
+                        name: p.name.into(),
+                        target: p.target(),
+                        object: p
+                            .object
+                            .map(|hex| ObjectId::from_hex(hex).expect("a hash kind we know")),
+                    },
+                    refs::file::Reference::Loose(l) => Backing::LooseFile(l),
                 }
-                Backing::OwnedPacked { name, target, object } => {
-                    todo!("packed peeling")
+                .into(),
+                access,
+            }
+        }
+        pub fn target(&self) -> refs::mutable::Target {
+            match self.backing.as_ref().expect("always set") {
+                Backing::OwnedPacked { target, .. } => mutable::Target::Peeled(target.to_owned()),
+                Backing::LooseFile(r) => r.target.clone(),
+            }
+        }
+
+        pub fn name(&self) -> refs::FullName<'_> {
+            match self.backing.as_ref().expect("always set") {
+                Backing::OwnedPacked { name, .. } => &name,
+                Backing::LooseFile(r) => &r.name,
+            }
+            .borrow()
+        }
+
+        pub fn peel_to_object_in_place(&mut self) -> Result<Object<'repo, A>, peel_to_id_in_place::Error> {
+            let repo = self.access.repo();
+            match self.backing.take().expect("a ref must be set") {
+                Backing::LooseFile(mut r) => {
+                    let oid = r
+                        .peel_to_id_in_place(
+                            &repo.refs,
+                            self.access.cache_mut().packed_refs(&repo.refs)?,
+                            |oid, buf| {
+                                repo.odb
+                                    .find(oid, buf, &mut self.access.cache_mut().pack)
+                                    .map(|po| po.map(|o| (o.kind, o.data)))
+                            },
+                        )?
+                        .to_owned();
+                    self.backing = Backing::LooseFile(r).into();
+                    Ok(Object::try_from_oid(oid, self.access).unwrap())
+                }
+                Backing::OwnedPacked {
+                    mut target,
+                    mut object,
+                    name,
+                } => {
+                    if let Some(peeled_id) = object.take() {
+                        target = peeled_id;
+                    }
+                    self.backing = Backing::OwnedPacked {
+                        name,
+                        target,
+                        object: None,
+                    }
+                    .into();
+                    Ok(Object::try_from_oid(target, self.access).unwrap())
                 }
             }
         }
@@ -328,20 +404,7 @@ pub mod reference {
                     .find(name, self.cache_mut().packed_refs(&self.repo().refs)?)
                 {
                     Ok(r) => match r {
-                        Some(r) => Ok(Some(Reference {
-                            backing: match r {
-                                refs::file::Reference::Packed(p) => Backing::OwnedPacked {
-                                    name: p.name.into(),
-                                    target: p.target(),
-                                    object: p
-                                        .object
-                                        .map(|hex| ObjectId::from_hex(hex).expect("a hash kind we know")),
-                                },
-                                refs::file::Reference::Loose(l) => Backing::LooseFile(l),
-                            }
-                            .into(),
-                            access: self,
-                        })),
+                        Some(r) => Ok(Some(Reference::from_ref(r, self))),
                         None => Ok(None),
                     },
                     Err(err) => Err(err.into()),
