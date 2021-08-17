@@ -3,11 +3,13 @@ mod tree {
 
     use git_hash::oid;
     use git_object::immutable;
+    #[cfg(feature = "git-traverse")]
     use git_traverse::tree::breadthfirst;
 
     pub trait Sealed {}
 
     pub trait TreeIterExt: Sealed {
+        #[cfg(feature = "git-diff")]
         fn changes_needed<FindFn, R, StateMut>(
             &self,
             other: immutable::TreeIter<'_>,
@@ -21,6 +23,7 @@ mod tree {
             StateMut: BorrowMut<git_diff::tree::State>;
 
         /// Use this for squeezing out the last bits of performance.
+        #[cfg(feature = "git-traverse")]
         fn traverse<StateMut, Find, V>(
             &self,
             state: StateMut,
@@ -36,6 +39,7 @@ mod tree {
     impl<'d> Sealed for immutable::TreeIter<'d> {}
 
     impl<'d> TreeIterExt for immutable::TreeIter<'d> {
+        #[cfg(feature = "git-diff")]
         fn changes_needed<FindFn, R, StateMut>(
             &self,
             other: immutable::TreeIter<'_>,
@@ -51,6 +55,7 @@ mod tree {
             git_diff::tree::Changes::from(Some(self.clone())).needed_to_obtain(other, state, find, delegate)
         }
 
+        #[cfg(feature = "git-traverse")]
         fn traverse<StateMut, Find, V>(
             &self,
             state: StateMut,
@@ -71,11 +76,13 @@ pub use tree::TreeIterExt;
 mod object_id {
     use git_hash::{oid, ObjectId};
     use git_object::immutable;
+    #[cfg(feature = "git-traverse")]
     use git_traverse::commit::ancestors::{Ancestors, State};
 
     pub trait Sealed {}
 
     pub trait ObjectIdExt: Sealed {
+        #[cfg(feature = "git-traverse")]
         fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&oid) -> bool, State>
         where
             Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>;
@@ -83,6 +90,7 @@ mod object_id {
 
     impl Sealed for ObjectId {}
     impl ObjectIdExt for ObjectId {
+        #[cfg(feature = "git-traverse")]
         fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&oid) -> bool, State>
         where
             Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>,
@@ -116,9 +124,8 @@ pub(crate) mod access {
                 Name: TryInto<PartialName<'a>, Error = E>,
                 Error: From<E>,
             {
-                Ok(self
-                    .find_reference(name)?
-                    .ok_or_else(|| reference::find::existing::Error::NotFound)?)
+                self.find_reference(name)?
+                    .ok_or(reference::find::existing::Error::NotFound)
             }
 
             fn find_reference<'a, Name, E>(

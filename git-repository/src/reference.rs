@@ -66,7 +66,7 @@ where
 
     pub fn name(&self) -> refs::FullName<'_> {
         match self.backing.as_ref().expect("always set") {
-            Backing::OwnedPacked { name, .. } => &name,
+            Backing::OwnedPacked { name, .. } => name,
             Backing::LooseFile(r) => &r.name,
         }
         .borrow()

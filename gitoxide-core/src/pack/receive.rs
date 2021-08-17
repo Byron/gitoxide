@@ -150,7 +150,7 @@ mod async_io {
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
     use git_repository::{
-        object::bstr::{BString, ByteSlice},
+        objs::bstr::{BString, ByteSlice},
         odb::pack,
         protocol,
         protocol::fetch::{Ref, Response},

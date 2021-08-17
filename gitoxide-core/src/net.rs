@@ -48,7 +48,7 @@ mod async_io {
     use async_net::TcpStream;
     use futures_lite::FutureExt;
     use git_repository::{
-        object::bstr::BString,
+        objs::bstr::BString,
         protocol::{
             transport,
             transport::{

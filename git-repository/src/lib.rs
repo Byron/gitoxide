@@ -71,7 +71,6 @@ use crate::hash::ObjectId;
 
 pub mod interrupt;
 
-#[cfg(feature = "git-traverse")]
 pub mod ext;
 pub mod prelude {
     pub use git_features::parallel::reduce::Finalize;

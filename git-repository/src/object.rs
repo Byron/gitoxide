@@ -76,7 +76,7 @@ where
 
     // TODO: tests
     pub fn peel_to_kind(&self, kind: Kind) -> Result<Self, peel_to_kind::Error> {
-        let mut id = self.id.clone();
+        let mut id = self.id;
         let mut buf = self.access.cache().buf.borrow_mut();
         let mut cursor =
             self.access
