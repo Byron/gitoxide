@@ -1,6 +1,6 @@
 [package]
 name = "git-odb"
-version = "0.20.1"
+version = "0.20.2"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
