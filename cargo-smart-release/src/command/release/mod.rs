@@ -10,9 +10,8 @@ mod utils;
 use crates_index::Index;
 use git_repository::hash::ObjectId;
 use utils::{
-    bump_spec_may_cause_empty_commits, is_dependency_with_version_requirement, is_workspace_member, names_and_versions,
-    package_by_id, package_by_name, package_eq_dependency, package_for_dependency, tag_name_for, will,
-    workspace_package_by_id,
+    is_dependency_with_version_requirement, is_workspace_member, names_and_versions, package_by_id, package_by_name,
+    package_eq_dependency, package_for_dependency, tag_name_for, will, workspace_package_by_id,
 };
 
 mod cargo;
@@ -162,13 +161,7 @@ fn perforrm_multi_version_release(
         names_and_versions(&crates_to_publish_together)
     );
 
-    let commit_id = manifest::edit_version_and_fixup_dependent_crates(
-        meta,
-        &crates_to_publish_together,
-        bump_spec_may_cause_empty_commits(&ctx.bump) && bump_spec_may_cause_empty_commits(&ctx.bump_dependencies),
-        options,
-        ctx,
-    )?;
+    let commit_id = manifest::edit_version_and_fixup_dependent_crates(meta, &crates_to_publish_together, options, ctx)?;
 
     crates_to_publish_together.reverse();
     let mut tag_names = Vec::new();
@@ -469,13 +462,8 @@ fn perform_single_release(
         new_version
     );
     let new_version = new_version.to_string();
-    let commit_id = manifest::edit_version_and_fixup_dependent_crates(
-        meta,
-        &[(publishee, new_version.clone())],
-        bump_spec_may_cause_empty_commits(bump_spec),
-        options,
-        ctx,
-    )?;
+    let commit_id =
+        manifest::edit_version_and_fixup_dependent_crates(meta, &[(publishee, new_version.clone())], options, ctx)?;
     cargo::publish_crate(publishee, &[], options)?;
     Ok((new_version, commit_id))
 }

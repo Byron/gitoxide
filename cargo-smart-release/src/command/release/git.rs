@@ -182,6 +182,8 @@ fn resolve_tree_id_from_ref_target(mut id: ObjectId, repo: &Repository, buf: &mu
 
 pub(in crate::command::release_impl) fn commit_changes(
     message: impl AsRef<str>,
+    verbose: bool,
+    dry_run: bool,
     empty_commit_possible: bool,
     ctx: &Context,
 ) -> anyhow::Result<ObjectId> {
@@ -191,6 +193,13 @@ pub(in crate::command::release_impl) fn commit_changes(
     if empty_commit_possible {
         cmd.arg("--allow-empty");
     }
+    if verbose {
+        log::info!("{} run {:?}", will(dry_run), cmd);
+    }
+    if dry_run {
+        return Ok(ObjectId::null_sha1());
+    }
+
     if !cmd.status()?.success() {
         bail!("Failed to commit changed manifests");
     }

@@ -13,10 +13,6 @@ pub fn is_dependency_with_version_requirement(dep: &Dependency) -> bool {
     !dep.req.comparators.is_empty()
 }
 
-pub fn bump_spec_may_cause_empty_commits(bump_spec: &str) -> bool {
-    bump_spec == "keep"
-}
-
 pub fn is_workspace_member(meta: &Metadata, crate_name: &str) -> bool {
     workspace_package_by_name(meta, crate_name).is_some()
 }

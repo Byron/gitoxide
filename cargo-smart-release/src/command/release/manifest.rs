@@ -7,14 +7,13 @@ use semver::{Op, Version, VersionReq};
 
 use super::{
     cargo, git,
-    utils::{names_and_versions, package_by_id, package_eq_dependency},
+    utils::{names_and_versions, package_by_id, package_eq_dependency, will},
     Context, Options,
 };
 
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates(
     meta: &Metadata,
     publishees: &[(&Package, String)],
-    empty_commit_possible: bool,
     Options { verbose, dry_run, .. }: Options,
     ctx: &Context,
 ) -> anyhow::Result<ObjectId> {
@@ -52,11 +51,12 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates(
         packages_to_fix.push(package_to_fix);
     }
 
+    let mut made_change = false;
     for (publishee, new_version) in publishees {
         let mut lock = locks_by_manifest_path
             .get_mut(&publishee.manifest_path)
             .expect("lock available");
-        set_version_and_update_package_dependency(
+        made_change |= set_version_and_update_package_dependency(
             publishee,
             Some(&new_version.to_string()),
             publishees,
@@ -69,25 +69,23 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates(
         let mut lock = locks_by_manifest_path
             .get_mut(&package_to_update.manifest_path)
             .expect("lock written once");
-        set_version_and_update_package_dependency(package_to_update, None, publishees, &mut lock, verbose)?;
+        made_change |=
+            set_version_and_update_package_dependency(package_to_update, None, publishees, &mut lock, verbose)?;
     }
 
     let message = format!("Release {}", names_and_versions(publishees));
-    if dry_run {
-        if verbose {
-            log::info!("WOULD commit changes to manifests with {:?}", message);
-        }
-        Ok(ObjectId::null_sha1())
-    } else {
-        log::info!("Will persist changes to manifests");
+    if verbose {
+        log::info!("{} persist changes to manifests with: {:?}", will(dry_run), message);
+    }
+    if !dry_run {
         for manifest_lock in locks_by_manifest_path.into_values() {
             manifest_lock.commit()?;
         }
         // This is dangerous as incompatibilities can happen here, leaving the working tree dirty.
         // For now we leave it that way without auto-restoring originals to facilitate debugging.
         cargo::refresh_lock_file()?;
-        git::commit_changes(message, empty_commit_possible, ctx)
     }
+    git::commit_changes(message, verbose, dry_run, !made_change, ctx)
 }
 
 fn set_version_and_update_package_dependency(
@@ -96,7 +94,7 @@ fn set_version_and_update_package_dependency(
     publishees: &[(&Package, String)],
     mut out: impl std::io::Write,
     verbose: bool,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<bool> {
     let manifest = std::fs::read_to_string(&package_to_update.manifest_path)?;
     let mut doc = toml_edit::Document::from_str(&manifest)?;
 
@@ -152,7 +150,8 @@ fn set_version_and_update_package_dependency(
             }
         }
     }
-    out.write_all(doc.to_string_in_original_order().as_bytes())?;
+    let new_manifest = doc.to_string_in_original_order();
+    out.write_all(new_manifest.as_bytes())?;
 
-    Ok(())
+    Ok(manifest != new_manifest)
 }
