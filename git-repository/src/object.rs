@@ -3,8 +3,9 @@ pub use git_object::Kind;
 use crate::odb::FindExt;
 use crate::{
     hash::{oid, ObjectId},
-    Access, Object,
+    object, odb, Access, Object,
 };
+use std::cell::Ref;
 use std::ops::DerefMut;
 
 impl<'repo, A, B> PartialEq<Object<'repo, A>> for Object<'repo, B> {
@@ -19,14 +20,22 @@ impl<'repo, A> std::fmt::Debug for Object<'repo, A> {
     }
 }
 
+pub mod find {
+    pub mod existing {
+        use crate::odb;
+
+        pub type Error = odb::pack::find::existing::Error<odb::compound::find::Error>;
+    }
+}
+
 pub mod peel_to_kind {
-    use crate::{hash::ObjectId, object, odb};
+    use crate::{hash::ObjectId, object, object::find, odb};
     use quick_error::quick_error;
 
     quick_error! {
         #[derive(Debug)]
         pub enum Error {
-            FindExisting(err: odb::pack::find::existing::Error<odb::compound::find::Error>) {
+            FindExisting(err: find::existing::Error) {
                 display("A non existing object was encountered during object peeling")
                 from()
                 source(err)
@@ -48,6 +57,21 @@ where
 
     pub fn id(&self) -> &oid {
         &self.id
+    }
+
+    /// Makes all lower level objects and iterators accessible
+    fn raw(&self) -> Result<(object::Kind, Ref<'_, [u8]>), find::existing::Error> {
+        let mut buf = self.access.cache().buf.borrow_mut();
+        let kind = {
+            let obj = self.access.repo().odb.find_existing(
+                &self.id,
+                &mut buf,
+                self.access.cache().pack.borrow_mut().deref_mut(),
+            )?;
+            obj.kind
+        };
+
+        Ok((kind, Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice())))
     }
 
     // TODO: tests
