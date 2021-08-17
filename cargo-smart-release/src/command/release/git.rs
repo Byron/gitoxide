@@ -62,10 +62,8 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
     let target = ctx
         .git_easy
         .find_existing_reference("HEAD")?
-        .peel_to_object_in_place()?
-        .id()
-        .to_owned();
-    let released_target = tag_ref.peel_to_object_in_place()?.id().to_owned();
+        .peel_to_object_in_place()?;
+    let released_target = tag_ref.peel_to_object_in_place()?;
 
     if repo_relative_crate_dir.as_os_str().is_empty() {
         Ok(target != released_target)
@@ -74,13 +72,13 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
 
         let current_dir_id = find_directory_id_in_tree(
             repo_relative_crate_dir,
-            resolve_tree_id_from_ref_target(target, &ctx.git_easy, &mut buf)?,
+            target.peel_to_kind(object::Kind::Tree)?.id(),
             &ctx.git_easy,
             &mut buf,
         )?;
         let released_dir_id = find_directory_id_in_tree(
             repo_relative_crate_dir,
-            resolve_tree_id_from_ref_target(released_target, &ctx.git_easy, &mut buf)?,
+            released_target.peel_to_kind(object::Kind::Tree)?.id(),
             &ctx.git_easy,
             &mut buf,
         )?;
@@ -119,10 +117,11 @@ pub fn assure_clean_working_tree() -> anyhow::Result<()> {
 
 fn find_directory_id_in_tree(
     path: &Utf8Path,
-    id: ObjectId,
+    id: impl Into<ObjectId>,
     shared: &git_repository::Easy,
     buf: &mut Vec<u8>,
 ) -> anyhow::Result<ObjectId> {
+    let id = id.into();
     let mut tree_id = None::<ObjectId>;
 
     for component in path.components() {
@@ -152,31 +151,6 @@ fn find_directory_id_in_tree(
     }
 
     tree_id.ok_or_else(|| anyhow!("path '{}' didn't exist in tree {}", path, id))
-}
-
-/// Note that borrowchk doesn't like us to return an immutable, decoded tree which we would otherwise do. Chalk/polonius could allow that,
-/// preventing a duplicate lookup.
-fn resolve_tree_id_from_ref_target(
-    mut id: ObjectId,
-    shared: &git_repository::Easy,
-    buf: &mut Vec<u8>,
-) -> anyhow::Result<ObjectId> {
-    let mut cursor = shared.repo.odb.find_existing(id, buf, &mut pack::cache::Never)?;
-    loop {
-        match cursor.kind {
-            object::Kind::Tree => return Ok(id),
-            object::Kind::Commit => {
-                id = cursor.into_commit_iter().expect("commit").tree_id().expect("id");
-                cursor = shared.repo.odb.find_existing(id, buf, &mut pack::cache::Never)?;
-            }
-            object::Kind::Tag | object::Kind::Blob => {
-                bail!(
-                    "A ref ultimately points to a blob or tag {} but we need a tree, peeling takes care of tags",
-                    id
-                )
-            }
-        }
-    }
 }
 
 pub(in crate::command::release_impl) fn commit_changes(

@@ -86,7 +86,7 @@ where
                     })?
                     .to_owned();
                 self.backing = Backing::LooseFile(r).into();
-                Ok(Object::try_from_oid(oid, self.access).unwrap())
+                Ok(Object::from_id(oid, self.access))
             }
             Backing::OwnedPacked {
                 mut target,
@@ -102,7 +102,7 @@ where
                     object: None,
                 }
                 .into();
-                Ok(Object::try_from_oid(target, self.access).unwrap())
+                Ok(Object::from_id(target, self.access))
             }
         }
     }
