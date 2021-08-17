@@ -163,24 +163,29 @@ pub use handles::{Shared, SharedArc};
 
 #[derive(Default)]
 pub struct Cache {
-    packed_refs: Option<refs::packed::Buffer>,
+    pub packed_refs: Option<refs::packed::Buffer>,
     pub pack: odb::pack::cache::Never, // TODO: choose great alround cache
     pub buf: Vec<u8>,
 }
 
 mod traits {
-    use std::cell::RefMut;
+    use std::cell::{Ref, RefMut};
 
     use crate::{Cache, Repository, Shared, SharedArc};
 
     pub trait Access {
         fn repo(&self) -> &Repository;
+        fn cache(&self) -> Ref<'_, Cache>;
         fn cache_mut(&self) -> RefMut<'_, Cache>;
     }
 
     impl Access for Shared {
         fn repo(&self) -> &Repository {
             self.repo.as_ref()
+        }
+
+        fn cache(&self) -> Ref<'_, Cache> {
+            self.cache.borrow()
         }
 
         fn cache_mut(&self) -> RefMut<'_, Cache> {
@@ -191,6 +196,10 @@ mod traits {
     impl Access for SharedArc {
         fn repo(&self) -> &Repository {
             self.repo.as_ref()
+        }
+
+        fn cache(&self) -> Ref<'_, Cache> {
+            self.cache.borrow()
         }
 
         fn cache_mut(&self) -> RefMut<'_, Cache> {
@@ -343,16 +352,13 @@ pub mod reference {
             let repo = self.access.repo();
             match self.backing.take().expect("a ref must be set") {
                 Backing::LooseFile(mut r) => {
+                    self.access.cache_mut().packed_refs(&repo.refs)?;
                     let oid = r
-                        .peel_to_id_in_place(
-                            &repo.refs,
-                            self.access.cache_mut().packed_refs(&repo.refs)?,
-                            |oid, buf| {
-                                repo.odb
-                                    .find(oid, buf, &mut self.access.cache_mut().pack)
-                                    .map(|po| po.map(|o| (o.kind, o.data)))
-                            },
-                        )?
+                        .peel_to_id_in_place(&repo.refs, self.access.cache().packed_refs.as_ref(), |oid, buf| {
+                            repo.odb
+                                .find(oid, buf, &mut self.access.cache_mut().pack)
+                                .map(|po| po.map(|o| (o.kind, o.data)))
+                        })?
                         .to_owned();
                     self.backing = Backing::LooseFile(r).into();
                     Ok(Object::try_from_oid(oid, self.access).unwrap())

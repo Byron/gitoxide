@@ -14,7 +14,6 @@ mod find {
     use std::convert::TryInto;
 
     #[test]
-    #[ignore]
     fn find_and_peel() {
         let repo = repo().unwrap();
         let mut packed_tag_ref = repo.find_reference("dt1").unwrap().expect("tag to exist");
