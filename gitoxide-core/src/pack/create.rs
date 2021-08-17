@@ -5,7 +5,7 @@ use git_repository::{
     hash,
     hash::ObjectId,
     interrupt,
-    object::bstr::ByteVec,
+    objs::bstr::ByteVec,
     odb::{pack, pack::cache::DecodeEntry, Find},
     prelude::{Finalize, FindExt},
     progress, traverse, Progress,

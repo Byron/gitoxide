@@ -6,7 +6,7 @@ use git_repository::{
     diff,
     hash::{oid, ObjectId},
     object,
-    object::{bstr::BStr, immutable},
+    objs::{bstr::BStr, immutable},
     odb,
     prelude::*,
     refs::file::loose::reference::peel,

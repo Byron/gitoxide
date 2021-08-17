@@ -28,8 +28,8 @@
 //! * [`hash`]
 //! * [`url`]
 //! * [`actor`]
-//! * [`object`]
-//!   * [`bstr`][object::bstr]
+//! * [`objs`]
+//!   * [`bstr`][objs::bstr]
 //! * [`odb`]
 //!   * [`pack`][odb::pack]
 //! * [`refs`]
@@ -56,7 +56,7 @@ pub use git_actor as actor;
 pub use git_diff as diff;
 pub use git_features::{parallel, progress, progress::Progress};
 pub use git_hash as hash;
-pub use git_object as object;
+pub use git_object as objs;
 pub use git_odb as odb;
 #[cfg(feature = "git-protocol")]
 pub use git_protocol as protocol;
@@ -134,8 +134,7 @@ pub struct Object<'r, A> {
     access: &'r A,
 }
 
-#[path = "object.rs"]
-mod object_impl;
+pub mod object;
 
 pub struct Reference<'r, A> {
     pub(crate) backing: Option<reference::Backing>,

@@ -10,7 +10,7 @@ quick_error! {
             from()
             source(err)
         }
-        MisplacedHead(name: crate::object::bstr::BString) {
+        MisplacedHead(name: crate::objs::bstr::BString) {
             display("Expected HEAD at '.git/HEAD', got '.git/{}'", name)
         }
         MissingObjectsDirectory(missing: PathBuf) {

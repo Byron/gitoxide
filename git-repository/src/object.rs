@@ -1,3 +1,5 @@
+pub use git_object::Kind;
+
 use crate::{
     hash::{oid, ObjectId},
     Access, Object,

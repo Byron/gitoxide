@@ -6,7 +6,7 @@ use std::{
 
 use git_repository::{
     hash::ObjectId,
-    object::bstr::{BString, ByteSlice},
+    objs::bstr::{BString, ByteSlice},
     odb::pack,
     protocol,
     protocol::{

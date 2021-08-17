@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use git_config::file::GitConfig;
-use git_repository::{object::bstr::ByteSlice, progress, Progress};
+use git_repository::{objs::bstr::ByteSlice, progress, Progress};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Mode {
