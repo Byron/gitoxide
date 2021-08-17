@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Dependency, DependencyKind, Metadata, Package, Version};
-use git_repository::{refs::packed, Repository};
+use git_repository::refs::packed;
 
 use crate::command::release::Options;
 
@@ -21,7 +21,7 @@ mod manifest;
 pub(in crate::command::release_impl) struct Context {
     root: Utf8PathBuf,
     meta: Metadata,
-    repo: Repository,
+    git_easy: git_repository::Easy,
     packed_refs: Option<packed::Buffer>,
     index: Index,
     crate_names: Vec<String>,
@@ -38,7 +38,7 @@ impl Context {
         let index = Index::new_cargo_default();
         Ok(Context {
             root,
-            repo,
+            git_easy: repo.into(),
             meta,
             packed_refs,
             index,

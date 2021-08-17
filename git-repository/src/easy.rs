@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use crate::{Cache, Repository};
 
-pub struct Shared {
+pub struct Easy {
     pub repo: Rc<Repository>,
     pub cache: Cache,
 }
@@ -11,41 +11,41 @@ pub struct Shared {
 ///
 /// Mutable data present in the `Handle` itself while keeping the parent `Repository` (which has its own cache) shared.
 /// Otherwise handles reflect the API of a `Repository`.
-pub struct SharedArc {
+pub struct EasyArc {
     pub repo: Arc<Repository>,
     pub cache: Cache,
 }
 
-impl Clone for Shared {
+impl Clone for Easy {
     fn clone(&self) -> Self {
-        Shared {
+        Easy {
             repo: Rc::clone(&self.repo),
             cache: Default::default(),
         }
     }
 }
 
-impl Clone for SharedArc {
+impl Clone for EasyArc {
     fn clone(&self) -> Self {
-        SharedArc {
+        EasyArc {
             repo: Arc::clone(&self.repo),
             cache: Default::default(),
         }
     }
 }
 
-impl From<Repository> for Shared {
+impl From<Repository> for Easy {
     fn from(repo: Repository) -> Self {
-        Shared {
+        Easy {
             repo: Rc::new(repo),
             cache: Default::default(),
         }
     }
 }
 
-impl From<Repository> for SharedArc {
+impl From<Repository> for EasyArc {
     fn from(repo: Repository) -> Self {
-        SharedArc {
+        EasyArc {
             repo: Arc::new(repo),
             cache: Default::default(),
         }
@@ -53,11 +53,11 @@ impl From<Repository> for SharedArc {
 }
 
 impl Repository {
-    pub fn into_shared(self) -> Shared {
+    pub fn into_easy(self) -> Easy {
         self.into()
     }
 
-    pub fn into_shared_arc(self) -> SharedArc {
+    pub fn into_easy_arc(self) -> EasyArc {
         self.into()
     }
 }

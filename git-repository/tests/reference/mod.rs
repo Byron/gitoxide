@@ -1,6 +1,6 @@
 use git_repository::Repository;
 
-fn repo() -> crate::Result<git_repository::Shared> {
+fn repo() -> crate::Result<git_repository::Easy> {
     let repo_path = git_testtools::scripted_fixture_repo_read_only("make_references_repo.sh")?;
     Ok(Repository::discover(repo_path)?.into())
 }

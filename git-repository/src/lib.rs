@@ -95,8 +95,8 @@ pub struct Repository {
     pub working_tree: Option<PathBuf>,
 }
 
-mod handles;
-pub use handles::{Shared, SharedArc};
+mod easy;
+pub use easy::{Easy, EasyArc};
 
 #[derive(Default)]
 pub struct Cache {
@@ -114,7 +114,8 @@ mod cache {
     };
 
     impl Cache {
-        pub fn assure_packed_refs_present(&self, file: &file::Store) -> Result<(), packed::buffer::open::Error> {
+        // TODO: this method should be on the Store itself, as one day there will be reftable support which lacks packed-refs
+        pub(crate) fn assure_packed_refs_present(&self, file: &file::Store) -> Result<(), packed::buffer::open::Error> {
             use std::ops::Deref;
             if self.packed_refs.borrow().is_none() {
                 *self.packed_refs.borrow_mut().deref_mut() = file.packed()?;

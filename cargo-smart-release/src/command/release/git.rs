@@ -17,15 +17,14 @@ use git_repository::{
         mutable::Target,
         transaction::{Change, Create, RefEdit},
     },
-    Repository,
 };
 
 use super::{Context, Options};
 use crate::command::release_impl::{tag_name_for, utils::will};
 
-fn is_top_level_package(manifest_path: &Utf8Path, repo: &Repository) -> bool {
+fn is_top_level_package(manifest_path: &Utf8Path, shared: &git_repository::Easy) -> bool {
     manifest_path
-        .strip_prefix(repo.working_tree.as_ref().expect("repo with working tree"))
+        .strip_prefix(shared.repo.working_tree.as_ref().expect("repo with working tree"))
         .map_or(false, |p| p.components().count() == 1)
 }
 
@@ -37,9 +36,14 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
     let version_tag_name = tag_name_for(
         &package.name,
         &package.version.to_string(),
-        is_top_level_package(&package.manifest_path, &ctx.repo),
+        is_top_level_package(&package.manifest_path, &ctx.git_easy),
     );
-    let mut tag_ref = match ctx.repo.refs.find(&version_tag_name, ctx.packed_refs.as_ref())? {
+    let mut tag_ref = match ctx
+        .git_easy
+        .repo
+        .refs
+        .find(&version_tag_name, ctx.packed_refs.as_ref())?
+    {
         None => {
             if verbose {
                 log::info!(
@@ -59,7 +63,7 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
         .strip_prefix(&ctx.root)
         .expect("workspace members are releative to the root directory");
 
-    let target = peel_ref_fully(&mut ctx.repo.refs.find_existing("HEAD", None)?, ctx)?;
+    let target = peel_ref_fully(&mut ctx.git_easy.repo.refs.find_existing("HEAD", None)?, ctx)?;
     let released_target = peel_ref_fully(&mut tag_ref, ctx)?;
 
     if repo_relative_crate_dir.as_os_str().is_empty() {
@@ -69,14 +73,14 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
 
         let current_dir_id = find_directory_id_in_tree(
             repo_relative_crate_dir,
-            resolve_tree_id_from_ref_target(target, &ctx.repo, &mut buf)?,
-            &ctx.repo,
+            resolve_tree_id_from_ref_target(target, &ctx.git_easy, &mut buf)?,
+            &ctx.git_easy,
             &mut buf,
         )?;
         let released_dir_id = find_directory_id_in_tree(
             repo_relative_crate_dir,
-            resolve_tree_id_from_ref_target(released_target, &ctx.repo, &mut buf)?,
-            &ctx.repo,
+            resolve_tree_id_from_ref_target(released_target, &ctx.git_easy, &mut buf)?,
+            &ctx.git_easy,
             &mut buf,
         )?;
 
@@ -115,7 +119,7 @@ pub fn assure_clean_working_tree() -> anyhow::Result<()> {
 fn find_directory_id_in_tree(
     path: &Utf8Path,
     id: ObjectId,
-    repo: &Repository,
+    shared: &git_repository::Easy,
     buf: &mut Vec<u8>,
 ) -> anyhow::Result<ObjectId> {
     let mut tree_id = None::<ObjectId>;
@@ -123,7 +127,8 @@ fn find_directory_id_in_tree(
     for component in path.components() {
         match component {
             Utf8Component::Normal(c) => {
-                let mut tree_iter = repo
+                let mut tree_iter = shared
+                    .repo
                     .odb
                     .find_existing(tree_id.take().unwrap_or(id), buf, &mut pack::cache::Never)?
                     .into_tree_iter()
@@ -150,8 +155,9 @@ fn find_directory_id_in_tree(
 
 fn peel_ref_fully(reference: &mut file::Reference<'_>, ctx: &Context) -> anyhow::Result<ObjectId> {
     reference
-        .peel_to_id_in_place(&ctx.repo.refs, ctx.packed_refs.as_ref(), |oid, buf| {
-            ctx.repo
+        .peel_to_id_in_place(&ctx.git_easy.repo.refs, ctx.packed_refs.as_ref(), |oid, buf| {
+            ctx.git_easy
+                .repo
                 .odb
                 .find(oid, buf, &mut pack::cache::Never)
                 .map(|r| r.map(|obj| (obj.kind, obj.data)))
@@ -161,14 +167,18 @@ fn peel_ref_fully(reference: &mut file::Reference<'_>, ctx: &Context) -> anyhow:
 
 /// Note that borrowchk doesn't like us to return an immutable, decoded tree which we would otherwise do. Chalk/polonius could allow that,
 /// preventing a duplicate lookup.
-fn resolve_tree_id_from_ref_target(mut id: ObjectId, repo: &Repository, buf: &mut Vec<u8>) -> anyhow::Result<ObjectId> {
-    let mut cursor = repo.odb.find_existing(id, buf, &mut pack::cache::Never)?;
+fn resolve_tree_id_from_ref_target(
+    mut id: ObjectId,
+    shared: &git_repository::Easy,
+    buf: &mut Vec<u8>,
+) -> anyhow::Result<ObjectId> {
+    let mut cursor = shared.repo.odb.find_existing(id, buf, &mut pack::cache::Never)?;
     loop {
         match cursor.kind {
             object::Kind::Tree => return Ok(id),
             object::Kind::Commit => {
                 id = cursor.into_commit_iter().expect("commit").tree_id().expect("id");
-                cursor = repo.odb.find_existing(id, buf, &mut pack::cache::Never)?;
+                cursor = shared.repo.odb.find_existing(id, buf, &mut pack::cache::Never)?;
             }
             object::Kind::Tag | object::Kind::Blob => {
                 bail!(
@@ -204,10 +214,11 @@ pub(in crate::command::release_impl) fn commit_changes(
         bail!("Failed to commit changed manifests");
     }
     Ok(ctx
+        .git_easy
         .repo
         .refs
         .loose_find_existing("HEAD")?
-        .peel_to_id_in_place(&ctx.repo.refs, ctx.packed_refs.as_ref(), peel::none)?
+        .peel_to_id_in_place(&ctx.git_easy.repo.refs, ctx.packed_refs.as_ref(), peel::none)?
         .to_owned())
 }
 
@@ -229,7 +240,7 @@ pub(in crate::command::release_impl) fn create_version_tag(
     let tag_name = tag_name_for(
         &publishee.name,
         new_version,
-        is_top_level_package(&publishee.manifest_path, &ctx.repo),
+        is_top_level_package(&publishee.manifest_path, &ctx.git_easy),
     );
     let edit = RefEdit {
         change: Change::Update {
@@ -247,6 +258,7 @@ pub(in crate::command::release_impl) fn create_version_tag(
         Ok(Some(edit.name))
     } else {
         let edits = ctx
+            .git_easy
             .repo
             .refs
             .transaction()
