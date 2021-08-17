@@ -1,6 +1,6 @@
 [package]
 name = "git-ref"
-version = "0.5.3"
+version = "0.5.4"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate to handle git references"

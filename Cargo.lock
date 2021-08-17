@@ -1191,7 +1191,7 @@ dependencies = [
 
 [[package]]
 name = "git-ref"
-version = "0.5.3"
+version = "0.5.4"
 dependencies = [
  "bstr",
  "filebuffer",
