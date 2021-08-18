@@ -7,7 +7,7 @@ use crate::{
     hash::{oid, ObjectId},
     object, odb,
     odb::FindExt,
-    Access, Oid,
+    Access, Object, Oid,
 };
 use std::borrow::Borrow;
 
@@ -46,9 +46,17 @@ mod impls {
     }
 }
 
-pub struct DetachedObject<'repo> {
-    pub kind: Kind,
-    pub data: Ref<'repo, [u8]>,
+impl<'repo, A> Object<'repo, A>
+where
+    A: Access + Sized,
+{
+    pub(crate) fn from_kind_and_current_buf(kind: Kind, access: &'repo A) -> Self {
+        Object {
+            kind,
+            data: Ref::map(access.cache().buf.borrow(), |v| v.as_slice()),
+            access,
+        }
+    }
 }
 
 pub mod find {
@@ -86,12 +94,12 @@ where
     A: crate::prelude::ObjectAccessExt + Access + Sized,
 {
     // NOTE: Can't access other object data that is attached to the same cache.
-    pub fn existing_object(&self) -> Result<DetachedObject<'repo>, find::existing::Error> {
+    pub fn existing_object(&self) -> Result<Object<'repo, A>, find::existing::Error> {
         self.access.find_existing_object(&self.id)
     }
 
     // NOTE: Can't access other object data that is attached to the same cache.
-    pub fn object(&self) -> Result<Option<DetachedObject<'repo>>, find::Error> {
+    pub fn object(&self) -> Result<Option<Object<'repo, A>>, find::Error> {
         self.access.find_object(&self.id)
     }
 }
@@ -109,7 +117,7 @@ where
     }
 
     // TODO: tests
-    pub fn peel_to_kind(&self, kind: Kind) -> Result<(ObjectId, DetachedObject<'repo>), peel_to_kind::Error> {
+    pub fn peel_to_kind(&self, kind: Kind) -> Result<(ObjectId, Object<'repo, A>), peel_to_kind::Error> {
         let mut id = self.id;
         let mut buf = self.access.cache().buf.borrow_mut();
         let mut cursor =
@@ -123,13 +131,7 @@ where
                     let kind = cursor.kind;
                     drop(cursor);
                     drop(buf);
-                    return Ok((
-                        id,
-                        DetachedObject {
-                            kind,
-                            data: Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice()),
-                        },
-                    ));
+                    return Ok((id, Object::from_kind_and_current_buf(kind, self.access)));
                 }
                 Kind::Commit => {
                     id = cursor.into_commit_iter().expect("commit").tree_id().expect("id");

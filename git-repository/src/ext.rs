@@ -113,7 +113,7 @@ mod access {
     pub(crate) mod object {
         use crate::hash::oid;
         use crate::odb::{Find, FindExt};
-        use crate::{object, Access, Oid};
+        use crate::{object, Access, Object, Oid};
         use std::cell::Ref;
         use std::ops::DerefMut;
 
@@ -123,7 +123,7 @@ mod access {
             fn find_existing_object(
                 &self,
                 id: impl AsRef<oid>,
-            ) -> Result<object::DetachedObject<'_>, object::find::existing::Error> {
+            ) -> Result<Object<'_, Self>, object::find::existing::Error> {
                 let cache = self.cache();
                 let mut buf = self.cache().buf.borrow_mut();
                 let kind = {
@@ -134,16 +134,10 @@ mod access {
                     obj.kind
                 };
 
-                Ok(object::DetachedObject {
-                    kind,
-                    data: Ref::map(cache.buf.borrow(), |v| v.as_slice()),
-                })
+                Ok(Object::from_kind_and_current_buf(kind, self))
             }
 
-            fn find_object(
-                &self,
-                id: impl AsRef<oid>,
-            ) -> Result<Option<object::DetachedObject<'_>>, object::find::Error> {
+            fn find_object(&self, id: impl AsRef<oid>) -> Result<Option<Object<'_, Self>>, object::find::Error> {
                 let cache = self.cache();
                 Ok(self
                     .repo()
@@ -152,10 +146,7 @@ mod access {
                     .map(|obj| {
                         let kind = obj.kind;
                         drop(obj);
-                        object::DetachedObject {
-                            kind,
-                            data: Ref::map(cache.buf.borrow(), |v| v.as_slice()),
-                        }
+                        Object::from_kind_and_current_buf(kind, self)
                     }))
             }
         }

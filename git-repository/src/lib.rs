@@ -18,6 +18,11 @@
 //!
 //! When starting out, use `easy(…)` and migrate to the more detailed method signatures to squeeze out more performance.
 //!
+//! ### Design Sketch
+//!
+//! * no implicit object lookups, thus `Oid` needs to get an `Object` first to start out with data
+//! * `Object` blocks the current buffer, hence many operations that use the buffer are consuming
+//!
 //! # Cargo-features
 //!
 //! ## One-stop-shop
@@ -129,6 +134,12 @@ pub(crate) use traits::Access;
 pub struct Oid<'r, A> {
     id: ObjectId,
     access: &'r A,
+}
+
+pub struct Object<'repo, A> {
+    pub kind: objs::Kind,
+    pub data: std::cell::Ref<'repo, [u8]>,
+    access: &'repo A,
 }
 
 pub mod object;
