@@ -9,7 +9,7 @@ use crate::{
     hash::{oid, ObjectId},
     object, odb,
     odb::FindExt,
-    Access, Object, Oid,
+    Access, ObjectRef, Oid,
 };
 use std::borrow::Borrow;
 
@@ -48,12 +48,12 @@ mod impls {
     }
 }
 
-impl<'repo, A> Object<'repo, A>
+impl<'repo, A> ObjectRef<'repo, A>
 where
     A: Access + Sized,
 {
     pub(crate) fn from_kind_and_current_buf(kind: Kind, access: &'repo A) -> Self {
-        Object {
+        ObjectRef {
             kind,
             data: Ref::map(access.cache().buf.borrow(), |v| v.as_slice()),
             access,
@@ -72,7 +72,7 @@ pub mod find {
     }
 }
 
-impl<'repo, A> Object<'repo, A>
+impl<'repo, A> ObjectRef<'repo, A>
 where
     A: ObjectAccessExt + Access + Sized,
 {
@@ -87,7 +87,7 @@ where
 
 pub mod peel_to_kind {
 
-    impl<'repo, A> Object<'repo, A>
+    impl<'repo, A> ObjectRef<'repo, A>
     where
         A: ObjectAccessExt + Access + Sized,
     {
@@ -143,7 +143,7 @@ pub mod peel_to_kind {
     use crate::ext::ObjectAccessExt;
     use crate::object::{peel_to_kind, Kind};
     use crate::objs::immutable;
-    use crate::{odb, Access, Object};
+    use crate::{odb, Access, ObjectRef};
     pub use error::Error;
 }
 
@@ -152,12 +152,12 @@ where
     A: crate::prelude::ObjectAccessExt + Access + Sized,
 {
     // NOTE: Can't access other object data that is attached to the same cache.
-    pub fn existing_object(&self) -> Result<Object<'repo, A>, find::existing::Error> {
+    pub fn existing_object(&self) -> Result<ObjectRef<'repo, A>, find::existing::Error> {
         self.access.find_existing_object(&self.id)
     }
 
     // NOTE: Can't access other object data that is attached to the same cache.
-    pub fn object(&self) -> Result<Option<Object<'repo, A>>, find::Error> {
+    pub fn object(&self) -> Result<Option<ObjectRef<'repo, A>>, find::Error> {
         self.access.find_object(&self.id)
     }
 }
@@ -175,7 +175,7 @@ where
     }
 
     // TODO: tests
-    pub fn peel_to_kind(&self, kind: Kind) -> Result<(ObjectId, Object<'repo, A>), peel_to_kind::Error> {
+    pub fn peel_to_kind(&self, kind: Kind) -> Result<(ObjectId, ObjectRef<'repo, A>), peel_to_kind::Error> {
         let mut id = self.id;
         let mut buf = self.access.cache().buf.borrow_mut();
         let mut cursor =
@@ -189,7 +189,7 @@ where
                     let kind = cursor.kind;
                     drop(cursor);
                     drop(buf);
-                    return Ok((id, Object::from_kind_and_current_buf(kind, self.access)));
+                    return Ok((id, ObjectRef::from_kind_and_current_buf(kind, self.access)));
                 }
                 Kind::Commit => {
                     id = cursor.into_commit_iter().expect("commit").tree_id().expect("id");

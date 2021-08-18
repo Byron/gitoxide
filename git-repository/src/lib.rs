@@ -21,7 +21,8 @@
 //! ### Design Sketch
 //!
 //! * no implicit object lookups, thus `Oid` needs to get an `Object` first to start out with data
-//! * `Object` blocks the current buffer, hence many operations that use the buffer are consuming
+//! * Objects with `Ref` suffix can only exist one at a time unless they are transformed into an owned version of it
+//! * `ObjectRef` blocks the current buffer, hence many operations that use the buffer are consuming
 //! * There can only be one `Object` at a time, but as many `Oids` as you want.
 //! * git-repository functions return `Oid` for oids if they originate in something having or being `Access`
 //!
@@ -138,7 +139,7 @@ pub struct Oid<'r, A> {
     access: &'r A,
 }
 
-pub struct Object<'repo, A> {
+pub struct ObjectRef<'repo, A> {
     pub kind: objs::Kind,
     pub data: std::cell::Ref<'repo, [u8]>,
     access: &'repo A,

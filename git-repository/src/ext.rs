@@ -113,7 +113,7 @@ mod access {
     pub(crate) mod object {
         use crate::hash::oid;
         use crate::odb::{Find, FindExt};
-        use crate::{object, Access, Object, Oid};
+        use crate::{object, Access, ObjectRef, Oid};
         use std::cell::Ref;
         use std::ops::DerefMut;
 
@@ -123,7 +123,7 @@ mod access {
             fn find_existing_object(
                 &self,
                 id: impl AsRef<oid>,
-            ) -> Result<Object<'_, Self>, object::find::existing::Error> {
+            ) -> Result<ObjectRef<'_, Self>, object::find::existing::Error> {
                 let cache = self.cache();
                 let mut buf = self.cache().buf.borrow_mut();
                 let kind = {
@@ -134,10 +134,10 @@ mod access {
                     obj.kind
                 };
 
-                Ok(Object::from_kind_and_current_buf(kind, self))
+                Ok(ObjectRef::from_kind_and_current_buf(kind, self))
             }
 
-            fn find_object(&self, id: impl AsRef<oid>) -> Result<Option<Object<'_, Self>>, object::find::Error> {
+            fn find_object(&self, id: impl AsRef<oid>) -> Result<Option<ObjectRef<'_, Self>>, object::find::Error> {
                 let cache = self.cache();
                 Ok(self
                     .repo()
@@ -146,7 +146,7 @@ mod access {
                     .map(|obj| {
                         let kind = obj.kind;
                         drop(obj);
-                        Object::from_kind_and_current_buf(kind, self)
+                        ObjectRef::from_kind_and_current_buf(kind, self)
                     }))
             }
         }
