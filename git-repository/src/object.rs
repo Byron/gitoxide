@@ -81,6 +81,20 @@ pub mod peel_to_kind {
         }
     }
 }
+impl<'repo, A> Object<'repo, A>
+where
+    A: crate::prelude::ObjectAccessExt + Access + Sized,
+{
+    // NOTE: Can't access other object data that is attached to the same cache.
+    pub fn existing_data(&self) -> Result<Data<'repo>, find::existing::Error> {
+        self.access.find_existing_object_data(&self.id)
+    }
+
+    // NOTE: Can't access other object data that is attached to the same cache.
+    pub fn data(&self) -> Result<Option<Data<'repo>>, find::Error> {
+        self.access.find_object_data(&self.id)
+    }
+}
 
 impl<'repo, A> Object<'repo, A>
 where
@@ -100,42 +114,6 @@ where
 
     pub fn detach(self) -> ObjectId {
         self.id
-    }
-
-    // NOTE: Can't access other object data that is attached to the same cache.
-    pub fn existing_data(&self) -> Result<Data<'repo>, find::existing::Error> {
-        let mut buf = self.access.cache().buf.borrow_mut();
-        let kind = {
-            let obj = self.access.repo().odb.find_existing(
-                &self.id,
-                &mut buf,
-                self.access.cache().pack.borrow_mut().deref_mut(),
-            )?;
-            obj.kind
-        };
-
-        Ok(Data {
-            kind,
-            bytes: Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice()),
-        })
-    }
-
-    // NOTE: Can't access other object data that is attached to the same cache.
-    pub fn data(&self) -> Result<Option<Data<'repo>>, find::Error> {
-        let mut buf = self.access.cache().buf.borrow_mut();
-        Ok(self
-            .access
-            .repo()
-            .odb
-            .find(&self.id, &mut buf, self.access.cache().pack.borrow_mut().deref_mut())?
-            .map(|obj| {
-                let kind = obj.kind;
-                drop(obj);
-                Data {
-                    kind,
-                    bytes: Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice()),
-                }
-            }))
     }
 
     // TODO: tests

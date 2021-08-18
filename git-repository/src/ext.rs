@@ -111,8 +111,8 @@ pub use object_id::ObjectIdExt;
 
 mod access {
     pub(crate) mod object {
-        use crate::hash::ObjectId;
-        use crate::odb::FindExt;
+        use crate::hash::oid;
+        use crate::odb::{Find, FindExt};
         use crate::{object, Access, Object};
         use std::cell::Ref;
         use std::ops::DerefMut;
@@ -120,20 +120,40 @@ mod access {
         pub trait ObjectAccessExt: Access + Sized {
             // NOTE: in order to get the actual kind of object, is must be fully decoded from storage in case of packs
             // even though partial decoding is possible for loose objects, it won't matter much here.
-            fn find_existing_object(
+            fn find_existing_object_data(
                 &self,
-                id: impl Into<ObjectId>,
-            ) -> Result<(Object<'_, Self>, object::Data<'_>), object::find::existing::Error> {
-                let obj = Object::from_id(id, self);
-                obj.existing_data().map(|d| (obj, d))
+                id: impl AsRef<oid>,
+            ) -> Result<object::Data<'_>, object::find::existing::Error> {
+                let cache = self.cache();
+                let mut buf = self.cache().buf.borrow_mut();
+                let kind = {
+                    let obj = self
+                        .repo()
+                        .odb
+                        .find_existing(id, &mut buf, cache.pack.borrow_mut().deref_mut())?;
+                    obj.kind
+                };
+
+                Ok(object::Data {
+                    kind,
+                    bytes: Ref::map(cache.buf.borrow(), |v| v.as_slice()),
+                })
             }
 
-            fn find_object(
-                &self,
-                id: impl Into<ObjectId>,
-            ) -> Result<Option<(Object<'_, Self>, object::Data<'_>)>, object::find::Error> {
-                let obj = Object::from_id(id, self);
-                obj.data().map(|maybe| maybe.map(|d| (obj, d)))
+            fn find_object_data(&self, id: impl AsRef<oid>) -> Result<Option<object::Data<'_>>, object::find::Error> {
+                let cache = self.cache();
+                Ok(self
+                    .repo()
+                    .odb
+                    .find(id, &mut cache.buf.borrow_mut(), cache.pack.borrow_mut().deref_mut())?
+                    .map(|obj| {
+                        let kind = obj.kind;
+                        drop(obj);
+                        object::Data {
+                            kind,
+                            bytes: Ref::map(cache.buf.borrow(), |v| v.as_slice()),
+                        }
+                    }))
             }
         }
     }
@@ -187,4 +207,4 @@ mod access {
         impl<A> ReferenceAccessExt for A where A: Access + Sized {}
     }
 }
-pub use access::reference::ReferenceAccessExt;
+pub use access::{object::ObjectAccessExt, reference::ReferenceAccessExt};
