@@ -111,12 +111,16 @@ pub use object_id::ObjectIdExt;
 
 pub(crate) mod access {
     pub(crate) mod object {
-        use crate::hash::oid;
-        use crate::odb::{Find, FindExt};
-        use crate::{object, Access, ObjectRef, Oid};
+        use std::{cell::Ref, ops::DerefMut};
+
         use git_hash::ObjectId;
-        use std::cell::Ref;
-        use std::ops::DerefMut;
+
+        use crate::{
+            hash::oid,
+            object,
+            odb::{Find, FindExt},
+            Access, ObjectRef, Oid,
+        };
 
         pub fn find_existing_object<A: Access + Sized>(
             access: &A,

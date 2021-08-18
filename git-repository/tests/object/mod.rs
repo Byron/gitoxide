@@ -1,5 +1,4 @@
-use git_repository::ObjectRef;
-use git_repository::Oid;
+use git_repository::{ObjectRef, Oid};
 
 #[test]
 fn object_ref_size_in_memory() {

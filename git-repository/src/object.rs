@@ -1,20 +1,22 @@
-use std::{cell::Ref, ops::DerefMut};
+use std::{borrow::Borrow, cell::Ref, ops::DerefMut};
 
 pub use git_object::Kind;
 
-use crate::objs::immutable;
-use crate::odb::Find;
 use crate::{
     hash::{oid, ObjectId},
-    object, odb,
-    odb::FindExt,
-    Access, ObjectRef, Oid,
+    object,
+    objs::immutable,
+    odb,
+    odb::{Find, FindExt},
+    Access, Object, ObjectRef, Oid,
 };
-use std::borrow::Borrow;
 
-mod impls {
+mod oid_impls {
     use super::Oid;
-    use crate::hash::{oid, ObjectId};
+    use crate::{
+        hash::{oid, ObjectId},
+        Object, ObjectRef,
+    };
 
     impl<'repo, A, B> PartialEq<Oid<'repo, A>> for Oid<'repo, B> {
         fn eq(&self, other: &Oid<'repo, A>) -> bool {
@@ -25,6 +27,24 @@ mod impls {
     impl<'repo, A> PartialEq<ObjectId> for Oid<'repo, A> {
         fn eq(&self, other: &ObjectId) -> bool {
             &self.id == other
+        }
+    }
+
+    impl<'repo, A> PartialEq<oid> for Oid<'repo, A> {
+        fn eq(&self, other: &oid) -> bool {
+            self.id == other
+        }
+    }
+
+    impl<'repo, A, B> PartialEq<ObjectRef<'repo, A>> for Oid<'repo, B> {
+        fn eq(&self, other: &ObjectRef<'repo, A>) -> bool {
+            self.id == other.id
+        }
+    }
+
+    impl<'repo, A> PartialEq<Object> for Oid<'repo, A> {
+        fn eq(&self, other: &Object) -> bool {
+            self.id == other.id
         }
     }
 
@@ -43,6 +63,21 @@ mod impls {
     impl<'repo, A> From<Oid<'repo, A>> for ObjectId {
         fn from(v: Oid<'repo, A>) -> Self {
             v.id
+        }
+    }
+}
+
+impl Object {
+    pub fn attach<A>(self, access: &A) -> ObjectRef<'_, A>
+    where
+        A: Access + Sized,
+    {
+        *access.cache().buf.borrow_mut() = self.data;
+        ObjectRef {
+            id: self.id,
+            kind: self.kind,
+            data: Ref::map(access.cache().buf.borrow(), |v| v.as_slice()),
+            access,
         }
     }
 }
@@ -72,6 +107,50 @@ pub mod find {
     }
 }
 
+mod object_ref_impls {
+    use crate::{Object, ObjectRef};
+
+    impl<'repo, A> From<ObjectRef<'repo, A>> for Object {
+        fn from(r: ObjectRef<'repo, A>) -> Self {
+            r.into_owned()
+        }
+    }
+
+    impl<'repo, A> AsRef<[u8]> for ObjectRef<'repo, A> {
+        fn as_ref(&self) -> &[u8] {
+            &self.data
+        }
+    }
+
+    impl AsRef<[u8]> for Object {
+        fn as_ref(&self) -> &[u8] {
+            &self.data
+        }
+    }
+}
+
+impl<'repo, A> ObjectRef<'repo, A> {
+    pub fn to_owned(&self) -> Object {
+        Object {
+            id: self.id,
+            kind: self.kind,
+            data: self.data.to_owned(),
+        }
+    }
+
+    pub fn into_owned(self) -> Object {
+        Object {
+            id: self.id,
+            kind: self.kind,
+            data: self.data.to_owned(),
+        }
+    }
+
+    pub fn detach(self) -> Object {
+        self.into()
+    }
+}
+
 impl<'repo, A> ObjectRef<'repo, A>
 where
     A: Access + Sized,
@@ -86,6 +165,11 @@ where
 }
 
 pub mod peel_to_kind {
+    use crate::{
+        object::{peel_to_kind, Kind},
+        objs::immutable,
+        odb, Access, ObjectRef,
+    };
 
     impl<'repo, A> ObjectRef<'repo, A>
     where
@@ -140,9 +224,6 @@ pub mod peel_to_kind {
             }
         }
     }
-    use crate::object::{peel_to_kind, Kind};
-    use crate::objs::immutable;
-    use crate::{odb, Access, ObjectRef};
     pub use error::Error;
 }
 

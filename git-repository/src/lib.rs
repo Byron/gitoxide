@@ -24,6 +24,8 @@
 //! * Objects with `Ref` suffix can only exist one at a time unless they are transformed into an owned version of it
 //! * `ObjectRef` blocks the current buffer, hence many operations that use the buffer are consuming
 //! * There can only be one `Object` at a time, but as many `Oids` as you want.
+//! * Anything attached to `Access` can be detached to lift the object limit or make them `Send` able. They can be `attached` to another
+//!   `Access` if needed.
 //! * git-repository functions return `Oid` for oids if they originate in something having or being `Access`
 //!
 //! #### Limitations
@@ -149,6 +151,13 @@ pub struct ObjectRef<'repo, A> {
     pub kind: objs::Kind,
     pub data: std::cell::Ref<'repo, [u8]>,
     access: &'repo A,
+}
+
+#[derive(Clone)]
+pub struct Object {
+    pub id: ObjectId,
+    pub kind: objs::Kind,
+    pub data: Vec<u8>,
 }
 
 pub mod object;

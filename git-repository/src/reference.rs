@@ -37,6 +37,7 @@ pub mod peel_to_id_in_place {
     }
 }
 
+// TODO: think about how to detach a Reference. It should essentially be a 'Raw' reference that should exist in `git-ref` rather than here.
 impl<'repo, A> Reference<'repo, A>
 where
     A: Access + Sized,
