@@ -73,13 +73,13 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
         // target.peel_to_kind(object::Kind::Tree)?.1.to_tree_
         let current_dir_id = find_directory_id_in_tree(
             repo_relative_crate_dir,
-            target.peel_to_kind(object::Kind::Tree)?,
+            target.peel_to_kind(object::Kind::Tree)?.0,
             &ctx.git_easy,
             &mut buf,
         )?;
         let released_dir_id = find_directory_id_in_tree(
             repo_relative_crate_dir,
-            released_target.peel_to_kind(object::Kind::Tree)?,
+            released_target.peel_to_kind(object::Kind::Tree)?.0,
             &ctx.git_easy,
             &mut buf,
         )?;

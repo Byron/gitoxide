@@ -17,7 +17,7 @@ mod data {
 fn size_in_memory() {
     assert_eq!(
         std::mem::size_of::<Object<'_, git_repository::Easy>>(),
-        64,
+        32,
         "the size of this structure should not changed unexpectedly"
     )
 }
