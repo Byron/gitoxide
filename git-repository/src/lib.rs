@@ -64,9 +64,9 @@
 //!   * [`transport`][protocol::transport]
 //!
 #![deny(unsafe_code, rust_2018_idioms)]
-#![allow(missing_docs, unused)]
+#![allow(missing_docs)]
 
-use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
+use std::{cell::RefCell, path::PathBuf};
 
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
@@ -123,7 +123,7 @@ pub struct Cache {
 }
 
 mod cache {
-    use std::{cell::Ref, ops::DerefMut};
+    use std::ops::DerefMut;
 
     use crate::{
         refs::{file, packed},
@@ -133,7 +133,6 @@ mod cache {
     impl Cache {
         // TODO: this method should be on the Store itself, as one day there will be reftable support which lacks packed-refs
         pub(crate) fn assure_packed_refs_present(&self, file: &file::Store) -> Result<(), packed::buffer::open::Error> {
-            use std::ops::Deref;
             if self.packed_refs.borrow().is_none() {
                 *self.packed_refs.borrow_mut().deref_mut() = file.packed()?;
             }

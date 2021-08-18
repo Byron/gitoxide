@@ -1,15 +1,8 @@
-use std::{borrow::Borrow, cell::Ref, convert::TryInto, ops::DerefMut};
+use std::{cell::Ref, convert::TryInto};
 
 pub use git_object::Kind;
 
-use crate::{
-    hash::{oid, ObjectId},
-    object,
-    objs::immutable,
-    odb,
-    odb::{Find, FindExt},
-    Access, Object, ObjectRef, Oid, TreeRef,
-};
+use crate::{hash::ObjectId, objs::immutable, odb, Access, Object, ObjectRef, Oid, TreeRef};
 
 impl<'repo, A> std::fmt::Debug for ObjectRef<'repo, A> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -92,11 +85,8 @@ mod tree {
     use crate::{
         object::find,
         objs,
-        objs::{
-            bstr::{BStr, ByteSlice},
-            immutable,
-        },
-        odb, Access, Oid, TreeRef,
+        objs::{bstr::BStr, immutable},
+        Access, TreeRef,
     };
 
     impl<'repo, A> TreeRef<'repo, A>
@@ -246,8 +236,7 @@ where
 pub mod peel_to_kind {
     use crate::{
         object::{peel_to_kind, Kind},
-        objs::immutable,
-        odb, Access, ObjectRef,
+        Access, ObjectRef,
     };
 
     impl<'repo, A> ObjectRef<'repo, A>
@@ -287,7 +276,7 @@ pub mod peel_to_kind {
     mod error {
         use quick_error::quick_error;
 
-        use crate::{hash::ObjectId, object, object::find, odb};
+        use crate::{object, object::find};
 
         quick_error! {
             #[derive(Debug)]

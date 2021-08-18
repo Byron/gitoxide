@@ -1,6 +1,6 @@
-use std::{cell::RefCell, ops::DerefMut};
+use std::ops::DerefMut;
 
-use crate::{hash::ObjectId, odb::Find, refs, refs::mutable, Access, Oid, Reference, Repository};
+use crate::{hash::ObjectId, odb::Find, refs, refs::mutable, Access, Oid, Reference};
 
 pub(crate) enum Backing {
     OwnedPacked {

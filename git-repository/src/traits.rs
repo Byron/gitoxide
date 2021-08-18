@@ -1,5 +1,3 @@
-use std::cell::RefMut;
-
 use crate::{Cache, Easy, EasyArc, Repository};
 
 pub trait Access {

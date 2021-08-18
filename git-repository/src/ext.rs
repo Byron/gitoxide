@@ -111,15 +111,14 @@ pub use object_id::ObjectIdExt;
 
 pub(crate) mod access {
     pub(crate) mod object {
-        use std::{cell::Ref, ops::DerefMut};
+        use std::ops::DerefMut;
 
         use git_hash::ObjectId;
 
         use crate::{
-            hash::oid,
             object,
             odb::{Find, FindExt},
-            Access, ObjectRef, Oid,
+            Access, ObjectRef,
         };
 
         pub fn find_existing_object<A: Access + Sized>(
@@ -174,15 +173,12 @@ pub(crate) mod access {
     }
 
     pub(crate) mod reference {
-        use std::{cell::RefCell, convert::TryInto};
+        use std::convert::TryInto;
 
         use crate::{
-            hash::ObjectId,
             reference,
-            reference::Backing,
-            refs,
             refs::{file::find::Error, PartialName},
-            Access, Reference, Repository,
+            Access, Reference,
         };
 
         /// Obtain and alter references comfortably

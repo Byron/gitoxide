@@ -1,5 +1,3 @@
-use crate::{Cache, Repository};
-
 mod access {
     use crate::{Kind, Repository};
 
@@ -36,7 +34,7 @@ mod init {
 }
 
 pub mod discover {
-    use std::{cell::RefCell, path::Path};
+    use std::path::Path;
 
     use quick_error::quick_error;
 
