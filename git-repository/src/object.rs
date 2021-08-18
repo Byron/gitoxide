@@ -129,7 +129,8 @@ where
             match cursor.kind {
                 any_kind if kind == any_kind => {
                     let kind = cursor.kind;
-                    (drop(cursor), drop(buf));
+                    drop(cursor);
+                    drop(buf);
                     return Ok((
                         id,
                         Data {
