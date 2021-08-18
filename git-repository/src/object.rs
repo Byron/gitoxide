@@ -9,15 +9,32 @@ use crate::{
     Access, Object,
 };
 
-impl<'repo, A, B> PartialEq<Object<'repo, A>> for Object<'repo, B> {
-    fn eq(&self, other: &Object<'repo, A>) -> bool {
-        self.id == other.id
-    }
-}
+mod impls {
+    use super::Object;
+    use crate::hash::{oid, ObjectId};
 
-impl<'repo, A> std::fmt::Debug for Object<'repo, A> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.id.fmt(f)
+    impl<'repo, A, B> PartialEq<Object<'repo, A>> for Object<'repo, B> {
+        fn eq(&self, other: &Object<'repo, A>) -> bool {
+            self.id == other.id
+        }
+    }
+
+    impl<'repo, A> std::fmt::Debug for Object<'repo, A> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            self.id.fmt(f)
+        }
+    }
+
+    impl<'repo, A> AsRef<oid> for Object<'repo, A> {
+        fn as_ref(&self) -> &oid {
+            &self.id
+        }
+    }
+
+    impl<'repo, A> From<Object<'repo, A>> for ObjectId {
+        fn from(v: Object<'repo, A>) -> Self {
+            v.id
+        }
     }
 }
 
@@ -106,6 +123,7 @@ where
                 any_kind if kind == any_kind => {
                     let kind = cursor.kind;
                     drop(cursor);
+                    drop(buf);
                     return Ok((
                         Object::from_id(id, self.access),
                         Data {
