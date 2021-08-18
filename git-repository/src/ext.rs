@@ -74,11 +74,12 @@ mod tree {
 pub use tree::TreeIterExt;
 
 mod object_id {
-    use crate::{Access, Object};
     use git_hash::{oid, ObjectId};
     use git_object::immutable;
     #[cfg(feature = "git-traverse")]
     use git_traverse::commit::ancestors::{Ancestors, State};
+
+    use crate::{Access, Object};
 
     pub trait Sealed {}
 

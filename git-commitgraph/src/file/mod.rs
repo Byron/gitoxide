@@ -1,7 +1,5 @@
 //! Operations on a single commit-graph file.
 
-pub use self::{commit::Commit, init::Error};
-
 use std::{
     fmt::{Display, Formatter},
     ops::Range,
@@ -10,6 +8,8 @@ use std::{
 
 use filebuffer::FileBuffer;
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+
+pub use self::{commit::Commit, init::Error};
 
 mod access;
 pub mod commit;

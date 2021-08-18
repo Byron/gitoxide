@@ -1,10 +1,11 @@
 #![allow(unused)]
 #![allow(clippy::result_unit_err)]
 
-use std::borrow::Cow;
-use std::convert::TryFrom;
-use std::path::Path;
-use std::path::PathBuf;
+use std::{
+    borrow::Cow,
+    convert::TryFrom,
+    path::{Path, PathBuf},
+};
 
 use crate::file::{GitConfig, GitConfigError};
 

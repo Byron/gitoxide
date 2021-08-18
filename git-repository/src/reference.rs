@@ -114,8 +114,9 @@ pub mod find {
     use crate::refs;
 
     pub mod existing {
-        use crate::reference::find;
         use quick_error::quick_error;
+
+        use crate::reference::find;
 
         quick_error! {
             #[derive(Debug)]

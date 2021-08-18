@@ -1,12 +1,13 @@
+use std::{cell::Ref, ops::DerefMut};
+
 pub use git_object::Kind;
 
-use crate::odb::FindExt;
 use crate::{
     hash::{oid, ObjectId},
-    object, odb, Access, Object,
+    object, odb,
+    odb::FindExt,
+    Access, Object,
 };
-use std::cell::Ref;
-use std::ops::DerefMut;
 
 impl<'repo, A, B> PartialEq<Object<'repo, A>> for Object<'repo, B> {
     fn eq(&self, other: &Object<'repo, A>) -> bool {
@@ -34,8 +35,9 @@ pub mod find {
 }
 
 pub mod peel_to_kind {
-    use crate::{hash::ObjectId, object, object::find, odb};
     use quick_error::quick_error;
+
+    use crate::{hash::ObjectId, object, object::find, odb};
 
     quick_error! {
         #[derive(Debug)]
