@@ -11,7 +11,7 @@ use git_repository::{
     hash::ObjectId,
     object,
     odb::{pack, FindExt},
-    prelude::ReferenceExt,
+    prelude::ReferenceAccessExt,
     refs::{
         self,
         file::loose::reference::peel,

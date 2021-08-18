@@ -110,6 +110,34 @@ mod object_id {
 pub use object_id::ObjectIdExt;
 
 mod access {
+    pub(crate) mod object {
+        use crate::hash::ObjectId;
+        use crate::odb::FindExt;
+        use crate::{object, Access, Object};
+        use std::cell::Ref;
+        use std::ops::DerefMut;
+
+        pub trait ObjectAccessExt: Access + Sized {
+            // NOTE: in order to get the actual kind of object, is must be fully decoded from storage in case of packs
+            // even though partial decoding is possible for loose objects, it won't matter much here.
+            fn find_existing_object(
+                &self,
+                id: impl Into<ObjectId>,
+            ) -> Result<(Object<'_, Self>, object::Data<'_>), object::find::existing::Error> {
+                let obj = Object::from_id(id, self);
+                obj.existing_data().map(|d| (obj, d))
+            }
+
+            fn find_object(
+                &self,
+                id: impl Into<ObjectId>,
+            ) -> Result<Option<(Object<'_, Self>, object::Data<'_>)>, object::find::Error> {
+                let obj = Object::from_id(id, self);
+                obj.data().map(|maybe| maybe.map(|d| (obj, d)))
+            }
+        }
+    }
+
     pub(crate) mod reference {
         use std::{cell::RefCell, convert::TryInto};
 
@@ -123,7 +151,7 @@ mod access {
         };
 
         /// Obtain and alter references comfortably
-        pub trait ReferenceExt: Access + Sized {
+        pub trait ReferenceAccessExt: Access + Sized {
             fn find_existing_reference<'a, Name, E>(
                 &self,
                 name: Name,
@@ -156,7 +184,7 @@ mod access {
             }
         }
 
-        impl<A> ReferenceExt for A where A: Access + Sized {}
+        impl<A> ReferenceAccessExt for A where A: Access + Sized {}
     }
 }
-pub use access::reference::ReferenceExt;
+pub use access::reference::ReferenceAccessExt;

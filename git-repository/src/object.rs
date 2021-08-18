@@ -2,6 +2,7 @@ use std::{cell::Ref, ops::DerefMut};
 
 pub use git_object::Kind;
 
+use crate::odb::Find;
 use crate::{
     hash::{oid, ObjectId},
     object, odb,
@@ -51,6 +52,9 @@ pub struct Data<'repo> {
 }
 
 pub mod find {
+    use crate::odb;
+
+    pub type Error = odb::compound::find::Error;
     pub mod existing {
         use crate::odb;
 
@@ -99,7 +103,7 @@ where
     }
 
     // NOTE: Can't access other object data that is attached to the same cache.
-    pub fn data(&self) -> Result<Data<'repo>, find::existing::Error> {
+    pub fn existing_data(&self) -> Result<Data<'repo>, find::existing::Error> {
         let mut buf = self.access.cache().buf.borrow_mut();
         let kind = {
             let obj = self.access.repo().odb.find_existing(
@@ -114,6 +118,24 @@ where
             kind,
             bytes: Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice()),
         })
+    }
+
+    // NOTE: Can't access other object data that is attached to the same cache.
+    pub fn data(&self) -> Result<Option<Data<'repo>>, find::Error> {
+        let mut buf = self.access.cache().buf.borrow_mut();
+        Ok(self
+            .access
+            .repo()
+            .odb
+            .find(&self.id, &mut buf, self.access.cache().pack.borrow_mut().deref_mut())?
+            .map(|obj| {
+                let kind = obj.kind;
+                drop(obj);
+                Data {
+                    kind,
+                    bytes: Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice()),
+                }
+            }))
     }
 
     // TODO: tests
