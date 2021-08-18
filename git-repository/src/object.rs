@@ -2,7 +2,6 @@ use std::{cell::Ref, ops::DerefMut};
 
 pub use git_object::Kind;
 
-use crate::ext::ObjectAccessExt;
 use crate::objs::immutable;
 use crate::odb::Find;
 use crate::{
@@ -75,7 +74,7 @@ pub mod find {
 
 impl<'repo, A> ObjectRef<'repo, A>
 where
-    A: ObjectAccessExt + Access + Sized,
+    A: Access + Sized,
 {
     pub fn to_commit_iter(&self) -> Option<immutable::CommitIter<'_>> {
         odb::data::Object::new(self.kind, &self.data).into_commit_iter()
@@ -90,7 +89,7 @@ pub mod peel_to_kind {
 
     impl<'repo, A> ObjectRef<'repo, A>
     where
-        A: ObjectAccessExt + Access + Sized,
+        A: Access + Sized,
     {
         // TODO: tests
         pub fn peel_to_kind(mut self, kind: Kind) -> Result<Self, peel_to_kind::Error> {
@@ -103,13 +102,13 @@ pub mod peel_to_kind {
                         let tree_id = self.to_commit_iter().expect("commit").tree_id().expect("valid commit");
                         let access = self.access;
                         drop(self);
-                        self = access.find_existing_object(tree_id)?;
+                        self = crate::ext::access::object::find_existing_object(access, tree_id)?;
                     }
                     Kind::Tag => {
                         let target_id = self.to_tag_iter().expect("tag").target_id().expect("valid tag");
                         let access = self.access;
                         drop(self);
-                        self = access.find_existing_object(target_id)?;
+                        self = crate::ext::access::object::find_existing_object(access, target_id)?;
                     }
                     Kind::Tree | Kind::Blob => {
                         return Err(peel_to_kind::Error::NotFound {
@@ -141,7 +140,6 @@ pub mod peel_to_kind {
             }
         }
     }
-    use crate::ext::ObjectAccessExt;
     use crate::object::{peel_to_kind, Kind};
     use crate::objs::immutable;
     use crate::{odb, Access, ObjectRef};
@@ -150,16 +148,16 @@ pub mod peel_to_kind {
 
 impl<'repo, A> Oid<'repo, A>
 where
-    A: crate::prelude::ObjectAccessExt + Access + Sized,
+    A: Access + Sized,
 {
     // NOTE: Can't access other object data that is attached to the same cache.
     pub fn existing_object(&self) -> Result<ObjectRef<'repo, A>, find::existing::Error> {
-        self.access.find_existing_object(self.id)
+        crate::ext::access::object::find_existing_object(self.access, self.id)
     }
 
     // NOTE: Can't access other object data that is attached to the same cache.
     pub fn object(&self) -> Result<Option<ObjectRef<'repo, A>>, find::Error> {
-        self.access.find_object(self.id)
+        crate::ext::access::object::find_object(self.access, self.id)
     }
 }
 
@@ -173,52 +171,5 @@ where
 
     pub fn detach(self) -> ObjectId {
         self.id
-    }
-
-    // TODO: tests
-    pub fn peel_to_kind(&self, kind: Kind) -> Result<ObjectRef<'repo, A>, peel_to_kind::Error> {
-        let mut id = self.id;
-        let mut buf = self.access.cache().buf.borrow_mut();
-        let mut cursor =
-            self.access
-                .repo()
-                .odb
-                .find_existing(&id, &mut buf, self.access.cache().pack.borrow_mut().deref_mut())?;
-        loop {
-            match cursor.kind {
-                any_kind if kind == any_kind => {
-                    let kind = cursor.kind;
-                    drop(cursor);
-                    drop(buf);
-                    return Ok(ObjectRef::from_current_buf(id, kind, self.access));
-                }
-                Kind::Commit => {
-                    id = cursor.into_commit_iter().expect("commit").tree_id().expect("id");
-                    cursor = self.access.repo().odb.find_existing(
-                        id,
-                        &mut buf,
-                        self.access.cache().pack.borrow_mut().deref_mut(),
-                    )?;
-                }
-                Kind::Tag => {
-                    id = cursor
-                        .into_tag_iter()
-                        .expect("tag")
-                        .target_id()
-                        .expect("target present");
-                    cursor = self.access.repo().odb.find_existing(
-                        id,
-                        &mut buf,
-                        self.access.cache().pack.borrow_mut().deref_mut(),
-                    )?;
-                }
-                Kind::Tree | Kind::Blob => {
-                    return Err(peel_to_kind::Error::NotFound {
-                        actual: cursor.kind,
-                        expected: kind,
-                    })
-                }
-            }
-        }
     }
 }

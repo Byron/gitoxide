@@ -109,7 +109,7 @@ mod object_id {
 }
 pub use object_id::ObjectIdExt;
 
-mod access {
+pub(crate) mod access {
     pub(crate) mod object {
         use crate::hash::oid;
         use crate::odb::{Find, FindExt};
@@ -118,6 +118,41 @@ mod access {
         use std::cell::Ref;
         use std::ops::DerefMut;
 
+        pub fn find_existing_object<A: Access + Sized>(
+            access: &A,
+            id: impl Into<ObjectId>,
+        ) -> Result<ObjectRef<'_, A>, object::find::existing::Error> {
+            let cache = access.cache();
+            let id = id.into();
+            let kind = {
+                let mut buf = access.cache().buf.borrow_mut();
+                let obj = access
+                    .repo()
+                    .odb
+                    .find_existing(&id, &mut buf, cache.pack.borrow_mut().deref_mut())?;
+                obj.kind
+            };
+
+            Ok(ObjectRef::from_current_buf(id, kind, access))
+        }
+
+        pub fn find_object<A: Access + Sized>(
+            access: &A,
+            id: impl Into<ObjectId>,
+        ) -> Result<Option<ObjectRef<'_, A>>, object::find::Error> {
+            let cache = access.cache();
+            let id = id.into();
+            Ok(access
+                .repo()
+                .odb
+                .find(&id, &mut cache.buf.borrow_mut(), cache.pack.borrow_mut().deref_mut())?
+                .map(|obj| {
+                    let kind = obj.kind;
+                    drop(obj);
+                    ObjectRef::from_current_buf(id, kind, access)
+                }))
+        }
+
         pub trait ObjectAccessExt: Access + Sized {
             // NOTE: in order to get the actual kind of object, is must be fully decoded from storage in case of packs
             // even though partial decoding is possible for loose objects, it won't matter much here.
@@ -125,32 +160,11 @@ mod access {
                 &self,
                 id: impl Into<ObjectId>,
             ) -> Result<ObjectRef<'_, Self>, object::find::existing::Error> {
-                let cache = self.cache();
-                let mut buf = self.cache().buf.borrow_mut();
-                let id = id.into();
-                let kind = {
-                    let obj = self
-                        .repo()
-                        .odb
-                        .find_existing(&id, &mut buf, cache.pack.borrow_mut().deref_mut())?;
-                    obj.kind
-                };
-
-                Ok(ObjectRef::from_current_buf(id, kind, self))
+                find_existing_object(self, id)
             }
 
             fn find_object(&self, id: impl Into<ObjectId>) -> Result<Option<ObjectRef<'_, Self>>, object::find::Error> {
-                let cache = self.cache();
-                let id = id.into();
-                Ok(self
-                    .repo()
-                    .odb
-                    .find(&id, &mut cache.buf.borrow_mut(), cache.pack.borrow_mut().deref_mut())?
-                    .map(|obj| {
-                        let kind = obj.kind;
-                        drop(obj);
-                        ObjectRef::from_current_buf(id, kind, self)
-                    }))
+                find_object(self, id)
             }
         }
     }

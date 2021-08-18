@@ -26,6 +26,11 @@
 //! * There can only be one `Object` at a time, but as many `Oids` as you want.
 //! * git-repository functions return `Oid` for oids if they originate in something having or being `Access`
 //!
+//! #### Limitations
+//!
+//! * types containing `&impl Access` can't access extension traits directly but have to use a workaround. This is due to the way
+//!   extension traits can't apply internally if if it is implemented, but must be part of the external interface
+//!
 //! # Cargo-features
 //!
 //! ## One-stop-shop
