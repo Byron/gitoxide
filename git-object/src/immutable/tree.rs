@@ -38,7 +38,8 @@ pub struct Entry<'a> {
     /// The name of the file in the parent tree.
     pub filename: &'a BStr,
     /// The id of the object representing the entry.
-    // TODO: rename oid -> id
+    // TODO: figure out how these should be called. id or oid? It's inconsistent around the codebase.
+    // Answer: make it 'id', as in `git2`
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub oid: &'a git_hash::oid,
 }

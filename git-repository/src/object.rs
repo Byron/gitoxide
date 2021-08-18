@@ -11,6 +11,12 @@ use crate::{
     Access, Object, ObjectRef, Oid, TreeRef,
 };
 
+impl<'repo, A> std::fmt::Debug for ObjectRef<'repo, A> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(&self.id, f)
+    }
+}
+
 mod oid_impls {
     use super::Oid;
     use crate::{
@@ -98,7 +104,7 @@ mod tree {
         A: Access + Sized,
     {
         // TODO: tests
-        fn lookup_path<I, P>(mut self, path: I) -> Result<Option<objs::mutable::tree::Entry>, find::existing::Error>
+        pub fn lookup_path<I, P>(mut self, path: I) -> Result<Option<objs::mutable::tree::Entry>, find::existing::Error>
         where
             I: IntoIterator<Item = P>,
             P: PartialEq<BStr>,
@@ -129,7 +135,7 @@ mod tree {
                     None => return Ok(None),
                 }
             }
-            unreachable!("we never let the iterator deplete")
+            Ok(None)
         }
     }
 }

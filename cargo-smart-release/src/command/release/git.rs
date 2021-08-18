@@ -1,6 +1,6 @@
 use std::{convert::TryInto, process::Command};
 
-use anyhow::{anyhow, bail};
+use anyhow::bail;
 use bstr::ByteSlice;
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path},
@@ -10,7 +10,6 @@ use git_repository::{
     actor,
     hash::ObjectId,
     object,
-    odb::{pack, FindExt},
     prelude::ReferenceAccessExt,
     refs::{
         self,
@@ -68,20 +67,26 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
     if repo_relative_crate_dir.as_os_str().is_empty() {
         Ok(target != released_target)
     } else {
-        let mut buf = Vec::new();
-
-        let current_dir_id = find_directory_id_in_tree(
-            repo_relative_crate_dir,
-            target.existing_object()?.peel_to_kind(object::Kind::Tree)?.id,
-            &ctx.git_easy,
-            &mut buf,
-        )?;
-        let released_dir_id = find_directory_id_in_tree(
-            repo_relative_crate_dir,
-            released_target.existing_object()?.peel_to_kind(object::Kind::Tree)?.id,
-            &ctx.git_easy,
-            &mut buf,
-        )?;
+        let components = repo_relative_crate_dir.components().map(|c| match c {
+            Utf8Component::Normal(c) => c.as_bytes(),
+            _ => unreachable!("only normal components are possible in paths here"),
+        });
+        let current_dir_id = target
+            .existing_object()?
+            .peel_to_kind(object::Kind::Tree)?
+            .try_into_tree()
+            .expect("tree")
+            .lookup_path(components.clone())?
+            .expect("path must exist in current commit")
+            .oid;
+        let released_dir_id = released_target
+            .existing_object()?
+            .peel_to_kind(object::Kind::Tree)?
+            .try_into_tree()
+            .expect("tree")
+            .lookup_path(components)?
+            .expect("path must exist as it was supposedly released there")
+            .oid;
 
         Ok(released_dir_id != current_dir_id)
     }
@@ -113,44 +118,6 @@ pub fn assure_clean_working_tree() -> anyhow::Result<()> {
         bail!("Found untracked files which would possibly be packaged when publishing.")
     }
     Ok(())
-}
-
-fn find_directory_id_in_tree(
-    path: &Utf8Path,
-    id: impl Into<ObjectId>,
-    shared: &git_repository::Easy,
-    buf: &mut Vec<u8>,
-) -> anyhow::Result<ObjectId> {
-    let id = id.into();
-    let mut tree_id = Some(id);
-
-    for component in path.components() {
-        match component {
-            Utf8Component::Normal(c) => match tree_id {
-                None => break,
-                Some(id) => {
-                    let mut tree_iter = shared
-                        .repo
-                        .odb
-                        .find_existing(id, buf, &mut pack::cache::Never)?
-                        .into_tree_iter()
-                        .expect("tree");
-                    tree_id = tree_iter
-                        .find_map(|e| {
-                            let e = e.expect("tree parseable");
-                            (e.filename == c).then(|| e.oid)
-                        })
-                        .map(ToOwned::to_owned);
-                }
-            },
-            _ => panic!(
-                "only normal components are expected in relative manifest paths: '{}'",
-                path
-            ),
-        }
-    }
-
-    tree_id.ok_or_else(|| anyhow!("path '{}' didn't exist in tree {}", path, id))
 }
 
 pub(in crate::command::release_impl) fn commit_changes(
