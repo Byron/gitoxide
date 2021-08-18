@@ -197,6 +197,8 @@ Check out the [performance discussion][git-traverse-performance] as well.
 
 ### git-index
 * read and write a git-index file
+    * non-sparse
+    * sparse (search for [`sparse index` here](https://github.blog/2021-08-16-highlights-from-git-2-33/))
 * add and remove entries
 * [x] API documentation
     * [ ] Some examples
