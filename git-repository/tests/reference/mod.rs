@@ -43,9 +43,9 @@ mod find {
             "it follows symbolic refs, too"
         );
         assert_eq!(
-            symbolic_ref.peel_to_object_in_place().unwrap().id(),
+            symbolic_ref.peel_to_object_in_place().unwrap(),
             the_commit,
             "idempotency"
-        )
+        );
     }
 }

@@ -128,6 +128,7 @@ pub(crate) use traits::Access;
 pub struct Object<'r, A> {
     id: ObjectId,
     access: &'r A,
+    data: Option<object::Data<'r>>,
 }
 
 pub mod object;

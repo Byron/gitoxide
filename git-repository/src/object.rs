@@ -8,6 +8,7 @@ use crate::{
     odb::FindExt,
     Access, Object,
 };
+use std::borrow::Borrow;
 
 mod impls {
     use super::Object;
@@ -16,6 +17,12 @@ mod impls {
     impl<'repo, A, B> PartialEq<Object<'repo, A>> for Object<'repo, B> {
         fn eq(&self, other: &Object<'repo, A>) -> bool {
             self.id == other.id
+        }
+    }
+
+    impl<'repo, A> PartialEq<ObjectId> for Object<'repo, A> {
+        fn eq(&self, other: &ObjectId) -> bool {
+            &self.id == other
         }
     }
 
@@ -76,7 +83,11 @@ where
     A: Access + Sized,
 {
     pub(crate) fn from_id(id: impl Into<ObjectId>, access: &'repo A) -> Self {
-        Object { id: id.into(), access }
+        Object {
+            id: id.into(),
+            access,
+            data: None,
+        }
     }
 
     pub fn id(&self) -> &oid {
@@ -87,12 +98,25 @@ where
         self.id
     }
 
+    pub fn kind(&mut self) -> Result<Kind, find::existing::Error> {
+        let cache = self.access.cache();
+        Ok(match &self.data {
+            Some(data) => data.kind,
+            None => {
+                let data = self.find_raw_data()?;
+                let kind = data.kind;
+                self.data = Some(data);
+                kind
+            }
+        })
+    }
+
     pub fn detach(self) -> ObjectId {
         self.id
     }
 
     /// Makes all lower level objects and iterators accessible
-    fn raw(&self) -> Result<Data<'repo>, find::existing::Error> {
+    fn find_raw_data(&self) -> Result<Data<'repo>, find::existing::Error> {
         let mut buf = self.access.cache().buf.borrow_mut();
         let kind = {
             let obj = self.access.repo().odb.find_existing(
@@ -110,7 +134,7 @@ where
     }
 
     // TODO: tests
-    pub fn peel_to_kind(&self, kind: Kind) -> Result<(Self, Data<'repo>), peel_to_kind::Error> {
+    pub fn peel_to_kind(&self, kind: Kind) -> Result<Self, peel_to_kind::Error> {
         let mut id = self.id;
         let mut buf = self.access.cache().buf.borrow_mut();
         let mut cursor =
@@ -122,15 +146,15 @@ where
             match cursor.kind {
                 any_kind if kind == any_kind => {
                     let kind = cursor.kind;
-                    drop(cursor);
-                    drop(buf);
-                    return Ok((
-                        Object::from_id(id, self.access),
-                        Data {
+                    (drop(cursor), drop(buf));
+                    return Ok(Object {
+                        id,
+                        access: self.access,
+                        data: Some(Data {
                             kind,
                             bytes: Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice()),
-                        },
-                    ));
+                        }),
+                    });
                 }
                 Kind::Commit => {
                     id = cursor.into_commit_iter().expect("commit").tree_id().expect("id");
