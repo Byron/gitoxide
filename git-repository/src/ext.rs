@@ -114,6 +114,7 @@ mod access {
         use crate::hash::oid;
         use crate::odb::{Find, FindExt};
         use crate::{object, Access, ObjectRef, Oid};
+        use git_hash::ObjectId;
         use std::cell::Ref;
         use std::ops::DerefMut;
 
@@ -122,31 +123,33 @@ mod access {
             // even though partial decoding is possible for loose objects, it won't matter much here.
             fn find_existing_object(
                 &self,
-                id: impl AsRef<oid>,
+                id: impl Into<ObjectId>,
             ) -> Result<ObjectRef<'_, Self>, object::find::existing::Error> {
                 let cache = self.cache();
                 let mut buf = self.cache().buf.borrow_mut();
+                let id = id.into();
                 let kind = {
                     let obj = self
                         .repo()
                         .odb
-                        .find_existing(id, &mut buf, cache.pack.borrow_mut().deref_mut())?;
+                        .find_existing(&id, &mut buf, cache.pack.borrow_mut().deref_mut())?;
                     obj.kind
                 };
 
-                Ok(ObjectRef::from_kind_and_current_buf(kind, self))
+                Ok(ObjectRef::from_current_buf(id, kind, self))
             }
 
-            fn find_object(&self, id: impl AsRef<oid>) -> Result<Option<ObjectRef<'_, Self>>, object::find::Error> {
+            fn find_object(&self, id: impl Into<ObjectId>) -> Result<Option<ObjectRef<'_, Self>>, object::find::Error> {
                 let cache = self.cache();
+                let id = id.into();
                 Ok(self
                     .repo()
                     .odb
-                    .find(id, &mut cache.buf.borrow_mut(), cache.pack.borrow_mut().deref_mut())?
+                    .find(&id, &mut cache.buf.borrow_mut(), cache.pack.borrow_mut().deref_mut())?
                     .map(|obj| {
                         let kind = obj.kind;
                         drop(obj);
-                        ObjectRef::from_kind_and_current_buf(kind, self)
+                        ObjectRef::from_current_buf(id, kind, self)
                     }))
             }
         }

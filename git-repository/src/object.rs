@@ -52,8 +52,9 @@ impl<'repo, A> ObjectRef<'repo, A>
 where
     A: Access + Sized,
 {
-    pub(crate) fn from_kind_and_current_buf(kind: Kind, access: &'repo A) -> Self {
+    pub(crate) fn from_current_buf(id: impl Into<ObjectId>, kind: Kind, access: &'repo A) -> Self {
         ObjectRef {
+            id: id.into(),
             kind,
             data: Ref::map(access.cache().buf.borrow(), |v| v.as_slice()),
             access,
@@ -153,12 +154,12 @@ where
 {
     // NOTE: Can't access other object data that is attached to the same cache.
     pub fn existing_object(&self) -> Result<ObjectRef<'repo, A>, find::existing::Error> {
-        self.access.find_existing_object(&self.id)
+        self.access.find_existing_object(self.id)
     }
 
     // NOTE: Can't access other object data that is attached to the same cache.
     pub fn object(&self) -> Result<Option<ObjectRef<'repo, A>>, find::Error> {
-        self.access.find_object(&self.id)
+        self.access.find_object(self.id)
     }
 }
 
@@ -175,7 +176,7 @@ where
     }
 
     // TODO: tests
-    pub fn peel_to_kind(&self, kind: Kind) -> Result<(ObjectId, ObjectRef<'repo, A>), peel_to_kind::Error> {
+    pub fn peel_to_kind(&self, kind: Kind) -> Result<ObjectRef<'repo, A>, peel_to_kind::Error> {
         let mut id = self.id;
         let mut buf = self.access.cache().buf.borrow_mut();
         let mut cursor =
@@ -189,7 +190,7 @@ where
                     let kind = cursor.kind;
                     drop(cursor);
                     drop(buf);
-                    return Ok((id, ObjectRef::from_kind_and_current_buf(kind, self.access)));
+                    return Ok(ObjectRef::from_current_buf(id, kind, self.access));
                 }
                 Kind::Commit => {
                     id = cursor.into_commit_iter().expect("commit").tree_id().expect("id");

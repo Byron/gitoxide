@@ -140,6 +140,7 @@ pub struct Oid<'r, A> {
 }
 
 pub struct ObjectRef<'repo, A> {
+    pub id: ObjectId,
     pub kind: objs::Kind,
     pub data: std::cell::Ref<'repo, [u8]>,
     access: &'repo A,
