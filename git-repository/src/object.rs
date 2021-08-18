@@ -104,7 +104,7 @@ mod tree {
             while let Some(component) = path.next() {
                 match immutable::tree::TreeIter::from_bytes(&self.data)
                     .filter_map(Result::ok)
-                    .find(|entry| component.eq(&entry.filename))
+                    .find(|entry| component.eq(entry.filename))
                 {
                     Some(entry) => {
                         if path.peek().is_none() {

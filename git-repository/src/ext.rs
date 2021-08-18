@@ -1,6 +1,8 @@
 mod tree {
+    #[cfg(feature = "git-diff")]
     use std::borrow::BorrowMut;
 
+    #[cfg(feature = "git-diff")]
     use git_hash::oid;
     use git_object::immutable;
     #[cfg(feature = "git-traverse")]
@@ -74,7 +76,8 @@ mod tree {
 pub use tree::TreeIterExt;
 
 mod object_id {
-    use git_hash::{oid, ObjectId};
+    use git_hash::ObjectId;
+    #[cfg(feature = "git-traverse")]
     use git_object::immutable;
     #[cfg(feature = "git-traverse")]
     use git_traverse::commit::ancestors::{Ancestors, State};
@@ -85,9 +88,9 @@ mod object_id {
 
     pub trait ObjectIdExt: Sealed {
         #[cfg(feature = "git-traverse")]
-        fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&oid) -> bool, State>
+        fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&git_hash::oid) -> bool, State>
         where
-            Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>;
+            Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>;
 
         fn attach<A: Access + Sized>(self, access: &A) -> Oid<'_, A>;
     }
@@ -95,9 +98,9 @@ mod object_id {
     impl Sealed for ObjectId {}
     impl ObjectIdExt for ObjectId {
         #[cfg(feature = "git-traverse")]
-        fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&oid) -> bool, State>
+        fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&git_hash::oid) -> bool, State>
         where
-            Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>,
+            Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>,
         {
             Ancestors::new(Some(self), State::default(), find)
         }
