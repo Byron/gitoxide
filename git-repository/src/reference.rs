@@ -1,6 +1,6 @@
 use std::{cell::RefCell, ops::DerefMut};
 
-use crate::{hash::ObjectId, odb::Find, refs, refs::mutable, Access, Object, Reference, Repository};
+use crate::{hash::ObjectId, odb::Find, refs, refs::mutable, Access, Oid, Reference, Repository};
 
 pub(crate) enum Backing {
     OwnedPacked {
@@ -72,7 +72,7 @@ where
         .borrow()
     }
 
-    pub fn peel_to_object_in_place(&mut self) -> Result<Object<'repo, A>, peel_to_id_in_place::Error> {
+    pub fn peel_to_object_in_place(&mut self) -> Result<Oid<'repo, A>, peel_to_id_in_place::Error> {
         let repo = self.access.repo();
         match self.backing.take().expect("a ref must be set") {
             Backing::LooseFile(mut r) => {
@@ -86,7 +86,7 @@ where
                     })?
                     .to_owned();
                 self.backing = Backing::LooseFile(r).into();
-                Ok(Object::from_id(oid, self.access))
+                Ok(Oid::from_id(oid, self.access))
             }
             Backing::OwnedPacked {
                 mut target,
@@ -102,7 +102,7 @@ where
                     object: None,
                 }
                 .into();
-                Ok(Object::from_id(target, self.access))
+                Ok(Oid::from_id(target, self.access))
             }
         }
     }

@@ -79,7 +79,7 @@ mod object_id {
     #[cfg(feature = "git-traverse")]
     use git_traverse::commit::ancestors::{Ancestors, State};
 
-    use crate::{Access, Object};
+    use crate::{Access, Oid};
 
     pub trait Sealed {}
 
@@ -89,7 +89,7 @@ mod object_id {
         where
             Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>;
 
-        fn attach<A: Access + Sized>(self, access: &A) -> Object<'_, A>;
+        fn attach<A: Access + Sized>(self, access: &A) -> Oid<'_, A>;
     }
 
     impl Sealed for ObjectId {}
@@ -102,8 +102,8 @@ mod object_id {
             Ancestors::new(Some(self), State::default(), find)
         }
 
-        fn attach<A: Access + Sized>(self, access: &A) -> Object<'_, A> {
-            Object::from_id(self, access)
+        fn attach<A: Access + Sized>(self, access: &A) -> Oid<'_, A> {
+            Oid::from_id(self, access)
         }
     }
 }
@@ -113,17 +113,17 @@ mod access {
     pub(crate) mod object {
         use crate::hash::oid;
         use crate::odb::{Find, FindExt};
-        use crate::{object, Access, Object};
+        use crate::{object, Access, Oid};
         use std::cell::Ref;
         use std::ops::DerefMut;
 
         pub trait ObjectAccessExt: Access + Sized {
             // NOTE: in order to get the actual kind of object, is must be fully decoded from storage in case of packs
             // even though partial decoding is possible for loose objects, it won't matter much here.
-            fn find_existing_object_data(
+            fn find_existing_object(
                 &self,
                 id: impl AsRef<oid>,
-            ) -> Result<object::Data<'_>, object::find::existing::Error> {
+            ) -> Result<object::DetachedObject<'_>, object::find::existing::Error> {
                 let cache = self.cache();
                 let mut buf = self.cache().buf.borrow_mut();
                 let kind = {
@@ -134,13 +134,16 @@ mod access {
                     obj.kind
                 };
 
-                Ok(object::Data {
+                Ok(object::DetachedObject {
                     kind,
-                    bytes: Ref::map(cache.buf.borrow(), |v| v.as_slice()),
+                    data: Ref::map(cache.buf.borrow(), |v| v.as_slice()),
                 })
             }
 
-            fn find_object_data(&self, id: impl AsRef<oid>) -> Result<Option<object::Data<'_>>, object::find::Error> {
+            fn find_object(
+                &self,
+                id: impl AsRef<oid>,
+            ) -> Result<Option<object::DetachedObject<'_>>, object::find::Error> {
                 let cache = self.cache();
                 Ok(self
                     .repo()
@@ -149,9 +152,9 @@ mod access {
                     .map(|obj| {
                         let kind = obj.kind;
                         drop(obj);
-                        object::Data {
+                        object::DetachedObject {
                             kind,
-                            bytes: Ref::map(cache.buf.borrow(), |v| v.as_slice()),
+                            data: Ref::map(cache.buf.borrow(), |v| v.as_slice()),
                         }
                     }))
             }

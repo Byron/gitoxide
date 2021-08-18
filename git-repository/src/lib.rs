@@ -125,7 +125,8 @@ mod cache {
 mod traits;
 pub(crate) use traits::Access;
 
-pub struct Object<'r, A> {
+// TODO: really would ObjectId, but it's different to show it's attached - maybe this is the type used most of the time here?
+pub struct Oid<'r, A> {
     id: ObjectId,
     access: &'r A,
 }

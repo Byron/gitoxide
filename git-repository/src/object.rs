@@ -7,48 +7,48 @@ use crate::{
     hash::{oid, ObjectId},
     object, odb,
     odb::FindExt,
-    Access, Object,
+    Access, Oid,
 };
 use std::borrow::Borrow;
 
 mod impls {
-    use super::Object;
+    use super::Oid;
     use crate::hash::{oid, ObjectId};
 
-    impl<'repo, A, B> PartialEq<Object<'repo, A>> for Object<'repo, B> {
-        fn eq(&self, other: &Object<'repo, A>) -> bool {
+    impl<'repo, A, B> PartialEq<Oid<'repo, A>> for Oid<'repo, B> {
+        fn eq(&self, other: &Oid<'repo, A>) -> bool {
             self.id == other.id
         }
     }
 
-    impl<'repo, A> PartialEq<ObjectId> for Object<'repo, A> {
+    impl<'repo, A> PartialEq<ObjectId> for Oid<'repo, A> {
         fn eq(&self, other: &ObjectId) -> bool {
             &self.id == other
         }
     }
 
-    impl<'repo, A> std::fmt::Debug for Object<'repo, A> {
+    impl<'repo, A> std::fmt::Debug for Oid<'repo, A> {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             self.id.fmt(f)
         }
     }
 
-    impl<'repo, A> AsRef<oid> for Object<'repo, A> {
+    impl<'repo, A> AsRef<oid> for Oid<'repo, A> {
         fn as_ref(&self) -> &oid {
             &self.id
         }
     }
 
-    impl<'repo, A> From<Object<'repo, A>> for ObjectId {
-        fn from(v: Object<'repo, A>) -> Self {
+    impl<'repo, A> From<Oid<'repo, A>> for ObjectId {
+        fn from(v: Oid<'repo, A>) -> Self {
             v.id
         }
     }
 }
 
-pub struct Data<'repo> {
+pub struct DetachedObject<'repo> {
     pub kind: Kind,
-    pub bytes: Ref<'repo, [u8]>,
+    pub data: Ref<'repo, [u8]>,
 }
 
 pub mod find {
@@ -81,27 +81,27 @@ pub mod peel_to_kind {
         }
     }
 }
-impl<'repo, A> Object<'repo, A>
+impl<'repo, A> Oid<'repo, A>
 where
     A: crate::prelude::ObjectAccessExt + Access + Sized,
 {
     // NOTE: Can't access other object data that is attached to the same cache.
-    pub fn existing_data(&self) -> Result<Data<'repo>, find::existing::Error> {
-        self.access.find_existing_object_data(&self.id)
+    pub fn existing_object(&self) -> Result<DetachedObject<'repo>, find::existing::Error> {
+        self.access.find_existing_object(&self.id)
     }
 
     // NOTE: Can't access other object data that is attached to the same cache.
-    pub fn data(&self) -> Result<Option<Data<'repo>>, find::Error> {
-        self.access.find_object_data(&self.id)
+    pub fn object(&self) -> Result<Option<DetachedObject<'repo>>, find::Error> {
+        self.access.find_object(&self.id)
     }
 }
 
-impl<'repo, A> Object<'repo, A>
+impl<'repo, A> Oid<'repo, A>
 where
     A: Access + Sized,
 {
     pub(crate) fn from_id(id: impl Into<ObjectId>, access: &'repo A) -> Self {
-        Object { id: id.into(), access }
+        Oid { id: id.into(), access }
     }
 
     pub fn id(&self) -> &oid {
@@ -117,7 +117,7 @@ where
     }
 
     // TODO: tests
-    pub fn peel_to_kind(&self, kind: Kind) -> Result<(ObjectId, Data<'repo>), peel_to_kind::Error> {
+    pub fn peel_to_kind(&self, kind: Kind) -> Result<(ObjectId, DetachedObject<'repo>), peel_to_kind::Error> {
         let mut id = self.id;
         let mut buf = self.access.cache().buf.borrow_mut();
         let mut cursor =
@@ -133,9 +133,9 @@ where
                     drop(buf);
                     return Ok((
                         id,
-                        Data {
+                        DetachedObject {
                             kind,
-                            bytes: Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice()),
+                            data: Ref::map(self.access.cache().buf.borrow(), |v| v.as_slice()),
                         },
                     ));
                 }
