@@ -35,7 +35,7 @@ pub struct SmartRelease {
     /// always bump versions as specified by --bump or --bump-dependencies even if this is not required.
     ///
     /// If it's required or not is determined by looking at the published versions in the crates index.
-    #[argh(switch, short = 'd')]
+    #[argh(switch)]
     pub no_bump_on_demand: bool,
 
     /// additionally run 'cargo publish --dry-run' when --execute is not set. This can be useful to see which local
@@ -99,7 +99,7 @@ pub struct SmartRelease {
     ///
     /// Can be 'major', 'minor' or 'patch', or 'keep' which doesn't alter the version.
     /// If unspecified, "keep" will be used.
-    #[argh(option, short = 'b')]
+    #[argh(option, short = 'd')]
     pub bump_dependencies: Option<String>,
 
     /// the name of the crates to be released, along with all of their dependencies if needed, using `cargo release`
