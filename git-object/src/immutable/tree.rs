@@ -38,6 +38,7 @@ pub struct Entry<'a> {
     /// The name of the file in the parent tree.
     pub filename: &'a BStr,
     /// The id of the object representing the entry.
+    // TODO: rename oid -> id
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub oid: &'a git_hash::oid,
 }

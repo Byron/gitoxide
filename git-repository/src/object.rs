@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, cell::Ref, ops::DerefMut};
+use std::{borrow::Borrow, cell::Ref, convert::TryInto, ops::DerefMut};
 
 pub use git_object::Kind;
 
@@ -8,7 +8,7 @@ use crate::{
     objs::immutable,
     odb,
     odb::{Find, FindExt},
-    Access, Object, ObjectRef, Oid,
+    Access, Object, ObjectRef, Oid, TreeRef,
 };
 
 mod oid_impls {
@@ -82,6 +82,58 @@ impl Object {
     }
 }
 
+mod tree {
+    use crate::{
+        object::find,
+        objs,
+        objs::{
+            bstr::{BStr, ByteSlice},
+            immutable,
+        },
+        odb, Access, Oid, TreeRef,
+    };
+
+    impl<'repo, A> TreeRef<'repo, A>
+    where
+        A: Access + Sized,
+    {
+        // TODO: tests
+        fn lookup_path<I, P>(mut self, path: I) -> Result<Option<objs::mutable::tree::Entry>, find::existing::Error>
+        where
+            I: IntoIterator<Item = P>,
+            P: PartialEq<BStr>,
+        {
+            // let mut out = None;
+            let mut path = path.into_iter().peekable();
+            while let Some(component) = path.next() {
+                match immutable::tree::TreeIter::from_bytes(&self.data)
+                    .filter_map(Result::ok)
+                    .find(|entry| component.eq(&entry.filename))
+                {
+                    Some(entry) => {
+                        if path.peek().is_none() {
+                            return Ok(Some(entry.into()));
+                        } else {
+                            let next_id = entry.oid.to_owned();
+                            let access = self.access;
+                            drop(entry);
+                            drop(self);
+                            self = match crate::ext::access::object::find_existing_object(access, next_id)?
+                                .try_into_tree()
+                            {
+                                Ok(tree) => tree,
+                                Err(_) => return Ok(None),
+                            };
+                        }
+                    }
+                    None => return Ok(None),
+                }
+            }
+            unreachable!("we never let the iterator deplete")
+        }
+    }
+}
+
 impl<'repo, A> ObjectRef<'repo, A>
 where
     A: Access + Sized,
@@ -93,6 +145,10 @@ where
             data: Ref::map(access.cache().buf.borrow(), |v| v.as_slice()),
             access,
         }
+    }
+
+    pub fn try_into_tree(self) -> Result<TreeRef<'repo, A>, Self> {
+        self.try_into()
     }
 }
 
@@ -108,7 +164,9 @@ pub mod find {
 }
 
 mod object_ref_impls {
-    use crate::{Object, ObjectRef};
+    use std::convert::TryFrom;
+
+    use crate::{object, Object, ObjectRef, TreeRef};
 
     impl<'repo, A> From<ObjectRef<'repo, A>> for Object {
         fn from(r: ObjectRef<'repo, A>) -> Self {
@@ -125,6 +183,21 @@ mod object_ref_impls {
     impl AsRef<[u8]> for Object {
         fn as_ref(&self) -> &[u8] {
             &self.data
+        }
+    }
+
+    impl<'repo, A> TryFrom<ObjectRef<'repo, A>> for TreeRef<'repo, A> {
+        type Error = ObjectRef<'repo, A>;
+
+        fn try_from(value: ObjectRef<'repo, A>) -> Result<Self, Self::Error> {
+            match value.kind {
+                object::Kind::Tree => Ok(TreeRef {
+                    id: value.id,
+                    data: value.data,
+                    access: value.access,
+                }),
+                _ => Err(value),
+            }
         }
     }
 }

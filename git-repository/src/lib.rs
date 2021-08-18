@@ -20,8 +20,13 @@
 //!
 //! ### Design Sketch
 //!
+//! Goal is to make the lower-level plumbing available without having to deal with any caches or buffers, and avoid any allocation
+//! beyond sizing the buffer to fit the biggest object seen so far.
+//!
 //! * no implicit object lookups, thus `Oid` needs to get an `Object` first to start out with data
-//! * Objects with `Ref` suffix can only exist one at a time unless they are transformed into an owned version of it
+//! * Objects with `Ref` suffix can only exist one at a time unless they are transformed into an owned version of it OR
+//!   multiple `Easy` handles are present, each providing another 'slot' for an object as long as its retrieved through
+//!   the respective `Easy` object.
 //! * `ObjectRef` blocks the current buffer, hence many operations that use the buffer are consuming
 //! * There can only be one `Object` at a time, but as many `Oids` as you want.
 //! * Anything attached to `Access` can be detached to lift the object limit or make them `Send` able. They can be `attached` to another
@@ -149,6 +154,12 @@ pub struct Oid<'r, A> {
 pub struct ObjectRef<'repo, A> {
     pub id: ObjectId,
     pub kind: objs::Kind,
+    pub data: std::cell::Ref<'repo, [u8]>,
+    access: &'repo A,
+}
+
+pub struct TreeRef<'repo, A> {
+    pub id: ObjectId,
     pub data: std::cell::Ref<'repo, [u8]>,
     access: &'repo A,
 }
