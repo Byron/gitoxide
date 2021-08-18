@@ -104,14 +104,6 @@ where
         Oid { id: id.into(), access }
     }
 
-    pub fn id(&self) -> &oid {
-        &self.id
-    }
-
-    pub fn into_id(self) -> ObjectId {
-        self.id
-    }
-
     pub fn detach(self) -> ObjectId {
         self.id
     }
