@@ -22,6 +22,8 @@
 //!
 //! * no implicit object lookups, thus `Oid` needs to get an `Object` first to start out with data
 //! * `Object` blocks the current buffer, hence many operations that use the buffer are consuming
+//! * There can only be one `Object` at a time, but as many `Oids` as you want.
+//! * git-repository functions return `Oid` for oids if they originate in something having or being `Access`
 //!
 //! # Cargo-features
 //!

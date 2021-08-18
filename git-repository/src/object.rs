@@ -2,6 +2,8 @@ use std::{cell::Ref, ops::DerefMut};
 
 pub use git_object::Kind;
 
+use crate::ext::ObjectAccessExt;
+use crate::objs::immutable;
 use crate::odb::Find;
 use crate::{
     hash::{oid, ObjectId},
@@ -70,25 +72,81 @@ pub mod find {
     }
 }
 
+impl<'repo, A> Object<'repo, A>
+where
+    A: ObjectAccessExt + Access + Sized,
+{
+    pub fn to_commit_iter(&self) -> Option<immutable::CommitIter<'_>> {
+        odb::data::Object::new(self.kind, &self.data).into_commit_iter()
+    }
+
+    pub fn to_tag_iter(&self) -> Option<immutable::TagIter<'_>> {
+        odb::data::Object::new(self.kind, &self.data).into_tag_iter()
+    }
+}
+
 pub mod peel_to_kind {
-    use quick_error::quick_error;
 
-    use crate::{hash::ObjectId, object, object::find, odb};
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            FindExisting(err: find::existing::Error) {
-                display("A non existing object was encountered during object peeling")
-                from()
-                source(err)
-            }
-            NotFound{id: ObjectId, kind: object::Kind} {
-                display("Last encountered object was {} while trying to peel to {}", id, kind)
+    impl<'repo, A> Object<'repo, A>
+    where
+        A: ObjectAccessExt + Access + Sized,
+    {
+        // TODO: tests
+        pub fn peel_to_kind(mut self, kind: Kind) -> Result<Self, peel_to_kind::Error> {
+            loop {
+                match self.kind {
+                    any_kind if kind == any_kind => {
+                        return Ok(self);
+                    }
+                    Kind::Commit => {
+                        let tree_id = self.to_commit_iter().expect("commit").tree_id().expect("valid commit");
+                        let access = self.access;
+                        drop(self);
+                        self = access.find_existing_object(tree_id)?;
+                    }
+                    Kind::Tag => {
+                        let target_id = self.to_tag_iter().expect("tag").target_id().expect("valid tag");
+                        let access = self.access;
+                        drop(self);
+                        self = access.find_existing_object(target_id)?;
+                    }
+                    Kind::Tree | Kind::Blob => {
+                        return Err(peel_to_kind::Error::NotFound {
+                            actual: self.kind,
+                            expected: kind,
+                        })
+                    }
+                }
             }
         }
     }
+
+    mod error {
+        use quick_error::quick_error;
+
+        use crate::{hash::ObjectId, object, object::find, odb};
+
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                FindExisting(err: find::existing::Error) {
+                    display("A non existing object was encountered during object peeling")
+                    from()
+                    source(err)
+                }
+                NotFound{actual: object::Kind, expected: object::Kind} {
+                    display("Last encountered object kind was {} while trying to peel to {}", actual, expected)
+                }
+            }
+        }
+    }
+    use crate::ext::ObjectAccessExt;
+    use crate::object::{peel_to_kind, Kind};
+    use crate::objs::immutable;
+    use crate::{odb, Access, Object};
+    pub use error::Error;
 }
+
 impl<'repo, A> Oid<'repo, A>
 where
     A: crate::prelude::ObjectAccessExt + Access + Sized,
@@ -153,7 +211,12 @@ where
                         self.access.cache().pack.borrow_mut().deref_mut(),
                     )?;
                 }
-                Kind::Tree | Kind::Blob => return Err(peel_to_kind::Error::NotFound { id, kind }),
+                Kind::Tree | Kind::Blob => {
+                    return Err(peel_to_kind::Error::NotFound {
+                        actual: cursor.kind,
+                        expected: kind,
+                    })
+                }
             }
         }
     }
