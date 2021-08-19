@@ -67,7 +67,7 @@
 #![deny(unsafe_code, rust_2018_idioms)]
 #![allow(missing_docs)]
 
-use std::path::PathBuf;
+use std::{path::PathBuf, rc::Rc, sync::Arc};
 
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
@@ -114,11 +114,21 @@ pub struct Repository {
     pub working_tree: Option<PathBuf>,
 }
 
-mod easy;
-pub use easy::{Cache, Easy, EasyArc};
+pub struct Easy {
+    pub repo: Rc<Repository>,
+    pub cache: easy::State,
+}
 
-mod traits;
-pub(crate) use traits::Access;
+/// A handle is what threaded programs would use to have thread-local but otherwise shared versions the same `Repository`.
+///
+/// Mutable data present in the `Handle` itself while keeping the parent `Repository` (which has its own cache) shared.
+/// Otherwise handles reflect the API of a `Repository`.
+pub struct EasyArc {
+    pub repo: Arc<Repository>,
+    pub cache: easy::State,
+}
+
+pub mod easy;
 
 // TODO: really would ObjectId, but it's different to show it's attached - maybe this is the type used most of the time here?
 pub struct Oid<'r, A> {

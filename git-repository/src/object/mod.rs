@@ -2,7 +2,7 @@ use std::{cell::Ref, convert::TryInto};
 
 pub use git_object::Kind;
 
-use crate::{hash::ObjectId, objs::immutable, odb, Access, Object, ObjectRef, TreeRef};
+use crate::{easy, hash::ObjectId, objs::immutable, odb, Object, ObjectRef, TreeRef};
 
 mod impls;
 mod tree;
@@ -10,13 +10,13 @@ mod tree;
 impl Object {
     pub fn attach<A>(self, access: &A) -> ObjectRef<'_, A>
     where
-        A: Access + Sized,
+        A: easy::Access + Sized,
     {
-        *access.cache().buf.borrow_mut() = self.data;
+        *access.state().buf.borrow_mut() = self.data;
         ObjectRef {
             id: self.id,
             kind: self.kind,
-            data: Ref::map(access.cache().buf.borrow(), |v| v.as_slice()),
+            data: Ref::map(access.state().buf.borrow(), |v| v.as_slice()),
             access,
         }
     }
@@ -24,13 +24,13 @@ impl Object {
 
 impl<'repo, A> ObjectRef<'repo, A>
 where
-    A: Access + Sized,
+    A: easy::Access + Sized,
 {
     pub(crate) fn from_current_buf(id: impl Into<ObjectId>, kind: Kind, access: &'repo A) -> Self {
         ObjectRef {
             id: id.into(),
             kind,
-            data: Ref::map(access.cache().buf.borrow(), |v| v.as_slice()),
+            data: Ref::map(access.state().buf.borrow(), |v| v.as_slice()),
             access,
         }
     }
@@ -82,7 +82,7 @@ impl<'repo, A> ObjectRef<'repo, A> {
 
 impl<'repo, A> ObjectRef<'repo, A>
 where
-    A: Access + Sized,
+    A: easy::Access + Sized,
 {
     pub fn to_commit_iter(&self) -> Option<immutable::CommitIter<'_>> {
         odb::data::Object::new(self.kind, &self.data).into_commit_iter()
@@ -95,13 +95,14 @@ where
 
 pub mod peel_to_kind {
     use crate::{
+        easy,
         object::{peel_to_kind, Kind},
-        Access, ObjectRef,
+        ObjectRef,
     };
 
     impl<'repo, A> ObjectRef<'repo, A>
     where
-        A: Access + Sized,
+        A: easy::Access + Sized,
     {
         // TODO: tests
         pub fn peel_to_kind(mut self, kind: Kind) -> Result<Self, peel_to_kind::Error> {

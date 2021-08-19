@@ -1,8 +1,9 @@
 use super::Oid;
 use crate::{
+    easy,
     hash::{oid, ObjectId},
     object::find,
-    Access, Object, ObjectRef,
+    Object, ObjectRef,
 };
 
 impl<'repo, A, B> PartialEq<Oid<'repo, A>> for Oid<'repo, B> {
@@ -55,7 +56,7 @@ impl<'repo, A> From<Oid<'repo, A>> for ObjectId {
 
 impl<'repo, A> Oid<'repo, A>
 where
-    A: Access + Sized,
+    A: easy::Access + Sized,
 {
     // NOTE: Can't access other object data that is attached to the same cache.
     pub fn object(&self) -> Result<ObjectRef<'repo, A>, find::existing::Error> {
@@ -70,7 +71,7 @@ where
 
 impl<'repo, A> Oid<'repo, A>
 where
-    A: Access + Sized,
+    A: easy::Access + Sized,
 {
     pub(crate) fn from_id(id: impl Into<ObjectId>, access: &'repo A) -> Self {
         Oid { id: id.into(), access }

@@ -4,19 +4,19 @@ pub(crate) mod object {
     use git_hash::ObjectId;
 
     use crate::{
-        object,
+        easy, object,
         odb::{Find, FindExt},
-        Access, ObjectRef,
+        ObjectRef,
     };
 
-    pub fn find_object<A: Access + Sized>(
+    pub fn find_object<A: easy::Access + Sized>(
         access: &A,
         id: impl Into<ObjectId>,
     ) -> Result<ObjectRef<'_, A>, object::find::existing::Error> {
-        let cache = access.cache();
+        let cache = access.state();
         let id = id.into();
         let kind = {
-            let mut buf = access.cache().buf.borrow_mut();
+            let mut buf = access.state().buf.borrow_mut();
             let obj = access
                 .repo()
                 .odb
@@ -27,11 +27,11 @@ pub(crate) mod object {
         Ok(ObjectRef::from_current_buf(id, kind, access))
     }
 
-    pub fn try_find_object<A: Access + Sized>(
+    pub fn try_find_object<A: easy::Access + Sized>(
         access: &A,
         id: impl Into<ObjectId>,
     ) -> Result<Option<ObjectRef<'_, A>>, object::find::Error> {
-        let cache = access.cache();
+        let cache = access.state();
         let id = id.into();
         Ok(access
             .repo()
@@ -44,7 +44,7 @@ pub(crate) mod object {
             }))
     }
 
-    pub trait ObjectAccessExt: Access + Sized {
+    pub trait ObjectAccessExt: easy::Access + Sized {
         // NOTE: in order to get the actual kind of object, is must be fully decoded from storage in case of packs
         // even though partial decoding is possible for loose objects, it won't matter much here.
         fn find_object(&self, id: impl Into<ObjectId>) -> Result<ObjectRef<'_, Self>, object::find::existing::Error> {
@@ -63,18 +63,18 @@ pub(crate) mod reference {
     use git_hash::ObjectId;
 
     use crate::{
-        actor, lock, reference,
+        actor, easy, lock, reference,
         refs::{
             file::find::Error,
             mutable::Target,
             transaction::{Change, Create, RefEdit},
             PartialName,
         },
-        Access, Reference,
+        Reference,
     };
 
     /// Obtain and alter references comfortably
-    pub trait ReferenceAccessExt: Access + Sized {
+    pub trait ReferenceAccessExt: easy::Access + Sized {
         fn tag(
             &self,
             name: impl AsRef<str>,
@@ -153,7 +153,7 @@ pub(crate) mod reference {
             Name: TryInto<PartialName<'a>, Error = E>,
             Error: From<E>,
         {
-            let cache = self.cache();
+            let cache = self.state();
             cache.assure_packed_refs_present(&self.repo().refs)?;
             match self.repo().refs.find(name, cache.packed_refs.borrow().as_ref()) {
                 Ok(r) => match r {
@@ -165,5 +165,5 @@ pub(crate) mod reference {
         }
     }
 
-    impl<A> ReferenceAccessExt for A where A: Access + Sized {}
+    impl<A> ReferenceAccessExt for A where A: easy::Access + Sized {}
 }

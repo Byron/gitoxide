@@ -1,13 +1,14 @@
 use crate::{
+    easy,
     object::find,
     objs,
     objs::{bstr::BStr, immutable},
-    Access, TreeRef,
+    TreeRef,
 };
 
 impl<'repo, A> TreeRef<'repo, A>
 where
-    A: Access + Sized,
+    A: easy::Access + Sized,
 {
     // TODO: move implementation to git-object, tests.
     pub fn lookup_path<I, P>(mut self, path: I) -> Result<Option<objs::mutable::tree::Entry>, find::existing::Error>

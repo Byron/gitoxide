@@ -1,6 +1,6 @@
 use std::ops::DerefMut;
 
-use crate::{hash::ObjectId, odb::Find, refs, refs::mutable, Access, Oid, Reference};
+use crate::{easy, hash::ObjectId, odb::Find, refs, refs::mutable, Oid, Reference};
 
 pub(crate) enum Backing {
     OwnedPacked {
@@ -75,7 +75,7 @@ pub mod peel_to_id_in_place {
 // TODO: think about how to detach a Reference. It should essentially be a 'Raw' reference that should exist in `git-ref` rather than here.
 impl<'repo, A> Reference<'repo, A>
 where
-    A: Access + Sized,
+    A: easy::Access + Sized,
 {
     pub(crate) fn from_file_ref(reference: refs::file::Reference<'_>, access: &'repo A) -> Self {
         Reference {
@@ -112,7 +112,7 @@ where
         let repo = self.access.repo();
         match self.backing.take().expect("a ref must be set") {
             Backing::LooseFile(mut r) => {
-                let cache = self.access.cache();
+                let cache = self.access.state();
                 cache.assure_packed_refs_present(&repo.refs)?;
                 let mut pack_cache = cache.pack.try_borrow_mut()?;
                 let oid = r
