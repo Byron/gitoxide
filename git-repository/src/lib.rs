@@ -171,6 +171,7 @@ pub struct Object {
 }
 
 pub mod object;
+mod oid;
 
 pub struct Reference<'r, A> {
     pub(crate) backing: Option<reference::Backing>,
