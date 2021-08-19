@@ -33,6 +33,14 @@ pub mod peel_to_id_in_place {
                 from()
                 source(err)
             }
+            Borrow(err: std::cell::BorrowError) {
+                display("A piece of the cache could not be borrowed")
+                from()
+            }
+            BorrowMut(err: std::cell::BorrowMutError) {
+                display("A piece of the cache could not be borrowed")
+                from()
+            }
         }
     }
 }
@@ -79,10 +87,11 @@ where
             Backing::LooseFile(mut r) => {
                 let cache = self.access.cache();
                 cache.assure_packed_refs_present(&repo.refs)?;
+                let mut pack_cache = cache.pack.try_borrow_mut()?;
                 let oid = r
-                    .peel_to_id_in_place(&repo.refs, cache.packed_refs.borrow().as_ref(), |oid, buf| {
+                    .peel_to_id_in_place(&repo.refs, cache.packed_refs.try_borrow()?.as_ref(), |oid, buf| {
                         repo.odb
-                            .find(oid, buf, cache.pack.borrow_mut().deref_mut())
+                            .find(oid, buf, pack_cache.deref_mut())
                             .map(|po| po.map(|o| (o.kind, o.data)))
                     })?
                     .to_owned();
