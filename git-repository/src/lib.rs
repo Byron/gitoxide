@@ -23,24 +23,27 @@
 //! Goal is to make the lower-level plumbing available without having to deal with any caches or buffers, and avoid any allocation
 //! beyond sizing the buffer to fit the biggest object seen so far.
 //!
-//! * no implicit object lookups, thus `Oid` needs to get an `Object` first to start out with data
+//! * no implicit object lookups, thus `Oid` needs to get an `Object` first to start out with data via `object()`
 //! * Objects with `Ref` suffix can only exist one at a time unless they are transformed into an owned version of it OR
 //!   multiple `Easy` handles are present, each providing another 'slot' for an object as long as its retrieved through
 //!   the respective `Easy` object.
-//! * `ObjectRef` blocks the current buffer, hence many operations that use the buffer are consuming
-//! * There can only be one `Object` at a time, but as many `Oids` as you want.
-//! * Anything attached to `Access` can be detached to lift the object limit or make them `Send` able. They can be `attached` to another
+//! * `ObjectRef` blocks the current buffer, hence many of its operations that use the buffer are consuming
+//! * All methods that access a any field from `Easy`'s mutable `State` are fallible, and return `easy::Result<_>` at least, to avoid
+//!   panics if the field can't be referenced due to borrow rules of `RefCell`.
+//! * Anything attached to `Access` can be detached to lift the object limit or make them `Send`-able. They can be `attached` to another
 //!   `Access` if needed.
-//! * git-repository functions return `Oid` for oids if they originate in something having or being `Access`
+//! * git-repository functions related to `Access` extensions will always return attached versions of return values, like `Oid` instead
+//!   of `ObjectId`, `ObjectRef` instead of `git_odb::data::Object`, or `Reference` instead of `git_ref::file::Reference`.
 //!
 //! #### Limitations
 //!
-//! * types containing `&impl Access` can't access extension traits directly but have to use a workaround. This is due to the way
-//!   extension traits can't apply internally if if it is implemented, but must be part of the external interface
 //! * The plumbing-level repository is borrowed immutably and doesn't change, which also means that its loaded packs and indices,
 //!   maybe along other state, can become stale. There is not trivial way of updating these unless the owner of it manages to
 //!   reduce its ref-count to one to obtain a mutable object back, or creates their own schemes along the lines instantiating
 //!   an entirely new repository which will subsequently be used while the stale one is phased out.
+//! * types containing `&impl Access` can't access extension traits directly but have to use a workaround. This is due to the way
+//!   extension traits can't apply internally if if it is implemented, but must be part of the external interface. This is only
+//!   relevant for code within `git-repository`
 //!
 //! # Cargo-features
 //!
@@ -120,7 +123,12 @@ pub struct Repository {
 
 pub struct Easy {
     pub repo: Rc<Repository>,
-    pub cache: easy::State,
+    pub state: easy::State,
+}
+
+pub struct EasyShared<'a> {
+    pub repo: &'a Repository,
+    pub state: easy::State,
 }
 
 /// A handle is what threaded programs would use to have thread-local but otherwise shared versions the same `Repository`.
@@ -129,7 +137,7 @@ pub struct Easy {
 /// Otherwise handles reflect the API of a `Repository`.
 pub struct EasyArc {
     pub repo: Arc<Repository>,
-    pub cache: easy::State,
+    pub state: easy::State,
 }
 
 pub mod easy;

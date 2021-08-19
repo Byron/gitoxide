@@ -109,11 +109,11 @@ where
         let repo = self.access.repo();
         match self.backing.take().expect("a ref must be set") {
             Backing::LooseFile(mut r) => {
-                let cache = self.access.state();
-                cache.assure_packed_refs_present(&repo.refs)?;
-                let mut pack_cache = cache.try_borrow_mut_pack_cache()?;
+                let state = self.access.state();
+                state.assure_packed_refs_present(&repo.refs)?;
+                let mut pack_cache = state.try_borrow_mut_pack_cache()?;
                 let oid = r
-                    .peel_to_id_in_place(&repo.refs, cache.try_borrow_packed_refs()?.as_ref(), |oid, buf| {
+                    .peel_to_id_in_place(&repo.refs, state.try_borrow_packed_refs()?.as_ref(), |oid, buf| {
                         repo.odb
                             .find(oid, buf, pack_cache.deref_mut())
                             .map(|po| po.map(|o| (o.kind, o.data)))

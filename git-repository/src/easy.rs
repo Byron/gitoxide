@@ -79,13 +79,13 @@ pub mod state {
 mod impls {
     use std::{rc::Rc, sync::Arc};
 
-    use crate::{easy, Easy, EasyArc, Repository};
+    use crate::{easy, Easy, EasyArc, EasyShared, Repository};
 
     impl Clone for Easy {
         fn clone(&self) -> Self {
             Easy {
                 repo: Rc::clone(&self.repo),
-                cache: Default::default(),
+                state: Default::default(),
             }
         }
     }
@@ -94,7 +94,16 @@ mod impls {
         fn clone(&self) -> Self {
             EasyArc {
                 repo: Arc::clone(&self.repo),
-                cache: Default::default(),
+                state: Default::default(),
+            }
+        }
+    }
+
+    impl<'repo> Clone for EasyShared<'repo> {
+        fn clone(&self) -> Self {
+            EasyShared {
+                repo: self.repo,
+                state: Default::default(),
             }
         }
     }
@@ -103,7 +112,7 @@ mod impls {
         fn from(repo: Repository) -> Self {
             Easy {
                 repo: Rc::new(repo),
-                cache: Default::default(),
+                state: Default::default(),
             }
         }
     }
@@ -112,12 +121,18 @@ mod impls {
         fn from(repo: Repository) -> Self {
             EasyArc {
                 repo: Arc::new(repo),
-                cache: Default::default(),
+                state: Default::default(),
             }
         }
     }
 
     impl Repository {
+        pub fn to_easy(&self) -> EasyShared<'_> {
+            EasyShared {
+                repo: self,
+                state: Default::default(),
+            }
+        }
         pub fn into_easy(self) -> Easy {
             self.into()
         }
@@ -133,7 +148,7 @@ mod impls {
         }
 
         fn state(&self) -> &easy::State {
-            &self.cache
+            &self.state
         }
     }
 
@@ -143,7 +158,17 @@ mod impls {
         }
 
         fn state(&self) -> &easy::State {
-            &self.cache
+            &self.state
+        }
+    }
+
+    impl<'repo> easy::Access for EasyShared<'repo> {
+        fn repo(&self) -> &Repository {
+            self.repo
+        }
+
+        fn state(&self) -> &easy::State {
+            &self.state
         }
     }
 }
