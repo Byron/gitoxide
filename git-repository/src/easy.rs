@@ -7,7 +7,7 @@ type PackCache = odb::pack::cache::Never; // TODO: choose great all-round cache
 #[derive(Default)]
 pub struct State {
     packed_refs: RefCell<Option<refs::packed::Buffer>>,
-    pub(crate) pack: RefCell<PackCache>,
+    pack_cache: RefCell<PackCache>,
     pub(crate) buf: RefCell<Vec<u8>>,
 }
 
@@ -58,8 +58,8 @@ pub mod state {
         }
 
         #[inline]
-        pub(crate) fn try_borrow_mut_pack(&self) -> Result<RefMut<'_, PackCache>, borrow::Error> {
-            self.pack.try_borrow_mut().map_err(Into::into)
+        pub(crate) fn try_borrow_mut_pack_cache(&self) -> Result<RefMut<'_, PackCache>, borrow::Error> {
+            self.pack_cache.try_borrow_mut().map_err(Into::into)
         }
     }
 }

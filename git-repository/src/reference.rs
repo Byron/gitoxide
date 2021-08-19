@@ -111,7 +111,7 @@ where
             Backing::LooseFile(mut r) => {
                 let cache = self.access.state();
                 cache.assure_packed_refs_present(&repo.refs)?;
-                let mut pack_cache = cache.try_borrow_mut_pack()?;
+                let mut pack_cache = cache.try_borrow_mut_pack_cache()?;
                 let oid = r
                     .peel_to_id_in_place(&repo.refs, cache.try_borrow_packed_refs()?.as_ref(), |oid, buf| {
                         repo.odb

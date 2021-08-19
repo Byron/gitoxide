@@ -20,7 +20,7 @@ pub(crate) mod object {
             let obj = access
                 .repo()
                 .odb
-                .find_existing(&id, &mut buf, cache.pack.borrow_mut().deref_mut())?;
+                .find_existing(&id, &mut buf, cache.try_borrow_mut_pack_cache()?.deref_mut())?;
             obj.kind
         };
 
@@ -36,7 +36,11 @@ pub(crate) mod object {
         Ok(access
             .repo()
             .odb
-            .find(&id, &mut cache.buf.borrow_mut(), cache.pack.borrow_mut().deref_mut())?
+            .find(
+                &id,
+                &mut cache.buf.borrow_mut(),
+                cache.try_borrow_mut_pack_cache()?.deref_mut(),
+            )?
             .map(|obj| {
                 let kind = obj.kind;
                 drop(obj);

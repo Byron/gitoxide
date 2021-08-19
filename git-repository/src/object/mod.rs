@@ -48,13 +48,47 @@ where
 }
 
 pub mod find {
-    use crate::odb;
+    use crate::{easy, odb};
+    use quick_error::quick_error;
 
-    pub type Error = odb::compound::find::Error;
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            Find(err: OdbError) {
+                display("An error occurred while trying to find an object")
+                from()
+                source(err)
+            }
+            Borrow(err: easy::state::borrow::Error) {
+                display("BUG: Part of interior state could not be borrowed.")
+                from()
+                source(err)
+            }
+        }
+    }
+    pub(crate) type OdbError = odb::compound::find::Error;
+
     pub mod existing {
-        use crate::odb;
+        use crate::{easy, odb};
+        use quick_error::quick_error;
 
-        pub type Error = odb::pack::find::existing::Error<odb::compound::find::Error>;
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                FindExisting(err: OdbError) {
+                    display("Could not find a supposedly existing object")
+                    from()
+                    source(err)
+                }
+                Borrow(err: easy::state::borrow::Error) {
+                    display("BUG: Part of interior state could not be borrowed.")
+                    from()
+                    source(err)
+                }
+            }
+        }
+
+        pub(crate) type OdbError = odb::pack::find::existing::Error<odb::compound::find::Error>;
     }
 }
 
