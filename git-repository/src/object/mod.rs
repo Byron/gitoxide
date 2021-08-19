@@ -35,6 +35,13 @@ where
         }
     }
 
+    pub fn into_tree(self) -> TreeRef<'repo, A> {
+        match self.try_into() {
+            Ok(tree) => tree,
+            Err(this) => panic!("Tried to use {} as tree, but was {}", this.id, this.kind),
+        }
+    }
+
     pub fn try_into_tree(self) -> Result<TreeRef<'repo, A>, Self> {
         self.try_into()
     }

@@ -71,16 +71,14 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
         let current_dir_id = current_commit
             .object()?
             .peel_to_kind(object::Kind::Tree)?
-            .try_into_tree()
-            .expect("tree")
+            .into_tree()
             .lookup_path(components.clone())?
             .expect("path must exist in current commit")
             .oid;
         let released_dir_id = released_target
             .object()?
             .peel_to_kind(object::Kind::Tree)?
-            .try_into_tree()
-            .expect("tree")
+            .into_tree()
             .lookup_path(components)?
             .expect("path must exist as it was supposedly released there")
             .oid;
