@@ -155,7 +155,7 @@ pub(crate) mod reference {
         {
             let cache = self.state();
             cache.assure_packed_refs_present(&self.repo().refs)?;
-            match self.repo().refs.find(name, cache.packed_refs.borrow().as_ref()) {
+            match self.repo().refs.find(name, cache.try_borrow_packed_refs()?.as_ref()) {
                 Ok(r) => match r {
                     Some(r) => Ok(Some(Reference::from_file_ref(r, self))),
                     None => Ok(None),

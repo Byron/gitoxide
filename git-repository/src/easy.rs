@@ -2,10 +2,12 @@ use std::cell::RefCell;
 
 use crate::{odb, refs, Repository};
 
+type PackCache = odb::pack::cache::Never; // TODO: choose great all-round cache
+
 #[derive(Default)]
 pub struct State {
-    pub(crate) packed_refs: RefCell<Option<refs::packed::Buffer>>,
-    pub(crate) pack: RefCell<odb::pack::cache::Never>, // TODO: choose great all-round cache
+    packed_refs: RefCell<Option<refs::packed::Buffer>>,
+    pub(crate) pack: RefCell<PackCache>,
     pub(crate) buf: RefCell<Vec<u8>>,
 }
 
@@ -14,13 +16,32 @@ pub trait Access {
     fn state(&self) -> &State;
 }
 
-mod state {
+pub mod state {
     use std::ops::DerefMut;
 
+    use crate::easy::PackCache;
     use crate::{
-        easy,
+        easy, refs,
         refs::{file, packed},
     };
+    use std::cell::{Ref, RefMut};
+
+    pub mod borrow {
+        use quick_error::quick_error;
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                Borrow(err: std::cell::BorrowError) {
+                    display("A state member could not be borrowed")
+                    from()
+                }
+                BorrowMut(err: std::cell::BorrowMutError) {
+                    display("A state member could not be mutably borrowed")
+                    from()
+                }
+            }
+        }
+    }
 
     impl easy::State {
         // TODO: this method should be on the Store itself, as one day there will be reftable support which lacks packed-refs
@@ -29,6 +50,16 @@ mod state {
                 *self.packed_refs.borrow_mut().deref_mut() = file.packed()?;
             }
             Ok(())
+        }
+
+        #[inline]
+        pub(crate) fn try_borrow_packed_refs(&self) -> Result<Ref<'_, Option<refs::packed::Buffer>>, borrow::Error> {
+            self.packed_refs.try_borrow().map_err(Into::into)
+        }
+
+        #[inline]
+        pub(crate) fn try_borrow_mut_pack(&self) -> Result<RefMut<'_, PackCache>, borrow::Error> {
+            self.pack.try_borrow_mut().map_err(Into::into)
         }
     }
 }

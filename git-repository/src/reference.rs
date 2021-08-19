@@ -45,7 +45,7 @@ pub mod edit {
 pub mod peel_to_id_in_place {
     use quick_error::quick_error;
 
-    use crate::refs;
+    use crate::{easy, refs};
 
     quick_error! {
         #[derive(Debug)]
@@ -60,13 +60,10 @@ pub mod peel_to_id_in_place {
                 from()
                 source(err)
             }
-            Borrow(err: std::cell::BorrowError) {
-                display("A piece of the cache could not be borrowed")
+            Borrow(err: easy::state::borrow::Error) {
+                display("BUG: Part of interior state could not be borrowed.")
                 from()
-            }
-            BorrowMut(err: std::cell::BorrowMutError) {
-                display("A piece of the cache could not be borrowed")
-                from()
+                source(err)
             }
         }
     }
@@ -114,9 +111,9 @@ where
             Backing::LooseFile(mut r) => {
                 let cache = self.access.state();
                 cache.assure_packed_refs_present(&repo.refs)?;
-                let mut pack_cache = cache.pack.try_borrow_mut()?;
+                let mut pack_cache = cache.try_borrow_mut_pack()?;
                 let oid = r
-                    .peel_to_id_in_place(&repo.refs, cache.packed_refs.try_borrow()?.as_ref(), |oid, buf| {
+                    .peel_to_id_in_place(&repo.refs, cache.try_borrow_packed_refs()?.as_ref(), |oid, buf| {
                         repo.odb
                             .find(oid, buf, pack_cache.deref_mut())
                             .map(|po| po.map(|o| (o.kind, o.data)))
@@ -148,7 +145,7 @@ where
 pub mod find {
     use quick_error::quick_error;
 
-    use crate::refs;
+    use crate::{easy, refs};
 
     pub mod existing {
         use quick_error::quick_error;
@@ -180,6 +177,11 @@ pub mod find {
             }
             PackedRefsOpen(err: refs::packed::buffer::open::Error) {
                 display("The packed-refs file could not be opened")
+                from()
+                source(err)
+            }
+            Borrow(err: easy::state::borrow::Error) {
+                display("BUG: Part of interior state could not be borrowed.")
                 from()
                 source(err)
             }
