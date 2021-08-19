@@ -37,6 +37,10 @@
 //!
 //! * types containing `&impl Access` can't access extension traits directly but have to use a workaround. This is due to the way
 //!   extension traits can't apply internally if if it is implemented, but must be part of the external interface
+//! * The plumbing-level repository is borrowed immutably and doesn't change, which also means that its loaded packs and indices,
+//!   maybe along other state, can become stale. There is not trivial way of updating these unless the owner of it manages to
+//!   reduce its ref-count to one to obtain a mutable object back, or creates their own schemes along the lines instantiating
+//!   an entirely new repository which will subsequently be used while the stale one is phased out.
 //!
 //! # Cargo-features
 //!
