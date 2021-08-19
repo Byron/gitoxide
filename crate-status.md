@@ -256,42 +256,51 @@ Use lock-files in the way git does with auto-cleanup being the most notable feat
 * [x] discovery
   * [ ] option to not cross file systems
   * [ ] handle git-common-dir
-* **Repository**    
-  * [x] discovery
+* **plumbing**
+  * **Repository**  (_plumbing_)
+    * [x] discovery
     * [ ] handle other non-discovery modes and provide control over environment variable usage required in applications
-  * [x] instantiation
+    * [x] instantiation
     * [ ] a way to handle `.git` files with `gitdir: <path>` in it
     * [ ] handle `gitdir` and `commondir` files
-* [x] access to refs and objects
-* traverse 
-    * [x] commit graphs
-    * [x] tree entries
-* diffs/changes
-   * [x] tree with tree
-   * [ ] tree with index
-   * [ ] index with working tree
-* [x] initialize
-    * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
-* [ ] All mutations are multi-process safe and this is tested and configurable (i.e. abort or wait if lock is encountered)
-* [ ] [Signed commits and tags](https://github.com/Byron/gitoxide/issues/12)
-* [ ] clone
-    * [ ] shallow
-    * [ ] namespaces support
-* [ ] sparse checkout support
-* [ ] execute hooks
-* [ ] .gitignore handling
-* [ ] checkout/stage conversions clean + smudge as in .gitattributes
-* [ ] rev-parsing and ref history
-* **refs**
-  * [ ] run transaction hooks and handle special repository states like quarantine
-  * [ ] support for different backends like `files` and `reftable`
-* [ ] worktrees
-* [ ] remotes with push and pull
-* [ ] mailmap   
-* [ ] configuration
-* [ ] merging
-* [ ] stashing
-* [ ] Use _Commit Graph_ to speed up certain queries
+  * [x] access to refs and objects
+  * traverse 
+      * [x] commit graphs
+      * [x] tree entries
+  * diffs/changes
+     * [x] tree with tree
+     * [ ] tree with index
+     * [ ] index with working tree
+  * [x] initialize
+      * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
+  * [ ] All mutations are multi-process safe and this is tested and configurable (i.e. abort or wait if lock is encountered)
+* **Easy** (_porcelain_) 
+  * **objects**
+    * [x] lookup
+    * [x] peel to object kind
+    * **trees**
+      * [x] lookup path
+  * **references**
+      * [x] peel to end
+  * [ ] [Signed commits and tags](https://github.com/Byron/gitoxide/issues/12)
+  * [ ] clone
+      * [ ] shallow
+      * [ ] namespaces support
+  * [ ] sparse checkout support
+  * [ ] execute hooks
+  * [ ] .gitignore handling
+  * [ ] checkout/stage conversions clean + smudge as in .gitattributes
+  * [ ] rev-parsing and ref history
+  * **refs**
+    * [ ] run transaction hooks and handle special repository states like quarantine
+    * [ ] support for different backends like `files` and `reftable`
+  * [ ] worktrees
+  * [ ] remotes with push and pull
+  * [ ] mailmap   
+  * [ ] configuration
+  * [ ] merging
+  * [ ] stashing
+  * [ ] Use _Commit Graph_ to speed up certain queries
 * [ ] API documentation
     * [ ] Some examples
 
