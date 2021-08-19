@@ -50,7 +50,7 @@ impl<'repo, A> Reference<'repo, A>
 where
     A: Access + Sized,
 {
-    pub(crate) fn from_ref(reference: refs::file::Reference<'_>, access: &'repo A) -> Self {
+    pub(crate) fn from_file_ref(reference: refs::file::Reference<'_>, access: &'repo A) -> Self {
         Reference {
             backing: match reference {
                 refs::file::Reference::Packed(p) => Backing::OwnedPacked {

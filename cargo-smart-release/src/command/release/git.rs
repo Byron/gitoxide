@@ -182,6 +182,7 @@ pub(in crate::command::release_impl) fn create_version_tag(
         }
         Ok(Some(edit.name))
     } else {
+        // ctx.git_easy.edit_reference(Some(refedit), lockmode)
         let edits = ctx
             .git_easy
             .repo

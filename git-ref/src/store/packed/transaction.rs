@@ -116,7 +116,10 @@ impl packed::Transaction {
         Ok(self)
     }
 
-    /// Commit the prepare transaction
+    /// Commit the prepared transaction.
+    ///
+    /// Please note that actual edits invalidated existing packed buffers.
+    /// Note: There is the potential to write changes into memory and return such a packed-refs buffer for reuse.
     pub fn commit(self) -> Result<(), commit::Error> {
         let mut edits = self.edits.expect("BUG: cannot call commit() before prepare(…)");
         if edits.is_empty() {
