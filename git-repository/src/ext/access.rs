@@ -61,13 +61,21 @@ pub(crate) mod reference {
     use std::convert::TryInto;
 
     use crate::{
-        reference,
-        refs::{file::find::Error, PartialName},
+        actor, lock, reference,
+        refs::{file::find::Error, transaction::RefEdit, PartialName},
         Access, Reference,
     };
 
     /// Obtain and alter references comfortably
     pub trait ReferenceAccessExt: Access + Sized {
+        fn edit_references(
+            _edits: impl IntoIterator<Item = RefEdit>,
+            _lock_mode: lock::acquire::Fail,
+            _log_committer: Option<&actor::Signature>,
+        ) -> Result<Vec<RefEdit>, reference::edit::Error> {
+            todo!("generic reference edit, from where other more 'easy' methods can be derived")
+        }
+
         fn find_reference<'a, Name, E>(
             &self,
             name: Name,

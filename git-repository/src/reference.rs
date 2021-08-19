@@ -15,6 +15,28 @@ pub(crate) enum Backing {
     LooseFile(refs::file::loose::Reference),
 }
 
+pub mod edit {
+    use quick_error::quick_error;
+
+    use crate::refs;
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            FileTransactionPrepare(err: refs::file::transaction::prepare::Error) {
+                display("Could not prepare the file transaction")
+                from()
+                source(err)
+            }
+            FileTransactionCommit(err: refs::file::transaction::commit::Error) {
+                display("Could not commit the file transaction")
+                from()
+                source(err)
+            }
+        }
+    }
+}
+
 pub mod peel_to_id_in_place {
     use quick_error::quick_error;
 

@@ -55,6 +55,7 @@
 //! * [`refs`]
 //! * [`interrupt`]
 //! * [`tempfile`]
+//! * [`lock`]
 //! * [`traverse`]
 //! * [`diff`]
 //! * [`Progress`]
@@ -76,6 +77,7 @@ pub use git_actor as actor;
 pub use git_diff as diff;
 pub use git_features::{parallel, progress, progress::Progress};
 pub use git_hash as hash;
+pub use git_lock as lock;
 pub use git_object as objs;
 pub use git_odb as odb;
 #[cfg(feature = "git-protocol")]

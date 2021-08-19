@@ -1220,6 +1220,7 @@ dependencies = [
  "git-diff",
  "git-features",
  "git-hash",
+ "git-lock",
  "git-object",
  "git-odb",
  "git-pack",
