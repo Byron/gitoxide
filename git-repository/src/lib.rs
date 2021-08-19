@@ -66,7 +66,7 @@
 #![deny(unsafe_code, rust_2018_idioms)]
 #![allow(missing_docs)]
 
-use std::{cell::RefCell, path::PathBuf};
+use std::path::PathBuf;
 
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
@@ -113,33 +113,7 @@ pub struct Repository {
 }
 
 mod easy;
-pub use easy::{Easy, EasyArc};
-
-#[derive(Default)]
-pub struct Cache {
-    packed_refs: RefCell<Option<refs::packed::Buffer>>,
-    pub(crate) pack: RefCell<odb::pack::cache::Never>, // TODO: choose great all-round cache
-    pub(crate) buf: RefCell<Vec<u8>>,
-}
-
-mod cache {
-    use std::ops::DerefMut;
-
-    use crate::{
-        refs::{file, packed},
-        Cache,
-    };
-
-    impl Cache {
-        // TODO: this method should be on the Store itself, as one day there will be reftable support which lacks packed-refs
-        pub(crate) fn assure_packed_refs_present(&self, file: &file::Store) -> Result<(), packed::buffer::open::Error> {
-            if self.packed_refs.borrow().is_none() {
-                *self.packed_refs.borrow_mut().deref_mut() = file.packed()?;
-            }
-            Ok(())
-        }
-    }
-}
+pub use easy::{Cache, Easy, EasyArc};
 
 mod traits;
 pub(crate) use traits::Access;

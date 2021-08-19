@@ -1,10 +1,37 @@
 use std::{rc::Rc, sync::Arc};
 
-use crate::{Cache, Repository};
+use crate::{odb, refs, Repository};
+use std::cell::RefCell;
 
 pub struct Easy {
     pub repo: Rc<Repository>,
     pub cache: Cache,
+}
+
+#[derive(Default)]
+pub struct Cache {
+    pub(crate) packed_refs: RefCell<Option<refs::packed::Buffer>>,
+    pub(crate) pack: RefCell<odb::pack::cache::Never>, // TODO: choose great all-round cache
+    pub(crate) buf: RefCell<Vec<u8>>,
+}
+
+mod cache {
+    use std::ops::DerefMut;
+
+    use crate::{
+        refs::{file, packed},
+        Cache,
+    };
+
+    impl Cache {
+        // TODO: this method should be on the Store itself, as one day there will be reftable support which lacks packed-refs
+        pub(crate) fn assure_packed_refs_present(&self, file: &file::Store) -> Result<(), packed::buffer::open::Error> {
+            if self.packed_refs.borrow().is_none() {
+                *self.packed_refs.borrow_mut().deref_mut() = file.packed()?;
+            }
+            Ok(())
+        }
+    }
 }
 
 /// A handle is what threaded programs would use to have thread-local but otherwise shared versions the same `Repository`.
