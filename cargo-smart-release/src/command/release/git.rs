@@ -38,7 +38,7 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
         &package.version.to_string(),
         is_top_level_package(&package.manifest_path, &ctx.git_easy),
     );
-    let mut tag_ref = match ctx.git_easy.find_reference(&version_tag_name)? {
+    let mut tag_ref = match ctx.git_easy.try_find_reference(&version_tag_name)? {
         None => {
             if verbose {
                 log::info!(
@@ -58,21 +58,18 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
         .strip_prefix(&ctx.root)
         .expect("workspace members are releative to the root directory");
 
-    let target = ctx
-        .git_easy
-        .find_existing_reference("HEAD")?
-        .peel_to_object_in_place()?;
+    let current_commit = ctx.git_easy.find_reference("HEAD")?.peel_to_object_in_place()?;
     let released_target = tag_ref.peel_to_object_in_place()?;
 
     if repo_relative_crate_dir.as_os_str().is_empty() {
-        Ok(target != released_target)
+        Ok(current_commit != released_target)
     } else {
         let components = repo_relative_crate_dir.components().map(|c| match c {
             Utf8Component::Normal(c) => c.as_bytes(),
             _ => unreachable!("only normal components are possible in paths here"),
         });
-        let current_dir_id = target
-            .existing_object()?
+        let current_dir_id = current_commit
+            .object()?
             .peel_to_kind(object::Kind::Tree)?
             .try_into_tree()
             .expect("tree")
@@ -80,7 +77,7 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
             .expect("path must exist in current commit")
             .oid;
         let released_dir_id = released_target
-            .existing_object()?
+            .object()?
             .peel_to_kind(object::Kind::Tree)?
             .try_into_tree()
             .expect("tree")

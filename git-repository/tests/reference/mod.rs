@@ -16,7 +16,7 @@ mod find {
     #[test]
     fn find_and_peel() {
         let repo = repo().unwrap();
-        let mut packed_tag_ref = repo.find_reference("dt1").unwrap().expect("tag to exist");
+        let mut packed_tag_ref = repo.try_find_reference("dt1").unwrap().expect("tag to exist");
         assert_eq!(packed_tag_ref.name(), "refs/tags/dt1".try_into().unwrap());
 
         assert_eq!(
@@ -34,7 +34,7 @@ mod find {
             "peeling again yields the same object"
         );
 
-        let mut symbolic_ref = repo.find_existing_reference("multi-link-target1").unwrap();
+        let mut symbolic_ref = repo.find_reference("multi-link-target1").unwrap();
         assert_eq!(symbolic_ref.name(), "refs/heads/multi-link-target1".try_into().unwrap());
         assert_eq!(symbolic_ref.peel_to_object_in_place().unwrap(), the_commit);
         assert_eq!(

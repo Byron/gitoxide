@@ -58,13 +58,13 @@ where
     A: Access + Sized,
 {
     // NOTE: Can't access other object data that is attached to the same cache.
-    pub fn existing_object(&self) -> Result<ObjectRef<'repo, A>, find::existing::Error> {
-        crate::ext::access::object::find_existing_object(self.access, self.id)
+    pub fn object(&self) -> Result<ObjectRef<'repo, A>, find::existing::Error> {
+        crate::ext::access::object::find_object(self.access, self.id)
     }
 
     // NOTE: Can't access other object data that is attached to the same cache.
-    pub fn object(&self) -> Result<Option<ObjectRef<'repo, A>>, find::Error> {
-        crate::ext::access::object::find_object(self.access, self.id)
+    pub fn try_object(&self) -> Result<Option<ObjectRef<'repo, A>>, find::Error> {
+        crate::ext::access::object::try_find_object(self.access, self.id)
     }
 }
 

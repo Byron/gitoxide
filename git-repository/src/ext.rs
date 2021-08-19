@@ -124,7 +124,7 @@ pub(crate) mod access {
             Access, ObjectRef,
         };
 
-        pub fn find_existing_object<A: Access + Sized>(
+        pub fn find_object<A: Access + Sized>(
             access: &A,
             id: impl Into<ObjectId>,
         ) -> Result<ObjectRef<'_, A>, object::find::existing::Error> {
@@ -142,7 +142,7 @@ pub(crate) mod access {
             Ok(ObjectRef::from_current_buf(id, kind, access))
         }
 
-        pub fn find_object<A: Access + Sized>(
+        pub fn try_find_object<A: Access + Sized>(
             access: &A,
             id: impl Into<ObjectId>,
         ) -> Result<Option<ObjectRef<'_, A>>, object::find::Error> {
@@ -162,15 +162,18 @@ pub(crate) mod access {
         pub trait ObjectAccessExt: Access + Sized {
             // NOTE: in order to get the actual kind of object, is must be fully decoded from storage in case of packs
             // even though partial decoding is possible for loose objects, it won't matter much here.
-            fn find_existing_object(
+            fn find_object(
                 &self,
                 id: impl Into<ObjectId>,
             ) -> Result<ObjectRef<'_, Self>, object::find::existing::Error> {
-                find_existing_object(self, id)
+                find_object(self, id)
             }
 
-            fn find_object(&self, id: impl Into<ObjectId>) -> Result<Option<ObjectRef<'_, Self>>, object::find::Error> {
-                find_object(self, id)
+            fn try_find_object(
+                &self,
+                id: impl Into<ObjectId>,
+            ) -> Result<Option<ObjectRef<'_, Self>>, object::find::Error> {
+                try_find_object(self, id)
             }
         }
     }
@@ -186,7 +189,7 @@ pub(crate) mod access {
 
         /// Obtain and alter references comfortably
         pub trait ReferenceAccessExt: Access + Sized {
-            fn find_existing_reference<'a, Name, E>(
+            fn find_reference<'a, Name, E>(
                 &self,
                 name: Name,
             ) -> Result<Reference<'_, Self>, reference::find::existing::Error>
@@ -194,11 +197,11 @@ pub(crate) mod access {
                 Name: TryInto<PartialName<'a>, Error = E>,
                 Error: From<E>,
             {
-                self.find_reference(name)?
+                self.try_find_reference(name)?
                     .ok_or(reference::find::existing::Error::NotFound)
             }
 
-            fn find_reference<'a, Name, E>(
+            fn try_find_reference<'a, Name, E>(
                 &self,
                 name: Name,
             ) -> Result<Option<Reference<'_, Self>>, reference::find::Error>

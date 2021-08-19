@@ -107,13 +107,13 @@ pub mod peel_to_kind {
                         let tree_id = self.to_commit_iter().expect("commit").tree_id().expect("valid commit");
                         let access = self.access;
                         drop(self);
-                        self = crate::ext::access::object::find_existing_object(access, tree_id)?;
+                        self = crate::ext::access::object::find_object(access, tree_id)?;
                     }
                     Kind::Tag => {
                         let target_id = self.to_tag_iter().expect("tag").target_id().expect("valid tag");
                         let access = self.access;
                         drop(self);
-                        self = crate::ext::access::object::find_existing_object(access, target_id)?;
+                        self = crate::ext::access::object::find_object(access, target_id)?;
                     }
                     Kind::Tree | Kind::Blob => {
                         return Err(peel_to_kind::Error::NotFound {
