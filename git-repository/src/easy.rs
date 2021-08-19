@@ -8,13 +8,15 @@ type PackCache = odb::pack::cache::Never; // TODO: choose great all-round cache
 pub struct State {
     packed_refs: RefCell<Option<refs::packed::Buffer>>,
     pack_cache: RefCell<PackCache>,
-    pub(crate) buf: RefCell<Vec<u8>>,
+    buf: RefCell<Vec<u8>>,
 }
 
 pub trait Access {
     fn repo(&self) -> &Repository;
     fn state(&self) -> &State;
 }
+
+pub type Result<T> = std::result::Result<T, state::borrow::Error>;
 
 pub mod state {
     use std::ops::DerefMut;
@@ -60,6 +62,16 @@ pub mod state {
         #[inline]
         pub(crate) fn try_borrow_mut_pack_cache(&self) -> Result<RefMut<'_, PackCache>, borrow::Error> {
             self.pack_cache.try_borrow_mut().map_err(Into::into)
+        }
+
+        #[inline]
+        pub(crate) fn try_borrow_mut_buf(&self) -> Result<RefMut<'_, Vec<u8>>, borrow::Error> {
+            self.buf.try_borrow_mut().map_err(Into::into)
+        }
+
+        #[inline]
+        pub(crate) fn try_borrow_buf(&self) -> Result<Ref<'_, Vec<u8>>, borrow::Error> {
+            self.buf.try_borrow().map_err(Into::into)
         }
     }
 }

@@ -8,17 +8,17 @@ mod impls;
 mod tree;
 
 impl Object {
-    pub fn attach<A>(self, access: &A) -> ObjectRef<'_, A>
+    pub fn attach<A>(self, access: &A) -> easy::Result<ObjectRef<'_, A>>
     where
         A: easy::Access + Sized,
     {
-        *access.state().buf.borrow_mut() = self.data;
-        ObjectRef {
+        *access.state().try_borrow_mut_buf()? = self.data;
+        Ok(ObjectRef {
             id: self.id,
             kind: self.kind,
-            data: Ref::map(access.state().buf.borrow(), |v| v.as_slice()),
+            data: Ref::map(access.state().try_borrow_buf()?, |v| v.as_slice()),
             access,
-        }
+        })
     }
 }
 
@@ -26,13 +26,13 @@ impl<'repo, A> ObjectRef<'repo, A>
 where
     A: easy::Access + Sized,
 {
-    pub(crate) fn from_current_buf(id: impl Into<ObjectId>, kind: Kind, access: &'repo A) -> Self {
-        ObjectRef {
+    pub(crate) fn from_current_buf(id: impl Into<ObjectId>, kind: Kind, access: &'repo A) -> easy::Result<Self> {
+        Ok(ObjectRef {
             id: id.into(),
             kind,
-            data: Ref::map(access.state().buf.borrow(), |v| v.as_slice()),
+            data: Ref::map(access.state().try_borrow_buf()?, |v| v.as_slice()),
             access,
-        }
+        })
     }
 
     pub fn into_tree(self) -> TreeRef<'repo, A> {

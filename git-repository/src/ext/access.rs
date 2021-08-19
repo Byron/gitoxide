@@ -13,39 +13,40 @@ pub(crate) mod object {
         access: &A,
         id: impl Into<ObjectId>,
     ) -> Result<ObjectRef<'_, A>, object::find::existing::Error> {
-        let cache = access.state();
+        let state = access.state();
         let id = id.into();
         let kind = {
-            let mut buf = access.state().buf.borrow_mut();
+            let mut buf = access.state().try_borrow_mut_buf()?;
             let obj = access
                 .repo()
                 .odb
-                .find_existing(&id, &mut buf, cache.try_borrow_mut_pack_cache()?.deref_mut())?;
+                .find_existing(&id, &mut buf, state.try_borrow_mut_pack_cache()?.deref_mut())?;
             obj.kind
         };
 
-        Ok(ObjectRef::from_current_buf(id, kind, access))
+        ObjectRef::from_current_buf(id, kind, access).map_err(Into::into)
     }
 
     pub fn try_find_object<A: easy::Access + Sized>(
         access: &A,
         id: impl Into<ObjectId>,
     ) -> Result<Option<ObjectRef<'_, A>>, object::find::Error> {
-        let cache = access.state();
+        let state = access.state();
         let id = id.into();
-        Ok(access
+        access
             .repo()
             .odb
             .find(
                 &id,
-                &mut cache.buf.borrow_mut(),
-                cache.try_borrow_mut_pack_cache()?.deref_mut(),
+                state.try_borrow_mut_buf()?.deref_mut(),
+                state.try_borrow_mut_pack_cache()?.deref_mut(),
             )?
             .map(|obj| {
                 let kind = obj.kind;
                 drop(obj);
-                ObjectRef::from_current_buf(id, kind, access)
-            }))
+                ObjectRef::from_current_buf(id, kind, access).map_err(Into::into)
+            })
+            .transpose()
     }
 
     pub trait ObjectAccessExt: easy::Access + Sized {
@@ -157,9 +158,9 @@ pub(crate) mod reference {
             Name: TryInto<PartialName<'a>, Error = E>,
             Error: From<E>,
         {
-            let cache = self.state();
-            cache.assure_packed_refs_present(&self.repo().refs)?;
-            match self.repo().refs.find(name, cache.try_borrow_packed_refs()?.as_ref()) {
+            let state = self.state();
+            state.assure_packed_refs_present(&self.repo().refs)?;
+            match self.repo().refs.find(name, state.try_borrow_packed_refs()?.as_ref()) {
                 Ok(r) => match r {
                     Some(r) => Ok(Some(Reference::from_file_ref(r, self))),
                     None => Ok(None),
