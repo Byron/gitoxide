@@ -1,7 +1,6 @@
-use std::{rc::Rc, sync::Arc};
+use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use crate::{odb, refs, Repository};
-use std::cell::RefCell;
 
 pub struct Easy {
     pub repo: Rc<Repository>,

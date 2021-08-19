@@ -369,7 +369,6 @@ dependencies = [
  "cargo_toml",
  "crates-index",
  "env_logger",
- "git-lock",
  "git-repository",
  "log",
  "semver 1.0.4",

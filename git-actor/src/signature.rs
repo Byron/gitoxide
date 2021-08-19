@@ -11,6 +11,17 @@ mod convert {
             }
         }
     }
+
+    impl Signature {
+        /// Borrow this instance as immutable
+        pub fn borrow(&self) -> immutable::Signature<'_> {
+            immutable::Signature {
+                name: self.name.as_ref(),
+                email: self.email.as_ref(),
+                time: self.time,
+            }
+        }
+    }
 }
 
 mod write {

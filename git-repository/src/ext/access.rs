@@ -68,12 +68,36 @@ pub(crate) mod reference {
 
     /// Obtain and alter references comfortably
     pub trait ReferenceAccessExt: Access + Sized {
-        fn edit_references(
-            _edits: impl IntoIterator<Item = RefEdit>,
-            _lock_mode: lock::acquire::Fail,
-            _log_committer: Option<&actor::Signature>,
+        fn edit_reference(
+            &self,
+            edit: RefEdit,
+            lock_mode: lock::acquire::Fail,
+            log_committer: Option<&actor::Signature>,
         ) -> Result<Vec<RefEdit>, reference::edit::Error> {
-            todo!("generic reference edit, from where other more 'easy' methods can be derived")
+            self.edit_references(Some(edit), lock_mode, log_committer)
+        }
+
+        fn edit_references(
+            &self,
+            edits: impl IntoIterator<Item = RefEdit>,
+            lock_mode: lock::acquire::Fail,
+            log_committer: Option<&actor::Signature>,
+        ) -> Result<Vec<RefEdit>, reference::edit::Error> {
+            let committer_storage;
+            let commiter = match log_committer {
+                Some(c) => c,
+                None => {
+                    // TODO: actually read the committer information from git-config, probably it should be provided here
+                    committer_storage = actor::Signature::empty();
+                    &committer_storage
+                }
+            };
+            self.repo()
+                .refs
+                .transaction()
+                .prepare(edits, lock_mode)?
+                .commit(commiter)
+                .map_err(Into::into)
         }
 
         fn find_reference<'a, Name, E>(

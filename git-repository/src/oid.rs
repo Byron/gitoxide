@@ -1,7 +1,7 @@
 use super::Oid;
-use crate::object::find;
 use crate::{
     hash::{oid, ObjectId},
+    object::find,
     Access, Object, ObjectRef,
 };
 

@@ -7,9 +7,8 @@ use cargo_metadata::{
     Package,
 };
 use git_repository::{
-    actor,
     hash::ObjectId,
-    object,
+    lock, object,
     prelude::ReferenceAccessExt,
     refs::{
         self,
@@ -182,14 +181,9 @@ pub(in crate::command::release_impl) fn create_version_tag(
         }
         Ok(Some(edit.name))
     } else {
-        // ctx.git_easy.edit_reference(Some(refedit), lockmode)
         let edits = ctx
             .git_easy
-            .repo
-            .refs
-            .transaction()
-            .prepare(Some(edit), git_lock::acquire::Fail::Immediately)?
-            .commit(&actor::Signature::empty())?;
+            .edit_reference(edit, lock::acquire::Fail::Immediately, None)?;
         assert_eq!(edits.len(), 1, "We create only one tag and there is no expansion");
         let tag = edits.into_iter().next().expect("the promised tag");
         log::info!("Created tag {}", tag.name.as_bstr());

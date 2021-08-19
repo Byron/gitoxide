@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, str::FromStr};
 
 use anyhow::bail;
 use cargo_metadata::{Metadata, Package};
-use git_repository::hash::ObjectId;
+use git_repository::{hash::ObjectId, lock};
 use semver::{Op, Version, VersionReq};
 
 use super::{
@@ -19,11 +19,8 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates(
 ) -> anyhow::Result<ObjectId> {
     let mut locks_by_manifest_path = BTreeMap::new();
     for (publishee, _) in publishees {
-        let lock = git_lock::File::acquire_to_update_resource(
-            &publishee.manifest_path,
-            git_lock::acquire::Fail::Immediately,
-            None,
-        )?;
+        let lock =
+            lock::File::acquire_to_update_resource(&publishee.manifest_path, lock::acquire::Fail::Immediately, None)?;
         locks_by_manifest_path.insert(&publishee.manifest_path, lock);
     }
     let mut packages_to_fix = Vec::new();
@@ -42,9 +39,9 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates(
         if locks_by_manifest_path.contains_key(&package_to_fix.manifest_path) {
             continue;
         }
-        let lock = git_lock::File::acquire_to_update_resource(
+        let lock = lock::File::acquire_to_update_resource(
             &package_to_fix.manifest_path,
-            git_lock::acquire::Fail::Immediately,
+            lock::acquire::Fail::Immediately,
             None,
         )?;
         locks_by_manifest_path.insert(&package_to_fix.manifest_path, lock);

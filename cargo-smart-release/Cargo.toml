@@ -13,7 +13,6 @@ keywords = ["cargo"]
 
 [dependencies]
 git-repository = { version = "^0.7", path = "../git-repository" }
-git-lock = { version = "^0.3.0", path = "../git-lock" }
 anyhow = "1.0.42"
 argh = { version = "0.1.5", default-features = false }
 env_logger = { version = "0.9.0", default-features = false, features = ["humantime", "termcolor", "atty"] }
