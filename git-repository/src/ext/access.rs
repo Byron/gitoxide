@@ -60,14 +60,47 @@ pub(crate) mod object {
 pub(crate) mod reference {
     use std::convert::TryInto;
 
+    use git_hash::ObjectId;
+
     use crate::{
         actor, lock, reference,
-        refs::{file::find::Error, transaction::RefEdit, PartialName},
+        refs::{
+            file::find::Error,
+            mutable::Target,
+            transaction::{Change, Create, RefEdit},
+            PartialName,
+        },
         Access, Reference,
     };
 
     /// Obtain and alter references comfortably
     pub trait ReferenceAccessExt: Access + Sized {
+        fn tag(
+            &self,
+            name: impl AsRef<str>,
+            target: impl Into<ObjectId>,
+            lock_mode: lock::acquire::Fail,
+            force: bool,
+        ) -> Result<Vec<RefEdit>, reference::edit::Error> {
+            self.edit_references(
+                Some(RefEdit {
+                    change: Change::Update {
+                        log: Default::default(),
+                        mode: if force {
+                            Create::OrUpdate { previous: None }
+                        } else {
+                            Create::Only
+                        },
+                        new: Target::Peeled(target.into()),
+                    },
+                    name: format!("tags/refs/{}", name.as_ref()).try_into()?,
+                    deref: false,
+                }),
+                lock_mode,
+                None,
+            )
+        }
+
         fn edit_reference(
             &self,
             edit: RefEdit,

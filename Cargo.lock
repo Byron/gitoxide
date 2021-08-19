@@ -1229,6 +1229,7 @@ dependencies = [
  "git-testtools",
  "git-traverse",
  "git-url",
+ "git-validate",
  "quick-error",
  "signal-hook",
 ]

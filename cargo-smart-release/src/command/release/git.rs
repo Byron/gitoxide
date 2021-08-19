@@ -10,12 +10,7 @@ use git_repository::{
     hash::ObjectId,
     lock, object,
     prelude::ReferenceAccessExt,
-    refs::{
-        self,
-        file::loose::reference::peel,
-        mutable::Target,
-        transaction::{Change, Create, RefEdit},
-    },
+    refs::{self, file::loose::reference::peel},
 };
 
 use super::{Context, Options};
@@ -166,24 +161,15 @@ pub(in crate::command::release_impl) fn create_version_tag(
         new_version,
         is_top_level_package(&publishee.manifest_path, &ctx.git_easy),
     );
-    let edit = RefEdit {
-        change: Change::Update {
-            log: Default::default(),
-            mode: Create::Only,
-            new: Target::Peeled(commit_id),
-        },
-        name: format!("refs/tags/{}", tag_name).try_into()?,
-        deref: false,
-    };
     if dry_run {
         if verbose {
             log::info!("WOULD create tag {}", tag_name);
         }
-        Ok(Some(edit.name))
+        Ok(Some(format!("refs/tags/{}", tag_name).try_into()?))
     } else {
         let edits = ctx
             .git_easy
-            .edit_reference(edit, lock::acquire::Fail::Immediately, None)?;
+            .tag(tag_name, commit_id, lock::acquire::Fail::Immediately, false)?;
         assert_eq!(edits.len(), 1, "We create only one tag and there is no expansion");
         let tag = edits.into_iter().next().expect("the promised tag");
         log::info!("Created tag {}", tag.name.as_bstr());

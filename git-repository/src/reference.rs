@@ -33,6 +33,11 @@ pub mod edit {
                 from()
                 source(err)
             }
+            NameValidation(err: git_validate::reference::name::Error) {
+                display("The reference name is invalid")
+                from()
+                source(err)
+            }
         }
     }
 }
