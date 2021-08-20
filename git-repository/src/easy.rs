@@ -14,7 +14,7 @@
 use std::cell::RefCell;
 
 use crate::{odb, refs, Repository};
-use std::borrow::Borrow;
+use std::ops::Deref;
 
 type PackCache = odb::pack::cache::Never; // TODO: choose great all-round cache
 
@@ -30,11 +30,10 @@ pub trait Access {
     fn state(&self) -> &State;
 }
 
-pub trait Access2<BR>
-where
-    BR: Borrow<Repository>,
-{
-    fn repo(&self) -> &BR;
+pub trait Access2 {
+    type RepoRef: Deref<Target = Repository>;
+
+    fn repo(&self) -> Self::RepoRef;
     fn state(&self) -> &State;
 }
 
@@ -102,7 +101,7 @@ mod impls {
     use std::{rc::Rc, sync::Arc};
 
     use crate::{easy, Easy, EasyArc, EasyExclusive, EasyShared, Repository};
-    use parking_lot::{RawRwLock, RwLockReadGuard};
+    use parking_lot::RwLockReadGuard;
 
     impl Clone for Easy {
         fn clone(&self) -> Self {
@@ -195,8 +194,9 @@ mod impls {
         }
     }
 
-    impl<'repo> easy::Access2<Repository> for EasyShared<'repo> {
-        fn repo(&self) -> &Repository {
+    impl<'repo> easy::Access2 for EasyShared<'repo> {
+        type RepoRef = &'repo Repository;
+        fn repo(&self) -> Self::RepoRef {
             self.repo
         }
 
@@ -205,8 +205,10 @@ mod impls {
         }
     }
 
-    impl<'repo> easy::Access2<RwLockReadGuard<'repo, Repository>> for EasyExclusive {
-        fn repo(&self) -> RwLockReadGuard<'repo, Repository> {
+    impl easy::Access2 for EasyExclusive {
+        type RepoRef<'a> = RwLockReadGuard<'a, Repository>;
+
+        fn repo(&self) -> Self::RepoRef {
             self.repo.read()
         }
 
