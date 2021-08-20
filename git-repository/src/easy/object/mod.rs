@@ -2,7 +2,8 @@ use std::{cell::Ref, convert::TryInto};
 
 pub use git_object::Kind;
 
-use crate::{easy, hash::ObjectId, objs::immutable, odb, Object, ObjectRef, TreeRef};
+use crate::easy::{Object, ObjectRef, TreeRef};
+use crate::{easy, hash::ObjectId, objs::immutable, odb};
 
 mod impls;
 mod tree;
@@ -142,8 +143,10 @@ pub mod peel_to_kind {
 
     use crate::{
         easy,
-        easy::object::{peel_to_kind, Kind},
-        ObjectRef,
+        easy::{
+            object::{peel_to_kind, Kind},
+            ObjectRef,
+        },
     };
 
     impl<'repo, A> ObjectRef<'repo, A>

@@ -1,8 +1,7 @@
 use crate::{
     easy,
-    easy::object::find,
+    easy::{object::find, Object, ObjectRef, Oid},
     hash::{oid, ObjectId},
-    Object, ObjectRef, Oid,
 };
 
 impl<'repo, A, B> PartialEq<Oid<'repo, A>> for Oid<'repo, B> {

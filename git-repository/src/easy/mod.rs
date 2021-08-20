@@ -17,7 +17,8 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use crate::{odb, refs, Repository};
+use crate::hash::ObjectId;
+use crate::{objs, odb, refs, Repository};
 
 mod impls;
 
@@ -26,6 +27,36 @@ pub mod object;
 mod oid;
 pub mod reference;
 pub mod state;
+
+pub struct Oid<'r, A> {
+    id: ObjectId,
+    access: &'r A,
+}
+
+pub struct ObjectRef<'repo, A> {
+    pub id: ObjectId,
+    pub kind: objs::Kind,
+    pub data: std::cell::Ref<'repo, [u8]>,
+    access: &'repo A,
+}
+
+pub struct TreeRef<'repo, A> {
+    pub id: ObjectId,
+    pub data: std::cell::Ref<'repo, [u8]>,
+    access: &'repo A,
+}
+
+#[derive(Clone)]
+pub struct Object {
+    pub id: ObjectId,
+    pub kind: objs::Kind,
+    pub data: Vec<u8>,
+}
+
+pub struct Reference<'r, A> {
+    pub(crate) backing: Option<reference::Backing>,
+    pub(crate) access: &'r A,
+}
 
 #[cfg(not(feature = "local"))]
 type PackCache = odb::pack::cache::Never;

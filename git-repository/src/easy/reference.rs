@@ -1,6 +1,13 @@
 use std::ops::DerefMut;
 
-use crate::{easy, hash::ObjectId, odb::Find, refs, refs::mutable, Oid, Reference};
+use crate::{
+    easy,
+    easy::{Oid, Reference},
+    hash::ObjectId,
+    odb::Find,
+    refs,
+    refs::mutable,
+};
 
 pub(crate) enum Backing {
     OwnedPacked {

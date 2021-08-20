@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 pub(crate) mod object {
     use std::ops::DerefMut;
 
@@ -5,15 +6,14 @@ pub(crate) mod object {
 
     use crate::{
         easy,
-        easy::object,
+        easy::{object, ObjectRef},
         odb::{Find, FindExt},
-        ObjectRef,
     };
 
     pub fn find_object<A: easy::Access + Sized>(
         access: &A,
         id: impl Into<ObjectId>,
-    ) -> Result<ObjectRef<'_, A>, object::find::existing::Error> {
+    ) -> Result<easy::ObjectRef<'_, A>, object::find::existing::Error> {
         let state = access.state();
         let id = id.into();
         let kind = {
@@ -32,7 +32,7 @@ pub(crate) mod object {
     pub fn try_find_object<A: easy::Access + Sized>(
         access: &A,
         id: impl Into<ObjectId>,
-    ) -> Result<Option<ObjectRef<'_, A>>, object::find::Error> {
+    ) -> Result<Option<easy::ObjectRef<'_, A>>, object::find::Error> {
         let state = access.state();
         let id = id.into();
         access
@@ -71,7 +71,7 @@ pub(crate) mod reference {
 
     use crate::{
         actor, easy,
-        easy::reference,
+        easy::{reference, Reference},
         lock,
         refs::{
             file::find::Error,
@@ -79,7 +79,6 @@ pub(crate) mod reference {
             transaction::{Change, Create, RefEdit},
             PartialName,
         },
-        Reference,
     };
 
     /// Obtain and alter references comfortably

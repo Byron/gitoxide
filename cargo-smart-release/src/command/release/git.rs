@@ -19,7 +19,7 @@ use crate::command::release_impl::{tag_name_for, utils::will};
 
 fn is_top_level_package(manifest_path: &Utf8Path, shared: &git_repository::Easy) -> bool {
     manifest_path
-        .strip_prefix(shared.repo.working_tree.as_ref().expect("repo with working tree"))
+        .strip_prefix(shared.repo.work_tree.as_ref().expect("repo with working tree"))
         .map_or(false, |p| p.components().count() == 1)
 }
 

@@ -1,10 +1,11 @@
+#![allow(missing_docs)]
 mod access {
     use crate::{Kind, Repository};
 
     impl Repository {
         pub fn kind(&self) -> Kind {
-            match self.working_tree {
-                Some(_) => Kind::WorkingTree,
+            match self.work_tree {
+                Some(_) => Kind::WorkTree,
                 None => Kind::Bare,
             }
         }
@@ -60,7 +61,7 @@ pub mod discover {
         pub fn discover(directory: impl AsRef<Path>) -> Result<Self, Error> {
             let path = discover::existing(directory)?;
             let (git_dir, working_tree) = match path {
-                crate::Path::WorkingTree(working_tree) => (working_tree.join(".git"), Some(working_tree)),
+                crate::Path::WorkTree(working_tree) => (working_tree.join(".git"), Some(working_tree)),
                 crate::Path::Repository(repository) => (repository, None),
             };
             Ok(Repository {
@@ -73,7 +74,7 @@ pub mod discover {
                         git_ref::file::WriteReflog::Normal
                     },
                 ),
-                working_tree,
+                work_tree: working_tree,
             })
         }
     }

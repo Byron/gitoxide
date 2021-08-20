@@ -23,7 +23,8 @@ pub mod existing {
     }
 }
 
-/// Returns the working tree if possible and the found repository is not bare or the git repository itself.
+/// Returns the work tree if possible and the found repository is not bare or the git repository itself,
+/// and traverse parent directories until a Repository is found.
 pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, existing::Error> {
     // Canonicalize the path so that `Path::parent` _actually_ gives
     // us the parent directory. (`Path::parent` just strips off the last

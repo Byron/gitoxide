@@ -1,9 +1,8 @@
 use crate::{
     easy,
-    easy::object::find,
+    easy::{object::find, TreeRef},
     objs,
     objs::{bstr::BStr, immutable},
-    TreeRef,
 };
 
 impl<'repo, A> TreeRef<'repo, A>

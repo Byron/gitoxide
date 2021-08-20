@@ -5,7 +5,7 @@ use git_object::immutable;
 #[cfg(feature = "git-traverse")]
 use git_traverse::commit::ancestors::{Ancestors, State};
 
-use crate::{easy, Oid};
+use crate::easy;
 
 pub trait Sealed {}
 
@@ -15,7 +15,7 @@ pub trait ObjectIdExt: Sealed {
     where
         Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>;
 
-    fn attach<A: easy::Access + Sized>(self, access: &A) -> Oid<'_, A>;
+    fn attach<A: easy::Access + Sized>(self, access: &A) -> easy::Oid<'_, A>;
 }
 
 impl Sealed for ObjectId {}
@@ -29,7 +29,7 @@ impl ObjectIdExt for ObjectId {
         Ancestors::new(Some(self), State::default(), find)
     }
 
-    fn attach<A: easy::Access + Sized>(self, access: &A) -> Oid<'_, A> {
-        Oid::from_id(self, access)
+    fn attach<A: easy::Access + Sized>(self, access: &A) -> easy::Oid<'_, A> {
+        easy::Oid::from_id(self, access)
     }
 }

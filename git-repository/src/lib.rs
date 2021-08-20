@@ -72,11 +72,10 @@
 //! * [`protocol`]
 //!   * [`transport`][protocol::transport]
 //!
-#![deny(unsafe_code, rust_2018_idioms)]
+#![deny(missing_docs, unsafe_code, rust_2018_idioms)]
 
 use std::{path::PathBuf, rc::Rc, sync::Arc};
 
-use easy::reference;
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
@@ -98,11 +97,10 @@ pub use git_traverse as traverse;
 pub use git_url as url;
 pub use path::Path;
 
-use crate::hash::ObjectId;
-
 pub mod interrupt;
 
 mod ext;
+///
 pub mod prelude {
     pub use git_features::parallel::reduce::Finalize;
     pub use git_odb::{Find, FindExt, Write};
@@ -110,86 +108,82 @@ pub mod prelude {
     pub use crate::ext::*;
 }
 
+///
 pub mod init;
 
+///
 pub mod path;
+///
 pub mod repository;
 
-pub struct Repository {
-    pub refs: git_ref::file::Store,
-    pub odb: git_odb::linked::Store,
-    pub working_tree: Option<PathBuf>,
-}
-
-pub struct Easy {
-    pub repo: Rc<Repository>,
-    pub state: easy::State,
-}
-
-pub struct EasyShared<'a> {
-    pub repo: &'a Repository,
-    pub state: easy::State,
-}
-
-/// A handle is what threaded programs would use to have thread-local but otherwise shared versions the same `Repository`.
+/// A instance with access to everything a git repository entails, best imagined as container _most_ for system resources required
+/// to interact with a `git` repository.
 ///
-/// Mutable data present in the `Handle` itself while keeping the parent `Repository` (which has its own cache) shared.
-/// Otherwise handles reflect the API of a `Repository`.
-pub struct EasyArc {
-    pub repo: Arc<Repository>,
-    pub state: easy::State,
+/// Namely, this is an object database, a reference database to point to objects, as well as configuration.
+pub struct Repository {
+    /// A store for references to point at objects
+    pub refs: git_ref::file::Store,
+    /// A store for objects that contain data
+    pub odb: git_odb::linked::Store,
+    /// The path to the worktree at which to find checked out files
+    pub work_tree: Option<PathBuf>,
 }
 
+/// A handle to a `Repository` for use when the repository needs to be shared, providing state for one `ObjectRef` at a time, , created with [`Repository::into_easy()`].
+///
+/// For use in one-off commands that don't have to deal with the changes they potentially incur.
+pub struct Easy {
+    pub(crate) repo: Rc<Repository>,
+    pub(crate) state: easy::State,
+}
+
+/// A handle to a repository for use when the repository needs to be shared using an actual reference, providing state for one `ObjectRef` at a time, created with [`Repository::to_easy()`]
+///
+/// For use in one-off commands that don't have to deal with the changes they potentially incur.
+pub struct EasyShared<'a> {
+    pub(crate) repo: &'a Repository,
+    pub(crate) state: easy::State,
+}
+
+/// A handle to a `Repository` for sharing across threads, with each thread having one or more caches,
+/// created with [`Repository::into_easy_arc()`]
+///
+/// For use in one-off commands that don't have to deal with the changes they potentially incur.
+pub struct EasyArc {
+    pub(crate) repo: Arc<Repository>,
+    pub(crate) state: easy::State,
+}
+
+/// A handle to a optionally mutable `Repository` for use in long-running applications that eventually need to update the `Repository`
+/// to adapt to changes they triggered or that were caused by other processes.
+///
+/// Using it incurs costs as each `Repository` access has to go through an indirection and involve a _fair_ `RwLock`. However, it's vital
+/// to precisely updating the `Repository` instance as opposed to creating a new one while serving other requests on an old instance, which
+/// potentially duplicates the resource costs.
 pub struct EasyArcExclusive {
-    pub repo: Arc<parking_lot::RwLock<Repository>>,
-    pub state: easy::State,
+    pub(crate) repo: Arc<parking_lot::RwLock<Repository>>,
+    pub(crate) state: easy::State,
 }
 
 pub mod easy;
 
-// TODO: really would ObjectId, but it's different to show it's attached - maybe this is the type used most of the time here?
-pub struct Oid<'r, A> {
-    id: ObjectId,
-    access: &'r A,
-}
-
-pub struct ObjectRef<'repo, A> {
-    pub id: ObjectId,
-    pub kind: objs::Kind,
-    pub data: std::cell::Ref<'repo, [u8]>,
-    access: &'repo A,
-}
-
-pub struct TreeRef<'repo, A> {
-    pub id: ObjectId,
-    pub data: std::cell::Ref<'repo, [u8]>,
-    access: &'repo A,
-}
-
-#[derive(Clone)]
-pub struct Object {
-    pub id: ObjectId,
-    pub kind: objs::Kind,
-    pub data: Vec<u8>,
-}
-
-pub struct Reference<'r, A> {
-    pub(crate) backing: Option<reference::Backing>,
-    pub(crate) access: &'r A,
-}
-
+/// The kind of `Repository`
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Kind {
+    /// A bare repository does not have a work tree, that is files on disk beyond the `git` repository itself.
     Bare,
-    WorkingTree,
+    /// A `git` repository along with a checked out files in a work tree.
+    WorkTree,
 }
 
 impl Kind {
+    /// Returns true if this is a bare repository, one without a work tree.
     pub fn is_bare(&self) -> bool {
         matches!(self, Kind::Bare)
     }
 }
 
+/// See [Repository::discover()].
 pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::discover::Error> {
     Repository::discover(directory)
 }
