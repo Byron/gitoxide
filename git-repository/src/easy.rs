@@ -14,7 +14,7 @@
 use std::cell::RefCell;
 
 use crate::{odb, refs, Repository};
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 type PackCache = odb::pack::cache::Never; // TODO: choose great all-round cache
 
@@ -32,8 +32,10 @@ pub trait Access {
 
 pub trait Access2 {
     type RepoRef: Deref<Target = Repository>;
+    type RepoRefMut: DerefMut<Target = Repository>;
 
     fn repo(&self) -> Self::RepoRef;
+    fn repo_mut(&self) -> Self::RepoRefMut;
     fn state(&self) -> &State;
 }
 
@@ -101,7 +103,7 @@ mod impls {
     use std::{rc::Rc, sync::Arc};
 
     use crate::{easy, Easy, EasyArc, EasyArcExclusive, EasyShared, Repository};
-    use parking_lot::lock_api::ArcRwLockReadGuard;
+    use parking_lot::lock_api::{ArcRwLockReadGuard, ArcRwLockWriteGuard};
 
     impl Clone for Easy {
         fn clone(&self) -> Self {
@@ -205,10 +207,16 @@ mod impls {
 
     impl<'repo> easy::Access2 for EasyShared<'repo> {
         type RepoRef = &'repo Repository;
+        type RepoRefMut = &'repo mut Repository;
 
         fn repo(&self) -> Self::RepoRef {
             self.repo
         }
+
+        fn repo_mut(&self) -> Self::RepoRefMut {
+            panic!("repo_mut() is unsupported on EasyShared")
+        }
+
         fn state(&self) -> &easy::State {
             &self.state
         }
@@ -216,10 +224,16 @@ mod impls {
 
     impl easy::Access2 for Easy {
         type RepoRef = Rc<Repository>;
+        type RepoRefMut = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>; // this is a lie
 
         fn repo(&self) -> Self::RepoRef {
             self.repo.clone()
         }
+
+        fn repo_mut(&self) -> Self::RepoRefMut {
+            panic!("repo_mut() is unsupported on Easy")
+        }
+
         fn state(&self) -> &easy::State {
             &self.state
         }
@@ -227,9 +241,13 @@ mod impls {
 
     impl easy::Access2 for EasyArc {
         type RepoRef = Arc<Repository>;
+        type RepoRefMut = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>; // this is a lie
 
         fn repo(&self) -> Self::RepoRef {
             self.repo.clone()
+        }
+        fn repo_mut(&self) -> Self::RepoRefMut {
+            panic!("repo_mut() is unsupported on EasyArc")
         }
         fn state(&self) -> &easy::State {
             &self.state
@@ -238,11 +256,14 @@ mod impls {
 
     impl easy::Access2 for EasyArcExclusive {
         type RepoRef = ArcRwLockReadGuard<parking_lot::RawRwLock, Repository>;
+        type RepoRefMut = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>;
 
         fn repo(&self) -> Self::RepoRef {
             self.repo.read_arc()
         }
-
+        fn repo_mut(&self) -> Self::RepoRefMut {
+            self.repo.write_arc()
+        }
         fn state(&self) -> &easy::State {
             &self.state
         }
