@@ -1230,6 +1230,7 @@ dependencies = [
  "git-traverse",
  "git-url",
  "git-validate",
+ "parking_lot",
  "quick-error",
  "signal-hook",
 ]

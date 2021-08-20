@@ -1,3 +1,16 @@
+//! ### Which `Easy*` is for me?
+//!
+//! * Use `Easy*Exclusive` when the underlying `Repository` eventually needs mutation, for instance to update data structures
+//!    - This is useful for long-running applications that eventually need to adapt to changes in the repository and pick up
+//!      new packs after a GC operation or a received pack.
+//! * Use the non-exclusive variants if the `Repository` doesn't ever have to change, for example as in one-off commands.
+//!
+//! ### Implementation Notes
+//!
+//! - Why no `Easy*` with simply an owned `Repository`, instead `Rc<Repository>` is enforced
+//!    - When this is desired, rather use `EasyShared` and drop the `EasyShared` once mutable access to the `Repository` is needed.
+//!      `Access` is not usable for functions that require official `&mut` mutability, it's made for interior mutability to support
+//!       trees of objects.
 use std::cell::RefCell;
 
 use crate::{odb, refs, Repository};
@@ -79,7 +92,7 @@ pub mod state {
 mod impls {
     use std::{rc::Rc, sync::Arc};
 
-    use crate::{easy, Easy, EasyArc, EasyShared, Repository};
+    use crate::{easy, Easy, EasyArc, EasyExclusive, EasyShared, Repository};
 
     impl Clone for Easy {
         fn clone(&self) -> Self {

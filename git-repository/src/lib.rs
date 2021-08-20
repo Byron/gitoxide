@@ -126,6 +126,11 @@ pub struct Easy {
     pub state: easy::State,
 }
 
+pub struct EasyExclusive {
+    pub repo: Rc<parking_lot::RwLock<Repository>>,
+    pub state: easy::State,
+}
+
 pub struct EasyShared<'a> {
     pub repo: &'a Repository,
     pub state: easy::State,
@@ -137,6 +142,11 @@ pub struct EasyShared<'a> {
 /// Otherwise handles reflect the API of a `Repository`.
 pub struct EasyArc {
     pub repo: Arc<Repository>,
+    pub state: easy::State,
+}
+
+pub struct EasyArcExclusive {
+    pub repo: Arc<parking_lot::RwLock<Repository>>,
     pub state: easy::State,
 }
 
