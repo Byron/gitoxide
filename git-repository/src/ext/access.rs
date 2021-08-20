@@ -3,9 +3,9 @@ pub(crate) mod object {
 
     use git_hash::ObjectId;
 
-    use crate::easy::object;
     use crate::{
         easy,
+        easy::object,
         odb::{Find, FindExt},
         ObjectRef,
     };
@@ -69,9 +69,10 @@ pub(crate) mod reference {
 
     use git_hash::ObjectId;
 
-    use crate::easy::reference;
     use crate::{
-        actor, easy, lock,
+        actor, easy,
+        easy::reference,
+        lock,
         refs::{
             file::find::Error,
             mutable::Target,
@@ -125,7 +126,7 @@ pub(crate) mod reference {
             log_committer: Option<&actor::Signature>,
         ) -> Result<Vec<RefEdit>, reference::edit::Error> {
             let committer_storage;
-            let commiter = match log_committer {
+            let committer = match log_committer {
                 Some(c) => c,
                 None => {
                     // TODO: actually read the committer information from git-config, probably it should be provided here
@@ -137,7 +138,7 @@ pub(crate) mod reference {
                 .refs
                 .transaction()
                 .prepare(edits, lock_mode)?
-                .commit(commiter)
+                .commit(committer)
                 .map_err(Into::into)
         }
 
@@ -162,8 +163,9 @@ pub(crate) mod reference {
             Error: From<E>,
         {
             let state = self.state();
-            state.assure_packed_refs_present(&self.repo()?.refs)?;
-            match self.repo()?.refs.find(name, state.try_borrow_packed_refs()?.as_ref()) {
+            let repo = self.repo()?;
+            state.assure_packed_refs_present(&repo.refs)?;
+            match repo.refs.find(name, state.try_borrow_packed_refs()?.as_ref()) {
                 Ok(r) => match r {
                     Some(r) => Ok(Some(Reference::from_file_ref(r, self))),
                     None => Ok(None),

@@ -6,18 +6,16 @@ use cargo_metadata::{
     camino::{Utf8Component, Utf8Path},
     Package,
 };
-
-use git_repository::easy::object;
 use git_repository::{
+    easy::object,
     hash::ObjectId,
     lock,
     prelude::ReferenceAccessExt,
     refs::{self, file::loose::reference::peel},
 };
 
-use crate::command::release_impl::{tag_name_for, utils::will};
-
 use super::{Context, Options};
+use crate::command::release_impl::{tag_name_for, utils::will};
 
 fn is_top_level_package(manifest_path: &Utf8Path, shared: &git_repository::Easy) -> bool {
     manifest_path

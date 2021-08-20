@@ -1,6 +1,7 @@
-use crate::easy::object::find;
 use crate::{
-    easy, objs,
+    easy,
+    easy::object::find,
+    objs,
     objs::{bstr::BStr, immutable},
     TreeRef,
 };

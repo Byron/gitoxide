@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 #[cfg(feature = "git-diff")]
 use std::borrow::BorrowMut;
 

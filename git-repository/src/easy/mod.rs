@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 //! ### Which `Easy*` is for me?
 //!
 //! * Use `Easy*Exclusive` when the underlying `Repository` eventually needs mutation, for instance to update data structures

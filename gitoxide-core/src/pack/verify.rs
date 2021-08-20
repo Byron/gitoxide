@@ -7,9 +7,8 @@ use std::{
 
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
-
-use git_repository::easy::object;
 use git_repository::{
+    easy::object,
     hash::ObjectId,
     odb,
     odb::{pack, pack::index},

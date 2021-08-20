@@ -73,7 +73,6 @@
 //!   * [`transport`][protocol::transport]
 //!
 #![deny(unsafe_code, rust_2018_idioms)]
-#![allow(missing_docs)]
 
 use std::{path::PathBuf, rc::Rc, sync::Arc};
 

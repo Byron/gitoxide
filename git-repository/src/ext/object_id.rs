@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use git_hash::ObjectId;
 #[cfg(feature = "git-traverse")]
 use git_object::immutable;

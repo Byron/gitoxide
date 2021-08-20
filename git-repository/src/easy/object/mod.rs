@@ -140,8 +140,11 @@ where
 pub mod peel_to_kind {
     pub use error::Error;
 
-    use crate::easy::object::{peel_to_kind, Kind};
-    use crate::{easy, ObjectRef};
+    use crate::{
+        easy,
+        easy::object::{peel_to_kind, Kind},
+        ObjectRef,
+    };
 
     impl<'repo, A> ObjectRef<'repo, A>
     where
@@ -180,8 +183,7 @@ pub mod peel_to_kind {
     mod error {
         use quick_error::quick_error;
 
-        use crate::easy::object;
-        use crate::easy::object::find;
+        use crate::easy::{object, object::find};
 
         quick_error! {
             #[derive(Debug)]
