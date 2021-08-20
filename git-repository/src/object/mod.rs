@@ -3,7 +3,6 @@ use std::{cell::Ref, convert::TryInto};
 pub use git_object::Kind;
 
 use crate::{easy, hash::ObjectId, objs::immutable, odb, Object, ObjectRef, TreeRef};
-use std::ops::Deref;
 
 mod impls;
 mod tree;
@@ -45,21 +44,6 @@ where
 
     pub fn try_into_tree(self) -> Result<TreeRef<'repo, A>, Self> {
         self.try_into()
-    }
-}
-
-impl<'repo, A> ObjectRef<'repo, A>
-where
-    A: easy::Access2 + Sized,
-{
-    pub(crate) fn from_current_buf2(id: impl Into<ObjectId>, kind: Kind, access: &'repo A) -> easy::Result<Self> {
-        let odb = &access.repo().deref().odb;
-        Ok(ObjectRef {
-            id: id.into(),
-            kind,
-            data: Ref::map(access.state().try_borrow_buf()?, |v| v.as_slice()),
-            access,
-        })
     }
 }
 

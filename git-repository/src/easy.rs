@@ -7,7 +7,7 @@
 //!
 //! ### Implementation Notes
 //!
-//! - Why no `Easy*` with simply an owned `Repository`, instead `Rc<Repository>` is enforced
+//! - Why no `Easy` with simply an owned `Repository`, instead `Rc<Repository>` is enforced
 //!    - When this is desired, rather use `EasyShared` and drop the `EasyShared` once mutable access to the `Repository` is needed.
 //!      `Access` is not usable for functions that require official `&mut` mutability, it's made for interior mutability to support
 //!       trees of objects.
@@ -26,15 +26,20 @@ pub struct State {
 }
 
 pub trait Access {
-    fn repo(&self) -> &Repository;
-    fn state(&self) -> &State;
-}
-
-pub trait Access2 {
     type RepoRef: Deref<Target = Repository>;
+    // TODO: Once GATs become stable, try to use them to make it work with RefCells too, aka EasyExclusive
     type RepoRefMut: DerefMut<Target = Repository>;
 
     fn repo(&self) -> Self::RepoRef;
+    /// # Panics
+    ///
+    /// Currently many implementors of this trait don't support exclusive access, which is why they trigger an unconditional
+    /// panic. It's planned to use `GAT`s to provide an `EasyExclusive` with an underlying `Rc<RefCell<Repository>>` for handling
+    /// mutable borrows.
+    ///
+    /// # NOTE
+    ///
+    /// This is implemented only for `EasyArcExclusive` to be obtained via `to_easy_arc_exclusive()`
     fn repo_mut(&self) -> Self::RepoRefMut;
     fn state(&self) -> &State;
 }
@@ -173,39 +178,13 @@ mod impls {
         pub fn into_easy_arc(self) -> EasyArc {
             self.into()
         }
-    }
 
-    impl easy::Access for Easy {
-        fn repo(&self) -> &Repository {
-            self.repo.as_ref()
-        }
-
-        fn state(&self) -> &easy::State {
-            &self.state
-        }
-    }
-
-    impl easy::Access for EasyArc {
-        fn repo(&self) -> &Repository {
-            self.repo.as_ref()
-        }
-
-        fn state(&self) -> &easy::State {
-            &self.state
+        pub fn into_easy_arc_exclusive(self) -> EasyArcExclusive {
+            self.into()
         }
     }
 
     impl<'repo> easy::Access for EasyShared<'repo> {
-        fn repo(&self) -> &Repository {
-            self.repo
-        }
-
-        fn state(&self) -> &easy::State {
-            &self.state
-        }
-    }
-
-    impl<'repo> easy::Access2 for EasyShared<'repo> {
         type RepoRef = &'repo Repository;
         type RepoRefMut = &'repo mut Repository;
 
@@ -222,7 +201,7 @@ mod impls {
         }
     }
 
-    impl easy::Access2 for Easy {
+    impl easy::Access for Easy {
         type RepoRef = Rc<Repository>;
         type RepoRefMut = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>; // this is a lie
 
@@ -239,7 +218,7 @@ mod impls {
         }
     }
 
-    impl easy::Access2 for EasyArc {
+    impl easy::Access for EasyArc {
         type RepoRef = Arc<Repository>;
         type RepoRefMut = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>; // this is a lie
 
@@ -254,7 +233,7 @@ mod impls {
         }
     }
 
-    impl easy::Access2 for EasyArcExclusive {
+    impl easy::Access for EasyArcExclusive {
         type RepoRef = ArcRwLockReadGuard<parking_lot::RawRwLock, Repository>;
         type RepoRefMut = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>;
 

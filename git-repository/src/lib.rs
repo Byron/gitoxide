@@ -34,13 +34,14 @@
 //!   `Access` if needed.
 //! * git-repository functions related to `Access` extensions will always return attached versions of return values, like `Oid` instead
 //!   of `ObjectId`, `ObjectRef` instead of `git_odb::data::Object`, or `Reference` instead of `git_ref::file::Reference`.
+//! * Obtaining mutable is currently a weak spot as these only work with Arc<RwLock> right now and can't work with `Rc<RefCell>` due
+//!   to missing GATs, presumably. All `Easy*!Exclusive` types are unable to provide a mutable reference to the underlying repository.
+//!   However, other ways to adjust the `Repository` of long-running applications are possible. For instance, there could be a flag that
+//!   indicates a new `Repository` should be created (for instance, after it was changed) which causes the next server connection to
+//!   create a new one. This instance is the one to use when spawning new `EasyArc` instances.
 //!
 //! #### Limitations
 //!
-//! * The plumbing-level repository is borrowed immutably and doesn't change, which also means that its loaded packs and indices,
-//!   maybe along other state, can become stale. There is not trivial way of updating these unless the owner of it manages to
-//!   reduce its ref-count to one to obtain a mutable object back, or creates their own schemes along the lines instantiating
-//!   an entirely new repository which will subsequently be used while the stale one is phased out.
 //! * types containing `&impl Access` can't access extension traits directly but have to use a workaround. This is due to the way
 //!   extension traits can't apply internally if if it is implemented, but must be part of the external interface. This is only
 //!   relevant for code within `git-repository`
