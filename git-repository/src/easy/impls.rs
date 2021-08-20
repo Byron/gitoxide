@@ -3,6 +3,7 @@ use std::{rc::Rc, sync::Arc};
 use parking_lot::lock_api::{ArcRwLockReadGuard, ArcRwLockWriteGuard};
 
 use crate::{easy, Easy, EasyArc, EasyArcExclusive, EasyShared, Repository};
+use std::cell::{Ref, RefMut};
 
 impl Clone for Easy {
     fn clone(&self) -> Self {
@@ -95,6 +96,23 @@ impl<'repo> easy::Access for EasyShared<'repo> {
     }
 }
 
+impl<'repo> easy::AccessGAT for EasyShared<'repo> {
+    type RepoRef<'a> = &'a Repository;
+    type RepoRefMut<'a> = &'a mut Repository;
+
+    fn repo(&self) -> Result<Self::RepoRef<'_>, easy::borrow::repo::Error> {
+        Ok(self.repo)
+    }
+
+    fn repo_mut<'a>(&'a self) -> Result<Self::RepoRefMut<'repo>, easy::borrow::repo::Error> {
+        Err(easy::borrow::repo::Error)
+    }
+
+    fn state(&self) -> &easy::State {
+        &self.state
+    }
+}
+
 impl easy::Access for Easy {
     type RepoRef = Rc<Repository>;
     type RepoRefMut = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>; // this is a lie
@@ -105,6 +123,50 @@ impl easy::Access for Easy {
 
     fn repo_mut(&self) -> Result<Self::RepoRefMut, easy::borrow::repo::Error> {
         Err(easy::borrow::repo::Error)
+    }
+
+    fn state(&self) -> &easy::State {
+        &self.state
+    }
+}
+
+/// A handle to a `Repository` for use when the repository needs to be shared, providing state for one `ObjectRef` at a time, , created with [`Repository::into_easy()`].
+///
+/// For use in one-off commands that don't have to deal with the changes they potentially incur.
+pub struct EasyExclusive {
+    /// The repository
+    pub repo: Rc<std::cell::RefCell<Repository>>,
+    /// The state with interior mutability
+    pub state: easy::State,
+}
+
+impl easy::AccessGAT for EasyExclusive {
+    type RepoRef<'a> = Ref<'a, Repository>; // this will be Ref<'a, Repository>
+    type RepoRefMut<'a> = RefMut<'a, Repository>; // this is a lie
+
+    fn repo(&self) -> Result<Self::RepoRef<'_>, easy::borrow::repo::Error> {
+        Ok(self.repo.borrow())
+    }
+
+    fn repo_mut(&self) -> Result<Self::RepoRefMut<'_>, easy::borrow::repo::Error> {
+        self.repo.try_borrow_mut().map_err(Into::into)
+    }
+
+    fn state(&self) -> &easy::State {
+        &self.state
+    }
+}
+
+impl easy::AccessGAT for EasyArcExclusive {
+    type RepoRef<'a> = ArcRwLockReadGuard<parking_lot::RawRwLock, Repository>;
+    type RepoRefMut<'a> = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>;
+
+    fn repo(&self) -> Result<Self::RepoRef<'_>, easy::borrow::repo::Error> {
+        Ok(self.repo.read_arc())
+    }
+
+    fn repo_mut(&self) -> Result<Self::RepoRefMut<'_>, easy::borrow::repo::Error> {
+        Ok(self.repo.write_arc())
     }
 
     fn state(&self) -> &easy::State {

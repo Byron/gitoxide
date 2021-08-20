@@ -1,3 +1,4 @@
+#![feature(generic_associated_types)]
 //! This crate provides the [`Repository`] abstraction which serves as a hub into all the functionality of git.
 //!
 //! It's powerful and won't sacrifice performance while still increasing convenience compared to using the sub-crates
