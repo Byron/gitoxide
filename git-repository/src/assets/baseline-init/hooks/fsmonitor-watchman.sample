@@ -11,7 +11,7 @@ use IPC::Open2;
 # The hook is passed a version (currently 2) and last update token
 # formatted as a string and outputs to stdout a new update token and
 # all files that have been modified since the update token. Paths must
-# be relative to the root of the work tree and separated by a single NUL.
+# be relative to the root of the working tree and separated by a single NUL.
 #
 # To enable this hook, rename this file to "query-watchman" and set
 # 'git config core.fsmonitor .git/hooks/query-watchman'

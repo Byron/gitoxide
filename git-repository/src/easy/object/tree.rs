@@ -30,7 +30,7 @@ where
                         let access = self.access;
                         drop(entry);
                         drop(self);
-                        self = match crate::ext::access::object::find_object(access, next_id)?.try_into_tree() {
+                        self = match crate::easy::ext::object::find_object(access, next_id)?.try_into_tree() {
                             Ok(tree) => tree,
                             Err(_) => return Ok(None),
                         };

@@ -133,12 +133,11 @@ pub(in crate::command::release_impl) fn commit_changes(
     if !cmd.status()?.success() {
         bail!("Failed to commit changed manifests");
     }
-    Ok(ctx
-        .git_easy
-        .repo
+    let repo = &ctx.git_easy.repo;
+    Ok(repo
         .refs
         .loose_find_existing("HEAD")?
-        .peel_to_id_in_place(&ctx.git_easy.repo.refs, ctx.packed_refs.as_ref(), peel::none)?
+        .peel_to_id_in_place(&repo.refs, ctx.packed_refs.as_ref(), peel::none)?
         .to_owned())
 }
 

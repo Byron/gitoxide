@@ -35,7 +35,7 @@ impl File {
 
     /// Returns 20 bytes sha1 at the given index in our list of (sorted) sha1 hashes.
     /// The position ranges from 0 to self.num_commits()
-    // copied from git-odb/src/pack/index/access.rs
+    // copied from git-odb/src/pack/index/ext
     pub fn id_at(&self, pos: file::Position) -> &git_hash::oid {
         assert!(
             pos.0 < self.num_commits(),
@@ -71,7 +71,7 @@ impl File {
     }
 
     /// Translate the given object hash to its position within this file, if present.
-    // copied from git-odb/src/pack/index/access.rs
+    // copied from git-odb/src/pack/index/ext
     pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<file::Position> {
         let id = id.as_ref();
         let first_byte = usize::from(id.first_byte());

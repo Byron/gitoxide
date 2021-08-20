@@ -2,8 +2,13 @@ use std::{cell::Ref, convert::TryInto};
 
 pub use git_object::Kind;
 
-use crate::easy::{Object, ObjectRef, TreeRef};
-use crate::{easy, hash::ObjectId, objs::immutable, odb};
+use crate::{
+    easy,
+    easy::{Object, ObjectRef, TreeRef},
+    hash::ObjectId,
+    objs::immutable,
+    odb,
+};
 
 mod impls;
 mod tree;
@@ -164,13 +169,13 @@ pub mod peel_to_kind {
                         let tree_id = self.to_commit_iter().expect("commit").tree_id().expect("valid commit");
                         let access = self.access;
                         drop(self);
-                        self = crate::ext::access::object::find_object(access, tree_id)?;
+                        self = crate::easy::ext::object::find_object(access, tree_id)?;
                     }
                     Kind::Tag => {
                         let target_id = self.to_tag_iter().expect("tag").target_id().expect("valid tag");
                         let access = self.access;
                         drop(self);
-                        self = crate::ext::access::object::find_object(access, target_id)?;
+                        self = crate::easy::ext::object::find_object(access, target_id)?;
                     }
                     Kind::Tree | Kind::Blob => {
                         return Err(peel_to_kind::Error::NotFound {

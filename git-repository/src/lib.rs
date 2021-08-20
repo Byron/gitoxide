@@ -105,7 +105,7 @@ pub mod prelude {
     pub use git_features::parallel::reduce::Finalize;
     pub use git_odb::{Find, FindExt, Write};
 
-    pub use crate::ext::*;
+    pub use crate::{easy::ext::*, ext::*};
 }
 
 ///
@@ -133,16 +133,20 @@ pub struct Repository {
 ///
 /// For use in one-off commands that don't have to deal with the changes they potentially incur.
 pub struct Easy {
-    pub(crate) repo: Rc<Repository>,
-    pub(crate) state: easy::State,
+    /// The repository
+    pub repo: Rc<Repository>,
+    /// The state with interior mutability
+    pub state: easy::State,
 }
 
 /// A handle to a repository for use when the repository needs to be shared using an actual reference, providing state for one `ObjectRef` at a time, created with [`Repository::to_easy()`]
 ///
 /// For use in one-off commands that don't have to deal with the changes they potentially incur.
 pub struct EasyShared<'a> {
-    pub(crate) repo: &'a Repository,
-    pub(crate) state: easy::State,
+    /// The repository
+    pub repo: &'a Repository,
+    /// The state with interior mutability
+    pub state: easy::State,
 }
 
 /// A handle to a `Repository` for sharing across threads, with each thread having one or more caches,
@@ -150,8 +154,10 @@ pub struct EasyShared<'a> {
 ///
 /// For use in one-off commands that don't have to deal with the changes they potentially incur.
 pub struct EasyArc {
-    pub(crate) repo: Arc<Repository>,
-    pub(crate) state: easy::State,
+    /// The repository
+    pub repo: Arc<Repository>,
+    /// The state with interior mutability
+    pub state: easy::State,
 }
 
 /// A handle to a optionally mutable `Repository` for use in long-running applications that eventually need to update the `Repository`
@@ -161,8 +167,10 @@ pub struct EasyArc {
 /// to precisely updating the `Repository` instance as opposed to creating a new one while serving other requests on an old instance, which
 /// potentially duplicates the resource costs.
 pub struct EasyArcExclusive {
-    pub(crate) repo: Arc<parking_lot::RwLock<Repository>>,
-    pub(crate) state: easy::State,
+    /// The repository
+    pub repo: Arc<parking_lot::RwLock<Repository>>,
+    /// The state with interior mutability
+    pub state: easy::State,
 }
 
 pub mod easy;

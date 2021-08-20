@@ -17,10 +17,11 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use crate::hash::ObjectId;
-use crate::{objs, odb, refs, Repository};
+use crate::{hash::ObjectId, objs, odb, refs, Repository};
 
 mod impls;
+
+pub(crate) mod ext;
 
 pub mod borrow;
 pub mod object;
