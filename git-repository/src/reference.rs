@@ -18,7 +18,7 @@ pub(crate) enum Backing {
 pub mod edit {
     use quick_error::quick_error;
 
-    use crate::refs;
+    use crate::{easy, refs};
 
     quick_error! {
         #[derive(Debug)]
@@ -37,6 +37,10 @@ pub mod edit {
                 display("The reference name is invalid")
                 from()
                 source(err)
+            }
+            BorrowRepo(err: easy::borrow::Error) {
+                display("BUG: The repository could not be borrowed")
+                from()
             }
         }
     }
@@ -60,10 +64,14 @@ pub mod peel_to_id_in_place {
                 from()
                 source(err)
             }
-            Borrow(err: easy::state::borrow::Error) {
+            BorrowState(err: easy::state::borrow::Error) {
                 display("BUG: Part of interior state could not be borrowed.")
                 from()
                 source(err)
+            }
+            BorrowRepo(err: easy::borrow::Error) {
+                display("BUG: The repository could not be borrowed")
+                from()
             }
         }
     }
@@ -106,7 +114,7 @@ where
     }
 
     pub fn peel_to_object_in_place(&mut self) -> Result<Oid<'repo, A>, peel_to_id_in_place::Error> {
-        let repo = self.access.repo();
+        let repo = self.access.repo()?;
         match self.backing.take().expect("a ref must be set") {
             Backing::LooseFile(mut r) => {
                 let state = self.access.state();
@@ -180,10 +188,14 @@ pub mod find {
                 from()
                 source(err)
             }
-            Borrow(err: easy::state::borrow::Error) {
+            BorrowState(err: easy::state::borrow::Error) {
                 display("BUG: Part of interior state could not be borrowed.")
                 from()
                 source(err)
+            }
+            BorrowRepo(err: easy::borrow::Error) {
+                display("BUG: The repository could not be borrowed")
+                from()
             }
         }
     }

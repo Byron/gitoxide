@@ -30,21 +30,42 @@ pub trait Access {
     // TODO: Once GATs become stable, try to use them to make it work with RefCells too, aka EasyExclusive
     type RepoRefMut: DerefMut<Target = Repository>;
 
-    fn repo(&self) -> Self::RepoRef;
-    /// # Panics
-    ///
-    /// Currently many implementors of this trait don't support exclusive access, which is why they trigger an unconditional
-    /// panic. It's planned to use `GAT`s to provide an `EasyExclusive` with an underlying `Rc<RefCell<Repository>>` for handling
-    /// mutable borrows.
-    ///
+    fn repo(&self) -> std::result::Result<Self::RepoRef, borrow::Error>;
     /// # NOTE
     ///
     /// This is implemented only for `EasyArcExclusive` to be obtained via `to_easy_arc_exclusive()`
-    fn repo_mut(&self) -> Self::RepoRefMut;
+    fn repo_mut(&self) -> std::result::Result<Self::RepoRefMut, borrow::Error>;
     fn state(&self) -> &State;
 }
 
 pub type Result<T> = std::result::Result<T, state::borrow::Error>;
+
+pub mod borrow {
+    use std::cell::{BorrowError, BorrowMutError};
+    use std::fmt::{Display, Formatter};
+
+    #[derive(Debug)]
+    pub struct Error;
+
+    impl Display for Error {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            "Could not borrow the repository as it's already borrowed mutably".fmt(f)
+        }
+    }
+
+    impl std::error::Error for Error {}
+
+    impl From<BorrowError> for Error {
+        fn from(_: BorrowError) -> Self {
+            Error
+        }
+    }
+    impl From<BorrowMutError> for Error {
+        fn from(_: BorrowMutError) -> Self {
+            Error
+        }
+    }
+}
 
 pub mod state {
     use std::ops::DerefMut;
@@ -75,6 +96,7 @@ pub mod state {
 
     impl easy::State {
         // TODO: this method should be on the Store itself, as one day there will be reftable support which lacks packed-refs
+        // TODO: provide a way to update a cache if the underlying pack changed or got deleted.
         pub(crate) fn assure_packed_refs_present(&self, file: &file::Store) -> Result<(), packed::buffer::open::Error> {
             if self.packed_refs.borrow().is_none() {
                 *self.packed_refs.borrow_mut().deref_mut() = file.packed()?;
@@ -188,12 +210,12 @@ mod impls {
         type RepoRef = &'repo Repository;
         type RepoRefMut = &'repo mut Repository;
 
-        fn repo(&self) -> Self::RepoRef {
-            self.repo
+        fn repo(&self) -> Result<Self::RepoRef, easy::borrow::Error> {
+            Ok(self.repo)
         }
 
-        fn repo_mut(&self) -> Self::RepoRefMut {
-            panic!("repo_mut() is unsupported on EasyShared")
+        fn repo_mut(&self) -> Result<Self::RepoRefMut, easy::borrow::Error> {
+            Err(easy::borrow::Error)
         }
 
         fn state(&self) -> &easy::State {
@@ -205,12 +227,12 @@ mod impls {
         type RepoRef = Rc<Repository>;
         type RepoRefMut = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>; // this is a lie
 
-        fn repo(&self) -> Self::RepoRef {
-            self.repo.clone()
+        fn repo(&self) -> Result<Self::RepoRef, easy::borrow::Error> {
+            Ok(self.repo.clone())
         }
 
-        fn repo_mut(&self) -> Self::RepoRefMut {
-            panic!("repo_mut() is unsupported on Easy")
+        fn repo_mut(&self) -> Result<Self::RepoRefMut, easy::borrow::Error> {
+            Err(easy::borrow::Error)
         }
 
         fn state(&self) -> &easy::State {
@@ -222,11 +244,11 @@ mod impls {
         type RepoRef = Arc<Repository>;
         type RepoRefMut = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>; // this is a lie
 
-        fn repo(&self) -> Self::RepoRef {
-            self.repo.clone()
+        fn repo(&self) -> Result<Self::RepoRef, easy::borrow::Error> {
+            Ok(self.repo.clone())
         }
-        fn repo_mut(&self) -> Self::RepoRefMut {
-            panic!("repo_mut() is unsupported on EasyArc")
+        fn repo_mut(&self) -> Result<Self::RepoRefMut, easy::borrow::Error> {
+            Err(easy::borrow::Error)
         }
         fn state(&self) -> &easy::State {
             &self.state
@@ -237,11 +259,11 @@ mod impls {
         type RepoRef = ArcRwLockReadGuard<parking_lot::RawRwLock, Repository>;
         type RepoRefMut = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>;
 
-        fn repo(&self) -> Self::RepoRef {
-            self.repo.read_arc()
+        fn repo(&self) -> Result<Self::RepoRef, easy::borrow::Error> {
+            Ok(self.repo.read_arc())
         }
-        fn repo_mut(&self) -> Self::RepoRefMut {
-            self.repo.write_arc()
+        fn repo_mut(&self) -> Result<Self::RepoRefMut, easy::borrow::Error> {
+            Ok(self.repo.write_arc())
         }
         fn state(&self) -> &easy::State {
             &self.state

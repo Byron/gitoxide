@@ -59,10 +59,14 @@ pub mod find {
                 from()
                 source(err)
             }
-            Borrow(err: easy::state::borrow::Error) {
+            BorrowState(err: easy::state::borrow::Error) {
                 display("BUG: Part of interior state could not be borrowed.")
                 from()
                 source(err)
+            }
+            BorrowRepo(err: easy::borrow::Error) {
+                display("BUG: The repository could not be borrowed")
+                from()
             }
         }
     }
@@ -80,10 +84,14 @@ pub mod find {
                     from()
                     source(err)
                 }
-                Borrow(err: easy::state::borrow::Error) {
+                BorrowState(err: easy::state::borrow::Error) {
                     display("BUG: Part of interior state could not be borrowed.")
                     from()
                     source(err)
+                }
+                BorrowRepo(err: easy::borrow::Error) {
+                    display("BUG: The repository could not be borrowed")
+                    from()
                 }
             }
         }

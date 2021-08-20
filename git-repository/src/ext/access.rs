@@ -17,10 +17,11 @@ pub(crate) mod object {
         let id = id.into();
         let kind = {
             let mut buf = access.state().try_borrow_mut_buf()?;
-            let obj = access
-                .repo()
-                .odb
-                .find_existing(&id, &mut buf, state.try_borrow_mut_pack_cache()?.deref_mut())?;
+            let obj =
+                access
+                    .repo()?
+                    .odb
+                    .find_existing(&id, &mut buf, state.try_borrow_mut_pack_cache()?.deref_mut())?;
             obj.kind
         };
 
@@ -34,7 +35,7 @@ pub(crate) mod object {
         let state = access.state();
         let id = id.into();
         access
-            .repo()
+            .repo()?
             .odb
             .find(
                 &id,
@@ -130,7 +131,7 @@ pub(crate) mod reference {
                     &committer_storage
                 }
             };
-            self.repo()
+            self.repo()?
                 .refs
                 .transaction()
                 .prepare(edits, lock_mode)?
@@ -159,8 +160,8 @@ pub(crate) mod reference {
             Error: From<E>,
         {
             let state = self.state();
-            state.assure_packed_refs_present(&self.repo().refs)?;
-            match self.repo().refs.find(name, state.try_borrow_packed_refs()?.as_ref()) {
+            state.assure_packed_refs_present(&self.repo()?.refs)?;
+            match self.repo()?.refs.find(name, state.try_borrow_packed_refs()?.as_ref()) {
                 Ok(r) => match r {
                     Some(r) => Ok(Some(Reference::from_file_ref(r, self))),
                     None => Ok(None),
