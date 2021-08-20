@@ -14,6 +14,7 @@
 use std::cell::RefCell;
 
 use crate::{odb, refs, Repository};
+use std::borrow::Borrow;
 
 type PackCache = odb::pack::cache::Never; // TODO: choose great all-round cache
 
@@ -26,6 +27,14 @@ pub struct State {
 
 pub trait Access {
     fn repo(&self) -> &Repository;
+    fn state(&self) -> &State;
+}
+
+pub trait Access2<BR>
+where
+    BR: Borrow<Repository>,
+{
+    fn repo(&self) -> &BR;
     fn state(&self) -> &State;
 }
 
@@ -93,6 +102,7 @@ mod impls {
     use std::{rc::Rc, sync::Arc};
 
     use crate::{easy, Easy, EasyArc, EasyExclusive, EasyShared, Repository};
+    use parking_lot::{RawRwLock, RwLockReadGuard};
 
     impl Clone for Easy {
         fn clone(&self) -> Self {
@@ -178,6 +188,26 @@ mod impls {
     impl<'repo> easy::Access for EasyShared<'repo> {
         fn repo(&self) -> &Repository {
             self.repo
+        }
+
+        fn state(&self) -> &easy::State {
+            &self.state
+        }
+    }
+
+    impl<'repo> easy::Access2<Repository> for EasyShared<'repo> {
+        fn repo(&self) -> &Repository {
+            self.repo
+        }
+
+        fn state(&self) -> &easy::State {
+            &self.state
+        }
+    }
+
+    impl<'repo> easy::Access2<RwLockReadGuard<'repo, Repository>> for EasyExclusive {
+        fn repo(&self) -> RwLockReadGuard<'repo, Repository> {
+            self.repo.read()
         }
 
         fn state(&self) -> &easy::State {
