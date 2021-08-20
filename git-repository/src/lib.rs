@@ -126,11 +126,6 @@ pub struct Easy {
     pub state: easy::State,
 }
 
-pub struct EasyExclusive {
-    pub repo: Rc<parking_lot::RwLock<Repository>>,
-    pub state: easy::State,
-}
-
 pub struct EasyShared<'a> {
     pub repo: &'a Repository,
     pub state: easy::State,

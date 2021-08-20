@@ -52,7 +52,7 @@ git-features = { version = "^0.16.0", path = "../git-features", features = ["pro
 
 signal-hook = { version = "0.3.9", default-features = false }
 quick-error = "2.0.0"
-parking_lot = "0.11.1"
+parking_lot = { version = "0.11.1", features = ["arc_lock"], git = "https://github.com/Amanieu/parking_lot", ref = "6bbf522dfe8c458909f8683b3f4b558b03e58b65" }
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }

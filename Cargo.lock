@@ -690,7 +690,7 @@ dependencies = [
  "futures-core",
  "libc",
  "mio",
- "parking_lot",
+ "parking_lot 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "signal-hook",
  "signal-hook-mio",
  "winapi",
@@ -1143,7 +1143,7 @@ dependencies = [
  "hex",
  "itoa",
  "memory-lru",
- "parking_lot",
+ "parking_lot 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "smallvec",
  "tempfile",
@@ -1230,7 +1230,7 @@ dependencies = [
  "git-traverse",
  "git-url",
  "git-validate",
- "parking_lot",
+ "parking_lot 0.11.1 (git+https://github.com/Amanieu/parking_lot)",
  "quick-error",
  "signal-hook",
 ]
@@ -1619,6 +1619,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "lock_api"
+version = "0.4.4"
+source = "git+https://github.com/Amanieu/parking_lot#6bbf522dfe8c458909f8683b3f4b558b03e58b65"
+dependencies = [
+ "scopeguard",
+]
+
+[[package]]
 name = "log"
 version = "0.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1851,8 +1859,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d7744ac029df22dca6284efe4e898991d28e3085c706c972bcd7da4a27a15eb"
 dependencies = [
  "instant",
- "lock_api",
- "parking_lot_core",
+ "lock_api 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "parking_lot_core 0.8.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "parking_lot"
+version = "0.11.1"
+source = "git+https://github.com/Amanieu/parking_lot#6bbf522dfe8c458909f8683b3f4b558b03e58b65"
+dependencies = [
+ "instant",
+ "lock_api 0.4.4 (git+https://github.com/Amanieu/parking_lot)",
+ "parking_lot_core 0.8.3 (git+https://github.com/Amanieu/parking_lot)",
 ]
 
 [[package]]
@@ -1860,6 +1878,19 @@ name = "parking_lot_core"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fa7a782938e745763fe6907fc6ba86946d72f49fe7e21de074e08128a99fb018"
+dependencies = [
+ "cfg-if",
+ "instant",
+ "libc",
+ "redox_syscall",
+ "smallvec",
+ "winapi",
+]
+
+[[package]]
+name = "parking_lot_core"
+version = "0.8.3"
+source = "git+https://github.com/Amanieu/parking_lot#6bbf522dfe8c458909f8683b3f4b558b03e58b65"
 dependencies = [
  "cfg-if",
  "instant",
@@ -2007,7 +2038,7 @@ dependencies = [
  "human_format",
  "humantime",
  "log",
- "parking_lot",
+ "parking_lot 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.2.22",
  "tui",
  "tui-react",

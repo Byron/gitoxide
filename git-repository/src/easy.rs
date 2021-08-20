@@ -100,7 +100,8 @@ pub mod state {
 mod impls {
     use std::{rc::Rc, sync::Arc};
 
-    use crate::{easy, Easy, EasyArc, EasyExclusive, EasyShared, Repository};
+    use crate::{easy, Easy, EasyArc, EasyArcExclusive, EasyShared, Repository};
+    use parking_lot::lock_api::ArcRwLockReadGuard;
     use parking_lot::RwLockReadGuard;
 
     impl Clone for Easy {
@@ -143,6 +144,15 @@ mod impls {
         fn from(repo: Repository) -> Self {
             EasyArc {
                 repo: Arc::new(repo),
+                state: Default::default(),
+            }
+        }
+    }
+
+    impl From<Repository> for EasyArcExclusive {
+        fn from(repo: Repository) -> Self {
+            EasyArcExclusive {
+                repo: Arc::new(parking_lot::RwLock::new(repo)),
                 state: Default::default(),
             }
         }
@@ -205,11 +215,11 @@ mod impls {
         }
     }
 
-    impl easy::Access2 for EasyExclusive {
-        type RepoRef<'a> = RwLockReadGuard<'a, Repository>;
+    impl easy::Access2 for EasyArcExclusive {
+        type RepoRef = ArcRwLockReadGuard<parking_lot::RawRwLock, Repository>;
 
         fn repo(&self) -> Self::RepoRef {
-            self.repo.read()
+            self.repo.read_arc()
         }
 
         fn state(&self) -> &easy::State {
