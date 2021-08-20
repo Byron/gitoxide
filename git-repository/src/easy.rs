@@ -102,7 +102,6 @@ mod impls {
 
     use crate::{easy, Easy, EasyArc, EasyArcExclusive, EasyShared, Repository};
     use parking_lot::lock_api::ArcRwLockReadGuard;
-    use parking_lot::RwLockReadGuard;
 
     impl Clone for Easy {
         fn clone(&self) -> Self {
@@ -206,10 +205,32 @@ mod impls {
 
     impl<'repo> easy::Access2 for EasyShared<'repo> {
         type RepoRef = &'repo Repository;
+
         fn repo(&self) -> Self::RepoRef {
             self.repo
         }
+        fn state(&self) -> &easy::State {
+            &self.state
+        }
+    }
 
+    impl easy::Access2 for Easy {
+        type RepoRef = Rc<Repository>;
+
+        fn repo(&self) -> Self::RepoRef {
+            self.repo.clone()
+        }
+        fn state(&self) -> &easy::State {
+            &self.state
+        }
+    }
+
+    impl easy::Access2 for EasyArc {
+        type RepoRef = Arc<Repository>;
+
+        fn repo(&self) -> Self::RepoRef {
+            self.repo.clone()
+        }
         fn state(&self) -> &easy::State {
             &self.state
         }
