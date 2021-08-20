@@ -48,8 +48,9 @@ where
 }
 
 pub mod find {
-    use crate::{easy, odb};
     use quick_error::quick_error;
+
+    use crate::{easy, odb};
 
     quick_error! {
         #[derive(Debug)]
@@ -73,8 +74,9 @@ pub mod find {
     pub(crate) type OdbError = odb::compound::find::Error;
 
     pub mod existing {
-        use crate::{easy, odb};
         use quick_error::quick_error;
+
+        use crate::{easy, odb};
 
         quick_error! {
             #[derive(Debug)]

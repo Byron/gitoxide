@@ -11,10 +11,12 @@
 //!    - When this is desired, rather use `EasyShared` and drop the `EasyShared` once mutable access to the `Repository` is needed.
 //!      `Access` is not usable for functions that require official `&mut` mutability, it's made for interior mutability to support
 //!       trees of objects.
-use std::cell::RefCell;
+use std::{
+    cell::RefCell,
+    ops::{Deref, DerefMut},
+};
 
 use crate::{odb, refs, Repository};
-use std::ops::{Deref, DerefMut};
 
 type PackCache = odb::pack::cache::Never; // TODO: choose great all-round cache
 
@@ -41,8 +43,10 @@ pub trait Access {
 pub type Result<T> = std::result::Result<T, state::borrow::Error>;
 
 pub mod borrow {
-    use std::cell::{BorrowError, BorrowMutError};
-    use std::fmt::{Display, Formatter};
+    use std::{
+        cell::{BorrowError, BorrowMutError},
+        fmt::{Display, Formatter},
+    };
 
     #[derive(Debug)]
     pub struct Error;
@@ -68,14 +72,17 @@ pub mod borrow {
 }
 
 pub mod state {
-    use std::ops::DerefMut;
+    use std::{
+        cell::{Ref, RefMut},
+        ops::DerefMut,
+    };
 
-    use crate::easy::PackCache;
     use crate::{
-        easy, refs,
+        easy,
+        easy::PackCache,
+        refs,
         refs::{file, packed},
     };
-    use std::cell::{Ref, RefMut};
 
     pub mod borrow {
         use quick_error::quick_error;
@@ -129,8 +136,9 @@ pub mod state {
 mod impls {
     use std::{rc::Rc, sync::Arc};
 
-    use crate::{easy, Easy, EasyArc, EasyArcExclusive, EasyShared, Repository};
     use parking_lot::lock_api::{ArcRwLockReadGuard, ArcRwLockWriteGuard};
+
+    use crate::{easy, Easy, EasyArc, EasyArcExclusive, EasyShared, Repository};
 
     impl Clone for Easy {
         fn clone(&self) -> Self {
