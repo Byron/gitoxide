@@ -60,12 +60,12 @@ pub mod find {
                 from()
                 source(err)
             }
-            BorrowState(err: easy::state::borrow::Error) {
+            BorrowState(err: easy::borrow::state::Error) {
                 display("BUG: Part of interior state could not be borrowed.")
                 from()
                 source(err)
             }
-            BorrowRepo(err: easy::borrow::Error) {
+            BorrowRepo(err: easy::borrow::repo::Error) {
                 display("BUG: The repository could not be borrowed")
                 from()
             }
@@ -86,12 +86,12 @@ pub mod find {
                     from()
                     source(err)
                 }
-                BorrowState(err: easy::state::borrow::Error) {
+                BorrowState(err: easy::borrow::state::Error) {
                     display("BUG: Part of interior state could not be borrowed.")
                     from()
                     source(err)
                 }
-                BorrowRepo(err: easy::borrow::Error) {
+                BorrowRepo(err: easy::borrow::repo::Error) {
                     display("BUG: The repository could not be borrowed")
                     from()
                 }
@@ -138,11 +138,10 @@ where
 }
 
 pub mod peel_to_kind {
-    use crate::{
-        easy,
-        object::{peel_to_kind, Kind},
-        ObjectRef,
-    };
+    pub use error::Error;
+
+    use crate::easy::object::{peel_to_kind, Kind};
+    use crate::{easy, ObjectRef};
 
     impl<'repo, A> ObjectRef<'repo, A>
     where
@@ -181,7 +180,8 @@ pub mod peel_to_kind {
     mod error {
         use quick_error::quick_error;
 
-        use crate::{object, object::find};
+        use crate::easy::object;
+        use crate::easy::object::find;
 
         quick_error! {
             #[derive(Debug)]
@@ -197,5 +197,4 @@ pub mod peel_to_kind {
             }
         }
     }
-    pub use error::Error;
 }

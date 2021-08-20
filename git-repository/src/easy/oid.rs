@@ -1,8 +1,8 @@
-use super::Oid;
+use crate::easy::object::find;
+use crate::Oid;
 use crate::{
     easy,
     hash::{oid, ObjectId},
-    object::find,
     Object, ObjectRef,
 };
 

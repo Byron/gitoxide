@@ -77,6 +77,7 @@
 
 use std::{path::PathBuf, rc::Rc, sync::Arc};
 
+use easy::reference;
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
@@ -96,6 +97,7 @@ pub use git_tempfile as tempfile;
 pub use git_traverse as traverse;
 #[cfg(feature = "git-url")]
 pub use git_url as url;
+pub use path::Path;
 
 use crate::hash::ObjectId;
 
@@ -112,8 +114,6 @@ pub mod prelude {
 pub mod init;
 
 pub mod path;
-pub use path::Path;
-
 pub mod repository;
 
 pub struct Repository {
@@ -174,15 +174,10 @@ pub struct Object {
     pub data: Vec<u8>,
 }
 
-pub mod object;
-mod oid;
-
 pub struct Reference<'r, A> {
     pub(crate) backing: Option<reference::Backing>,
     pub(crate) access: &'r A,
 }
-
-pub mod reference;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Kind {

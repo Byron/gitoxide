@@ -7,9 +7,11 @@ use std::{
 
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
+
+use git_repository::easy::object;
 use git_repository::{
     hash::ObjectId,
-    object, odb,
+    odb,
     odb::{pack, pack::index},
     progress, Progress,
 };

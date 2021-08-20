@@ -3,8 +3,9 @@ pub(crate) mod object {
 
     use git_hash::ObjectId;
 
+    use crate::easy::object;
     use crate::{
-        easy, object,
+        easy,
         odb::{Find, FindExt},
         ObjectRef,
     };
@@ -68,8 +69,9 @@ pub(crate) mod reference {
 
     use git_hash::ObjectId;
 
+    use crate::easy::reference;
     use crate::{
-        actor, easy, lock, reference,
+        actor, easy, lock,
         refs::{
             file::find::Error,
             mutable::Target,

@@ -1,17 +1,18 @@
 use std::time::Instant;
 
 use anyhow::anyhow;
+use rayon::prelude::*;
+
 use diff::tree::visit::{Action, Change};
+use git_repository::easy::object;
 use git_repository::{
     diff,
     hash::{oid, ObjectId},
-    object,
     objs::{bstr::BStr, immutable},
     odb,
     prelude::*,
     refs::file::loose::reference::peel,
 };
-use rayon::prelude::*;
 
 const GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES: usize = 60_000_000;
 

@@ -6,14 +6,16 @@ use std::{
 };
 
 use anyhow::{anyhow, Result};
+use quick_error::quick_error;
+
+use git_repository::easy::object;
 use git_repository::{
     hash,
     hash::ObjectId,
-    object, odb,
+    odb,
     odb::{loose, pack, Write},
     progress, Progress,
 };
-use quick_error::quick_error;
 
 #[derive(PartialEq, Debug)]
 pub enum SafetyCheck {

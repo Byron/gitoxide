@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 
-use crate::{object, Object, ObjectRef, TreeRef};
+use crate::easy::object;
+use crate::{Object, ObjectRef, TreeRef};
 
 impl<'repo, A> std::fmt::Debug for ObjectRef<'repo, A> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

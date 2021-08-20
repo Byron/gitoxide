@@ -38,7 +38,7 @@ pub mod edit {
                 from()
                 source(err)
             }
-            BorrowRepo(err: easy::borrow::Error) {
+            BorrowRepo(err: easy::borrow::repo::Error) {
                 display("BUG: The repository could not be borrowed")
                 from()
             }
@@ -64,12 +64,12 @@ pub mod peel_to_id_in_place {
                 from()
                 source(err)
             }
-            BorrowState(err: easy::state::borrow::Error) {
+            BorrowState(err: easy::borrow::state::Error) {
                 display("BUG: Part of interior state could not be borrowed.")
                 from()
                 source(err)
             }
-            BorrowRepo(err: easy::borrow::Error) {
+            BorrowRepo(err: easy::borrow::repo::Error) {
                 display("BUG: The repository could not be borrowed")
                 from()
             }
@@ -158,7 +158,7 @@ pub mod find {
     pub mod existing {
         use quick_error::quick_error;
 
-        use crate::reference::find;
+        use crate::easy::reference::find;
 
         quick_error! {
             #[derive(Debug)]
@@ -188,12 +188,12 @@ pub mod find {
                 from()
                 source(err)
             }
-            BorrowState(err: easy::state::borrow::Error) {
+            BorrowState(err: easy::borrow::state::Error) {
                 display("BUG: Part of interior state could not be borrowed.")
                 from()
                 source(err)
             }
-            BorrowRepo(err: easy::borrow::Error) {
+            BorrowRepo(err: easy::borrow::repo::Error) {
                 display("BUG: The repository could not be borrowed")
                 from()
             }
