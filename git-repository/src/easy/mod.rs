@@ -85,17 +85,4 @@ pub trait Access {
     fn state(&self) -> &State;
 }
 
-pub trait AccessGAT {
-    type RepoRef<'a>: Deref<Target = Repository> + 'a;
-    // TODO: Once GATs become stable, try to use them to make it work with RefCells too, aka EasyExclusive
-    type RepoRefMut<'a>: DerefMut<Target = Repository> + 'a;
-
-    fn repo<'a>(&self) -> std::result::Result<Self::RepoRef<'_>, borrow::repo::Error>;
-    /// # NOTE
-    ///
-    /// This is implemented only for `EasyArcExclusive` to be obtained via `to_easy_arc_exclusive()`
-    fn repo_mut<'a>(&'a self) -> std::result::Result<Self::RepoRefMut<'a>, borrow::repo::Error>;
-    fn state(&self) -> &State;
-}
-
 pub type Result<T> = std::result::Result<T, borrow::state::Error>;
