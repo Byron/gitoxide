@@ -4,33 +4,6 @@ use parking_lot::lock_api::{ArcRwLockReadGuard, ArcRwLockWriteGuard};
 
 use crate::{easy, Easy, EasyArc, EasyArcExclusive, EasyShared, Repository};
 
-impl Clone for Easy {
-    fn clone(&self) -> Self {
-        Easy {
-            repo: Rc::clone(&self.repo),
-            state: Default::default(),
-        }
-    }
-}
-
-impl Clone for EasyArc {
-    fn clone(&self) -> Self {
-        EasyArc {
-            repo: Arc::clone(&self.repo),
-            state: Default::default(),
-        }
-    }
-}
-
-impl<'repo> Clone for EasyShared<'repo> {
-    fn clone(&self) -> Self {
-        EasyShared {
-            repo: self.repo,
-            state: Default::default(),
-        }
-    }
-}
-
 impl From<Repository> for Easy {
     fn from(repo: Repository) -> Self {
         Easy {
@@ -103,6 +76,7 @@ impl easy::Access for Easy {
         Ok(self.repo.clone())
     }
 
+    /// TODO: With GATs, this can return an actual RefMut<'a, _> so mutability is possible in single-threaded mode.
     fn repo_mut(&self) -> Result<Self::RepoRefMut, easy::borrow::repo::Error> {
         Err(easy::borrow::repo::Error)
     }

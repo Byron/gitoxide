@@ -128,7 +128,7 @@ where
                 state.assure_packed_refs_present(&repo.refs)?;
                 let mut pack_cache = state.try_borrow_mut_pack_cache()?;
                 let oid = r
-                    .peel_to_id_in_place(&repo.refs, state.try_borrow_packed_refs()?.as_ref(), |oid, buf| {
+                    .peel_to_id_in_place(&repo.refs, state.packed_refs_buffer().as_ref(), |oid, buf| {
                         repo.odb
                             .find(oid, buf, pack_cache.deref_mut())
                             .map(|po| po.map(|o| (o.kind, o.data)))

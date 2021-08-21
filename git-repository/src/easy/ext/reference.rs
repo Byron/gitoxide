@@ -91,7 +91,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         let state = self.state();
         let repo = self.repo()?;
         state.assure_packed_refs_present(&repo.refs)?;
-        match repo.refs.find(name, state.try_borrow_packed_refs()?.as_ref()) {
+        match repo.refs.find(name, state.packed_refs_buffer().as_ref()) {
             Ok(r) => match r {
                 Some(r) => Ok(Some(Reference::from_file_ref(r, self))),
                 None => Ok(None),

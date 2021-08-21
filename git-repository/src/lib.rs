@@ -116,10 +116,14 @@ pub mod path;
 ///
 pub mod repository;
 
-/// A instance with access to everything a git repository entails, best imagined as container _most_ for system resources required
+/// A instance with access to everything a git repository entails, best imagined as container for _most_ for system resources required
 /// to interact with a `git` repository.
 ///
-/// Namely, this is an object database, a reference database to point to objects, as well as configuration.
+/// These resources are meant to be shareable across threads and used by most using an `Easy*` type has a handle carrying additional
+/// in-memory data to accelerate data access or hold volatile data. Depending on context, `EasyShared` gets the fastest read-only
+/// access to the repository, whereas `Easy` has to go through an `Rc`
+///
+/// Namely, this is an object database, a reference database to point to objects.
 pub struct Repository {
     /// A store for references to point at objects
     pub refs: git_ref::file::Store,
@@ -131,7 +135,9 @@ pub struct Repository {
 
 /// A handle to a `Repository` for use when the repository needs to be shared, providing state for one `ObjectRef` at a time, , created with [`Repository::into_easy()`].
 ///
-/// For use in one-off commands that don't have to deal with the changes they potentially incur.
+/// For use in one-off single-threaded commands that don't have to deal with the changes they potentially incur.
+/// TODO: There should be an `EasyExclusive` using `Rc<RefCell<…>>` but that needs GATs.
+#[derive(Clone)]
 pub struct Easy {
     /// The repository
     pub repo: Rc<Repository>,
@@ -142,6 +148,7 @@ pub struct Easy {
 /// A handle to a repository for use when the repository needs to be shared using an actual reference, providing state for one `ObjectRef` at a time, created with [`Repository::to_easy()`]
 ///
 /// For use in one-off commands that don't have to deal with the changes they potentially incur.
+#[derive(Clone)]
 pub struct EasyShared<'a> {
     /// The repository
     pub repo: &'a Repository,
@@ -152,7 +159,8 @@ pub struct EasyShared<'a> {
 /// A handle to a `Repository` for sharing across threads, with each thread having one or more caches,
 /// created with [`Repository::into_easy_arc()`]
 ///
-/// For use in one-off commands that don't have to deal with the changes they potentially incur.
+/// For use in one-off commands in threaded applications that don't have to deal with the changes they potentially incur.
+#[derive(Clone)]
 pub struct EasyArc {
     /// The repository
     pub repo: Arc<Repository>,
@@ -166,6 +174,7 @@ pub struct EasyArc {
 /// Using it incurs costs as each `Repository` access has to go through an indirection and involve a _fair_ `RwLock`. However, it's vital
 /// to precisely updating the `Repository` instance as opposed to creating a new one while serving other requests on an old instance, which
 /// potentially duplicates the resource costs.
+#[derive(Clone)]
 pub struct EasyArcExclusive {
     /// The repository
     pub repo: Arc<parking_lot::RwLock<Repository>>,

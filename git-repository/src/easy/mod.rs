@@ -18,6 +18,7 @@ use std::{
 };
 
 use crate::{hash::ObjectId, objs, odb, refs, Repository};
+use std::sync::Arc;
 
 mod impls;
 
@@ -67,7 +68,11 @@ type PackCache = odb::pack::cache::lru::StaticLinkedList<64>;
 /// State for use in `Easy*` to provide mutable parts of a repository such as caches and buffers.
 #[derive(Default)]
 pub struct State {
-    packed_refs: RefCell<Option<refs::packed::Buffer>>,
+    /// As the packed-buffer may hold onto a memory map, we avoid that to exist once per thread, multiplying system resources.
+    /// This seems worth the cost of always going through an `Arc<RwLock<…>>>`. Note that `EasyArcExclusive` uses the same construct
+    /// but the reason we make this distinction at all is that there are other easy's that allows to chose exactly what you need in
+    /// your application. `State` is one size fits all with supporting single-threaded applications only.
+    packed_refs: Arc<parking_lot::RwLock<Option<refs::packed::Buffer>>>,
     pack_cache: RefCell<PackCache>,
     buf: RefCell<Vec<u8>>,
 }
