@@ -177,6 +177,20 @@ pub struct EasyArc {
 /// Using it incurs costs as each `Repository` access has to go through an indirection and involve an _eventually fair_ `RwLock`.
 /// However, it's vital to precisely updating the `Repository` instance as opposed to creating a new one while serving other requests
 /// on an old instance, which potentially duplicates the resource costs.
+///
+/// ### Limitation
+///
+/// * **It can take a long time to get a mutable `repo`….**
+///    - Imagine a typical server operation where a pack is sent to a client. As it's a fresh clone it takes 5 minutes.
+///      Right after the clone began somebody initiates a push. Everything goes well and as a new pack was created the server
+///      wants to tell the object database to update its packs, making the new one available. To do that, it needs mutable access to the
+///      repository instance, and obtaining it will take until the end of the ongoing clone as the latter has acquired read-access to
+///      the same repository instance. This is most certainly undesirable.
+///   - Workarounds would be to
+///       - acquire the read-lock each time the clone operation wants to access an object
+///       - set a flag that triggers the server to create a new `Repository` instance next time a connection comes in which is subsequently
+///         shared across additional connections.
+///       - Create a new `Repository` per connection.
 #[derive(Clone)]
 pub struct EasyArcExclusive {
     /// The repository
