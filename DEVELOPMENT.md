@@ -21,7 +21,7 @@
    * we adhere to semantic versioning
    * while below 1.0, expect a greater amount of breaking changes, which are announced with minor versions
    * From 1.0, we will try hardest to keep the API and user interface non-breaking the closer to the user a library is. Thus the CLI should remain at version
-    1 for a long times. However, crates that make it up can change more rapidly and may see more major version changes over time.
+    1 for a long time. However, crates that make it up can change more rapidly and may see more major version changes over time.
   
 ## General
 
