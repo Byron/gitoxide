@@ -108,7 +108,7 @@ where
             let tips = tips
                 .map(|tip| {
                     ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else({
-                        let packed = repo.refs.packed().ok().flatten();
+                        let packed = repo.refs.packed_buffer().ok().flatten();
                         let refs = &repo.refs;
                         let repo = Arc::clone(&repo);
                         move |_| {

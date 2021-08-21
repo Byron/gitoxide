@@ -271,7 +271,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
         let (_keep, mut store) = store_writable("make_repo_for_reflog.sh")?;
         store.write_reflog = *reflog_writemode;
         assert!(store.loose_find_existing("HEAD")?.log_exists(&store));
-        assert!(store.packed()?.is_none(), "there is no pack");
+        assert!(store.packed_buffer()?.is_none(), "there is no pack");
 
         let edits = store
             .transaction()
@@ -292,7 +292,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
             !store.loose_find_existing("HEAD")?.log_exists(&store),
             "log was deleted"
         );
-        assert!(store.packed()?.is_none(), "there still is no pack");
+        assert!(store.packed_buffer()?.is_none(), "there still is no pack");
     }
     Ok(())
 }
@@ -306,7 +306,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
         "no loose main available, it's packed"
     );
     assert!(
-        store.packed()?.expect("packed").find("main")?.is_some(),
+        store.packed_buffer()?.expect("packed").find("main")?.is_some(),
         "packed main is available"
     );
 
@@ -327,7 +327,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
         .commit(&committer())?;
 
     assert_eq!(edits.len(), 1, "an edit was performed in the packed refs store");
-    let packed = store.packed()?.expect("packed ref present");
+    let packed = store.packed_buffer()?.expect("packed ref present");
     assert!(packed.find("main")?.is_none(), "no main present after deletion");
     Ok(())
 }
@@ -335,7 +335,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
 #[test]
 fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_refs() -> crate::Result {
     let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
-    let packed = store.packed()?.expect("packed-refs");
+    let packed = store.packed_buffer()?.expect("packed-refs");
     let branch = store.find_existing("newer-as-loose", Some(&packed))?;
     let branch_id = branch.target().as_id().map(ToOwned::to_owned).expect("peeled");
     assert_ne!(
@@ -365,7 +365,7 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
         "only one edit even though technically two places were changed"
     );
     assert!(
-        store.find("newer-as-loose", store.packed()?.as_ref())?.is_none(),
+        store.find("newer-as-loose", store.packed_buffer()?.as_ref())?.is_none(),
         "reference is deleted everywhere"
     );
     Ok(())
@@ -378,17 +378,23 @@ fn all_contained_references_deletes_the_packed_ref_file_too() {
     let edits = store
         .transaction()
         .prepare(
-            store.packed().unwrap().expect("packed-refs").iter().unwrap().map(|r| {
-                let r = r.expect("valid ref");
-                RefEdit {
-                    change: Change::Delete {
-                        previous: Target::Peeled(r.target()).into(),
-                        log: RefLog::AndReference,
-                    },
-                    name: r.name.into(),
-                    deref: false,
-                }
-            }),
+            store
+                .packed_buffer()
+                .unwrap()
+                .expect("packed-refs")
+                .iter()
+                .unwrap()
+                .map(|r| {
+                    let r = r.expect("valid ref");
+                    RefEdit {
+                        change: Change::Delete {
+                            previous: Target::Peeled(r.target()).into(),
+                            log: RefLog::AndReference,
+                        },
+                        name: r.name.into(),
+                        deref: false,
+                    }
+                }),
             git_lock::acquire::Fail::Immediately,
         )
         .unwrap()
@@ -397,7 +403,7 @@ fn all_contained_references_deletes_the_packed_ref_file_too() {
 
     assert!(!store.packed_refs_path().is_file(), "packed-refs was entirely removed");
 
-    let packed = store.packed().unwrap();
+    let packed = store.packed_buffer().unwrap();
     assert!(packed.is_none(), "it won't make up packed refs");
     for edit in edits {
         assert!(

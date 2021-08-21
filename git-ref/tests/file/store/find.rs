@@ -7,7 +7,7 @@ mod existing {
     fn with_packed_refs() -> crate::Result {
         let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
         let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-        let packed = store.packed()?;
+        let packed = store.packed_buffer()?;
         let r = store.find_existing("main", packed.as_ref())?;
         assert_eq!(r.target().borrow().as_id().expect("peeled"), c1);
         assert_eq!(r.name().as_bstr(), "refs/heads/main");

@@ -15,7 +15,7 @@ impl easy::State {
     // TODO: provide a way to update a cache if the underlying pack changed or got deleted.
     pub(crate) fn assure_packed_refs_present(&self, file: &file::Store) -> Result<(), packed::buffer::open::Error> {
         if self.packed_refs.borrow().is_none() {
-            *self.packed_refs.borrow_mut().deref_mut() = file.packed()?;
+            *self.packed_refs.borrow_mut().deref_mut() = file.packed_buffer()?;
         }
         Ok(())
     }

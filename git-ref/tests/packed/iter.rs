@@ -26,7 +26,7 @@ fn packed_refs_with_header() -> crate::Result {
 
 #[test]
 fn iter_prefix() -> crate::Result {
-    let packed = store_with_packed_refs()?.packed()?.expect("packed-refs");
+    let packed = store_with_packed_refs()?.packed_buffer()?.expect("packed-refs");
     assert_eq!(
         packed
             .iter_prefixed("refs/heads/")?
@@ -134,7 +134,7 @@ buggy-hash refs/wrong
 fn performance() -> crate::Result {
     let store = store_at("make_repository_with_lots_of_packed_refs.sh")?;
     let start = std::time::Instant::now();
-    let actual = store.packed()?.expect("packed-refs present").iter()?.count();
+    let actual = store.packed_buffer()?.expect("packed-refs present").iter()?.count();
     assert_eq!(actual, 150003);
     let elapsed = start.elapsed().as_secs_f32();
     eprintln!(

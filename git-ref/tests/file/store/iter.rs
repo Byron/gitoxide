@@ -14,7 +14,7 @@ mod with_namespace {
     #[test]
     fn general_iteration_can_trivially_use_namespaces_as_prefixes() {
         let store = store_at("make_namespaced_packed_ref_repository.sh").unwrap();
-        let packed = store.packed().unwrap();
+        let packed = store.packed_buffer().unwrap();
 
         let ns_two = git_ref::namespace::expand("bar").unwrap();
         assert_eq!(
@@ -88,7 +88,7 @@ mod with_namespace {
 fn no_packed_available_thus_no_iteration_possible() -> crate::Result {
     let store_without_packed = store()?;
     assert!(
-        store_without_packed.packed()?.is_none(),
+        store_without_packed.packed_buffer()?.is_none(),
         "there is no packed refs in this store"
     );
     Ok(())
@@ -97,7 +97,7 @@ fn no_packed_available_thus_no_iteration_possible() -> crate::Result {
 #[test]
 fn packed_file_iter() -> crate::Result {
     let store = store_with_packed_refs()?;
-    assert_eq!(store.packed()?.expect("pack available").iter()?.count(), 8);
+    assert_eq!(store.packed_buffer()?.expect("pack available").iter()?.count(), 8);
     Ok(())
 }
 
@@ -206,7 +206,7 @@ fn overlay_iter() -> crate::Result {
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
-        .iter(store.packed()?.as_ref())?
+        .iter(store.packed_buffer()?.as_ref())?
         .map(|r| r.map(|r| (r.name().as_bstr().to_owned(), r.target(), r.is_packed())))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
@@ -240,7 +240,7 @@ fn overlay_iter_with_prefix_wont_allow_absolute_paths() -> crate::Result {
     #[cfg(windows)]
     let abs_path = "c:\\hello";
 
-    match store.iter_prefixed(store.packed()?.as_ref(), abs_path) {
+    match store.iter_prefixed(store.packed_buffer()?.as_ref(), abs_path) {
         Ok(_) => unreachable!("absolute paths aren't allowed"),
         Err(err) => assert_eq!(err.to_string(), "prefix must be a relative path, like 'refs/heads'"),
     }
@@ -253,7 +253,7 @@ fn overlay_prefixed_iter() -> crate::Result {
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
-        .iter_prefixed(store.packed()?.as_ref(), "refs/heads")?
+        .iter_prefixed(store.packed_buffer()?.as_ref(), "refs/heads")?
         .map(|r| r.map(|r| (r.name().as_bstr().to_owned(), r.target(), r.is_packed())))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");

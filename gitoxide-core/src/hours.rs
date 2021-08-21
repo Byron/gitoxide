@@ -46,7 +46,7 @@ where
     P: Progress,
 {
     let repo = git_repository::discover(working_dir)?;
-    let packed = repo.refs.packed()?;
+    let packed = repo.refs.packed_buffer()?;
     let commit_id = repo
         .refs
         .find_existing(refname.to_string_lossy().as_ref(), packed.as_ref())?

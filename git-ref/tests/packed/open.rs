@@ -7,7 +7,7 @@ use crate::{file::store_with_packed_refs, packed::write_packed_refs_with};
 #[test]
 fn sorted_buffer_works() {
     let store = store_with_packed_refs().unwrap();
-    store.packed().unwrap();
+    store.packed_buffer().unwrap();
 }
 
 #[test]

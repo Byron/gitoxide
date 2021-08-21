@@ -10,15 +10,16 @@ impl file::Store {
         lock_mode: git_lock::acquire::Fail,
     ) -> Result<packed::Transaction, transaction::Error> {
         let lock = git_lock::File::acquire_to_update_resource(self.packed_refs_path(), lock_mode, None)?;
-        Ok(match self.packed()? {
+        Ok(match self.packed_buffer()? {
             Some(packed) => packed::Transaction::new_from_pack_and_lock(packed, lock),
             None => packed::Transaction::new_empty(lock),
         })
     }
 
     /// Return a buffer for the packed file
-    pub fn packed(&self) -> Result<Option<packed::Buffer>, packed::buffer::open::Error> {
-        match packed::Buffer::open(self.packed_refs_path(), 32 * 1024) {
+    pub fn packed_buffer(&self) -> Result<Option<packed::Buffer>, packed::buffer::open::Error> {
+        let need_more_than_these_bytes_to_use_mmap = 32 * 1024;
+        match packed::Buffer::open(self.packed_refs_path(), need_more_than_these_bytes_to_use_mmap) {
             Ok(buf) => Ok(Some(buf)),
             Err(packed::buffer::open::Error::Io(err)) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
             Err(err) => Err(err),

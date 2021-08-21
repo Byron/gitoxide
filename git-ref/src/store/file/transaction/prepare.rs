@@ -267,7 +267,7 @@ impl<'s> Transaction<'s> {
                     // A packed transaction is optional - we only have deletions that can't be made if
                     // no packed-ref file exists anyway
                     self.store
-                        .packed()?
+                        .packed_buffer()?
                         .map(|p| {
                             p.into_transaction(lock_fail_mode)
                                 .map_err(Error::PackedTransactionAcquire)

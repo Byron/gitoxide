@@ -18,7 +18,7 @@ fn a_lock_file_would_not_be_a_valid_partial_name() {
 #[test]
 fn all_iterable_refs_can_be_found() -> crate::Result {
     let store = store_with_packed_refs()?;
-    let packed_refs = store.packed()?.expect("packed-refs exist");
+    let packed_refs = store.packed_buffer()?.expect("packed-refs exist");
 
     for reference in packed_refs.iter()? {
         let reference = reference?;
@@ -80,7 +80,7 @@ c4cebba92af964f2d126be90b8a6298c4cf84d45 refs/tags/git-actor-v0.1.0
 #[test]
 fn partial_name_to_full_name_conversion_rules_are_applied() -> crate::Result {
     let store = store_at("make_packed_refs_for_lookup_rules.sh")?;
-    let packed = store.packed()?.expect("packed-refs exists");
+    let packed = store.packed_buffer()?.expect("packed-refs exists");
 
     assert_eq!(
         store.loose_find_existing("origin")?.name.as_bstr(),
@@ -172,7 +172,7 @@ bogus refs/tags/git-actor-v0.1.0
 #[test]
 fn find_speed() -> crate::Result {
     let store = store_at("make_repository_with_lots_of_packed_refs.sh")?;
-    let packed = store.packed()?.expect("packed-refs present");
+    let packed = store.packed_buffer()?.expect("packed-refs present");
     let start = std::time::Instant::now();
     let mut num_refs = 0;
     for r in packed.iter()?.take(10_000) {

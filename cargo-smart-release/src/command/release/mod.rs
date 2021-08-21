@@ -34,7 +34,7 @@ impl Context {
         let meta = cargo_metadata::MetadataCommand::new().exec()?;
         let root = meta.workspace_root.clone();
         let repo = git_repository::discover(&root)?;
-        let packed_refs = repo.refs.packed()?;
+        let packed_refs = repo.refs.packed_buffer()?;
         let index = Index::new_cargo_default();
         Ok(Context {
             root,
