@@ -25,7 +25,7 @@ enum Transform {
 impl file::Store {
     /// Find a single reference by the given `path` which is required to be a valid reference name.
     ///
-    /// If `packed` is provided, the reference search will extend to the packed buffer created with [`packed()`][file::Store::packed()].
+    /// If `packed` is provided, the reference search will extend to the packed buffer created with [`packed()`][file::Store::packed_buffer()].
     /// Note that the caller is responsible for its freshness, i.e. assuring it wasn't modified since it was read.
     ///
     /// Returns `Ok(None)` if no such ref exists.

@@ -113,7 +113,7 @@ impl file::Store {
     ///
     /// Reference files that do not constitute valid names will be silently ignored.
     ///
-    /// See [`Store::packed()`][file::Store::packed()] for interacting with packed references.
+    /// See [`Store::packed()`][file::Store::packed_buffer()] for interacting with packed references.
     pub fn loose_iter(&self) -> std::io::Result<Loose> {
         let refs = self.refs_dir();
         if !refs.is_dir() {
