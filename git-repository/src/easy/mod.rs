@@ -19,6 +19,7 @@ use std::{
 
 use crate::{hash::ObjectId, objs, odb, refs, Repository};
 use std::sync::Arc;
+use std::time::SystemTime;
 
 mod impls;
 
@@ -65,6 +66,12 @@ type PackCache = odb::pack::cache::Never;
 #[cfg(feature = "local")]
 type PackCache = odb::pack::cache::lru::StaticLinkedList<64>;
 
+#[derive(Default)]
+struct ModifieablePackedRefsBuffer {
+    packed_refs: Option<refs::packed::Buffer>,
+    modified: Option<SystemTime>,
+}
+
 /// State for use in `Easy*` to provide mutable parts of a repository such as caches and buffers.
 #[derive(Default)]
 pub struct State {
@@ -72,7 +79,7 @@ pub struct State {
     /// This seems worth the cost of always going through an `Arc<RwLock<…>>>`. Note that `EasyArcExclusive` uses the same construct
     /// but the reason we make this distinction at all is that there are other easy's that allows to chose exactly what you need in
     /// your application. `State` is one size fits all with supporting single-threaded applications only.
-    packed_refs: Arc<parking_lot::RwLock<Option<refs::packed::Buffer>>>,
+    packed_refs: Arc<parking_lot::RwLock<ModifieablePackedRefsBuffer>>,
     pack_cache: RefCell<PackCache>,
     buf: RefCell<Vec<u8>>,
 }

@@ -117,11 +117,11 @@ pub mod path;
 pub mod repository;
 
 /// A instance with access to everything a git repository entails, best imagined as container for _most_ for system resources required
-/// to interact with a `git` repository.
+/// to interact with a `git` repository which are loaded in once the instance is created.
 ///
 /// These resources are meant to be shareable across threads and used by most using an `Easy*` type has a handle carrying additional
 /// in-memory data to accelerate data access or hold volatile data. Depending on context, `EasyShared` gets the fastest read-only
-/// access to the repository, whereas `Easy` has to go through an `Rc`
+/// access to the repository, whereas `Easy` has to go through an `Rc` and `EasyArcExclusive` through an `Arc<RwLock>`.
 ///
 /// Namely, this is an object database, a reference database to point to objects.
 pub struct Repository {
@@ -129,6 +129,9 @@ pub struct Repository {
     pub refs: git_ref::file::Store,
     /// A store for objects that contain data
     pub odb: git_odb::linked::Store,
+    /// TODO: git-config should be here - it's read a lot but not written much in must applications, so shouldn't be in `State`.
+    ///       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
+    ///       packs are refreshed.
     /// The path to the worktree at which to find checked out files
     pub work_tree: Option<PathBuf>,
 }
@@ -171,9 +174,9 @@ pub struct EasyArc {
 /// A handle to a optionally mutable `Repository` for use in long-running applications that eventually need to update the `Repository`
 /// to adapt to changes they triggered or that were caused by other processes.
 ///
-/// Using it incurs costs as each `Repository` access has to go through an indirection and involve a _fair_ `RwLock`. However, it's vital
-/// to precisely updating the `Repository` instance as opposed to creating a new one while serving other requests on an old instance, which
-/// potentially duplicates the resource costs.
+/// Using it incurs costs as each `Repository` access has to go through an indirection and involve an _eventually fair_ `RwLock`.
+/// However, it's vital to precisely updating the `Repository` instance as opposed to creating a new one while serving other requests
+/// on an old instance, which potentially duplicates the resource costs.
 #[derive(Clone)]
 pub struct EasyArcExclusive {
     /// The repository

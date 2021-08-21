@@ -125,14 +125,17 @@ where
         match self.backing.take().expect("a ref must be set") {
             Backing::LooseFile(mut r) => {
                 let state = self.access.state();
-                state.assure_packed_refs_present(&repo.refs)?;
                 let mut pack_cache = state.try_borrow_mut_pack_cache()?;
                 let oid = r
-                    .peel_to_id_in_place(&repo.refs, state.packed_refs_buffer().as_ref(), |oid, buf| {
-                        repo.odb
-                            .find(oid, buf, pack_cache.deref_mut())
-                            .map(|po| po.map(|o| (o.kind, o.data)))
-                    })?
+                    .peel_to_id_in_place(
+                        &repo.refs,
+                        state.assure_packed_refs_uptodate(&repo.refs)?.as_ref(),
+                        |oid, buf| {
+                            repo.odb
+                                .find(oid, buf, pack_cache.deref_mut())
+                                .map(|po| po.map(|o| (o.kind, o.data)))
+                        },
+                    )?
                     .to_owned();
                 self.backing = Backing::LooseFile(r).into();
                 Ok(Oid::from_id(oid, self.access))
