@@ -252,6 +252,7 @@ fn traversals() -> crate::Result {
                 })))
                 .filter(|o| !o.is_null()),
             progress::Discard,
+            &AtomicBool::new(false),
             count::iter_from_objects::Options {
                 input_object_expansion: expansion_mode,
                 thread_limit: deterministic_count_needs_single_thread,

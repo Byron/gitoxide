@@ -7,251 +7,6 @@ use git_object::immutable;
 
 use crate::{data::output, find, FindExt};
 
-/// Generate [`Count`][output::Count] from input `objects` with object expansion based on [`options`][Options]
-/// to learn which objects would be part of a pack.
-///
-/// A [`Count`][output::Count] object maintains enough state to greatly accelerate future access of packed objects.
-///
-/// * `db` - the object store to use for accessing objects.
-/// * `make_cache` - a function to create thread-local pack caches
-/// * `objects_ids`
-///   * A list of objects ids to add to the pack. Duplication checks are performed so no object is ever added to a pack twice.
-///   * Objects may be expanded based on the provided [`options`][Options]
-/// * `progress`
-///   * a way to obtain progress information
-/// * `options`
-///   * more configuration
-pub fn iter_from_objects<Find, Iter, Oid, Cache>(
-    db: Find,
-    make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
-    objects_ids: Iter,
-    progress: impl Progress,
-    Options {
-        thread_limit,
-        input_object_expansion,
-        chunk_size,
-    }: Options,
-) -> impl Iterator<Item = Result<Vec<output::Count>, Error<find::existing::Error<Find::Error>>>>
-       + parallel::reduce::Finalize<Reduce = reduce::Statistics<Error<find::existing::Error<Find::Error>>>>
-where
-    Find: crate::Find + Clone + Send + Sync + 'static,
-    <Find as crate::Find>::Error: Send,
-    Iter: Iterator<Item = Oid> + Send + 'static,
-    Oid: AsRef<oid> + Send + 'static,
-    Cache: crate::cache::DecodeEntry,
-{
-    let lower_bound = objects_ids.size_hint().0;
-    let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(
-        chunk_size,
-        if lower_bound == 0 { None } else { Some(lower_bound) },
-        thread_limit,
-        None,
-    );
-    let chunks = util::Chunks {
-        iter: objects_ids,
-        size: chunk_size,
-    };
-    let seen_objs = Arc::new(dashmap::DashSet::<ObjectId>::new());
-    let progress = Arc::new(parking_lot::Mutex::new(progress));
-
-    parallel::reduce::Stepwise::new(
-        chunks,
-        thread_limit,
-        {
-            let progress = Arc::clone(&progress);
-            move |n| {
-                (
-                    Vec::new(),   // object data buffer
-                    Vec::new(),   // object data buffer 2 to hold two objects at a time
-                    make_cache(), // cache to speed up pack operations
-                    {
-                        let mut p = progress.lock().add_child(format!("thread {}", n));
-                        p.init(None, git_features::progress::count("objects"));
-                        p
-                    },
-                )
-            }
-        },
-        {
-            let seen_objs = Arc::clone(&seen_objs);
-            move |oids: Vec<Oid>, (buf1, buf2, cache, progress)| {
-                use ObjectExpansion::*;
-                let mut out = Vec::new();
-                let mut tree_traversal_state = git_traverse::tree::breadthfirst::State::default();
-                let mut tree_diff_state = git_diff::tree::State::default();
-                let mut parent_commit_ids = Vec::new();
-                let seen_objs = seen_objs.as_ref();
-                let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs);
-                let mut changes_delegate = tree::changes::AllNew::new(seen_objs);
-                let mut outcome = Outcome::default();
-                let stats = &mut outcome;
-
-                for id in oids.into_iter() {
-                    let id = id.as_ref();
-                    let obj = db.find_existing(id, buf1, cache)?;
-                    stats.input_objects += 1;
-                    match input_object_expansion {
-                        TreeAdditionsComparedToAncestor => {
-                            use git_object::Kind::*;
-                            let mut obj = obj;
-                            let mut id = id.to_owned();
-
-                            loop {
-                                push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress, stats, false);
-                                match obj.kind {
-                                    Tree | Blob => break,
-                                    Tag => {
-                                        id = immutable::TagIter::from_bytes(obj.data)
-                                            .target_id()
-                                            .expect("every tag has a target");
-                                        obj = db.find_existing(id, buf1, cache)?;
-                                        stats.expanded_objects += 1;
-                                        continue;
-                                    }
-                                    Commit => {
-                                        let current_tree_iter = {
-                                            let mut commit_iter = immutable::CommitIter::from_bytes(obj.data);
-                                            let tree_id = commit_iter.tree_id().expect("every commit has a tree");
-                                            parent_commit_ids.clear();
-                                            for token in commit_iter {
-                                                match token {
-                                                    Ok(immutable::commit::iter::Token::Parent { id }) => {
-                                                        parent_commit_ids.push(id)
-                                                    }
-                                                    Ok(_) => break,
-                                                    Err(err) => return Err(Error::CommitDecode(err)),
-                                                }
-                                            }
-                                            let obj = db.find_existing(tree_id, buf1, cache)?;
-                                            push_obj_count_unique(
-                                                &mut out, seen_objs, &tree_id, &obj, progress, stats, true,
-                                            );
-                                            immutable::TreeIter::from_bytes(obj.data)
-                                        };
-
-                                        let objects = if parent_commit_ids.is_empty() {
-                                            traverse_delegate.clear();
-                                            git_traverse::tree::breadthfirst(
-                                                current_tree_iter,
-                                                &mut tree_traversal_state,
-                                                |oid, buf| {
-                                                    stats.decoded_objects += 1;
-                                                    db.find_existing_tree_iter(oid, buf, cache).ok()
-                                                },
-                                                &mut traverse_delegate,
-                                            )
-                                            .map_err(Error::TreeTraverse)?;
-                                            &traverse_delegate.objects
-                                        } else {
-                                            for commit_id in &parent_commit_ids {
-                                                let parent_tree_id = {
-                                                    let parent_commit_obj = db.find_existing(commit_id, buf2, cache)?;
-
-                                                    push_obj_count_unique(
-                                                        &mut out,
-                                                        seen_objs,
-                                                        commit_id,
-                                                        &parent_commit_obj,
-                                                        progress,
-                                                        stats,
-                                                        true,
-                                                    );
-                                                    immutable::CommitIter::from_bytes(parent_commit_obj.data)
-                                                        .tree_id()
-                                                        .expect("every commit has a tree")
-                                                };
-                                                let parent_tree = {
-                                                    let parent_tree_obj =
-                                                        db.find_existing(parent_tree_id, buf2, cache)?;
-                                                    push_obj_count_unique(
-                                                        &mut out,
-                                                        seen_objs,
-                                                        &parent_tree_id,
-                                                        &parent_tree_obj,
-                                                        progress,
-                                                        stats,
-                                                        true,
-                                                    );
-                                                    immutable::TreeIter::from_bytes(parent_tree_obj.data)
-                                                };
-
-                                                changes_delegate.clear();
-                                                git_diff::tree::Changes::from(Some(parent_tree))
-                                                    .needed_to_obtain(
-                                                        current_tree_iter.clone(),
-                                                        &mut tree_diff_state,
-                                                        |oid, buf| {
-                                                            stats.decoded_objects += 1;
-                                                            db.find_existing_tree_iter(oid, buf, cache).ok()
-                                                        },
-                                                        &mut changes_delegate,
-                                                    )
-                                                    .map_err(Error::TreeChanges)?;
-                                            }
-                                            &changes_delegate.objects
-                                        };
-                                        for id in objects.iter() {
-                                            out.push(id_to_count(&db, buf2, id, progress, stats));
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        TreeContents => {
-                            use git_object::Kind::*;
-                            let mut id: ObjectId = id.into();
-                            let mut obj = obj;
-                            loop {
-                                push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress, stats, false);
-                                match obj.kind {
-                                    Tree => {
-                                        traverse_delegate.clear();
-                                        git_traverse::tree::breadthfirst(
-                                            git_object::immutable::TreeIter::from_bytes(obj.data),
-                                            &mut tree_traversal_state,
-                                            |oid, buf| {
-                                                stats.decoded_objects += 1;
-                                                db.find_existing_tree_iter(oid, buf, cache).ok()
-                                            },
-                                            &mut traverse_delegate,
-                                        )
-                                        .map_err(Error::TreeTraverse)?;
-                                        for id in traverse_delegate.objects.iter() {
-                                            out.push(id_to_count(&db, buf1, id, progress, stats));
-                                        }
-                                        break;
-                                    }
-                                    Commit => {
-                                        id = immutable::CommitIter::from_bytes(obj.data)
-                                            .tree_id()
-                                            .expect("every commit has a tree");
-                                        stats.expanded_objects += 1;
-                                        obj = db.find_existing(id, buf1, cache)?;
-                                        continue;
-                                    }
-                                    Blob => break,
-                                    Tag => {
-                                        id = immutable::TagIter::from_bytes(obj.data)
-                                            .target_id()
-                                            .expect("every tag has a target");
-                                        stats.expanded_objects += 1;
-                                        obj = db.find_existing(id, buf1, cache)?;
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                        AsIs => push_obj_count_unique(&mut out, seen_objs, id, &obj, progress, stats, false),
-                    }
-                }
-                Ok((out, outcome))
-            }
-        },
-        reduce::Statistics::default(),
-    )
-}
-
 /// Generate [`Count`][output::Count]s from input `objects` with object expansion based on [`options`][Options]
 /// to learn which objects would would constitute a pack. This step is required to know exactly how many objects would
 /// be in a pack while keeping data around to avoid minimize object database access.
@@ -265,6 +20,8 @@ where
 ///   * Objects may be expanded based on the provided [`options`][Options]
 /// * `progress`
 ///   * a way to obtain progress information
+/// * `should_interrupt`
+///  * A flag that is set to true if the operation should stop
 /// * `options`
 ///   * more configuration
 pub fn objects<Find, Iter, Oid, Cache>(
@@ -272,6 +29,7 @@ pub fn objects<Find, Iter, Oid, Cache>(
     make_cache: impl Fn() -> Cache + Send + Sync,
     objects_ids: Iter,
     progress: impl Progress,
+    should_interrupt: &AtomicBool,
     Options {
         thread_limit,
         input_object_expansion,
@@ -297,12 +55,13 @@ where
         size: chunk_size,
     };
     let seen_objs = dashmap::DashSet::<ObjectId>::new();
-    let progress = parking_lot::Mutex::new(progress);
+    let top_level_progress = Arc::new(parking_lot::Mutex::new(progress));
 
     parallel::in_parallel(
         chunks,
         thread_limit,
         {
+            let progress = Arc::clone(&top_level_progress);
             move |n| {
                 (
                     Vec::new(),   // object data buffer
@@ -317,6 +76,7 @@ where
             }
         },
         {
+            let top_level_progress = Arc::clone(&top_level_progress);
             move |oids: Vec<Oid>, (buf1, buf2, cache, progress)| {
                 use ObjectExpansion::*;
                 let mut out = Vec::new();
@@ -327,6 +87,9 @@ where
                 let mut changes_delegate = tree::changes::AllNew::new(&seen_objs);
                 let mut outcome = Outcome::default();
                 let stats = &mut outcome;
+                if should_interrupt.load(Ordering::Relaxed) {
+                    return Err(Error::Interrupted);
+                }
 
                 for id in oids.into_iter() {
                     let id = id.as_ref();
@@ -487,10 +250,11 @@ where
                         AsIs => push_obj_count_unique(&mut out, &seen_objs, id, &obj, progress, stats, false),
                     }
                 }
+                top_level_progress.lock().inc_by(out.len());
                 Ok((out, outcome))
             }
         },
-        reduce::Statistics2::default(),
+        reduce::Statistics::default(),
     )
 }
 
@@ -761,8 +525,11 @@ mod types {
         TreeTraverse(git_traverse::tree::breadthfirst::Error),
         #[error(transparent)]
         TreeChanges(git_diff::tree::changes::Error),
+        #[error("Operation interrupted")]
+        Interrupted,
     }
 }
+use std::sync::atomic::{AtomicBool, Ordering};
 pub use types::{Error, ObjectExpansion, Options, Outcome};
 
 mod reduce {
@@ -775,6 +542,7 @@ mod reduce {
 
     pub struct Statistics<E> {
         total: Outcome,
+        counts: Vec<output::Count>,
         _err: PhantomData<E>,
     }
 
@@ -782,47 +550,13 @@ mod reduce {
         fn default() -> Self {
             Statistics {
                 total: Default::default(),
-                _err: PhantomData::default(),
-            }
-        }
-    }
-
-    impl<Error> parallel::Reduce for Statistics<Error> {
-        type Input = Result<(Vec<output::Count>, Outcome), Error>;
-        type FeedProduce = Vec<output::Count>;
-        type Output = Outcome;
-        type Error = Error;
-
-        fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
-            item.map(|(counts, mut stats)| {
-                stats.total_objects = counts.len();
-                self.total.aggregate(stats);
-                counts
-            })
-        }
-
-        fn finalize(self) -> Result<Self::Output, Self::Error> {
-            Ok(self.total)
-        }
-    }
-
-    pub struct Statistics2<E> {
-        total: Outcome,
-        counts: Vec<output::Count>,
-        _err: PhantomData<E>,
-    }
-
-    impl<E> Default for Statistics2<E> {
-        fn default() -> Self {
-            Statistics2 {
-                total: Default::default(),
                 counts: Default::default(),
                 _err: PhantomData::default(),
             }
         }
     }
 
-    impl<Error> parallel::Reduce for Statistics2<Error> {
+    impl<Error> parallel::Reduce for Statistics<Error> {
         type Input = Result<(Vec<output::Count>, Outcome), Error>;
         type FeedProduce = ();
         type Output = (Vec<output::Count>, Outcome);

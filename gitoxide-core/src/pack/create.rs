@@ -97,6 +97,7 @@ pub fn create<W>(
 where
     W: std::io::Write,
 {
+    // TODO: review need for Arc for the counting part, use different kinds of Easy depending on need
     let repo = Arc::new(git_repository::discover(repository_path)?);
     progress.init(Some(2), progress::steps());
     let tips = tips.into_iter();
@@ -108,6 +109,7 @@ where
             let tips = tips
                 .map(|tip| {
                     ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else({
+                        // TODO: Use Easy when ready…
                         let packed = repo.refs.packed().ok().flatten();
                         let refs = &repo.refs;
                         let repo = Arc::clone(&repo);
@@ -132,12 +134,13 @@ where
                 Err(_) => unreachable!("there is only one instance left here"),
             };
             let iter = Box::new(
+                // TODO: Easy-based traversal
                 traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), {
                     let db = Arc::clone(&db);
                     move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
                 })
-                .inspect(move |_| progress.inc())
-                .map(Result::unwrap),
+                .map(Result::unwrap)
+                .inspect(move |_| progress.inc()),
             ); // todo: should there be a better way, maybe let input support Option or Result
             (db, iter)
         }
@@ -157,44 +160,34 @@ where
     };
 
     let mut stats = Statistics::default();
-    let chunk_size = 200;
-    let start = Instant::now();
+    let chunk_size = 1000; // What's a good value for this?
     let counts = {
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
-        let mut interruptible_counts_iter = interrupt::Iter::new(
-            pack::data::output::count::iter_from_objects(
-                Arc::clone(&db),
-                move || {
-                    if nondeterministic_count {
-                        Box::new(pack::cache::lru::StaticLinkedList::<64>::default()) as Box<dyn DecodeEntry>
-                    } else {
-                        Box::new(pack::cache::lru::MemoryCappedHashmap::new(400 * 1024 * 1024)) as Box<dyn DecodeEntry>
-                        // todo: Make that configurable
-                    }
+        let (mut counts, count_stats) = pack::data::output::count::objects(
+            Arc::clone(&db),
+            move || {
+                if nondeterministic_count {
+                    Box::new(pack::cache::lru::StaticLinkedList::<64>::default()) as Box<dyn DecodeEntry>
+                } else {
+                    Box::new(pack::cache::lru::MemoryCappedHashmap::new(400 * 1024 * 1024)) as Box<dyn DecodeEntry>
+                    // todo: Make that configurable
+                }
+            },
+            input,
+            progress::ThroughputOnDrop::new(progress),
+            &interrupt::IS_INTERRUPTED,
+            pack::data::output::count::iter_from_objects::Options {
+                thread_limit: if nondeterministic_count || matches!(expansion, ObjectExpansion::None) {
+                    thread_limit
+                } else {
+                    Some(1)
                 },
-                input,
-                progress.add_child("threads"),
-                pack::data::output::count::iter_from_objects::Options {
-                    thread_limit: if nondeterministic_count || matches!(expansion, ObjectExpansion::None) {
-                        thread_limit
-                    } else {
-                        Some(1)
-                    },
-                    chunk_size,
-                    input_object_expansion: expansion.into(),
-                },
-            ),
-            make_cancellation_err,
-        );
-        let mut counts = Vec::new();
-        for c in interruptible_counts_iter.by_ref() {
-            let c = c??;
-            progress.inc_by(c.len());
-            counts.extend(c.into_iter());
-        }
-        stats.counts = interruptible_counts_iter.into_inner().finalize()?;
-        progress.show_throughput(start);
+                chunk_size,
+                input_object_expansion: expansion.into(),
+            },
+        )?;
+        stats.counts = count_stats;
         counts.shrink_to_fit();
         counts
     };
