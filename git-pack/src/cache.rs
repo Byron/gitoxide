@@ -106,28 +106,17 @@ pub mod lru {
         /// The cache must be small as the search is 'naive' and the underlying data structure is a linked list.
         /// Values of 64 seem to improve performance.
         #[derive(Default)]
-        pub struct StaticLinkedList<const SIZE: usize>(uluru::LRUCache<Entry, SIZE>, Vec<Vec<u8>>);
+        pub struct StaticLinkedList<const SIZE: usize>(uluru::LRUCache<Entry, SIZE>);
 
         impl<const SIZE: usize> DecodeEntry for StaticLinkedList<SIZE> {
             fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize) {
-                if let Some(previous) = self.0.insert(Entry {
+                self.0.insert(Entry {
                     offset,
                     pack_id,
-                    data: self
-                        .1
-                        .pop()
-                        .map(|mut v| {
-                            v.clear();
-                            v.resize(data.len(), 0);
-                            v.copy_from_slice(data);
-                            v
-                        })
-                        .unwrap_or_else(|| Vec::from(data)),
+                    data: Vec::from(data),
                     kind,
                     compressed_size,
-                }) {
-                    self.1.push(previous.data)
-                }
+                })
             }
 
             fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)> {
