@@ -8,7 +8,7 @@ use git_object::immutable;
 use crate::{data::output, find, FindExt};
 
 /// The return type used by [`objects()`].
-pub type Result<E> = std::result::Result<(Vec<output::Count>, Outcome), Error<E>>;
+pub type Result<E1, E2> = std::result::Result<(Vec<output::Count>, Outcome), Error<E1, E2>>;
 
 /// Generate [`Count`][output::Count]s from input `objects` with object expansion based on [`options`][Options]
 /// to learn which objects would would constitute a pack. This step is required to know exactly how many objects would
@@ -27,7 +27,7 @@ pub type Result<E> = std::result::Result<(Vec<output::Count>, Outcome), Error<E>
 ///  * A flag that is set to true if the operation should stop
 /// * `options`
 ///   * more configuration
-pub fn objects<Find, Iter, Oid, Cache>(
+pub fn objects<Find, Iter, IterErr, Oid, Cache>(
     db: Find,
     make_cache: impl Fn() -> Cache + Send + Sync,
     objects_ids: Iter,
@@ -38,12 +38,13 @@ pub fn objects<Find, Iter, Oid, Cache>(
         input_object_expansion,
         chunk_size,
     }: Options,
-) -> Result<find::existing::Error<Find::Error>>
+) -> Result<find::existing::Error<Find::Error>, IterErr>
 where
     Find: crate::Find + Send + Sync,
     <Find as crate::Find>::Error: Send,
-    Iter: Iterator<Item = Oid> + Send,
-    Oid: AsRef<oid> + Send,
+    Iter: Iterator<Item = std::result::Result<Oid, IterErr>> + Send,
+    Oid: Into<ObjectId> + Send,
+    IterErr: std::error::Error + Send,
     Cache: crate::cache::DecodeEntry,
 {
     let lower_bound = objects_ids.size_hint().0;
@@ -80,7 +81,7 @@ where
         },
         {
             let top_level_progress = Arc::clone(&top_level_progress);
-            move |oids: Vec<Oid>, (buf1, buf2, cache, progress)| {
+            move |oids: Vec<std::result::Result<Oid, IterErr>>, (buf1, buf2, cache, progress)| {
                 use ObjectExpansion::*;
                 let mut out = Vec::new();
                 let mut tree_traversal_state = git_traverse::tree::breadthfirst::State::default();
@@ -95,7 +96,7 @@ where
                 }
 
                 for id in oids.into_iter() {
-                    let id = id.as_ref();
+                    let id = id.map(|oid| oid.into()).map_err(Error::InputIteration)?;
                     let obj = db.find_existing(id, buf1, cache)?;
                     stats.input_objects += 1;
                     match input_object_expansion {
@@ -208,7 +209,7 @@ where
                         }
                         TreeContents => {
                             use git_object::Kind::*;
-                            let mut id: ObjectId = id.into();
+                            let mut id = id;
                             let mut obj = obj;
                             loop {
                                 push_obj_count_unique(&mut out, &seen_objs, &id, &obj, progress, stats, false);
@@ -250,7 +251,7 @@ where
                                 }
                             }
                         }
-                        AsIs => push_obj_count_unique(&mut out, &seen_objs, id, &obj, progress, stats, false),
+                        AsIs => push_obj_count_unique(&mut out, &seen_objs, &id, &obj, progress, stats, false),
                     }
                 }
                 top_level_progress.lock().inc_by(out.len());
@@ -516,14 +517,17 @@ mod types {
     /// The error returned by the pack generation iterator [bytes::FromEntriesIter][crate::data::output::bytes::FromEntriesIter].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
-    pub enum Error<FindErr>
+    pub enum Error<FindErr, IterErr>
     where
         FindErr: std::error::Error + 'static,
+        IterErr: std::error::Error + 'static,
     {
         #[error(transparent)]
         CommitDecode(git_object::immutable::object::decode::Error),
         #[error(transparent)]
         FindExisting(#[from] FindErr),
+        #[error(transparent)]
+        InputIteration(IterErr),
         #[error(transparent)]
         TreeTraverse(git_traverse::tree::breadthfirst::Error),
         #[error(transparent)]

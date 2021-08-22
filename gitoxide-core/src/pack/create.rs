@@ -102,7 +102,10 @@ where
     progress.init(Some(2), progress::steps());
     let tips = tips.into_iter();
     let make_cancellation_err = || anyhow!("Cancelled by user");
-    let (db, input): (_, Box<dyn Iterator<Item = ObjectId> + Send + 'static>) = match input {
+    let (db, input): (
+        _,
+        Box<dyn Iterator<Item = Result<ObjectId, input_iteration::Error>> + Send>,
+    ) = match input {
         None => {
             let mut progress = progress.add_child("traversing");
             progress.init(None, progress::count("commits"));
@@ -139,9 +142,9 @@ where
                     let db = Arc::clone(&db);
                     move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
                 })
-                .map(Result::unwrap)
+                .map(|res| res.map_err(Into::into))
                 .inspect(move |_| progress.inc()),
-            ); // todo: should there be a better way, maybe let input support Option or Result
+            );
             (db, iter)
         }
         Some(input) => {
@@ -149,11 +152,10 @@ where
                 Ok(repo) => Arc::new(repo.odb),
                 Err(_) => unreachable!("there is only one instance left here"),
             };
-            let iter = Box::new(input.lines().filter_map(|hex_id| {
+            let iter = Box::new(input.lines().map(|hex_id| {
                 hex_id
-                    .ok()
-                    .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).ok())
-                // todo: should there be a better way, maybe let input support Option or Result
+                    .map_err(Into::into)
+                    .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).map_err(Into::into))
             }));
             (db, iter)
         }
@@ -326,4 +328,30 @@ fn human_output(
 struct Statistics {
     counts: pack::data::output::count::iter_from_objects::Outcome,
     entries: pack::data::output::entry::iter_from_counts::Outcome,
+}
+
+pub mod input_iteration {
+    use git_repository::{hash, traverse};
+
+    use quick_error::quick_error;
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            Iteration(err: traverse::commit::ancestors::Error) {
+                display("input objects couldn't be iterated completely")
+                from()
+                source(err)
+            }
+            InputLinesIo(err: std::io::Error) {
+                display("An error occurred while reading hashes from standard input")
+                from()
+                source(err)
+            }
+            HashDecode(err: hash::decode::Error) {
+                display("Could not decode hex hash provided on standard input")
+                from()
+                source(err)
+            }
+        }
+    }
 }

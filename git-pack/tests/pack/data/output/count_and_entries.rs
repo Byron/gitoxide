@@ -12,6 +12,7 @@ use crate::pack::{
     data::output::{db, DbKind},
     hex_to_id,
 };
+use std::convert::Infallible;
 
 #[test]
 fn traversals() -> crate::Result {
@@ -250,7 +251,8 @@ fn traversals() -> crate::Result {
                 } else {
                     "e3fb53cbb4c346d48732a24f09cf445e49bc63d6"
                 })))
-                .filter(|o| !o.is_null()),
+                .filter(|o| !o.is_null())
+                .map(Ok::<_, Infallible>),
             progress::Discard,
             &AtomicBool::new(false),
             count::iter_from_objects::Options {
