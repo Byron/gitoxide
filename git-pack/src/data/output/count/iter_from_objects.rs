@@ -519,7 +519,7 @@ mod util {
 }
 
 mod types {
-    /// Information gathered during the run of [`iter_from_objects()`][super::iter_from_objects()].
+    /// Information gathered during the run of [`iter_from_objects()`][super::objects()].
     #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub struct Outcome {
