@@ -166,29 +166,46 @@ where
     let counts = {
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
-        let (mut counts, count_stats) = pack::data::output::count::objects(
-            Arc::clone(&db),
-            move || {
-                if nondeterministic_count {
-                    Box::new(pack::cache::lru::StaticLinkedList::<64>::default()) as Box<dyn DecodeEntry>
-                } else {
-                    Box::new(pack::cache::lru::MemoryCappedHashmap::new(400 * 1024 * 1024)) as Box<dyn DecodeEntry>
-                    // todo: Make that configurable
-                }
-            },
-            input,
-            progress::ThroughputOnDrop::new(progress),
-            &interrupt::IS_INTERRUPTED,
-            pack::data::output::count::iter_from_objects::Options {
-                thread_limit: if nondeterministic_count || matches!(expansion, ObjectExpansion::None) {
-                    thread_limit
-                } else {
-                    Some(1)
+        let may_use_multiple_threads = nondeterministic_count || matches!(expansion, ObjectExpansion::None);
+        let thread_limit = if may_use_multiple_threads {
+            thread_limit
+        } else {
+            Some(1)
+        };
+        let make_cache = move || {
+            if may_use_multiple_threads {
+                Box::new(pack::cache::lru::StaticLinkedList::<64>::default()) as Box<dyn DecodeEntry>
+            } else {
+                Box::new(pack::cache::lru::MemoryCappedHashmap::new(400 * 1024 * 1024)) as Box<dyn DecodeEntry>
+                // todo: Make that configurable
+            }
+        };
+        let db = Arc::clone(&db);
+        let progress = progress::ThroughputOnDrop::new(progress);
+        let input_object_expansion = expansion.into();
+        let (mut counts, count_stats) = if may_use_multiple_threads {
+            pack::data::output::count::objects(
+                db,
+                make_cache,
+                input,
+                progress,
+                &interrupt::IS_INTERRUPTED,
+                pack::data::output::count::iter_from_objects::Options {
+                    thread_limit,
+                    chunk_size,
+                    input_object_expansion,
                 },
-                chunk_size,
-                input_object_expansion: expansion.into(),
-            },
-        )?;
+            )?
+        } else {
+            pack::data::output::count::objects_unthreaded(
+                db,
+                &mut make_cache(),
+                input,
+                progress,
+                &interrupt::IS_INTERRUPTED,
+                input_object_expansion,
+            )?
+        };
         stats.counts = count_stats;
         counts.shrink_to_fit();
         counts

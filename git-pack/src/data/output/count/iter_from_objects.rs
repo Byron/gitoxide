@@ -81,10 +81,6 @@ where
         },
         {
             move |oids: Vec<std::result::Result<Oid, IterErr>>, (buf1, buf2, cache, progress)| {
-                if should_interrupt.load(Ordering::Relaxed) {
-                    return Err(Error::Interrupted);
-                }
-
                 expand_inner(
                     &db,
                     input_object_expansion,
@@ -94,10 +90,41 @@ where
                     buf2,
                     cache,
                     progress,
+                    should_interrupt,
                 )
             }
         },
         reduce::Statistics::new(progress),
+    )
+}
+
+/// Like [`objects()`] but using a single thread only to mostly save on the otherwise required overhead.
+pub fn objects_unthreaded<Find, IterErr, Oid>(
+    db: Find,
+    pack_cache: &mut impl crate::cache::DecodeEntry,
+    object_ids: impl Iterator<Item = std::result::Result<Oid, IterErr>>,
+    mut progress: impl Progress,
+    should_interrupt: &AtomicBool,
+    input_object_expansion: ObjectExpansion,
+) -> Result<find::existing::Error<Find::Error>, IterErr>
+where
+    Find: crate::Find + Send + Sync,
+    Oid: Into<ObjectId> + Send,
+    IterErr: std::error::Error + Send,
+{
+    let seen_objs = RefCell::new(HashSet::<ObjectId>::new());
+
+    let (mut buf1, mut buf2) = (Vec::new(), Vec::new());
+    expand_inner(
+        &db,
+        input_object_expansion,
+        &seen_objs,
+        object_ids,
+        &mut buf1,
+        &mut buf2,
+        pack_cache,
+        &mut progress,
+        should_interrupt,
     )
 }
 
@@ -111,6 +138,7 @@ fn expand_inner<Find, IterErr, Oid>(
     buf2: &mut Vec<u8>,
     cache: &mut impl crate::cache::DecodeEntry,
     progress: &mut impl Progress,
+    should_interrupt: &AtomicBool,
 ) -> Result<find::existing::Error<Find::Error>, IterErr>
 where
     Find: crate::Find + Send + Sync,
@@ -128,6 +156,10 @@ where
     let mut outcome = Outcome::default();
     let stats = &mut outcome;
     for id in oids.into_iter() {
+        if should_interrupt.load(Ordering::Relaxed) {
+            return Err(Error::Interrupted);
+        }
+
         let id = id.map(|oid| oid.into()).map_err(Error::InputIteration)?;
         let obj = db.find_existing(id, buf1, cache)?;
         stats.input_objects += 1;
@@ -556,7 +588,6 @@ mod types {
         /// especially when tree traversal is involved. Thus deterministic ordering requires `Some(1)` to be set.
         pub thread_limit: Option<usize>,
         /// The amount of objects per chunk or unit of work to be sent to threads for processing
-        /// TODO: could this become the window size?
         pub chunk_size: usize,
         /// The way input objects are handled
         pub input_object_expansion: ObjectExpansion,
@@ -594,6 +625,8 @@ mod types {
         Interrupted,
     }
 }
+use std::cell::RefCell;
+use std::collections::HashSet;
 pub use types::{Error, ObjectExpansion, Options, Outcome};
 
 mod reduce {

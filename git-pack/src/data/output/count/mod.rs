@@ -27,4 +27,4 @@ impl Count {
 
 ///
 pub mod iter_from_objects;
-pub use iter_from_objects::objects;
+pub use iter_from_objects::{objects, objects_unthreaded};
