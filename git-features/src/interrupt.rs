@@ -36,9 +36,7 @@ where
     type Item = Result<I::Item, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.make_err.is_none() {
-            return None;
-        }
+        self.make_err.as_ref()?;
         if self.should_interrupt.load(Ordering::Relaxed) {
             return Some(Err(self.make_err.take().expect("no bug")()));
         }

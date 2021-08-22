@@ -7,6 +7,9 @@ use git_object::immutable;
 
 use crate::{data::output, find, FindExt};
 
+/// The return type used by [`objects()`].
+pub type Result<E> = std::result::Result<(Vec<output::Count>, Outcome), Error<E>>;
+
 /// Generate [`Count`][output::Count]s from input `objects` with object expansion based on [`options`][Options]
 /// to learn which objects would would constitute a pack. This step is required to know exactly how many objects would
 /// be in a pack while keeping data around to avoid minimize object database access.
@@ -35,7 +38,7 @@ pub fn objects<Find, Iter, Oid, Cache>(
         input_object_expansion,
         chunk_size,
     }: Options,
-) -> Result<(Vec<output::Count>, Outcome), Error<find::existing::Error<Find::Error>>>
+) -> Result<find::existing::Error<Find::Error>>
 where
     Find: crate::Find + Send + Sync,
     <Find as crate::Find>::Error: Send,
