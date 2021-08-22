@@ -1,7 +1,7 @@
 use crate::parallel::Reduce;
 
-#[cfg(not(feature = "parallel"))]
 /// Runs `left` and then `right`, one after another, returning their output when both are done.
+#[cfg(not(feature = "parallel"))]
 pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
     (left(), right())
 }

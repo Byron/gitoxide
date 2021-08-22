@@ -97,17 +97,22 @@ pub fn create<W>(
 where
     W: std::io::Write,
 {
+    // TODO: review need for Arc for the counting part, use different kinds of Easy depending on need
     let repo = Arc::new(git_repository::discover(repository_path)?);
     progress.init(Some(2), progress::steps());
     let tips = tips.into_iter();
     let make_cancellation_err = || anyhow!("Cancelled by user");
-    let (db, input): (_, Box<dyn Iterator<Item = ObjectId> + Send + 'static>) = match input {
+    let (db, input): (
+        _,
+        Box<dyn Iterator<Item = Result<ObjectId, input_iteration::Error>> + Send>,
+    ) = match input {
         None => {
             let mut progress = progress.add_child("traversing");
             progress.init(None, progress::count("commits"));
             let tips = tips
                 .map(|tip| {
                     ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else({
+                        // TODO: Use Easy when ready…
                         let packed = repo.refs.packed_buffer().ok().flatten();
                         let refs = &repo.refs;
                         let repo = Arc::clone(&repo);
@@ -132,13 +137,14 @@ where
                 Err(_) => unreachable!("there is only one instance left here"),
             };
             let iter = Box::new(
+                // TODO: Easy-based traversal
                 traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), {
                     let db = Arc::clone(&db);
                     move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
                 })
-                .inspect(move |_| progress.inc())
-                .map(Result::unwrap),
-            ); // todo: should there be a better way, maybe let input support Option or Result
+                .map(|res| res.map_err(Into::into))
+                .inspect(move |_| progress.inc()),
+            );
             (db, iter)
         }
         Some(input) => {
@@ -146,55 +152,61 @@ where
                 Ok(repo) => Arc::new(repo.odb),
                 Err(_) => unreachable!("there is only one instance left here"),
             };
-            let iter = Box::new(input.lines().filter_map(|hex_id| {
+            let iter = Box::new(input.lines().map(|hex_id| {
                 hex_id
-                    .ok()
-                    .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).ok())
-                // todo: should there be a better way, maybe let input support Option or Result
+                    .map_err(Into::into)
+                    .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).map_err(Into::into))
             }));
             (db, iter)
         }
     };
 
     let mut stats = Statistics::default();
-    let chunk_size = 200;
-    let start = Instant::now();
+    let chunk_size = 1000; // What's a good value for this?
     let counts = {
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
-        let mut interruptible_counts_iter = interrupt::Iter::new(
-            pack::data::output::count::iter_from_objects(
-                Arc::clone(&db),
-                move || {
-                    if nondeterministic_count {
-                        Box::new(pack::cache::lru::StaticLinkedList::<64>::default()) as Box<dyn DecodeEntry>
-                    } else {
-                        Box::new(pack::cache::lru::MemoryCappedHashmap::new(400 * 1024 * 1024)) as Box<dyn DecodeEntry>
-                        // todo: Make that configurable
-                    }
-                },
+        let may_use_multiple_threads = nondeterministic_count || matches!(expansion, ObjectExpansion::None);
+        let thread_limit = if may_use_multiple_threads {
+            thread_limit
+        } else {
+            Some(1)
+        };
+        let make_cache = move || {
+            if may_use_multiple_threads {
+                Box::new(pack::cache::lru::StaticLinkedList::<64>::default()) as Box<dyn DecodeEntry>
+            } else {
+                Box::new(pack::cache::lru::MemoryCappedHashmap::new(400 * 1024 * 1024)) as Box<dyn DecodeEntry>
+                // todo: Make that configurable
+            }
+        };
+        let db = Arc::clone(&db);
+        let progress = progress::ThroughputOnDrop::new(progress);
+        let input_object_expansion = expansion.into();
+        let (mut counts, count_stats) = if may_use_multiple_threads {
+            pack::data::output::count::objects(
+                db,
+                make_cache,
                 input,
-                progress.add_child("threads"),
+                progress,
+                &interrupt::IS_INTERRUPTED,
                 pack::data::output::count::iter_from_objects::Options {
-                    thread_limit: if nondeterministic_count || matches!(expansion, ObjectExpansion::None) {
-                        thread_limit
-                    } else {
-                        Some(1)
-                    },
+                    thread_limit,
                     chunk_size,
-                    input_object_expansion: expansion.into(),
+                    input_object_expansion,
                 },
-            ),
-            make_cancellation_err,
-        );
-        let mut counts = Vec::new();
-        for c in interruptible_counts_iter.by_ref() {
-            let c = c??;
-            progress.inc_by(c.len());
-            counts.extend(c.into_iter());
-        }
-        stats.counts = interruptible_counts_iter.into_inner().finalize()?;
-        progress.show_throughput(start);
+            )?
+        } else {
+            pack::data::output::count::objects_unthreaded(
+                db,
+                &mut make_cache(),
+                input,
+                progress,
+                &interrupt::IS_INTERRUPTED,
+                input_object_expansion,
+            )?
+        };
+        stats.counts = count_stats;
         counts.shrink_to_fit();
         counts
     };
@@ -218,7 +230,7 @@ where
         ))
     };
 
-    let mut entries_progress = progress.add_child("consumed");
+    let mut entries_progress = progress.add_child("consuming");
     entries_progress.init(Some(num_objects), progress::count("entries"));
     let mut write_progress = progress.add_child("writing");
     write_progress.init(None, progress::bytes());
@@ -333,4 +345,30 @@ fn human_output(
 struct Statistics {
     counts: pack::data::output::count::iter_from_objects::Outcome,
     entries: pack::data::output::entry::iter_from_counts::Outcome,
+}
+
+pub mod input_iteration {
+    use git_repository::{hash, traverse};
+
+    use quick_error::quick_error;
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            Iteration(err: traverse::commit::ancestors::Error) {
+                display("input objects couldn't be iterated completely")
+                from()
+                source(err)
+            }
+            InputLinesIo(err: std::io::Error) {
+                display("An error occurred while reading hashes from standard input")
+                from()
+                source(err)
+            }
+            HashDecode(err: hash::decode::Error) {
+                display("Could not decode hex hash provided on standard input")
+                from()
+                source(err)
+            }
+        }
+    }
 }

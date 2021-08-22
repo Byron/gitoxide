@@ -1,14 +1,18 @@
 use std::sync::Arc;
 
-use dashmap::DashSet;
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
 use git_object::immutable;
 
 use crate::{data::output, find, FindExt};
+use std::sync::atomic::{AtomicBool, Ordering};
 
-/// Generate [`Count`][output::Count] from input `objects` with object expansion based on [`options`][Options]
-/// to learn which objects would be part of a pack.
+/// The return type used by [`objects()`].
+pub type Result<E1, E2> = std::result::Result<(Vec<output::Count>, Outcome), Error<E1, E2>>;
+
+/// Generate [`Count`][output::Count]s from input `objects` with object expansion based on [`options`][Options]
+/// to learn which objects would would constitute a pack. This step is required to know exactly how many objects would
+/// be in a pack while keeping data around to avoid minimize object database access.
 ///
 /// A [`Count`][output::Count] object maintains enough state to greatly accelerate future access of packed objects.
 ///
@@ -19,25 +23,28 @@ use crate::{data::output, find, FindExt};
 ///   * Objects may be expanded based on the provided [`options`][Options]
 /// * `progress`
 ///   * a way to obtain progress information
+/// * `should_interrupt`
+///  * A flag that is set to true if the operation should stop
 /// * `options`
 ///   * more configuration
-pub fn iter_from_objects<Find, Iter, Oid, Cache>(
+pub fn objects<Find, Iter, IterErr, Oid, Cache>(
     db: Find,
-    make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
+    make_cache: impl Fn() -> Cache + Send + Sync,
     objects_ids: Iter,
     progress: impl Progress,
+    should_interrupt: &AtomicBool,
     Options {
         thread_limit,
         input_object_expansion,
         chunk_size,
     }: Options,
-) -> impl Iterator<Item = Result<Vec<output::Count>, Error<find::existing::Error<Find::Error>>>>
-       + parallel::reduce::Finalize<Reduce = reduce::Statistics<Error<find::existing::Error<Find::Error>>>>
+) -> Result<find::existing::Error<Find::Error>, IterErr>
 where
-    Find: crate::Find + Clone + Send + Sync + 'static,
+    Find: crate::Find + Send + Sync,
     <Find as crate::Find>::Error: Send,
-    Iter: Iterator<Item = Oid> + Send + 'static,
-    Oid: AsRef<oid> + Send + 'static,
+    Iter: Iterator<Item = std::result::Result<Oid, IterErr>> + Send,
+    Oid: Into<ObjectId> + Send,
+    IterErr: std::error::Error + Send,
     Cache: crate::cache::DecodeEntry,
 {
     let lower_bound = objects_ids.size_hint().0;
@@ -51,10 +58,10 @@ where
         iter: objects_ids,
         size: chunk_size,
     };
-    let seen_objs = Arc::new(dashmap::DashSet::<ObjectId>::new());
+    let seen_objs = dashmap::DashSet::<ObjectId>::new();
     let progress = Arc::new(parking_lot::Mutex::new(progress));
 
-    parallel::reduce::Stepwise::new(
+    parallel::in_parallel(
         chunks,
         thread_limit,
         {
@@ -73,188 +80,245 @@ where
             }
         },
         {
-            let seen_objs = Arc::clone(&seen_objs);
-            move |oids: Vec<Oid>, (buf1, buf2, cache, progress)| {
-                use ObjectExpansion::*;
-                let mut out = Vec::new();
-                let mut tree_traversal_state = git_traverse::tree::breadthfirst::State::default();
-                let mut tree_diff_state = git_diff::tree::State::default();
-                let mut parent_commit_ids = Vec::new();
-                let seen_objs = seen_objs.as_ref();
-                let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs);
-                let mut changes_delegate = tree::changes::AllNew::new(seen_objs);
-                let mut outcome = Outcome::default();
-                let stats = &mut outcome;
+            move |oids: Vec<std::result::Result<Oid, IterErr>>, (buf1, buf2, cache, progress)| {
+                expand_inner(
+                    &db,
+                    input_object_expansion,
+                    &seen_objs,
+                    oids,
+                    buf1,
+                    buf2,
+                    cache,
+                    progress,
+                    should_interrupt,
+                )
+            }
+        },
+        reduce::Statistics::new(progress),
+    )
+}
 
-                for id in oids.into_iter() {
-                    let id = id.as_ref();
-                    let obj = db.find_existing(id, buf1, cache)?;
-                    stats.input_objects += 1;
-                    match input_object_expansion {
-                        TreeAdditionsComparedToAncestor => {
-                            use git_object::Kind::*;
-                            let mut obj = obj;
-                            let mut id = id.to_owned();
+/// Like [`objects()`] but using a single thread only to mostly save on the otherwise required overhead.
+pub fn objects_unthreaded<Find, IterErr, Oid>(
+    db: Find,
+    pack_cache: &mut impl crate::cache::DecodeEntry,
+    object_ids: impl Iterator<Item = std::result::Result<Oid, IterErr>>,
+    mut progress: impl Progress,
+    should_interrupt: &AtomicBool,
+    input_object_expansion: ObjectExpansion,
+) -> Result<find::existing::Error<Find::Error>, IterErr>
+where
+    Find: crate::Find + Send + Sync,
+    Oid: Into<ObjectId> + Send,
+    IterErr: std::error::Error + Send,
+{
+    let seen_objs = RefCell::new(HashSet::<ObjectId>::new());
 
-                            loop {
-                                push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress, stats, false);
-                                match obj.kind {
-                                    Tree | Blob => break,
-                                    Tag => {
-                                        id = immutable::TagIter::from_bytes(obj.data)
-                                            .target_id()
-                                            .expect("every tag has a target");
-                                        obj = db.find_existing(id, buf1, cache)?;
-                                        stats.expanded_objects += 1;
-                                        continue;
-                                    }
-                                    Commit => {
-                                        let current_tree_iter = {
-                                            let mut commit_iter = immutable::CommitIter::from_bytes(obj.data);
-                                            let tree_id = commit_iter.tree_id().expect("every commit has a tree");
-                                            parent_commit_ids.clear();
-                                            for token in commit_iter {
-                                                match token {
-                                                    Ok(immutable::commit::iter::Token::Parent { id }) => {
-                                                        parent_commit_ids.push(id)
-                                                    }
-                                                    Ok(_) => break,
-                                                    Err(err) => return Err(Error::CommitDecode(err)),
-                                                }
-                                            }
-                                            let obj = db.find_existing(tree_id, buf1, cache)?;
-                                            push_obj_count_unique(
-                                                &mut out, seen_objs, &tree_id, &obj, progress, stats, true,
-                                            );
-                                            immutable::TreeIter::from_bytes(obj.data)
-                                        };
+    let (mut buf1, mut buf2) = (Vec::new(), Vec::new());
+    expand_inner(
+        &db,
+        input_object_expansion,
+        &seen_objs,
+        object_ids,
+        &mut buf1,
+        &mut buf2,
+        pack_cache,
+        &mut progress,
+        should_interrupt,
+    )
+}
 
-                                        let objects = if parent_commit_ids.is_empty() {
-                                            traverse_delegate.clear();
-                                            git_traverse::tree::breadthfirst(
-                                                current_tree_iter,
-                                                &mut tree_traversal_state,
-                                                |oid, buf| {
-                                                    stats.decoded_objects += 1;
-                                                    db.find_existing_tree_iter(oid, buf, cache).ok()
-                                                },
-                                                &mut traverse_delegate,
-                                            )
-                                            .map_err(Error::TreeTraverse)?;
-                                            &traverse_delegate.objects
-                                        } else {
-                                            for commit_id in &parent_commit_ids {
-                                                let parent_tree_id = {
-                                                    let parent_commit_obj = db.find_existing(commit_id, buf2, cache)?;
+#[allow(clippy::too_many_arguments)]
+fn expand_inner<Find, IterErr, Oid>(
+    db: &Find,
+    input_object_expansion: ObjectExpansion,
+    seen_objs: &impl util::InsertImmutable<ObjectId>,
+    oids: impl IntoIterator<Item = std::result::Result<Oid, IterErr>>,
+    buf1: &mut Vec<u8>,
+    buf2: &mut Vec<u8>,
+    cache: &mut impl crate::cache::DecodeEntry,
+    progress: &mut impl Progress,
+    should_interrupt: &AtomicBool,
+) -> Result<find::existing::Error<Find::Error>, IterErr>
+where
+    Find: crate::Find + Send + Sync,
+    Oid: Into<ObjectId> + Send,
+    IterErr: std::error::Error + Send,
+{
+    use ObjectExpansion::*;
 
-                                                    push_obj_count_unique(
-                                                        &mut out,
-                                                        seen_objs,
-                                                        commit_id,
-                                                        &parent_commit_obj,
-                                                        progress,
-                                                        stats,
-                                                        true,
-                                                    );
-                                                    immutable::CommitIter::from_bytes(parent_commit_obj.data)
-                                                        .tree_id()
-                                                        .expect("every commit has a tree")
-                                                };
-                                                let parent_tree = {
-                                                    let parent_tree_obj =
-                                                        db.find_existing(parent_tree_id, buf2, cache)?;
-                                                    push_obj_count_unique(
-                                                        &mut out,
-                                                        seen_objs,
-                                                        &parent_tree_id,
-                                                        &parent_tree_obj,
-                                                        progress,
-                                                        stats,
-                                                        true,
-                                                    );
-                                                    immutable::TreeIter::from_bytes(parent_tree_obj.data)
-                                                };
+    let mut out = Vec::new();
+    let mut tree_traversal_state = git_traverse::tree::breadthfirst::State::default();
+    let mut tree_diff_state = git_diff::tree::State::default();
+    let mut parent_commit_ids = Vec::new();
+    let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs);
+    let mut changes_delegate = tree::changes::AllNew::new(seen_objs);
+    let mut outcome = Outcome::default();
+    let stats = &mut outcome;
+    for id in oids.into_iter() {
+        if should_interrupt.load(Ordering::Relaxed) {
+            return Err(Error::Interrupted);
+        }
 
-                                                changes_delegate.clear();
-                                                git_diff::tree::Changes::from(Some(parent_tree))
-                                                    .needed_to_obtain(
-                                                        current_tree_iter.clone(),
-                                                        &mut tree_diff_state,
-                                                        |oid, buf| {
-                                                            stats.decoded_objects += 1;
-                                                            db.find_existing_tree_iter(oid, buf, cache).ok()
-                                                        },
-                                                        &mut changes_delegate,
-                                                    )
-                                                    .map_err(Error::TreeChanges)?;
-                                            }
-                                            &changes_delegate.objects
-                                        };
-                                        for id in objects.iter() {
-                                            out.push(id_to_count(&db, buf2, id, progress, stats));
-                                        }
-                                        break;
+        let id = id.map(|oid| oid.into()).map_err(Error::InputIteration)?;
+        let obj = db.find_existing(id, buf1, cache)?;
+        stats.input_objects += 1;
+        match input_object_expansion {
+            TreeAdditionsComparedToAncestor => {
+                use git_object::Kind::*;
+                let mut obj = obj;
+                let mut id = id.to_owned();
+
+                loop {
+                    push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress, stats, false);
+                    match obj.kind {
+                        Tree | Blob => break,
+                        Tag => {
+                            id = immutable::TagIter::from_bytes(obj.data)
+                                .target_id()
+                                .expect("every tag has a target");
+                            obj = db.find_existing(id, buf1, cache)?;
+                            stats.expanded_objects += 1;
+                            continue;
+                        }
+                        Commit => {
+                            let current_tree_iter = {
+                                let mut commit_iter = immutable::CommitIter::from_bytes(obj.data);
+                                let tree_id = commit_iter.tree_id().expect("every commit has a tree");
+                                parent_commit_ids.clear();
+                                for token in commit_iter {
+                                    match token {
+                                        Ok(immutable::commit::iter::Token::Parent { id }) => parent_commit_ids.push(id),
+                                        Ok(_) => break,
+                                        Err(err) => return Err(Error::CommitDecode(err)),
                                     }
                                 }
-                            }
-                        }
-                        TreeContents => {
-                            use git_object::Kind::*;
-                            let mut id: ObjectId = id.into();
-                            let mut obj = obj;
-                            loop {
-                                push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress, stats, false);
-                                match obj.kind {
-                                    Tree => {
-                                        traverse_delegate.clear();
-                                        git_traverse::tree::breadthfirst(
-                                            git_object::immutable::TreeIter::from_bytes(obj.data),
-                                            &mut tree_traversal_state,
+                                let obj = db.find_existing(tree_id, buf1, cache)?;
+                                push_obj_count_unique(&mut out, seen_objs, &tree_id, &obj, progress, stats, true);
+                                immutable::TreeIter::from_bytes(obj.data)
+                            };
+
+                            let objects = if parent_commit_ids.is_empty() {
+                                traverse_delegate.clear();
+                                git_traverse::tree::breadthfirst(
+                                    current_tree_iter,
+                                    &mut tree_traversal_state,
+                                    |oid, buf| {
+                                        stats.decoded_objects += 1;
+                                        db.find_existing_tree_iter(oid, buf, cache).ok()
+                                    },
+                                    &mut traverse_delegate,
+                                )
+                                .map_err(Error::TreeTraverse)?;
+                                &traverse_delegate.objects
+                            } else {
+                                for commit_id in &parent_commit_ids {
+                                    let parent_tree_id = {
+                                        let parent_commit_obj = db.find_existing(commit_id, buf2, cache)?;
+
+                                        push_obj_count_unique(
+                                            &mut out,
+                                            seen_objs,
+                                            commit_id,
+                                            &parent_commit_obj,
+                                            progress,
+                                            stats,
+                                            true,
+                                        );
+                                        immutable::CommitIter::from_bytes(parent_commit_obj.data)
+                                            .tree_id()
+                                            .expect("every commit has a tree")
+                                    };
+                                    let parent_tree = {
+                                        let parent_tree_obj = db.find_existing(parent_tree_id, buf2, cache)?;
+                                        push_obj_count_unique(
+                                            &mut out,
+                                            seen_objs,
+                                            &parent_tree_id,
+                                            &parent_tree_obj,
+                                            progress,
+                                            stats,
+                                            true,
+                                        );
+                                        immutable::TreeIter::from_bytes(parent_tree_obj.data)
+                                    };
+
+                                    changes_delegate.clear();
+                                    git_diff::tree::Changes::from(Some(parent_tree))
+                                        .needed_to_obtain(
+                                            current_tree_iter.clone(),
+                                            &mut tree_diff_state,
                                             |oid, buf| {
                                                 stats.decoded_objects += 1;
                                                 db.find_existing_tree_iter(oid, buf, cache).ok()
                                             },
-                                            &mut traverse_delegate,
+                                            &mut changes_delegate,
                                         )
-                                        .map_err(Error::TreeTraverse)?;
-                                        for id in traverse_delegate.objects.iter() {
-                                            out.push(id_to_count(&db, buf1, id, progress, stats));
-                                        }
-                                        break;
-                                    }
-                                    Commit => {
-                                        id = immutable::CommitIter::from_bytes(obj.data)
-                                            .tree_id()
-                                            .expect("every commit has a tree");
-                                        stats.expanded_objects += 1;
-                                        obj = db.find_existing(id, buf1, cache)?;
-                                        continue;
-                                    }
-                                    Blob => break,
-                                    Tag => {
-                                        id = immutable::TagIter::from_bytes(obj.data)
-                                            .target_id()
-                                            .expect("every tag has a target");
-                                        stats.expanded_objects += 1;
-                                        obj = db.find_existing(id, buf1, cache)?;
-                                        continue;
-                                    }
+                                        .map_err(Error::TreeChanges)?;
                                 }
+                                &changes_delegate.objects
+                            };
+                            for id in objects.iter() {
+                                out.push(id_to_count(db, buf2, id, progress, stats));
                             }
+                            break;
                         }
-                        AsIs => push_obj_count_unique(&mut out, seen_objs, id, &obj, progress, stats, false),
                     }
                 }
-                Ok((out, outcome))
             }
-        },
-        reduce::Statistics::default(),
-    )
+            TreeContents => {
+                use git_object::Kind::*;
+                let mut id = id;
+                let mut obj = obj;
+                loop {
+                    push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress, stats, false);
+                    match obj.kind {
+                        Tree => {
+                            traverse_delegate.clear();
+                            git_traverse::tree::breadthfirst(
+                                git_object::immutable::TreeIter::from_bytes(obj.data),
+                                &mut tree_traversal_state,
+                                |oid, buf| {
+                                    stats.decoded_objects += 1;
+                                    db.find_existing_tree_iter(oid, buf, cache).ok()
+                                },
+                                &mut traverse_delegate,
+                            )
+                            .map_err(Error::TreeTraverse)?;
+                            for id in traverse_delegate.objects.iter() {
+                                out.push(id_to_count(db, buf1, id, progress, stats));
+                            }
+                            break;
+                        }
+                        Commit => {
+                            id = immutable::CommitIter::from_bytes(obj.data)
+                                .tree_id()
+                                .expect("every commit has a tree");
+                            stats.expanded_objects += 1;
+                            obj = db.find_existing(id, buf1, cache)?;
+                            continue;
+                        }
+                        Blob => break,
+                        Tag => {
+                            id = immutable::TagIter::from_bytes(obj.data)
+                                .target_id()
+                                .expect("every tag has a target");
+                            stats.expanded_objects += 1;
+                            obj = db.find_existing(id, buf1, cache)?;
+                            continue;
+                        }
+                    }
+                }
+            }
+            AsIs => push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress, stats, false),
+        }
+    }
+    Ok((out, outcome))
 }
 
 mod tree {
     pub mod changes {
-        use dashmap::DashSet;
+        use crate::data::output::count::iter_from_objects::util::InsertImmutable;
         use git_diff::tree::{
             visit::{Action, Change},
             Visit,
@@ -262,13 +326,16 @@ mod tree {
         use git_hash::ObjectId;
         use git_object::bstr::BStr;
 
-        pub struct AllNew<'a> {
+        pub struct AllNew<'a, H> {
             pub objects: Vec<ObjectId>,
-            all_seen: &'a DashSet<ObjectId>,
+            all_seen: &'a H,
         }
 
-        impl<'a> AllNew<'a> {
-            pub fn new(all_seen: &'a DashSet<ObjectId>) -> Self {
+        impl<'a, H> AllNew<'a, H>
+        where
+            H: InsertImmutable<ObjectId>,
+        {
+            pub fn new(all_seen: &'a H) -> Self {
                 AllNew {
                     objects: Default::default(),
                     all_seen,
@@ -279,7 +346,10 @@ mod tree {
             }
         }
 
-        impl<'a> Visit for AllNew<'a> {
+        impl<'a, H> Visit for AllNew<'a, H>
+        where
+            H: InsertImmutable<ObjectId>,
+        {
             fn pop_front_tracked_path_and_set_current(&mut self) {}
 
             fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
@@ -304,18 +374,21 @@ mod tree {
     }
 
     pub mod traverse {
-        use dashmap::DashSet;
+        use crate::data::output::count::iter_from_objects::util::InsertImmutable;
         use git_hash::ObjectId;
         use git_object::{bstr::BStr, immutable::tree::Entry};
         use git_traverse::tree::visit::{Action, Visit};
 
-        pub struct AllUnseen<'a> {
+        pub struct AllUnseen<'a, H> {
             pub objects: Vec<ObjectId>,
-            all_seen: &'a DashSet<ObjectId>,
+            all_seen: &'a H,
         }
 
-        impl<'a> AllUnseen<'a> {
-            pub fn new(all_seen: &'a DashSet<ObjectId>) -> Self {
+        impl<'a, H> AllUnseen<'a, H>
+        where
+            H: InsertImmutable<ObjectId>,
+        {
+            pub fn new(all_seen: &'a H) -> Self {
                 AllUnseen {
                     objects: Default::default(),
                     all_seen,
@@ -326,7 +399,10 @@ mod tree {
             }
         }
 
-        impl<'a> Visit for AllUnseen<'a> {
+        impl<'a, H> Visit for AllUnseen<'a, H>
+        where
+            H: InsertImmutable<ObjectId>,
+        {
             fn pop_front_tracked_path_and_set_current(&mut self) {}
 
             fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
@@ -358,7 +434,7 @@ mod tree {
 
 fn push_obj_count_unique(
     out: &mut Vec<output::Count>,
-    all_seen: &DashSet<ObjectId>,
+    all_seen: &impl util::InsertImmutable<ObjectId>,
     id: &oid,
     obj: &crate::data::Object<'_>,
     progress: &mut impl Progress,
@@ -392,6 +468,30 @@ fn id_to_count<Find: crate::Find>(
 }
 
 mod util {
+    pub trait InsertImmutable<Item: Eq + std::hash::Hash> {
+        fn insert(&self, item: Item) -> bool;
+    }
+
+    mod trait_impls {
+        use super::InsertImmutable;
+        use dashmap::DashSet;
+        use std::cell::RefCell;
+        use std::collections::HashSet;
+        use std::hash::Hash;
+
+        impl<T: Eq + Hash> InsertImmutable<T> for DashSet<T> {
+            fn insert(&self, item: T) -> bool {
+                self.insert(item)
+            }
+        }
+
+        impl<T: Eq + Hash> InsertImmutable<T> for RefCell<HashSet<T>> {
+            fn insert(&self, item: T) -> bool {
+                self.borrow_mut().insert(item)
+            }
+        }
+    }
+
     pub struct Chunks<I> {
         pub size: usize,
         pub iter: I,
@@ -431,7 +531,7 @@ mod types {
         pub expanded_objects: usize,
         /// The amount of fully decoded objects. These are the most expensive as they are fully decoded
         pub decoded_objects: usize,
-        /// The total amount of objects seed. Should be `expanded_objects + input_objects`.
+        /// The total amount of encountered objects. Should be `expanded_objects + input_objects`.
         pub total_objects: usize,
     }
 
@@ -488,7 +588,6 @@ mod types {
         /// especially when tree traversal is involved. Thus deterministic ordering requires `Some(1)` to be set.
         pub thread_limit: Option<usize>,
         /// The amount of objects per chunk or unit of work to be sent to threads for processing
-        /// TODO: could this become the window size?
         pub chunk_size: usize,
         /// The way input objects are handled
         pub input_object_expansion: ObjectExpansion,
@@ -507,20 +606,27 @@ mod types {
     /// The error returned by the pack generation iterator [bytes::FromEntriesIter][crate::data::output::bytes::FromEntriesIter].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
-    pub enum Error<FindErr>
+    pub enum Error<FindErr, IterErr>
     where
         FindErr: std::error::Error + 'static,
+        IterErr: std::error::Error + 'static,
     {
         #[error(transparent)]
         CommitDecode(git_object::immutable::object::decode::Error),
         #[error(transparent)]
         FindExisting(#[from] FindErr),
         #[error(transparent)]
+        InputIteration(IterErr),
+        #[error(transparent)]
         TreeTraverse(git_traverse::tree::breadthfirst::Error),
         #[error(transparent)]
         TreeChanges(git_diff::tree::changes::Error),
+        #[error("Operation interrupted")]
+        Interrupted,
     }
 }
+use std::cell::RefCell;
+use std::collections::HashSet;
 pub use types::{Error, ObjectExpansion, Options, Outcome};
 
 mod reduce {
@@ -530,37 +636,50 @@ mod reduce {
 
     use super::Outcome;
     use crate::data::output;
+    use git_features::progress::Progress;
+    use std::sync::Arc;
 
-    pub struct Statistics<E> {
+    pub struct Statistics<E, P> {
         total: Outcome,
+        counts: Vec<output::Count>,
+        progress: Arc<parking_lot::Mutex<P>>,
         _err: PhantomData<E>,
     }
 
-    impl<E> Default for Statistics<E> {
-        fn default() -> Self {
+    impl<E, P> Statistics<E, P>
+    where
+        P: Progress,
+    {
+        pub fn new(progress: Arc<parking_lot::Mutex<P>>) -> Self {
             Statistics {
                 total: Default::default(),
+                counts: Default::default(),
+                progress,
                 _err: PhantomData::default(),
             }
         }
     }
 
-    impl<Error> parallel::Reduce for Statistics<Error> {
-        type Input = Result<(Vec<output::Count>, Outcome), Error>;
-        type FeedProduce = Vec<output::Count>;
-        type Output = Outcome;
-        type Error = Error;
+    impl<E, P> parallel::Reduce for Statistics<E, P>
+    where
+        P: Progress,
+    {
+        type Input = Result<(Vec<output::Count>, Outcome), E>;
+        type FeedProduce = ();
+        type Output = (Vec<output::Count>, Outcome);
+        type Error = E;
 
         fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
-            item.map(|(counts, mut stats)| {
-                stats.total_objects = counts.len();
-                self.total.aggregate(stats);
-                counts
-            })
+            let (counts, mut stats) = item?;
+            stats.total_objects = counts.len();
+            self.total.aggregate(stats);
+            self.progress.lock().inc_by(counts.len());
+            self.counts.extend(counts);
+            Ok(())
         }
 
         fn finalize(self) -> Result<Self::Output, Self::Error> {
-            Ok(self.total)
+            Ok((self.counts, self.total))
         }
     }
 }

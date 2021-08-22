@@ -12,6 +12,7 @@ use crate::pack::{
     data::output::{db, DbKind},
     hex_to_id,
 };
+use std::convert::Infallible;
 
 #[test]
 fn traversals() -> crate::Result {
@@ -240,7 +241,7 @@ fn traversals() -> crate::Result {
         }
 
         let deterministic_count_needs_single_thread = Some(1);
-        let mut counts_iter = output::count::iter_from_objects(
+        let (counts, stats) = output::count::objects(
             db.clone(),
             || pack::cache::Never,
             commits
@@ -250,20 +251,16 @@ fn traversals() -> crate::Result {
                 } else {
                     "e3fb53cbb4c346d48732a24f09cf445e49bc63d6"
                 })))
-                .filter(|o| !o.is_null()),
+                .filter(|o| !o.is_null())
+                .map(Ok::<_, Infallible>),
             progress::Discard,
+            &AtomicBool::new(false),
             count::iter_from_objects::Options {
                 input_object_expansion: expansion_mode,
                 thread_limit: deterministic_count_needs_single_thread,
                 ..Default::default()
             },
-        );
-        let counts: Vec<_> = counts_iter
-            .by_ref()
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .flatten()
-            .collect();
+        )?;
         let actual_count = counts.iter().fold(ObjectCount::default(), |mut c, e| {
             let mut buf = Vec::new();
             if let Some(obj) = db.find_existing(e.id, &mut buf, &mut pack::cache::Never).ok() {
@@ -275,7 +272,6 @@ fn traversals() -> crate::Result {
         let counts_len = counts.len();
         assert_eq!(counts_len, expected_obj_count.total());
 
-        let stats = counts_iter.finalize()?;
         assert_eq!(stats, expected_counts_outcome);
         assert_eq!(stats.total_objects, expected_obj_count.total());
 
