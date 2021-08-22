@@ -218,7 +218,7 @@ where
         ))
     };
 
-    let mut entries_progress = progress.add_child("consumed");
+    let mut entries_progress = progress.add_child("consuming");
     entries_progress.init(Some(num_objects), progress::count("entries"));
     let mut write_progress = progress.add_child("writing");
     write_progress.init(None, progress::bytes());
