@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use dashmap::DashSet;
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
 use git_object::immutable;
@@ -106,7 +105,7 @@ where
 fn expand_inner<Find, IterErr, Oid>(
     db: &Find,
     input_object_expansion: ObjectExpansion,
-    seen_objs: &DashSet<ObjectId>,
+    seen_objs: &impl util::InsertImmutable<ObjectId>,
     oids: impl IntoIterator<Item = std::result::Result<Oid, IterErr>>,
     buf1: &mut Vec<u8>,
     buf2: &mut Vec<u8>,
@@ -287,7 +286,7 @@ where
 
 mod tree {
     pub mod changes {
-        use dashmap::DashSet;
+        use crate::data::output::count::iter_from_objects::util::InsertImmutable;
         use git_diff::tree::{
             visit::{Action, Change},
             Visit,
@@ -295,13 +294,16 @@ mod tree {
         use git_hash::ObjectId;
         use git_object::bstr::BStr;
 
-        pub struct AllNew<'a> {
+        pub struct AllNew<'a, H> {
             pub objects: Vec<ObjectId>,
-            all_seen: &'a DashSet<ObjectId>,
+            all_seen: &'a H,
         }
 
-        impl<'a> AllNew<'a> {
-            pub fn new(all_seen: &'a DashSet<ObjectId>) -> Self {
+        impl<'a, H> AllNew<'a, H>
+        where
+            H: InsertImmutable<ObjectId>,
+        {
+            pub fn new(all_seen: &'a H) -> Self {
                 AllNew {
                     objects: Default::default(),
                     all_seen,
@@ -312,7 +314,10 @@ mod tree {
             }
         }
 
-        impl<'a> Visit for AllNew<'a> {
+        impl<'a, H> Visit for AllNew<'a, H>
+        where
+            H: InsertImmutable<ObjectId>,
+        {
             fn pop_front_tracked_path_and_set_current(&mut self) {}
 
             fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
@@ -337,18 +342,21 @@ mod tree {
     }
 
     pub mod traverse {
-        use dashmap::DashSet;
+        use crate::data::output::count::iter_from_objects::util::InsertImmutable;
         use git_hash::ObjectId;
         use git_object::{bstr::BStr, immutable::tree::Entry};
         use git_traverse::tree::visit::{Action, Visit};
 
-        pub struct AllUnseen<'a> {
+        pub struct AllUnseen<'a, H> {
             pub objects: Vec<ObjectId>,
-            all_seen: &'a DashSet<ObjectId>,
+            all_seen: &'a H,
         }
 
-        impl<'a> AllUnseen<'a> {
-            pub fn new(all_seen: &'a DashSet<ObjectId>) -> Self {
+        impl<'a, H> AllUnseen<'a, H>
+        where
+            H: InsertImmutable<ObjectId>,
+        {
+            pub fn new(all_seen: &'a H) -> Self {
                 AllUnseen {
                     objects: Default::default(),
                     all_seen,
@@ -359,7 +367,10 @@ mod tree {
             }
         }
 
-        impl<'a> Visit for AllUnseen<'a> {
+        impl<'a, H> Visit for AllUnseen<'a, H>
+        where
+            H: InsertImmutable<ObjectId>,
+        {
             fn pop_front_tracked_path_and_set_current(&mut self) {}
 
             fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
@@ -391,7 +402,7 @@ mod tree {
 
 fn push_obj_count_unique(
     out: &mut Vec<output::Count>,
-    all_seen: &DashSet<ObjectId>,
+    all_seen: &impl util::InsertImmutable<ObjectId>,
     id: &oid,
     obj: &crate::data::Object<'_>,
     progress: &mut impl Progress,
@@ -425,6 +436,30 @@ fn id_to_count<Find: crate::Find>(
 }
 
 mod util {
+    pub trait InsertImmutable<Item: Eq + std::hash::Hash> {
+        fn insert(&self, item: Item) -> bool;
+    }
+
+    mod trait_impls {
+        use super::InsertImmutable;
+        use dashmap::DashSet;
+        use std::cell::RefCell;
+        use std::collections::HashSet;
+        use std::hash::Hash;
+
+        impl<T: Eq + Hash> InsertImmutable<T> for DashSet<T> {
+            fn insert(&self, item: T) -> bool {
+                self.insert(item)
+            }
+        }
+
+        impl<T: Eq + Hash> InsertImmutable<T> for RefCell<HashSet<T>> {
+            fn insert(&self, item: T) -> bool {
+                self.borrow_mut().insert(item)
+            }
+        }
+    }
+
     pub struct Chunks<I> {
         pub size: usize,
         pub iter: I,
