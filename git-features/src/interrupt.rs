@@ -10,7 +10,6 @@ pub struct Iter<'a, I, EFN> {
     pub inner: I,
     make_err: Option<EFN>,
     should_interrupt: &'a AtomicBool,
-    is_done: bool,
 }
 
 impl<'a, I, EFN, E> Iter<'a, I, EFN>
@@ -25,7 +24,6 @@ where
             inner,
             make_err: Some(make_err),
             should_interrupt,
-            is_done: false,
         }
     }
 }
@@ -38,17 +36,16 @@ where
     type Item = Result<I::Item, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.is_done {
+        if self.make_err.is_none() {
             return None;
         }
         if self.should_interrupt.load(Ordering::Relaxed) {
-            self.is_done = true;
             return Some(Err(self.make_err.take().expect("no bug")()));
         }
         match self.inner.next() {
             Some(next) => Some(Ok(next)),
             None => {
-                self.is_done = true;
+                self.make_err = None;
                 None
             }
         }
