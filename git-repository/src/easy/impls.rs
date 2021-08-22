@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use std::{rc::Rc, sync::Arc};
 
 use parking_lot::lock_api::{ArcRwLockReadGuard, ArcRwLockWriteGuard};

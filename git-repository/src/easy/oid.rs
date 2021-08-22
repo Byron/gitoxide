@@ -57,11 +57,13 @@ where
     A: easy::Access + Sized,
 {
     // NOTE: Can't access other object data that is attached to the same cache.
+    /// Find the [`ObjectRef`] associated with this object id, and assume it exists.
     pub fn object(&self) -> Result<ObjectRef<'repo, A>, find::existing::Error> {
         crate::easy::ext::object::find_object(self.access, self.id)
     }
 
     // NOTE: Can't access other object data that is attached to the same cache.
+    /// Try find the [`ObjectRef`] associated with this object id, it might not be available locally.
     pub fn try_object(&self) -> Result<Option<ObjectRef<'repo, A>>, find::Error> {
         crate::easy::ext::object::try_find_object(self.access, self.id)
     }
@@ -75,6 +77,7 @@ where
         Oid { id: id.into(), access }
     }
 
+    /// Turn this instance into its bare [ObjectId].
     pub fn detach(self) -> ObjectId {
         self.id
     }

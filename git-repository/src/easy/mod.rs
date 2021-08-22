@@ -1,4 +1,3 @@
-#![allow(missing_docs)]
 //! ### Which `Easy*` is for me?
 //!
 //! * Use `Easy*Exclusive` when the underlying `Repository` eventually needs mutation, for instance to update data structures
@@ -31,31 +30,53 @@ mod oid;
 pub mod reference;
 pub mod state;
 
+/// An [ObjectId] with access to a repository.
 pub struct Oid<'r, A> {
     id: ObjectId,
     access: &'r A,
 }
 
+/// A decoded object with a reference to its owning repository.
+///
+/// ## Limitations
+///
+/// Note that it holds a reference to a buffer of it's associated repository handle, so there
+/// can only be one at a time, per handle.
 pub struct ObjectRef<'repo, A> {
+    /// The id of the object
     pub id: ObjectId,
+    /// The kind of the object
     pub kind: objs::Kind,
+    /// The fully decoded object data
     pub data: std::cell::Ref<'repo, [u8]>,
     access: &'repo A,
 }
 
+/// A decoded tree object with access to its owning repository.
+///
+/// Please note that the limitations described in [ObjectRef] apply here as well.
 pub struct TreeRef<'repo, A> {
+    /// The id of the tree
     pub id: ObjectId,
+    /// The fully decoded tree data
     pub data: std::cell::Ref<'repo, [u8]>,
     access: &'repo A,
 }
 
+/// A detached, self-contained object, without access to its source repository.
+///
+/// Use it if an `ObjectRef` should be sent over thread boundaries or stored in collections.
 #[derive(Clone)]
 pub struct Object {
+    /// The id of the object
     pub id: ObjectId,
+    /// The kind of the object
     pub kind: objs::Kind,
+    /// The fully decoded object data
     pub data: Vec<u8>,
 }
 
+/// A reference that points to an object or reference, with access to its source repository.
 pub struct Reference<'r, A> {
     pub(crate) backing: Option<reference::Backing>,
     pub(crate) access: &'r A,
@@ -84,17 +105,34 @@ pub struct State {
     buf: RefCell<Vec<u8>>,
 }
 
+/// A utility trait to represent access to a repository.
+///
+/// It provides immutable and possibly mutable access. Both types of access are validated at runtime, which may fail
+/// or may block, depending on the implementation.
+///
+/// Furthermore it provides access to additional state for use with the [`Repository`]. It is designed for thread-local
+/// mutable access, which is checked at runtime as well. This means that operations can't freely be interleaved and some
+/// care as to be taken especially in conjunction with [`ObjectRef`] instances.
 pub trait Access {
+    /// The type of a shared borrow to the Repository
     type RepoRef: Deref<Target = Repository>;
     // TODO: Once GATs become stable, try to use them to make it work with RefCells too, aka EasyExclusive
+    /// The type of a mutable borrow to the Repository
     type RepoRefMut: DerefMut<Target = Repository>;
 
-    fn repo(&self) -> std::result::Result<Self::RepoRef, borrow::repo::Error>;
+    /// Return a shared borrow to the repository.
+    ///
+    /// This may fail if there already is a mutable borrow
+    fn repo(&self) -> borrow::repo::Result<Self::RepoRef>;
+
+    /// Returns a mutable borrow to the repository if possible.
+    ///
     /// # NOTE
     ///
-    /// This is implemented only for `EasyArcExclusive` to be obtained via `to_easy_arc_exclusive()`
-    fn repo_mut(&self) -> std::result::Result<Self::RepoRefMut, borrow::repo::Error>;
+    /// This may not be supported by all implementations. Choosing an implementation that does support it is particularly
+    /// relevant for long-running applications that make changes to the repository.
+    fn repo_mut(&self) -> borrow::repo::Result<Self::RepoRefMut>;
+
+    /// Return a shared borrow of the repository state, with support for interior mutability.
     fn state(&self) -> &State;
 }
-
-pub type Result<T> = std::result::Result<T, borrow::state::Error>;

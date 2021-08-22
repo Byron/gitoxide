@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use std::{cell::Ref, convert::TryInto};
 
 pub use git_object::Kind;
@@ -14,7 +15,7 @@ mod impls;
 mod tree;
 
 impl Object {
-    pub fn attach<A>(self, access: &A) -> easy::Result<ObjectRef<'_, A>>
+    pub fn attach<A>(self, access: &A) -> easy::borrow::state::Result<ObjectRef<'_, A>>
     where
         A: easy::Access + Sized,
     {
@@ -32,7 +33,11 @@ impl<'repo, A> ObjectRef<'repo, A>
 where
     A: easy::Access + Sized,
 {
-    pub(crate) fn from_current_buf(id: impl Into<ObjectId>, kind: Kind, access: &'repo A) -> easy::Result<Self> {
+    pub(crate) fn from_current_buf(
+        id: impl Into<ObjectId>,
+        kind: Kind,
+        access: &'repo A,
+    ) -> easy::borrow::state::Result<Self> {
         Ok(ObjectRef {
             id: id.into(),
             kind,

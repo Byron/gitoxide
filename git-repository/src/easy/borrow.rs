@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 pub mod state {
     use quick_error::quick_error;
     quick_error! {
@@ -13,6 +14,8 @@ pub mod state {
             }
         }
     }
+
+    pub type Result<T> = std::result::Result<T, Error>;
 }
 
 pub mod repo {
@@ -43,4 +46,6 @@ pub mod repo {
             Error
         }
     }
+
+    pub type Result<T> = std::result::Result<T, Error>;
 }
