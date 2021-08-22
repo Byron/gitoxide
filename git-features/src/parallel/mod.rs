@@ -35,11 +35,11 @@
 #[cfg(feature = "parallel")]
 mod in_parallel;
 #[cfg(feature = "parallel")]
-pub use in_parallel::*;
+pub use in_parallel::{in_parallel, join};
 
 mod serial;
 #[cfg(not(feature = "parallel"))]
-pub use serial::*;
+pub use serial::{in_parallel, join};
 
 mod eager_iter;
 pub use eager_iter::{EagerIter, EagerIterIf};
