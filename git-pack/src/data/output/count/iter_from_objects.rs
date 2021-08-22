@@ -59,13 +59,13 @@ where
         size: chunk_size,
     };
     let seen_objs = dashmap::DashSet::<ObjectId>::new();
-    let top_level_progress = Arc::new(parking_lot::Mutex::new(progress));
+    let progress = Arc::new(parking_lot::Mutex::new(progress));
 
     parallel::in_parallel(
         chunks,
         thread_limit,
         {
-            let progress = Arc::clone(&top_level_progress);
+            let progress = Arc::clone(&progress);
             move |n| {
                 (
                     Vec::new(),   // object data buffer
@@ -80,7 +80,6 @@ where
             }
         },
         {
-            let top_level_progress = Arc::clone(&top_level_progress);
             move |oids: Vec<std::result::Result<Oid, IterErr>>, (buf1, buf2, cache, progress)| {
                 use ObjectExpansion::*;
                 let mut out = Vec::new();
@@ -254,11 +253,10 @@ where
                         AsIs => push_obj_count_unique(&mut out, &seen_objs, &id, &obj, progress, stats, false),
                     }
                 }
-                top_level_progress.lock().inc_by(out.len());
                 Ok((out, outcome))
             }
         },
-        reduce::Statistics::default(),
+        reduce::Statistics::new(progress),
     )
 }
 
@@ -546,33 +544,44 @@ mod reduce {
 
     use super::Outcome;
     use crate::data::output;
+    use git_features::progress::Progress;
+    use std::sync::Arc;
 
-    pub struct Statistics<E> {
+    pub struct Statistics<E, P> {
         total: Outcome,
         counts: Vec<output::Count>,
+        progress: Arc<parking_lot::Mutex<P>>,
         _err: PhantomData<E>,
     }
 
-    impl<E> Default for Statistics<E> {
-        fn default() -> Self {
+    impl<E, P> Statistics<E, P>
+    where
+        P: Progress,
+    {
+        pub fn new(progress: Arc<parking_lot::Mutex<P>>) -> Self {
             Statistics {
                 total: Default::default(),
                 counts: Default::default(),
+                progress,
                 _err: PhantomData::default(),
             }
         }
     }
 
-    impl<Error> parallel::Reduce for Statistics<Error> {
-        type Input = Result<(Vec<output::Count>, Outcome), Error>;
+    impl<E, P> parallel::Reduce for Statistics<E, P>
+    where
+        P: Progress,
+    {
+        type Input = Result<(Vec<output::Count>, Outcome), E>;
         type FeedProduce = ();
         type Output = (Vec<output::Count>, Outcome);
-        type Error = Error;
+        type Error = E;
 
         fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
             let (counts, mut stats) = item?;
             stats.total_objects = counts.len();
             self.total.aggregate(stats);
+            self.progress.lock().inc_by(counts.len());
             self.counts.extend(counts);
             Ok(())
         }
