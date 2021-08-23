@@ -205,12 +205,20 @@ where
                                     &mut tree_traversal_state,
                                     |oid, buf| {
                                         stats.decoded_objects += 1;
-                                        db.find_existing_tree_iter(oid, buf, cache).ok()
+                                        match db.find_existing(oid, buf, cache).ok() {
+                                            Some(obj) => {
+                                                progress.inc();
+                                                stats.expanded_objects += 1;
+                                                out.push(output::Count::from_data(oid, &obj));
+                                                obj.into_tree_iter()
+                                            }
+                                            None => None,
+                                        }
                                     },
                                     &mut traverse_delegate,
                                 )
                                 .map_err(Error::TreeTraverse)?;
-                                &traverse_delegate.objects
+                                &traverse_delegate.non_trees
                             } else {
                                 for commit_id in &parent_commit_ids {
                                     let parent_tree_id = {
@@ -280,12 +288,20 @@ where
                                 &mut tree_traversal_state,
                                 |oid, buf| {
                                     stats.decoded_objects += 1;
-                                    db.find_existing_tree_iter(oid, buf, cache).ok()
+                                    match db.find_existing(oid, buf, cache).ok() {
+                                        Some(obj) => {
+                                            progress.inc();
+                                            stats.expanded_objects += 1;
+                                            out.push(output::Count::from_data(oid, &obj));
+                                            obj.into_tree_iter()
+                                        }
+                                        None => None,
+                                    }
                                 },
                                 &mut traverse_delegate,
                             )
                             .map_err(Error::TreeTraverse)?;
-                            for id in traverse_delegate.objects.iter() {
+                            for id in traverse_delegate.non_trees.iter() {
                                 out.push(id_to_count(db, buf1, id, progress, stats));
                             }
                             break;
@@ -380,7 +396,7 @@ mod tree {
         use git_traverse::tree::visit::{Action, Visit};
 
         pub struct AllUnseen<'a, H> {
-            pub objects: Vec<ObjectId>,
+            pub non_trees: Vec<ObjectId>,
             all_seen: &'a H,
         }
 
@@ -390,12 +406,12 @@ mod tree {
         {
             pub fn new(all_seen: &'a H) -> Self {
                 AllUnseen {
-                    objects: Default::default(),
+                    non_trees: Default::default(),
                     all_seen,
                 }
             }
             pub fn clear(&mut self) {
-                self.objects.clear();
+                self.non_trees.clear();
             }
         }
 
@@ -414,7 +430,6 @@ mod tree {
             fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
                 let inserted = self.all_seen.insert(entry.oid.to_owned());
                 if inserted {
-                    self.objects.push(entry.oid.to_owned());
                     Action::Continue
                 } else {
                     Action::Skip
@@ -424,7 +439,7 @@ mod tree {
             fn visit_nontree(&mut self, entry: &Entry<'_>) -> Action {
                 let inserted = self.all_seen.insert(entry.oid.to_owned());
                 if inserted {
-                    self.objects.push(entry.oid.to_owned());
+                    self.non_trees.push(entry.oid.to_owned());
                 }
                 Action::Continue
             }
