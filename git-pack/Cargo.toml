@@ -13,7 +13,7 @@ doctest = false
 
 [features]
 pack-cache-lru-static = ["uluru"]
-pack-cache-lru-dynamic = ["memory-lru"]
+pack-cache-lru-dynamic = ["clru", "memory-lru"]
 serde1 = ["serde", "git-object/serde1"]
 internal-testing-git-features-parallel = ["git-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
@@ -50,6 +50,7 @@ parking_lot = { version = "0.11.0", default-features = false }
 thiserror = "1.0.26"
 uluru = { version = "3.0.0", optional = true }
 memory-lru = { version = "0.1.0", optional = true }
+clru = { version = "0.5.0", optional = true }
 dashmap = "4.0.2"
 
 [dev-dependencies]

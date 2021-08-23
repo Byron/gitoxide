@@ -176,7 +176,7 @@ where
             if may_use_multiple_threads {
                 Box::new(pack::cache::Never) as Box<dyn DecodeEntry>
             } else {
-                Box::new(pack::cache::lru::MemoryCappedHashmap::new(512 * 1024 * 1024)) as Box<dyn DecodeEntry>
+                Box::new(pack::cache::lru::MemoryCappedHashmap2::new(512 * 1024 * 1024)) as Box<dyn DecodeEntry>
                 // todo: Make that configurable
             }
         };
