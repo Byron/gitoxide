@@ -174,9 +174,9 @@ where
         };
         let make_cache = move || {
             if may_use_multiple_threads {
-                Box::new(pack::cache::lru::StaticLinkedList::<64>::default()) as Box<dyn DecodeEntry>
+                Box::new(pack::cache::Never) as Box<dyn DecodeEntry>
             } else {
-                Box::new(pack::cache::lru::MemoryCappedHashmap::new(400 * 1024 * 1024)) as Box<dyn DecodeEntry>
+                Box::new(pack::cache::lru::MemoryCappedHashmap::new(512 * 1024 * 1024)) as Box<dyn DecodeEntry>
                 // todo: Make that configurable
             }
         };
@@ -218,7 +218,7 @@ where
         pack::data::output::InOrderIter::from(pack::data::output::entry::iter_from_counts(
             counts,
             Arc::clone(&db),
-            pack::cache::lru::StaticLinkedList::<64>::default,
+            || pack::cache::Never,
             progress,
             pack::data::output::entry::iter_from_counts::Options {
                 thread_limit,

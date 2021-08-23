@@ -43,7 +43,12 @@ mod impl_ {
             let ratio = hits as f32 / misses as f32;
             eprintln!(
                 "{}[{:0x}]: {} / {} (hits/misses) = {:.02}%, puts = {}",
-                self.owner, self as *const _ as usize, hits, misses, ratio, self.puts
+                self.owner,
+                self as *const _ as usize,
+                hits,
+                misses,
+                ratio * 100.0,
+                self.puts
             );
         }
     }
