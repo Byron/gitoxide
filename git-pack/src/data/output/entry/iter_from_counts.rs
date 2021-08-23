@@ -59,28 +59,39 @@ where
     );
     let (chunk_size, thread_limit, _) =
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
-    let chunks = util::ChunkRanges::new(chunk_size, counts.len()).enumerate();
-    // {
-    //     let mut progress = progress.add_child("resolving");
-    //     progress.init(Some(counts.len()), git_features::progress::count("counts"));
-    //     parallel::in_parallel_if(
-    //         || counts.len() > 4_000,
-    //         chunks.clone(),
-    //         thread_limit,
-    //         {
-    //             let make_cache = make_cache.clone();
-    //             |_n| (Vec::<u8>::new(), make_cache())
-    //         },
-    //         |chunk_range, (buf, pack_cache)| {
-    //             let chunk = &counts[chunk_range];
-    //             for count in chunk {
-    //                 let () = count;
-    //             }
-    //             Ok(())
-    //         },
-    //         parallel::reduce::IdentityWithResult::<_, _>::default(),
-    //     );
-    // }
+    let chunks = util::ChunkRanges::new(chunk_size, counts.len());
+    {
+        let mut progress = progress.add_child("resolving");
+        progress.init(Some(counts.len()), git_features::progress::count("counts"));
+        let enough_counts_present = counts.len() > 4_000;
+        parallel::in_parallel_if(
+            || enough_counts_present,
+            chunks.clone(),
+            thread_limit,
+            |_n| Vec::<u8>::new(),
+            |chunk_range, buf| {
+                let chunk = {
+                    let c = &counts[chunk_range];
+                    let mut_ptr = c.as_ptr() as *mut output::Count;
+                    // SAFETY: We know that 'chunks' is only non-overlapping slices, and this function owns `counts`.
+                    #[allow(unsafe_code)]
+                    unsafe {
+                        std::slice::from_raw_parts_mut(mut_ptr, c.len())
+                    }
+                };
+                for count in chunk {
+                    use crate::data::output::count::PackLocation::*;
+                    match count.entry_pack_location {
+                        LookedUp(_) => continue,
+                        NotLookedUp => count.entry_pack_location = LookedUp(db.location_by_oid(count.id, buf)),
+                    }
+                }
+                Ok::<_, ()>(())
+            },
+            parallel::reduce::IdentityWithResult::<(), ()>::default(),
+        )
+        .expect("infallible - we ignore none-existing objects");
+    }
     let counts_range_by_pack_id = match mode {
         Mode::PackCopyAndBaseObjects => {
             let mut progress = progress.add_child("sorting");
@@ -122,7 +133,7 @@ where
     let progress = Arc::new(parking_lot::Mutex::new(progress));
 
     parallel::reduce::Stepwise::new(
-        chunks,
+        chunks.enumerate(),
         thread_limit,
         {
             let progress = Arc::clone(&progress);
