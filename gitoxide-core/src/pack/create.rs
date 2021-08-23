@@ -49,9 +49,9 @@ impl FromStr for ObjectExpansion {
     }
 }
 
-impl From<ObjectExpansion> for pack::data::output::count::iter_from_objects::ObjectExpansion {
+impl From<ObjectExpansion> for pack::data::output::count::objects::ObjectExpansion {
     fn from(v: ObjectExpansion) -> Self {
-        use pack::data::output::count::iter_from_objects::ObjectExpansion::*;
+        use pack::data::output::count::objects::ObjectExpansion::*;
         match v {
             ObjectExpansion::None => AsIs,
             ObjectExpansion::TreeTraversal => TreeContents,
@@ -190,7 +190,7 @@ where
                 input,
                 progress,
                 &interrupt::IS_INTERRUPTED,
-                pack::data::output::count::iter_from_objects::Options {
+                pack::data::output::count::objects::Options {
                     thread_limit,
                     chunk_size,
                     input_object_expansion,
@@ -300,7 +300,7 @@ fn print(stats: Statistics, format: OutputFormat, out: impl std::io::Write) -> a
 fn human_output(
     Statistics {
         counts:
-            pack::data::output::count::iter_from_objects::Outcome {
+            pack::data::output::count::objects::Outcome {
                 input_objects,
                 expanded_objects,
                 decoded_objects,
@@ -343,7 +343,7 @@ fn human_output(
 #[derive(Default)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 struct Statistics {
-    counts: pack::data::output::count::iter_from_objects::Outcome,
+    counts: pack::data::output::count::objects::Outcome,
     entries: pack::data::output::entry::iter_from_counts::Outcome,
 }
 

@@ -90,7 +90,7 @@ fn traversals() -> crate::Result {
         allow_thin_pack,
     ) in [
         (
-            count::iter_from_objects::ObjectExpansion::AsIs,
+            count::objects::ObjectExpansion::AsIs,
             Count {
                 trees: 0,
                 commits: 15,
@@ -105,7 +105,7 @@ fn traversals() -> crate::Result {
                 blobs: 0,
                 tags: 1,
             },
-            output::count::iter_from_objects::Outcome {
+            output::count::objects::Outcome {
                 input_objects: 16,
                 expanded_objects: 0,
                 decoded_objects: 16,
@@ -122,7 +122,7 @@ fn traversals() -> crate::Result {
             false,
         ),
         (
-            count::iter_from_objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
+            count::objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
             Count {
                 trees: 3,
                 commits: 2, // todo: why more?
@@ -137,7 +137,7 @@ fn traversals() -> crate::Result {
                 blobs: 96,
                 tags: 0,
             },
-            output::count::iter_from_objects::Outcome {
+            output::count::objects::Outcome {
                 input_objects: 1,
                 expanded_objects: 102,
                 decoded_objects: 18,
@@ -154,7 +154,7 @@ fn traversals() -> crate::Result {
             true,
         ),
         (
-            count::iter_from_objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
+            count::objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
             Count {
                 trees: 5,
                 commits: 2, // todo: why more?
@@ -169,7 +169,7 @@ fn traversals() -> crate::Result {
                 blobs: 96,
                 tags: 0,
             },
-            output::count::iter_from_objects::Outcome {
+            output::count::objects::Outcome {
                 input_objects: 1,
                 expanded_objects: 102,
                 decoded_objects: 18,
@@ -186,10 +186,10 @@ fn traversals() -> crate::Result {
             false,
         ),
         (
-            count::iter_from_objects::ObjectExpansion::TreeContents,
+            count::objects::ObjectExpansion::TreeContents,
             whole_pack,
             whole_pack_obj_count,
-            output::count::iter_from_objects::Outcome {
+            output::count::objects::Outcome {
                 input_objects: 16,
                 expanded_objects: 852,
                 decoded_objects: 57,
@@ -206,10 +206,10 @@ fn traversals() -> crate::Result {
             false,
         ),
         (
-            count::iter_from_objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
+            count::objects::ObjectExpansion::TreeAdditionsComparedToAncestor,
             whole_pack,
             whole_pack_obj_count,
-            output::count::iter_from_objects::Outcome {
+            output::count::objects::Outcome {
                 input_objects: 16,
                 expanded_objects: 866,
                 decoded_objects: 208,
@@ -255,7 +255,7 @@ fn traversals() -> crate::Result {
                 .map(Ok::<_, Infallible>),
             progress::Discard,
             &AtomicBool::new(false),
-            count::iter_from_objects::Options {
+            count::objects::Options {
                 input_object_expansion: expansion_mode,
                 thread_limit: deterministic_count_needs_single_thread,
                 ..Default::default()

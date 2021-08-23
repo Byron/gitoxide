@@ -38,6 +38,8 @@ impl compound::Store {
                         p.extension().unwrap_or_default() == "idx"
                             && p.file_name().unwrap_or_default().to_string_lossy().starts_with("pack-")
                     })
+                    // TODO: make this configurable, git for instance sorts by modification date
+                    //       https://github.com/libgit2/libgit2/blob/main/src/odb_pack.c#L41-L158
                     .map(|(p, md)| pack::Bundle::at(p).map(|b| (b, md.len())))
                     .collect::<Result<Vec<_>, _>>()?;
                 packs_and_sizes.sort_by_key(|e| e.1);

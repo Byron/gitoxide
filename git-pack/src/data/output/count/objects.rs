@@ -318,7 +318,7 @@ where
 
 mod tree {
     pub mod changes {
-        use crate::data::output::count::iter_from_objects::util::InsertImmutable;
+        use crate::data::output::count::objects::util::InsertImmutable;
         use git_diff::tree::{
             visit::{Action, Change},
             Visit,
@@ -374,7 +374,7 @@ mod tree {
     }
 
     pub mod traverse {
-        use crate::data::output::count::iter_from_objects::util::InsertImmutable;
+        use crate::data::output::count::objects::util::InsertImmutable;
         use git_hash::ObjectId;
         use git_object::{bstr::BStr, immutable::tree::Entry};
         use git_traverse::tree::visit::{Action, Visit};
