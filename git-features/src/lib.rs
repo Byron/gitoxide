@@ -9,6 +9,8 @@
 //! Thus all features provided here commonly have a 'cheap' base implementation, with the option to pull in
 //! counterparts with higher performance.
 
+///
+pub mod cache;
 pub mod fs;
 pub mod hash;
 pub mod interrupt;

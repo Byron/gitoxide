@@ -60,6 +60,7 @@ prodash-render-line-termion = ["prodash-render-line", "prodash/render-line-termi
 # internal
 prodash-render-tui = ["prodash/render-tui"]
 prodash-render-line = ["prodash/render-line"]
+cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
 
 [dependencies]
 anyhow = "1.0.42"

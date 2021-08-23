@@ -57,19 +57,26 @@ pub mod lru {
         }
 
         /// An LRU cache with hash map backing and an eviction rule based on the memory usage for object data in bytes.
-        pub struct MemoryCappedHashmap(memory_lru::MemoryLruCache<(u32, u64), Entry>);
+        pub struct MemoryCappedHashmap {
+            inner: memory_lru::MemoryLruCache<(u32, u64), Entry>,
+            debug: git_features::cache::Debug,
+        }
 
         impl MemoryCappedHashmap {
             /// Return a new instance which evicts least recently used items if it uses more than `memory_cap_in_bytes`
             /// object data.
             pub fn new(memory_cap_in_bytes: usize) -> MemoryCappedHashmap {
-                MemoryCappedHashmap(memory_lru::MemoryLruCache::new(memory_cap_in_bytes))
+                MemoryCappedHashmap {
+                    inner: memory_lru::MemoryLruCache::new(memory_cap_in_bytes),
+                    debug: git_features::cache::Debug::new(format!("MemoryCappedHashmap({}B)", memory_cap_in_bytes)),
+                }
             }
         }
 
         impl DecodeEntry for MemoryCappedHashmap {
             fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize) {
-                self.0.insert(
+                self.debug.put();
+                self.inner.insert(
                     (pack_id, offset),
                     Entry {
                         data: Vec::from(data),
@@ -80,11 +87,17 @@ pub mod lru {
             }
 
             fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)> {
-                self.0.get(&(pack_id, offset)).map(|e| {
+                let res = self.inner.get(&(pack_id, offset)).map(|e| {
                     out.resize(e.data.len(), 0);
                     out.copy_from_slice(&e.data);
                     (e.kind, e.compressed_size)
-                })
+                });
+                if res.is_some() {
+                    self.debug.hit()
+                } else {
+                    self.debug.miss()
+                }
+                res
             }
         }
     }
@@ -105,16 +118,30 @@ pub mod lru {
         /// A cache using a least-recently-used implementation capable of storing the `SIZE` most recent objects.
         /// The cache must be small as the search is 'naive' and the underlying data structure is a linked list.
         /// Values of 64 seem to improve performance.
-        #[derive(Default)]
-        pub struct StaticLinkedList<const SIZE: usize>(uluru::LRUCache<Entry, SIZE>, Vec<Vec<u8>>);
+        pub struct StaticLinkedList<const SIZE: usize> {
+            inner: uluru::LRUCache<Entry, SIZE>,
+            free_list: Vec<Vec<u8>>,
+            debug: git_features::cache::Debug,
+        }
+
+        impl<const SIZE: usize> Default for StaticLinkedList<SIZE> {
+            fn default() -> Self {
+                StaticLinkedList {
+                    inner: Default::default(),
+                    free_list: Vec::new(),
+                    debug: git_features::cache::Debug::new(format!("StaticLinkedList<{}>", SIZE)),
+                }
+            }
+        }
 
         impl<const SIZE: usize> DecodeEntry for StaticLinkedList<SIZE> {
             fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize) {
-                if let Some(previous) = self.0.insert(Entry {
+                self.debug.put();
+                if let Some(previous) = self.inner.insert(Entry {
                     offset,
                     pack_id,
                     data: self
-                        .1
+                        .free_list
                         .pop()
                         .map(|mut v| {
                             v.clear();
@@ -126,12 +153,12 @@ pub mod lru {
                     kind,
                     compressed_size,
                 }) {
-                    self.1.push(previous.data)
+                    self.free_list.push(previous.data)
                 }
             }
 
             fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)> {
-                self.0.lookup(|e: &mut Entry| {
+                let res = self.inner.lookup(|e: &mut Entry| {
                     if e.pack_id == pack_id && e.offset == offset {
                         out.resize(e.data.len(), 0);
                         out.copy_from_slice(&e.data);
@@ -139,7 +166,13 @@ pub mod lru {
                     } else {
                         None
                     }
-                })
+                });
+                if res.is_some() {
+                    self.debug.hit()
+                } else {
+                    self.debug.miss()
+                }
+                res
             }
         }
     }

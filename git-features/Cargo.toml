@@ -21,6 +21,7 @@ crc32 = ["crc32fast"]
 zlib = ["flate2", "flate2/rust_backend", "quick-error"]
 zlib-ng-compat = ["flate2/zlib-ng-compat"]
 zlib-rust-backend = ["flate2/rust_backend"]
+cache-efficiency-debug = []
 
 [[test]]
 name = "hash"

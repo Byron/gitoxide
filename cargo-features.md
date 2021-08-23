@@ -76,7 +76,7 @@ The library powering the command-line interface.
 [skim]: https://github.com/lotabout/skim
 [git-hours]: https://github.com/kimmobrunfeldt/git-hours
 
-### git-odb
+### git-pack
 
 * **pack-cache-lru-static**
     * Provide a fixed-size allocation-free LRU cache for packs. It's useful if caching is desired while keeping the memory footprint
@@ -126,6 +126,10 @@ All feature toggles are additive.
     * **rustsha1**
         * A standard and well performing pure Rust implementation of Sha1. Will significantly slow down various git operations.
 
+* **cache-efficiency-debug**
+    * Caches implement this by default, which costs nothing unless this feature is enabled
+    * Count cache hits and misses and print that debug information on drop
+     
 ### git-packetline
 
 By default, all IO related capabilities will be missing unless one of the following is chosen.
