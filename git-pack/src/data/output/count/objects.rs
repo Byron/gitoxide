@@ -463,8 +463,7 @@ fn id_to_count<Find: crate::Find>(
     statistics.expanded_objects += 1;
     output::Count {
         id: id.to_owned(),
-        // entry_pack_location: db.location_by_oid(id, buf),
-        entry_pack_location: None,
+        entry_pack_location: db.location_by_oid(id, buf),
     }
 }
 

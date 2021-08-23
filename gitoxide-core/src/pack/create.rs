@@ -210,7 +210,6 @@ where
         counts.shrink_to_fit();
         counts
     };
-    todo!("figure out performance issues");
 
     progress.inc();
     let num_objects = counts.len();
