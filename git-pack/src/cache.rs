@@ -44,69 +44,6 @@ pub mod lru {
     #[cfg(feature = "pack-cache-lru-dynamic")]
     mod memory {
         use super::DecodeEntry;
-        struct Entry {
-            data: Vec<u8>,
-            kind: git_object::Kind,
-            compressed_size: usize,
-        }
-
-        impl memory_lru::ResidentSize for Entry {
-            fn resident_size(&self) -> usize {
-                self.data.len()
-            }
-        }
-
-        /// An LRU cache with hash map backing and an eviction rule based on the memory usage for object data in bytes.
-        pub struct MemoryCappedHashmap {
-            inner: memory_lru::MemoryLruCache<(u32, u64), Entry>,
-            debug: git_features::cache::Debug,
-        }
-
-        impl MemoryCappedHashmap {
-            /// Return a new instance which evicts least recently used items if it uses more than `memory_cap_in_bytes`
-            /// object data.
-            pub fn new(memory_cap_in_bytes: usize) -> MemoryCappedHashmap {
-                MemoryCappedHashmap {
-                    inner: memory_lru::MemoryLruCache::new(memory_cap_in_bytes),
-                    debug: git_features::cache::Debug::new(format!("MemoryCappedHashmap({}B)", memory_cap_in_bytes)),
-                }
-            }
-        }
-
-        impl DecodeEntry for MemoryCappedHashmap {
-            fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize) {
-                self.debug.put();
-                self.inner.insert(
-                    (pack_id, offset),
-                    Entry {
-                        data: Vec::from(data),
-                        kind,
-                        compressed_size,
-                    },
-                )
-            }
-
-            fn get(&mut self, pack_id: u32, offset: u64, out: &mut Vec<u8>) -> Option<(git_object::Kind, usize)> {
-                let res = self.inner.get(&(pack_id, offset)).map(|e| {
-                    out.resize(e.data.len(), 0);
-                    out.copy_from_slice(&e.data);
-                    (e.kind, e.compressed_size)
-                });
-                if res.is_some() {
-                    self.debug.hit()
-                } else {
-                    self.debug.miss()
-                }
-                res
-            }
-        }
-    }
-    #[cfg(feature = "pack-cache-lru-dynamic")]
-    pub use memory::MemoryCappedHashmap;
-
-    #[cfg(feature = "pack-cache-lru-dynamic")]
-    mod memory2 {
-        use super::DecodeEntry;
         use clru::WeightScale;
         use std::num::NonZeroUsize;
 
@@ -126,17 +63,17 @@ pub mod lru {
         }
 
         /// An LRU cache with hash map backing and an eviction rule based on the memory usage for object data in bytes.
-        pub struct MemoryCappedHashmap2 {
+        pub struct MemoryCappedHashmap {
             inner: clru::CLruCache<Key, Entry, std::collections::hash_map::RandomState, CustomScale>,
             free_list: Vec<Vec<u8>>,
             debug: git_features::cache::Debug,
         }
 
-        impl MemoryCappedHashmap2 {
+        impl MemoryCappedHashmap {
             /// Return a new instance which evicts least recently used items if it uses more than `memory_cap_in_bytes`
             /// object data.
-            pub fn new(memory_cap_in_bytes: usize) -> MemoryCappedHashmap2 {
-                MemoryCappedHashmap2 {
+            pub fn new(memory_cap_in_bytes: usize) -> MemoryCappedHashmap {
+                MemoryCappedHashmap {
                     inner: clru::CLruCache::with_config(
                         clru::CLruCacheConfig::new(NonZeroUsize::new(memory_cap_in_bytes).expect("non zero"))
                             .with_scale(CustomScale),
@@ -147,7 +84,7 @@ pub mod lru {
             }
         }
 
-        impl DecodeEntry for MemoryCappedHashmap2 {
+        impl DecodeEntry for MemoryCappedHashmap {
             fn put(&mut self, pack_id: u32, offset: u64, data: &[u8], kind: git_object::Kind, compressed_size: usize) {
                 self.debug.put();
                 if let Ok(Some(previous_entry)) = self.inner.put_with_weight(
@@ -187,7 +124,7 @@ pub mod lru {
         }
     }
     #[cfg(feature = "pack-cache-lru-dynamic")]
-    pub use memory2::MemoryCappedHashmap2;
+    pub use memory::MemoryCappedHashmap;
 
     #[cfg(feature = "pack-cache-lru-static")]
     mod _static {

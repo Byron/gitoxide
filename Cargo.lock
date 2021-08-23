@@ -1149,7 +1149,6 @@ dependencies = [
  "git-traverse",
  "hex",
  "itoa",
- "memory-lru",
  "parking_lot 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "smallvec",
