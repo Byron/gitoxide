@@ -57,20 +57,46 @@ where
         matches!(version, crate::data::Version::V2),
         "currently we can only write version 2"
     );
+    let (chunk_size, thread_limit, _) =
+        parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
+    let chunks = util::ChunkRanges::new(chunk_size, counts.len()).enumerate();
+    // {
+    //     let mut progress = progress.add_child("resolving");
+    //     progress.init(Some(counts.len()), git_features::progress::count("counts"));
+    //     parallel::in_parallel_if(
+    //         || counts.len() > 4_000,
+    //         chunks.clone(),
+    //         thread_limit,
+    //         {
+    //             let make_cache = make_cache.clone();
+    //             |_n| (Vec::<u8>::new(), make_cache())
+    //         },
+    //         |chunk_range, (buf, pack_cache)| {
+    //             let chunk = &counts[chunk_range];
+    //             for count in chunk {
+    //                 let () = count;
+    //             }
+    //             Ok(())
+    //         },
+    //         parallel::reduce::IdentityWithResult::<_, _>::default(),
+    //     );
+    // }
     let counts_range_by_pack_id = match mode {
         Mode::PackCopyAndBaseObjects => {
             let mut progress = progress.add_child("sorting");
             progress.init(Some(counts.len()), git_features::progress::count("counts"));
             let start = std::time::Instant::now();
 
+            use crate::data::output::count::PackLocation::*;
             counts.sort_by(|lhs, rhs| match (&lhs.entry_pack_location, &rhs.entry_pack_location) {
-                (None, None) => Ordering::Equal,
-                (Some(_), None) => Ordering::Greater,
-                (None, Some(_)) => Ordering::Less,
-                (Some(lhs), Some(rhs)) => lhs
+                (LookedUp(None), LookedUp(None)) => Ordering::Equal,
+                (LookedUp(Some(_)), LookedUp(None)) => Ordering::Greater,
+                (LookedUp(None), LookedUp(Some(_))) => Ordering::Less,
+                (LookedUp(Some(lhs)), LookedUp(Some(rhs))) => lhs
                     .pack_id
                     .cmp(&rhs.pack_id)
                     .then(lhs.pack_offset.cmp(&rhs.pack_offset)),
+                (_, _) => unreachable!("counts were resolved beforehand"),
             });
 
             let mut index: Vec<(u32, std::ops::Range<usize>)> = Vec::new();
@@ -93,9 +119,6 @@ where
         }
     };
     let counts = Arc::new(counts);
-    let (chunk_size, thread_limit, _) =
-        parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
-    let chunks = util::ChunkRanges::new(chunk_size, counts.len()).enumerate();
     let progress = Arc::new(parking_lot::Mutex::new(progress));
 
     parallel::reduce::Stepwise::new(
@@ -205,6 +228,7 @@ where
 }
 
 mod util {
+    #[derive(Clone)]
     pub struct ChunkRanges {
         cursor: usize,
         size: usize,

@@ -91,6 +91,7 @@ where
                     cache,
                     progress,
                     should_interrupt,
+                    true,
                 )
             }
         },
@@ -125,6 +126,7 @@ where
         pack_cache,
         &mut progress,
         should_interrupt,
+        false,
     )
 }
 
@@ -139,6 +141,7 @@ fn expand_inner<Find, IterErr, Oid>(
     cache: &mut impl crate::cache::DecodeEntry,
     progress: &mut impl Progress,
     should_interrupt: &AtomicBool,
+    allow_pack_lookups: bool,
 ) -> Result<find::existing::Error<Find::Error>, IterErr>
 where
     Find: crate::Find + Send + Sync,
@@ -267,7 +270,7 @@ where
                                 &changes_delegate.objects
                             };
                             for id in objects.iter() {
-                                out.push(id_to_count(db, buf2, id, progress, stats));
+                                out.push(id_to_count(db, buf2, id, progress, stats, allow_pack_lookups));
                             }
                             break;
                         }
@@ -302,7 +305,7 @@ where
                             )
                             .map_err(Error::TreeTraverse)?;
                             for id in traverse_delegate.non_trees.iter() {
-                                out.push(id_to_count(db, buf1, id, progress, stats));
+                                out.push(id_to_count(db, buf1, id, progress, stats, allow_pack_lookups));
                             }
                             break;
                         }
@@ -447,6 +450,7 @@ mod tree {
     }
 }
 
+#[inline]
 fn push_obj_count_unique(
     out: &mut Vec<output::Count>,
     all_seen: &impl util::InsertImmutable<ObjectId>,
@@ -467,18 +471,24 @@ fn push_obj_count_unique(
     }
 }
 
+#[inline]
 fn id_to_count<Find: crate::Find>(
     db: &Find,
     buf: &mut Vec<u8>,
     id: &oid,
     progress: &mut impl Progress,
     statistics: &mut Outcome,
+    allow_pack_lookups: bool,
 ) -> output::Count {
     progress.inc();
     statistics.expanded_objects += 1;
     output::Count {
         id: id.to_owned(),
-        entry_pack_location: db.location_by_oid(id, buf),
+        entry_pack_location: if allow_pack_lookups {
+            PackLocation::LookedUp(db.location_by_oid(id, buf))
+        } else {
+            PackLocation::NotLookedUp
+        },
     }
 }
 
@@ -640,6 +650,7 @@ mod types {
         Interrupted,
     }
 }
+use crate::data::output::count::PackLocation;
 use std::cell::RefCell;
 use std::collections::HashSet;
 pub use types::{Error, ObjectExpansion, Options, Outcome};
