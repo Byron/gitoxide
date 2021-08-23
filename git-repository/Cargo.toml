@@ -42,7 +42,7 @@ git-odb = { version ="0.20.0", path = "../git-odb" }
 git-hash = { version = "^0.5.0", path = "../git-hash" }
 git-object = { version ="0.12.0", path = "../git-object" }
 git-actor = { version ="0.3.1", path = "../git-actor" }
-git-pack = { version ="0.8.0", path = "../git-pack" }
+git-pack = { version ="^0.9.0", path = "../git-pack" }
 
 git-url = { version = "0.3.0", path = "../git-url", optional = true }
 git-traverse = { version ="0.7.0", path = "../git-traverse", optional = true }
