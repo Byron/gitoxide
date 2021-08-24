@@ -14,7 +14,7 @@ path = "src/main.rs"
 
 [dependencies]
 git-hash = { version = "^0.5.0", path = "../../git-hash" }
-nom = { version = "6", default-features = false, features = ["alloc"]}
+nom = { version = "7", default-features = false, features = ["std"]}
 bstr = "0.2.15"
 crc = "2.0.0"
 once_cell = "1.8.0"

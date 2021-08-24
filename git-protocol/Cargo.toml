@@ -34,7 +34,7 @@ git-hash = { version = "^0.5.0", path = "../git-hash" }
 quick-error = "2.0.0"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
-nom = { version = "6", default-features = false, features = ["alloc"]}
+nom = { version = "7", default-features = false, features = ["std"]}
 btoi = "0.4.2"
 
 # for async-client
