@@ -4,24 +4,17 @@
 
  * **test-first development**
    * protect against regression and make implementing features easy.
-   * user docker to test more elaborate user interactions
+   * user containers to test more elaborate user interactions
    * keep it practical, knowing the Rust compiler already has your back
      for the mundane things, like unhappy code paths.
    * *use git itself* as reference implementation, and use their test-cases and fixtures where
-     appropriate.
-   * *use libgit2* test fixtures and cases where appropriate.
+     appropriate. At the very least, try to learn from them.
+   * *use libgit2* test fixtures and cases where appropriate, or learn from them.
  * **safety first**
    * handle all errors, never `unwrap()`. If needed, `expect("why")`.
-   * provide an error chain and make it easy to understand what went wrong.
- * **strive for an MVP and version 1.0 fast...**
-   * ...even if that includes only the most common usecases.
- * **Prefer to increment major version rapidly...**
-   * ...instead of keeping major version zero for longer than needed.
- * **stability**
-   * we adhere to semantic versioning
-   * while below 1.0, expect a greater amount of breaking changes, which are announced with minor versions
-   * From 1.0, we will try hardest to keep the API and user interface non-breaking the closer to the user a library is. Thus the CLI should remain at version
-    1 for a long time. However, crates that make it up can change more rapidly and may see more major version changes over time.
+   * provide an error chain and make it easy to understand what went wrong. We use `quick-error` for non-generic errors and `thiserror` when generalization is
+     needed.
+ * Adhere to the [stability guide](https://github.com/Byron/gitoxide/blob/main/STABILITY.md)
   
 ## General
 
