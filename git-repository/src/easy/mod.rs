@@ -14,11 +14,11 @@
 use std::{
     cell::RefCell,
     ops::{Deref, DerefMut},
+    sync::Arc,
+    time::SystemTime,
 };
 
 use crate::{hash::ObjectId, objs, odb, refs, Repository};
-use std::sync::Arc;
-use std::time::SystemTime;
 
 mod impls;
 

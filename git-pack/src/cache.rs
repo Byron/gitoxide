@@ -43,9 +43,11 @@ pub mod lru {
 
     #[cfg(feature = "pack-cache-lru-dynamic")]
     mod memory {
-        use super::DecodeEntry;
-        use clru::WeightScale;
         use std::num::NonZeroUsize;
+
+        use clru::WeightScale;
+
+        use super::DecodeEntry;
 
         struct Entry {
             data: Vec<u8>,

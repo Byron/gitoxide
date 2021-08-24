@@ -1,4 +1,7 @@
-use std::sync::{atomic::AtomicBool, Arc};
+use std::{
+    convert::Infallible,
+    sync::{atomic::AtomicBool, Arc},
+};
 
 use git_features::{parallel::reduce::Finalize, progress};
 use git_odb::{compound, linked, pack, FindExt};
@@ -12,7 +15,6 @@ use crate::pack::{
     data::output::{db, DbKind},
     hex_to_id,
 };
-use std::convert::Infallible;
 
 #[test]
 fn traversals() -> crate::Result {
