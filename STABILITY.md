@@ -3,12 +3,16 @@
 Even though this project adheres to [semver], this guide aims to explain how semantic versioning is used exactly and how we aim to provide stability within an
 ever-changing codebase.
 
+Please note that this guide isn't stable itself and may be adjusted to fit changes in requirements or new ways are discovered.
+
 ## Terminology
 
 * _dependent crate_
   - A crate which depends on a crate in this workspace directly.
 * _downstream crate_
   - A crate which directly or indirectly depends on a crate in this workspace.
+* _workspace crate_
+  - A crate which is a member of this workspace and hence is stored in this repository
 * _breaking change_
   - A change in code that requires a `dependent crate` to adjust their code to fix compile errors.
 * _release_
@@ -18,7 +22,7 @@ ever-changing codebase.
 
 The project uses three stability tiers for all of its crates, and all crates use [semver] for their version numbers.
 Tiers differ primarily in the time between breaking changes, which always have to be announced with `PRs` as per
-our [collaboration guide]
+our [collaboration guide].
 
 The following schematic helps to visualize what follows.
 
@@ -92,6 +96,13 @@ crates they depend on to prevent automatic upgrades.
 
 Minor version updates for new features can be released when needed assuming there are no other breaking changes, updating the build identifiers for year and month accordingly.
 
+## The _Minimal Stable Rust Version_ (->MSRV)
+
+It is as low as it can be for the crate in questions. While there is no non-pre-release of a tier 1 crate, the MSRV is automatically assumed to be the latest stable version.
+
+Increasing the MSRV is not considered a breaking change and doesn't warrant a major version bump itself.
+
+Please let us know if you have other requirement and we see if we can provide stability guarantees for it or reduce the MSRV to a given version.
 
 ## Transitioning from pre-release to release crates
 
