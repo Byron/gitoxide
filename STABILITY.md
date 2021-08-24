@@ -97,5 +97,16 @@ Minor version updates for new features can be released when needed assuming ther
 
 How do we avoid staying in pre-release mode forever?
 
+There is only two questions to ask and answer positively:
+
+- _Does the crate fulfill its intended purpose well enough?_
+- _Do the dependent workspace crates fulfill their intended purposes well enough?_
+
+For plumbing crates, the intended purpose is narrow which would allow them to transition earlier. For plumbing crates, if in doubt or fear of future requirements
+especially if dependent crates are still early in development, prefer to release them anyway and live with requirements of _ST2_.
+
+Apps and application crates may take longer as they are larger in scope. A good indicator for them to get to a release may be maturing plumbing crates they
+use. Their scope shoud also be narrowed to a minimal viable product.
+
 [semver]: https://semver.org
 [collaboration guide]: https://github.com/Byron/gitoxide/blob/main/COLLABORATING.md
