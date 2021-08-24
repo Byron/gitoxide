@@ -534,18 +534,15 @@ fn bump_to_valid_version(
             v.major += 1;
             v.minor = 0;
             v.patch = 0;
-            v.build = BuildMetadata::EMPTY;
             v.pre = Prerelease::EMPTY;
         }
         "minor" => {
             v.minor += 1;
             v.patch = 0;
-            v.build = BuildMetadata::EMPTY;
             v.pre = Prerelease::EMPTY;
         }
         "patch" => {
             v.patch += 1;
-            v.build = BuildMetadata::EMPTY;
             v.pre = Prerelease::EMPTY;
         }
         "keep" => {}
