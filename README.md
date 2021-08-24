@@ -48,7 +48,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 
 ### Crates
 
-Follow linked crate name for detailed status.
+Follow linked crate name for detailed status. Please note that all crates follow [semver] as well as the [stability guide].
 
 * **usable**
   * [git-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-actor)
@@ -69,6 +69,7 @@ Follow linked crate name for detailed status.
   * [git-tempfile](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tempfile)
   * [git-lock](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-lock)
   * [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
+  * `gitoxide-core`
 * **very early**    
   * [git-repository](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-repository)
 * **idea**
@@ -83,38 +84,17 @@ Follow linked crate name for detailed status.
   * [x] Generate and verify large commit graphs
   * [ ] Generate huge pack from a lot of loose objects
   
-### Ideas for Examples
-
-  * [ ] `gix tool open-remote` open the URL of the remote, possibly after applying known transformations to go from `ssh` to `https`.
-  * [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
-        as well. What would an MVP look like? Maybe even something that could ship with gitoxide.
-  * [ ] A truly awesome history rewriter which makes it easy to understand what happened while avoiding all pitfalls. Think BFG, but more awesome, if that's possible.
-  * [ ] `git-tui` should learn a lot from [fossil-scm] regarding the presentation of data. Maybe [this](https://github.com/Lutetium-Vanadium/requestty/) can be used for prompts.
-  * [ ] Can markdown be used as database so issue-trackers along with meta-data could just be markdown files which are mostly human-editable? Could user interfaces
-        be meta-data aware and just hide the meta-data chunks which are now editable in the GUI itself? Doing this would make conflicts easier to resolve than an `sqlite`
-        database.
-      * ~~A git-backend for `sqlite` which should allow embedding sqlite databases into git repositories, which in turn can be used for bug-trackers, wikis or other
-        features, making for a fully distributed github like experience, maybe.~~
-
-### Ideas for Spin-Offs
-
-* [ ] A system to integrate tightly with `git-lfs` to allow a multi-tier architecture so that assets can be stored in git and are accessible quickly from an intranet location
-  (for example by accessing the storage read-only over the network) while changes are pushed immediately by the server to other edge locations, like _the cloud_ or backups. Sparse checkouts along with explorer/finder integrations
-  make it convenient to only work on a small subset of files locally. Clones can contain all configuration somebody would need to work efficiently from their location,
-  and authentication for the git history as well as LFS resources make the system secure. One could imagine encryption support for untrusted locations in _the cloud_
-  even though more research would have to be done to make it truly secure.
-* [ ] A [syncthing] like client/server application. This is to demonstrate how lower-level crates can be combined into custom applications that use
-  only part of git's technology to achieve their very own thing. Watch out for big file support, multi-device cross-syncing, the possibility for
-  untrusted destinations using full-encryption, case-insensitive and sensitive filesystems, and extended file attributes as well as ignore files.
-
-[syncthing]: https://github.com/syncthing/syncthing
-[fossil-scm]: https://www.fossil-scm.org
-
 ### Cargo features
 
 Many crates use feature flags to allow tuning the compiled result based on your needs. Have a [look at the guide][cargo-features] for more information.
 
 [cargo-features]: https://github.com/Byron/gitoxide/blob/main/cargo-features.md#git-config
+
+### Stability
+
+Our [stability guide] helps to judge how much churn can be expected when depending on crates in this workspace.
+
+[stability guide]: https://github.com/Byron/gitoxide/blob/main/STABILITY.md
 
 ## Installation
 
@@ -208,7 +188,7 @@ Project non-goals can change over time as we learn more, and they can be challen
      long running operations.
    * When connecting or streaming over TCP connections, especially when receiving on the server, async seems like a must
      though, but behind a feature flag.
-     
+
 ## Contributions
 
 If what you have seen so far sparked your interest to contribute, then let us say: We are happy to have you and help you to get started.
@@ -218,6 +198,9 @@ We recommend running `make tests check-size` during the development process to a
 A backlog for work ready to be picked up is [available in the Project's Kanban board][project-board], which contains instructions on how 
 to pick a task. If it's empty or you have other questions, feel free to [start a discussion][discussions] or reach out to @Byron [privately][keybase].
 
+For additional details, also take a look at the [collaboration guide].
+
+[collaboration guide]: https://github.com/Byron/gitoxide/blob/main/COLLABORATING.md
 [project-board]: https://github.com/Byron/gitoxide/projects
 [discussions]: https://github.com/Byron/gitoxide/discussions
 [keybase]: https://keybase.io/byronbates
@@ -234,7 +217,34 @@ Provide a CLI to for the most basic user journey:
 * [ ] add a remote
 * [ ] push
   * [ ] create (thin) pack
-  
+
+### Ideas for Examples
+
+* [ ] `gix tool open-remote` open the URL of the remote, possibly after applying known transformations to go from `ssh` to `https`.
+* [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
+  as well. What would an MVP look like? Maybe even something that could ship with gitoxide.
+* [ ] A truly awesome history rewriter which makes it easy to understand what happened while avoiding all pitfalls. Think BFG, but more awesome, if that's possible.
+* [ ] `git-tui` should learn a lot from [fossil-scm] regarding the presentation of data. Maybe [this](https://github.com/Lutetium-Vanadium/requestty/) can be used for prompts.
+* [ ] Can markdown be used as database so issue-trackers along with meta-data could just be markdown files which are mostly human-editable? Could user interfaces
+  be meta-data aware and just hide the meta-data chunks which are now editable in the GUI itself? Doing this would make conflicts easier to resolve than an `sqlite`
+  database.
+    * ~~A git-backend for `sqlite` which should allow embedding sqlite databases into git repositories, which in turn can be used for bug-trackers, wikis or other
+      features, making for a fully distributed github like experience, maybe.~~
+
+### Ideas for Spin-Offs
+
+* [ ] A system to integrate tightly with `git-lfs` to allow a multi-tier architecture so that assets can be stored in git and are accessible quickly from an intranet location
+  (for example by accessing the storage read-only over the network) while changes are pushed immediately by the server to other edge locations, like _the cloud_ or backups. Sparse checkouts along with explorer/finder integrations
+  make it convenient to only work on a small subset of files locally. Clones can contain all configuration somebody would need to work efficiently from their location,
+  and authentication for the git history as well as LFS resources make the system secure. One could imagine encryption support for untrusted locations in _the cloud_
+  even though more research would have to be done to make it truly secure.
+* [ ] A [syncthing] like client/server application. This is to demonstrate how lower-level crates can be combined into custom applications that use
+  only part of git's technology to achieve their very own thing. Watch out for big file support, multi-device cross-syncing, the possibility for
+  untrusted destinations using full-encryption, case-insensitive and sensitive filesystems, and extended file attributes as well as ignore files.
+
+[syncthing]: https://github.com/syncthing/syncthing
+[fossil-scm]: https://www.fossil-scm.org
+
 
 ## Shortcomings
 
