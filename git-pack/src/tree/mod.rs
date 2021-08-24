@@ -11,8 +11,6 @@ pub enum Error {
         /// The invariant violating offset
         pack_offset: u64,
     },
-    #[error("Is there ever a need to create empty indices? If so, please post a PR.")]
-    InvariantNonEmpty,
     #[error("The delta at pack offset {delta_pack_offset} could not find its base at {base_pack_offset} - it should have been seen already")]
     InvariantBasesBeforeDeltasNeedThem {
         /// The delta pack offset whose base we could not find
@@ -53,9 +51,6 @@ pub struct Tree<T> {
 impl<T> Tree<T> {
     /// Instantiate a empty tree capable of storing `num_objects` amounts of items.
     pub fn with_capacity(num_objects: usize) -> Result<Self, Error> {
-        if num_objects == 0 {
-            return Err(Error::InvariantNonEmpty);
-        }
         Ok(Tree {
             items: VecDeque::with_capacity(num_objects),
             roots: 0,
