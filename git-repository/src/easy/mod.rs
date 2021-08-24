@@ -16,7 +16,11 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use crate::{hash::ObjectId, objs, odb, refs, Repository};
+use crate::Repository;
+use git_hash::ObjectId;
+use git_object as objs;
+use git_odb as odb;
+use git_ref as refs;
 use std::sync::Arc;
 use std::time::SystemTime;
 

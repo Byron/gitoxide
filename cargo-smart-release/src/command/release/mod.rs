@@ -526,7 +526,7 @@ fn bump_to_valid_version(
         };
         Ok(new_version)
     }
-    use semver::{BuildMetadata, Prerelease};
+    use semver::Prerelease;
 
     let mut v = publishee.version.clone();
     match bump_spec {

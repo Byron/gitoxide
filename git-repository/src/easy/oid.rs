@@ -1,8 +1,8 @@
 use crate::{
     easy,
     easy::{object::find, Object, ObjectRef, Oid},
-    hash::{oid, ObjectId},
 };
+use git_hash::{oid, ObjectId};
 
 impl<'repo, A, B> PartialEq<Oid<'repo, A>> for Oid<'repo, B> {
     fn eq(&self, other: &Oid<'repo, A>) -> bool {

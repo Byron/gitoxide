@@ -4,8 +4,8 @@ use std::cell::{Ref, RefMut};
 use crate::{
     easy,
     easy::{borrow, PackCache},
-    refs::{file, packed},
 };
+use git_ref::{file, packed};
 
 impl Clone for easy::State {
     fn clone(&self) -> Self {

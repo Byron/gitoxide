@@ -1,9 +1,9 @@
 use crate::{
     easy,
     easy::{object::find, TreeRef},
-    objs,
-    objs::{bstr::BStr, immutable},
 };
+use git_object as objs;
+use git_object::{bstr::BStr, immutable};
 
 impl<'repo, A> TreeRef<'repo, A>
 where

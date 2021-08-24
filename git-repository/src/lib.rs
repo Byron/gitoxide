@@ -48,9 +48,10 @@
 //!
 //! # Cargo-features
 //!
-//! ## One-stop-shop
+//! ## With the optional "unstable" cargo feature
 //!
-//! To make using  _sub-crates_ easier these are re-exported into the root of this crate.
+//! To make using  _sub-crates_ easier these are re-exported into the root of this crate. Note that these may change their major version
+//! even if this crate doesn't, hence breaking downstream.
 //!
 //! `git_repository::`
 //! * [`hash`]
@@ -66,6 +67,7 @@
 //! * [`lock`]
 //! * [`traverse`]
 //! * [`diff`]
+//! * [`parallel`]
 //! * [`Progress`]
 //! * [`progress`]
 //! * [`interrupt`]
@@ -79,21 +81,29 @@ use std::{path::PathBuf, rc::Rc, sync::Arc};
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
+#[cfg(feature = "unstable")]
 pub use git_actor as actor;
-#[cfg(feature = "git-diff")]
+#[cfg(all(feature = "unstable", feature = "git-diff"))]
 pub use git_diff as diff;
+#[cfg(feature = "unstable")]
 pub use git_features::{parallel, progress, progress::Progress};
+#[cfg(feature = "unstable")]
 pub use git_hash as hash;
+#[cfg(feature = "unstable")]
 pub use git_lock as lock;
+#[cfg(feature = "unstable")]
 pub use git_object as objs;
+#[cfg(feature = "unstable")]
 pub use git_odb as odb;
-#[cfg(feature = "git-protocol")]
+#[cfg(all(feature = "unstable", feature = "git-protocol"))]
 pub use git_protocol as protocol;
+#[cfg(feature = "unstable")]
 pub use git_ref as refs;
+#[cfg(feature = "unstable")]
 pub use git_tempfile as tempfile;
-#[cfg(feature = "git-traverse")]
+#[cfg(all(feature = "unstable", feature = "git-traverse"))]
 pub use git_traverse as traverse;
-#[cfg(feature = "git-url")]
+#[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url as url;
 pub use path::Path;
 

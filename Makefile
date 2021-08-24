@@ -129,6 +129,8 @@ check: ## Build all code in suitable configurations
 					&& cargo check --features async-client
 	cd git-protocol && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-repository && cargo check --all-features \
+					  && cargo check --no-default-features --features local \
+					  && cargo check --no-default-features --features network \
 					 && cargo check --no-default-features
 
 unit-tests: ## run all unit tests

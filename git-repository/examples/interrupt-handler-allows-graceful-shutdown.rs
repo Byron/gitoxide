@@ -1,13 +1,12 @@
 use std::path::Path;
 
-use git_repository::tempfile::{AutoRemove, ContainingDirectory};
+use git_tempfile::{AutoRemove, ContainingDirectory};
 
 fn main() -> anyhow::Result<()> {
     git_repository::interrupt::init_handler(|| {})?;
     eprintln!("About to emit the first term signal");
     let tempfile_path = Path::new("example-file.tmp");
-    let _keep_tempfile =
-        git_repository::tempfile::mark_at(tempfile_path, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
+    let _keep_tempfile = git_tempfile::mark_at(tempfile_path, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
 
     signal_hook::low_level::raise(signal_hook::consts::SIGTERM)?;
     eprintln!(

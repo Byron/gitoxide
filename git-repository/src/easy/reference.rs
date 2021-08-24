@@ -4,16 +4,15 @@ use std::ops::DerefMut;
 use crate::{
     easy,
     easy::{Oid, Reference},
-    hash::ObjectId,
-    odb::Find,
-    refs,
-    refs::mutable,
 };
+use git_hash::ObjectId;
+use git_odb::Find;
+use git_ref as refs;
 
 pub(crate) enum Backing {
     OwnedPacked {
         /// The validated full name of the reference.
-        name: mutable::FullName,
+        name: refs::mutable::FullName,
         /// The target object id of the reference, hex encoded.
         target: ObjectId,
         /// The fully peeled object id, hex encoded, that the ref is ultimately pointing to
@@ -26,7 +25,8 @@ pub(crate) enum Backing {
 pub mod edit {
     use quick_error::quick_error;
 
-    use crate::{easy, refs};
+    use crate::easy;
+    use git_ref as refs;
 
     quick_error! {
         #[derive(Debug)]
@@ -57,7 +57,8 @@ pub mod edit {
 pub mod peel_to_id_in_place {
     use quick_error::quick_error;
 
-    use crate::{easy, refs};
+    use crate::easy;
+    use git_ref as refs;
 
     quick_error! {
         #[derive(Debug)]
@@ -108,7 +109,7 @@ where
     }
     pub fn target(&self) -> refs::mutable::Target {
         match self.backing.as_ref().expect("always set") {
-            Backing::OwnedPacked { target, .. } => mutable::Target::Peeled(target.to_owned()),
+            Backing::OwnedPacked { target, .. } => refs::mutable::Target::Peeled(target.to_owned()),
             Backing::LooseFile(r) => r.target.clone(),
         }
     }
@@ -164,7 +165,8 @@ where
 pub mod find {
     use quick_error::quick_error;
 
-    use crate::{easy, refs};
+    use crate::easy;
+    use git_ref as refs;
 
     pub mod existing {
         use quick_error::quick_error;

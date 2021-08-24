@@ -24,7 +24,7 @@ The following schematic helps to visualize what follows.
 
 ```
                 Release Software v1.X              
-    ST1 ══════════════════════════════════════════╗
+    Stability Tier 1 ═════════════════════════════╗
     ║                                             ║
     ║    gixp─────────────┐ gix──────────────┐    ║
     ║    │  plumbing app  │ │  porcelain app │    ║
@@ -42,7 +42,7 @@ The following schematic helps to visualize what follows.
     ║                      │                      ║
     ╚═════════════════════════════════════════════╝
                            │                       
-    ST2 ──────────────────────────────────────────┐
+    Stability Tier 2 ─────────────────────────────┐
     │                      ▼                      │
     │    plumbing crates─────────────────────┐    │
     │    │ ┌───────────┐       ┌───────────┐ │    │

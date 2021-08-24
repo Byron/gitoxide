@@ -5,8 +5,8 @@ use git_hash::ObjectId;
 use crate::{
     easy,
     easy::{object, ObjectRef},
-    odb::{Find, FindExt},
 };
+use git_odb::{Find, FindExt};
 
 pub fn find_object<A: easy::Access + Sized>(
     access: &A,

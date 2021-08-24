@@ -6,10 +6,10 @@ pub use git_object::Kind;
 use crate::{
     easy,
     easy::{Object, ObjectRef, TreeRef},
-    hash::ObjectId,
-    objs::immutable,
-    odb,
 };
+use git_hash::ObjectId;
+use git_object::immutable;
+use git_odb as odb;
 
 mod impls;
 mod tree;
@@ -61,7 +61,8 @@ where
 pub mod find {
     use quick_error::quick_error;
 
-    use crate::{easy, odb};
+    use crate::easy;
+    use git_odb as odb;
 
     quick_error! {
         #[derive(Debug)]
@@ -87,7 +88,8 @@ pub mod find {
     pub mod existing {
         use quick_error::quick_error;
 
-        use crate::{easy, odb};
+        use crate::easy;
+        use git_odb as odb;
 
         quick_error! {
             #[derive(Debug)]

@@ -5,7 +5,8 @@ fn repo() -> crate::Result<git_repository::Easy> {
 mod find {
     use std::convert::TryInto;
 
-    use git_repository::{prelude::*, refs};
+    use git_ref as refs;
+    use git_repository::prelude::*;
     use git_testtools::hex_to_id;
 
     use crate::reference::repo;
