@@ -47,12 +47,22 @@ The following schematic helps to visualize what follows.
     ║    git-repository──────────────────────┐    ║
     ║    │                application crate  │    ║
     ║    └───────────────────────────────────┘    ║
-    ║                      │                      ║
+    ║             │                       │       ║
+    ║             ▼                               ║
+    ║    Foundation Crates─────────────┐  │       ║
+    ║    │┌──────────┐ ┌──────────────┐│          ║
+    ║    ││ git-hash │ │ git-ref-base ││  │       ║
+    ║    │└──────────┘ └──────────────┘│          ║
+    ║    │     ┌─────────────────┐     │  │       ║
+    ║    │     │ git-config-base │     │          ║
+    ║    │     └─────────────────┘     │  │       ║
+    ║    └─────────────────────────────┘          ║
+    ║                                     │       ║
     ╚═════════════════════════════════════════════╝
-                           │                       
-    Stability Tier 2 ─────────────────────────────┐
+                            ─ ─ ─ ─ ─ ─ ─ ┘        
+    Stability Tier 2 ──────┼──────────────────────┐
     │                      ▼                      │
-    │    plumbing crates─────────────────────┐    │
+    │    Plumbing Crates─────────────────────┐    │
     │    │ ┌───────────┐       ┌───────────┐ │    │
     │    │ │  git-odb  │       │  git-ref  │ │    │
     │    │ └───────────┘       └───────────┘ │    │
@@ -96,6 +106,8 @@ Intermediate pre-releases may be created at most every 4 weeks by appending `-al
 breaking changes or new features without forcing the use of `git` sources for dependencies in cargo manifests. Pre-release releases must pin all the pre-release
 crates they depend on to prevent automatic upgrades. Dependent external crates are advised to pin their `alpha` dependencies with `=<version>` version requirements to avoid
 automatic updates which may be breaking.
+
+Once breaking changes are known to be planned, deprecation warnings should be provided in intermediate pre-releases.
 
 Minor version updates for new features can be released when needed assuming there are no other breaking changes, updating the build identifiers for year and month accordingly.
 
