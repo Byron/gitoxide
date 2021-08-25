@@ -8,7 +8,7 @@ use bstr::{BStr, ByteSlice};
 
 use crate::{FullNameRef, PartialNameRef};
 
-/// The error used in the [`PartialName`][super::PartialName]::try_from(…) implementations.
+/// The error used in the [`PartialNameRef`][super::PartialNameRef]::try_from(…) implementations.
 pub type Error = git_validate::reference::name::Error;
 
 impl<'a> FullNameRef<'a> {

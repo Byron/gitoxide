@@ -28,7 +28,7 @@ git-features = { version = "^0.16.0", path = "../git-features", features = ["wal
 git-hash = { version = "^0.5.0", path = "../git-hash" }
 git-object = { version ="0.12.0", path = "../git-object" }
 git-validate = { version = "^0.5.0", path = "../git-validate" }
-git-actor = { version ="^0.4.0", path = "../git-actor" }
+git-actor = { version ="^0.5.0", path = "../git-actor" }
 git-lock = { version ="^1.0.0", path = "../git-lock" }
 git-tempfile = { version ="^1.0.0", path = "../git-tempfile" }
 
