@@ -74,7 +74,7 @@ mod tests {
         };
 
         fn decode(i: &[u8]) -> IResult<&[u8], SignatureRef<'_>, nom::error::VerboseError<&[u8]>> {
-            signature_ref::decode(i)
+            signature::decode(i)
         }
 
         fn signature(

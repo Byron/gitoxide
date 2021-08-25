@@ -1,3 +1,16 @@
+mod _ref {
+    use crate::{signature::decode, SignatureRef};
+
+    impl<'a> SignatureRef<'a> {
+        /// Deserialize a signature from the given `data`.
+        pub fn from_bytes<E: nom::error::ParseError<&'a [u8]> + nom::error::ContextError<&'a [u8]>>(
+            data: &'a [u8],
+        ) -> Result<SignatureRef<'a>, nom::Err<E>> {
+            decode(data).map(|(_, t)| t)
+        }
+    }
+}
+
 mod convert {
     use crate::{Sign, Signature, SignatureRef, Time};
 
@@ -85,3 +98,7 @@ mod write {
         Ok(name)
     }
 }
+
+///
+mod decode;
+pub use decode::decode;

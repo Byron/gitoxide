@@ -80,7 +80,7 @@ pub mod decode {
             tuple((
                 context("<old-hexsha>", terminated(hex_hash, tag(b" "))),
                 context("<new-hexsha>", terminated(hex_hash, tag(b" "))),
-                context("<name> <<email>> <timestamp>", git_actor::signature_ref::decode),
+                context("<name> <<email>> <timestamp>", git_actor::signature::decode),
                 opt(tag(b"\t")),
                 context("<optional message>", message),
             )),
