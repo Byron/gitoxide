@@ -1,11 +1,13 @@
-use std::sync::Arc;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
 use git_object::immutable;
 
 use crate::{data::output, find, FindExt};
-use std::sync::atomic::{AtomicBool, Ordering};
 
 /// The return type used by [`objects()`].
 pub type Result<E1, E2> = std::result::Result<(Vec<output::Count>, Outcome), Error<E1, E2>>;
@@ -337,13 +339,14 @@ where
 
 mod tree {
     pub mod changes {
-        use crate::data::output::count::objects::util::InsertImmutable;
         use git_diff::tree::{
             visit::{Action, Change},
             Visit,
         };
         use git_hash::ObjectId;
         use git_object::bstr::BStr;
+
+        use crate::data::output::count::objects::util::InsertImmutable;
 
         pub struct AllNew<'a, H> {
             pub objects: Vec<ObjectId>,
@@ -393,10 +396,11 @@ mod tree {
     }
 
     pub mod traverse {
-        use crate::data::output::count::objects::util::InsertImmutable;
         use git_hash::ObjectId;
         use git_object::{bstr::BStr, immutable::tree::Entry};
         use git_traverse::tree::visit::{Action, Visit};
+
+        use crate::data::output::count::objects::util::InsertImmutable;
 
         pub struct AllUnseen<'a, H> {
             pub non_trees: Vec<ObjectId>,
@@ -498,11 +502,11 @@ mod util {
     }
 
     mod trait_impls {
-        use super::InsertImmutable;
+        use std::{cell::RefCell, collections::HashSet, hash::Hash};
+
         use dashmap::DashSet;
-        use std::cell::RefCell;
-        use std::collections::HashSet;
-        use std::hash::Hash;
+
+        use super::InsertImmutable;
 
         impl<T: Eq + Hash> InsertImmutable<T> for DashSet<T> {
             fn insert(&self, item: T) -> bool {
@@ -650,20 +654,19 @@ mod types {
         Interrupted,
     }
 }
-use crate::data::output::count::PackLocation;
-use std::cell::RefCell;
-use std::collections::HashSet;
+use std::{cell::RefCell, collections::HashSet};
+
 pub use types::{Error, ObjectExpansion, Options, Outcome};
 
-mod reduce {
-    use std::marker::PhantomData;
+use crate::data::output::count::PackLocation;
 
-    use git_features::parallel;
+mod reduce {
+    use std::{marker::PhantomData, sync::Arc};
+
+    use git_features::{parallel, progress::Progress};
 
     use super::Outcome;
     use crate::data::output;
-    use git_features::progress::Progress;
-    use std::sync::Arc;
 
     pub struct Statistics<E, P> {
         total: Outcome,

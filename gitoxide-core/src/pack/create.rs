@@ -349,7 +349,6 @@ struct Statistics {
 
 pub mod input_iteration {
     use git_repository::{hash, traverse};
-
     use quick_error::quick_error;
     quick_error! {
         #[derive(Debug)]
