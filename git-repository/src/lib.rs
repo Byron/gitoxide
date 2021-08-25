@@ -81,13 +81,11 @@ use std::{path::PathBuf, rc::Rc, sync::Arc};
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
-#[cfg(feature = "unstable")]
 pub use git_actor as actor;
 #[cfg(all(feature = "unstable", feature = "git-diff"))]
 pub use git_diff as diff;
 #[cfg(feature = "unstable")]
 pub use git_features::{parallel, progress, progress::Progress};
-#[cfg(feature = "unstable")]
 pub use git_hash as hash;
 #[cfg(feature = "unstable")]
 pub use git_lock as lock;
