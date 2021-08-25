@@ -24,7 +24,7 @@ use git_hash::{oid, ObjectId};
 mod store;
 pub use store::{file, packed};
 
-mod mutable;
+mod fullname;
 ///
 pub mod name;
 ///
