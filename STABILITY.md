@@ -16,7 +16,11 @@ Please note that this guide isn't stable itself and may be adjusted to fit chang
 * _breaking change_
   - A change in code that requires a `dependent crate` to adjust their code to fix compile errors.
 * _release_
-  - A new version of a crate is published to crates.io 
+  - A new version of a crate is published to crates.io
+* _development version_ 
+  - A crate version whose _major_ version is 0.
+* _release version_
+  - A crate version whose _major_ version is 1 or higher.
 
 ## Tiers
 
@@ -98,7 +102,7 @@ Minor version updates for new features can be released when needed assuming ther
 
 ## The _Minimal Stable Rust Version_ (->MSRV)
 
-It is as low as it can be for the crate in questions. While there is no non-pre-release of a tier 1 crate, the MSRV is automatically assumed to be the latest stable version.
+The MSRV is automatically assumed to be the latest stable version.
 
 Increasing the MSRV is not considered a breaking change and doesn't warrant a major version bump itself.
 
