@@ -54,7 +54,7 @@ pub mod edit {
     }
 }
 
-pub mod peel_to_id_in_place {
+pub mod peel_to_oid_in_place {
     use quick_error::quick_error;
 
     use crate::easy;
@@ -122,7 +122,7 @@ where
         .borrow()
     }
 
-    pub fn peel_to_object_in_place(&mut self) -> Result<Oid<'repo, A>, peel_to_id_in_place::Error> {
+    pub fn peel_to_oid_in_place(&mut self) -> Result<Oid<'repo, A>, peel_to_oid_in_place::Error> {
         let repo = self.access.repo()?;
         match self.backing.take().expect("a ref must be set") {
             Backing::LooseFile(mut r) => {

@@ -6,16 +6,10 @@ use cargo_metadata::{
     camino::{Utf8Component, Utf8Path},
     Package,
 };
-use git_repository::{
-    easy::object,
-    hash::ObjectId,
-    lock,
-    prelude::ReferenceAccessExt,
-    refs::{self, file::loose::reference::peel},
-};
+use git_repository::easy::object;
 
-use super::{Context, Options};
-use crate::command::release_impl::{tag_name_for, utils::will};
+use super::{tag_name_for, utils::will, Context, Oid, Options};
+use git_repository::{prelude::ReferenceAccessExt, refs};
 
 fn is_top_level_package(manifest_path: &Utf8Path, shared: &git_repository::Easy) -> bool {
     manifest_path
@@ -53,8 +47,8 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
         .strip_prefix(&ctx.root)
         .expect("workspace members are releative to the root directory");
 
-    let current_commit = ctx.git_easy.find_reference("HEAD")?.peel_to_object_in_place()?;
-    let released_target = tag_ref.peel_to_object_in_place()?;
+    let current_commit = ctx.git_easy.find_reference("HEAD")?.peel_to_oid_in_place()?;
+    let released_target = tag_ref.peel_to_oid_in_place()?;
 
     if repo_relative_crate_dir.as_os_str().is_empty() {
         Ok(current_commit != released_target)
@@ -116,7 +110,7 @@ pub(in crate::command::release_impl) fn commit_changes(
     dry_run: bool,
     empty_commit_possible: bool,
     ctx: &Context,
-) -> anyhow::Result<ObjectId> {
+) -> anyhow::Result<Option<Oid<'_>>> {
     // TODO: replace with gitoxide one day
     let mut cmd = Command::new("git");
     cmd.arg("commit").arg("-am").arg(message.as_ref());
@@ -127,25 +121,20 @@ pub(in crate::command::release_impl) fn commit_changes(
         log::info!("{} run {:?}", will(dry_run), cmd);
     }
     if dry_run {
-        return Ok(ObjectId::null_sha1());
+        return Ok(None);
     }
 
     if !cmd.status()?.success() {
         bail!("Failed to commit changed manifests");
     }
-    let repo = &ctx.git_easy.repo;
-    Ok(repo
-        .refs
-        .loose_find_existing("HEAD")?
-        .peel_to_id_in_place(&repo.refs, ctx.packed_refs.as_ref(), peel::none)?
-        .to_owned())
+    Ok(Some(ctx.git_easy.find_reference("HEAD")?.peel_to_oid_in_place()?))
 }
 
-pub(in crate::command::release_impl) fn create_version_tag(
+pub(in crate::command::release_impl) fn create_version_tag<'repo>(
     publishee: &Package,
     new_version: &str,
-    commit_id: ObjectId,
-    ctx: &Context,
+    commit_id: Option<Oid<'repo>>,
+    ctx: &'repo Context,
     Options {
         verbose,
         dry_run,
@@ -167,9 +156,12 @@ pub(in crate::command::release_impl) fn create_version_tag(
         }
         Ok(Some(format!("refs/tags/{}", tag_name).try_into()?))
     } else {
-        let edits = ctx
-            .git_easy
-            .tag(tag_name, commit_id, lock::acquire::Fail::Immediately, false)?;
+        let edits = ctx.git_easy.tag(
+            tag_name,
+            commit_id.expect("set in --execute mode"),
+            git_lock::acquire::Fail::Immediately,
+            false,
+        )?;
         assert_eq!(edits.len(), 1, "We create only one tag and there is no expansion");
         let tag = edits.into_iter().next().expect("the promised tag");
         log::info!("Created tag {}", tag.name.as_bstr());

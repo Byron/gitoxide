@@ -2,13 +2,11 @@ use std::collections::BTreeSet;
 
 use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Dependency, DependencyKind, Metadata, Package, Version};
-use git_repository::refs::packed;
 
 use crate::command::release::Options;
 
 mod utils;
 use crates_index::Index;
-use git_repository::hash::ObjectId;
 use utils::{
     is_dependency_with_version_requirement, is_workspace_member, names_and_versions, package_by_id, package_by_name,
     package_eq_dependency, package_for_dependency, tag_name_for, will, workspace_package_by_id,
@@ -18,12 +16,13 @@ mod cargo;
 mod git;
 mod manifest;
 
+type Oid<'repo> = git_repository::easy::Oid<'repo, git_repository::Easy>;
+
 pub(in crate::command::release_impl) struct Context {
     root: Utf8PathBuf,
     meta: Metadata,
     git_easy: git_repository::Easy,
-    packed_refs: Option<packed::Buffer>,
-    index: Index,
+    crates_index: Index,
     crate_names: Vec<String>,
     bump: String,
     bump_dependencies: String,
@@ -34,14 +33,12 @@ impl Context {
         let meta = cargo_metadata::MetadataCommand::new().exec()?;
         let root = meta.workspace_root.clone();
         let repo = git_repository::discover(&root)?;
-        let packed_refs = repo.refs.packed_buffer()?;
         let index = Index::new_cargo_default();
         Ok(Context {
             root,
             git_easy: repo.into(),
             meta,
-            packed_refs,
-            index,
+            crates_index: index,
             crate_names,
             bump,
             bump_dependencies,
@@ -57,14 +54,14 @@ pub fn release(options: Options, crates: Vec<String>, bump: String, bump_depende
     }
     let mut ctx = Context::new(crates, bump, bump_dependencies)?;
     if options.update_crates_index {
-        log::info!("Updating crates-io index at '{}'", ctx.index.path().display());
-        ctx.index.update()?;
+        log::info!("Updating crates-io index at '{}'", ctx.crates_index.path().display());
+        ctx.crates_index.update()?;
     } else if !options.no_bump_on_demand {
         log::warn!(
             "Consider running with --update-crates-index to assure bumping on demand uses the latest information"
         );
     }
-    if !ctx.index.exists() {
+    if !ctx.crates_index.exists() {
         log::warn!("Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already");
     }
 
@@ -172,7 +169,7 @@ fn perforrm_multi_version_release(
             .collect();
 
         cargo::publish_crate(publishee, &unpublished_crates, options)?;
-        if let Some(tag_name) = git::create_version_tag(publishee, &new_version, commit_id, ctx, options)? {
+        if let Some(tag_name) = git::create_version_tag(publishee, &new_version, commit_id.clone(), ctx, options)? {
             tag_names.push(tag_name);
         };
     }
@@ -447,12 +444,12 @@ fn select_publishee_bump_spec<'a>(name: &String, ctx: &'a Context) -> &'a str {
     }
 }
 
-fn perform_single_release(
+fn perform_single_release<'repo>(
     meta: &Metadata,
     publishee: &Package,
     options: Options,
-    ctx: &Context,
-) -> anyhow::Result<(String, ObjectId)> {
+    ctx: &'repo Context,
+) -> anyhow::Result<(String, Option<Oid<'repo>>)> {
     let bump_spec = select_publishee_bump_spec(&publishee.name, ctx);
     let new_version = bump_to_valid_version(publishee, bump_spec, ctx, options.no_bump_on_demand)?;
     log::info!(
@@ -481,7 +478,7 @@ fn bump_to_valid_version(
         no_bump_on_demand: bool,
     ) -> anyhow::Result<Version> {
         let bump_on_demand = !no_bump_on_demand;
-        match ctx.index.crate_(&publishee.name) {
+        match ctx.crates_index.crate_(&publishee.name) {
             Some(existing_release) => {
                 let existing_version = semver::Version::parse(existing_release.latest_version().version())?;
                 if existing_version >= new_version {

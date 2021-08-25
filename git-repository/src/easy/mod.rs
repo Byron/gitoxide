@@ -35,6 +35,7 @@ pub mod reference;
 pub mod state;
 
 /// An [ObjectId] with access to a repository.
+#[derive(Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct Oid<'r, A> {
     id: ObjectId,
     access: &'r A,
