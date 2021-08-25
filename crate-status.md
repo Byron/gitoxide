@@ -214,26 +214,11 @@ Check out the [performance discussion][git-traverse-performance] as well.
     
 ### git-tempfile
 
-Use tempfiles to minimize the risk of resource leakage when preparing to overwrite or create a file with new content
-in a signal-safe way, making the change atomic.
-
-Tempfiles can also be used as locks as only one tempfile can exist at a given path at a time.
-
-* [x] registered temporary files which are deleted automatically as the process terminates or on drop
-   * [x] write to temorary file and persist it under new name
-   * [x] close temporary files to convert them into a marker while saving system resources
-   * [x] mark paths with a closed temporary file
-* [x] persist temporary files to prevent them from perishing.
-* [x] signal-handler integration with `git-repository` to clean lockfiles before the process is aborted.
-* [x] use a temporary file transparently due thanks to implementations of `std::io` traits
+See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-tempfile/README.md).
 
 ### git-lock
 
-Use lock-files in the way git does with auto-cleanup being the most notable feature.
-
-* [ ] writable lock files that can be committed to atomically replace the resource they lock
-* [ ] read-only markers that lock a resource without the intend to overwrite it
-* [ ] auto-removal of the lockfiles and intermediate directories on drop or on signal
+See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.md).
 
 ### git-config
 * [ ] read

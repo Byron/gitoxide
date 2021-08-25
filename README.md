@@ -50,10 +50,13 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 
 Follow linked crate name for detailed status. Please note that all crates follow [semver] as well as the [stability guide].
 
-* **primed for 1.0 releaes**
-  - [git-tempfile](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tempfile)
-  - [git-lock](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-lock)
+### Released
 
+* **Stability Tier 2**
+  - [git-tempfile](https://github.com/Byron/gitoxide/blob/main/git-tempfile/README.md)
+  - [git-lock](https://github.com/Byron/gitoxide/blob/main/git-lock/README.md)
+
+### In Development/Pre-Release
 * **usable**
   * [git-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-actor)
   * [git-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-hash)
