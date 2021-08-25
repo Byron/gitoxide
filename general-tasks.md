@@ -2,10 +2,10 @@
 
 ### Get rid of unsafe pointer magic [WithSidebands] _(cost: high)_
 
-What needs to be done is to transform the &mut StreamingPeekableIter into a child future, and when exhausted, it must be transformed back 
-into the &mut _ that created it. That way, only a single mutable reference to said Iter is present at any time. Unfortunately the generated futures (using async) 
-don't support that as we would have to keep both the future and the parent that created it inside of our own struct. Instead of hiding this using 
-pointers, one could implement the magical part by hand, a custom future, which happily dissolves into its mutable parent iter ref. 
+What needs to be done is to transform the &mut StreamingPeekableIter into a child future, and when exhausted, it must be transformed back
+into the &mut _ that created it. That way, only a single mutable reference to said Iter is present at any time. Unfortunately the generated futures (using async)
+don't support that as we would have to keep both the future and the parent that created it inside of our own struct. Instead of hiding this using
+pointers, one could implement the magical part by hand, a custom future, which happily dissolves into its mutable parent iter ref.
 That would be quite some work though.
 
 [WithSidebands]: https://github.com/Byron/gitoxide/blob/fed6c69fd8b2877a66fe9d87916f3d54a3fc342b/git-packetline/src/read/sidebands/async_io.rs#L197
@@ -34,11 +34,11 @@ That would be quite some work though.
 * [ ] Pack decoding takes [5x more memory][android-base-discussion] than git on the [android-base repository][android-base-repo].
 * [ ] On **ARM64 on MacOS** the SHA1 implementation of the [`sha-1` crate](https://github.com/RustCrypto/hashes) is capped at about 550MB/s, half the speed of what I saw on Intel and about 50% slower than what's implemented in `libcorecrypto.dylib`. Get that fast and the decoding stage will be able
       to beat git on fewer cores. [See this comment for more](https://github.com/Byron/gitoxide/discussions/46#discussioncomment-511268). Right now we only do when scaling beyond what `git` can do due to lock contention.
-      * This should work once the `asm` feature can be enabled in the `sha-1` crate, which currently fails but is tracked [in this issue](https://github.com/RustCrypto/asm-hashes/issues/28).
+    * This should work once the `asm` feature can be enabled in the `sha-1` crate, which currently fails but is tracked [in this issue](https://github.com/RustCrypto/asm-hashes/issues/28).
         * If it's not fast enough, one might hope that ARM8 instructions can improve performance, but right now they [aren't available](https://github.com/rust-lang/stdarch/issues/1055#issuecomment-803737796).
         * Maybe the path forward for that crate is to [use system or openssl dylibs](https://github.com/RustCrypto/asm-hashes/issues/5).
 * [ ] ~~`pack::cache::lru::Memory` all copy input data in individual allocations. Could a pre-allocated arena or slab be faster?~~
-  * Probably not, as allocation performance might not be the issue here. Even though there definitely is a lot of effectively useless copying 
+  * Probably not, as allocation performance might not be the issue here. Even though there definitely is a lot of effectively useless copying
     of data and deallocation happening if caches are not used after all.
 * [ ] Add more control over the amount of memory used for the `less-memory` algorithm of `pack-verify` to increase cache hit rate at the cost of memory.
   Note that depending on this setting, it might not be needed anymore to iterated over sorted offsets, freeing 150MB of memory in the process
@@ -53,7 +53,7 @@ That would be quite some work though.
   * @joshtriplett writes: "Would it be possible, with some care, to use the index to figure out in advance which objects will be needed again and which ones won't? Could you compute a small DAG of objects you need for deltas (without storing the objects themselves), and use that to decide the order you process objects in?"
   * Note that there is tension between adding more latency to build such tree and the algorithms ability to (otherwise) start instantly.
   * potential savings: unknown
-    
+
 [android-base-discussion]: https://github.com/Byron/gitoxide/pull/81
 [android-base-repo]: https://android.googlesource.com/platform/frameworks/base
 [josh-aug-12]: https://github.com/Byron/gitoxide/issues/1#issuecomment-672566602
