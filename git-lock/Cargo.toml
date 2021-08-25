@@ -6,7 +6,7 @@ license = "MIT/Apache-2.0"
 description = "A git-style lock-file implementation"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
-include = ["src/**/*"]
+include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
 
 [lib]
 doctest = false

@@ -50,6 +50,10 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 
 Follow linked crate name for detailed status. Please note that all crates follow [semver] as well as the [stability guide].
 
+* **primed for 1.0 releaes**
+  - [git-tempfile](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tempfile)
+  - [git-lock](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-lock)
+
 * **usable**
   * [git-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-actor)
   * [git-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-hash)
@@ -66,8 +70,6 @@ Follow linked crate name for detailed status. Please note that all crates follow
   * [git-traverse](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-traverse)
   * [git-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config)
   * [git-features](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-features)
-  * [git-tempfile](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tempfile)
-  * [git-lock](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-lock)
   * [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
   * `gitoxide-core`
 * **very early**    

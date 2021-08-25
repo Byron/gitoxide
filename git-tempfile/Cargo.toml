@@ -6,7 +6,7 @@ license = "MIT/Apache-2.0"
 description = "A tempfile implementation with a global registry to assure cleanup"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
-include = ["src/**/*"]
+include = ["src/**/*", "LICENSE-*", "CHANGELOG.md"]
 
 [lib]
 doctest = false
