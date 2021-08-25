@@ -101,7 +101,7 @@ pub enum Change {
 
 impl Change {
     /// Return references to values that are in common between all variants.
-    pub fn previous_value(&self) -> Option<crate::Target<'_>> {
+    pub fn previous_value(&self) -> Option<crate::TargetRef<'_>> {
         match self {
             Change::Update { mode: Create::Only, .. } => None,
             Change::Update {
@@ -139,7 +139,7 @@ mod ext {
 
     use crate::{
         transaction::{Change, LogChange, RefEdit, RefLog, Target},
-        Namespace, PartialName,
+        Namespace, PartialNameRef,
     };
 
     /// An extension trait to perform commonly used operations on edits across different ref stores.
@@ -155,7 +155,7 @@ mod ext {
         /// Note no action is performed if deref isn't specified.
         fn extend_with_splits_of_symbolic_refs(
             &mut self,
-            find: impl FnMut(PartialName<'_>) -> Option<Target>,
+            find: impl FnMut(PartialNameRef<'_>) -> Option<Target>,
             make_entry: impl FnMut(usize, RefEdit) -> T,
         ) -> Result<(), std::io::Error>;
 
@@ -168,7 +168,7 @@ mod ext {
         /// Users call this to assure derefs are honored and duplicate checks are done.
         fn pre_process(
             &mut self,
-            find: impl FnMut(PartialName<'_>) -> Option<Target>,
+            find: impl FnMut(PartialNameRef<'_>) -> Option<Target>,
             make_entry: impl FnMut(usize, RefEdit) -> T,
             namespace: impl Into<Option<Namespace>>,
         ) -> Result<(), std::io::Error> {
@@ -198,7 +198,7 @@ mod ext {
 
         fn extend_with_splits_of_symbolic_refs(
             &mut self,
-            mut find: impl FnMut(PartialName<'_>) -> Option<Target>,
+            mut find: impl FnMut(PartialNameRef<'_>) -> Option<Target>,
             mut make_entry: impl FnMut(usize, RefEdit) -> E,
         ) -> Result<(), std::io::Error> {
             let mut new_edits = Vec::new();

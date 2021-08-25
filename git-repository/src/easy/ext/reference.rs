@@ -12,7 +12,7 @@ use git_ref::{
     file::find::Error,
     mutable::Target,
     transaction::{Change, Create, RefEdit},
-    PartialName,
+    PartialNameRef,
 };
 
 /// Obtain and alter references comfortably
@@ -77,7 +77,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
 
     fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_, Self>, reference::find::existing::Error>
     where
-        Name: TryInto<PartialName<'a>, Error = E>,
+        Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
     {
         self.try_find_reference(name)?
@@ -86,7 +86,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
 
     fn try_find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_, Self>>, reference::find::Error>
     where
-        Name: TryInto<PartialName<'a>, Error = E>,
+        Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
     {
         let state = self.state();

@@ -114,7 +114,7 @@ where
         }
     }
 
-    pub fn name(&self) -> refs::FullName<'_> {
+    pub fn name(&self) -> refs::FullNameRef<'_> {
         match self.backing.as_ref().expect("always set") {
             Backing::OwnedPacked { name, .. } => name,
             Backing::LooseFile(r) => &r.name,

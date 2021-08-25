@@ -321,7 +321,7 @@ impl<'s> Transaction<'s> {
 
             // traverse parent chain from leaf/peeled ref and set the leaf previous oid accordingly
             // to help with their reflog entries
-            if let (Some(crate::Target::Peeled(oid)), Some(parent_idx)) =
+            if let (Some(crate::TargetRef::Peeled(oid)), Some(parent_idx)) =
                 (change.update.change.previous_value(), change.parent_index)
             {
                 let oid = oid.to_owned();

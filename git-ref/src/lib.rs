@@ -34,10 +34,10 @@ pub mod transaction;
 
 /// A validated and potentially partial reference name - it can safely be used for common operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub struct FullName<'a>(&'a BStr);
+pub struct FullNameRef<'a>(&'a BStr);
 /// A validated complete and fully qualified reference name, safe to use for all operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub struct PartialName<'a>(&'a BStr);
+pub struct PartialNameRef<'a>(&'a BStr);
 
 /// A validated prefix for references to act as a namespace.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -57,7 +57,7 @@ pub enum Kind {
 
 /// Denotes a ref target, equivalent to [`Kind`], but with signature_ref data.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub enum Target<'a> {
+pub enum TargetRef<'a> {
     /// A ref that points to an object id
     Peeled(&'a oid),
     /// A ref that points to another reference by its validated name, adding a level of indirection.
@@ -65,4 +65,4 @@ pub enum Target<'a> {
 }
 
 mod parse;
-mod target;
+mod target_ref;

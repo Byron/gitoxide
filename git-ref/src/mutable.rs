@@ -44,21 +44,21 @@ impl TryFrom<BString> for FullName {
     }
 }
 
-impl<'a> From<crate::FullName<'a>> for FullName {
-    fn from(value: crate::FullName<'a>) -> Self {
+impl<'a> From<crate::FullNameRef<'a>> for FullName {
+    fn from(value: crate::FullNameRef<'a>) -> Self {
         FullName(value.as_bstr().into())
     }
 }
 
 impl FullName {
     /// Interpret this fully qualified reference name as partial name.
-    pub fn to_partial(&self) -> crate::PartialName<'_> {
-        crate::PartialName(self.0.as_bstr())
+    pub fn to_partial(&self) -> crate::PartialNameRef<'_> {
+        crate::PartialNameRef(self.0.as_bstr())
     }
 
     /// Interpret this fully qualified reference as shared full name
-    pub fn borrow(&self) -> crate::FullName<'_> {
-        crate::FullName(self.0.as_bstr())
+    pub fn borrow(&self) -> crate::FullNameRef<'_> {
+        crate::FullNameRef(self.0.as_bstr())
     }
 
     /// Convert this name into the relative path, lossily, identifying the reference location relative to a repository
@@ -105,10 +105,10 @@ impl Target {
     }
 
     /// Interpret this owned Target as shared Target
-    pub fn borrow(&self) -> crate::Target<'_> {
+    pub fn borrow(&self) -> crate::TargetRef<'_> {
         match self {
-            Target::Peeled(oid) => crate::Target::Peeled(oid),
-            Target::Symbolic(name) => crate::Target::Symbolic(name.0.as_bstr()),
+            Target::Peeled(oid) => crate::TargetRef::Peeled(oid),
+            Target::Symbolic(name) => crate::TargetRef::Symbolic(name.0.as_bstr()),
         }
     }
 
@@ -133,20 +133,20 @@ impl Target {
     }
 }
 
-impl<'a> From<crate::Target<'a>> for Target {
-    fn from(src: crate::Target<'a>) -> Self {
+impl<'a> From<crate::TargetRef<'a>> for Target {
+    fn from(src: crate::TargetRef<'a>) -> Self {
         match src {
-            crate::Target::Peeled(oid) => Target::Peeled(oid.to_owned()),
-            crate::Target::Symbolic(name) => Target::Symbolic(FullName(name.to_owned())),
+            crate::TargetRef::Peeled(oid) => Target::Peeled(oid.to_owned()),
+            crate::TargetRef::Symbolic(name) => Target::Symbolic(FullName(name.to_owned())),
         }
     }
 }
 
-impl<'a> PartialEq<crate::Target<'a>> for Target {
-    fn eq(&self, other: &crate::Target<'a>) -> bool {
+impl<'a> PartialEq<crate::TargetRef<'a>> for Target {
+    fn eq(&self, other: &crate::TargetRef<'a>) -> bool {
         match (self, other) {
-            (Target::Peeled(lhs), crate::Target::Peeled(rhs)) => lhs == rhs,
-            (Target::Symbolic(lhs), crate::Target::Symbolic(rhs)) => lhs.as_bstr() == *rhs,
+            (Target::Peeled(lhs), crate::TargetRef::Peeled(rhs)) => lhs == rhs,
+            (Target::Symbolic(lhs), crate::TargetRef::Symbolic(rhs)) => lhs.as_bstr() == *rhs,
             _ => false,
         }
     }

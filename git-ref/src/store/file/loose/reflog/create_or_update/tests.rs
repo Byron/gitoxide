@@ -1,5 +1,5 @@
 use super::*;
-use crate::{file::WriteReflog, store::file::log, FullName};
+use crate::{file::WriteReflog, store::file::log, FullNameRef};
 use bstr::ByteSlice;
 use git_actor::{Sign, Signature, Time};
 use git_lock::acquire::Fail;
@@ -16,7 +16,7 @@ fn empty_store(writemode: WriteReflog) -> Result<(TempDir, file::Store)> {
 }
 
 fn reflock(store: &file::Store, full_name: &str) -> Result<git_lock::Marker> {
-    let full_name: FullName<'_> = full_name.try_into()?;
+    let full_name: FullNameRef<'_> = full_name.try_into()?;
     git_lock::Marker::acquire_to_hold_resource(
         store.reference_path(&full_name.to_path()),
         Fail::Immediately,

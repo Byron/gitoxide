@@ -4,7 +4,7 @@ use bstr::{BStr, BString};
 use filebuffer::FileBuffer;
 use git_hash::ObjectId;
 
-use crate::{transaction::RefEdit, FullName};
+use crate::{transaction::RefEdit, FullNameRef};
 
 enum Backing {
     /// The buffer is loaded entirely in memory, along with the `offset` to the first record past the header.
@@ -42,7 +42,7 @@ pub(crate) struct Transaction {
 #[derive(Debug, PartialEq, Eq)]
 pub struct Reference<'a> {
     /// The validated full name of the reference.
-    pub name: FullName<'a>,
+    pub name: FullNameRef<'a>,
     /// The target object id of the reference, hex encoded.
     pub target: &'a BStr,
     /// The fully peeled object id, hex encoded, that the ref is ultimately pointing to

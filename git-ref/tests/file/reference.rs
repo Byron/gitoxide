@@ -68,13 +68,13 @@ mod peel {
         )
         .expect("loose ref");
         assert!(
-            matches!(nr.target.borrow(), git_ref::Target::Peeled(_)),
+            matches!(nr.target.borrow(), git_ref::TargetRef::Peeled(_)),
             "iteration peels a single level"
         );
         assert!(nr.follow_symbolic(&store, None).is_none(), "end of iteration");
         assert_eq!(
             nr.target.borrow(),
-            git_ref::Target::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
+            git_ref::TargetRef::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
             "we still have the peeled target"
         );
         Ok(())

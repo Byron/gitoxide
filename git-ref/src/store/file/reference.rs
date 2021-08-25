@@ -11,7 +11,7 @@ use crate::{
         file::{log, loose},
         packed,
     },
-    FullName, Namespace,
+    FullNameRef, Namespace,
 };
 
 /// Either a loose or packed reference, depending on where it was found.
@@ -144,7 +144,7 @@ impl<'p> Reference<'p> {
     }
 
     /// Return the full validated name of the reference, which may include a namespace.
-    pub fn name(&self) -> FullName<'_> {
+    pub fn name(&self) -> FullNameRef<'_> {
         match self {
             Reference::Packed(p) => p.name,
             Reference::Loose(l) => l.name.borrow(),
@@ -154,12 +154,12 @@ impl<'p> Reference<'p> {
     /// Return the full validated name of the reference, with the given namespace stripped if possible.
     ///
     /// If the reference name wasn't prefixed with `namespace`, `None` is returned instead.
-    pub fn name_without_namespace(&self, namespace: &Namespace) -> Option<FullName<'_>> {
+    pub fn name_without_namespace(&self, namespace: &Namespace) -> Option<FullNameRef<'_>> {
         self.name()
             .0
             .as_bstr()
             .strip_prefix(namespace.0.as_bstr().as_ref())
-            .map(|stripped| FullName(stripped.as_bstr()))
+            .map(|stripped| FullNameRef(stripped.as_bstr()))
     }
 
     /// Return the target to which the reference points to.

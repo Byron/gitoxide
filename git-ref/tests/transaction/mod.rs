@@ -5,7 +5,7 @@ mod refedit_ext {
     use git_ref::{
         mutable::Target,
         transaction::{Change, Create, RefEdit, RefEditsExt, RefLog},
-        PartialName,
+        PartialNameRef,
     };
 
     #[derive(Default)]
@@ -26,7 +26,7 @@ mod refedit_ext {
                 },
             }
         }
-        fn find_existing(&self, name: PartialName<'_>) -> Option<Target> {
+        fn find_existing(&self, name: PartialNameRef<'_>) -> Option<Target> {
             self.targets.borrow_mut().remove(name.as_bstr())
         }
     }
@@ -151,14 +151,14 @@ mod refedit_ext {
         use git_ref::{
             mutable::Target,
             transaction::{Change, Create, LogChange, RefEdit, RefEditsExt, RefLog},
-            FullName, PartialName,
+            FullNameRef, PartialNameRef,
         };
         use git_testtools::hex_to_id;
 
         use crate::transaction::refedit_ext::MockStore;
 
         fn find<'a>(edits: &'a [RefEdit], name: &str) -> &'a RefEdit {
-            let name: FullName = name.try_into().unwrap();
+            let name: FullNameRef = name.try_into().unwrap();
             edits
                 .iter()
                 .find(|e| e.name.as_bstr() == name.as_bstr())
@@ -229,7 +229,7 @@ mod refedit_ext {
                 next_item: Cell<bool>,
             }
             impl Cycler {
-                fn find_existing(&self, _name: PartialName<'_>) -> Option<Target> {
+                fn find_existing(&self, _name: PartialNameRef<'_>) -> Option<Target> {
                     let item: bool = self.next_item.get();
                     self.next_item.set(!item);
                     Some(Target::Symbolic(

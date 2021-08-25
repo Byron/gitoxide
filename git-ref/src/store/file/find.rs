@@ -14,7 +14,7 @@ use crate::{
         file::{loose, path_to_name},
         packed,
     },
-    PartialName,
+    PartialNameRef,
 };
 
 enum Transform {
@@ -41,7 +41,7 @@ impl file::Store {
         packed: Option<&'p packed::Buffer>,
     ) -> Result<Option<file::Reference<'p>>, Error>
     where
-        Name: TryInto<PartialName<'a>, Error = E>,
+        Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
     {
         let path = partial.try_into()?;
@@ -51,7 +51,7 @@ impl file::Store {
     /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
     pub fn loose_find<'a, Name, E>(&self, partial: Name) -> Result<Option<loose::Reference>, Error>
     where
-        Name: TryInto<PartialName<'a>, Error = E>,
+        Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
     {
         self.find(partial, None)
@@ -116,7 +116,7 @@ impl file::Store {
                 if is_definitely_absolute {
                     if let Some(packed) = packed {
                         let full_name = path_to_name(relative_path);
-                        let full_name = PartialName((*full_name).as_bstr());
+                        let full_name = PartialNameRef((*full_name).as_bstr());
                         if let Some(packed_ref) = packed.find(full_name)? {
                             return Ok(Some(file::Reference::Packed(packed_ref)));
                         };
@@ -173,7 +173,7 @@ pub mod existing {
             file::{find, loose},
             packed,
         },
-        PartialName,
+        PartialNameRef,
     };
 
     impl file::Store {
@@ -184,7 +184,7 @@ pub mod existing {
             packed: Option<&'p packed::Buffer>,
         ) -> Result<file::Reference<'p>, Error>
         where
-            Name: TryInto<PartialName<'a>, Error = E>,
+            Name: TryInto<PartialNameRef<'a>, Error = E>,
             crate::name::Error: From<E>,
         {
             let path = partial
@@ -200,7 +200,7 @@ pub mod existing {
         /// Similar to [`file::Store::find()`] won't handle packed-refs.
         pub fn loose_find_existing<'a, Name, E>(&self, partial: Name) -> Result<loose::Reference, Error>
         where
-            Name: TryInto<PartialName<'a>, Error = E>,
+            Name: TryInto<PartialNameRef<'a>, Error = E>,
             crate::name::Error: From<E>,
         {
             self.find_existing(partial, None)
