@@ -1610,7 +1610,7 @@ dependencies = [
 [[package]]
 name = "lock_api"
 version = "0.4.4"
-source = "git+https://github.com/Amanieu/parking_lot?branch=master#6bbf522dfe8c458909f8683b3f4b558b03e58b65"
+source = "git+https://github.com/Amanieu/parking_lot?branch=master#c866ba80e4c38b0119823ab93f822f8e9dae2ce7"
 dependencies = [
  "scopeguard",
 ]
@@ -1860,7 +1860,7 @@ dependencies = [
 [[package]]
 name = "parking_lot"
 version = "0.11.1"
-source = "git+https://github.com/Amanieu/parking_lot?branch=master#6bbf522dfe8c458909f8683b3f4b558b03e58b65"
+source = "git+https://github.com/Amanieu/parking_lot?branch=master#c866ba80e4c38b0119823ab93f822f8e9dae2ce7"
 dependencies = [
  "instant",
  "lock_api 0.4.4 (git+https://github.com/Amanieu/parking_lot?branch=master)",
@@ -1884,7 +1884,7 @@ dependencies = [
 [[package]]
 name = "parking_lot_core"
 version = "0.8.3"
-source = "git+https://github.com/Amanieu/parking_lot?branch=master#6bbf522dfe8c458909f8683b3f4b558b03e58b65"
+source = "git+https://github.com/Amanieu/parking_lot?branch=master#c866ba80e4c38b0119823ab93f822f8e9dae2ce7"
 dependencies = [
  "cfg-if",
  "instant",
