@@ -22,11 +22,11 @@ impl<'a> Object<'a> {
             pack_location: None,
         }
     }
-    /// Decodes the data in the backing slice into a [`git_object::signature_ref::Object`], allowing to access all of its data
+    /// Decodes the data in the backing slice into a [`git_object::immutable::Object`], allowing to access all of its data
     /// conveniently. The cost of parsing an object is negligible.
     ///
     /// **Note** that [mutable, decoded objects][git_object::mutable::Object] can be created from a [`crate::data::Object`]
-    /// using [`git_object::signature_ref::Object::into_mutable()`].
+    /// using [`git_object::immutable::Object::into_mutable()`].
     pub fn decode(&self) -> Result<immutable::Object<'a>, immutable::object::decode::Error> {
         Ok(match self.kind {
             git_object::Kind::Tree => immutable::Object::Tree(immutable::Tree::from_bytes(self.data)?),
