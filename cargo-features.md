@@ -177,6 +177,20 @@ be selected.
     details information about the error location will be collected.
   - Use it in applications which expect broken or invalid objects or for debugging purposes. Incorrectly formatted objects aren't at all
     common otherwise.
+  
+### git-repository
+
+* **unstable**
+  - Re-export stability tier 2 crates for convenience and make `Repository` struct fields with types from these crates publicly accessible.
+  - Doing so is less stable than the stability tier 1 that `git-repository` is a member of.
+
+The following toggles can be used to reduce dependencies.
+
+* **local**
+  - Provide additional non-networked functionality 
+* **network**
+  - Provide networked functionality
+* **one-stop-shop** = _local_ + _network_
 
 ### Serialization Support
 
