@@ -132,6 +132,11 @@ check: ## Build all code in suitable configurations
 					  && cargo check --no-default-features --features local \
 					  && cargo check --no-default-features --features network \
 					 && cargo check --no-default-features
+	cd cargo-smart-release && cargo check
+	cd experiments/object-access && cargo check
+	cd experiments/diffing && cargo check
+	cd experiments/traversal && cargo check
+	cd experiments/hash-owned-borrowed && cargo check
 
 unit-tests: ## run all unit tests
 	cargo test --all

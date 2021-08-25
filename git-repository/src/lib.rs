@@ -136,9 +136,15 @@ pub mod repository;
 /// Namely, this is an object database, a reference database to point to objects.
 pub struct Repository {
     /// A store for references to point at objects
+    #[cfg(feature = "unstable")]
     pub refs: git_ref::file::Store,
+    #[cfg(not(feature = "unstable"))]
+    pub(crate) refs: git_ref::file::Store,
     /// A store for objects that contain data
+    #[cfg(feature = "unstable")]
     pub odb: git_odb::linked::Store,
+    #[cfg(not(feature = "unstable"))]
+    pub(crate) odb: git_odb::linked::Store,
     /// TODO: git-config should be here - it's read a lot but not written much in must applications, so shouldn't be in `State`.
     ///       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
     ///       packs are refreshed. This would be `git_config::fs::Config` when ready.
