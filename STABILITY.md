@@ -70,9 +70,7 @@ The following schematic helps to visualize what follows.
 
 Pre-release crates is marked with major version number zero, for example `0.1.4` and lives in stability tier 3 _(->ST3)_.
 
-It's acceptable to let each breaking change be followed by a minor version release.
-Dependent crates are advised to use `=<version>` version requirements to avoid automatic updates of patch levels which
-may be breaking if they also depend on other `plumbing crates`.
+It's acceptable to let each breaking change be immediately followed by a minor version release.
 
 ### Tier 2: released plumbing crates
 
@@ -96,7 +94,8 @@ The earliest release date is July 1st. Had the second breaking change happened i
 
 Intermediate pre-releases may be created at most every 4 weeks by appending `-alpha.X` where `X` is the sequential release number. These should help testing
 breaking changes or new features without forcing the use of `git` sources for dependencies in cargo manifests. Pre-release releases must pin all the pre-release
-crates they depend on to prevent automatic upgrades.
+crates they depend on to prevent automatic upgrades. Dependent external crates are advised to pin their `alpha` dependencies with `=<version>` version requirements to avoid
+automatic updates which may be breaking.
 
 Minor version updates for new features can be released when needed assuming there are no other breaking changes, updating the build identifiers for year and month accordingly.
 
