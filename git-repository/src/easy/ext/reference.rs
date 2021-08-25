@@ -35,7 +35,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
                     },
                     new: Target::Peeled(target.into()),
                 },
-                name: format!("tags/refs/{}", name.as_ref()).try_into()?,
+                name: format!("refs/tags/{}", name.as_ref()).try_into()?,
                 deref: false,
             }),
             lock_mode,
