@@ -60,4 +60,4 @@ pub struct Time {
     pub sign: Sign,
 }
 
-mod types;
+mod time;

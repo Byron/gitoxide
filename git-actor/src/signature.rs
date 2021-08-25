@@ -29,7 +29,7 @@ mod convert {
 
     impl Signature {
         /// Borrow this instance as signature_ref
-        pub fn borrow(&self) -> SignatureRef<'_> {
+        pub fn to_ref(&self) -> SignatureRef<'_> {
             SignatureRef {
                 name: self.name.as_ref(),
                 email: self.email.as_ref(),
