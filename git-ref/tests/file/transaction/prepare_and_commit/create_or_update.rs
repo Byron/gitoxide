@@ -11,8 +11,8 @@ use git_ref::{
         transaction::{self, PackedRefs},
         WriteReflog,
     },
-    mutable::Target,
     transaction::{Change, Create, LogChange, RefEdit, RefLog},
+    Target,
 };
 use git_testtools::hex_to_id;
 use std::convert::TryInto;
@@ -328,7 +328,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         let head = store.loose_find_existing(edits[0].name.to_partial())?;
         assert_eq!(head.name.as_bstr(), "HEAD");
         assert_eq!(head.kind(), git_ref::Kind::Symbolic);
-        assert_eq!(head.target.borrow().as_name(), Some(referent.as_bytes().as_bstr()));
+        assert_eq!(head.target.to_ref().as_name(), Some(referent.as_bytes().as_bstr()));
         assert!(!head.log_exists(&store), "no reflog is written for symbolic ref");
         assert!(store.loose_find(referent)?.is_none(), "referent wasn't created");
 
@@ -393,7 +393,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             "head is still symbolic, not detached"
         );
         assert_eq!(
-            head.target.borrow().as_name(),
+            head.target.to_ref().as_name(),
             Some(referent.as_bytes().as_bstr()),
             "it still points to the referent"
         );
@@ -401,7 +401,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         let referent_ref = store.loose_find_existing(referent)?;
         assert_eq!(referent_ref.kind(), git_ref::Kind::Peeled, "referent is a peeled ref");
         assert_eq!(
-            referent_ref.target.borrow().as_id(),
+            referent_ref.target.to_ref().as_id(),
             Some(new_oid.as_ref()),
             "referent points to desired hash"
         );
@@ -431,7 +431,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
 fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_though_it_should() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
     let head = store.loose_find_existing("HEAD")?;
-    let referent = head.target.borrow().as_name().expect("symbolic ref").to_owned();
+    let referent = head.target.to_ref().as_name().expect("symbolic ref").to_owned();
     let previous_head_reflog = reflog_lines(&store, "HEAD")?;
 
     let new_id = hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc");

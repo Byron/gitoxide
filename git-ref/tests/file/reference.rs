@@ -68,12 +68,12 @@ mod peel {
         )
         .expect("loose ref");
         assert!(
-            matches!(nr.target.borrow(), git_ref::TargetRef::Peeled(_)),
+            matches!(nr.target.to_ref(), git_ref::TargetRef::Peeled(_)),
             "iteration peels a single level"
         );
         assert!(nr.follow_symbolic(&store, None).is_none(), "end of iteration");
         assert_eq!(
-            nr.target.borrow(),
+            nr.target.to_ref(),
             git_ref::TargetRef::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
             "we still have the peeled target"
         );
@@ -203,8 +203,8 @@ mod parse {
                     let reference =
                         Reference::try_from_path("HEAD".try_into().expect("valid static name"), $input).unwrap();
                     assert_eq!(reference.kind(), $kind);
-                    assert_eq!(reference.target.borrow().as_id(), $id);
-                    assert_eq!(reference.target.borrow().as_name(), $ref);
+                    assert_eq!(reference.target.to_ref().as_id(), $id);
+                    assert_eq!(reference.target.to_ref().as_name(), $ref);
                 }
             };
         }

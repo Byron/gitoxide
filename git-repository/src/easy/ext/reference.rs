@@ -10,9 +10,8 @@ use git_actor as actor;
 use git_lock as lock;
 use git_ref::{
     file::find::Error,
-    mutable::Target,
     transaction::{Change, Create, RefEdit},
-    PartialNameRef,
+    PartialNameRef, Target,
 };
 
 /// Obtain and alter references comfortably

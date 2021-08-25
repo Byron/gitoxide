@@ -1,5 +1,4 @@
 use crate::{
-    mutable::Target,
     packed,
     store::{
         file,
@@ -10,6 +9,7 @@ use crate::{
         },
     },
     transaction::{Change, Create, LogChange, RefEdit, RefEditsExt, RefLog},
+    Target,
 };
 
 impl<'s> Transaction<'s> {
@@ -44,7 +44,7 @@ impl<'s> Transaction<'s> {
             })
             .and_then(|maybe_loose| match (maybe_loose, packed) {
                 (None, Some(packed)) => packed
-                    .find(change.update.name.borrow())
+                    .find(change.update.name.to_ref())
                     .map(|opt| opt.map(file::Reference::Packed))
                     .map_err(Error::from),
                 (None, None) => Ok(None),
@@ -104,7 +104,7 @@ impl<'s> Transaction<'s> {
 
                 let existing_ref = existing_ref?;
                 match (&previous, &existing_ref) {
-                    (Create::Only, Some(existing)) if existing.target() != new.borrow() => {
+                    (Create::Only, Some(existing)) if existing.target() != new.to_ref() => {
                         let new = new.clone();
                         return Err(Error::MustNotExist {
                             full_name: change.name(),
@@ -342,8 +342,8 @@ mod error {
     use quick_error::quick_error;
 
     use crate::{
-        mutable::Target,
         store::{file, packed},
+        Target,
     };
 
     quick_error! {

@@ -9,12 +9,11 @@ pub use error::Error;
 
 use crate::{
     file,
-    mutable::FullName,
     store::{
         file::{loose, path_to_name},
         packed,
     },
-    PartialNameRef,
+    FullName, PartialNameRef,
 };
 
 enum Transform {

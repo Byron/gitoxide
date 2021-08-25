@@ -3,12 +3,7 @@ use std::{borrow::Cow, convert::TryFrom, fmt, path::Path};
 use bstr::{BStr, BString, ByteSlice};
 use git_hash::{oid, ObjectId};
 
-use crate::Kind;
-
-/// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
-/// of a symbolic reference
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct FullName(pub(crate) BString);
+use crate::{FullName, Kind, Target};
 
 impl TryFrom<&str> for FullName {
     type Error = git_validate::refname::Error;
@@ -57,7 +52,7 @@ impl FullName {
     }
 
     /// Interpret this fully qualified reference as shared full name
-    pub fn borrow(&self) -> crate::FullNameRef<'_> {
+    pub fn to_ref(&self) -> crate::FullNameRef<'_> {
         crate::FullNameRef(self.0.as_bstr())
     }
 
@@ -74,17 +69,6 @@ impl FullName {
     pub fn as_bstr(&self) -> &BStr {
         self.0.as_bstr()
     }
-}
-
-/// Denotes a ref target, equivalent to [`Kind`][super::Kind], but with mutable data.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub enum Target {
-    /// A ref that points to an object id
-    Peeled(ObjectId),
-    /// A ref that points to another reference by its validated name, adding a level of indirection.
-    ///
-    /// Note that this is an extension of gitoxide which will be helpful in logging all reference changes.
-    Symbolic(FullName),
 }
 
 impl Target {
@@ -105,7 +89,7 @@ impl Target {
     }
 
     /// Interpret this owned Target as shared Target
-    pub fn borrow(&self) -> crate::TargetRef<'_> {
+    pub fn to_ref(&self) -> crate::TargetRef<'_> {
         match self {
             Target::Peeled(oid) => crate::TargetRef::Peeled(oid),
             Target::Symbolic(name) => crate::TargetRef::Symbolic(name.0.as_bstr()),

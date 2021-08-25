@@ -4,8 +4,8 @@ use crate::file::{
 };
 use git_lock::acquire::Fail;
 use git_ref::{
-    mutable::Target,
     transaction::{Change, RefEdit, RefLog},
+    Target,
 };
 use git_testtools::hex_to_id;
 use std::convert::TryInto;

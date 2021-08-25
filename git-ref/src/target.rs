@@ -26,7 +26,7 @@ impl<'a> TargetRef<'a> {
         }
     }
     /// Convert this instance into an owned version, without consuming it.
-    pub fn to_owned(self) -> crate::mutable::Target {
+    pub fn into_owned(self) -> crate::Target {
         self.into()
     }
 }

@@ -2,11 +2,11 @@ use quick_error::quick_error;
 
 use crate::{
     file,
-    mutable::Target,
     store::{
         file::{find, loose},
         packed,
     },
+    Target,
 };
 
 quick_error! {
@@ -67,8 +67,8 @@ pub mod to_id {
     use quick_error::quick_error;
 
     use crate::{
-        mutable::{FullName, Target},
         store::{file, file::loose, packed},
+        FullName, Target,
     };
 
     quick_error! {

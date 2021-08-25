@@ -19,7 +19,7 @@ mod find {
 
         assert_eq!(
             packed_tag_ref.target(),
-            refs::mutable::Target::Peeled(hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3")),
+            refs::Target::Peeled(hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3")),
             "it points to a tag object"
         );
 

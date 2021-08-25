@@ -15,7 +15,7 @@
 use bstr::BString;
 use git_hash::ObjectId;
 
-use crate::mutable::{FullName, Target};
+use crate::{FullName, Target};
 
 /// A change to the reflog.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -108,7 +108,7 @@ impl Change {
                 mode: Create::OrUpdate { previous },
                 ..
             }
-            | Change::Delete { previous, .. } => previous.as_ref().map(|t| t.borrow()),
+            | Change::Delete { previous, .. } => previous.as_ref().map(|t| t.to_ref()),
         }
     }
 }

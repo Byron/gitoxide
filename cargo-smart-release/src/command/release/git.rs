@@ -141,7 +141,7 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
         skip_tag,
         ..
     }: Options,
-) -> anyhow::Result<Option<refs::mutable::FullName>> {
+) -> anyhow::Result<Option<refs::FullName>> {
     if skip_tag {
         return Ok(None);
     }
@@ -170,10 +170,7 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
 }
 
 // TODO: Make this gitoxide
-pub fn push_tags_and_head(
-    tag_names: impl IntoIterator<Item = refs::mutable::FullName>,
-    options: Options,
-) -> anyhow::Result<()> {
+pub fn push_tags_and_head(tag_names: impl IntoIterator<Item = refs::FullName>, options: Options) -> anyhow::Result<()> {
     if options.skip_push {
         return Ok(());
     }

@@ -5,13 +5,12 @@ use git_hash::ObjectId;
 
 use crate::{
     file::loose::reference::logiter::must_be_io_err,
-    mutable,
     store::{
         file,
         file::{log, loose},
         packed,
     },
-    FullNameRef, Namespace,
+    FullNameRef, Namespace, Target,
 };
 
 /// Either a loose or packed reference, depending on where it was found.
@@ -114,7 +113,7 @@ impl<'p> Reference<'p> {
         buf: &'b mut Vec<u8>,
     ) -> std::io::Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>> + 'a>> {
         match self {
-            Reference::Loose(r) => store.reflog_iter(r.name.borrow(), buf).map_err(must_be_io_err),
+            Reference::Loose(r) => store.reflog_iter(r.name.to_ref(), buf).map_err(must_be_io_err),
             Reference::Packed(p) => store.reflog_iter(p.name, buf).map_err(must_be_io_err),
         }
     }
@@ -128,9 +127,9 @@ impl<'p> Reference<'p> {
     }
 
     /// Transform this reference into an owned `Target`
-    pub fn into_target(self) -> mutable::Target {
+    pub fn into_target(self) -> Target {
         match self {
-            Reference::Packed(p) => mutable::Target::Peeled(p.object()),
+            Reference::Packed(p) => Target::Peeled(p.object()),
             Reference::Loose(r) => r.target,
         }
     }
@@ -147,7 +146,7 @@ impl<'p> Reference<'p> {
     pub fn name(&self) -> FullNameRef<'_> {
         match self {
             Reference::Packed(p) => p.name,
-            Reference::Loose(l) => l.name.borrow(),
+            Reference::Loose(l) => l.name.to_ref(),
         }
     }
 
@@ -163,9 +162,9 @@ impl<'p> Reference<'p> {
     }
 
     /// Return the target to which the reference points to.
-    pub fn target(&self) -> mutable::Target {
+    pub fn target(&self) -> Target {
         match self {
-            Reference::Packed(p) => mutable::Target::Peeled(p.target()),
+            Reference::Packed(p) => Target::Peeled(p.target()),
             Reference::Loose(l) => l.target.clone(),
         }
     }

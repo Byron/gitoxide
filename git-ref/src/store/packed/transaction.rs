@@ -1,9 +1,9 @@
 use std::io::Write;
 
 use crate::{
-    mutable::Target,
     store::{file::transaction::FindObjectFn, packed, packed::Edit},
     transaction::{Change, RefEdit},
+    Target,
 };
 
 pub(crate) const HEADER_LINE: &[u8] = b"# pack-refs with: peeled fully-peeled sorted \n";
@@ -56,7 +56,7 @@ impl packed::Transaction {
                 if let Change::Delete { .. } = edit.change {
                     buffer
                         .as_ref()
-                        .map_or(true, |b| b.find_existing(edit.name.borrow()).is_ok())
+                        .map_or(true, |b| b.find_existing(edit.name.to_ref()).is_ok())
                 } else {
                     true
                 }

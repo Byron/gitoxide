@@ -3,9 +3,8 @@ mod refedit_ext {
 
     use bstr::{BString, ByteSlice};
     use git_ref::{
-        mutable::Target,
         transaction::{Change, Create, RefEdit, RefEditsExt, RefLog},
-        PartialNameRef,
+        PartialNameRef, Target,
     };
 
     #[derive(Default)]
@@ -149,9 +148,8 @@ mod refedit_ext {
 
         use git_hash::ObjectId;
         use git_ref::{
-            mutable::Target,
             transaction::{Change, Create, LogChange, RefEdit, RefEditsExt, RefLog},
-            FullNameRef, PartialNameRef,
+            FullNameRef, PartialNameRef, Target,
         };
         use git_testtools::hex_to_id;
 
