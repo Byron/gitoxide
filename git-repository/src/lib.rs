@@ -97,7 +97,6 @@ pub use git_object as objs;
 pub use git_odb as odb;
 #[cfg(all(feature = "unstable", feature = "git-protocol"))]
 pub use git_protocol as protocol;
-#[cfg(feature = "unstable")]
 pub use git_ref as refs;
 #[cfg(feature = "unstable")]
 pub use git_tempfile as tempfile;
@@ -136,10 +135,7 @@ pub mod repository;
 /// Namely, this is an object database, a reference database to point to objects.
 pub struct Repository {
     /// A store for references to point at objects
-    #[cfg(feature = "unstable")]
     pub refs: git_ref::file::Store,
-    #[cfg(not(feature = "unstable"))]
-    pub(crate) refs: git_ref::file::Store,
     /// A store for objects that contain data
     #[cfg(feature = "unstable")]
     pub odb: git_odb::linked::Store,
