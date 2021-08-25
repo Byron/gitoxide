@@ -12,7 +12,7 @@ pub struct Tag<'a> {
     /// The name of the tag, e.g. "v1.0".
     pub name: &'a BStr,
     /// The author of the tag.
-    pub tagger: Option<git_actor::immutable::Signature<'a>>,
+    pub tagger: Option<git_actor::SignatureRef<'a>>,
     /// The message describing this release.
     pub message: &'a BStr,
     /// A cryptographic signature over the entire content of the serialized tag object thus far.
@@ -158,7 +158,7 @@ pub mod iter {
         }
     }
 
-    /// Like [`immutable::Tag`][super::Tag], but as `Iterator` to support entirely allocation free parsing.
+    /// Like [`signature_ref::Tag`][super::Tag], but as `Iterator` to support entirely allocation free parsing.
     /// It's particularly useful to dereference only the target chain.
     pub struct Iter<'a> {
         data: &'a [u8],
@@ -269,7 +269,7 @@ pub mod iter {
         },
         TargetKind(Kind),
         Name(&'a BStr),
-        Tagger(Option<git_actor::immutable::Signature<'a>>),
+        Tagger(Option<git_actor::SignatureRef<'a>>),
         Body {
             message: &'a BStr,
             pgp_signature: Option<&'a BStr>,

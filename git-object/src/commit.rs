@@ -2,7 +2,7 @@ use bstr::{BStr, ByteSlice};
 
 use crate::immutable;
 
-/// An iterator over extra headers in [owned][crate::mutable::Commit] and [borrowed][immutable::Commit] commits.
+/// An iterator over extra headers in [owned][crate::mutable::Commit] and [borrowed][signature_ref::Commit] commits.
 pub struct ExtraHeaders<I> {
     inner: I,
 }

@@ -23,9 +23,9 @@ fn fixture_bytes(kind: &str, path: &str) -> Vec<u8> {
     fixup(super::fixture_bytes(PathBuf::from(kind).join(path).to_str().unwrap()))
 }
 
-fn signature(time: u32) -> git_actor::immutable::Signature<'static> {
+fn signature(time: u32) -> git_actor::SignatureRef<'static> {
     use git_object::bstr::ByteSlice;
-    git_actor::immutable::Signature {
+    git_actor::SignatureRef {
         name: b"Sebastian Thiel".as_bstr(),
         email: b"sebastian.thiel@icloud.com".as_bstr(),
         time: Time {
@@ -36,9 +36,9 @@ fn signature(time: u32) -> git_actor::immutable::Signature<'static> {
     }
 }
 
-fn linus_signature(time: u32) -> git_actor::immutable::Signature<'static> {
+fn linus_signature(time: u32) -> git_actor::SignatureRef<'static> {
     use git_object::bstr::ByteSlice;
-    git_actor::immutable::Signature {
+    git_actor::SignatureRef {
         name: b"Linus Torvalds".as_bstr(),
         email: b"torvalds@linux-foundation.org".as_bstr(),
         time: Time {

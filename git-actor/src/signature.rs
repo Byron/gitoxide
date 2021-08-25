@@ -1,9 +1,24 @@
 mod convert {
-    use crate::{immutable, Signature};
+    use crate::{Sign, Signature, SignatureRef, Time};
 
-    impl From<immutable::Signature<'_>> for Signature {
-        fn from(other: immutable::Signature<'_>) -> Signature {
-            let immutable::Signature { name, email, time } = other;
+    impl Signature {
+        /// An empty signature, similar to 'null'.
+        pub fn empty() -> Self {
+            Signature {
+                name: Default::default(),
+                email: Default::default(),
+                time: Time {
+                    time: 0,
+                    offset: 0,
+                    sign: Sign::Plus,
+                },
+            }
+        }
+    }
+
+    impl From<SignatureRef<'_>> for Signature {
+        fn from(other: SignatureRef<'_>) -> Signature {
+            let SignatureRef { name, email, time } = other;
             Signature {
                 name: name.to_owned(),
                 email: email.to_owned(),
@@ -13,9 +28,9 @@ mod convert {
     }
 
     impl Signature {
-        /// Borrow this instance as immutable
-        pub fn borrow(&self) -> immutable::Signature<'_> {
-            immutable::Signature {
+        /// Borrow this instance as signature_ref
+        pub fn borrow(&self) -> SignatureRef<'_> {
+            SignatureRef {
                 name: self.name.as_ref(),
                 email: self.email.as_ref(),
                 time: self.time,

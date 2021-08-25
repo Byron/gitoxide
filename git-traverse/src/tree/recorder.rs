@@ -9,7 +9,7 @@ use git_object::{
 use crate::tree::{visit, visit::Action};
 
 /// An owned entry as observed by a call to [`visit_(tree|nontree)(…)`][visit::Visit::visit_tree()], enhanced with the full path to it.
-/// Otherwise similar to [`immutable::tree::Entry`][git_object::immutable::tree::Entry].
+/// Otherwise similar to [`signature_ref::tree::Entry`][git_object::signature_ref::tree::Entry].
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Entry {
     /// The kind of entry, similar to entries in a unix directory tree.

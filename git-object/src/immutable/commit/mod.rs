@@ -24,12 +24,12 @@ pub struct Commit<'a> {
     /// HEX hash of each parent commit. Empty for first commit in repository.
     pub parents: SmallVec<[&'a BStr; 2]>,
     /// Who wrote this commit.
-    pub author: git_actor::immutable::Signature<'a>,
+    pub author: git_actor::SignatureRef<'a>,
     /// Who committed this commit.
     ///
     /// This may be different from the `author` in case the author couldn't write to the repository themselves and
     /// is commonly encountered with contributed commits.
-    pub committer: git_actor::immutable::Signature<'a>,
+    pub committer: git_actor::SignatureRef<'a>,
     /// The name of the message encoding, otherwise [UTF-8 should be assumed](https://github.com/git/git/blob/e67fbf927dfdf13d0b21dc6ea15dc3c7ef448ea0/commit.c#L1493:L1493).
     pub encoding: Option<&'a BStr>,
     /// The commit message documenting the change.

@@ -97,14 +97,14 @@ use git_actor::Signature;
 #[test]
 fn round_trip() -> Result<(), Box<dyn std::error::Error>> {
     for input in &[
-            &b"Sebastian Thiel <byronimo@gmail.com> 1 -0030"[..],
-            ".. ☺️Sebastian 王知明 Thiel🙌 .. <byronimo@gmail.com> 1528473343 +0230".as_bytes(),
-            ".. whitespace  \t  is explicitly allowed    - unicode aware trimming must be done elsewhere <byronimo@gmail.com> 1528473343 +0230".as_bytes(),
-        ] {
-            let signature: Signature = git_actor::immutable::Signature::from_bytes::<()>(input)?.into();
-            let mut output = Vec::new();
-            signature.write_to(&mut output)?;
-            assert_eq!(output.as_bstr(), input.as_bstr());
-        }
+        &b"Sebastian Thiel <byronimo@gmail.com> 1 -0030"[..],
+        ".. ☺️Sebastian 王知明 Thiel🙌 .. <byronimo@gmail.com> 1528473343 +0230".as_bytes(),
+        ".. whitespace  \t  is explicitly allowed    - unicode aware trimming must be done elsewhere <byronimo@gmail.com> 1528473343 +0230".as_bytes(),
+    ] {
+        let signature: Signature = git_actor::SignatureRef::from_bytes::<()>(input)?.into();
+        let mut output = Vec::new();
+        signature.write_to(&mut output)?;
+        assert_eq!(output.as_bstr(), input.as_bstr());
+    }
     Ok(())
 }

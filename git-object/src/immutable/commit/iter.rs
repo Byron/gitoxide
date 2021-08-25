@@ -35,7 +35,7 @@ impl Default for State {
     }
 }
 
-/// Like [`immutable::Commit`][super::Commit], but as `Iterator` to support (up to) entirely allocation free parsing.
+/// Like [`signature_ref::Commit`][super::Commit], but as `Iterator` to support (up to) entirely allocation free parsing.
 /// It's particularly useful to traverse the commit graph without ever allocating arrays for parents.
 pub struct Iter<'a> {
     data: &'a [u8],
@@ -67,7 +67,7 @@ impl<'a> Iter<'a> {
     /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not
     /// if not exactly two signatures were iterable.
     /// Errors are not the common case - if an error needs to be detectable, use this instance as iterator.
-    pub fn signatures(&'a mut self) -> impl Iterator<Item = git_actor::immutable::Signature<'_>> + 'a {
+    pub fn signatures(&'a mut self) -> impl Iterator<Item = git_actor::SignatureRef<'_>> + 'a {
         self.filter_map(Result::ok)
             .skip_while(|t| !matches!(t, Token::Author { .. } | Token::Committer { .. }))
             .filter_map(|t| match t {
@@ -208,11 +208,11 @@ pub enum Token<'a> {
     },
     /// A person who authored the content of the commit.
     Author {
-        signature: git_actor::immutable::Signature<'a>,
+        signature: git_actor::SignatureRef<'a>,
     },
     /// A person who committed the authors work to the repository.
     Committer {
-        signature: git_actor::immutable::Signature<'a>,
+        signature: git_actor::SignatureRef<'a>,
     },
     Encoding(&'a BStr),
     ExtraHeader((&'a BStr, Cow<'a, BStr>)),

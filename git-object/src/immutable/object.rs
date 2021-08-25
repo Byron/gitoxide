@@ -4,7 +4,7 @@ use crate::{
     Kind,
 };
 
-/// An immutable object representing [`Trees`][Tree], [`Blobs`][Blob], [`Commits`][Commit], or [`Tags`][Tag].
+/// An signature_ref object representing [`Trees`][Tree], [`Blobs`][Blob], [`Commits`][Commit], or [`Tags`][Tag].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
@@ -27,14 +27,14 @@ impl<'a> Object<'a> {
         })
     }
 
-    /// Convert the immutable object into a mutable version, consuming the source in the process.
+    /// Convert the signature_ref object into a mutable version, consuming the source in the process.
     ///
     /// Note that this is an expensive operation.
     pub fn into_mutable(self) -> crate::mutable::Object {
         self.into()
     }
 
-    /// Convert this immutable object into its mutable counterpart.
+    /// Convert this signature_ref object into its mutable counterpart.
     ///
     /// Note that this is an expensive operation.
     pub fn to_mutable(&self) -> crate::mutable::Object {

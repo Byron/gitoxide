@@ -76,6 +76,6 @@ pub fn hex_hash<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &
 
 pub(crate) fn signature<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
     i: &'a [u8],
-) -> IResult<&'a [u8], git_actor::immutable::Signature<'a>, E> {
-    git_actor::immutable::signature::decode(i)
+) -> IResult<&'a [u8], git_actor::SignatureRef<'a>, E> {
+    git_actor::signature_ref::decode(i)
 }

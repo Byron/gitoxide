@@ -80,7 +80,7 @@ pub mod decode {
             tuple((
                 context("<old-hexsha>", terminated(hex_hash, tag(b" "))),
                 context("<new-hexsha>", terminated(hex_hash, tag(b" "))),
-                context("<name> <<email>> <timestamp>", git_actor::immutable::signature::decode),
+                context("<name> <<email>> <timestamp>", git_actor::signature_ref::decode),
                 opt(tag(b"\t")),
                 context("<optional message>", message),
             )),
@@ -164,7 +164,7 @@ pub mod decode {
                     Line {
                         previous_oid: NULL_SHA1.as_bstr(),
                         new_oid: NULL_SHA1.as_bstr(),
-                        signature: git_actor::immutable::Signature {
+                        signature: git_actor::SignatureRef {
                             name: b"name".as_bstr(),
                             email: b"foo@example.com".as_bstr(),
                             time: Time {
@@ -190,7 +190,7 @@ pub mod decode {
                 let actual = Line {
                     previous_oid: b"a5828ae6b52137b913b978e16cd2334482eb4c1f".as_bstr(),
                     new_oid: b"89b43f80a514aee58b662ad606e6352e03eaeee4".as_bstr(),
-                    signature: git_actor::immutable::Signature {
+                    signature: git_actor::SignatureRef {
                         name: b"Sebastian Thiel".as_bstr(),
                         email: b"foo@example.com".as_bstr(),
                         time: Time {

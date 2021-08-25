@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-mod mutable;
+mod signature;
 
 pub use git_testtools::hex_to_id;
 

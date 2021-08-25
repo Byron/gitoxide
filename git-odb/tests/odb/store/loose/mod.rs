@@ -3,8 +3,8 @@ use git_object::bstr::ByteSlice;
 
 pub mod backend;
 
-fn signature(time: u32) -> git_actor::immutable::Signature<'static> {
-    git_actor::immutable::Signature {
+fn signature(time: u32) -> git_actor::SignatureRef<'static> {
+    git_actor::SignatureRef {
         name: b"Sebastian Thiel".as_bstr(),
         email: b"byronimo@gmail.com".as_bstr(),
         time: Time {
