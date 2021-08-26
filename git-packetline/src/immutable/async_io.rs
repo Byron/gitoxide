@@ -5,7 +5,7 @@ use futures_io::AsyncWrite;
 use crate::{
     encode,
     immutable::{Band, Error, Text},
-    Channel, PacketLine,
+    Channel, PacketLineRef,
 };
 
 impl<'a> Band<'a> {
@@ -38,14 +38,14 @@ impl<'a> Error<'a> {
     }
 }
 
-impl<'a> PacketLine<'a> {
+impl<'a> PacketLineRef<'a> {
     /// Serialize this instance to `out` in git `packetline` format, returning the amount of bytes written to `out`.
     pub async fn write_to(&self, out: impl AsyncWrite + Unpin) -> io::Result<usize> {
         match self {
-            PacketLine::Data(d) => encode::data_to_write(d, out).await,
-            PacketLine::Flush => encode::flush_to_write(out).await,
-            PacketLine::Delimiter => encode::delim_to_write(out).await,
-            PacketLine::ResponseEnd => encode::response_end_to_write(out).await,
+            PacketLineRef::Data(d) => encode::data_to_write(d, out).await,
+            PacketLineRef::Flush => encode::flush_to_write(out).await,
+            PacketLineRef::Delimiter => encode::delim_to_write(out).await,
+            PacketLineRef::ResponseEnd => encode::response_end_to_write(out).await,
         }
     }
 }

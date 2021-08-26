@@ -5,7 +5,7 @@ use bstr::{BString, ByteSlice};
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
 use futures_lite::io::AsyncReadExt;
 use git_odb::pack;
-use git_packetline::PacketLine;
+use git_packetline::PacketLineRef;
 
 use crate::read::streaming_peek_iter::fixture_bytes;
 
@@ -38,7 +38,7 @@ mod util {
 #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
 async fn read_pack_with_progress_extraction() -> crate::Result {
     let buf = fixture_bytes("v1/01-clone.combined-output");
-    let mut rd = git_packetline::StreamingPeekableIter::new(&buf[..], &[PacketLine::Flush]);
+    let mut rd = git_packetline::StreamingPeekableIter::new(&buf[..], &[PacketLineRef::Flush]);
 
     // Read without sideband decoding
     let mut out = Vec::new();
@@ -99,7 +99,7 @@ async fn read_pack_with_progress_extraction() -> crate::Result {
 async fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Result {
     let buf = fixture_bytes("v1/01-clone.combined-output-no-binary");
 
-    let mut rd = git_packetline::StreamingPeekableIter::new(&buf[..], &[PacketLine::Flush]);
+    let mut rd = git_packetline::StreamingPeekableIter::new(&buf[..], &[PacketLineRef::Flush]);
 
     let mut out = String::new();
     let mut r = rd.as_read();
@@ -116,7 +116,7 @@ async fn read_line_trait_method_reads_one_packet_line_at_a_time() -> crate::Resu
     assert_eq!(out, "", "…which can't be overcome unless the reader is reset");
     assert_eq!(
         r.stopped_at(),
-        Some(PacketLine::Flush),
+        Some(PacketLineRef::Flush),
         "it knows what stopped the reader"
     );
 
@@ -168,7 +168,7 @@ async fn peek_past_an_actual_eof_is_an_error() -> crate::Result {
 #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
 async fn peek_past_a_delimiter_is_no_error() -> crate::Result {
     let input = b"0009hello0000";
-    let mut rd = git_packetline::StreamingPeekableIter::new(&input[..], &[PacketLine::Flush]);
+    let mut rd = git_packetline::StreamingPeekableIter::new(&input[..], &[PacketLineRef::Flush]);
     let mut reader = rd.as_read();
     let res = reader.peek_data_line().await;
     assert_eq!(res.expect("one line")??, b"hello");
@@ -204,7 +204,7 @@ async fn handling_of_err_lines() {
         0,
         "it stops reading after an error despite there being more to read"
     );
-    reader.reset_with(&[PacketLine::Flush]);
+    reader.reset_with(&[PacketLineRef::Flush]);
     let res = reader.read(buf.as_mut()).await;
     assert_eq!(
         res.unwrap_err().to_string(),

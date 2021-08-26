@@ -25,7 +25,19 @@ pub enum Channel {
 
 ///
 pub mod immutable;
-pub use immutable::PacketLine;
+/// A borrowed packet line as it refers to a slice of data by reference.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub enum PacketLineRef<'a> {
+    /// A chunk of raw data.
+    Data(&'a [u8]),
+    /// A flush packet.
+    Flush,
+    /// A delimiter packet.
+    Delimiter,
+    /// The end of the response.
+    ResponseEnd,
+}
 
 ///
 pub mod read;

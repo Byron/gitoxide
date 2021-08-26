@@ -4,7 +4,7 @@ use std::{
     io::{self, BufRead, Read},
 };
 
-use git_packetline::PacketLine;
+use git_packetline::PacketLineRef;
 pub use traits::{Error, GetResponse, Http, PostResponse};
 
 use crate::{
@@ -199,7 +199,7 @@ impl<H: Http> client::Transport for Transport<H> {
 
         let line_reader = self
             .line_provider
-            .get_or_insert_with(|| git_packetline::StreamingPeekableIter::new(body, &[PacketLine::Flush]));
+            .get_or_insert_with(|| git_packetline::StreamingPeekableIter::new(body, &[PacketLineRef::Flush]));
 
         let mut announced_service = String::new();
         line_reader.as_read().read_to_string(&mut announced_service)?;

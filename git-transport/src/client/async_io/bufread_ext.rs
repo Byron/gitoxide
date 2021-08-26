@@ -69,18 +69,19 @@ impl<'a, T: AsyncRead + Unpin> ExtendedBufRead for git_packetline::read::WithSid
     }
     fn reset(&mut self, version: Protocol) {
         match version {
-            Protocol::V1 => self.reset_with(&[git_packetline::PacketLine::Flush]),
-            Protocol::V2 => {
-                self.reset_with(&[git_packetline::PacketLine::Delimiter, git_packetline::PacketLine::Flush])
-            }
+            Protocol::V1 => self.reset_with(&[git_packetline::PacketLineRef::Flush]),
+            Protocol::V2 => self.reset_with(&[
+                git_packetline::PacketLineRef::Delimiter,
+                git_packetline::PacketLineRef::Flush,
+            ]),
         }
     }
     fn stopped_at(&self) -> Option<MessageKind> {
         self.stopped_at().map(|l| match l {
-            git_packetline::PacketLine::Flush => MessageKind::Flush,
-            git_packetline::PacketLine::Delimiter => MessageKind::Delimiter,
-            git_packetline::PacketLine::ResponseEnd => MessageKind::ResponseEnd,
-            git_packetline::PacketLine::Data(_) => unreachable!("data cannot be a delimiter"),
+            git_packetline::PacketLineRef::Flush => MessageKind::Flush,
+            git_packetline::PacketLineRef::Delimiter => MessageKind::Delimiter,
+            git_packetline::PacketLineRef::ResponseEnd => MessageKind::ResponseEnd,
+            git_packetline::PacketLineRef::Data(_) => unreachable!("data cannot be a delimiter"),
         })
     }
 }

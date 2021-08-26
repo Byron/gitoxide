@@ -61,17 +61,17 @@ impl<'a> RequestWriter<'a> {
     pub async fn write_message(&mut self, message: MessageKind) -> io::Result<()> {
         match message {
             MessageKind::Flush => {
-                git_packetline::PacketLine::Flush
+                git_packetline::PacketLineRef::Flush
                     .write_to(self.writer.inner_mut())
                     .await
             }
             MessageKind::Delimiter => {
-                git_packetline::PacketLine::Delimiter
+                git_packetline::PacketLineRef::Delimiter
                     .write_to(self.writer.inner_mut())
                     .await
             }
             MessageKind::ResponseEnd => {
-                git_packetline::PacketLine::ResponseEnd
+                git_packetline::PacketLineRef::ResponseEnd
                     .write_to(self.writer.inner_mut())
                     .await
             }

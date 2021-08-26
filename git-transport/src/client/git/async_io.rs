@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use bstr::BString;
 use futures_io::{AsyncRead, AsyncWrite};
 use futures_lite::AsyncWriteExt;
-use git_packetline::PacketLine;
+use git_packetline::PacketLineRef;
 
 use crate::{
     client::{self, capabilities, git, Capabilities, SetServiceResponse},
@@ -114,7 +114,7 @@ where
     ) -> Self {
         git::Connection {
             writer: write,
-            line_provider: git_packetline::StreamingPeekableIter::new(read, &[PacketLine::Flush]),
+            line_provider: git_packetline::StreamingPeekableIter::new(read, &[PacketLineRef::Flush]),
             path: repository_path.into(),
             virtual_host: virtual_host.map(|(h, p)| (h.into(), p)),
             desired_version,

@@ -3,7 +3,7 @@ use std::io;
 use crate::{
     encode,
     immutable::{Band, Error, Text},
-    Channel, PacketLine,
+    Channel, PacketLineRef,
 };
 
 impl<'a> Band<'a> {
@@ -35,14 +35,14 @@ impl<'a> Error<'a> {
     }
 }
 
-impl<'a> PacketLine<'a> {
+impl<'a> PacketLineRef<'a> {
     /// Serialize this instance to `out` in git `packetline` format, returning the amount of bytes written to `out`.
     pub fn write_to(&self, out: impl io::Write) -> io::Result<usize> {
         match self {
-            PacketLine::Data(d) => encode::data_to_write(d, out),
-            PacketLine::Flush => encode::flush_to_write(out),
-            PacketLine::Delimiter => encode::delim_to_write(out),
-            PacketLine::ResponseEnd => encode::response_end_to_write(out),
+            PacketLineRef::Data(d) => encode::data_to_write(d, out),
+            PacketLineRef::Flush => encode::flush_to_write(out),
+            PacketLineRef::Delimiter => encode::delim_to_write(out),
+            PacketLineRef::ResponseEnd => encode::response_end_to_write(out),
         }
     }
 }

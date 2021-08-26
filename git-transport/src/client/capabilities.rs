@@ -143,7 +143,7 @@ impl Capabilities {
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 impl Capabilities {
     fn extract_protocol<'a>(
-        capabilities_or_version: &'a git_packetline::PacketLine<'_>,
+        capabilities_or_version: &'a git_packetline::PacketLineRef<'_>,
     ) -> Result<(git_packetline::immutable::Text<'a>, Protocol), client::Error> {
         let first_line = capabilities_or_version
             .as_text()

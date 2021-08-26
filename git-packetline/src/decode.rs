@@ -1,7 +1,7 @@
 use bstr::BString;
 use quick_error::quick_error;
 
-use crate::{PacketLine, DELIMITER_LINE, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, RESPONSE_END_LINE, U16_HEX_BYTES};
+use crate::{PacketLineRef, DELIMITER_LINE, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, RESPONSE_END_LINE, U16_HEX_BYTES};
 
 quick_error! {
     /// The error used in the [`decode`][crate::decode] module
@@ -29,13 +29,31 @@ quick_error! {
     }
 }
 
+///
+pub mod band {
+    use quick_error::quick_error;
+    quick_error! {
+        /// The error used in [`PacketLineRef::decode_band()`].
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            InvalidSideBand(band: u8) {
+                display("attempt to decode a non-side channel line or input was malformed: {}", band)
+            }
+            NonDataLine {
+                display("attempt to decode a non-data line into a side-channel band")
+            }
+        }
+    }
+}
+
 /// A utility return type to support incremental parsing of packet lines.
 #[derive(Debug, Clone)]
 pub enum Stream<'a> {
     /// Indicate a single packet line was parsed completely
     Complete {
         /// The parsed packet line
-        line: PacketLine<'a>,
+        line: PacketLineRef<'a>,
         /// The amount of bytes consumed from input
         bytes_consumed: usize,
     },
@@ -49,7 +67,7 @@ pub enum Stream<'a> {
 /// The result of [`hex_prefix()`] indicating either a special packet line or the amount of wanted bytes
 pub enum PacketLineOrWantedSize<'a> {
     /// The special kind of packet line decoded from the hex prefix. It never contains actual data.
-    Line(PacketLine<'a>),
+    Line(PacketLineRef<'a>),
     /// The amount of bytes indicated by the hex prefix of the packet line.
     Wanted(u16),
 }
@@ -58,9 +76,9 @@ pub enum PacketLineOrWantedSize<'a> {
 pub fn hex_prefix(four_bytes: &[u8]) -> Result<PacketLineOrWantedSize<'_>, Error> {
     debug_assert_eq!(four_bytes.len(), 4, "need four hex bytes");
     for (line_bytes, line_type) in &[
-        (FLUSH_LINE, PacketLine::Flush),
-        (DELIMITER_LINE, PacketLine::Delimiter),
-        (RESPONSE_END_LINE, PacketLine::ResponseEnd),
+        (FLUSH_LINE, PacketLineRef::Flush),
+        (DELIMITER_LINE, PacketLineRef::Delimiter),
+        (RESPONSE_END_LINE, PacketLineRef::ResponseEnd),
     ] {
         if four_bytes == *line_bytes {
             return Ok(PacketLineOrWantedSize::Line(*line_type));
@@ -85,12 +103,12 @@ pub fn hex_prefix(four_bytes: &[u8]) -> Result<PacketLineOrWantedSize<'_>, Error
 }
 
 /// Obtain a `PacketLine` from `data` after assuring `data` is small enough to fit.
-pub fn to_data_line(data: &[u8]) -> Result<PacketLine<'_>, Error> {
+pub fn to_data_line(data: &[u8]) -> Result<PacketLineRef<'_>, Error> {
     if data.len() > MAX_LINE_LEN {
         return Err(Error::DataLengthLimitExceeded(data.len()));
     }
 
-    Ok(PacketLine::Data(data))
+    Ok(PacketLineRef::Data(data))
 }
 
 /// Decode `data` as packet line while reporting whether the data is complete or not using a [`Stream`].
@@ -129,7 +147,7 @@ pub fn streaming(data: &[u8]) -> Result<Stream<'_>, Error> {
 ///
 /// Note that failure also happens if there is not enough data to parse a complete packet line, as opposed to [`streaming()`] decoding
 /// succeeds in that case, stating how much more bytes are required.
-pub fn all_at_once(data: &[u8]) -> Result<PacketLine<'_>, Error> {
+pub fn all_at_once(data: &[u8]) -> Result<PacketLineRef<'_>, Error> {
     match streaming(data)? {
         Stream::Complete { line, .. } => Ok(line),
         Stream::Incomplete { bytes_needed } => Err(Error::NotEnoughData(bytes_needed)),

@@ -1,27 +1,13 @@
 use bstr::BStr;
 
-use crate::{Channel, ERR_PREFIX};
+use crate::{decode, Channel, PacketLineRef, ERR_PREFIX};
 
-/// A borrowed packet line as it refers to a slice of data by reference.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum PacketLine<'a> {
-    /// A chunk of raw data.
-    Data(&'a [u8]),
-    /// A flush packet.
-    Flush,
-    /// A delimiter packet.
-    Delimiter,
-    /// The end of the response.
-    ResponseEnd,
-}
-
-impl<'a> PacketLine<'a> {
+impl<'a> PacketLineRef<'a> {
     /// Return this instance as slice if it's [`Data`][PacketLine::Data].
     pub fn as_slice(&self) -> Option<&[u8]> {
         match self {
-            PacketLine::Data(d) => Some(d),
-            PacketLine::Flush | PacketLine::Delimiter | PacketLine::ResponseEnd => None,
+            PacketLineRef::Data(d) => Some(d),
+            PacketLineRef::Flush | PacketLineRef::Delimiter | PacketLineRef::ResponseEnd => None,
         }
     }
     /// Return this instance's [`as_slice()`][PacketLine::as_slice()] as [`BStr`].
@@ -67,29 +53,14 @@ impl<'a> PacketLine<'a> {
     }
 
     /// Decode the band of this [`slice`][PacketLine::as_slice()], or panic if it is not actually a side-band line.
-    pub fn decode_band(&self) -> Result<Band<'_>, DecodeBandError> {
-        let d = self.as_slice().ok_or(DecodeBandError::NonDataLine)?;
+    pub fn decode_band(&self) -> Result<Band<'_>, decode::band::Error> {
+        let d = self.as_slice().ok_or(decode::band::Error::NonDataLine)?;
         Ok(match d[0] {
             1 => Band::Data(&d[1..]),
             2 => Band::Progress(&d[1..]),
             3 => Band::Error(&d[1..]),
-            band => return Err(DecodeBandError::InvalidSideBand(band)),
+            band => return Err(decode::band::Error::InvalidSideBand(band)),
         })
-    }
-}
-
-use quick_error::quick_error;
-quick_error! {
-    /// The error used in [`decode_band()`][PacketLine::decode_band()].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum DecodeBandError {
-        InvalidSideBand(band: u8) {
-            display("attempt to decode a non-side channel line or input was malformed: {}", band)
-        }
-        NonDataLine {
-            display("attempt to decode a non-data line into a side-channel band")
-        }
     }
 }
 

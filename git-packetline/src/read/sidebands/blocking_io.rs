@@ -2,7 +2,7 @@ use std::{io, io::BufRead};
 
 use crate::{
     immutable::{Band, Text},
-    PacketLine, StreamingPeekableIter, U16_HEX_BYTES,
+    PacketLineRef, StreamingPeekableIter, U16_HEX_BYTES,
 };
 
 /// An implementor of [`BufRead`][io::BufRead] yielding packet lines on each call to [`read_line()`][io::BufRead::read_line()].
@@ -71,12 +71,12 @@ where
     }
 
     /// Forwards to the parent [StreamingPeekableIter::reset_with()]
-    pub fn reset_with(&mut self, delimiters: &'static [PacketLine<'static>]) {
+    pub fn reset_with(&mut self, delimiters: &'static [PacketLineRef<'static>]) {
         self.parent.reset_with(delimiters)
     }
 
     /// Forwards to the parent [StreamingPeekableIter::stopped_at()]
-    pub fn stopped_at(&self) -> Option<PacketLine<'static>> {
+    pub fn stopped_at(&self) -> Option<PacketLineRef<'static>> {
         self.parent.stopped_at
     }
 
@@ -89,7 +89,7 @@ where
     /// next on a call to [`read_line()`][io::BufRead::read_line()].
     pub fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], crate::decode::Error>>> {
         match self.parent.peek_line() {
-            Some(Ok(Ok(crate::PacketLine::Data(line)))) => Some(Ok(Ok(line))),
+            Some(Ok(Ok(crate::PacketLineRef::Data(line)))) => Some(Ok(Ok(line))),
             Some(Ok(Err(err))) => Some(Ok(Err(err))),
             Some(Err(err)) => Some(Err(err)),
             _ => None,

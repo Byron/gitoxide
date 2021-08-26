@@ -1,12 +1,12 @@
 #[cfg(any(feature = "blocking-io", feature = "async-io"))]
 use crate::MAX_LINE_LEN;
-use crate::{PacketLine, U16_HEX_BYTES};
+use crate::{PacketLineRef, U16_HEX_BYTES};
 
 #[cfg(any(feature = "blocking-io", feature = "async-io"))]
 type ExhaustiveOutcome<'a> = (
-    bool,                                                                  // is_done
-    Option<PacketLine<'static>>,                                           // stopped_at
-    Option<std::io::Result<Result<PacketLine<'a>, crate::decode::Error>>>, // actual method result
+    bool,                                                                     // is_done
+    Option<PacketLineRef<'static>>,                                           // stopped_at
+    Option<std::io::Result<Result<PacketLineRef<'a>, crate::decode::Error>>>, // actual method result
 );
 
 /// Read pack lines one after another, without consuming more than needed from the underlying
@@ -20,14 +20,14 @@ pub struct StreamingPeekableIter<T> {
     #[cfg(any(feature = "blocking-io", feature = "async-io"))]
     buf: Vec<u8>,
     fail_on_err_lines: bool,
-    delimiters: &'static [PacketLine<'static>],
+    delimiters: &'static [PacketLineRef<'static>],
     is_done: bool,
-    stopped_at: Option<PacketLine<'static>>,
+    stopped_at: Option<PacketLineRef<'static>>,
 }
 
 impl<T> StreamingPeekableIter<T> {
     /// Return a new instance from `read` which will stop decoding packet lines when receiving one of the given `delimiters`.
-    pub fn new(read: T, delimiters: &'static [PacketLine<'static>]) -> Self {
+    pub fn new(read: T, delimiters: &'static [PacketLineRef<'static>]) -> Self {
         StreamingPeekableIter {
             read,
             #[cfg(any(feature = "blocking-io", feature = "async-io"))]
@@ -58,7 +58,7 @@ impl<T> StreamingPeekableIter<T> {
 
     /// Returns the packet line that stopped the iteration, or
     /// `None` if the end wasn't reached yet, on EOF, or if [`fail_on_err_lines()`][StreamingPeekableIter::fail_on_err_lines()] was true.
-    pub fn stopped_at(&self) -> Option<PacketLine<'static>> {
+    pub fn stopped_at(&self) -> Option<PacketLineRef<'static>> {
         self.stopped_at
     }
 
@@ -71,7 +71,7 @@ impl<T> StreamingPeekableIter<T> {
     }
 
     /// Similar to [`reset()`][StreamingPeekableIter::reset()] with support to changing the `delimiters`.
-    pub fn reset_with(&mut self, delimiters: &'static [PacketLine<'static>]) {
+    pub fn reset_with(&mut self, delimiters: &'static [PacketLineRef<'static>]) {
         self.delimiters = delimiters;
         self.is_done = false;
         self.stopped_at = None;

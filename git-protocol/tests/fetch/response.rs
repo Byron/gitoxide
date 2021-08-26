@@ -3,7 +3,7 @@ use crate::fetch::Cursor;
 fn mock_reader(path: &str) -> git_packetline::StreamingPeekableIter<Cursor> {
     use crate::fixture_bytes;
     let buf = fixture_bytes(path);
-    git_packetline::StreamingPeekableIter::new(Cursor::new(buf), &[git_packetline::PacketLine::Flush])
+    git_packetline::StreamingPeekableIter::new(Cursor::new(buf), &[git_packetline::PacketLineRef::Flush])
 }
 
 fn id(hex: &str) -> git_hash::ObjectId {

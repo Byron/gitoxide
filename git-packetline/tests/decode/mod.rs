@@ -2,7 +2,7 @@ mod streaming {
     use git_packetline::{
         decode::{self, streaming, Stream},
         immutable::Error,
-        PacketLine,
+        PacketLineRef,
     };
 
     use crate::assert_err_display;
@@ -10,7 +10,7 @@ mod streaming {
     fn assert_complete(
         res: Result<Stream, decode::Error>,
         expected_consumed: usize,
-        expected_value: PacketLine,
+        expected_value: PacketLineRef,
     ) -> crate::Result {
         match res? {
             Stream::Complete { line, bytes_consumed } => {
@@ -24,7 +24,7 @@ mod streaming {
 
     mod round_trip {
         use bstr::ByteSlice;
-        use git_packetline::{decode, decode::streaming, Channel, PacketLine};
+        use git_packetline::{decode, decode::streaming, Channel, PacketLineRef};
 
         use crate::decode::streaming::assert_complete;
 
@@ -45,10 +45,10 @@ mod streaming {
         #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
         async fn all_kinds_of_packetlines() -> crate::Result {
             for (line, bytes) in &[
-                (PacketLine::ResponseEnd, 4),
-                (PacketLine::Delimiter, 4),
-                (PacketLine::Flush, 4),
-                (PacketLine::Data(b"hello there"), 15),
+                (PacketLineRef::ResponseEnd, 4),
+                (PacketLineRef::Delimiter, 4),
+                (PacketLineRef::Flush, 4),
+                (PacketLineRef::Data(b"hello there"), 15),
             ] {
                 let mut out = Vec::new();
                 line.write_to(&mut out).await?;
@@ -60,7 +60,7 @@ mod streaming {
         #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
         async fn error_line() -> crate::Result {
             let mut out = Vec::new();
-            PacketLine::Data(b"the error")
+            PacketLineRef::Data(b"the error")
                 .as_error()
                 .expect("data line")
                 .write_to(&mut out)
@@ -74,7 +74,7 @@ mod streaming {
         async fn side_bands() -> crate::Result {
             for channel in &[Channel::Data, Channel::Error, Channel::Progress] {
                 let mut out = Vec::new();
-                let band = PacketLine::Data(b"band data")
+                let band = PacketLineRef::Data(b"band data")
                     .as_band(*channel)
                     .expect("data is valid for band");
                 band.write_to(&mut out).await?;
@@ -87,17 +87,17 @@ mod streaming {
 
     #[test]
     fn flush() -> crate::Result {
-        assert_complete(streaming(b"0000someotherstuff"), 4, PacketLine::Flush)
+        assert_complete(streaming(b"0000someotherstuff"), 4, PacketLineRef::Flush)
     }
 
     #[test]
     fn trailing_line_feeds_are_not_removed_automatically() -> crate::Result {
-        assert_complete(streaming(b"0006a\n"), 6, PacketLine::Data(b"a\n"))
+        assert_complete(streaming(b"0006a\n"), 6, PacketLineRef::Data(b"a\n"))
     }
 
     #[test]
     fn ignore_extra_bytes() -> crate::Result {
-        assert_complete(streaming(b"0006a\nhello"), 6, PacketLine::Data(b"a\n"))
+        assert_complete(streaming(b"0006a\nhello"), 6, PacketLineRef::Data(b"a\n"))
     }
 
     #[test]
@@ -110,7 +110,7 @@ mod streaming {
 
     #[test]
     fn error_on_error_line() -> crate::Result {
-        let line = PacketLine::Data(b"ERR the error");
+        let line = PacketLineRef::Data(b"ERR the error");
         assert_complete(
             streaming(b"0011ERR the error-and just ignored because not part of the size"),
             17,

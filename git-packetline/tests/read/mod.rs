@@ -4,7 +4,7 @@ pub mod streaming_peek_iter {
     use std::{io, path::PathBuf};
 
     use bstr::ByteSlice;
-    use git_packetline::PacketLine;
+    use git_packetline::PacketLineRef;
 
     fn fixture_path(path: &str) -> PathBuf {
         PathBuf::from("tests/fixtures").join(path)
@@ -14,22 +14,22 @@ pub mod streaming_peek_iter {
         std::fs::read(fixture_path(path)).expect("readable fixture")
     }
 
-    fn first_line() -> PacketLine<'static> {
-        PacketLine::Data(b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n")
+    fn first_line() -> PacketLineRef<'static> {
+        PacketLineRef::Data(b"7814e8a05a59c0cf5fb186661d1551c75d1299b5 HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed symref=HEAD:refs/heads/master object-format=sha1 agent=git/2.28.0\n")
     }
 
     #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
     async fn peek_follows_read_line_delimiter_logic() -> crate::Result {
-        let mut rd = git_packetline::StreamingPeekableIter::new(&b"0005a00000005b"[..], &[PacketLine::Flush]);
+        let mut rd = git_packetline::StreamingPeekableIter::new(&b"0005a00000005b"[..], &[PacketLineRef::Flush]);
         let res = rd.peek_line().await;
-        assert_eq!(res.expect("line")??, PacketLine::Data(b"a"));
+        assert_eq!(res.expect("line")??, PacketLineRef::Data(b"a"));
         rd.read_line().await;
 
         let res = rd.peek_line().await;
         assert!(res.is_none(), "we hit the delmiter, and thus are EOF");
         assert_eq!(
             rd.stopped_at(),
-            Some(PacketLine::Flush),
+            Some(PacketLineRef::Flush),
             "Stopped tracking is done even when peeking"
         );
         let res = rd.peek_line().await;
@@ -38,7 +38,7 @@ pub mod streaming_peek_iter {
         let res = rd.peek_line().await;
         assert_eq!(
             res.expect("line")??,
-            PacketLine::Data(b"b"),
+            PacketLineRef::Data(b"b"),
             "after resetting, we get past the delimiter"
         );
         Ok(())
@@ -46,10 +46,10 @@ pub mod streaming_peek_iter {
 
     #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
     async fn peek_follows_read_line_err_logic() -> crate::Result {
-        let mut rd = git_packetline::StreamingPeekableIter::new(&b"0005a0009ERR e0000"[..], &[PacketLine::Flush]);
+        let mut rd = git_packetline::StreamingPeekableIter::new(&b"0005a0009ERR e0000"[..], &[PacketLineRef::Flush]);
         rd.fail_on_err_lines(true);
         let res = rd.peek_line().await;
-        assert_eq!(res.expect("line")??, PacketLine::Data(b"a"));
+        assert_eq!(res.expect("line")??, PacketLineRef::Data(b"a"));
         rd.read_line().await;
         let res = rd.peek_line().await;
         assert_eq!(
@@ -65,7 +65,7 @@ pub mod streaming_peek_iter {
         assert!(res.is_none(), "it should stop due to the delimiter");
         assert_eq!(
             rd.stopped_at(),
-            Some(PacketLine::Flush),
+            Some(PacketLineRef::Flush),
             "Stopped tracking is done even when peeking"
         );
         Ok(())
@@ -73,14 +73,14 @@ pub mod streaming_peek_iter {
 
     #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
     async fn peek_non_data() -> crate::Result {
-        let mut rd = git_packetline::StreamingPeekableIter::new(&b"000000010002"[..], &[PacketLine::ResponseEnd]);
+        let mut rd = git_packetline::StreamingPeekableIter::new(&b"000000010002"[..], &[PacketLineRef::ResponseEnd]);
         let res = rd.read_line().await;
-        assert_eq!(res.expect("line")??, PacketLine::Flush);
+        assert_eq!(res.expect("line")??, PacketLineRef::Flush);
         let res = rd.read_line().await;
-        assert_eq!(res.expect("line")??, PacketLine::Delimiter);
-        rd.reset_with(&[PacketLine::Flush]);
+        assert_eq!(res.expect("line")??, PacketLineRef::Delimiter);
+        rd.reset_with(&[PacketLineRef::Flush]);
         let res = rd.read_line().await;
-        assert_eq!(res.expect("line")??, PacketLine::ResponseEnd);
+        assert_eq!(res.expect("line")??, PacketLineRef::ResponseEnd);
         for _ in 0..2 {
             let res = rd.peek_line().await;
             assert_eq!(
@@ -102,7 +102,7 @@ pub mod streaming_peek_iter {
         let input = b"00010009ERR e0002";
         let mut rd = git_packetline::StreamingPeekableIter::new(&input[..], &[]);
         let res = rd.read_line().await;
-        assert_eq!(res.expect("line")??, PacketLine::Delimiter);
+        assert_eq!(res.expect("line")??, PacketLineRef::Delimiter);
         let res = rd.read_line().await;
         assert_eq!(
             res.expect("line")??.as_bstr(),
@@ -113,7 +113,7 @@ pub mod streaming_peek_iter {
         let mut rd = git_packetline::StreamingPeekableIter::new(&input[..], &[]);
         rd.fail_on_err_lines(true);
         let res = rd.read_line().await;
-        assert_eq!(res.expect("line")??, PacketLine::Delimiter);
+        assert_eq!(res.expect("line")??, PacketLineRef::Delimiter);
         let res = rd.read_line().await;
         assert_eq!(
             res.expect("line").unwrap_err().to_string(),
@@ -125,7 +125,7 @@ pub mod streaming_peek_iter {
 
         rd.replace(input);
         let res = rd.read_line().await;
-        assert_eq!(res.expect("line")??, PacketLine::Delimiter);
+        assert_eq!(res.expect("line")??, PacketLineRef::Delimiter);
         let res = rd.read_line().await;
         assert_eq!(
             res.expect("line")??.as_bstr(),
@@ -138,7 +138,7 @@ pub mod streaming_peek_iter {
     #[maybe_async::test(feature = "blocking-io", async(feature = "async-io", async_std::test))]
     async fn peek() -> crate::Result {
         let bytes = fixture_bytes("v1/fetch/01-many-refs.response");
-        let mut rd = git_packetline::StreamingPeekableIter::new(&bytes[..], &[PacketLine::Flush]);
+        let mut rd = git_packetline::StreamingPeekableIter::new(&bytes[..], &[PacketLineRef::Flush]);
         let res = rd.peek_line().await;
         assert_eq!(res.expect("line")??, first_line(), "peek returns first line");
         let res = rd.peek_line().await;
@@ -165,7 +165,7 @@ pub mod streaming_peek_iter {
         assert_eq!(res, 1559);
         assert_eq!(
             rd.stopped_at(),
-            Some(PacketLine::Flush),
+            Some(PacketLineRef::Flush),
             "A flush packet line ends every pack file"
         );
         Ok(())
@@ -175,7 +175,7 @@ pub mod streaming_peek_iter {
     async fn read_from_file_and_reader_advancement() -> crate::Result {
         let mut bytes = fixture_bytes("v1/fetch/01-many-refs.response");
         bytes.extend(fixture_bytes("v1/fetch/01-many-refs.response").into_iter());
-        let mut rd = git_packetline::StreamingPeekableIter::new(&bytes[..], &[PacketLine::Flush]);
+        let mut rd = git_packetline::StreamingPeekableIter::new(&bytes[..], &[PacketLineRef::Flush]);
         let res = rd.read_line().await;
         assert_eq!(res.expect("line")??, first_line());
         let res = exhaust(&mut rd).await;

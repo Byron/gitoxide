@@ -10,10 +10,10 @@ use futures_lite::ready;
 use crate::{
     decode,
     immutable::{Band, Text},
-    PacketLine, StreamingPeekableIter, U16_HEX_BYTES,
+    PacketLineRef, StreamingPeekableIter, U16_HEX_BYTES,
 };
 
-type ReadLineResult<'a> = Option<std::io::Result<Result<PacketLine<'a>, decode::Error>>>;
+type ReadLineResult<'a> = Option<std::io::Result<Result<PacketLineRef<'a>, decode::Error>>>;
 /// An implementor of [`AsyncBufRead`] yielding packet lines on each call to [`read_line()`][AsyncBufRead::read_line()].
 /// It's also possible to hide the underlying packet lines using the [`Read`][AsyncRead] implementation which is useful
 /// if they represent binary data, like the one of a pack file.
@@ -116,14 +116,14 @@ where
     }
 
     /// Forwards to the parent [StreamingPeekableIter::reset_with()]
-    pub fn reset_with(&mut self, delimiters: &'static [PacketLine<'static>]) {
+    pub fn reset_with(&mut self, delimiters: &'static [PacketLineRef<'static>]) {
         if let State::Idle { ref mut parent } = self.state {
             parent.as_mut().unwrap().reset_with(delimiters)
         }
     }
 
     /// Forwards to the parent [StreamingPeekableIter::stopped_at()]
-    pub fn stopped_at(&self) -> Option<PacketLine<'static>> {
+    pub fn stopped_at(&self) -> Option<PacketLineRef<'static>> {
         match self.state {
             State::Idle { ref parent } => parent.as_ref().unwrap().stopped_at,
             _ => None,
@@ -140,7 +140,7 @@ where
     pub async fn peek_data_line(&mut self) -> Option<std::io::Result<Result<&[u8], crate::decode::Error>>> {
         match self.state {
             State::Idle { ref mut parent } => match parent.as_mut().unwrap().peek_line().await {
-                Some(Ok(Ok(crate::PacketLine::Data(line)))) => Some(Ok(Ok(line))),
+                Some(Ok(Ok(crate::PacketLineRef::Data(line)))) => Some(Ok(Ok(line))),
                 Some(Ok(Err(err))) => Some(Ok(Err(err))),
                 Some(Err(err)) => Some(Err(err)),
                 _ => None,

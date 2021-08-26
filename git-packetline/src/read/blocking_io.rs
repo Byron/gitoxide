@@ -5,7 +5,7 @@ use bstr::ByteSlice;
 use crate::{
     decode,
     read::{ExhaustiveOutcome, WithSidebands},
-    PacketLine, StreamingPeekableIter, MAX_LINE_LEN, U16_HEX_BYTES,
+    PacketLineRef, StreamingPeekableIter, MAX_LINE_LEN, U16_HEX_BYTES,
 };
 
 /// Non-IO methods
@@ -13,7 +13,10 @@ impl<T> StreamingPeekableIter<T>
 where
     T: io::Read,
 {
-    fn read_line_inner<'a>(reader: &mut T, buf: &'a mut Vec<u8>) -> io::Result<Result<PacketLine<'a>, decode::Error>> {
+    fn read_line_inner<'a>(
+        reader: &mut T,
+        buf: &'a mut Vec<u8>,
+    ) -> io::Result<Result<PacketLineRef<'a>, decode::Error>> {
         let (hex_bytes, data_bytes) = buf.split_at_mut(4);
         reader.read_exact(hex_bytes)?;
         let num_data_bytes = match decode::hex_prefix(hex_bytes) {
@@ -35,7 +38,7 @@ where
     fn read_line_inner_exhaustive<'a>(
         reader: &mut T,
         buf: &'a mut Vec<u8>,
-        delimiters: &[PacketLine<'static>],
+        delimiters: &[PacketLineRef<'static>],
         fail_on_err_lines: bool,
         buf_resize: bool,
     ) -> ExhaustiveOutcome<'a> {
@@ -83,7 +86,7 @@ where
     ///  * natural EOF
     ///  * ERR packet line encountered if [`fail_on_err_lines()`][StreamingPeekableIter::fail_on_err_lines()] is true.
     ///  * A `delimiter` packet line encountered
-    pub fn read_line(&mut self) -> Option<io::Result<Result<PacketLine<'_>, decode::Error>>> {
+    pub fn read_line(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, decode::Error>>> {
         if self.is_done {
             return None;
         }
@@ -111,7 +114,7 @@ where
     /// Peek the next packet line without consuming it.
     ///
     /// Multiple calls to peek will return the same packet line, if there is one.
-    pub fn peek_line(&mut self) -> Option<io::Result<Result<PacketLine<'_>, decode::Error>>> {
+    pub fn peek_line(&mut self) -> Option<io::Result<Result<PacketLineRef<'_>, decode::Error>>> {
         if self.is_done {
             return None;
         }
