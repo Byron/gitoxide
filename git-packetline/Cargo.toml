@@ -6,7 +6,7 @@ license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project implementing the pkt-line serialization format"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
-include = ["src/**/*"]
+include = ["src/**/*", "CHANGELOG.md"]
 
 [lib]
 doctest = false
