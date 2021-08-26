@@ -13,7 +13,12 @@ use super::{
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<'repo>(
     meta: &Metadata,
     publishees: &[(&Package, String)],
-    Options { verbose, dry_run, .. }: Options,
+    Options {
+        verbose,
+        dry_run,
+        skip_publish,
+        ..
+    }: Options,
     ctx: &'repo Context,
 ) -> anyhow::Result<Option<Oid<'repo>>> {
     let mut locks_by_manifest_path = BTreeMap::new();
@@ -72,7 +77,11 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
             set_version_and_update_package_dependency(package_to_update, None, publishees, &mut lock, verbose)?;
     }
 
-    let message = format!("Release {}", names_and_versions(publishees));
+    let message = format!(
+        "{} {}",
+        if skip_publish { "Bump" } else { "Release" },
+        names_and_versions(publishees)
+    );
     if verbose {
         log::info!("{} persist changes to manifests with: {:?}", will(dry_run), message);
     }
