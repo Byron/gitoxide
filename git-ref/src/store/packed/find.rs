@@ -7,7 +7,7 @@ use crate::{store::packed, PartialNameRef};
 /// packed-refs specific functionality
 impl packed::Buffer {
     /// Find a reference with the given `name` and return it.
-    pub fn find<'a, Name, E>(&self, name: Name) -> Result<Option<packed::Reference<'_>>, Error>
+    pub fn try_find<'a, Name, E>(&self, name: Name) -> Result<Option<packed::Reference<'_>>, Error>
     where
         Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
@@ -52,12 +52,12 @@ impl packed::Buffer {
     }
 
     /// Find a reference with the given `name` and return it.
-    pub fn find_existing<'a, Name, E>(&self, name: Name) -> Result<packed::Reference<'_>, existing::Error>
+    pub fn find<'a, Name, E>(&self, name: Name) -> Result<packed::Reference<'_>, existing::Error>
     where
         Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
     {
-        match self.find(name) {
+        match self.try_find(name) {
             Ok(Some(r)) => Ok(r),
             Ok(None) => Err(existing::Error::NotFound),
             Err(err) => Err(existing::Error::Find(err)),

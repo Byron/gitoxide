@@ -6,7 +6,7 @@ mod reflog {
         fn iter() -> crate::Result {
             let store = file::store_with_packed_refs()?;
             let packed = store.packed_buffer()?;
-            let r = store.find_existing("main", packed.as_ref())?;
+            let r = store.find("main", packed.as_ref())?;
             let mut buf = Vec::new();
             assert_eq!(r.log_iter(&store, &mut buf)?.expect("log exists").count(), 1);
             assert!(r.log_exists(&store), "it exists if its readable");
@@ -17,7 +17,7 @@ mod reflog {
         fn iter_rev() -> crate::Result {
             let store = file::store_with_packed_refs()?;
             let packed = store.packed_buffer()?;
-            let r = store.find_existing("main", packed.as_ref())?;
+            let r = store.find("main", packed.as_ref())?;
             let mut buf = [0u8; 256];
             assert_eq!(r.log_iter_rev(&store, &mut buf)?.expect("log exists").count(), 1);
             Ok(())
@@ -30,7 +30,7 @@ mod reflog {
         #[test]
         fn iter() -> crate::Result {
             let store = file::store()?;
-            let r = store.loose_find_existing("HEAD")?;
+            let r = store.find_loose("HEAD")?;
             let mut buf = Vec::new();
             assert_eq!(r.log_iter(&store, &mut buf)?.expect("log exists").count(), 1);
             assert!(r.log_exists(&store), "it exists if its readable");
@@ -40,7 +40,7 @@ mod reflog {
         #[test]
         fn iter_rev() -> crate::Result {
             let store = file::store()?;
-            let r = store.loose_find_existing("HEAD")?;
+            let r = store.find_loose("HEAD")?;
             let mut buf = [0u8; 256];
             assert_eq!(r.log_iter_rev(&store, &mut buf)?.expect("log exists").count(), 1);
             Ok(())
@@ -60,7 +60,7 @@ mod peel {
     #[test]
     fn one_level() -> crate::Result {
         let store = file::store()?;
-        let r = store.loose_find_existing("HEAD")?;
+        let r = store.find_loose("HEAD")?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
         let nr = git_ref::file::loose::Reference::try_from(
@@ -83,13 +83,13 @@ mod peel {
     #[test]
     fn peel_with_packed_involvement() -> crate::Result {
         let store = store_with_packed_refs()?;
-        let mut head = store.loose_find_existing("HEAD")?;
+        let mut head = store.find_loose("HEAD")?;
         let packed = store.packed_buffer()?;
         let expected = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
         assert_eq!(head.peel_to_id_in_place(&store, packed.as_ref(), peel::none)?, expected);
         assert_eq!(head.target.as_id().map(ToOwned::to_owned), Some(expected));
 
-        let mut head = store.find_existing("dt1", packed.as_ref())?;
+        let mut head = store.find("dt1", packed.as_ref())?;
         assert_eq!(head.peel_to_id_in_place(&store, packed.as_ref(), peel::none)?, expected);
         assert_eq!(head.target().as_id().map(ToOwned::to_owned), Some(expected));
         Ok(())
@@ -100,7 +100,7 @@ mod peel {
         let store = store_with_packed_refs()?;
         let packed = store.packed_buffer()?;
 
-        let head = store.find_existing("dt1", packed.as_ref())?;
+        let head = store.find("dt1", packed.as_ref())?;
         assert!(head.is_packed());
         assert_eq!(
             head.target().as_id().map(ToOwned::to_owned),
@@ -128,14 +128,14 @@ mod peel {
     #[test]
     fn to_id_multi_hop() -> crate::Result {
         let store = file::store()?;
-        let mut r = store.loose_find_existing("multi-link")?;
+        let mut r = store.find_loose("multi-link")?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
         let commit = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
         assert_eq!(r.peel_to_id_in_place(&store, None, peel::none)?, commit);
         assert_eq!(r.name.as_bstr(), "refs/remotes/origin/multi-link-target3");
 
-        let mut r = store.loose_find_existing("dt1")?;
+        let mut r = store.find_loose("dt1")?;
         assert_eq!(
             r.peel_to_id_in_place(&store, None, peel::none)?,
             hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3"),
@@ -158,7 +158,7 @@ mod peel {
     #[test]
     fn to_id_cycle() -> crate::Result {
         let store = file::store()?;
-        let mut r = store.loose_find_existing("loop-a")?;
+        let mut r = store.find_loose("loop-a")?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
         assert_eq!(r.name.as_bstr(), "refs/loop-a");
 

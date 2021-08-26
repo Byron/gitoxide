@@ -46,7 +46,7 @@ fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_ca
         if *is_empty {
             let edits = edits?;
             assert!(
-                store.loose_find(edits[0].name.to_partial())?.is_some(),
+                store.try_find_loose(edits[0].name.to_partial())?.is_some(),
                 "HEAD was created despite a directory being in the way"
             );
         } else {
@@ -96,7 +96,7 @@ fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
 #[test]
 fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.loose_find("HEAD")?.expect("head exists already");
+    let head = store.try_find_loose("HEAD")?.expect("head exists already");
     let target = head.target;
 
     let res = store.transaction().prepare(
@@ -126,7 +126,7 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
 #[test]
 fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_value_does_not_match() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.loose_find("HEAD")?.expect("head exists already");
+    let head = store.try_find_loose("HEAD")?.expect("head exists already");
     let target = head.target;
 
     let res = store.transaction().prepare(
@@ -211,7 +211,7 @@ fn namespaced_updates_or_deletions_cause_reference_names_to_be_rewritten_and_obs
 #[test]
 fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the_value_matches() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.loose_find("HEAD")?.expect("head exists already");
+    let head = store.try_find_loose("HEAD")?.expect("head exists already");
     let target = head.target;
     let previous_reflog_count = reflog_lines(&store, "HEAD")?.len();
 
@@ -289,7 +289,10 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         let (_keep, mut store) = empty_store()?;
         store.write_reflog = *reflog_writemode;
         let referent = "refs/heads/alt-main";
-        assert!(store.loose_find(referent)?.is_none(), "the reference does not exist");
+        assert!(
+            store.try_find_loose(referent)?.is_none(),
+            "the reference does not exist"
+        );
         let log_ignored = LogChange {
             mode: RefLog::AndReference,
             force_create_reflog: false,
@@ -325,12 +328,12 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             "no split was performed"
         );
 
-        let head = store.loose_find_existing(edits[0].name.to_partial())?;
+        let head = store.find_loose(edits[0].name.to_partial())?;
         assert_eq!(head.name.as_bstr(), "HEAD");
         assert_eq!(head.kind(), git_ref::Kind::Symbolic);
         assert_eq!(head.target.to_ref().as_name(), Some(referent.as_bytes().as_bstr()));
         assert!(!head.log_exists(&store), "no reflog is written for symbolic ref");
-        assert!(store.loose_find(referent)?.is_none(), "referent wasn't created");
+        assert!(store.try_find_loose(referent)?.is_none(), "referent wasn't created");
 
         let new_oid = hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242");
         let new = Target::Peeled(new_oid);
@@ -386,7 +389,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             ]
         );
 
-        let head = store.loose_find_existing("HEAD")?;
+        let head = store.find_loose("HEAD")?;
         assert_eq!(
             head.kind(),
             git_ref::Kind::Symbolic,
@@ -398,7 +401,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             "it still points to the referent"
         );
 
-        let referent_ref = store.loose_find_existing(referent)?;
+        let referent_ref = store.find_loose(referent)?;
         assert_eq!(referent_ref.kind(), git_ref::Kind::Peeled, "referent is a peeled ref");
         assert_eq!(
             referent_ref.target.to_ref().as_id(),
@@ -430,7 +433,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
 /// be needed to keep the reflog consistent
 fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_though_it_should() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.loose_find_existing("HEAD")?;
+    let head = store.find_loose("HEAD")?;
     let referent = head.target.to_ref().as_name().expect("symbolic ref").to_owned();
     let previous_head_reflog = reflog_lines(&store, "HEAD")?;
 
@@ -497,7 +500,7 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
 fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
     let (_keep, store) = store_writable("make_packed_ref_repository.sh")?;
     assert!(
-        store.loose_find("main")?.is_none(),
+        store.try_find_loose("main")?.is_none(),
         "no loose main available, it's packed"
     );
     let new_id = hex_to_id("0000000000000000000000000000000000000001");
@@ -528,12 +531,12 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
 
     let packed = store.packed_buffer().unwrap().expect("packed refs is available");
     assert_eq!(
-            packed.find_existing("main")?.target(),
-            old_id,
-            "packed refs aren't rewritten, the change goes into the loose ref instead which shadows packed refs of same name"
+        packed.find("main")?.target(),
+        old_id,
+        "packed refs aren't rewritten, the change goes into the loose ref instead which shadows packed refs of same name"
         );
     assert_eq!(
-        store.loose_find_existing("main")?.target.as_id(),
+        store.find_loose("main")?.target.as_id(),
         Some(new_id.as_ref()),
         "the new id was written to the loose ref"
     );
@@ -608,10 +611,10 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
 #[test]
 fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() -> crate::Result {
     let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
-    let branch = store.find_existing("newer-as-loose", None)?;
+    let branch = store.find("newer-as-loose", None)?;
     let packed = store.packed_buffer()?.expect("packed-refs");
     assert_ne!(
-        packed.find_existing("newer-as-loose")?.target(),
+        packed.find("newer-as-loose")?.target(),
         branch.target().as_id().expect("peeled"),
         "the packed ref is outdated"
     );
@@ -662,12 +665,8 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
         "the amount of packed refs doesn't change"
     );
     assert_eq!(
-        packed.find_existing("newer-as-loose")?.target(),
-        store
-            .find_existing("newer-as-loose", None)?
-            .target()
-            .as_id()
-            .expect("peeled"),
+        packed.find("newer-as-loose")?.target(),
+        store.find("newer-as-loose", None)?.target().as_id().expect("peeled"),
         "the packed ref is now up to date and the loose ref definitely still exists"
     );
     Ok(())

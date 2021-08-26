@@ -81,7 +81,7 @@ impl<'p> Reference<'p> {
         match self {
             Reference::Loose(r) => r.follow_symbolic(store, packed),
             Reference::Packed(p) => packed
-                .and_then(|packed| packed.find(p.name).ok().flatten()) // needed to get data with 'p2 lifetime
+                .and_then(|packed| packed.try_find(p.name).ok().flatten()) // needed to get data with 'p2 lifetime
                 .and_then(|np| {
                     p.object.and(np.object).map(|peeled| {
                         Ok(Reference::Packed(packed::Reference {

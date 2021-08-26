@@ -58,9 +58,9 @@ fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
 #[test]
 fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.loose_find_existing("HEAD")?;
+    let head = store.find_loose("HEAD")?;
     assert!(head.log_exists(&store));
-    let _main = store.loose_find_existing("main")?;
+    let _main = store.find_loose("main")?;
 
     let edits = store
         .transaction()
@@ -93,15 +93,15 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
         store.reflog_iter_rev("HEAD", &mut [0u8; 128])?.is_none(),
         "reflog was deleted"
     );
-    assert!(store.loose_find("HEAD")?.is_none(), "ref was deleted");
-    assert!(store.loose_find("main")?.is_some(), "referent still exists");
+    assert!(store.try_find_loose("HEAD")?.is_none(), "ref was deleted");
+    assert!(store.try_find_loose("main")?.is_some(), "referent still exists");
     Ok(())
 }
 
 #[test]
 fn delete_ref_with_incorrect_previous_value_fails() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.loose_find_existing("HEAD")?;
+    let head = store.find_loose("HEAD")?;
     assert!(head.log_exists(&store));
 
     let res = store.transaction().prepare(
@@ -123,9 +123,9 @@ fn delete_ref_with_incorrect_previous_value_fails() -> crate::Result {
         Ok(_) => unreachable!("must be err"),
     }
     // everything stays as is
-    let head = store.loose_find_existing("HEAD")?;
+    let head = store.find_loose("HEAD")?;
     assert!(head.log_exists(&store));
-    let main = store.loose_find_existing("main").expect("referent still exists");
+    let main = store.find_loose("main").expect("referent still exists");
     assert!(main.log_exists(&store));
     Ok(())
 }
@@ -133,7 +133,7 @@ fn delete_ref_with_incorrect_previous_value_fails() -> crate::Result {
 #[test]
 fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.loose_find_existing("HEAD")?;
+    let head = store.find_loose("HEAD")?;
     assert!(head.log_exists(&store));
 
     let edits = store
@@ -152,9 +152,9 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
         .commit(&committer())?;
 
     assert_eq!(edits.len(), 1);
-    let head = store.loose_find_existing("HEAD")?;
+    let head = store.find_loose("HEAD")?;
     assert!(!head.log_exists(&store));
-    let main = store.loose_find_existing("main").expect("referent still exists");
+    let main = store.find_loose("main").expect("referent still exists");
     assert!(main.log_exists(&store), "log is untouched, too");
     assert_eq!(
         main.target,
@@ -167,7 +167,7 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
 #[test]
 fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let head = store.loose_find_existing("HEAD")?;
+    let head = store.find_loose("HEAD")?;
     assert!(head.log_exists(&store));
 
     let edits = store
@@ -186,9 +186,9 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
         .commit(&committer())?;
 
     assert_eq!(edits.len(), 2);
-    let head = store.loose_find_existing("HEAD")?;
+    let head = store.find_loose("HEAD")?;
     assert!(!head.log_exists(&store));
-    let main = store.loose_find_existing("main").expect("referent still exists");
+    let main = store.find_loose("main").expect("referent still exists");
     assert!(!main.log_exists(&store), "log is removed");
     assert_eq!(
         main.target,
@@ -203,7 +203,7 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
 fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() -> crate::Result {
     let (_keep, store) = empty_store()?;
     std::fs::write(store.base.join("HEAD"), &b"broken")?;
-    assert!(store.loose_find("HEAD").is_err(), "the ref is truly broken");
+    assert!(store.try_find_loose("HEAD").is_err(), "the ref is truly broken");
 
     let res = store.transaction().prepare(
         Some(RefEdit {
@@ -233,7 +233,7 @@ fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() -> crate::Res
 fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Result {
     let (_keep, store) = empty_store()?;
     std::fs::write(store.base.join("HEAD"), &b"broken")?;
-    assert!(store.loose_find("HEAD").is_err(), "the ref is truly broken");
+    assert!(store.try_find_loose("HEAD").is_err(), "the ref is truly broken");
 
     let edits = store
         .transaction()
@@ -250,7 +250,7 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Res
         )?
         .commit(&committer())?;
 
-    assert!(store.loose_find("HEAD")?.is_none(), "the ref was deleted");
+    assert!(store.try_find_loose("HEAD")?.is_none(), "the ref was deleted");
     assert_eq!(
         edits,
         vec![RefEdit {
@@ -270,7 +270,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
     for reflog_writemode in &[git_ref::file::WriteReflog::Normal, git_ref::file::WriteReflog::Disable] {
         let (_keep, mut store) = store_writable("make_repo_for_reflog.sh")?;
         store.write_reflog = *reflog_writemode;
-        assert!(store.loose_find_existing("HEAD")?.log_exists(&store));
+        assert!(store.find_loose("HEAD")?.log_exists(&store));
         assert!(store.packed_buffer()?.is_none(), "there is no pack");
 
         let edits = store
@@ -288,10 +288,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
             )?
             .commit(&committer())?;
         assert_eq!(edits.len(), 1);
-        assert!(
-            !store.loose_find_existing("HEAD")?.log_exists(&store),
-            "log was deleted"
-        );
+        assert!(!store.find_loose("HEAD")?.log_exists(&store), "log was deleted");
         assert!(store.packed_buffer()?.is_none(), "there still is no pack");
     }
     Ok(())
@@ -302,11 +299,11 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
 ) -> crate::Result {
     let (_keep, store) = store_writable("make_packed_ref_repository.sh")?;
     assert!(
-        store.loose_find("main")?.is_none(),
+        store.try_find_loose("main")?.is_none(),
         "no loose main available, it's packed"
     );
     assert!(
-        store.packed_buffer()?.expect("packed").find("main")?.is_some(),
+        store.packed_buffer()?.expect("packed").try_find("main")?.is_some(),
         "packed main is available"
     );
 
@@ -328,7 +325,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
 
     assert_eq!(edits.len(), 1, "an edit was performed in the packed refs store");
     let packed = store.packed_buffer()?.expect("packed ref present");
-    assert!(packed.find("main")?.is_none(), "no main present after deletion");
+    assert!(packed.try_find("main")?.is_none(), "no main present after deletion");
     Ok(())
 }
 
@@ -336,10 +333,10 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
 fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_refs() -> crate::Result {
     let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
     let packed = store.packed_buffer()?.expect("packed-refs");
-    let branch = store.find_existing("newer-as-loose", Some(&packed))?;
+    let branch = store.find("newer-as-loose", Some(&packed))?;
     let branch_id = branch.target().as_id().map(ToOwned::to_owned).expect("peeled");
     assert_ne!(
-        packed.find_existing("newer-as-loose")?.target(),
+        packed.find("newer-as-loose")?.target(),
         branch_id,
         "the packed ref is outdated"
     );
@@ -365,7 +362,9 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
         "only one edit even though technically two places were changed"
     );
     assert!(
-        store.find("newer-as-loose", store.packed_buffer()?.as_ref())?.is_none(),
+        store
+            .try_find("newer-as-loose", store.packed_buffer()?.as_ref())?
+            .is_none(),
         "reference is deleted everywhere"
     );
     Ok(())
@@ -407,7 +406,10 @@ fn all_contained_references_deletes_the_packed_ref_file_too() {
     assert!(packed.is_none(), "it won't make up packed refs");
     for edit in edits {
         assert!(
-            store.find(edit.name.to_partial(), packed.as_ref()).unwrap().is_none(),
+            store
+                .try_find(edit.name.to_partial(), packed.as_ref())
+                .unwrap()
+                .is_none(),
             "delete ref cannot be found"
         );
     }

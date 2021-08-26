@@ -44,7 +44,7 @@ impl<'s> Transaction<'s> {
             })
             .and_then(|maybe_loose| match (maybe_loose, packed) {
                 (None, Some(packed)) => packed
-                    .find(change.update.name.to_ref())
+                    .try_find(change.update.name.to_ref())
                     .map(|opt| opt.map(file::Reference::Packed))
                     .map_err(Error::from),
                 (None, None) => Ok(None),
@@ -191,7 +191,7 @@ impl<'s> Transaction<'s> {
                 |name| {
                     let symbolic_refs_are_never_packed = None;
                     store
-                        .find_existing(name, symbolic_refs_are_never_packed)
+                        .find(name, symbolic_refs_are_never_packed)
                         .map(|r| r.into_target())
                         .ok()
                 },

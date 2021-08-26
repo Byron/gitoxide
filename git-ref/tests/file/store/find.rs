@@ -8,7 +8,7 @@ mod existing {
         let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
         let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
         let packed = store.packed_buffer()?;
-        let r = store.find_existing("main", packed.as_ref())?;
+        let r = store.find("main", packed.as_ref())?;
         assert_eq!(r.target().to_ref().as_id().expect("peeled"), c1);
         assert_eq!(r.name().as_bstr(), "refs/heads/main");
         Ok(())
@@ -27,7 +27,7 @@ mod loose {
         fn success_and_failure() -> crate::Result {
             let store = store()?;
             for (partial_name, expected_path) in &[("main", Some("refs/heads/main")), ("does-not-exist", None)] {
-                let reference = store.loose_find_existing(*partial_name);
+                let reference = store.find_loose(*partial_name);
                 match expected_path {
                     Some(expected_path) => assert_eq!(reference?.name.as_bstr(), expected_path),
                     None => match reference {
@@ -60,7 +60,7 @@ mod loose {
             ("heads/main", "refs/heads/main", git_ref::Kind::Peeled),
             ("refs/heads/main", "refs/heads/main", git_ref::Kind::Peeled),
         ] {
-            let reference = store.loose_find(*partial_name)?.expect("exists");
+            let reference = store.try_find_loose(*partial_name)?.expect("exists");
             assert_eq!(reference.name.as_bstr(), expected_path);
             assert_eq!(reference.target.to_ref().kind(), *expected_ref_kind);
         }
@@ -75,7 +75,7 @@ mod loose {
             ("broken", "does not parse", true),
             ("../escaping", "an invalid ref name", true),
         ] {
-            let reference = store.loose_find(*partial_name);
+            let reference = store.try_find_loose(*partial_name);
             if *is_err {
                 assert!(reference.is_err(), "{}", reason);
             } else {

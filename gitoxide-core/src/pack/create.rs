@@ -117,7 +117,7 @@ where
                         let refs = &repo.refs;
                         let repo = Arc::clone(&repo);
                         move |_| {
-                            refs.find_existing(tip.as_ref().to_string_lossy().as_ref(), packed.as_ref())
+                            refs.find(tip.as_ref().to_string_lossy().as_ref(), packed.as_ref())
                                 .map_err(anyhow::Error::from)
                                 .and_then(|mut r| {
                                     r.peel_to_id_in_place(refs, packed.as_ref(), |oid, buf| {

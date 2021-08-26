@@ -92,7 +92,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         let repo = self.repo()?;
         match repo
             .refs
-            .find(name, state.assure_packed_refs_uptodate(&repo.refs)?.as_ref())
+            .try_find(name, state.assure_packed_refs_uptodate(&repo.refs)?.as_ref())
         {
             Ok(r) => match r {
                 Some(r) => Ok(Some(Reference::from_file_ref(r, self))),

@@ -54,9 +54,7 @@ impl packed::Transaction {
             .into_iter()
             .filter(|edit| {
                 if let Change::Delete { .. } = edit.change {
-                    buffer
-                        .as_ref()
-                        .map_or(true, |b| b.find_existing(edit.name.to_ref()).is_ok())
+                    buffer.as_ref().map_or(true, |b| b.find(edit.name.to_ref()).is_ok())
                 } else {
                     true
                 }

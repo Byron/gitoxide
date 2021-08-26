@@ -34,7 +34,7 @@ impl file::Store {
     /// The lookup algorithm follows the one in [the git documentation][git-lookup-docs].
     ///
     /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
-    pub fn find<'a, 'p, 's, Name, E>(
+    pub fn try_find<'a, 'p, 's, Name, E>(
         &'s self,
         partial: Name,
         packed: Option<&'p packed::Buffer>,
@@ -48,12 +48,16 @@ impl file::Store {
     }
 
     /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
-    pub fn loose_find<'a, Name, E>(&self, partial: Name) -> Result<Option<loose::Reference>, Error>
+    ///
+    /// Find only loose references, that is references that aren't in the packed-refs buffer.
+    /// All symbolic references are loose references.
+    /// `HEAD` is always a loose reference.
+    pub fn try_find_loose<'a, Name, E>(&self, partial: Name) -> Result<Option<loose::Reference>, Error>
     where
         Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
     {
-        self.find(partial, None)
+        self.try_find(partial, None)
             .map(|r| r.map(|r| r.try_into().expect("only loose refs are found without pack")))
     }
 
@@ -116,7 +120,7 @@ impl file::Store {
                     if let Some(packed) = packed {
                         let full_name = path_to_name(relative_path);
                         let full_name = PartialNameRef((*full_name).as_bstr());
-                        if let Some(packed_ref) = packed.find(full_name)? {
+                        if let Some(packed_ref) = packed.try_find(full_name)? {
                             return Ok(Some(file::Reference::Packed(packed_ref)));
                         };
                     }
@@ -176,8 +180,8 @@ pub mod existing {
     };
 
     impl file::Store {
-        /// Similar to [`file::Store::find_existing()`] but a non-existing ref is treated as error.
-        pub fn find_existing<'a, 'p, 's, Name, E>(
+        /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
+        pub fn find<'a, 'p, 's, Name, E>(
             &'s self,
             partial: Name,
             packed: Option<&'p packed::Buffer>,
@@ -197,12 +201,12 @@ pub mod existing {
         }
 
         /// Similar to [`file::Store::find()`] won't handle packed-refs.
-        pub fn loose_find_existing<'a, Name, E>(&self, partial: Name) -> Result<loose::Reference, Error>
+        pub fn find_loose<'a, Name, E>(&self, partial: Name) -> Result<loose::Reference, Error>
         where
             Name: TryInto<PartialNameRef<'a>, Error = E>,
             crate::name::Error: From<E>,
         {
-            self.find_existing(partial, None)
+            self.find(partial, None)
                 .map(|r| r.try_into().expect("always loose without packed"))
         }
     }
