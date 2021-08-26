@@ -9,10 +9,6 @@ use std::borrow::Cow;
 pub use bstr;
 use bstr::{BStr, BString, ByteSlice};
 use smallvec::SmallVec;
-use tree::Entry;
-pub use types::{Error, Kind};
-
-use crate::tree::EntryRef;
 
 ///
 pub mod commit;
@@ -26,8 +22,20 @@ mod blob;
 
 mod encode;
 pub(crate) mod parse;
-mod types;
 
+///
+pub mod kind;
+
+/// The four types of objects that git differentiates. #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[allow(missing_docs)]
+pub enum Kind {
+    Tree,
+    Blob,
+    Commit,
+    Tag,
+}
 /// A chunk of any [`data`][BlobRef::data].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -189,7 +197,7 @@ pub enum Object {
 pub struct TreeRef<'a> {
     /// The directories and files contained in this tree.
     #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub entries: Vec<EntryRef<'a>>,
+    pub entries: Vec<tree::EntryRef<'a>>,
 }
 
 /// A directory snapshot containing files (blobs), directories (trees) and submodules (commits), lazily evaluated.
@@ -205,8 +213,8 @@ pub struct TreeRefIter<'a> {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tree {
-    /// The directories and files contained in this tree. They must be and remain sorted by [`filename`][Entry::filename].
-    pub entries: Vec<Entry>,
+    /// The directories and files contained in this tree. They must be and remain sorted by [`filename`][tree::Entry::filename].
+    pub entries: Vec<tree::Entry>,
 }
 
 ///

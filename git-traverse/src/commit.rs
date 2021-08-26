@@ -6,7 +6,7 @@ pub mod ancestors {
     };
 
     use git_hash::{oid, ObjectId};
-    use git_object::commit;
+    use git_object::CommitRefIter;
     use quick_error::quick_error;
 
     quick_error! {
@@ -50,7 +50,7 @@ pub mod ancestors {
 
     impl<Find, StateMut> Ancestors<Find, fn(&oid) -> bool, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<commit::CommitRefIter<'a>>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<CommitRefIter<'a>>,
         StateMut: BorrowMut<State>,
     {
         /// Create a new instance.
@@ -72,7 +72,7 @@ pub mod ancestors {
 
     impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<commit::CommitRefIter<'a>>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<CommitRefIter<'a>>,
         Predicate: FnMut(&oid) -> bool,
         StateMut: BorrowMut<State>,
     {
@@ -114,7 +114,7 @@ pub mod ancestors {
 
     impl<Find, Predicate, StateMut> Iterator for Ancestors<Find, Predicate, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<commit::CommitRefIter<'a>>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<CommitRefIter<'a>>,
         Predicate: FnMut(&oid) -> bool,
         StateMut: BorrowMut<State>,
     {

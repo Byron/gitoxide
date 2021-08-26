@@ -1,6 +1,5 @@
 use bstr::{BStr, ByteSlice};
 
-pub use crate::CommitRefIter;
 use crate::{Commit, CommitRef, TagRef};
 
 mod decode;

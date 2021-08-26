@@ -19,7 +19,7 @@ pub mod object {
             #[error("{0}")]
             InvalidHeader(&'static str),
             #[error(transparent)]
-            ObjectHeader(#[from] object::Error),
+            ObjectHeader(#[from] object::kind::Error),
         }
 
         /// Decode a loose object header, being `<kind> <size>\0`, returns ([`Kind`][object::Kind], `size`, `consumed bytes`).

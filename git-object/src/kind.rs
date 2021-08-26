@@ -2,16 +2,8 @@ use std::fmt;
 
 use quick_error::quick_error;
 
-/// The four types of objects that git differentiates.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[allow(missing_docs)]
-pub enum Kind {
-    Tree,
-    Blob,
-    Commit,
-    Tag,
-}
+use crate::Kind;
+
 quick_error! {
     /// The Error used in [`Kind::from_bytes()`].
     #[derive(Debug, Clone)]

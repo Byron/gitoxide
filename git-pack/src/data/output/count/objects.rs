@@ -5,7 +5,7 @@ use std::sync::{
 
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
-use git_object::{commit, TagRefIter};
+use git_object::{CommitRefIter, TagRefIter};
 
 use crate::{data::output, find, FindExt};
 
@@ -188,7 +188,7 @@ where
                         }
                         Commit => {
                             let current_tree_iter = {
-                                let mut commit_iter = commit::CommitRefIter::from_bytes(obj.data);
+                                let mut commit_iter = CommitRefIter::from_bytes(obj.data);
                                 let tree_id = commit_iter.tree_id().expect("every commit has a tree");
                                 parent_commit_ids.clear();
                                 for token in commit_iter {
@@ -240,7 +240,7 @@ where
                                             stats,
                                             true,
                                         );
-                                        commit::CommitRefIter::from_bytes(parent_commit_obj.data)
+                                        CommitRefIter::from_bytes(parent_commit_obj.data)
                                             .tree_id()
                                             .expect("every commit has a tree")
                                     };
@@ -314,7 +314,7 @@ where
                             break;
                         }
                         Commit => {
-                            id = commit::CommitRefIter::from_bytes(obj.data)
+                            id = CommitRefIter::from_bytes(obj.data)
                                 .tree_id()
                                 .expect("every commit has a tree");
                             stats.expanded_objects += 1;

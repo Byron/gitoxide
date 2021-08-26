@@ -1,6 +1,6 @@
 //! Contains a borrowed Object bound to a buffer holding its decompressed data.
 
-use git_object::{commit, BlobRef, CommitRef, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
+use git_object::{BlobRef, CommitRef, CommitRefIter, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
 
 /// A borrowed object using a borrowed slice as backing buffer.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -47,9 +47,9 @@ impl<'a> Object<'a> {
 
     /// Returns this object as commit iterator to parse tokens one at a time to avoid allocations, or
     /// `None` if this is not a commit object.
-    pub fn into_commit_iter(self) -> Option<commit::CommitRefIter<'a>> {
+    pub fn into_commit_iter(self) -> Option<CommitRefIter<'a>> {
         match self.kind {
-            git_object::Kind::Commit => Some(commit::CommitRefIter::from_bytes(self.data)),
+            git_object::Kind::Commit => Some(CommitRefIter::from_bytes(self.data)),
             _ => None,
         }
     }
