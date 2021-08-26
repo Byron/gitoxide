@@ -1,7 +1,7 @@
 use std::{borrow::BorrowMut, collections::VecDeque};
 
 use git_hash::{oid, ObjectId};
-use git_object::{immutable, tree, TreeRefIter};
+use git_object::{tree, TreeRefIter};
 use quick_error::quick_error;
 
 use crate::tree::visit::Visit;
@@ -17,7 +17,7 @@ quick_error! {
         Cancelled {
             display("The delegate cancelled the operation")
         }
-        ObjectDecode(err: immutable::object::decode::Error) {
+        ObjectDecode(err: git_object::decode::Error) {
             display("An object could not be decoded")
             source(err)
             from()

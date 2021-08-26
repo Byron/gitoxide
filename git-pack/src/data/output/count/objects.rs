@@ -643,7 +643,7 @@ mod types {
         IterErr: std::error::Error + 'static,
     {
         #[error(transparent)]
-        CommitDecode(git_object::immutable::object::decode::Error),
+        CommitDecode(git_object::decode::Error),
         #[error(transparent)]
         FindExisting(#[from] FindErr),
         #[error(transparent)]

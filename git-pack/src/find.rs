@@ -158,7 +158,6 @@ pub mod existing {
 ///
 pub mod existing_object {
     use git_hash::ObjectId;
-    use git_object::immutable;
 
     /// The error returned by the various [`find_existing_*`][crate::FindExt::find_existing_commit()] trait methods.
     #[derive(Debug, thiserror::Error)]
@@ -167,7 +166,7 @@ pub mod existing_object {
         #[error(transparent)]
         Find(T),
         #[error(transparent)]
-        Decode(immutable::object::decode::Error),
+        Decode(git_object::decode::Error),
         #[error("An object with id {} could not be found", .oid)]
         NotFound { oid: ObjectId },
         #[error("Expected object of kind {} something else", .expected)]

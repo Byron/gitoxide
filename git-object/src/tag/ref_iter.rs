@@ -7,7 +7,7 @@ use nom::{
     error::{context, ParseError},
 };
 
-use crate::{bstr::ByteSlice, immutable::object, parse, parse::NL, tag::decode, Kind, TagRefIter};
+use crate::{bstr::ByteSlice, parse, parse::NL, tag::decode, Kind, TagRefIter};
 
 pub(crate) enum State {
     Target,
@@ -45,7 +45,7 @@ impl<'a> TagRefIter<'a> {
 }
 
 impl<'a> TagRefIter<'a> {
-    fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), object::decode::Error> {
+    fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
         use State::*;
         Ok(match state {
             Target => {
@@ -65,7 +65,7 @@ impl<'a> TagRefIter<'a> {
                     parse::header_field(i, b"type", take_while1(is_alphabetic))
                 })(i)?;
                 let kind = crate::Kind::from_bytes(kind).map_err(|_| {
-                    let err = object::decode::ParseError::from_error_kind(i, nom::error::ErrorKind::MapRes);
+                    let err = crate::decode::ParseError::from_error_kind(i, nom::error::ErrorKind::MapRes);
                     nom::Err::Error(err)
                 })?;
                 *state = State::Name;
@@ -99,7 +99,7 @@ impl<'a> TagRefIter<'a> {
 }
 
 impl<'a> Iterator for TagRefIter<'a> {
-    type Item = Result<Token<'a>, object::decode::Error>;
+    type Item = Result<Token<'a>, crate::decode::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.data.is_empty() {

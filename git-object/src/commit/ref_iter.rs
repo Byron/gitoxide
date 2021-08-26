@@ -9,7 +9,7 @@ use nom::{
     error::context,
 };
 
-use crate::{bstr::ByteSlice, commit::decode, immutable::object, parse, parse::NL, CommitRefIter};
+use crate::{bstr::ByteSlice, commit::decode, parse, parse::NL, CommitRefIter};
 
 #[derive(Copy, Clone)]
 pub(crate) enum SignatureKind {
@@ -68,7 +68,7 @@ impl<'a> CommitRefIter<'a> {
 }
 
 impl<'a> CommitRefIter<'a> {
-    fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), object::decode::Error> {
+    fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), crate::decode::Error> {
         use State::*;
         Ok(match state {
             Tree => {
@@ -167,7 +167,7 @@ impl<'a> CommitRefIter<'a> {
 }
 
 impl<'a> Iterator for CommitRefIter<'a> {
-    type Item = Result<Token<'a>, object::decode::Error>;
+    type Item = Result<Token<'a>, crate::decode::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.data.is_empty() {

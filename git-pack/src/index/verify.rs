@@ -2,10 +2,7 @@ use std::sync::{atomic::AtomicBool, Arc};
 
 use git_features::progress::{self, Progress};
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use git_object::{
-    bstr::{BString, ByteSlice},
-    immutable::object,
-};
+use git_object::bstr::{BString, ByteSlice};
 
 use crate::index;
 
@@ -20,7 +17,7 @@ pub enum Error {
     },
     #[error("{kind} object {id} could not be decoded")]
     ObjectDecode {
-        source: object::decode::Error,
+        source: git_object::decode::Error,
         kind: git_object::Kind,
         id: git_hash::ObjectId,
     },

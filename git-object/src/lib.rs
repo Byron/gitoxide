@@ -15,9 +15,6 @@ pub use types::{Error, Kind};
 use crate::tree::EntryRef;
 
 ///
-pub mod immutable;
-
-///
 pub mod commit;
 mod object;
 ///
@@ -154,10 +151,10 @@ pub struct Tag {
 /// Immutable objects are read-only structures referencing most data from [a byte slice][crate::ObjectRef::from_bytes()].
 ///
 /// Immutable objects are expected to be deserialized from bytes that acts as backing store, and they
-/// cannot be mutated or serialized. Instead, one will [convert][crate::ObjectRef::into_owned()] them into their [`mutable`][crate::mutable] counterparts
+/// cannot be mutated or serialized. Instead, one will [convert][crate::ObjectRef::into_owned()] them into their [`mutable`][Object] counterparts
 /// which support mutation and serialization.
 ///
-/// An object is representing [`Trees`][TreeRef], [`Blobs`][BlobRef], [`Commits`][CommitRef], or [`Tags`][TagRef].
+/// An `ObjectRef` is representing [`Trees`][TreeRef], [`Blobs`][BlobRef], [`Commits`][CommitRef], or [`Tags`][TagRef].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
@@ -175,7 +172,8 @@ pub enum ObjectRef<'a> {
 ///
 /// They either created using object [construction][Object] or by [deserializing existing objects][ObjectRef::from_bytes()]
 /// and converting these [into mutable copies][ObjectRef::into_owned()] for adjustments.
-/// A mutable object representing [`Trees`][Tree], [`Blobs`][Blob], [`Commits`][Commit] or [`Tags`][Tag].
+///
+/// An `Object` is representing [`Trees`][Tree], [`Blobs`][Blob], [`Commits`][Commit] or [`Tags`][Tag].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(clippy::large_enum_variant, missing_docs)]
@@ -209,4 +207,82 @@ pub struct TreeRefIter<'a> {
 pub struct Tree {
     /// The directories and files contained in this tree. They must be and remain sorted by [`filename`][Entry::filename].
     pub entries: Vec<Entry>,
+}
+
+///
+#[cfg(feature = "verbose-object-parsing-errors")]
+pub mod decode {
+    use crate::bstr::{BString, ByteSlice};
+
+    /// The type to be used for parse errors.
+    pub type ParseError<'a> = nom::error::VerboseError<&'a [u8]>;
+    /// The owned type to be used for parse errors.
+    pub type ParseErrorOwned = nom::error::VerboseError<BString>;
+
+    /// A type to indicate errors during parsing and to abstract away details related to `nom`.
+    #[derive(Debug, Clone)]
+    pub struct Error {
+        /// The actual error
+        pub inner: ParseErrorOwned,
+    }
+
+    impl<'a> From<nom::Err<ParseError<'a>>> for Error {
+        fn from(v: nom::Err<ParseError<'a>>) -> Self {
+            Error {
+                inner: match v {
+                    nom::Err::Error(err) | nom::Err::Failure(err) => nom::error::VerboseError {
+                        errors: err
+                            .errors
+                            .into_iter()
+                            .map(|(i, v)| (i.as_bstr().to_owned(), v))
+                            .collect(),
+                    },
+                    nom::Err::Incomplete(_) => unreachable!("we don't have streaming parsers"),
+                },
+            }
+        }
+    }
+
+    impl std::fmt::Display for Error {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            self.inner.fmt(f)
+        }
+    }
+
+    impl std::error::Error for Error {}
+}
+
+///
+#[cfg(not(feature = "verbose-object-parsing-errors"))]
+pub mod decode {
+    /// The type to be used for parse errors, discards everything and is zero size
+    pub type ParseError<'a> = ();
+    /// The owned type to be used for parse errors, discards everything and is zero size
+    pub type ParseErrorOwned = ();
+
+    /// A type to indicate errors during parsing and to abstract away details related to `nom`.
+    #[derive(Debug, Clone)]
+    pub struct Error {
+        /// The actual error
+        pub inner: ParseErrorOwned,
+    }
+
+    impl<'a> From<nom::Err<ParseError<'a>>> for Error {
+        fn from(v: nom::Err<ParseError<'a>>) -> Self {
+            Error {
+                inner: match v {
+                    nom::Err::Error(err) | nom::Err::Failure(err) => err,
+                    nom::Err::Incomplete(_) => unreachable!("we don't have streaming parsers"),
+                },
+            }
+        }
+    }
+
+    impl std::fmt::Display for Error {
+        fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            Ok(())
+        }
+    }
+
+    impl std::error::Error for Error {}
 }

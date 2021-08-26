@@ -62,3 +62,100 @@ impl Object {
         }
     }
 }
+
+use crate::{BlobRef, CommitRef, Kind, ObjectRef, TagRef, TreeRef};
+
+impl<'a> ObjectRef<'a> {
+    /// Deserialize an object of `kind` from the given `data`.
+    pub fn from_bytes(kind: Kind, data: &'a [u8]) -> Result<ObjectRef<'a>, crate::decode::Error> {
+        Ok(match kind {
+            Kind::Tree => ObjectRef::Tree(TreeRef::from_bytes(data)?),
+            Kind::Blob => ObjectRef::Blob(BlobRef { data }),
+            Kind::Commit => ObjectRef::Commit(CommitRef::from_bytes(data)?),
+            Kind::Tag => ObjectRef::Tag(TagRef::from_bytes(data)?),
+        })
+    }
+
+    /// Convert the immutable object into a mutable version, consuming the source in the process.
+    ///
+    /// Note that this is an expensive operation.
+    pub fn into_owned(self) -> Object {
+        self.into()
+    }
+
+    /// Convert this immutable object into its mutable counterpart.
+    ///
+    /// Note that this is an expensive operation.
+    pub fn to_owned(&self) -> Object {
+        self.clone().into()
+    }
+}
+
+/// Convenient access to contained objects.
+impl<'a> ObjectRef<'a> {
+    /// Interpret this object as blob.
+    pub fn as_blob(&self) -> Option<&BlobRef<'a>> {
+        match self {
+            ObjectRef::Blob(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Interpret this object as blob, chainable.
+    pub fn into_blob(self) -> Option<BlobRef<'a>> {
+        match self {
+            ObjectRef::Blob(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Interpret this object as commit.
+    pub fn as_commit(&self) -> Option<&CommitRef<'a>> {
+        match self {
+            ObjectRef::Commit(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Interpret this object as commit, chainable.
+    pub fn into_commit(self) -> Option<CommitRef<'a>> {
+        match self {
+            ObjectRef::Commit(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Interpret this object as tree.
+    pub fn as_tree(&self) -> Option<&TreeRef<'a>> {
+        match self {
+            ObjectRef::Tree(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Interpret this object as tree, chainable
+    pub fn into_tree(self) -> Option<TreeRef<'a>> {
+        match self {
+            ObjectRef::Tree(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Interpret this object as tag.
+    pub fn as_tag(&self) -> Option<&TagRef<'a>> {
+        match self {
+            ObjectRef::Tag(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Interpret this object as tag, chainable.
+    pub fn into_tag(self) -> Option<TagRef<'a>> {
+        match self {
+            ObjectRef::Tag(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Return the kind of object.
+    pub fn kind(&self) -> Kind {
+        match self {
+            ObjectRef::Tree(_) => Kind::Tree,
+            ObjectRef::Blob(_) => Kind::Blob,
+            ObjectRef::Commit(_) => Kind::Commit,
+            ObjectRef::Tag(_) => Kind::Tag,
+        }
+    }
+}

@@ -6,7 +6,7 @@ pub mod ancestors {
     };
 
     use git_hash::{oid, ObjectId};
-    use git_object::{commit, immutable};
+    use git_object::commit;
     use quick_error::quick_error;
 
     quick_error! {
@@ -17,7 +17,7 @@ pub mod ancestors {
             NotFound{oid: ObjectId} {
                 display("The commit {} could not be found", oid)
             }
-            ObjectDecode(err: immutable::object::decode::Error) {
+            ObjectDecode(err: git_object::decode::Error) {
                 display("An object could not be decoded")
                 source(err)
                 from()

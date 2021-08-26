@@ -1,6 +1,6 @@
 //! Contains a borrowed Object bound to a buffer holding its decompressed data.
 
-use git_object::{commit, immutable, BlobRef, CommitRef, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
+use git_object::{commit, BlobRef, CommitRef, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
 
 /// A borrowed object using a borrowed slice as backing buffer.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -27,7 +27,7 @@ impl<'a> Object<'a> {
     ///
     /// **Note** that [mutable, decoded objects][git_object::Object] can be created from a [`crate::data::Object`]
     /// using [`git_object::ObjectRef::into_owned()`].
-    pub fn decode(&self) -> Result<ObjectRef<'a>, immutable::object::decode::Error> {
+    pub fn decode(&self) -> Result<ObjectRef<'a>, git_object::decode::Error> {
         Ok(match self.kind {
             git_object::Kind::Tree => ObjectRef::Tree(TreeRef::from_bytes(self.data)?),
             git_object::Kind::Blob => ObjectRef::Blob(BlobRef { data: self.data }),

@@ -1,7 +1,7 @@
 use bstr::{BStr, ByteSlice};
 
 pub use crate::CommitRefIter;
-use crate::{immutable, immutable::object, Commit, CommitRef, TagRef};
+use crate::{Commit, CommitRef, TagRef};
 
 mod decode;
 
@@ -12,10 +12,8 @@ mod write;
 
 impl<'a> CommitRef<'a> {
     /// Deserialize a commit from the given `data` bytes while avoiding most allocations.
-    pub fn from_bytes(data: &'a [u8]) -> Result<CommitRef<'a>, object::decode::Error> {
-        decode::commit(data)
-            .map(|(_, t)| t)
-            .map_err(object::decode::Error::from)
+    pub fn from_bytes(data: &'a [u8]) -> Result<CommitRef<'a>, crate::decode::Error> {
+        decode::commit(data).map(|(_, t)| t).map_err(crate::decode::Error::from)
     }
     /// Return the `tree` fields hash digest.
     pub fn tree(&self) -> git_hash::ObjectId {
@@ -70,7 +68,7 @@ where
     ///
     /// A merge tag is a tag object embedded within the respective header field of a commit, making
     /// it a child object of sorts.
-    pub fn mergetags(self) -> impl Iterator<Item = Result<TagRef<'a>, immutable::object::decode::Error>> {
+    pub fn mergetags(self) -> impl Iterator<Item = Result<TagRef<'a>, crate::decode::Error>> {
         self.find_all("mergetag").map(|b| TagRef::from_bytes(b))
     }
 

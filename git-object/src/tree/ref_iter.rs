@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use crate::{immutable::object, tree, tree::EntryRef, TreeRef, TreeRefIter};
+use crate::{tree, tree::EntryRef, TreeRef, TreeRefIter};
 
 impl<'a> TreeRefIter<'a> {
     /// Instantiate an iterator from the given tree data.
@@ -11,8 +11,8 @@ impl<'a> TreeRefIter<'a> {
 
 impl<'a> TreeRef<'a> {
     /// Deserialize a Tree from `data`.
-    pub fn from_bytes(data: &'a [u8]) -> Result<TreeRef<'a>, object::decode::Error> {
-        decode::tree(data).map(|(_, t)| t).map_err(object::decode::Error::from)
+    pub fn from_bytes(data: &'a [u8]) -> Result<TreeRef<'a>, crate::decode::Error> {
+        decode::tree(data).map(|(_, t)| t).map_err(crate::decode::Error::from)
     }
 
     /// Create an instance of the empty tree.
@@ -25,7 +25,7 @@ impl<'a> TreeRef<'a> {
 
 impl<'a> TreeRefIter<'a> {
     /// Consume self and return all parsed entries.
-    pub fn entries(self) -> Result<Vec<EntryRef<'a>>, object::decode::Error> {
+    pub fn entries(self) -> Result<Vec<EntryRef<'a>>, crate::decode::Error> {
         self.collect()
     }
 }
@@ -37,7 +37,7 @@ impl<'a> Default for TreeRefIter<'a> {
 }
 
 impl<'a> Iterator for TreeRefIter<'a> {
-    type Item = Result<EntryRef<'a>, object::decode::Error>;
+    type Item = Result<EntryRef<'a>, crate::decode::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.data.is_empty() {

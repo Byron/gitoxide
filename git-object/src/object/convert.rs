@@ -157,3 +157,71 @@ impl TryFrom<Object> for Blob {
         })
     }
 }
+
+impl<'a> From<TagRef<'a>> for ObjectRef<'a> {
+    fn from(v: TagRef<'a>) -> Self {
+        ObjectRef::Tag(v)
+    }
+}
+
+impl<'a> From<CommitRef<'a>> for ObjectRef<'a> {
+    fn from(v: CommitRef<'a>) -> Self {
+        ObjectRef::Commit(v)
+    }
+}
+
+impl<'a> From<TreeRef<'a>> for ObjectRef<'a> {
+    fn from(v: TreeRef<'a>) -> Self {
+        ObjectRef::Tree(v)
+    }
+}
+
+impl<'a> From<BlobRef<'a>> for ObjectRef<'a> {
+    fn from(v: BlobRef<'a>) -> Self {
+        ObjectRef::Blob(v)
+    }
+}
+
+impl<'a> TryFrom<ObjectRef<'a>> for TagRef<'a> {
+    type Error = ObjectRef<'a>;
+
+    fn try_from(value: ObjectRef<'a>) -> Result<Self, Self::Error> {
+        Ok(match value {
+            ObjectRef::Tag(v) => v,
+            _ => return Err(value),
+        })
+    }
+}
+
+impl<'a> TryFrom<ObjectRef<'a>> for CommitRef<'a> {
+    type Error = ObjectRef<'a>;
+
+    fn try_from(value: ObjectRef<'a>) -> Result<Self, Self::Error> {
+        Ok(match value {
+            ObjectRef::Commit(v) => v,
+            _ => return Err(value),
+        })
+    }
+}
+
+impl<'a> TryFrom<ObjectRef<'a>> for TreeRef<'a> {
+    type Error = ObjectRef<'a>;
+
+    fn try_from(value: ObjectRef<'a>) -> Result<Self, Self::Error> {
+        Ok(match value {
+            ObjectRef::Tree(v) => v,
+            _ => return Err(value),
+        })
+    }
+}
+
+impl<'a> TryFrom<ObjectRef<'a>> for BlobRef<'a> {
+    type Error = ObjectRef<'a>;
+
+    fn try_from(value: ObjectRef<'a>) -> Result<Self, Self::Error> {
+        Ok(match value {
+            ObjectRef::Blob(v) => v,
+            _ => return Err(value),
+        })
+    }
+}
