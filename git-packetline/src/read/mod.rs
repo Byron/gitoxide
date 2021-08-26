@@ -10,7 +10,7 @@ type ExhaustiveOutcome<'a> = (
 );
 
 /// Read pack lines one after another, without consuming more than needed from the underlying
-/// [`Read`][std::io::Read]. [`Flush`][PacketLine::Flush] lines cause the reader to stop producing lines forever,
+/// [`Read`][std::io::Read]. [`Flush`][PacketLineRef::Flush] lines cause the reader to stop producing lines forever,
 /// leaving [`Read`][std::io::Read] at the start of whatever comes next.
 ///
 /// This implementation tries hard not to allocate at all which leads to quite some added complexity and plenty of extra memory copies.

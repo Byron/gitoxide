@@ -3,27 +3,27 @@ use bstr::BStr;
 use crate::{decode, BandRef, Channel, ErrorRef, PacketLineRef, TextRef, ERR_PREFIX};
 
 impl<'a> PacketLineRef<'a> {
-    /// Return this instance as slice if it's [`Data`][PacketLine::Data].
+    /// Return this instance as slice if it's [`Data`][PacketLineRef::Data].
     pub fn as_slice(&self) -> Option<&[u8]> {
         match self {
             PacketLineRef::Data(d) => Some(d),
             PacketLineRef::Flush | PacketLineRef::Delimiter | PacketLineRef::ResponseEnd => None,
         }
     }
-    /// Return this instance's [`as_slice()`][PacketLine::as_slice()] as [`BStr`].
+    /// Return this instance's [`as_slice()`][PacketLineRef::as_slice()] as [`BStr`].
     pub fn as_bstr(&self) -> Option<&BStr> {
         self.as_slice().map(Into::into)
     }
-    /// Interpret this instance's [`as_slice()`][PacketLine::as_slice()] as [`Error`].
+    /// Interpret this instance's [`as_slice()`][PacketLineRef::as_slice()] as [`ErrorRef`].
     ///
     /// This works for any data received in an error [channel][crate::Channel].
     ///
-    /// Note that this creates an unchecked error using the slice verbatim, which is useful to [serialize it][Error::write_to()].
-    /// See [`check_error()`][PacketLine::check_error()] for a version that assures the error information is in the expected format.
+    /// Note that this creates an unchecked error using the slice verbatim, which is useful to [serialize it][ErrorRef::write_to()].
+    /// See [`check_error()`][PacketLineRef::check_error()] for a version that assures the error information is in the expected format.
     pub fn as_error(&self) -> Option<ErrorRef<'_>> {
         self.as_slice().map(ErrorRef)
     }
-    /// Check this instance's [`as_slice()`][PacketLine::as_slice()] is a valid [`Error`] and return it.
+    /// Check this instance's [`as_slice()`][PacketLineRef::as_slice()] is a valid [`ErrorRef`] and return it.
     ///
     /// This works for any data received in an error [channel][crate::Channel].
     pub fn check_error(&self) -> Option<ErrorRef<'_>> {
@@ -40,10 +40,10 @@ impl<'a> PacketLineRef<'a> {
         self.as_slice().map(Into::into)
     }
 
-    /// Interpret the data in this [`slice`][PacketLine::as_slice()] as [`Band`] according to the given `kind` of channel.
+    /// Interpret the data in this [`slice`][PacketLineRef::as_slice()] as [`BandRef`] according to the given `kind` of channel.
     ///
     /// Note that this is only relevant in a side-band channel.
-    /// See [`decode_band()`][PacketLine::decode_band()] in case `kind` is unknown.
+    /// See [`decode_band()`][PacketLineRef::decode_band()] in case `kind` is unknown.
     pub fn as_band(&self, kind: Channel) -> Option<BandRef<'_>> {
         self.as_slice().map(|d| match kind {
             Channel::Data => BandRef::Data(d),
@@ -52,7 +52,7 @@ impl<'a> PacketLineRef<'a> {
         })
     }
 
-    /// Decode the band of this [`slice`][PacketLine::as_slice()], or panic if it is not actually a side-band line.
+    /// Decode the band of this [`slice`][PacketLineRef::as_slice()], or panic if it is not actually a side-band line.
     pub fn decode_band(&self) -> Result<BandRef<'_>, decode::band::Error> {
         let d = self.as_slice().ok_or(decode::band::Error::NonDataLine)?;
         Ok(match d[0] {
