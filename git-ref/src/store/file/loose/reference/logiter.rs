@@ -41,7 +41,7 @@ impl Reference {
         &'a self,
         store: &file::Store,
         buf: &'b mut Vec<u8>,
-    ) -> std::io::Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>> + 'a>> {
+    ) -> std::io::Result<Option<impl Iterator<Item = Result<log::LineRef<'b>, log::iter::decode::Error>> + 'a>> {
         store.reflog_iter(self.name.to_ref(), buf).map_err(must_be_io_err)
     }
 }

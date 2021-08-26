@@ -52,7 +52,7 @@ impl file::Store {
         &self,
         name: Name,
         buf: &'b mut Vec<u8>,
-    ) -> Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>>>, Error>
+    ) -> Result<Option<impl Iterator<Item = Result<log::LineRef<'b>, log::iter::decode::Error>>>, Error>
     where
         Name: TryInto<FullNameRef<'a>, Error = E>,
         crate::name::Error: From<E>,

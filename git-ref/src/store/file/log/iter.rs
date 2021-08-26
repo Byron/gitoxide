@@ -1,5 +1,6 @@
 use bstr::ByteSlice;
 
+use crate::store::file;
 use crate::store::file::{log, log::iter::decode::LineNumber};
 
 ///
@@ -51,9 +52,9 @@ pub mod decode {
 /// This iterator is useful when the ref log file is going to be rewritten which forces processing of the entire file.
 /// It will continue parsing even if individual log entries failed to parse, leaving it to the driver to decide whether to
 /// abort or continue.
-pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::Line<'_>, decode::Error>> {
+pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::LineRef<'_>, decode::Error>> {
     lines.as_bstr().lines().enumerate().map(|(ln, line)| {
-        log::Line::from_bytes(line).map_err(|err| decode::Error::new(err, decode::LineNumber::FromStart(ln)))
+        log::LineRef::from_bytes(line).map_err(|err| decode::Error::new(err, decode::LineNumber::FromStart(ln)))
     })
 }
 
@@ -93,7 +94,7 @@ impl<'a, F> Iterator for Reverse<'a, F>
 where
     F: std::io::Read + std::io::Seek,
 {
-    type Item = std::io::Result<Result<log::mutable::Line, decode::Error>>;
+    type Item = std::io::Result<Result<file::log::Line, decode::Error>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match (self.last_nl_pos.take(), self.read_and_pos.take()) {
@@ -124,7 +125,7 @@ where
                     self.read_and_pos = Some(read_and_pos);
                     self.last_nl_pos = Some(start);
                     let buf = &self.buf[start + 1..end];
-                    let res = Some(Ok(log::Line::from_bytes(buf)
+                    let res = Some(Ok(log::LineRef::from_bytes(buf)
                         .map_err(|err| decode::Error::new(err, LineNumber::FromEnd(self.count)))
                         .map(Into::into)));
                     self.count += 1;
@@ -134,7 +135,7 @@ where
                     let (mut read, last_read_pos) = read_and_pos;
                     if last_read_pos == 0 {
                         let buf = &self.buf[..end];
-                        Some(Ok(log::Line::from_bytes(buf)
+                        Some(Ok(log::LineRef::from_bytes(buf)
                             .map_err(|err| decode::Error::new(err, LineNumber::FromEnd(self.count)))
                             .map(Into::into)))
                     } else {
