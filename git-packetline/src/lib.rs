@@ -23,8 +23,17 @@ pub enum Channel {
     Error = 3,
 }
 
+mod line;
 ///
-pub mod line;
+pub mod read;
+
+///
+#[cfg(any(feature = "async-io", feature = "blocking-io"))]
+mod write;
+#[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
+pub use write::async_io::Writer;
+#[cfg(feature = "blocking-io")]
+pub use write::blocking_io::Writer;
 
 /// A borrowed packet line as it refers to a slice of data by reference.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -62,17 +71,21 @@ pub enum BandRef<'a> {
     Error(&'a [u8]),
 }
 
+/// Read pack lines one after another, without consuming more than needed from the underlying
+/// [`Read`][std::io::Read]. [`Flush`][PacketLineRef::Flush] lines cause the reader to stop producing lines forever,
+/// leaving [`Read`][std::io::Read] at the start of whatever comes next.
 ///
-pub mod read;
-#[doc(inline)]
-pub use read::StreamingPeekableIter;
-
-///
-#[cfg(any(feature = "async-io", feature = "blocking-io"))]
-pub mod write;
-#[cfg(any(feature = "async-io", feature = "blocking-io"))]
-#[doc(inline)]
-pub use write::Writer;
+/// This implementation tries hard not to allocate at all which leads to quite some added complexity and plenty of extra memory copies.
+pub struct StreamingPeekableIter<T> {
+    read: T,
+    peek_buf: Vec<u8>,
+    #[cfg(any(feature = "blocking-io", feature = "async-io"))]
+    buf: Vec<u8>,
+    fail_on_err_lines: bool,
+    delimiters: &'static [PacketLineRef<'static>],
+    is_done: bool,
+    stopped_at: Option<PacketLineRef<'static>>,
+}
 
 /// Utilities to help decoding packet lines
 pub mod decode;

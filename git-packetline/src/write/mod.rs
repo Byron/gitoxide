@@ -1,12 +1,10 @@
+use crate::Writer;
+
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
-mod async_io;
-#[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]
-pub use async_io::Writer;
+pub(crate) mod async_io;
 
 #[cfg(feature = "blocking-io")]
-mod blocking_io;
-#[cfg(feature = "blocking-io")]
-pub use blocking_io::Writer;
+pub(crate) mod blocking_io;
 
 /// Common methods
 impl<T> Writer<T> {

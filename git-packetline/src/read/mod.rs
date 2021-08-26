@@ -1,6 +1,6 @@
 #[cfg(any(feature = "blocking-io", feature = "async-io"))]
 use crate::MAX_LINE_LEN;
-use crate::{PacketLineRef, U16_HEX_BYTES};
+use crate::{PacketLineRef, StreamingPeekableIter, U16_HEX_BYTES};
 
 #[cfg(any(feature = "blocking-io", feature = "async-io"))]
 type ExhaustiveOutcome<'a> = (
@@ -8,22 +8,6 @@ type ExhaustiveOutcome<'a> = (
     Option<PacketLineRef<'static>>,                                           // stopped_at
     Option<std::io::Result<Result<PacketLineRef<'a>, crate::decode::Error>>>, // actual method result
 );
-
-/// Read pack lines one after another, without consuming more than needed from the underlying
-/// [`Read`][std::io::Read]. [`Flush`][PacketLineRef::Flush] lines cause the reader to stop producing lines forever,
-/// leaving [`Read`][std::io::Read] at the start of whatever comes next.
-///
-/// This implementation tries hard not to allocate at all which leads to quite some added complexity and plenty of extra memory copies.
-pub struct StreamingPeekableIter<T> {
-    read: T,
-    peek_buf: Vec<u8>,
-    #[cfg(any(feature = "blocking-io", feature = "async-io"))]
-    buf: Vec<u8>,
-    fail_on_err_lines: bool,
-    delimiters: &'static [PacketLineRef<'static>],
-    is_done: bool,
-    stopped_at: Option<PacketLineRef<'static>>,
-}
 
 impl<T> StreamingPeekableIter<T> {
     /// Return a new instance from `read` which will stop decoding packet lines when receiving one of the given `delimiters`.
