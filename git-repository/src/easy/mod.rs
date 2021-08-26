@@ -113,7 +113,7 @@ pub struct State {
 
 /// A utility trait to represent access to a repository.
 ///
-/// It provides signature_ref and possibly mutable access. Both types of access are validated at runtime, which may fail
+/// It provides immutable and possibly mutable access. Both types of access are validated at runtime, which may fail
 /// or may block, depending on the implementation.
 ///
 /// Furthermore it provides access to additional state for use with the [`Repository`]. It is designed for thread-local

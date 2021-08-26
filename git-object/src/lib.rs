@@ -14,6 +14,7 @@ pub use types::{Error, Kind};
 
 use crate::tree::EntryRef;
 
+///
 pub mod immutable;
 
 ///
@@ -150,7 +151,13 @@ pub struct Tag {
     pub pgp_signature: Option<BString>,
 }
 
-/// An signature_ref object representing [`Trees`][TreeRef], [`Blobs`][BlobRef], [`Commits`][CommitRef], or [`Tags`][TagRef].
+/// Immutable objects are read-only structures referencing most data from [a byte slice][crate::ObjectRef::from_bytes()].
+///
+/// Immutable objects are expected to be deserialized from bytes that acts as backing store, and they
+/// cannot be mutated or serialized. Instead, one will [convert][crate::ObjectRef::into_owned()] them into their [`mutable`][crate::mutable] counterparts
+/// which support mutation and serialization.
+///
+/// An object is representing [`Trees`][TreeRef], [`Blobs`][BlobRef], [`Commits`][CommitRef], or [`Tags`][TagRef].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]

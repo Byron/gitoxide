@@ -41,7 +41,7 @@ mod convert {
     }
 
     impl Signature {
-        /// Borrow this instance as signature_ref
+        /// Borrow this instance as immutable
         pub fn to_ref(&self) -> SignatureRef<'_> {
             SignatureRef {
                 name: self.name.as_ref(),

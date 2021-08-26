@@ -71,7 +71,7 @@ pub enum Target {
     Symbolic(FullName),
 }
 
-/// Denotes a ref target, equivalent to [`Kind`], but with signature_ref data.
+/// Denotes a ref target, equivalent to [`Kind`], but with immutable data.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub enum TargetRef<'a> {
     /// A ref that points to an object id

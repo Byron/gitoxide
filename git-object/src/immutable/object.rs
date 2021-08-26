@@ -11,14 +11,14 @@ impl<'a> ObjectRef<'a> {
         })
     }
 
-    /// Convert the signature_ref object into a mutable version, consuming the source in the process.
+    /// Convert the immutable object into a mutable version, consuming the source in the process.
     ///
     /// Note that this is an expensive operation.
     pub fn into_owned(self) -> Object {
         self.into()
     }
 
-    /// Convert this signature_ref object into its mutable counterpart.
+    /// Convert this immutable object into its mutable counterpart.
     ///
     /// Note that this is an expensive operation.
     pub fn to_owned(&self) -> Object {

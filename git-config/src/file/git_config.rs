@@ -306,7 +306,7 @@ impl<'event> GitConfig<'event> {
             .map_err(|_| GitConfigError::FailedConversion)
     }
 
-    /// Returns an signature_ref section reference.
+    /// Returns an immutable section reference.
     ///
     /// # Errors
     ///

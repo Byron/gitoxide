@@ -1,4 +1,4 @@
-//! This crate provides ways of identifying an actor within the git repository both in shared/signature_ref and mutable variants.
+//! This crate provides ways of identifying an actor within the git repository both in shared/mutable and mutable variants.
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 use bstr::{BStr, BString};
