@@ -144,7 +144,7 @@ impl Capabilities {
 impl Capabilities {
     fn extract_protocol<'a>(
         capabilities_or_version: &'a git_packetline::PacketLineRef<'_>,
-    ) -> Result<(git_packetline::immutable::Text<'a>, Protocol), client::Error> {
+    ) -> Result<(git_packetline::TextRef<'a>, Protocol), client::Error> {
         let first_line = capabilities_or_version
             .as_text()
             .ok_or(client::Error::ExpectedLine("text"))?;

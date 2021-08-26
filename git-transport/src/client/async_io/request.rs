@@ -75,11 +75,7 @@ impl<'a> RequestWriter<'a> {
                     .write_to(self.writer.inner_mut())
                     .await
             }
-            MessageKind::Text(t) => {
-                git_packetline::immutable::Text::from(t)
-                    .write_to(self.writer.inner_mut())
-                    .await
-            }
+            MessageKind::Text(t) => git_packetline::TextRef::from(t).write_to(self.writer.inner_mut()).await,
         }
         .map(|_| ())
     }

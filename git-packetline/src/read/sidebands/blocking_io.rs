@@ -1,9 +1,6 @@
 use std::{io, io::BufRead};
 
-use crate::{
-    immutable::{Band, Text},
-    PacketLineRef, StreamingPeekableIter, U16_HEX_BYTES,
-};
+use crate::{BandRef, PacketLineRef, StreamingPeekableIter, TextRef, U16_HEX_BYTES};
 
 /// An implementor of [`BufRead`][io::BufRead] yielding packet lines on each call to [`read_line()`][io::BufRead::read_line()].
 /// It's also possible to hide the underlying packet lines using the [`Read`][io::Read] implementation which is useful
@@ -116,13 +113,13 @@ where
                             .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
                         const ENCODED_BAND: usize = 1;
                         match band {
-                            Band::Data(d) => break (U16_HEX_BYTES + ENCODED_BAND, d.len()),
-                            Band::Progress(d) => {
-                                let text = Text::from(d).0;
+                            BandRef::Data(d) => break (U16_HEX_BYTES + ENCODED_BAND, d.len()),
+                            BandRef::Progress(d) => {
+                                let text = TextRef::from(d).0;
                                 handle_progress(false, text);
                             }
-                            Band::Error(d) => {
-                                let text = Text::from(d).0;
+                            BandRef::Error(d) => {
+                                let text = TextRef::from(d).0;
                                 handle_progress(true, text);
                             }
                         };

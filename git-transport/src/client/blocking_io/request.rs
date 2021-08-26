@@ -50,7 +50,7 @@ impl<'a> RequestWriter<'a> {
             MessageKind::Flush => git_packetline::PacketLineRef::Flush.write_to(self.writer.inner_mut()),
             MessageKind::Delimiter => git_packetline::PacketLineRef::Delimiter.write_to(self.writer.inner_mut()),
             MessageKind::ResponseEnd => git_packetline::PacketLineRef::ResponseEnd.write_to(self.writer.inner_mut()),
-            MessageKind::Text(t) => git_packetline::immutable::Text::from(t).write_to(self.writer.inner_mut()),
+            MessageKind::Text(t) => git_packetline::TextRef::from(t).write_to(self.writer.inner_mut()),
         }
         .map(|_| ())
     }

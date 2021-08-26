@@ -1,8 +1,7 @@
 mod streaming {
     use git_packetline::{
         decode::{self, streaming, Stream},
-        immutable::Error,
-        PacketLineRef,
+        ErrorRef, PacketLineRef,
     };
 
     use crate::assert_err_display;
@@ -118,7 +117,7 @@ mod streaming {
         )?;
         assert_eq!(
             line.check_error().expect("error to be parsed here"),
-            Error(b"the error")
+            ErrorRef(b"the error")
         );
         Ok(())
     }

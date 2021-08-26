@@ -24,7 +24,8 @@ pub enum Channel {
 }
 
 ///
-pub mod immutable;
+pub mod line;
+
 /// A borrowed packet line as it refers to a slice of data by reference.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -37,6 +38,28 @@ pub enum PacketLineRef<'a> {
     Delimiter,
     /// The end of the response.
     ResponseEnd,
+}
+
+/// A packet line representing an Error in a side-band channel.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct ErrorRef<'a>(pub &'a [u8]);
+
+/// A packet line representing text, which may include a trailing newline.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct TextRef<'a>(pub &'a [u8]);
+
+/// A band in a side-band channel.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub enum BandRef<'a> {
+    /// A band carrying data.
+    Data(&'a [u8]),
+    /// A band carrying user readable progress information.
+    Progress(&'a [u8]),
+    /// A band carrying user readable errors.
+    Error(&'a [u8]),
 }
 
 ///
