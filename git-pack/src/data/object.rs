@@ -25,7 +25,7 @@ impl<'a> Object<'a> {
     /// Decodes the data in the backing slice into a [`git_object::ObjectRef`], allowing to access all of its data
     /// conveniently. The cost of parsing an object is negligible.
     ///
-    /// **Note** that [mutable, decoded objects][git_object::mutable::Object] can be created from a [`crate::data::Object`]
+    /// **Note** that [mutable, decoded objects][git_object::Object] can be created from a [`crate::data::Object`]
     /// using [`git_object::ObjectRef::into_mutable()`].
     pub fn decode(&self) -> Result<ObjectRef<'a>, immutable::object::decode::Error> {
         Ok(match self.kind {
