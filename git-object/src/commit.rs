@@ -4,7 +4,7 @@ use crate::{immutable, TagRef};
 
 pub use crate::immutable::commit::iter::RefIter;
 
-/// An iterator over extra headers in [owned][crate::mutable::Commit] and [borrowed][immutable::Commit] commits.
+/// An iterator over extra headers in [owned][crate::mutable::Commit] and [borrowed][crate::CommitRef] commits.
 pub struct ExtraHeaders<I> {
     inner: I,
 }

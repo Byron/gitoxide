@@ -35,7 +35,7 @@ impl Default for State {
     }
 }
 
-/// Like [`signature_ref::Commit`][super::Commit], but as `Iterator` to support (up to) entirely allocation free parsing.
+/// Like [`CommitRef`][crate::CommitRef], but as `Iterator` to support (up to) entirely allocation free parsing.
 /// It's particularly useful to traverse the commit graph without ever allocating arrays for parents.
 pub struct RefIter<'a> {
     data: &'a [u8],
@@ -196,7 +196,7 @@ impl<'a> Iterator for RefIter<'a> {
     }
 }
 
-/// A token returned by the [commit iterator][Iter].
+/// A token returned by the [commit iterator][RefIter].
 #[allow(missing_docs)]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Token<'a> {

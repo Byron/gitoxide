@@ -1,6 +1,6 @@
 /// The mode of items storable in a tree, similar to the file mode on a unix file system.
 ///
-/// Used in [mutable::Entry][crate::mutable::tree::Entry] and [tree::Entry][crate::immutable::tree::Entry].
+/// Used in [mutable::Entry][crate::mutable::tree::Entry] and [EntryRef].
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
 #[repr(u16)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

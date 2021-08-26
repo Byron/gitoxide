@@ -1,4 +1,4 @@
-//! This crate provides types for [read-only git objects][immutable::Object] backed by bytes provided in git's serialization format
+//! This crate provides types for [read-only git objects][crate::ObjectRef] backed by bytes provided in git's serialization format
 //! as well as [mutable versions][mutable::Object] of these. The latter can be serialized into git's serialization format for objects.
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
@@ -26,7 +26,7 @@ pub mod tree;
 
 mod types;
 
-/// A chunk of any [`data`][Blob::data].
+/// A chunk of any [`data`][BlobRef::data].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlobRef<'a> {
@@ -34,7 +34,7 @@ pub struct BlobRef<'a> {
     pub data: &'a [u8],
 }
 
-/// A git commit parsed using [`from_bytes()`][Commit::from_bytes()].
+/// A git commit parsed using [`from_bytes()`][CommitRef::from_bytes()].
 ///
 /// A commit encapsulates information about a point in time at which the state of the repository is recorded, usually after a
 /// change which is documented in the commit `message`.
@@ -43,7 +43,7 @@ pub struct BlobRef<'a> {
 pub struct CommitRef<'a> {
     /// HEX hash of tree object we point to. Usually 40 bytes long.
     ///
-    /// Use [`tree()`][Commit::tree()] to obtain a decoded version of it.
+    /// Use [`tree()`][CommitRef::tree()] to obtain a decoded version of it.
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub tree: &'a BStr,
     /// HEX hash of each parent commit. Empty for first commit in repository.
@@ -59,7 +59,7 @@ pub struct CommitRef<'a> {
     pub encoding: Option<&'a BStr>,
     /// The commit message documenting the change.
     pub message: &'a BStr,
-    /// Extra header fields, in order of them being encountered, made accessible with the iterator returned by [`extra_headers()`][Commit::extra_headers()].
+    /// Extra header fields, in order of them being encountered, made accessible with the iterator returned by [`extra_headers()`][CommitRef::extra_headers()].
     pub extra_headers: Vec<(&'a BStr, Cow<'a, BStr>)>,
 }
 
@@ -67,7 +67,7 @@ pub struct CommitRef<'a> {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TagRef<'a> {
-    /// The hash in hexadecimal being the object this tag points to. Use [`target()`][Tag::target()] to obtain a byte representation.
+    /// The hash in hexadecimal being the object this tag points to. Use [`target()`][TagRef::target()] to obtain a byte representation.
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub target: &'a BStr,
     /// The kind of object that `target` points to.
@@ -82,7 +82,7 @@ pub struct TagRef<'a> {
     pub pgp_signature: Option<&'a BStr>,
 }
 
-/// An signature_ref object representing [`Trees`][Tree], [`Blobs`][Blob], [`Commits`][Commit], or [`Tags`][Tag].
+/// An signature_ref object representing [`Trees`][TreeRef], [`Blobs`][BlobRef], [`Commits`][CommitRef], or [`Tags`][TagRef].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]

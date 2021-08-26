@@ -139,7 +139,7 @@ pub mod iter {
         }
     }
 
-    /// Like [`signature_ref::Tag`][super::Tag], but as `Iterator` to support entirely allocation free parsing.
+    /// Like [`TagRef`][crate::TagRef], but as `Iterator` to support entirely allocation free parsing.
     /// It's particularly useful to dereference only the target chain.
     pub struct RefIter<'a> {
         data: &'a [u8],
@@ -241,7 +241,7 @@ pub mod iter {
         }
     }
 
-    /// A token returned by the [commit iterator][Iter].
+    /// A token returned by the [commit iterator][RefIter].
     #[allow(missing_docs)]
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
     pub enum Token<'a> {

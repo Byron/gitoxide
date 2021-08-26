@@ -22,7 +22,7 @@ impl<'a> Object<'a> {
             pack_location: None,
         }
     }
-    /// Decodes the data in the backing slice into a [`git_object::immutable::Object`], allowing to access all of its data
+    /// Decodes the data in the backing slice into a [`git_object::ObjectRef`], allowing to access all of its data
     /// conveniently. The cost of parsing an object is negligible.
     ///
     /// **Note** that [mutable, decoded objects][git_object::mutable::Object] can be created from a [`crate::data::Object`]

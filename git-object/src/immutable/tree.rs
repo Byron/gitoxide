@@ -20,7 +20,7 @@ impl<'a> RefIter<'a> {
     }
 }
 
-/// An element of a [`Tree`][Tree::entries].
+/// An element of a [`TreeRef`][TreeRef::entries].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct EntryRef<'a> {
