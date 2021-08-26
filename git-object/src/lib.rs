@@ -74,6 +74,13 @@ pub struct CommitRef<'a> {
     pub extra_headers: Vec<(&'a BStr, Cow<'a, BStr>)>,
 }
 
+/// Like [`CommitRef`][crate::CommitRef], but as `Iterator` to support (up to) entirely allocation free parsing.
+/// It's particularly useful to traverse the commit graph without ever allocating arrays for parents.
+pub struct CommitRefIter<'a> {
+    data: &'a [u8],
+    state: commit::ref_iter::State,
+}
+
 /// A mutable git commit, representing an annotated state of a working tree along with a reference to its historical commits.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

@@ -1,9 +1,7 @@
 use bstr::{BStr, ByteSlice};
 
-pub use ref_iter::RefIter;
-
-use crate::{immutable, TagRef};
-use crate::{immutable::object, CommitRef};
+pub use crate::CommitRefIter;
+use crate::{immutable, immutable::object, CommitRef, TagRef};
 
 mod decode;
 

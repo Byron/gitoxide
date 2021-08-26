@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use bstr::BStr;
+use git_hash::{oid, ObjectId};
 use nom::{
     branch::alt,
     bytes::complete::is_not,
@@ -8,21 +9,20 @@ use nom::{
     error::context,
 };
 
-use git_hash::{oid, ObjectId};
-
-use crate::commit::decode;
 use crate::{
     bstr::ByteSlice,
+    commit::decode,
     immutable::{object, parse, parse::NL},
+    CommitRefIter,
 };
 
 #[derive(Copy, Clone)]
-enum SignatureKind {
+pub(crate) enum SignatureKind {
     Author,
     Committer,
 }
 
-enum State {
+pub(crate) enum State {
     Tree,
     Parents,
     Signature { of: SignatureKind },
@@ -35,13 +35,6 @@ impl Default for State {
     fn default() -> Self {
         State::Tree
     }
-}
-
-/// Like [`CommitRef`][crate::CommitRef], but as `Iterator` to support (up to) entirely allocation free parsing.
-/// It's particularly useful to traverse the commit graph without ever allocating arrays for parents.
-pub struct CommitRefIter<'a> {
-    data: &'a [u8],
-    state: State,
 }
 
 impl<'a> CommitRefIter<'a> {
@@ -198,7 +191,7 @@ impl<'a> Iterator for CommitRefIter<'a> {
     }
 }
 
-/// A token returned by the [commit iterator][RefIter].
+/// A token returned by the [commit iterator][CommitRefIter].
 #[allow(missing_docs)]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Token<'a> {

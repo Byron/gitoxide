@@ -68,7 +68,7 @@ where
                 progress.inc();
                 repo.odb.find_existing(oid, buf, &mut pack_cache).ok().map(|o| {
                     commits.push(o.data.to_owned());
-                    objs::commit::RefIter::from_bytes(o.data)
+                    objs::commit::CommitRefIter::from_bytes(o.data)
                 })
             }),
             || anyhow!("Cancelled by user"),
@@ -84,7 +84,7 @@ where
     let mut all_commits: Vec<actor::Signature> = all_commits
         .into_par_iter()
         .map(|commit_data: Vec<u8>| {
-            objs::commit::RefIter::from_bytes(&commit_data)
+            objs::commit::CommitRefIter::from_bytes(&commit_data)
                 .signatures()
                 .next()
                 .map(|author| actor::Signature::from(author))

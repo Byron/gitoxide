@@ -131,9 +131,8 @@ dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
 =T+RI
 -----END PGP SIGNATURE-----";
 mod method {
-    use pretty_assertions::assert_eq;
-
     use git_object::CommitRef;
+    use pretty_assertions::assert_eq;
 
     use crate::{hex_to_id, immutable::fixture_bytes};
 
@@ -148,8 +147,7 @@ mod method {
 }
 
 mod iter {
-    use git_object::commit::ref_iter::Token;
-    use git_object::{bstr::ByteSlice, commit};
+    use git_object::{bstr::ByteSlice, commit, commit::ref_iter::Token};
 
     use crate::{
         hex_to_id,
@@ -346,9 +344,8 @@ mod iter {
 }
 
 mod from_bytes {
-    use smallvec::SmallVec;
-
     use git_object::{bstr::ByteSlice, CommitRef};
+    use smallvec::SmallVec;
 
     use crate::immutable::{
         commit::{LONG_MESSAGE, MERGE_TAG, SIGNATURE},

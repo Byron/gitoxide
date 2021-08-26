@@ -130,7 +130,7 @@ mod ext {
         make_iter_lookup!(
             find_existing_commit_iter,
             Kind::Blob,
-            commit::RefIter<'a>,
+            commit::CommitRefIter<'a>,
             into_commit_iter
         );
         make_iter_lookup!(find_existing_tree_iter, Kind::Tree, TreeRefIter<'a>, into_tree_iter);
