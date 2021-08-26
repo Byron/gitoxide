@@ -1,7 +1,7 @@
 use crate::{
-    mutable::Target,
     store::file::{transaction::PackedRefs, Transaction},
     transaction::{Change, LogChange, RefEdit, RefLog},
+    Target,
 };
 
 impl<'s> Transaction<'s> {
@@ -102,7 +102,7 @@ impl<'s> Transaction<'s> {
                 Change::Delete { .. } => {
                     // Reflog deletion happens first in case it fails a ref without log is less terrible than
                     // a log without a reference.
-                    let reflog_path = self.store.reflog_path(change.update.name.borrow());
+                    let reflog_path = self.store.reflog_path(change.update.name.to_ref());
                     if let Err(err) = std::fs::remove_file(&reflog_path) {
                         if err.kind() != std::io::ErrorKind::NotFound {
                             return Err(Error::DeleteReflog {

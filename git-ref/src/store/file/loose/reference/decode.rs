@@ -11,9 +11,9 @@ use nom::{
 use quick_error::quick_error;
 
 use crate::{
-    mutable,
     parse::{hex_hash, newline},
     store::file::loose::Reference,
+    FullName, Target,
 };
 
 enum MaybeUnsafeState {
@@ -36,18 +36,16 @@ quick_error! {
     }
 }
 
-impl TryFrom<MaybeUnsafeState> for mutable::Target {
+impl TryFrom<MaybeUnsafeState> for Target {
     type Error = Error;
 
     fn try_from(v: MaybeUnsafeState) -> Result<Self, Self::Error> {
         Ok(match v {
-            MaybeUnsafeState::Id(id) => mutable::Target::Peeled(id),
-            MaybeUnsafeState::UnvalidatedPath(name) => {
-                mutable::Target::Symbolic(match git_validate::refname(name.as_ref()) {
-                    Ok(_) => mutable::FullName(name),
-                    Err(err) => return Err(Error::RefnameValidation { err, path: name }),
-                })
-            }
+            MaybeUnsafeState::Id(id) => Target::Peeled(id),
+            MaybeUnsafeState::UnvalidatedPath(name) => Target::Symbolic(match git_validate::refname(name.as_ref()) {
+                Ok(_) => FullName(name),
+                Err(err) => return Err(Error::RefnameValidation { err, path: name }),
+            }),
         })
     }
 }
@@ -55,7 +53,7 @@ impl TryFrom<MaybeUnsafeState> for mutable::Target {
 impl Reference {
     /// Create a new reference of the given `parent` store with `relative_path` service as unique identifier
     /// at which the `path_contents` was read to obtain the refs value.
-    pub fn try_from_path(name: mutable::FullName, path_contents: &[u8]) -> Result<Self, Error> {
+    pub fn try_from_path(name: FullName, path_contents: &[u8]) -> Result<Self, Error> {
         Ok(Reference {
             name,
             target: parse(path_contents)

@@ -7,8 +7,8 @@ use std::{
 
 use crate::{
     file::{loose, path_to_name, Reference},
-    mutable::FullName,
     store::{file, packed},
+    FullName,
 };
 
 /// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise

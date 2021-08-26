@@ -202,7 +202,7 @@ fn loose_iter_with_prefix() -> crate::Result {
 
 #[test]
 fn overlay_iter() -> crate::Result {
-    use git_ref::mutable::Target::*;
+    use git_ref::Target::*;
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
@@ -249,7 +249,7 @@ fn overlay_iter_with_prefix_wont_allow_absolute_paths() -> crate::Result {
 
 #[test]
 fn overlay_prefixed_iter() -> crate::Result {
-    use git_ref::mutable::Target::*;
+    use git_ref::Target::*;
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store

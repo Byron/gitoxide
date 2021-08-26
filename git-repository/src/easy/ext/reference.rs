@@ -10,9 +10,8 @@ use git_actor as actor;
 use git_lock as lock;
 use git_ref::{
     file::find::Error,
-    mutable::Target,
     transaction::{Change, Create, RefEdit},
-    PartialName,
+    PartialNameRef, Target,
 };
 
 /// Obtain and alter references comfortably
@@ -77,7 +76,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
 
     fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_, Self>, reference::find::existing::Error>
     where
-        Name: TryInto<PartialName<'a>, Error = E>,
+        Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
     {
         self.try_find_reference(name)?
@@ -86,14 +85,14 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
 
     fn try_find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_, Self>>, reference::find::Error>
     where
-        Name: TryInto<PartialName<'a>, Error = E>,
+        Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
     {
         let state = self.state();
         let repo = self.repo()?;
         match repo
             .refs
-            .find(name, state.assure_packed_refs_uptodate(&repo.refs)?.as_ref())
+            .try_find(name, state.assure_packed_refs_uptodate(&repo.refs)?.as_ref())
         {
             Ok(r) => match r {
                 Some(r) => Ok(Some(Reference::from_file_ref(r, self))),

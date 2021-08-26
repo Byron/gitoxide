@@ -27,7 +27,7 @@ fn unsorted_buffers_or_those_without_a_header_can_be_opened_and_searched() {
         .unwrap();
         for packed_ref in buffer.iter().unwrap().map(Result::unwrap) {
             let found_ref = buffer
-                .find_existing(packed_ref.name)
+                .find(packed_ref.name)
                 .expect("ref can be found as buffer is sorted");
             assert_eq!(
                 found_ref, packed_ref,

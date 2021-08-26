@@ -68,13 +68,10 @@ mod tests {
         use git_testtools::to_bstr_err;
         use nom::IResult;
 
-        use crate::{
-            signature_ref::{self, SignatureRef},
-            Sign, Time,
-        };
+        use crate::{signature, Sign, SignatureRef, Time};
 
         fn decode(i: &[u8]) -> IResult<&[u8], SignatureRef<'_>, nom::error::VerboseError<&[u8]>> {
-            signature_ref::decode(i)
+            signature::decode(i)
         }
 
         fn signature(

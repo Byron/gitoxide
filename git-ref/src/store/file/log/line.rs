@@ -1,8 +1,59 @@
 use git_hash::ObjectId;
 
 use crate::store::file::log::Line;
+use crate::store::file::log::LineRef;
 
-impl<'a> Line<'a> {
+impl<'a> LineRef<'a> {
+    /// Convert this instance into its mutable counterpart
+    pub fn to_owned(&self) -> Line {
+        self.clone().into()
+    }
+}
+
+mod write {
+    use std::io;
+
+    use bstr::{BStr, ByteSlice};
+    use quick_error::quick_error;
+
+    use crate::store::file::log::Line;
+
+    quick_error! {
+        /// The Error produced by [`Line::write_to()`] (but wrapped in an io error).
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        enum Error {
+            IllegalCharacter {
+                display("Messages must not contain newlines\\n")
+            }
+        }
+    }
+
+    impl From<Error> for io::Error {
+        fn from(err: Error) -> Self {
+            io::Error::new(io::ErrorKind::Other, err)
+        }
+    }
+
+    /// Output
+    impl Line {
+        /// Serialize this instance to `out` in the git serialization format for ref log lines.
+        pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+            write!(out, "{} {} ", self.previous_oid, self.new_oid)?;
+            self.signature.write_to(&mut out)?;
+            writeln!(out, "\t{}", check_newlines(self.message.as_ref())?)
+        }
+    }
+
+    fn check_newlines(input: &BStr) -> Result<&BStr, Error> {
+        if input.find_byte(b'\n').is_some() {
+            return Err(Error::IllegalCharacter);
+        }
+        Ok(input)
+    }
+}
+
+impl<'a> LineRef<'a> {
     /// The previous object id of the ref. It will be a null hash if there was no previous id as
     /// this ref is being created.
     pub fn previous_oid(&self) -> ObjectId {
@@ -11,6 +62,17 @@ impl<'a> Line<'a> {
     /// The new object id of the ref, or a null hash if it is removed.
     pub fn new_oid(&self) -> ObjectId {
         ObjectId::from_hex(self.new_oid).expect("parse validation")
+    }
+}
+
+impl<'a> From<LineRef<'a>> for Line {
+    fn from(v: LineRef<'a>) -> Self {
+        Line {
+            previous_oid: v.previous_oid(),
+            new_oid: v.new_oid(),
+            signature: v.signature.into(),
+            message: v.message.into(),
+        }
     }
 }
 
@@ -25,7 +87,7 @@ pub mod decode {
         IResult,
     };
 
-    use crate::{file::log::Line, parse::hex_hash};
+    use crate::{file::log::LineRef, parse::hex_hash};
 
     ///
     mod error {
@@ -59,9 +121,9 @@ pub mod decode {
     }
     pub use error::Error;
 
-    impl<'a> Line<'a> {
+    impl<'a> LineRef<'a> {
         /// Decode a line from the given bytes which are expected to start at a hex sha.
-        pub fn from_bytes(input: &'a [u8]) -> Result<Line<'a>, Error> {
+        pub fn from_bytes(input: &'a [u8]) -> Result<LineRef<'a>, Error> {
             one::<()>(input).map(|(_, l)| l).map_err(|_| Error::new(input))
         }
     }
@@ -74,13 +136,13 @@ pub mod decode {
         }
     }
 
-    fn one<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], Line<'a>, E> {
+    fn one<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(bytes: &'a [u8]) -> IResult<&[u8], LineRef<'a>, E> {
         let (i, (old, new, signature, message_sep, message)) = context(
             "<old-hexsha> <new-hexsha> <name> <<email>> <timestamp> <tz>\\t<message>",
             tuple((
                 context("<old-hexsha>", terminated(hex_hash, tag(b" "))),
                 context("<new-hexsha>", terminated(hex_hash, tag(b" "))),
-                context("<name> <<email>> <timestamp>", git_actor::signature_ref::decode),
+                context("<name> <<email>> <timestamp>", git_actor::signature::decode),
                 opt(tag(b"\t")),
                 context("<optional message>", message),
             )),
@@ -100,7 +162,7 @@ pub mod decode {
 
         Ok((
             i,
-            Line {
+            LineRef {
                 previous_oid: old,
                 new_oid: new,
                 signature,
@@ -161,7 +223,7 @@ pub mod decode {
             for input in &[line_without_nl, line_with_nl] {
                 assert_eq!(
                     one::<nom::error::Error<_>>(input).expect("successful parsing").1,
-                    Line {
+                    LineRef {
                         previous_oid: NULL_SHA1.as_bstr(),
                         new_oid: NULL_SHA1.as_bstr(),
                         signature: git_actor::SignatureRef {
@@ -187,7 +249,7 @@ pub mod decode {
             for input in &[line_without_nl, line_with_nl] {
                 let (remaining, res) = one::<nom::error::Error<_>>(input).expect("successful parsing");
                 assert!(remaining.is_empty(), "all consuming even without trailing newline");
-                let actual = Line {
+                let actual = LineRef {
                     previous_oid: b"a5828ae6b52137b913b978e16cd2334482eb4c1f".as_bstr(),
                     new_oid: b"89b43f80a514aee58b662ad606e6352e03eaeee4".as_bstr(),
                     signature: git_actor::SignatureRef {

@@ -19,12 +19,12 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs, rust_2018_idioms)]
 use bstr::{BStr, BString};
-use git_hash::oid;
+use git_hash::{oid, ObjectId};
 
 mod store;
 pub use store::{file, packed};
-///
-pub mod mutable;
+
+mod fullname;
 ///
 pub mod name;
 ///
@@ -32,12 +32,17 @@ pub mod namespace;
 ///
 pub mod transaction;
 
+/// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
+/// of a symbolic reference
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub struct FullName(pub(crate) BString);
+
 /// A validated and potentially partial reference name - it can safely be used for common operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub struct FullName<'a>(&'a BStr);
+pub struct FullNameRef<'a>(&'a BStr);
 /// A validated complete and fully qualified reference name, safe to use for all operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub struct PartialName<'a>(&'a BStr);
+pub struct PartialNameRef<'a>(&'a BStr);
 
 /// A validated prefix for references to act as a namespace.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -55,9 +60,20 @@ pub enum Kind {
     Symbolic,
 }
 
+/// Denotes a ref target, equivalent to [`Kind`], but with mutable data.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub enum Target {
+    /// A ref that points to an object id
+    Peeled(ObjectId),
+    /// A ref that points to another reference by its validated name, adding a level of indirection.
+    ///
+    /// Note that this is an extension of gitoxide which will be helpful in logging all reference changes.
+    Symbolic(FullName),
+}
+
 /// Denotes a ref target, equivalent to [`Kind`], but with signature_ref data.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub enum Target<'a> {
+pub enum TargetRef<'a> {
     /// A ref that points to an object id
     Peeled(&'a oid),
     /// A ref that points to another reference by its validated name, adding a level of indirection.

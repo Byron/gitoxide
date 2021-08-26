@@ -8,8 +8,8 @@ use git_features::fs::walkdir::DirEntryIter;
 use os_str_bytes::OsStrBytes;
 
 use crate::{
-    mutable::FullName,
     store::file::{self, loose::Reference},
+    FullName,
 };
 
 /// An iterator over all valid loose reference paths as seen from a particular base directory.

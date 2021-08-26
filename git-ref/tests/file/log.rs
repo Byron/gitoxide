@@ -6,7 +6,7 @@ mod line {
         #[test]
         fn newlines_in_message_of_the_input_fails_and_we_trust_signature_writing_validation() -> crate::Result {
             let line = "0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1";
-            let mut line = log::Line::from_bytes(line.as_bytes())?.to_mutable();
+            let mut line = log::LineRef::from_bytes(line.as_bytes())?.to_owned();
             line.message.push_str("and here come\nthe newline");
             let err = line
                 .write_to(&mut Vec::new())
@@ -20,10 +20,10 @@ mod line {
             let lines = &["0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	commit (initial): c1\n", 
                          "0000000000000000000000000000000000000000 134385f6d781b7e97062102c6a483440bfda2a03 committer <committer@example.com> 946771200 +0000	\n"];
             for line in lines {
-                let line = log::Line::from_bytes(line.as_bytes())?;
+                let line = log::LineRef::from_bytes(line.as_bytes())?;
                 let mut buf = Vec::new();
-                line.to_mutable().write_to(&mut buf)?;
-                let same_line = log::Line::from_bytes(&buf)?;
+                line.to_owned().write_to(&mut buf)?;
+                let same_line = log::LineRef::from_bytes(&buf)?;
                 assert_eq!(line, same_line);
             }
             Ok(())
@@ -75,7 +75,7 @@ mod iter {
         }
 
         mod with_buffer_big_enough_for_largest_line {
-            use git_ref::file::log::mutable::Line;
+            use git_ref::file::log::Line;
             use git_testtools::hex_to_id;
 
             #[test]

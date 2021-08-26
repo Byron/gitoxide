@@ -5,13 +5,12 @@ use git_hash::ObjectId;
 
 use crate::{
     file::loose::reference::logiter::must_be_io_err,
-    mutable,
     store::{
         file,
         file::{log, loose},
         packed,
     },
-    FullName, Namespace,
+    FullNameRef, Namespace, Target,
 };
 
 /// Either a loose or packed reference, depending on where it was found.
@@ -82,7 +81,7 @@ impl<'p> Reference<'p> {
         match self {
             Reference::Loose(r) => r.follow_symbolic(store, packed),
             Reference::Packed(p) => packed
-                .and_then(|packed| packed.find(p.name).ok().flatten()) // needed to get data with 'p2 lifetime
+                .and_then(|packed| packed.try_find(p.name).ok().flatten()) // needed to get data with 'p2 lifetime
                 .and_then(|np| {
                     p.object.and(np.object).map(|peeled| {
                         Ok(Reference::Packed(packed::Reference {
@@ -112,9 +111,9 @@ impl<'p> Reference<'p> {
         &'a self,
         store: &file::Store,
         buf: &'b mut Vec<u8>,
-    ) -> std::io::Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>> + 'a>> {
+    ) -> std::io::Result<Option<impl Iterator<Item = Result<log::LineRef<'b>, log::iter::decode::Error>> + 'a>> {
         match self {
-            Reference::Loose(r) => store.reflog_iter(r.name.borrow(), buf).map_err(must_be_io_err),
+            Reference::Loose(r) => store.reflog_iter(r.name.to_ref(), buf).map_err(must_be_io_err),
             Reference::Packed(p) => store.reflog_iter(p.name, buf).map_err(must_be_io_err),
         }
     }
@@ -128,9 +127,9 @@ impl<'p> Reference<'p> {
     }
 
     /// Transform this reference into an owned `Target`
-    pub fn into_target(self) -> mutable::Target {
+    pub fn into_target(self) -> Target {
         match self {
-            Reference::Packed(p) => mutable::Target::Peeled(p.object()),
+            Reference::Packed(p) => Target::Peeled(p.object()),
             Reference::Loose(r) => r.target,
         }
     }
@@ -144,28 +143,28 @@ impl<'p> Reference<'p> {
     }
 
     /// Return the full validated name of the reference, which may include a namespace.
-    pub fn name(&self) -> FullName<'_> {
+    pub fn name(&self) -> FullNameRef<'_> {
         match self {
             Reference::Packed(p) => p.name,
-            Reference::Loose(l) => l.name.borrow(),
+            Reference::Loose(l) => l.name.to_ref(),
         }
     }
 
     /// Return the full validated name of the reference, with the given namespace stripped if possible.
     ///
     /// If the reference name wasn't prefixed with `namespace`, `None` is returned instead.
-    pub fn name_without_namespace(&self, namespace: &Namespace) -> Option<FullName<'_>> {
+    pub fn name_without_namespace(&self, namespace: &Namespace) -> Option<FullNameRef<'_>> {
         self.name()
             .0
             .as_bstr()
             .strip_prefix(namespace.0.as_bstr().as_ref())
-            .map(|stripped| FullName(stripped.as_bstr()))
+            .map(|stripped| FullNameRef(stripped.as_bstr()))
     }
 
     /// Return the target to which the reference points to.
-    pub fn target(&self) -> mutable::Target {
+    pub fn target(&self) -> Target {
         match self {
-            Reference::Packed(p) => mutable::Target::Peeled(p.target()),
+            Reference::Packed(p) => Target::Peeled(p.target()),
             Reference::Loose(l) => l.target.clone(),
         }
     }

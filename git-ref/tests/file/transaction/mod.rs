@@ -1,15 +1,16 @@
 mod prepare_and_commit {
     use bstr::BString;
+
     use git_actor::{Sign, Time};
     use git_hash::ObjectId;
-    use git_ref::{file, file::log};
+    use git_ref::file;
 
-    fn reflog_lines(store: &file::Store, name: &str) -> crate::Result<Vec<log::mutable::Line>> {
+    fn reflog_lines(store: &file::Store, name: &str) -> crate::Result<Vec<file::log::Line>> {
         let mut buf = Vec::new();
         let res = store
             .reflog_iter(name, &mut buf)?
             .expect("existing reflog")
-            .map(|l| l.map(log::mutable::Line::from))
+            .map(|l| l.map(file::log::Line::from))
             .collect::<std::result::Result<Vec<_>, _>>()?;
         Ok(res)
     }
@@ -32,8 +33,8 @@ mod prepare_and_commit {
         }
     }
 
-    fn log_line(previous: ObjectId, new: ObjectId, message: impl Into<BString>) -> log::mutable::Line {
-        log::mutable::Line {
+    fn log_line(previous: ObjectId, new: ObjectId, message: impl Into<BString>) -> file::log::Line {
+        file::log::Line {
             previous_oid: previous,
             new_oid: new,
             signature: committer(),

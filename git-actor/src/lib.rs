@@ -5,8 +5,6 @@ use bstr::{BStr, BString};
 
 ///
 pub mod signature;
-///
-pub mod signature_ref;
 
 const SPACE: &[u8; 1] = b" ";
 

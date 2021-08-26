@@ -49,7 +49,7 @@ where
     let packed = repo.refs.packed_buffer()?;
     let commit_id = repo
         .refs
-        .find_existing(refname.to_string_lossy().as_ref(), packed.as_ref())?
+        .find(refname.to_string_lossy().as_ref(), packed.as_ref())?
         .peel_to_id_in_place(&repo.refs, packed.as_ref(), |oid, buf| {
             repo.odb
                 .find(oid, buf, &mut pack::cache::Never)

@@ -1,12 +1,12 @@
-use crate::{mutable, Kind};
+use crate::{FullName, Kind, Target};
 
 /// A git _ref_ which is stored in a file.
 #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
 pub struct Reference {
     /// The path to uniquely identify this ref within its store.
-    pub name: mutable::FullName,
+    pub name: FullName,
     /// The target of the reference, either a symbolic reference by full name or an object by its id.
-    pub target: mutable::Target,
+    pub target: Target,
 }
 
 impl Reference {

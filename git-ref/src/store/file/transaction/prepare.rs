@@ -1,5 +1,4 @@
 use crate::{
-    mutable::Target,
     packed,
     store::{
         file,
@@ -10,6 +9,7 @@ use crate::{
         },
     },
     transaction::{Change, Create, LogChange, RefEdit, RefEditsExt, RefLog},
+    Target,
 };
 
 impl<'s> Transaction<'s> {
@@ -44,7 +44,7 @@ impl<'s> Transaction<'s> {
             })
             .and_then(|maybe_loose| match (maybe_loose, packed) {
                 (None, Some(packed)) => packed
-                    .find(change.update.name.borrow())
+                    .try_find(change.update.name.to_ref())
                     .map(|opt| opt.map(file::Reference::Packed))
                     .map_err(Error::from),
                 (None, None) => Ok(None),
@@ -104,7 +104,7 @@ impl<'s> Transaction<'s> {
 
                 let existing_ref = existing_ref?;
                 match (&previous, &existing_ref) {
-                    (Create::Only, Some(existing)) if existing.target() != new.borrow() => {
+                    (Create::Only, Some(existing)) if existing.target() != new.to_ref() => {
                         let new = new.clone();
                         return Err(Error::MustNotExist {
                             full_name: change.name(),
@@ -191,7 +191,7 @@ impl<'s> Transaction<'s> {
                 |name| {
                     let symbolic_refs_are_never_packed = None;
                     store
-                        .find_existing(name, symbolic_refs_are_never_packed)
+                        .find(name, symbolic_refs_are_never_packed)
                         .map(|r| r.into_target())
                         .ok()
                 },
@@ -321,7 +321,7 @@ impl<'s> Transaction<'s> {
 
             // traverse parent chain from leaf/peeled ref and set the leaf previous oid accordingly
             // to help with their reflog entries
-            if let (Some(crate::Target::Peeled(oid)), Some(parent_idx)) =
+            if let (Some(crate::TargetRef::Peeled(oid)), Some(parent_idx)) =
                 (change.update.change.previous_value(), change.parent_index)
             {
                 let oid = oid.to_owned();
@@ -342,8 +342,8 @@ mod error {
     use quick_error::quick_error;
 
     use crate::{
-        mutable::Target,
         store::{file, packed},
+        Target,
     };
 
     quick_error! {

@@ -12,7 +12,7 @@ use git_ref as refs;
 pub(crate) enum Backing {
     OwnedPacked {
         /// The validated full name of the reference.
-        name: refs::mutable::FullName,
+        name: refs::FullName,
         /// The target object id of the reference, hex encoded.
         target: ObjectId,
         /// The fully peeled object id, hex encoded, that the ref is ultimately pointing to
@@ -107,19 +107,19 @@ where
             access,
         }
     }
-    pub fn target(&self) -> refs::mutable::Target {
+    pub fn target(&self) -> refs::Target {
         match self.backing.as_ref().expect("always set") {
-            Backing::OwnedPacked { target, .. } => refs::mutable::Target::Peeled(target.to_owned()),
+            Backing::OwnedPacked { target, .. } => refs::Target::Peeled(target.to_owned()),
             Backing::LooseFile(r) => r.target.clone(),
         }
     }
 
-    pub fn name(&self) -> refs::FullName<'_> {
+    pub fn name(&self) -> refs::FullNameRef<'_> {
         match self.backing.as_ref().expect("always set") {
             Backing::OwnedPacked { name, .. } => name,
             Backing::LooseFile(r) => &r.name,
         }
-        .borrow()
+        .to_ref()
     }
 
     pub fn peel_to_oid_in_place(&mut self) -> Result<Oid<'repo, A>, peel_to_oid_in_place::Error> {

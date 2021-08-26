@@ -2,7 +2,7 @@ use std::{convert::TryInto, io::Read, path::PathBuf};
 
 use crate::{
     store::{file, file::log},
-    FullName,
+    FullNameRef,
 };
 
 impl file::Store {
@@ -13,7 +13,7 @@ impl file::Store {
     /// If the caller needs to know if it's readable, try to read the log instead with a reverse or forward iterator.
     pub fn reflog_exists<'a, Name, E>(&self, name: Name) -> Result<bool, E>
     where
-        Name: TryInto<FullName<'a>, Error = E>,
+        Name: TryInto<FullNameRef<'a>, Error = E>,
         crate::name::Error: From<E>,
     {
         Ok(self.reflog_path(name.try_into()?).is_file())
@@ -29,10 +29,10 @@ impl file::Store {
         buf: &'b mut [u8],
     ) -> Result<Option<log::iter::Reverse<'b, std::fs::File>>, Error>
     where
-        Name: TryInto<FullName<'a>, Error = E>,
+        Name: TryInto<FullNameRef<'a>, Error = E>,
         crate::name::Error: From<E>,
     {
-        let name: FullName<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
+        let name: FullNameRef<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
         let path = self.reflog_path(name);
         if path.is_dir() {
             return Ok(None);
@@ -52,12 +52,12 @@ impl file::Store {
         &self,
         name: Name,
         buf: &'b mut Vec<u8>,
-    ) -> Result<Option<impl Iterator<Item = Result<log::Line<'b>, log::iter::decode::Error>>>, Error>
+    ) -> Result<Option<impl Iterator<Item = Result<log::LineRef<'b>, log::iter::decode::Error>>>, Error>
     where
-        Name: TryInto<FullName<'a>, Error = E>,
+        Name: TryInto<FullNameRef<'a>, Error = E>,
         crate::name::Error: From<E>,
     {
-        let name: FullName<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
+        let name: FullNameRef<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
         let path = self.reflog_path(name);
         match std::fs::File::open(&path) {
             Ok(mut file) => {
@@ -77,7 +77,7 @@ impl file::Store {
 
 impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into its log name
-    pub(crate) fn reflog_path(&self, name: FullName<'_>) -> PathBuf {
+    pub(crate) fn reflog_path(&self, name: FullNameRef<'_>) -> PathBuf {
         self.reflog_path_inner(&name.to_path())
     }
 }
