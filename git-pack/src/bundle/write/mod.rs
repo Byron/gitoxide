@@ -31,6 +31,12 @@ impl crate::Bundle {
     /// * `thin_pack_base_object_lookup_fn` If set, we expect to see a thin-pack with objects that reference their base object by object id which is
     /// expected to exist in the object database the bundle is contained within.
     /// `options` further configure how the task is performed.
+    ///
+    /// # Note
+    ///
+    /// * the resulting pack may be empty, that is, contains zero objects in some situations. This is a valid reply by a server and should
+    ///   be accounted for.
+    ///   - Empty packs always have the same name and not handling this case will result in at most one superfluous pack.
     pub fn write_to_directory(
         pack: impl io::BufRead,
         directory: Option<impl AsRef<Path>>,
