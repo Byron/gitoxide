@@ -125,27 +125,32 @@ mod ext {
 
         make_obj_lookup!(
             find_existing_commit,
-            immutable::Object::Commit,
+            immutable::ObjectRef::Commit,
             Kind::Commit,
-            immutable::Commit<'a>
+            immutable::CommitRef<'a>
         );
         make_obj_lookup!(
             find_existing_tree,
-            immutable::Object::Tree,
+            immutable::ObjectRef::Tree,
             Kind::Tree,
             immutable::Tree<'a>
         );
-        make_obj_lookup!(find_existing_tag, immutable::Object::Tag, Kind::Tag, immutable::Tag<'a>);
+        make_obj_lookup!(
+            find_existing_tag,
+            immutable::ObjectRef::Tag,
+            Kind::Tag,
+            immutable::TagRef<'a>
+        );
         make_obj_lookup!(
             find_existing_blob,
-            immutable::Object::Blob,
+            immutable::ObjectRef::Blob,
             Kind::Blob,
-            immutable::Blob<'a>
+            immutable::BlobRef<'a>
         );
         make_iter_lookup!(
             find_existing_commit_iter,
             Kind::Blob,
-            immutable::CommitIter<'a>,
+            immutable::CommitRefIter<'a>,
             into_commit_iter
         );
         make_iter_lookup!(

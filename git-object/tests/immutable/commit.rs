@@ -131,7 +131,7 @@ dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
 =T+RI
 -----END PGP SIGNATURE-----";
 mod method {
-    use git_object::immutable::Commit;
+    use git_object::immutable::CommitRef;
     use pretty_assertions::assert_eq;
 
     use crate::{hex_to_id, immutable::fixture_bytes};
@@ -139,7 +139,7 @@ mod method {
     #[test]
     fn tree() -> crate::Result {
         let fixture = fixture_bytes("commit", "unsigned.txt");
-        let commit = Commit::from_bytes(&fixture)?;
+        let commit = CommitRef::from_bytes(&fixture)?;
         assert_eq!(commit.tree(), hex_to_id("1b2dfb4ac5e42080b682fc676e9738c94ce6d54d"));
         assert_eq!(commit.tree, "1b2dfb4ac5e42080b682fc676e9738c94ce6d54d");
         Ok(())
@@ -149,7 +149,7 @@ mod method {
 mod iter {
     use git_object::{
         bstr::ByteSlice,
-        immutable::{commit::iter::Token, CommitIter},
+        immutable::{commit::iter::Token, CommitRefIter},
     };
 
     use crate::{
@@ -163,7 +163,7 @@ mod iter {
     #[test]
     fn newline_right_after_signature_multiline_header() -> crate::Result {
         let data = fixture_bytes("commit", "signed-whitespace.txt");
-        let tokens = CommitIter::from_bytes(&data).collect::<Result<Vec<_>, _>>()?;
+        let tokens = CommitRefIter::from_bytes(&data).collect::<Result<Vec<_>, _>>()?;
         assert_eq!(tokens.len(), 7, "mainly a parsing exercise");
         match tokens.last().expect("there are tokens") {
             Token::Message(msg) => {
@@ -177,7 +177,7 @@ mod iter {
     #[test]
     fn signed_with_encoding() -> crate::Result {
         assert_eq!(
-            CommitIter::from_bytes(&fixture_bytes("commit", "signed-with-encoding.txt"))
+            CommitRefIter::from_bytes(&fixture_bytes("commit", "signed-with-encoding.txt"))
                 .collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Tree {
@@ -203,7 +203,7 @@ mod iter {
     #[test]
     fn whitespace() -> crate::Result {
         assert_eq!(
-            CommitIter::from_bytes(&fixture_bytes("commit", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
+            CommitRefIter::from_bytes(&fixture_bytes("commit", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Tree {
                     id: hex_to_id("9bed6275068a0575243ba8409253e61af81ab2ff")
@@ -226,7 +226,7 @@ mod iter {
     #[test]
     fn unsigned() -> crate::Result {
         assert_eq!(
-            CommitIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).collect::<Result<Vec<_>, _>>()?,
+            CommitRefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Tree {
                     id: hex_to_id("1b2dfb4ac5e42080b682fc676e9738c94ce6d54d")
@@ -246,7 +246,8 @@ mod iter {
     #[test]
     fn signed_singleline() -> crate::Result {
         assert_eq!(
-            CommitIter::from_bytes(&fixture_bytes("commit", "signed-singleline.txt")).collect::<Result<Vec<_>, _>>()?,
+            CommitRefIter::from_bytes(&fixture_bytes("commit", "signed-singleline.txt"))
+                .collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Tree {
                     id: hex_to_id("00fc39317701176e326974ce44f5bd545a32ec0b")
@@ -270,7 +271,7 @@ mod iter {
     #[test]
     fn error_handling() -> crate::Result {
         let data = fixture_bytes("commit", "unsigned.txt");
-        let iter = CommitIter::from_bytes(&data[..data.len() / 2]);
+        let iter = CommitRefIter::from_bytes(&data[..data.len() / 2]);
         let tokens = iter.collect::<Vec<_>>();
         assert!(
             tokens.last().expect("at least the errored token").is_err(),
@@ -282,7 +283,7 @@ mod iter {
     #[test]
     fn mergetag() -> crate::Result {
         assert_eq!(
-            CommitIter::from_bytes(&fixture_bytes("commit", "mergetag.txt")).collect::<Result<Vec<_>, _>>()?,
+            CommitRefIter::from_bytes(&fixture_bytes("commit", "mergetag.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Tree {
                     id: hex_to_id("1c61918031bf2c7fab9e17dde3c52a6a9884fcb5")
@@ -307,7 +308,7 @@ mod iter {
     }
 
     mod method {
-        use git_object::immutable::CommitIter;
+        use git_object::immutable::CommitRefIter;
 
         use crate::{
             hex_to_id,
@@ -317,11 +318,11 @@ mod iter {
         #[test]
         fn tree_id() -> crate::Result {
             assert_eq!(
-                CommitIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).tree_id(),
+                CommitRefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).tree_id(),
                 Some(hex_to_id("1b2dfb4ac5e42080b682fc676e9738c94ce6d54d"))
             );
             assert_eq!(
-                CommitIter::from_bytes(&fixture_bytes("commit", "unsigned.txt"))
+                CommitRefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt"))
                     .signatures()
                     .collect::<Vec<_>>(),
                 vec![signature(1592437401), signature(1592437401)]
@@ -332,7 +333,7 @@ mod iter {
         #[test]
         fn signatures() -> crate::Result {
             assert_eq!(
-                CommitIter::from_bytes(&fixture_bytes("commit", "unsigned.txt"))
+                CommitRefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt"))
                     .signatures()
                     .collect::<Vec<_>>(),
                 vec![signature(1592437401), signature(1592437401)]
@@ -343,7 +344,7 @@ mod iter {
 }
 
 mod from_bytes {
-    use git_object::{bstr::ByteSlice, immutable::Commit};
+    use git_object::{bstr::ByteSlice, immutable::CommitRef};
     use smallvec::SmallVec;
 
     use crate::immutable::{
@@ -354,8 +355,8 @@ mod from_bytes {
     #[test]
     fn unsigned() -> crate::Result {
         assert_eq!(
-            Commit::from_bytes(&fixture_bytes("commit", "unsigned.txt"))?,
-            Commit {
+            CommitRef::from_bytes(&fixture_bytes("commit", "unsigned.txt"))?,
+            CommitRef {
                 tree: b"1b2dfb4ac5e42080b682fc676e9738c94ce6d54d".as_bstr(),
                 parents: SmallVec::default(),
                 author: signature(1592437401),
@@ -371,8 +372,8 @@ mod from_bytes {
     #[test]
     fn whitespace() -> crate::Result {
         assert_eq!(
-            Commit::from_bytes(&fixture_bytes("commit", "whitespace.txt"))?,
-            Commit {
+            CommitRef::from_bytes(&fixture_bytes("commit", "whitespace.txt"))?,
+            CommitRef {
                 tree: b"9bed6275068a0575243ba8409253e61af81ab2ff".as_bstr(),
                 parents: SmallVec::from(vec![b"26b4df046d1776c123ac69d918f5aec247b58cc6".as_bstr()]),
                 author: signature(1592448450),
@@ -388,8 +389,8 @@ mod from_bytes {
     #[test]
     fn signed_singleline() -> crate::Result {
         assert_eq!(
-            Commit::from_bytes(&fixture_bytes("commit", "signed-singleline.txt"))?,
-            Commit {
+            CommitRef::from_bytes(&fixture_bytes("commit", "signed-singleline.txt"))?,
+            CommitRef {
                 tree: b"00fc39317701176e326974ce44f5bd545a32ec0b".as_bstr(),
                 parents: SmallVec::from(vec![b"09d8d3a12e161a7f6afb522dbe8900a9c09bce06".as_bstr()]),
                 author: signature(1592391367),
@@ -405,7 +406,7 @@ mod from_bytes {
     #[test]
     fn mergetag() -> crate::Result {
         let fixture = fixture_bytes("commit", "mergetag.txt");
-        let commit = Commit {
+        let commit = CommitRef {
             tree: b"1c61918031bf2c7fab9e17dde3c52a6a9884fcb5".as_bstr(),
             parents: SmallVec::from(vec![
                 b"44ebe016df3aad96e3be8f95ec52397728dd7701".as_bstr(),
@@ -420,7 +421,7 @@ mod from_bytes {
                 std::borrow::Cow::Owned(MERGE_TAG.as_bytes().into()),
             )],
         };
-        assert_eq!(Commit::from_bytes(&fixture)?, commit);
+        assert_eq!(CommitRef::from_bytes(&fixture)?, commit);
         assert_eq!(commit.extra_headers().find_all("mergetag").count(), 1);
         assert_eq!(commit.extra_headers().mergetags().count(), 1);
         Ok(())
@@ -429,8 +430,8 @@ mod from_bytes {
     #[test]
     fn signed() -> crate::Result {
         assert_eq!(
-            Commit::from_bytes(&fixture_bytes("commit", "signed.txt"))?,
-            Commit {
+            CommitRef::from_bytes(&fixture_bytes("commit", "signed.txt"))?,
+            CommitRef {
                 tree: b"00fc39317701176e326974ce44f5bd545a32ec0b".as_bstr(),
                 parents: SmallVec::from(vec![b"09d8d3a12e161a7f6afb522dbe8900a9c09bce06".as_bstr()]),
                 author: signature(1592391367),
@@ -446,8 +447,8 @@ mod from_bytes {
     #[test]
     fn signed_with_encoding() -> crate::Result {
         assert_eq!(
-            Commit::from_bytes(&fixture_bytes("commit", "signed-with-encoding.txt"))?,
-            Commit {
+            CommitRef::from_bytes(&fixture_bytes("commit", "signed-with-encoding.txt"))?,
+            CommitRef {
                 tree: b"1973afa74d87b2bb73fa884aaaa8752aec43ea88".as_bstr(),
                 parents: SmallVec::from(vec![b"79c51cc86923e2b8ca0ee5c4eb75e48027133f9a".as_bstr()]),
                 author: signature(1592448995),
@@ -463,8 +464,8 @@ mod from_bytes {
     #[test]
     fn with_encoding() -> crate::Result {
         assert_eq!(
-            Commit::from_bytes(&fixture_bytes("commit", "with-encoding.txt"))?,
-            Commit {
+            CommitRef::from_bytes(&fixture_bytes("commit", "with-encoding.txt"))?,
+            CommitRef {
                 tree: b"4a1c03029e7407c0afe9fc0320b3258e188b115e".as_bstr(),
                 parents: SmallVec::from(vec![b"7ca98aad461a5c302cb4c9e3acaaa6053cc67a62".as_bstr()]),
                 author: signature(1592438199),
@@ -480,8 +481,8 @@ mod from_bytes {
     #[test]
     fn merge() -> crate::Result {
         assert_eq!(
-            Commit::from_bytes(&fixture_bytes("commit", "merge.txt"))?,
-            Commit {
+            CommitRef::from_bytes(&fixture_bytes("commit", "merge.txt"))?,
+            CommitRef {
                 tree: b"0cf16ce8e229b59a761198975f0c0263229faf82".as_bstr(),
                 parents: SmallVec::from(vec![
                     b"6a6054db4ce3c1e4e6a37f8c4d7acb63a4d6ad71".as_bstr(),
@@ -512,7 +513,7 @@ iyBBl69jASy41Ug/BlFJbw4+ItkShpXwkJKuBBV/JExChmvbxYWaS7QnyYC9UO0=
     #[test]
     fn newline_right_after_signature_multiline_header() -> crate::Result {
         let fixture = fixture_bytes("commit", "signed-whitespace.txt");
-        let commit = Commit::from_bytes(&fixture)?;
+        let commit = CommitRef::from_bytes(&fixture)?;
         let pgp_sig = OTHER_SIGNATURE.as_bstr();
         assert_eq!(commit.extra_headers[0].1.as_ref(), pgp_sig);
         assert_eq!(commit.extra_headers().pgp_signature(), Some(pgp_sig));

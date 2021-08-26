@@ -16,7 +16,7 @@ macro_rules! round_trip {
                 assert_eq!(output.as_bstr(), input.as_bstr());
 
                 // Test the parse->borrowed->owned->write chain for the top-level objects
-                let item: mutable::Object = immutable::Object::from(<$borrowed>::from_bytes(&input)?).into();
+                let item: mutable::Object = immutable::ObjectRef::from(<$borrowed>::from_bytes(&input)?).into();
                 output.clear();
                 item.write_to(&mut output)?;
                 assert_eq!(output.as_bstr(), input.as_bstr());
@@ -30,7 +30,7 @@ mod object;
 mod tag {
     round_trip!(
         mutable::Tag,
-        immutable::Tag,
+        immutable::TagRef,
         "tag/empty.txt",
         "tag/no-tagger.txt",
         "tag/whitespace.txt",
@@ -42,7 +42,7 @@ mod tag {
 mod commit {
     round_trip!(
         mutable::Commit,
-        immutable::Commit,
+        immutable::CommitRef,
         "commit/signed-whitespace.txt",
         "commit/two-multiline-headers.txt",
         "commit/mergetag.txt",
@@ -62,5 +62,5 @@ mod tree {
 
 mod blob {
     // It doesn't matter which data we use - it's not interpreted.
-    round_trip!(mutable::Blob, immutable::Blob, "tree/everything.tree");
+    round_trip!(mutable::Blob, immutable::BlobRef, "tree/everything.tree");
 }

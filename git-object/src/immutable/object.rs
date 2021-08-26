@@ -1,6 +1,6 @@
 use crate::{
     immutable,
-    immutable::{Blob, Commit, Tag, Tree},
+    immutable::{BlobRef, CommitRef, TagRef, Tree},
     Kind,
 };
 
@@ -8,22 +8,22 @@ use crate::{
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
-pub enum Object<'a> {
+pub enum ObjectRef<'a> {
     #[cfg_attr(feature = "serde1", serde(borrow))]
     Tree(Tree<'a>),
-    Blob(Blob<'a>),
-    Commit(Commit<'a>),
-    Tag(Tag<'a>),
+    Blob(BlobRef<'a>),
+    Commit(CommitRef<'a>),
+    Tag(TagRef<'a>),
 }
 
-impl<'a> Object<'a> {
+impl<'a> ObjectRef<'a> {
     /// Deserialize an object of `kind` from the given `data`.
-    pub fn from_bytes(kind: Kind, data: &'a [u8]) -> Result<Object<'a>, decode::Error> {
+    pub fn from_bytes(kind: Kind, data: &'a [u8]) -> Result<ObjectRef<'a>, decode::Error> {
         Ok(match kind {
-            Kind::Tree => Object::Tree(Tree::from_bytes(data)?),
-            Kind::Blob => Object::Blob(Blob { data }),
-            Kind::Commit => Object::Commit(Commit::from_bytes(data)?),
-            Kind::Tag => Object::Tag(Tag::from_bytes(data)?),
+            Kind::Tree => ObjectRef::Tree(Tree::from_bytes(data)?),
+            Kind::Blob => ObjectRef::Blob(BlobRef { data }),
+            Kind::Commit => ObjectRef::Commit(CommitRef::from_bytes(data)?),
+            Kind::Tag => ObjectRef::Tag(TagRef::from_bytes(data)?),
         })
     }
 
@@ -43,70 +43,70 @@ impl<'a> Object<'a> {
 }
 
 /// Convenient access to contained objects.
-impl<'a> Object<'a> {
+impl<'a> ObjectRef<'a> {
     /// Interpret this object as blob.
-    pub fn as_blob(&self) -> Option<&immutable::Blob<'a>> {
+    pub fn as_blob(&self) -> Option<&immutable::BlobRef<'a>> {
         match self {
-            Object::Blob(v) => Some(v),
+            ObjectRef::Blob(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as blob, chainable.
-    pub fn into_blob(self) -> Option<immutable::Blob<'a>> {
+    pub fn into_blob(self) -> Option<immutable::BlobRef<'a>> {
         match self {
-            Object::Blob(v) => Some(v),
+            ObjectRef::Blob(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as commit.
-    pub fn as_commit(&self) -> Option<&immutable::Commit<'a>> {
+    pub fn as_commit(&self) -> Option<&immutable::CommitRef<'a>> {
         match self {
-            Object::Commit(v) => Some(v),
+            ObjectRef::Commit(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as commit, chainable.
-    pub fn into_commit(self) -> Option<immutable::Commit<'a>> {
+    pub fn into_commit(self) -> Option<immutable::CommitRef<'a>> {
         match self {
-            Object::Commit(v) => Some(v),
+            ObjectRef::Commit(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as tree.
     pub fn as_tree(&self) -> Option<&immutable::Tree<'a>> {
         match self {
-            Object::Tree(v) => Some(v),
+            ObjectRef::Tree(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as tree, chainable
     pub fn into_tree(self) -> Option<immutable::Tree<'a>> {
         match self {
-            Object::Tree(v) => Some(v),
+            ObjectRef::Tree(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as tag.
-    pub fn as_tag(&self) -> Option<&immutable::Tag<'a>> {
+    pub fn as_tag(&self) -> Option<&immutable::TagRef<'a>> {
         match self {
-            Object::Tag(v) => Some(v),
+            ObjectRef::Tag(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as tag, chainable.
-    pub fn into_tag(self) -> Option<immutable::Tag<'a>> {
+    pub fn into_tag(self) -> Option<immutable::TagRef<'a>> {
         match self {
-            Object::Tag(v) => Some(v),
+            ObjectRef::Tag(v) => Some(v),
             _ => None,
         }
     }
     /// Return the kind of object.
     pub fn kind(&self) -> Kind {
         match self {
-            Object::Tree(_) => Kind::Tree,
-            Object::Blob(_) => Kind::Blob,
-            Object::Commit(_) => Kind::Commit,
-            Object::Tag(_) => Kind::Tag,
+            ObjectRef::Tree(_) => Kind::Tree,
+            ObjectRef::Blob(_) => Kind::Blob,
+            ObjectRef::Commit(_) => Kind::Commit,
+            ObjectRef::Tag(_) => Kind::Tag,
         }
     }
 }
@@ -114,71 +114,71 @@ impl<'a> Object<'a> {
 mod convert {
     use std::convert::TryFrom;
 
-    use crate::immutable::{Blob, Commit, Object, Tag, Tree};
+    use crate::immutable::{BlobRef, CommitRef, ObjectRef, TagRef, Tree};
 
-    impl<'a> From<Tag<'a>> for Object<'a> {
-        fn from(v: Tag<'a>) -> Self {
-            Object::Tag(v)
+    impl<'a> From<TagRef<'a>> for ObjectRef<'a> {
+        fn from(v: TagRef<'a>) -> Self {
+            ObjectRef::Tag(v)
         }
     }
 
-    impl<'a> From<Commit<'a>> for Object<'a> {
-        fn from(v: Commit<'a>) -> Self {
-            Object::Commit(v)
+    impl<'a> From<CommitRef<'a>> for ObjectRef<'a> {
+        fn from(v: CommitRef<'a>) -> Self {
+            ObjectRef::Commit(v)
         }
     }
 
-    impl<'a> From<Tree<'a>> for Object<'a> {
+    impl<'a> From<Tree<'a>> for ObjectRef<'a> {
         fn from(v: Tree<'a>) -> Self {
-            Object::Tree(v)
+            ObjectRef::Tree(v)
         }
     }
 
-    impl<'a> From<Blob<'a>> for Object<'a> {
-        fn from(v: Blob<'a>) -> Self {
-            Object::Blob(v)
+    impl<'a> From<BlobRef<'a>> for ObjectRef<'a> {
+        fn from(v: BlobRef<'a>) -> Self {
+            ObjectRef::Blob(v)
         }
     }
 
-    impl<'a> TryFrom<Object<'a>> for Tag<'a> {
-        type Error = Object<'a>;
+    impl<'a> TryFrom<ObjectRef<'a>> for TagRef<'a> {
+        type Error = ObjectRef<'a>;
 
-        fn try_from(value: Object<'a>) -> Result<Self, Self::Error> {
+        fn try_from(value: ObjectRef<'a>) -> Result<Self, Self::Error> {
             Ok(match value {
-                Object::Tag(v) => v,
+                ObjectRef::Tag(v) => v,
                 _ => return Err(value),
             })
         }
     }
 
-    impl<'a> TryFrom<Object<'a>> for Commit<'a> {
-        type Error = Object<'a>;
+    impl<'a> TryFrom<ObjectRef<'a>> for CommitRef<'a> {
+        type Error = ObjectRef<'a>;
 
-        fn try_from(value: Object<'a>) -> Result<Self, Self::Error> {
+        fn try_from(value: ObjectRef<'a>) -> Result<Self, Self::Error> {
             Ok(match value {
-                Object::Commit(v) => v,
+                ObjectRef::Commit(v) => v,
                 _ => return Err(value),
             })
         }
     }
 
-    impl<'a> TryFrom<Object<'a>> for Tree<'a> {
-        type Error = Object<'a>;
+    impl<'a> TryFrom<ObjectRef<'a>> for Tree<'a> {
+        type Error = ObjectRef<'a>;
 
-        fn try_from(value: Object<'a>) -> Result<Self, Self::Error> {
+        fn try_from(value: ObjectRef<'a>) -> Result<Self, Self::Error> {
             Ok(match value {
-                Object::Tree(v) => v,
+                ObjectRef::Tree(v) => v,
                 _ => return Err(value),
             })
         }
     }
 
-    impl<'a> TryFrom<Object<'a>> for Blob<'a> {
-        type Error = Object<'a>;
+    impl<'a> TryFrom<ObjectRef<'a>> for BlobRef<'a> {
+        type Error = ObjectRef<'a>;
 
-        fn try_from(value: Object<'a>) -> Result<Self, Self::Error> {
+        fn try_from(value: ObjectRef<'a>) -> Result<Self, Self::Error> {
             Ok(match value {
-                Object::Blob(v) => v,
+                ObjectRef::Blob(v) => v,
                 _ => return Err(value),
             })
         }

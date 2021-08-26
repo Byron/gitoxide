@@ -1,8 +1,8 @@
 //! Mutable objects with each field being separately allocated and changeable.
 //!
 //! Mutable objects are Commits, Trees, Blobs and Tags that can be changed and serialized.
-//! They either created using object [construction][Object] or by [deserializing existing objects][crate::immutable::Object::from_bytes()]
-//! and converting these [into mutable copies][crate::immutable::Object::into_mutable()] for adjustments.
+//! They either created using object [construction][Object] or by [deserializing existing objects][crate::immutable::ObjectRef::from_bytes()]
+//! and converting these [into mutable copies][crate::immutable::ObjectRef::into_mutable()] for adjustments.
 
 const NL: &[u8; 1] = b"\n";
 const SPACE: &[u8; 1] = b" ";

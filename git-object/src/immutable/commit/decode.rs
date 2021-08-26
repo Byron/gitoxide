@@ -11,7 +11,7 @@ use nom::{
 use smallvec::SmallVec;
 
 use crate::{
-    immutable::{parse, parse::NL, Commit},
+    immutable::{parse, parse::NL, CommitRef},
     BStr, ByteSlice,
 };
 
@@ -28,7 +28,9 @@ pub fn message<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]
     Ok((&[], i.as_bstr()))
 }
 
-pub fn commit<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], Commit<'_>, E> {
+pub fn commit<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
+    i: &'a [u8],
+) -> IResult<&'a [u8], CommitRef<'_>, E> {
     let (i, tree) = context("tree <40 lowercase hex char>", |i| {
         parse::header_field(i, b"tree", parse::hex_hash)
     })(i)?;
@@ -59,7 +61,7 @@ pub fn commit<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8])
 
     Ok((
         i,
-        Commit {
+        CommitRef {
             tree,
             parents: SmallVec::from(parents),
             author,

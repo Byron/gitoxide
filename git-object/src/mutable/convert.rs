@@ -1,8 +1,8 @@
 use crate::{immutable, mutable};
 
-impl From<immutable::Tag<'_>> for mutable::Tag {
-    fn from(other: immutable::Tag<'_>) -> mutable::Tag {
-        let immutable::Tag {
+impl From<immutable::TagRef<'_>> for mutable::Tag {
+    fn from(other: immutable::TagRef<'_>) -> mutable::Tag {
+        let immutable::TagRef {
             target,
             name,
             target_kind,
@@ -21,9 +21,9 @@ impl From<immutable::Tag<'_>> for mutable::Tag {
     }
 }
 
-impl From<immutable::Commit<'_>> for mutable::Commit {
-    fn from(other: immutable::Commit<'_>) -> mutable::Commit {
-        let immutable::Commit {
+impl From<immutable::CommitRef<'_>> for mutable::Commit {
+    fn from(other: immutable::CommitRef<'_>) -> mutable::Commit {
+        let immutable::CommitRef {
             tree,
             parents,
             author,
@@ -50,8 +50,8 @@ impl From<immutable::Commit<'_>> for mutable::Commit {
     }
 }
 
-impl<'a> From<immutable::Blob<'a>> for mutable::Blob {
-    fn from(v: immutable::Blob<'a>) -> Self {
+impl<'a> From<immutable::BlobRef<'a>> for mutable::Blob {
+    fn from(v: immutable::BlobRef<'a>) -> Self {
         mutable::Blob {
             data: v.data.to_owned(),
         }
@@ -78,13 +78,13 @@ impl From<immutable::tree::Entry<'_>> for mutable::tree::Entry {
     }
 }
 
-impl<'a> From<immutable::Object<'a>> for mutable::Object {
-    fn from(v: immutable::Object<'_>) -> Self {
+impl<'a> From<immutable::ObjectRef<'a>> for mutable::Object {
+    fn from(v: immutable::ObjectRef<'_>) -> Self {
         match v {
-            immutable::Object::Tree(v) => mutable::Object::Tree(v.into()),
-            immutable::Object::Blob(v) => mutable::Object::Blob(v.into()),
-            immutable::Object::Commit(v) => mutable::Object::Commit(v.into()),
-            immutable::Object::Tag(v) => mutable::Object::Tag(v.into()),
+            immutable::ObjectRef::Tree(v) => mutable::Object::Tree(v.into()),
+            immutable::ObjectRef::Blob(v) => mutable::Object::Blob(v.into()),
+            immutable::ObjectRef::Commit(v) => mutable::Object::Commit(v.into()),
+            immutable::ObjectRef::Tag(v) => mutable::Object::Tag(v.into()),
         }
     }
 }

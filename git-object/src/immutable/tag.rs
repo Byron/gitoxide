@@ -3,7 +3,7 @@ use crate::{immutable::object, BStr};
 /// Represents a git tag, commonly indicating a software release.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Tag<'a> {
+pub struct TagRef<'a> {
     /// The hash in hexadecimal being the object this tag points to. Use [`target()`][Tag::target()] to obtain a byte representation.
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub target: &'a BStr,
@@ -19,9 +19,9 @@ pub struct Tag<'a> {
     pub pgp_signature: Option<&'a BStr>,
 }
 
-impl<'a> Tag<'a> {
+impl<'a> TagRef<'a> {
     /// Deserialize a tag from `data`.
-    pub fn from_bytes(data: &'a [u8]) -> Result<Tag<'a>, object::decode::Error> {
+    pub fn from_bytes(data: &'a [u8]) -> Result<TagRef<'a>, object::decode::Error> {
         decode::git_tag(data)
             .map(|(_, t)| t)
             .map_err(object::decode::Error::from)
@@ -44,11 +44,11 @@ mod decode {
     };
 
     use crate::{
-        immutable::{parse, parse::NL, Tag},
+        immutable::{parse, parse::NL, TagRef},
         BStr, ByteSlice,
     };
 
-    pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Tag<'a>, E> {
+    pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], TagRef<'a>, E> {
         let (i, target) = context("object <40 lowercase hex char>", |i| {
             parse::header_field(i, b"object", parse::hex_hash)
         })(i)?;
@@ -70,7 +70,7 @@ mod decode {
         let (i, (message, pgp_signature)) = all_consuming(message)(i)?;
         Ok((
             i,
-            Tag {
+            TagRef {
                 target,
                 name: tag_version.as_bstr(),
                 target_kind: kind,
@@ -160,15 +160,15 @@ pub mod iter {
 
     /// Like [`signature_ref::Tag`][super::Tag], but as `Iterator` to support entirely allocation free parsing.
     /// It's particularly useful to dereference only the target chain.
-    pub struct Iter<'a> {
+    pub struct RefIter<'a> {
         data: &'a [u8],
         state: State,
     }
 
-    impl<'a> Iter<'a> {
+    impl<'a> RefIter<'a> {
         /// Create a tag iterator from data.
-        pub fn from_bytes(data: &'a [u8]) -> Iter<'a> {
-            Iter {
+        pub fn from_bytes(data: &'a [u8]) -> RefIter<'a> {
+            RefIter {
                 data,
                 state: State::default(),
             }
@@ -186,7 +186,7 @@ pub mod iter {
         }
     }
 
-    impl<'a> Iter<'a> {
+    impl<'a> RefIter<'a> {
         fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), object::decode::Error> {
             use State::*;
             Ok(match state {
@@ -240,7 +240,7 @@ pub mod iter {
         }
     }
 
-    impl<'a> Iterator for Iter<'a> {
+    impl<'a> Iterator for RefIter<'a> {
         type Item = Result<Token<'a>, object::decode::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {

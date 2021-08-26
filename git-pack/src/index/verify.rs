@@ -181,7 +181,7 @@ impl index::File {
             match object_kind {
                 Tree | Commit | Tag => {
                     let borrowed_object =
-                        git_object::immutable::Object::from_bytes(object_kind, buf).map_err(|err| {
+                        git_object::immutable::ObjectRef::from_bytes(object_kind, buf).map_err(|err| {
                             Error::ObjectDecode {
                                 source: err,
                                 kind: object_kind,

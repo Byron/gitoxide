@@ -15,7 +15,7 @@ pub mod iter;
 /// change which is documented in the commit `message`.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Commit<'a> {
+pub struct CommitRef<'a> {
     /// HEX hash of tree object we point to. Usually 40 bytes long.
     ///
     /// Use [`tree()`][Commit::tree()] to obtain a decoded version of it.
@@ -38,9 +38,9 @@ pub struct Commit<'a> {
     pub extra_headers: Vec<(&'a BStr, Cow<'a, BStr>)>,
 }
 
-impl<'a> Commit<'a> {
+impl<'a> CommitRef<'a> {
     /// Deserialize a commit from the given `data` bytes while avoiding most allocations.
-    pub fn from_bytes(data: &'a [u8]) -> Result<Commit<'a>, object::decode::Error> {
+    pub fn from_bytes(data: &'a [u8]) -> Result<CommitRef<'a>, object::decode::Error> {
         decode::commit(data)
             .map(|(_, t)| t)
             .map_err(object::decode::Error::from)

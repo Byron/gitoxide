@@ -50,7 +50,7 @@ pub mod ancestors {
 
     impl<Find, StateMut> Ancestors<Find, fn(&oid) -> bool, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitRefIter<'a>>,
         StateMut: BorrowMut<State>,
     {
         /// Create a new instance.
@@ -72,7 +72,7 @@ pub mod ancestors {
 
     impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitRefIter<'a>>,
         Predicate: FnMut(&oid) -> bool,
         StateMut: BorrowMut<State>,
     {
@@ -114,7 +114,7 @@ pub mod ancestors {
 
     impl<Find, Predicate, StateMut> Iterator for Ancestors<Find, Predicate, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::CommitRefIter<'a>>,
         Predicate: FnMut(&oid) -> bool,
         StateMut: BorrowMut<State>,
     {

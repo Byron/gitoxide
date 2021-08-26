@@ -141,11 +141,11 @@ impl<'repo, A> ObjectRef<'repo, A>
 where
     A: easy::Access + Sized,
 {
-    pub fn to_commit_iter(&self) -> Option<immutable::CommitIter<'_>> {
+    pub fn to_commit_iter(&self) -> Option<immutable::CommitRefIter<'_>> {
         odb::data::Object::new(self.kind, &self.data).into_commit_iter()
     }
 
-    pub fn to_tag_iter(&self) -> Option<immutable::TagIter<'_>> {
+    pub fn to_tag_iter(&self) -> Option<immutable::TagRefIter<'_>> {
         odb::data::Object::new(self.kind, &self.data).into_tag_iter()
     }
 }

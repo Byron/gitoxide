@@ -13,7 +13,7 @@ pub trait ObjectIdExt: Sealed {
     #[cfg(feature = "git-traverse")]
     fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&git_hash::oid) -> bool, State>
     where
-        Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>;
+        Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<immutable::CommitRefIter<'a>>;
 
     fn attach<A: easy::Access + Sized>(self, access: &A) -> easy::Oid<'_, A>;
 }
@@ -24,7 +24,7 @@ impl ObjectIdExt for ObjectId {
     #[cfg(feature = "git-traverse")]
     fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&git_hash::oid) -> bool, State>
     where
-        Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<immutable::CommitIter<'a>>,
+        Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<immutable::CommitRefIter<'a>>,
     {
         Ancestors::new(Some(self), State::default(), find)
     }

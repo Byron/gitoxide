@@ -157,7 +157,7 @@ pub mod to_id {
                     })?;
                 match kind {
                     git_object::Kind::Tag => {
-                        oid = git_object::immutable::TagIter::from_bytes(data)
+                        oid = git_object::immutable::TagRefIter::from_bytes(data)
                             .target_id()
                             .ok_or_else(|| Error::NotFound {
                                 oid,

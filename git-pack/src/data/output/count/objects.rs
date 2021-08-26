@@ -179,7 +179,7 @@ where
                     match obj.kind {
                         Tree | Blob => break,
                         Tag => {
-                            id = immutable::TagIter::from_bytes(obj.data)
+                            id = immutable::TagRefIter::from_bytes(obj.data)
                                 .target_id()
                                 .expect("every tag has a target");
                             obj = db.find_existing(id, buf1, cache)?;
@@ -188,7 +188,7 @@ where
                         }
                         Commit => {
                             let current_tree_iter = {
-                                let mut commit_iter = immutable::CommitIter::from_bytes(obj.data);
+                                let mut commit_iter = immutable::CommitRefIter::from_bytes(obj.data);
                                 let tree_id = commit_iter.tree_id().expect("every commit has a tree");
                                 parent_commit_ids.clear();
                                 for token in commit_iter {
@@ -238,7 +238,7 @@ where
                                             stats,
                                             true,
                                         );
-                                        immutable::CommitIter::from_bytes(parent_commit_obj.data)
+                                        immutable::CommitRefIter::from_bytes(parent_commit_obj.data)
                                             .tree_id()
                                             .expect("every commit has a tree")
                                     };
@@ -312,7 +312,7 @@ where
                             break;
                         }
                         Commit => {
-                            id = immutable::CommitIter::from_bytes(obj.data)
+                            id = immutable::CommitRefIter::from_bytes(obj.data)
                                 .tree_id()
                                 .expect("every commit has a tree");
                             stats.expanded_objects += 1;
@@ -321,7 +321,7 @@ where
                         }
                         Blob => break,
                         Tag => {
-                            id = immutable::TagIter::from_bytes(obj.data)
+                            id = immutable::TagRefIter::from_bytes(obj.data)
                                 .target_id()
                                 .expect("every tag has a target");
                             stats.expanded_objects += 1;

@@ -5,19 +5,19 @@
 //! which support mutation and serialization.
 
 mod blob;
-pub use blob::Blob;
+pub use blob::BlobRef;
 
 ///
 pub mod commit;
-pub use commit::{iter::Iter as CommitIter, Commit};
+pub use commit::{iter::RefIter as CommitRefIter, CommitRef};
 
 ///
 pub mod object;
-pub use object::Object;
+pub use object::ObjectRef;
 
 ///
 pub mod tag;
-pub use tag::{iter::Iter as TagIter, Tag};
+pub use tag::{iter::RefIter as TagRefIter, TagRef};
 
 ///
 pub mod tree;

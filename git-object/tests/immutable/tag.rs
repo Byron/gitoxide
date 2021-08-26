@@ -1,7 +1,7 @@
-use git_object::{bstr::ByteSlice, immutable::Tag, Kind};
+use git_object::{bstr::ByteSlice, immutable::TagRef, Kind};
 
 mod method {
-    use git_object::immutable::Tag;
+    use git_object::immutable::TagRef;
     use pretty_assertions::assert_eq;
 
     use crate::{hex_to_id, immutable::fixture_bytes};
@@ -9,7 +9,7 @@ mod method {
     #[test]
     fn target() -> crate::Result {
         let fixture = fixture_bytes("tag", "signed.txt");
-        let tag = Tag::from_bytes(&fixture)?;
+        let tag = TagRef::from_bytes(&fixture)?;
         assert_eq!(tag.target(), hex_to_id("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec"));
         assert_eq!(tag.target, "ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bytes());
         Ok(())
@@ -19,7 +19,7 @@ mod method {
 mod iter {
     use git_object::{
         bstr::ByteSlice,
-        immutable::{tag::iter::Token, TagIter},
+        immutable::{tag::iter::Token, TagRefIter},
         Kind,
     };
 
@@ -31,7 +31,7 @@ mod iter {
     #[test]
     fn empty() -> crate::Result {
         assert_eq!(
-            TagIter::from_bytes(&fixture_bytes("tag", "empty.txt")).collect::<Result<Vec<_>, _>>()?,
+            TagRefIter::from_bytes(&fixture_bytes("tag", "empty.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Target {
                     id: hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc")
@@ -47,7 +47,7 @@ mod iter {
     #[test]
     fn no_tagger() -> crate::Result {
         assert_eq!(
-            TagIter::from_bytes(&fixture_bytes("tag", "no-tagger.txt")).collect::<Result<Vec<_>, _>>()?,
+            TagRefIter::from_bytes(&fixture_bytes("tag", "no-tagger.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Target {
                     id: hex_to_id("c39ae07f393806ccf406ef966e9a15afc43cc36a")
@@ -83,7 +83,7 @@ KLMHist5yj0sw1E4hDTyQa0=
     #[test]
     fn whitespace() -> crate::Result {
         assert_eq!(
-            TagIter::from_bytes(&fixture_bytes("tag", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
+            TagRefIter::from_bytes(&fixture_bytes("tag", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Target {
                     id: hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc")
@@ -103,7 +103,7 @@ KLMHist5yj0sw1E4hDTyQa0=
     #[test]
     fn error_handling() -> crate::Result {
         let data = fixture_bytes("tag", "empty.txt");
-        let iter = TagIter::from_bytes(&data[..data.len() / 2]);
+        let iter = TagRefIter::from_bytes(&data[..data.len() / 2]);
         let tokens = iter.collect::<Vec<_>>();
         assert!(
             tokens.last().expect("at least the errored token").is_err(),
@@ -114,21 +114,24 @@ KLMHist5yj0sw1E4hDTyQa0=
 }
 
 mod from_bytes {
-    use git_object::{bstr::ByteSlice, immutable::Tag, Kind};
+    use git_object::{bstr::ByteSlice, immutable::TagRef, Kind};
 
     use crate::immutable::{fixture_bytes, signature, tag::tag_fixture};
 
     #[test]
     fn signed() -> crate::Result {
-        assert_eq!(Tag::from_bytes(&fixture_bytes("tag", "signed.txt"))?, tag_fixture(9000));
+        assert_eq!(
+            TagRef::from_bytes(&fixture_bytes("tag", "signed.txt"))?,
+            tag_fixture(9000)
+        );
         Ok(())
     }
 
     #[test]
     fn empty() -> crate::Result {
         assert_eq!(
-            Tag::from_bytes(&fixture_bytes("tag", "empty.txt"))?,
-            Tag {
+            TagRef::from_bytes(&fixture_bytes("tag", "empty.txt"))?,
+            TagRef {
                 target: b"01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc".as_bstr(),
                 name: b"empty".as_bstr(),
                 target_kind: Kind::Commit,
@@ -143,8 +146,8 @@ mod from_bytes {
     #[test]
     fn with_newlines() -> crate::Result {
         assert_eq!(
-            Tag::from_bytes(&fixture_bytes("tag", "with-newlines.txt"))?,
-            Tag {
+            TagRef::from_bytes(&fixture_bytes("tag", "with-newlines.txt"))?,
+            TagRef {
                 target: b"ebdf205038b66108c0331aa590388431427493b7".as_bstr(),
                 name: b"baz".as_bstr(),
                 target_kind: Kind::Commit,
@@ -159,8 +162,8 @@ mod from_bytes {
     #[test]
     fn no_tagger() -> crate::Result {
         assert_eq!(
-            Tag::from_bytes(&fixture_bytes("tag", "no-tagger.txt"))?,
-            Tag {
+            TagRef::from_bytes(&fixture_bytes("tag", "no-tagger.txt"))?,
+            TagRef {
                 target: b"c39ae07f393806ccf406ef966e9a15afc43cc36a".as_bstr(),
                 name: b"v2.6.11-tree".as_bstr(),
                 target_kind: Kind::Tree,
@@ -191,8 +194,8 @@ KLMHist5yj0sw1E4hDTyQa0=
     #[test]
     fn whitespace() -> crate::Result {
         assert_eq!(
-            Tag::from_bytes(&fixture_bytes("tag", "whitespace.txt"))?,
-            Tag {
+            TagRef::from_bytes(&fixture_bytes("tag", "whitespace.txt"))?,
+            TagRef {
                 target: b"01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc".as_bstr(),
                 name: b"whitespace".as_bstr(),
                 target_kind: Kind::Commit,
@@ -205,8 +208,8 @@ KLMHist5yj0sw1E4hDTyQa0=
     }
 }
 
-fn tag_fixture(offset: i32) -> Tag<'static> {
-    Tag {
+fn tag_fixture(offset: i32) -> TagRef<'static> {
+    TagRef {
         target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
         name: b"1.0.0".as_bstr(),
         target_kind: Kind::Commit,

@@ -30,8 +30,8 @@ where
     ///
     /// A merge tag is a tag object embedded within the respective header field of a commit, making
     /// it a child object of sorts.
-    pub fn mergetags(self) -> impl Iterator<Item = Result<immutable::Tag<'a>, immutable::object::decode::Error>> {
-        self.find_all("mergetag").map(|b| immutable::Tag::from_bytes(b))
+    pub fn mergetags(self) -> impl Iterator<Item = Result<immutable::TagRef<'a>, immutable::object::decode::Error>> {
+        self.find_all("mergetag").map(|b| immutable::TagRef::from_bytes(b))
     }
 
     /// Return the cryptographic signature provided by gpg/pgp verbatim.

@@ -26,13 +26,13 @@ impl<'a> Object<'a> {
     /// conveniently. The cost of parsing an object is negligible.
     ///
     /// **Note** that [mutable, decoded objects][git_object::mutable::Object] can be created from a [`crate::data::Object`]
-    /// using [`git_object::immutable::Object::into_mutable()`].
-    pub fn decode(&self) -> Result<immutable::Object<'a>, immutable::object::decode::Error> {
+    /// using [`git_object::immutable::ObjectRef::into_mutable()`].
+    pub fn decode(&self) -> Result<immutable::ObjectRef<'a>, immutable::object::decode::Error> {
         Ok(match self.kind {
-            git_object::Kind::Tree => immutable::Object::Tree(immutable::Tree::from_bytes(self.data)?),
-            git_object::Kind::Blob => immutable::Object::Blob(immutable::Blob { data: self.data }),
-            git_object::Kind::Commit => immutable::Object::Commit(immutable::Commit::from_bytes(self.data)?),
-            git_object::Kind::Tag => immutable::Object::Tag(immutable::Tag::from_bytes(self.data)?),
+            git_object::Kind::Tree => immutable::ObjectRef::Tree(immutable::Tree::from_bytes(self.data)?),
+            git_object::Kind::Blob => immutable::ObjectRef::Blob(immutable::BlobRef { data: self.data }),
+            git_object::Kind::Commit => immutable::ObjectRef::Commit(immutable::CommitRef::from_bytes(self.data)?),
+            git_object::Kind::Tag => immutable::ObjectRef::Tag(immutable::TagRef::from_bytes(self.data)?),
         })
     }
 
@@ -47,18 +47,18 @@ impl<'a> Object<'a> {
 
     /// Returns this object as commit iterator to parse tokens one at a time to avoid allocations, or
     /// `None` if this is not a commit object.
-    pub fn into_commit_iter(self) -> Option<immutable::CommitIter<'a>> {
+    pub fn into_commit_iter(self) -> Option<immutable::CommitRefIter<'a>> {
         match self.kind {
-            git_object::Kind::Commit => Some(immutable::CommitIter::from_bytes(self.data)),
+            git_object::Kind::Commit => Some(immutable::CommitRefIter::from_bytes(self.data)),
             _ => None,
         }
     }
 
     /// Returns this object as tag iterator to parse tokens one at a time to avoid allocations, or
     /// `None` if this is not a tag object.
-    pub fn into_tag_iter(self) -> Option<immutable::TagIter<'a>> {
+    pub fn into_tag_iter(self) -> Option<immutable::TagRefIter<'a>> {
         match self.kind {
-            git_object::Kind::Tag => Some(immutable::TagIter::from_bytes(self.data)),
+            git_object::Kind::Tag => Some(immutable::TagRefIter::from_bytes(self.data)),
             _ => None,
         }
     }

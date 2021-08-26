@@ -37,15 +37,15 @@ impl Default for State {
 
 /// Like [`signature_ref::Commit`][super::Commit], but as `Iterator` to support (up to) entirely allocation free parsing.
 /// It's particularly useful to traverse the commit graph without ever allocating arrays for parents.
-pub struct Iter<'a> {
+pub struct RefIter<'a> {
     data: &'a [u8],
     state: State,
 }
 
-impl<'a> Iter<'a> {
+impl<'a> RefIter<'a> {
     /// Create a commit iterator from data.
-    pub fn from_bytes(data: &'a [u8]) -> Iter<'a> {
-        Iter {
+    pub fn from_bytes(data: &'a [u8]) -> RefIter<'a> {
+        RefIter {
             data,
             state: State::default(),
         }
@@ -77,7 +77,7 @@ impl<'a> Iter<'a> {
     }
 }
 
-impl<'a> Iter<'a> {
+impl<'a> RefIter<'a> {
     fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), object::decode::Error> {
         use State::*;
         Ok(match state {
@@ -176,7 +176,7 @@ impl<'a> Iter<'a> {
     }
 }
 
-impl<'a> Iterator for Iter<'a> {
+impl<'a> Iterator for RefIter<'a> {
     type Item = Result<Token<'a>, object::decode::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
