@@ -15,7 +15,6 @@ pub use types::{Error, Kind};
 use crate::tree::EntryRef;
 
 pub mod immutable;
-pub mod mutable;
 
 ///
 pub mod commit;
@@ -163,6 +162,12 @@ pub enum ObjectRef<'a> {
     Tag(TagRef<'a>),
 }
 
+/// Mutable objects with each field being separately allocated and changeable.
+///
+/// Mutable objects are Commits, Trees, Blobs and Tags that can be changed and serialized.
+///
+/// They either created using object [construction][Object] or by [deserializing existing objects][ObjectRef::from_bytes()]
+/// and converting these [into mutable copies][ObjectRef::into_owned()] for adjustments.
 /// A mutable object representing [`Trees`][Tree], [`Blobs`][Blob], [`Commits`][Commit] or [`Tags`][Tag].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

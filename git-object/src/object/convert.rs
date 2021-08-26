@@ -1,4 +1,5 @@
 use crate::{tree, Blob, BlobRef, Commit, CommitRef, Object, ObjectRef, Tag, TagRef, Tree, TreeRef};
+use std::convert::TryFrom;
 
 impl From<TagRef<'_>> for Tag {
     fn from(other: TagRef<'_>) -> Tag {
@@ -86,5 +87,73 @@ impl<'a> From<ObjectRef<'a>> for Object {
             ObjectRef::Commit(v) => Object::Commit(v.into()),
             ObjectRef::Tag(v) => Object::Tag(v.into()),
         }
+    }
+}
+
+impl From<Tag> for Object {
+    fn from(v: Tag) -> Self {
+        Object::Tag(v)
+    }
+}
+
+impl From<Commit> for Object {
+    fn from(v: Commit) -> Self {
+        Object::Commit(v)
+    }
+}
+
+impl From<Tree> for Object {
+    fn from(v: Tree) -> Self {
+        Object::Tree(v)
+    }
+}
+
+impl From<Blob> for Object {
+    fn from(v: Blob) -> Self {
+        Object::Blob(v)
+    }
+}
+
+impl TryFrom<Object> for Tag {
+    type Error = Object;
+
+    fn try_from(value: Object) -> Result<Self, Self::Error> {
+        Ok(match value {
+            Object::Tag(v) => v,
+            _ => return Err(value),
+        })
+    }
+}
+
+impl TryFrom<Object> for Commit {
+    type Error = Object;
+
+    fn try_from(value: Object) -> Result<Self, Self::Error> {
+        Ok(match value {
+            Object::Commit(v) => v,
+            _ => return Err(value),
+        })
+    }
+}
+
+impl TryFrom<Object> for Tree {
+    type Error = Object;
+
+    fn try_from(value: Object) -> Result<Self, Self::Error> {
+        Ok(match value {
+            Object::Tree(v) => v,
+            _ => return Err(value),
+        })
+    }
+}
+
+impl TryFrom<Object> for Blob {
+    type Error = Object;
+
+    fn try_from(value: Object) -> Result<Self, Self::Error> {
+        Ok(match value {
+            Object::Blob(v) => v,
+            _ => return Err(value),
+        })
     }
 }
