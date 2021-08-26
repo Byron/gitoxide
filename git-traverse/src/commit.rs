@@ -131,7 +131,7 @@ pub mod ancestors {
                         }
                         for token in commit_iter {
                             match token {
-                                Ok(immutable::commit::iter::Token::Parent { id }) => {
+                                Ok(git_object::commit::ref_iter::Token::Parent { id }) => {
                                     let was_inserted = state.seen.insert(id);
                                     if was_inserted && (self.predicate)(&id) {
                                         state.next.push_back(id);

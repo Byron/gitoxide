@@ -141,7 +141,7 @@ impl<'repo, A> ObjectRef<'repo, A>
 where
     A: easy::Access + Sized,
 {
-    pub fn to_commit_iter(&self) -> Option<commit::RefIter<'_>> {
+    pub fn to_commit_iter(&self) -> Option<commit::CommitRefIter<'_>> {
         odb::data::Object::new(self.kind, &self.data).into_commit_iter()
     }
 

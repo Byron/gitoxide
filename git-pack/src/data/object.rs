@@ -47,9 +47,9 @@ impl<'a> Object<'a> {
 
     /// Returns this object as commit iterator to parse tokens one at a time to avoid allocations, or
     /// `None` if this is not a commit object.
-    pub fn into_commit_iter(self) -> Option<commit::RefIter<'a>> {
+    pub fn into_commit_iter(self) -> Option<commit::CommitRefIter<'a>> {
         match self.kind {
-            git_object::Kind::Commit => Some(commit::RefIter::from_bytes(self.data)),
+            git_object::Kind::Commit => Some(commit::CommitRefIter::from_bytes(self.data)),
             _ => None,
         }
     }

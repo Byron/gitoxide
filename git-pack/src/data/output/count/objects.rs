@@ -5,7 +5,7 @@ use std::sync::{
 
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
-use git_object::{commit, immutable, TagRefIter};
+use git_object::{commit, TagRefIter};
 
 use crate::{data::output, find, FindExt};
 
@@ -188,12 +188,14 @@ where
                         }
                         Commit => {
                             let current_tree_iter = {
-                                let mut commit_iter = commit::RefIter::from_bytes(obj.data);
+                                let mut commit_iter = commit::CommitRefIter::from_bytes(obj.data);
                                 let tree_id = commit_iter.tree_id().expect("every commit has a tree");
                                 parent_commit_ids.clear();
                                 for token in commit_iter {
                                     match token {
-                                        Ok(immutable::commit::iter::Token::Parent { id }) => parent_commit_ids.push(id),
+                                        Ok(git_object::commit::ref_iter::Token::Parent { id }) => {
+                                            parent_commit_ids.push(id)
+                                        }
                                         Ok(_) => break,
                                         Err(err) => return Err(Error::CommitDecode(err)),
                                     }
@@ -238,7 +240,7 @@ where
                                             stats,
                                             true,
                                         );
-                                        commit::RefIter::from_bytes(parent_commit_obj.data)
+                                        commit::CommitRefIter::from_bytes(parent_commit_obj.data)
                                             .tree_id()
                                             .expect("every commit has a tree")
                                     };
@@ -312,7 +314,7 @@ where
                             break;
                         }
                         Commit => {
-                            id = commit::RefIter::from_bytes(obj.data)
+                            id = commit::CommitRefIter::from_bytes(obj.data)
                                 .tree_id()
                                 .expect("every commit has a tree");
                             stats.expanded_objects += 1;

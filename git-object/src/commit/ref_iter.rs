@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use bstr::BStr;
-use git_hash::{oid, ObjectId};
 use nom::{
     branch::alt,
     bytes::complete::is_not,
@@ -9,9 +8,12 @@ use nom::{
     error::context,
 };
 
+use git_hash::{oid, ObjectId};
+
+use crate::commit::decode;
 use crate::{
     bstr::ByteSlice,
-    immutable::{commit::decode, object, parse, parse::NL},
+    immutable::{object, parse, parse::NL},
 };
 
 #[derive(Copy, Clone)]
@@ -37,15 +39,15 @@ impl Default for State {
 
 /// Like [`CommitRef`][crate::CommitRef], but as `Iterator` to support (up to) entirely allocation free parsing.
 /// It's particularly useful to traverse the commit graph without ever allocating arrays for parents.
-pub struct RefIter<'a> {
+pub struct CommitRefIter<'a> {
     data: &'a [u8],
     state: State,
 }
 
-impl<'a> RefIter<'a> {
+impl<'a> CommitRefIter<'a> {
     /// Create a commit iterator from data.
-    pub fn from_bytes(data: &'a [u8]) -> RefIter<'a> {
-        RefIter {
+    pub fn from_bytes(data: &'a [u8]) -> CommitRefIter<'a> {
+        CommitRefIter {
             data,
             state: State::default(),
         }
@@ -77,7 +79,7 @@ impl<'a> RefIter<'a> {
     }
 }
 
-impl<'a> RefIter<'a> {
+impl<'a> CommitRefIter<'a> {
     fn next_inner(i: &'a [u8], state: &mut State) -> Result<(&'a [u8], Token<'a>), object::decode::Error> {
         use State::*;
         Ok(match state {
@@ -176,7 +178,7 @@ impl<'a> RefIter<'a> {
     }
 }
 
-impl<'a> Iterator for RefIter<'a> {
+impl<'a> Iterator for CommitRefIter<'a> {
     type Item = Result<Token<'a>, object::decode::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {

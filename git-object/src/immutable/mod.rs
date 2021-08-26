@@ -5,9 +5,6 @@
 //! which support mutation and serialization.
 
 ///
-pub mod commit;
-
-///
 pub mod object;
 
 pub(crate) mod parse;
