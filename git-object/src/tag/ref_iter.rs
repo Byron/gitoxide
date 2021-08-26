@@ -7,12 +7,7 @@ use nom::{
     error::{context, ParseError},
 };
 
-use crate::{
-    bstr::ByteSlice,
-    immutable::{object, parse, parse::NL},
-    tag::decode,
-    Kind, TagRefIter,
-};
+use crate::{bstr::ByteSlice, immutable::object, parse, parse::NL, tag::decode, Kind, TagRefIter};
 
 pub(crate) enum State {
     Target,

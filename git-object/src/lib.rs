@@ -27,6 +27,7 @@ pub mod tree;
 mod blob;
 
 mod encode;
+pub(crate) mod parse;
 mod types;
 
 /// A chunk of any [`data`][BlobRef::data].

@@ -9,12 +9,7 @@ use nom::{
     error::context,
 };
 
-use crate::{
-    bstr::ByteSlice,
-    commit::decode,
-    immutable::{object, parse, parse::NL},
-    CommitRefIter,
-};
+use crate::{bstr::ByteSlice, commit::decode, immutable::object, parse, parse::NL, CommitRefIter};
 
 #[derive(Copy, Clone)]
 pub(crate) enum SignatureKind {

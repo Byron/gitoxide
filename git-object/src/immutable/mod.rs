@@ -6,5 +6,3 @@
 
 ///
 pub mod object;
-
-pub(crate) mod parse;

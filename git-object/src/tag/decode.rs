@@ -8,10 +8,7 @@ use nom::{
     IResult,
 };
 
-use crate::{
-    immutable::{parse, parse::NL},
-    BStr, ByteSlice, TagRef,
-};
+use crate::{parse, parse::NL, BStr, ByteSlice, TagRef};
 
 pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], TagRef<'a>, E> {
     let (i, target) = context("object <40 lowercase hex char>", |i| {

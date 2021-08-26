@@ -87,7 +87,7 @@ mod decode {
         IResult,
     };
 
-    use crate::{immutable::parse::SPACE, tree, tree::EntryRef, TreeRef};
+    use crate::{parse::SPACE, tree, tree::EntryRef, TreeRef};
 
     const NULL: &[u8] = b"\0";
 
