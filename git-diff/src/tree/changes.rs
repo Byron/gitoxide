@@ -54,13 +54,13 @@ impl<'a> tree::Changes<'a> {
     /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/git-object/src/mutable/tree.rs#L52-L55
     pub fn needed_to_obtain<FindFn, R, StateMut>(
         mut self,
-        other: immutable::TreeIter<'_>,
+        other: git_object::tree::RefIter<'_>,
         mut state: StateMut,
         mut find: FindFn,
         delegate: &mut R,
     ) -> Result<(), Error>
     where
-        FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::tree::TreeIter<'b>>,
+        FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<git_object::tree::RefIter<'b>>,
         R: tree::Visit,
         StateMut: BorrowMut<tree::State>,
     {
@@ -120,7 +120,7 @@ impl<'a> tree::Changes<'a> {
 }
 
 fn delete_entry_schedule_recursion<R: tree::Visit>(
-    entry: immutable::tree::Entry<'_>,
+    entry: immutable::tree::EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
@@ -143,7 +143,7 @@ fn delete_entry_schedule_recursion<R: tree::Visit>(
 }
 
 fn add_entry_schedule_recursion<R: tree::Visit>(
-    entry: immutable::tree::Entry<'_>,
+    entry: immutable::tree::EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
@@ -165,9 +165,9 @@ fn add_entry_schedule_recursion<R: tree::Visit>(
     Ok(())
 }
 fn catchup_rhs_with_lhs<R: tree::Visit>(
-    rhs_entries: &mut IteratorType<immutable::TreeIter<'_>>,
-    lhs: immutable::tree::Entry<'_>,
-    rhs: immutable::tree::Entry<'_>,
+    rhs_entries: &mut IteratorType<git_object::tree::RefIter<'_>>,
+    lhs: git_object::tree::EntryRef<'_>,
+    rhs: git_object::tree::EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
@@ -205,9 +205,9 @@ fn catchup_rhs_with_lhs<R: tree::Visit>(
 }
 
 fn catchup_lhs_with_rhs<R: tree::Visit>(
-    lhs_entries: &mut IteratorType<immutable::TreeIter<'_>>,
-    lhs: immutable::tree::Entry<'_>,
-    rhs: immutable::tree::Entry<'_>,
+    lhs_entries: &mut IteratorType<git_object::tree::RefIter<'_>>,
+    lhs: git_object::tree::EntryRef<'_>,
+    rhs: git_object::tree::EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {
@@ -245,8 +245,8 @@ fn catchup_lhs_with_rhs<R: tree::Visit>(
 }
 
 fn handle_lhs_and_rhs_with_equal_filenames<R: tree::Visit>(
-    lhs: immutable::tree::Entry<'_>,
-    rhs: immutable::tree::Entry<'_>,
+    lhs: immutable::tree::EntryRef<'_>,
+    rhs: immutable::tree::EntryRef<'_>,
     queue: &mut VecDeque<TreeInfoPair>,
     delegate: &mut R,
 ) -> Result<(), Error> {

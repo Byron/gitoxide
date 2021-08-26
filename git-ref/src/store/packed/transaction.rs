@@ -77,13 +77,11 @@ impl packed::Transaction {
                     let kind = find(next_id, &mut buf)?;
                     match kind {
                         Some(kind) if kind == git_object::Kind::Tag => {
-                            next_id = git_object::immutable::TagRefIter::from_bytes(&buf)
-                                .target_id()
-                                .ok_or_else(|| {
-                                    prepare::Error::Resolve(
-                                        format!("Couldn't get target object id from tag {}", next_id).into(),
-                                    )
-                                })?;
+                            next_id = git_object::tag::RefIter::from_bytes(&buf).target_id().ok_or_else(|| {
+                                prepare::Error::Resolve(
+                                    format!("Couldn't get target object id from tag {}", next_id).into(),
+                                )
+                            })?;
                         }
                         Some(_) => {
                             break if next_id == new { None } else { Some(next_id) };

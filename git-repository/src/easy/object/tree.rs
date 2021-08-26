@@ -18,7 +18,7 @@ where
         // let mut out = None;
         let mut path = path.into_iter().peekable();
         while let Some(component) = path.next() {
-            match immutable::tree::TreeIter::from_bytes(&self.data)
+            match immutable::tree::RefIter::from_bytes(&self.data)
                 .filter_map(Result::ok)
                 .find(|entry| component.eq(entry.filename))
             {

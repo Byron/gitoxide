@@ -157,12 +157,13 @@ pub mod to_id {
                     })?;
                 match kind {
                     git_object::Kind::Tag => {
-                        oid = git_object::immutable::TagRefIter::from_bytes(data)
-                            .target_id()
-                            .ok_or_else(|| Error::NotFound {
-                                oid,
-                                name: self.name.0.clone(),
-                            })?;
+                        oid =
+                            git_object::tag::RefIter::from_bytes(data)
+                                .target_id()
+                                .ok_or_else(|| Error::NotFound {
+                                    oid,
+                                    name: self.name.0.clone(),
+                                })?;
                     }
                     _ => break oid,
                 };

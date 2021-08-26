@@ -55,7 +55,7 @@ mod write {
 }
 
 mod locate {
-    use git_object::{bstr::ByteSlice, immutable, immutable::tree, tree::EntryMode, Kind};
+    use git_object::{bstr::ByteSlice, immutable::tree, tree::EntryMode, BlobRef, CommitRef, Kind, TagRef, TreeRef};
 
     use crate::{
         hex_to_id,
@@ -75,7 +75,7 @@ mod locate {
         let o = locate("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9", &mut buf);
         assert_eq!(o.kind, Kind::Tag);
         assert_eq!(o.data.len(), 1024);
-        let expected = immutable::TagRef {
+        let expected = TagRef {
             target: b"ffa700b4aca13b80cb6b98a078e7c96804f8e0ec".as_bstr(),
             name: b"1.0.0".as_bstr(),
             target_kind: Kind::Commit,
@@ -113,7 +113,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         let o = locate("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec", &mut buf);
         assert_eq!(o.kind, Kind::Commit);
         assert_eq!(o.data.len(), 1084);
-        let expected = immutable::CommitRef {
+        let expected = CommitRef {
             tree: b"6ba2a0ded519f737fd5b8d5ccfb141125ef3176f".as_bstr(),
             parents: vec![].into(),
             author: signature(1528473303),
@@ -141,7 +141,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         let o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980", &mut buf);
         assert_eq!(
             o.decode()?.as_blob().expect("blob"),
-            &immutable::BlobRef {
+            &BlobRef {
                 data: &[104, 105, 32, 116, 104, 101, 114, 101, 10]
             },
             "small blobs are treated similarly to other object types and are read into memory at once when the header is read"
@@ -182,16 +182,16 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         assert_eq!(o.kind, Kind::Tree);
         assert_eq!(o.data.len(), 66);
 
-        let expected = immutable::Tree {
+        let expected = TreeRef {
             entries: vec![
-                tree::Entry {
+                tree::EntryRef {
                     mode: EntryMode::Tree,
                     filename: b"dir".as_bstr(),
                     oid: as_id(&[
                         150, 174, 134, 139, 53, 57, 245, 81, 200, 143, 213, 240, 35, 148, 208, 34, 88, 27, 17, 176,
                     ]),
                 },
-                tree::Entry {
+                tree::EntryRef {
                     mode: EntryMode::Blob,
                     filename: b"file.txt".as_bstr(),
                     oid: as_id(&[

@@ -2,37 +2,28 @@ use std::convert::TryFrom;
 
 use bstr::BStr;
 
-use crate::{immutable::object, tree};
-
-/// A directory snapshot containing files (blobs), directories (trees) and submodules (commits).
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Tree<'a> {
-    /// The directories and files contained in this tree.
-    #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub entries: Vec<Entry<'a>>,
-}
+use crate::{immutable::object, tree, TreeRef};
 
 /// A directory snapshot containing files (blobs), directories (trees) and submodules (commits), lazily evaluated.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct TreeIter<'a> {
+pub struct RefIter<'a> {
     /// The directories and files contained in this tree.
     #[cfg_attr(feature = "serde1", serde(borrow))]
     data: &'a [u8],
 }
 
-impl<'a> TreeIter<'a> {
+impl<'a> RefIter<'a> {
     /// Instantiate an iterator from the given tree data.
-    pub fn from_bytes(data: &'a [u8]) -> TreeIter<'a> {
-        TreeIter { data }
+    pub fn from_bytes(data: &'a [u8]) -> RefIter<'a> {
+        RefIter { data }
     }
 }
 
 /// An element of a [`Tree`][Tree::entries].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Entry<'a> {
+pub struct EntryRef<'a> {
     /// The kind of object to which `oid` is pointing.
     pub mode: tree::EntryMode,
     /// The name of the file in the parent tree.
@@ -44,35 +35,35 @@ pub struct Entry<'a> {
     pub oid: &'a git_hash::oid,
 }
 
-impl<'a> Tree<'a> {
+impl<'a> TreeRef<'a> {
     /// Deserialize a Tree from `data`.
-    pub fn from_bytes(data: &'a [u8]) -> Result<Tree<'a>, object::decode::Error> {
+    pub fn from_bytes(data: &'a [u8]) -> Result<TreeRef<'a>, object::decode::Error> {
         decode::tree(data).map(|(_, t)| t).map_err(object::decode::Error::from)
     }
 
     /// Create an instance of the empty tree.
     ///
     /// It's particularly useful as static part of a program.
-    pub const fn empty() -> Tree<'static> {
-        Tree { entries: Vec::new() }
+    pub const fn empty() -> TreeRef<'static> {
+        TreeRef { entries: Vec::new() }
     }
 }
 
-impl<'a> TreeIter<'a> {
+impl<'a> RefIter<'a> {
     /// Consume self and return all parsed entries.
-    pub fn entries(self) -> Result<Vec<Entry<'a>>, object::decode::Error> {
+    pub fn entries(self) -> Result<Vec<EntryRef<'a>>, object::decode::Error> {
         self.collect()
     }
 }
 
-impl<'a> Default for TreeIter<'a> {
+impl<'a> Default for RefIter<'a> {
     fn default() -> Self {
-        TreeIter { data: &[] }
+        RefIter { data: &[] }
     }
 }
 
-impl<'a> Iterator for TreeIter<'a> {
-    type Item = Result<Entry<'a>, object::decode::Error>;
+impl<'a> Iterator for RefIter<'a> {
+    type Item = Result<EntryRef<'a>, object::decode::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.data.is_empty() {
@@ -123,13 +114,13 @@ mod decode {
     };
 
     use crate::{
-        immutable::{parse::SPACE, tree::Entry, Tree},
-        tree,
+        immutable::{parse::SPACE, tree::EntryRef},
+        tree, TreeRef,
     };
 
     const NULL: &[u8] = b"\0";
 
-    pub fn entry<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], Entry<'_>, E> {
+    pub fn entry<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], EntryRef<'_>, E> {
         let (i, mode) = terminated(take_while_m_n(5, 6, is_digit), tag(SPACE))(i)?;
         let mode = tree::EntryMode::try_from(mode)
             .map_err(|invalid| nom::Err::Error(E::from_error_kind(invalid, nom::error::ErrorKind::MapRes)))?;
@@ -138,7 +129,7 @@ mod decode {
 
         Ok((
             i,
-            Entry {
+            EntryRef {
                 mode,
                 filename: filename.as_bstr(),
                 oid: git_hash::oid::try_from(oid).expect("we counted exactly 20 bytes"),
@@ -146,8 +137,8 @@ mod decode {
         ))
     }
 
-    pub fn tree<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], Tree<'a>, E> {
+    pub fn tree<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], TreeRef<'a>, E> {
         let (i, entries) = all_consuming(many0(entry))(i)?;
-        Ok((i, Tree { entries }))
+        Ok((i, TreeRef { entries }))
     }
 }

@@ -52,13 +52,13 @@ impl State {
 ///    be escalated into a more specific error if its encountered by the caller.
 /// * `delegate` - A way to observe entries and control the iteration while allowing the optimizer to let you pay only for what you use.
 pub fn traverse<StateMut, Find, V>(
-    root: immutable::TreeIter<'_>,
+    root: tree::RefIter<'_>,
     mut state: StateMut,
     mut find: Find,
     delegate: &mut V,
 ) -> Result<(), Error>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<immutable::TreeIter<'a>>,
+    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<tree::RefIter<'a>>,
     StateMut: BorrowMut<State>,
     V: Visit,
 {

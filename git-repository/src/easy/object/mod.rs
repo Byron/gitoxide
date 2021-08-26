@@ -8,7 +8,7 @@ use crate::{
     easy::{Object, ObjectRef, TreeRef},
 };
 use git_hash::ObjectId;
-use git_object::immutable;
+use git_object::{commit, tag};
 use git_odb as odb;
 
 mod impls;
@@ -141,11 +141,11 @@ impl<'repo, A> ObjectRef<'repo, A>
 where
     A: easy::Access + Sized,
 {
-    pub fn to_commit_iter(&self) -> Option<immutable::CommitRefIter<'_>> {
+    pub fn to_commit_iter(&self) -> Option<commit::RefIter<'_>> {
         odb::data::Object::new(self.kind, &self.data).into_commit_iter()
     }
 
-    pub fn to_tag_iter(&self) -> Option<immutable::TagRefIter<'_>> {
+    pub fn to_tag_iter(&self) -> Option<tag::RefIter<'_>> {
         odb::data::Object::new(self.kind, &self.data).into_tag_iter()
     }
 }

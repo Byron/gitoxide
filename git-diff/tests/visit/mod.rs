@@ -2,7 +2,7 @@ mod changes {
     mod to_obtain_tree {
         use git_diff::tree::{recorder, recorder::Change::*};
         use git_hash::{oid, ObjectId};
-        use git_object::{bstr::ByteSlice, immutable, tree::EntryMode};
+        use git_object::{bstr::ByteSlice, tree, tree::EntryMode};
         use git_odb::{linked, pack, Find};
 
         use crate::hex_to_id;
@@ -22,7 +22,7 @@ mod changes {
             db: &linked::Store,
             commit: &oid,
             buf: &'a mut Vec<u8>,
-        ) -> crate::Result<immutable::TreeIter<'a>> {
+        ) -> crate::Result<tree::RefIter<'a>> {
             let tree_id = db
                 .find(commit, buf, &mut pack::cache::Never)?
                 .ok_or_else(|| format!("start commit {:?} to be present", commit))?

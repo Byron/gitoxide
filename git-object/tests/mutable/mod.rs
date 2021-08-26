@@ -3,7 +3,7 @@ macro_rules! round_trip {
         #[test]
         fn round_trip() -> Result<(), Box<dyn std::error::Error>> {
             use crate::fixture_bytes;
-            use git_object::{mutable, immutable};
+            use git_object::{ObjectRef, mutable};
             use bstr::ByteSlice;
             for input in &[
                 $( $files ),*
@@ -16,7 +16,7 @@ macro_rules! round_trip {
                 assert_eq!(output.as_bstr(), input.as_bstr());
 
                 // Test the parse->borrowed->owned->write chain for the top-level objects
-                let item: mutable::Object = immutable::ObjectRef::from(<$borrowed>::from_bytes(&input)?).into();
+                let item: mutable::Object = ObjectRef::from(<$borrowed>::from_bytes(&input)?).into();
                 output.clear();
                 item.write_to(&mut output)?;
                 assert_eq!(output.as_bstr(), input.as_bstr());
@@ -30,7 +30,7 @@ mod object;
 mod tag {
     round_trip!(
         mutable::Tag,
-        immutable::TagRef,
+        git_object::TagRef,
         "tag/empty.txt",
         "tag/no-tagger.txt",
         "tag/whitespace.txt",
@@ -42,7 +42,7 @@ mod tag {
 mod commit {
     round_trip!(
         mutable::Commit,
-        immutable::CommitRef,
+        git_object::CommitRef,
         "commit/signed-whitespace.txt",
         "commit/two-multiline-headers.txt",
         "commit/mergetag.txt",
@@ -57,10 +57,10 @@ mod commit {
 }
 
 mod tree {
-    round_trip!(mutable::Tree, immutable::Tree, "tree/everything.tree");
+    round_trip!(mutable::Tree, git_object::TreeRef, "tree/everything.tree");
 }
 
 mod blob {
     // It doesn't matter which data we use - it's not interpreted.
-    round_trip!(mutable::Blob, immutable::BlobRef, "tree/everything.tree");
+    round_trip!(mutable::Blob, git_object::BlobRef, "tree/everything.tree");
 }

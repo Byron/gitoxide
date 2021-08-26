@@ -23,7 +23,7 @@ pub struct Entry {
 }
 
 impl Entry {
-    fn new(entry: &immutable::tree::Entry<'_>, filepath: BString) -> Self {
+    fn new(entry: &immutable::tree::EntryRef<'_>, filepath: BString) -> Self {
         Entry {
             filepath,
             oid: entry.oid.to_owned(),
@@ -83,12 +83,12 @@ impl visit::Visit for Recorder {
         self.pop_element();
     }
 
-    fn visit_tree(&mut self, entry: &immutable::tree::Entry<'_>) -> Action {
+    fn visit_tree(&mut self, entry: &immutable::tree::EntryRef<'_>) -> Action {
         self.records.push(Entry::new(entry, self.path_clone()));
         Action::Continue
     }
 
-    fn visit_nontree(&mut self, entry: &immutable::tree::Entry<'_>) -> Action {
+    fn visit_nontree(&mut self, entry: &immutable::tree::EntryRef<'_>) -> Action {
         self.records.push(Entry::new(entry, self.path_clone()));
         Action::Continue
     }

@@ -5,7 +5,7 @@ use std::sync::{
 
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
-use git_object::immutable;
+use git_object::{commit, immutable, tag};
 
 use crate::{data::output, find, FindExt};
 
@@ -179,7 +179,7 @@ where
                     match obj.kind {
                         Tree | Blob => break,
                         Tag => {
-                            id = immutable::TagRefIter::from_bytes(obj.data)
+                            id = tag::RefIter::from_bytes(obj.data)
                                 .target_id()
                                 .expect("every tag has a target");
                             obj = db.find_existing(id, buf1, cache)?;
@@ -188,7 +188,7 @@ where
                         }
                         Commit => {
                             let current_tree_iter = {
-                                let mut commit_iter = immutable::CommitRefIter::from_bytes(obj.data);
+                                let mut commit_iter = commit::RefIter::from_bytes(obj.data);
                                 let tree_id = commit_iter.tree_id().expect("every commit has a tree");
                                 parent_commit_ids.clear();
                                 for token in commit_iter {
@@ -200,7 +200,7 @@ where
                                 }
                                 let obj = db.find_existing(tree_id, buf1, cache)?;
                                 push_obj_count_unique(&mut out, seen_objs, &tree_id, &obj, progress, stats, true);
-                                immutable::TreeIter::from_bytes(obj.data)
+                                git_object::tree::RefIter::from_bytes(obj.data)
                             };
 
                             let objects = if parent_commit_ids.is_empty() {
@@ -238,7 +238,7 @@ where
                                             stats,
                                             true,
                                         );
-                                        immutable::CommitRefIter::from_bytes(parent_commit_obj.data)
+                                        commit::RefIter::from_bytes(parent_commit_obj.data)
                                             .tree_id()
                                             .expect("every commit has a tree")
                                     };
@@ -253,7 +253,7 @@ where
                                             stats,
                                             true,
                                         );
-                                        immutable::TreeIter::from_bytes(parent_tree_obj.data)
+                                        git_object::tree::RefIter::from_bytes(parent_tree_obj.data)
                                     };
 
                                     changes_delegate.clear();
@@ -289,7 +289,7 @@ where
                         Tree => {
                             traverse_delegate.clear();
                             git_traverse::tree::breadthfirst(
-                                git_object::immutable::TreeIter::from_bytes(obj.data),
+                                git_object::tree::RefIter::from_bytes(obj.data),
                                 &mut tree_traversal_state,
                                 |oid, buf| {
                                     stats.decoded_objects += 1;
@@ -312,7 +312,7 @@ where
                             break;
                         }
                         Commit => {
-                            id = immutable::CommitRefIter::from_bytes(obj.data)
+                            id = commit::RefIter::from_bytes(obj.data)
                                 .tree_id()
                                 .expect("every commit has a tree");
                             stats.expanded_objects += 1;
@@ -321,7 +321,7 @@ where
                         }
                         Blob => break,
                         Tag => {
-                            id = immutable::TagRefIter::from_bytes(obj.data)
+                            id = tag::RefIter::from_bytes(obj.data)
                                 .target_id()
                                 .expect("every tag has a target");
                             stats.expanded_objects += 1;
@@ -397,7 +397,7 @@ mod tree {
 
     pub mod traverse {
         use git_hash::ObjectId;
-        use git_object::{bstr::BStr, immutable::tree::Entry};
+        use git_object::{bstr::BStr, immutable::tree::EntryRef};
         use git_traverse::tree::visit::{Action, Visit};
 
         use crate::data::output::count::objects::util::InsertImmutable;
@@ -434,7 +434,7 @@ mod tree {
 
             fn pop_path_component(&mut self) {}
 
-            fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
+            fn visit_tree(&mut self, entry: &EntryRef<'_>) -> Action {
                 let inserted = self.all_seen.insert(entry.oid.to_owned());
                 if inserted {
                     Action::Continue
@@ -443,7 +443,7 @@ mod tree {
                 }
             }
 
-            fn visit_nontree(&mut self, entry: &Entry<'_>) -> Action {
+            fn visit_nontree(&mut self, entry: &EntryRef<'_>) -> Action {
                 let inserted = self.all_seen.insert(entry.oid.to_owned());
                 if inserted {
                     self.non_trees.push(entry.oid.to_owned());

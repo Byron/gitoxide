@@ -34,11 +34,11 @@ pub trait Visit {
     /// [`Action::Skip`] can be used to prevent traversing it, for example if it's known to the caller already.
     ///
     /// The implementation may use the current path to learn where in the tree the change is located.
-    fn visit_tree(&mut self, entry: &immutable::tree::Entry<'_>) -> Action;
+    fn visit_tree(&mut self, entry: &immutable::tree::EntryRef<'_>) -> Action;
 
     /// Observe a tree entry that is NO tree and return an instruction whether to continue or not.
     /// [`Action::Skip`] has no effect here.
     ///
     /// The implementation may use the current path to learn where in the tree the change is located.
-    fn visit_nontree(&mut self, entry: &immutable::tree::Entry<'_>) -> Action;
+    fn visit_nontree(&mut self, entry: &immutable::tree::EntryRef<'_>) -> Action;
 }

@@ -1,26 +1,10 @@
-use crate::{
-    immutable,
-    immutable::{BlobRef, CommitRef, TagRef, Tree},
-    Kind,
-};
-
-/// An signature_ref object representing [`Trees`][Tree], [`Blobs`][Blob], [`Commits`][Commit], or [`Tags`][Tag].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[allow(missing_docs)]
-pub enum ObjectRef<'a> {
-    #[cfg_attr(feature = "serde1", serde(borrow))]
-    Tree(Tree<'a>),
-    Blob(BlobRef<'a>),
-    Commit(CommitRef<'a>),
-    Tag(TagRef<'a>),
-}
+use crate::{BlobRef, CommitRef, Kind, ObjectRef, TagRef, TreeRef};
 
 impl<'a> ObjectRef<'a> {
     /// Deserialize an object of `kind` from the given `data`.
     pub fn from_bytes(kind: Kind, data: &'a [u8]) -> Result<ObjectRef<'a>, decode::Error> {
         Ok(match kind {
-            Kind::Tree => ObjectRef::Tree(Tree::from_bytes(data)?),
+            Kind::Tree => ObjectRef::Tree(TreeRef::from_bytes(data)?),
             Kind::Blob => ObjectRef::Blob(BlobRef { data }),
             Kind::Commit => ObjectRef::Commit(CommitRef::from_bytes(data)?),
             Kind::Tag => ObjectRef::Tag(TagRef::from_bytes(data)?),
@@ -45,56 +29,56 @@ impl<'a> ObjectRef<'a> {
 /// Convenient access to contained objects.
 impl<'a> ObjectRef<'a> {
     /// Interpret this object as blob.
-    pub fn as_blob(&self) -> Option<&immutable::BlobRef<'a>> {
+    pub fn as_blob(&self) -> Option<&BlobRef<'a>> {
         match self {
             ObjectRef::Blob(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as blob, chainable.
-    pub fn into_blob(self) -> Option<immutable::BlobRef<'a>> {
+    pub fn into_blob(self) -> Option<BlobRef<'a>> {
         match self {
             ObjectRef::Blob(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as commit.
-    pub fn as_commit(&self) -> Option<&immutable::CommitRef<'a>> {
+    pub fn as_commit(&self) -> Option<&CommitRef<'a>> {
         match self {
             ObjectRef::Commit(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as commit, chainable.
-    pub fn into_commit(self) -> Option<immutable::CommitRef<'a>> {
+    pub fn into_commit(self) -> Option<CommitRef<'a>> {
         match self {
             ObjectRef::Commit(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as tree.
-    pub fn as_tree(&self) -> Option<&immutable::Tree<'a>> {
+    pub fn as_tree(&self) -> Option<&TreeRef<'a>> {
         match self {
             ObjectRef::Tree(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as tree, chainable
-    pub fn into_tree(self) -> Option<immutable::Tree<'a>> {
+    pub fn into_tree(self) -> Option<TreeRef<'a>> {
         match self {
             ObjectRef::Tree(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as tag.
-    pub fn as_tag(&self) -> Option<&immutable::TagRef<'a>> {
+    pub fn as_tag(&self) -> Option<&TagRef<'a>> {
         match self {
             ObjectRef::Tag(v) => Some(v),
             _ => None,
         }
     }
     /// Interpret this object as tag, chainable.
-    pub fn into_tag(self) -> Option<immutable::TagRef<'a>> {
+    pub fn into_tag(self) -> Option<TagRef<'a>> {
         match self {
             ObjectRef::Tag(v) => Some(v),
             _ => None,
@@ -114,7 +98,8 @@ impl<'a> ObjectRef<'a> {
 mod convert {
     use std::convert::TryFrom;
 
-    use crate::immutable::{BlobRef, CommitRef, ObjectRef, TagRef, Tree};
+    use crate::ObjectRef;
+    use crate::{BlobRef, CommitRef, TagRef, TreeRef};
 
     impl<'a> From<TagRef<'a>> for ObjectRef<'a> {
         fn from(v: TagRef<'a>) -> Self {
@@ -128,8 +113,8 @@ mod convert {
         }
     }
 
-    impl<'a> From<Tree<'a>> for ObjectRef<'a> {
-        fn from(v: Tree<'a>) -> Self {
+    impl<'a> From<TreeRef<'a>> for ObjectRef<'a> {
+        fn from(v: TreeRef<'a>) -> Self {
             ObjectRef::Tree(v)
         }
     }
@@ -162,7 +147,7 @@ mod convert {
         }
     }
 
-    impl<'a> TryFrom<ObjectRef<'a>> for Tree<'a> {
+    impl<'a> TryFrom<ObjectRef<'a>> for TreeRef<'a> {
         type Error = ObjectRef<'a>;
 
         fn try_from(value: ObjectRef<'a>) -> Result<Self, Self::Error> {

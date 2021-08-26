@@ -7,7 +7,7 @@ use anyhow::anyhow;
 use dashmap::DashSet;
 use git_repository::{
     hash::ObjectId,
-    objs::{bstr::BStr, immutable::tree::Entry},
+    objs::{bstr::BStr, immutable::tree::EntryRef},
     odb,
     prelude::*,
     refs::file::loose::reference::peel,
@@ -186,7 +186,7 @@ where
                 fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
                 fn push_path_component(&mut self, _component: &BStr) {}
                 fn pop_path_component(&mut self) {}
-                fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
+                fn visit_tree(&mut self, entry: &EntryRef<'_>) -> Action {
                     self.entries += 1;
                     let inserted = self.seen.insert(entry.oid.to_owned());
                     if !inserted {
@@ -195,7 +195,7 @@ where
                         tree::visit::Action::Continue
                     }
                 }
-                fn visit_nontree(&mut self, entry: &Entry<'_>) -> Action {
+                fn visit_nontree(&mut self, entry: &EntryRef<'_>) -> Action {
                     self.entries += 1;
                     self.seen.insert(entry.oid.to_owned());
                     tree::visit::Action::Continue
@@ -241,7 +241,7 @@ where
                 fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
                 fn push_path_component(&mut self, _component: &BStr) {}
                 fn pop_path_component(&mut self) {}
-                fn visit_tree(&mut self, entry: &Entry<'_>) -> Action {
+                fn visit_tree(&mut self, entry: &EntryRef<'_>) -> Action {
                     self.entries += 1;
                     let inserted = self.seen.insert(entry.oid.to_owned());
                     if !inserted {
@@ -250,7 +250,7 @@ where
                         tree::visit::Action::Continue
                     }
                 }
-                fn visit_nontree(&mut self, entry: &Entry<'_>) -> Action {
+                fn visit_nontree(&mut self, entry: &EntryRef<'_>) -> Action {
                     self.entries += 1;
                     self.seen.insert(entry.oid.to_owned());
                     tree::visit::Action::Continue

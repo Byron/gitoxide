@@ -49,7 +49,7 @@ pub trait Find {
 }
 
 mod ext {
-    use git_object::{immutable, Kind};
+    use git_object::{commit, tree, BlobRef, CommitRef, Kind, ObjectRef, TagRef, TreeRef};
 
     use crate::{data, find};
 
@@ -123,42 +123,17 @@ mod ext {
                 })
         }
 
-        make_obj_lookup!(
-            find_existing_commit,
-            immutable::ObjectRef::Commit,
-            Kind::Commit,
-            immutable::CommitRef<'a>
-        );
-        make_obj_lookup!(
-            find_existing_tree,
-            immutable::ObjectRef::Tree,
-            Kind::Tree,
-            immutable::Tree<'a>
-        );
-        make_obj_lookup!(
-            find_existing_tag,
-            immutable::ObjectRef::Tag,
-            Kind::Tag,
-            immutable::TagRef<'a>
-        );
-        make_obj_lookup!(
-            find_existing_blob,
-            immutable::ObjectRef::Blob,
-            Kind::Blob,
-            immutable::BlobRef<'a>
-        );
+        make_obj_lookup!(find_existing_commit, ObjectRef::Commit, Kind::Commit, CommitRef<'a>);
+        make_obj_lookup!(find_existing_tree, ObjectRef::Tree, Kind::Tree, TreeRef<'a>);
+        make_obj_lookup!(find_existing_tag, ObjectRef::Tag, Kind::Tag, TagRef<'a>);
+        make_obj_lookup!(find_existing_blob, ObjectRef::Blob, Kind::Blob, BlobRef<'a>);
         make_iter_lookup!(
             find_existing_commit_iter,
             Kind::Blob,
-            immutable::CommitRefIter<'a>,
+            commit::RefIter<'a>,
             into_commit_iter
         );
-        make_iter_lookup!(
-            find_existing_tree_iter,
-            Kind::Tree,
-            immutable::TreeIter<'a>,
-            into_tree_iter
-        );
+        make_iter_lookup!(find_existing_tree_iter, Kind::Tree, tree::RefIter<'a>, into_tree_iter);
     }
 
     impl<T: super::Find> FindExt for T {}

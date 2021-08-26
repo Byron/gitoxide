@@ -1,8 +1,8 @@
-use crate::{immutable, mutable};
+use crate::{immutable, mutable, BlobRef, CommitRef, ObjectRef, TagRef, TreeRef};
 
-impl From<immutable::TagRef<'_>> for mutable::Tag {
-    fn from(other: immutable::TagRef<'_>) -> mutable::Tag {
-        let immutable::TagRef {
+impl From<TagRef<'_>> for mutable::Tag {
+    fn from(other: TagRef<'_>) -> mutable::Tag {
+        let TagRef {
             target,
             name,
             target_kind,
@@ -21,9 +21,9 @@ impl From<immutable::TagRef<'_>> for mutable::Tag {
     }
 }
 
-impl From<immutable::CommitRef<'_>> for mutable::Commit {
-    fn from(other: immutable::CommitRef<'_>) -> mutable::Commit {
-        let immutable::CommitRef {
+impl From<CommitRef<'_>> for mutable::Commit {
+    fn from(other: CommitRef<'_>) -> mutable::Commit {
+        let CommitRef {
             tree,
             parents,
             author,
@@ -50,26 +50,26 @@ impl From<immutable::CommitRef<'_>> for mutable::Commit {
     }
 }
 
-impl<'a> From<immutable::BlobRef<'a>> for mutable::Blob {
-    fn from(v: immutable::BlobRef<'a>) -> Self {
+impl<'a> From<BlobRef<'a>> for mutable::Blob {
+    fn from(v: BlobRef<'a>) -> Self {
         mutable::Blob {
             data: v.data.to_owned(),
         }
     }
 }
 
-impl From<immutable::Tree<'_>> for mutable::Tree {
-    fn from(other: immutable::Tree<'_>) -> mutable::Tree {
-        let immutable::Tree { entries } = other;
+impl From<TreeRef<'_>> for mutable::Tree {
+    fn from(other: TreeRef<'_>) -> mutable::Tree {
+        let TreeRef { entries } = other;
         mutable::Tree {
             entries: entries.into_iter().map(Into::into).collect(),
         }
     }
 }
 
-impl From<immutable::tree::Entry<'_>> for mutable::tree::Entry {
-    fn from(other: immutable::tree::Entry<'_>) -> mutable::tree::Entry {
-        let immutable::tree::Entry { mode, filename, oid } = other;
+impl From<immutable::tree::EntryRef<'_>> for mutable::tree::Entry {
+    fn from(other: immutable::tree::EntryRef<'_>) -> mutable::tree::Entry {
+        let immutable::tree::EntryRef { mode, filename, oid } = other;
         mutable::tree::Entry {
             mode,
             filename: filename.to_owned(),
@@ -78,13 +78,13 @@ impl From<immutable::tree::Entry<'_>> for mutable::tree::Entry {
     }
 }
 
-impl<'a> From<immutable::ObjectRef<'a>> for mutable::Object {
-    fn from(v: immutable::ObjectRef<'_>) -> Self {
+impl<'a> From<ObjectRef<'a>> for mutable::Object {
+    fn from(v: ObjectRef<'_>) -> Self {
         match v {
-            immutable::ObjectRef::Tree(v) => mutable::Object::Tree(v.into()),
-            immutable::ObjectRef::Blob(v) => mutable::Object::Blob(v.into()),
-            immutable::ObjectRef::Commit(v) => mutable::Object::Commit(v.into()),
-            immutable::ObjectRef::Tag(v) => mutable::Object::Tag(v.into()),
+            ObjectRef::Tree(v) => mutable::Object::Tree(v.into()),
+            ObjectRef::Blob(v) => mutable::Object::Blob(v.into()),
+            ObjectRef::Commit(v) => mutable::Object::Commit(v.into()),
+            ObjectRef::Tag(v) => mutable::Object::Tag(v.into()),
         }
     }
 }

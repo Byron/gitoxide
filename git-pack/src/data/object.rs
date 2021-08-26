@@ -1,6 +1,6 @@
 //! Contains a borrowed Object bound to a buffer holding its decompressed data.
 
-use git_object::immutable;
+use git_object::{commit, immutable, tag, tree, BlobRef, CommitRef, ObjectRef, TagRef, TreeRef};
 
 /// A borrowed object using a borrowed slice as backing buffer.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -26,39 +26,39 @@ impl<'a> Object<'a> {
     /// conveniently. The cost of parsing an object is negligible.
     ///
     /// **Note** that [mutable, decoded objects][git_object::mutable::Object] can be created from a [`crate::data::Object`]
-    /// using [`git_object::immutable::ObjectRef::into_mutable()`].
-    pub fn decode(&self) -> Result<immutable::ObjectRef<'a>, immutable::object::decode::Error> {
+    /// using [`git_object::ObjectRef::into_mutable()`].
+    pub fn decode(&self) -> Result<ObjectRef<'a>, immutable::object::decode::Error> {
         Ok(match self.kind {
-            git_object::Kind::Tree => immutable::ObjectRef::Tree(immutable::Tree::from_bytes(self.data)?),
-            git_object::Kind::Blob => immutable::ObjectRef::Blob(immutable::BlobRef { data: self.data }),
-            git_object::Kind::Commit => immutable::ObjectRef::Commit(immutable::CommitRef::from_bytes(self.data)?),
-            git_object::Kind::Tag => immutable::ObjectRef::Tag(immutable::TagRef::from_bytes(self.data)?),
+            git_object::Kind::Tree => ObjectRef::Tree(TreeRef::from_bytes(self.data)?),
+            git_object::Kind::Blob => ObjectRef::Blob(BlobRef { data: self.data }),
+            git_object::Kind::Commit => ObjectRef::Commit(CommitRef::from_bytes(self.data)?),
+            git_object::Kind::Tag => ObjectRef::Tag(TagRef::from_bytes(self.data)?),
         })
     }
 
     /// Returns this object as tree iterator to parse entries one at a time to avoid allocations, or
     /// `None` if this is not a tree object.
-    pub fn into_tree_iter(self) -> Option<immutable::TreeIter<'a>> {
+    pub fn into_tree_iter(self) -> Option<tree::RefIter<'a>> {
         match self.kind {
-            git_object::Kind::Tree => Some(immutable::TreeIter::from_bytes(self.data)),
+            git_object::Kind::Tree => Some(tree::RefIter::from_bytes(self.data)),
             _ => None,
         }
     }
 
     /// Returns this object as commit iterator to parse tokens one at a time to avoid allocations, or
     /// `None` if this is not a commit object.
-    pub fn into_commit_iter(self) -> Option<immutable::CommitRefIter<'a>> {
+    pub fn into_commit_iter(self) -> Option<commit::RefIter<'a>> {
         match self.kind {
-            git_object::Kind::Commit => Some(immutable::CommitRefIter::from_bytes(self.data)),
+            git_object::Kind::Commit => Some(commit::RefIter::from_bytes(self.data)),
             _ => None,
         }
     }
 
     /// Returns this object as tag iterator to parse tokens one at a time to avoid allocations, or
     /// `None` if this is not a tag object.
-    pub fn into_tag_iter(self) -> Option<immutable::TagRefIter<'a>> {
+    pub fn into_tag_iter(self) -> Option<tag::RefIter<'a>> {
         match self.kind {
-            git_object::Kind::Tag => Some(immutable::TagRefIter::from_bytes(self.data)),
+            git_object::Kind::Tag => Some(tag::RefIter::from_bytes(self.data)),
             _ => None,
         }
     }

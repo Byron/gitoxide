@@ -1,23 +1,4 @@
-use crate::{immutable::object, BStr};
-
-/// Represents a git tag, commonly indicating a software release.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct TagRef<'a> {
-    /// The hash in hexadecimal being the object this tag points to. Use [`target()`][Tag::target()] to obtain a byte representation.
-    #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub target: &'a BStr,
-    /// The kind of object that `target` points to.
-    pub target_kind: crate::Kind,
-    /// The name of the tag, e.g. "v1.0".
-    pub name: &'a BStr,
-    /// The author of the tag.
-    pub tagger: Option<git_actor::SignatureRef<'a>>,
-    /// The message describing this release.
-    pub message: &'a BStr,
-    /// A cryptographic signature over the entire content of the serialized tag object thus far.
-    pub pgp_signature: Option<&'a BStr>,
-}
+use crate::{immutable::object, TagRef};
 
 impl<'a> TagRef<'a> {
     /// Deserialize a tag from `data`.
@@ -44,8 +25,8 @@ mod decode {
     };
 
     use crate::{
-        immutable::{parse, parse::NL, TagRef},
-        BStr, ByteSlice,
+        immutable::{parse, parse::NL},
+        BStr, ByteSlice, TagRef,
     };
 
     pub fn git_tag<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], TagRef<'a>, E> {

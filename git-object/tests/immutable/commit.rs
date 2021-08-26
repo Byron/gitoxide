@@ -131,7 +131,7 @@ dS3aXZhRfaPqpdsWrMB9fY7ll+oyfw==
 =T+RI
 -----END PGP SIGNATURE-----";
 mod method {
-    use git_object::immutable::CommitRef;
+    use git_object::CommitRef;
     use pretty_assertions::assert_eq;
 
     use crate::{hex_to_id, immutable::fixture_bytes};
@@ -147,10 +147,7 @@ mod method {
 }
 
 mod iter {
-    use git_object::{
-        bstr::ByteSlice,
-        immutable::{commit::iter::Token, CommitRefIter},
-    };
+    use git_object::{bstr::ByteSlice, commit, immutable::commit::iter::Token};
 
     use crate::{
         hex_to_id,
@@ -163,7 +160,7 @@ mod iter {
     #[test]
     fn newline_right_after_signature_multiline_header() -> crate::Result {
         let data = fixture_bytes("commit", "signed-whitespace.txt");
-        let tokens = CommitRefIter::from_bytes(&data).collect::<Result<Vec<_>, _>>()?;
+        let tokens = commit::RefIter::from_bytes(&data).collect::<Result<Vec<_>, _>>()?;
         assert_eq!(tokens.len(), 7, "mainly a parsing exercise");
         match tokens.last().expect("there are tokens") {
             Token::Message(msg) => {
@@ -177,7 +174,7 @@ mod iter {
     #[test]
     fn signed_with_encoding() -> crate::Result {
         assert_eq!(
-            CommitRefIter::from_bytes(&fixture_bytes("commit", "signed-with-encoding.txt"))
+            commit::RefIter::from_bytes(&fixture_bytes("commit", "signed-with-encoding.txt"))
                 .collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Tree {
@@ -203,7 +200,7 @@ mod iter {
     #[test]
     fn whitespace() -> crate::Result {
         assert_eq!(
-            CommitRefIter::from_bytes(&fixture_bytes("commit", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
+            commit::RefIter::from_bytes(&fixture_bytes("commit", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Tree {
                     id: hex_to_id("9bed6275068a0575243ba8409253e61af81ab2ff")
@@ -226,7 +223,7 @@ mod iter {
     #[test]
     fn unsigned() -> crate::Result {
         assert_eq!(
-            CommitRefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).collect::<Result<Vec<_>, _>>()?,
+            commit::RefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Tree {
                     id: hex_to_id("1b2dfb4ac5e42080b682fc676e9738c94ce6d54d")
@@ -246,7 +243,7 @@ mod iter {
     #[test]
     fn signed_singleline() -> crate::Result {
         assert_eq!(
-            CommitRefIter::from_bytes(&fixture_bytes("commit", "signed-singleline.txt"))
+            commit::RefIter::from_bytes(&fixture_bytes("commit", "signed-singleline.txt"))
                 .collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Tree {
@@ -271,7 +268,7 @@ mod iter {
     #[test]
     fn error_handling() -> crate::Result {
         let data = fixture_bytes("commit", "unsigned.txt");
-        let iter = CommitRefIter::from_bytes(&data[..data.len() / 2]);
+        let iter = commit::RefIter::from_bytes(&data[..data.len() / 2]);
         let tokens = iter.collect::<Vec<_>>();
         assert!(
             tokens.last().expect("at least the errored token").is_err(),
@@ -283,7 +280,7 @@ mod iter {
     #[test]
     fn mergetag() -> crate::Result {
         assert_eq!(
-            CommitRefIter::from_bytes(&fixture_bytes("commit", "mergetag.txt")).collect::<Result<Vec<_>, _>>()?,
+            commit::RefIter::from_bytes(&fixture_bytes("commit", "mergetag.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Tree {
                     id: hex_to_id("1c61918031bf2c7fab9e17dde3c52a6a9884fcb5")
@@ -308,21 +305,20 @@ mod iter {
     }
 
     mod method {
-        use git_object::immutable::CommitRefIter;
-
         use crate::{
             hex_to_id,
             immutable::{fixture_bytes, signature},
         };
+        use git_object::commit;
 
         #[test]
         fn tree_id() -> crate::Result {
             assert_eq!(
-                CommitRefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).tree_id(),
+                commit::RefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt")).tree_id(),
                 Some(hex_to_id("1b2dfb4ac5e42080b682fc676e9738c94ce6d54d"))
             );
             assert_eq!(
-                CommitRefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt"))
+                commit::RefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt"))
                     .signatures()
                     .collect::<Vec<_>>(),
                 vec![signature(1592437401), signature(1592437401)]
@@ -333,7 +329,7 @@ mod iter {
         #[test]
         fn signatures() -> crate::Result {
             assert_eq!(
-                CommitRefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt"))
+                commit::RefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt"))
                     .signatures()
                     .collect::<Vec<_>>(),
                 vec![signature(1592437401), signature(1592437401)]
@@ -344,7 +340,7 @@ mod iter {
 }
 
 mod from_bytes {
-    use git_object::{bstr::ByteSlice, immutable::CommitRef};
+    use git_object::{bstr::ByteSlice, CommitRef};
     use smallvec::SmallVec;
 
     use crate::immutable::{

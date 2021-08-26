@@ -11,8 +11,8 @@ use nom::{
 use smallvec::SmallVec;
 
 use crate::{
-    immutable::{parse, parse::NL, CommitRef},
-    BStr, ByteSlice,
+    immutable::{parse, parse::NL},
+    BStr, ByteSlice, CommitRef,
 };
 
 pub fn message<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
