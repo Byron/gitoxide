@@ -26,6 +26,7 @@ pub mod tree;
 
 mod blob;
 
+mod encode;
 mod types;
 
 /// A chunk of any [`data`][BlobRef::data].

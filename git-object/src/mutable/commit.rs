@@ -2,11 +2,8 @@ use std::io;
 
 use bstr::{BStr, ByteSlice};
 
-use crate::{
-    commit,
-    mutable::{encode, NL},
-    Commit,
-};
+use crate::encode::NL;
+use crate::{commit, encode, Commit};
 
 impl Commit {
     /// Returns a convenient iterator over all extra headers.

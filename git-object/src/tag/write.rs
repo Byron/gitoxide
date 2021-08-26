@@ -3,14 +3,13 @@ use std::io;
 use bstr::BStr;
 use quick_error::quick_error;
 
-use crate::{
-    mutable::{encode, NL},
-    Tag,
-};
+use crate::encode::NL;
+use crate::{encode, Tag};
 
 quick_error! {
     /// An Error used in [`Tag::write_to()`].
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         StartsWithDash {
             display("Tags must not start with a dash: '-'")

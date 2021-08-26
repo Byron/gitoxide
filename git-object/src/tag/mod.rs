@@ -1,6 +1,10 @@
 use crate::{immutable::object, TagRef};
 
 mod decode;
+
+///
+pub mod write;
+
 ///
 pub mod ref_iter;
 

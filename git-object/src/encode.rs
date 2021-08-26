@@ -3,8 +3,6 @@ use std::io;
 use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
 
-use crate::mutable::{NL, SPACE};
-
 quick_error! {
     #[derive(Debug)]
     enum Error {
@@ -71,3 +69,6 @@ pub fn header_field(name: &[u8], value: &[u8], out: impl io::Write) -> io::Resul
     }
     trusted_header_field(name, value, out)
 }
+
+pub(crate) const NL: &[u8; 1] = b"\n";
+pub(crate) const SPACE: &[u8; 1] = b" ";

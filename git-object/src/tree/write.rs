@@ -3,7 +3,8 @@ use std::io;
 use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
 
-use crate::{mutable::SPACE, tree::Entry, Tree};
+use crate::encode::SPACE;
+use crate::{tree::Entry, Tree};
 
 quick_error! {
     /// The Error used in [`Tree::write_to()`].
