@@ -1,8 +1,6 @@
-use crate::Blob;
-use crate::BlobRef;
+use std::{convert::Infallible, io};
 
-use std::convert::Infallible;
-use std::io;
+use crate::{Blob, BlobRef};
 
 impl Blob {
     /// Write the blobs data to `out` verbatim.

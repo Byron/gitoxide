@@ -5,7 +5,7 @@ use std::sync::{
 
 use git_features::{parallel, progress::Progress};
 use git_hash::{oid, ObjectId};
-use git_object::{commit, immutable, tag};
+use git_object::{commit, immutable, TagRefIter};
 
 use crate::{data::output, find, FindExt};
 
@@ -179,7 +179,7 @@ where
                     match obj.kind {
                         Tree | Blob => break,
                         Tag => {
-                            id = tag::RefIter::from_bytes(obj.data)
+                            id = TagRefIter::from_bytes(obj.data)
                                 .target_id()
                                 .expect("every tag has a target");
                             obj = db.find_existing(id, buf1, cache)?;
@@ -321,7 +321,7 @@ where
                         }
                         Blob => break,
                         Tag => {
-                            id = tag::RefIter::from_bytes(obj.data)
+                            id = TagRefIter::from_bytes(obj.data)
                                 .target_id()
                                 .expect("every tag has a target");
                             stats.expanded_objects += 1;

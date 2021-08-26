@@ -10,7 +10,4 @@ pub mod commit;
 ///
 pub mod object;
 
-///
-pub mod tag;
-
 pub(crate) mod parse;

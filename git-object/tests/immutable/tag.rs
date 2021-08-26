@@ -17,7 +17,7 @@ mod method {
 }
 
 mod iter {
-    use git_object::{bstr::ByteSlice, immutable::tag::iter::Token, tag, Kind};
+    use git_object::{bstr::ByteSlice, tag::ref_iter::Token, Kind, TagRefIter};
 
     use crate::{
         hex_to_id,
@@ -27,7 +27,7 @@ mod iter {
     #[test]
     fn empty() -> crate::Result {
         assert_eq!(
-            tag::RefIter::from_bytes(&fixture_bytes("tag", "empty.txt")).collect::<Result<Vec<_>, _>>()?,
+            TagRefIter::from_bytes(&fixture_bytes("tag", "empty.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Target {
                     id: hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc")
@@ -43,7 +43,7 @@ mod iter {
     #[test]
     fn no_tagger() -> crate::Result {
         assert_eq!(
-            tag::RefIter::from_bytes(&fixture_bytes("tag", "no-tagger.txt")).collect::<Result<Vec<_>, _>>()?,
+            TagRefIter::from_bytes(&fixture_bytes("tag", "no-tagger.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Target {
                     id: hex_to_id("c39ae07f393806ccf406ef966e9a15afc43cc36a")
@@ -79,7 +79,7 @@ KLMHist5yj0sw1E4hDTyQa0=
     #[test]
     fn whitespace() -> crate::Result {
         assert_eq!(
-            tag::RefIter::from_bytes(&fixture_bytes("tag", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
+            TagRefIter::from_bytes(&fixture_bytes("tag", "whitespace.txt")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 Token::Target {
                     id: hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc")
@@ -99,7 +99,7 @@ KLMHist5yj0sw1E4hDTyQa0=
     #[test]
     fn error_handling() -> crate::Result {
         let data = fixture_bytes("tag", "empty.txt");
-        let iter = tag::RefIter::from_bytes(&data[..data.len() / 2]);
+        let iter = TagRefIter::from_bytes(&data[..data.len() / 2]);
         let tokens = iter.collect::<Vec<_>>();
         assert!(
             tokens.last().expect("at least the errored token").is_err(),

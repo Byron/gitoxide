@@ -3,8 +3,10 @@ use std::io;
 use bstr::BStr;
 use quick_error::quick_error;
 
-use crate::mutable::{encode, NL};
-use crate::Tag;
+use crate::{
+    mutable::{encode, NL},
+    Tag,
+};
 
 quick_error! {
     /// An Error used in [`Tag::write_to()`].

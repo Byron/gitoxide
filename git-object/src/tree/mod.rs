@@ -1,7 +1,9 @@
 use std::cmp::Ordering;
 
-use crate::bstr::BString;
-use crate::{bstr::BStr, tree};
+use crate::{
+    bstr::{BStr, BString},
+    tree,
+};
 
 /// The mode of items storable in a tree, similar to the file mode on a unix file system.
 ///

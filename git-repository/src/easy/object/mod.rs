@@ -3,7 +3,7 @@ use std::{cell::Ref, convert::TryInto};
 
 use git_hash::ObjectId;
 pub use git_object::Kind;
-use git_object::{commit, tag};
+use git_object::{commit, TagRefIter};
 use git_odb as odb;
 
 use crate::{
@@ -145,7 +145,7 @@ where
         odb::data::Object::new(self.kind, &self.data).into_commit_iter()
     }
 
-    pub fn to_tag_iter(&self) -> Option<tag::RefIter<'_>> {
+    pub fn to_tag_iter(&self) -> Option<TagRefIter<'_>> {
         odb::data::Object::new(self.kind, &self.data).into_tag_iter()
     }
 }

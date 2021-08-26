@@ -9,11 +9,10 @@ use std::borrow::Cow;
 pub use bstr;
 use bstr::{BStr, BString, ByteSlice};
 use smallvec::SmallVec;
-
+use tree::Entry;
 pub use types::{Error, Kind};
 
 use crate::tree::EntryRef;
-use tree::Entry;
 
 pub mod immutable;
 pub mod mutable;
@@ -115,6 +114,13 @@ pub struct TagRef<'a> {
     pub message: &'a BStr,
     /// A cryptographic signature over the entire content of the serialized tag object thus far.
     pub pgp_signature: Option<&'a BStr>,
+}
+
+/// Like [`TagRef`], but as `Iterator` to support entirely allocation free parsing.
+/// It's particularly useful to dereference only the target chain.
+pub struct TagRefIter<'a> {
+    data: &'a [u8],
+    state: tag::ref_iter::State,
 }
 
 /// A mutable git tag.

@@ -60,8 +60,7 @@ impl Object {
 mod convert {
     use std::convert::TryFrom;
 
-    use crate::Object;
-    use crate::{Blob, Commit, Tag, Tree};
+    use crate::{Blob, Commit, Object, Tag, Tree};
 
     impl From<Tag> for Object {
         fn from(v: Tag) -> Self {
