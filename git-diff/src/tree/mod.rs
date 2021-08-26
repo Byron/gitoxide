@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use git_hash::ObjectId;
-use git_object::tree;
+use git_object::TreeRefIter;
 
 /// The state required to visit [Changes] to be instantiated with `State::default()`.
 #[derive(Default, Clone)]
@@ -22,11 +22,11 @@ impl State {
 }
 
 /// An iterator over changes of a tree, instantiated using `Changes::from(…)`.
-pub struct Changes<'a>(Option<tree::RefIter<'a>>);
+pub struct Changes<'a>(Option<TreeRefIter<'a>>);
 
 impl<'a, T> From<T> for Changes<'a>
 where
-    T: Into<Option<tree::RefIter<'a>>>,
+    T: Into<Option<TreeRefIter<'a>>>,
 {
     fn from(v: T) -> Self {
         Changes(v.into())

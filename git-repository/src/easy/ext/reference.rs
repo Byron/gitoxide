@@ -1,17 +1,17 @@
 use std::convert::TryInto;
 
-use git_hash::ObjectId;
-
-use crate::{
-    easy,
-    easy::{reference, Reference},
-};
 use git_actor as actor;
+use git_hash::ObjectId;
 use git_lock as lock;
 use git_ref::{
     file::find::Error,
     transaction::{Change, Create, RefEdit},
     PartialNameRef, Target,
+};
+
+use crate::{
+    easy,
+    easy::{reference, Reference},
 };
 
 /// Obtain and alter references comfortably

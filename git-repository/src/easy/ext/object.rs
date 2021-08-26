@@ -1,12 +1,12 @@
 use std::ops::DerefMut;
 
 use git_hash::ObjectId;
+use git_odb::{Find, FindExt};
 
 use crate::{
     easy,
     easy::{object, ObjectRef},
 };
-use git_odb::{Find, FindExt};
 
 pub fn find_object<A: easy::Access + Sized>(
     access: &A,

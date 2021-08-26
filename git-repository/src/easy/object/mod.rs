@@ -1,15 +1,15 @@
 #![allow(missing_docs)]
 use std::{cell::Ref, convert::TryInto};
 
+use git_hash::ObjectId;
 pub use git_object::Kind;
+use git_object::{commit, tag};
+use git_odb as odb;
 
 use crate::{
     easy,
     easy::{Object, ObjectRef, TreeRef},
 };
-use git_hash::ObjectId;
-use git_object::{commit, tag};
-use git_odb as odb;
 
 mod impls;
 mod tree;
@@ -59,10 +59,10 @@ where
 }
 
 pub mod find {
+    use git_odb as odb;
     use quick_error::quick_error;
 
     use crate::easy;
-    use git_odb as odb;
 
     quick_error! {
         #[derive(Debug)]
@@ -86,10 +86,10 @@ pub mod find {
     pub(crate) type OdbError = odb::compound::find::Error;
 
     pub mod existing {
+        use git_odb as odb;
         use quick_error::quick_error;
 
         use crate::easy;
-        use git_odb as odb;
 
         quick_error! {
             #[derive(Debug)]

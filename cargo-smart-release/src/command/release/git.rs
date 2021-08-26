@@ -6,10 +6,9 @@ use cargo_metadata::{
     camino::{Utf8Component, Utf8Path},
     Package,
 };
-use git_repository::easy::object;
+use git_repository::{easy::object, prelude::ReferenceAccessExt, refs};
 
 use super::{tag_name_for, utils::will, Context, Oid, Options};
-use git_repository::{prelude::ReferenceAccessExt, refs};
 
 fn is_top_level_package(manifest_path: &Utf8Path, shared: &git_repository::Easy) -> bool {
     manifest_path

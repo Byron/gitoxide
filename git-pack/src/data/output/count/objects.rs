@@ -200,7 +200,7 @@ where
                                 }
                                 let obj = db.find_existing(tree_id, buf1, cache)?;
                                 push_obj_count_unique(&mut out, seen_objs, &tree_id, &obj, progress, stats, true);
-                                git_object::tree::RefIter::from_bytes(obj.data)
+                                git_object::TreeRefIter::from_bytes(obj.data)
                             };
 
                             let objects = if parent_commit_ids.is_empty() {
@@ -253,7 +253,7 @@ where
                                             stats,
                                             true,
                                         );
-                                        git_object::tree::RefIter::from_bytes(parent_tree_obj.data)
+                                        git_object::TreeRefIter::from_bytes(parent_tree_obj.data)
                                     };
 
                                     changes_delegate.clear();
@@ -289,7 +289,7 @@ where
                         Tree => {
                             traverse_delegate.clear();
                             git_traverse::tree::breadthfirst(
-                                git_object::tree::RefIter::from_bytes(obj.data),
+                                git_object::TreeRefIter::from_bytes(obj.data),
                                 &mut tree_traversal_state,
                                 |oid, buf| {
                                     stats.decoded_objects += 1;
@@ -397,7 +397,7 @@ mod tree {
 
     pub mod traverse {
         use git_hash::ObjectId;
-        use git_object::{bstr::BStr, immutable::tree::EntryRef};
+        use git_object::{bstr::BStr, tree::EntryRef};
         use git_traverse::tree::visit::{Action, Visit};
 
         use crate::data::output::count::objects::util::InsertImmutable;

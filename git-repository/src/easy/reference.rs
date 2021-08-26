@@ -1,13 +1,14 @@
 #![allow(missing_docs)]
 use std::ops::DerefMut;
 
+use git_hash::ObjectId;
+use git_odb::Find;
+use git_ref as refs;
+
 use crate::{
     easy,
     easy::{Oid, Reference},
 };
-use git_hash::ObjectId;
-use git_odb::Find;
-use git_ref as refs;
 
 pub(crate) enum Backing {
     OwnedPacked {
@@ -23,10 +24,10 @@ pub(crate) enum Backing {
 }
 
 pub mod edit {
+    use git_ref as refs;
     use quick_error::quick_error;
 
     use crate::easy;
-    use git_ref as refs;
 
     quick_error! {
         #[derive(Debug)]
@@ -55,10 +56,10 @@ pub mod edit {
 }
 
 pub mod peel_to_oid_in_place {
+    use git_ref as refs;
     use quick_error::quick_error;
 
     use crate::easy;
-    use git_ref as refs;
 
     quick_error! {
         #[derive(Debug)]
@@ -163,10 +164,10 @@ where
 }
 
 pub mod find {
+    use git_ref as refs;
     use quick_error::quick_error;
 
     use crate::easy;
-    use git_ref as refs;
 
     pub mod existing {
         use quick_error::quick_error;

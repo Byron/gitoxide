@@ -55,7 +55,7 @@ mod write {
 }
 
 mod locate {
-    use git_object::{bstr::ByteSlice, immutable::tree, tree::EntryMode, BlobRef, CommitRef, Kind, TagRef, TreeRef};
+    use git_object::{bstr::ByteSlice, tree::EntryMode, BlobRef, CommitRef, Kind, TagRef, TreeRef};
 
     use crate::{
         hex_to_id,
@@ -184,14 +184,14 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
 
         let expected = TreeRef {
             entries: vec![
-                tree::EntryRef {
+                git_object::tree::EntryRef {
                     mode: EntryMode::Tree,
                     filename: b"dir".as_bstr(),
                     oid: as_id(&[
                         150, 174, 134, 139, 53, 57, 245, 81, 200, 143, 213, 240, 35, 148, 208, 34, 88, 27, 17, 176,
                     ]),
                 },
-                tree::EntryRef {
+                git_object::tree::EntryRef {
                     mode: EntryMode::Blob,
                     filename: b"file.txt".as_bstr(),
                     oid: as_id(&[

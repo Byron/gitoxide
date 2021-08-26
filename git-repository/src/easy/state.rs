@@ -1,11 +1,12 @@
 #![allow(missing_docs)]
 use std::cell::{Ref, RefMut};
 
+use git_ref::{file, packed};
+
 use crate::{
     easy,
     easy::{borrow, PackCache},
 };
-use git_ref::{file, packed};
 
 impl Clone for easy::State {
     fn clone(&self) -> Self {

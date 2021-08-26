@@ -1,4 +1,4 @@
-use crate::{immutable, mutable, BlobRef, CommitRef, ObjectRef, TagRef, TreeRef};
+use crate::{mutable, tree, BlobRef, CommitRef, ObjectRef, TagRef, TreeRef};
 
 impl From<TagRef<'_>> for mutable::Tag {
     fn from(other: TagRef<'_>) -> mutable::Tag {
@@ -67,9 +67,9 @@ impl From<TreeRef<'_>> for mutable::Tree {
     }
 }
 
-impl From<immutable::tree::EntryRef<'_>> for mutable::tree::Entry {
-    fn from(other: immutable::tree::EntryRef<'_>) -> mutable::tree::Entry {
-        let immutable::tree::EntryRef { mode, filename, oid } = other;
+impl From<tree::EntryRef<'_>> for mutable::tree::Entry {
+    fn from(other: tree::EntryRef<'_>) -> mutable::tree::Entry {
+        let tree::EntryRef { mode, filename, oid } = other;
         mutable::tree::Entry {
             mode,
             filename: filename.to_owned(),

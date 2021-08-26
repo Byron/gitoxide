@@ -98,8 +98,7 @@ impl<'a> ObjectRef<'a> {
 mod convert {
     use std::convert::TryFrom;
 
-    use crate::ObjectRef;
-    use crate::{BlobRef, CommitRef, TagRef, TreeRef};
+    use crate::{BlobRef, CommitRef, ObjectRef, TagRef, TreeRef};
 
     impl<'a> From<TagRef<'a>> for ObjectRef<'a> {
         fn from(v: TagRef<'a>) -> Self {

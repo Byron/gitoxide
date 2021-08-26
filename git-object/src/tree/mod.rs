@@ -1,3 +1,5 @@
+use crate::{bstr::BStr, tree};
+
 /// The mode of items storable in a tree, similar to the file mode on a unix file system.
 ///
 /// Used in [mutable::Entry][crate::mutable::tree::Entry] and [EntryRef].
@@ -25,4 +27,19 @@ impl EntryMode {
     }
 }
 
-pub use crate::immutable::tree::{EntryRef, RefIter};
+/// An element of a [`TreeRef`][TreeRef::entries].
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct EntryRef<'a> {
+    /// The kind of object to which `oid` is pointing.
+    pub mode: tree::EntryMode,
+    /// The name of the file in the parent tree.
+    pub filename: &'a BStr,
+    /// The id of the object representing the entry.
+    // TODO: figure out how these should be called. id or oid? It's inconsistent around the codebase.
+    // Answer: make it 'id', as in `git2`
+    #[cfg_attr(feature = "serde1", serde(borrow))]
+    pub oid: &'a git_hash::oid,
+}
+
+mod ref_iter;

@@ -4,7 +4,7 @@ use std::borrow::BorrowMut;
 
 #[cfg(feature = "git-diff")]
 use git_hash::oid;
-use git_object::{immutable, tree};
+use git_object::TreeRefIter;
 #[cfg(feature = "git-traverse")]
 use git_traverse::tree::breadthfirst;
 
@@ -14,13 +14,13 @@ pub trait TreeIterExt: Sealed {
     #[cfg(feature = "git-diff")]
     fn changes_needed<FindFn, R, StateMut>(
         &self,
-        other: tree::RefIter<'_>,
+        other: TreeRefIter<'_>,
         state: StateMut,
         find: FindFn,
         delegate: &mut R,
     ) -> Result<(), git_diff::tree::changes::Error>
     where
-        FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::tree::RefIter<'b>>,
+        FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<TreeRefIter<'b>>,
         R: git_diff::tree::Visit,
         StateMut: BorrowMut<git_diff::tree::State>;
 
@@ -33,24 +33,24 @@ pub trait TreeIterExt: Sealed {
         delegate: &mut V,
     ) -> Result<(), breadthfirst::Error>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<tree::RefIter<'a>>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
         StateMut: BorrowMut<breadthfirst::State>,
         V: git_traverse::tree::Visit;
 }
 
-impl<'d> Sealed for tree::RefIter<'d> {}
+impl<'d> Sealed for TreeRefIter<'d> {}
 
-impl<'d> TreeIterExt for tree::RefIter<'d> {
+impl<'d> TreeIterExt for TreeRefIter<'d> {
     #[cfg(feature = "git-diff")]
     fn changes_needed<FindFn, R, StateMut>(
         &self,
-        other: tree::RefIter<'_>,
+        other: TreeRefIter<'_>,
         state: StateMut,
         find: FindFn,
         delegate: &mut R,
     ) -> Result<(), git_diff::tree::changes::Error>
     where
-        FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<immutable::tree::RefIter<'b>>,
+        FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<TreeRefIter<'b>>,
         R: git_diff::tree::Visit,
         StateMut: BorrowMut<git_diff::tree::State>,
     {
@@ -65,7 +65,7 @@ impl<'d> TreeIterExt for tree::RefIter<'d> {
         delegate: &mut V,
     ) -> Result<(), breadthfirst::Error>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<tree::RefIter<'a>>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
         StateMut: BorrowMut<breadthfirst::State>,
         V: git_traverse::tree::Visit,
     {

@@ -2,12 +2,11 @@ use std::time::Instant;
 
 use anyhow::anyhow;
 use diff::tree::visit::{Action, Change};
-use git_repository::objs::tree;
 use git_repository::{
     diff,
     easy::object,
     hash::{oid, ObjectId},
-    objs::bstr::BStr,
+    objs::{bstr::BStr, TreeRefIter},
     odb,
     prelude::*,
     refs::file::loose::reference::peel,
@@ -255,14 +254,14 @@ where
         }
     };
 
-    fn find_tree_iter<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> Option<tree::RefIter<'b>>
+    fn find_tree_iter<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> Option<TreeRefIter<'b>>
     where
         L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<odb::data::Object<'a>>,
     {
         find(id, buf).and_then(|o| o.into_tree_iter())
     }
 
-    fn tree_iter_by_commit<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> tree::RefIter<'b>
+    fn tree_iter_by_commit<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> TreeRefIter<'b>
     where
         L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<odb::data::Object<'a>>,
     {

@@ -49,7 +49,7 @@ pub trait Find {
 }
 
 mod ext {
-    use git_object::{commit, tree, BlobRef, CommitRef, Kind, ObjectRef, TagRef, TreeRef};
+    use git_object::{commit, BlobRef, CommitRef, Kind, ObjectRef, TagRef, TreeRef, TreeRefIter};
 
     use crate::{data, find};
 
@@ -133,7 +133,7 @@ mod ext {
             commit::RefIter<'a>,
             into_commit_iter
         );
-        make_iter_lookup!(find_existing_tree_iter, Kind::Tree, tree::RefIter<'a>, into_tree_iter);
+        make_iter_lookup!(find_existing_tree_iter, Kind::Tree, TreeRefIter<'a>, into_tree_iter);
     }
 
     impl<T: super::Find> FindExt for T {}

@@ -1,38 +1,12 @@
 use std::convert::TryFrom;
 
-use bstr::BStr;
+use crate::{immutable::object, tree, tree::EntryRef, TreeRef, TreeRefIter};
 
-use crate::{immutable::object, tree, TreeRef};
-
-/// A directory snapshot containing files (blobs), directories (trees) and submodules (commits), lazily evaluated.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct RefIter<'a> {
-    /// The directories and files contained in this tree.
-    #[cfg_attr(feature = "serde1", serde(borrow))]
-    data: &'a [u8],
-}
-
-impl<'a> RefIter<'a> {
+impl<'a> TreeRefIter<'a> {
     /// Instantiate an iterator from the given tree data.
-    pub fn from_bytes(data: &'a [u8]) -> RefIter<'a> {
-        RefIter { data }
+    pub fn from_bytes(data: &'a [u8]) -> TreeRefIter<'a> {
+        TreeRefIter { data }
     }
-}
-
-/// An element of a [`TreeRef`][TreeRef::entries].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct EntryRef<'a> {
-    /// The kind of object to which `oid` is pointing.
-    pub mode: tree::EntryMode,
-    /// The name of the file in the parent tree.
-    pub filename: &'a BStr,
-    /// The id of the object representing the entry.
-    // TODO: figure out how these should be called. id or oid? It's inconsistent around the codebase.
-    // Answer: make it 'id', as in `git2`
-    #[cfg_attr(feature = "serde1", serde(borrow))]
-    pub oid: &'a git_hash::oid,
 }
 
 impl<'a> TreeRef<'a> {
@@ -49,20 +23,20 @@ impl<'a> TreeRef<'a> {
     }
 }
 
-impl<'a> RefIter<'a> {
+impl<'a> TreeRefIter<'a> {
     /// Consume self and return all parsed entries.
     pub fn entries(self) -> Result<Vec<EntryRef<'a>>, object::decode::Error> {
         self.collect()
     }
 }
 
-impl<'a> Default for RefIter<'a> {
+impl<'a> Default for TreeRefIter<'a> {
     fn default() -> Self {
-        RefIter { data: &[] }
+        TreeRefIter { data: &[] }
     }
 }
 
-impl<'a> Iterator for RefIter<'a> {
+impl<'a> Iterator for TreeRefIter<'a> {
     type Item = Result<EntryRef<'a>, object::decode::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -113,10 +87,7 @@ mod decode {
         IResult,
     };
 
-    use crate::{
-        immutable::{parse::SPACE, tree::EntryRef},
-        tree, TreeRef,
-    };
+    use crate::{immutable::parse::SPACE, tree, tree::EntryRef, TreeRef};
 
     const NULL: &[u8] = b"\0";
 

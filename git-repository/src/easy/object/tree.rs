@@ -1,9 +1,10 @@
+use git_object as objs;
+use git_object::{bstr::BStr, TreeRefIter};
+
 use crate::{
     easy,
     easy::{object::find, TreeRef},
 };
-use git_object as objs;
-use git_object::{bstr::BStr, immutable};
 
 impl<'repo, A> TreeRef<'repo, A>
 where
@@ -18,7 +19,7 @@ where
         // let mut out = None;
         let mut path = path.into_iter().peekable();
         while let Some(component) = path.next() {
-            match immutable::tree::RefIter::from_bytes(&self.data)
+            match TreeRefIter::from_bytes(&self.data)
                 .filter_map(Result::ok)
                 .find(|entry| component.eq(entry.filename))
             {

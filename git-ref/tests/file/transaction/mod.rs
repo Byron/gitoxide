@@ -1,6 +1,5 @@
 mod prepare_and_commit {
     use bstr::BString;
-
     use git_actor::{Sign, Time};
     use git_hash::ObjectId;
     use git_ref::file;

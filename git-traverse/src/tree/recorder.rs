@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use git_hash::ObjectId;
 use git_object::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
-    immutable, tree,
+    tree,
 };
 
 use crate::tree::{visit, visit::Action};
@@ -23,7 +23,7 @@ pub struct Entry {
 }
 
 impl Entry {
-    fn new(entry: &immutable::tree::EntryRef<'_>, filepath: BString) -> Self {
+    fn new(entry: &tree::EntryRef<'_>, filepath: BString) -> Self {
         Entry {
             filepath,
             oid: entry.oid.to_owned(),
@@ -83,12 +83,12 @@ impl visit::Visit for Recorder {
         self.pop_element();
     }
 
-    fn visit_tree(&mut self, entry: &immutable::tree::EntryRef<'_>) -> Action {
+    fn visit_tree(&mut self, entry: &tree::EntryRef<'_>) -> Action {
         self.records.push(Entry::new(entry, self.path_clone()));
         Action::Continue
     }
 
-    fn visit_nontree(&mut self, entry: &immutable::tree::EntryRef<'_>) -> Action {
+    fn visit_nontree(&mut self, entry: &tree::EntryRef<'_>) -> Action {
         self.records.push(Entry::new(entry, self.path_clone()));
         Action::Continue
     }

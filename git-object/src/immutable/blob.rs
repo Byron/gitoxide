@@ -1,5 +1,6 @@
-use crate::BlobRef;
 use std::convert::Infallible;
+
+use crate::BlobRef;
 
 impl<'a> BlobRef<'a> {
     /// Instantiate a `Blob` from the given `data`, which is used as-is.

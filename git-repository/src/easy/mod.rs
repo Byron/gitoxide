@@ -18,11 +18,12 @@ use std::{
     time::SystemTime,
 };
 
-use crate::Repository;
 use git_hash::ObjectId;
 use git_object as objs;
 use git_odb as odb;
 use git_ref as refs;
+
+use crate::Repository;
 
 mod impls;
 

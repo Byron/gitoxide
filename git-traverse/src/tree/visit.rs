@@ -1,4 +1,4 @@
-use git_object::{bstr::BStr, immutable};
+use git_object::{bstr::BStr, tree};
 
 /// What to do after an entry was [recorded][Visit::visit_tree()].
 #[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
@@ -34,11 +34,11 @@ pub trait Visit {
     /// [`Action::Skip`] can be used to prevent traversing it, for example if it's known to the caller already.
     ///
     /// The implementation may use the current path to learn where in the tree the change is located.
-    fn visit_tree(&mut self, entry: &immutable::tree::EntryRef<'_>) -> Action;
+    fn visit_tree(&mut self, entry: &tree::EntryRef<'_>) -> Action;
 
     /// Observe a tree entry that is NO tree and return an instruction whether to continue or not.
     /// [`Action::Skip`] has no effect here.
     ///
     /// The implementation may use the current path to learn where in the tree the change is located.
-    fn visit_nontree(&mut self, entry: &immutable::tree::EntryRef<'_>) -> Action;
+    fn visit_nontree(&mut self, entry: &tree::EntryRef<'_>) -> Action;
 }

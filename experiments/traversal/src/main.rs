@@ -7,7 +7,7 @@ use anyhow::anyhow;
 use dashmap::DashSet;
 use git_repository::{
     hash::ObjectId,
-    objs::{bstr::BStr, immutable::tree::EntryRef},
+    objs::{bstr::BStr, tree::EntryRef},
     odb,
     prelude::*,
     refs::file::loose::reference::peel,

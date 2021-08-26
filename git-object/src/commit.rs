@@ -1,8 +1,7 @@
 use bstr::{BStr, ByteSlice};
 
-use crate::{immutable, TagRef};
-
 pub use crate::immutable::commit::iter::RefIter;
+use crate::{immutable, TagRef};
 
 /// An iterator over extra headers in [owned][crate::mutable::Commit] and [borrowed][crate::CommitRef] commits.
 pub struct ExtraHeaders<I> {

@@ -1,10 +1,10 @@
 #![allow(missing_docs)]
 use git_hash::ObjectId;
+use git_object::commit;
 #[cfg(feature = "git-traverse")]
 use git_traverse::commit::ancestors::{Ancestors, State};
 
 use crate::easy;
-use git_object::commit;
 
 pub trait Sealed {}
 

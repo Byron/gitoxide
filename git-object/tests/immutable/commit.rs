@@ -305,11 +305,12 @@ mod iter {
     }
 
     mod method {
+        use git_object::commit;
+
         use crate::{
             hex_to_id,
             immutable::{fixture_bytes, signature},
         };
-        use git_object::commit;
 
         #[test]
         fn tree_id() -> crate::Result {

@@ -1,6 +1,6 @@
 //! Contains a borrowed Object bound to a buffer holding its decompressed data.
 
-use git_object::{commit, immutable, tag, tree, BlobRef, CommitRef, ObjectRef, TagRef, TreeRef};
+use git_object::{commit, immutable, tag, BlobRef, CommitRef, ObjectRef, TagRef, TreeRef, TreeRefIter};
 
 /// A borrowed object using a borrowed slice as backing buffer.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -38,9 +38,9 @@ impl<'a> Object<'a> {
 
     /// Returns this object as tree iterator to parse entries one at a time to avoid allocations, or
     /// `None` if this is not a tree object.
-    pub fn into_tree_iter(self) -> Option<tree::RefIter<'a>> {
+    pub fn into_tree_iter(self) -> Option<TreeRefIter<'a>> {
         match self.kind {
-            git_object::Kind::Tree => Some(tree::RefIter::from_bytes(self.data)),
+            git_object::Kind::Tree => Some(TreeRefIter::from_bytes(self.data)),
             _ => None,
         }
     }

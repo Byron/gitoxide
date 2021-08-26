@@ -1,6 +1,7 @@
+use std::fmt;
+
 use bstr::{BStr, ByteSlice};
 use git_hash::{oid, ObjectId};
-use std::fmt;
 
 use crate::{FullName, Kind, Target, TargetRef};
 

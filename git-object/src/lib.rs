@@ -9,10 +9,9 @@ use std::borrow::Cow;
 pub use bstr;
 use bstr::{BStr, BString, ByteSlice};
 use smallvec::SmallVec;
-
 pub use types::{Error, Kind};
 
-use crate::immutable::tree::EntryRef;
+use crate::tree::EntryRef;
 
 pub mod immutable;
 pub mod mutable;
@@ -101,4 +100,13 @@ pub struct TreeRef<'a> {
     /// The directories and files contained in this tree.
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub entries: Vec<EntryRef<'a>>,
+}
+
+/// A directory snapshot containing files (blobs), directories (trees) and submodules (commits), lazily evaluated.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct TreeRefIter<'a> {
+    /// The directories and files contained in this tree.
+    #[cfg_attr(feature = "serde1", serde(borrow))]
+    data: &'a [u8],
 }

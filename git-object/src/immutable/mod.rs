@@ -15,7 +15,4 @@ pub mod object;
 ///
 pub mod tag;
 
-///
-pub mod tree;
-
-mod parse;
+pub(crate) mod parse;

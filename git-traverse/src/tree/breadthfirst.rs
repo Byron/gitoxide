@@ -1,7 +1,7 @@
 use std::{borrow::BorrowMut, collections::VecDeque};
 
 use git_hash::{oid, ObjectId};
-use git_object::{immutable, tree};
+use git_object::{immutable, tree, TreeRefIter};
 use quick_error::quick_error;
 
 use crate::tree::visit::Visit;
@@ -52,13 +52,13 @@ impl State {
 ///    be escalated into a more specific error if its encountered by the caller.
 /// * `delegate` - A way to observe entries and control the iteration while allowing the optimizer to let you pay only for what you use.
 pub fn traverse<StateMut, Find, V>(
-    root: tree::RefIter<'_>,
+    root: TreeRefIter<'_>,
     mut state: StateMut,
     mut find: Find,
     delegate: &mut V,
 ) -> Result<(), Error>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<tree::RefIter<'a>>,
+    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
     StateMut: BorrowMut<State>,
     V: Visit,
 {

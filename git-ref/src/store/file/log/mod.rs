@@ -1,5 +1,4 @@
 use bstr::BStr;
-
 use git_hash::ObjectId;
 use git_object::bstr::BString;
 

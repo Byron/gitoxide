@@ -1,21 +1,17 @@
 mod iter {
-    use git_object::{bstr::ByteSlice, immutable::tree::EntryRef, tree};
+    use git_object::{bstr::ByteSlice, tree, tree::EntryRef, TreeRefIter};
 
     use crate::{hex_to_id, immutable::fixture_bytes};
 
     #[test]
     fn empty() {
-        assert_eq!(
-            tree::RefIter::from_bytes(&[]).count(),
-            0,
-            "empty trees are definitely ok"
-        );
+        assert_eq!(TreeRefIter::from_bytes(&[]).count(), 0, "empty trees are definitely ok");
     }
 
     #[test]
     fn error_handling() {
         let data = fixture_bytes("tree", "everything.tree");
-        let iter = tree::RefIter::from_bytes(&data[..data.len() / 2]);
+        let iter = TreeRefIter::from_bytes(&data[..data.len() / 2]);
         let entries = iter.collect::<Vec<_>>();
         assert!(
             entries.last().expect("at least one token").is_err(),
@@ -26,7 +22,7 @@ mod iter {
     #[test]
     fn everything() -> crate::Result {
         assert_eq!(
-            tree::RefIter::from_bytes(&fixture_bytes("tree", "everything.tree")).collect::<Result<Vec<_>, _>>()?,
+            TreeRefIter::from_bytes(&fixture_bytes("tree", "everything.tree")).collect::<Result<Vec<_>, _>>()?,
             vec![
                 EntryRef {
                     mode: tree::EntryMode::BlobExecutable,
@@ -60,7 +56,7 @@ mod iter {
 }
 
 mod from_bytes {
-    use git_object::{bstr::ByteSlice, immutable::tree::EntryRef, tree, TreeRef};
+    use git_object::{bstr::ByteSlice, tree, tree::EntryRef, TreeRef};
 
     use crate::{hex_to_id, immutable::fixture_bytes};
 
