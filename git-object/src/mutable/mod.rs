@@ -4,6 +4,4 @@
 //! They either created using object [construction][crate::Object] or by [deserializing existing objects][crate::ObjectRef::from_bytes()]
 //! and converting these [into mutable copies][crate::ObjectRef::into_owned()] for adjustments.
 
-mod convert;
-
 mod object;

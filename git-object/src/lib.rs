@@ -19,6 +19,7 @@ pub mod mutable;
 
 ///
 pub mod commit;
+mod object;
 ///
 pub mod tag;
 ///
