@@ -14,14 +14,14 @@ impl<'a> ObjectRef<'a> {
     /// Convert the signature_ref object into a mutable version, consuming the source in the process.
     ///
     /// Note that this is an expensive operation.
-    pub fn into_mutable(self) -> Object {
+    pub fn into_owned(self) -> Object {
         self.into()
     }
 
     /// Convert this signature_ref object into its mutable counterpart.
     ///
     /// Note that this is an expensive operation.
-    pub fn to_mutable(&self) -> Object {
+    pub fn to_owned(&self) -> Object {
         self.clone().into()
     }
 }

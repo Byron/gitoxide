@@ -26,7 +26,7 @@ impl<'a> Object<'a> {
     /// conveniently. The cost of parsing an object is negligible.
     ///
     /// **Note** that [mutable, decoded objects][git_object::Object] can be created from a [`crate::data::Object`]
-    /// using [`git_object::ObjectRef::into_mutable()`].
+    /// using [`git_object::ObjectRef::into_owned()`].
     pub fn decode(&self) -> Result<ObjectRef<'a>, immutable::object::decode::Error> {
         Ok(match self.kind {
             git_object::Kind::Tree => ObjectRef::Tree(TreeRef::from_bytes(self.data)?),
