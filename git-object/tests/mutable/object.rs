@@ -1,4 +1,4 @@
-use git_object::mutable::Object;
+use git_object::Object;
 
 #[test]
 fn size_in_memory() {

@@ -1,4 +1,4 @@
-use crate::{BlobRef, CommitRef, Kind, ObjectRef, TagRef, TreeRef};
+use crate::{BlobRef, CommitRef, Kind, Object, ObjectRef, TagRef, TreeRef};
 
 impl<'a> ObjectRef<'a> {
     /// Deserialize an object of `kind` from the given `data`.
@@ -14,14 +14,14 @@ impl<'a> ObjectRef<'a> {
     /// Convert the signature_ref object into a mutable version, consuming the source in the process.
     ///
     /// Note that this is an expensive operation.
-    pub fn into_mutable(self) -> crate::mutable::Object {
+    pub fn into_mutable(self) -> Object {
         self.into()
     }
 
     /// Convert this signature_ref object into its mutable counterpart.
     ///
     /// Note that this is an expensive operation.
-    pub fn to_mutable(&self) -> crate::mutable::Object {
+    pub fn to_mutable(&self) -> Object {
         self.clone().into()
     }
 }

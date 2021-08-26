@@ -1,43 +1,32 @@
 use std::io;
 
-use crate::mutable;
-
-/// A mutable object representing [`Trees`][mutable::Tree], [`Blobs`][mutable::Blob], [`Commits`][mutable::Commit] or [`Tags`][mutable::Tag].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[allow(clippy::large_enum_variant, missing_docs)]
-pub enum Object {
-    Tree(mutable::Tree),
-    Blob(mutable::Blob),
-    Commit(mutable::Commit),
-    Tag(mutable::Tag),
-}
+use crate::{Blob, Commit, Object, Tag, Tree};
 
 /// Convenient extraction of typed object.
 impl Object {
-    /// Returns a [`Blob`][mutable::Blob] if it is one.
-    pub fn as_blob(&self) -> Option<&mutable::Blob> {
+    /// Returns a [`Blob`][Blob] if it is one.
+    pub fn as_blob(&self) -> Option<&Blob> {
         match self {
             Object::Blob(v) => Some(v),
             _ => None,
         }
     }
-    /// Returns a [`Commit`][mutable::Commit] if it is one.
-    pub fn as_commit(&self) -> Option<&mutable::Commit> {
+    /// Returns a [`Commit`][Commit] if it is one.
+    pub fn as_commit(&self) -> Option<&Commit> {
         match self {
             Object::Commit(v) => Some(v),
             _ => None,
         }
     }
-    /// Returns a [`Tree`][mutable::Tree] if it is one.
-    pub fn as_tree(&self) -> Option<&mutable::Tree> {
+    /// Returns a [`Tree`][Tree] if it is one.
+    pub fn as_tree(&self) -> Option<&Tree> {
         match self {
             Object::Tree(v) => Some(v),
             _ => None,
         }
     }
-    /// Returns a [`Tag`][mutable::Tag] if it is one.
-    pub fn as_tag(&self) -> Option<&mutable::Tag> {
+    /// Returns a [`Tag`][Tag] if it is one.
+    pub fn as_tag(&self) -> Option<&Tag> {
         match self {
             Object::Tag(v) => Some(v),
             _ => None,
@@ -58,7 +47,7 @@ impl Object {
 impl Object {
     /// Write the contained object to `out` in the git serialization format.
     pub fn write_to(&self, out: impl io::Write) -> io::Result<()> {
-        use Object::*;
+        use crate::Object::*;
         match self {
             Tree(v) => v.write_to(out),
             Blob(v) => v.write_to(out),
@@ -71,7 +60,8 @@ impl Object {
 mod convert {
     use std::convert::TryFrom;
 
-    use crate::mutable::{Blob, Commit, Object, Tag, Tree};
+    use crate::Object;
+    use crate::{Blob, Commit, Tag, Tree};
 
     impl From<Tag> for Object {
         fn from(v: Tag) -> Self {

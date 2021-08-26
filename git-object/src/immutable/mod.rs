@@ -4,8 +4,6 @@
 //! cannot be mutated or serialized. Instead, one will [convert][crate::ObjectRef::into_mutable()] them into their [`mutable`][crate::mutable] counterparts
 //! which support mutation and serialization.
 
-mod blob;
-
 ///
 pub mod commit;
 

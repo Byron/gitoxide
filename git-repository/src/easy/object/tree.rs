@@ -1,4 +1,3 @@
-use git_object as objs;
 use git_object::{bstr::BStr, TreeRefIter};
 
 use crate::{
@@ -11,7 +10,7 @@ where
     A: easy::Access + Sized,
 {
     // TODO: move implementation to git-object, tests.
-    pub fn lookup_path<I, P>(mut self, path: I) -> Result<Option<objs::mutable::tree::Entry>, find::existing::Error>
+    pub fn lookup_path<I, P>(mut self, path: I) -> Result<Option<git_object::tree::Entry>, find::existing::Error>
     where
         I: IntoIterator<Item = P>,
         P: PartialEq<BStr>,

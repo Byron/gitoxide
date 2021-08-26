@@ -5,7 +5,6 @@ use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use git_object::{
     bstr::{BString, ByteSlice},
     immutable::object,
-    mutable,
 };
 
 use crate::index;
@@ -187,7 +186,7 @@ impl index::File {
                             id: index_entry.oid,
                         })?;
                     if let Mode::Sha1Crc32DecodeEncode = mode {
-                        let object = mutable::Object::from(borrowed_object);
+                        let object = git_object::Object::from(borrowed_object);
                         encode_buf.clear();
                         object.write_to(&mut *encode_buf)?;
                         if encode_buf.as_slice() != buf {

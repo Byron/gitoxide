@@ -1,36 +1,12 @@
 use std::io;
 
-use bstr::{BStr, BString, ByteSlice};
-use smallvec::SmallVec;
+use bstr::{BStr, ByteSlice};
 
 use crate::{
     commit,
     mutable::{encode, NL},
+    Commit,
 };
-
-/// A mutable git commit, representing an annotated state of a working tree along with a reference to its historical commits.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Commit {
-    /// The hash of recorded working tree state.
-    pub tree: git_hash::ObjectId,
-    /// Hash of each parent commit. Empty for the first commit in repository.
-    pub parents: SmallVec<[git_hash::ObjectId; 1]>,
-    /// Who wrote this commit.
-    pub author: git_actor::Signature,
-    /// Who committed this commit.
-    ///
-    /// This may be different from the `author` in case the author couldn't write to the repository themselves and
-    /// is commonly encountered with contributed commits.
-    pub committer: git_actor::Signature,
-    /// The name of the message encoding, otherwise [UTF-8 should be assumed](https://github.com/git/git/blob/e67fbf927dfdf13d0b21dc6ea15dc3c7ef448ea0/commit.c#L1493:L1493).
-    pub encoding: Option<BString>,
-    /// The commit message documenting the change.
-    pub message: BString,
-    /// Extra header fields, in order of them being encountered, made accessible with the iterator returned
-    /// by [`extra_headers()`][Commit::extra_headers()].
-    pub extra_headers: Vec<(BString, BString)>,
-}
 
 impl Commit {
     /// Returns a convenient iterator over all extra headers.

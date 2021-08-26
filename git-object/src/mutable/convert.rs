@@ -1,7 +1,7 @@
-use crate::{mutable, tree, BlobRef, CommitRef, ObjectRef, TagRef, TreeRef};
+use crate::{tree, Blob, BlobRef, Commit, CommitRef, Object, ObjectRef, Tag, TagRef, Tree, TreeRef};
 
-impl From<TagRef<'_>> for mutable::Tag {
-    fn from(other: TagRef<'_>) -> mutable::Tag {
+impl From<TagRef<'_>> for Tag {
+    fn from(other: TagRef<'_>) -> Tag {
         let TagRef {
             target,
             name,
@@ -10,7 +10,7 @@ impl From<TagRef<'_>> for mutable::Tag {
             tagger: signature,
             pgp_signature,
         } = other;
-        mutable::Tag {
+        Tag {
             target: git_hash::ObjectId::from_hex(target).expect("40 bytes hex sha1"),
             name: name.to_owned(),
             target_kind,
@@ -21,8 +21,8 @@ impl From<TagRef<'_>> for mutable::Tag {
     }
 }
 
-impl From<CommitRef<'_>> for mutable::Commit {
-    fn from(other: CommitRef<'_>) -> mutable::Commit {
+impl From<CommitRef<'_>> for Commit {
+    fn from(other: CommitRef<'_>) -> Commit {
         let CommitRef {
             tree,
             parents,
@@ -32,7 +32,7 @@ impl From<CommitRef<'_>> for mutable::Commit {
             message,
             extra_headers,
         } = other;
-        mutable::Commit {
+        Commit {
             tree: git_hash::ObjectId::from_hex(tree).expect("40 bytes hex sha1"),
             parents: parents
                 .iter()
@@ -50,27 +50,27 @@ impl From<CommitRef<'_>> for mutable::Commit {
     }
 }
 
-impl<'a> From<BlobRef<'a>> for mutable::Blob {
+impl<'a> From<BlobRef<'a>> for Blob {
     fn from(v: BlobRef<'a>) -> Self {
-        mutable::Blob {
+        Blob {
             data: v.data.to_owned(),
         }
     }
 }
 
-impl From<TreeRef<'_>> for mutable::Tree {
-    fn from(other: TreeRef<'_>) -> mutable::Tree {
+impl From<TreeRef<'_>> for Tree {
+    fn from(other: TreeRef<'_>) -> Tree {
         let TreeRef { entries } = other;
-        mutable::Tree {
+        Tree {
             entries: entries.into_iter().map(Into::into).collect(),
         }
     }
 }
 
-impl From<tree::EntryRef<'_>> for mutable::tree::Entry {
-    fn from(other: tree::EntryRef<'_>) -> mutable::tree::Entry {
+impl From<tree::EntryRef<'_>> for tree::Entry {
+    fn from(other: tree::EntryRef<'_>) -> tree::Entry {
         let tree::EntryRef { mode, filename, oid } = other;
-        mutable::tree::Entry {
+        tree::Entry {
             mode,
             filename: filename.to_owned(),
             oid: oid.into(),
@@ -78,13 +78,13 @@ impl From<tree::EntryRef<'_>> for mutable::tree::Entry {
     }
 }
 
-impl<'a> From<ObjectRef<'a>> for mutable::Object {
+impl<'a> From<ObjectRef<'a>> for Object {
     fn from(v: ObjectRef<'_>) -> Self {
         match v {
-            ObjectRef::Tree(v) => mutable::Object::Tree(v.into()),
-            ObjectRef::Blob(v) => mutable::Object::Blob(v.into()),
-            ObjectRef::Commit(v) => mutable::Object::Commit(v.into()),
-            ObjectRef::Tag(v) => mutable::Object::Tag(v.into()),
+            ObjectRef::Tree(v) => Object::Tree(v.into()),
+            ObjectRef::Blob(v) => Object::Blob(v.into()),
+            ObjectRef::Commit(v) => Object::Commit(v.into()),
+            ObjectRef::Tag(v) => Object::Tag(v.into()),
         }
     }
 }
