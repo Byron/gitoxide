@@ -1,14 +1,10 @@
 use std::io;
 
-use bstr::{BStr, ByteSlice};
+use bstr::ByteSlice;
 
-use crate::{commit, encode, encode::NL, Commit};
+use crate::{encode, encode::NL, Commit};
 
 impl Commit {
-    /// Returns a convenient iterator over all extra headers.
-    pub fn extra_headers(&self) -> commit::ExtraHeaders<impl Iterator<Item = (&BStr, &BStr)>> {
-        commit::ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (k.as_bstr(), v.as_bstr())))
-    }
     /// Serializes this instance to `out` in the git serialization format.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         encode::trusted_header_id(b"tree", &self.tree, &mut out)?;

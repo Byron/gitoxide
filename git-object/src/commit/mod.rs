@@ -1,12 +1,14 @@
 use bstr::{BStr, ByteSlice};
 
 pub use crate::CommitRefIter;
-use crate::{immutable, immutable::object, CommitRef, TagRef};
+use crate::{immutable, immutable::object, Commit, CommitRef, TagRef};
 
 mod decode;
 
 ///
 pub mod ref_iter;
+
+mod write;
 
 impl<'a> CommitRef<'a> {
     /// Deserialize a commit from the given `data` bytes while avoiding most allocations.
@@ -30,6 +32,13 @@ impl<'a> CommitRef<'a> {
     /// Returns a convenient iterator over all extra headers.
     pub fn extra_headers(&self) -> crate::commit::ExtraHeaders<impl Iterator<Item = (&BStr, &BStr)>> {
         crate::commit::ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (*k, v.as_ref())))
+    }
+}
+
+impl Commit {
+    /// Returns a convenient iterator over all extra headers.
+    pub fn extra_headers(&self) -> ExtraHeaders<impl Iterator<Item = (&BStr, &BStr)>> {
+        ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (k.as_bstr(), v.as_bstr())))
     }
 }
 

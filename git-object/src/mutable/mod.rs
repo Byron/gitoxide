@@ -6,6 +6,4 @@
 
 mod convert;
 
-mod commit;
-
 mod object;
