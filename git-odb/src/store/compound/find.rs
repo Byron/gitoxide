@@ -5,7 +5,7 @@ use crate::{
     store::{compound, loose},
 };
 
-/// Returned by [`compound::Store::find()`]
+/// Returned by [`compound::Store::try_find()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {

@@ -5,7 +5,7 @@ use git_pack::{data, loose::object::header};
 
 use crate::store::loose::{sha1_path, Store, HEADER_READ_UNCOMPRESSED_BYTES};
 
-/// Returned by [`Store::find()`]
+/// Returned by [`Store::try_find()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {

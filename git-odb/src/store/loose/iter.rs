@@ -51,7 +51,7 @@ impl Store {
 
     /// Return an iterator over all objects contained in the database.
     ///
-    /// The [`Id`][git_hash::ObjectId]s returned by the iterator can typically be used in the [`locate(…)`][Store::find()] method.
+    /// The [`Id`][git_hash::ObjectId]s returned by the iterator can typically be used in the [`locate(…)`][Store::try_find()] method.
     /// _Note_ that the result is not sorted or stable, thus ordering can change between runs.
     ///
     /// # Notes
