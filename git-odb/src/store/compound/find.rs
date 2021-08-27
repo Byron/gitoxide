@@ -25,7 +25,7 @@ impl compound::Store {
     /// Find an object as identified by [`ObjectId`][git_hash::ObjectId] and store its data in full in the provided `buffer`.
     /// This will search the object in all contained object databases.
     /// Use a `pack_cache` to accelerate pack access by reducing the amount of work duplication, or [`pack::cache::Never`] to disable any caching.
-    pub fn find<'a>(
+    pub fn try_find<'a>(
         &self,
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
@@ -39,7 +39,7 @@ impl compound::Store {
             }
         }
         if self.loose.contains(id) {
-            return self.loose.find(id, buffer).map_err(Into::into);
+            return self.loose.try_find(id, buffer).map_err(Into::into);
         }
         Ok(None)
     }

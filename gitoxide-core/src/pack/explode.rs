@@ -222,7 +222,7 @@ pub fn pack_or_pack_index(
                         }
                     }
                     if let Some(verifier) = object_verifier.as_ref() {
-                        let obj = verifier.find(written_id, &mut read_buf)
+                        let obj = verifier.try_find(written_id, &mut read_buf)
                             .map_err(|err| Error::WrittenFileCorrupt(err, written_id))?
                             .ok_or(Error::WrittenFileMissing(written_id))?;
                         obj.verify_checksum(written_id)?;

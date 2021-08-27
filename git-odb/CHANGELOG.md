@@ -1,3 +1,5 @@
 ### 0.21.0 (2021-08-??)
 
-- TBD
+- **renames**
+   - `compound::Store::find()` -> `compound::Store::try_find()`
+   - `loose::Store::find()` -> `loose::Store::try_find()`

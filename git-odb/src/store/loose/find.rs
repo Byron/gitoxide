@@ -38,7 +38,7 @@ impl Store {
     ///
     /// Returns `Err` if there was an error locating or reading the object. Returns `Ok<None>` if
     /// there was no such object.
-    pub fn find<'a>(
+    pub fn try_find<'a>(
         &self,
         id: impl AsRef<git_hash::oid>,
         out: &'a mut Vec<u8>,

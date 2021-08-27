@@ -45,7 +45,7 @@ impl crate::Find for linked::Store {
                 }
                 None => {
                     if db.loose.contains(id) {
-                        return db.loose.find(id, buffer).map_err(Into::into);
+                        return db.loose.try_find(id, buffer).map_err(Into::into);
                     }
                 }
             }

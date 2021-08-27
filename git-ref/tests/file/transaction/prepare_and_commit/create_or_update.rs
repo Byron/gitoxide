@@ -560,7 +560,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
         .transaction()
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
             Box::new(move |oid, buf| {
-                odb.find(oid, buf, &mut git_odb::pack::cache::Never)
+                odb.try_find(oid, buf, &mut git_odb::pack::cache::Never)
                     .map(|obj| obj.map(|obj| obj.kind))
                     .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)
             }),

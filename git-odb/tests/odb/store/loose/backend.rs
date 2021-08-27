@@ -26,7 +26,7 @@ fn iter() {
     assert_eq!(oids, object_ids())
 }
 pub fn locate_oid(id: git_hash::ObjectId, buf: &mut Vec<u8>) -> git_pack::data::Object<'_> {
-    ldb().find(id, buf).expect("read success").expect("id present")
+    ldb().try_find(id, buf).expect("read success").expect("id present")
 }
 
 mod write {
@@ -45,10 +45,16 @@ mod write {
             let obj = locate_oid(oid, &mut buf);
             let actual = db.write(&obj.decode()?.into(), git_hash::Kind::Sha1)?;
             assert_eq!(actual, oid);
-            assert_eq!(db.find(oid, &mut buf2)?.expect("id present").decode()?, obj.decode()?);
+            assert_eq!(
+                db.try_find(oid, &mut buf2)?.expect("id present").decode()?,
+                obj.decode()?
+            );
             let actual = db.write_buf(obj.kind, obj.data, git_hash::Kind::Sha1)?;
             assert_eq!(actual, oid);
-            assert_eq!(db.find(oid, &mut buf2)?.expect("id present").decode()?, obj.decode()?);
+            assert_eq!(
+                db.try_find(oid, &mut buf2)?.expect("id present").decode()?,
+                obj.decode()?
+            );
         }
         Ok(())
     }
@@ -168,7 +174,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     }
 
     fn try_locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> Option<git_pack::data::Object<'a>> {
-        ldb().find(hex_to_id(hex), buf).ok().flatten()
+        ldb().try_find(hex_to_id(hex), buf).ok().flatten()
     }
 
     pub fn as_id(id: &[u8; 20]) -> &git_hash::oid {
