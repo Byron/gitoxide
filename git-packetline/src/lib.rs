@@ -1,6 +1,6 @@
 //! Read and write the git packet line wire format without copying it.
 //!
-//! For reading the packet line format use the [`StreamingPeekableIter`], and for writing the `Writer`.
+//! For reading the packet line format use the [`StreamingPeekableIter`], and for writing the [`Writer`].
 #![deny(unsafe_code, rust_2018_idioms, missing_docs)]
 
 const U16_HEX_BYTES: usize = 4;
