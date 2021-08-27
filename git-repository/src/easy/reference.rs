@@ -135,7 +135,7 @@ where
                         state.assure_packed_refs_uptodate(&repo.refs)?.as_ref(),
                         |oid, buf| {
                             repo.odb
-                                .find(oid, buf, pack_cache.deref_mut())
+                                .try_find(oid, buf, pack_cache.deref_mut())
                                 .map(|po| po.map(|o| (o.kind, o.data)))
                         },
                     )?

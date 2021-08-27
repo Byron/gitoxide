@@ -25,7 +25,7 @@ impl linked::Store {
 impl crate::Find for linked::Store {
     type Error = compound::find::Error;
 
-    fn find<'a>(
+    fn try_find<'a>(
         &self,
         id: impl AsRef<oid>,
         buffer: &'a mut Vec<u8>,
@@ -107,13 +107,13 @@ impl crate::Find for linked::Store {
 impl crate::Find for &linked::Store {
     type Error = compound::find::Error;
 
-    fn find<'a>(
+    fn try_find<'a>(
         &self,
         id: impl AsRef<oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
     ) -> Result<Option<Object<'a>>, Self::Error> {
-        (*self).find(id, buffer, pack_cache)
+        (*self).try_find(id, buffer, pack_cache)
     }
 
     fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {

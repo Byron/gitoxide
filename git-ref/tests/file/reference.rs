@@ -145,7 +145,7 @@ mod peel {
         let odb = git_odb::linked::Store::at(store.base.join("objects"))?;
         assert_eq!(
             r.peel_to_id_in_place(&store, None, |oid, buf| {
-                odb.find(oid, buf, &mut git_odb::pack::cache::Never)
+                odb.try_find(oid, buf, &mut git_odb::pack::cache::Never)
                     .map(|obj| obj.map(|obj| (obj.kind, obj.data)))
             })?,
             commit,

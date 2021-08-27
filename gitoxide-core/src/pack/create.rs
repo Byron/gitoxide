@@ -122,7 +122,7 @@ where
                                 .and_then(|mut r| {
                                     r.peel_to_id_in_place(refs, packed.as_ref(), |oid, buf| {
                                         repo.odb
-                                            .find(oid, buf, &mut pack::cache::Never)
+                                            .try_find(oid, buf, &mut pack::cache::Never)
                                             .map(|obj| obj.map(|obj| (obj.kind, obj.data)))
                                     })
                                     .map(|oid| oid.to_owned())
@@ -140,7 +140,7 @@ where
                 // TODO: Easy-based traversal
                 traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), {
                     let db = Arc::clone(&db);
-                    move |oid, buf| db.find_existing_commit_iter(oid, buf, &mut pack::cache::Never).ok()
+                    move |oid, buf| db.find_commit_iter(oid, buf, &mut pack::cache::Never).ok()
                 })
                 .map(|res| res.map_err(Into::into))
                 .inspect(move |_| progress.inc()),

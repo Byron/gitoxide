@@ -52,7 +52,7 @@ where
         .find(refname.to_string_lossy().as_ref(), packed.as_ref())?
         .peel_to_id_in_place(&repo.refs, packed.as_ref(), |oid, buf| {
             repo.odb
-                .find(oid, buf, &mut pack::cache::Never)
+                .try_find(oid, buf, &mut pack::cache::Never)
                 .map(|obj| obj.map(|obj| (obj.kind, obj.data)))
         })?
         .to_owned();
@@ -66,7 +66,7 @@ where
         for c in interrupt::Iter::new(
             commit_id.ancestors_iter(|oid, buf| {
                 progress.inc();
-                repo.odb.find_existing(oid, buf, &mut pack_cache).ok().map(|o| {
+                repo.odb.find(oid, buf, &mut pack_cache).ok().map(|o| {
                     commits.push(o.data.to_owned());
                     objs::CommitRefIter::from_bytes(o.data)
                 })

@@ -39,10 +39,7 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let all_commits = commit_id
-        .ancestors_iter(|oid, buf| {
-            db.find_existing_commit_iter(oid, buf, &mut odb::pack::cache::Never)
-                .ok()
-        })
+        .ancestors_iter(|oid, buf| db.find_commit_iter(oid, buf, &mut odb::pack::cache::Never).ok())
         .collect::<Result<Vec<_>, _>>()?;
     let num_diffs = all_commits.len();
     let elapsed = start.elapsed();
@@ -77,7 +74,7 @@ fn main() -> anyhow::Result<()> {
                 Some(odb::data::Object::new(*kind, buf))
             }
             None => {
-                let obj = db.find_existing(oid, buf, pack_cache).ok();
+                let obj = db.find(oid, buf, pack_cache).ok();
                 if let Some(ref obj) = obj {
                     obj_cache.insert(
                         oid,

@@ -24,7 +24,7 @@ mod changes {
             buf: &'a mut Vec<u8>,
         ) -> crate::Result<TreeRefIter<'a>> {
             let tree_id = db
-                .find(commit, buf, &mut pack::cache::Never)?
+                .try_find(commit, buf, &mut pack::cache::Never)?
                 .ok_or_else(|| format!("start commit {:?} to be present", commit))?
                 .decode()?
                 .into_commit()
@@ -32,7 +32,7 @@ mod changes {
                 .tree();
 
             Ok(db
-                .find(tree_id, buf, &mut pack::cache::Never)?
+                .try_find(tree_id, buf, &mut pack::cache::Never)?
                 .expect("main tree present")
                 .into_tree_iter()
                 .expect("id to be a tree"))
@@ -50,7 +50,7 @@ mod changes {
                 rhs_tree,
                 git_diff::tree::State::default(),
                 |oid, buf| {
-                    db.find(oid, buf, &mut pack::cache::Never)
+                    db.try_find(oid, buf, &mut pack::cache::Never)
                         .ok()
                         .flatten()
                         .and_then(|obj| obj.into_tree_iter())
@@ -64,7 +64,7 @@ mod changes {
             let mut buf = Vec::new();
             let (main_tree_id, parent_commit_id) = {
                 let commit = db
-                    .find(commit_id, &mut buf, &mut pack::cache::Never)?
+                    .try_find(commit_id, &mut buf, &mut pack::cache::Never)?
                     .ok_or_else(|| format!("start commit {:?} to be present", commit_id))?
                     .decode()?
                     .into_commit()
@@ -76,18 +76,18 @@ mod changes {
                 })
             };
             let current_tree = db
-                .find(main_tree_id, &mut buf, &mut pack::cache::Never)?
+                .try_find(main_tree_id, &mut buf, &mut pack::cache::Never)?
                 .expect("main tree present")
                 .into_tree_iter()
                 .expect("id to be a tree");
             let mut buf2 = Vec::new();
             let previous_tree: Option<_> = {
                 parent_commit_id
-                    .and_then(|id| db.find(id, &mut buf2, &mut pack::cache::Never).ok().flatten())
+                    .and_then(|id| db.try_find(id, &mut buf2, &mut pack::cache::Never).ok().flatten())
                     .and_then(|c| c.decode().ok())
                     .and_then(|c| c.into_commit())
                     .map(|c| c.tree())
-                    .and_then(|tree| db.find(tree, &mut buf2, &mut pack::cache::Never).ok().flatten())
+                    .and_then(|tree| db.try_find(tree, &mut buf2, &mut pack::cache::Never).ok().flatten())
                     .and_then(|tree| tree.into_tree_iter())
             };
 
@@ -96,7 +96,7 @@ mod changes {
                 current_tree,
                 &mut git_diff::tree::State::default(),
                 |oid, buf| {
-                    db.find(oid, buf, &mut pack::cache::Never)
+                    db.try_find(oid, buf, &mut pack::cache::Never)
                         .ok()
                         .flatten()
                         .and_then(|obj| obj.into_tree_iter())
@@ -130,7 +130,7 @@ mod changes {
 
             let head = head_of(db);
             commit::Ancestors::new(Some(head), commit::ancestors::State::default(), |oid, buf| {
-                db.find(oid, buf, &mut pack::cache::Never)
+                db.try_find(oid, buf, &mut pack::cache::Never)
                     .ok()
                     .flatten()
                     .and_then(|o| o.into_commit_iter())

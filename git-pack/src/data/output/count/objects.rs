@@ -166,7 +166,7 @@ where
         }
 
         let id = id.map(|oid| oid.into()).map_err(Error::InputIteration)?;
-        let obj = db.find_existing(id, buf1, cache)?;
+        let obj = db.find(id, buf1, cache)?;
         stats.input_objects += 1;
         match input_object_expansion {
             TreeAdditionsComparedToAncestor => {
@@ -182,7 +182,7 @@ where
                             id = TagRefIter::from_bytes(obj.data)
                                 .target_id()
                                 .expect("every tag has a target");
-                            obj = db.find_existing(id, buf1, cache)?;
+                            obj = db.find(id, buf1, cache)?;
                             stats.expanded_objects += 1;
                             continue;
                         }
@@ -200,7 +200,7 @@ where
                                         Err(err) => return Err(Error::CommitDecode(err)),
                                     }
                                 }
-                                let obj = db.find_existing(tree_id, buf1, cache)?;
+                                let obj = db.find(tree_id, buf1, cache)?;
                                 push_obj_count_unique(&mut out, seen_objs, &tree_id, &obj, progress, stats, true);
                                 git_object::TreeRefIter::from_bytes(obj.data)
                             };
@@ -212,7 +212,7 @@ where
                                     &mut tree_traversal_state,
                                     |oid, buf| {
                                         stats.decoded_objects += 1;
-                                        match db.find_existing(oid, buf, cache).ok() {
+                                        match db.find(oid, buf, cache).ok() {
                                             Some(obj) => {
                                                 progress.inc();
                                                 stats.expanded_objects += 1;
@@ -229,7 +229,7 @@ where
                             } else {
                                 for commit_id in &parent_commit_ids {
                                     let parent_tree_id = {
-                                        let parent_commit_obj = db.find_existing(commit_id, buf2, cache)?;
+                                        let parent_commit_obj = db.find(commit_id, buf2, cache)?;
 
                                         push_obj_count_unique(
                                             &mut out,
@@ -245,7 +245,7 @@ where
                                             .expect("every commit has a tree")
                                     };
                                     let parent_tree = {
-                                        let parent_tree_obj = db.find_existing(parent_tree_id, buf2, cache)?;
+                                        let parent_tree_obj = db.find(parent_tree_id, buf2, cache)?;
                                         push_obj_count_unique(
                                             &mut out,
                                             seen_objs,
@@ -265,7 +265,7 @@ where
                                             &mut tree_diff_state,
                                             |oid, buf| {
                                                 stats.decoded_objects += 1;
-                                                db.find_existing_tree_iter(oid, buf, cache).ok()
+                                                db.find_tree_iter(oid, buf, cache).ok()
                                             },
                                             &mut changes_delegate,
                                         )
@@ -295,7 +295,7 @@ where
                                 &mut tree_traversal_state,
                                 |oid, buf| {
                                     stats.decoded_objects += 1;
-                                    match db.find_existing(oid, buf, cache).ok() {
+                                    match db.find(oid, buf, cache).ok() {
                                         Some(obj) => {
                                             progress.inc();
                                             stats.expanded_objects += 1;
@@ -318,7 +318,7 @@ where
                                 .tree_id()
                                 .expect("every commit has a tree");
                             stats.expanded_objects += 1;
-                            obj = db.find_existing(id, buf1, cache)?;
+                            obj = db.find(id, buf1, cache)?;
                             continue;
                         }
                         Blob => break,
@@ -327,7 +327,7 @@ where
                                 .target_id()
                                 .expect("every tag has a target");
                             stats.expanded_objects += 1;
-                            obj = db.find_existing(id, buf1, cache)?;
+                            obj = db.find(id, buf1, cache)?;
                             continue;
                         }
                     }

@@ -173,7 +173,7 @@ where
     let mut bytes = 0u64;
     let mut cache = new_cache();
     for hash in hashes {
-        let obj = repo.odb.find_existing(hash, &mut buf, &mut cache)?;
+        let obj = repo.odb.find(hash, &mut buf, &mut cache)?;
         bytes += obj.data.len() as u64;
     }
     Ok(bytes)
@@ -200,7 +200,7 @@ where
         |(buf, cache), hash| {
             match mode {
                 AccessMode::ObjectData => {
-                    let obj = repo.odb.find_existing(hash, buf, cache)?;
+                    let obj = repo.odb.find(hash, buf, cache)?;
                     bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
                 }
                 AccessMode::ObjectExists => {

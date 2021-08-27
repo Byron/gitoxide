@@ -19,7 +19,7 @@ pub fn find_object<A: easy::Access + Sized>(
         let obj = access
             .repo()?
             .odb
-            .find_existing(&id, &mut buf, state.try_borrow_mut_pack_cache()?.deref_mut())?;
+            .find(&id, &mut buf, state.try_borrow_mut_pack_cache()?.deref_mut())?;
         obj.kind
     };
 
@@ -35,7 +35,7 @@ pub fn try_find_object<A: easy::Access + Sized>(
     access
         .repo()?
         .odb
-        .find(
+        .try_find(
             &id,
             state.try_borrow_mut_buf()?.deref_mut(),
             state.try_borrow_mut_pack_cache()?.deref_mut(),

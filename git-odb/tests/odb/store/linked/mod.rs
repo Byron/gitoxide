@@ -40,7 +40,7 @@ mod locate {
     fn can_locate(db: &Store, hex_id: &str) {
         let mut buf = vec![];
         assert!(db
-            .find(hex_to_id(hex_id), &mut buf, &mut pack::cache::Never)
+            .try_find(hex_to_id(hex_id), &mut buf, &mut pack::cache::Never)
             .expect("no read error")
             .is_some());
     }

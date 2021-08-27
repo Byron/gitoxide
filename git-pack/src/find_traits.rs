@@ -18,7 +18,7 @@ pub trait Find {
     ///
     /// Returns `Some` object if it was present in the database, or the error that occurred during lookup or object
     /// retrieval.
-    fn find<'a>(
+    fn try_find<'a>(
         &self,
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
@@ -49,13 +49,13 @@ pub trait Find {
 }
 
 mod ext {
-    use git_object::{BlobRef, CommitRef, CommitRefIter, Kind, ObjectRef, TagRef, TreeRef, TreeRefIter};
+    use git_object::{BlobRef, CommitRef, CommitRefIter, Kind, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
 
     use crate::{data, find};
 
     macro_rules! make_obj_lookup {
         ($method:ident, $object_variant:path, $object_kind:path, $object_type:ty) => {
-            /// Like [`find_existing(…)`][Self::find_existing()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error
+            /// Like [`find(…)`][Self::find()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error
             /// while returning the desired object type.
             fn $method<'a>(
                 &self,
@@ -64,7 +64,7 @@ mod ext {
                 pack_cache: &mut impl crate::cache::DecodeEntry,
             ) -> Result<$object_type, find::existing_object::Error<Self::Error>> {
                 let id = id.as_ref();
-                self.find(id, buffer, pack_cache)
+                self.try_find(id, buffer, pack_cache)
                     .map_err(find::existing_object::Error::Find)?
                     .ok_or_else(|| find::existing_object::Error::NotFound {
                         oid: id.as_ref().to_owned(),
@@ -91,7 +91,7 @@ mod ext {
                 pack_cache: &mut impl crate::cache::DecodeEntry,
             ) -> Result<$object_type, find::existing_iter::Error<Self::Error>> {
                 let id = id.as_ref();
-                self.find(id, buffer, pack_cache)
+                self.try_find(id, buffer, pack_cache)
                     .map_err(find::existing_iter::Error::Find)?
                     .ok_or_else(|| find::existing_iter::Error::NotFound {
                         oid: id.as_ref().to_owned(),
@@ -109,31 +109,27 @@ mod ext {
     /// An extension trait with convenience functions.
     pub trait FindExt: super::Find {
         /// Like [`find(…)`][super::Find::find()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
-        fn find_existing<'a>(
+        fn find<'a>(
             &self,
             id: impl AsRef<git_hash::oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
         ) -> Result<data::Object<'a>, find::existing::Error<Self::Error>> {
             let id = id.as_ref();
-            self.find(id, buffer, pack_cache)
+            self.try_find(id, buffer, pack_cache)
                 .map_err(find::existing::Error::Find)?
                 .ok_or_else(|| find::existing::Error::NotFound {
                     oid: id.as_ref().to_owned(),
                 })
         }
 
-        make_obj_lookup!(find_existing_commit, ObjectRef::Commit, Kind::Commit, CommitRef<'a>);
-        make_obj_lookup!(find_existing_tree, ObjectRef::Tree, Kind::Tree, TreeRef<'a>);
-        make_obj_lookup!(find_existing_tag, ObjectRef::Tag, Kind::Tag, TagRef<'a>);
-        make_obj_lookup!(find_existing_blob, ObjectRef::Blob, Kind::Blob, BlobRef<'a>);
-        make_iter_lookup!(
-            find_existing_commit_iter,
-            Kind::Blob,
-            CommitRefIter<'a>,
-            into_commit_iter
-        );
-        make_iter_lookup!(find_existing_tree_iter, Kind::Tree, TreeRefIter<'a>, into_tree_iter);
+        make_obj_lookup!(find_commit, ObjectRef::Commit, Kind::Commit, CommitRef<'a>);
+        make_obj_lookup!(find_tree, ObjectRef::Tree, Kind::Tree, TreeRef<'a>);
+        make_obj_lookup!(find_tag, ObjectRef::Tag, Kind::Tag, TagRef<'a>);
+        make_obj_lookup!(find_blob, ObjectRef::Blob, Kind::Blob, BlobRef<'a>);
+        make_iter_lookup!(find_commit_iter, Kind::Blob, CommitRefIter<'a>, into_commit_iter);
+        make_iter_lookup!(find_tree_iter, Kind::Tree, TreeRefIter<'a>, into_tree_iter);
+        make_iter_lookup!(find_tag_iter, Kind::Tag, TagRefIter<'a>, into_tag_iter);
     }
 
     impl<T: super::Find> FindExt for T {}
@@ -153,13 +149,13 @@ mod find_impls {
     {
         type Error = T::Error;
 
-        fn find<'a>(
+        fn try_find<'a>(
             &self,
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
         ) -> Result<Option<Object<'a>>, Self::Error> {
-            self.deref().find(id, buffer, pack_cache)
+            self.deref().try_find(id, buffer, pack_cache)
         }
 
         fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
@@ -181,13 +177,13 @@ mod find_impls {
     {
         type Error = T::Error;
 
-        fn find<'a>(
+        fn try_find<'a>(
             &self,
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
         ) -> Result<Option<Object<'a>>, Self::Error> {
-            self.deref().find(id, buffer, pack_cache)
+            self.deref().try_find(id, buffer, pack_cache)
         }
 
         fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
