@@ -7,3 +7,8 @@
    - `Find::find_existing_*` -> `Find::find_*`
    - `Find::find_existing_*` -> `Find::find_*`
    - `Find::find()-> `Find::try_find()`
+   - `bundle::Bundle` -> `Bundle`
+   - `bundle::Error` -> `bundle::init::Error`
+ 
+* **new methods**
+   - `Find::find_tag_iter()`

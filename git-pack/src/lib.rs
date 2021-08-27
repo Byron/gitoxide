@@ -15,7 +15,13 @@
 
 ///
 pub mod bundle;
-pub use crate::bundle::Bundle;
+/// A bundle of pack data and the corresponding pack index
+pub struct Bundle {
+    /// The pack file corresponding to `index`
+    pub pack: crate::data::File,
+    /// The index file corresponding to `pack`
+    pub index: crate::index::File,
+}
 
 ///
 pub mod find;

@@ -12,7 +12,7 @@ pub enum Error {
     #[error("The objects directory at '{0}' is not an accessible directory")]
     Inaccessible(PathBuf),
     #[error(transparent)]
-    Pack(#[from] pack::bundle::Error),
+    Pack(#[from] pack::bundle::init::Error),
     #[error(transparent)]
     Alternate(#[from] Box<crate::alternate::Error>),
 }

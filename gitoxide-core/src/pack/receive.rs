@@ -301,15 +301,9 @@ fn receive_pack_blocking<W: io::Write>(
         index_kind: pack::index::Version::V2,
         iteration_mode: pack::data::input::Mode::Verify,
     };
-    let outcome = pack::bundle::Bundle::write_to_directory(
-        input,
-        directory.take(),
-        progress,
-        &ctx.should_interrupt,
-        None,
-        options,
-    )
-    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+    let outcome =
+        pack::Bundle::write_to_directory(input, directory.take(), progress, &ctx.should_interrupt, None, options)
+            .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
 
     if let Some(directory) = refs_directory.take() {
         write_raw_refs(refs, directory)?;

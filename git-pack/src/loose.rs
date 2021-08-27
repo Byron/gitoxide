@@ -2,7 +2,10 @@
 pub mod object {
     ///
     pub mod header {
-        //! loose object header encoding and decoding
+        //! loose object header encoding and decoding.
+        //!
+        //! Note that these are still relevant for packs as they are part of the computed hash of any git object, packed or not.
+        //! It just so happened that loose objects where the first ones used for implementing an object database.
         use byteorder::WriteBytesExt;
         use git_object as object;
 

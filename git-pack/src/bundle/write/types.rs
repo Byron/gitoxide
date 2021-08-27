@@ -43,7 +43,7 @@ pub struct Outcome {
 
 impl Outcome {
     /// Instantiate a bundle from the newly written index and data file that are represented by this `Outcome`
-    pub fn to_bundle(&self) -> Option<Result<crate::Bundle, crate::bundle::Error>> {
+    pub fn to_bundle(&self) -> Option<Result<crate::Bundle, crate::bundle::init::Error>> {
         self.index_path.as_ref().map(crate::Bundle::at)
     }
 }
