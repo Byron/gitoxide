@@ -2,6 +2,8 @@
 
 Fearlessly release workspace crates without dealing with dependencies or versions.
 
+[![asciicast](https://asciinema.org/a/cJyZGUCCUIe75pQ9QZO2aZSOl.svg)](https://asciinema.org/a/cJyZGUCCUIe75pQ9QZO2aZSOl)
+
 ### Installation
 
 #### Cargo
