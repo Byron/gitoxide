@@ -19,7 +19,7 @@ pub use git_pack as pack;
 pub use pack::{data, Find, FindExt};
 
 mod store;
-pub use store::*;
+pub use store::{compound, linked, loose, sink, Sink};
 
 pub mod alternate;
 

@@ -6,7 +6,7 @@ authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
 description = "Implements various git object databases"
 edition = "2018"
-include = ["src/**/*"]
+include = ["src/**/*", "CHANGELOG.md"]
 
 [lib]
 doctest = false
