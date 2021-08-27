@@ -28,7 +28,7 @@ all-features = true
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
 git-repository = { version = "^0.7.0", path = "../git-repository", default-features = false, features = ["local", "unstable"]} # TODO: eventually 'unstable' shouldn't be needed anymore
-git-protocol-for-configuration-only = { package = "git-protocol", version ="^0.9.0", path = "../git-protocol", optional = true }
+git-protocol-for-configuration-only = { package = "git-protocol", version ="^0.10.0", path = "../git-protocol", optional = true }
 git-commitgraph = { version = "^0.4.0", path = "../git-commitgraph" }
 git-config = { version = "^0.1.0", path = "../git-config" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
