@@ -6,7 +6,7 @@ authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
 description = "Implements git packs and related data structures"
 edition = "2018"
-include = ["src/**/*"]
+include = ["src/**/*", "CHANGELOG.md"]
 
 [lib]
 doctest = false
