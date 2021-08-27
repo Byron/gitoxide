@@ -38,7 +38,7 @@ required-features = ["async-client"]
 [dependencies]
 git-features = { version = "^0.16.0", path = "../git-features" }
 git-url = { version = "^0.3.0", path = "../git-url" }
-git-packetline = { version ="0.9.0", path = "../git-packetline" }
+git-packetline = { version ="^0.10.0", path = "../git-packetline" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 quick-error = "2.0.0"
