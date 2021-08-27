@@ -1,3 +1,4 @@
+use crate::data::Entry;
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 
 const _TYPE_EXT1: u8 = 0;
@@ -8,18 +9,6 @@ const TAG: u8 = 4;
 const _TYPE_EXT2: u8 = 5;
 const OFS_DELTA: u8 = 6;
 const REF_DELTA: u8 = 7;
-
-/// An representing an full- or delta-object within a pack
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Entry {
-    /// The entry's header
-    pub header: Header,
-    /// The decompressed size of the object in bytes
-    pub decompressed_size: u64,
-    /// absolute offset to compressed object data in the pack, just behind the entry's header
-    pub data_offset: u64,
-}
 
 /// Access
 impl Entry {

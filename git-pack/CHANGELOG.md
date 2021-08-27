@@ -10,6 +10,8 @@
    - `bundle::Bundle` -> `Bundle`
    - `bundle::Error` -> `bundle::init::Error`
    - `pub tree::` -> `pub(crate) cache::delta::`
- 
+   - `data::object::Object` -> `data::Object`
+   - `data::entry::Entry` -> `data::Entry`
+
 * **new methods**
    - `Find::find_tag_iter()`

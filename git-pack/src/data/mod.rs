@@ -4,6 +4,29 @@ use std::{convert::TryInto, path::Path};
 use filebuffer::FileBuffer;
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 
+/// An representing an full- or delta-object within a pack
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Entry {
+    /// The entry's header
+    pub header: entry::Header,
+    /// The decompressed size of the object in bytes
+    pub decompressed_size: u64,
+    /// absolute offset to compressed object data in the pack, just behind the entry's header
+    pub data_offset: u64,
+}
+
+/// A borrowed object using a borrowed slice as backing buffer.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub struct Object<'a> {
+    /// kind of object
+    pub kind: git_object::Kind,
+    /// decoded, decompressed data, owned by a backing store.
+    pub data: &'a [u8],
+    /// If `Some`, this object is from a pack whose pack location can be used to look up pack related information
+    pub pack_location: Option<crate::bundle::Location>,
+}
+
 mod file;
 pub use file::{decode_entry, verify, ResolvedBase};
 ///
@@ -11,11 +34,8 @@ pub mod header;
 
 ///
 pub mod entry;
-#[doc(inline)]
-pub use entry::Entry;
 
 pub mod object;
-pub use object::Object;
 
 ///
 pub mod input;
