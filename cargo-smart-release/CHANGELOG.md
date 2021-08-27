@@ -1,4 +1,4 @@
-### v0.3.0 (2021-08-XX)
+### v0.3.0 (2021-08-27)
 
 - add `--skip-dependencies` flag
 - add `--verbose` flag and be less verbose in dry-runs by default to provide only essential information
