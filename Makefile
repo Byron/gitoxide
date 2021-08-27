@@ -131,7 +131,7 @@ check: ## Build all code in suitable configurations
 	cd git-repository && cargo check --all-features \
 					  && cargo check --no-default-features --features local \
 					  && cargo check --no-default-features --features network \
-					 && cargo check --no-default-features
+					  && cargo check --no-default-features
 	cd cargo-smart-release && cargo check
 	cd experiments/object-access && cargo check
 	cd experiments/diffing && cargo check

@@ -202,9 +202,10 @@ pub struct EasyArc {
 ///         shared across additional connections.
 ///       - Create a new `Repository` per connection.
 #[derive(Clone)]
+#[cfg(feature = "parking_lot_future")]
 pub struct EasyArcExclusive {
     /// The repository
-    pub repo: Arc<parking_lot::RwLock<Repository>>,
+    pub repo: Arc<parking_lot_future::RwLock<Repository>>,
     /// The state with interior mutability
     pub state: easy::State,
 }

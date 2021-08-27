@@ -1219,6 +1219,7 @@ dependencies = [
  "git-traverse",
  "git-url",
  "git-validate",
+ "parking_lot 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "parking_lot 0.11.1 (git+https://github.com/Amanieu/parking_lot?branch=master)",
  "quick-error",
  "signal-hook",

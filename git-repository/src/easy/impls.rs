@@ -1,9 +1,10 @@
 #![allow(missing_docs)]
 use std::{rc::Rc, sync::Arc};
 
-use parking_lot::lock_api::{ArcRwLockReadGuard, ArcRwLockWriteGuard};
+#[cfg(feature = "parking_lot_future")]
+use parking_lot_future::lock_api::{ArcRwLockReadGuard, ArcRwLockWriteGuard};
 
-use crate::{easy, Easy, EasyArc, EasyArcExclusive, EasyShared, Repository};
+use crate::{easy, Easy, EasyArc, EasyShared, Repository};
 
 impl From<Repository> for Easy {
     fn from(repo: Repository) -> Self {
@@ -23,10 +24,11 @@ impl From<Repository> for EasyArc {
     }
 }
 
-impl From<Repository> for EasyArcExclusive {
+#[cfg(feature = "parking_lot_future")]
+impl From<Repository> for crate::EasyArcExclusive {
     fn from(repo: Repository) -> Self {
-        EasyArcExclusive {
-            repo: Arc::new(parking_lot::RwLock::new(repo)),
+        crate::EasyArcExclusive {
+            repo: Arc::new(parking_lot_future::RwLock::new(repo)),
             state: Default::default(),
         }
     }
@@ -47,7 +49,8 @@ impl Repository {
         self.into()
     }
 
-    pub fn into_easy_arc_exclusive(self) -> EasyArcExclusive {
+    #[cfg(feature = "parking_lot_future")]
+    pub fn into_easy_arc_exclusive(self) -> crate::EasyArcExclusive {
         self.into()
     }
 }
@@ -71,7 +74,7 @@ impl<'repo> easy::Access for EasyShared<'repo> {
 
 impl easy::Access for Easy {
     type RepoRef = Rc<Repository>;
-    type RepoRefMut = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>; // this is a lie
+    type RepoRefMut = &'static mut Repository; // this is a lie
 
     fn repo(&self) -> Result<Self::RepoRef, easy::borrow::repo::Error> {
         Ok(self.repo.clone())
@@ -89,7 +92,7 @@ impl easy::Access for Easy {
 
 impl easy::Access for EasyArc {
     type RepoRef = Arc<Repository>;
-    type RepoRefMut = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>; // this is a lie
+    type RepoRefMut = &'static mut Repository; // this is a lie
 
     fn repo(&self) -> Result<Self::RepoRef, easy::borrow::repo::Error> {
         Ok(self.repo.clone())
@@ -102,9 +105,10 @@ impl easy::Access for EasyArc {
     }
 }
 
-impl easy::Access for EasyArcExclusive {
-    type RepoRef = ArcRwLockReadGuard<parking_lot::RawRwLock, Repository>;
-    type RepoRefMut = ArcRwLockWriteGuard<parking_lot::RawRwLock, Repository>;
+#[cfg(feature = "parking_lot_future")]
+impl easy::Access for crate::EasyArcExclusive {
+    type RepoRef = ArcRwLockReadGuard<parking_lot_future::RawRwLock, Repository>;
+    type RepoRefMut = ArcRwLockWriteGuard<parking_lot_future::RawRwLock, Repository>;
 
     fn repo(&self) -> Result<Self::RepoRef, easy::borrow::repo::Error> {
         Ok(self.repo.read_arc())
