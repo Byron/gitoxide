@@ -8,11 +8,10 @@ use std::{
 
 use git_features::{parallel, progress::Progress};
 
+use crate::cache::delta::traverse::Context;
+use crate::index::{self, util::index_entries_sorted_by_offset_ascending};
+
 use super::{Error, SafetyCheck};
-use crate::{
-    index::{self, util::index_entries_sorted_by_offset_ascending},
-    tree::traverse::Context,
-};
 
 /// Traversal with index
 impl index::File {
@@ -61,7 +60,7 @@ impl index::File {
             || -> Result<_, Error<_>> {
                 let sorted_entries =
                     index_entries_sorted_by_offset_ascending(self, progress.add_child("collecting sorted index"));
-                let tree = crate::tree::Tree::from_offsets_in_pack(
+                let tree = crate::cache::delta::Tree::from_offsets_in_pack(
                     sorted_entries.into_iter().map(EntryWithDefault::from),
                     |e| e.index_entry.pack_offset,
                     pack.path(),
@@ -170,7 +169,7 @@ impl From<crate::index::Entry> for EntryWithDefault {
     }
 }
 
-fn digest_statistics(items: VecDeque<crate::tree::Item<EntryWithDefault>>) -> index::traverse::Outcome {
+fn digest_statistics(items: VecDeque<crate::cache::delta::Item<EntryWithDefault>>) -> index::traverse::Outcome {
     let mut res = index::traverse::Outcome::default();
     let average = &mut res.average;
     for item in &items {

@@ -10,8 +10,10 @@
 //! Objects returned by `.find(…)` are [objects][data::Object] which know their pack location in order to speed up
 //! various common operations like creating new packs from existing ones.
 //!
-//! When traversing all objects in a pack, a [Tree acceleration structure][tree::Tree] can be built from pack data or an index
+//! When traversing all objects in a pack, a _delta tree acceleration structure_ can be built from pack data or an index
 //! in order to decompress packs in parallel and without any waste.
+
+pub use find_traits::{Find, FindExt};
 
 ///
 pub mod bundle;
@@ -26,17 +28,13 @@ pub struct Bundle {
 ///
 pub mod find;
 
-mod find_traits;
-pub use find_traits::{Find, FindExt};
-
 ///
 pub mod cache;
 ///
 pub mod data;
+mod find_traits;
 ///
 pub mod index;
-///
-pub mod tree;
 
 ///
 pub mod loose;

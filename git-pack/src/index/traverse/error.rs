@@ -9,9 +9,9 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
     #[error("Index file, pack file or object verification failed")]
     Verify(#[from] index::verify::Error),
     #[error("The pack delta tree index could not be built")]
-    Tree(#[from] crate::tree::from_offsets::Error),
+    Tree(#[from] crate::cache::delta::from_offsets::Error),
     #[error("The tree traversal failed")]
-    TreeTraversal(#[from] crate::tree::traverse::Error),
+    TreeTraversal(#[from] crate::cache::delta::traverse::Error),
     #[error("The pack of this index file failed to verify its checksums")]
     PackChecksum(#[from] crate::data::verify::Error),
     #[error("Object {id} at offset {offset} could not be decoded")]

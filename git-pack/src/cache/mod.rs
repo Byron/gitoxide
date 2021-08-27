@@ -39,3 +39,6 @@ impl<T: DecodeEntry + ?Sized> DecodeEntry for Box<T> {
 /// Various implementations of [`DecodeEntry`] using least-recently-used algorithms.
 #[cfg(any(feature = "pack-cache-lru-dynamic", feature = "pack-cache-lru-static"))]
 pub mod lru;
+
+///
+pub(crate) mod delta;

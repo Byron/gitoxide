@@ -8,7 +8,8 @@ use std::{
 
 use git_features::progress::{self, Progress};
 
-use crate::{index::access::PackOffset, tree::Tree};
+use crate::cache::delta::Tree;
+use crate::index::access::PackOffset;
 
 /// Returned by [`Tree::from_offsets_in_pack()`]
 #[derive(thiserror::Error, Debug)]
@@ -21,7 +22,7 @@ pub enum Error {
     #[error("Could find object with id {id} in this pack. Thin packs are not supported")]
     UnresolvedRefDelta { id: git_hash::ObjectId },
     #[error(transparent)]
-    Tree(#[from] crate::tree::Error),
+    Tree(#[from] crate::cache::delta::Error),
     #[error("Interrupted")]
     Interrupted,
 }

@@ -1,15 +1,13 @@
 use std::{convert::TryInto, io, sync::atomic::AtomicBool};
 
+pub use error::Error;
 use git_features::progress::{self, Progress};
 
-use crate::{
-    loose,
-    tree::{traverse::Context, Tree},
-};
+use crate::cache::delta::{traverse::Context, Tree};
+use crate::loose;
 
 mod encode;
 mod error;
-pub use error::Error;
 
 pub(crate) struct TreeEntry {
     pub id: git_hash::ObjectId,

@@ -34,4 +34,3 @@ mod bundle;
 mod data;
 mod index;
 mod iter;
-mod tree;

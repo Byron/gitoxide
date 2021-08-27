@@ -10,7 +10,7 @@ use crate::index::{util::Count, V2_SIGNATURE};
 
 pub(crate) fn write_to(
     out: impl io::Write,
-    entries_sorted_by_oid: VecDeque<crate::tree::Item<crate::index::write::TreeEntry>>,
+    entries_sorted_by_oid: VecDeque<crate::cache::delta::Item<crate::index::write::TreeEntry>>,
     pack_hash: &git_hash::ObjectId,
     kind: crate::index::Version,
     mut progress: impl Progress,

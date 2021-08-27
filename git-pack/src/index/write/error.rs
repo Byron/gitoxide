@@ -21,7 +21,7 @@ pub enum Error {
     #[error("{pack_offset} is not a valid offset for pack offset {distance}")]
     IteratorInvariantBaseOffset { pack_offset: u64, distance: u64 },
     #[error(transparent)]
-    Tree(#[from] crate::tree::Error),
+    Tree(#[from] crate::cache::delta::Error),
     #[error(transparent)]
-    TreeTraversal(#[from] crate::tree::traverse::Error),
+    TreeTraversal(#[from] crate::cache::delta::traverse::Error),
 }
