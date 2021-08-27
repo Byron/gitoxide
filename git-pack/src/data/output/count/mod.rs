@@ -1,19 +1,6 @@
-use git_hash::ObjectId;
-
 use crate::data;
-
-/// An item representing a future Entry in the leanest way possible.
-///
-/// One can expect to have one of these in memory when building big objects, so smaller is better here.
-/// They should contain everything of importance to generate a pack as fast as possible.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Count {
-    /// The hash of the object to write
-    pub id: ObjectId,
-    /// A way to locate a pack entry in the object database, only available if the object is in a pack.
-    pub entry_pack_location: PackLocation,
-}
+use crate::data::output::Count;
+use git_hash::ObjectId;
 
 /// Specifies how the pack location was handled during counting
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

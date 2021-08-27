@@ -9,24 +9,6 @@ use crate::{data, data::output, find};
 pub mod iter_from_counts;
 pub use iter_from_counts::iter_from_counts;
 
-/// An entry to be written to a file.
-///
-/// Some of these will be in-flight and in memory while waiting to be written. Memory requirements depend on the amount of compressed
-/// data they hold.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Entry {
-    /// The hash of the object to write
-    pub id: ObjectId,
-    /// The kind of entry represented by `data`. It's used alongside with it to complete the pack entry
-    /// at rest or in transit.
-    pub kind: Kind,
-    /// The size in bytes needed once `data` gets decompressed
-    pub decompressed_size: usize,
-    /// The compressed data right behind the header
-    pub compressed_data: Vec<u8>,
-}
-
 /// The kind of pack entry to be written
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -62,8 +44,8 @@ pub enum Error {
 
 impl output::Entry {
     /// An object which can be identified as invalid easily which happens if objects didn't exist even if they were referred to.
-    pub fn invalid() -> Entry {
-        Entry {
+    pub fn invalid() -> output::Entry {
+        output::Entry {
             id: ObjectId::null_sha1(),
             kind: Kind::Base(git_object::Kind::Blob),
             decompressed_size: 0,
