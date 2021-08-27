@@ -1,4 +1,4 @@
-### 0.9.0 (2021-08-??)
+### 0.9.0 (2021-08-27)
 
 - **renames / moves / visibility**
    - `find::Find`  and `find::FindExt` only in `Find` and `FindExt` (not in `find` anymore)
