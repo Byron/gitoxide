@@ -33,7 +33,7 @@ async fn clone_abort_prep() -> crate::Result {
         transport.into_inner().1.as_bstr(),
         format!(
             "002fgit-upload-pack does/not/matter\0\0version=2\00014command=ls-refs
-001aagent={}
+001bagent={}
 0001000csymrefs
 0009peel
 00000000",
@@ -89,7 +89,7 @@ async fn ls_remote() -> crate::Result {
         transport.into_inner().1.as_bstr(),
         format!(
             "0044git-upload-pack does/not/matter\0\0version=2\0value-only\0key=value\00014command=ls-refs
-001aagent={}
+001bagent={}
 0001000csymrefs
 0009peel
 0000",
@@ -176,7 +176,7 @@ async fn ref_in_want() -> crate::Result {
         transport.into_inner().1.as_bstr(),
         format!(
             "002fgit-upload-pack does/not/matter\0\0version=2\00012command=fetch
-001aagent={}
+001bagent={}
 0001000ethin-pack
 0010include-tag
 000eofs-delta
