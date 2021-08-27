@@ -1,6 +1,6 @@
 [package]
 name = "cargo-smart-release"
-version = "0.2.4"
+version = "0.3.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/gitoxide"
 description = "Cargo subcommand for fearlessly releasing crates in workspaces."
