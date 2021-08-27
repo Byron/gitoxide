@@ -9,7 +9,7 @@ use crate::{data, find};
 ///
 /// [issue]: https://github.com/rust-lang/rust/issues/44265
 pub trait Find {
-    /// The error returned by [`find()`][Find::find()]
+    /// The error returned by [`try_find()`][Find::try_find()]
     type Error: std::error::Error + 'static;
 
     /// Find an object matching `id` in the database while placing its raw, undecoded data into `buffer`.
@@ -82,7 +82,7 @@ mod ext {
 
     macro_rules! make_iter_lookup {
         ($method:ident, $object_kind:path, $object_type:ty, $into_iter:tt) => {
-            /// Like [`find_existing(…)`][Self::find_existing()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error
+            /// Like [`find(…)`][Self::find()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error
             /// while returning the desired iterator type.
             fn $method<'a>(
                 &self,
@@ -108,7 +108,7 @@ mod ext {
 
     /// An extension trait with convenience functions.
     pub trait FindExt: super::Find {
-        /// Like [`find(…)`][super::Find::find()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
+        /// Like [`try_find(…)`][super::Find::try_find()], but flattens the `Result<Option<_>>` into a single `Result` making a non-existing object an error.
         fn find<'a>(
             &self,
             id: impl AsRef<git_hash::oid>,

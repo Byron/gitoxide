@@ -2,7 +2,7 @@
 pub mod existing {
     use git_hash::ObjectId;
 
-    /// The error returned by the [`find_existing(…)`][crate::FindExt::find_existing()] trait methods.
+    /// The error returned by the [`find(…)`][crate::FindExt::find()] trait methods.
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error<T: std::error::Error + 'static> {
@@ -17,7 +17,7 @@ pub mod existing {
 pub mod existing_object {
     use git_hash::ObjectId;
 
-    /// The error returned by the various [`find_existing_*`][crate::FindExt::find_existing_commit()] trait methods.
+    /// The error returned by the various [`find_*`][crate::FindExt::find_commit()] trait methods.
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error<T: std::error::Error + 'static> {
@@ -36,7 +36,7 @@ pub mod existing_object {
 pub mod existing_iter {
     use git_hash::ObjectId;
 
-    /// The error returned by the various [`find_existing_*`][crate::FindExt::find_existing_commit()] trait methods.
+    /// The error returned by the various [`find_*`][crate::FindExt::find_commit()] trait methods.
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error<T: std::error::Error + 'static> {
