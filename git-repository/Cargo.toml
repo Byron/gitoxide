@@ -6,7 +6,7 @@ license = "MIT/Apache-2.0"
 version = "0.8.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
-include = ["src/**/*", "CHANGELOG.md", "!**/assets/**/*"]
+include = ["src/**/*", "CHANGELOG.md"]
 
 [lib]
 doctest = false
