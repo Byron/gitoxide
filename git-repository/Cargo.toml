@@ -3,10 +3,10 @@ name = "git-repository"
 repository = "https://github.com/Byron/gitoxide"
 description = "Abstractions for git repositories"
 license = "MIT/Apache-2.0"
-version = "0.7.2"
+version = "0.8.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
-include = ["src/**/*", "CHANGELOG.md"]
+include = ["src/**/*", "CHANGELOG.md", "!**/assets/**/*"]
 
 [lib]
 doctest = false
