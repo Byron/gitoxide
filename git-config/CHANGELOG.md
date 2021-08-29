@@ -1,5 +1,9 @@
 # Changelog
 
+## `git-config` 0.1.5 (2021-08-06)
+
+- maintenance release
+
 ## `git-config` 0.1.2 (2021-08-06)
 
 ### Added

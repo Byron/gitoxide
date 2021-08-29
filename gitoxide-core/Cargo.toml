@@ -12,6 +12,7 @@ doctest = false
 test = false
 
 [features]
+default = []
 serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "git-protocol-for-configuration-only/serde1", "serde_json", "serde"]
 
 # async or blocking tooling
@@ -21,9 +22,6 @@ async-client = ["git-protocol-for-configuration-only/async-client", "git-reposit
 # tools
 organize = ["git-url", "jwalk"]
 estimate-hours = ["itertools", "rayon", "bstr", "fs-err"]
-
-[package.metadata.docs.rs]
-all-features = true
 
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
@@ -54,3 +52,6 @@ rayon = { version = "1.5.0", optional = true }
 itertools = { version = "0.10.1", optional = true }
 bstr = { version = "0.2.13", default-features = false, features = ["std", "unicode"], optional = true }
 fs-err = { version = "2.6.0", optional = true }
+
+[package.metadata.docs.rs]
+features = ["blocking-client", "organize", "estimate-hours", "serde1"]

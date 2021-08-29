@@ -61,3 +61,6 @@ async-std = { version = "1.9.0", features = ["attributes"] }
 maybe-async = "0.2.6"
 git-pack = { path = "../git-pack" }
 blocking = "1.0.2"
+
+[package.metadata.docs.rs]
+features = ["http-client-curl"]

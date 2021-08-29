@@ -8,7 +8,7 @@ authors = ["Edward Shen <code@eddie.sh>"]
 edition = "2018"
 keywords = ["git-config", "git", "config", "gitoxide"]
 categories = ["config", "parser-implementations"]
-include = ["src/**/*", "LICENSE-*", "README.md"]
+include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 
 [features]
 # serde = ["serde_crate"]
