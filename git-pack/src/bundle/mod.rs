@@ -29,8 +29,9 @@ pub mod write;
 mod verify {
     use std::sync::{atomic::AtomicBool, Arc};
 
-    use crate::Bundle;
     use git_features::progress::Progress;
+
+    use crate::Bundle;
 
     impl Bundle {
         /// Similar to [`crate::index::File::verify_integrity()`] but more convenient to call as the presence of the

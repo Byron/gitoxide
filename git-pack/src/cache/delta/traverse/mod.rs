@@ -9,8 +9,10 @@ use git_features::{
     progress::{self, Progress},
 };
 
-use crate::cache::delta::{Item, Tree};
-use crate::data::EntryRange;
+use crate::{
+    cache::delta::{Item, Tree},
+    data::EntryRange,
+};
 
 mod resolve;
 

@@ -1,8 +1,9 @@
-use crate::Bundle;
 use std::{
     convert::TryFrom,
     path::{Path, PathBuf},
 };
+
+use crate::Bundle;
 
 /// Returned by [`Bundle::at()`]
 #[derive(thiserror::Error, Debug)]

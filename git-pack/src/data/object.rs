@@ -1,7 +1,8 @@
 //! Contains a borrowed Object bound to a buffer holding its decompressed data.
 
-use crate::data::Object;
 use git_object::{BlobRef, CommitRef, CommitRefIter, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
+
+use crate::data::Object;
 
 impl<'a> Object<'a> {
     /// Constructs a new data object from `kind` and `data`.

@@ -20,8 +20,9 @@ mod access {
 }
 
 pub mod from_path {
-    use crate::Path;
     use std::convert::TryFrom;
+
+    use crate::Path;
 
     pub type Error = git_odb::linked::init::Error;
 
@@ -47,8 +48,9 @@ pub mod from_path {
 }
 
 pub mod init {
-    use quick_error::quick_error;
     use std::path::Path;
+
+    use quick_error::quick_error;
 
     quick_error! {
         #[derive(Debug)]
@@ -66,8 +68,9 @@ pub mod init {
         }
     }
 
-    use crate::Repository;
     use std::convert::TryInto;
+
+    use crate::Repository;
 
     impl Repository {
         /// Create a repository with work-tree within `directory`, creating intermediate directories as needed.
@@ -82,12 +85,11 @@ pub mod init {
 }
 
 pub mod discover {
-    use std::path::Path;
+    use std::{convert::TryInto, path::Path};
 
     use quick_error::quick_error;
 
     use crate::{path::discover, Repository};
-    use std::convert::TryInto;
 
     quick_error! {
         #[derive(Debug)]

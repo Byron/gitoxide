@@ -8,10 +8,11 @@ use std::{
 
 use git_features::{parallel, progress::Progress};
 
-use crate::cache::delta::traverse::Context;
-use crate::index::{self, util::index_entries_sorted_by_offset_ascending};
-
 use super::{Error, SafetyCheck};
+use crate::{
+    cache::delta::traverse::Context,
+    index::{self, util::index_entries_sorted_by_offset_ascending},
+};
 
 /// Traversal with index
 impl index::File {

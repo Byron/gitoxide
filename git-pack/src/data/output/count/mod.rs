@@ -1,6 +1,6 @@
-use crate::data;
-use crate::data::output::Count;
 use git_hash::ObjectId;
+
+use crate::{data, data::output::Count};
 
 /// Specifies how the pack location was handled during counting
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

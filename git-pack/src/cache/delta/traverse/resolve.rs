@@ -5,8 +5,10 @@ use git_features::{
     zlib,
 };
 
-use crate::cache::delta::traverse::{Context, Error};
-use crate::data::EntryRange;
+use crate::{
+    cache::delta::traverse::{Context, Error},
+    data::EntryRange,
+};
 
 pub(crate) fn deltas<T, F, P, MBFN, S, E>(
     nodes: crate::cache::delta::Chunk<'_, T>,

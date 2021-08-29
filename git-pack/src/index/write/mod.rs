@@ -3,8 +3,10 @@ use std::{convert::TryInto, io, sync::atomic::AtomicBool};
 pub use error::Error;
 use git_features::progress::{self, Progress};
 
-use crate::cache::delta::{traverse::Context, Tree};
-use crate::loose;
+use crate::{
+    cache::delta::{traverse::Context, Tree},
+    loose,
+};
 
 mod encode;
 mod error;

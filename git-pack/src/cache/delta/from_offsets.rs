@@ -8,8 +8,7 @@ use std::{
 
 use git_features::progress::{self, Progress};
 
-use crate::cache::delta::Tree;
-use crate::index::access::PackOffset;
+use crate::{cache::delta::Tree, index::access::PackOffset};
 
 /// Returned by [`Tree::from_offsets_in_pack()`]
 #[derive(thiserror::Error, Debug)]
