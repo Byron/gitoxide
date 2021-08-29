@@ -46,6 +46,13 @@
 //!   extension traits can't apply internally if if it is implemented, but must be part of the external interface. This is only
 //!   relevant for code within `git-repository`
 //!
+//! ### Terminology
+//!
+//! #### WorkingTree and WorkTree
+//!
+//! When reading the documentation of the canonical git-worktree program one gets the impression work tree and working tree are used
+//! interchangeably. We use the term _work tree_ only and try to do so consistently as its shorter and assumed to be the same.
+//!
 //! # Cargo-features
 //!
 //! ## With the optional "unstable" cargo feature
@@ -102,7 +109,6 @@ pub use git_tempfile as tempfile;
 pub use git_traverse as traverse;
 #[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url as url;
-pub use path::Path;
 
 pub mod interrupt;
 
@@ -122,6 +128,15 @@ pub mod init;
 pub mod path;
 ///
 pub mod repository;
+
+/// A repository path which either points to a work tree or the `.git` repository itself.
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum Path {
+    /// The currently checked out or nascent work tree of a git repository.
+    WorkTree(PathBuf),
+    /// The git repository itself
+    Repository(PathBuf),
+}
 
 /// A instance with access to everything a git repository entails, best imagined as container for _most_ for system resources required
 /// to interact with a `git` repository which are loaded in once the instance is created.
@@ -230,4 +245,9 @@ impl Kind {
 /// See [Repository::discover()].
 pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::discover::Error> {
     Repository::discover(directory)
+}
+
+/// See [Repository::init()].
+pub fn init(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::init::Error> {
+    Repository::init(directory)
 }

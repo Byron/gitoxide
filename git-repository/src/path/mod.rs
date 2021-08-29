@@ -1,17 +1,11 @@
 #![allow(missing_docs)]
 use std::path::PathBuf;
 
-use crate::Kind;
+use crate::{Kind, Path};
 
 pub mod discover;
 pub mod is_git;
 pub use is_git::{is_bare, is_git};
-
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub enum Path {
-    WorkTree(PathBuf),
-    Repository(PathBuf),
-}
 
 impl AsRef<std::path::Path> for Path {
     fn as_ref(&self) -> &std::path::Path {
@@ -40,6 +34,12 @@ impl Path {
         match self {
             Path::WorkTree(path) => path.join(".git"),
             Path::Repository(path) => path,
+        }
+    }
+    pub fn into_repository_and_work_tree_directories(self) -> (PathBuf, Option<PathBuf>) {
+        match self {
+            crate::Path::WorkTree(working_tree) => (working_tree.join(".git"), Some(working_tree)),
+            crate::Path::Repository(repository) => (repository, None),
         }
     }
 }

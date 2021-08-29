@@ -1222,6 +1222,7 @@ dependencies = [
  "parking_lot",
  "quick-error",
  "signal-hook",
+ "tempfile",
 ]
 
 [[package]]

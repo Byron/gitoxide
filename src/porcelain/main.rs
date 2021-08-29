@@ -34,7 +34,7 @@ pub fn main() -> Result<()> {
             crate::shared::STANDARD_RANGE,
             move |_progress, _out, _err| panic!("something went very wrong"),
         ),
-        Subcommands::Init { directory } => core::repository::init(directory),
+        Subcommands::Init { directory } => core::repository::init(directory).map(|_| ()),
         Subcommands::Tools(tool) => match tool {
             ToolCommands::EstimateHours(EstimateHours {
                 working_dir,

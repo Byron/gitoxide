@@ -19,17 +19,64 @@ mod access {
     }
 }
 
-mod init {
+pub mod from_path {
+    use crate::Path;
+    use std::convert::TryFrom;
+
+    pub type Error = git_odb::linked::init::Error;
+
+    impl TryFrom<crate::Path> for crate::Repository {
+        type Error = Error;
+
+        fn try_from(value: Path) -> Result<Self, Self::Error> {
+            let (git_dir, working_tree) = value.into_repository_and_work_tree_directories();
+            Ok(crate::Repository {
+                odb: git_odb::linked::Store::at(git_dir.join("objects"))?,
+                refs: git_ref::file::Store::at(
+                    git_dir,
+                    if working_tree.is_none() {
+                        git_ref::file::WriteReflog::Disable
+                    } else {
+                        git_ref::file::WriteReflog::Normal
+                    },
+                ),
+                work_tree: working_tree,
+            })
+        }
+    }
+}
+
+pub mod init {
+    use quick_error::quick_error;
     use std::path::Path;
 
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            Init(err: crate::init::Error) {
+                display("Failed to initialize a new repository")
+                from()
+                source(err)
+            }
+            ObjectStoreInitialization(err: git_odb::linked::init::Error) {
+                display("Could not initialize the object database")
+                from()
+                source(err)
+            }
+        }
+    }
+
     use crate::Repository;
+    use std::convert::TryInto;
 
     impl Repository {
-        /// Really just a sketch at this point to help guide the API.
-        pub fn create_and_init(directory: impl AsRef<Path>) -> Result<Self, crate::init::Error> {
-            // TODO: proper error
-            crate::init::repository(directory.as_ref())?;
-            Ok(Repository::discover(directory).unwrap()) // TODO: a specialized method without discovery
+        /// Create a repository with work-tree within `directory`, creating intermediate directories as needed.
+        ///
+        /// Fails without action if there is already a `.git` repository inside of `directory`, but
+        /// won't mind if the `directory` otherwise is non-empty.
+        pub fn init(directory: impl AsRef<Path>) -> Result<Self, Error> {
+            let path = crate::init::into(directory.as_ref())?;
+            Ok(path.try_into()?)
         }
     }
 }
@@ -40,6 +87,7 @@ pub mod discover {
     use quick_error::quick_error;
 
     use crate::{path::discover, Repository};
+    use std::convert::TryInto;
 
     quick_error! {
         #[derive(Debug)]
@@ -60,22 +108,7 @@ pub mod discover {
     impl Repository {
         pub fn discover(directory: impl AsRef<Path>) -> Result<Self, Error> {
             let path = discover::existing(directory)?;
-            let (git_dir, working_tree) = match path {
-                crate::Path::WorkTree(working_tree) => (working_tree.join(".git"), Some(working_tree)),
-                crate::Path::Repository(repository) => (repository, None),
-            };
-            Ok(Repository {
-                odb: git_odb::linked::Store::at(git_dir.join("objects"))?,
-                refs: git_ref::file::Store::at(
-                    git_dir,
-                    if working_tree.is_none() {
-                        git_ref::file::WriteReflog::Disable
-                    } else {
-                        git_ref::file::WriteReflog::Normal
-                    },
-                ),
-                work_tree: working_tree,
-            })
+            Ok(path.try_into()?)
         }
     }
 }

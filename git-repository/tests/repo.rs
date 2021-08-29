@@ -9,5 +9,6 @@ fn repo(name: &str) -> crate::Result<Repository> {
 
 mod access;
 mod discover;
+mod init;
 mod object;
 mod reference;

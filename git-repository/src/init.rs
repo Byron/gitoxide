@@ -1,4 +1,3 @@
-#![allow(missing_docs)]
 use std::{
     fs::{self, OpenOptions},
     io::Write,
@@ -8,7 +7,9 @@ use std::{
 use quick_error::quick_error;
 
 quick_error! {
+    /// The error used in [`into()`].
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         IoOpen(err: std::io::Error, path: PathBuf) {
             display("Could not open data at '{}'", path.display())
@@ -95,22 +96,24 @@ fn create_dir(p: &Path) -> Result<(), Error> {
     fs::create_dir_all(p).map_err(|e| Error::CreateDirectory(e, p.to_owned()))
 }
 
-pub fn repository(directory: impl Into<PathBuf>) -> Result<(), Error> {
-    let mut cursor = directory.into();
-    cursor.push(GIT_DIR_NAME);
+/// Create a new `.git` repository within the possibly non-existing `directory`
+/// and return its path.
+pub fn into(directory: impl Into<PathBuf>) -> Result<crate::Path, Error> {
+    let mut dot_git = directory.into();
+    dot_git.push(GIT_DIR_NAME);
 
-    if cursor.is_dir() {
-        return Err(Error::DirectoryExists(cursor));
+    if dot_git.is_dir() {
+        return Err(Error::DirectoryExists(dot_git));
     }
-    create_dir(&cursor)?;
+    create_dir(&dot_git)?;
 
     {
-        let mut cursor = NewDir(&mut cursor).at("info")?;
+        let mut cursor = NewDir(&mut dot_git).at("info")?;
         write_file(TPL_INFO_EXCLUDE, PathCursor(cursor.as_mut()).at("exclude"))?;
     }
 
     {
-        let mut cursor = NewDir(&mut cursor).at("hooks")?;
+        let mut cursor = NewDir(&mut dot_git).at("hooks")?;
         for (tpl, filename) in &[
             (TPL_HOOKS_UPDATE, "update.sample"),
             (TPL_HOOKS_PREPARE_COMMIT_MSG, "prepare-commit-msg.sample"),
@@ -130,13 +133,13 @@ pub fn repository(directory: impl Into<PathBuf>) -> Result<(), Error> {
     }
 
     {
-        let mut cursor = NewDir(&mut cursor).at("objects")?;
+        let mut cursor = NewDir(&mut dot_git).at("objects")?;
         create_dir(PathCursor(cursor.as_mut()).at("info"))?;
         create_dir(PathCursor(cursor.as_mut()).at("pack"))?;
     }
 
     {
-        let mut cursor = NewDir(&mut cursor).at("refs")?;
+        let mut cursor = NewDir(&mut dot_git).at("refs")?;
         create_dir(PathCursor(cursor.as_mut()).at("heads"))?;
         create_dir(PathCursor(cursor.as_mut()).at("tags"))?;
     }
@@ -146,8 +149,8 @@ pub fn repository(directory: impl Into<PathBuf>) -> Result<(), Error> {
         (TPL_DESCRIPTION, "description"),
         (TPL_CONFIG, "config"),
     ] {
-        write_file(tpl, PathCursor(&mut cursor).at(filename))?;
+        write_file(tpl, PathCursor(&mut dot_git).at(filename))?;
     }
 
-    Ok(())
+    Ok(crate::Path::from_dot_git_dir(dot_git, crate::Kind::WorkTree))
 }
