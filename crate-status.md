@@ -11,6 +11,7 @@
 ### git-object
 * *decode (zero-copy)* borrowed objects
     * [x] commit
+      * [ ] parse [trailers](https://git-scm.com/docs/git-interpret-trailers)
     * [x] tree
 * encode owned objects
     * [x] commit
@@ -251,6 +252,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
   * [x] access to refs and objects
   * traverse 
       * [x] commit graphs
+      * [ ] make [git-notes](https://git-scm.com/docs/git-notes) accessible
       * [x] tree entries
   * diffs/changes
      * [x] tree with tree
