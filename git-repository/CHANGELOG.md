@@ -8,7 +8,7 @@
 #### Breaking
 - **renames / moves**
     - `path::Path` to `Path`
-    - `init::repository()` -> `init::into()`
+    - `init::repository()` -> `path::create::into()`
 
 ### v0.8.1 (2021-08-28)
 

@@ -1,11 +1,15 @@
 #![allow(missing_docs)]
+
 use std::path::PathBuf;
+
+pub use is_git::{is_bare, is_git};
 
 use crate::{Kind, Path};
 
+///
+pub mod create;
 pub mod discover;
 pub mod is_git;
-pub use is_git::{is_bare, is_git};
 
 impl AsRef<std::path::Path> for Path {
     fn as_ref(&self) -> &std::path::Path {

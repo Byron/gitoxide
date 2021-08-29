@@ -55,7 +55,7 @@ pub mod init {
     quick_error! {
         #[derive(Debug)]
         pub enum Error {
-            Init(err: crate::init::Error) {
+            Init(err: crate::path::create::Error) {
                 display("Failed to initialize a new repository")
                 from()
                 source(err)
@@ -78,7 +78,7 @@ pub mod init {
         /// Fails without action if there is already a `.git` repository inside of `directory`, but
         /// won't mind if the `directory` otherwise is non-empty.
         pub fn init(directory: impl AsRef<Path>) -> Result<Self, Error> {
-            let path = crate::init::into(directory.as_ref())?;
+            let path = crate::path::create::into(directory.as_ref())?;
             Ok(path.try_into()?)
         }
     }

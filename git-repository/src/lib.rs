@@ -122,12 +122,10 @@ pub mod prelude {
 }
 
 ///
-pub mod init;
-
-///
 pub mod path;
-///
-pub mod repository;
+
+mod repository;
+pub use repository::{discover, from_path, init};
 
 /// A repository path which either points to a work tree or the `.git` repository itself.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
