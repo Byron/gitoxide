@@ -125,7 +125,7 @@ pub mod prelude {
 pub mod path;
 
 mod repository;
-pub use repository::{discover, from_path, init};
+pub use repository::{discover, from_path, init, open};
 
 /// A repository path which either points to a work tree or the `.git` repository itself.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -152,11 +152,12 @@ pub struct Repository {
     pub odb: git_odb::linked::Store,
     #[cfg(not(feature = "unstable"))]
     pub(crate) odb: git_odb::linked::Store,
-    /// TODO: git-config should be here - it's read a lot but not written much in must applications, so shouldn't be in `State`.
-    ///       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
-    ///       packs are refreshed. This would be `git_config::fs::Config` when ready.
     /// The path to the worktree at which to find checked out files
     pub work_tree: Option<PathBuf>,
+    // TODO: git-config should be here - it's read a lot but not written much in must applications, so shouldn't be in `State`.
+    //       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
+    //       packs are refreshed. This would be `git_config::fs::Config` when ready.
+    // pub(crate) config: git_config::file::GitConfig<'static>,
 }
 
 /// A handle to a `Repository` for use when the repository needs to be shared, providing state for one `ObjectRef` at a time, , created with [`Repository::into_easy()`].

@@ -24,27 +24,12 @@ pub mod from_path {
 
     use crate::Path;
 
-    pub type Error = git_odb::linked::init::Error;
-
     impl TryFrom<crate::Path> for crate::Repository {
-        type Error = Error;
+        type Error = crate::open::Error;
 
-        // TODO: Don't use this for cases where input paths are given to save on IOPs, there may be
-        //       duplicate file checks here.
         fn try_from(value: Path) -> Result<Self, Self::Error> {
-            let (git_dir, working_tree) = value.into_repository_and_work_tree_directories();
-            Ok(crate::Repository {
-                odb: git_odb::linked::Store::at(git_dir.join("objects"))?,
-                refs: git_ref::file::Store::at(
-                    git_dir,
-                    if working_tree.is_none() {
-                        git_ref::file::WriteReflog::Disable
-                    } else {
-                        git_ref::file::WriteReflog::Normal
-                    },
-                ),
-                work_tree: working_tree,
-            })
+            let (git_dir, worktree_dir) = value.into_repository_and_work_tree_directories();
+            crate::Repository::open_from_paths(git_dir, worktree_dir)
         }
     }
 }
@@ -52,12 +37,18 @@ pub mod from_path {
 pub mod open {
     use crate::Repository;
 
+    use git_config::values::Boolean;
     use quick_error::quick_error;
-    use std::convert::TryInto;
+    use std::path::PathBuf;
 
     quick_error! {
         #[derive(Debug)]
         pub enum Error {
+            Config(err: git_config::parser::ParserOrIoError<'static>) {
+                display("The git configuration file could not be read")
+                from()
+                source(err)
+            }
             NotARepository(err: crate::path::is_git::Error) {
                 display("The provided path doesn't appear to be a git repository")
                 from()
@@ -81,7 +72,36 @@ pub mod open {
                     crate::path::is_git(&git_dir).map(|kind| (git_dir, kind))?
                 }
             };
-            crate::Path::from_dot_git_dir(path, kind).try_into().map_err(Into::into)
+            let (git_dir, worktree_dir) =
+                crate::Path::from_dot_git_dir(path, kind).into_repository_and_work_tree_directories();
+            Repository::open_from_paths(git_dir, worktree_dir)
+        }
+
+        pub(in crate::repository) fn open_from_paths(
+            git_dir: PathBuf,
+            mut worktree_dir: Option<PathBuf>,
+        ) -> Result<Self, Error> {
+            if worktree_dir.is_none() {
+                let config = git_config::file::GitConfig::open(git_dir.join("config"))?;
+                let is_bare = config
+                    .value::<Boolean<'_>>("core", None, "bare")
+                    .map_or(false, |b| matches!(b, Boolean::True(_)));
+                if !is_bare {
+                    worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());
+                }
+            }
+            Ok(crate::Repository {
+                odb: git_odb::linked::Store::at(git_dir.join("objects"))?,
+                refs: git_ref::file::Store::at(
+                    git_dir,
+                    if worktree_dir.is_none() {
+                        git_ref::file::WriteReflog::Disable
+                    } else {
+                        git_ref::file::WriteReflog::Normal
+                    },
+                ),
+                work_tree: worktree_dir,
+            })
         }
     }
 }
@@ -99,8 +119,8 @@ pub mod init {
                 from()
                 source(err)
             }
-            ObjectStoreInitialization(err: git_odb::linked::init::Error) {
-                display("Could not initialize the object database")
+            Open(err: crate::open::Error) {
+                display("Could not open repository")
                 from()
                 source(err)
             }
@@ -138,8 +158,8 @@ pub mod discover {
                 from()
                 source(err)
             }
-            ObjectStoreInitialization(err: git_odb::linked::init::Error) {
-                display("Could not initialize the object database")
+            Open(err: crate::open::Error) {
+                display("Could not open repository")
                 from()
                 source(err)
             }

@@ -1205,6 +1205,7 @@ version = "0.8.1"
 dependencies = [
  "anyhow",
  "git-actor",
+ "git-config",
  "git-diff",
  "git-features",
  "git-hash",
