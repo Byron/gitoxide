@@ -1221,7 +1221,6 @@ dependencies = [
  "git-url",
  "git-validate",
  "parking_lot",
- "quick-error",
  "signal-hook",
  "tempfile",
  "thiserror",

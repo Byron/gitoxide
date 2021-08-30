@@ -21,10 +21,10 @@ mod bare {
         let tmp = tempfile::tempdir().unwrap();
         std::fs::write(tmp.path().join("existing.txt"), b"I was here before you").unwrap();
 
-        assert_eq!(
-            git_repository::init_bare(tmp.path()).unwrap_err().to_string(),
-            "Failed to initialize a new repository"
-        );
+        assert!(git_repository::init_bare(tmp.path())
+            .unwrap_err()
+            .to_string()
+            .starts_with("Refusing to initialize the non-empty directory as"),);
     }
 }
 

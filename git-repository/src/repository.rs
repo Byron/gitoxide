@@ -95,29 +95,17 @@ pub mod open {
 }
 
 pub mod init {
+    use crate::Repository;
+    use std::convert::TryInto;
     use std::path::Path;
 
-    use quick_error::quick_error;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Init(err: crate::path::create::Error) {
-                display("Failed to initialize a new repository")
-                from()
-                source(err)
-            }
-            Open(err: crate::open::Error) {
-                display("Could not open repository")
-                from()
-                source(err)
-            }
-        }
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        Init(#[from] crate::path::create::Error),
+        #[error(transparent)]
+        Open(#[from] crate::open::Error),
     }
-
-    use std::convert::TryInto;
-
-    use crate::Repository;
 
     impl Repository {
         /// Create a repository with work-tree within `directory`, creating intermediate directories as needed.
@@ -132,26 +120,15 @@ pub mod init {
 }
 
 pub mod discover {
+    use crate::{path::discover, Repository};
     use std::{convert::TryInto, path::Path};
 
-    use quick_error::quick_error;
-
-    use crate::{path::discover, Repository};
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Discover(err: discover::existing::Error) {
-                display("Could not find a valid git repository directory")
-                from()
-                source(err)
-            }
-            Open(err: crate::open::Error) {
-                display("Could not open repository")
-                from()
-                source(err)
-            }
-        }
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        Discover(#[from] discover::existing::Error),
+        #[error(transparent)]
+        Open(#[from] crate::open::Error),
     }
 
     impl Repository {

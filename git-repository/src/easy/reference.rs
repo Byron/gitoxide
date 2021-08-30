@@ -137,52 +137,31 @@ where
 
 pub mod find {
     use git_ref as refs;
-    use quick_error::quick_error;
 
     use crate::easy;
 
     pub mod existing {
-        use quick_error::quick_error;
 
         use crate::easy::reference::find;
 
-        quick_error! {
-            #[derive(Debug)]
-            pub enum Error {
-                Find(err: find::Error) {
-                    display("An error occurred when trying to find a reference")
-                    from()
-                    source(err)
-                }
-                NotFound {
-                    display("The reference did not exist even though that was expected")
-                }
-            }
+        #[derive(Debug, thiserror::Error)]
+        pub enum Error {
+            #[error(transparent)]
+            Find(#[from] find::Error),
+            #[error("The reference did not exist even though that was expected")]
+            NotFound,
         }
     }
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Find(err: refs::file::find::Error) {
-                display("An error occurred when trying to find a reference")
-                from()
-                source(err)
-            }
-            PackedRefsOpen(err: refs::packed::buffer::open::Error) {
-                display("The packed-refs file could not be opened")
-                from()
-                source(err)
-            }
-            BorrowState(err: easy::borrow::state::Error) {
-                display("BUG: Part of interior state could not be borrowed.")
-                from()
-                source(err)
-            }
-            BorrowRepo(err: easy::borrow::repo::Error) {
-                display("BUG: The repository could not be borrowed")
-                from()
-            }
-        }
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        Find(#[from] refs::file::find::Error),
+        #[error(transparent)]
+        PackedRefsOpen(#[from] refs::packed::buffer::open::Error),
+        #[error("BUG: Part of interior state could not be borrowed.")]
+        BorrowState(#[from] easy::borrow::state::Error),
+        #[error("BUG: The repository could not be borrowed")]
+        BorrowRepo(#[from] easy::borrow::repo::Error),
     }
 }

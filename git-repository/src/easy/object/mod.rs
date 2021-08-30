@@ -77,31 +77,20 @@ pub mod find {
 
     pub mod existing {
         use git_odb as odb;
-        use quick_error::quick_error;
 
         use crate::easy;
 
-        quick_error! {
-            #[derive(Debug)]
-            pub enum Error {
-                FindExisting(err: OdbError) {
-                    display("Could not find a supposedly existing object")
-                    from()
-                    source(err)
-                }
-                BorrowState(err: easy::borrow::state::Error) {
-                    display("BUG: Part of interior state could not be borrowed.")
-                    from()
-                    source(err)
-                }
-                BorrowRepo(err: easy::borrow::repo::Error) {
-                    display("BUG: The repository could not be borrowed")
-                    from()
-                }
-            }
-        }
-
         pub(crate) type OdbError = odb::pack::find::existing::Error<odb::compound::find::Error>;
+
+        #[derive(Debug, thiserror::Error)]
+        pub enum Error {
+            #[error(transparent)]
+            FindExisting(#[from] OdbError),
+            #[error("BUG: Part of interior state could not be borrowed.")]
+            BorrowState(#[from] easy::borrow::state::Error),
+            #[error("BUG: The repository could not be borrowed")]
+            BorrowRepo(#[from] easy::borrow::repo::Error),
+        }
     }
 }
 
@@ -186,22 +175,18 @@ pub mod peel_to_kind {
     }
 
     mod error {
-        use quick_error::quick_error;
 
         use crate::easy::{object, object::find};
 
-        quick_error! {
-            #[derive(Debug)]
-            pub enum Error {
-                FindExisting(err: find::existing::Error) {
-                    display("A non existing object was encountered during object peeling")
-                    from()
-                    source(err)
-                }
-                NotFound{actual: object::Kind, expected: object::Kind} {
-                    display("Last encountered object kind was {} while trying to peel to {}", actual, expected)
-                }
-            }
+        #[derive(Debug, thiserror::Error)]
+        pub enum Error {
+            #[error(transparent)]
+            FindExisting(#[from] find::existing::Error),
+            #[error("Last encountered object kind was {} while trying to peel to {}", .actual, .expected)]
+            NotFound {
+                actual: object::Kind,
+                expected: object::Kind,
+            },
         }
     }
 }
