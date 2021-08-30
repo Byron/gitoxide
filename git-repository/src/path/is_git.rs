@@ -29,7 +29,8 @@ pub fn is_bare(git_dir: impl AsRef<Path>) -> bool {
     !git_dir.as_ref().join("index").exists()
 }
 
-/// What constitutes a valid git repository, and what's yet to be implemented.
+/// What constitutes a valid git repository, and what's yet to be implemented, returning the guessed repository kind
+/// purely based on the presence of files. Note that the git-config ultimately decides what's bare.
 ///
 /// * [x] a valid head
 /// * [ ] git common directory

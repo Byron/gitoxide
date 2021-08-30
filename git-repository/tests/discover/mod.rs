@@ -32,7 +32,7 @@ mod existing {
         let path = git_repository::path::discover::existing(&dir)?;
         assert_eq!(path.kind(), Kind::WorkTree);
         assert_eq!(
-            path.into_repository_directory(),
+            path.into_repository_and_work_tree_directories().0,
             dir,
             "the .git dir is directly returned if valid"
         );

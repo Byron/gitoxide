@@ -249,3 +249,8 @@ pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, re
 pub fn init(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::init::Error> {
     Repository::init(directory)
 }
+
+/// See [Repository::open()].
+pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<Repository, repository::open::Error> {
+    Repository::open(directory)
+}

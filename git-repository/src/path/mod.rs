@@ -34,12 +34,6 @@ impl Path {
         }
     }
 
-    pub fn into_repository_directory(self) -> PathBuf {
-        match self {
-            Path::WorkTree(path) => path.join(".git"),
-            Path::Repository(path) => path,
-        }
-    }
     pub fn into_repository_and_work_tree_directories(self) -> (PathBuf, Option<PathBuf>) {
         match self {
             crate::Path::WorkTree(working_tree) => (working_tree.join(".git"), Some(working_tree)),

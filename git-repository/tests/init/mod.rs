@@ -1,4 +1,5 @@
 #[test]
+#[ignore]
 fn init_into_empty_directory_creates_a_dot_git_dir() -> crate::Result {
     let tmp = tempfile::tempdir()?;
     let repo = git_repository::init(tmp.path())?;
@@ -12,6 +13,8 @@ fn init_into_empty_directory_creates_a_dot_git_dir() -> crate::Result {
         tmp.path().join(".git"),
         "there is a work tree by default"
     );
+    assert_eq!(git_repository::open(repo.git_dir())?, repo);
+    git_repository::open(repo.work_tree.expect("non-bare repo"))?;
     Ok(())
 }
 

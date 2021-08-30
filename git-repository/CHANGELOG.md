@@ -4,6 +4,8 @@
 
 - `init()`
 - `Repository::init()`
+- `open()`
+- `Repository::open()`
 
 #### Breaking
 - **renames / moves**

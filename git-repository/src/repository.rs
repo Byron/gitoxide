@@ -29,6 +29,8 @@ pub mod from_path {
     impl TryFrom<crate::Path> for crate::Repository {
         type Error = Error;
 
+        // TODO: Don't use this for cases where input paths are given to save on IOPs, there may be
+        //       duplicate file checks here.
         fn try_from(value: Path) -> Result<Self, Self::Error> {
             let (git_dir, working_tree) = value.into_repository_and_work_tree_directories();
             Ok(crate::Repository {
@@ -43,6 +45,43 @@ pub mod from_path {
                 ),
                 work_tree: working_tree,
             })
+        }
+    }
+}
+
+pub mod open {
+    use crate::Repository;
+
+    use quick_error::quick_error;
+    use std::convert::TryInto;
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            NotARepository(err: crate::path::is_git::Error) {
+                display("The provided path doesn't appear to be a git repository")
+                from()
+                source(err)
+            }
+            ObjectStoreInitialization(err: git_odb::linked::init::Error) {
+                display("Could not initialize the object database")
+                from()
+                source(err)
+            }
+        }
+    }
+
+    impl Repository {
+        pub fn open(path: impl Into<std::path::PathBuf>) -> Result<Self, Error> {
+            let path = path.into();
+            let (path, kind) = match crate::path::is_git(&path) {
+                Ok(kind) => (path, kind),
+                Err(_) => {
+                    let git_dir = path.join(".git");
+                    crate::path::is_git(&git_dir).map(|kind| (git_dir, kind))?
+                }
+            };
+            crate::Path::from_dot_git_dir(path, kind).try_into().map_err(Into::into)
         }
     }
 }
@@ -111,6 +150,27 @@ pub mod discover {
         pub fn discover(directory: impl AsRef<Path>) -> Result<Self, Error> {
             let path = discover::existing(directory)?;
             Ok(path.try_into()?)
+        }
+    }
+}
+
+mod impls {
+    use crate::Repository;
+
+    impl std::fmt::Debug for Repository {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(
+                f,
+                "Repository(git = '{}', working_tree: {:?}",
+                self.git_dir().display(),
+                self.work_tree
+            )
+        }
+    }
+
+    impl PartialEq<Repository> for Repository {
+        fn eq(&self, other: &Repository) -> bool {
+            self.git_dir() == other.git_dir() && self.work_tree == other.work_tree
         }
     }
 }
