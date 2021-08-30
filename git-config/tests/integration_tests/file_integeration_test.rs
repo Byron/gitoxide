@@ -4,15 +4,14 @@ use git_config::{file::GitConfig, values::*};
 use std::path::Path;
 
 #[test]
-fn parse_config_with_windows_line_endings_successfully() {
-    GitConfig::open(Path::new("tests").join("fixtures").join("repo-config.crlf"))
-        .map_err(|err| err.to_string())
-        .unwrap();
+fn parse_config_with_windows_line_endings_successfully() -> crate::Result {
+    GitConfig::open(Path::new("tests").join("fixtures").join("repo-config.crlf"))?;
+    Ok(())
 }
 
 /// Asserts we can cast into all variants of our type
 #[test]
-fn get_value_for_all_provided_values() -> Result<(), Box<dyn std::error::Error>> {
+fn get_value_for_all_provided_values() -> crate::Result {
     let config = r#"
         [core]
             bool-explicit = false
@@ -80,7 +79,7 @@ fn get_value_for_all_provided_values() -> Result<(), Box<dyn std::error::Error>>
 /// There was a regression where lookup would fail because we only checked the
 /// last section entry for any given section and subsection
 #[test]
-fn get_value_looks_up_all_sections_before_failing() -> Result<(), Box<dyn std::error::Error>> {
+fn get_value_looks_up_all_sections_before_failing() -> crate::Result {
     let config = r#"
         [core]
             bool-explicit = false
@@ -106,7 +105,7 @@ fn get_value_looks_up_all_sections_before_failing() -> Result<(), Box<dyn std::e
 }
 
 #[test]
-fn section_names_are_case_insensitive() -> Result<(), Box<dyn std::error::Error>> {
+fn section_names_are_case_insensitive() -> crate::Result {
     let config = "[core] bool-implicit";
     let file = GitConfig::try_from(config)?;
     assert!(file.value::<Boolean>("core", None, "bool-implicit").is_ok());
@@ -119,7 +118,7 @@ fn section_names_are_case_insensitive() -> Result<(), Box<dyn std::error::Error>
 }
 
 #[test]
-fn value_names_are_case_insensitive() -> Result<(), Box<dyn std::error::Error>> {
+fn value_names_are_case_insensitive() -> crate::Result {
     let config = "[core]
         a = true
         A = false";

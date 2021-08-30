@@ -4,5 +4,7 @@
 // TL;DR single mod makes integration tests faster to compile, test, and with
 // less build artifacts.
 
+type Result = std::result::Result<(), Box<dyn std::error::Error>>;
+
 mod file_integeration_test;
 mod parser_integration_tests;

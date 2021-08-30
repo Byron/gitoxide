@@ -211,9 +211,18 @@ fn newline_events_are_merged() {
 #[test]
 fn error() {
     let input = "[core] a=b\n 4a=3";
-    println!("{}", parse_from_str(input).unwrap_err());
+    assert_eq!(
+        parse_from_str(input).unwrap_err().to_string(),
+        "Got an unexpected token on line 2 while trying to parse a config name: '4a=3'"
+    );
     let input = "[core] a=b\n =3";
-    println!("{}", parse_from_str(input).unwrap_err());
+    assert_eq!(
+        parse_from_str(input).unwrap_err().to_string(),
+        "Got an unexpected token on line 2 while trying to parse a config name: '=3'"
+    );
     let input = "[core";
-    println!("{}", parse_from_str(input).unwrap_err());
+    assert_eq!(
+        parse_from_str(input).unwrap_err().to_string(),
+        "Got an unexpected token on line 1 while trying to parse a section header: '[core'"
+    );
 }
