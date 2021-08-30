@@ -1367,7 +1367,7 @@ fn take_spaces(i: &[u8]) -> IResult<&[u8], &str> {
 
 fn take_newline(i: &[u8]) -> IResult<&[u8], (&str, usize)> {
     let mut counter = 0;
-    let (i, v) = take_while(|c| (c as char).is_ascii() && is_newline(c))(i)?;
+    let (i, v) = take_while(|c| (c as char).is_ascii() && (c == b'\r' || is_newline(c)))(i)?;
     counter += v.len();
     if v.is_empty() {
         Err(nom::Err::Error(NomError {

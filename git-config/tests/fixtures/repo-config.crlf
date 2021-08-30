@@ -1,0 +1,14 @@
+; hello
+# world
+
+[core]
+	repositoryformatversion = 0
+	bare = true
+[other]
+	repositoryformatversion = 0
+
+	bare = true
+
+# before section with newline
+[foo]
+	repositoryformatversion = 0

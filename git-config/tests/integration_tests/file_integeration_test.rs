@@ -1,6 +1,14 @@
 use std::{borrow::Cow, convert::TryFrom};
 
 use git_config::{file::GitConfig, values::*};
+use std::path::Path;
+
+#[test]
+fn parse_config_with_windows_line_endings_successfully() {
+    GitConfig::open(Path::new("tests").join("fixtures").join("repo-config.crlf"))
+        .map_err(|err| err.to_string())
+        .unwrap();
+}
 
 /// Asserts we can cast into all variants of our type
 #[test]
