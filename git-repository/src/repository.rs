@@ -35,10 +35,11 @@ pub mod from_path {
 }
 
 pub mod open {
-    use crate::Repository;
+    use std::path::PathBuf;
 
     use git_config::values::Boolean;
-    use std::path::PathBuf;
+
+    use crate::Repository;
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
@@ -95,9 +96,9 @@ pub mod open {
 }
 
 pub mod init {
+    use std::{convert::TryInto, path::Path};
+
     use crate::Repository;
-    use std::convert::TryInto;
-    use std::path::Path;
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
@@ -120,8 +121,9 @@ pub mod init {
 }
 
 pub mod discover {
-    use crate::{path::discover, Repository};
     use std::{convert::TryInto, path::Path};
+
+    use crate::{path::discover, Repository};
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {

@@ -1,7 +1,6 @@
-use std::{borrow::Cow, convert::TryFrom};
+use std::{borrow::Cow, convert::TryFrom, path::Path};
 
 use git_config::{file::GitConfig, values::*};
-use std::path::Path;
 
 #[test]
 fn parse_config_with_windows_line_endings_successfully() -> crate::Result {
