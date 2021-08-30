@@ -38,28 +38,16 @@ pub mod open {
     use crate::Repository;
 
     use git_config::values::Boolean;
-    use quick_error::quick_error;
     use std::path::PathBuf;
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Config(err: git_config::parser::ParserOrIoError<'static>) {
-                display("The git configuration file could not be read")
-                from()
-                source(err)
-            }
-            NotARepository(err: crate::path::is_git::Error) {
-                display("The provided path doesn't appear to be a git repository")
-                from()
-                source(err)
-            }
-            ObjectStoreInitialization(err: git_odb::linked::init::Error) {
-                display("Could not initialize the object database")
-                from()
-                source(err)
-            }
-        }
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        Config(#[from] git_config::parser::ParserOrIoError<'static>),
+        #[error(transparent)]
+        NotARepository(#[from] crate::path::is_git::Error),
+        #[error(transparent)]
+        ObjectStoreInitialization(#[from] git_odb::linked::init::Error),
     }
 
     impl Repository {

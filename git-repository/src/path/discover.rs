@@ -8,18 +8,12 @@ use crate::path;
 pub mod existing {
     use std::path::PathBuf;
 
-    use quick_error::quick_error;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            InaccessibleDirectory(path: PathBuf) {
-                display("Failed to access a directory, or path is not a direectory")
-            }
-            NoGitRepository(path: PathBuf) {
-                display("Could find a git repository in '{}' or in any of its parents", path.display())
-            }
-        }
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error("Failed to access a directory, or path is not a directory: '{}'", .path.display())]
+        InaccessibleDirectory { path: PathBuf },
+        #[error("Could find a git repository in '{}' or in any of its parents", .path.display())]
+        NoGitRepository { path: PathBuf },
     }
 }
 
@@ -30,10 +24,13 @@ pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, existing::Er
     // us the parent directory. (`Path::parent` just strips off the last
     // path component, which means it will not do what you expect when
     // working with paths paths that contain '..'.)
-    let directory = maybe_canonicalize(directory.as_ref())
-        .map_err(|_| existing::Error::InaccessibleDirectory(directory.as_ref().into()))?;
+    let directory = maybe_canonicalize(directory.as_ref()).map_err(|_| existing::Error::InaccessibleDirectory {
+        path: directory.as_ref().into(),
+    })?;
     if !directory.is_dir() {
-        return Err(existing::Error::InaccessibleDirectory(directory.into_owned()));
+        return Err(existing::Error::InaccessibleDirectory {
+            path: directory.into_owned(),
+        });
     }
 
     let mut cursor: &Path = &directory;
@@ -47,7 +44,11 @@ pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, existing::Er
         }
         match cursor.parent() {
             Some(parent) => cursor = parent,
-            None => break Err(existing::Error::NoGitRepository(directory.into_owned())),
+            None => {
+                break Err(existing::Error::NoGitRepository {
+                    path: directory.into_owned(),
+                })
+            }
         }
     }
 }

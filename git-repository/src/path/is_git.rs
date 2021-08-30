@@ -1,25 +1,15 @@
 use std::path::{Path, PathBuf};
 
-use quick_error::quick_error;
-
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        FindHeadRef(err: git_ref::file::find::existing::Error) {
-            display("Could not find a valid HEAD reference")
-            from()
-            source(err)
-        }
-        MisplacedHead(name: git_object::bstr::BString) {
-            display("Expected HEAD at '.git/HEAD', got '.git/{}'", name)
-        }
-        MissingObjectsDirectory(missing: PathBuf) {
-            display("Expected an objects directory at '{}'", missing.display())
-        }
-        MissingRefsDirectory(missing: PathBuf) {
-            display("Expected a refs directory at '{}'", missing.display())
-        }
-    }
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Could not find a valid HEAD reference")]
+    FindHeadRef(#[from] git_ref::file::find::existing::Error),
+    #[error("Expected HEAD at '.git/HEAD', got '.git/{}'", .name)]
+    MisplacedHead { name: git_object::bstr::BString },
+    #[error("Expected an objects directory at '{}'", .missing.display())]
+    MissingObjectsDirectory { missing: PathBuf },
+    #[error("Expected a refs directory at '{}'", .missing.display())]
+    MissingRefsDirectory { missing: PathBuf },
 }
 
 /// Returns true if the given `git_dir` seems to be a bare repository.
@@ -45,7 +35,9 @@ pub fn is_git(git_dir: impl AsRef<Path>) -> Result<crate::Kind, Error> {
         let refs = git_ref::file::Store::at(&dot_git, Default::default());
         let head = refs.find_loose("HEAD")?;
         if head.name.as_bstr() != "HEAD" {
-            return Err(Error::MisplacedHead(head.name.into_inner()));
+            return Err(Error::MisplacedHead {
+                name: head.name.into_inner(),
+            });
         }
     }
 
@@ -54,13 +46,13 @@ pub fn is_git(git_dir: impl AsRef<Path>) -> Result<crate::Kind, Error> {
             .map(PathBuf::from)
             .unwrap_or_else(|_| dot_git.join("objects"));
         if !objects_path.is_dir() {
-            return Err(Error::MissingObjectsDirectory(objects_path));
+            return Err(Error::MissingObjectsDirectory { missing: objects_path });
         }
     }
     {
         let refs_path = dot_git.join("refs");
         if !refs_path.is_dir() {
-            return Err(Error::MissingRefsDirectory(refs_path));
+            return Err(Error::MissingRefsDirectory { missing: refs_path });
         }
     }
 

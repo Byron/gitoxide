@@ -25,65 +25,37 @@ pub(crate) enum Backing {
 
 pub mod edit {
     use git_ref as refs;
-    use quick_error::quick_error;
 
     use crate::easy;
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            FileTransactionPrepare(err: refs::file::transaction::prepare::Error) {
-                display("Could not prepare the file transaction")
-                from()
-                source(err)
-            }
-            FileTransactionCommit(err: refs::file::transaction::commit::Error) {
-                display("Could not commit the file transaction")
-                from()
-                source(err)
-            }
-            NameValidation(err: git_validate::reference::name::Error) {
-                display("The reference name is invalid")
-                from()
-                source(err)
-            }
-            BorrowRepo(err: easy::borrow::repo::Error) {
-                display("BUG: The repository could not be borrowed")
-                from()
-            }
-        }
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        FileTransactionPrepare(#[from] refs::file::transaction::prepare::Error),
+        #[error(transparent)]
+        FileTransactionCommit(#[from] refs::file::transaction::commit::Error),
+        #[error(transparent)]
+        NameValidation(#[from] git_validate::reference::name::Error),
+        #[error("BUG: The repository could not be borrowed")]
+        BorrowRepo(#[from] easy::borrow::repo::Error),
     }
 }
 
 pub mod peel_to_oid_in_place {
     use git_ref as refs;
-    use quick_error::quick_error;
 
     use crate::easy;
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            LoosePeelToId(err: refs::file::loose::reference::peel::to_id::Error) {
-                display("Could not peel loose reference")
-                from()
-                source(err)
-            }
-            PackedRefsOpen(err: refs::packed::buffer::open::Error) {
-                display("The packed-refs file could not be opened")
-                from()
-                source(err)
-            }
-            BorrowState(err: easy::borrow::state::Error) {
-                display("BUG: Part of interior state could not be borrowed.")
-                from()
-                source(err)
-            }
-            BorrowRepo(err: easy::borrow::repo::Error) {
-                display("BUG: The repository could not be borrowed")
-                from()
-            }
-        }
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        LoosePeelToId(#[from] refs::file::loose::reference::peel::to_id::Error),
+        #[error(transparent)]
+        PackedRefsOpen(#[from] refs::packed::buffer::open::Error),
+        #[error("BUG: Part of interior state could not be borrowed.")]
+        BorrowState(#[from] easy::borrow::state::Error),
+        #[error("BUG: The repository could not be borrowed")]
+        BorrowRepo(#[from] easy::borrow::repo::Error),
     }
 }
 

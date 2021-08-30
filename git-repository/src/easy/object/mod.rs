@@ -60,30 +60,20 @@ where
 
 pub mod find {
     use git_odb as odb;
-    use quick_error::quick_error;
 
     use crate::easy;
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Find(err: OdbError) {
-                display("An error occurred while trying to find an object")
-                from()
-                source(err)
-            }
-            BorrowState(err: easy::borrow::state::Error) {
-                display("BUG: Part of interior state could not be borrowed.")
-                from()
-                source(err)
-            }
-            BorrowRepo(err: easy::borrow::repo::Error) {
-                display("BUG: The repository could not be borrowed")
-                from()
-            }
-        }
-    }
     pub(crate) type OdbError = odb::compound::find::Error;
+
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        Find(#[from] OdbError),
+        #[error("BUG: Part of interior state could not be borrowed.")]
+        BorrowState(#[from] easy::borrow::state::Error),
+        #[error("BUG: The repository could not be borrowed")]
+        BorrowRepo(#[from] easy::borrow::repo::Error),
+    }
 
     pub mod existing {
         use git_odb as odb;

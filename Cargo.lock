@@ -1224,6 +1224,7 @@ dependencies = [
  "quick-error",
  "signal-hook",
  "tempfile",
+ "thiserror",
 ]
 
 [[package]]

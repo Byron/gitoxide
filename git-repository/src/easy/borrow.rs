@@ -1,18 +1,11 @@
 #![allow(missing_docs)]
 pub mod state {
-    use quick_error::quick_error;
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Borrow(err: std::cell::BorrowError) {
-                display("A state member could not be borrowed")
-                from()
-            }
-            BorrowMut(err: std::cell::BorrowMutError) {
-                display("A state member could not be mutably borrowed")
-                from()
-            }
-        }
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error("A state member could not be borrowed")]
+        Borrow(#[from] std::cell::BorrowError),
+        #[error("A state member could not be mutably borrowed")]
+        BorrowMut(#[from] std::cell::BorrowMutError),
     }
 
     pub type Result<T> = std::result::Result<T, Error>;

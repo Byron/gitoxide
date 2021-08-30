@@ -5,32 +5,21 @@ use std::{
 };
 
 use git_object::bstr::ByteSlice;
-use quick_error::quick_error;
 
-quick_error! {
-    /// The error used in [`into()`].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        IoOpen(err: std::io::Error, path: PathBuf) {
-            display("Could not open data at '{}'", path.display())
-            source(err)
-        }
-        IoWrite(err: std::io::Error, path: PathBuf) {
-            display("Could not write data at '{}'", path.display())
-            source(err)
-        }
-        DirectoryExists(path: PathBuf) {
-            display("Refusing to initialize the existing '{}' directory", path.display())
-        }
-        DirectoryNotEmpty(path: PathBuf) {
-            display("Refusing to initialize the non-empty directory as '{}'", path.display())
-        }
-        CreateDirectory(err: std::io::Error, path: PathBuf) {
-            display("Could not create directory at '{}'", path.display())
-            source(err)
-        }
-    }
+/// The error used in [`into()`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Could not open data at '{}'", .path.display())]
+    IoOpen { source: std::io::Error, path: PathBuf },
+    #[error("Could not write data at '{}'", .path.display())]
+    IoWrite { source: std::io::Error, path: PathBuf },
+    #[error("Refusing to initialize the existing '{}' directory", .path.display())]
+    DirectoryExists { path: PathBuf },
+    #[error("Refusing to initialize the non-empty directory as '{}'", .path.display())]
+    DirectoryNotEmpty { path: PathBuf },
+    #[error("Could not create directory at '{}'", .path.display())]
+    CreateDirectory { source: std::io::Error, path: PathBuf },
 }
 
 const GIT_DIR_NAME: &str = ".git";
@@ -92,12 +81,21 @@ fn write_file(data: &[u8], path: &Path) -> Result<(), Error> {
         .create(true)
         .append(false)
         .open(path)
-        .map_err(|e| Error::IoOpen(e, path.to_owned()))?;
-    file.write_all(data).map_err(|e| Error::IoWrite(e, path.to_owned()))
+        .map_err(|e| Error::IoOpen {
+            source: e,
+            path: path.to_owned(),
+        })?;
+    file.write_all(data).map_err(|e| Error::IoWrite {
+        source: e,
+        path: path.to_owned(),
+    })
 }
 
 fn create_dir(p: &Path) -> Result<(), Error> {
-    fs::create_dir_all(p).map_err(|e| Error::CreateDirectory(e, p.to_owned()))
+    fs::create_dir_all(p).map_err(|e| Error::CreateDirectory {
+        source: e,
+        path: p.to_owned(),
+    })
 }
 
 /// Create a new `.git` repository of `kind` within the possibly non-existing `directory`
@@ -108,18 +106,21 @@ pub fn into(directory: impl Into<PathBuf>, kind: crate::Kind) -> Result<crate::P
     match kind {
         crate::Kind::Bare => {
             if std::fs::read_dir(&dot_git)
-                .map_err(|err| Error::IoOpen(err, dot_git.clone()))?
+                .map_err(|err| Error::IoOpen {
+                    source: err,
+                    path: dot_git.clone(),
+                })?
                 .count()
                 != 0
             {
-                return Err(Error::DirectoryNotEmpty(dot_git));
+                return Err(Error::DirectoryNotEmpty { path: dot_git });
             }
         }
         crate::Kind::WorkTree => {
             dot_git.push(GIT_DIR_NAME);
 
             if dot_git.is_dir() {
-                return Err(Error::DirectoryExists(dot_git));
+                return Err(Error::DirectoryExists { path: dot_git });
             }
         }
     }
