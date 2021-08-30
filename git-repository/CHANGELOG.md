@@ -3,14 +3,15 @@
 #### New
 
 - `init()`
-- `Repository::init()`
+- `init_bare()`
+- `Repository::init(Kind)`
 - `open()`
 - `Repository::open()`
 
 #### Breaking
-- **renames / moves**
+- **renames / moves / Signature Changes**
     - `path::Path` to `Path`
-    - `init::repository()` -> `path::create::into()`
+    - `init::repository(dir)` -> `path::create::into(dir, **Kind**)`
 
 ### v0.8.1 (2021-08-28)
 

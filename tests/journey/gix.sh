@@ -145,6 +145,7 @@ title "Porcelain ${kind}"
           }
 
           it "matches the output of baseline git init" && {
+            rm .git/config # this one is altered, ignore
             expect_snapshot "$fixtures/baseline-init" .git
           }
 
@@ -167,6 +168,7 @@ title "Porcelain ${kind}"
           }
 
           it "matches the output of baseline git init" && {
+            rm $DIR/.git/config # this one is altered, ignore
             expect_snapshot "$fixtures/baseline-init" $DIR/.git
           }
 

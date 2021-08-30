@@ -248,7 +248,12 @@ pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, re
 
 /// See [Repository::init()].
 pub fn init(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::init::Error> {
-    Repository::init(directory)
+    Repository::init(directory, Kind::WorkTree)
+}
+
+/// See [Repository::init()].
+pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::init::Error> {
+    Repository::init(directory, Kind::Bare)
 }
 
 /// See [Repository::open()].

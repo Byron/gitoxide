@@ -4,6 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use git_object::bstr::ByteSlice;
 use quick_error::quick_error;
 
 quick_error! {
@@ -21,6 +22,9 @@ quick_error! {
         }
         DirectoryExists(path: PathBuf) {
             display("Refusing to initialize the existing '{}' directory", path.display())
+        }
+        DirectoryNotEmpty(path: PathBuf) {
+            display("Refusing to initialize the non-empty directory as '{}'", path.display())
         }
         CreateDirectory(err: std::io::Error, path: PathBuf) {
             display("Could not create directory at '{}'", path.display())
@@ -96,14 +100,28 @@ fn create_dir(p: &Path) -> Result<(), Error> {
     fs::create_dir_all(p).map_err(|e| Error::CreateDirectory(e, p.to_owned()))
 }
 
-/// Create a new `.git` repository within the possibly non-existing `directory`
+/// Create a new `.git` repository of `kind` within the possibly non-existing `directory`
 /// and return its path.
-pub fn into(directory: impl Into<PathBuf>) -> Result<crate::Path, Error> {
+pub fn into(directory: impl Into<PathBuf>, kind: crate::Kind) -> Result<crate::Path, Error> {
     let mut dot_git = directory.into();
-    dot_git.push(GIT_DIR_NAME);
 
-    if dot_git.is_dir() {
-        return Err(Error::DirectoryExists(dot_git));
+    match kind {
+        crate::Kind::Bare => {
+            if std::fs::read_dir(&dot_git)
+                .map_err(|err| Error::IoOpen(err, dot_git.clone()))?
+                .count()
+                != 0
+            {
+                return Err(Error::DirectoryNotEmpty(dot_git));
+            }
+        }
+        crate::Kind::WorkTree => {
+            dot_git.push(GIT_DIR_NAME);
+
+            if dot_git.is_dir() {
+                return Err(Error::DirectoryExists(dot_git));
+            }
+        }
     }
     create_dir(&dot_git)?;
 
@@ -149,8 +167,21 @@ pub fn into(directory: impl Into<PathBuf>) -> Result<crate::Path, Error> {
         (TPL_DESCRIPTION, "description"),
         (TPL_CONFIG, "config"),
     ] {
-        write_file(tpl, PathCursor(&mut dot_git).at(filename))?;
+        if *filename == "config" {
+            write_file(
+                &tpl.replace(
+                    "{bare-value}",
+                    match kind {
+                        crate::Kind::Bare => "true",
+                        crate::Kind::WorkTree => "false",
+                    },
+                ),
+                PathCursor(&mut dot_git).at(filename),
+            )?;
+        } else {
+            write_file(tpl, PathCursor(&mut dot_git).at(filename))?;
+        }
     }
 
-    Ok(crate::Path::from_dot_git_dir(dot_git, crate::Kind::WorkTree))
+    Ok(crate::Path::from_dot_git_dir(dot_git, kind))
 }

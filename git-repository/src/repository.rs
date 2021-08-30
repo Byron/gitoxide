@@ -136,8 +136,8 @@ pub mod init {
         ///
         /// Fails without action if there is already a `.git` repository inside of `directory`, but
         /// won't mind if the `directory` otherwise is non-empty.
-        pub fn init(directory: impl AsRef<Path>) -> Result<Self, Error> {
-            let path = crate::path::create::into(directory.as_ref())?;
+        pub fn init(directory: impl AsRef<Path>, kind: crate::Kind) -> Result<Self, Error> {
+            let path = crate::path::create::into(directory.as_ref(), kind)?;
             Ok(path.try_into()?)
         }
     }

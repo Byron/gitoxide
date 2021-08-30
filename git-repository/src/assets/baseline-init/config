@@ -1,2 +1,3 @@
 [core]
 	repositoryformatversion = 0
+	bare = {bare-value}
