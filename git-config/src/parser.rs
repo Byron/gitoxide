@@ -834,9 +834,7 @@ impl<'a> Parser<'a> {
     /// frontmatter
     #[inline]
     pub fn take_frontmatter(&mut self) -> Vec<Event<'a>> {
-        let mut to_return = vec![];
-        std::mem::swap(&mut self.frontmatter, &mut to_return);
-        to_return
+        std::mem::take(&mut self.frontmatter)
     }
 
     /// Returns the parsed sections from the parser. Consider
