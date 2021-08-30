@@ -16,7 +16,7 @@ use nom::{
     bytes::complete::{escaped, tag, take_till, take_while},
     character::{
         complete::{char, none_of, one_of},
-        is_newline, is_space,
+        is_space,
     },
     combinator::{map, opt},
     error::{Error as NomError, ErrorKind},
@@ -946,7 +946,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser, Error> {
     let (i, frontmatter) = many0(alt((
         map(comment, Event::Comment),
         map(take_spaces, |whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
-        map(take_newline, |(newline, counter)| {
+        map(take_newlines, |(newline, counter)| {
             newlines += counter;
             Event::Newline(Cow::Borrowed(newline))
         }),
@@ -1015,7 +1015,7 @@ pub fn parse_from_bytes_owned(input: &[u8]) -> Result<Parser<'static>, Error<'st
     let (i, frontmatter) = many0(alt((
         map(comment, Event::Comment),
         map(take_spaces, |whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
-        map(take_newline, |(newline, counter)| {
+        map(take_newlines, |(newline, counter)| {
             newlines += counter;
             Event::Newline(Cow::Borrowed(newline))
         }),
@@ -1094,7 +1094,7 @@ fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParserNode) -> IResult<&'a [u8], (
             }
         }
 
-        if let Ok((new_i, (v, new_newlines))) = take_newline(i) {
+        if let Ok((new_i, (v, new_newlines))) = take_newlines(i) {
             if old_i != new_i {
                 i = new_i;
                 newlines += new_newlines;
@@ -1365,10 +1365,30 @@ fn take_spaces(i: &[u8]) -> IResult<&[u8], &str> {
     }
 }
 
-fn take_newline(i: &[u8]) -> IResult<&[u8], (&str, usize)> {
+fn take_newlines(i: &[u8]) -> IResult<&[u8], (&str, usize)> {
     let mut counter = 0;
-    let (i, v) = take_while(|c| (c as char).is_ascii() && (c == b'\r' || is_newline(c)))(i)?;
-    counter += v.len();
+    let mut consumed_bytes = 0;
+    let mut next_must_be_newline = false;
+    for b in i.iter() {
+        if !(*b as char).is_ascii() {
+            break;
+        };
+        if *b == b'\r' {
+            if next_must_be_newline {
+                break;
+            }
+            next_must_be_newline = true;
+            continue;
+        };
+        if *b == b'\n' {
+            counter += 1;
+            consumed_bytes += if next_must_be_newline { 2 } else { 1 };
+            next_must_be_newline = false;
+        } else {
+            break;
+        }
+    }
+    let (v, i) = i.split_at(consumed_bytes);
     if v.is_empty() {
         Err(nom::Err::Error(NomError {
             input: i,
