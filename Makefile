@@ -85,10 +85,12 @@ check: ## Build all code in suitable configurations
 	cargo check --no-default-features --features lean-termion
 	cargo check --no-default-features --features max
 	cargo check --no-default-features --features max-termion
-	cd git-actor && cargo check
+	cd git-actor && cargo check \
+				 && cargo check --features local-offset
 	cd gitoxide-core && cargo check \
                      && cargo check --features blocking-client \
-                     && cargo check --features async-client
+                     && cargo check --features async-client \
+                     && cargo check --features local-offset
 	cd gitoxide-core && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-hash && cargo check --all-features \
 				&& cargo check
@@ -110,6 +112,7 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features rustsha1 \
 			   && cargo check --features fast-sha1 \
 			   && cargo check --features progress \
+			   && cargo check --features time \
 			   && cargo check --features io-pipe \
 			   && cargo check --features crc32 \
 			   && cargo check --features zlib \
@@ -131,6 +134,7 @@ check: ## Build all code in suitable configurations
 	cd git-repository && cargo check --all-features \
 					  && cargo check --no-default-features --features local \
 					  && cargo check --no-default-features --features network \
+					  && cargo check --no-default-features --features one-stop-shop \
 					  && cargo check --no-default-features
 	cd cargo-smart-release && cargo check
 	cd experiments/object-access && cargo check

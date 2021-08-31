@@ -106,6 +106,7 @@ mod init {
     impl Signature {
         /// Return an actor identified `name` and `email` at the current local time, that is a time with a timezone offset from
         /// UTC based on the hosts configuration.
+        #[cfg(feature = "local-offset")]
         pub fn now_local(
             name: impl Into<BString>,
             email: impl Into<BString>,
@@ -127,6 +128,7 @@ mod init {
 
         /// Return an actor identified `name` and `email` at the current local time, or UTC time if the current time zone could
         /// not be obtained.
+        #[cfg(feature = "local-offset")]
         pub fn now_local_or_utc(name: impl Into<BString>, email: impl Into<BString>) -> Self {
             let offset = git_features::time::tz::current_utc_offset().unwrap_or(0);
             Signature {

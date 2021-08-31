@@ -50,6 +50,7 @@ pretty-cli = ["clap",
     "prodash/local-time",
     "prodash-render-tui",
     "prodash-render-line",
+    "gitoxide-core/local-offset",
     "env_logger",
     "futures-lite"]
 lean-cli = ["argh", "prodash/progress-log", "env_logger" ]
