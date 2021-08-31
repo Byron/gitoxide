@@ -1028,6 +1028,7 @@ dependencies = [
  "flate2",
  "git-hash",
  "jwalk",
+ "libc",
  "num_cpus",
  "prodash",
  "quick-error",

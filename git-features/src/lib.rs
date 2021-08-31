@@ -22,3 +22,7 @@ pub mod progress;
 ///
 #[cfg(feature = "zlib")]
 pub mod zlib;
+
+///
+#[cfg(feature = "time")]
+pub mod time;
