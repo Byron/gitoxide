@@ -3,7 +3,7 @@ pub mod tz {
     mod error {
         use std::fmt;
 
-        /// The error returned by [`offset()`]
+        /// The error returned by [`current_utc_offset()`][super::current_utc_offset()]
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub struct Error;
 

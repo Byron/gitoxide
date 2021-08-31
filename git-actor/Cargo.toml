@@ -13,7 +13,7 @@ doctest = false
 
 [features]
 serde1 = ["serde", "bstr/serde1"]
-local-offset = ["git-features/time"]
+local-time-support = ["git-features/time"]
 
 [package.metadata.docs.rs]
 all-features = true

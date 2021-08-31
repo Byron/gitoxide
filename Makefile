@@ -86,11 +86,11 @@ check: ## Build all code in suitable configurations
 	cargo check --no-default-features --features max
 	cargo check --no-default-features --features max-termion
 	cd git-actor && cargo check \
-				 && cargo check --features local-offset
+				 && cargo check --features local-time-support
 	cd gitoxide-core && cargo check \
                      && cargo check --features blocking-client \
                      && cargo check --features async-client \
-                     && cargo check --features local-offset
+                     && cargo check --features local-time-support
 	cd gitoxide-core && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-hash && cargo check --all-features \
 				&& cargo check

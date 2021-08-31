@@ -17,7 +17,7 @@ default = ["max-performance", "one-stop-shop"]
 unstable = []
 serde1 = ["git-pack/serde1", "git-object/serde1"]
 max-performance = ["git-features/zlib-ng-compat", "git-features/fast-sha1"]
-local-offset = ["git-actor/local-offset"]
+local-time-support = ["git-actor/local-time-support"]
 local = [
     "git-url",
     "git-traverse",
@@ -31,7 +31,7 @@ network = [
 one-stop-shop = [
     "local",
     "network",
-    "local-offset"
+    "local-time-support"
 ]
 
 

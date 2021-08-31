@@ -19,7 +19,7 @@ serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "git-protocol-for-c
 blocking-client = ["git-protocol-for-configuration-only/blocking-client", "git-repository/network"]
 async-client = ["git-protocol-for-configuration-only/async-client", "git-repository/network", "async-trait", "futures-io", "async-net", "async-io", "futures-lite", "blocking"]
 
-local-offset = ["git-repository/local-offset"]
+local-time-support = ["git-repository/local-time-support"]
 
 # tools
 organize = ["git-url", "jwalk"]
