@@ -25,7 +25,9 @@ pub mod tz {
     /// Note that there may be various legitimate reasons for failure, which should be accounted for.
     pub fn current_utc_offset() -> Result<UTCOffsetInSeconds, Error> {
         // TODO: make this work without cfg(unsound_local_offset), see
-        // https://github.com/time-rs/time/issues/293#issuecomment-909158529
+        //       https://github.com/time-rs/time/issues/293#issuecomment-909158529
+        // TODO: get a function to return the current time as well to avoid double-lookups
+        //       (to get the offset, the current time is needed)
         time::UtcOffset::current_local_offset()
             .map(|ofs| ofs.whole_seconds())
             .map_err(|_| Error)

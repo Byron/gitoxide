@@ -971,6 +971,7 @@ version = "0.5.0"
 dependencies = [
  "bstr",
  "btoi",
+ "git-features",
  "git-testtools",
  "itoa",
  "nom",
