@@ -129,6 +129,8 @@ All feature toggles are additive.
 * **cache-efficiency-debug**
     * Caches implement this by default, which costs nothing unless this feature is enabled
     * Count cache hits and misses and print that debug information on drop
+* **time**
+    * Make the `time` module available with access to the local time as configured by the system.
      
 ### git-packetline
 

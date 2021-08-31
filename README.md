@@ -251,7 +251,7 @@ Provide a CLI to for the most basic user journey:
 [fossil-scm]: https://www.fossil-scm.org
 
 
-## Shortcomings
+## Shortcomings & Limitations
 
 * **fetches using protocol V1 and stateful connections, i.e. ssh, git, file, may hang**
   * This can be fixed by making response parsing.
@@ -277,6 +277,7 @@ Provide a CLI to for the most basic user journey:
 * **git-url** _might_ be more restrictive than what git allows as for the most part, it uses a browser grade URL parser.
   * Thus far there is no proof for this, and as _potential remedy_ we could certainly re-implement exactly what git does
     to handle its URLs.
+* **local time** is currently impeded by [this issue](https://github.com/time-rs/time/issues/293#issuecomment-909158529) but it's planned to resolve it eventually.
   
 ## Credits
 

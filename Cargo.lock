@@ -1028,12 +1028,12 @@ dependencies = [
  "flate2",
  "git-hash",
  "jwalk",
- "libc",
  "num_cpus",
  "prodash",
  "quick-error",
  "sha-1",
  "sha1",
+ "time 0.3.2",
  "walkdir",
 ]
 
