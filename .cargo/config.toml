@@ -1,0 +1,2 @@
+[build]
+rustflags = "--cfg unsound_local_offset -C target-cpu=native"

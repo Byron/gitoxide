@@ -47,7 +47,7 @@ pretty-cli = ["clap",
     "gitoxide-core/serde1",
     "prodash/progress-tree",
     "prodash/progress-tree-log",
-    "prodash/localtime",
+    "prodash/local-time",
     "prodash-render-tui",
     "prodash-render-line",
     "env_logger",
@@ -73,7 +73,7 @@ git-transport-for-configuration-only = { package = "git-transport", optional = t
 
 clap = { version = "3.0.0-beta.4", optional = true }
 argh = { version = "0.1.5", optional = true, default-features = false }
-prodash = { version = "15.0.0", optional = true, default-features = false }
+prodash = { version = "16.0.0", optional = true, default-features = false }
 atty = { version = "0.2.14", optional = true, default-features = false }
 env_logger = { version = "0.9.0", optional = true, default-features = false, features = ["humantime", "termcolor", "atty"] }
 crosstermion = { version = "0.8.0", optional = true, default-features = false }
