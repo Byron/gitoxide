@@ -7,8 +7,6 @@ fn repo(name: &str) -> crate::Result<Repository> {
     Ok(Repository::discover(repo_path)?)
 }
 
-mod access;
 mod discover;
+mod easy;
 mod init;
-mod object;
-mod reference;

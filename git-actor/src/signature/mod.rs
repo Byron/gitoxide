@@ -100,8 +100,9 @@ mod write {
 }
 
 mod init {
-    use crate::{Signature, Time};
     use bstr::BString;
+
+    use crate::{Signature, Time};
 
     impl Signature {
         /// Return an actor identified `name` and `email` at the current local time, that is a time with a timezone offset from

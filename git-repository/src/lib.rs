@@ -96,7 +96,6 @@ pub use git_features::{parallel, progress, progress::Progress};
 pub use git_hash as hash;
 #[cfg(feature = "unstable")]
 pub use git_lock as lock;
-#[cfg(feature = "unstable")]
 pub use git_object as objs;
 #[cfg(feature = "unstable")]
 pub use git_odb as odb;
@@ -154,6 +153,7 @@ pub struct Repository {
     pub(crate) odb: git_odb::linked::Store,
     /// The path to the worktree at which to find checked out files
     pub work_tree: Option<PathBuf>,
+    hash_kind: git_hash::Kind,
     // TODO: git-config should be here - it's read a lot but not written much in must applications, so shouldn't be in `State`.
     //       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
     //       packs are refreshed. This would be `git_config::fs::Config` when ready.

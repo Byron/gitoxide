@@ -2,7 +2,7 @@ use git_hash::{oid, ObjectId};
 
 use crate::{
     easy,
-    easy::{object::find, Object, ObjectRef, Oid},
+    easy::{ext::ObjectAccessExt, object::find, Object, ObjectRef, Oid},
 };
 
 impl<'repo, A, B> PartialEq<Oid<'repo, A>> for Oid<'repo, B> {
@@ -60,13 +60,13 @@ where
     // NOTE: Can't access other object data that is attached to the same cache.
     /// Find the [`ObjectRef`] associated with this object id, and assume it exists.
     pub fn object(&self) -> Result<ObjectRef<'repo, A>, find::existing::Error> {
-        crate::easy::ext::object::find_object(self.access, self.id)
+        self.access.find_object(self.id)
     }
 
     // NOTE: Can't access other object data that is attached to the same cache.
     /// Try find the [`ObjectRef`] associated with this object id, it might not be available locally.
     pub fn try_object(&self) -> Result<Option<ObjectRef<'repo, A>>, find::Error> {
-        crate::easy::ext::object::try_find_object(self.access, self.id)
+        self.access.try_find_object(self.id)
     }
 }
 

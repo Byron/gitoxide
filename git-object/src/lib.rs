@@ -217,6 +217,13 @@ pub struct Tree {
     pub entries: Vec<tree::Entry>,
 }
 
+impl Tree {
+    /// Return an empty tree which serializes to a well-known hash
+    pub fn empty() -> Self {
+        Tree { entries: Vec::new() }
+    }
+}
+
 ///
 #[cfg(feature = "verbose-object-parsing-errors")]
 pub mod decode {

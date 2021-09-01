@@ -4,7 +4,6 @@ use std::{cell::Ref, convert::TryInto};
 use git_hash::ObjectId;
 pub use git_object::Kind;
 use git_object::{CommitRefIter, TagRefIter};
-use git_odb as odb;
 
 use crate::{
     easy,
@@ -59,11 +58,10 @@ where
 }
 
 pub mod find {
-    use git_odb as odb;
 
     use crate::easy;
 
-    pub(crate) type OdbError = odb::compound::find::Error;
+    pub(crate) type OdbError = git_odb::compound::find::Error;
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
@@ -76,11 +74,9 @@ pub mod find {
     }
 
     pub mod existing {
-        use git_odb as odb;
-
         use crate::easy;
 
-        pub(crate) type OdbError = odb::pack::find::existing::Error<odb::compound::find::Error>;
+        pub(crate) type OdbError = git_odb::pack::find::existing::Error<git_odb::compound::find::Error>;
 
         #[derive(Debug, thiserror::Error)]
         pub enum Error {
@@ -91,6 +87,18 @@ pub mod find {
             #[error("BUG: The repository could not be borrowed")]
             BorrowRepo(#[from] easy::borrow::repo::Error),
         }
+    }
+}
+
+pub mod write {
+    use crate::easy;
+
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        OdbWrite(#[from] git_odb::loose::write::Error),
+        #[error("BUG: The repository could not be borrowed")]
+        BorrowRepo(#[from] easy::borrow::repo::Error),
     }
 }
 
@@ -121,11 +129,11 @@ where
     A: easy::Access + Sized,
 {
     pub fn to_commit_iter(&self) -> Option<CommitRefIter<'_>> {
-        odb::data::Object::new(self.kind, &self.data).into_commit_iter()
+        git_odb::data::Object::new(self.kind, &self.data).into_commit_iter()
     }
 
     pub fn to_tag_iter(&self) -> Option<TagRefIter<'_>> {
-        odb::data::Object::new(self.kind, &self.data).into_tag_iter()
+        git_odb::data::Object::new(self.kind, &self.data).into_tag_iter()
     }
 }
 
@@ -135,6 +143,7 @@ pub mod peel_to_kind {
     use crate::{
         easy,
         easy::{
+            ext::ObjectAccessExt,
             object::{peel_to_kind, Kind},
             ObjectRef,
         },
@@ -155,13 +164,13 @@ pub mod peel_to_kind {
                         let tree_id = self.to_commit_iter().expect("commit").tree_id().expect("valid commit");
                         let access = self.access;
                         drop(self);
-                        self = crate::easy::ext::object::find_object(access, tree_id)?;
+                        self = access.find_object(tree_id)?;
                     }
                     Kind::Tag => {
                         let target_id = self.to_tag_iter().expect("tag").target_id().expect("valid tag");
                         let access = self.access;
                         drop(self);
-                        self = crate::easy::ext::object::find_object(access, target_id)?;
+                        self = access.find_object(target_id)?;
                     }
                     Kind::Tree | Kind::Blob => {
                         return Err(peel_to_kind::Error::NotFound {

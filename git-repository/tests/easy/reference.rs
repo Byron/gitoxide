@@ -1,18 +1,16 @@
-fn repo() -> crate::Result<git_repository::Easy> {
-    crate::repo("make_references_repo.sh").map(Into::into)
-}
-
 mod find {
     use std::convert::TryInto;
 
     use git_ref as refs;
-    use git_repository::prelude::*;
+    use git_repository::prelude::ReferenceAccessExt;
     use git_testtools::hex_to_id;
 
-    use crate::reference::repo;
+    fn repo() -> crate::Result<git_repository::Easy> {
+        crate::repo("make_references_repo.sh").map(Into::into)
+    }
 
     #[test]
-    fn find_and_peel() {
+    fn and_peel() {
         let repo = repo().unwrap();
         let mut packed_tag_ref = repo.try_find_reference("dt1").unwrap().expect("tag to exist");
         assert_eq!(packed_tag_ref.name(), "refs/tags/dt1".try_into().unwrap());

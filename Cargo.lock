@@ -1188,6 +1188,7 @@ name = "git-repository"
 version = "0.8.1"
 dependencies = [
  "anyhow",
+ "bstr",
  "git-actor",
  "git-config",
  "git-diff",
