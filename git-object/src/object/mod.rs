@@ -24,6 +24,34 @@ mod write {
 
 /// Convenient extraction of typed object.
 impl Object {
+    /// Turns this instance into a [`Blob`][Blob] if it is one.
+    pub fn into_blob(self) -> Option<Blob> {
+        match self {
+            Object::Blob(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Turns this instance into a [`Commit`][Commit] if it is one.
+    pub fn into_commit(self) -> Option<Commit> {
+        match self {
+            Object::Commit(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Turns this instance into a [`Tree`][Tree] if it is one.
+    pub fn into_tree(self) -> Option<Tree> {
+        match self {
+            Object::Tree(v) => Some(v),
+            _ => None,
+        }
+    }
+    /// Turns this instance into a [`Tag`][Tag] if it is one.
+    pub fn into_tag(self) -> Option<Tag> {
+        match self {
+            Object::Tag(v) => Some(v),
+            _ => None,
+        }
+    }
     /// Returns a [`Blob`][Blob] if it is one.
     pub fn as_blob(&self) -> Option<&Blob> {
         match self {

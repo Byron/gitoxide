@@ -61,7 +61,6 @@ pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::LineRef<'_>, de
 }
 
 /// An iterator yielding parsed lines in a file in reverse.
-#[allow(dead_code)]
 pub struct Reverse<'a, F> {
     buf: &'a mut [u8],
     count: usize,
