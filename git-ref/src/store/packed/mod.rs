@@ -35,6 +35,7 @@ pub(crate) struct Transaction {
     buffer: Option<Buffer>,
     edits: Option<Vec<Edit>>,
     lock: Option<git_lock::File>,
+    #[allow(dead_code)] // It just has to be kept alive, hence no reads
     closed_lock: Option<git_lock::Marker>,
 }
 
