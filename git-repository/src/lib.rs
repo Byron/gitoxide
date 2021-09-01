@@ -94,7 +94,6 @@ pub use git_diff as diff;
 #[cfg(feature = "unstable")]
 pub use git_features::{parallel, progress, progress::Progress};
 pub use git_hash as hash;
-#[cfg(feature = "unstable")]
 pub use git_lock as lock;
 pub use git_object as objs;
 #[cfg(feature = "unstable")]
