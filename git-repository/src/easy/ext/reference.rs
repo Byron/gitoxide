@@ -23,8 +23,8 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         lock_mode: lock::acquire::Fail,
         force: bool,
     ) -> Result<Vec<RefEdit>, reference::edit::Error> {
-        self.edit_references(
-            Some(RefEdit {
+        self.edit_reference(
+            RefEdit {
                 change: Change::Update {
                     log: Default::default(),
                     mode: if force {
@@ -36,7 +36,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
                 },
                 name: format!("refs/tags/{}", name.as_ref()).try_into()?,
                 deref: false,
-            }),
+            },
             lock_mode,
             None,
         )

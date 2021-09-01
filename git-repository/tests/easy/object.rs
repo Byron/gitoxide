@@ -4,15 +4,16 @@ mod in_bare {
     use git_repository::prelude::ObjectAccessExt;
 
     #[test]
-    fn write_empty_tree() {
-        let tmp = tempfile::tempdir().unwrap();
-        let repo = git_repository::init_bare(&tmp).unwrap().into_easy();
-        let oid = repo.write_object(&git_repository::objs::Tree::empty().into()).unwrap();
+    fn write_empty_tree() -> crate::Result {
+        let tmp = tempfile::tempdir()?;
+        let repo = git_repository::init_bare(&tmp)?.into_easy();
+        let oid = repo.write_object(&git_repository::objs::Tree::empty().into())?;
         assert_eq!(
             oid,
             git_repository::hash::ObjectId::empty_tree(),
             "it produces a well-known empty tree id"
-        )
+        );
+        Ok(())
     }
 }
 
