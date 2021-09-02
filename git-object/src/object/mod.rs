@@ -24,34 +24,63 @@ mod write {
 
 /// Convenient extraction of typed object.
 impl Object {
-    /// Turns this instance into a [`Blob`][Blob] if it is one.
-    pub fn into_blob(self) -> Option<Blob> {
+    /// Turns this instance into a [`Blob`][Blob], panic otherwise.
+    pub fn into_blob(self) -> Blob {
         match self {
-            Object::Blob(v) => Some(v),
-            _ => None,
+            Object::Blob(v) => v,
+            _ => panic!("BUG: not a blob"),
+        }
+    }
+    /// Turns this instance into a [`Commit`][Commit] panic otherwise.
+    pub fn into_commit(self) -> Commit {
+        match self {
+            Object::Commit(v) => v,
+            _ => panic!("BUG: not a commit"),
+        }
+    }
+    /// Turns this instance into a [`Tree`][Tree] panic otherwise.
+    pub fn into_tree(self) -> Tree {
+        match self {
+            Object::Tree(v) => v,
+            _ => panic!("BUG: not a tree"),
+        }
+    }
+    /// Turns this instance into a [`Tag`][Tag] panic otherwise.
+    pub fn into_tag(self) -> Tag {
+        match self {
+            Object::Tag(v) => v,
+            _ => panic!("BUG: not a tag"),
+        }
+    }
+    /// Turns this instance into a [`Blob`][Blob] if it is one.
+    pub fn try_into_blob(self) -> Result<Blob, Self> {
+        match self {
+            Object::Blob(v) => Ok(v),
+            _ => Err(self),
         }
     }
     /// Turns this instance into a [`Commit`][Commit] if it is one.
-    pub fn into_commit(self) -> Option<Commit> {
+    pub fn try_into_commit(self) -> Result<Commit, Self> {
         match self {
-            Object::Commit(v) => Some(v),
-            _ => None,
+            Object::Commit(v) => Ok(v),
+            _ => Err(self),
         }
     }
     /// Turns this instance into a [`Tree`][Tree] if it is one.
-    pub fn into_tree(self) -> Option<Tree> {
+    pub fn try_into_tree(self) -> Result<Tree, Self> {
         match self {
-            Object::Tree(v) => Some(v),
-            _ => None,
+            Object::Tree(v) => Ok(v),
+            _ => Err(self),
         }
     }
     /// Turns this instance into a [`Tag`][Tag] if it is one.
-    pub fn into_tag(self) -> Option<Tag> {
+    pub fn try_into_tag(self) -> Result<Tag, Self> {
         match self {
-            Object::Tag(v) => Some(v),
-            _ => None,
+            Object::Tag(v) => Ok(v),
+            _ => Err(self),
         }
     }
+
     /// Returns a [`Blob`][Blob] if it is one.
     pub fn as_blob(&self) -> Option<&Blob> {
         match self {
