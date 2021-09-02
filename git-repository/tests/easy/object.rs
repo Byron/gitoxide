@@ -32,7 +32,6 @@ mod commit {
             .commit(
                 "HEAD",
                 "hello there \r\n\nthe body",
-                None,
                 author.clone(),
                 author,
                 tree_id,

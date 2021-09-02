@@ -60,11 +60,11 @@ pub trait ObjectAccessExt: easy::Access + Sized {
 
     // docs notes
     // Fails immediately if lock can't be acquired as first parent depends on it
-    fn commit<'a, Name, E>(
+    // Writes without message encoding
+    fn commit<Name, E>(
         &self,
         reference: Name,
         message: impl Into<BString>,
-        message_encoding: impl Into<Option<BString>>,
         author: impl Into<git_actor::Signature>,
         committer: impl Into<git_actor::Signature>,
         tree: impl Into<Option<ObjectId>>,
@@ -86,7 +86,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
             tree: tree.into().unwrap_or_else(git_hash::ObjectId::empty_tree),
             author: author.into(),
             committer: committer.into(),
-            encoding: message_encoding.into(),
+            encoding: None,
             parents: parents.into_iter().map(|id| id.into()).collect(),
             extra_headers: Default::default(),
         }
