@@ -128,6 +128,13 @@ impl<'repo, A> ObjectRef<'repo, A>
 where
     A: easy::Access + Sized,
 {
+    /// As [`to_commit_iter()`] but panics if this is not a commit
+    pub fn commit_iter(&self) -> CommitRefIter<'_> {
+        git_odb::data::Object::new(self.kind, &self.data)
+            .into_commit_iter()
+            .expect("BUG: This object must be a commit")
+    }
+
     pub fn to_commit_iter(&self) -> Option<CommitRefIter<'_>> {
         git_odb::data::Object::new(self.kind, &self.data).into_commit_iter()
     }

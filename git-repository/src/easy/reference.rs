@@ -3,7 +3,6 @@ use std::ops::DerefMut;
 
 use git_hash::ObjectId;
 use git_odb::Find;
-use git_ref as refs;
 
 use crate::{
     easy,
@@ -13,27 +12,25 @@ use crate::{
 pub(crate) enum Backing {
     OwnedPacked {
         /// The validated full name of the reference.
-        name: refs::FullName,
+        name: git_ref::FullName,
         /// The target object id of the reference, hex encoded.
         target: ObjectId,
         /// The fully peeled object id, hex encoded, that the ref is ultimately pointing to
         /// i.e. when all indirections are removed.
         object: Option<ObjectId>,
     },
-    LooseFile(refs::file::loose::Reference),
+    LooseFile(git_ref::file::loose::Reference),
 }
 
 pub mod edit {
-    use git_ref as refs;
-
     use crate::easy;
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
         #[error(transparent)]
-        FileTransactionPrepare(#[from] refs::file::transaction::prepare::Error),
+        FileTransactionPrepare(#[from] git_ref::file::transaction::prepare::Error),
         #[error(transparent)]
-        FileTransactionCommit(#[from] refs::file::transaction::commit::Error),
+        FileTransactionCommit(#[from] git_ref::file::transaction::commit::Error),
         #[error(transparent)]
         NameValidation(#[from] git_validate::reference::name::Error),
         #[error("BUG: The repository could not be borrowed")]
@@ -42,16 +39,14 @@ pub mod edit {
 }
 
 pub mod peel_to_oid_in_place {
-    use git_ref as refs;
-
     use crate::easy;
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
         #[error(transparent)]
-        LoosePeelToId(#[from] refs::file::loose::reference::peel::to_id::Error),
+        LoosePeelToId(#[from] git_ref::file::loose::reference::peel::to_id::Error),
         #[error(transparent)]
-        PackedRefsOpen(#[from] refs::packed::buffer::open::Error),
+        PackedRefsOpen(#[from] git_ref::packed::buffer::open::Error),
         #[error("BUG: Part of interior state could not be borrowed.")]
         BorrowState(#[from] easy::borrow::state::Error),
         #[error("BUG: The repository could not be borrowed")]
@@ -64,30 +59,30 @@ impl<'repo, A> Reference<'repo, A>
 where
     A: easy::Access + Sized,
 {
-    pub(crate) fn from_file_ref(reference: refs::file::Reference<'_>, access: &'repo A) -> Self {
+    pub(crate) fn from_file_ref(reference: git_ref::file::Reference<'_>, access: &'repo A) -> Self {
         Reference {
             backing: match reference {
-                refs::file::Reference::Packed(p) => Backing::OwnedPacked {
+                git_ref::file::Reference::Packed(p) => Backing::OwnedPacked {
                     name: p.name.into(),
                     target: p.target(),
                     object: p
                         .object
                         .map(|hex| ObjectId::from_hex(hex).expect("a hash kind we know")),
                 },
-                refs::file::Reference::Loose(l) => Backing::LooseFile(l),
+                git_ref::file::Reference::Loose(l) => Backing::LooseFile(l),
             }
             .into(),
             access,
         }
     }
-    pub fn target(&self) -> refs::Target {
+    pub fn target(&self) -> git_ref::Target {
         match self.backing.as_ref().expect("always set") {
-            Backing::OwnedPacked { target, .. } => refs::Target::Peeled(target.to_owned()),
+            Backing::OwnedPacked { target, .. } => git_ref::Target::Peeled(target.to_owned()),
             Backing::LooseFile(r) => r.target.clone(),
         }
     }
 
-    pub fn name(&self) -> refs::FullNameRef<'_> {
+    pub fn name(&self) -> git_ref::FullNameRef<'_> {
         match self.backing.as_ref().expect("always set") {
             Backing::OwnedPacked { name, .. } => name,
             Backing::LooseFile(r) => &r.name,
@@ -136,8 +131,6 @@ where
 }
 
 pub mod find {
-    use git_ref as refs;
-
     use crate::easy;
 
     pub mod existing {
@@ -156,9 +149,9 @@ pub mod find {
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
         #[error(transparent)]
-        Find(#[from] refs::file::find::Error),
+        Find(#[from] git_ref::file::find::Error),
         #[error(transparent)]
-        PackedRefsOpen(#[from] refs::packed::buffer::open::Error),
+        PackedRefsOpen(#[from] git_ref::packed::buffer::open::Error),
         #[error("BUG: Part of interior state could not be borrowed.")]
         BorrowState(#[from] easy::borrow::state::Error),
         #[error("BUG: The repository could not be borrowed")]

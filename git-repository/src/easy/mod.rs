@@ -30,6 +30,7 @@ mod impls;
 pub(crate) mod ext;
 
 pub mod borrow;
+pub mod commit;
 pub mod object;
 mod oid;
 pub mod reference;

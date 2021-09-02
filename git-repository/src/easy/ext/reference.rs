@@ -4,7 +4,6 @@ use git_actor as actor;
 use git_hash::ObjectId;
 use git_lock as lock;
 use git_ref::{
-    file::find::Error,
     transaction::{Change, Create, RefEdit},
     PartialNameRef, Target,
 };
@@ -77,7 +76,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_, Self>, reference::find::existing::Error>
     where
         Name: TryInto<PartialNameRef<'a>, Error = E>,
-        Error: From<E>,
+        git_ref::file::find::Error: From<E>,
     {
         self.try_find_reference(name)?
             .ok_or(reference::find::existing::Error::NotFound)
@@ -86,7 +85,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     fn try_find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_, Self>>, reference::find::Error>
     where
         Name: TryInto<PartialNameRef<'a>, Error = E>,
-        Error: From<E>,
+        git_ref::file::find::Error: From<E>,
     {
         let state = self.state();
         let repo = self.repo()?;

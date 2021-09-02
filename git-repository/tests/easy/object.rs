@@ -1,6 +1,6 @@
 use git_repository::easy;
 
-mod in_bare {
+mod in_empty_bare {
     use git_repository::prelude::ObjectAccessExt;
 
     #[test]
@@ -14,6 +14,36 @@ mod in_bare {
             "it produces a well-known empty tree id"
         );
         Ok(())
+    }
+}
+
+mod commit {
+    use git_repository as git;
+    use git_repository::prelude::{ObjectAccessExt, ReferenceAccessExt};
+    use git_testtools::hex_to_id;
+
+    #[test]
+    fn multi_line_commit_message_uses_first_line_in_ref_log() {
+        let (repo, _keep) = crate::basic_rw_repo().unwrap();
+        let parent = repo.find_reference("HEAD").unwrap().peel_to_oid_in_place().unwrap();
+        let tree_id = parent.object().unwrap().commit_iter().tree_id();
+        let author = git::actor::Signature::empty();
+        let commit_id = repo
+            .commit(
+                "HEAD",
+                "hello there \r\n\nthe body",
+                None,
+                author.clone(),
+                author,
+                tree_id,
+                Some(parent),
+            )
+            .unwrap();
+        assert_eq!(
+            commit_id,
+            hex_to_id("1ff7decccf76bfa15bfdb0b66bac0c9144b4b083"),
+            "the commit id is stable"
+        );
     }
 }
 
