@@ -68,7 +68,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
         message: impl Into<BString>,
         author: impl Into<git_actor::Signature>,
         committer: impl Into<git_actor::Signature>,
-        tree: impl Into<Option<ObjectId>>,
+        tree: impl Into<ObjectId>,
         parents: impl IntoIterator<Item = impl Into<ObjectId>>,
     ) -> Result<Oid<'_, Self>, commit::Error>
     where
@@ -84,7 +84,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
         let reference = reference.try_into()?;
         let commit: git_object::Object = git_object::Commit {
             message: message.into(),
-            tree: tree.into().unwrap_or_else(git_hash::ObjectId::empty_tree),
+            tree: tree.into(),
             author: author.into(),
             committer: committer.into(),
             encoding: None,

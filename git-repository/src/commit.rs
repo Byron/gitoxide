@@ -1,6 +1,9 @@
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 
+/// An empty array of a type usable with the `git::easy` API to help declaring no parents should be used
+pub const NO_PARENT_IDS: [git_hash::ObjectId; 0] = [];
+
 /// Produce a short commit summary for the given `message`.
 ///
 /// This means the following
