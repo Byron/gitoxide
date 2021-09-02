@@ -8,7 +8,8 @@ use crate::{
     easy,
     easy::{commit, object, ObjectRef, Oid},
 };
-use bstr::BString;
+use bstr::{BString, ByteSlice};
+use git_ref::transaction::{LogChange, RefLog};
 use git_ref::FullName;
 use std::convert::TryInto;
 
@@ -92,16 +93,20 @@ pub trait ObjectAccessExt: easy::Access + Sized {
         }
         .into();
 
-        let commit_id = self.write_object(&commit)?.detach();
+        let commit_id = self.write_object(&commit)?;
         let commit = commit.into_commit();
         self.edit_reference(
             RefEdit {
                 change: Change::Update {
-                    log: Default::default(), // TODO: generate commit summary
+                    log: LogChange {
+                        mode: RefLog::AndReference,
+                        force_create_reflog: false,
+                        message: crate::commit::summary(commit.message.as_bstr()).into_owned(),
+                    }, // TODO: generate commit summary
                     mode: Create::OrUpdate {
                         previous: commit.parents.get(0).map(|p| Target::Peeled(*p)),
                     },
-                    new: Target::Peeled(commit_id),
+                    new: Target::Peeled(commit_id.id),
                 },
                 name: reference,
                 deref: true,
@@ -109,7 +114,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
             git_lock::acquire::Fail::Immediately,
             Some(&commit.committer),
         )?;
-        Ok(commit_id.attach(self))
+        Ok(commit_id)
     }
 }
 

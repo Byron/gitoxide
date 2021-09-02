@@ -12,6 +12,7 @@ fn basic_rw_repo() -> crate::Result<(Easy, tempfile::TempDir)> {
     Ok((Repository::open(repo_path.path())?.into(), repo_path))
 }
 
+mod commit;
 mod discover;
 mod easy;
 mod init;

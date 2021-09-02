@@ -224,6 +224,9 @@ pub struct EasyArcExclusive {
 
 pub mod easy;
 
+///
+pub mod commit;
+
 /// The kind of `Repository`
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Kind {
