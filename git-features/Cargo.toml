@@ -80,5 +80,6 @@ time = { version = "0.3.2", optional = true, default-features = false, features 
 [package.metadata.docs.rs]
 all-features = true
 
-[target.'cfg(not(windows))'.dependencies]
+# Assembly doesn't yet compile on MSVC on windows, but does on GNU, see https://github.com/RustCrypto/asm-hashes/issues/17
+[target.'cfg(not(all(target_os = "windows", target_env = "msvc")))'.dependencies]
 sha-1 = { version = "0.9.1", optional = true, features = ["asm"] }
