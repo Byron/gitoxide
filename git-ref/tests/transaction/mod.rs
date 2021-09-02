@@ -274,7 +274,8 @@ mod refedit_ext {
         }
 
         #[test]
-        fn symbolic_refs_are_split_into_referents_handling_the_reflog_recursively() -> crate::Result {
+        fn symbolic_refs_are_split_into_referents_handling_the_reflog_and_previous_values_recursively() -> crate::Result
+        {
             let store = MockStore::with(vec![
                 (
                     "refs/heads/delete-symbolic-1",
@@ -358,7 +359,7 @@ mod refedit_ext {
                     },
                     RefEdit {
                         change: Change::Update {
-                            mode: Create::Only,
+                            mode: Create::OrUpdate { previous: None },
                             log: log_only.clone(),
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },
@@ -375,7 +376,7 @@ mod refedit_ext {
                     },
                     RefEdit {
                         change: Change::Update {
-                            mode: Create::Only,
+                            mode: Create::OrUpdate { previous: None },
                             log: log_only,
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },
