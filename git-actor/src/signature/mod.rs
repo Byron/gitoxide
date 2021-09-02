@@ -3,9 +3,10 @@ mod _ref {
 
     impl<'a> SignatureRef<'a> {
         /// Deserialize a signature from the given `data`.
-        pub fn from_bytes<E: nom::error::ParseError<&'a [u8]> + nom::error::ContextError<&'a [u8]>>(
-            data: &'a [u8],
-        ) -> Result<SignatureRef<'a>, nom::Err<E>> {
+        pub fn from_bytes<E>(data: &'a [u8]) -> Result<SignatureRef<'a>, nom::Err<E>>
+        where
+            E: nom::error::ParseError<&'a [u8]> + nom::error::ContextError<&'a [u8]>,
+        {
             decode(data).map(|(_, t)| t)
         }
     }
@@ -13,6 +14,12 @@ mod _ref {
 
 mod convert {
     use crate::{Sign, Signature, SignatureRef, Time};
+
+    impl Default for Signature {
+        fn default() -> Self {
+            Signature::empty()
+        }
+    }
 
     impl Signature {
         /// An empty signature, similar to 'null'.

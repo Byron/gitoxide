@@ -226,6 +226,8 @@ pub mod easy;
 
 ///
 pub mod commit;
+///
+pub mod reference;
 
 /// The kind of `Repository`
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]

@@ -1,13 +1,15 @@
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 
-/// Produce a commit summary for the given `message`.
+/// Produce a short commit summary for the given `message`.
 ///
 /// This means the following
 ///
 /// * Take the subject line which is delimited by two newlines (\n\n)
 /// * transform intermediate consecutive whitespace including \r into one space
 ///
+/// The resulting summary will have folded whitespace before a newline into spaces and stopped that process
+/// once two consecutive newlines are encountered.
 pub fn summary(message: &BStr) -> Cow<'_, BStr> {
     let message = message.trim();
     match message.find_byte(b'\n') {

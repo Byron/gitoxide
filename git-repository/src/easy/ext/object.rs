@@ -8,7 +8,7 @@ use crate::{
     easy,
     easy::{commit, object, ObjectRef, Oid},
 };
-use bstr::{BString, ByteSlice};
+use bstr::BString;
 use git_ref::transaction::{LogChange, RefLog};
 use git_ref::FullName;
 use std::convert::TryInto;
@@ -101,8 +101,8 @@ pub trait ObjectAccessExt: easy::Access + Sized {
                     log: LogChange {
                         mode: RefLog::AndReference,
                         force_create_reflog: false,
-                        message: crate::commit::summary(commit.message.as_bstr()).into_owned(),
-                    }, // TODO: generate commit summary
+                        message: crate::reference::log::message("commit", &commit),
+                    },
                     mode: Create::OrUpdate {
                         previous: commit.parents.get(0).map(|p| Target::Peeled(*p)),
                     },

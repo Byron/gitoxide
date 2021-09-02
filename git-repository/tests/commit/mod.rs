@@ -28,6 +28,15 @@ pub mod summary {
     }
 
     #[test]
+    fn whitespace_without_newlines_is_ignored_except_for_leading_and_trailing_whitespace() {
+        let input = b" \t\r\n \nhello \t \rworld \t\r\n \n".as_bstr();
+        assert_eq!(
+            git::commit::summary(input),
+            Cow::Borrowed(b"hello \t \rworld".as_bstr())
+        );
+    }
+
+    #[test]
     fn lines_separated_by_double_newlines_are_subjects() {
         let input = b" \t\r\n \nhello\t \r\nworld \t\r \nfoo\n\nsomething else we ignore".as_bstr();
         assert_eq!(git::commit::summary(input), Cow::Borrowed(b"hello world foo".as_bstr()));

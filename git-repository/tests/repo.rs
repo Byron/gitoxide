@@ -16,3 +16,4 @@ mod commit;
 mod discover;
 mod easy;
 mod init;
+mod reference;
