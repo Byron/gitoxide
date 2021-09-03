@@ -103,7 +103,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
                         force_create_reflog: false,
                         message: crate::reference::log::message("commit", &commit),
                     },
-                    mode: Create::OrUpdate {
+                    previous: Create::OrUpdate {
                         previous: commit.parents.get(0).map(|p| Target::Peeled(*p)),
                     },
                     new: Target::Peeled(commit_id.id),

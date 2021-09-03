@@ -23,7 +23,7 @@ mod commit {
     use git_testtools::hex_to_id;
 
     #[test]
-    fn single_line_initial_commit_empty_tree() {
+    fn single_line_initial_commit_empty_tree_ref_nonexisting() {
         let tmp = tempfile::tempdir().unwrap();
         let repo = git::init_bare(&tmp).unwrap().into_easy();
         let empty_tree_id = repo.write_object(&git::objs::Tree::empty().into()).unwrap();
@@ -43,13 +43,16 @@ mod commit {
             hex_to_id("302ea5640358f98ba23cda66c1e664a6f274643f"),
             "the commit id is stable"
         );
+
+        // TODO: check reflog
     }
 
     #[test]
-    fn multi_line_commit_message_uses_first_line_in_ref_log() {
+    #[ignore]
+    fn multi_line_commit_message_uses_first_line_in_ref_log_ref_nonexisting() {
         let (repo, _keep) = crate::basic_rw_repo().unwrap();
         let parent = repo.find_reference("HEAD").unwrap().peel_to_oid_in_place().unwrap();
-        let tree_id = parent
+        let empty_tree_id = parent
             .object()
             .unwrap()
             .commit_iter()
@@ -61,8 +64,8 @@ mod commit {
                 "HEAD",
                 "hello there \r\n\nthe body",
                 author.clone(),
-                author,
-                tree_id,
+                author.clone(),
+                empty_tree_id,
                 Some(parent),
             )
             .unwrap();
@@ -71,6 +74,24 @@ mod commit {
             hex_to_id("1ff7decccf76bfa15bfdb0b66bac0c9144b4b083"),
             "the commit id is stable"
         );
+
+        let commit_id = repo
+            .commit(
+                "refs/heads/new-branch",
+                "committing into a new branch creates it",
+                author.clone(),
+                author,
+                empty_tree_id,
+                Some(commit_id),
+            )
+            .unwrap();
+
+        assert_eq!(
+            commit_id,
+            hex_to_id("1ff7decccf76bfa15bfdb0b66bac0c9144b4b083"),
+            "the second commit id is stable"
+        );
+
         // TODO: check reflog
     }
 }

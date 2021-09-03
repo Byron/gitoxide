@@ -26,7 +26,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
             RefEdit {
                 change: Change::Update {
                     log: Default::default(),
-                    mode: if force {
+                    previous: if force {
                         Create::OrUpdate { previous: None }
                     } else {
                         Create::Only
