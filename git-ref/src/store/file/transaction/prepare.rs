@@ -8,7 +8,7 @@ use crate::{
             Transaction,
         },
     },
-    transaction::{Change, Create, LogChange, RefEdit, RefEditsExt, RefLog},
+    transaction::{Change, LogChange, RefEdit, RefEditsExt, RefLog},
     Target,
 };
 
@@ -102,23 +102,29 @@ impl<'s> Transaction<'s> {
 
                 let existing_ref = existing_ref?;
                 match (&previous, &existing_ref) {
-                    (Create::Only, Some(existing)) if existing.target() != new.to_ref() => {
-                        let new = new.clone();
-                        return Err(Error::MustNotExist {
-                            full_name: change.name(),
-                            actual: existing.target(),
-                            new,
-                        });
+                    (PreviousValue::Any, _)
+                    | (PreviousValue::MustExist, Some(_))
+                    | (PreviousValue::MustNotExist | PreviousValue::ExistingMustMatch(_), None) => {}
+                    (PreviousValue::MustExist, None) => {
+                        let expected = Target::Peeled(git_hash::ObjectId::null_sha1());
+                        let full_name = change.name();
+                        return Err(Error::MustExist { full_name, expected });
+                    }
+                    (PreviousValue::MustNotExist, Some(existing)) => {
+                        if existing.target() != new.to_ref() {
+                            let new = new.clone();
+                            return Err(Error::MustNotExist {
+                                full_name: change.name(),
+                                actual: existing.target(),
+                                new,
+                            });
+                        }
                     }
                     (
-                        Create::OrUpdate {
-                            previous: Some(previous),
-                        },
+                        PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
                         Some(existing),
-                    ) => match previous {
-                        Target::Peeled(oid) if oid.is_null() => {}
-                        any_target if *any_target == existing.target() => {}
-                        _target_mismatch => {
+                    ) => {
+                        if *previous != existing.target() {
                             let actual = existing.target();
                             let expected = previous.to_owned();
                             let full_name = change.name();
@@ -128,25 +134,17 @@ impl<'s> Transaction<'s> {
                                 expected,
                             });
                         }
-                    },
-                    (
-                        Create::OrUpdate {
-                            previous: Some(previous),
-                        },
-                        None,
-                    ) => {
+                    }
+
+                    (PreviousValue::MustExistAndMatch(previous), None) => {
                         let expected = previous.to_owned();
                         let full_name = change.name();
                         return Err(Error::MustExist { full_name, expected });
                     }
-                    (Create::Only | Create::OrUpdate { previous: None }, None | Some(_)) => {}
                 };
 
-                *previous = match existing_ref {
-                    None => Create::Only,
-                    Some(existing) => Create::OrUpdate {
-                        previous: Some(existing.target()),
-                    },
+                if let Some(existing) = existing_ref {
+                    *previous = PreviousValue::MustExistAndMatch(existing.target());
                 };
 
                 lock.with_mut(|file| match new {
@@ -234,9 +232,9 @@ impl<'s> Transaction<'s> {
                 }
                 match edit.update.change {
                     Change::Update {
-                        previous: Create::OrUpdate { previous: None },
+                        previous: PreviousValue::ExistingMustMatch(_) | PreviousValue::MustExistAndMatch(_),
                         ..
-                    } => continue,
+                    } => needs_packed_refs_lookups = true,
                     Change::Delete { .. } => {
                         edits_for_packed_transaction.push(edit.update.clone());
                     }
@@ -403,3 +401,5 @@ mod error {
 }
 
 pub use error::Error;
+
+use crate::transaction::PreviousValue;

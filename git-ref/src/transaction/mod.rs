@@ -45,7 +45,9 @@ impl Default for LogChange {
 pub enum PreviousValue {
     /// No requirements are made towards the current value, and the new value is set unconditionally.
     Any,
-    /// Create the ref only. This fails if the ref exists.
+    /// The reference must exist and may have any value.
+    MustExist,
+    /// Create the ref only, hence the reference must not exist.
     MustNotExist,
     /// The ref _must_ exist and have the given value.
     MustExistAndMatch(Target),
@@ -63,35 +65,6 @@ impl PreviousValue {
     }
 }
 
-/// A way to determine if a value should be created or created or updated. In the latter case the previous
-/// value can be specified to indicate to what extend the previous value matters.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub enum Create {
-    /// Create a ref only. This fails if the ref exists and does not match the desired new value.
-    Only,
-    /// Create or update the reference with the `previous` value being controlling how to deal with existing ref values.
-    ///
-    OrUpdate {
-        /// Interpret…
-        /// * `None` so that existing values do not matter at all. This is the mode that always creates or updates a reference to the
-        ///   desired new value.
-        /// * `Some(Target::Peeled(ObjectId::null_sha1())` so that the reference is required to exist even though its value doesn't matter.
-        /// * `Some(value)` so that the reference is required to exist and have the given `value`.
-        previous: Option<Target>,
-    },
-}
-
-impl Create {
-    pub(crate) fn previous_oid(&self) -> Option<ObjectId> {
-        match self {
-            Create::OrUpdate {
-                previous: Some(Target::Peeled(oid)),
-            } => Some(*oid),
-            Create::Only | Create::OrUpdate { .. } => None,
-        }
-    }
-}
-
 /// A description of an edit to perform.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Change {
@@ -104,7 +77,7 @@ pub enum Change {
         /// The create mode.
         /// If a ref was existing previously it will be updated to reflect the previous value for bookkeeping purposes
         /// and for use in the reflog.
-        previous: Create,
+        previous: PreviousValue,
         /// The new state of the reference, either for updating an existing one or creating a new one.
         new: Target,
     },
@@ -116,6 +89,7 @@ pub enum Change {
         ///
         /// If a previous ref existed, this value will be filled in automatically and can be accessed
         /// if the transaction was committed successfully.
+        // TODO: use PreviousValue here even though it will have a few unused cases
         previous: Option<Target>,
         /// How to thread the reference log during deletion.
         log: RefLog,
@@ -127,13 +101,11 @@ impl Change {
     pub fn previous_value(&self) -> Option<crate::TargetRef<'_>> {
         match self {
             Change::Update {
-                previous: Create::Only, ..
-            } => None,
-            Change::Update {
-                previous: Create::OrUpdate { previous },
+                previous: PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
                 ..
-            }
-            | Change::Delete { previous, .. } => previous.as_ref().map(|t| t.to_ref()),
+            } => Some(previous.to_ref()),
+            Change::Delete { previous, .. } => previous.as_ref().map(|t| t.to_ref()),
+            _ => None,
         }
     }
 }

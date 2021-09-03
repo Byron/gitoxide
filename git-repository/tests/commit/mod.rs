@@ -1,7 +1,8 @@
 pub mod summary {
+    use std::borrow::Cow;
+
     use bstr::ByteSlice;
     use git_repository as git;
-    use std::borrow::Cow;
 
     #[test]
     fn no_newline_yields_the_message_itself() {

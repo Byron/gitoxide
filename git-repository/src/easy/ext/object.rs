@@ -1,17 +1,18 @@
-use std::ops::DerefMut;
+use std::{convert::TryInto, ops::DerefMut};
 
+use bstr::BString;
 use git_hash::ObjectId;
 use git_odb::{Find, FindExt};
+use git_ref::{
+    transaction::{LogChange, PreviousValue, RefLog},
+    FullName,
+};
 
-use crate::ext::ObjectIdExt;
 use crate::{
     easy,
     easy::{commit, object, ObjectRef, Oid},
+    ext::ObjectIdExt,
 };
-use bstr::BString;
-use git_ref::transaction::{LogChange, RefLog};
-use git_ref::FullName;
-use std::convert::TryInto;
 
 pub trait ObjectAccessExt: easy::Access + Sized {
     // NOTE: in order to get the actual kind of object, is must be fully decoded from storage in case of packs
@@ -75,11 +76,12 @@ pub trait ObjectAccessExt: easy::Access + Sized {
         Name: TryInto<FullName, Error = E>,
         commit::Error: From<E>,
     {
-        use crate::easy::ext::ReferenceAccessExt;
         use git_ref::{
-            transaction::{Change, Create, RefEdit},
+            transaction::{Change, RefEdit},
             Target,
         };
+
+        use crate::easy::ext::ReferenceAccessExt;
 
         let reference = reference.try_into()?;
         let commit: git_object::Object = git_object::Commit {
@@ -103,8 +105,9 @@ pub trait ObjectAccessExt: easy::Access + Sized {
                         force_create_reflog: false,
                         message: crate::reference::log::message("commit", &commit),
                     },
-                    previous: Create::OrUpdate {
-                        previous: commit.parents.get(0).map(|p| Target::Peeled(*p)),
+                    previous: match commit.parents.get(0).map(|p| Target::Peeled(*p)) {
+                        Some(previous) => PreviousValue::ExistingMustMatch(previous),
+                        None => PreviousValue::MustNotExist,
                     },
                     new: Target::Peeled(commit_id.id),
                 },

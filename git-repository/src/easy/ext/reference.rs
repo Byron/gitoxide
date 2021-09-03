@@ -4,7 +4,7 @@ use git_actor as actor;
 use git_hash::ObjectId;
 use git_lock as lock;
 use git_ref::{
-    transaction::{Change, Create, RefEdit},
+    transaction::{Change, PreviousValue, RefEdit},
     PartialNameRef, Target,
 };
 
@@ -27,9 +27,9 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
                 change: Change::Update {
                     log: Default::default(),
                     previous: if force {
-                        Create::OrUpdate { previous: None }
+                        PreviousValue::Any
                     } else {
-                        Create::Only
+                        PreviousValue::MustNotExist
                     },
                     new: Target::Peeled(target.into()),
                 },

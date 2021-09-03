@@ -1,8 +1,9 @@
 ///
 pub mod log {
-    use crate::commit;
     use bstr::{BString, ByteSlice, ByteVec};
     use git_object::Commit;
+
+    use crate::commit;
 
     /// Generate a message typical for git commit logs based on the given `operation`
     pub fn message(operation: &str, commit: &Commit) -> BString {

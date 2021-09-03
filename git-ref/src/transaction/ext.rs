@@ -1,7 +1,7 @@
 use bstr::{BString, ByteVec};
 
 use crate::{
-    transaction::{Change, Create, LogChange, RefEdit, RefLog, Target},
+    transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog, Target},
     Namespace, PartialNameRef,
 };
 
@@ -103,7 +103,7 @@ where
                                         force_create_reflog: log.force_create_reflog,
                                     },
                                 );
-                                let next = std::mem::replace(previous, Create::OrUpdate { previous: None });
+                                let next = std::mem::replace(previous, PreviousValue::Any);
                                 RefEdit {
                                     change: Change::Update {
                                         previous: next,

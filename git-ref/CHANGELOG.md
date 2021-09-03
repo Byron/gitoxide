@@ -2,7 +2,7 @@
 
 #### Breaking
 
-* Replace `transaction::Create` with `transaction::PreviousValue`
+* Replace `transaction::Create` with `transaction::PreviousValue` and remove `transaction::Create`
 
 ### v0.6.1
 
