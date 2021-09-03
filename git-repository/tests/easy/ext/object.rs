@@ -91,8 +91,7 @@ mod commit {
         );
 
         // TODO: check reflog
-        let branch = repo.head().unwrap().expect("head is not detached");
-        let current_commit = branch.target().as_id().expect("peeled").to_owned();
-        assert_eq!(current_commit, commit_id.detach(), "the commit was set");
+        let current_commit = repo.find_reference("HEAD").unwrap().peel_to_oid_in_place().unwrap();
+        assert_eq!(current_commit, commit_id, "the commit was set");
     }
 }

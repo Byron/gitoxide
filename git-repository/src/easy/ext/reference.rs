@@ -73,11 +73,13 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
             .map_err(Into::into)
     }
 
+    // TODO: encode that the ref is unborn (i.e. uninitialized repo)
     fn head(&self) -> Result<Option<Reference<'_, Self>>, reference::find::existing::Error> {
-        let _head = self.find_reference("HEAD")?;
-        // _head.peel_to_oid_in_place()
-        todo!("follow symrefs")
-        // head.backing
+        let head = self.find_reference("HEAD")?;
+        match head.inner.target {
+            Target::Symbolic(branch) => self.find_reference(branch.to_partial()).map(Some),
+            Target::Peeled(_) => Ok(None),
+        }
     }
 
     fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_, Self>, reference::find::existing::Error>
