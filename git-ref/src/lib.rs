@@ -39,6 +39,9 @@ pub use raw::Reference;
 
 mod target;
 
+///
+pub mod peel;
+
 /// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
 /// of a symbolic reference
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

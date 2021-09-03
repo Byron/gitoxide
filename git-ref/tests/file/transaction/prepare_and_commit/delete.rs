@@ -6,7 +6,7 @@ use git_lock::acquire::Fail;
 use git_ref::transaction::PreviousValue;
 use git_ref::{
     transaction::{Change, RefEdit, RefLog},
-    Target,
+    Reference, Target,
 };
 use git_testtools::hex_to_id;
 use std::convert::TryInto;
@@ -153,13 +153,13 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
         .commit(&committer())?;
 
     assert_eq!(edits.len(), 1);
-    let head = store.find_loose("HEAD")?;
+    let head: Reference = store.find_loose("HEAD")?.into();
     assert!(!head.log_exists(&store));
     let main = store.find_loose("main").expect("referent still exists");
     assert!(main.log_exists(&store), "log is untouched, too");
     assert_eq!(
         main.target,
-        head.follow_symbolic(&store, None).expect("a symref")?.target(),
+        head.follow_symbolic(&store, None).expect("a symref")?.target,
         "head points to main"
     );
     Ok(())
@@ -187,13 +187,13 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
         .commit(&committer())?;
 
     assert_eq!(edits.len(), 2);
-    let head = store.find_loose("HEAD")?;
+    let head: Reference = store.find_loose("HEAD")?.into();
     assert!(!head.log_exists(&store));
     let main = store.find_loose("main").expect("referent still exists");
     assert!(!main.log_exists(&store), "log is removed");
     assert_eq!(
         main.target,
-        head.follow_symbolic(&store, None).expect("a symref")?.target(),
+        head.follow_symbolic(&store, None).expect("a symref")?.target,
         "head points to main"
     );
     Ok(())
@@ -369,7 +369,7 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
     let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
     let packed = store.packed_buffer()?.expect("packed-refs");
     let branch = store.find("newer-as-loose", Some(&packed))?;
-    let branch_id = branch.target().as_id().map(ToOwned::to_owned).expect("peeled");
+    let branch_id = branch.target.as_id().map(ToOwned::to_owned).expect("peeled");
     assert_ne!(
         packed.find("newer-as-loose")?.target(),
         branch_id,
@@ -384,7 +384,7 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
                     expected: PreviousValue::MustExistAndMatch(Target::Peeled(branch_id)),
                     log: RefLog::AndReference,
                 },
-                name: branch.name().into(),
+                name: branch.name.into(),
                 deref: false,
             }),
             git_lock::acquire::Fail::Immediately,

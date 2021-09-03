@@ -14,11 +14,13 @@ pub struct Reference {
 }
 
 mod convert {
-    use crate::raw::Reference;
-    use crate::store::file::loose;
-    use crate::store::packed;
-    use crate::Target;
     use git_hash::ObjectId;
+
+    use crate::{
+        raw::Reference,
+        store::{file::loose, packed},
+        Target,
+    };
 
     impl From<Reference> for loose::Reference {
         fn from(value: Reference) -> Self {
@@ -54,10 +56,13 @@ mod convert {
 
 // TODO: peeling depends on file store, that should be generic but we don't have a trait for that yet
 mod log {
-    use crate::raw::Reference;
-    use crate::store::file;
-    use crate::store::file::log;
-    use crate::store::file::loose::reference::logiter::must_be_io_err;
+    use crate::{
+        raw::Reference,
+        store::{
+            file,
+            file::{log, loose::reference::logiter::must_be_io_err},
+        },
+    };
 
     impl Reference {
         /// Obtain a reverse iterator over logs of this reference. See [crate::file::loose::Reference::log_iter_rev()] for details.
@@ -89,9 +94,9 @@ mod log {
 }
 
 mod access {
-    use crate::raw::Reference;
-    use crate::{FullNameRef, Namespace};
     use bstr::ByteSlice;
+
+    use crate::{raw::Reference, FullNameRef, Namespace};
 
     impl Reference {
         /// Returns the kind of reference based on its target
@@ -99,16 +104,11 @@ mod access {
             self.target.kind()
         }
 
-        /// Return the full validated name of the reference, which may include a namespace.
-        pub fn name(&self) -> FullNameRef<'_> {
-            self.name.to_ref()
-        }
-
         /// Return the full validated name of the reference, with the given namespace stripped if possible.
         ///
         /// If the reference name wasn't prefixed with `namespace`, `None` is returned instead.
         pub fn name_without_namespace(&self, namespace: &Namespace) -> Option<FullNameRef<'_>> {
-            self.name()
+            self.name
                 .0
                 .as_bstr()
                 .strip_prefix(namespace.0.as_bstr().as_ref())
@@ -119,10 +119,16 @@ mod access {
 
 // TODO: peeling depends on file store, that should be generic but we don't have a trait for that yet
 mod peel {
-    use crate::raw::Reference;
-    use crate::store::{file, file::loose, packed};
-    use crate::{FullName, Target};
+    use std::collections::BTreeSet;
+
     use git_hash::ObjectId;
+
+    use crate::{
+        peel,
+        raw::Reference,
+        store::{file, packed},
+        Target,
+    };
 
     impl Reference {
         /// For details, see [crate::file::loose::Reference::peel_to_id_in_place].
@@ -130,50 +136,85 @@ mod peel {
             &mut self,
             store: &file::Store,
             packed: Option<&packed::Buffer>,
-            find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
-        ) -> Result<ObjectId, crate::store::file::loose::reference::peel::to_id::Error> {
+            mut find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
+        ) -> Result<ObjectId, peel::to_id::Error> {
             match self.peeled.take() {
                 Some(peeled) => {
                     self.target = Target::Peeled(peeled);
                     Ok(peeled)
                 }
-                None => {
-                    let mut loose_self = loose::Reference {
-                        name: FullName(std::mem::take(&mut self.name.0)),
-                        target: std::mem::replace(&mut self.target, Target::Symbolic(FullName(Default::default()))),
-                    };
-                    let res = loose_self
-                        .peel_to_id_in_place(store, packed, find)
-                        .map(ToOwned::to_owned);
-                    self.name = loose_self.name;
-                    self.target = loose_self.target;
-                    res
-                }
+                None => match self.target {
+                    Target::Peeled(peeled) => Ok(peeled.clone()),
+                    Target::Symbolic(_) => {
+                        let mut seen = BTreeSet::new();
+                        let cursor = &mut *self;
+                        while let Some(next) = cursor.follow_symbolic(store, packed) {
+                            *cursor = next?;
+                            if seen.contains(&cursor.name) {
+                                return Err(peel::to_id::Error::Cycle(store.base.join(cursor.name.to_path())));
+                            }
+                            seen.insert(cursor.name.clone());
+                            const MAX_REF_DEPTH: usize = 5;
+                            if seen.len() == MAX_REF_DEPTH {
+                                return Err(peel::to_id::Error::DepthLimitExceeded {
+                                    max_depth: MAX_REF_DEPTH,
+                                });
+                            }
+                        }
+
+                        let mut buf = Vec::new();
+                        let mut oid = self.target.as_id().expect("peeled ref").to_owned();
+                        self.target = Target::Peeled(loop {
+                            let (kind, data) = find(oid, &mut buf)
+                                .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)?
+                                .ok_or_else(|| peel::to_id::Error::NotFound {
+                                    oid,
+                                    name: self.name.0.clone(),
+                                })?;
+                            match kind {
+                                git_object::Kind::Tag => {
+                                    oid = git_object::TagRefIter::from_bytes(data).target_id().ok_or_else(|| {
+                                        peel::to_id::Error::NotFound {
+                                            oid,
+                                            name: self.name.0.clone(),
+                                        }
+                                    })?;
+                                }
+                                _ => break oid,
+                            };
+                        });
+                        Ok(self.target.as_id().expect("to be peeled").to_owned())
+                    }
+                },
             }
         }
 
-        /// For details, see [crate::file::loose::Reference::follow_symbolic()].
-        pub fn peel_one_level(
+        /// Follow this symbolic reference one level and return the ref it refers to,
+        /// possibly providing access to `packed` references for lookup if it contains the referent.
+        ///
+        /// Returns `None` if this is not a symbolic reference, hence the leaf of the chain.
+        pub fn follow_symbolic(
             &self,
-            _store: &file::Store,
-            _packed: Option<&packed::Buffer>,
-        ) -> Option<Result<Reference, crate::store::file::loose::reference::peel::Error>> {
+            store: &file::Store,
+            packed: Option<&packed::Buffer>,
+        ) -> Option<Result<Reference, file::find::existing::Error>> {
             match self.peeled {
                 Some(peeled) => Some(Ok(Reference {
                     name: self.name.clone(),
                     target: Target::Peeled(peeled),
                     peeled: None,
                 })),
-                None => {
-                    match self.target {
-                        Target::Peeled(_) => None,
-                        Target::Symbolic(_) => {
-                            let _loose_self: loose::Reference = self.clone().into();
-                            todo!("get rid of file::Reference")
-                            // loose_self.follow_symbolic(store, packed)
+                None => match &self.target {
+                    Target::Peeled(_) => None,
+                    Target::Symbolic(full_name) => {
+                        let path = full_name.to_path();
+                        match store.find_one_with_verified_input(path.as_ref(), packed) {
+                            Ok(Some(next)) => Some(Ok(next)),
+                            Ok(None) => Some(Err(file::find::existing::Error::NotFound(path.into_owned()))),
+                            Err(err) => Some(Err(file::find::existing::Error::Find(err))),
                         }
                     }
-                }
+                },
             }
         }
     }

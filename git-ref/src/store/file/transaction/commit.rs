@@ -193,5 +193,6 @@ mod error {
         }
     }
 }
-use crate::transaction::PreviousValue;
 pub use error::Error;
+
+use crate::transaction::PreviousValue;

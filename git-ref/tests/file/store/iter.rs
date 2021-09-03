@@ -22,7 +22,7 @@ mod with_namespace {
                 .iter_prefixed(packed.as_ref(), ns_two.to_path())
                 .unwrap()
                 .map(Result::unwrap)
-                .map(|r: git_ref::file::Reference| r.name().as_bstr().to_owned())
+                .map(|r: git_ref::Reference| r.name.as_bstr().to_owned())
                 .collect::<Vec<_>>(),
             vec![
                 "refs/namespaces/bar/refs/heads/multi-link-target1",
@@ -38,8 +38,8 @@ mod with_namespace {
                 .iter_prefixed(packed.as_ref(), ns_one.to_path())
                 .unwrap()
                 .map(Result::unwrap)
-                .map(|r: git_ref::file::Reference| (
-                    r.name().as_bstr().to_owned(),
+                .map(|r: git_ref::Reference| (
+                    r.name.as_bstr().to_owned(),
                     r.name_without_namespace(&ns_one)
                         .expect("stripping correct namespace always works")
                         .as_bstr()
@@ -65,10 +65,10 @@ mod with_namespace {
                 .unwrap()
                 .map(Result::unwrap)
                 .filter_map(
-                    |r: git_ref::file::Reference| if r.name().as_bstr().starts_with_str("refs/namespaces") {
+                    |r: git_ref::Reference| if r.name.as_bstr().starts_with_str("refs/namespaces") {
                         None
                     } else {
-                        Some(r.name().as_bstr().to_owned())
+                        Some(r.name.as_bstr().to_owned())
                     }
                 )
                 .collect::<Vec<_>>(),
@@ -207,25 +207,23 @@ fn overlay_iter() -> crate::Result {
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
         .iter(store.packed_buffer()?.as_ref())?
-        .map(|r| r.map(|r| (r.name().as_bstr().to_owned(), r.target(), r.is_packed())))
+        .map(|r| r.map(|r| (r.name.as_bstr().to_owned(), r.target)))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
     let c2 = hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7");
     assert_eq!(
         ref_names,
         vec![
-            (b"refs/heads/main".as_bstr().to_owned(), Peeled(c1), true),
-            ("refs/heads/newer-as-loose".into(), Peeled(c2), false),
+            (b"refs/heads/main".as_bstr().to_owned(), Peeled(c1)),
+            ("refs/heads/newer-as-loose".into(), Peeled(c2)),
             (
                 "refs/remotes/origin/HEAD".into(),
                 Symbolic("refs/remotes/origin/main".try_into()?),
-                false
             ),
-            ("refs/remotes/origin/main".into(), Peeled(c1), true),
+            ("refs/remotes/origin/main".into(), Peeled(c1)),
             (
                 "refs/tags/tag-object".into(),
                 Peeled(hex_to_id("b3109a7e51fc593f85b145a76c70ddd1d133fafd")),
-                true
             )
         ]
     );
@@ -254,15 +252,15 @@ fn overlay_prefixed_iter() -> crate::Result {
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
         .iter_prefixed(store.packed_buffer()?.as_ref(), "refs/heads")?
-        .map(|r| r.map(|r| (r.name().as_bstr().to_owned(), r.target(), r.is_packed())))
+        .map(|r| r.map(|r| (r.name.as_bstr().to_owned(), r.target)))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
     let c2 = hex_to_id("9902e3c3e8f0c569b4ab295ddf473e6de763e1e7");
     assert_eq!(
         ref_names,
         vec![
-            (b"refs/heads/main".as_bstr().to_owned(), Peeled(c1), true),
-            ("refs/heads/newer-as-loose".into(), Peeled(c2), false),
+            (b"refs/heads/main".as_bstr().to_owned(), Peeled(c1)),
+            ("refs/heads/newer-as-loose".into(), Peeled(c2)),
         ]
     );
     Ok(())

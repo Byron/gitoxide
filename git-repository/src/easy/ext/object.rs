@@ -109,7 +109,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
                         Some(previous) => PreviousValue::ExistingMustMatch(previous),
                         None => PreviousValue::MustNotExist,
                     },
-                    new: Target::Peeled(commit_id.id),
+                    new: Target::Peeled(commit_id.inner),
                 },
                 name: reference,
                 deref: true,

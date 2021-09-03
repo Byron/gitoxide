@@ -72,9 +72,6 @@ pub mod log;
 ///
 pub mod find;
 
-mod reference;
-pub use reference::Reference;
-
 ///
 pub mod transaction;
 

@@ -9,7 +9,7 @@ use crate::{
         },
     },
     transaction::{Change, LogChange, RefEdit, RefEditsExt, RefLog},
-    Target,
+    Reference, Target,
 };
 
 impl<'s> Transaction<'s> {
@@ -33,7 +33,7 @@ impl<'s> Transaction<'s> {
                 maybe_loose
                     .map(|buf| {
                         loose::Reference::try_from_path(change.update.name.clone(), &buf)
-                            .map(file::Reference::Loose)
+                            .map(Reference::from)
                             .map_err(Error::from)
                     })
                     .transpose()
@@ -45,7 +45,7 @@ impl<'s> Transaction<'s> {
             .and_then(|maybe_loose| match (maybe_loose, packed) {
                 (None, Some(packed)) => packed
                     .try_find(change.update.name.to_ref())
-                    .map(|opt| opt.map(file::Reference::Packed))
+                    .map(|opt| opt.map(Into::into))
                     .map_err(Error::from),
                 (None, None) => Ok(None),
                 (maybe_loose, _) => Ok(maybe_loose),
@@ -78,7 +78,7 @@ impl<'s> Transaction<'s> {
                         PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
                         Some(existing),
                     ) => {
-                        let actual = existing.target();
+                        let actual = existing.target.clone();
                         if *previous != actual {
                             let expected = previous.clone();
                             return Err(Error::ReferenceOutOfDate {
@@ -92,7 +92,7 @@ impl<'s> Transaction<'s> {
 
                 // Keep the previous value for the caller and ourselves. Maybe they want to keep a log of sorts.
                 if let Some(existing) = existing_ref {
-                    *expected = PreviousValue::MustExistAndMatch(existing.target());
+                    *expected = PreviousValue::MustExistAndMatch(existing.target);
                 }
 
                 lock
@@ -119,11 +119,11 @@ impl<'s> Transaction<'s> {
                         return Err(Error::MustExist { full_name, expected });
                     }
                     (PreviousValue::MustNotExist, Some(existing)) => {
-                        if existing.target() != new.to_ref() {
+                        if existing.target != *new {
                             let new = new.clone();
                             return Err(Error::MustNotExist {
                                 full_name: change.name(),
-                                actual: existing.target(),
+                                actual: existing.target.clone(),
                                 new,
                             });
                         }
@@ -132,8 +132,8 @@ impl<'s> Transaction<'s> {
                         PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
                         Some(existing),
                     ) => {
-                        if *previous != existing.target() {
-                            let actual = existing.target();
+                        if *previous != existing.target {
+                            let actual = existing.target.clone();
                             let expected = previous.to_owned();
                             let full_name = change.name();
                             return Err(Error::ReferenceOutOfDate {
@@ -152,7 +152,7 @@ impl<'s> Transaction<'s> {
                 };
 
                 if let Some(existing) = existing_ref {
-                    *expected = PreviousValue::MustExistAndMatch(existing.target());
+                    *expected = PreviousValue::MustExistAndMatch(existing.target);
                 };
 
                 lock.with_mut(|file| match new {
@@ -194,10 +194,7 @@ impl<'s> Transaction<'s> {
             .pre_process(
                 |name| {
                     let symbolic_refs_are_never_packed = None;
-                    store
-                        .find(name, symbolic_refs_are_never_packed)
-                        .map(|r| r.into_target())
-                        .ok()
+                    store.find(name, symbolic_refs_are_never_packed).map(|r| r.target).ok()
                 },
                 |idx, update| Edit {
                     update,

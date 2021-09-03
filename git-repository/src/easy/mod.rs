@@ -39,7 +39,8 @@ pub mod state;
 /// An [ObjectId] with access to a repository.
 #[derive(Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct Oid<'r, A> {
-    id: ObjectId,
+    /// The actual object id
+    pub inner: ObjectId,
     access: &'r A,
 }
 
@@ -87,7 +88,8 @@ pub struct Object {
 ///
 /// Note that these are snapshots and won't recognize if they are stale.
 pub struct Reference<'r, A> {
-    pub(crate) backing: Option<reference::Backing>,
+    /// The actual reference data
+    pub inner: git_ref::Reference,
     pub(crate) access: &'r A,
 }
 

@@ -718,7 +718,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
     let packed = store.packed_buffer()?.expect("packed-refs");
     assert_ne!(
         packed.find("newer-as-loose")?.target(),
-        branch.target().as_id().expect("peeled"),
+        branch.target.as_id().expect("peeled"),
         "the packed ref is outdated"
     );
     let mut buf = Vec::new();
@@ -767,7 +767,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
     );
     assert_eq!(
         packed.find("newer-as-loose")?.target(),
-        store.find("newer-as-loose", None)?.target().as_id().expect("peeled"),
+        store.find("newer-as-loose", None)?.target.into_id(),
         "the packed ref is now up to date and the loose ref definitely still exists"
     );
     Ok(())

@@ -6,9 +6,9 @@ use std::{
 };
 
 use crate::{
-    file::{loose, path_to_name, Reference},
+    file::{loose, path_to_name},
     store::{file, packed},
-    FullName,
+    FullName, Reference,
 };
 
 /// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise
@@ -26,8 +26,8 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
     fn convert_packed(
         &mut self,
         packed: Result<packed::Reference<'p>, packed::iter::Error>,
-    ) -> Result<Reference<'p>, Error> {
-        packed.map(Reference::Packed).map_err(|err| match err {
+    ) -> Result<Reference, Error> {
+        packed.map(Into::into).map_err(|err| match err {
             packed::iter::Error::Reference {
                 invalid_line,
                 line_number,
@@ -39,7 +39,7 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
         })
     }
 
-    fn convert_loose(&mut self, res: std::io::Result<(PathBuf, FullName)>) -> Result<Reference<'p>, Error> {
+    fn convert_loose(&mut self, res: std::io::Result<(PathBuf, FullName)>) -> Result<Reference, Error> {
         let (refpath, name) = res.map_err(Error::Traversal)?;
         std::fs::File::open(&refpath)
             .and_then(|mut f| {
@@ -52,12 +52,12 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
                 err,
                 relative_path: refpath.strip_prefix(&self.base).expect("base contains path").into(),
             })
-            .map(Reference::Loose)
+            .map(Into::into)
     }
 }
 
 impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
-    type Item = Result<Reference<'p>, Error>;
+    type Item = Result<Reference, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.packed.as_mut() {

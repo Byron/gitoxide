@@ -16,7 +16,7 @@ mod find {
         assert_eq!(packed_tag_ref.name(), "refs/tags/dt1".try_into().unwrap());
 
         assert_eq!(
-            packed_tag_ref.target(),
+            packed_tag_ref.inner.target,
             refs::Target::Peeled(hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3")),
             "it points to a tag object"
         );
