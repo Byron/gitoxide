@@ -82,12 +82,15 @@ where
                     new_edits.push(make_entry(
                         eid,
                         match &mut edit.change {
-                            Change::Delete { previous, log: mode } => {
+                            Change::Delete {
+                                expected: previous,
+                                log: mode,
+                            } => {
                                 let current_mode = *mode;
                                 *mode = RefLog::Only;
                                 RefEdit {
                                     change: Change::Delete {
-                                        previous: previous.clone(),
+                                        expected: previous.clone(),
                                         log: current_mode,
                                     },
                                     name: referent,

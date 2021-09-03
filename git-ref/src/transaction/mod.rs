@@ -64,22 +64,19 @@ pub enum Change {
         /// The desired change to the reference log.
         log: LogChange,
         /// The expected value already present in the reference.
-        /// If a ref was existing previously it will be updated to reflect the previous value for bookkeeping purposes
-        /// and for use in the reflog.
+        /// If a ref was existing previously it will be overwritten at `MustExistAndMatch(actual_value)` for use after
+        /// the transaction was committed successfully.
         expected: PreviousValue,
         /// The new state of the reference, either for updating an existing one or creating a new one.
         new: Target,
     },
     /// Delete a reference and optionally check if `previous` is its content.
     Delete {
-        /// The previous state of the reference. If set, the reference is expected to exist and match the given value.
-        /// If the value is a peeled null-id the reference is expected to exist but the value doesn't matter, neither peeled nor symbolic.
-        /// If `None`, the actual value does not matter.
+        /// The expected value of the reference, with the `MustNotExist` variant being invalid.
         ///
-        /// If a previous ref existed, this value will be filled in automatically and can be accessed
-        /// if the transaction was committed successfully.
-        // TODO: use PreviousValue here even though it will have a few unused cases
-        previous: Option<Target>,
+        /// If a previous ref existed, this value will be filled in automatically as `MustExistAndMatch(actual_value)` and
+        /// can be accessed if the transaction was committed successfully.
+        expected: PreviousValue,
         /// How to thread the reference log during deletion.
         log: RefLog,
     },
@@ -92,10 +89,15 @@ impl Change {
             Change::Update {
                 expected: PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
                 ..
-            } => Some(previous.to_ref()),
-            Change::Delete { previous, .. } => previous.as_ref().map(|t| t.to_ref()),
-            _ => None,
+            } => previous,
+            Change::Delete {
+                expected: PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
+                ..
+            } => previous,
+            _ => return None,
         }
+        .to_ref()
+        .into()
     }
 }
 

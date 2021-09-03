@@ -51,7 +51,7 @@ impl<'s> Transaction<'s> {
                 (maybe_loose, _) => Ok(maybe_loose),
             });
         let lock = match &mut change.update.change {
-            Change::Delete { previous, .. } => {
+            Change::Delete { expected, .. } => {
                 let lock = git_lock::Marker::acquire_to_hold_resource(
                     store.reference_path(&relative_path),
                     lock_fail_mode,
@@ -62,16 +62,24 @@ impl<'s> Transaction<'s> {
                     full_name: "borrowchk wont allow change.name()".into(),
                 })?;
                 let existing_ref = existing_ref?;
-                match (&previous, &existing_ref) {
-                    (None, None | Some(_)) => {}
-                    (Some(_previous), None) => {
+                match (&expected, &existing_ref) {
+                    (PreviousValue::MustNotExist, _) => {
+                        panic!("BUG: MustNotExist constraint makes no sense if references are to be deleted")
+                    }
+                    (PreviousValue::ExistingMustMatch(_), None)
+                    | (PreviousValue::MustExist, Some(_))
+                    | (PreviousValue::Any, None | Some(_)) => {}
+                    (PreviousValue::MustExist | PreviousValue::MustExistAndMatch(_), None) => {
                         return Err(Error::DeleteReferenceMustExist {
                             full_name: change.name(),
                         })
                     }
-                    (Some(previous), Some(existing)) => {
+                    (
+                        PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
+                        Some(existing),
+                    ) => {
                         let actual = existing.target();
-                        if !previous.is_null() && *previous != actual {
+                        if *previous != actual {
                             let expected = previous.clone();
                             return Err(Error::ReferenceOutOfDate {
                                 full_name: change.name(),
@@ -84,7 +92,7 @@ impl<'s> Transaction<'s> {
 
                 // Keep the previous value for the caller and ourselves. Maybe they want to keep a log of sorts.
                 if let Some(existing) = existing_ref {
-                    *previous = Some(existing.target());
+                    *expected = PreviousValue::MustExistAndMatch(existing.target());
                 }
 
                 lock

@@ -3,6 +3,7 @@ use crate::file::{
     transaction::prepare_and_commit::{committer, empty_store},
 };
 use git_lock::acquire::Fail;
+use git_ref::transaction::PreviousValue;
 use git_ref::{
     transaction::{Change, RefEdit, RefLog},
     Target,
@@ -18,7 +19,7 @@ fn delete_a_ref_which_is_gone_succeeds() -> crate::Result {
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: None,
+                    expected: PreviousValue::Any,
                     log: RefLog::AndReference,
                 },
                 name: "DOES_NOT_EXIST".try_into()?,
@@ -37,7 +38,7 @@ fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
     let res = store.transaction().prepare(
         Some(RefEdit {
             change: Change::Delete {
-                previous: Some(Target::must_exist()),
+                expected: PreviousValue::MustExist,
                 log: RefLog::AndReference,
             },
             name: "DOES_NOT_EXIST".try_into()?,
@@ -67,7 +68,7 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: Some(Target::must_exist()),
+                    expected: PreviousValue::MustExist,
                     log: RefLog::AndReference,
                 },
                 name: head.name.clone(),
@@ -81,7 +82,7 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
         edits,
         vec![RefEdit {
             change: Change::Delete {
-                previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
+                expected: PreviousValue::MustExistAndMatch(Target::Symbolic("refs/heads/main".try_into()?)),
                 log: RefLog::AndReference,
             },
             name: head.name,
@@ -107,7 +108,7 @@ fn delete_ref_with_incorrect_previous_value_fails() -> crate::Result {
     let res = store.transaction().prepare(
         Some(RefEdit {
             change: Change::Delete {
-                previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
+                expected: PreviousValue::MustExistAndMatch(Target::Symbolic("refs/heads/main".try_into()?)),
                 log: RefLog::Only,
             },
             name: head.name,
@@ -141,7 +142,7 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
+                    expected: PreviousValue::MustExistAndMatch(Target::Symbolic("refs/heads/main".try_into()?)),
                     log: RefLog::Only,
                 },
                 name: head.name,
@@ -175,7 +176,7 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: Some(Target::must_exist()),
+                    expected: PreviousValue::MustExist,
                     log: RefLog::Only,
                 },
                 name: head.name,
@@ -208,7 +209,7 @@ fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() -> crate::Res
     let res = store.transaction().prepare(
         Some(RefEdit {
             change: Change::Delete {
-                previous: Some(Target::must_exist()),
+                expected: PreviousValue::MustExist,
                 log: RefLog::AndReference,
             },
             name: "HEAD".try_into()?,
@@ -240,7 +241,7 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Res
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: None,
+                    expected: PreviousValue::Any,
                     log: RefLog::AndReference,
                 },
                 name: "HEAD".try_into()?,
@@ -255,7 +256,7 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Res
         edits,
         vec![RefEdit {
             change: Change::Delete {
-                previous: None,
+                expected: PreviousValue::Any,
                 log: RefLog::AndReference,
             },
             name: "HEAD".try_into()?,
@@ -278,7 +279,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
             .prepare(
                 Some(RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::Only,
                     },
                     name: "HEAD".try_into()?,
@@ -313,7 +314,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: Some(Target::Peeled(old_id)),
+                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(old_id)),
                     log: RefLog::AndReference,
                 },
                 name: "refs/heads/main".try_into()?,
@@ -346,7 +347,7 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: Some(Target::Peeled(branch_id)),
+                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(branch_id)),
                     log: RefLog::AndReference,
                 },
                 name: branch.name().into(),
@@ -387,7 +388,7 @@ fn all_contained_references_deletes_the_packed_ref_file_too() {
                     let r = r.expect("valid ref");
                     RefEdit {
                         change: Change::Delete {
-                            previous: Target::Peeled(r.target()).into(),
+                            expected: PreviousValue::MustExistAndMatch(Target::Peeled(r.target())),
                             log: RefLog::AndReference,
                         },
                         name: r.name.into(),

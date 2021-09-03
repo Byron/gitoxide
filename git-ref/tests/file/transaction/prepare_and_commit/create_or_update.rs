@@ -162,7 +162,7 @@ fn namespaced_updates_or_deletions_cause_reference_names_to_be_rewritten_and_obs
             vec![
                 RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::AndReference,
                     },
                     name: "refs/for/deletion".try_into()?,
@@ -187,7 +187,7 @@ fn namespaced_updates_or_deletions_cause_reference_names_to_be_rewritten_and_obs
         vec![
             RefEdit {
                 change: Change::Delete {
-                    previous: None,
+                    expected: PreviousValue::Any,
                     log: RefLog::AndReference,
                 },
                 name: "refs/namespaces/foo/refs/for/deletion".try_into()?,

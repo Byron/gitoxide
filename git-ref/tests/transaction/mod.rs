@@ -33,7 +33,7 @@ mod refedit_ext {
     fn named_edit(name: &str) -> RefEdit {
         RefEdit {
             change: Change::Delete {
-                previous: None,
+                expected: PreviousValue::Any,
                 log: RefLog::AndReference,
             },
             name: name.try_into().expect("valid name"),
@@ -48,7 +48,7 @@ mod refedit_ext {
         let mut edits = vec![
             RefEdit {
                 change: Change::Delete {
-                    previous: None,
+                    expected: PreviousValue::Any,
                     log: RefLog::AndReference,
                 },
                 name: "HEAD".try_into()?,
@@ -56,7 +56,7 @@ mod refedit_ext {
             },
             RefEdit {
                 change: Change::Delete {
-                    previous: None,
+                    expected: PreviousValue::Any,
                     log: RefLog::AndReference,
                 },
                 name: "refs/heads/main".try_into()?,
@@ -100,7 +100,7 @@ mod refedit_ext {
         let mut edits = vec![
             RefEdit {
                 change: Change::Delete {
-                    previous: None,
+                    expected: PreviousValue::Any,
                     log: RefLog::AndReference,
                 },
                 name: "refs/tags/deleted".try_into()?,
@@ -122,7 +122,7 @@ mod refedit_ext {
             vec![
                 RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::AndReference,
                     },
                     name: "refs/namespaces/foo/refs/tags/deleted".try_into()?,
@@ -172,7 +172,7 @@ mod refedit_ext {
             let mut edits = vec![
                 RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::AndReference,
                     },
                     name: "SYMBOLIC_PROBABLY_BUT_DEREF_IS_FALSE_SO_IGNORED".try_into()?,
@@ -180,7 +180,7 @@ mod refedit_ext {
                 },
                 RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::AndReference,
                     },
                     name: "refs/heads/anything-but-not-symbolic".try_into()?,
@@ -188,7 +188,7 @@ mod refedit_ext {
                 },
                 RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::AndReference,
                     },
                     name: "refs/heads/does-not-exist-and-deref-is-ignored".try_into()?,
@@ -241,7 +241,7 @@ mod refedit_ext {
             let mut edits = vec![
                 RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::AndReference,
                     },
                     name: "refs/heads/delete-symbolic-1".try_into()?,
@@ -315,7 +315,7 @@ mod refedit_ext {
             let mut edits = vec![
                 RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::AndReference,
                     },
                     name: "refs/heads/delete-symbolic-1".try_into()?,
@@ -351,7 +351,7 @@ mod refedit_ext {
                 vec![
                     RefEdit {
                         change: Change::Delete {
-                            previous: None,
+                            expected: PreviousValue::Any,
                             log: RefLog::Only,
                         },
                         name: "refs/heads/delete-symbolic-1".try_into()?,
@@ -368,7 +368,7 @@ mod refedit_ext {
                     },
                     RefEdit {
                         change: Change::Delete {
-                            previous: None,
+                            expected: PreviousValue::Any,
                             log: RefLog::Only,
                         },
                         name: "refs/heads/delete-symbolic-2".try_into()?,
@@ -385,7 +385,7 @@ mod refedit_ext {
                     },
                     RefEdit {
                         change: Change::Delete {
-                            previous: None,
+                            expected: PreviousValue::Any,
                             log: RefLog::AndReference,
                         },
                         name: "refs/heads/delete-symbolic-3".try_into()?,
