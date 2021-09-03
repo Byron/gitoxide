@@ -123,7 +123,6 @@ mod peel {
     }
 
     #[test]
-    #[ignore]
     fn to_id_multi_hop() -> crate::Result {
         let store = file::store()?;
         let mut r: Reference = store.find_loose("multi-link")?.into();
@@ -154,7 +153,6 @@ mod peel {
     }
 
     #[test]
-    #[ignore]
     fn to_id_cycle() -> crate::Result {
         let store = file::store()?;
         let mut r: Reference = store.find_loose("loop-a")?.into();

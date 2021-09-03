@@ -143,16 +143,16 @@ mod peel {
                     self.target = Target::Peeled(peeled);
                     Ok(peeled)
                 }
-                None => match self.target {
-                    Target::Peeled(peeled) => Ok(peeled),
-                    Target::Symbolic(_) => {
+                None => {
+                    if self.target.kind() == crate::Kind::Symbolic {
                         let mut seen = BTreeSet::new();
                         let cursor = &mut *self;
                         while let Some(next) = cursor.follow_symbolic(store, packed) {
-                            *cursor = next?;
-                            if seen.contains(&cursor.name) {
+                            let next = next?;
+                            if seen.contains(&next.name) {
                                 return Err(peel::to_id::Error::Cycle(store.base.join(cursor.name.to_path())));
                             }
+                            *cursor = next;
                             seen.insert(cursor.name.clone());
                             const MAX_REF_DEPTH: usize = 5;
                             if seen.len() == MAX_REF_DEPTH {
@@ -161,31 +161,30 @@ mod peel {
                                 });
                             }
                         }
-
-                        let mut buf = Vec::new();
-                        let mut oid = self.target.as_id().expect("peeled ref").to_owned();
-                        self.target = Target::Peeled(loop {
-                            let (kind, data) = find(oid, &mut buf)
-                                .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)?
-                                .ok_or_else(|| peel::to_id::Error::NotFound {
-                                    oid,
-                                    name: self.name.0.clone(),
+                    };
+                    let mut buf = Vec::new();
+                    let mut oid = self.target.as_id().expect("peeled ref").to_owned();
+                    self.target = Target::Peeled(loop {
+                        let (kind, data) = find(oid, &mut buf)
+                            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)?
+                            .ok_or_else(|| peel::to_id::Error::NotFound {
+                                oid,
+                                name: self.name.0.clone(),
+                            })?;
+                        match kind {
+                            git_object::Kind::Tag => {
+                                oid = git_object::TagRefIter::from_bytes(data).target_id().ok_or_else(|| {
+                                    peel::to_id::Error::NotFound {
+                                        oid,
+                                        name: self.name.0.clone(),
+                                    }
                                 })?;
-                            match kind {
-                                git_object::Kind::Tag => {
-                                    oid = git_object::TagRefIter::from_bytes(data).target_id().ok_or_else(|| {
-                                        peel::to_id::Error::NotFound {
-                                            oid,
-                                            name: self.name.0.clone(),
-                                        }
-                                    })?;
-                                }
-                                _ => break oid,
-                            };
-                        });
-                        Ok(self.target.as_id().expect("to be peeled").to_owned())
-                    }
-                },
+                            }
+                            _ => break oid,
+                        };
+                    });
+                    Ok(self.target.as_id().expect("to be peeled").to_owned())
+                }
             }
         }
 
