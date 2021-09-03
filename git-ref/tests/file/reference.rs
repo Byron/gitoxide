@@ -1,5 +1,5 @@
 mod reflog {
-    mod packedd {
+    mod packed {
         use crate::file;
 
         #[test]
@@ -62,14 +62,14 @@ mod peel {
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
         let nr = Reference::from(r)
-            .follow_symbolic(&store, None)
+            .follow(&store, None)
             .expect("exists")
             .expect("no failure");
         assert!(
             matches!(nr.target.to_ref(), git_ref::TargetRef::Peeled(_)),
             "iteration peels a single level"
         );
-        assert!(nr.follow_symbolic(&store, None).is_none(), "end of iteration");
+        assert!(nr.follow(&store, None).is_none(), "end of iteration");
         assert_eq!(
             nr.target.to_ref(),
             git_ref::TargetRef::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
@@ -110,7 +110,7 @@ mod peel {
         );
 
         let peeled = head
-            .follow_symbolic(&store, packed.as_ref())
+            .follow(&store, packed.as_ref())
             .expect("a peeled ref for the object")?;
         assert_eq!(
             peeled.target.as_id().map(ToOwned::to_owned),
@@ -118,7 +118,7 @@ mod peel {
             "packed refs are always peeled (at least the ones we choose to read)"
         );
         assert_eq!(peeled.kind(), git_ref::Kind::Peeled, "it's terminally peeled now");
-        assert!(peeled.follow_symbolic(&store, packed.as_ref()).is_none());
+        assert!(peeled.follow(&store, packed.as_ref()).is_none());
         Ok(())
     }
 
@@ -140,6 +140,7 @@ mod peel {
         );
 
         let odb = git_odb::linked::Store::at(store.base.join("objects"))?;
+        let mut r: Reference = store.find_loose("dt1")?.into();
         assert_eq!(
             r.peel_to_id_in_place(&store, None, |oid, buf| {
                 odb.try_find(oid, buf, &mut git_odb::pack::cache::Never)

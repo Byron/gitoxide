@@ -138,16 +138,16 @@ mod peel {
             packed: Option<&packed::Buffer>,
             mut find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
         ) -> Result<ObjectId, peel::to_id::Error> {
-            match self.peeled.take() {
+            match self.peeled {
                 Some(peeled) => {
-                    self.target = Target::Peeled(peeled);
+                    self.target = Target::Peeled(peeled.to_owned());
                     Ok(peeled)
                 }
                 None => {
                     if self.target.kind() == crate::Kind::Symbolic {
                         let mut seen = BTreeSet::new();
                         let cursor = &mut *self;
-                        while let Some(next) = cursor.follow_symbolic(store, packed) {
+                        while let Some(next) = cursor.follow(store, packed) {
                             let next = next?;
                             if seen.contains(&next.name) {
                                 return Err(peel::to_id::Error::Cycle(store.base.join(cursor.name.to_path())));
@@ -164,7 +164,7 @@ mod peel {
                     };
                     let mut buf = Vec::new();
                     let mut oid = self.target.as_id().expect("peeled ref").to_owned();
-                    self.target = Target::Peeled(loop {
+                    let peeled_id = loop {
                         let (kind, data) = find(oid, &mut buf)
                             .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)?
                             .ok_or_else(|| peel::to_id::Error::NotFound {
@@ -182,7 +182,9 @@ mod peel {
                             }
                             _ => break oid,
                         };
-                    });
+                    };
+                    self.peeled = Some(peeled_id);
+                    self.target = Target::Peeled(peeled_id);
                     Ok(self.target.as_id().expect("to be peeled").to_owned())
                 }
             }
@@ -192,7 +194,7 @@ mod peel {
         /// possibly providing access to `packed` references for lookup if it contains the referent.
         ///
         /// Returns `None` if this is not a symbolic reference, hence the leaf of the chain.
-        pub fn follow_symbolic(
+        pub fn follow(
             &self,
             store: &file::Store,
             packed: Option<&packed::Buffer>,
@@ -216,5 +218,19 @@ mod peel {
                 },
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn size_of_reference() {
+        assert_eq!(
+            std::mem::size_of::<Reference>(),
+            80,
+            "let's not let it change size undetected"
+        );
     }
 }

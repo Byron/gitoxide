@@ -46,7 +46,6 @@ mod commit {
     }
 
     #[test]
-    #[ignore]
     fn multi_line_commit_message_uses_first_line_in_ref_log_ref_nonexisting() {
         let (repo, _keep) = crate::basic_rw_repo().unwrap();
         let parent = repo.find_reference("HEAD").unwrap().peel_to_oid_in_place().unwrap();
@@ -57,7 +56,7 @@ mod commit {
             .tree_id()
             .expect("tree to be set");
         let author = git::actor::Signature::empty();
-        let commit_id = repo
+        let first_commit_id = repo
             .commit(
                 "HEAD",
                 "hello there \r\n\nthe body",
@@ -68,30 +67,37 @@ mod commit {
             )
             .unwrap();
         assert_eq!(
-            commit_id,
+            first_commit_id,
             hex_to_id("1ff7decccf76bfa15bfdb0b66bac0c9144b4b083"),
             "the commit id is stable"
         );
 
-        let commit_id = repo
+        let current_commit = repo.find_reference("HEAD").unwrap().peel_to_oid_in_place().unwrap();
+        assert_eq!(current_commit, first_commit_id, "the commit was set");
+
+        let second_commit_id = repo
             .commit(
                 "refs/heads/new-branch",
                 "committing into a new branch creates it",
                 author.clone(),
                 author,
                 empty_tree_id,
-                Some(commit_id),
+                Some(first_commit_id),
             )
             .unwrap();
 
         assert_eq!(
-            commit_id,
-            hex_to_id("1ff7decccf76bfa15bfdb0b66bac0c9144b4b083"),
+            second_commit_id,
+            hex_to_id("b0d041ade77e51d31c79c7147fb769336ccc77b1"),
             "the second commit id is stable"
         );
 
         // TODO: check reflog
-        let current_commit = repo.find_reference("HEAD").unwrap().peel_to_oid_in_place().unwrap();
-        assert_eq!(current_commit, commit_id, "the commit was set");
+        let current_commit = repo
+            .find_reference("new-branch")
+            .unwrap()
+            .peel_to_oid_in_place()
+            .unwrap();
+        assert_eq!(current_commit, second_commit_id, "the commit was set");
     }
 }
