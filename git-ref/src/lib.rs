@@ -32,6 +32,13 @@ pub mod namespace;
 ///
 pub mod transaction;
 
+mod parse;
+mod raw;
+
+pub use raw::Reference;
+
+mod target;
+
 /// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
 /// of a symbolic reference
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -79,7 +86,3 @@ pub enum TargetRef<'a> {
     /// A ref that points to another reference by its validated name, adding a level of indirection.
     Symbolic(&'a BStr),
 }
-
-mod parse;
-mod raw;
-mod target;

@@ -3,7 +3,7 @@ use git_hash::ObjectId;
 use crate::{FullName, Target};
 
 /// A fully owned backend agnostic reference
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Reference {
     /// The path to uniquely identify this ref within its store.
     pub name: FullName,
@@ -52,6 +52,7 @@ mod convert {
     }
 }
 
+// TODO: peeling depends on file store, that should be generic but we don't have a trait for that yet
 mod log {
     use crate::raw::Reference;
     use crate::store::file;
@@ -116,45 +117,64 @@ mod access {
     }
 }
 
-// impl Reference {
-//     /// For details, see [crate::file::loose::Reference::peel_to_id_in_place].
-//     pub fn peel_to_id_in_place<E: std::error::Error + Send + Sync + 'static>(
-//         &mut self,
-//         store: &file::Store,
-//         packed: Option<&packed::Buffer>,
-//         find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
-//     ) -> Result<ObjectId, crate::store::file::loose::reference::peel::to_id::Error> {
-//         match self {
-//             Reference::Loose(r) => r.peel_to_id_in_place(store, packed, find).map(ToOwned::to_owned),
-//             Reference::Packed(p) => {
-//                 if let Some(object) = p.object {
-//                     p.target = object;
-//                 }
-//                 p.object = None;
-//                 Ok(p.target())
-//             }
-//         }
-//     }
-//
-//     /// For details, see [crate::file::loose::Reference::follow_symbolic()].
-//     pub fn peel_one_level<'p2>(
-//         &self,
-//         store: &file::Store,
-//         packed: Option<&'p2 packed::Buffer>,
-//     ) -> Option<Result<Reference<'p2>, crate::store::file::loose::reference::peel::Error>> {
-//         match self {
-//             Reference::Loose(r) => r.follow_symbolic(store, packed),
-//             Reference::Packed(p) => packed
-//                 .and_then(|packed| packed.try_find(p.name).ok().flatten()) // needed to get data with 'p2 lifetime
-//                 .and_then(|np| {
-//                     p.object.and(np.object).map(|peeled| {
-//                         Ok(Reference::Packed(packed::Reference {
-//                             name: np.name,
-//                             target: peeled,
-//                             object: None,
-//                         }))
-//                     })
-//                 }),
-//         }
-//     }
-// }
+// TODO: peeling depends on file store, that should be generic but we don't have a trait for that yet
+mod peel {
+    use crate::raw::Reference;
+    use crate::store::{file, file::loose, packed};
+    use crate::{FullName, Target};
+    use git_hash::ObjectId;
+
+    impl Reference {
+        /// For details, see [crate::file::loose::Reference::peel_to_id_in_place].
+        pub fn peel_to_id_in_place<E: std::error::Error + Send + Sync + 'static>(
+            &mut self,
+            store: &file::Store,
+            packed: Option<&packed::Buffer>,
+            find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
+        ) -> Result<ObjectId, crate::store::file::loose::reference::peel::to_id::Error> {
+            match self.peeled.take() {
+                Some(peeled) => {
+                    self.target = Target::Peeled(peeled);
+                    Ok(peeled)
+                }
+                None => {
+                    let mut loose_self = loose::Reference {
+                        name: FullName(std::mem::take(&mut self.name.0)),
+                        target: std::mem::replace(&mut self.target, Target::Symbolic(FullName(Default::default()))),
+                    };
+                    let res = loose_self
+                        .peel_to_id_in_place(store, packed, find)
+                        .map(ToOwned::to_owned);
+                    self.name = loose_self.name;
+                    self.target = loose_self.target;
+                    res
+                }
+            }
+        }
+
+        /// For details, see [crate::file::loose::Reference::follow_symbolic()].
+        pub fn peel_one_level(
+            &self,
+            _store: &file::Store,
+            _packed: Option<&packed::Buffer>,
+        ) -> Option<Result<Reference, crate::store::file::loose::reference::peel::Error>> {
+            match self.peeled {
+                Some(peeled) => Some(Ok(Reference {
+                    name: self.name.clone(),
+                    target: Target::Peeled(peeled),
+                    peeled: None,
+                })),
+                None => {
+                    match self.target {
+                        Target::Peeled(_) => None,
+                        Target::Symbolic(_) => {
+                            let _loose_self: loose::Reference = self.clone().into();
+                            todo!("get rid of file::Reference")
+                            // loose_self.follow_symbolic(store, packed)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
