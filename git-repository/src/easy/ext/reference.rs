@@ -75,7 +75,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
 
     fn head(&self) -> Result<Option<Reference<'_, Self>>, reference::find::existing::Error> {
         let _head = self.find_reference("HEAD")?;
-
+        // _head.peel_to_oid_in_place()
         todo!("follow symrefs")
         // head.backing
     }

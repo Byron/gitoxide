@@ -7,6 +7,11 @@ fn repo(name: &str) -> crate::Result<Repository> {
     Ok(Repository::discover(repo_path)?)
 }
 
+fn basic_repo() -> crate::Result<Easy> {
+    let repo_path = git_testtools::scripted_fixture_repo_read_only("make_basic_repo.sh")?;
+    Ok(Repository::open(repo_path)?.into())
+}
+
 fn basic_rw_repo() -> crate::Result<(Easy, tempfile::TempDir)> {
     let repo_path = git_testtools::scripted_fixture_repo_writable("make_basic_repo.sh")?;
     Ok((Repository::open(repo_path.path())?.into(), repo_path))

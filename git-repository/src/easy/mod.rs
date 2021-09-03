@@ -105,7 +105,8 @@ struct ModifieablePackedRefsBuffer {
 /// State for use in `Easy*` to provide mutable parts of a repository such as caches and buffers.
 #[derive(Default)]
 pub struct State {
-    /// As the packed-buffer may hold onto a memory map, we avoid that to exist once per thread, multiplying system resources.
+    /// As the packed-buffer may hold onto a memory map, we avoid that to exist once per thread, multiplying system resources, cloning
+    /// it with every clone of the owning `Easy`.
     /// This seems worth the cost of always going through an `Arc<RwLock<…>>>`. Note that `EasyArcExclusive` uses the same construct
     /// but the reason we make this distinction at all is that there are other easy's that allows to chose exactly what you need in
     /// your application. `State` is one size fits all with supporting single-threaded applications only.
