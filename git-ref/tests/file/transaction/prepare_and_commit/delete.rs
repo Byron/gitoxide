@@ -230,6 +230,40 @@ fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() -> crate::Res
 }
 
 #[test]
+fn non_existing_can_be_deleted_with_the_may_exist_match_constraint() -> crate::Result {
+    let (_keep, store) = empty_store()?;
+    let previous_value =
+        PreviousValue::ExistingMustMatch(Target::Peeled(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")));
+    let edits = store
+        .transaction()
+        .prepare(
+            Some(RefEdit {
+                change: Change::Delete {
+                    expected: previous_value.clone(),
+                    log: RefLog::AndReference,
+                },
+                name: "refs/heads/not-there".try_into()?,
+                deref: true,
+            }),
+            Fail::Immediately,
+        )?
+        .commit(&committer())?;
+
+    assert_eq!(
+        edits,
+        vec![RefEdit {
+            change: Change::Delete {
+                expected: previous_value,
+                log: RefLog::AndReference,
+            },
+            name: "refs/heads/not-there".try_into()?,
+            deref: false,
+        }]
+    );
+    Ok(())
+}
+
+#[test]
 /// Based on https://github.com/git/git/blob/master/refs/files-backend.c#L514:L515
 fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Result {
     let (_keep, store) = empty_store()?;
@@ -372,46 +406,42 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
 }
 
 #[test]
-fn all_contained_references_deletes_the_packed_ref_file_too() {
-    let (_keep, store) = store_writable("make_packed_ref_repository.sh").unwrap();
+fn all_contained_references_deletes_the_packed_ref_file_too() -> crate::Result {
+    for mode in ["must-exist", "may-exist"] {
+        let (_keep, store) = store_writable("make_packed_ref_repository.sh")?;
 
-    let edits = store
-        .transaction()
-        .prepare(
-            store
-                .packed_buffer()
-                .unwrap()
-                .expect("packed-refs")
-                .iter()
-                .unwrap()
-                .map(|r| {
+        let edits = store
+            .transaction()
+            .prepare(
+                store.packed_buffer()?.expect("packed-refs").iter()?.map(|r| {
                     let r = r.expect("valid ref");
                     RefEdit {
                         change: Change::Delete {
-                            expected: PreviousValue::MustExistAndMatch(Target::Peeled(r.target())),
+                            expected: match mode {
+                                "must-exist" => PreviousValue::MustExistAndMatch(Target::Peeled(r.target())),
+                                "may-exist" => PreviousValue::ExistingMustMatch(Target::Peeled(r.target())),
+                                _ => unimplemented!("unknown mode: {}", mode),
+                            },
                             log: RefLog::AndReference,
                         },
                         name: r.name.into(),
                         deref: false,
                     }
                 }),
-            git_lock::acquire::Fail::Immediately,
-        )
-        .unwrap()
-        .commit(&committer())
-        .unwrap();
+                git_lock::acquire::Fail::Immediately,
+            )?
+            .commit(&committer())?;
 
-    assert!(!store.packed_refs_path().is_file(), "packed-refs was entirely removed");
+        assert!(!store.packed_refs_path().is_file(), "packed-refs was entirely removed");
 
-    let packed = store.packed_buffer().unwrap();
-    assert!(packed.is_none(), "it won't make up packed refs");
-    for edit in edits {
-        assert!(
-            store
-                .try_find(edit.name.to_partial(), packed.as_ref())
-                .unwrap()
-                .is_none(),
-            "delete ref cannot be found"
-        );
+        let packed = store.packed_buffer()?;
+        assert!(packed.is_none(), "it won't make up packed refs");
+        for edit in edits {
+            assert!(
+                store.try_find(edit.name.to_partial(), packed.as_ref())?.is_none(),
+                "delete ref cannot be found"
+            );
+        }
     }
+    Ok(())
 }

@@ -123,7 +123,73 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
 }
 
 #[test]
-fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_value_does_not_match() -> crate::Result {
+fn the_existing_must_match_constraint_allow_non_existing_references_to_be_created() -> crate::Result {
+    let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
+    let expected = PreviousValue::ExistingMustMatch(Target::Peeled(ObjectId::empty_tree()));
+    let edits = store
+        .transaction()
+        .prepare(
+            Some(RefEdit {
+                change: Change::Update {
+                    log: LogChange::default(),
+                    new: Target::Peeled(ObjectId::null_sha1()),
+                    expected: expected.clone(),
+                },
+                name: "refs/heads/new".try_into()?,
+                deref: false,
+            }),
+            Fail::Immediately,
+        )?
+        .commit(&committer())?;
+
+    assert_eq!(
+        edits,
+        vec![RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                new: Target::Peeled(ObjectId::null_sha1()),
+                expected,
+            },
+            name: "refs/heads/new".try_into()?,
+            deref: false,
+        }]
+    );
+    Ok(())
+}
+
+#[test]
+fn the_existing_must_match_constraint_requires_existing_references_to_have_the_given_value_to_cause_failure_on_mismatch(
+) -> crate::Result {
+    let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
+    let head = store.try_find_loose("HEAD")?.expect("head exists already");
+    let target = head.target;
+
+    let res = store.transaction().prepare(
+        Some(RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                new: Target::Peeled(ObjectId::null_sha1()),
+                expected: PreviousValue::ExistingMustMatch(Target::Peeled(hex_to_id(
+                    "28ce6a8b26aa170e1de65536fe8abe1832bd3242",
+                ))),
+            },
+            name: "HEAD".try_into()?,
+            deref: false,
+        }),
+        Fail::Immediately,
+    );
+    match res {
+        Err(transaction::prepare::Error::ReferenceOutOfDate { full_name, actual, .. }) => {
+            assert_eq!(full_name, "HEAD");
+            assert_eq!(actual, target);
+        }
+        _ => unreachable!("unexpected result"),
+    }
+    Ok(())
+}
+
+#[test]
+fn reference_with_must_not_exist_constraint_cannot_be_created_if_it_exists_already() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
     let head = store.try_find_loose("HEAD")?.expect("head exists already");
     let target = head.target;
@@ -208,7 +274,53 @@ fn namespaced_updates_or_deletions_cause_reference_names_to_be_rewritten_and_obs
 }
 
 #[test]
-fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the_value_matches() -> crate::Result {
+fn reference_with_must_exist_constraint_must_exist_already_with_any_value() -> crate::Result {
+    let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
+    let head = store.try_find_loose("HEAD")?.expect("head exists already");
+    let target = head.target;
+    let previous_reflog_count = reflog_lines(&store, "HEAD")?.len();
+
+    let new_target = Target::Peeled(ObjectId::empty_tree());
+    let edits = store
+        .transaction()
+        .prepare(
+            Some(RefEdit {
+                change: Change::Update {
+                    log: LogChange::default(),
+                    new: new_target.clone(),
+                    expected: PreviousValue::MustExist,
+                },
+                name: "HEAD".try_into()?,
+                deref: false,
+            }),
+            Fail::Immediately,
+        )?
+        .commit(&committer())?;
+
+    assert_eq!(
+        edits,
+        vec![RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                new: new_target,
+                expected: PreviousValue::MustExistAndMatch(target)
+            },
+            name: "HEAD".try_into()?,
+            deref: false,
+        }]
+    );
+
+    assert_eq!(
+        reflog_lines(&store, "HEAD")?.len(),
+        previous_reflog_count + 1,
+        "a new reflog is added"
+    );
+    Ok(())
+}
+
+#[test]
+fn reference_with_must_not_exist_constraint_may_exist_already_if_the_new_value_matches_the_existing_one(
+) -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
     let head = store.try_find_loose("HEAD")?.expect("head exists already");
     let target = head.target;
