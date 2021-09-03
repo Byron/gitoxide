@@ -616,7 +616,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
     let edits = store.loose_iter()?.map(|r| r.expect("valid ref")).map(|r| RefEdit {
         change: Change::Update {
             log: LogChange::default(),
-            expected: PreviousValue::MustExistAndMatch(r.target.clone().into()),
+            expected: PreviousValue::MustExistAndMatch(r.target.clone()),
             new: r.target,
         },
         name: r.name,
