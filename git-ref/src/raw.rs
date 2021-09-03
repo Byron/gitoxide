@@ -84,7 +84,7 @@ mod log {
             store.reflog_iter(self.name.to_ref(), buf).map_err(must_be_io_err)
         }
 
-        /// For details, see [loose::Reference::log_exists()].
+        /// For details, see [Reference::log_exists()].
         pub fn log_exists(&self, store: &file::Store) -> bool {
             store
                 .reflog_exists(self.name.to_ref())
@@ -131,7 +131,7 @@ mod peel {
     };
 
     impl Reference {
-        /// For details, see [crate::file::loose::Reference::peel_to_id_in_place].
+        /// For details, see [Reference::peel_to_id_in_place()].
         pub fn peel_to_id_in_place<E: std::error::Error + Send + Sync + 'static>(
             &mut self,
             store: &file::Store,

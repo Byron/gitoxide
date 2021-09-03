@@ -18,7 +18,7 @@ impl Default for WriteReflog {
 /// A store for reference which uses plain files.
 ///
 /// Each ref is represented as a single file on disk in a folder structure that follows the relative path
-/// used to identify [references][Reference].
+/// used to identify [references][crate::Reference].
 #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
 pub struct Store {
     /// The location at which loose references can be found as per conventions of a typical git repository.

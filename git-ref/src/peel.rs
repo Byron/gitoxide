@@ -1,4 +1,4 @@
-/// A function for use in [`loose::Reference::peel_to_id_in_place()`] to indicate no peeling should happen.
+/// A function for use in [`crate::Reference::peel_to_id_in_place()`] to indicate no peeling should happen.
 pub fn none(
     _id: git_hash::ObjectId,
     _buf: &mut Vec<u8>,
