@@ -38,7 +38,7 @@ impl<'s> Transaction<'s> {
                 Change::Update {
                     log,
                     new,
-                    previous: mode,
+                    expected: mode,
                 } => {
                     let lock = change.lock.take().expect("each ref is locked");
                     let (update_ref, update_reflog) = match log.mode {

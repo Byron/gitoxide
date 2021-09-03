@@ -26,7 +26,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
             RefEdit {
                 change: Change::Update {
                     log: Default::default(),
-                    previous: if force {
+                    expected: if force {
                         PreviousValue::Any
                     } else {
                         PreviousValue::MustNotExist

@@ -109,7 +109,7 @@ mod refedit_ext {
             RefEdit {
                 change: Change::Update {
                     log: Default::default(),
-                    previous: PreviousValue::MustNotExist,
+                    expected: PreviousValue::MustNotExist,
                     new: Target::Symbolic("refs/heads/main".try_into()?),
                 },
                 name: "HEAD".try_into()?,
@@ -131,7 +131,7 @@ mod refedit_ext {
                 RefEdit {
                     change: Change::Update {
                         log: Default::default(),
-                        previous: PreviousValue::MustNotExist,
+                        expected: PreviousValue::MustNotExist,
                         new: Target::Symbolic("refs/namespaces/foo/refs/heads/main".try_into()?),
                     },
                     name: "refs/namespaces/foo/HEAD".try_into()?,
@@ -249,7 +249,7 @@ mod refedit_ext {
                 },
                 RefEdit {
                     change: Change::Update {
-                        previous: PreviousValue::MustNotExist,
+                        expected: PreviousValue::MustNotExist,
                         log: LogChange {
                             mode: RefLog::AndReference,
                             force_create_reflog: true,
@@ -323,7 +323,7 @@ mod refedit_ext {
                 },
                 RefEdit {
                     change: Change::Update {
-                        previous: PreviousValue::MustNotExist,
+                        expected: PreviousValue::MustNotExist,
                         log: log.clone(),
                         new: Target::Peeled(ObjectId::null_sha1()),
                     },
@@ -359,7 +359,7 @@ mod refedit_ext {
                     },
                     RefEdit {
                         change: Change::Update {
-                            previous: PreviousValue::Any,
+                            expected: PreviousValue::Any,
                             log: log_only.clone(),
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },
@@ -376,7 +376,7 @@ mod refedit_ext {
                     },
                     RefEdit {
                         change: Change::Update {
-                            previous: PreviousValue::Any,
+                            expected: PreviousValue::Any,
                             log: log_only,
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },
@@ -393,7 +393,7 @@ mod refedit_ext {
                     },
                     RefEdit {
                         change: Change::Update {
-                            previous: PreviousValue::MustNotExist,
+                            expected: PreviousValue::MustNotExist,
                             log,
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },

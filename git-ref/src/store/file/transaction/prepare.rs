@@ -89,7 +89,7 @@ impl<'s> Transaction<'s> {
 
                 lock
             }
-            Change::Update { previous, new, .. } => {
+            Change::Update { expected, new, .. } => {
                 let mut lock = git_lock::File::acquire_to_update_resource(
                     store.reference_path(&relative_path),
                     lock_fail_mode,
@@ -101,7 +101,7 @@ impl<'s> Transaction<'s> {
                 })?;
 
                 let existing_ref = existing_ref?;
-                match (&previous, &existing_ref) {
+                match (&expected, &existing_ref) {
                     (PreviousValue::Any, _)
                     | (PreviousValue::MustExist, Some(_))
                     | (PreviousValue::MustNotExist | PreviousValue::ExistingMustMatch(_), None) => {}
@@ -144,7 +144,7 @@ impl<'s> Transaction<'s> {
                 };
 
                 if let Some(existing) = existing_ref {
-                    *previous = PreviousValue::MustExistAndMatch(existing.target());
+                    *expected = PreviousValue::MustExistAndMatch(existing.target());
                 };
 
                 lock.with_mut(|file| match new {
@@ -232,7 +232,7 @@ impl<'s> Transaction<'s> {
                 }
                 match edit.update.change {
                     Change::Update {
-                        previous: PreviousValue::ExistingMustMatch(_) | PreviousValue::MustExistAndMatch(_),
+                        expected: PreviousValue::ExistingMustMatch(_) | PreviousValue::MustExistAndMatch(_),
                         ..
                     } => needs_packed_refs_lookups = true,
                     Change::Delete { .. } => {

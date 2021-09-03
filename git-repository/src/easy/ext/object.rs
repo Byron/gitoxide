@@ -105,7 +105,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
                         force_create_reflog: false,
                         message: crate::reference::log::message("commit", &commit),
                     },
-                    previous: match commit.parents.get(0).map(|p| Target::Peeled(*p)) {
+                    expected: match commit.parents.get(0).map(|p| Target::Peeled(*p)) {
                         Some(previous) => PreviousValue::ExistingMustMatch(previous),
                         None => PreviousValue::MustNotExist,
                     },

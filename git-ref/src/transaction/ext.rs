@@ -94,7 +94,7 @@ where
                                     deref: true,
                                 }
                             }
-                            Change::Update { log, previous, new } => {
+                            Change::Update { log, expected, new } => {
                                 let current = std::mem::replace(
                                     log,
                                     LogChange {
@@ -103,10 +103,10 @@ where
                                         force_create_reflog: log.force_create_reflog,
                                     },
                                 );
-                                let next = std::mem::replace(previous, PreviousValue::Any);
+                                let next = std::mem::replace(expected, PreviousValue::Any);
                                 RefEdit {
                                     change: Change::Update {
-                                        previous: next,
+                                        expected: next,
                                         new: new.clone(),
                                         log: current,
                                     },

@@ -74,10 +74,10 @@ pub enum Change {
     Update {
         /// The desired change to the reference log.
         log: LogChange,
-        /// The create mode.
+        /// The expected value already present in the reference.
         /// If a ref was existing previously it will be updated to reflect the previous value for bookkeeping purposes
         /// and for use in the reflog.
-        previous: PreviousValue,
+        expected: PreviousValue,
         /// The new state of the reference, either for updating an existing one or creating a new one.
         new: Target,
     },
@@ -101,7 +101,7 @@ impl Change {
     pub fn previous_value(&self) -> Option<crate::TargetRef<'_>> {
         match self {
             Change::Update {
-                previous: PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
+                expected: PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
                 ..
             } => Some(previous.to_ref()),
             Change::Delete { previous, .. } => previous.as_ref().map(|t| t.to_ref()),
