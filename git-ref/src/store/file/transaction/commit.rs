@@ -35,7 +35,7 @@ impl<'s> Transaction<'s> {
             assert!(!change.update.deref, "Deref mode is turned into splits and turned off");
             match &change.update.change {
                 // reflog first, then reference
-                Change::Update { log, new, expected } => {
+                Change::Update { log, new, expected: _ } => {
                     let lock = change.lock.take().expect("each ref is locked");
                     let (update_ref, update_reflog) = match log.mode {
                         RefLog::Only => (false, true),
@@ -45,7 +45,7 @@ impl<'s> Transaction<'s> {
                         match new {
                             Target::Symbolic(_) => {} // no reflog for symref changes
                             Target::Peeled(new_oid) => {
-                                let previous = expected.previous_oid().or(change.leaf_referent_previous_oid);
+                                let previous = change.previous_oid.or(change.leaf_referent_previous_oid);
                                 let do_update = previous.as_ref().map_or(true, |previous| previous != new_oid);
                                 if do_update {
                                     self.store.reflog_create_or_append(

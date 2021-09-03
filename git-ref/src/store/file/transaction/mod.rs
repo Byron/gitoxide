@@ -43,6 +43,8 @@ pub(in crate::store::file) struct Edit {
     /// For symbolic refs, this is the previous OID to put into the reflog instead of our own previous value. It's the
     /// peeled value of the leaf referent.
     leaf_referent_previous_oid: Option<ObjectId>,
+    /// The previous object id of an existing reference, if present, for use in the reflog
+    previous_oid: Option<ObjectId>,
 }
 
 impl Edit {

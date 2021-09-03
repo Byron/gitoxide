@@ -13,7 +13,6 @@
 //! * prepared transactions are committed to finalize the change
 //!   - errors when committing while leave the ref store in an inconsistent, but operational state.
 use bstr::BString;
-use git_hash::ObjectId;
 
 use crate::{FullName, Target};
 
@@ -53,15 +52,6 @@ pub enum PreviousValue {
     MustExistAndMatch(Target),
     /// The ref _may_ exist and have the given value, or may not exist at all.
     ExistingMustMatch(Target),
-}
-
-impl PreviousValue {
-    pub(crate) fn previous_oid(&self) -> Option<ObjectId> {
-        match self {
-            PreviousValue::MustExistAndMatch(Target::Peeled(oid)) => Some(*oid),
-            _ => None,
-        }
-    }
 }
 
 /// A description of an edit to perform.

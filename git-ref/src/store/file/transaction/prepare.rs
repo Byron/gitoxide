@@ -144,7 +144,9 @@ impl<'s> Transaction<'s> {
                 };
 
                 if let Some(existing) = existing_ref {
-                    *expected = PreviousValue::MustExistAndMatch(existing.target());
+                    let target = existing.target();
+                    change.previous_oid = target.as_id().map(ToOwned::to_owned);
+                    *expected = PreviousValue::MustExistAndMatch(target);
                 };
 
                 lock.with_mut(|file| match new {
@@ -180,6 +182,7 @@ impl<'s> Transaction<'s> {
                 lock: None,
                 parent_index: None,
                 leaf_referent_previous_oid: None,
+                previous_oid: None,
             })
             .collect();
         updates
@@ -196,6 +199,7 @@ impl<'s> Transaction<'s> {
                     lock: None,
                     parent_index: Some(idx),
                     leaf_referent_previous_oid: None,
+                    previous_oid: None,
                 },
                 self.namespace.take(),
             )

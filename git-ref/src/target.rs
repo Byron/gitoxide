@@ -65,6 +65,13 @@ impl Target {
             Target::Peeled(oid) => Some(oid),
         }
     }
+    /// Return the contained object id if the target is peeled or itself if it is not.
+    pub fn try_into_id(self) -> Result<ObjectId, Self> {
+        match self {
+            Target::Symbolic(_) => Err(self),
+            Target::Peeled(oid) => Ok(oid),
+        }
+    }
     /// Interpret this target as name of the reference it points to which maybe `None` if it an object id.
     pub fn as_name(&self) -> Option<&BStr> {
         match self {
