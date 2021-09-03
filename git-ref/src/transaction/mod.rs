@@ -40,6 +40,29 @@ impl Default for LogChange {
     }
 }
 
+/// The desired value of an updated value
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub enum PreviousValue {
+    /// No requirements are made towards the current value, and the new value is set unconditionally.
+    Any,
+    /// Create the ref only. This fails if the ref exists.
+    MustNotExist,
+    /// The ref _must_ exist and have the given value.
+    MustExistAndMatch(Target),
+    /// The ref _may_ exist and have the given value, or may not exist at all.
+    ExistingMustMatch(Target),
+}
+
+impl PreviousValue {
+    pub(crate) fn previous_oid(&self) -> Option<ObjectId> {
+        match self {
+            PreviousValue::MustExistAndMatch(Target::Peeled(oid))
+            | PreviousValue::ExistingMustMatch(Target::Peeled(oid)) => Some(*oid),
+            _ => None,
+        }
+    }
+}
+
 /// A way to determine if a value should be created or created or updated. In the latter case the previous
 /// value can be specified to indicate to what extend the previous value matters.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -81,7 +104,7 @@ pub enum Change {
         /// The create mode.
         /// If a ref was existing previously it will be updated to reflect the previous value for bookkeeping purposes
         /// and for use in the reflog.
-        mode: Create,
+        previous: Create,
         /// The new state of the reference, either for updating an existing one or creating a new one.
         new: Target,
     },
@@ -103,9 +126,11 @@ impl Change {
     /// Return references to values that are in common between all variants.
     pub fn previous_value(&self) -> Option<crate::TargetRef<'_>> {
         match self {
-            Change::Update { mode: Create::Only, .. } => None,
             Change::Update {
-                mode: Create::OrUpdate { previous },
+                previous: Create::Only, ..
+            } => None,
+            Change::Update {
+                previous: Create::OrUpdate { previous },
                 ..
             }
             | Change::Delete { previous, .. } => previous.as_ref().map(|t| t.to_ref()),

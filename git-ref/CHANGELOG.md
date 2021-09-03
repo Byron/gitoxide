@@ -1,3 +1,9 @@
+### v0.7.0
+
+#### Breaking
+
+* Replace `transaction::Create` with `transaction::PreviousValue`
+
 ### v0.6.1
 
 #### Bugfixes

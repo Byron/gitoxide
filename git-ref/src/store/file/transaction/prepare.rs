@@ -89,9 +89,7 @@ impl<'s> Transaction<'s> {
 
                 lock
             }
-            Change::Update {
-                mode: previous, new, ..
-            } => {
+            Change::Update { previous, new, .. } => {
                 let mut lock = git_lock::File::acquire_to_update_resource(
                     store.reference_path(&relative_path),
                     lock_fail_mode,
@@ -236,7 +234,7 @@ impl<'s> Transaction<'s> {
                 }
                 match edit.update.change {
                     Change::Update {
-                        mode: Create::OrUpdate { previous: None },
+                        previous: Create::OrUpdate { previous: None },
                         ..
                     } => continue,
                     Change::Delete { .. } => {

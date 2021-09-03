@@ -94,11 +94,7 @@ where
                                     deref: true,
                                 }
                             }
-                            Change::Update {
-                                log,
-                                mode: previous,
-                                new,
-                            } => {
+                            Change::Update { log, previous, new } => {
                                 let current = std::mem::replace(
                                     log,
                                     LogChange {
@@ -110,7 +106,7 @@ where
                                 let next = std::mem::replace(previous, Create::OrUpdate { previous: None });
                                 RefEdit {
                                     change: Change::Update {
-                                        mode: next,
+                                        previous: next,
                                         new: new.clone(),
                                         log: current,
                                     },

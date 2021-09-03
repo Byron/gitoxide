@@ -35,7 +35,11 @@ impl<'s> Transaction<'s> {
             assert!(!change.update.deref, "Deref mode is turned into splits and turned off");
             match &change.update.change {
                 // reflog first, then reference
-                Change::Update { log, new, mode } => {
+                Change::Update {
+                    log,
+                    new,
+                    previous: mode,
+                } => {
                     let lock = change.lock.take().expect("each ref is locked");
                     let (update_ref, update_reflog) = match log.mode {
                         RefLog::Only => (false, true),
