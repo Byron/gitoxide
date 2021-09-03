@@ -144,7 +144,7 @@ mod peel {
                     Ok(peeled)
                 }
                 None => match self.target {
-                    Target::Peeled(peeled) => Ok(peeled.clone()),
+                    Target::Peeled(peeled) => Ok(peeled),
                     Target::Symbolic(_) => {
                         let mut seen = BTreeSet::new();
                         let cursor = &mut *self;

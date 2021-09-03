@@ -47,7 +47,7 @@ where
 {
     pub(crate) fn from_file_ref(reference: git_ref::Reference, access: &'repo A) -> Self {
         Reference {
-            inner: reference.into(),
+            inner: reference,
             access,
         }
     }

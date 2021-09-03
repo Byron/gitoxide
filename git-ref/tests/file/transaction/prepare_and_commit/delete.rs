@@ -384,7 +384,7 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
                     expected: PreviousValue::MustExistAndMatch(Target::Peeled(branch_id)),
                     log: RefLog::AndReference,
                 },
-                name: branch.name.into(),
+                name: branch.name,
                 deref: false,
             }),
             git_lock::acquire::Fail::Immediately,
