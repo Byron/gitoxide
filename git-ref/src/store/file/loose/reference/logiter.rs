@@ -3,7 +3,7 @@ use crate::store::{
     file::{log, loose, loose::Reference},
 };
 
-pub(in crate::store::file) fn must_be_io_err(err: loose::reflog::Error) -> std::io::Error {
+pub(crate) fn must_be_io_err(err: loose::reflog::Error) -> std::io::Error {
     match err {
         loose::reflog::Error::Io(err) => err,
         loose::reflog::Error::RefnameValidation(_) => unreachable!("we are called from a valid ref"),

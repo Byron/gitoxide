@@ -84,6 +84,8 @@ pub struct Object {
 }
 
 /// A reference that points to an object or reference, with access to its source repository.
+///
+/// Note that these are snapshots and won't recognize if they are stale.
 pub struct Reference<'r, A> {
     pub(crate) backing: Option<reference::Backing>,
     pub(crate) access: &'r A,

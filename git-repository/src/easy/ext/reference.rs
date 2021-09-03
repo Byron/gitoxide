@@ -73,6 +73,13 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
             .map_err(Into::into)
     }
 
+    fn head(&self) -> Result<Option<Reference<'_, Self>>, reference::find::existing::Error> {
+        let _head = self.find_reference("HEAD")?;
+
+        todo!("follow symrefs")
+        // head.backing
+    }
+
     fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_, Self>, reference::find::existing::Error>
     where
         Name: TryInto<PartialNameRef<'a>, Error = E>,

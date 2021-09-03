@@ -65,6 +65,14 @@ impl Target {
             Target::Peeled(oid) => Some(oid),
         }
     }
+    /// Return the contained object id or panic
+    pub fn into_id(self) -> ObjectId {
+        match self {
+            Target::Symbolic(_) => panic!("BUG: expected peeled reference target but found symbolic one"),
+            Target::Peeled(oid) => oid,
+        }
+    }
+
     /// Return the contained object id if the target is peeled or itself if it is not.
     pub fn try_into_id(self) -> Result<ObjectId, Self> {
         match self {
