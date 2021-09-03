@@ -58,8 +58,7 @@ pub enum PreviousValue {
 impl PreviousValue {
     pub(crate) fn previous_oid(&self) -> Option<ObjectId> {
         match self {
-            PreviousValue::MustExistAndMatch(Target::Peeled(oid))
-            | PreviousValue::ExistingMustMatch(Target::Peeled(oid)) => Some(*oid),
+            PreviousValue::MustExistAndMatch(Target::Peeled(oid)) => Some(*oid),
             _ => None,
         }
     }
