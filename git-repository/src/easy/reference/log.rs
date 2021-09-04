@@ -21,12 +21,15 @@ pub enum Error {
     BorrowRepo(#[from] easy::borrow::repo::Error),
 }
 
+pub type ReverseIter<'a> = git_ref::file::log::iter::Reverse<'a, std::fs::File>;
+pub type ForwardIter<'a> = git_ref::file::log::iter::Forward<'a>;
+
 impl<'repo, A, R> Buffer<'repo, A, R>
 where
     A: easy::Access + Sized,
     R: Borrow<Reference<'repo, A>>,
 {
-    pub fn iter_rev(&mut self) -> Result<Option<git_ref::file::log::iter::Reverse<'_, std::fs::File>>, Error> {
+    pub fn iter_rev(&mut self) -> Result<Option<ReverseIter<'_>>, Error> {
         let buf = self.buf.deref_mut();
         buf.resize(512, 0);
         Ok(self
@@ -34,6 +37,16 @@ where
             .borrow()
             .inner
             .log_iter_rev(&self.reference.borrow().access.repo()?.refs, buf)?)
+    }
+
+    // TODO: tests
+    pub fn iter(&mut self) -> Result<Option<ForwardIter<'_>>, Error> {
+        let buf = self.buf.deref_mut();
+        Ok(self
+            .reference
+            .borrow()
+            .inner
+            .log_iter(&self.reference.borrow().access.repo()?.refs, buf)?)
     }
 }
 

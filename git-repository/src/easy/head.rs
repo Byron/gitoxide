@@ -101,6 +101,7 @@ pub mod peel {
     where
         A: Access + Sized,
     {
+        // TODO: tests
         pub fn peel_to_id_in_place(&mut self) -> Option<Result<ObjectId, Error>> {
             Some(match &mut self.kind {
                 Kind::Unborn(_name) => return None,
