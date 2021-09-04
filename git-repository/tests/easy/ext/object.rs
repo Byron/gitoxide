@@ -40,7 +40,7 @@ mod commit {
             "the commit id is stable"
         );
 
-        let head = repo.head()?.into_reference();
+        let head = repo.head()?.into_referent();
         assert_eq!(
             head.log()?
                 .reverse_iter()?
@@ -54,45 +54,50 @@ mod commit {
     }
 
     #[test]
-    fn multi_line_commit_message_uses_first_line_in_ref_log_ref_nonexisting() {
-        let (repo, _keep) = crate::basic_rw_repo().unwrap();
-        let parent = repo.find_reference("HEAD").unwrap().peel_to_id_in_place().unwrap();
-        let empty_tree_id = parent
-            .object()
-            .unwrap()
-            .commit_iter()
-            .tree_id()
-            .expect("tree to be set");
+    fn multi_line_commit_message_uses_first_line_in_ref_log_ref_nonexisting() -> crate::Result {
+        let (repo, _keep) = crate::basic_rw_repo()?;
+        let parent = repo.find_reference("HEAD")?.peel_to_id_in_place()?;
+        let empty_tree_id = parent.object()?.commit_iter().tree_id().expect("tree to be set");
         let author = git::actor::Signature::empty();
-        let first_commit_id = repo
-            .commit(
-                "HEAD",
-                "hello there \r\n\nthe body",
-                author.clone(),
-                author.clone(),
-                empty_tree_id,
-                Some(parent),
-            )
-            .unwrap();
+        let first_commit_id = repo.commit(
+            "HEAD",
+            "hello there \r\n\nthe body",
+            author.clone(),
+            author.clone(),
+            empty_tree_id,
+            Some(parent),
+        )?;
         assert_eq!(
             first_commit_id,
             hex_to_id("1ff7decccf76bfa15bfdb0b66bac0c9144b4b083"),
             "the commit id is stable"
         );
 
-        let current_commit = repo.head().unwrap().into_fully_peeled_id().expect("born").unwrap();
+        let head_log_entries: Vec<_> = repo
+            .head()?
+            .log()?
+            .reverse_iter()?
+            .expect("log present")
+            .map(Result::unwrap)
+            .map(Result::unwrap)
+            .map(|l| l.message.to_owned())
+            .collect();
+        assert_eq!(
+            head_log_entries,
+            vec!["commit: hello there", "commit: c2", "commit (initial): c1"],
+            "we get the actual HEAD log, not the log of some reference"
+        );
+        let current_commit = repo.head()?.into_fully_peeled_id().expect("born")?;
         assert_eq!(current_commit, &*first_commit_id, "the commit was set");
 
-        let second_commit_id = repo
-            .commit(
-                "refs/heads/new-branch",
-                "committing into a new branch creates it",
-                author.clone(),
-                author,
-                empty_tree_id,
-                Some(first_commit_id),
-            )
-            .unwrap();
+        let second_commit_id = repo.commit(
+            "refs/heads/new-branch",
+            "committing into a new branch creates it",
+            author.clone(),
+            author,
+            empty_tree_id,
+            Some(first_commit_id),
+        )?;
 
         assert_eq!(
             second_commit_id,
@@ -100,19 +105,20 @@ mod commit {
             "the second commit id is stable"
         );
 
-        let mut branch = repo.find_reference("new-branch").unwrap();
-        let current_commit = branch.peel_to_id_in_place().unwrap();
+        let mut branch = repo.find_reference("new-branch")?;
+        let current_commit = branch.peel_to_id_in_place()?;
         assert_eq!(current_commit, second_commit_id, "the commit was set");
 
-        let mut log = branch.log().unwrap();
-        let mut log_iter = log.reverse_iter().unwrap().expect("log present");
+        let mut log = branch.log()?;
+        let mut log_iter = log.reverse_iter()?.expect("log present");
         assert_eq!(
-            log_iter.next().expect("one line").unwrap().unwrap().message,
+            log_iter.next().expect("one line")??.message,
             "commit: committing into a new branch creates it"
         );
         assert!(
             log_iter.next().is_none(),
             "there is only one log line in the new branch"
         );
+        Ok(())
     }
 }
