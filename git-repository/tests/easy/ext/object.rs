@@ -92,12 +92,23 @@ mod commit {
             "the second commit id is stable"
         );
 
-        // TODO: check reflog
-        let current_commit = repo
-            .find_reference("new-branch")
-            .unwrap()
-            .peel_to_id_in_place()
-            .unwrap();
+        let mut branch = repo.find_reference("new-branch").unwrap();
+        let current_commit = branch.peel_to_id_in_place().unwrap();
         assert_eq!(current_commit, second_commit_id, "the commit was set");
+
+        assert_eq!(
+            branch
+                .log()
+                .unwrap()
+                .reverse_iter()
+                .unwrap()
+                .expect("log present")
+                .next()
+                .expect("one line")
+                .unwrap()
+                .unwrap()
+                .message,
+            "commit: committing into a new branch creates it"
+        );
     }
 }
