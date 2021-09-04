@@ -73,13 +73,20 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
             .map_err(Into::into)
     }
 
-    // TODO: encode that the ref is unborn (i.e. uninitialized repo)
-    fn head(&self) -> Result<Option<Reference<'_, Self>>, reference::find::existing::Error> {
+    fn head(&self) -> Result<easy::Head<'_, Self>, reference::find::existing::Error> {
         let head = self.find_reference("HEAD")?;
-        match head.inner.target {
-            Target::Symbolic(branch) => self.find_reference(branch.to_partial()).map(Some),
-            Target::Peeled(_) => Ok(None),
+        Ok(match head.inner.target {
+            Target::Symbolic(branch) => match self.find_reference(branch.to_partial()) {
+                Ok(r) => easy::head::Kind::Symbolic(r.detach()),
+                Err(reference::find::existing::Error::NotFound) => easy::head::Kind::Unborn(branch),
+                Err(err) => return Err(err),
+            },
+            Target::Peeled(target) => easy::head::Kind::Detached {
+                target,
+                peeled: head.inner.peeled,
+            },
         }
+        .attach(self))
     }
 
     fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_, Self>, reference::find::existing::Error>
@@ -103,7 +110,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
             .try_find(name, state.assure_packed_refs_uptodate(&repo.refs)?.as_ref())
         {
             Ok(r) => match r {
-                Some(r) => Ok(Some(Reference::from_file_ref(r, self))),
+                Some(r) => Ok(Some(Reference::from_ref(r, self))),
                 None => Ok(None),
             },
             Err(err) => Err(err.into()),

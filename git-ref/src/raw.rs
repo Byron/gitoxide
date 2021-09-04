@@ -9,8 +9,8 @@ pub struct Reference {
     pub name: FullName,
     /// The target of the reference, either a symbolic reference by full name or a possibly intermediate object by its id.
     pub target: Target,
-    /// The fully peeled object to which this reference ultimately points to
-    peeled: Option<ObjectId>,
+    /// The fully peeled object to which this reference ultimately points to. Only guaranteed to be set after `peel_to_id_in_place()` was called.
+    pub peeled: Option<ObjectId>,
 }
 
 mod convert {
@@ -54,7 +54,7 @@ mod convert {
     }
 }
 
-// TODO: peeling depends on file store, that should be generic but we don't have a trait for that yet
+// TODO: peeling depends on file store, that should be generic but we don't have a trait for that yet. Make it an Extension trait!
 mod log {
     use crate::{
         raw::Reference,

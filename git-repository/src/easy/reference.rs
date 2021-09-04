@@ -24,7 +24,7 @@ pub mod edit {
     }
 }
 
-pub mod peel_to_oid_in_place {
+pub mod peel_to_id_in_place {
     use crate::easy;
 
     #[derive(Debug, thiserror::Error)]
@@ -40,16 +40,7 @@ pub mod peel_to_oid_in_place {
     }
 }
 
-impl<'repo, A> Reference<'repo, A>
-where
-    A: easy::Access + Sized,
-{
-    pub(crate) fn from_file_ref(reference: git_ref::Reference, access: &'repo A) -> Self {
-        Reference {
-            inner: reference,
-            access,
-        }
-    }
+impl<'repo, A> Reference<'repo, A> {
     pub fn target(&self) -> git_ref::TargetRef<'_> {
         self.inner.target.to_ref()
     }
@@ -61,8 +52,20 @@ where
     pub fn detach(self) -> git_ref::Reference {
         self.inner
     }
+}
 
-    pub fn peel_to_oid_in_place(&mut self) -> Result<Oid<'repo, A>, peel_to_oid_in_place::Error> {
+impl<'repo, A> Reference<'repo, A>
+where
+    A: easy::Access + Sized,
+{
+    pub(crate) fn from_ref(reference: git_ref::Reference, access: &'repo A) -> Self {
+        Reference {
+            inner: reference,
+            access,
+        }
+    }
+
+    pub fn peel_to_id_in_place(&mut self) -> Result<Oid<'repo, A>, peel_to_id_in_place::Error> {
         let repo = self.access.repo()?;
         let state = self.access.state();
         let mut pack_cache = state.try_borrow_mut_pack_cache()?;

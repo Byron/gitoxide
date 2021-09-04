@@ -46,8 +46,8 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
         .strip_prefix(&ctx.root)
         .expect("workspace members are releative to the root directory");
 
-    let current_commit = ctx.git_easy.find_reference("HEAD")?.peel_to_oid_in_place()?;
-    let released_target = tag_ref.peel_to_oid_in_place()?;
+    let current_commit = ctx.git_easy.find_reference("HEAD")?.peel_to_id_in_place()?;
+    let released_target = tag_ref.peel_to_id_in_place()?;
 
     if repo_relative_crate_dir.as_os_str().is_empty() {
         Ok(current_commit != released_target)
@@ -126,7 +126,7 @@ pub(in crate::command::release_impl) fn commit_changes(
     if !cmd.status()?.success() {
         bail!("Failed to commit changed manifests");
     }
-    Ok(Some(ctx.git_easy.find_reference("HEAD")?.peel_to_oid_in_place()?))
+    Ok(Some(ctx.git_easy.find_reference("HEAD")?.peel_to_id_in_place()?))
 }
 
 pub(in crate::command::release_impl) fn create_version_tag<'repo>(

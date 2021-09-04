@@ -31,10 +31,18 @@ pub(crate) mod ext;
 
 pub mod borrow;
 pub mod commit;
+pub mod head;
 pub mod object;
 mod oid;
 pub mod reference;
 pub mod state;
+
+/// The head reference, as created from looking at `.git/HEAD`.
+pub struct Head<'repo, A> {
+    /// One of various possible states for the HEAD reference
+    pub kind: head::Kind,
+    access: &'repo A,
+}
 
 /// An [ObjectId] with access to a repository.
 #[derive(Eq, Hash, Ord, PartialOrd, Clone, Copy)]

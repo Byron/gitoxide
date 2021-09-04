@@ -48,7 +48,7 @@ mod commit {
     #[test]
     fn multi_line_commit_message_uses_first_line_in_ref_log_ref_nonexisting() {
         let (repo, _keep) = crate::basic_rw_repo().unwrap();
-        let parent = repo.find_reference("HEAD").unwrap().peel_to_oid_in_place().unwrap();
+        let parent = repo.find_reference("HEAD").unwrap().peel_to_id_in_place().unwrap();
         let empty_tree_id = parent
             .object()
             .unwrap()
@@ -72,8 +72,8 @@ mod commit {
             "the commit id is stable"
         );
 
-        let current_commit = repo.find_reference("HEAD").unwrap().peel_to_oid_in_place().unwrap();
-        assert_eq!(current_commit, first_commit_id, "the commit was set");
+        let current_commit = repo.head().unwrap().into_fully_peeled_id().unwrap().expect("born");
+        assert_eq!(current_commit, &*first_commit_id, "the commit was set");
 
         let second_commit_id = repo
             .commit(
@@ -96,7 +96,7 @@ mod commit {
         let current_commit = repo
             .find_reference("new-branch")
             .unwrap()
-            .peel_to_oid_in_place()
+            .peel_to_id_in_place()
             .unwrap();
         assert_eq!(current_commit, second_commit_id, "the commit was set");
     }

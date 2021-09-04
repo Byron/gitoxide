@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use git_hash::{oid, ObjectId};
 
 use crate::{
@@ -67,6 +69,14 @@ where
     /// Try find the [`ObjectRef`] associated with this object id, it might not be available locally.
     pub fn try_object(&self) -> Result<Option<ObjectRef<'repo, A>>, find::Error> {
         self.access.try_find_object(self.inner)
+    }
+}
+
+impl<'repo, A> Deref for Oid<'repo, A> {
+    type Target = oid;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
     }
 }
 
