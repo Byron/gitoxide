@@ -1,16 +1,18 @@
 use std::convert::TryInto;
 
-use git_actor as actor;
-use git_hash::ObjectId;
-use git_lock as lock;
-use git_ref::{
-    transaction::{Change, PreviousValue, RefEdit},
-    PartialNameRef, Target,
-};
-
+use crate::easy::ext::ConfigAccessExt;
 use crate::{
     easy,
     easy::{reference, Reference},
+};
+use bstr::BString;
+use git_actor as actor;
+use git_hash::ObjectId;
+use git_lock as lock;
+use git_ref::transaction::{LogChange, RefLog};
+use git_ref::{
+    transaction::{Change, PreviousValue, RefEdit},
+    FullName, PartialNameRef, Target,
 };
 
 /// Obtain and alter references comfortably
@@ -41,6 +43,44 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         )
     }
 
+    // TODO: more tests or usage
+    fn reference<Name, E>(
+        &self,
+        name: Name,
+        target: impl Into<ObjectId>,
+        constraint: PreviousValue,
+        log_message: impl Into<BString>,
+    ) -> Result<Reference<'_, Self>, reference::create::Error>
+    where
+        Name: TryInto<FullName, Error = E>,
+        reference::create::Error: From<E>,
+    {
+        let name = name.try_into()?;
+        let edits = self.edit_reference(
+            RefEdit {
+                change: Change::Update {
+                    log: LogChange {
+                        mode: RefLog::AndReference,
+                        force_create_reflog: false,
+                        message: log_message.into(),
+                    },
+                    expected: constraint,
+                    new: Target::Peeled(target.into()),
+                },
+                name,
+                deref: false,
+            },
+            git_lock::acquire::Fail::Immediately,
+            None,
+        )?;
+        assert_eq!(
+            edits.len(),
+            1,
+            "only one reference can be created, splits aren't possible"
+        );
+        Ok(self.find_reference(edits[0].name.to_partial())?)
+    }
+
     fn edit_reference(
         &self,
         edit: RefEdit,
@@ -60,8 +100,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         let committer = match log_committer {
             Some(c) => c,
             None => {
-                // TODO: actually read the committer information from git-config, probably it should be provided here
-                committer_storage = actor::Signature::empty();
+                committer_storage = self.committer();
                 &committer_storage
             }
         };

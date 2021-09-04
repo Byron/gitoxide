@@ -9,6 +9,20 @@ use crate::{
     easy::{Oid, Reference},
 };
 
+pub mod create {
+    use crate::easy;
+
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        Edit(#[from] easy::reference::edit::Error),
+        #[error(transparent)]
+        FindExistingReference(#[from] easy::reference::find::existing::Error),
+        #[error(transparent)]
+        NameValidation(#[from] git_validate::reference::name::Error),
+    }
+}
+
 pub mod edit {
     use crate::easy;
 

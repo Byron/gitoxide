@@ -1,9 +1,4 @@
-use std::convert::TryInto;
-
-use git_ref::{
-    transaction::{Change, PreviousValue, RefEdit},
-    Target,
-};
+use git_ref::transaction::PreviousValue;
 use git_repository as git;
 use git_repository::prelude::ReferenceAccessExt;
 use git_testtools::hex_to_id;
@@ -29,18 +24,11 @@ fn symbolic() -> crate::Result {
 #[test]
 fn detached() -> crate::Result {
     let (repo, _keep) = crate::basic_rw_repo()?;
-    repo.edit_reference(
-        RefEdit {
-            change: Change::Update {
-                log: Default::default(),
-                expected: PreviousValue::Any,
-                new: Target::Peeled(hex_to_id("3189cd3cb0af8586c39a838aa3e54fd72a872a41")),
-            },
-            name: "HEAD".try_into()?,
-            deref: false,
-        },
-        git_lock::acquire::Fail::Immediately,
-        None,
+    repo.reference(
+        "HEAD",
+        hex_to_id("3189cd3cb0af8586c39a838aa3e54fd72a872a41"),
+        PreviousValue::Any,
+        "",
     )?;
 
     let head = repo.head()?;
