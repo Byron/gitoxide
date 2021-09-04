@@ -1,4 +1,4 @@
-/// A function for use in [`crate::Reference::peel_to_id_in_place()`] to indicate no peeling should happen.
+/// A function for use in [`crate::file::ReferenceExt::peel_to_id_in_place()`] to indicate no peeling should happen.
 pub fn none(
     _id: git_hash::ObjectId,
     _buf: &mut Vec<u8>,
@@ -16,7 +16,7 @@ pub mod to_id {
     use crate::file;
 
     quick_error! {
-        /// The error returned by [`crate::Reference::peel_to_id_in_place()`].
+        /// The error returned by [`crate::file::ReferenceExt::peel_to_id_in_place()`].
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {

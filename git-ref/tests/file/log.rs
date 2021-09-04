@@ -60,6 +60,8 @@ mod iter {
         }
 
         mod with_buffer_too_small_for_single_line {
+            use std::error::Error;
+
             #[test]
             fn single_line() -> crate::Result {
                 let mut buf = [0u8; 128];
@@ -76,8 +78,8 @@ mod iter {
                         iter.next()
                             .expect("an error")
                             .expect_err("buffer too small")
-                            .get_ref()
-                            .expect("inner error")
+                            .source()
+                            .expect("source")
                             .to_string(),
                         "buffer too small for line size"
                     );
@@ -108,7 +110,7 @@ mod iter {
                         new_oid,
                         signature: _,
                         message,
-                    } = iter.next().expect("a single line")??;
+                    } = iter.next().expect("a single line")?;
                     assert_eq!(previous_oid, hex_to_id("0000000000000000000000000000000000000000"));
                     assert_eq!(new_oid, hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"));
                     assert_eq!(message, "commit (initial): c1");
@@ -136,7 +138,7 @@ mod iter {
                             new_oid,
                             signature: _,
                             message,
-                        } = iter.next().expect("a single line")??;
+                        } = iter.next().expect("a single line")?;
                         assert_eq!(previous_oid, hex_to_id("0000000000000000000000000000000000000000"));
                         assert_eq!(new_oid, hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"));
                         assert_eq!(message, "commit (initial): c1");
@@ -145,7 +147,7 @@ mod iter {
                             new_oid,
                             signature: _,
                             message,
-                        } = iter.next().expect("a single line")??;
+                        } = iter.next().expect("a single line")?;
                         assert_eq!(message, "commit (initial): c2");
                         assert_eq!(previous_oid, hex_to_id("1000000000000000000000000000000000000000"));
                         assert_eq!(new_oid, hex_to_id("234385f6d781b7e97062102c6a483440bfda2a03"));

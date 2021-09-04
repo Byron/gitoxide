@@ -46,7 +46,7 @@ mod commit {
                 .reverse_iter()?
                 .expect("log present")
                 .next()
-                .expect("one line")??
+                .expect("one line")?
                 .message,
             "commit (initial): initial"
         );
@@ -78,7 +78,6 @@ mod commit {
             .log()?
             .reverse_iter()?
             .expect("log present")
-            .map(Result::unwrap)
             .map(Result::unwrap)
             .map(|l| l.message.to_owned())
             .collect();
@@ -112,7 +111,7 @@ mod commit {
         let mut log = branch.log()?;
         let mut log_iter = log.reverse_iter()?.expect("log present");
         assert_eq!(
-            log_iter.next().expect("one line")??.message,
+            log_iter.next().expect("one line")?.message,
             "commit: committing into a new branch creates it"
         );
         assert!(
