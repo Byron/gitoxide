@@ -46,6 +46,19 @@ mod iter {
     }
 
     mod backward {
+        mod with_zero_sized_buffer {
+
+            #[test]
+            fn any_line() {
+                let mut buf = [0u8; 0];
+                assert!(
+                    git_ref::file::log::iter::reverse(std::io::Cursor::new(b"won't matter".as_ref()), &mut buf)
+                        .is_err(),
+                    "zero sized buffers aren't allowed"
+                );
+            }
+        }
+
         mod with_buffer_too_small_for_single_line {
             #[test]
             fn single_line() -> crate::Result {

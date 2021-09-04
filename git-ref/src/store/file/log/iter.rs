@@ -98,6 +98,12 @@ where
     F: std::io::Read + std::io::Seek,
 {
     let pos = log.seek(std::io::SeekFrom::End(0))?;
+    if buf.is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "Zero sized buffers are not allowed, use 256 bytes or more for typical logs",
+        ));
+    }
     Ok(Reverse {
         buf,
         count: 0,
