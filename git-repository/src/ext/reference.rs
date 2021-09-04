@@ -4,7 +4,7 @@ pub trait Sealed {}
 
 impl Sealed for git_ref::Reference {}
 
-/// Extensions for [references][Reference].
+/// Extensions for [references][git_ref::Reference].
 pub trait ReferenceExt {
     /// Attach [`easy::Access`] to the given reference. It can be detached later with [`detach()]`.
     fn attach<A: easy::Access + Sized>(self, access: &A) -> easy::Reference<'_, A>;

@@ -31,10 +31,7 @@ impl<'repo, A> Head<'repo, A> {
         })
     }
     pub fn is_detached(&self) -> bool {
-        match self.kind {
-            Kind::Detached { .. } => true,
-            _ => false,
-        }
+        matches!(self.kind, Kind::Detached { .. })
     }
 }
 
