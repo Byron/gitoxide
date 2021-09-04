@@ -26,7 +26,7 @@ where
     A: easy::Access + Sized,
     R: Borrow<Reference<'repo, A>>,
 {
-    pub fn reverse_iter(&mut self) -> Result<Option<git_ref::file::log::iter::Reverse<'_, std::fs::File>>, Error> {
+    pub fn iter_rev(&mut self) -> Result<Option<git_ref::file::log::iter::Reverse<'_, std::fs::File>>, Error> {
         let buf = self.buf.deref_mut();
         buf.resize(512, 0);
         Ok(self
