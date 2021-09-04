@@ -54,45 +54,6 @@ mod convert {
     }
 }
 
-// TODO: peeling depends on file store, that should be generic but we don't have a trait for that yet. Make it an Extension trait!
-mod log {
-    use crate::{
-        raw::Reference,
-        store::{
-            file,
-            file::{log, loose::reference::logiter::must_be_io_err},
-        },
-    };
-
-    impl Reference {
-        /// Obtain a reverse iterator over logs of this reference. See [crate::file::loose::Reference::log_iter_rev()] for details.
-        pub fn log_iter_rev<'b>(
-            &self,
-            store: &file::Store,
-            buf: &'b mut [u8],
-        ) -> std::io::Result<Option<log::iter::Reverse<'b, std::fs::File>>> {
-            store.reflog_iter_rev(self.name.to_ref(), buf).map_err(must_be_io_err)
-        }
-
-        /// Obtain an iterator over logs of this reference. See [crate::file::loose::Reference::log_iter()] for details.
-        pub fn log_iter<'a, 'b: 'a>(
-            &'a self,
-            store: &file::Store,
-            buf: &'b mut Vec<u8>,
-        ) -> std::io::Result<Option<impl Iterator<Item = Result<log::LineRef<'b>, log::iter::decode::Error>> + 'a>>
-        {
-            store.reflog_iter(self.name.to_ref(), buf).map_err(must_be_io_err)
-        }
-
-        /// For details, see [Reference::log_exists()].
-        pub fn log_exists(&self, store: &file::Store) -> bool {
-            store
-                .reflog_exists(self.name.to_ref())
-                .expect("infallible name conversion")
-        }
-    }
-}
-
 mod access {
     use bstr::ByteSlice;
 

@@ -54,13 +54,28 @@ pub mod decode {
 /// This iterator is useful when the ref log file is going to be rewritten which forces processing of the entire file.
 /// It will continue parsing even if individual log entries failed to parse, leaving it to the driver to decide whether to
 /// abort or continue.
-pub fn forward(lines: &[u8]) -> impl Iterator<Item = Result<log::LineRef<'_>, decode::Error>> {
-    lines.as_bstr().lines().enumerate().map(|(ln, line)| {
-        log::LineRef::from_bytes(line).map_err(|err| decode::Error::new(err, decode::LineNumber::FromStart(ln)))
-    })
+pub fn forward(lines: &[u8]) -> Forward<'_> {
+    Forward {
+        inner: lines.as_bstr().lines().enumerate(),
+    }
 }
 
-/// An iterator yielding parsed lines in a file in reverse.
+/// An iterator yielding parsed lines in a file from start to end, oldest to newest.
+pub struct Forward<'a> {
+    inner: std::iter::Enumerate<bstr::Lines<'a>>,
+}
+
+impl<'a> Iterator for Forward<'a> {
+    type Item = Result<log::LineRef<'a>, decode::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|(ln, line)| {
+            log::LineRef::from_bytes(line).map_err(|err| decode::Error::new(err, decode::LineNumber::FromStart(ln)))
+        })
+    }
+}
+
+/// An iterator yielding parsed lines in a file in reverse, most recent to oldest.
 pub struct Reverse<'a, F> {
     buf: &'a mut [u8],
     count: usize,

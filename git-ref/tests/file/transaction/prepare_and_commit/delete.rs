@@ -3,6 +3,7 @@ use crate::file::{
     transaction::prepare_and_commit::{committer, empty_store},
 };
 use git_lock::acquire::Fail;
+use git_ref::file::ReferenceExt;
 use git_ref::transaction::PreviousValue;
 use git_ref::{
     transaction::{Change, RefEdit, RefLog},

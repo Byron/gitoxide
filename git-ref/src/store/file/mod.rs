@@ -77,3 +77,6 @@ pub mod transaction;
 
 ///
 pub mod packed;
+
+mod raw_ext;
+pub use raw_ext::ReferenceExt;

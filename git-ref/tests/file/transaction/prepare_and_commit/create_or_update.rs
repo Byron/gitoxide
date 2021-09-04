@@ -6,6 +6,7 @@ use bstr::ByteSlice;
 use git_hash::ObjectId;
 use git_lock::acquire::Fail;
 use git_object::bstr::BString;
+use git_ref::file::ReferenceExt;
 use git_ref::transaction::PreviousValue;
 use git_ref::{
     file::{

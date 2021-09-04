@@ -1,5 +1,7 @@
 mod reflog {
     mod packed {
+        use git_ref::file::ReferenceExt;
+
         use crate::file;
 
         #[test]
