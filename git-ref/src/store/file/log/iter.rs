@@ -1,9 +1,6 @@
 use bstr::ByteSlice;
 
-use crate::store::{
-    file,
-    file::{log, log::iter::decode::LineNumber},
-};
+use crate::store::file::{log, log::iter::decode::LineNumber};
 
 ///
 pub mod decode {
@@ -140,7 +137,7 @@ impl<'a, F> Iterator for Reverse<'a, F>
 where
     F: std::io::Read + std::io::Seek,
 {
-    type Item = Result<file::log::Line, reverse::Error>;
+    type Item = Result<crate::log::Line, reverse::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match (self.last_nl_pos.take(), self.read_and_pos.take()) {

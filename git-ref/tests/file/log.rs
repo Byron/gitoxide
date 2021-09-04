@@ -90,7 +90,7 @@ mod iter {
         }
 
         mod with_buffer_big_enough_for_largest_line {
-            use git_ref::file::log::Line;
+            use git_ref::log::Line;
             use git_testtools::hex_to_id;
 
             #[test]

@@ -4,6 +4,7 @@
 
 * Replace `transaction::Create` with `transaction::PreviousValue` and remove `transaction::Create`
 * Remove `file::Reference` in favor of `Reference`
+* Move `file::log::Line` to `log::Line`
 
 ### v0.6.1
 
