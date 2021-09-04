@@ -79,7 +79,7 @@ mod commit {
             .reverse_iter()?
             .expect("log present")
             .map(Result::unwrap)
-            .map(|l| l.message.to_owned())
+            .map(|l| l.message)
             .collect();
         assert_eq!(
             head_log_entries,
