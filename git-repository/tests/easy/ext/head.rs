@@ -27,8 +27,8 @@ fn symbolic() -> crate::Result {
 }
 
 #[test]
-fn detached() {
-    let (repo, _keep) = crate::basic_rw_repo().unwrap();
+fn detached() -> crate::Result {
+    let (repo, _keep) = crate::basic_rw_repo()?;
     repo.edit_reference(
         RefEdit {
             change: Change::Update {
@@ -36,15 +36,15 @@ fn detached() {
                 expected: PreviousValue::Any,
                 new: Target::Peeled(hex_to_id("3189cd3cb0af8586c39a838aa3e54fd72a872a41")),
             },
-            name: "HEAD".try_into().unwrap(),
+            name: "HEAD".try_into()?,
             deref: false,
         },
         git_lock::acquire::Fail::Immediately,
         None,
-    )
-    .unwrap();
+    )?;
 
-    let head = repo.head().unwrap();
+    let head = repo.head()?;
     assert!(head.is_detached(), "head is detached");
     assert!(head.name().is_none());
+    Ok(())
 }

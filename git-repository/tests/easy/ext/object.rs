@@ -72,7 +72,7 @@ mod commit {
             "the commit id is stable"
         );
 
-        let current_commit = repo.head().unwrap().into_fully_peeled_id().unwrap().expect("born");
+        let current_commit = repo.head().unwrap().into_fully_peeled_id().expect("born").unwrap();
         assert_eq!(current_commit, &*first_commit_id, "the commit was set");
 
         let second_commit_id = repo

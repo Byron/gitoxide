@@ -62,16 +62,24 @@ pub mod peel {
     where
         A: Access + Sized,
     {
-        /// Resolve to an
-        pub fn into_fully_peeled_id(self) -> Result<Option<ObjectId>, Error> {
-            Ok(Some(match self.kind {
-                Kind::Unborn(_name) => return Ok(None),
+        pub fn into_fully_peeled_id(self) -> Option<Result<ObjectId, Error>> {
+            Some(match self.kind {
+                Kind::Unborn(_name) => return None,
                 Kind::Detached {
                     peeled: Some(peeled), ..
-                } => peeled,
-                Kind::Detached { peeled: None, target } => target.attach(self.access).object()?.peel_to_end()?.id,
-                Kind::Symbolic(r) => r.attach(self.access).peel_to_id_in_place()?.detach(),
-            }))
+                } => Ok(peeled),
+                Kind::Detached { peeled: None, target } => target
+                    .attach(self.access)
+                    .object()
+                    .map_err(Into::into)
+                    .and_then(|obj| obj.peel_to_end().map_err(Into::into))
+                    .map(|peeled| peeled.id),
+                Kind::Symbolic(r) => r
+                    .attach(self.access)
+                    .peel_to_id_in_place()
+                    .map_err(Into::into)
+                    .map(|id| id.detach()),
+            })
         }
     }
 }
