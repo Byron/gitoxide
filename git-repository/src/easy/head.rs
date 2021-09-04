@@ -3,7 +3,7 @@
 use git_hash::ObjectId;
 use git_ref::FullNameRef;
 
-use crate::easy::Head;
+use crate::{easy, easy::Head, ext::ReferenceExt};
 
 pub enum Kind {
     /// The existing reference the symbolic HEAD points to.
@@ -32,6 +32,18 @@ impl<'repo, A> Head<'repo, A> {
     }
     pub fn is_detached(&self) -> bool {
         matches!(self.kind, Kind::Detached { .. })
+    }
+}
+
+impl<'repo, A> Head<'repo, A>
+where
+    A: easy::Access + Sized,
+{
+    pub fn into_reference(self) -> easy::Reference<'repo, A> {
+        match self.kind {
+            Kind::Symbolic(r) => r.attach(self.access),
+            _ => panic!("BUG: Expected head to be a born symbolic reference"),
+        }
     }
 }
 

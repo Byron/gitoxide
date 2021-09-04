@@ -21,28 +21,36 @@ mod commit {
     use git_testtools::hex_to_id;
 
     #[test]
-    fn single_line_initial_commit_empty_tree_ref_nonexisting() {
-        let tmp = tempfile::tempdir().unwrap();
-        let repo = git::init_bare(&tmp).unwrap().into_easy();
-        let empty_tree_id = repo.write_object(&git::objs::Tree::empty().into()).unwrap();
+    fn single_line_initial_commit_empty_tree_ref_nonexisting() -> crate::Result {
+        let tmp = tempfile::tempdir()?;
+        let repo = git::init(&tmp)?.into_easy();
+        let empty_tree_id = repo.write_object(&git::objs::Tree::empty().into())?;
         let author = git::actor::Signature::empty();
-        let commit_id = repo
-            .commit(
-                "HEAD",
-                "initial",
-                author.clone(),
-                author,
-                empty_tree_id,
-                git::commit::NO_PARENT_IDS,
-            )
-            .unwrap();
+        let commit_id = repo.commit(
+            "HEAD",
+            "initial",
+            author.clone(),
+            author,
+            empty_tree_id,
+            git::commit::NO_PARENT_IDS,
+        )?;
         assert_eq!(
             commit_id,
             hex_to_id("302ea5640358f98ba23cda66c1e664a6f274643f"),
             "the commit id is stable"
         );
 
-        // TODO: check reflog
+        let head = repo.head()?.into_reference();
+        assert_eq!(
+            head.log()?
+                .reverse_iter()?
+                .expect("log present")
+                .next()
+                .expect("one line")??
+                .message,
+            "commit (initial): initial"
+        );
+        Ok(())
     }
 
     #[test]
@@ -96,19 +104,15 @@ mod commit {
         let current_commit = branch.peel_to_id_in_place().unwrap();
         assert_eq!(current_commit, second_commit_id, "the commit was set");
 
+        let mut log = branch.log().unwrap();
+        let mut log_iter = log.reverse_iter().unwrap().expect("log present");
         assert_eq!(
-            branch
-                .log()
-                .unwrap()
-                .reverse_iter()
-                .unwrap()
-                .expect("log present")
-                .next()
-                .expect("one line")
-                .unwrap()
-                .unwrap()
-                .message,
+            log_iter.next().expect("one line").unwrap().unwrap().message,
             "commit: committing into a new branch creates it"
+        );
+        assert!(
+            log_iter.next().is_none(),
+            "there is only one log line in the new branch"
         );
     }
 }
