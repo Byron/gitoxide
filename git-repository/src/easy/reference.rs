@@ -2,6 +2,7 @@
 use std::ops::DerefMut;
 
 use git_odb::Find;
+use git_ref::file::ReferenceExt;
 
 use crate::{
     easy,

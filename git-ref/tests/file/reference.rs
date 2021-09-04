@@ -52,7 +52,7 @@ mod reflog {
 
 mod peel {
     use git_odb::Find;
-    use git_ref::{peel, Reference};
+    use git_ref::{file::ReferenceExt, peel, Reference};
     use git_testtools::hex_to_id;
 
     use crate::{file, file::store_with_packed_refs};

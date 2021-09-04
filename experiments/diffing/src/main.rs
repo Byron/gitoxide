@@ -9,7 +9,7 @@ use git_repository::{
     objs::{bstr::BStr, TreeRefIter},
     odb,
     prelude::*,
-    refs::peel,
+    refs::{file::ReferenceExt, peel},
 };
 use rayon::prelude::*;
 

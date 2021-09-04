@@ -10,7 +10,7 @@ use git_repository::{
     objs::{bstr::BStr, tree::EntryRef},
     odb,
     prelude::*,
-    refs::peel,
+    refs::{file::ReferenceExt, peel},
     traverse::{tree, tree::visit::Action},
 };
 
