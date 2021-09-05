@@ -1,7 +1,7 @@
 pub mod summary {
     use std::borrow::Cow;
 
-    use bstr::ByteSlice;
+    use git::bstr::ByteSlice;
     use git_repository as git;
 
     #[test]

@@ -64,12 +64,11 @@
 //! * [`hash`]
 //! * [`url`]
 //! * [`actor`]
+//! * [`bstr`][bstr]
 //! * [`objs`]
-//!   * [`bstr`][objs::bstr]
 //! * [`odb`]
 //!   * [`pack`][odb::pack]
 //! * [`refs`]
-//!   * [`bstr`][refs::bstr]
 //! * [`interrupt`]
 //! * [`tempfile`]
 //! * [`lock`]
@@ -108,6 +107,7 @@ pub use git_tempfile as tempfile;
 pub use git_traverse as traverse;
 #[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url as url;
+pub use objs::bstr;
 
 pub mod interrupt;
 
