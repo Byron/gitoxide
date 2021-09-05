@@ -1,6 +1,6 @@
 use std::fmt;
 
-use bstr::{BStr, ByteSlice};
+use bstr::BStr;
 use git_hash::{oid, ObjectId};
 
 use crate::{FullName, Kind, Target, TargetRef};
@@ -23,7 +23,7 @@ impl<'a> TargetRef<'a> {
     /// Interpret this target as name of the reference it points to which maybe `None` if it an object id.
     pub fn as_name(&self) -> Option<&BStr> {
         match self {
-            TargetRef::Symbolic(path) => Some(path),
+            TargetRef::Symbolic(path) => Some(path.as_bstr()),
             TargetRef::Peeled(_) => None,
         }
     }
@@ -54,7 +54,7 @@ impl Target {
     pub fn to_ref(&self) -> crate::TargetRef<'_> {
         match self {
             Target::Peeled(oid) => crate::TargetRef::Peeled(oid),
-            Target::Symbolic(name) => crate::TargetRef::Symbolic(name.0.as_bstr()),
+            Target::Symbolic(name) => crate::TargetRef::Symbolic(name.to_ref()),
         }
     }
 
@@ -98,7 +98,7 @@ impl<'a> From<crate::TargetRef<'a>> for Target {
     fn from(src: crate::TargetRef<'a>) -> Self {
         match src {
             crate::TargetRef::Peeled(oid) => Target::Peeled(oid.to_owned()),
-            crate::TargetRef::Symbolic(name) => Target::Symbolic(FullName(name.to_owned())),
+            crate::TargetRef::Symbolic(name) => Target::Symbolic(name.to_owned()),
         }
     }
 }
@@ -107,7 +107,7 @@ impl<'a> PartialEq<crate::TargetRef<'a>> for Target {
     fn eq(&self, other: &crate::TargetRef<'a>) -> bool {
         match (self, other) {
             (Target::Peeled(lhs), crate::TargetRef::Peeled(rhs)) => lhs == rhs,
-            (Target::Symbolic(lhs), crate::TargetRef::Symbolic(rhs)) => lhs.as_bstr() == *rhs,
+            (Target::Symbolic(lhs), crate::TargetRef::Symbolic(rhs)) => lhs.as_bstr() == rhs.as_bstr(),
             _ => false,
         }
     }

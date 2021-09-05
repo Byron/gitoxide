@@ -2,7 +2,7 @@ use std::{borrow::Cow, convert::TryFrom, path::Path};
 
 use bstr::{BStr, BString, ByteSlice};
 
-use crate::FullName;
+use crate::{FullName, FullNameRef};
 
 impl TryFrom<&str> for FullName {
     type Error = git_validate::refname::Error;
@@ -67,5 +67,12 @@ impl FullName {
     /// Return ourselves as byte string which is a valid refname
     pub fn as_bstr(&self) -> &BStr {
         self.0.as_bstr()
+    }
+}
+
+impl<'a> FullNameRef<'a> {
+    /// Create an owned copy of ourself
+    pub fn to_owned(&self) -> FullName {
+        FullName(self.0.to_owned())
     }
 }

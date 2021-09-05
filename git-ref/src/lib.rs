@@ -107,5 +107,5 @@ pub enum TargetRef<'a> {
     /// A ref that points to an object id
     Peeled(&'a oid),
     /// A ref that points to another reference by its validated name, adding a level of indirection.
-    Symbolic(&'a BStr),
+    Symbolic(FullNameRef<'a>),
 }
