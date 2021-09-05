@@ -4,6 +4,7 @@ use bstr::BStr;
 use git_hash::{oid, ObjectId};
 
 use crate::{FullName, Kind, Target, TargetRef};
+use std::convert::TryFrom;
 
 impl<'a> TargetRef<'a> {
     /// Returns the kind of the target the ref is pointing to.
@@ -116,6 +117,17 @@ impl<'a> PartialEq<crate::TargetRef<'a>> for Target {
 impl From<ObjectId> for Target {
     fn from(id: ObjectId) -> Self {
         Target::Peeled(id)
+    }
+}
+
+impl TryFrom<Target> for ObjectId {
+    type Error = Target;
+
+    fn try_from(value: Target) -> Result<Self, Self::Error> {
+        match value {
+            Target::Peeled(id) => Ok(id),
+            Target::Symbolic(_) => Err(value),
+        }
     }
 }
 

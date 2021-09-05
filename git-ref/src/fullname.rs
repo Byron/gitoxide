@@ -38,6 +38,18 @@ impl TryFrom<BString> for FullName {
     }
 }
 
+impl From<FullName> for BString {
+    fn from(name: FullName) -> Self {
+        name.0
+    }
+}
+
+impl<'a> From<FullNameRef<'a>> for &'a BStr {
+    fn from(name: FullNameRef<'a>) -> Self {
+        name.0
+    }
+}
+
 impl<'a> From<crate::FullNameRef<'a>> for FullName {
     fn from(value: crate::FullNameRef<'a>) -> Self {
         FullName(value.as_bstr().into())
