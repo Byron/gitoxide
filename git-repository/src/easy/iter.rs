@@ -4,6 +4,7 @@ pub mod references {
     use std::cell::Ref;
 
     /// An iterator over references
+    #[must_use]
     pub struct State<'r, A>
     where
         A: easy::Access + Sized,
@@ -25,6 +26,17 @@ pub mod references {
         pub fn all(&self) -> Result<Iter<'_, A>, init::Error> {
             Ok(Iter {
                 inner: self.repo.deref().refs.iter(self.packed_refs.packed_refs.as_ref())?,
+                access: self.access,
+            })
+        }
+
+        pub fn prefixed(&self, prefix: impl AsRef<Path>) -> Result<Iter<'_, A>, init::Error> {
+            Ok(Iter {
+                inner: self
+                    .repo
+                    .deref()
+                    .refs
+                    .iter_prefixed(self.packed_refs.packed_refs.as_ref(), prefix)?,
                 access: self.access,
             })
         }
@@ -76,4 +88,5 @@ pub mod references {
     }
     pub use error::Error;
     use std::ops::Deref;
+    use std::path::Path;
 }

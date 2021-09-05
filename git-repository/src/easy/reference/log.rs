@@ -4,6 +4,7 @@ use git_ref::file::ReferenceExt;
 
 use crate::{easy, easy::Reference};
 
+#[must_use = "Iterators should be obtained from this log buffer"]
 pub struct State<'repo, A: 'repo, R>
 where
     R: Borrow<Reference<'repo, A>>,

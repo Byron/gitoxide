@@ -1,19 +1,57 @@
 mod iter_references {
+    use git_repository as git;
     use git_repository::prelude::ReferenceAccessExt;
 
+    fn repo() -> crate::Result<git::Easy> {
+        crate::repo("make_references_repo.sh").map(|r| r.into_easy())
+    }
+
     #[test]
-    fn all() {
-        let repo = crate::basic_repo().unwrap();
+    fn all() -> crate::Result {
+        let repo = repo()?;
         assert_eq!(
-            repo.iter_references()
-                .unwrap()
-                .all()
-                .unwrap()
-                .map(Result::unwrap)
+            repo.iter_references()?
+                .all()?
+                .filter_map(Result::ok)
                 .map(|r| r.name().as_bstr().to_owned())
                 .collect::<Vec<_>>(),
-            vec!["refs/heads/main"]
+            vec![
+                "refs/d1",
+                "refs/heads/d1",
+                "refs/heads/dt1",
+                "refs/heads/main",
+                "refs/heads/multi-link-target1",
+                "refs/loop-a",
+                "refs/loop-b",
+                "refs/multi-link",
+                "refs/remotes/origin/HEAD",
+                "refs/remotes/origin/main",
+                "refs/remotes/origin/multi-link-target3",
+                "refs/tags/dt1",
+                "refs/tags/multi-link-target2",
+                "refs/tags/t1"
+            ]
         );
+        Ok(())
+    }
+
+    #[test]
+    fn prefixed() -> crate::Result {
+        let repo = repo()?;
+        assert_eq!(
+            repo.iter_references()?
+                .prefixed("refs/heads/")?
+                .filter_map(Result::ok)
+                .map(|r| r.name().as_bstr().to_owned())
+                .collect::<Vec<_>>(),
+            vec![
+                "refs/heads/d1",
+                "refs/heads/dt1",
+                "refs/heads/main",
+                "refs/heads/multi-link-target1",
+            ]
+        );
+        Ok(())
     }
 }
 
