@@ -163,10 +163,10 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     {
         let state = self.state();
         let repo = self.repo()?;
-        match repo
-            .refs
-            .try_find(name, state.assure_packed_refs_uptodate(&repo.refs)?.as_ref())
-        {
+        match repo.refs.try_find(
+            name,
+            state.assure_packed_refs_uptodate(&repo.refs)?.packed_refs.as_ref(),
+        ) {
             Ok(r) => match r {
                 Some(r) => Ok(Some(Reference::from_ref(r, self))),
                 None => Ok(None),
