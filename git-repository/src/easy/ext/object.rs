@@ -1,7 +1,7 @@
 use std::{convert::TryInto, ops::DerefMut};
 
-use bstr::BString;
 use git_hash::ObjectId;
+use git_object::bstr::BString;
 use git_odb::{Find, FindExt};
 use git_ref::{
     transaction::{LogChange, PreviousValue, RefLog},

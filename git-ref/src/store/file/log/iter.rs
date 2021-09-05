@@ -1,4 +1,4 @@
-use bstr::ByteSlice;
+use git_object::bstr::ByteSlice;
 
 use crate::store::file::{log, log::iter::decode::LineNumber};
 
@@ -59,7 +59,7 @@ pub fn forward(lines: &[u8]) -> Forward<'_> {
 
 /// An iterator yielding parsed lines in a file from start to end, oldest to newest.
 pub struct Forward<'a> {
-    inner: std::iter::Enumerate<bstr::Lines<'a>>,
+    inner: std::iter::Enumerate<git_object::bstr::Lines<'a>>,
 }
 
 impl<'a> Iterator for Forward<'a> {

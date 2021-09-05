@@ -3,8 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use bstr::ByteSlice;
 use git_features::fs::walkdir::DirEntryIter;
+use git_object::bstr::ByteSlice;
 use os_str_bytes::OsStrBytes;
 
 use crate::{

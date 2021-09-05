@@ -1,4 +1,4 @@
-use bstr::{BString, ByteVec};
+use git_object::bstr::{BString, ByteVec};
 
 use crate::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog, Target},

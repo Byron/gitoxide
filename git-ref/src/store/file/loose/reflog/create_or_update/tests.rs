@@ -1,8 +1,8 @@
 use super::*;
 use crate::{file::WriteReflog, FullNameRef};
-use bstr::ByteSlice;
 use git_actor::{Sign, Signature, Time};
 use git_lock::acquire::Fail;
+use git_object::bstr::ByteSlice;
 use git_testtools::hex_to_id;
 use std::{convert::TryInto, path::Path};
 use tempfile::TempDir;

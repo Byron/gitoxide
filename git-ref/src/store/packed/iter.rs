@@ -1,4 +1,4 @@
-use bstr::{BString, ByteSlice};
+use git_object::bstr::{BString, ByteSlice};
 
 use crate::store::{packed, packed::decode};
 
@@ -94,7 +94,7 @@ impl<'a> packed::Iter<'a> {
 }
 
 mod error {
-    use bstr::BString;
+    use git_object::bstr::BString;
     use quick_error::quick_error;
 
     quick_error! {

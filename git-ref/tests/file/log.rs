@@ -1,6 +1,6 @@
 mod line {
     mod write_to {
-        use bstr::ByteVec;
+        use git_object::bstr::ByteVec;
         use git_ref::file::log;
 
         #[test]
@@ -159,8 +159,8 @@ mod iter {
         }
     }
     mod forward {
-        use bstr::B;
         use git_hash::ObjectId;
+        use git_object::bstr::B;
 
         use crate::file::log::iter::reflog;
 

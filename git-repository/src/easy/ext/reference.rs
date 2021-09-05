@@ -1,9 +1,9 @@
 use std::convert::TryInto;
 
-use bstr::BString;
 use git_actor as actor;
 use git_hash::ObjectId;
 use git_lock as lock;
+use git_object::bstr::BString;
 use git_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     FullName, PartialNameRef, Target,

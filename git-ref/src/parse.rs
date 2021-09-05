@@ -1,4 +1,4 @@
-use bstr::{BStr, ByteSlice};
+use git_object::bstr::{BStr, ByteSlice};
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while_m_n},

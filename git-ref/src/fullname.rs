@@ -1,6 +1,6 @@
 use std::{borrow::Cow, convert::TryFrom, path::Path};
 
-use bstr::{BStr, BString, ByteSlice};
+use git_object::bstr::{BStr, BString, ByteSlice};
 
 use crate::{FullName, FullNameRef};
 

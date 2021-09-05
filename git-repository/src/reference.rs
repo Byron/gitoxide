@@ -1,6 +1,6 @@
 ///
 pub mod log {
-    use bstr::{BString, ByteSlice, ByteVec};
+    use git_object::bstr::{BString, ByteSlice, ByteVec};
     use git_object::Commit;
 
     use crate::commit;

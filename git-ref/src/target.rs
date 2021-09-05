@@ -1,7 +1,7 @@
 use std::fmt;
 
-use bstr::BStr;
 use git_hash::{oid, ObjectId};
+use git_object::bstr::BStr;
 
 use crate::{FullName, Kind, Target, TargetRef};
 use std::convert::TryFrom;

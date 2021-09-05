@@ -1,7 +1,7 @@
 mod refedit_ext {
     use std::{cell::RefCell, collections::BTreeMap, convert::TryInto};
 
-    use bstr::{BString, ByteSlice};
+    use git_object::bstr::{BString, ByteSlice};
     use git_ref::{
         transaction::{Change, PreviousValue, RefEdit, RefEditsExt, RefLog},
         PartialNameRef, Target,

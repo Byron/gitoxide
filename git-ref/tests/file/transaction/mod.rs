@@ -1,7 +1,7 @@
 mod prepare_and_commit {
-    use bstr::BString;
     use git_actor::{Sign, Time};
     use git_hash::ObjectId;
+    use git_object::bstr::BString;
     use git_ref::file;
 
     fn reflog_lines(store: &file::Store, name: &str) -> crate::Result<Vec<git_ref::log::Line>> {

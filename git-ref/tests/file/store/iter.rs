@@ -1,12 +1,12 @@
 use std::convert::TryInto;
 
-use bstr::ByteSlice;
+use git_object::bstr::ByteSlice;
 use git_testtools::hex_to_id;
 
 use crate::file::{store, store_at, store_with_packed_refs};
 
 mod with_namespace {
-    use bstr::BString;
+    use git_object::bstr::BString;
     use git_object::bstr::ByteSlice;
 
     use crate::file::store_at;

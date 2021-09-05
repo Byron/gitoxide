@@ -4,8 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use bstr::ByteSlice;
 pub use error::Error;
+use git_object::bstr::ByteSlice;
 
 use crate::{
     file,

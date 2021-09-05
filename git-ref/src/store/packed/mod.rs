@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-use bstr::{BStr, BString};
 use filebuffer::FileBuffer;
 use git_hash::ObjectId;
+use git_object::bstr::{BStr, BString};
 
 use crate::{transaction::RefEdit, FullNameRef};
 

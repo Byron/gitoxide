@@ -38,12 +38,12 @@ pub struct Transaction<'s> {
     namespace: Option<crate::Namespace>,
 }
 
-pub(in crate::store::file) fn path_to_name(path: impl Into<PathBuf>) -> bstr::BString {
+pub(in crate::store::file) fn path_to_name(path: impl Into<PathBuf>) -> git_object::bstr::BString {
     use os_str_bytes::OsStringBytes;
     let path = path.into().into_raw_vec();
     #[cfg(windows)]
     let path = {
-        use bstr::ByteSlice;
+        use git_object::bstr::ByteSlice;
         path.replace(b"\\", b"/")
     };
     path.into()

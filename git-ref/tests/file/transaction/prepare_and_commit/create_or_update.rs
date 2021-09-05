@@ -2,10 +2,10 @@ use crate::file::{
     store_with_packed_refs, store_writable,
     transaction::prepare_and_commit::{committer, empty_store, log_line, reflog_lines},
 };
-use bstr::ByteSlice;
 use git_hash::ObjectId;
 use git_lock::acquire::Fail;
 use git_object::bstr::BString;
+use git_object::bstr::ByteSlice;
 use git_ref::file::ReferenceExt;
 use git_ref::transaction::PreviousValue;
 use git_ref::{

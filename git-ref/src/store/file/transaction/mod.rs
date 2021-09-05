@@ -1,5 +1,5 @@
-use bstr::BString;
 use git_hash::ObjectId;
+use git_object::bstr::BString;
 
 use crate::{
     store::{file, file::Transaction},

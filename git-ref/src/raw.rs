@@ -55,7 +55,7 @@ mod convert {
 }
 
 mod access {
-    use bstr::ByteSlice;
+    use git_object::bstr::ByteSlice;
 
     use crate::{raw::Reference, FullNameRef, Namespace};
 

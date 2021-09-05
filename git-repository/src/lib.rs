@@ -69,6 +69,7 @@
 //! * [`odb`]
 //!   * [`pack`][odb::pack]
 //! * [`refs`]
+//!   * [`bstr`][refs::bstr]
 //! * [`interrupt`]
 //! * [`tempfile`]
 //! * [`lock`]

@@ -10,7 +10,7 @@ pub fn none(
 pub mod to_id {
     use std::path::PathBuf;
 
-    use bstr::BString;
+    use git_object::bstr::BString;
     use quick_error::quick_error;
 
     use crate::file;

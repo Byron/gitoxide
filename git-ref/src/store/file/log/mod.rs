@@ -1,4 +1,4 @@
-use bstr::BStr;
+use git_object::bstr::BStr;
 
 pub use super::loose::reflog::{create_or_update, Error};
 

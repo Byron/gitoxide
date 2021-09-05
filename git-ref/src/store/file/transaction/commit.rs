@@ -155,7 +155,7 @@ impl<'s> Transaction<'s> {
     }
 }
 mod error {
-    use bstr::BString;
+    use git_object::bstr::BString;
     use quick_error::quick_error;
 
     use crate::store::{file, packed};

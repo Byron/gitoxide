@@ -50,7 +50,7 @@ pub mod open {
         #[error(transparent)]
         ObjectStoreInitialization(#[from] git_odb::linked::init::Error),
         #[error("Cannot handle objects formatted as {:?}", .name)]
-        UnsupportedObjectFormat { name: bstr::BString },
+        UnsupportedObjectFormat { name: git_object::bstr::BString },
     }
 
     impl Repository {

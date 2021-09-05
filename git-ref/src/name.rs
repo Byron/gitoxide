@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use bstr::{BStr, ByteSlice};
+use git_object::bstr::{BStr, ByteSlice};
 
 use crate::{FullNameRef, PartialNameRef};
 

@@ -18,8 +18,9 @@
 //!   * supersedes all of the above to allow handling hundreds of thousands of references.
 #![forbid(unsafe_code)]
 #![deny(missing_docs, rust_2018_idioms)]
-use bstr::{BStr, BString};
 use git_hash::{oid, ObjectId};
+pub use git_object::bstr;
+use git_object::bstr::{BStr, BString};
 
 mod store;
 pub use store::{file, packed};
@@ -41,8 +42,8 @@ mod target;
 
 ///
 pub mod log {
-    use bstr::BString;
     use git_hash::ObjectId;
+    use git_object::bstr::BString;
 
     /// A parsed ref log line that can be changed
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

@@ -1165,7 +1165,6 @@ dependencies = [
 name = "git-ref"
 version = "0.7.0"
 dependencies = [
- "bstr",
  "filebuffer",
  "git-actor",
  "git-features",
@@ -1188,7 +1187,6 @@ name = "git-repository"
 version = "0.8.1"
 dependencies = [
  "anyhow",
- "bstr",
  "git-actor",
  "git-config",
  "git-diff",

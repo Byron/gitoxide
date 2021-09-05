@@ -89,8 +89,8 @@ pub mod create_or_update {
         path::{Path, PathBuf},
     };
 
-    use bstr::BStr;
     use git_hash::{oid, ObjectId};
+    use git_object::bstr::BStr;
 
     use crate::store::{file, file::WriteReflog};
 
