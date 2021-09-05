@@ -113,6 +113,18 @@ impl<'a> PartialEq<crate::TargetRef<'a>> for Target {
     }
 }
 
+impl From<ObjectId> for Target {
+    fn from(id: ObjectId) -> Self {
+        Target::Peeled(id)
+    }
+}
+
+impl From<FullName> for Target {
+    fn from(name: FullName) -> Self {
+        Target::Symbolic(name)
+    }
+}
+
 impl fmt::Display for Target {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
