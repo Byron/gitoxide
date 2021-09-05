@@ -13,7 +13,7 @@ path = "src/main.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-git-hash = { version = "^0.5.0", path = "../../git-hash" }
+git-hash = { version ="^0.6.0", path = "../../git-hash" }
 nom = { version = "7", default-features = false, features = ["std"]}
 bstr = "0.2.15"
 crc = "2.0.0"

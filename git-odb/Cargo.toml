@@ -29,7 +29,7 @@ all-features = true
 
 [dependencies]
 git-features = { version = "^0.16.0", path = "../git-features", features = ["rustsha1", "walkdir", "zlib"] }
-git-hash = { version = "^0.5.0", path = "../git-hash" }
+git-hash = { version ="^0.6.0", path = "../git-hash" }
 git-object = { version ="^0.13.0", path = "../git-object" }
 git-pack = { version ="^0.9.0", path = "../git-pack" }
 
