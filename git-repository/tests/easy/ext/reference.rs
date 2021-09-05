@@ -1,4 +1,23 @@
-pub mod head {
+mod iter_references {
+    use git_repository::prelude::ReferenceAccessExt;
+
+    #[test]
+    fn all() {
+        let repo = crate::basic_repo().unwrap();
+        assert_eq!(
+            repo.iter_references()
+                .unwrap()
+                .all()
+                .unwrap()
+                .map(Result::unwrap)
+                .map(|r| r.name().as_bstr().to_owned())
+                .collect::<Vec<_>>(),
+            vec!["refs/heads/main"]
+        );
+    }
+}
+
+mod head {
 
     use git_ref::transaction::PreviousValue;
     use git_repository as git;

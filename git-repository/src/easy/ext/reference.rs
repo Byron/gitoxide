@@ -145,15 +145,14 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     }
 
     fn iter_references(&self) -> Result<easy::iter::references::State<'_, Self>, easy::iter::references::Error> {
-        let _state = self.state();
-        todo!("")
-        // Ok(easy::iter::References {
-        //     inner: self
-        //         .repo()?
-        //         .refs
-        //         .iter(state.assure_packed_refs_uptodate(&repo.refs)?.as_ref())?,
-        //     access: self,
-        // })
+        let state = self.state();
+        let repo = self.repo()?;
+        let packed_refs = state.assure_packed_refs_uptodate(&repo.refs)?;
+        Ok(easy::iter::references::State {
+            repo,
+            packed_refs,
+            access: self,
+        })
     }
 
     fn try_find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_, Self>>, reference::find::Error>

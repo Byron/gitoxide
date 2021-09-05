@@ -15,8 +15,6 @@ impl Clone for easy::State {
 }
 
 impl easy::State {
-    // TODO: ~~this method should be on the Store itself, as one day there will be reftable support which lacks packed-refs~~
-    //       Actually make it a RefMut instead and don't share across threads. Iteration would have to hold the lock for too long
     pub(crate) fn assure_packed_refs_uptodate(
         &self,
         file: &file::Store,
