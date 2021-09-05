@@ -3,7 +3,7 @@ use git_hash::ObjectId;
 use crate::{FullName, Target};
 
 /// A fully owned backend agnostic reference
-#[derive(Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Reference {
     /// The path to uniquely identify this ref within its store.
     pub name: FullName,
