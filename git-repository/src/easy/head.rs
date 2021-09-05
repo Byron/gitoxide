@@ -67,8 +67,8 @@ pub mod log {
     where
         A: easy::Access + Sized,
     {
-        pub fn log(&self) -> Result<easy::reference::log::Buffer<'repo, A, easy::Reference<'repo, A>>, Error> {
-            Ok(easy::reference::log::Buffer {
+        pub fn log(&self) -> Result<easy::reference::log::State<'repo, A, easy::Reference<'repo, A>>, Error> {
+            Ok(easy::reference::log::State {
                 reference: self.access.find_reference("HEAD")?,
                 buf: self.access.state().try_borrow_mut_buf()?,
                 _phantom: PhantomData::default(),

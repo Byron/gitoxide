@@ -4,7 +4,7 @@ use git_ref::file::ReferenceExt;
 
 use crate::{easy, easy::Reference};
 
-pub struct Buffer<'repo, A: 'repo, R>
+pub struct State<'repo, A: 'repo, R>
 where
     R: Borrow<Reference<'repo, A>>,
 {
@@ -24,7 +24,7 @@ pub enum Error {
 pub type ReverseIter<'a> = git_ref::file::log::iter::Reverse<'a, std::fs::File>;
 pub type ForwardIter<'a> = git_ref::file::log::iter::Forward<'a>;
 
-impl<'repo, A, R> Buffer<'repo, A, R>
+impl<'repo, A, R> State<'repo, A, R>
 where
     A: easy::Access + Sized,
     R: Borrow<Reference<'repo, A>>,
@@ -54,8 +54,8 @@ impl<'repo, A> Reference<'repo, A>
 where
     A: easy::Access + Sized,
 {
-    pub fn log(&self) -> Result<Buffer<'repo, A, &'_ Reference<'repo, A>>, easy::borrow::state::Error> {
-        Ok(Buffer {
+    pub fn log(&self) -> Result<State<'repo, A, &'_ Reference<'repo, A>>, easy::borrow::state::Error> {
+        Ok(State {
             reference: self,
             buf: self.access.state().try_borrow_mut_buf()?,
             _phantom: Default::default(),
