@@ -88,6 +88,7 @@ use std::{path::PathBuf, rc::Rc, sync::Arc};
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
+pub use bstr;
 pub use git_actor as actor;
 #[cfg(all(feature = "unstable", feature = "git-diff"))]
 pub use git_diff as diff;
@@ -107,7 +108,6 @@ pub use git_tempfile as tempfile;
 pub use git_traverse as traverse;
 #[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url as url;
-pub use objs::bstr;
 
 pub mod interrupt;
 
