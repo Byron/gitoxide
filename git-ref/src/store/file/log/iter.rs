@@ -111,8 +111,9 @@ where
 
 ///
 pub mod reverse {
-    use super::decode;
     use quick_error::quick_error;
+
+    use super::decode;
 
     quick_error! {
         /// The error returned by the [`Reverse`][super::Reverse] iterator

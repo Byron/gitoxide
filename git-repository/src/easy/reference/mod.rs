@@ -17,8 +17,6 @@ pub mod create {
         #[error(transparent)]
         Edit(#[from] easy::reference::edit::Error),
         #[error(transparent)]
-        FindExistingReference(#[from] easy::reference::find::existing::Error),
-        #[error(transparent)]
         NameValidation(#[from] git_validate::reference::name::Error),
     }
 }

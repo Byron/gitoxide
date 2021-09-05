@@ -1,18 +1,18 @@
 use std::convert::TryInto;
 
-use crate::easy::ext::ConfigAccessExt;
-use crate::{
-    easy,
-    easy::{reference, Reference},
-};
 use bstr::BString;
 use git_actor as actor;
 use git_hash::ObjectId;
 use git_lock as lock;
-use git_ref::transaction::{LogChange, RefLog};
 use git_ref::{
-    transaction::{Change, PreviousValue, RefEdit},
+    transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     FullName, PartialNameRef, Target,
+};
+
+use crate::{
+    easy,
+    easy::{ext::ConfigAccessExt, reference, Reference},
+    ext::ReferenceExt,
 };
 
 /// Obtain and alter references comfortably
@@ -56,7 +56,8 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         reference::create::Error: From<E>,
     {
         let name = name.try_into()?;
-        let edits = self.edit_reference(
+        let id = target.into();
+        let mut edits = self.edit_reference(
             RefEdit {
                 change: Change::Update {
                     log: LogChange {
@@ -65,7 +66,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
                         message: log_message.into(),
                     },
                     expected: constraint,
-                    new: Target::Peeled(target.into()),
+                    new: Target::Peeled(id),
                 },
                 name,
                 deref: false,
@@ -78,7 +79,13 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
             1,
             "only one reference can be created, splits aren't possible"
         );
-        Ok(self.find_reference(edits[0].name.to_partial())?)
+
+        Ok(git_ref::Reference {
+            name: edits.pop().expect("exactly one edit").name,
+            target: Target::Peeled(id),
+            peeled: None,
+        }
+        .attach(self))
     }
 
     fn edit_reference(
