@@ -7,7 +7,6 @@
 mod borrowed;
 pub use borrowed::oid;
 
-#[allow(missing_docs)]
 mod owned;
 pub use owned::ObjectId;
 

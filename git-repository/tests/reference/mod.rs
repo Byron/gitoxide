@@ -4,7 +4,7 @@ mod log {
     #[test]
     fn message() {
         let mut commit = git::objs::Commit {
-            tree: git::hash::ObjectId::empty_tree(),
+            tree: git::hash::ObjectId::empty_tree(git_hash::Kind::Sha1),
             parents: Default::default(),
             author: Default::default(),
             committer: Default::default(),

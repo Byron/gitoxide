@@ -1,5 +1,5 @@
 mod write_object {
-    use git_repository::prelude::ObjectAccessExt;
+    use git_repository::prelude::{ConfigAccessExt, ObjectAccessExt};
 
     #[test]
     fn empty_tree() -> crate::Result {
@@ -8,7 +8,7 @@ mod write_object {
         let oid = repo.write_object(&git_repository::objs::Tree::empty().into())?;
         assert_eq!(
             oid,
-            git_repository::hash::ObjectId::empty_tree(),
+            git_repository::hash::ObjectId::empty_tree(repo.hash_kind()?),
             "it produces a well-known empty tree id"
         );
         Ok(())

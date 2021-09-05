@@ -126,7 +126,7 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
 #[test]
 fn the_existing_must_match_constraint_allow_non_existing_references_to_be_created() -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
-    let expected = PreviousValue::ExistingMustMatch(Target::Peeled(ObjectId::empty_tree()));
+    let expected = PreviousValue::ExistingMustMatch(Target::Peeled(ObjectId::empty_tree(git_hash::Kind::Sha1)));
     let edits = store
         .transaction()
         .prepare(
@@ -281,7 +281,7 @@ fn reference_with_must_exist_constraint_must_exist_already_with_any_value() -> c
     let target = head.target;
     let previous_reflog_count = reflog_lines(&store, "HEAD")?.len();
 
-    let new_target = Target::Peeled(ObjectId::empty_tree());
+    let new_target = Target::Peeled(ObjectId::empty_tree(git_hash::Kind::Sha1));
     let edits = store
         .transaction()
         .prepare(
