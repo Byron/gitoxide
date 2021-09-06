@@ -11,18 +11,18 @@ mod with_namespace {
     use crate::file::store_at;
 
     #[test]
-    fn general_iteration_can_trivially_use_namespaces_as_prefixes() {
-        let store = store_at("make_namespaced_packed_ref_repository.sh").unwrap();
-        let packed = store.packed_buffer().unwrap();
+    fn general_iteration_can_trivially_use_namespaces_as_prefixes() -> crate::Result {
+        let store = store_at("make_namespaced_packed_ref_repository.sh")?;
+        let packed = store.packed_buffer()?;
 
-        let ns_two = git_ref::namespace::expand("bar").unwrap();
+        let ns_two = git_ref::namespace::expand("bar")?;
+        let namespaced_packed_refs = store
+            .iter_prefixed(packed.as_ref(), ns_two.to_path())?
+            .map(Result::unwrap)
+            .map(|r: git_ref::Reference| r.name.as_bstr().to_owned())
+            .collect::<Vec<_>>();
         assert_eq!(
-            store
-                .iter_prefixed(packed.as_ref(), ns_two.to_path())
-                .unwrap()
-                .map(Result::unwrap)
-                .map(|r: git_ref::Reference| r.name.as_bstr().to_owned())
-                .collect::<Vec<_>>(),
+            namespaced_packed_refs,
             vec![
                 "refs/namespaces/bar/refs/heads/multi-link-target1",
                 "refs/namespaces/bar/refs/multi-link",
@@ -30,12 +30,37 @@ mod with_namespace {
                 "refs/namespaces/bar/refs/tags/multi-link-target2"
             ]
         );
+        for fullname in namespaced_packed_refs {
+            let reference = store.find(fullname.as_bstr(), packed.as_ref())?;
+            assert_eq!(
+                reference.name.as_bstr(),
+                fullname,
+                "it finds namespaced items by fully qualified name"
+            );
+            assert!(
+                store
+                    .try_find(
+                        fullname.rsplit_str(b"/").next().expect("name").as_bstr(),
+                        packed.as_ref()
+                    )?
+                    .is_none(),
+                "it won't find namespaced items just by their shortest name"
+            );
+            assert!(
+                store
+                    .try_find(
+                        reference.name_without_namespace(&ns_two).expect("namespaced"),
+                        packed.as_ref()
+                    )?
+                    .is_none(),
+                "it won't find namespaced items by their full name without namespace"
+            );
+        }
 
-        let ns_one = git_ref::namespace::expand("foo").unwrap();
+        let ns_one = git_ref::namespace::expand("foo")?;
         assert_eq!(
             store
-                .iter_prefixed(packed.as_ref(), ns_one.to_path())
-                .unwrap()
+                .iter_prefixed(packed.as_ref(), ns_one.to_path())?
                 .map(Result::unwrap)
                 .map(|r: git_ref::Reference| (
                     r.name.as_bstr().to_owned(),
@@ -60,8 +85,7 @@ mod with_namespace {
 
         assert_eq!(
             store
-                .iter(packed.as_ref())
-                .unwrap()
+                .iter(packed.as_ref())?
                 .map(Result::unwrap)
                 .filter_map(
                     |r: git_ref::Reference| if r.name.as_bstr().starts_with_str("refs/namespaces") {
@@ -80,6 +104,7 @@ mod with_namespace {
             ],
             "we can find refs without namespace by manual filter, really just for testing purposes"
         );
+        Ok(())
     }
 }
 
