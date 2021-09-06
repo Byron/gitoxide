@@ -44,11 +44,11 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     }
 
     fn namespace(&self) -> Result<Option<git_ref::Namespace>, easy::borrow::repo::Error> {
-        self.repo().map(|repo| repo.deref().namespace.clone())
+        self.repo().map(|repo| repo.deref().refs.namespace.clone())
     }
 
     fn clear_namespace(&mut self) -> Result<Option<git_ref::Namespace>, easy::borrow::repo::Error> {
-        self.repo_mut().map(|mut repo| repo.deref_mut().namespace.take())
+        self.repo_mut().map(|mut repo| repo.deref_mut().refs.namespace.take())
     }
 
     fn set_namespace<'a, Name, E>(
@@ -60,7 +60,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         git_validate::refname::Error: From<E>,
     {
         let namespace = git_ref::namespace::expand(namespace)?;
-        Ok(self.repo_mut()?.deref_mut().namespace.replace(namespace))
+        Ok(self.repo_mut()?.deref_mut().refs.namespace.replace(namespace))
     }
 
     // TODO: more tests or usage
@@ -133,14 +133,11 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
             }
         };
         let repo = self.repo()?;
-        let transaction = repo.refs.transaction();
-        match &repo.namespace {
-            Some(namespace) => transaction.namespace(namespace.to_owned()),
-            None => transaction,
-        }
-        .prepare(edits, lock_mode)?
-        .commit(committer)
-        .map_err(Into::into)
+        repo.refs
+            .transaction()
+            .prepare(edits, lock_mode)?
+            .commit(committer)
+            .map_err(Into::into)
     }
 
     fn head(&self) -> Result<easy::Head<'_, Self>, reference::find::existing::Error> {

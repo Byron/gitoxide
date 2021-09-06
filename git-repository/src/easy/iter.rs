@@ -17,7 +17,6 @@ pub mod references {
 
     pub struct Iter<'r, A> {
         inner: git_ref::file::iter::LooseThenPacked<'r, 'r>,
-        namespace: Option<&'r git_ref::Namespace>,
         access: &'r A,
     }
 
@@ -28,13 +27,7 @@ pub mod references {
         pub fn all(&self) -> Result<Iter<'_, A>, init::Error> {
             let repo = self.repo.deref();
             Ok(Iter {
-                inner: match repo.namespace {
-                    None => repo.refs.iter(self.packed_refs.packed_refs.as_ref())?,
-                    Some(ref namespace) => repo
-                        .refs
-                        .iter_prefixed(self.packed_refs.packed_refs.as_ref(), namespace.to_path())?,
-                },
-                namespace: repo.namespace.as_ref(),
+                inner: repo.refs.iter(self.packed_refs.packed_refs.as_ref())?,
                 access: self.access,
             })
         }
@@ -42,14 +35,7 @@ pub mod references {
         pub fn prefixed(&self, prefix: impl AsRef<Path>) -> Result<Iter<'_, A>, init::Error> {
             let repo = self.repo.deref();
             Ok(Iter {
-                inner: match repo.namespace {
-                    None => repo.refs.iter_prefixed(self.packed_refs.packed_refs.as_ref(), prefix)?,
-                    Some(ref namespace) => repo.refs.iter_prefixed(
-                        self.packed_refs.packed_refs.as_ref(),
-                        namespace.to_owned().into_namespaced_prefix(prefix),
-                    )?,
-                },
-                namespace: repo.namespace.as_ref(),
+                inner: repo.refs.iter_prefixed(self.packed_refs.packed_refs.as_ref(), prefix)?,
                 access: self.access,
             })
         }
@@ -64,12 +50,7 @@ pub mod references {
         fn next(&mut self) -> Option<Self::Item> {
             self.inner.next().map(|res| {
                 res.map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
-                    .map(|mut r| {
-                        if let Some(namespace) = self.namespace {
-                            r.strip_namespace(namespace);
-                        };
-                        easy::Reference::from_ref(r, self.access)
-                    })
+                    .map(|r| easy::Reference::from_ref(r, self.access))
             })
         }
     }

@@ -7,8 +7,10 @@ use crate::file::{store, store_at, store_with_packed_refs};
 
 mod with_namespace {
     use git_object::bstr::{BString, ByteSlice};
+    use git_ref::FullName;
 
     use crate::file::store_at;
+    use std::convert::TryFrom;
 
     #[test]
     fn general_iteration_can_trivially_use_namespaces_as_prefixes() -> crate::Result {
@@ -16,7 +18,7 @@ mod with_namespace {
         let packed = store.packed_buffer()?;
 
         let ns_two = git_ref::namespace::expand("bar")?;
-        let namespaced_packed_refs = store
+        let namespaced_refs = store
             .iter_prefixed(packed.as_ref(), ns_two.to_path())?
             .map(Result::unwrap)
             .map(|r: git_ref::Reference| r.name.as_bstr().to_owned())
@@ -27,8 +29,8 @@ mod with_namespace {
             "refs/namespaces/bar/refs/remotes/origin/multi-link-target3",
             "refs/namespaces/bar/refs/tags/multi-link-target2",
         ];
-        assert_eq!(namespaced_packed_refs, expected_namespaced_refs);
-        for fullname in namespaced_packed_refs {
+        assert_eq!(namespaced_refs, expected_namespaced_refs);
+        for fullname in namespaced_refs {
             let reference = store.find(fullname.as_bstr(), packed.as_ref())?;
             assert_eq!(
                 reference.name.as_bstr(),
@@ -60,13 +62,22 @@ mod with_namespace {
             s.namespace = ns_two.clone().into();
             s
         };
+
+        let namespaced_refs = ns_store
+            .iter(packed.as_ref())?
+            .map(Result::unwrap)
+            .map(|r: git_ref::Reference| r.name.as_bstr().to_owned())
+            .collect::<Vec<_>>();
         assert_eq!(
-            ns_store
-                .iter(packed.as_ref())?
-                .map(Result::unwrap)
-                .map(|r: git_ref::Reference| r.name.as_bstr().to_owned())
-                .collect::<Vec<_>>(),
+            namespaced_refs,
             expected_namespaced_refs
+                .into_iter()
+                .map(|name| FullName::try_from(name)
+                    .expect("valid full name")
+                    .strip_namespace(&ns_two)
+                    .as_bstr()
+                    .to_owned())
+                .collect::<Vec<_>>()
         );
 
         let ns_one = git_ref::namespace::expand("foo")?;

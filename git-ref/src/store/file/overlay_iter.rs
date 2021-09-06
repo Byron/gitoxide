@@ -8,7 +8,7 @@ use std::{
 use crate::{
     file::{loose, path_to_name},
     store::{file, packed},
-    FullName, Reference,
+    FullName, Namespace, Reference,
 };
 
 /// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise
@@ -20,23 +20,34 @@ pub struct LooseThenPacked<'p, 's> {
     packed: Option<Peekable<packed::Iter<'p>>>,
     loose: Peekable<loose::iter::SortedLoosePaths>,
     buf: Vec<u8>,
+    namespace: Option<&'s Namespace>,
 }
 
 impl<'p, 's> LooseThenPacked<'p, 's> {
+    fn strip_namespace(&self, mut r: Reference) -> Reference {
+        if let Some(namespace) = &self.namespace {
+            r.strip_namespace(namespace);
+        }
+        r
+    }
+
     fn convert_packed(
         &mut self,
         packed: Result<packed::Reference<'p>, packed::iter::Error>,
     ) -> Result<Reference, Error> {
-        packed.map(Into::into).map_err(|err| match err {
-            packed::iter::Error::Reference {
-                invalid_line,
-                line_number,
-            } => Error::PackedReference {
-                invalid_line,
-                line_number,
-            },
-            packed::iter::Error::Header { .. } => unreachable!("this one only happens on iteration creation"),
-        })
+        packed
+            .map(Into::into)
+            .map(|r| self.strip_namespace(r))
+            .map_err(|err| match err {
+                packed::iter::Error::Reference {
+                    invalid_line,
+                    line_number,
+                } => Error::PackedReference {
+                    invalid_line,
+                    line_number,
+                },
+                packed::iter::Error::Header { .. } => unreachable!("this one only happens on iteration creation"),
+            })
     }
 
     fn convert_loose(&mut self, res: std::io::Result<(PathBuf, FullName)>) -> Result<Reference, Error> {
@@ -53,6 +64,7 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
                 relative_path: refpath.strip_prefix(&self.base).expect("base contains path").into(),
             })
             .map(Into::into)
+            .map(|r| self.strip_namespace(r))
     }
 }
 
@@ -120,6 +132,7 @@ impl file::Store {
                 loose: loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.to_owned())
                     .peekable(),
                 buf: Vec::new(),
+                namespace: None,
             }),
         }
     }
@@ -161,6 +174,7 @@ impl file::Store {
             loose: loose::iter::SortedLoosePaths::at_root_with_names(self.base.join(prefix), self.base.to_owned())
                 .peekable(),
             buf: Vec::new(),
+            namespace: self.namespace.as_ref(),
         })
     }
 }

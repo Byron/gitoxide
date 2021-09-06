@@ -114,7 +114,6 @@ pub mod open {
                 ),
                 work_tree: worktree_dir,
                 hash_kind,
-                namespace: None,
             })
         }
     }
