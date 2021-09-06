@@ -202,7 +202,6 @@ impl<'s> Transaction<'s> {
                     parent_index: Some(idx),
                     leaf_referent_previous_oid: None,
                 },
-                None,
             )
             .map_err(Error::PreprocessingFailed)?;
 

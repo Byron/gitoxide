@@ -2,7 +2,7 @@ use git_object::bstr::BString;
 
 use crate::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog, Target},
-    Namespace, PartialNameRef,
+    PartialNameRef,
 };
 
 /// An extension trait to perform commonly used operations on edits across different ref stores.
@@ -22,10 +22,6 @@ where
         make_entry: impl FnMut(usize, RefEdit) -> T,
     ) -> Result<(), std::io::Error>;
 
-    /// If `namespace` is not `None`, alter all edit names by prefixing them with the given namespace.
-    /// Note that symbolic reference targets will also be rewritten to point into the namespace instead.
-    fn adjust_namespace(&mut self, namespace: Option<Namespace>);
-
     /// All processing steps in one and in the correct order.
     ///
     /// Users call this to assure derefs are honored and duplicate checks are done.
@@ -33,9 +29,7 @@ where
         &mut self,
         find: impl FnMut(PartialNameRef<'_>) -> Option<Target>,
         make_entry: impl FnMut(usize, RefEdit) -> T,
-        namespace: impl Into<Option<Namespace>>,
     ) -> Result<(), std::io::Error> {
-        self.adjust_namespace(namespace.into());
         self.extend_with_splits_of_symbolic_refs(find, make_entry)?;
         self.assure_one_name_has_one_edit().map_err(|name| {
             std::io::Error::new(
@@ -137,22 +131,6 @@ where
             first = self.len();
 
             self.extend(new_edits.drain(..));
-        }
-    }
-
-    fn adjust_namespace(&mut self, namespace: Option<Namespace>) {
-        if let Some(namespace) = namespace {
-            for entry in self.iter_mut() {
-                let entry = entry.borrow_mut();
-                entry.name.prefix_namespace(&namespace);
-                if let Change::Update {
-                    new: Target::Symbolic(ref mut name),
-                    ..
-                } = entry.change
-                {
-                    name.prefix_namespace(&namespace);
-                }
-            }
         }
     }
 }

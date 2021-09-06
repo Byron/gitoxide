@@ -65,7 +65,7 @@ mod refedit_ext {
         ];
 
         let err = edits
-            .pre_process(|n| store.find_existing(n), |_, e| e, None)
+            .pre_process(|n| store.find_existing(n), |_, e| e)
             .expect_err("duplicate detected");
         assert_eq!(
             err.to_string(),
@@ -93,54 +93,6 @@ mod refedit_ext {
             "HEAD",
             "a correctly named duplicate"
         );
-    }
-
-    #[test]
-    fn namespaces_are_rewriting_names_and_symbolic_ref_targets_when_provided() -> crate::Result {
-        let mut edits = vec![
-            RefEdit {
-                change: Change::Delete {
-                    expected: PreviousValue::Any,
-                    log: RefLog::AndReference,
-                },
-                name: "refs/tags/deleted".try_into()?,
-                deref: false,
-            },
-            RefEdit {
-                change: Change::Update {
-                    log: Default::default(),
-                    expected: PreviousValue::MustNotExist,
-                    new: Target::Symbolic("refs/heads/main".try_into()?),
-                },
-                name: "HEAD".try_into()?,
-                deref: false,
-            },
-        ];
-        edits.adjust_namespace(git_ref::namespace::expand("foo")?.into());
-        assert_eq!(
-            edits,
-            vec![
-                RefEdit {
-                    change: Change::Delete {
-                        expected: PreviousValue::Any,
-                        log: RefLog::AndReference,
-                    },
-                    name: "refs/namespaces/foo/refs/tags/deleted".try_into()?,
-                    deref: false,
-                },
-                RefEdit {
-                    change: Change::Update {
-                        log: Default::default(),
-                        expected: PreviousValue::MustNotExist,
-                        new: Target::Symbolic("refs/namespaces/foo/refs/heads/main".try_into()?),
-                    },
-                    name: "refs/namespaces/foo/HEAD".try_into()?,
-                    deref: false,
-                }
-            ],
-            "it rewrites both names as well as symbolic ref targets"
-        );
-        Ok(())
     }
 
     mod splitting {

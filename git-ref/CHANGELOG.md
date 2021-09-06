@@ -6,6 +6,7 @@
 * Remove `file::Reference` in favor of `Reference`
 * Move `file::log::Line` to `log::Line`
 * `TargetRef::Symbolic(&BStr)` -> `TargetRef::Symbolic(FullNameRef)`
+* replace `Transaction::namespacce()` with `file::Store::namespace`
 
 ### v0.6.1
 
