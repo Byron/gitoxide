@@ -144,6 +144,22 @@ pub mod init {
     }
 }
 
+mod location {
+    use crate::Repository;
+
+    impl Repository {
+        /// The path to the `.git` directory itself, or equivalent if this is a bare repository.
+        pub fn path(&self) -> &std::path::Path {
+            &self.refs.base
+        }
+
+        /// Return the path to the working directory if this is not a bare repository.
+        pub fn workdir(&self) -> Option<&std::path::Path> {
+            self.work_tree.as_deref()
+        }
+    }
+}
+
 pub mod discover {
     use std::{convert::TryInto, path::Path};
 
