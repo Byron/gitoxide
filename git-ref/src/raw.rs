@@ -75,6 +75,14 @@ mod access {
                 .strip_prefix(namespace.0.as_bstr().as_ref())
                 .map(|stripped| FullNameRef(stripped.as_bstr()))
         }
+
+        /// Strip the given namespace from our name as well as the name, but not the reference we point to.
+        ///
+        /// Symbolic link targets must remain as is or else the reference cannot be peeled without knowing the namespace.
+        pub fn strip_namespace(&mut self, namespace: &Namespace) -> &mut Self {
+            self.name.strip_namespace(namespace);
+            self
+        }
     }
 }
 

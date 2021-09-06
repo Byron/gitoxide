@@ -4,4 +4,5 @@ mod file;
 mod fullname;
 mod namespace;
 mod packed;
+mod reference;
 mod transaction;

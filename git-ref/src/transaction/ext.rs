@@ -144,13 +144,13 @@ where
         if let Some(namespace) = namespace {
             for entry in self.iter_mut() {
                 let entry = entry.borrow_mut();
-                entry.name.prefix_with_namespace(&namespace);
+                entry.name.prefix_namespace(&namespace);
                 if let Change::Update {
                     new: Target::Symbolic(ref mut name),
                     ..
                 } = entry.change
                 {
-                    name.prefix_with_namespace(&namespace);
+                    name.prefix_namespace(&namespace);
                 }
             }
         }

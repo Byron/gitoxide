@@ -83,7 +83,7 @@ impl FullName {
     }
 
     /// Modify ourself so that we use `namespace` as prefix, if it is not yet in the `namespace`
-    pub fn prefix_with_namespace(&mut self, namespace: &Namespace) -> &mut Self {
+    pub fn prefix_namespace(&mut self, namespace: &Namespace) -> &mut Self {
         if !self.0.starts_with_str(&namespace.0) {
             self.0.insert_str(0, &namespace.0);
         }

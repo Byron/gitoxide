@@ -117,6 +117,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         self.edit_references(Some(edit), lock_mode, log_committer)
     }
 
+    // NOTE: Returned edits don't hide the namespace.
     fn edit_references(
         &self,
         edits: impl IntoIterator<Item = RefEdit>,
@@ -132,20 +133,14 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
             }
         };
         let repo = self.repo()?;
-        repo.refs
-            .transaction()
-            .prepare(
-                edits.into_iter().map(|mut edit| match repo.namespace {
-                    None => edit,
-                    Some(ref namespace) => {
-                        edit.name.prefix_with_namespace(namespace);
-                        edit
-                    }
-                }),
-                lock_mode,
-            )?
-            .commit(committer)
-            .map_err(Into::into)
+        let transaction = repo.refs.transaction();
+        match &repo.namespace {
+            Some(namespace) => transaction.namespace(namespace.to_owned()),
+            None => transaction,
+        }
+        .prepare(edits, lock_mode)?
+        .commit(committer)
+        .map_err(Into::into)
     }
 
     fn head(&self) -> Result<easy::Head<'_, Self>, reference::find::existing::Error> {
