@@ -1,5 +1,5 @@
 #![allow(missing_docs)]
-use std::ops::Deref;
+use std::{cell::RefMut, ops::Deref};
 
 use git_hash::{oid, ObjectId};
 
@@ -7,7 +7,6 @@ use crate::{
     easy,
     easy::{ext::ObjectAccessExt, object::find, ObjectRef, Oid},
 };
-use std::cell::RefMut;
 
 impl<'repo, A> Oid<'repo, A>
 where
@@ -62,11 +61,14 @@ where
 }
 
 pub mod ancestors {
-    use crate::easy;
-    use crate::easy::oid::Ancestors;
-    use crate::easy::Oid;
-    use git_odb::Find;
     use std::ops::{Deref, DerefMut};
+
+    use git_odb::Find;
+
+    use crate::{
+        easy,
+        easy::{oid::Ancestors, Oid},
+    };
 
     impl<'repo, A> Oid<'repo, A>
     where
@@ -96,7 +98,6 @@ pub mod ancestors {
     where
         A: easy::Access + Sized,
     {
-        // TODO: tests
         pub fn all(&mut self) -> Iter<'_, 'repo, A> {
             Iter {
                 access: self.access,
@@ -139,8 +140,9 @@ pub mod ancestors {
             BorrowBufMut(#[from] easy::borrow::state::Error),
         }
     }
-    use crate::ext::ObjectIdExt;
     use error::Error;
+
+    use crate::ext::ObjectIdExt;
 }
 
 mod impls {

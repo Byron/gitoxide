@@ -87,7 +87,7 @@ mod commit {
             "we get the actual HEAD log, not the log of some reference"
         );
         let current_commit = repo.head()?.into_fully_peeled_id().expect("born")?;
-        assert_eq!(current_commit, &*first_commit_id, "the commit was set");
+        assert_eq!(current_commit, first_commit_id, "the commit was set");
 
         let second_commit_id = repo.commit(
             "refs/heads/new-branch",

@@ -78,8 +78,6 @@ pub mod log {
 }
 
 pub mod peel {
-    use git_hash::ObjectId;
-
     use crate::{
         easy,
         easy::{head::Kind, Access, Head},
@@ -136,23 +134,19 @@ pub mod peel {
             })
         }
 
-        pub fn into_fully_peeled_id(self) -> Option<Result<ObjectId, Error>> {
+        pub fn into_fully_peeled_id(self) -> Option<Result<easy::Oid<'repo, A>, Error>> {
             Some(match self.kind {
                 Kind::Unborn(_name) => return None,
                 Kind::Detached {
                     peeled: Some(peeled), ..
-                } => Ok(peeled),
+                } => Ok(peeled.attach(self.access)),
                 Kind::Detached { peeled: None, target } => target
                     .attach(self.access)
                     .object()
                     .map_err(Into::into)
                     .and_then(|obj| obj.peel_to_end().map_err(Into::into))
-                    .map(|peeled| peeled.id),
-                Kind::Symbolic(r) => r
-                    .attach(self.access)
-                    .peel_to_id_in_place()
-                    .map_err(Into::into)
-                    .map(|id| id.detach()),
+                    .map(|obj| obj.id.attach(self.access)),
+                Kind::Symbolic(r) => r.attach(self.access).peel_to_id_in_place().map_err(Into::into),
             })
         }
     }
