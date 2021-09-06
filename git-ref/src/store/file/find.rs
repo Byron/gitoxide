@@ -31,7 +31,9 @@ impl file::Store {
     ///
     /// ### Note
     ///
-    /// The lookup algorithm follows the one in [the git documentation][git-lookup-docs].
+    /// * The lookup algorithm follows the one in [the git documentation][git-lookup-docs].
+    /// * Namespaced names will only be found if they are fully qualified. They can, however, be found during iteration.
+    ///   This shortcoming can be fixed if there is demand by introducing `try_find_in_namespace(…)`.
     ///
     /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
     pub fn try_find<'a, Name, E>(
