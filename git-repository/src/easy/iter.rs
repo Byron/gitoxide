@@ -65,7 +65,7 @@ pub mod references {
             self.inner.next().map(|res| {
                 res.map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
                     .map(|mut r| {
-                        if let Some(ref namespace) = self.namespace {
+                        if let Some(namespace) = self.namespace {
                             r.name.strip_namespace(namespace);
                         };
                         easy::Reference::from_ref(r, self.access)
