@@ -104,20 +104,24 @@ impl file::Store {
     ///
     /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themeselves.
     pub fn iter<'p, 's>(&'s self, packed: Option<&'p packed::Buffer>) -> std::io::Result<LooseThenPacked<'p, 's>> {
-        Ok(LooseThenPacked {
-            base: &self.base,
-            packed: match packed {
-                Some(packed) => Some(
-                    packed
-                        .iter()
-                        .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
-                        .peekable(),
-                ),
-                None => None,
-            },
-            loose: loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.to_owned()).peekable(),
-            buf: Vec::new(),
-        })
+        match &self.namespace {
+            Some(namespace) => self.iter_prefixed_unvalidated(packed, namespace.to_path()),
+            None => Ok(LooseThenPacked {
+                base: &self.base,
+                packed: match packed {
+                    Some(packed) => Some(
+                        packed
+                            .iter()
+                            .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
+                            .peekable(),
+                    ),
+                    None => None,
+                },
+                loose: loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.to_owned())
+                    .peekable(),
+                buf: Vec::new(),
+            }),
+        }
     }
 
     /// As [`iter(…)`][file::Store::iter()], but filters by `prefix`, i.e. "refs/heads".
@@ -128,7 +132,21 @@ impl file::Store {
         packed: Option<&'p packed::Buffer>,
         prefix: impl AsRef<Path>,
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
-        let packed_prefix = path_to_name(self.validate_prefix(prefix.as_ref())?);
+        self.validate_prefix(prefix.as_ref())?;
+        match &self.namespace {
+            None => self.iter_prefixed_unvalidated(packed, prefix),
+            Some(namespace) => {
+                self.iter_prefixed_unvalidated(packed, namespace.to_owned().into_namespaced_prefix(prefix))
+            }
+        }
+    }
+
+    fn iter_prefixed_unvalidated<'p, 's>(
+        &'s self,
+        packed: Option<&'p packed::Buffer>,
+        prefix: impl AsRef<Path>,
+    ) -> std::io::Result<LooseThenPacked<'p, 's>> {
+        let packed_prefix = path_to_name(prefix.as_ref());
         Ok(LooseThenPacked {
             base: &self.base,
             packed: match packed {

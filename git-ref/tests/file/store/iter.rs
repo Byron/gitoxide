@@ -21,15 +21,13 @@ mod with_namespace {
             .map(Result::unwrap)
             .map(|r: git_ref::Reference| r.name.as_bstr().to_owned())
             .collect::<Vec<_>>();
-        assert_eq!(
-            namespaced_packed_refs,
-            vec![
-                "refs/namespaces/bar/refs/heads/multi-link-target1",
-                "refs/namespaces/bar/refs/multi-link",
-                "refs/namespaces/bar/refs/remotes/origin/multi-link-target3",
-                "refs/namespaces/bar/refs/tags/multi-link-target2"
-            ]
-        );
+        let expected_namespaced_refs = vec![
+            "refs/namespaces/bar/refs/heads/multi-link-target1",
+            "refs/namespaces/bar/refs/multi-link",
+            "refs/namespaces/bar/refs/remotes/origin/multi-link-target3",
+            "refs/namespaces/bar/refs/tags/multi-link-target2",
+        ];
+        assert_eq!(namespaced_packed_refs, expected_namespaced_refs);
         for fullname in namespaced_packed_refs {
             let reference = store.find(fullname.as_bstr(), packed.as_ref())?;
             assert_eq!(
@@ -56,6 +54,20 @@ mod with_namespace {
                 "it won't find namespaced items by their full name without namespace"
             );
         }
+
+        let ns_store = {
+            let mut s = store.clone();
+            s.namespace = ns_two.clone().into();
+            s
+        };
+        assert_eq!(
+            ns_store
+                .iter(packed.as_ref())?
+                .map(Result::unwrap)
+                .map(|r: git_ref::Reference| r.name.as_bstr().to_owned())
+                .collect::<Vec<_>>(),
+            expected_namespaced_refs
+        );
 
         let ns_one = git_ref::namespace::expand("foo")?;
         assert_eq!(
