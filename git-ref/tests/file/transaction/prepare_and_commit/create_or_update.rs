@@ -218,13 +218,11 @@ fn reference_with_must_not_exist_constraint_cannot_be_created_if_it_exists_alrea
 }
 
 #[test]
-fn namespaced_updates_or_deletions_cause_reference_names_to_be_rewritten_and_observable_in_the_output() -> crate::Result
-{
-    let (_keep, store) = empty_store()?;
-
+fn namespaced_updates_or_deletions_are_transparent_and_not_observable() -> crate::Result {
+    let (_keep, mut store) = empty_store()?;
+    store.namespace = git_ref::namespace::expand("foo")?.into();
     let edits = store
         .transaction()
-        .namespace(git_ref::namespace::expand("foo")?)
         .prepare(
             vec![
                 RefEdit {
@@ -257,16 +255,16 @@ fn namespaced_updates_or_deletions_cause_reference_names_to_be_rewritten_and_obs
                     expected: PreviousValue::Any,
                     log: RefLog::AndReference,
                 },
-                name: "refs/namespaces/foo/refs/for/deletion".try_into()?,
+                name: "refs/for/deletion".try_into()?,
                 deref: false,
             },
             RefEdit {
                 change: Change::Update {
                     log: LogChange::default(),
-                    new: Target::Symbolic("refs/namespaces/foo/refs/heads/hello".try_into()?),
+                    new: Target::Symbolic("refs/heads/hello".try_into()?),
                     expected: PreviousValue::MustNotExist,
                 },
-                name: "refs/namespaces/foo/HEAD".try_into()?,
+                name: "HEAD".try_into()?,
                 deref: false,
             }
         ]

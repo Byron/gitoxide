@@ -117,7 +117,6 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         self.edit_references(Some(edit), lock_mode, log_committer)
     }
 
-    // NOTE: Returned edits don't hide the namespace.
     fn edit_references(
         &self,
         edits: impl IntoIterator<Item = RefEdit>,
