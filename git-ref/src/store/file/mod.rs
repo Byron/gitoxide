@@ -27,6 +27,8 @@ pub struct Store {
     pub base: PathBuf,
     /// The way to handle reflog edits
     pub write_reflog: WriteReflog,
+    /// The namespace to use for edits and reads
+    pub namespace: Option<Namespace>,
 }
 
 /// A transaction on a file store
@@ -79,4 +81,5 @@ pub mod transaction;
 pub mod packed;
 
 mod raw_ext;
+use crate::Namespace;
 pub use raw_ext::ReferenceExt;

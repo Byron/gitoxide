@@ -36,6 +36,7 @@ mod init {
             file::Store {
                 base: git_dir.into(),
                 write_reflog,
+                namespace: None,
             }
         }
     }
