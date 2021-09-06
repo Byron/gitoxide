@@ -58,7 +58,7 @@ pub struct FullNameRef<'a>(&'a BStr);
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct PartialNameRef<'a>(&'a BStr);
 
-/// A validated prefix for references to act as a namespace.
+/// A _validated_ prefix for references to act as a namespace.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Namespace(BString);
 

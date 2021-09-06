@@ -81,6 +81,7 @@ pub mod peel {
     use git_hash::ObjectId;
 
     use crate::{
+        easy,
         easy::{head::Kind, Access, Head},
         ext::{ObjectIdExt, ReferenceExt},
     };
@@ -92,7 +93,7 @@ pub mod peel {
             #[error(transparent)]
             FindExistingObject(#[from] object::find::existing::Error),
             #[error(transparent)]
-            PeelReference(#[from] reference::peel_to_id_in_place::Error),
+            PeelReference(#[from] reference::peel::Error),
         }
     }
     pub use error::Error;
@@ -102,12 +103,12 @@ pub mod peel {
         A: Access + Sized,
     {
         // TODO: tests
-        pub fn peel_to_id_in_place(&mut self) -> Option<Result<ObjectId, Error>> {
+        pub fn peel_to_id_in_place(&mut self) -> Option<Result<easy::Oid<'repo, A>, Error>> {
             Some(match &mut self.kind {
                 Kind::Unborn(_name) => return None,
                 Kind::Detached {
                     peeled: Some(peeled), ..
-                } => Ok(*peeled),
+                } => Ok((*peeled).attach(self.access)),
                 Kind::Detached { peeled: None, target } => {
                     match target
                         .attach(self.access)
@@ -121,14 +122,14 @@ pub mod peel {
                                 peeled: Some(peeled),
                                 target: *target,
                             };
-                            Ok(peeled)
+                            Ok(peeled.attach(self.access))
                         }
                         Err(err) => Err(err),
                     }
                 }
                 Kind::Symbolic(r) => {
                     let mut nr = r.clone().attach(self.access);
-                    let peeled = nr.peel_to_id_in_place().map_err(Into::into).map(|id| id.detach());
+                    let peeled = nr.peel_to_id_in_place().map_err(Into::into);
                     *r = nr.detach();
                     peeled
                 }

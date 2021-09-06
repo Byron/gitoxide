@@ -96,3 +96,17 @@ where
         self.inner
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn size_of_oid() {
+        assert_eq!(
+            std::mem::size_of::<Oid<'_, crate::Easy>>(),
+            32,
+            "size of oid shouldn't change without notice"
+        )
+    }
+}

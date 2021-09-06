@@ -38,6 +38,6 @@ mod find {
             "refs/remotes/origin/multi-link-target3".try_into().unwrap(),
             "it follows symbolic refs, too"
         );
-        assert_eq!(symbolic_ref.peel_to_id_in_place().unwrap(), the_commit, "idempotency");
+        assert_eq!(symbolic_ref.into_fully_peeled_id().unwrap(), the_commit, "idempotency");
     }
 }

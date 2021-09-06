@@ -1,10 +1,9 @@
-use std::fmt;
+use std::{convert::TryFrom, fmt};
 
 use git_hash::{oid, ObjectId};
 use git_object::bstr::BStr;
 
 use crate::{FullName, Kind, Target, TargetRef};
-use std::convert::TryFrom;
 
 impl<'a> TargetRef<'a> {
     /// Returns the kind of the target the ref is pointing to.

@@ -1,4 +1,7 @@
-use std::convert::TryInto;
+use std::{
+    convert::TryInto,
+    ops::{Deref, DerefMut},
+};
 
 use bstr::BString;
 use git_actor as actor;
@@ -15,32 +18,49 @@ use crate::{
     ext::ReferenceExt,
 };
 
+const DEFAULT_LOCK_MODE: git_lock::acquire::Fail = git_lock::acquire::Fail::Immediately;
+
 /// Obtain and alter references comfortably
 pub trait ReferenceAccessExt: easy::Access + Sized {
     fn tag(
         &self,
         name: impl AsRef<str>,
         target: impl Into<ObjectId>,
-        lock_mode: lock::acquire::Fail,
-        force: bool,
+        constraint: PreviousValue,
     ) -> Result<Vec<RefEdit>, reference::edit::Error> {
         self.edit_reference(
             RefEdit {
                 change: Change::Update {
                     log: Default::default(),
-                    expected: if force {
-                        PreviousValue::Any
-                    } else {
-                        PreviousValue::MustNotExist
-                    },
+                    expected: constraint,
                     new: Target::Peeled(target.into()),
                 },
                 name: format!("refs/tags/{}", name.as_ref()).try_into()?,
                 deref: false,
             },
-            lock_mode,
+            DEFAULT_LOCK_MODE,
             None,
         )
+    }
+
+    fn namespace(&self) -> Result<Option<git_ref::Namespace>, easy::borrow::repo::Error> {
+        self.repo().map(|repo| repo.deref().namespace.clone())
+    }
+
+    fn clear_namespace(&mut self) -> Result<Option<git_ref::Namespace>, easy::borrow::repo::Error> {
+        self.repo_mut().map(|mut repo| repo.deref_mut().namespace.take())
+    }
+
+    fn set_namespace<'a, Name, E>(
+        &mut self,
+        namespace: Name,
+    ) -> Result<Option<git_ref::Namespace>, easy::reference::namespace::set::Error>
+    where
+        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        git_validate::refname::Error: From<E>,
+    {
+        let namespace = git_ref::namespace::expand(namespace)?;
+        Ok(self.repo_mut()?.deref_mut().namespace.replace(namespace))
     }
 
     // TODO: more tests or usage
@@ -71,7 +91,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
                 name,
                 deref: false,
             },
-            git_lock::acquire::Fail::Immediately,
+            DEFAULT_LOCK_MODE,
             None,
         )?;
         assert_eq!(
@@ -111,10 +131,19 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
                 &committer_storage
             }
         };
-        self.repo()?
-            .refs
+        let repo = self.repo()?;
+        repo.refs
             .transaction()
-            .prepare(edits, lock_mode)?
+            .prepare(
+                edits.into_iter().map(|mut edit| match repo.namespace {
+                    None => edit,
+                    Some(ref namespace) => {
+                        edit.name.prefix_with_namespace(namespace);
+                        edit
+                    }
+                }),
+                lock_mode,
+            )?
             .commit(committer)
             .map_err(Into::into)
     }

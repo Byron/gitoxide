@@ -2,7 +2,7 @@ use std::{borrow::Cow, convert::TryFrom, path::Path};
 
 use git_object::bstr::{BStr, BString, ByteSlice};
 
-use crate::{FullName, FullNameRef};
+use crate::{bstr::ByteVec, FullName, FullNameRef, Namespace};
 
 impl TryFrom<&str> for FullName {
     type Error = git_validate::refname::Error;
@@ -76,9 +76,28 @@ impl FullName {
     pub fn into_inner(self) -> BString {
         self.0
     }
+
     /// Return ourselves as byte string which is a valid refname
     pub fn as_bstr(&self) -> &BStr {
         self.0.as_bstr()
+    }
+
+    /// Modify ourself so that we use `namespace` as prefix, if it is not yet in the `namespace`
+    pub fn prefix_with_namespace(&mut self, namespace: &Namespace) -> &mut Self {
+        if !self.0.starts_with_str(&namespace.0) {
+            self.0.insert_str(0, &namespace.0);
+        }
+        self
+    }
+
+    /// Strip the given `namespace` off the beginning of this name, if it is in this namespace.
+    pub fn strip_namespace(&mut self, namespace: &Namespace) -> &mut Self {
+        if self.0.starts_with_str(&namespace.0) {
+            let prev_len = self.0.len();
+            self.0.copy_within(namespace.0.len().., 0);
+            self.0.resize(prev_len - namespace.0.len(), 0);
+        }
+        self
     }
 }
 

@@ -9,6 +9,20 @@ use crate::{
     easy::{Oid, Reference},
 };
 
+pub mod namespace {
+    pub mod set {
+        use crate::easy;
+
+        #[derive(Debug, thiserror::Error)]
+        pub enum Error {
+            #[error(transparent)]
+            BorrowRepoMut(#[from] easy::borrow::repo::Error),
+            #[error(transparent)]
+            NameValidation(#[from] git_validate::refname::Error),
+        }
+    }
+}
+
 pub mod create {
     use crate::easy;
 
@@ -37,7 +51,7 @@ pub mod edit {
     }
 }
 
-pub mod peel_to_id_in_place {
+pub mod peel {
     use crate::easy;
 
     #[derive(Debug, thiserror::Error)]
@@ -87,7 +101,7 @@ where
         }
     }
 
-    pub fn peel_to_id_in_place(&mut self) -> Result<Oid<'repo, A>, peel_to_id_in_place::Error> {
+    pub fn peel_to_id_in_place(&mut self) -> Result<Oid<'repo, A>, peel::Error> {
         let repo = self.access.repo()?;
         let state = self.access.state();
         let mut pack_cache = state.try_borrow_mut_pack_cache()?;
@@ -102,15 +116,23 @@ where
         )?;
         Ok(Oid::from_id(oid, self.access))
     }
+
+    pub fn into_fully_peeled_id(mut self) -> Result<Oid<'repo, A>, peel::Error> {
+        self.peel_to_id_in_place()
+    }
 }
 
 pub mod log;
 
 pub(crate) mod packed {
-    use crate::easy;
+    use std::{
+        cell::{BorrowError, BorrowMutError},
+        time::SystemTime,
+    };
+
     use git_ref::file;
-    use std::cell::{BorrowError, BorrowMutError};
-    use std::time::SystemTime;
+
+    use crate::easy;
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
