@@ -209,13 +209,13 @@ where
             for commit in commits {
                 let tree_id = db
                     .try_find(commit, &mut buf, &mut cache)?
-                    .and_then(|o| o.into_commit_iter().and_then(|mut c| c.tree_id()))
+                    .and_then(|o| o.try_into_commit_iter().and_then(|mut c| c.tree_id()))
                     .expect("commit as starting point");
 
                 let mut count = Count { entries: 0, seen };
                 db.find_tree_iter(tree_id, &mut buf2, &mut cache)?.traverse(
                     &mut state,
-                    |oid, buf| db.find(oid, buf, &mut cache).ok().and_then(|o| o.into_tree_iter()),
+                    |oid, buf| db.find(oid, buf, &mut cache).ok().and_then(|o| o.try_into_tree_iter()),
                     &mut count,
                 )?;
                 entries += count.entries as u64;

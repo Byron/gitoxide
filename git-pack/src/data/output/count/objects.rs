@@ -217,7 +217,7 @@ where
                                                 progress.inc();
                                                 stats.expanded_objects += 1;
                                                 out.push(output::Count::from_data(oid, &obj));
-                                                obj.into_tree_iter()
+                                                obj.try_into_tree_iter()
                                             }
                                             None => None,
                                         }
@@ -300,7 +300,7 @@ where
                                             progress.inc();
                                             stats.expanded_objects += 1;
                                             out.push(output::Count::from_data(oid, &obj));
-                                            obj.into_tree_iter()
+                                            obj.try_into_tree_iter()
                                         }
                                         None => None,
                                     }

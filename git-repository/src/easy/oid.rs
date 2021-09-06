@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use std::ops::Deref;
 
 use git_hash::{oid, ObjectId};
@@ -6,6 +7,7 @@ use crate::{
     easy,
     easy::{ext::ObjectAccessExt, object::find, ObjectRef, Oid},
 };
+use std::cell::RefMut;
 
 impl<'repo, A> Oid<'repo, A>
 where
@@ -47,6 +49,98 @@ where
     pub fn detach(self) -> ObjectId {
         self.inner
     }
+}
+
+pub struct Ancestors<'repo, A>
+where
+    A: easy::Access + Sized,
+{
+    repo: A::RepoRef,
+    pack_cache: RefMut<'repo, easy::PackCache>,
+    access: &'repo A,
+    tip: ObjectId,
+}
+
+pub mod ancestors {
+    use crate::easy;
+    use crate::easy::oid::Ancestors;
+    use crate::easy::Oid;
+    use git_odb::Find;
+    use std::ops::{Deref, DerefMut};
+
+    impl<'repo, A> Oid<'repo, A>
+    where
+        A: easy::Access + Sized,
+    {
+        pub fn ancestors(&self) -> Result<Ancestors<'repo, A>, Error> {
+            let pack_cache = self.access.state().try_borrow_mut_pack_cache()?;
+            let repo = self.access.repo()?;
+            Ok(Ancestors {
+                pack_cache,
+                repo,
+                access: self.access,
+                tip: self.inner,
+            })
+        }
+    }
+
+    pub struct Iter<'a, 'repo, A>
+    where
+        A: easy::Access + Sized,
+    {
+        access: &'repo A,
+        inner: Box<dyn Iterator<Item = Result<git_hash::ObjectId, git_traverse::commit::ancestors::Error>> + 'a>,
+    }
+
+    impl<'repo, A> Ancestors<'repo, A>
+    where
+        A: easy::Access + Sized,
+    {
+        // TODO: tests
+        pub fn all(&mut self) -> Iter<'_, 'repo, A> {
+            Iter {
+                access: self.access,
+                inner: Box::new(git_traverse::commit::Ancestors::new(
+                    Some(self.tip),
+                    git_traverse::commit::ancestors::State::default(),
+                    move |oid, buf| {
+                        self.repo
+                            .deref()
+                            .odb
+                            .try_find(oid, buf, self.pack_cache.deref_mut())
+                            .ok()
+                            .flatten()
+                            .and_then(|obj| obj.try_into_commit_iter())
+                    },
+                )),
+            }
+        }
+    }
+
+    impl<'a, 'repo, A> Iterator for Iter<'a, 'repo, A>
+    where
+        A: easy::Access + Sized,
+    {
+        type Item = Result<Oid<'repo, A>, git_traverse::commit::ancestors::Error>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            self.inner.next().map(|res| res.map(|oid| oid.attach(self.access)))
+        }
+    }
+
+    mod error {
+        use crate::easy;
+
+        #[derive(Debug, thiserror::Error)]
+        pub enum Error {
+            #[error(transparent)]
+            BorrowRepo(#[from] easy::borrow::repo::Error),
+            #[error(transparent)]
+            BorrowBufMut(#[from] easy::borrow::state::Error),
+        }
+    }
+    use crate::ext::ObjectIdExt;
+    use error::Error;
 }
 
 mod impls {

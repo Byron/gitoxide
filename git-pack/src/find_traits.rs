@@ -127,9 +127,9 @@ mod ext {
         make_obj_lookup!(find_tree, ObjectRef::Tree, Kind::Tree, TreeRef<'a>);
         make_obj_lookup!(find_tag, ObjectRef::Tag, Kind::Tag, TagRef<'a>);
         make_obj_lookup!(find_blob, ObjectRef::Blob, Kind::Blob, BlobRef<'a>);
-        make_iter_lookup!(find_commit_iter, Kind::Blob, CommitRefIter<'a>, into_commit_iter);
-        make_iter_lookup!(find_tree_iter, Kind::Tree, TreeRefIter<'a>, into_tree_iter);
-        make_iter_lookup!(find_tag_iter, Kind::Tag, TagRefIter<'a>, into_tag_iter);
+        make_iter_lookup!(find_commit_iter, Kind::Blob, CommitRefIter<'a>, try_into_commit_iter);
+        make_iter_lookup!(find_tree_iter, Kind::Tree, TreeRefIter<'a>, try_into_tree_iter);
+        make_iter_lookup!(find_tag_iter, Kind::Tag, TagRefIter<'a>, try_into_tag_iter);
     }
 
     impl<T: super::Find> FindExt for T {}

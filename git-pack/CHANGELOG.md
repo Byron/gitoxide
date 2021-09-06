@@ -1,3 +1,10 @@
+### 0.10.0 (2021-08-??)
+
+- **renames**
+   - `data::Object::into_commit_iter()` -> `data::Object::try_into_commit_iter()`
+   - `data::Object::into_tree_iter()` -> `data::Object::try_into_tree_iter()`
+   - `data::Object::into_tag_iter()` -> `data::Object::try_into_tag_iter()`
+
 ### 0.9.0 (2021-08-27)
 
 - **renames / moves / visibility**
