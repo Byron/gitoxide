@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: Swatinem/rust-cache@v1
+#     - uses: Swatinem/rust-cache@v1 - todo: figure out why windows doesn't seem to get its own caches, maybe?
     - name: clippy
       run: cargo clippy --all
     - name: fmt
