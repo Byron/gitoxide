@@ -10,7 +10,7 @@ mod set_namespace {
     fn affects_edits_and_iteration() {
         let (mut repo, _keep) = easy_repo_rw().unwrap();
         assert_eq!(
-            repo.iter_references().unwrap().all().unwrap().count(),
+            repo.references().unwrap().all().unwrap().count(),
             15,
             "there are plenty of references in the default namespace"
         );
@@ -21,12 +21,7 @@ mod set_namespace {
         );
 
         assert_eq!(
-            repo.iter_references()
-                .unwrap()
-                .all()
-                .unwrap()
-                .filter_map(Result::ok)
-                .count(),
+            repo.references().unwrap().all().unwrap().filter_map(Result::ok).count(),
             0,
             "no references are in the namespace yet"
         );
@@ -47,7 +42,7 @@ mod set_namespace {
         .unwrap();
 
         assert_eq!(
-            repo.iter_references()
+            repo.references()
                 .unwrap()
                 .all()
                 .unwrap()
@@ -59,7 +54,7 @@ mod set_namespace {
         );
 
         assert_eq!(
-            repo.iter_references()
+            repo.references()
                 .unwrap()
                 .prefixed("refs/tags/")
                 .unwrap()
@@ -89,7 +84,7 @@ mod set_namespace {
         );
 
         assert_eq!(
-            repo.iter_references().unwrap().all().unwrap().count(),
+            repo.references().unwrap().all().unwrap().count(),
             17,
             "it lists all references, also the ones in namespaces"
         );
@@ -108,7 +103,7 @@ mod iter_references {
     fn all() -> crate::Result {
         let repo = repo()?;
         assert_eq!(
-            repo.iter_references()?
+            repo.references()?
                 .all()?
                 .filter_map(Result::ok)
                 .map(|r| r.name().as_bstr().to_owned())
@@ -137,7 +132,7 @@ mod iter_references {
     fn prefixed() -> crate::Result {
         let repo = repo()?;
         assert_eq!(
-            repo.iter_references()?
+            repo.references()?
                 .prefixed("refs/heads/")?
                 .filter_map(Result::ok)
                 .map(|r| r.name().as_bstr().to_owned())

@@ -164,7 +164,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
             .ok_or(reference::find::existing::Error::NotFound)
     }
 
-    fn iter_references(&self) -> Result<easy::iter::references::State<'_, Self>, easy::iter::references::Error> {
+    fn references(&self) -> Result<easy::iter::references::State<'_, Self>, easy::iter::references::Error> {
         let state = self.state();
         let repo = self.repo()?;
         let packed_refs = state.assure_packed_refs_uptodate(&repo.refs)?;

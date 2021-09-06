@@ -80,5 +80,6 @@ pub mod transaction;
 pub mod packed;
 
 mod raw_ext;
-use crate::Namespace;
 pub use raw_ext::ReferenceExt;
+
+use crate::Namespace;

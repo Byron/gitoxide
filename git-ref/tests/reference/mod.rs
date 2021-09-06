@@ -1,5 +1,6 @@
-use git_ref::{FullName, Target};
 use std::convert::TryInto;
+
+use git_ref::{FullName, Target};
 
 #[test]
 fn strip_namespace() {
