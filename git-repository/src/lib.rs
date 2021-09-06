@@ -104,7 +104,7 @@ pub use git_protocol as protocol;
 pub use git_ref as refs;
 #[cfg(feature = "unstable")]
 pub use git_tempfile as tempfile;
-#[cfg(all(feature = "unstable", feature = "git-traverse"))]
+#[cfg(feature = "unstable")]
 pub use git_traverse as traverse;
 #[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url as url;

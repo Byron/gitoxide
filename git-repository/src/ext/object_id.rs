@@ -1,6 +1,5 @@
 #![allow(missing_docs)]
 use git_hash::ObjectId;
-#[cfg(feature = "git-traverse")]
 use git_traverse::commit::ancestors::{Ancestors, State};
 
 use crate::easy;
@@ -8,7 +7,6 @@ use crate::easy;
 pub trait Sealed {}
 
 pub trait ObjectIdExt: Sealed {
-    #[cfg(feature = "git-traverse")]
     fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&git_hash::oid) -> bool, State>
     where
         Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<git_object::CommitRefIter<'a>>;
@@ -19,7 +17,6 @@ pub trait ObjectIdExt: Sealed {
 impl Sealed for ObjectId {}
 
 impl ObjectIdExt for ObjectId {
-    #[cfg(feature = "git-traverse")]
     fn ancestors_iter<Find>(self, find: Find) -> Ancestors<Find, fn(&git_hash::oid) -> bool, State>
     where
         Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<git_object::CommitRefIter<'a>>,
