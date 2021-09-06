@@ -69,15 +69,16 @@ mod set_namespace {
             vec!["refs/tags/new-tag"],
             "namespaced references appear like normal ones"
         );
-        let fully_qualified_tag_name = "refs/namespaces/foo/refs/tags/new-tag";
+        let fully_qualified_tag_name = "refs/tags/new-tag";
         assert_eq!(
             repo.find_reference(fully_qualified_tag_name).unwrap().name().as_bstr(),
             fully_qualified_tag_name,
-            "namespaced names can only be found by fully qualified name - a known limitation that could be lifted."
+            "fully qualified (yet namespaced) names work"
         );
-        assert!(
-            repo.try_find_reference("refs/tags/new-tag").unwrap().is_none(),
-            "namespaces aren't currently respected when finding references. This can be lifted if there is a non-server application for it."
+        assert_eq!(
+            repo.find_reference("new-tag").unwrap().name().as_bstr(),
+            fully_qualified_tag_name,
+            "namespaces are transparent"
         );
 
         let previous_ns = repo.clear_namespace().unwrap().expect("namespace set");
