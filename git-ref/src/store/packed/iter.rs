@@ -5,6 +5,10 @@ use crate::store::{packed, packed::decode};
 /// packed-refs specific functionality
 impl packed::Buffer {
     /// Return an iterator of references stored in this packed refs buffer, ordered by reference name.
+    ///
+    /// # Note
+    ///
+    /// There is no namespace support in packed iterators. It can be emulated using `iter_prefixed(…)`.
     pub fn iter(&self) -> Result<packed::Iter<'_>, packed::iter::Error> {
         packed::Iter::new(self.as_ref())
     }

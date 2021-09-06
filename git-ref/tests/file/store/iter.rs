@@ -31,6 +31,28 @@ mod with_namespace {
             namespaced_refs.iter().map(|n| n.as_bstr()).collect::<Vec<_>>(),
             expected_namespaced_refs
         );
+        assert_eq!(
+            store
+                .loose_iter_prefixed(ns_two.to_path())?
+                .map(Result::unwrap)
+                .map(|r| r.name.into_inner())
+                .collect::<Vec<_>>(),
+            [
+                "refs/namespaces/bar/refs/heads/multi-link-target1",
+                "refs/namespaces/bar/refs/multi-link",
+                "refs/namespaces/bar/refs/tags/multi-link-target2"
+            ]
+        );
+        assert_eq!(
+            packed
+                .as_ref()
+                .expect("present")
+                .iter_prefixed(ns_two.as_bstr())?
+                .map(Result::unwrap)
+                .map(|r| r.name.to_owned().into_inner())
+                .collect::<Vec<_>>(),
+            ["refs/namespaces/bar/refs/remotes/origin/multi-link-target3"]
+        );
         for fullname in namespaced_refs {
             let reference = store.find(fullname.as_bstr(), packed.as_ref())?;
             assert_eq!(
@@ -109,14 +131,14 @@ mod with_namespace {
     }
 
     #[test]
-    fn iteration_on_store_with_namespace_makes_namespace_transparent() {
-        let ns_two = git_ref::namespace::expand("bar").unwrap();
+    fn iteration_on_store_with_namespace_makes_namespace_transparent() -> crate::Result {
+        let ns_two = git_ref::namespace::expand("bar")?;
         let mut ns_store = {
-            let mut s = store_at("make_namespaced_packed_ref_repository.sh").unwrap();
+            let mut s = store_at("make_namespaced_packed_ref_repository.sh")?;
             s.namespace = ns_two.clone().into();
             s
         };
-        let packed = ns_store.packed_buffer().unwrap();
+        let packed = ns_store.packed_buffer()?;
 
         let expected_refs = vec![
             "refs/heads/multi-link-target1",
@@ -125,8 +147,7 @@ mod with_namespace {
             "refs/tags/multi-link-target2",
         ];
         let ref_names = ns_store
-            .iter(packed.as_ref())
-            .unwrap()
+            .iter(packed.as_ref())?
             .map(Result::unwrap)
             .map(|r: git_ref::Reference| r.name)
             .collect::<Vec<_>>();
@@ -134,14 +155,13 @@ mod with_namespace {
 
         for fullname in ref_names {
             assert_eq!(
-                ns_store.find(fullname.as_bstr(), packed.as_ref()).unwrap().name,
+                ns_store.find(fullname.as_bstr(), packed.as_ref())?.name,
                 fullname,
                 "it finds namespaced items by fully qualified name, excluding namespace"
             );
             assert!(
                 ns_store
-                    .try_find(fullname.clone().prefix_namespace(&ns_two).to_partial(), packed.as_ref())
-                    .unwrap()
+                    .try_find(fullname.clone().prefix_namespace(&ns_two).to_partial(), packed.as_ref())?
                     .is_none(),
                 "it won't find namespaced items by their store-relative name with namespace"
             );
@@ -150,26 +170,45 @@ mod with_namespace {
                     .find(
                         fullname.as_bstr().splitn_str(2, b"/").nth(1).expect("name").as_bstr(),
                         packed.as_ref()
-                    )
-                    .unwrap()
+                    )?
                     .name,
                 fullname,
                 "it finds partial names within the namespace"
             );
         }
 
-        let ns_one = git_ref::namespace::expand("foo").unwrap();
+        assert_eq!(
+            packed.as_ref().expect("present").iter()?.map(Result::unwrap).count(),
+            8,
+            "packed refs have no namespace support at all"
+        );
+        assert_eq!(
+            ns_store
+                .loose_iter()?
+                .map(Result::unwrap)
+                .map(|r| r.name.into_inner())
+                .collect::<Vec<_>>(),
+            [
+                "refs/namespaces/bar/refs/heads/multi-link-target1",
+                "refs/namespaces/bar/refs/multi-link",
+                "refs/namespaces/bar/refs/tags/multi-link-target2",
+                "refs/namespaces/foo/refs/remotes/origin/HEAD"
+            ],
+            "loose iterators have no namespace support at all"
+        );
+
+        let ns_one = git_ref::namespace::expand("foo")?;
         ns_store.namespace = ns_one.into();
 
         assert_eq!(
             ns_store
-                .iter(packed.as_ref())
-                .unwrap()
+                .iter(packed.as_ref())?
                 .map(Result::unwrap)
                 .map(|r: git_ref::Reference| r.name.into_inner())
                 .collect::<Vec<_>>(),
             vec!["refs/d1", "refs/remotes/origin/HEAD", "refs/remotes/origin/main"],
         );
+        Ok(())
     }
 }
 

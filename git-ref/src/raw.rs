@@ -57,7 +57,7 @@ mod convert {
 mod access {
     use git_object::bstr::ByteSlice;
 
-    use crate::{raw::Reference, FullNameRef, Namespace};
+    use crate::{raw::Reference, FullNameRef, Namespace, Target};
 
     impl Reference {
         /// Returns the kind of reference based on its target
@@ -77,10 +77,11 @@ mod access {
         }
 
         /// Strip the given namespace from our name as well as the name, but not the reference we point to.
-        ///
-        /// Symbolic link targets must remain as is or else the reference cannot be peeled without knowing the namespace.
         pub fn strip_namespace(&mut self, namespace: &Namespace) -> &mut Self {
             self.name.strip_namespace(namespace);
+            if let Target::Symbolic(name) = &mut self.target {
+                name.strip_namespace(namespace);
+            }
             self
         }
     }
