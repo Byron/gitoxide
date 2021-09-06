@@ -1,4 +1,4 @@
-use git_object::bstr::{BString, ByteVec};
+use git_object::bstr::BString;
 
 use crate::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog, Target},
@@ -144,21 +144,13 @@ where
         if let Some(namespace) = namespace {
             for entry in self.iter_mut() {
                 let entry = entry.borrow_mut();
-                entry.name.0 = {
-                    let mut new_name = namespace.0.clone();
-                    new_name.push_str(&entry.name.0);
-                    new_name
-                };
+                entry.name.prefix_with_namespace(&namespace);
                 if let Change::Update {
                     new: Target::Symbolic(ref mut name),
                     ..
                 } = entry.change
                 {
-                    name.0 = {
-                        let mut new_name = namespace.0.clone();
-                        new_name.push_str(&name.0);
-                        new_name
-                    };
+                    name.prefix_with_namespace(&namespace);
                 }
             }
         }
