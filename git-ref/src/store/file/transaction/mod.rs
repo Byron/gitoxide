@@ -69,13 +69,15 @@ impl file::Store {
     /// A snapshot of packed references will be obtained automatically if needed to fulfill this transaction
     /// and will be provided as result of a successful transaction. Note that upon transaction failure, packed-refs
     /// will never have been altered.
+    ///
+    /// The transaction inherits the parent namespace.
     pub fn transaction(&self) -> Transaction<'_> {
         Transaction {
             store: self,
             packed_transaction: None,
             updates: None,
             packed_refs: PackedRefs::default(),
-            namespace: None,
+            namespace: self.namespace.clone(),
         }
     }
 }

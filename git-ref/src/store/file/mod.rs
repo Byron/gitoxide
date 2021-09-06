@@ -53,18 +53,18 @@ pub(in crate::store::file) fn path_to_name(path: impl Into<PathBuf>) -> git_obje
 
 ///
 pub mod loose;
-mod overlay;
+mod overlay_iter;
 
 ///
 pub mod iter {
     pub use super::{
         loose::iter::{loose, Loose},
-        overlay::LooseThenPacked,
+        overlay_iter::LooseThenPacked,
     };
 
     ///
     pub mod loose_then_packed {
-        pub use super::super::overlay::Error;
+        pub use super::super::overlay_iter::Error;
     }
 }
 
