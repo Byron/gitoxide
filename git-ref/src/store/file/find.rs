@@ -121,10 +121,17 @@ impl file::Store {
             None => {
                 if is_definitely_absolute {
                     if let Some(packed) = packed {
-                        let full_name = path_to_name(relative_path);
+                        let full_name = path_to_name(match &self.namespace {
+                            None => relative_path,
+                            Some(namespace) => namespace.to_owned().into_namespaced_prefix(relative_path),
+                        });
                         let full_name = PartialNameRef((*full_name).as_bstr());
                         if let Some(packed_ref) = packed.try_find(full_name)? {
-                            return Ok(Some(packed_ref.into()));
+                            let mut res: Reference = packed_ref.into();
+                            if let Some(namespace) = &self.namespace {
+                                res.strip_namespace(namespace);
+                            }
+                            return Ok(Some(res));
                         };
                     }
                 }
@@ -136,6 +143,12 @@ impl file::Store {
             let full_name = path_to_name(&relative_path);
             loose::Reference::try_from_path(FullName(full_name), &contents)
                 .map(Into::into)
+                .map(|mut r: Reference| {
+                    if let Some(namespace) = &self.namespace {
+                        r.strip_namespace(namespace);
+                    }
+                    r
+                })
                 .map_err(|err| Error::ReferenceCreation { err, relative_path })?
         }))
     }
@@ -144,7 +157,10 @@ impl file::Store {
 impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
     pub(crate) fn reference_path(&self, name: &Path) -> PathBuf {
-        self.base.join(name)
+        match &self.namespace {
+            None => self.base.join(name),
+            Some(namespace) => self.base.join(namespace.to_path()).join(name),
+        }
     }
 
     /// Read the file contents with a verified full reference path and return it in the given vector if possible.

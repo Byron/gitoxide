@@ -37,14 +37,15 @@ mod with_namespace {
                 reference.name, fullname,
                 "it finds namespaced items by fully qualified name"
             );
-            assert!(
+            assert_eq!(
                 store
-                    .try_find(
-                        fullname.as_bstr().rsplit_str(b"/").next().expect("name").as_bstr(),
+                    .find(
+                        fullname.as_bstr().splitn_str(2, b"/").nth(1).expect("name").as_bstr(),
                         packed.as_ref()
                     )?
-                    .is_none(),
-                "it won't find namespaced items just by their shortest name"
+                    .name,
+                fullname,
+                "it will find namespaced items just by their shortened (but not shortest) name"
             );
             assert!(
                 store
@@ -108,7 +109,6 @@ mod with_namespace {
     }
 
     #[test]
-    #[ignore]
     fn iteration_on_store_with_namespace_makes_namespace_transparent() {
         let ns_two = git_ref::namespace::expand("bar").unwrap();
         let mut ns_store = {
@@ -148,7 +148,7 @@ mod with_namespace {
             assert_eq!(
                 ns_store
                     .find(
-                        fullname.as_bstr().rsplit_str(b"/").next().expect("name").as_bstr(),
+                        fullname.as_bstr().splitn_str(2, b"/").nth(1).expect("name").as_bstr(),
                         packed.as_ref()
                     )
                     .unwrap()
