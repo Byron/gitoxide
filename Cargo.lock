@@ -1008,7 +1008,7 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "git-hash",
  "git-object",
