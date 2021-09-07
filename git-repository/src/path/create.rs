@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git_object::bstr::ByteSlice;
+use bstr::ByteSlice;
 
 /// The error used in [`into()`].
 #[derive(Debug, thiserror::Error)]

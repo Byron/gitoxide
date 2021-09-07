@@ -1,3 +1,20 @@
+### v0.7.0
+
+#### Breaking
+
+* Replace `transaction::Create` with `transaction::PreviousValue` and remove `transaction::Create`
+* Remove `file::Reference` in favor of `Reference`
+* Move `file::log::Line` to `log::Line`
+* `TargetRef::Symbolic(&BStr)` -> `TargetRef::Symbolic(FullNameRef)`
+* replace `Transaction::namespacce()` with `file::Store::namespace`
+
+### v0.6.1
+
+#### Bugfixes
+
+* splits of edits to symbolic references will now 'move' the desired previous values down to the
+  referents while resorting to not having any requirements in the symbolic ref instead.
+
 ### v0.6.0
 
 #### BREAKING

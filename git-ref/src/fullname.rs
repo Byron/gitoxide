@@ -1,8 +1,8 @@
 use std::{borrow::Cow, convert::TryFrom, path::Path};
 
-use bstr::{BStr, BString, ByteSlice};
+use git_object::bstr::{BStr, BString, ByteSlice};
 
-use crate::FullName;
+use crate::{bstr::ByteVec, FullName, FullNameRef, Namespace};
 
 impl TryFrom<&str> for FullName {
     type Error = git_validate::refname::Error;
@@ -38,6 +38,18 @@ impl TryFrom<BString> for FullName {
     }
 }
 
+impl From<FullName> for BString {
+    fn from(name: FullName) -> Self {
+        name.0
+    }
+}
+
+impl<'a> From<FullNameRef<'a>> for &'a BStr {
+    fn from(name: FullNameRef<'a>) -> Self {
+        name.0
+    }
+}
+
 impl<'a> From<crate::FullNameRef<'a>> for FullName {
     fn from(value: crate::FullNameRef<'a>) -> Self {
         FullName(value.as_bstr().into())
@@ -64,8 +76,34 @@ impl FullName {
     pub fn into_inner(self) -> BString {
         self.0
     }
+
     /// Return ourselves as byte string which is a valid refname
     pub fn as_bstr(&self) -> &BStr {
         self.0.as_bstr()
+    }
+
+    /// Modify ourself so that we use `namespace` as prefix, if it is not yet in the `namespace`
+    pub fn prefix_namespace(&mut self, namespace: &Namespace) -> &mut Self {
+        if !self.0.starts_with_str(&namespace.0) {
+            self.0.insert_str(0, &namespace.0);
+        }
+        self
+    }
+
+    /// Strip the given `namespace` off the beginning of this name, if it is in this namespace.
+    pub fn strip_namespace(&mut self, namespace: &Namespace) -> &mut Self {
+        if self.0.starts_with_str(&namespace.0) {
+            let prev_len = self.0.len();
+            self.0.copy_within(namespace.0.len().., 0);
+            self.0.resize(prev_len - namespace.0.len(), 0);
+        }
+        self
+    }
+}
+
+impl<'a> FullNameRef<'a> {
+    /// Create an owned copy of ourself
+    pub fn to_owned(&self) -> FullName {
+        FullName(self.0.to_owned())
     }
 }

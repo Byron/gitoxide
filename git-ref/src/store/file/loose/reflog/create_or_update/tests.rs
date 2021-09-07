@@ -1,8 +1,8 @@
 use super::*;
-use crate::{file::WriteReflog, store::file::log, FullNameRef};
-use bstr::ByteSlice;
+use crate::{file::WriteReflog, FullNameRef};
 use git_actor::{Sign, Signature, Time};
 use git_lock::acquire::Fail;
+use git_object::bstr::ByteSlice;
 use git_testtools::hex_to_id;
 use std::{convert::TryInto, path::Path};
 use tempfile::TempDir;
@@ -25,11 +25,11 @@ fn reflock(store: &file::Store, full_name: &str) -> Result<git_lock::Marker> {
     .map_err(Into::into)
 }
 
-fn reflog_lines(store: &file::Store, name: &str, buf: &mut Vec<u8>) -> Result<Vec<log::Line>> {
+fn reflog_lines(store: &file::Store, name: &str, buf: &mut Vec<u8>) -> Result<Vec<crate::log::Line>> {
     store
         .reflog_iter(name, buf)?
         .expect("existing reflog")
-        .map(|l| l.map(log::Line::from))
+        .map(|l| l.map(crate::log::Line::from))
         .collect::<std::result::Result<Vec<_>, _>>()
         .map_err(Into::into)
 }
@@ -83,7 +83,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
             WriteReflog::Normal => {
                 assert_eq!(
                     reflog_lines(&store, full_name, &mut buf)?,
-                    vec![log::Line {
+                    vec![crate::log::Line {
                         previous_oid: ObjectId::null_sha1(),
                         new_oid: new,
                         signature: committer.clone(),
@@ -104,7 +104,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
                 assert_eq!(lines.len(), 2, "now there is another line");
                 assert_eq!(
                     lines.last().expect("non-empty"),
-                    &log::Line {
+                    &crate::log::Line {
                         previous_oid: previous,
                         new_oid: new,
                         signature: committer.clone(),

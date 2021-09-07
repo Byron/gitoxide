@@ -29,7 +29,7 @@ impl<'a> Object<'a> {
 
     /// Returns this object as tree iterator to parse entries one at a time to avoid allocations, or
     /// `None` if this is not a tree object.
-    pub fn into_tree_iter(self) -> Option<TreeRefIter<'a>> {
+    pub fn try_into_tree_iter(self) -> Option<TreeRefIter<'a>> {
         match self.kind {
             git_object::Kind::Tree => Some(TreeRefIter::from_bytes(self.data)),
             _ => None,
@@ -38,7 +38,7 @@ impl<'a> Object<'a> {
 
     /// Returns this object as commit iterator to parse tokens one at a time to avoid allocations, or
     /// `None` if this is not a commit object.
-    pub fn into_commit_iter(self) -> Option<CommitRefIter<'a>> {
+    pub fn try_into_commit_iter(self) -> Option<CommitRefIter<'a>> {
         match self.kind {
             git_object::Kind::Commit => Some(CommitRefIter::from_bytes(self.data)),
             _ => None,
@@ -47,7 +47,7 @@ impl<'a> Object<'a> {
 
     /// Returns this object as tag iterator to parse tokens one at a time to avoid allocations, or
     /// `None` if this is not a tag object.
-    pub fn into_tag_iter(self) -> Option<TagRefIter<'a>> {
+    pub fn try_into_tag_iter(self) -> Option<TagRefIter<'a>> {
         match self.kind {
             git_object::Kind::Tag => Some(TagRefIter::from_bytes(self.data)),
             _ => None,

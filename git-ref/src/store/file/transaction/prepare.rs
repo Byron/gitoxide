@@ -8,8 +8,8 @@ use crate::{
             Transaction,
         },
     },
-    transaction::{Change, Create, LogChange, RefEdit, RefEditsExt, RefLog},
-    Target,
+    transaction::{Change, LogChange, RefEdit, RefEditsExt, RefLog},
+    Reference, Target,
 };
 
 impl<'s> Transaction<'s> {
@@ -33,7 +33,7 @@ impl<'s> Transaction<'s> {
                 maybe_loose
                     .map(|buf| {
                         loose::Reference::try_from_path(change.update.name.clone(), &buf)
-                            .map(file::Reference::Loose)
+                            .map(Reference::from)
                             .map_err(Error::from)
                     })
                     .transpose()
@@ -45,13 +45,13 @@ impl<'s> Transaction<'s> {
             .and_then(|maybe_loose| match (maybe_loose, packed) {
                 (None, Some(packed)) => packed
                     .try_find(change.update.name.to_ref())
-                    .map(|opt| opt.map(file::Reference::Packed))
+                    .map(|opt| opt.map(Into::into))
                     .map_err(Error::from),
                 (None, None) => Ok(None),
                 (maybe_loose, _) => Ok(maybe_loose),
             });
         let lock = match &mut change.update.change {
-            Change::Delete { previous, .. } => {
+            Change::Delete { expected, .. } => {
                 let lock = git_lock::Marker::acquire_to_hold_resource(
                     store.reference_path(&relative_path),
                     lock_fail_mode,
@@ -62,16 +62,24 @@ impl<'s> Transaction<'s> {
                     full_name: "borrowchk wont allow change.name()".into(),
                 })?;
                 let existing_ref = existing_ref?;
-                match (&previous, &existing_ref) {
-                    (None, None | Some(_)) => {}
-                    (Some(_previous), None) => {
+                match (&expected, &existing_ref) {
+                    (PreviousValue::MustNotExist, _) => {
+                        panic!("BUG: MustNotExist constraint makes no sense if references are to be deleted")
+                    }
+                    (PreviousValue::ExistingMustMatch(_), None)
+                    | (PreviousValue::MustExist, Some(_))
+                    | (PreviousValue::Any, None | Some(_)) => {}
+                    (PreviousValue::MustExist | PreviousValue::MustExistAndMatch(_), None) => {
                         return Err(Error::DeleteReferenceMustExist {
                             full_name: change.name(),
                         })
                     }
-                    (Some(previous), Some(existing)) => {
-                        let actual = existing.target();
-                        if !previous.is_null() && *previous != actual {
+                    (
+                        PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
+                        Some(existing),
+                    ) => {
+                        let actual = existing.target.clone();
+                        if *previous != actual {
                             let expected = previous.clone();
                             return Err(Error::ReferenceOutOfDate {
                                 full_name: change.name(),
@@ -84,14 +92,12 @@ impl<'s> Transaction<'s> {
 
                 // Keep the previous value for the caller and ourselves. Maybe they want to keep a log of sorts.
                 if let Some(existing) = existing_ref {
-                    *previous = Some(existing.target());
+                    *expected = PreviousValue::MustExistAndMatch(existing.target);
                 }
 
                 lock
             }
-            Change::Update {
-                mode: previous, new, ..
-            } => {
+            Change::Update { expected, new, .. } => {
                 let mut lock = git_lock::File::acquire_to_update_resource(
                     store.reference_path(&relative_path),
                     lock_fail_mode,
@@ -103,25 +109,31 @@ impl<'s> Transaction<'s> {
                 })?;
 
                 let existing_ref = existing_ref?;
-                match (&previous, &existing_ref) {
-                    (Create::Only, Some(existing)) if existing.target() != new.to_ref() => {
-                        let new = new.clone();
-                        return Err(Error::MustNotExist {
-                            full_name: change.name(),
-                            actual: existing.target(),
-                            new,
-                        });
+                match (&expected, &existing_ref) {
+                    (PreviousValue::Any, _)
+                    | (PreviousValue::MustExist, Some(_))
+                    | (PreviousValue::MustNotExist | PreviousValue::ExistingMustMatch(_), None) => {}
+                    (PreviousValue::MustExist, None) => {
+                        let expected = Target::Peeled(git_hash::ObjectId::null_sha1());
+                        let full_name = change.name();
+                        return Err(Error::MustExist { full_name, expected });
+                    }
+                    (PreviousValue::MustNotExist, Some(existing)) => {
+                        if existing.target != *new {
+                            let new = new.clone();
+                            return Err(Error::MustNotExist {
+                                full_name: change.name(),
+                                actual: existing.target.clone(),
+                                new,
+                            });
+                        }
                     }
                     (
-                        Create::OrUpdate {
-                            previous: Some(previous),
-                        },
+                        PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
                         Some(existing),
-                    ) => match previous {
-                        Target::Peeled(oid) if oid.is_null() => {}
-                        any_target if *any_target == existing.target() => {}
-                        _target_mismatch => {
-                            let actual = existing.target();
+                    ) => {
+                        if *previous != existing.target {
+                            let actual = existing.target.clone();
                             let expected = previous.to_owned();
                             let full_name = change.name();
                             return Err(Error::ReferenceOutOfDate {
@@ -130,25 +142,17 @@ impl<'s> Transaction<'s> {
                                 expected,
                             });
                         }
-                    },
-                    (
-                        Create::OrUpdate {
-                            previous: Some(previous),
-                        },
-                        None,
-                    ) => {
+                    }
+
+                    (PreviousValue::MustExistAndMatch(previous), None) => {
                         let expected = previous.to_owned();
                         let full_name = change.name();
                         return Err(Error::MustExist { full_name, expected });
                     }
-                    (Create::Only | Create::OrUpdate { previous: None }, None | Some(_)) => {}
                 };
 
-                *previous = match existing_ref {
-                    None => Create::Only,
-                    Some(existing) => Create::OrUpdate {
-                        previous: Some(existing.target()),
-                    },
+                if let Some(existing) = existing_ref {
+                    *expected = PreviousValue::MustExistAndMatch(existing.target);
                 };
 
                 lock.with_mut(|file| match new {
@@ -190,10 +194,7 @@ impl<'s> Transaction<'s> {
             .pre_process(
                 |name| {
                     let symbolic_refs_are_never_packed = None;
-                    store
-                        .find(name, symbolic_refs_are_never_packed)
-                        .map(|r| r.into_target())
-                        .ok()
+                    store.find(name, symbolic_refs_are_never_packed).map(|r| r.target).ok()
                 },
                 |idx, update| Edit {
                     update,
@@ -201,7 +202,6 @@ impl<'s> Transaction<'s> {
                     parent_index: Some(idx),
                     leaf_referent_previous_oid: None,
                 },
-                self.namespace.take(),
             )
             .map_err(Error::PreprocessingFailed)?;
 
@@ -236,9 +236,9 @@ impl<'s> Transaction<'s> {
                 }
                 match edit.update.change {
                     Change::Update {
-                        mode: Create::OrUpdate { previous: None },
+                        expected: PreviousValue::ExistingMustMatch(_) | PreviousValue::MustExistAndMatch(_),
                         ..
-                    } => continue,
+                    } => needs_packed_refs_lookups = true,
                     Change::Delete { .. } => {
                         edits_for_packed_transaction.push(edit.update.clone());
                     }
@@ -338,7 +338,7 @@ impl<'s> Transaction<'s> {
 }
 
 mod error {
-    use bstr::BString;
+    use git_object::bstr::BString;
     use quick_error::quick_error;
 
     use crate::{
@@ -405,3 +405,5 @@ mod error {
 }
 
 pub use error::Error;
+
+use crate::transaction::PreviousValue;

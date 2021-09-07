@@ -72,6 +72,8 @@ The library powering the command-line interface.
   - **async-client**
     - The client to connect to git servers will be async, while supporting only the 'git' transport itself. It's the most limited and can be seen as example
       on how to use custom transports for custom servers.
+* **local-time-support**
+    - Functions dealing with time may include the local timezone offset, not just UTC with the offset being zero.
 
 [skim]: https://github.com/lotabout/skim
 [git-hours]: https://github.com/kimmobrunfeldt/git-hours
@@ -83,6 +85,11 @@ The library powering the command-line interface.
       for the LRU-cache itself low.
 * **pack-cache-lru-dynamic**
     * Provide a hash-map based LRU cache whose eviction is based a memory cap calculated from object data.
+   
+### git-actor
+
+* **local-time-support**
+   - Make `Signature` initializers using the local time (with UTC offset) available.
 
 ### git-features
 
@@ -185,6 +192,8 @@ be selected.
 * **unstable**
   - Re-export stability tier 2 crates for convenience and make `Repository` struct fields with types from these crates publicly accessible.
   - Doing so is less stable than the stability tier 1 that `git-repository` is a member of.
+* **local-time-support**
+  - Functions dealing with time may include the local timezone offset, not just UTC with the offset being zero.
 
 The following toggles can be used to reduce dependencies.
 

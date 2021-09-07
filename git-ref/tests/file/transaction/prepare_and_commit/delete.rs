@@ -3,9 +3,11 @@ use crate::file::{
     transaction::prepare_and_commit::{committer, empty_store},
 };
 use git_lock::acquire::Fail;
+use git_ref::file::ReferenceExt;
+use git_ref::transaction::PreviousValue;
 use git_ref::{
     transaction::{Change, RefEdit, RefLog},
-    Target,
+    Reference, Target,
 };
 use git_testtools::hex_to_id;
 use std::convert::TryInto;
@@ -18,7 +20,7 @@ fn delete_a_ref_which_is_gone_succeeds() -> crate::Result {
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: None,
+                    expected: PreviousValue::Any,
                     log: RefLog::AndReference,
                 },
                 name: "DOES_NOT_EXIST".try_into()?,
@@ -37,7 +39,7 @@ fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
     let res = store.transaction().prepare(
         Some(RefEdit {
             change: Change::Delete {
-                previous: Some(Target::must_exist()),
+                expected: PreviousValue::MustExist,
                 log: RefLog::AndReference,
             },
             name: "DOES_NOT_EXIST".try_into()?,
@@ -67,7 +69,7 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: Some(Target::must_exist()),
+                    expected: PreviousValue::MustExist,
                     log: RefLog::AndReference,
                 },
                 name: head.name.clone(),
@@ -81,7 +83,7 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
         edits,
         vec![RefEdit {
             change: Change::Delete {
-                previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
+                expected: PreviousValue::MustExistAndMatch(Target::Symbolic("refs/heads/main".try_into()?)),
                 log: RefLog::AndReference,
             },
             name: head.name,
@@ -107,7 +109,7 @@ fn delete_ref_with_incorrect_previous_value_fails() -> crate::Result {
     let res = store.transaction().prepare(
         Some(RefEdit {
             change: Change::Delete {
-                previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
+                expected: PreviousValue::MustExistAndMatch(Target::Symbolic("refs/heads/main".try_into()?)),
                 log: RefLog::Only,
             },
             name: head.name,
@@ -141,7 +143,7 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: Some(Target::Symbolic("refs/heads/main".try_into()?)),
+                    expected: PreviousValue::MustExistAndMatch(Target::Symbolic("refs/heads/main".try_into()?)),
                     log: RefLog::Only,
                 },
                 name: head.name,
@@ -152,13 +154,13 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
         .commit(&committer())?;
 
     assert_eq!(edits.len(), 1);
-    let head = store.find_loose("HEAD")?;
+    let head: Reference = store.find_loose("HEAD")?.into();
     assert!(!head.log_exists(&store));
     let main = store.find_loose("main").expect("referent still exists");
     assert!(main.log_exists(&store), "log is untouched, too");
     assert_eq!(
         main.target,
-        head.follow_symbolic(&store, None).expect("a symref")?.target(),
+        head.follow(&store, None).expect("a symref")?.target,
         "head points to main"
     );
     Ok(())
@@ -175,7 +177,7 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: Some(Target::must_exist()),
+                    expected: PreviousValue::MustExist,
                     log: RefLog::Only,
                 },
                 name: head.name,
@@ -186,13 +188,13 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
         .commit(&committer())?;
 
     assert_eq!(edits.len(), 2);
-    let head = store.find_loose("HEAD")?;
+    let head: Reference = store.find_loose("HEAD")?.into();
     assert!(!head.log_exists(&store));
     let main = store.find_loose("main").expect("referent still exists");
     assert!(!main.log_exists(&store), "log is removed");
     assert_eq!(
         main.target,
-        head.follow_symbolic(&store, None).expect("a symref")?.target(),
+        head.follow(&store, None).expect("a symref")?.target,
         "head points to main"
     );
     Ok(())
@@ -208,7 +210,7 @@ fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() -> crate::Res
     let res = store.transaction().prepare(
         Some(RefEdit {
             change: Change::Delete {
-                previous: Some(Target::must_exist()),
+                expected: PreviousValue::MustExist,
                 log: RefLog::AndReference,
             },
             name: "HEAD".try_into()?,
@@ -229,6 +231,40 @@ fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() -> crate::Res
 }
 
 #[test]
+fn non_existing_can_be_deleted_with_the_may_exist_match_constraint() -> crate::Result {
+    let (_keep, store) = empty_store()?;
+    let previous_value =
+        PreviousValue::ExistingMustMatch(Target::Peeled(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")));
+    let edits = store
+        .transaction()
+        .prepare(
+            Some(RefEdit {
+                change: Change::Delete {
+                    expected: previous_value.clone(),
+                    log: RefLog::AndReference,
+                },
+                name: "refs/heads/not-there".try_into()?,
+                deref: true,
+            }),
+            Fail::Immediately,
+        )?
+        .commit(&committer())?;
+
+    assert_eq!(
+        edits,
+        vec![RefEdit {
+            change: Change::Delete {
+                expected: previous_value,
+                log: RefLog::AndReference,
+            },
+            name: "refs/heads/not-there".try_into()?,
+            deref: false,
+        }]
+    );
+    Ok(())
+}
+
+#[test]
 /// Based on https://github.com/git/git/blob/master/refs/files-backend.c#L514:L515
 fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Result {
     let (_keep, store) = empty_store()?;
@@ -240,7 +276,7 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Res
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: None,
+                    expected: PreviousValue::Any,
                     log: RefLog::AndReference,
                 },
                 name: "HEAD".try_into()?,
@@ -255,7 +291,7 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Res
         edits,
         vec![RefEdit {
             change: Change::Delete {
-                previous: None,
+                expected: PreviousValue::Any,
                 log: RefLog::AndReference,
             },
             name: "HEAD".try_into()?,
@@ -278,7 +314,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
             .prepare(
                 Some(RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::Only,
                     },
                     name: "HEAD".try_into()?,
@@ -313,7 +349,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: Some(Target::Peeled(old_id)),
+                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(old_id)),
                     log: RefLog::AndReference,
                 },
                 name: "refs/heads/main".try_into()?,
@@ -334,7 +370,7 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
     let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
     let packed = store.packed_buffer()?.expect("packed-refs");
     let branch = store.find("newer-as-loose", Some(&packed))?;
-    let branch_id = branch.target().as_id().map(ToOwned::to_owned).expect("peeled");
+    let branch_id = branch.target.as_id().map(ToOwned::to_owned).expect("peeled");
     assert_ne!(
         packed.find("newer-as-loose")?.target(),
         branch_id,
@@ -346,10 +382,10 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
         .prepare(
             Some(RefEdit {
                 change: Change::Delete {
-                    previous: Some(Target::Peeled(branch_id)),
+                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(branch_id)),
                     log: RefLog::AndReference,
                 },
-                name: branch.name().into(),
+                name: branch.name,
                 deref: false,
             }),
             git_lock::acquire::Fail::Immediately,
@@ -371,46 +407,42 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
 }
 
 #[test]
-fn all_contained_references_deletes_the_packed_ref_file_too() {
-    let (_keep, store) = store_writable("make_packed_ref_repository.sh").unwrap();
+fn all_contained_references_deletes_the_packed_ref_file_too() -> crate::Result {
+    for mode in ["must-exist", "may-exist"] {
+        let (_keep, store) = store_writable("make_packed_ref_repository.sh")?;
 
-    let edits = store
-        .transaction()
-        .prepare(
-            store
-                .packed_buffer()
-                .unwrap()
-                .expect("packed-refs")
-                .iter()
-                .unwrap()
-                .map(|r| {
+        let edits = store
+            .transaction()
+            .prepare(
+                store.packed_buffer()?.expect("packed-refs").iter()?.map(|r| {
                     let r = r.expect("valid ref");
                     RefEdit {
                         change: Change::Delete {
-                            previous: Target::Peeled(r.target()).into(),
+                            expected: match mode {
+                                "must-exist" => PreviousValue::MustExistAndMatch(Target::Peeled(r.target())),
+                                "may-exist" => PreviousValue::ExistingMustMatch(Target::Peeled(r.target())),
+                                _ => unimplemented!("unknown mode: {}", mode),
+                            },
                             log: RefLog::AndReference,
                         },
                         name: r.name.into(),
                         deref: false,
                     }
                 }),
-            git_lock::acquire::Fail::Immediately,
-        )
-        .unwrap()
-        .commit(&committer())
-        .unwrap();
+                git_lock::acquire::Fail::Immediately,
+            )?
+            .commit(&committer())?;
 
-    assert!(!store.packed_refs_path().is_file(), "packed-refs was entirely removed");
+        assert!(!store.packed_refs_path().is_file(), "packed-refs was entirely removed");
 
-    let packed = store.packed_buffer().unwrap();
-    assert!(packed.is_none(), "it won't make up packed refs");
-    for edit in edits {
-        assert!(
-            store
-                .try_find(edit.name.to_partial(), packed.as_ref())
-                .unwrap()
-                .is_none(),
-            "delete ref cannot be found"
-        );
+        let packed = store.packed_buffer()?;
+        assert!(packed.is_none(), "it won't make up packed refs");
+        for edit in edits {
+            assert!(
+                store.try_find(edit.name.to_partial(), packed.as_ref())?.is_none(),
+                "delete ref cannot be found"
+            );
+        }
     }
+    Ok(())
 }

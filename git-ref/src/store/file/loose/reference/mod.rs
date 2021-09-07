@@ -1,7 +1,4 @@
-pub(in crate::store::file) mod logiter;
-
-///
-pub mod peel;
+pub(in crate) mod logiter;
 
 ///
 pub mod decode;

@@ -5,7 +5,7 @@ pub enum Error {
     #[error("Could not find a valid HEAD reference")]
     FindHeadRef(#[from] git_ref::file::find::existing::Error),
     #[error("Expected HEAD at '.git/HEAD', got '.git/{}'", .name)]
-    MisplacedHead { name: git_object::bstr::BString },
+    MisplacedHead { name: bstr::BString },
     #[error("Expected an objects directory at '{}'", .missing.display())]
     MissingObjectsDirectory { missing: PathBuf },
     #[error("Expected a refs directory at '{}'", .missing.display())]

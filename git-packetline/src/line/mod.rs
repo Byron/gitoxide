@@ -52,7 +52,7 @@ impl<'a> PacketLineRef<'a> {
         })
     }
 
-    /// Decode the band of this [`slice`][PacketLineRef::as_slice()], or panic if it is not actually a side-band line.
+    /// Decode the band of this [`slice`][PacketLineRef::as_slice()]
     pub fn decode_band(&self) -> Result<BandRef<'_>, decode::band::Error> {
         let d = self.as_slice().ok_or(decode::band::Error::NonDataLine)?;
         Ok(match d[0] {

@@ -35,9 +35,9 @@ pub mod from_path {
 }
 
 pub mod open {
-    use std::path::PathBuf;
+    use std::{borrow::Cow, path::PathBuf};
 
-    use git_config::values::Boolean;
+    use git_config::values::{Boolean, Integer};
 
     use crate::Repository;
 
@@ -49,6 +49,8 @@ pub mod open {
         NotARepository(#[from] crate::path::is_git::Error),
         #[error(transparent)]
         ObjectStoreInitialization(#[from] git_odb::linked::init::Error),
+        #[error("Cannot handle objects formatted as {:?}", .name)]
+        UnsupportedObjectFormat { name: bstr::BString },
     }
 
     impl Repository {
@@ -70,8 +72,8 @@ pub mod open {
             git_dir: PathBuf,
             mut worktree_dir: Option<PathBuf>,
         ) -> Result<Self, Error> {
+            let config = git_config::file::GitConfig::open(git_dir.join("config"))?;
             if worktree_dir.is_none() {
-                let config = git_config::file::GitConfig::open(git_dir.join("config"))?;
                 let is_bare = config
                     .value::<Boolean<'_>>("core", None, "bare")
                     .map_or(false, |b| matches!(b, Boolean::True(_)));
@@ -79,6 +81,27 @@ pub mod open {
                     worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());
                 }
             }
+            let hash_kind = if config
+                .value::<Integer>("core", None, "repositoryFormatVersion")
+                .map_or(0, |v| v.value)
+                == 1
+            {
+                if let Ok(format) = config.value::<Cow<'_, [u8]>>("extensions", None, "objectFormat") {
+                    match format.as_ref() {
+                        b"sha1" => git_hash::Kind::Sha1,
+                        _ => {
+                            return Err(Error::UnsupportedObjectFormat {
+                                name: format.to_vec().into(),
+                            })
+                        }
+                    }
+                } else {
+                    git_hash::Kind::Sha1
+                }
+            } else {
+                git_hash::Kind::Sha1
+            };
+
             Ok(crate::Repository {
                 odb: git_odb::linked::Store::at(git_dir.join("objects"))?,
                 refs: git_ref::file::Store::at(
@@ -90,6 +113,7 @@ pub mod open {
                     },
                 ),
                 work_tree: worktree_dir,
+                hash_kind,
             })
         }
     }
@@ -116,6 +140,22 @@ pub mod init {
         pub fn init(directory: impl AsRef<Path>, kind: crate::Kind) -> Result<Self, Error> {
             let path = crate::path::create::into(directory.as_ref(), kind)?;
             Ok(path.try_into()?)
+        }
+    }
+}
+
+mod location {
+    use crate::Repository;
+
+    impl Repository {
+        /// The path to the `.git` directory itself, or equivalent if this is a bare repository.
+        pub fn path(&self) -> &std::path::Path {
+            &self.refs.base
+        }
+
+        /// Return the path to the working directory if this is not a bare repository.
+        pub fn workdir(&self) -> Option<&std::path::Path> {
+            self.work_tree.as_deref()
         }
     }
 }

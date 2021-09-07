@@ -1,10 +1,14 @@
-use bstr::{BString, ByteSlice};
+use git_object::bstr::{BString, ByteSlice};
 
 use crate::store::{packed, packed::decode};
 
 /// packed-refs specific functionality
 impl packed::Buffer {
     /// Return an iterator of references stored in this packed refs buffer, ordered by reference name.
+    ///
+    /// # Note
+    ///
+    /// There is no namespace support in packed iterators. It can be emulated using `iter_prefixed(…)`.
     pub fn iter(&self) -> Result<packed::Iter<'_>, packed::iter::Error> {
         packed::Iter::new(self.as_ref())
     }
@@ -94,7 +98,7 @@ impl<'a> packed::Iter<'a> {
 }
 
 mod error {
-    use bstr::BString;
+    use git_object::bstr::BString;
     use quick_error::quick_error;
 
     quick_error! {

@@ -46,7 +46,7 @@ mod reference {
 }
 
 mod header {
-    use bstr::ByteSlice;
+    use git_object::bstr::ByteSlice;
     use git_testtools::to_bstr_err;
 
     use super::Result;

@@ -3,8 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use bstr::ByteSlice;
 use git_features::fs::walkdir::DirEntryIter;
+use git_object::bstr::ByteSlice;
 use os_str_bytes::OsStrBytes;
 
 use crate::{
@@ -112,6 +112,10 @@ impl file::Store {
     /// to see all files that look like references whether valid or not.
     ///
     /// Reference files that do not constitute valid names will be silently ignored.
+    ///
+    /// # Note
+    ///
+    /// There is no namespace support in loose file iterators. It can be emulated using `loose_iter_prefixed(…)`.
     ///
     /// See [`Store::packed()`][file::Store::packed_buffer()] for interacting with packed references.
     pub fn loose_iter(&self) -> std::io::Result<Loose> {

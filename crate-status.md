@@ -239,6 +239,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 
 ### git-repository
 * [x] utilities for applications to make long running operations interruptible gracefully and to support timeouts in servers.
+* [ ] handle `core.repositoryFormatVersion` and extensions
 * [x] discovery
   * [ ] option to not cross file systems
   * [ ] handle git-common-dir

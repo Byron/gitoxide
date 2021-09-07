@@ -7,19 +7,19 @@ Please note that this guide isn't stable itself and may be adjusted to fit chang
 
 ## Terminology
 
-* _dependent crate_
+- _dependent crate_
   - A crate which depends on a crate in this workspace directly.
-* _downstream crate_
+- _downstream crate_
   - A crate which directly or indirectly depends on a crate in this workspace.
-* _workspace crate_
+- _workspace crate_
   - A crate which is a member of this workspace and hence is stored in this repository
-* _breaking change_
+- _breaking change_
   - A change in code that requires a `dependent crate` to adjust their code to fix compile errors.
-* _release_
+- _release_
   - A new version of a crate is published to crates.io
-* _development version_ 
+- _development version_
   - A crate version whose _major_ version is 0.
-* _release version_
+- _release version_
   - A crate version whose _major_ version is 1 or higher.
 
 ## Tiers
@@ -56,9 +56,13 @@ The following schematic helps to visualize what follows.
     ║    │ ┌─────────────┐   ┌─────────────┐ │    ║   
     ║    │ │   git-ref   │   │ git-config  │ │    ║  │
     ║    │ └─────────────┘   └─────────────┘ │    ║   
-    ║    └───────────────────────────────────┘    ║  │
-    ║                                             ║   
-    ╚═════════════════════════════════════════════╝  │
+    ║    │ ┌─────────────┐   ┌─────────────┐ │    ║  │
+    ║    │ │ git-object  │   │  git-lock   │ │    ║   
+    ║    │ └─────────────┘   └─────────────┘ │    ║  │
+    ║    └───────────────────────────────────┘    ║   
+    ║                                             ║  │
+    ╚═════════════════════════════════════════════╝   
+                                                     │
     Stability Tier 2 ─────────────────────────────┐   
     │                                             │  │
     │    Plumbing Crates─────────────────────┐    │   
@@ -95,7 +99,7 @@ If there are additional breaking changes without a release, these push back the 
 
 ### Tier 1: released apps and application crates
 
-Released apps and application crates are marked with major version number 1 or above, like `2.3.0+21.06` and live in tier 1 _(->ST1)_, 
+Released apps and application crates are marked with major version number 1 or above, like `2.3.0+21.06` and live in tier 1 _(->ST1)_,
 with the build identifiers for year (`21`) and and month `06` appended, based on the actual release year and month.
 
 Breaking changes are collected and may be released no more often than every 6 months by incrementing the major version number. If there are additional breaking changes,

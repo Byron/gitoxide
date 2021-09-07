@@ -4,8 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use bstr::ByteSlice;
 pub use error::Error;
+use git_object::bstr::ByteSlice;
 
 use crate::{
     file,
@@ -13,7 +13,7 @@ use crate::{
         file::{loose, path_to_name},
         packed,
     },
-    FullName, PartialNameRef,
+    FullName, PartialNameRef, Reference,
 };
 
 enum Transform {
@@ -31,14 +31,17 @@ impl file::Store {
     ///
     /// ### Note
     ///
-    /// The lookup algorithm follows the one in [the git documentation][git-lookup-docs].
+    /// * The lookup algorithm follows the one in [the git documentation][git-lookup-docs].
+    /// * Namespaced names will only be found if they are fully qualified. They can, however, be found during iteration.
+    ///   This shortcoming can be fixed if there is demand by introducing `try_find_in_namespace(…)` or by letting `PartialNameRef` have
+    ///   a namespace reference, too.
     ///
     /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
-    pub fn try_find<'a, 'p, 's, Name, E>(
-        &'s self,
+    pub fn try_find<'a, Name, E>(
+        &self,
         partial: Name,
-        packed: Option<&'p packed::Buffer>,
-    ) -> Result<Option<file::Reference<'p>>, Error>
+        packed: Option<&packed::Buffer>,
+    ) -> Result<Option<Reference>, Error>
     where
         Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
@@ -61,11 +64,11 @@ impl file::Store {
             .map(|r| r.map(|r| r.try_into().expect("only loose refs are found without pack")))
     }
 
-    pub(in crate::store::file) fn find_one_with_verified_input<'p>(
+    pub(crate) fn find_one_with_verified_input<'p>(
         &self,
         relative_path: &Path,
         packed: Option<&'p packed::Buffer>,
-    ) -> Result<Option<file::Reference<'p>>, Error> {
+    ) -> Result<Option<Reference>, Error> {
         let is_all_uppercase = relative_path
             .to_string_lossy()
             .as_ref()
@@ -94,13 +97,13 @@ impl file::Store {
         )
     }
 
-    fn find_inner<'p>(
+    fn find_inner(
         &self,
         inbetween: &str,
         relative_path: &Path,
-        packed: Option<&'p packed::Buffer>,
+        packed: Option<&packed::Buffer>,
         transform: Transform,
-    ) -> Result<Option<file::Reference<'p>>, Error> {
+    ) -> Result<Option<Reference>, Error> {
         let (base, is_definitely_absolute) = match transform {
             Transform::EnforceRefsPrefix => (
                 if relative_path.starts_with("refs") {
@@ -118,10 +121,17 @@ impl file::Store {
             None => {
                 if is_definitely_absolute {
                     if let Some(packed) = packed {
-                        let full_name = path_to_name(relative_path);
+                        let full_name = path_to_name(match &self.namespace {
+                            None => relative_path,
+                            Some(namespace) => namespace.to_owned().into_namespaced_prefix(relative_path),
+                        });
                         let full_name = PartialNameRef((*full_name).as_bstr());
                         if let Some(packed_ref) = packed.try_find(full_name)? {
-                            return Ok(Some(file::Reference::Packed(packed_ref)));
+                            let mut res: Reference = packed_ref.into();
+                            if let Some(namespace) = &self.namespace {
+                                res.strip_namespace(namespace);
+                            }
+                            return Ok(Some(res));
                         };
                     }
                 }
@@ -132,7 +142,13 @@ impl file::Store {
         Ok(Some({
             let full_name = path_to_name(&relative_path);
             loose::Reference::try_from_path(FullName(full_name), &contents)
-                .map(file::Reference::Loose)
+                .map(Into::into)
+                .map(|mut r: Reference| {
+                    if let Some(namespace) = &self.namespace {
+                        r.strip_namespace(namespace);
+                    }
+                    r
+                })
                 .map_err(|err| Error::ReferenceCreation { err, relative_path })?
         }))
     }
@@ -141,7 +157,10 @@ impl file::Store {
 impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
     pub(crate) fn reference_path(&self, name: &Path) -> PathBuf {
-        self.base.join(name)
+        match &self.namespace {
+            None => self.base.join(name),
+            Some(namespace) => self.base.join(namespace.to_path()).join(name),
+        }
     }
 
     /// Read the file contents with a verified full reference path and return it in the given vector if possible.
@@ -176,16 +195,12 @@ pub mod existing {
             file::{find, loose},
             packed,
         },
-        PartialNameRef,
+        PartialNameRef, Reference,
     };
 
     impl file::Store {
         /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
-        pub fn find<'a, 'p, 's, Name, E>(
-            &'s self,
-            partial: Name,
-            packed: Option<&'p packed::Buffer>,
-        ) -> Result<file::Reference<'p>, Error>
+        pub fn find<'a, Name, E>(&self, partial: Name, packed: Option<&packed::Buffer>) -> Result<Reference, Error>
         where
             Name: TryInto<PartialNameRef<'a>, Error = E>,
             crate::name::Error: From<E>,

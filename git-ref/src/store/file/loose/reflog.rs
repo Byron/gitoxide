@@ -52,7 +52,7 @@ impl file::Store {
         &self,
         name: Name,
         buf: &'b mut Vec<u8>,
-    ) -> Result<Option<impl Iterator<Item = Result<log::LineRef<'b>, log::iter::decode::Error>>>, Error>
+    ) -> Result<Option<log::iter::Forward<'b>>, Error>
     where
         Name: TryInto<FullNameRef<'a>, Error = E>,
         crate::name::Error: From<E>,
@@ -89,8 +89,8 @@ pub mod create_or_update {
         path::{Path, PathBuf},
     };
 
-    use bstr::BStr;
     use git_hash::{oid, ObjectId};
+    use git_object::bstr::BStr;
 
     use crate::store::{file, file::WriteReflog};
 
@@ -152,7 +152,7 @@ pub mod create_or_update {
                         write!(
                             file,
                             "{} {} ",
-                            previous_oid.unwrap_or_else(|| ObjectId::null_sha(new.kind())),
+                            previous_oid.unwrap_or_else(|| ObjectId::null(new.kind())),
                             new
                         )
                         .and_then(|_| committer.write_to(&mut file))

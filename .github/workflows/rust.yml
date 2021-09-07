@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+#     - uses: Swatinem/rust-cache@v1 - todo: figure out why windows doesn't seem to get its own caches, maybe?
     - name: clippy
       run: cargo clippy --all
     - name: fmt
@@ -44,6 +45,7 @@ jobs:
           profile: default
           toolchain: stable
           override: true
+      - uses: Swatinem/rust-cache@v1
       - name: "Check default features build on windows"
         uses: actions-rs/cargo@v1
         with:

@@ -9,7 +9,7 @@ use git_repository::{
     objs::{bstr::BStr, TreeRefIter},
     odb,
     prelude::*,
-    refs::file::loose::reference::peel,
+    refs::{file::ReferenceExt, peel},
 };
 use rayon::prelude::*;
 
@@ -255,7 +255,7 @@ where
     where
         L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<odb::data::Object<'a>>,
     {
-        find(id, buf).and_then(|o| o.into_tree_iter())
+        find(id, buf).and_then(|o| o.try_into_tree_iter())
     }
 
     fn tree_iter_by_commit<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> TreeRefIter<'b>
@@ -264,7 +264,7 @@ where
     {
         let tid = find(id, buf)
             .expect("commit present")
-            .into_commit_iter()
+            .try_into_commit_iter()
             .expect("a commit")
             .tree_id()
             .expect("tree id present and decodable");

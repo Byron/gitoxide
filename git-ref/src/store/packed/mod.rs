@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-use bstr::{BStr, BString};
 use filebuffer::FileBuffer;
 use git_hash::ObjectId;
+use git_object::bstr::{BStr, BString};
 
 use crate::{transaction::RefEdit, FullNameRef};
 
@@ -35,6 +35,7 @@ pub(crate) struct Transaction {
     buffer: Option<Buffer>,
     edits: Option<Vec<Edit>>,
     lock: Option<git_lock::File>,
+    #[allow(dead_code)] // It just has to be kept alive, hence no reads
     closed_lock: Option<git_lock::Marker>,
 }
 

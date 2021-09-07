@@ -17,9 +17,9 @@ default = ["max-performance", "one-stop-shop"]
 unstable = []
 serde1 = ["git-pack/serde1", "git-object/serde1"]
 max-performance = ["git-features/zlib-ng-compat", "git-features/fast-sha1"]
+local-time-support = ["git-actor/local-time-support"]
 local = [
     "git-url",
-    "git-traverse",
     "git-diff",
     "git-pack/pack-cache-lru-dynamic",
     "git-pack/pack-cache-lru-static",
@@ -30,28 +30,30 @@ network = [
 one-stop-shop = [
     "local",
     "network",
+    "local-time-support"
 ]
 
 
 [dependencies]
-git-ref = { version ="^0.6.0", path = "../git-ref" }
+git-ref = { version ="^0.7.0", path = "../git-ref" }
 git-tempfile = { version ="^1.0.0", path = "../git-tempfile" }
 git-lock = { version ="^1.0.0", path = "../git-lock" }
 git-validate = { version = "^0.5.0", path = "../git-validate" }
 
 git-config = { version ="^0.1.0", path = "../git-config" }
 git-odb = { version ="^0.21.0", path = "../git-odb" }
-git-hash = { version = "^0.5.0", path = "../git-hash" }
+git-hash = { version ="^0.6.0", path = "../git-hash" }
 git-object = { version ="^0.13.0", path = "../git-object" }
 git-actor = { version ="^0.5.0", path = "../git-actor" }
-git-pack = { version ="^0.9.0", path = "../git-pack" }
+git-pack = { version ="^0.10.0", path = "../git-pack" }
 
 git-url = { version = "0.3.0", path = "../git-url", optional = true }
-git-traverse = { version ="^0.8.0", path = "../git-traverse", optional = true }
+git-traverse = { version ="^0.8.0", path = "../git-traverse" }
 git-protocol = { version ="^0.10.0", path = "../git-protocol", optional = true }
 git-diff = { version ="^0.9.0", path = "../git-diff", optional = true }
 git-features = { version = "^0.16.0", path = "../git-features", features = ["progress"] }
 
+bstr = { version = "0.2.13", default-features = false, features = ["std", "unicode"]}
 signal-hook = { version = "0.3.9", default-features = false }
 thiserror = "1.0.26"
 parking_lot = { version = "0.11.2", features = ["arc_lock"] }

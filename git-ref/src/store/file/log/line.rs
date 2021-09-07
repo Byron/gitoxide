@@ -1,6 +1,6 @@
 use git_hash::ObjectId;
 
-use crate::store::file::log::{Line, LineRef};
+use crate::{log::Line, store::file::log::LineRef};
 
 impl<'a> LineRef<'a> {
     /// Convert this instance into its mutable counterpart
@@ -12,10 +12,10 @@ impl<'a> LineRef<'a> {
 mod write {
     use std::io;
 
-    use bstr::{BStr, ByteSlice};
+    use git_object::bstr::{BStr, ByteSlice};
     use quick_error::quick_error;
 
-    use crate::store::file::log::Line;
+    use crate::log::Line;
 
     quick_error! {
         /// The Error produced by [`Line::write_to()`] (but wrapped in an io error).
@@ -77,7 +77,7 @@ impl<'a> From<LineRef<'a>> for Line {
 
 ///
 pub mod decode {
-    use bstr::{BStr, ByteSlice};
+    use git_object::bstr::{BStr, ByteSlice};
     use nom::{
         bytes::complete::{tag, take_while},
         combinator::opt,
@@ -90,7 +90,7 @@ pub mod decode {
 
     ///
     mod error {
-        use bstr::{BString, ByteSlice};
+        use git_object::bstr::{BString, ByteSlice};
 
         /// The error returned by [from_bytes(…)][super::Line::from_bytes()]
         #[derive(Debug)]
@@ -172,9 +172,9 @@ pub mod decode {
 
     #[cfg(test)]
     mod test {
-        use bstr::ByteSlice;
         use git_actor::{Sign, Time};
         use git_hash::ObjectId;
+        use git_object::bstr::ByteSlice;
 
         use super::*;
 

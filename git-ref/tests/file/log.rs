@@ -1,6 +1,6 @@
 mod line {
     mod write_to {
-        use bstr::ByteVec;
+        use git_object::bstr::ByteVec;
         use git_ref::file::log;
 
         #[test]
@@ -46,7 +46,22 @@ mod iter {
     }
 
     mod backward {
+        mod with_zero_sized_buffer {
+
+            #[test]
+            fn any_line() {
+                let mut buf = [0u8; 0];
+                assert!(
+                    git_ref::file::log::iter::reverse(std::io::Cursor::new(b"won't matter".as_ref()), &mut buf)
+                        .is_err(),
+                    "zero sized buffers aren't allowed"
+                );
+            }
+        }
+
         mod with_buffer_too_small_for_single_line {
+            use std::error::Error;
+
             #[test]
             fn single_line() -> crate::Result {
                 let mut buf = [0u8; 128];
@@ -63,8 +78,8 @@ mod iter {
                         iter.next()
                             .expect("an error")
                             .expect_err("buffer too small")
-                            .get_ref()
-                            .expect("inner error")
+                            .source()
+                            .expect("source")
                             .to_string(),
                         "buffer too small for line size"
                     );
@@ -75,7 +90,7 @@ mod iter {
         }
 
         mod with_buffer_big_enough_for_largest_line {
-            use git_ref::file::log::Line;
+            use git_ref::log::Line;
             use git_testtools::hex_to_id;
 
             #[test]
@@ -95,7 +110,7 @@ mod iter {
                         new_oid,
                         signature: _,
                         message,
-                    } = iter.next().expect("a single line")??;
+                    } = iter.next().expect("a single line")?;
                     assert_eq!(previous_oid, hex_to_id("0000000000000000000000000000000000000000"));
                     assert_eq!(new_oid, hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"));
                     assert_eq!(message, "commit (initial): c1");
@@ -123,7 +138,7 @@ mod iter {
                             new_oid,
                             signature: _,
                             message,
-                        } = iter.next().expect("a single line")??;
+                        } = iter.next().expect("a single line")?;
                         assert_eq!(previous_oid, hex_to_id("0000000000000000000000000000000000000000"));
                         assert_eq!(new_oid, hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"));
                         assert_eq!(message, "commit (initial): c1");
@@ -132,7 +147,7 @@ mod iter {
                             new_oid,
                             signature: _,
                             message,
-                        } = iter.next().expect("a single line")??;
+                        } = iter.next().expect("a single line")?;
                         assert_eq!(message, "commit (initial): c2");
                         assert_eq!(previous_oid, hex_to_id("1000000000000000000000000000000000000000"));
                         assert_eq!(new_oid, hex_to_id("234385f6d781b7e97062102c6a483440bfda2a03"));
@@ -144,8 +159,8 @@ mod iter {
         }
     }
     mod forward {
-        use bstr::B;
         use git_hash::ObjectId;
+        use git_object::bstr::B;
 
         use crate::file::log::iter::reflog;
 

@@ -35,7 +35,7 @@ impl<'s> Transaction<'s> {
             assert!(!change.update.deref, "Deref mode is turned into splits and turned off");
             match &change.update.change {
                 // reflog first, then reference
-                Change::Update { log, new, mode } => {
+                Change::Update { log, new, expected } => {
                     let lock = change.lock.take().expect("each ref is locked");
                     let (update_ref, update_reflog) = match log.mode {
                         RefLog::Only => (false, true),
@@ -45,7 +45,11 @@ impl<'s> Transaction<'s> {
                         match new {
                             Target::Symbolic(_) => {} // no reflog for symref changes
                             Target::Peeled(new_oid) => {
-                                let previous = mode.previous_oid().or(change.leaf_referent_previous_oid);
+                                let previous = match expected {
+                                    PreviousValue::MustExistAndMatch(Target::Peeled(oid)) => Some(oid.to_owned()),
+                                    _ => None,
+                                }
+                                .or(change.leaf_referent_previous_oid);
                                 let do_update = previous.as_ref().map_or(true, |previous| previous != new_oid);
                                 if do_update {
                                     self.store.reflog_create_or_append(
@@ -151,7 +155,7 @@ impl<'s> Transaction<'s> {
     }
 }
 mod error {
-    use bstr::BString;
+    use git_object::bstr::BString;
     use quick_error::quick_error;
 
     use crate::store::{file, packed};
@@ -190,3 +194,5 @@ mod error {
     }
 }
 pub use error::Error;
+
+use crate::transaction::PreviousValue;

@@ -1,9 +1,9 @@
 mod refedit_ext {
     use std::{cell::RefCell, collections::BTreeMap, convert::TryInto};
 
-    use bstr::{BString, ByteSlice};
+    use git_object::bstr::{BString, ByteSlice};
     use git_ref::{
-        transaction::{Change, Create, RefEdit, RefEditsExt, RefLog},
+        transaction::{Change, PreviousValue, RefEdit, RefEditsExt, RefLog},
         PartialNameRef, Target,
     };
 
@@ -33,7 +33,7 @@ mod refedit_ext {
     fn named_edit(name: &str) -> RefEdit {
         RefEdit {
             change: Change::Delete {
-                previous: None,
+                expected: PreviousValue::Any,
                 log: RefLog::AndReference,
             },
             name: name.try_into().expect("valid name"),
@@ -48,7 +48,7 @@ mod refedit_ext {
         let mut edits = vec![
             RefEdit {
                 change: Change::Delete {
-                    previous: None,
+                    expected: PreviousValue::Any,
                     log: RefLog::AndReference,
                 },
                 name: "HEAD".try_into()?,
@@ -56,7 +56,7 @@ mod refedit_ext {
             },
             RefEdit {
                 change: Change::Delete {
-                    previous: None,
+                    expected: PreviousValue::Any,
                     log: RefLog::AndReference,
                 },
                 name: "refs/heads/main".try_into()?,
@@ -65,7 +65,7 @@ mod refedit_ext {
         ];
 
         let err = edits
-            .pre_process(|n| store.find_existing(n), |_, e| e, None)
+            .pre_process(|n| store.find_existing(n), |_, e| e)
             .expect_err("duplicate detected");
         assert_eq!(
             err.to_string(),
@@ -95,60 +95,12 @@ mod refedit_ext {
         );
     }
 
-    #[test]
-    fn namespaces_are_rewriting_names_and_symbolic_ref_targets_when_provided() -> crate::Result {
-        let mut edits = vec![
-            RefEdit {
-                change: Change::Delete {
-                    previous: None,
-                    log: RefLog::AndReference,
-                },
-                name: "refs/tags/deleted".try_into()?,
-                deref: false,
-            },
-            RefEdit {
-                change: Change::Update {
-                    log: Default::default(),
-                    mode: Create::Only,
-                    new: Target::Symbolic("refs/heads/main".try_into()?),
-                },
-                name: "HEAD".try_into()?,
-                deref: false,
-            },
-        ];
-        edits.adjust_namespace(git_ref::namespace::expand("foo")?.into());
-        assert_eq!(
-            edits,
-            vec![
-                RefEdit {
-                    change: Change::Delete {
-                        previous: None,
-                        log: RefLog::AndReference,
-                    },
-                    name: "refs/namespaces/foo/refs/tags/deleted".try_into()?,
-                    deref: false,
-                },
-                RefEdit {
-                    change: Change::Update {
-                        log: Default::default(),
-                        mode: Create::Only,
-                        new: Target::Symbolic("refs/namespaces/foo/refs/heads/main".try_into()?),
-                    },
-                    name: "refs/namespaces/foo/HEAD".try_into()?,
-                    deref: false,
-                }
-            ],
-            "it rewrites both names as well as symbolic ref targets"
-        );
-        Ok(())
-    }
-
     mod splitting {
         use std::{cell::Cell, convert::TryInto};
 
         use git_hash::ObjectId;
         use git_ref::{
-            transaction::{Change, Create, LogChange, RefEdit, RefEditsExt, RefLog},
+            transaction::{Change, LogChange, PreviousValue, RefEdit, RefEditsExt, RefLog},
             FullNameRef, PartialNameRef, Target,
         };
         use git_testtools::hex_to_id;
@@ -172,7 +124,7 @@ mod refedit_ext {
             let mut edits = vec![
                 RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::AndReference,
                     },
                     name: "SYMBOLIC_PROBABLY_BUT_DEREF_IS_FALSE_SO_IGNORED".try_into()?,
@@ -180,7 +132,7 @@ mod refedit_ext {
                 },
                 RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::AndReference,
                     },
                     name: "refs/heads/anything-but-not-symbolic".try_into()?,
@@ -188,7 +140,7 @@ mod refedit_ext {
                 },
                 RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::AndReference,
                     },
                     name: "refs/heads/does-not-exist-and-deref-is-ignored".try_into()?,
@@ -241,7 +193,7 @@ mod refedit_ext {
             let mut edits = vec![
                 RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::AndReference,
                     },
                     name: "refs/heads/delete-symbolic-1".try_into()?,
@@ -249,7 +201,7 @@ mod refedit_ext {
                 },
                 RefEdit {
                     change: Change::Update {
-                        mode: Create::Only,
+                        expected: PreviousValue::MustNotExist,
                         log: LogChange {
                             mode: RefLog::AndReference,
                             force_create_reflog: true,
@@ -274,7 +226,8 @@ mod refedit_ext {
         }
 
         #[test]
-        fn symbolic_refs_are_split_into_referents_handling_the_reflog_recursively() -> crate::Result {
+        fn symbolic_refs_are_split_into_referents_handling_the_reflog_and_previous_values_recursively() -> crate::Result
+        {
             let store = MockStore::with(vec![
                 (
                     "refs/heads/delete-symbolic-1",
@@ -314,7 +267,7 @@ mod refedit_ext {
             let mut edits = vec![
                 RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::AndReference,
                     },
                     name: "refs/heads/delete-symbolic-1".try_into()?,
@@ -322,7 +275,7 @@ mod refedit_ext {
                 },
                 RefEdit {
                     change: Change::Update {
-                        mode: Create::Only,
+                        expected: PreviousValue::MustNotExist,
                         log: log.clone(),
                         new: Target::Peeled(ObjectId::null_sha1()),
                     },
@@ -350,7 +303,7 @@ mod refedit_ext {
                 vec![
                     RefEdit {
                         change: Change::Delete {
-                            previous: None,
+                            expected: PreviousValue::Any,
                             log: RefLog::Only,
                         },
                         name: "refs/heads/delete-symbolic-1".try_into()?,
@@ -358,7 +311,7 @@ mod refedit_ext {
                     },
                     RefEdit {
                         change: Change::Update {
-                            mode: Create::Only,
+                            expected: PreviousValue::Any,
                             log: log_only.clone(),
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },
@@ -367,7 +320,7 @@ mod refedit_ext {
                     },
                     RefEdit {
                         change: Change::Delete {
-                            previous: None,
+                            expected: PreviousValue::Any,
                             log: RefLog::Only,
                         },
                         name: "refs/heads/delete-symbolic-2".try_into()?,
@@ -375,7 +328,7 @@ mod refedit_ext {
                     },
                     RefEdit {
                         change: Change::Update {
-                            mode: Create::Only,
+                            expected: PreviousValue::Any,
                             log: log_only,
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },
@@ -384,7 +337,7 @@ mod refedit_ext {
                     },
                     RefEdit {
                         change: Change::Delete {
-                            previous: None,
+                            expected: PreviousValue::Any,
                             log: RefLog::AndReference,
                         },
                         name: "refs/heads/delete-symbolic-3".try_into()?,
@@ -392,7 +345,7 @@ mod refedit_ext {
                     },
                     RefEdit {
                         change: Change::Update {
-                            mode: Create::Only,
+                            expected: PreviousValue::MustNotExist,
                             log,
                             new: Target::Peeled(ObjectId::null_sha1()),
                         },

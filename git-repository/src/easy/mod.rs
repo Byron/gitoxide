@@ -14,14 +14,9 @@
 use std::{
     cell::RefCell,
     ops::{Deref, DerefMut},
-    sync::Arc,
-    time::SystemTime,
 };
 
 use git_hash::ObjectId;
-use git_object as objs;
-use git_odb as odb;
-use git_ref as refs;
 
 use crate::Repository;
 
@@ -30,15 +25,26 @@ mod impls;
 pub(crate) mod ext;
 
 pub mod borrow;
+pub mod commit;
+pub mod head;
+pub mod iter;
 pub mod object;
-mod oid;
+pub mod oid;
 pub mod reference;
 pub mod state;
+
+/// The head reference, as created from looking at `.git/HEAD`.
+pub struct Head<'repo, A> {
+    /// One of various possible states for the HEAD reference
+    pub kind: head::Kind,
+    access: &'repo A,
+}
 
 /// An [ObjectId] with access to a repository.
 #[derive(Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct Oid<'r, A> {
-    id: ObjectId,
+    /// The actual object id
+    pub inner: ObjectId,
     access: &'r A,
 }
 
@@ -52,7 +58,7 @@ pub struct ObjectRef<'repo, A> {
     /// The id of the object
     pub id: ObjectId,
     /// The kind of the object
-    pub kind: objs::Kind,
+    pub kind: git_object::Kind,
     /// The fully decoded object data
     pub data: std::cell::Ref<'repo, [u8]>,
     access: &'repo A,
@@ -77,36 +83,31 @@ pub struct Object {
     /// The id of the object
     pub id: ObjectId,
     /// The kind of the object
-    pub kind: objs::Kind,
+    pub kind: git_object::Kind,
     /// The fully decoded object data
     pub data: Vec<u8>,
 }
 
 /// A reference that points to an object or reference, with access to its source repository.
+///
+/// Note that these are snapshots and won't recognize if they are stale.
 pub struct Reference<'r, A> {
-    pub(crate) backing: Option<reference::Backing>,
+    /// The actual reference data
+    pub inner: git_ref::Reference,
     pub(crate) access: &'r A,
 }
 
 #[cfg(not(feature = "local"))]
-type PackCache = odb::pack::cache::Never;
+type PackCache = git_odb::pack::cache::Never;
 #[cfg(feature = "local")]
-type PackCache = odb::pack::cache::lru::StaticLinkedList<64>;
-
-#[derive(Default)]
-struct ModifieablePackedRefsBuffer {
-    packed_refs: Option<refs::packed::Buffer>,
-    modified: Option<SystemTime>,
-}
+type PackCache = git_odb::pack::cache::lru::StaticLinkedList<64>;
 
 /// State for use in `Easy*` to provide mutable parts of a repository such as caches and buffers.
 #[derive(Default)]
 pub struct State {
-    /// As the packed-buffer may hold onto a memory map, we avoid that to exist once per thread, multiplying system resources.
-    /// This seems worth the cost of always going through an `Arc<RwLock<…>>>`. Note that `EasyArcExclusive` uses the same construct
-    /// but the reason we make this distinction at all is that there are other easy's that allows to chose exactly what you need in
-    /// your application. `State` is one size fits all with supporting single-threaded applications only.
-    packed_refs: Arc<parking_lot::RwLock<ModifieablePackedRefsBuffer>>,
+    /// As the packed-buffer may hold onto a memory map, so ideally this State is freed after use instead of keeping it around
+    /// for too long. At least `packed_refs` is lazily initialized.
+    packed_refs: RefCell<reference::packed::ModifieablePackedRefsBuffer>,
     pack_cache: RefCell<PackCache>,
     buf: RefCell<Vec<u8>>,
 }

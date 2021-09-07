@@ -34,7 +34,7 @@ mod changes {
             Ok(db
                 .try_find(tree_id, buf, &mut pack::cache::Never)?
                 .expect("main tree present")
-                .into_tree_iter()
+                .try_into_tree_iter()
                 .expect("id to be a tree"))
         }
 
@@ -53,7 +53,7 @@ mod changes {
                     db.try_find(oid, buf, &mut pack::cache::Never)
                         .ok()
                         .flatten()
-                        .and_then(|obj| obj.into_tree_iter())
+                        .and_then(|obj| obj.try_into_tree_iter())
                 },
                 &mut recorder,
             )?;
@@ -78,7 +78,7 @@ mod changes {
             let current_tree = db
                 .try_find(main_tree_id, &mut buf, &mut pack::cache::Never)?
                 .expect("main tree present")
-                .into_tree_iter()
+                .try_into_tree_iter()
                 .expect("id to be a tree");
             let mut buf2 = Vec::new();
             let previous_tree: Option<_> = {
@@ -88,7 +88,7 @@ mod changes {
                     .and_then(|c| c.into_commit())
                     .map(|c| c.tree())
                     .and_then(|tree| db.try_find(tree, &mut buf2, &mut pack::cache::Never).ok().flatten())
-                    .and_then(|tree| tree.into_tree_iter())
+                    .and_then(|tree| tree.try_into_tree_iter())
             };
 
             let mut recorder = git_diff::tree::Recorder::default();
@@ -99,7 +99,7 @@ mod changes {
                     db.try_find(oid, buf, &mut pack::cache::Never)
                         .ok()
                         .flatten()
-                        .and_then(|obj| obj.into_tree_iter())
+                        .and_then(|obj| obj.try_into_tree_iter())
                 },
                 &mut recorder,
             )?;
@@ -133,7 +133,7 @@ mod changes {
                 db.try_find(oid, buf, &mut pack::cache::Never)
                     .ok()
                     .flatten()
-                    .and_then(|o| o.into_commit_iter())
+                    .and_then(|o| o.try_into_commit_iter())
             })
             .collect::<Vec<_>>()
             .into_iter()

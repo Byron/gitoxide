@@ -1,11 +1,8 @@
 #![allow(missing_docs)]
-#[cfg(feature = "git-diff")]
 use std::borrow::BorrowMut;
 
-#[cfg(feature = "git-diff")]
 use git_hash::oid;
 use git_object::TreeRefIter;
-#[cfg(feature = "git-traverse")]
 use git_traverse::tree::breadthfirst;
 
 pub trait Sealed {}
@@ -25,7 +22,6 @@ pub trait TreeIterExt: Sealed {
         StateMut: BorrowMut<git_diff::tree::State>;
 
     /// Use this for squeezing out the last bits of performance.
-    #[cfg(feature = "git-traverse")]
     fn traverse<StateMut, Find, V>(
         &self,
         state: StateMut,
@@ -57,7 +53,6 @@ impl<'d> TreeIterExt for TreeRefIter<'d> {
         git_diff::tree::Changes::from(Some(self.clone())).needed_to_obtain(other, state, find, delegate)
     }
 
-    #[cfg(feature = "git-traverse")]
     fn traverse<StateMut, Find, V>(
         &self,
         state: StateMut,

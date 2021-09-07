@@ -70,7 +70,7 @@ impl<'repo> easy::Access for EasyShared<'repo> {
 }
 
 impl easy::Access for Easy {
-    type RepoRef = Rc<Repository>;
+    type RepoRef = Rc<Repository>; // TODO: this could be a reference with GATs
     type RepoRefMut = &'static mut Repository; // this is a lie
 
     fn repo(&self) -> Result<Self::RepoRef, easy::borrow::repo::Error> {

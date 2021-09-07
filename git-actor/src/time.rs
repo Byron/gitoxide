@@ -2,6 +2,16 @@ use std::io;
 
 use crate::{Sign, Time, SPACE};
 
+impl From<i32> for Sign {
+    fn from(v: i32) -> Self {
+        if v < 0 {
+            Sign::Minus
+        } else {
+            Sign::Plus
+        }
+    }
+}
+
 impl Time {
     /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {

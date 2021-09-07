@@ -2,16 +2,18 @@ use crate::file::{
     store_with_packed_refs, store_writable,
     transaction::prepare_and_commit::{committer, empty_store, log_line, reflog_lines},
 };
-use bstr::ByteSlice;
 use git_hash::ObjectId;
 use git_lock::acquire::Fail;
 use git_object::bstr::BString;
+use git_object::bstr::ByteSlice;
+use git_ref::file::ReferenceExt;
+use git_ref::transaction::PreviousValue;
 use git_ref::{
     file::{
         transaction::{self, PackedRefs},
         WriteReflog,
     },
-    transaction::{Change, Create, LogChange, RefEdit, RefLog},
+    transaction::{Change, LogChange, RefEdit, RefLog},
     Target,
 };
 use git_testtools::hex_to_id;
@@ -34,7 +36,7 @@ fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_ca
                 Some(RefEdit {
                     change: Change::Update {
                         log: LogChange::default(),
-                        mode: Create::Only,
+                        expected: PreviousValue::MustNotExist,
                         new: Target::Symbolic("refs/heads/main".try_into().unwrap()),
                     },
                     name: "HEAD".try_into()?,
@@ -73,9 +75,7 @@ fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
             change: Change::Update {
                 log: LogChange::default(),
                 new: Target::Peeled(ObjectId::null_sha1()),
-                mode: Create::OrUpdate {
-                    previous: Some(Target::must_exist()),
-                },
+                expected: PreviousValue::MustExist,
             },
             name: "HEAD".try_into()?,
             deref: false,
@@ -104,9 +104,9 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
             change: Change::Update {
                 log: LogChange::default(),
                 new: Target::Peeled(ObjectId::null_sha1()),
-                mode: Create::OrUpdate {
-                    previous: Some(Target::Peeled(hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"))),
-                },
+                expected: PreviousValue::MustExistAndMatch(Target::Peeled(hex_to_id(
+                    "28ce6a8b26aa170e1de65536fe8abe1832bd3242",
+                ))),
             },
             name: "HEAD".try_into()?,
             deref: false,
@@ -124,7 +124,43 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
 }
 
 #[test]
-fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_value_does_not_match() -> crate::Result {
+fn the_existing_must_match_constraint_allow_non_existing_references_to_be_created() -> crate::Result {
+    let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
+    let expected = PreviousValue::ExistingMustMatch(Target::Peeled(ObjectId::empty_tree(git_hash::Kind::Sha1)));
+    let edits = store
+        .transaction()
+        .prepare(
+            Some(RefEdit {
+                change: Change::Update {
+                    log: LogChange::default(),
+                    new: Target::Peeled(ObjectId::null_sha1()),
+                    expected: expected.clone(),
+                },
+                name: "refs/heads/new".try_into()?,
+                deref: false,
+            }),
+            Fail::Immediately,
+        )?
+        .commit(&committer())?;
+
+    assert_eq!(
+        edits,
+        vec![RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                new: Target::Peeled(ObjectId::null_sha1()),
+                expected,
+            },
+            name: "refs/heads/new".try_into()?,
+            deref: false,
+        }]
+    );
+    Ok(())
+}
+
+#[test]
+fn the_existing_must_match_constraint_requires_existing_references_to_have_the_given_value_to_cause_failure_on_mismatch(
+) -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
     let head = store.try_find_loose("HEAD")?.expect("head exists already");
     let target = head.target;
@@ -134,7 +170,37 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
             change: Change::Update {
                 log: LogChange::default(),
                 new: Target::Peeled(ObjectId::null_sha1()),
-                mode: Create::Only,
+                expected: PreviousValue::ExistingMustMatch(Target::Peeled(hex_to_id(
+                    "28ce6a8b26aa170e1de65536fe8abe1832bd3242",
+                ))),
+            },
+            name: "HEAD".try_into()?,
+            deref: false,
+        }),
+        Fail::Immediately,
+    );
+    match res {
+        Err(transaction::prepare::Error::ReferenceOutOfDate { full_name, actual, .. }) => {
+            assert_eq!(full_name, "HEAD");
+            assert_eq!(actual, target);
+        }
+        _ => unreachable!("unexpected result"),
+    }
+    Ok(())
+}
+
+#[test]
+fn reference_with_must_not_exist_constraint_cannot_be_created_if_it_exists_already() -> crate::Result {
+    let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
+    let head = store.try_find_loose("HEAD")?.expect("head exists already");
+    let target = head.target;
+
+    let res = store.transaction().prepare(
+        Some(RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                new: Target::Peeled(ObjectId::null_sha1()),
+                expected: PreviousValue::MustNotExist,
             },
             name: "HEAD".try_into()?,
             deref: false,
@@ -152,18 +218,16 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_if_the_val
 }
 
 #[test]
-fn namespaced_updates_or_deletions_cause_reference_names_to_be_rewritten_and_observable_in_the_output() -> crate::Result
-{
-    let (_keep, store) = empty_store()?;
-
+fn namespaced_updates_or_deletions_are_transparent_and_not_observable() -> crate::Result {
+    let (_keep, mut store) = empty_store()?;
+    store.namespace = git_ref::namespace::expand("foo")?.into();
     let edits = store
         .transaction()
-        .namespace(git_ref::namespace::expand("foo")?)
         .prepare(
             vec![
                 RefEdit {
                     change: Change::Delete {
-                        previous: None,
+                        expected: PreviousValue::Any,
                         log: RefLog::AndReference,
                     },
                     name: "refs/for/deletion".try_into()?,
@@ -173,7 +237,7 @@ fn namespaced_updates_or_deletions_cause_reference_names_to_be_rewritten_and_obs
                     change: Change::Update {
                         log: LogChange::default(),
                         new: Target::Symbolic("refs/heads/hello".try_into()?),
-                        mode: Create::Only,
+                        expected: PreviousValue::MustNotExist,
                     },
                     name: "HEAD".try_into()?,
                     deref: false,
@@ -188,19 +252,19 @@ fn namespaced_updates_or_deletions_cause_reference_names_to_be_rewritten_and_obs
         vec![
             RefEdit {
                 change: Change::Delete {
-                    previous: None,
+                    expected: PreviousValue::Any,
                     log: RefLog::AndReference,
                 },
-                name: "refs/namespaces/foo/refs/for/deletion".try_into()?,
+                name: "refs/for/deletion".try_into()?,
                 deref: false,
             },
             RefEdit {
                 change: Change::Update {
                     log: LogChange::default(),
-                    new: Target::Symbolic("refs/namespaces/foo/refs/heads/hello".try_into()?),
-                    mode: Create::Only,
+                    new: Target::Symbolic("refs/heads/hello".try_into()?),
+                    expected: PreviousValue::MustNotExist,
                 },
-                name: "refs/namespaces/foo/HEAD".try_into()?,
+                name: "HEAD".try_into()?,
                 deref: false,
             }
         ]
@@ -209,7 +273,53 @@ fn namespaced_updates_or_deletions_cause_reference_names_to_be_rewritten_and_obs
 }
 
 #[test]
-fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the_value_matches() -> crate::Result {
+fn reference_with_must_exist_constraint_must_exist_already_with_any_value() -> crate::Result {
+    let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
+    let head = store.try_find_loose("HEAD")?.expect("head exists already");
+    let target = head.target;
+    let previous_reflog_count = reflog_lines(&store, "HEAD")?.len();
+
+    let new_target = Target::Peeled(ObjectId::empty_tree(git_hash::Kind::Sha1));
+    let edits = store
+        .transaction()
+        .prepare(
+            Some(RefEdit {
+                change: Change::Update {
+                    log: LogChange::default(),
+                    new: new_target.clone(),
+                    expected: PreviousValue::MustExist,
+                },
+                name: "HEAD".try_into()?,
+                deref: false,
+            }),
+            Fail::Immediately,
+        )?
+        .commit(&committer())?;
+
+    assert_eq!(
+        edits,
+        vec![RefEdit {
+            change: Change::Update {
+                log: LogChange::default(),
+                new: new_target,
+                expected: PreviousValue::MustExistAndMatch(target)
+            },
+            name: "HEAD".try_into()?,
+            deref: false,
+        }]
+    );
+
+    assert_eq!(
+        reflog_lines(&store, "HEAD")?.len(),
+        previous_reflog_count + 1,
+        "a new reflog is added"
+    );
+    Ok(())
+}
+
+#[test]
+fn reference_with_must_not_exist_constraint_may_exist_already_if_the_new_value_matches_the_existing_one(
+) -> crate::Result {
     let (_keep, store) = store_writable("make_repo_for_reflog.sh")?;
     let head = store.try_find_loose("HEAD")?.expect("head exists already");
     let target = head.target;
@@ -222,7 +332,7 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the
                 change: Change::Update {
                     log: LogChange::default(),
                     new: target.clone(),
-                    mode: Create::Only,
+                    expected: PreviousValue::MustNotExist,
                 },
                 name: "HEAD".try_into()?,
                 deref: false,
@@ -237,7 +347,7 @@ fn reference_with_create_only_must_not_exist_already_when_creating_it_unless_the
             change: Change::Update {
                 log: LogChange::default(),
                 new: target.clone(),
-                mode: Create::OrUpdate { previous: Some(target) },
+                expected: PreviousValue::MustExistAndMatch(target)
             },
             name: "HEAD".try_into()?,
             deref: false,
@@ -269,7 +379,7 @@ fn cancellation_after_preparation_leaves_no_change() -> crate::Result {
             change: Change::Update {
                 log: LogChange::default(),
                 new: Target::Symbolic("refs/heads/main".try_into().unwrap()),
-                mode: Create::Only,
+                expected: PreviousValue::MustNotExist,
             },
             name: "HEAD".try_into()?,
             deref: false,
@@ -306,7 +416,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     change: Change::Update {
                         log: log_ignored.clone(),
                         new: new_head_value.clone(),
-                        mode: Create::Only,
+                        expected: PreviousValue::MustNotExist,
                     },
                     name: "HEAD".try_into()?,
                     deref: false,
@@ -320,7 +430,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                 change: Change::Update {
                     log: log_ignored.clone(),
                     new: new_head_value.clone(),
-                    mode: Create::Only,
+                    expected: PreviousValue::MustNotExist,
                 },
                 name: "HEAD".try_into()?,
                 deref: false,
@@ -354,7 +464,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     change: Change::Update {
                         log: log.clone(),
                         new: new.clone(),
-                        mode: Create::OrUpdate { previous: None },
+                        expected: PreviousValue::Any,
                     },
                     name: "HEAD".try_into()?,
                     deref: true,
@@ -370,9 +480,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     change: Change::Update {
                         log: log_only.clone(),
                         new: new.clone(),
-                        mode: Create::OrUpdate {
-                            previous: Some(new_head_value.clone())
-                        },
+                        expected: PreviousValue::MustExistAndMatch(new_head_value.clone()),
                     },
                     name: "HEAD".try_into()?,
                     deref: false,
@@ -381,7 +489,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     change: Change::Update {
                         log,
                         new: new.clone(),
-                        mode: Create::Only,
+                        expected: PreviousValue::Any,
                     },
                     name: referent.try_into()?,
                     deref: false,
@@ -448,9 +556,7 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
                         force_create_reflog: false,
                         message: "".into(),
                     },
-                    mode: Create::OrUpdate {
-                        previous: Some(Target::must_exist()),
-                    },
+                    expected: PreviousValue::MustExist,
                     new: Target::Peeled(new_id),
                 },
                 name: referent.as_bstr().try_into()?,
@@ -470,9 +576,9 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
                     force_create_reflog: false,
                     message: "".into(),
                 },
-                mode: Create::OrUpdate {
-                    previous: Some(Target::Peeled(hex_to_id("02a7a22d90d7c02fb494ed25551850b868e634f0"))),
-                },
+                expected: PreviousValue::MustExistAndMatch(Target::Peeled(hex_to_id(
+                    "02a7a22d90d7c02fb494ed25551850b868e634f0"
+                )),),
                 new: Target::Peeled(new_id),
             },
             name: referent.as_bstr().try_into()?,
@@ -515,9 +621,7 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
                         force_create_reflog: false,
                         message: "for pack".into(),
                     },
-                    mode: Create::OrUpdate {
-                        previous: Some(Target::Peeled(old_id)),
-                    },
+                    expected: PreviousValue::MustExistAndMatch(Target::Peeled(old_id)),
                     new: Target::Peeled(new_id),
                 },
                 name: "refs/heads/main".try_into()?,
@@ -572,9 +676,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
                 .map(|r| RefEdit {
                     change: Change::Update {
                         log: LogChange::default(),
-                        mode: Create::OrUpdate {
-                            previous: Some(r.target.clone()),
-                        },
+                        expected: PreviousValue::MustExistAndMatch(r.target.clone()),
                         new: r.target,
                     },
                     name: r.name,
@@ -615,7 +717,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
     let packed = store.packed_buffer()?.expect("packed-refs");
     assert_ne!(
         packed.find("newer-as-loose")?.target(),
-        branch.target().as_id().expect("peeled"),
+        branch.target.as_id().expect("peeled"),
         "the packed ref is outdated"
     );
     let mut buf = Vec::new();
@@ -625,9 +727,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
     let edits = store.loose_iter()?.map(|r| r.expect("valid ref")).map(|r| RefEdit {
         change: Change::Update {
             log: LogChange::default(),
-            mode: Create::OrUpdate {
-                previous: r.target.clone().into(),
-            },
+            expected: PreviousValue::MustExistAndMatch(r.target.clone()),
             new: r.target,
         },
         name: r.name,
@@ -666,7 +766,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
     );
     assert_eq!(
         packed.find("newer-as-loose")?.target(),
-        store.find("newer-as-loose", None)?.target().as_id().expect("peeled"),
+        store.find("newer-as-loose", None)?.target.into_id(),
         "the packed ref is now up to date and the loose ref definitely still exists"
     );
     Ok(())

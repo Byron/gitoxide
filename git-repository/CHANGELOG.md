@@ -1,4 +1,4 @@
-### v0.9.0 (2021-08-??)
+### v0.9.0 (2021-09-??)
 
 #### New
 
@@ -7,6 +7,9 @@
 - `Repository::init(Kind)`
 - `open()`
 - `Repository::open()`
+- `easy::Head`
+- `easy::ext::ReferenceAccessExt::head()`
+- `ext::ReferenceExt` trait
 
 #### Breaking
 - **renames / moves / Signature Changes**

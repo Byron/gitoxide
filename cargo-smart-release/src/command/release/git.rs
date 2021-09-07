@@ -6,7 +6,7 @@ use cargo_metadata::{
     camino::{Utf8Component, Utf8Path},
     Package,
 };
-use git_repository::{easy::object, prelude::ReferenceAccessExt, refs};
+use git_repository::{easy::object, prelude::ReferenceAccessExt, refs, refs::transaction::PreviousValue};
 
 use super::{tag_name_for, utils::will, Context, Oid, Options};
 
@@ -46,8 +46,8 @@ pub(in crate::command::release_impl) fn has_changed_since_last_release(
         .strip_prefix(&ctx.root)
         .expect("workspace members are releative to the root directory");
 
-    let current_commit = ctx.git_easy.find_reference("HEAD")?.peel_to_oid_in_place()?;
-    let released_target = tag_ref.peel_to_oid_in_place()?;
+    let current_commit = ctx.git_easy.find_reference("HEAD")?.peel_to_id_in_place()?;
+    let released_target = tag_ref.peel_to_id_in_place()?;
 
     if repo_relative_crate_dir.as_os_str().is_empty() {
         Ok(current_commit != released_target)
@@ -126,7 +126,7 @@ pub(in crate::command::release_impl) fn commit_changes(
     if !cmd.status()?.success() {
         bail!("Failed to commit changed manifests");
     }
-    Ok(Some(ctx.git_easy.find_reference("HEAD")?.peel_to_oid_in_place()?))
+    Ok(Some(ctx.git_easy.find_reference("HEAD")?.peel_to_id_in_place()?))
 }
 
 pub(in crate::command::release_impl) fn create_version_tag<'repo>(
@@ -155,12 +155,9 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
         }
         Ok(Some(format!("refs/tags/{}", tag_name).try_into()?))
     } else {
-        let edits = ctx.git_easy.tag(
-            tag_name,
-            commit_id.expect("set in --execute mode"),
-            git_lock::acquire::Fail::Immediately,
-            false,
-        )?;
+        let edits = ctx
+            .git_easy
+            .tag(tag_name, commit_id.expect("set in --execute mode"), PreviousValue::Any)?;
         assert_eq!(edits.len(), 1, "We create only one tag and there is no expansion");
         let tag = edits.into_iter().next().expect("the promised tag");
         log::info!("Created tag {}", tag.name.as_bstr());

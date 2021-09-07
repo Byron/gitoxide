@@ -1,6 +1,6 @@
 [package]
 name = "git-ref"
-version = "0.6.0"
+version = "0.7.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate to handle git references"
@@ -13,7 +13,7 @@ doctest = false
 test = true
 
 [features]
-serde1 = ["serde", "bstr/serde1", "git-hash/serde1", "git-actor/serde1"]
+serde1 = ["serde", "git-hash/serde1", "git-actor/serde1", "git-object/serde1"]
 internal-testing-git-features-parallel = ["git-features/parallel"] # test sorted parallel loose file traversal
 
 [[test]]
@@ -25,7 +25,7 @@ required-features = ["internal-testing-git-features-parallel"]
 
 [dependencies]
 git-features = { version = "^0.16.0", path = "../git-features", features = ["walkdir"]}
-git-hash = { version = "^0.5.0", path = "../git-hash" }
+git-hash = { version ="^0.6.0", path = "../git-hash" }
 git-object = { version ="^0.13.0", path = "../git-object" }
 git-validate = { version = "^0.5.0", path = "../git-validate" }
 git-actor = { version ="^0.5.0", path = "../git-actor" }
@@ -33,7 +33,6 @@ git-lock = { version ="^1.0.0", path = "../git-lock" }
 git-tempfile = { version ="^1.0.0", path = "../git-tempfile" }
 
 quick-error = "2.0.0"
-bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 nom = { version = "7", default-features = false, features = ["std"]}
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 os_str_bytes = "3.1.0"

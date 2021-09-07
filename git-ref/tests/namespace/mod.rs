@@ -1,3 +1,15 @@
+use std::path::Path;
+
+#[test]
+fn into_namespaced_prefix() {
+    assert_eq!(
+        git_ref::namespace::expand("foo")
+            .unwrap()
+            .into_namespaced_prefix("prefix"),
+        Path::new("refs").join("namespaces").join("foo").join("prefix")
+    )
+}
+
 mod expand {
     #[test]
     fn components_end_with_trailing_slash_to_help_with_prefix_stripping() {

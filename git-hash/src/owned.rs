@@ -1,11 +1,12 @@
-use std::{borrow::Borrow, fmt, io, ops::Deref};
+use std::{borrow::Borrow, convert::TryInto, fmt, io, ops::Deref};
 
-use crate::{borrowed::oid, SIZE_OF_SHA1_DIGEST};
+use crate::{borrowed::oid, Kind, SIZE_OF_SHA1_DIGEST};
 
 /// An owned hash identifying objects, most commonly Sha1
 #[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum ObjectId {
+    /// A SHA 1 hash digest
     Sha1([u8; SIZE_OF_SHA1_DIGEST]),
 }
 
@@ -45,8 +46,13 @@ impl ObjectId {
         out.write_all(&self.to_sha1_hex())
     }
 
-    pub const fn empty_tree() -> ObjectId {
-        ObjectId::Sha1(*b"\x4b\x82\x5d\xc6\x42\xcb\x6e\xb9\xa0\x60\xe5\x4b\xf8\xd6\x92\x88\xfb\xee\x49\x04")
+    /// The hash of an empty tree
+    pub const fn empty_tree(hash: Kind) -> ObjectId {
+        match hash {
+            Kind::Sha1 => {
+                ObjectId::Sha1(*b"\x4b\x82\x5d\xc6\x42\xcb\x6e\xb9\xa0\x60\xe5\x4b\xf8\xd6\x92\x88\xfb\xee\x49\x04")
+            }
+        }
     }
 
     /// Returns true if this hash consists of all null bytes
@@ -57,7 +63,7 @@ impl ObjectId {
     }
 
     /// Returns an Digest representing a hash with whose memory is zeroed.
-    pub const fn null_sha(kind: crate::Kind) -> ObjectId {
+    pub const fn null(kind: crate::Kind) -> ObjectId {
         match kind {
             crate::Kind::Sha1 => Self::null_sha1(),
         }
@@ -118,7 +124,6 @@ impl ObjectId {
     }
 
     /// Returns an Digest representing a Sha1 with whose memory is zeroed.
-    /// TODO: remove this method replace its usage with `null_sha(kind)` to probably become hash independent.
     pub const fn null_sha1() -> ObjectId {
         ObjectId::Sha1([0u8; 20])
     }
@@ -127,6 +132,15 @@ impl ObjectId {
 impl From<[u8; SIZE_OF_SHA1_DIGEST]> for ObjectId {
     fn from(v: [u8; 20]) -> Self {
         Self::new_sha1(v)
+    }
+}
+
+impl From<&[u8]> for ObjectId {
+    fn from(v: &[u8]) -> Self {
+        match v.len() {
+            20 => Self::Sha1(v.try_into().expect("prior length validation")),
+            other => panic!("BUG: unsupported hash len: {}", other),
+        }
     }
 }
 

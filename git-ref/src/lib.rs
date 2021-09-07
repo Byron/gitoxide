@@ -18,8 +18,9 @@
 //!   * supersedes all of the above to allow handling hundreds of thousands of references.
 #![forbid(unsafe_code)]
 #![deny(missing_docs, rust_2018_idioms)]
-use bstr::{BStr, BString};
 use git_hash::{oid, ObjectId};
+pub use git_object::bstr;
+use git_object::bstr::{BStr, BString};
 
 mod store;
 pub use store::{file, packed};
@@ -31,6 +32,19 @@ pub mod name;
 pub mod namespace;
 ///
 pub mod transaction;
+
+mod parse;
+mod raw;
+
+pub use raw::Reference;
+
+mod target;
+
+///
+pub mod log;
+
+///
+pub mod peel;
 
 /// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
 /// of a symbolic reference
@@ -44,7 +58,7 @@ pub struct FullNameRef<'a>(&'a BStr);
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct PartialNameRef<'a>(&'a BStr);
 
-/// A validated prefix for references to act as a namespace.
+/// A _validated_ prefix for references to act as a namespace.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Namespace(BString);
 
@@ -56,7 +70,7 @@ pub enum Kind {
     Peeled,
     /// A ref that points to another reference, adding a level of indirection.
     ///
-    /// It can be resolved to an id using the [`peel_in_place_to_id()`][file::Reference::peel_to_id_in_place()] method.
+    /// It can be resolved to an id using the [`peel_in_place_to_id()`][`crate::file::ReferenceExt::peel_to_id_in_place()`] method.
     Symbolic,
 }
 
@@ -77,8 +91,5 @@ pub enum TargetRef<'a> {
     /// A ref that points to an object id
     Peeled(&'a oid),
     /// A ref that points to another reference by its validated name, adding a level of indirection.
-    Symbolic(&'a BStr),
+    Symbolic(FullNameRef<'a>),
 }
-
-mod parse;
-mod target;

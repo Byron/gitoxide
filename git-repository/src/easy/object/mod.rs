@@ -4,7 +4,6 @@ use std::{cell::Ref, convert::TryInto};
 use git_hash::ObjectId;
 pub use git_object::Kind;
 use git_object::{CommitRefIter, TagRefIter};
-use git_odb as odb;
 
 use crate::{
     easy,
@@ -59,11 +58,10 @@ where
 }
 
 pub mod find {
-    use git_odb as odb;
 
     use crate::easy;
 
-    pub(crate) type OdbError = odb::compound::find::Error;
+    pub(crate) type OdbError = git_odb::compound::find::Error;
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
@@ -76,11 +74,9 @@ pub mod find {
     }
 
     pub mod existing {
-        use git_odb as odb;
-
         use crate::easy;
 
-        pub(crate) type OdbError = odb::pack::find::existing::Error<odb::compound::find::Error>;
+        pub(crate) type OdbError = git_odb::pack::find::existing::Error<git_odb::compound::find::Error>;
 
         #[derive(Debug, thiserror::Error)]
         pub enum Error {
@@ -91,6 +87,18 @@ pub mod find {
             #[error("BUG: The repository could not be borrowed")]
             BorrowRepo(#[from] easy::borrow::repo::Error),
         }
+    }
+}
+
+pub mod write {
+    use crate::easy;
+
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        OdbWrite(#[from] git_odb::loose::write::Error),
+        #[error("BUG: The repository could not be borrowed")]
+        BorrowRepo(#[from] easy::borrow::repo::Error),
     }
 }
 
@@ -120,32 +128,58 @@ impl<'repo, A> ObjectRef<'repo, A>
 where
     A: easy::Access + Sized,
 {
+    /// As [`to_commit_iter()`][ObjectRef::to_commit_iter()] but panics if this is not a commit
+    pub fn commit_iter(&self) -> CommitRefIter<'_> {
+        git_odb::data::Object::new(self.kind, &self.data)
+            .try_into_commit_iter()
+            .expect("BUG: This object must be a commit")
+    }
+
     pub fn to_commit_iter(&self) -> Option<CommitRefIter<'_>> {
-        odb::data::Object::new(self.kind, &self.data).into_commit_iter()
+        git_odb::data::Object::new(self.kind, &self.data).try_into_commit_iter()
     }
 
     pub fn to_tag_iter(&self) -> Option<TagRefIter<'_>> {
-        odb::data::Object::new(self.kind, &self.data).into_tag_iter()
+        git_odb::data::Object::new(self.kind, &self.data).try_into_tag_iter()
     }
 }
 
-pub mod peel_to_kind {
-    pub use error::Error;
-
+pub mod peel {
     use crate::{
         easy,
         easy::{
-            object::{peel_to_kind, Kind},
+            ext::ObjectAccessExt,
+            object,
+            object::{peel, Kind},
             ObjectRef,
         },
     };
+
+    pub mod to_kind {
+        mod error {
+
+            use crate::easy::object;
+
+            #[derive(Debug, thiserror::Error)]
+            pub enum Error {
+                #[error(transparent)]
+                FindExistingObject(#[from] object::find::existing::Error),
+                #[error("Last encountered object kind was {} while trying to peel to {}", .actual, .expected)]
+                NotFound {
+                    actual: object::Kind,
+                    expected: object::Kind,
+                },
+            }
+        }
+        pub use error::Error;
+    }
 
     impl<'repo, A> ObjectRef<'repo, A>
     where
         A: easy::Access + Sized,
     {
         // TODO: tests
-        pub fn peel_to_kind(mut self, kind: Kind) -> Result<Self, peel_to_kind::Error> {
+        pub fn peel_to_kind(mut self, kind: Kind) -> Result<Self, peel::to_kind::Error> {
             loop {
                 match self.kind {
                     any_kind if kind == any_kind => {
@@ -155,16 +189,16 @@ pub mod peel_to_kind {
                         let tree_id = self.to_commit_iter().expect("commit").tree_id().expect("valid commit");
                         let access = self.access;
                         drop(self);
-                        self = crate::easy::ext::object::find_object(access, tree_id)?;
+                        self = access.find_object(tree_id)?;
                     }
                     Kind::Tag => {
                         let target_id = self.to_tag_iter().expect("tag").target_id().expect("valid tag");
                         let access = self.access;
                         drop(self);
-                        self = crate::easy::ext::object::find_object(access, target_id)?;
+                        self = access.find_object(target_id)?;
                     }
                     Kind::Tree | Kind::Blob => {
-                        return Err(peel_to_kind::Error::NotFound {
+                        return Err(peel::to_kind::Error::NotFound {
                             actual: self.kind,
                             expected: kind,
                         })
@@ -172,21 +206,20 @@ pub mod peel_to_kind {
                 }
             }
         }
-    }
 
-    mod error {
-
-        use crate::easy::{object, object::find};
-
-        #[derive(Debug, thiserror::Error)]
-        pub enum Error {
-            #[error(transparent)]
-            FindExisting(#[from] find::existing::Error),
-            #[error("Last encountered object kind was {} while trying to peel to {}", .actual, .expected)]
-            NotFound {
-                actual: object::Kind,
-                expected: object::Kind,
-            },
+        // TODO: tests
+        pub fn peel_to_end(mut self) -> Result<Self, object::find::existing::Error> {
+            loop {
+                match self.kind {
+                    Kind::Commit | Kind::Tree | Kind::Blob => break Ok(self),
+                    Kind::Tag => {
+                        let target_id = self.to_tag_iter().expect("tag").target_id().expect("valid tag");
+                        let access = self.access;
+                        drop(self);
+                        self = access.find_object(target_id)?;
+                    }
+                }
+            }
         }
     }
 }

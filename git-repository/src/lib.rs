@@ -64,8 +64,8 @@
 //! * [`hash`]
 //! * [`url`]
 //! * [`actor`]
+//! * [`bstr`][bstr]
 //! * [`objs`]
-//!   * [`bstr`][objs::bstr]
 //! * [`odb`]
 //!   * [`pack`][odb::pack]
 //! * [`refs`]
@@ -88,15 +88,14 @@ use std::{path::PathBuf, rc::Rc, sync::Arc};
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
+pub use bstr;
 pub use git_actor as actor;
 #[cfg(all(feature = "unstable", feature = "git-diff"))]
 pub use git_diff as diff;
 #[cfg(feature = "unstable")]
 pub use git_features::{parallel, progress, progress::Progress};
 pub use git_hash as hash;
-#[cfg(feature = "unstable")]
 pub use git_lock as lock;
-#[cfg(feature = "unstable")]
 pub use git_object as objs;
 #[cfg(feature = "unstable")]
 pub use git_odb as odb;
@@ -105,7 +104,7 @@ pub use git_protocol as protocol;
 pub use git_ref as refs;
 #[cfg(feature = "unstable")]
 pub use git_tempfile as tempfile;
-#[cfg(all(feature = "unstable", feature = "git-traverse"))]
+#[cfg(feature = "unstable")]
 pub use git_traverse as traverse;
 #[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url as url;
@@ -154,6 +153,7 @@ pub struct Repository {
     pub(crate) odb: git_odb::linked::Store,
     /// The path to the worktree at which to find checked out files
     pub work_tree: Option<PathBuf>,
+    pub(crate) hash_kind: git_hash::Kind,
     // TODO: git-config should be here - it's read a lot but not written much in must applications, so shouldn't be in `State`.
     //       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
     //       packs are refreshed. This would be `git_config::fs::Config` when ready.
@@ -224,6 +224,11 @@ pub struct EasyArcExclusive {
 }
 
 pub mod easy;
+
+///
+pub mod commit;
+///
+pub mod reference;
 
 /// The kind of `Repository`
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]

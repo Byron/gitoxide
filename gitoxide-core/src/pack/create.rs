@@ -8,7 +8,9 @@ use git_repository::{
     objs::bstr::ByteVec,
     odb::{pack, pack::cache::DecodeEntry, Find},
     prelude::{Finalize, FindExt},
-    progress, traverse, Progress,
+    progress,
+    refs::file::ReferenceExt,
+    traverse, Progress,
 };
 
 use crate::OutputFormat;
