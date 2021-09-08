@@ -1,4 +1,8 @@
-### 0.10.0 (2021-08-??)
+### 0.11.0 (2021-09-08)
+
+- manual bump for safety as its dependencies have breaking changes
+
+### 0.10.0 (2021-09-07)
 
 - **renames**
    - `data::Object::into_commit_iter()` -> `data::Object::try_into_commit_iter()`
