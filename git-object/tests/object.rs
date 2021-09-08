@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
+mod encode;
 mod immutable;
-mod mutable;
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -26,4 +26,13 @@ pub fn fixture(path: &str) -> PathBuf {
 
 fn fixture_bytes(path: &str) -> Vec<u8> {
     fixup(std::fs::read(fixture(path)).unwrap())
+}
+
+#[test]
+fn size_in_memory() {
+    assert_eq!(
+        std::mem::size_of::<git_object::Object>(),
+        264,
+        "Prevent unexpected growth of what should be lightweight objects"
+    )
 }

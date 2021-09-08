@@ -1,5 +1,5 @@
 //! This crate provides types for [read-only git objects][crate::ObjectRef] backed by bytes provided in git's serialization format
-//! as well as [mutable versions][Object] of these. The latter can be serialized into git's serialization format for objects.
+//! as well as [mutable versions][Object] of these. Both types of objects can be encoded.
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 

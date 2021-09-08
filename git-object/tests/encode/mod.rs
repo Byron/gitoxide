@@ -37,7 +37,6 @@ macro_rules! round_trip {
     };
 }
 
-mod object;
 mod tag {
     round_trip!(
         git_object::Tag,
