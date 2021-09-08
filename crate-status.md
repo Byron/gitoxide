@@ -299,7 +299,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * [ ] Some examples
 
 ### git-validate
-* [ ] validate ref names
+* [x] validate ref names
 * [x] [validate][tagname-validation] tag names
 
 ### git-ref

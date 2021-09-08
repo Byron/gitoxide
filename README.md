@@ -52,9 +52,11 @@ Follow linked crate name for detailed status. Please note that all crates follow
 
 ### Released
 
+* **Stability Tier 1**
+  - [git-lock](https://github.com/Byron/gitoxide/blob/main/git-lock/README.md)
+     
 * **Stability Tier 2**
   - [git-tempfile](https://github.com/Byron/gitoxide/blob/main/git-tempfile/README.md)
-  - [git-lock](https://github.com/Byron/gitoxide/blob/main/git-lock/README.md)
 
 ### In Development/Pre-Release
 * **usable**
