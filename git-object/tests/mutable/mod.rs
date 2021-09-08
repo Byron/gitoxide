@@ -8,15 +8,26 @@ macro_rules! round_trip {
             for input in &[
                 $( $files ),*
             ] {
+                use git_object::WriteTo;
                 let input = fixture_bytes(input);
                 // Test the parse->borrowed->owned->write chain for an object kind
-                let item: $owned = <$borrowed>::from_bytes(&input)?.into();
                 let mut output = Vec::new();
+                let item = <$borrowed>::from_bytes(&input)?;
+                item.write_to(&mut output)?;
+                assert_eq!(output.as_bstr(), input.as_bstr());
+
+                let item: $owned = item.into();
+                output.clear();
                 item.write_to(&mut output)?;
                 assert_eq!(output.as_bstr(), input.as_bstr());
 
                 // Test the parse->borrowed->owned->write chain for the top-level objects
-                let item: Object = ObjectRef::from(<$borrowed>::from_bytes(&input)?).into();
+                let item = ObjectRef::from(<$borrowed>::from_bytes(&input)?);
+                output.clear();
+                item.write_to(&mut output)?;
+                assert_eq!(output.as_bstr(), input.as_bstr());
+
+                let item: Object = item.into();
                 output.clear();
                 item.write_to(&mut output)?;
                 assert_eq!(output.as_bstr(), input.as_bstr());

@@ -2,10 +2,24 @@ use std::{convert::Infallible, io};
 
 use crate::{Blob, BlobRef};
 
-impl Blob {
+impl<'a> crate::WriteTo for BlobRef<'a> {
     /// Write the blobs data to `out` verbatim.
-    pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+    fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         out.write_all(&self.data)
+    }
+}
+
+impl crate::WriteTo for Blob {
+    /// Write the blobs data to `out` verbatim.
+    fn write_to(&self, out: impl io::Write) -> io::Result<()> {
+        self.to_ref().write_to(out)
+    }
+}
+
+impl Blob {
+    /// Provide a `BlobRef` to this owned blob
+    pub fn to_ref(&self) -> BlobRef<'_> {
+        BlobRef { data: &self.data }
     }
 }
 

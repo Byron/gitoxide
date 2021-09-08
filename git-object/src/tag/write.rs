@@ -3,7 +3,7 @@ use std::io;
 use bstr::BStr;
 use quick_error::quick_error;
 
-use crate::{encode, encode::NL, Tag};
+use crate::{encode, encode::NL, Tag, TagRef};
 
 quick_error! {
     /// An Error used in [`Tag::write_to()`].
@@ -27,13 +27,33 @@ impl From<Error> for io::Error {
     }
 }
 
-impl Tag {
-    /// Writes the encoded tag to `out`.
-    pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+impl crate::WriteTo for Tag {
+    fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         encode::trusted_header_id(b"object", &self.target, &mut out)?;
         encode::trusted_header_field(b"type", self.target_kind.as_bytes(), &mut out)?;
         encode::header_field(b"tag", validated_name(self.name.as_ref())?, &mut out)?;
-        if let Some(tagger) = &self.signature {
+        if let Some(tagger) = &self.tagger {
+            encode::trusted_header_signature(b"tagger", &tagger.to_ref(), &mut out)?;
+        }
+
+        if !self.message.is_empty() {
+            out.write_all(NL)?;
+            out.write_all(&self.message)?;
+        }
+        if let Some(ref message) = self.pgp_signature {
+            out.write_all(NL)?;
+            out.write_all(message)?;
+        }
+        Ok(())
+    }
+}
+
+impl<'a> crate::WriteTo for TagRef<'a> {
+    fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+        encode::trusted_header_id(b"object", &self.target(), &mut out)?;
+        encode::trusted_header_field(b"type", self.target_kind.as_bytes(), &mut out)?;
+        encode::header_field(b"tag", validated_name(self.name)?, &mut out)?;
+        if let Some(tagger) = &self.tagger {
             encode::trusted_header_signature(b"tagger", tagger, &mut out)?;
         }
 

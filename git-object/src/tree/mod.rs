@@ -37,7 +37,7 @@ impl EntryMode {
 }
 
 /// An element of a [`TreeRef`][crate::TreeRef::entries].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct EntryRef<'a> {
     /// The kind of object to which `oid` is pointing.
@@ -49,6 +49,20 @@ pub struct EntryRef<'a> {
     // Answer: make it 'id', as in `git2`
     #[cfg_attr(feature = "serde1", serde(borrow))]
     pub oid: &'a git_hash::oid,
+}
+
+impl<'a> PartialOrd for EntryRef<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<'a> Ord for EntryRef<'a> {
+    /// Entries compare by the common portion of the filename. This is critical for proper functioning of algorithms working on trees.
+    fn cmp(&self, other: &Self) -> Ordering {
+        let len = self.filename.len().min(other.filename.len());
+        self.filename[..len].cmp(&other.filename[..len])
+    }
 }
 
 /// An entry in a [`Tree`][crate::Tree], similar to an entry in a directory.

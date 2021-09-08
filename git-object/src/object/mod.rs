@@ -5,12 +5,26 @@ mod convert;
 mod write {
     use std::io;
 
-    use crate::Object;
+    use crate::{Object, ObjectRef, WriteTo};
 
     /// Serialization
-    impl Object {
+    impl<'a> WriteTo for ObjectRef<'a> {
         /// Write the contained object to `out` in the git serialization format.
-        pub fn write_to(&self, out: impl io::Write) -> io::Result<()> {
+        fn write_to(&self, out: impl io::Write) -> io::Result<()> {
+            use crate::ObjectRef::*;
+            match self {
+                Tree(v) => v.write_to(out),
+                Blob(v) => v.write_to(out),
+                Commit(v) => v.write_to(out),
+                Tag(v) => v.write_to(out),
+            }
+        }
+    }
+
+    /// Serialization
+    impl WriteTo for Object {
+        /// Write the contained object to `out` in the git serialization format.
+        fn write_to(&self, out: impl io::Write) -> io::Result<()> {
             use crate::Object::*;
             match self {
                 Tree(v) => v.write_to(out),

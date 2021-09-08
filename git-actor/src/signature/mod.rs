@@ -65,7 +65,7 @@ mod write {
     use bstr::{BStr, ByteSlice};
     use quick_error::quick_error;
 
-    use crate::{Signature, SPACE};
+    use crate::{Signature, SignatureRef, SPACE};
 
     quick_error! {
         /// The Error produced by [`Signature::write_to()`].
@@ -87,11 +87,18 @@ mod write {
     /// Output
     impl Signature {
         /// Serialize this instance to `out` in the git serialization format for actors.
+        pub fn write_to(&self, out: impl io::Write) -> io::Result<()> {
+            self.to_ref().write_to(out)
+        }
+    }
+
+    impl<'a> SignatureRef<'a> {
+        /// Serialize this instance to `out` in the git serialization format for actors.
         pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
-            out.write_all(validated_token(self.name.as_bstr())?)?;
+            out.write_all(validated_token(self.name)?)?;
             out.write_all(SPACE)?;
             out.write_all(&b"<"[..])?;
-            out.write_all(validated_token(self.email.as_bstr())?)?;
+            out.write_all(validated_token(self.email)?)?;
             out.write_all(&b"> "[..])?;
             self.time.write_to(out)?;
             Ok(())

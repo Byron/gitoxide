@@ -17,7 +17,7 @@ impl From<TagRef<'_>> for Tag {
             name: name.to_owned(),
             target_kind,
             message: message.to_owned(),
-            signature: signature.map(Into::into),
+            tagger: signature.map(Into::into),
             pgp_signature: pgp_signature.map(ToOwned::to_owned),
         }
     }

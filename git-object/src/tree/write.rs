@@ -3,7 +3,8 @@ use std::io;
 use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
 
-use crate::{encode::SPACE, tree::Entry, Tree};
+use crate::tree::EntryRef;
+use crate::{encode::SPACE, tree::Entry, Tree, TreeRef};
 
 quick_error! {
     /// The Error used in [`Tree::write_to()`].
@@ -23,9 +24,9 @@ impl From<Error> for io::Error {
 }
 
 /// Serialization
-impl Tree {
+impl crate::WriteTo for Tree {
     /// Serialize this tree to `out` in the git internal format.
-    pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+    fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         debug_assert_eq!(
             &{
                 let mut entries_sorted = self.entries.clone();
@@ -40,7 +41,36 @@ impl Tree {
             out.write_all(SPACE)?;
 
             if filename.find_byte(b'\n').is_some() {
-                return Err(Error::NewlineInFilename(filename.to_owned()).into());
+                return Err(Error::NewlineInFilename((*filename).to_owned()).into());
+            }
+            out.write_all(filename)?;
+            out.write_all(&[b'\0'])?;
+
+            out.write_all(oid.as_bytes())?;
+        }
+        Ok(())
+    }
+}
+
+/// Serialization
+impl<'a> crate::WriteTo for TreeRef<'a> {
+    /// Serialize this tree to `out` in the git internal format.
+    fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
+        debug_assert_eq!(
+            &{
+                let mut entries_sorted = self.entries.clone();
+                entries_sorted.sort();
+                entries_sorted
+            },
+            &self.entries,
+            "entries for serialization must be sorted by filename"
+        );
+        for EntryRef { mode, filename, oid } in &self.entries {
+            out.write_all(mode.as_bytes())?;
+            out.write_all(SPACE)?;
+
+            if filename.find_byte(b'\n').is_some() {
+                return Err(Error::NewlineInFilename((*filename).to_owned()).into());
             }
             out.write_all(filename)?;
             out.write_all(&[b'\0'])?;

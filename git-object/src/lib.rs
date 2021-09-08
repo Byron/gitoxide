@@ -20,6 +20,12 @@ pub mod tree;
 
 mod blob;
 
+/// Writing of objects to a `Write` implementation
+pub trait WriteTo {
+    /// Write a representation of this instance to `out`.
+    fn write_to(&self, out: impl std::io::Write) -> std::io::Result<()>;
+}
+
 mod encode;
 pub(crate) mod parse;
 
@@ -148,10 +154,10 @@ pub struct Tag {
     pub target_kind: crate::Kind,
     /// The name of the tag, e.g. "v1.0".
     pub name: BString,
+    /// The tags author.
+    pub tagger: Option<git_actor::Signature>,
     /// The message describing the tag.
     pub message: BString,
-    /// The tags author.
-    pub signature: Option<git_actor::Signature>,
     /// A pgp signature over all bytes of the encoded tag, excluding the pgp signature itself.
     pub pgp_signature: Option<BString>,
 }
