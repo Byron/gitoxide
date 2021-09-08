@@ -2,7 +2,7 @@ use std::io;
 
 use bstr::ByteSlice;
 
-use crate::{encode, encode::NL, Commit, CommitRef};
+use crate::{encode, encode::NL, Commit, CommitRef, Kind};
 
 impl crate::WriteTo for Commit {
     /// Serializes this instance to `out` in the git serialization format.
@@ -26,6 +26,10 @@ impl crate::WriteTo for Commit {
         }
         out.write_all(NL)?;
         out.write_all(&self.message)
+    }
+
+    fn kind(&self) -> Kind {
+        Kind::Commit
     }
 }
 
@@ -51,5 +55,9 @@ impl<'a> crate::WriteTo for CommitRef<'a> {
         }
         out.write_all(NL)?;
         out.write_all(self.message)
+    }
+
+    fn kind(&self) -> Kind {
+        Kind::Commit
     }
 }

@@ -6,7 +6,7 @@ use quick_error::quick_error;
 use crate::{
     encode::SPACE,
     tree::{Entry, EntryRef},
-    Tree, TreeRef,
+    Kind, Tree, TreeRef,
 };
 
 quick_error! {
@@ -53,6 +53,10 @@ impl crate::WriteTo for Tree {
         }
         Ok(())
     }
+
+    fn kind(&self) -> Kind {
+        Kind::Tree
+    }
 }
 
 /// Serialization
@@ -81,5 +85,9 @@ impl<'a> crate::WriteTo for TreeRef<'a> {
             out.write_all(oid.as_bytes())?;
         }
         Ok(())
+    }
+
+    fn kind(&self) -> Kind {
+        Kind::Tree
     }
 }

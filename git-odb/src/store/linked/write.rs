@@ -1,13 +1,13 @@
 use std::io::Read;
 
-use git_object::{Kind, Object};
+use git_object::Kind;
 
 use crate::store::{linked, loose};
 
 impl crate::write::Write for linked::Store {
     type Error = loose::write::Error;
 
-    fn write(&self, object: &Object, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {
+    fn write(&self, object: impl git_object::WriteTo, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {
         self.dbs[0].loose.write(object, hash)
     }
 

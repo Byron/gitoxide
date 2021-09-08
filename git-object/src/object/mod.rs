@@ -5,7 +5,7 @@ mod convert;
 mod write {
     use std::io;
 
-    use crate::{Object, ObjectRef, WriteTo};
+    use crate::{Kind, Object, ObjectRef, WriteTo};
 
     /// Serialization
     impl<'a> WriteTo for ObjectRef<'a> {
@@ -18,6 +18,10 @@ mod write {
                 Commit(v) => v.write_to(out),
                 Tag(v) => v.write_to(out),
             }
+        }
+
+        fn kind(&self) -> Kind {
+            self.kind()
         }
     }
 
@@ -32,6 +36,10 @@ mod write {
                 Commit(v) => v.write_to(out),
                 Tag(v) => v.write_to(out),
             }
+        }
+
+        fn kind(&self) -> Kind {
+            self.kind()
         }
     }
 }

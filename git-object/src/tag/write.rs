@@ -3,7 +3,7 @@ use std::io;
 use bstr::BStr;
 use quick_error::quick_error;
 
-use crate::{encode, encode::NL, Tag, TagRef};
+use crate::{encode, encode::NL, Kind, Tag, TagRef};
 
 quick_error! {
     /// An Error used in [`Tag::write_to()`].
@@ -46,6 +46,10 @@ impl crate::WriteTo for Tag {
         }
         Ok(())
     }
+
+    fn kind(&self) -> Kind {
+        Kind::Tag
+    }
 }
 
 impl<'a> crate::WriteTo for TagRef<'a> {
@@ -66,6 +70,10 @@ impl<'a> crate::WriteTo for TagRef<'a> {
             out.write_all(message)?;
         }
         Ok(())
+    }
+
+    fn kind(&self) -> Kind {
+        Kind::Tag
     }
 }
 

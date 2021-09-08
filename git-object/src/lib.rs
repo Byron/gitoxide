@@ -20,11 +20,8 @@ pub mod tree;
 
 mod blob;
 
-/// Writing of objects to a `Write` implementation
-pub trait WriteTo {
-    /// Write a representation of this instance to `out`.
-    fn write_to(&self, out: impl std::io::Write) -> std::io::Result<()>;
-}
+mod traits;
+pub use traits::WriteTo;
 
 mod encode;
 pub(crate) mod parse;

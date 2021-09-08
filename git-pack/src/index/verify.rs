@@ -2,7 +2,10 @@ use std::sync::{atomic::AtomicBool, Arc};
 
 use git_features::progress::{self, Progress};
 use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-use git_object::bstr::{BString, ByteSlice};
+use git_object::{
+    bstr::{BString, ByteSlice},
+    WriteTo,
+};
 
 use crate::index;
 
@@ -176,14 +179,13 @@ impl index::File {
             use git_object::Kind::*;
             match object_kind {
                 Tree | Commit | Tag => {
-                    let borrowed_object =
+                    let object =
                         git_object::ObjectRef::from_bytes(object_kind, buf).map_err(|err| Error::ObjectDecode {
                             source: err,
                             kind: object_kind,
                             id: index_entry.oid,
                         })?;
                     if let Mode::Sha1Crc32DecodeEncode = mode {
-                        let object = git_object::Object::from(borrowed_object);
                         encode_buf.clear();
                         object.write_to(&mut *encode_buf)?;
                         if encode_buf.as_slice() != buf {

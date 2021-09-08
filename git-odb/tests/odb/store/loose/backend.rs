@@ -43,7 +43,7 @@ mod write {
 
         for oid in object_ids() {
             let obj = locate_oid(oid, &mut buf);
-            let actual = db.write(&obj.decode()?.into(), git_hash::Kind::Sha1)?;
+            let actual = db.write(&obj.decode()?, git_hash::Kind::Sha1)?;
             assert_eq!(actual, oid);
             assert_eq!(
                 db.try_find(oid, &mut buf2)?.expect("id present").decode()?,
