@@ -59,9 +59,9 @@ impl<'a> crate::WriteTo for TagRef<'a> {
 
         if !self.message.is_empty() {
             out.write_all(NL)?;
-            out.write_all(&self.message)?;
+            out.write_all(self.message)?;
         }
-        if let Some(ref message) = self.pgp_signature {
+        if let Some(message) = self.pgp_signature {
             out.write_all(NL)?;
             out.write_all(message)?;
         }

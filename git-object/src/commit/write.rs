@@ -50,6 +50,6 @@ impl<'a> crate::WriteTo for CommitRef<'a> {
             }
         }
         out.write_all(NL)?;
-        out.write_all(&self.message)
+        out.write_all(self.message)
     }
 }

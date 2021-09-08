@@ -5,7 +5,7 @@ use crate::{Blob, BlobRef};
 impl<'a> crate::WriteTo for BlobRef<'a> {
     /// Write the blobs data to `out` verbatim.
     fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
-        out.write_all(&self.data)
+        out.write_all(self.data)
     }
 }
 
