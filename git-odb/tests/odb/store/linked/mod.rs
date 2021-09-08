@@ -6,6 +6,19 @@ fn db() -> Store {
     Store::at(fixture_path("objects")).expect("valid object path")
 }
 
+#[test]
+fn refresh() {
+    let mut db = db();
+    assert_eq!(db.iter().count(), 146, "packed + loose objects");
+    db.dbs[0].bundles.clear();
+    assert_eq!(db.iter().count(), 7, "loose objects only");
+
+    db.refresh().unwrap();
+    assert_eq!(db.iter().count(), 146, "it replenished the packs");
+    db.refresh().unwrap();
+    assert_eq!(db.iter().count(), 146, "calling this multiple times is ok");
+}
+
 mod iter {
     use crate::odb::store::linked::db;
 

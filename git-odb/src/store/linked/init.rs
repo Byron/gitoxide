@@ -30,6 +30,16 @@ impl linked::Store {
         );
         Ok(linked::Store { dbs })
     }
+
+    /// Efficiently refresh the stable data like memory maps of packs or linked repositories to reflect the changed state on disk.
+    pub fn refresh(&mut self) -> Result<&mut Self, Error> {
+        // TODO: actually do this efficiently by only loading or discarding what changed. Probably redirect the non-alternates impl
+        //       to the compound db to deal with pack refreshing.
+        let first_db = self.dbs.remove(0);
+        let base_path = first_db.loose.path;
+        *self = Self::at(base_path)?;
+        Ok(self)
+    }
 }
 
 impl std::convert::TryFrom<PathBuf> for linked::Store {
