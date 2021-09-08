@@ -1063,7 +1063,7 @@ dependencies = [
 
 [[package]]
 name = "git-object"
-version = "0.13.1"
+version = "0.14.0"
 dependencies = [
  "bstr",
  "git-actor",
