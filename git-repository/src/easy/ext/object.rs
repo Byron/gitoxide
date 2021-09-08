@@ -1,6 +1,5 @@
 use std::{convert::TryInto, ops::DerefMut};
 
-use bstr::BString;
 use git_hash::ObjectId;
 use git_odb::{Find, FindExt};
 use git_ref::{
@@ -50,7 +49,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
             .transpose()
     }
 
-    fn write_object(&self, object: &git_object::Object) -> Result<Oid<'_, Self>, object::write::Error> {
+    fn write_object(&self, object: impl git_object::WriteTo) -> Result<Oid<'_, Self>, object::write::Error> {
         use git_odb::Write;
 
         let repo = self.repo()?;
@@ -63,12 +62,12 @@ pub trait ObjectAccessExt: easy::Access + Sized {
     // docs notes
     // Fails immediately if lock can't be acquired as first parent depends on it
     // Writes without message encoding
-    fn commit<Name, E>(
+    fn commit<'a, Name, E>(
         &self,
         reference: Name,
-        message: impl Into<BString>,
-        author: impl Into<git_actor::Signature>,
-        committer: impl Into<git_actor::Signature>,
+        author: &git_actor::SignatureRef<'a>,
+        committer: &git_actor::SignatureRef<'a>,
+        message: impl AsRef<str>,
         tree: impl Into<ObjectId>,
         parents: impl IntoIterator<Item = impl Into<ObjectId>>,
     ) -> Result<Oid<'_, Self>, commit::Error>
@@ -83,12 +82,14 @@ pub trait ObjectAccessExt: easy::Access + Sized {
 
         use crate::easy::ext::ReferenceAccessExt;
 
+        // TODO: possibly use CommitRef to save a few allocations (but will have to allocate for object ids anyway.
+        //       This can be made vastly more efficient though if we wanted to, so we lie in the API
         let reference = reference.try_into()?;
         let commit: git_object::Object = git_object::Commit {
-            message: message.into(),
+            message: message.as_ref().into(),
             tree: tree.into(),
-            author: author.into(),
-            committer: committer.into(),
+            author: author.to_owned(),
+            committer: committer.to_owned(),
             encoding: None,
             parents: parents.into_iter().map(|id| id.into()).collect(),
             extra_headers: Default::default(),

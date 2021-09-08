@@ -5,7 +5,7 @@ mod write_object {
     fn empty_tree() -> crate::Result {
         let tmp = tempfile::tempdir()?;
         let repo = git_repository::init_bare(&tmp)?.into_easy();
-        let oid = repo.write_object(&git_repository::objs::Tree::empty().into())?;
+        let oid = repo.write_object(&git_repository::objs::TreeRef::empty())?;
         assert_eq!(
             oid,
             git_repository::hash::ObjectId::empty_tree(repo.hash_kind()?),
@@ -24,13 +24,13 @@ mod commit {
     fn single_line_initial_commit_empty_tree_ref_nonexisting() -> crate::Result {
         let tmp = tempfile::tempdir()?;
         let repo = git::init(&tmp)?.into_easy();
-        let empty_tree_id = repo.write_object(&git::objs::Tree::empty().into())?;
+        let empty_tree_id = repo.write_object(&git::objs::Tree::empty())?;
         let author = git::actor::Signature::empty();
         let commit_id = repo.commit(
             "HEAD",
+            &author.to_ref(),
+            &author.to_ref(),
             "initial",
-            author.clone(),
-            author,
             empty_tree_id,
             git::commit::NO_PARENT_IDS,
         )?;
@@ -61,9 +61,9 @@ mod commit {
         let author = git::actor::Signature::empty();
         let first_commit_id = repo.commit(
             "HEAD",
+            &author.to_ref(),
+            &author.to_ref(),
             "hello there \r\n\nthe body",
-            author.clone(),
-            author.clone(),
             empty_tree_id,
             Some(parent),
         )?;
@@ -91,9 +91,9 @@ mod commit {
 
         let second_commit_id = repo.commit(
             "refs/heads/new-branch",
+            &author.to_ref(),
+            &author.to_ref(),
             "committing into a new branch creates it",
-            author.clone(),
-            author,
             empty_tree_id,
             Some(first_commit_id),
         )?;

@@ -1,5 +1,5 @@
 mod _ref {
-    use crate::{signature::decode, SignatureRef};
+    use crate::{signature::decode, Signature, SignatureRef};
 
     impl<'a> SignatureRef<'a> {
         /// Deserialize a signature from the given `data`.
@@ -8,6 +8,15 @@ mod _ref {
             E: nom::error::ParseError<&'a [u8]> + nom::error::ContextError<&'a [u8]>,
         {
             decode(data).map(|(_, t)| t)
+        }
+
+        /// Create an owned instance from this shared one.
+        pub fn to_owned(&self) -> Signature {
+            Signature {
+                name: self.name.to_owned(),
+                email: self.email.to_owned(),
+                time: self.time,
+            }
         }
     }
 }
@@ -34,6 +43,15 @@ mod convert {
                 },
             }
         }
+
+        /// Borrow this instance as immutable
+        pub fn to_ref(&self) -> SignatureRef<'_> {
+            SignatureRef {
+                name: self.name.as_ref(),
+                email: self.email.as_ref(),
+                time: self.time,
+            }
+        }
     }
 
     impl From<SignatureRef<'_>> for Signature {
@@ -43,17 +61,6 @@ mod convert {
                 name: name.to_owned(),
                 email: email.to_owned(),
                 time,
-            }
-        }
-    }
-
-    impl Signature {
-        /// Borrow this instance as immutable
-        pub fn to_ref(&self) -> SignatureRef<'_> {
-            SignatureRef {
-                name: self.name.as_ref(),
-                email: self.email.as_ref(),
-                time: self.time,
             }
         }
     }

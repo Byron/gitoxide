@@ -1,5 +1,6 @@
-use crate::Kind;
 use std::io::Write;
+
+use crate::Kind;
 
 /// Writing of objects to a `Write` implementation
 pub trait WriteTo {

@@ -1,5 +1,6 @@
-use git_object::WriteTo;
 use std::io;
+
+use git_object::WriteTo;
 
 /// Describe the capability to write git objects into an object store.
 pub trait Write {
