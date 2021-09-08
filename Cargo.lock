@@ -1163,7 +1163,7 @@ dependencies = [
 
 [[package]]
 name = "git-ref"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "filebuffer",
  "git-actor",
