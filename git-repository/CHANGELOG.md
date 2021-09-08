@@ -1,6 +1,8 @@
 ### v0.10.0 (2021-09-08)
 
 - rename `prelude::ConfigAccessExt` to `prelude::RepositoryAccessExt`
+- `prelude::ObjectAccessExt::commit()` signature change
+- cargo feature changed in incompatible ways. `network` was replaced by more finegrained options for _blocking_ and _async_ networking, as well as optional http transport
 
 ### v0.9.0 (2021-09-07)
 

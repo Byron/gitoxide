@@ -13,11 +13,11 @@ test = false
 
 [features]
 default = []
-serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "git-protocol-for-configuration-only/serde1", "serde_json", "serde"]
+serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "serde_json", "serde"]
 
 # async or blocking tooling
-blocking-client = ["git-protocol-for-configuration-only/blocking-client", "git-repository/network"]
-async-client = ["git-protocol-for-configuration-only/async-client", "git-repository/network", "async-trait", "futures-io", "async-net", "async-io", "futures-lite", "blocking"]
+blocking-client = ["git-repository/blocking-network-client"]
+async-client = ["git-repository/async-network-client", "async-trait", "futures-io", "async-net", "async-io", "futures-lite", "blocking"]
 
 local-time-support = ["git-repository/local-time-support"]
 
@@ -28,7 +28,6 @@ estimate-hours = ["itertools", "rayon", "bstr", "fs-err"]
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
 git-repository = { version ="^0.8.0", path = "../git-repository", default-features = false, features = ["local", "unstable"]} # TODO: eventually 'unstable' shouldn't be needed anymore
-git-protocol-for-configuration-only = { package = "git-protocol", version ="^0.10.0", path = "../git-protocol", optional = true }
 git-commitgraph = { version = "^0.4.0", path = "../git-commitgraph" }
 git-config = { version = "^0.1.0", path = "../git-config" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }

@@ -15,21 +15,20 @@ test = true
 [features]
 default = ["max-performance", "one-stop-shop"]
 unstable = []
-serde1 = ["git-pack/serde1", "git-object/serde1"]
+serde1 = ["git-pack/serde1", "git-object/serde1", "git-protocol/serde1", "git-transport/serde1", "git-ref/serde1"]
 max-performance = ["git-features/zlib-ng-compat", "git-features/fast-sha1"]
 local-time-support = ["git-actor/local-time-support"]
+async-network-client = ["git-protocol/async-client"]
+blocking-network-client = ["git-protocol/blocking-client"]
+blocking-http-transport = ["git-transport/http-client-curl"]
 local = [
     "git-url",
     "git-diff",
     "git-pack/pack-cache-lru-dynamic",
     "git-pack/pack-cache-lru-static",
 ]
-network = [
-    "git-protocol"
-]
 one-stop-shop = [
     "local",
-    "network",
     "local-time-support"
 ]
 
@@ -50,6 +49,7 @@ git-pack = { version ="^0.10.0", path = "../git-pack" }
 git-url = { version = "0.3.0", path = "../git-url", optional = true }
 git-traverse = { version ="^0.8.0", path = "../git-traverse" }
 git-protocol = { version ="^0.10.0", path = "../git-protocol", optional = true }
+git-transport = { version ="^0.11.0", path = "../git-transport", optional = true }
 git-diff = { version ="^0.9.0", path = "../git-diff", optional = true }
 git-features = { version = "^0.16.0", path = "../git-features", features = ["progress"] }
 
