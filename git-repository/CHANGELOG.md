@@ -1,4 +1,8 @@
-### v0.9.0 (2021-09-??)
+### v0.10.0 (2021-09-08)
+
+- rename `prelude::ConfigAccessExt` to `prelude::RepositoryAccessExt`
+
+### v0.9.0 (2021-09-07)
 
 #### New
 

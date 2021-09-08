@@ -1,5 +1,5 @@
 mod write_object {
-    use git_repository::prelude::{ConfigAccessExt, ObjectAccessExt};
+    use git_repository::prelude::{ObjectAccessExt, RepositoryAccessExt};
 
     #[test]
     fn empty_tree() -> crate::Result {

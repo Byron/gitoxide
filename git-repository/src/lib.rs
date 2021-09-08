@@ -18,6 +18,13 @@
 //!
 //! When starting out, use `easy(…)` and migrate to the more detailed method signatures to squeeze out more performance.
 //!
+//! ### Shortcomings & Limitations
+//!
+//! - Only one `easy::Object` or derivatives can be held in memory at a time, _per `Easy*`_.
+//! - Changes made to the configuration, packs, and alternates aren't picked up automatically if they aren't
+//!   made through the underlying `Repository` instance. Run one of the [`refresh*()`][prelude::RepositoryAccessExt] to trigger
+//!   an update. Also note that this is only a consideration for long-running processes.
+//!
 //! ### Design Sketch
 //!
 //! Goal is to make the lower-level plumbing available without having to deal with any caches or buffers, and avoid any allocation
@@ -32,19 +39,13 @@
 //!   panics if the field can't be referenced due to borrow rules of `RefCell`.
 //! * Anything attached to `Access` can be detached to lift the object limit or make them `Send`-able. They can be `attached` to another
 //!   `Access` if needed.
-//! * git-repository functions related to `Access` extensions will always return attached versions of return values, like `Oid` instead
-//!   of `ObjectId`, `ObjectRef` instead of `git_odb::data::Object`, or `Reference` instead of `git_ref::file::Reference`.
+//! * `git-repository` functions related to `Access` extensions will always return attached versions of return values, like `Oid` instead
+//!   of `git_hash::ObjectId`, `ObjectRef` instead of `git_odb::data::Object`, or `Reference` instead of `git_ref::Reference`.
 //! * Obtaining mutable is currently a weak spot as these only work with Arc<RwLock> right now and can't work with `Rc<RefCell>` due
 //!   to missing GATs, presumably. All `Easy*!Exclusive` types are unable to provide a mutable reference to the underlying repository.
 //!   However, other ways to adjust the `Repository` of long-running applications are possible. For instance, there could be a flag that
 //!   indicates a new `Repository` should be created (for instance, after it was changed) which causes the next server connection to
 //!   create a new one. This instance is the one to use when spawning new `EasyArc` instances.
-//!
-//! #### Limitations
-//!
-//! * types containing `&impl Access` can't access extension traits directly but have to use a workaround. This is due to the way
-//!   extension traits can't apply internally if if it is implemented, but must be part of the external interface. This is only
-//!   relevant for code within `git-repository`
 //!
 //! ### Terminology
 //!

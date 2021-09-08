@@ -1,6 +1,7 @@
 mod repo_with_small_packs {
-    use crate::odb::{fixture_path, hex_to_id};
     use git_odb::pack;
+
+    use crate::odb::{fixture_path, hex_to_id};
 
     #[test]
     fn all_packed_objects_can_be_found() {

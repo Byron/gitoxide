@@ -29,6 +29,7 @@ pub mod commit;
 pub mod head;
 pub mod iter;
 pub mod object;
+pub mod odb;
 pub mod oid;
 pub mod reference;
 pub mod state;

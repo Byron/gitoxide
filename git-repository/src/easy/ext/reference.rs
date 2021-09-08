@@ -14,7 +14,7 @@ use git_ref::{
 
 use crate::{
     easy,
-    easy::{ext::ConfigAccessExt, reference, Reference},
+    easy::{ext::RepositoryAccessExt, reference, Reference},
     ext::ReferenceExt,
 };
 
