@@ -4,6 +4,7 @@ use semver::Version;
 
 use super::Context;
 
+#[allow(clippy::ptr_arg)]
 pub(crate) fn select_publishee_bump_spec<'a>(name: &String, ctx: &'a Context) -> &'a str {
     if ctx.crate_names.contains(name) {
         &ctx.bump

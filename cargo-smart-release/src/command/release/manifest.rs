@@ -87,11 +87,12 @@ fn collect_directly_dependent_packages<'a>(
         .iter()
         .map(|id| package_by_id(meta, id))
         .filter(|p| {
-            p.dependencies.iter().any(|dep| {
-                publishees
-                    .iter()
-                    .any(|(publishee, _)| package_eq_dependency(publishee, dep))
-            })
+            !publishees.iter().any(|(publishee, _)| publishee.id == p.id)
+                && p.dependencies.iter().any(|dep| {
+                    publishees
+                        .iter()
+                        .any(|(publishee, _)| package_eq_dependency(publishee, dep))
+                })
         })
     {
         if locks_by_manifest_path.contains_key(&package_to_fix.manifest_path) {
