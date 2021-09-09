@@ -9,7 +9,7 @@ pub trait Write {
     /// _Note_ the default implementations require the `From<io::Error>` bound.
     type Error: std::error::Error + From<io::Error>;
 
-    /// Write [`object`][Object] using the given kind of [`hash`][git_hash::Kind] into the database,
+    /// Write objects using the given kind of [`hash`][git_hash::Kind] into the database,
     /// returning id to reference it in subsequent reads.
     fn write(&self, object: impl WriteTo, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {
         let mut buf = Vec::with_capacity(2048);
