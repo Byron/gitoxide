@@ -8,7 +8,7 @@ use semver::{Op, Version, VersionReq};
 use super::{
     cargo, git,
     utils::{names_and_versions, package_by_id, package_eq_dependency, will},
-    Context, Oid, Options,
+    version, Context, Oid, Options,
 };
 
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<'repo>(
@@ -110,7 +110,7 @@ fn collect_directly_dependent_packages<'a>(
 
 fn set_version_and_update_package_dependency(
     package_to_update: &Package,
-    new_version: Option<&str>,
+    new_package_version: Option<&str>,
     publishees: &[(&Package, String)],
     mut out: impl std::io::Write,
     Options {
@@ -122,7 +122,7 @@ fn set_version_and_update_package_dependency(
     let manifest = std::fs::read_to_string(&package_to_update.manifest_path)?;
     let mut doc = toml_edit::Document::from_str(&manifest)?;
 
-    if let Some(new_version) = new_version {
+    if let Some(new_version) = new_package_version {
         doc["package"]["version"] = toml_edit::value(new_version);
         if verbose {
             log::info!(
@@ -149,7 +149,8 @@ fn set_version_and_update_package_dependency(
                     .and_then(|name_table| name_table.get_mut("version"))
                 {
                     let version_req = VersionReq::parse(current_version_req.as_str().expect("versions are strings"))?;
-                    let force_update = conservative_pre_release_version_handling && is_pre_release(&new_version);
+                    let force_update =
+                        conservative_pre_release_version_handling && version::is_pre_release(&new_version);
                     if !version_req.matches(&new_version) || force_update {
                         let supported_op = Op::Caret;
                         if version_req.comparators.is_empty()
@@ -180,8 +181,4 @@ fn set_version_and_update_package_dependency(
     out.write_all(new_manifest.as_bytes())?;
 
     Ok(manifest != new_manifest)
-}
-
-fn is_pre_release(semver: &Version) -> bool {
-    semver.major == 0
 }

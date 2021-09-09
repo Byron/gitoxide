@@ -31,7 +31,7 @@ fn main() -> anyhow::Result<()> {
                 dry_run: !execute,
                 verbose: execute || verbose,
                 conservative_pre_release_version_handling: !no_conservative_pre_release_version_handling,
-                no_bump_on_demand,
+                bump_when_needed: !no_bump_on_demand,
                 allow_dirty,
                 ignore_instability,
                 skip_publish,

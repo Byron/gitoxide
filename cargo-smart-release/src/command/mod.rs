@@ -12,7 +12,7 @@ pub mod release {
         pub skip_tag: bool,
         pub allow_auto_publish_of_stable_crates: bool,
         pub update_crates_index: bool,
-        pub no_bump_on_demand: bool,
+        pub bump_when_needed: bool,
         pub verbose: bool,
         pub skip_push: bool,
         pub skip_dependencies: bool,

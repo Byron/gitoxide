@@ -57,7 +57,7 @@ pub fn release(options: Options, crates: Vec<String>, bump: String, bump_depende
     if options.update_crates_index {
         log::info!("Updating crates-io index at '{}'", ctx.crates_index.path().display());
         ctx.crates_index.update()?;
-    } else if !options.no_bump_on_demand {
+    } else if options.bump_when_needed {
         log::warn!(
             "Consider running with --update-crates-index to assure bumping on demand uses the latest information"
         );
@@ -147,7 +147,7 @@ fn perforrm_multi_version_release(
                 p,
                 version::select_publishee_bump_spec(&p.name, ctx),
                 ctx,
-                options.no_bump_on_demand,
+                options.bump_when_needed,
             )
             .map(|v| (p, v.to_string()))
         })
@@ -443,7 +443,7 @@ fn perform_single_release<'repo>(
     ctx: &'repo Context,
 ) -> anyhow::Result<(String, Option<Oid<'repo>>)> {
     let bump_spec = version::select_publishee_bump_spec(&publishee.name, ctx);
-    let new_version = version::bump(publishee, bump_spec, ctx, options.no_bump_on_demand)?;
+    let new_version = version::bump(publishee, bump_spec, ctx, options.bump_when_needed)?;
     log::info!(
         "{} prepare release of {} v{}",
         will(options.dry_run),
