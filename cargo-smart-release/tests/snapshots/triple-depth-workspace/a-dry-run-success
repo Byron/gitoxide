@@ -1,3 +1,8 @@
 [WARN ] Consider running with --update-crates-index to assure bumping on demand uses the latest information
+[INFO ] Package a wasn't tagged with a-v0.8.0 yet and thus needs a release
 [INFO ] Using manifest version 0.8.0 of crate a as it is sufficient to succeed latest published version 0.0.1.
 [INFO ] WOULD prepare release of a v0.8.0
+[INFO ] Pending 'a' manifest version update: "0.8.0"
+[INFO ] WOULD persist changes to manifests with: "Bump a v0.8.0"
+[INFO ] WOULD run "git" "commit" "-am" "Bump a v0.8.0"
+[INFO ] WOULD create tag a-v0.8.0

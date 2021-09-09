@@ -44,7 +44,7 @@ title "smart-release"
     (with 'dry-run only'
       it "succeeds" && {
         WITH_SNAPSHOT="$snapshot/a-dry-run-success" \
-        expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish
+        expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish -v
       }
     )
     (with '--execute (but without side-effects'
