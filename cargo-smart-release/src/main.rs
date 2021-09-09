@@ -21,6 +21,7 @@ fn main() -> anyhow::Result<()> {
             skip_push,
             dangerously_pass_no_verify,
             allow_auto_publish_of_stable_crates,
+            no_conservative_pre_release_version_handling,
             dry_run_cargo_publish,
             update_crates_index,
             no_bump_on_demand,
@@ -29,6 +30,7 @@ fn main() -> anyhow::Result<()> {
             command::release::Options {
                 dry_run: !execute,
                 verbose: execute || verbose,
+                conservative_pre_release_version_handling: !no_conservative_pre_release_version_handling,
                 no_bump_on_demand,
                 allow_dirty,
                 ignore_instability,

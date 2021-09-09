@@ -56,6 +56,12 @@ pub struct SmartRelease {
     #[argh(switch)]
     pub allow_auto_publish_of_stable_crates: bool,
 
+    /// do not force pre-release version requirements to be updated in dependent crates on patch update.
+    ///
+    /// It's best to look at this issue for a deeper understanding: https://github.com/Byron/gitoxide/issues/194
+    #[argh(switch)]
+    pub no_conservative_pre_release_version_handling: bool,
+
     /// don't actually publish, but perform all other operations like manifest adjustments and tag creation.
     #[argh(switch)]
     pub skip_publish: bool,

@@ -17,6 +17,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
         verbose,
         dry_run,
         skip_publish,
+        conservative_pre_release_version_handling,
         ..
     }: Options,
     ctx: &'repo Context,
@@ -66,6 +67,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
             publishees,
             &mut lock,
             verbose,
+            conservative_pre_release_version_handling,
         )?;
     }
 
@@ -73,8 +75,14 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
         let mut lock = locks_by_manifest_path
             .get_mut(&package_to_update.manifest_path)
             .expect("lock written once");
-        made_change |=
-            set_version_and_update_package_dependency(package_to_update, None, publishees, &mut lock, verbose)?;
+        made_change |= set_version_and_update_package_dependency(
+            package_to_update,
+            None,
+            publishees,
+            &mut lock,
+            verbose,
+            conservative_pre_release_version_handling,
+        )?;
     }
 
     let message = format!(
@@ -102,6 +110,7 @@ fn set_version_and_update_package_dependency(
     publishees: &[(&Package, String)],
     mut out: impl std::io::Write,
     verbose: bool,
+    conservative_pre_release_version_handling: bool,
 ) -> anyhow::Result<bool> {
     let manifest = std::fs::read_to_string(&package_to_update.manifest_path)?;
     let mut doc = toml_edit::Document::from_str(&manifest)?;
@@ -133,7 +142,12 @@ fn set_version_and_update_package_dependency(
                     .and_then(|name_table| name_table.get_mut("version"))
                 {
                     let version_req = VersionReq::parse(current_version_req.as_str().expect("versions are strings"))?;
-                    if !version_req.matches(&new_version) {
+                    let force_update = if conservative_pre_release_version_handling && new_version.major == 0 {
+                        true
+                    } else {
+                        false
+                    };
+                    if !version_req.matches(&new_version) || force_update {
                         let supported_op = Op::Caret;
                         if version_req.comparators.is_empty()
                             || (version_req.comparators.len() > 1)
@@ -144,8 +158,9 @@ fn set_version_and_update_package_dependency(
                         let new_version = format!("^{}", new_version);
                         if verbose {
                             log::info!(
-                                "Pending '{}' manifest {} update: '{} = \"{}\"' (from {})",
+                                "Pending '{}' {}manifest {} update: '{} = \"{}\"' (from {})",
                                 package_to_update.name,
+                                if force_update { "conservative " } else { "" },
                                 dep_type,
                                 name_to_find,
                                 new_version,

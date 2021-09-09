@@ -6,6 +6,7 @@ pub mod release {
         pub ignore_instability: bool,
         pub skip_publish: bool,
         pub dry_run_cargo_publish: bool,
+        pub conservative_pre_release_version_handling: bool,
         /// Pass --no-verify unconditionally to cargo publish. Really just for fixing things
         pub no_verify: bool,
         pub skip_tag: bool,

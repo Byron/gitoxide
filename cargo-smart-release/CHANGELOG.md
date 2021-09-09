@@ -1,3 +1,11 @@
+### v0.3.2 (2021-09-??)
+
+- Conservative pre-release version handling along with a flag to turn it off. See [this issue][194] for details.
+
+[194]: https://github.com/Byron/gitoxide/issues/194
+
+### v0.3.1 (2021-09-07) - internal improvements
+
 ### v0.3.0 (2021-08-27)
 
 - add `--skip-dependencies` flag
