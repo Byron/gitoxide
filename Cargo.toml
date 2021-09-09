@@ -138,3 +138,6 @@ members = [
 
     "tests/tools",
 ]
+exclude = ["cargo-smart-release/tests/fixtures/tri-depth-workspace/a",
+           "cargo-smart-release/tests/fixtures/tri-depth-workspace/b",
+           "cargo-smart-release/tests/fixtures/tri-depth-workspace/c"]
