@@ -142,11 +142,7 @@ fn set_version_and_update_package_dependency(
                     .and_then(|name_table| name_table.get_mut("version"))
                 {
                     let version_req = VersionReq::parse(current_version_req.as_str().expect("versions are strings"))?;
-                    let force_update = if conservative_pre_release_version_handling && new_version.major == 0 {
-                        true
-                    } else {
-                        false
-                    };
+                    let force_update = conservative_pre_release_version_handling && new_version.major == 0;
                     if !version_req.matches(&new_version) || force_update {
                         let supported_op = Op::Caret;
                         if version_req.comparators.is_empty()
