@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use anyhow::bail;
-use cargo_metadata::{camino::Utf8PathBuf, Dependency, DependencyKind, Metadata, Package, Version};
+use cargo_metadata::{camino::Utf8PathBuf, Dependency, DependencyKind, Metadata, Package};
 
 use crate::command::release::Options;
 
@@ -15,10 +15,11 @@ use utils::{
 mod cargo;
 mod git;
 mod manifest;
+mod version;
 
 type Oid<'repo> = git_repository::easy::Oid<'repo, git_repository::Easy>;
 
-pub(in crate::command::release_impl) struct Context {
+pub(crate) struct Context {
     root: Utf8PathBuf,
     meta: Metadata,
     git_easy: git_repository::Easy,
@@ -142,9 +143,9 @@ fn perforrm_multi_version_release(
         .into_iter()
         .map(|name| {
             let p = package_by_name(meta, &name)?;
-            bump_to_valid_version(
+            version::bump(
                 p,
-                select_publishee_bump_spec(&p.name, ctx),
+                version::select_publishee_bump_spec(&p.name, ctx),
                 ctx,
                 options.no_bump_on_demand,
             )
@@ -435,23 +436,14 @@ fn hops_for_dependency_to_link_back_to_publishee<'a>(
     None
 }
 
-#[allow(clippy::ptr_arg)]
-fn select_publishee_bump_spec<'a>(name: &String, ctx: &'a Context) -> &'a str {
-    if ctx.crate_names.contains(name) {
-        &ctx.bump
-    } else {
-        &ctx.bump_dependencies
-    }
-}
-
 fn perform_single_release<'repo>(
     meta: &Metadata,
     publishee: &Package,
     options: Options,
     ctx: &'repo Context,
 ) -> anyhow::Result<(String, Option<Oid<'repo>>)> {
-    let bump_spec = select_publishee_bump_spec(&publishee.name, ctx);
-    let new_version = bump_to_valid_version(publishee, bump_spec, ctx, options.no_bump_on_demand)?;
+    let bump_spec = version::select_publishee_bump_spec(&publishee.name, ctx);
+    let new_version = version::bump(publishee, bump_spec, ctx, options.no_bump_on_demand)?;
     log::info!(
         "{} prepare release of {} v{}",
         will(options.dry_run),
@@ -463,87 +455,4 @@ fn perform_single_release<'repo>(
         manifest::edit_version_and_fixup_dependent_crates(meta, &[(publishee, new_version.clone())], options, ctx)?;
     cargo::publish_crate(publishee, &[], options)?;
     Ok((new_version, commit_id))
-}
-
-fn bump_to_valid_version(
-    publishee: &Package,
-    bump_spec: &str,
-    ctx: &Context,
-    no_bump_on_demand: bool,
-) -> anyhow::Result<Version> {
-    fn validated_new_version(
-        publishee: &Package,
-        mut new_version: Version,
-        ctx: &Context,
-        no_bump_on_demand: bool,
-    ) -> anyhow::Result<Version> {
-        let bump_on_demand = !no_bump_on_demand;
-        match ctx.crates_index.crate_(&publishee.name) {
-            Some(existing_release) => {
-                let existing_version = semver::Version::parse(existing_release.latest_version().version())?;
-                if existing_version >= new_version {
-                    bail!(
-                    "Latest published version of '{}' is {}, the new version is {}. Consider using --bump <level> or --bump-dependencies <level>.",
-                    publishee.name,
-                    existing_release.latest_version().version(),
-                    new_version
-                );
-                }
-                if bump_on_demand && publishee.version > existing_version {
-                    if new_version > publishee.version {
-                        log::info!(
-                            "Using manifest version {} of crate {} instead of new version {} as it is sufficient to succeed latest published version {}.",
-                            publishee.version,
-                            publishee.name,
-                            new_version,
-                            existing_version
-                        );
-                    } else {
-                        log::info!(
-                            "Using manifest version {} of crate {} as it is sufficient to succeed latest published version {}.",
-                            publishee.version,
-                            publishee.name,
-                            existing_version
-                        );
-                    }
-                    new_version = publishee.version.clone();
-                }
-            }
-            None => {
-                if bump_on_demand {
-                    log::info!(
-                        "Using current version {} instead of bumped one {}.",
-                        publishee.version,
-                        new_version
-                    );
-                    new_version = publishee.version.clone();
-                }
-                log::info!("Congratulations for the new release of '{}' 🎉", publishee.name);
-            }
-        };
-        Ok(new_version)
-    }
-    use semver::Prerelease;
-
-    let mut v = publishee.version.clone();
-    match bump_spec {
-        "major" => {
-            v.major += 1;
-            v.minor = 0;
-            v.patch = 0;
-            v.pre = Prerelease::EMPTY;
-        }
-        "minor" => {
-            v.minor += 1;
-            v.patch = 0;
-            v.pre = Prerelease::EMPTY;
-        }
-        "patch" => {
-            v.patch += 1;
-            v.pre = Prerelease::EMPTY;
-        }
-        "keep" => {}
-        _ => bail!("Invalid version specification: '{}'", bump_spec),
-    };
-    validated_new_version(publishee, v, ctx, no_bump_on_demand)
 }

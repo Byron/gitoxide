@@ -1,7 +1,8 @@
 use std::{collections::BTreeMap, str::FromStr};
 
 use anyhow::bail;
-use cargo_metadata::{Metadata, Package};
+use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
+use git_lock::File;
 use semver::{Op, Version, VersionReq};
 
 use super::{
@@ -13,24 +14,73 @@ use super::{
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<'repo>(
     meta: &Metadata,
     publishees: &[(&Package, String)],
-    Options {
-        verbose,
-        dry_run,
-        skip_publish,
-        conservative_pre_release_version_handling,
-        ..
-    }: Options,
+    opts: Options,
     ctx: &'repo Context,
 ) -> anyhow::Result<Option<Oid<'repo>>> {
     let mut locks_by_manifest_path = BTreeMap::new();
+    let Options {
+        verbose,
+        dry_run,
+        skip_publish,
+        ..
+    } = opts;
     for (publishee, _) in publishees {
         let lock = git_lock::File::acquire_to_update_resource(
             &publishee.manifest_path,
             git_lock::acquire::Fail::Immediately,
             None,
         )?;
-        locks_by_manifest_path.insert(&publishee.manifest_path, lock);
+        let previous = locks_by_manifest_path.insert(&publishee.manifest_path, lock);
+        assert!(previous.is_none(), "publishees are unique so insertion always happens");
     }
+
+    let mut dependant_packages = collect_directly_dependent_packages(meta, publishees, &mut locks_by_manifest_path)?;
+    let mut made_change = false;
+    for (publishee, new_version) in publishees {
+        let mut lock = locks_by_manifest_path
+            .get_mut(&publishee.manifest_path)
+            .expect("lock available");
+        made_change |= set_version_and_update_package_dependency(
+            publishee,
+            Some(&new_version.to_string()),
+            publishees,
+            &mut lock,
+            opts,
+        )?;
+    }
+
+    for dependant_on_publishee in dependant_packages.iter_mut() {
+        let mut lock = locks_by_manifest_path
+            .get_mut(&dependant_on_publishee.manifest_path)
+            .expect("lock written once");
+        made_change |=
+            set_version_and_update_package_dependency(dependant_on_publishee, None, publishees, &mut lock, opts)?;
+    }
+
+    let message = format!(
+        "{} {}",
+        if skip_publish { "Bump" } else { "Release" },
+        names_and_versions(publishees)
+    );
+    if verbose {
+        log::info!("{} persist changes to manifests with: {:?}", will(dry_run), message);
+    }
+    if !dry_run {
+        for manifest_lock in locks_by_manifest_path.into_values() {
+            manifest_lock.commit()?;
+        }
+        // This is dangerous as incompatibilities can happen here, leaving the working tree dirty.
+        // For now we leave it that way without auto-restoring originals to facilitate debugging.
+        cargo::refresh_lock_file()?;
+    }
+    git::commit_changes(message, verbose, dry_run, !made_change, ctx)
+}
+
+fn collect_directly_dependent_packages<'a>(
+    meta: &'a Metadata,
+    publishees: &[(&Package, String)],
+    locks_by_manifest_path: &mut BTreeMap<&'a Utf8PathBuf, File>,
+) -> anyhow::Result<Vec<&'a Package>> {
     let mut packages_to_fix = Vec::new();
     for package_to_fix in meta
         .workspace_members
@@ -55,53 +105,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
         locks_by_manifest_path.insert(&package_to_fix.manifest_path, lock);
         packages_to_fix.push(package_to_fix);
     }
-
-    let mut made_change = false;
-    for (publishee, new_version) in publishees {
-        let mut lock = locks_by_manifest_path
-            .get_mut(&publishee.manifest_path)
-            .expect("lock available");
-        made_change |= set_version_and_update_package_dependency(
-            publishee,
-            Some(&new_version.to_string()),
-            publishees,
-            &mut lock,
-            verbose,
-            conservative_pre_release_version_handling,
-        )?;
-    }
-
-    for package_to_update in packages_to_fix.iter_mut() {
-        let mut lock = locks_by_manifest_path
-            .get_mut(&package_to_update.manifest_path)
-            .expect("lock written once");
-        made_change |= set_version_and_update_package_dependency(
-            package_to_update,
-            None,
-            publishees,
-            &mut lock,
-            verbose,
-            conservative_pre_release_version_handling,
-        )?;
-    }
-
-    let message = format!(
-        "{} {}",
-        if skip_publish { "Bump" } else { "Release" },
-        names_and_versions(publishees)
-    );
-    if verbose {
-        log::info!("{} persist changes to manifests with: {:?}", will(dry_run), message);
-    }
-    if !dry_run {
-        for manifest_lock in locks_by_manifest_path.into_values() {
-            manifest_lock.commit()?;
-        }
-        // This is dangerous as incompatibilities can happen here, leaving the working tree dirty.
-        // For now we leave it that way without auto-restoring originals to facilitate debugging.
-        cargo::refresh_lock_file()?;
-    }
-    git::commit_changes(message, verbose, dry_run, !made_change, ctx)
+    Ok(packages_to_fix)
 }
 
 fn set_version_and_update_package_dependency(
@@ -109,8 +113,11 @@ fn set_version_and_update_package_dependency(
     new_version: Option<&str>,
     publishees: &[(&Package, String)],
     mut out: impl std::io::Write,
-    verbose: bool,
-    conservative_pre_release_version_handling: bool,
+    Options {
+        verbose,
+        conservative_pre_release_version_handling,
+        ..
+    }: Options,
 ) -> anyhow::Result<bool> {
     let manifest = std::fs::read_to_string(&package_to_update.manifest_path)?;
     let mut doc = toml_edit::Document::from_str(&manifest)?;
@@ -142,7 +149,7 @@ fn set_version_and_update_package_dependency(
                     .and_then(|name_table| name_table.get_mut("version"))
                 {
                     let version_req = VersionReq::parse(current_version_req.as_str().expect("versions are strings"))?;
-                    let force_update = conservative_pre_release_version_handling && new_version.major == 0;
+                    let force_update = conservative_pre_release_version_handling && is_pre_release(&new_version);
                     if !version_req.matches(&new_version) || force_update {
                         let supported_op = Op::Caret;
                         if version_req.comparators.is_empty()
@@ -173,4 +180,8 @@ fn set_version_and_update_package_dependency(
     out.write_all(new_manifest.as_bytes())?;
 
     Ok(manifest != new_manifest)
+}
+
+fn is_pre_release(semver: &Version) -> bool {
+    semver.major == 0
 }
