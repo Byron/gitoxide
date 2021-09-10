@@ -1080,7 +1080,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.21.2"
+version = "0.21.3"
 dependencies = [
  "btoi",
  "git-actor",
