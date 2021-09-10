@@ -1,4 +1,4 @@
-### 1.0.1 (2021-09-10)
+### 1.0.2 (2021-09-10)
 
 - Compatibility with Rust 1.55. It informed about the incorrect usage of `std::io::ErrorKind::Other` which this crate also dependent on in its tests.
 

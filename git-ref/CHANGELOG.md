@@ -1,4 +1,4 @@
-### v0.7.2
+### v0.7.3
 
 - Compatibility with Rust 1.55. It informed about the incorrect usage of `std::io::ErrorKind::Other` which this crate also dependent on causing
   runtime bugs. The latter were detected by tests and this release contains the fix to not rely on certain behaviour anymore.
