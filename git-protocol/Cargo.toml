@@ -1,6 +1,6 @@
 [package]
 name = "git-protocol"
-version = "0.10.3"
+version = "0.10.4"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project for implementing git protocols"
