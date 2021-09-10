@@ -28,6 +28,7 @@ function set-static-git-environment() {
 title "smart-release"
 (sandbox
   set-static-git-environment
+  export CARGO_HOME=$PWD
 
   snapshot="$snapshot/triple-depth-workspace"
   cp -R $fixtures/tri-depth-workspace/* .
@@ -49,7 +50,7 @@ title "smart-release"
     )
     (with '--execute (but without side-effects'
       it "succeeds" && {
-        expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish --execute
+        expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish --execute --allow-dirty
       }
     )
     (with ".git and target/ directories removed"

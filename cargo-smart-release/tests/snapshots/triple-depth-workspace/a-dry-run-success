@@ -1,6 +1,9 @@
 [WARN ] Consider running with --update-crates-index to assure bumping on demand uses the latest information
+[WARN ] Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already
 [INFO ] Package a wasn't tagged with a-v0.8.0 yet and thus needs a release
-[INFO ] Using manifest version 0.8.0 of crate a as it is sufficient to succeed latest published version 0.0.1.
+[WARN ] The working tree has changes which will prevent a release with --execute unless --allow-dirty is also specified. The latter isn't recommended.
+[INFO ] Using current version 0.8.0 instead of bumped one 0.8.0.
+[INFO ] Congratulations for the new release of 'a' 🎉
 [INFO ] WOULD prepare release of a v0.8.0
 [INFO ] Pending 'a' manifest version update: "0.8.0"
 [INFO ] WOULD persist changes to manifests with: "Bump a v0.8.0"
