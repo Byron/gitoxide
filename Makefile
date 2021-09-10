@@ -56,7 +56,8 @@ debug-small: always ## minimal dependencies, at cost of performance
 target/release/gix: always
 	cargo build --release --no-default-features --features small
 
-lint: clippy ## Run lints with clippy
+nix-shell-macos: ## Enter a nix-shell able to build on macos
+	nix-shell -p pkg-config openssl libiconv darwin.apple_sdk.frameworks.Security darwin.apple_sdk.frameworks.SystemConfiguration
 
 ##@ Testing
 
