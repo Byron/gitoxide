@@ -52,9 +52,9 @@ pub struct SmartRelease {
     #[argh(switch, short = 'u')]
     pub update_crates_index: bool,
 
-    /// allow discovery of changed crates to also publish stable crates, bumping their version according to --bump <spec>.
+    /// disallow to also publish stable crates when discoverying changed crates, bumping their version according to -d <spec>.
     #[argh(switch)]
-    pub allow_auto_publish_of_stable_crates: bool,
+    pub no_auto_publish_of_stable_crates: bool,
 
     /// do not force pre-release version requirements to be updated in dependent crates on patch update.
     ///

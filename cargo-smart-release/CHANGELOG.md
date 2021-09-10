@@ -1,6 +1,7 @@
-### v0.3.2 (2021-09-??)
+### v0.4.0 (2021-09-??)
 
 - Conservative pre-release version handling along with a flag to turn it off. See [this issue][194] for details.
+- Rename `--allow-auto-publish-of-stable-crates` to `--no-auto-publish-of-stable-crates`, inverting its meaning.
 
 [194]: https://github.com/Byron/gitoxide/issues/194
 

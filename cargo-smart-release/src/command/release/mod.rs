@@ -307,7 +307,7 @@ fn depth_first_traversal(
             verbose,
         )?;
         if git::has_changed_since_last_release(dep_package, ctx, verbose)? {
-            if dep_package.version.major == 0 || allow_auto_publish_of_stable_crates {
+            if version::is_pre_release(&dep_package.version) || allow_auto_publish_of_stable_crates {
                 if verbose {
                     log::info!(
                         "Adding {} v{} to set of published crates as it changed since last release",
