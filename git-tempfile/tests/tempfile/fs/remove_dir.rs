@@ -34,8 +34,7 @@ mod empty_upwards_until_boundary {
         let dir = tempfile::tempdir()?;
         let target = dir.path().join("actually-a-file");
         std::fs::write(&target, &[42])?;
-        assert!(matches!(remove_dir::empty_upward_until_boundary(&target, dir.path()),
-                            Err(err) if err.kind() == io::ErrorKind::Other));
+        assert!(remove_dir::empty_upward_until_boundary(&target, dir.path()).is_err()); // TODO: check for IsNotADirectory when it becomes stable
         assert!(target.is_file(), "it didn't touch the file");
         assert!(dir.path().is_dir(), "it won't touch the boundary");
         Ok(())
@@ -127,8 +126,6 @@ mod empty_depth_first {
 /// We assume that all checks above also apply to the iterator, so won't repeat them here
 /// Test outside interference only
 mod iter {
-    use std::io;
-
     use git_tempfile::remove_dir;
 
     #[test]
@@ -142,10 +139,9 @@ mod iter {
 
         // recreate the deleted directory in racy fashion, causing the next-to-delete directory not to be empty.
         std::fs::create_dir(&nested)?;
-        assert_eq!(
-            it.next().expect("err item").unwrap_err().kind(),
-            io::ErrorKind::Other,
-            "cannot delete non-empty directory"
+        assert!(
+            it.next().expect("err item").is_err(),
+            "cannot delete non-empty directory" // TODO: check for IsADirectory when it becomes stable
         );
         assert!(it.next().is_none(), "iterator is depleted");
         Ok(())

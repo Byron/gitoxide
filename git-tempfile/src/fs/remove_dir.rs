@@ -41,13 +41,12 @@ impl<'a> Iterator for Iter<'a> {
     type Item = std::io::Result<&'a Path>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        use std::io::ErrorKind::*;
         match self.cursor.take() {
             Some(dir) => {
                 let next = match std::fs::remove_dir(dir) {
                     Ok(()) => Some(Ok(dir)),
                     Err(err) => match err.kind() {
-                        NotFound => Some(Ok(dir)),
+                        std::io::ErrorKind::NotFound => Some(Ok(dir)),
                         _other_error_kind => return Some(Err(err)),
                     },
                 };
