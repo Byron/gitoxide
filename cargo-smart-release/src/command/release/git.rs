@@ -1,6 +1,6 @@
 use std::{convert::TryInto, process::Command};
 
-use anyhow::bail;
+use anyhow::{anyhow, bail};
 use bstr::ByteSlice;
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path},
@@ -87,18 +87,15 @@ pub fn assure_clean_working_tree() -> anyhow::Result<()> {
         bail!("Detected working tree changes. Please commit beforehand as otherwise these would be committed as part of manifest changes, or use --allow-dirty to force it.")
     }
 
-    let has_untracked = !Command::new("git")
+    let untracked = Command::new("git")
         .arg("ls-files")
         .arg("--exclude-standard")
         .arg("--others")
         .output()?
-        .stdout
-        .as_slice()
-        .trim()
-        .is_empty();
-
-    if has_untracked {
-        bail!("Found untracked files which would possibly be packaged when publishing.")
+        .stdout;
+    if !untracked.trim().is_empty() {
+        let err = anyhow!(bstr::BString::from(untracked));
+        return Err(err.context("Found untracked files which would possibly be packaged when publishing."));
     }
     Ok(())
 }
