@@ -38,7 +38,7 @@ impl Arguments {
             }
             git_transport::Protocol::V2 => {
                 let retained_state = self.args.clone();
-                self.args.extend(self.haves.drain(..));
+                self.args.append(&mut self.haves);
                 if add_done_argument {
                     self.args.push("done".into());
                 }

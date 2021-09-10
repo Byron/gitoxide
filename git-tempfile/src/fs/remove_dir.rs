@@ -103,7 +103,7 @@ pub fn empty_depth_first(delete_dir: impl Into<PathBuf>) -> std::io::Result<()> 
             std::fs::remove_dir(&dir_to_delete)?;
         } else {
             stack.push(dir_to_delete);
-            stack.extend(next_to_push.drain(..));
+            stack.append(&mut next_to_push);
         }
     }
     Ok(())

@@ -130,7 +130,7 @@ where
             round += 1;
             first = self.len();
 
-            self.extend(new_edits.drain(..));
+            self.append(&mut new_edits);
         }
     }
 }
