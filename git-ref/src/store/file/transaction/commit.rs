@@ -73,11 +73,8 @@ impl<'s> Transaction<'s> {
                     }
                     if update_ref {
                         if let Err(err) = lock.commit() {
-                            #[cfg(not(target_os = "windows"))]
-                            let special_kind = std::io::ErrorKind::Other;
-                            #[cfg(target_os = "windows")]
-                            let special_kind = std::io::ErrorKind::PermissionDenied;
-                            let err = if err.error.kind() == special_kind {
+                            // TODO: when Kind::IsADirectory becomes stable, use that.
+                            let err = if err.instance.resource_path().is_dir() {
                                 git_tempfile::remove_dir::empty_depth_first(err.instance.resource_path())
                                     .map_err(|io_err| std::io::Error::new(std::io::ErrorKind::Other, io_err))
                                     .and_then(|_| err.instance.commit().map_err(|err| err.error))

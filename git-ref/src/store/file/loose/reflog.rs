@@ -126,12 +126,8 @@ pub mod create_or_update {
                         Ok(f) => Some(f),
                         Err(err) if err.kind() == std::io::ErrorKind::NotFound => None,
                         Err(err) => {
-                            #[cfg(target_os = "windows")]
-                            let special_kind = std::io::ErrorKind::PermissionDenied;
-                            #[cfg(not(target_os = "windows"))]
-                            let special_kind = std::io::ErrorKind::Other;
-
-                            if err.kind() == special_kind {
+                            // TODO: when Kind::IsADirectory becomes stable, use that.
+                            if log_path.is_dir() {
                                 git_tempfile::remove_dir::empty_depth_first(&log_path)
                                     .and_then(|_| options.open(&log_path))
                                     .map(Some)
