@@ -152,13 +152,11 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
         }
         Ok(Some(format!("refs/tags/{}", tag_name).try_into()?))
     } else {
-        let edits = ctx
+        let tag = ctx
             .git_easy
             .tag(tag_name, commit_id.expect("set in --execute mode"), PreviousValue::Any)?;
-        assert_eq!(edits.len(), 1, "We create only one tag and there is no expansion");
-        let tag = edits.into_iter().next().expect("the promised tag");
-        log::info!("Created tag {}", tag.name.as_bstr());
-        Ok(Some(tag.name))
+        log::info!("Created tag {}", tag.name().as_bstr());
+        Ok(Some(tag.inner.name))
     }
 }
 
