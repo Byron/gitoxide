@@ -33,7 +33,9 @@ pub mod oid;
 pub mod reference;
 pub mod state;
 
-/// The head reference, as created from looking at `.git/HEAD`.
+/// The head reference, as created from looking at `.git/HEAD`, able to represent all of its possible states.
+///
+/// Note that like [`Reference`], this type's data is snapshot of persisted state on disk.
 pub struct Head<'repo, A> {
     /// One of various possible states for the HEAD reference
     pub kind: head::Kind,
