@@ -128,7 +128,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         let committer = match log_committer {
             Some(c) => c,
             None => {
-                committer_storage = self.committer();
+                committer_storage = self.committer()?;
                 &committer_storage
             }
         };
