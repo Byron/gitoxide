@@ -19,6 +19,24 @@ mod commit {
     use git_repository as git;
     use git_repository::prelude::{ObjectAccessExt, ReferenceAccessExt};
     use git_testtools::hex_to_id;
+    #[test]
+    fn parent_in_initial_commit_causes_failure() {
+        let tmp = tempfile::tempdir().unwrap();
+        let repo = git::init(&tmp).unwrap().into_easy();
+        let empty_tree_id = repo.write_object(&git::objs::Tree::empty()).unwrap().detach();
+        let author = git::actor::Signature::empty();
+        let err = repo
+            .commit(
+                "HEAD",
+                &author.to_ref(),
+                &author.to_ref(),
+                "initial",
+                empty_tree_id,
+                [empty_tree_id],
+            )
+            .unwrap_err();
+        assert_eq!(err.to_string(), "Reference 'refs/heads/main' was supposed to exist with value 4b825dc642cb6eb9a060e54bf8d69288fbee4904, but didn't.", "cannot provide parent id in initial commit");
+    }
 
     #[test]
     fn single_line_initial_commit_empty_tree_ref_nonexisting() -> crate::Result {
@@ -41,6 +59,7 @@ mod commit {
         );
 
         let head = repo.head()?.into_referent();
+        assert_eq!(head.name().as_bstr(), "refs/heads/main", "'main' is the default name");
         assert_eq!(
             head.log()?
                 .iter_rev()?

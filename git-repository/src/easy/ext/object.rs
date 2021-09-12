@@ -86,7 +86,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
     ///
     /// `reference` will be created if it doesn't exist, and can be `"HEAD"` to automatically write-through to the symbolic reference
     /// that `HEAD` points to if it is not detached. For this reason, detached head states cannot be created unless the `HEAD` is detached
-    /// already.
+    /// already. The reflog will be written as canonical git would do, like `<operation> (<detail>): <summary>`.
     ///
     /// The first parent id in `parents` is expected to be the current target of `reference` and the operation will fail if it is not.
     /// If there is no parent, the `reference` is expected to not exist yet.
@@ -137,7 +137,13 @@ pub trait ObjectAccessExt: easy::Access + Sized {
                         message: crate::reference::log::message("commit", &commit),
                     },
                     expected: match commit.parents.get(0).map(|p| Target::Peeled(*p)) {
-                        Some(previous) => PreviousValue::ExistingMustMatch(previous),
+                        Some(previous) => {
+                            if reference.as_bstr() == "HEAD" {
+                                PreviousValue::MustExistAndMatch(previous)
+                            } else {
+                                PreviousValue::ExistingMustMatch(previous)
+                            }
+                        }
                         None => PreviousValue::MustNotExist,
                     },
                     new: Target::Peeled(commit_id.inner),
