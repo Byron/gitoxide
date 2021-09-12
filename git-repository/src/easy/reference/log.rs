@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use std::{borrow::Borrow, cell::RefMut, marker::PhantomData, ops::DerefMut};
 
 use git_ref::file::ReferenceExt;

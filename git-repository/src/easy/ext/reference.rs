@@ -94,10 +94,10 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         target: impl Into<ObjectId>,
         constraint: PreviousValue,
         log_message: impl Into<BString>,
-    ) -> Result<Reference<'_, Self>, reference::create::Error>
+    ) -> Result<Reference<'_, Self>, reference::edit::Error>
     where
         Name: TryInto<FullName, Error = E>,
-        reference::create::Error: From<E>,
+        reference::edit::Error: From<E>,
     {
         let name = name.try_into()?;
         let id = target.into();

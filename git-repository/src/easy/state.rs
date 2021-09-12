@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+//!
 use std::cell::{Ref, RefMut};
 
 use git_ref::file;
