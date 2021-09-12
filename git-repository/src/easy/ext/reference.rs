@@ -207,14 +207,13 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
 
     /// Return a platform for iterating references.
     ///
-    /// Common kinds of iteration are [all][easy::iter::references::State::all()] or [prefixed][easy::iter::references::State::prefixed()]
+    /// Common kinds of iteration are [all][easy::reference::iter::State::all()] or [prefixed][easy::reference::iter::State::prefixed()]
     /// references.
-    // TODO: put this into easy::reference::iter::State
-    fn references(&self) -> Result<easy::iter::references::State<'_, Self>, easy::iter::references::Error> {
+    fn references(&self) -> Result<easy::reference::iter::State<'_, Self>, easy::reference::iter::Error> {
         let state = self.state();
         let repo = self.repo()?;
         let packed_refs = state.assure_packed_refs_uptodate(&repo.refs)?;
-        Ok(easy::iter::references::State {
+        Ok(easy::reference::iter::State {
             repo,
             packed_refs,
             access: self,

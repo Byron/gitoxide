@@ -9,6 +9,8 @@ use crate::{
     easy::{Oid, Reference},
 };
 
+pub mod iter;
+
 pub mod namespace {
     pub mod set {
         use crate::easy;
