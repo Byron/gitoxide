@@ -13,9 +13,23 @@ use crate::{
     ext::ObjectIdExt,
 };
 
+/// Methods related to object creation.
 pub trait ObjectAccessExt: easy::Access + Sized {
-    // NOTE: in order to get the actual kind of object, is must be fully decoded from storage in case of packs
-    // even though partial decoding is possible for loose objects, it won't matter much here.
+    /// Find the object with `id` in the object database or return an error if it could not be found.
+    ///
+    /// There are various legitimate reasons for an object to not be present, which is why
+    /// [`try_find_object(…)`][ObjectAccessExt::try_find_object()] might be preferable instead.
+    ///
+    /// # Important
+    ///
+    /// As a shared buffer is written to back the object data, the returned `ObjectRef` will prevent other
+    /// `find_object()` operations from succeeding while alive.
+    /// To bypass this limit, clone this `easy::Access` instance.
+    ///
+    /// # Performance Note
+    ///
+    /// In order to get the kind of the object, is must be fully decoded from storage if it is packed with deltas.
+    /// Loose object could be partially decoded, even though that's not implemented.
     fn find_object(&self, id: impl Into<ObjectId>) -> Result<ObjectRef<'_, Self>, object::find::existing::Error> {
         let state = self.state();
         let id = id.into();
@@ -31,6 +45,13 @@ pub trait ObjectAccessExt: easy::Access + Sized {
         ObjectRef::from_current_buf(id, kind, self).map_err(Into::into)
     }
 
+    /// Try to find the object with `id` or return `None` it it wasn't found.
+    ///
+    /// # Important
+    ///
+    /// As a shared buffer is written to back the object data, the returned `ObjectRef` will prevent other
+    /// `try_find_object()` operations from succeeding while alive.
+    /// To bypass this limit, clone this `easy::Access` instance.
     fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<ObjectRef<'_, Self>>, object::find::Error> {
         let state = self.state();
         let id = id.into();
@@ -49,6 +70,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
             .transpose()
     }
 
+    /// Write the given object into the object database and return its object id.
     fn write_object(&self, object: impl git_object::WriteTo) -> Result<Oid<'_, Self>, object::write::Error> {
         use git_odb::Write;
 
@@ -59,9 +81,17 @@ pub trait ObjectAccessExt: easy::Access + Sized {
             .map_err(Into::into)
     }
 
-    // docs notes
-    // Fails immediately if lock can't be acquired as first parent depends on it
-    // Writes without message encoding
+    /// Create a new commit object with `author`, `committer` and `message` referring to `tree` with `parents`, and point `reference`
+    /// to it. The commit is written without message encoding field, which can be assumed to be UTF-8.
+    ///
+    /// `reference` will be created if it doesn't exist, and can be `"HEAD"` to automatically write-through to the symbolic reference
+    /// that `HEAD` points to if it is not detached. For this reason, detached head states cannot be created unless the `HEAD` is detached
+    /// already.
+    ///
+    /// The first parent id in `parents` is expected to be the current target of `reference` and the operation will fail if it is not.
+    /// If there is no parent, the `reference` is expected to not exist yet.
+    ///
+    /// The method fails immediately if a `reference` lock can't be acquired.
     fn commit<'a, Name, E>(
         &self,
         reference: Name,

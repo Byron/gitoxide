@@ -1,4 +1,3 @@
-#![allow(missing_docs)]
 pub(crate) mod object;
 pub use object::ObjectAccessExt;
 
