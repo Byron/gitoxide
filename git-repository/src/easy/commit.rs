@@ -1,8 +1,10 @@
-#![allow(missing_docs)]
+//!
 mod error {
     use crate::easy;
 
+    /// The error returned by [`ObjectAccessExt::commit(…)`][easy::ext::ObjectAccessExt::commit()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
         ReferenceNameValidation(#[from] git_ref::name::Error),
