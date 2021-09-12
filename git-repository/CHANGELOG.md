@@ -1,6 +1,7 @@
 ### v0.10.0 (2021-??-??)
 
 - Change return value of `prelude::RepositoryAccessExt::committer()` from `git_actor::Signature` to `Result<git_actor::Signature, easy::borrow:repo::Error>`
+- Change return value of `prelude::ReferenceAccessExt` from `Result<Vec<RefEdit>>, _>` to `Result<easy::Reference, _>`.
 
 ### v0.9.1 (2021-09-10)
 
