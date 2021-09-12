@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+//!
 use std::{cell::RefMut, ops::Deref};
 
 use git_hash::{oid, ObjectId};
@@ -8,18 +8,25 @@ use crate::{
     easy::{ext::ObjectAccessExt, object::find, ObjectRef, Oid},
 };
 
+/// An [object id][ObjectId] infused with `Easy`.
 impl<'repo, A> Oid<'repo, A>
 where
     A: easy::Access + Sized,
 {
-    // NOTE: Can't access other object data that is attached to the same cache.
-    /// Find the [`ObjectRef`] associated with this object id, and assume it exists.
+    /// Find the [`ObjectRef`] associated with this object id, and consider it an error if it doesn't exist.
+    ///
+    /// # Note
+    ///
+    /// There can only be one `ObjectRef` per `Easy`. To increase that limit, clone the `Easy`.
     pub fn object(&self) -> Result<ObjectRef<'repo, A>, find::existing::Error> {
         self.access.find_object(self.inner)
     }
 
-    // NOTE: Can't access other object data that is attached to the same cache.
-    /// Try find the [`ObjectRef`] associated with this object id, it might not be available locally.
+    /// Try to find the [`ObjectRef`] associated with this object id, and return `None` if it's not available locally.
+    ///
+    /// # Note
+    ///
+    /// There can only be one `ObjectRef` per `Easy`. To increase that limit, clone the `Easy`.
     pub fn try_object(&self) -> Result<Option<ObjectRef<'repo, A>>, find::Error> {
         self.access.try_find_object(self.inner)
     }
@@ -50,6 +57,7 @@ where
     }
 }
 
+/// A platform to traverse commit ancestors, also referred to as commit history.
 pub struct Ancestors<'repo, A>
 where
     A: easy::Access + Sized,
@@ -60,6 +68,7 @@ where
     tip: ObjectId,
 }
 
+///
 pub mod ancestors {
     use std::ops::{Deref, DerefMut};
 
@@ -74,6 +83,7 @@ pub mod ancestors {
     where
         A: easy::Access + Sized,
     {
+        /// Obtain a platform for traversing ancestors of this commit.
         pub fn ancestors(&self) -> Result<Ancestors<'repo, A>, Error> {
             let pack_cache = self.access.state().try_borrow_mut_pack_cache()?;
             let repo = self.access.repo()?;
@@ -86,6 +96,7 @@ pub mod ancestors {
         }
     }
 
+    /// The iterator returned by [`Ancestors::all()`].
     pub struct Iter<'a, 'repo, A>
     where
         A: easy::Access + Sized,
@@ -98,6 +109,7 @@ pub mod ancestors {
     where
         A: easy::Access + Sized,
     {
+        /// Return an iterator to traverse all commits in the history of the commit the parent [Oid] is pointing to.
         pub fn all(&mut self) -> Iter<'_, 'repo, A> {
             Iter {
                 access: self.access,
@@ -132,7 +144,9 @@ pub mod ancestors {
     mod error {
         use crate::easy;
 
+        /// The error returned by [`Oid::ancestors()`][super::Oid::ancestors()].
         #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
         pub enum Error {
             #[error(transparent)]
             BorrowRepo(#[from] easy::borrow::repo::Error),
