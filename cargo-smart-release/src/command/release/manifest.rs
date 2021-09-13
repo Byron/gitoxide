@@ -95,12 +95,11 @@ fn collect_directly_dependent_packages<'a>(
 ) -> anyhow::Result<Vec<(&'a Package, Option<String>)>> {
     let mut packages_to_fix = Vec::<(&Package, Option<String>)>::new();
     let mut dependent_packages_this_round = Vec::new();
-    let mut previous_packages_to_fix_len = 0;
     let publishees_backing = publishees
         .iter()
         .map(|(p, v)| (*p, Some(v.to_owned())))
         .collect::<Vec<_>>();
-    let mut publishees_and_dependents = publishees_backing.as_slice();
+    let publishees_and_dependents = publishees_backing.as_slice();
 
     // eprintln!("start");
     loop {
@@ -188,9 +187,6 @@ fn collect_directly_dependent_packages<'a>(
             break;
         }
         packages_to_fix.append(&mut dependent_packages_this_round);
-        // TODO: consider all of them, each round, as it's a graph we are dealing with
-        publishees_and_dependents = &packages_to_fix[previous_packages_to_fix_len..];
-        previous_packages_to_fix_len = packages_to_fix.len();
 
         if !conservative_pre_release_version_handling {
             break;
