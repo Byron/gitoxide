@@ -4,7 +4,7 @@ use std::cell::Ref;
 use crate::easy;
 
 /// A platform to create iterators over references.
-#[must_use]
+#[must_use = "Iterators should be obtained from this iterator platform"]
 pub struct State<'r, A>
 where
     A: easy::Access + Sized,
