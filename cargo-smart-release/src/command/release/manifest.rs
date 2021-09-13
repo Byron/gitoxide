@@ -34,7 +34,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
         assert!(previous.is_none(), "publishees are unique so insertion always happens");
     }
 
-    let mut dependant_packages = collect_directly_dependent_packages(meta, publishees, &mut locks_by_manifest_path)?;
+    let mut dependent_packages = collect_directly_dependent_packages(meta, publishees, &mut locks_by_manifest_path)?;
     let mut made_change = false;
     for (publishee, new_version) in publishees {
         let mut lock = locks_by_manifest_path
@@ -49,7 +49,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
         )?;
     }
 
-    for dependant_on_publishee in dependant_packages.iter_mut() {
+    for dependant_on_publishee in dependent_packages.iter_mut() {
         let mut lock = locks_by_manifest_path
             .get_mut(&dependant_on_publishee.manifest_path)
             .expect("lock written once");
