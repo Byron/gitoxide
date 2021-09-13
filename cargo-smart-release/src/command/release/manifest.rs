@@ -155,7 +155,7 @@ fn collect_directly_dependent_packages<'a>(
                 if locks_by_manifest_path.contains_key(&package_to_fix.manifest_path) {
                     if let Some(previous_version) = packages_to_fix
                         .iter()
-                        .find_map(|(p, v)| (&p.id == &package_to_fix.id && &*v < &new_version).then(|| v))
+                        .find_map(|(p, v)| (p.id == package_to_fix.id && *v < new_version).then(|| v))
                     {
                         log::warn!(
                             "BUG: we encountered package {} again, and would need to update its version {:?} to {:?}",
