@@ -1,7 +1,9 @@
-#![allow(missing_docs)]
+//!
 use std::path::{Path, PathBuf};
 
+/// The error returned by [`git()`].
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("Could not find a valid HEAD reference")]
     FindHeadRef(#[from] git_ref::file::find::existing::Error),
