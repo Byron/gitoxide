@@ -98,3 +98,18 @@ fn validate(
 pub(crate) fn is_pre_release(semver: &Version) -> bool {
     semver.major == 0
 }
+
+pub(crate) fn conservative_dependent_version(
+    _publishee: &Package,
+    _new_publishee_version: &str,
+    _dependent: &Package,
+    _ctx: &Context,
+    _verbose: bool,
+) -> Option<Version> {
+    // TODO: actual computation
+    None
+}
+
+pub(crate) fn rhs_is_major_bump_for_lhs(lhs: &Version, rhs: &Version) -> bool {
+    rhs.major > lhs.major || rhs.minor > lhs.minor
+}
