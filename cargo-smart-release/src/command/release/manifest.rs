@@ -49,12 +49,17 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
         )?;
     }
 
-    for dependant_on_publishee in dependent_packages.iter_mut() {
+    for (dependant_on_publishee, possibly_new_version) in dependent_packages.iter_mut() {
         let mut lock = locks_by_manifest_path
             .get_mut(&dependant_on_publishee.manifest_path)
             .expect("lock written once");
-        made_change |=
-            set_version_and_update_package_dependency(dependant_on_publishee, None, publishees, &mut lock, opts)?;
+        made_change |= set_version_and_update_package_dependency(
+            dependant_on_publishee,
+            possibly_new_version.as_deref(),
+            publishees,
+            &mut lock,
+            opts,
+        )?;
     }
 
     let message = format!(
@@ -80,7 +85,7 @@ fn collect_directly_dependent_packages<'a>(
     meta: &'a Metadata,
     publishees: &[(&Package, String)],
     locks_by_manifest_path: &mut BTreeMap<&'a Utf8PathBuf, File>,
-) -> anyhow::Result<Vec<&'a Package>> {
+) -> anyhow::Result<Vec<(&'a Package, Option<String>)>> {
     let mut packages_to_fix = Vec::new();
     for package_to_fix in meta
         .workspace_members
@@ -104,7 +109,7 @@ fn collect_directly_dependent_packages<'a>(
             None,
         )?;
         locks_by_manifest_path.insert(&package_to_fix.manifest_path, lock);
-        packages_to_fix.push(package_to_fix);
+        packages_to_fix.push((package_to_fix, None));
     }
     Ok(packages_to_fix)
 }
