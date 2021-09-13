@@ -116,6 +116,9 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     if !crates_to_publish_together.is_empty() {
         perforrm_multi_version_release(&ctx, options, meta, crates_to_publish_together)?;
     }
+    // if !changed_crate_names_to_publish.is_empty() {
+    //     perforrm_multi_version_release(&ctx, options, meta, changed_crate_names_to_publish)?;
+    // }
 
     Ok(())
 }

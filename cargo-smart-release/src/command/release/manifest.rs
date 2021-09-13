@@ -34,7 +34,8 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
         assert!(previous.is_none(), "publishees are unique so insertion always happens");
     }
 
-    let mut dependent_packages = collect_directly_dependent_packages(meta, publishees, &mut locks_by_manifest_path)?;
+    let mut dependent_packages =
+        collect_directly_dependent_packages(meta, publishees, &mut locks_by_manifest_path, opts)?;
     let mut made_change = false;
     for (publishee, new_version) in publishees {
         let mut lock = locks_by_manifest_path
@@ -85,31 +86,56 @@ fn collect_directly_dependent_packages<'a>(
     meta: &'a Metadata,
     publishees: &[(&Package, String)],
     locks_by_manifest_path: &mut BTreeMap<&'a Utf8PathBuf, File>,
+    Options {
+        conservative_pre_release_version_handling,
+        ..
+    }: Options,
 ) -> anyhow::Result<Vec<(&'a Package, Option<String>)>> {
     let mut packages_to_fix = Vec::new();
-    for package_to_fix in meta
-        .workspace_members
+    let mut dependent_packages_this_round = Vec::new();
+    let mut previous_packages_to_fix_len = 0;
+    let publishees_backing = publishees
         .iter()
-        .map(|id| package_by_id(meta, id))
-        .filter(|p| {
-            !publishees.iter().any(|(publishee, _)| publishee.id == p.id)
-                && p.dependencies.iter().any(|dep| {
-                    publishees
-                        .iter()
-                        .any(|(publishee, _)| package_eq_dependency(publishee, dep))
-                })
-        })
-    {
-        if locks_by_manifest_path.contains_key(&package_to_fix.manifest_path) {
-            continue;
+        .map(|(p, v)| (*p, Some(v.to_owned())))
+        .collect::<Vec<_>>();
+    let mut publishees = publishees_backing.as_slice();
+    // eprintln!("start");
+    loop {
+        // dbg!(publishees.iter().map(|(p, _)| &p.name).collect::<Vec<_>>());
+        for package_to_fix in meta
+            .workspace_members
+            .iter()
+            .map(|id| package_by_id(meta, id))
+            .filter(|p| {
+                !publishees.iter().any(|(publishee, _)| publishee.id == p.id)
+                    && p.dependencies.iter().any(|dep| {
+                        publishees
+                            .iter()
+                            .any(|(publishee, _)| package_eq_dependency(publishee, dep))
+                    })
+            })
+        {
+            if locks_by_manifest_path.contains_key(&package_to_fix.manifest_path) {
+                continue;
+            }
+            let lock = git_lock::File::acquire_to_update_resource(
+                &package_to_fix.manifest_path,
+                git_lock::acquire::Fail::Immediately,
+                None,
+            )?;
+            locks_by_manifest_path.insert(&package_to_fix.manifest_path, lock);
+            dependent_packages_this_round.push((package_to_fix, None));
         }
-        let lock = git_lock::File::acquire_to_update_resource(
-            &package_to_fix.manifest_path,
-            git_lock::acquire::Fail::Immediately,
-            None,
-        )?;
-        locks_by_manifest_path.insert(&package_to_fix.manifest_path, lock);
-        packages_to_fix.push((package_to_fix, None));
+        if dependent_packages_this_round.is_empty() {
+            break;
+        }
+        packages_to_fix.append(&mut dependent_packages_this_round);
+        publishees = &packages_to_fix[previous_packages_to_fix_len..];
+        previous_packages_to_fix_len = packages_to_fix.len();
+
+        if !conservative_pre_release_version_handling {
+            break;
+        }
     }
     Ok(packages_to_fix)
 }
