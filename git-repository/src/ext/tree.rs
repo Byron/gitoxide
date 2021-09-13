@@ -1,4 +1,3 @@
-#![allow(missing_docs)]
 use std::borrow::BorrowMut;
 
 use git_hash::oid;
@@ -7,7 +6,14 @@ use git_traverse::tree::breadthfirst;
 
 pub trait Sealed {}
 
+/// An extension trait for tree iterators
 pub trait TreeIterExt: Sealed {
+    /// Traverse both `self` and the `other` tree in lock-step to allow computing what's needed to turn `self` into `other`,
+    /// with `state` being provided to allow reusing allocations and `find` being a function to lookup trees and turn them
+    /// into an iterator.
+    ///
+    /// The `delegate` implements a way to store the desired information about the traversal, allowing to pay only for what is needed.
+    /// It is also expected to store the result of the comparison, hence _unit_ is returned.
     #[cfg(feature = "git-diff")]
     fn changes_needed<FindFn, R, StateMut>(
         &self,
@@ -21,7 +27,11 @@ pub trait TreeIterExt: Sealed {
         R: git_diff::tree::Visit,
         StateMut: BorrowMut<git_diff::tree::State>;
 
-    /// Use this for squeezing out the last bits of performance.
+    /// Traverse this tree with `state` being provided to potentially reuse allocations, and `find` being a function to lookup trees
+    /// and turn them into iterators.
+    ///
+    /// The `delegate` implements a way to store details about the traversal to allow paying only for what's actually used.
+    /// Since it is expected to store the operation result, _unit_ is returned.
     fn traverse<StateMut, Find, V>(
         &self,
         state: StateMut,
