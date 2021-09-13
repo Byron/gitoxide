@@ -14,7 +14,6 @@ mod errors;
 mod impls;
 mod tree;
 pub use errors::{find, write};
-
 pub mod peel;
 
 impl Object {
@@ -95,7 +94,7 @@ impl<'repo, A> ObjectRef<'repo, A>
 where
     A: easy::Access + Sized,
 {
-    /// Obtain a an iterator over commit tokens like in [`to_commit_iter()`][ObjectRef::to_commit_iter()], but panic if this is not a commit.
+    /// Obtain a an iterator over commit tokens like in [`to_commit_iter()`][ObjectRef::try_to_commit_iter()], but panic if this is not a commit.
     pub fn commit_iter(&self) -> CommitRefIter<'_> {
         git_odb::data::Object::new(self.kind, &self.data)
             .try_into_commit_iter()
@@ -105,6 +104,13 @@ where
     /// Obtain a commit token iterator from the data in this instance, if it is a commit.
     pub fn try_to_commit_iter(&self) -> Option<CommitRefIter<'_>> {
         git_odb::data::Object::new(self.kind, &self.data).try_into_commit_iter()
+    }
+
+    /// Obtain a tag token iterator from the data in this instance, or panic if it is not a tag
+    pub fn tag_iter(&self) -> TagRefIter<'_> {
+        git_odb::data::Object::new(self.kind, &self.data)
+            .try_into_tag_iter()
+            .expect("BUG: this object must be a tag")
     }
 
     /// Obtain a tag token iterator from the data in this instance, if it is a tag.

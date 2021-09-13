@@ -135,7 +135,7 @@ pub mod peel {
                         .attach(self.access)
                         .object()
                         .map_err(Into::into)
-                        .and_then(|obj| obj.peel_to_end().map_err(Into::into))
+                        .and_then(|obj| obj.peel_tags_to_end().map_err(Into::into))
                         .map(|peeled| peeled.id)
                     {
                         Ok(peeled) => {
@@ -169,7 +169,7 @@ pub mod peel {
                     .attach(self.access)
                     .object()
                     .map_err(Into::into)
-                    .and_then(|obj| obj.peel_to_end().map_err(Into::into))
+                    .and_then(|obj| obj.peel_tags_to_end().map_err(Into::into))
                     .map(|obj| obj.id.attach(self.access)),
                 Kind::Symbolic(r) => r.attach(self.access).peel_to_id_in_place().map_err(Into::into),
             })
