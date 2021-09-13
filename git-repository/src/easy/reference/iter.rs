@@ -1,9 +1,9 @@
-#![allow(missing_docs)]
+//!
 use std::cell::Ref;
 
 use crate::easy;
 
-/// An iterator over references
+/// A platform to create iterators over references.
 #[must_use]
 pub struct State<'r, A>
 where
@@ -14,6 +14,7 @@ where
     pub(crate) access: &'r A,
 }
 
+/// An iterator over references, with or without filter.
 pub struct Iter<'r, A> {
     inner: git_ref::file::iter::LooseThenPacked<'r, 'r>,
     access: &'r A,
@@ -23,6 +24,10 @@ impl<'r, A> State<'r, A>
 where
     A: easy::Access + Sized,
 {
+    /// Return an iterator over all references in the repository.
+    ///
+    /// Even broken or otherwise unparsible or inaccessible references are returned and have to be handled by the caller on a
+    /// case by case basis.
     pub fn all(&self) -> Result<Iter<'_, A>, init::Error> {
         let repo = self.repo.deref();
         Ok(Iter {
@@ -31,6 +36,9 @@ where
         })
     }
 
+    /// Return an iterator over all references that match the given `prefix`.
+    ///
+    /// These are of the form `refs/heads` or `refs/remotes/origin`, and must not contain relative paths components like `.` or `..`.
     pub fn prefixed(&self, prefix: impl AsRef<Path>) -> Result<Iter<'_, A>, init::Error> {
         let repo = self.repo.deref();
         Ok(Iter {
@@ -54,18 +62,24 @@ where
     }
 }
 
+///
 pub mod init {
+    /// The error returned by [`State::all()`][super::State::all()] or [`State::prefixed()`][super::State::prefixed()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
         Io(#[from] std::io::Error),
     }
 }
 
+///
 mod error {
     use crate::easy;
 
+    /// The error returned by [ReferenceAccessExt::references()][easy::ext::ReferenceAccessExt::references()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
         PackedRefsOpen(#[from] git_ref::packed::buffer::open::Error),
