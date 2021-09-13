@@ -96,15 +96,6 @@ pub mod ancestors {
         }
     }
 
-    /// The iterator returned by [`Ancestors::all()`].
-    pub struct Iter<'a, 'repo, A>
-    where
-        A: easy::Access + Sized,
-    {
-        access: &'repo A,
-        inner: Box<dyn Iterator<Item = Result<git_hash::ObjectId, git_traverse::commit::ancestors::Error>> + 'a>,
-    }
-
     impl<'repo, A> Ancestors<'repo, A>
     where
         A: easy::Access + Sized,
@@ -128,6 +119,15 @@ pub mod ancestors {
                 )),
             }
         }
+    }
+
+    /// The iterator returned by [`Ancestors::all()`].
+    pub struct Iter<'a, 'repo, A>
+    where
+        A: easy::Access + Sized,
+    {
+        access: &'repo A,
+        inner: Box<dyn Iterator<Item = Result<git_hash::ObjectId, git_traverse::commit::ancestors::Error>> + 'a>,
     }
 
     impl<'a, 'repo, A> Iterator for Iter<'a, 'repo, A>

@@ -47,7 +47,7 @@
 //!   However, other ways to adjust the `Repository` of long-running applications are possible. For instance, there could be a flag that
 //!   indicates a new `Repository` should be created (for instance, after it was changed) which causes the next server connection to
 //!   create a new one. This instance is the one to use when spawning new `EasyArc` instances.
-//! * `Platform` types are used to hold mutable or shared versions of required state for use in dependent objects they create, like iterators.
+//! * 'Platform' types are used to hold mutable or shared versions of required state for use in dependent objects they create, like iterators.
 //!   These come with the benefit of allowing for nicely readable call chains.
 //!
 //! ### Terminology

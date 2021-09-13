@@ -64,7 +64,7 @@ where
 
 ///
 pub mod init {
-    /// The error returned by [`State::all()`][super::State::all()] or [`State::prefixed()`][super::State::prefixed()].
+    /// The error returned by [`Platform::all()`][super::Platform::all()] or [`Platform::prefixed()`][super::Platform::prefixed()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

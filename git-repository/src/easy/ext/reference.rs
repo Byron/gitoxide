@@ -207,7 +207,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
 
     /// Return a platform for iterating references.
     ///
-    /// Common kinds of iteration are [all][easy::reference::iter::State::all()] or [prefixed][easy::reference::iter::State::prefixed()]
+    /// Common kinds of iteration are [all][easy::reference::iter::Platform::all()] or [prefixed][easy::reference::iter::Platform::prefixed()]
     /// references.
     fn references(&self) -> Result<easy::reference::iter::Platform<'_, Self>, easy::reference::iter::Error> {
         let state = self.state();

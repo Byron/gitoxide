@@ -61,7 +61,7 @@ mod commit {
         let head = repo.head()?.into_referent();
         assert_eq!(head.name().as_bstr(), "refs/heads/main", "'main' is the default name");
         assert_eq!(
-            head.log()?
+            head.logs()?
                 .iter_rev()?
                 .expect("log present")
                 .next()
@@ -94,7 +94,7 @@ mod commit {
 
         let head_log_entries: Vec<_> = repo
             .head()?
-            .log()?
+            .logs()?
             .iter_rev()?
             .expect("log present")
             .map(Result::unwrap)
@@ -127,7 +127,7 @@ mod commit {
         let current_commit = branch.peel_to_id_in_place()?;
         assert_eq!(current_commit, second_commit_id, "the commit was set");
 
-        let mut log = branch.log()?;
+        let mut log = branch.logs()?;
         let mut log_iter = log.iter_rev()?.expect("log present");
         assert_eq!(
             log_iter.next().expect("one line")?.message,
