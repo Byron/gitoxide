@@ -66,7 +66,7 @@ where
         let mut pack_cache = odb::pack::cache::Never;
         let mut commits: Vec<Vec<u8>> = Vec::new();
         for c in interrupt::Iter::new(
-            commit_id.ancestors_iter(|oid, buf| {
+            commit_id.ancestors(|oid, buf| {
                 progress.inc();
                 repo.odb.find(oid, buf, &mut pack_cache).ok().map(|o| {
                     commits.push(o.data.to_owned());

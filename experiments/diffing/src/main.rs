@@ -39,7 +39,7 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let all_commits = commit_id
-        .ancestors_iter(|oid, buf| db.find_commit_iter(oid, buf, &mut odb::pack::cache::Never).ok())
+        .ancestors(|oid, buf| db.find_commit_iter(oid, buf, &mut odb::pack::cache::Never).ok())
         .collect::<Result<Vec<_>, _>>()?;
     let num_diffs = all_commits.len();
     let elapsed = start.elapsed();

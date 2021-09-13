@@ -37,7 +37,7 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let all_commits = commit_id
-        .ancestors_iter(|oid, buf| db.find_commit_iter(oid, buf, &mut odb::pack::cache::Never).ok())
+        .ancestors(|oid, buf| db.find_commit_iter(oid, buf, &mut odb::pack::cache::Never).ok())
         .collect::<Result<Vec<_>, _>>()?;
     let elapsed = start.elapsed();
     println!(
@@ -146,7 +146,7 @@ where
     C: odb::pack::cache::DecodeEntry,
 {
     let mut cache = new_cache();
-    let ancestors = tip.ancestors_iter(|oid, buf| db.find_commit_iter(oid, buf, &mut cache).ok());
+    let ancestors = tip.ancestors(|oid, buf| db.find_commit_iter(oid, buf, &mut cache).ok());
     let mut commits = 0;
     for commit_id in ancestors {
         let _ = commit_id?;
