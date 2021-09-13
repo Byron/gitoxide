@@ -149,5 +149,6 @@ pub mod ancestors {
         }
     }
 }
+// TODO: put this here as a breaking change.
 #[doc(inline)]
 pub use ancestors::Ancestors;
