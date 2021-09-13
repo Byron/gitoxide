@@ -103,14 +103,12 @@ where
     }
 
     /// Obtain a commit token iterator from the data in this instance, if it is a commit.
-    // TODO: rename to try_*
-    pub fn to_commit_iter(&self) -> Option<CommitRefIter<'_>> {
+    pub fn try_to_commit_iter(&self) -> Option<CommitRefIter<'_>> {
         git_odb::data::Object::new(self.kind, &self.data).try_into_commit_iter()
     }
 
-    // TODO: rename to try_*
     /// Obtain a tag token iterator from the data in this instance, if it is a tag.
-    pub fn to_tag_iter(&self) -> Option<TagRefIter<'_>> {
+    pub fn try_to_tag_iter(&self) -> Option<TagRefIter<'_>> {
         git_odb::data::Object::new(self.kind, &self.data).try_into_tag_iter()
     }
 }
