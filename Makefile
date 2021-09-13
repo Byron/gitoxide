@@ -142,7 +142,6 @@ check: ## Build all code in suitable configurations
 	cd experiments/object-access && cargo check
 	cd experiments/diffing && cargo check
 	cd experiments/traversal && cargo check
-	cd experiments/hash-owned-borrowed && cargo check
 
 unit-tests: ## run all unit tests
 	cargo test --all
