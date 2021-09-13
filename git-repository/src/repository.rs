@@ -1,25 +1,18 @@
-#![allow(missing_docs)]
 mod access {
     use crate::{Kind, Repository};
 
     impl Repository {
+        /// Return the kind of repository, either bare or one with a work tree.
         pub fn kind(&self) -> Kind {
             match self.work_tree {
                 Some(_) => Kind::WorkTree,
                 None => Kind::Bare,
             }
         }
-
-        pub fn git_dir(&self) -> &std::path::Path {
-            &self.refs.base
-        }
-        pub fn objects_dir(&self) -> &std::path::Path {
-            &self.odb.dbs[0].loose.path
-        }
     }
 }
 
-pub mod from_path {
+mod from_path {
     use std::convert::TryFrom;
 
     use crate::Path;
@@ -34,6 +27,7 @@ pub mod from_path {
     }
 }
 
+///
 pub mod open {
     use std::{borrow::Cow, path::PathBuf};
 
@@ -41,7 +35,9 @@ pub mod open {
 
     use crate::Repository;
 
+    /// The error returned by [`Repository::open()`].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
         Config(#[from] git_config::parser::ParserOrIoError<'static>),
@@ -54,6 +50,7 @@ pub mod open {
     }
 
     impl Repository {
+        /// Open a git repository at the given `path`, possibly expanding it to `path/.git` if `path` is a work tree dir.
         pub fn open(path: impl Into<std::path::PathBuf>) -> Result<Self, Error> {
             let path = path.into();
             let (path, kind) = match crate::path::is_git(&path) {
@@ -119,12 +116,15 @@ pub mod open {
     }
 }
 
+///
 pub mod init {
     use std::{convert::TryInto, path::Path};
 
     use crate::Repository;
 
+    /// The error returned by [`Repository::init()`].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
         Init(#[from] crate::path::create::Error),
@@ -153,19 +153,34 @@ mod location {
             &self.refs.base
         }
 
+        /// Return the path to the repository itself, containing objects, references, configuration, and more.
+        ///
+        /// Synonymous to [`path()`][Repository::path()].
+        pub fn git_dir(&self) -> &std::path::Path {
+            &self.refs.base
+        }
+
         /// Return the path to the working directory if this is not a bare repository.
         pub fn workdir(&self) -> Option<&std::path::Path> {
             self.work_tree.as_deref()
         }
+
+        /// Return the path to the directory containing all objects.
+        pub fn objects_dir(&self) -> &std::path::Path {
+            &self.odb.dbs[0].loose.path
+        }
     }
 }
 
+///
 pub mod discover {
     use std::{convert::TryInto, path::Path};
 
     use crate::{path::discover, Repository};
 
+    /// The error returned by [`Repository::discover()`].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
         Discover(#[from] discover::existing::Error),
@@ -174,6 +189,7 @@ pub mod discover {
     }
 
     impl Repository {
+        /// Try to open a git repository in `directory` and search upwards through its parents until one is found.
         pub fn discover(directory: impl AsRef<Path>) -> Result<Self, Error> {
             let path = discover::existing(directory)?;
             Ok(path.try_into()?)
