@@ -9,7 +9,7 @@ publish = false
 
 [dependencies]
 anyhow = "1"
-git-repository = { version ="^0.9.1", path = "../../git-repository", features = ["unstable"] }
+git-repository = { version ="^0.10.0", path = "../../git-repository", features = ["unstable"] }
 git2 = "0.13"
 rayon = "1.5.0"
 dashmap = "4.0.2"
