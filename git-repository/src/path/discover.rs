@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+//!
 use std::{
     borrow::Cow,
     path::{Component, Path},
@@ -6,10 +6,13 @@ use std::{
 
 use crate::path;
 
+///
 pub mod existing {
     use std::path::PathBuf;
 
+    /// The error returned by [path::discover::existing()][super::existing()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error("Failed to access a directory, or path is not a directory: '{}'", .path.display())]
         InaccessibleDirectory { path: PathBuf },
@@ -18,8 +21,9 @@ pub mod existing {
     }
 }
 
-/// Returns the work tree if possible and the found repository is not bare or the git repository itself,
-/// and traverse parent directories until a Repository is found.
+/// Find the location of the git repository directly in `directory` or in any of its parent directories.
+///
+/// Fail if no valid-looking git repository could be found.
 pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, existing::Error> {
     // Canonicalize the path so that `Path::parent` _actually_ gives
     // us the parent directory. (`Path::parent` just strips off the last

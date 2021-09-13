@@ -1,4 +1,3 @@
-#![allow(missing_docs)]
 use std::{
     fs::{self, OpenOptions},
     io::Write,
