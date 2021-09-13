@@ -1,3 +1,10 @@
+/// An iterator over the ancestors one or more starting commits
+pub struct Ancestors<Find, Predicate, StateMut> {
+    find: Find,
+    predicate: Predicate,
+    state: StateMut,
+}
+
 ///
 pub mod ancestors {
     use std::{
@@ -8,6 +15,8 @@ pub mod ancestors {
     use git_hash::{oid, ObjectId};
     use git_object::CommitRefIter;
     use quick_error::quick_error;
+
+    use crate::commit::Ancestors;
 
     quick_error! {
         /// The error is part of the item returned by the [Ancestors] iterator.
@@ -39,13 +48,6 @@ pub mod ancestors {
             self.buf.clear();
             self.seen.clear();
         }
-    }
-
-    /// An iterator over the ancestors one or more starting commits
-    pub struct Ancestors<Find, Predicate, StateMut> {
-        find: Find,
-        predicate: Predicate,
-        state: StateMut,
     }
 
     impl<Find, StateMut> Ancestors<Find, fn(&oid) -> bool, StateMut>
@@ -149,6 +151,3 @@ pub mod ancestors {
         }
     }
 }
-// TODO: put this here as a breaking change.
-#[doc(inline)]
-pub use ancestors::Ancestors;

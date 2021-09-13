@@ -400,7 +400,7 @@ mod tree {
     pub mod traverse {
         use git_hash::ObjectId;
         use git_object::{bstr::BStr, tree::EntryRef};
-        use git_traverse::tree::visit::{Action, Visit};
+        use git_traverse::tree::{visit::Action, Visit};
 
         use crate::data::output::count::objects::util::InsertImmutable;
 

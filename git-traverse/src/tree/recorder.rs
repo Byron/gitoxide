@@ -1,14 +1,12 @@
-use std::collections::VecDeque;
-
 use git_hash::ObjectId;
 use git_object::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
     tree,
 };
 
-use crate::tree::{visit, visit::Action};
+use crate::tree::{visit::Action, Recorder, Visit};
 
-/// An owned entry as observed by a call to [`visit_(tree|nontree)(…)`][visit::Visit::visit_tree()], enhanced with the full path to it.
+/// An owned entry as observed by a call to [`visit_(tree|nontree)(…)`][Visit::visit_tree()], enhanced with the full path to it.
 /// Otherwise similar to [`git_object::tree::EntryRef`].
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Entry {
@@ -32,15 +30,6 @@ impl Entry {
     }
 }
 
-/// A [Visit][visit::Visit] implementation to record every observed change and keep track of the changed paths.
-#[derive(Clone, Debug, Default)]
-pub struct Recorder {
-    path_deque: VecDeque<BString>,
-    path: BString,
-    /// The observed entries.
-    pub records: Vec<Entry>,
-}
-
 impl Recorder {
     fn pop_element(&mut self) {
         if let Some(pos) = self.path.rfind_byte(b'/') {
@@ -62,7 +51,7 @@ impl Recorder {
     }
 }
 
-impl visit::Visit for Recorder {
+impl Visit for Recorder {
     fn pop_front_tracked_path_and_set_current(&mut self) {
         self.path = self
             .path_deque

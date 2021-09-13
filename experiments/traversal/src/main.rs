@@ -178,7 +178,7 @@ where
                 seen: HashSet<ObjectId>,
             }
 
-            impl tree::visit::Visit for Count {
+            impl tree::Visit for Count {
                 fn pop_front_tracked_path_and_set_current(&mut self) {}
                 fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
                 fn push_path_component(&mut self, _component: &BStr) {}
@@ -229,7 +229,7 @@ where
                 seen: &'a DashSet<ObjectId>,
             }
 
-            impl<'a> tree::visit::Visit for Count<'a> {
+            impl<'a> tree::Visit for Count<'a> {
                 fn pop_front_tracked_path_and_set_current(&mut self) {}
                 fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
                 fn push_path_component(&mut self, _component: &BStr) {}
