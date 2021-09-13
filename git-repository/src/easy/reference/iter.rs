@@ -5,7 +5,7 @@ use crate::easy;
 
 /// A platform to create iterators over references.
 #[must_use = "Iterators should be obtained from this iterator platform"]
-pub struct State<'r, A>
+pub struct Platform<'r, A>
 where
     A: easy::Access + Sized,
 {
@@ -20,7 +20,7 @@ pub struct Iter<'r, A> {
     access: &'r A,
 }
 
-impl<'r, A> State<'r, A>
+impl<'r, A> Platform<'r, A>
 where
     A: easy::Access + Sized,
 {

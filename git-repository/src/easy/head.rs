@@ -84,8 +84,8 @@ pub mod log {
         A: easy::Access + Sized,
     {
         /// Return a platform for obtaining iterators on the reference log associated with the `HEAD` reference.
-        pub fn log(&self) -> Result<easy::reference::log::State<'repo, A, easy::Reference<'repo, A>>, Error> {
-            Ok(easy::reference::log::State {
+        pub fn log(&self) -> Result<easy::reference::log::Platform<'repo, A, easy::Reference<'repo, A>>, Error> {
+            Ok(easy::reference::log::Platform {
                 reference: self.access.find_reference("HEAD")?,
                 buf: self.access.state().try_borrow_mut_buf()?,
                 _phantom: PhantomData::default(),

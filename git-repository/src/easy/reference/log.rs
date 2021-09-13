@@ -7,7 +7,7 @@ use crate::{easy, easy::Reference};
 
 /// A platform to obtain iterators over reference logs.
 #[must_use = "Iterators should be obtained from this log platform"]
-pub struct State<'repo, A: 'repo, R>
+pub struct Platform<'repo, A: 'repo, R>
 where
     R: Borrow<Reference<'repo, A>>,
 {
@@ -37,7 +37,7 @@ pub type ReverseIter<'a> = git_ref::file::log::iter::Reverse<'a, std::fs::File>;
 /// An iterator over reference logs, oldest to newest.
 pub type ForwardIter<'a> = git_ref::file::log::iter::Forward<'a>;
 
-impl<'repo, A, R> State<'repo, A, R>
+impl<'repo, A, R> Platform<'repo, A, R>
 where
     A: easy::Access + Sized,
     R: Borrow<Reference<'repo, A>>,
@@ -75,8 +75,8 @@ where
     A: easy::Access + Sized,
 {
     /// Return a platform for obtaining iterators over reference logs.
-    pub fn log(&self) -> Result<State<'repo, A, &'_ Reference<'repo, A>>, easy::borrow::state::Error> {
-        Ok(State {
+    pub fn log(&self) -> Result<Platform<'repo, A, &'_ Reference<'repo, A>>, easy::borrow::state::Error> {
+        Ok(Platform {
             reference: self,
             buf: self.access.state().try_borrow_mut_buf()?,
             _phantom: Default::default(),

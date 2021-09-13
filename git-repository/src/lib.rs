@@ -16,7 +16,8 @@
 //! Most extensions to existing objects provide an `obj_with_extension.easy(&repo).an_easier_version_of_a_method()` or `easy(&repo)`
 //! method to hide all complex arguments and sacrifice some performance for a lot of convenience.
 //!
-//! When starting out, use `easy(…)` and migrate to the more detailed method signatures to squeeze out more performance.
+//! When starting out, use `easy(…)` and migrate to the more detailed method signatures to squeeze out the last inkling of performance
+//! if it really does make a difference.
 //!
 //! ### Shortcomings & Limitations
 //!
@@ -46,6 +47,8 @@
 //!   However, other ways to adjust the `Repository` of long-running applications are possible. For instance, there could be a flag that
 //!   indicates a new `Repository` should be created (for instance, after it was changed) which causes the next server connection to
 //!   create a new one. This instance is the one to use when spawning new `EasyArc` instances.
+//! * `Platform` types are used to hold mutable or shared versions of required state for use in dependent objects they create, like iterators.
+//!   These come with the benefit of allowing for nicely readable call chains.
 //!
 //! ### Terminology
 //!
