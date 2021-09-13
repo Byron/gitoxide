@@ -42,7 +42,7 @@ pub mod open {
         #[error(transparent)]
         Config(#[from] git_config::parser::ParserOrIoError<'static>),
         #[error(transparent)]
-        NotARepository(#[from] crate::path::is_git::Error),
+        NotARepository(#[from] crate::path::is::Error),
         #[error(transparent)]
         ObjectStoreInitialization(#[from] git_odb::linked::init::Error),
         #[error("Cannot handle objects formatted as {:?}", .name)]
@@ -53,11 +53,11 @@ pub mod open {
         /// Open a git repository at the given `path`, possibly expanding it to `path/.git` if `path` is a work tree dir.
         pub fn open(path: impl Into<std::path::PathBuf>) -> Result<Self, Error> {
             let path = path.into();
-            let (path, kind) = match crate::path::is_git(&path) {
+            let (path, kind) = match crate::path::is::git(&path) {
                 Ok(kind) => (path, kind),
                 Err(_) => {
                     let git_dir = path.join(".git");
-                    crate::path::is_git(&git_dir).map(|kind| (git_dir, kind))?
+                    crate::path::is::git(&git_dir).map(|kind| (git_dir, kind))?
                 }
             };
             let (git_dir, worktree_dir) =

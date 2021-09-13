@@ -1,13 +1,11 @@
 use std::path::PathBuf;
 
-pub use is_git::{is_bare, is_git};
-
 use crate::{Kind, Path};
 
 ///
 pub mod create;
 pub mod discover;
-pub mod is_git;
+pub mod is;
 
 impl AsRef<std::path::Path> for Path {
     fn as_ref(&self) -> &std::path::Path {

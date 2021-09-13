@@ -33,13 +33,13 @@ where
             return None;
         }
         if path.join("HEAD").is_file() && path.join("config").is_file() {
-            git_repository::path::is_git(path).ok()
+            git_repository::path::is::git(path).ok()
         } else {
             None
         }
     }
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
-        if git_repository::path::is_bare(&git_dir) {
+        if git_repository::path::is::bare(&git_dir) {
             git_dir
         } else {
             git_dir.parent().expect("git is never in the root").to_owned()

@@ -40,11 +40,11 @@ pub fn existing(directory: impl AsRef<Path>) -> Result<crate::Path, existing::Er
 
     let mut cursor: &Path = &directory;
     loop {
-        if let Ok(kind) = path::is_git(cursor) {
+        if let Ok(kind) = path::is::git(cursor) {
             break Ok(crate::Path::from_dot_git_dir(cursor, kind));
         }
         let git_dir = cursor.join(".git");
-        if let Ok(kind) = path::is_git(&git_dir) {
+        if let Ok(kind) = path::is::git(&git_dir) {
             break Ok(crate::Path::from_dot_git_dir(git_dir, kind));
         }
         match cursor.parent() {
