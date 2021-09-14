@@ -120,6 +120,7 @@ fn collect_directly_dependent_packages<'a>(
     Options {
         isolate_dependencies_from_breaking_changes,
         bump_when_needed,
+        verbose,
         ..
     }: Options,
 ) -> anyhow::Result<Vec<(&'a Package, Option<String>)>> {
@@ -167,6 +168,7 @@ fn collect_directly_dependent_packages<'a>(
                             workspace_package,
                             ctx,
                             bump_when_needed,
+                            verbose,
                         ) {
                             desired_versions.push(version)
                         }

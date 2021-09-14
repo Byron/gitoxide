@@ -39,34 +39,35 @@ pub(crate) fn bump(
         "keep" => {}
         _ => bail!("Invalid version specification: '{}'", bump_spec),
     };
-    smallest_necessary_version_relative_to_crates_index(publishee, v, ctx, bump_when_needed, true)
+    smallest_necessary_version_relative_to_crates_index(publishee, v, ctx, bump_when_needed, true, true)
 }
 
 fn smallest_necessary_version_relative_to_crates_index(
-    publishee: &Package,
+    package: &Package,
     mut new_version: Version,
     ctx: &Context,
     bump_when_needed: bool,
     verbose: bool,
+    will_be_published: bool,
 ) -> anyhow::Result<Version> {
-    match ctx.crates_index.crate_(&publishee.name) {
+    match ctx.crates_index.crate_(&package.name) {
         Some(published_crate) => {
             let latest_published_version = semver::Version::parse(published_crate.latest_version().version())?;
             if latest_published_version >= new_version {
                 bail!(
                 "Latest published version of '{}' is {}, the new version is {}. Consider using --bump <level> or --bump-dependencies <level> or update the index with --update-crates-index.",
-                publishee.name,
+                package.name,
                 published_crate.latest_version().version(),
                 new_version
             );
             }
-            if bump_when_needed && publishee.version > latest_published_version {
-                if new_version > publishee.version {
+            if bump_when_needed && package.version > latest_published_version {
+                if new_version > package.version {
                     if verbose {
                         log::info!(
                             "Using manifest version {} of crate {} instead of new version {} as it is sufficient to succeed latest published version {}.",
-                            publishee.version,
-                            publishee.name,
+                            package.version,
+                            package.name,
                             new_version,
                             latest_published_version
                         );
@@ -74,12 +75,12 @@ fn smallest_necessary_version_relative_to_crates_index(
                 } else if verbose {
                     log::info!(
                         "Using manifest version {} of crate {} as it is sufficient to succeed latest published version {}.",
-                        publishee.version,
-                        publishee.name,
+                        package.version,
+                        package.name,
                         latest_published_version
                     );
                 }
-                new_version = publishee.version.clone();
+                new_version = package.version.clone();
             }
         }
         None => {
@@ -87,14 +88,14 @@ fn smallest_necessary_version_relative_to_crates_index(
                 if verbose {
                     log::info!(
                         "Using current version {} instead of bumped one {}.",
-                        publishee.version,
+                        package.version,
                         new_version
                     );
                 }
-                new_version = publishee.version.clone();
+                new_version = package.version.clone();
             }
-            if verbose {
-                log::info!("Congratulations for the new release of '{}' 🎉", publishee.name);
+            if verbose && will_be_published {
+                log::info!("Congratulations for the new release of '{}' 🎉", package.name);
             }
         }
     };
@@ -111,14 +112,22 @@ pub(crate) fn conservative_dependent_version(
     dependent: &Package,
     ctx: &Context,
     bump_when_needed: bool,
+    verbose: bool,
 ) -> Option<Version> {
     let new_publishee_version: Version = new_publishee_version.parse().expect("new versions are always valid");
     if !rhs_is_breaking_bump_for_lhs(&publishee.version, &new_publishee_version) {
         return None;
     }
     let new_dependent_version = breaking_version_bump(&dependent.version);
-    smallest_necessary_version_relative_to_crates_index(dependent, new_dependent_version, ctx, bump_when_needed, false)
-        .ok()
+    smallest_necessary_version_relative_to_crates_index(
+        dependent,
+        new_dependent_version,
+        ctx,
+        bump_when_needed,
+        verbose,
+        false,
+    )
+    .ok()
 }
 
 fn breaking_version_bump(v: &Version) -> Version {
