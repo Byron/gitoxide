@@ -86,7 +86,15 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
             if safety_bumped_packages.is_empty() {
                 Cow::from("")
             } else {
-                format!(", safety bump {}", names_and_versions(&safety_bumped_packages)).into()
+                match safety_bumped_packages.len() {
+                    1 => format!(", safety bump {}", names_and_versions(&safety_bumped_packages)).into(),
+                    num_crates => format!(
+                        ", safety bump {} crates\n\nSAFETY BUMP: {}",
+                        num_crates,
+                        names_and_versions(&safety_bumped_packages)
+                    )
+                    .into(),
+                }
             }
         }
     );

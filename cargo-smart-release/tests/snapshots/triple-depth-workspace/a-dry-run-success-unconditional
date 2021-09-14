@@ -8,6 +8,6 @@
 [INFO ] Pending 'b' manifest dependencies update: 'a = "^0.9.0"' (from  "0.8.0" )
 [INFO ] Pending 'c' manifest version update: "8.1.0"
 [INFO ] Pending 'c' manifest dependencies update: 'b = "^0.9.0"' (from  "0.8.0" )
-[INFO ] WOULD persist changes to manifests with: "Bump a v0.9.0, safety bump b v0.9.0, c v8.1.0"
-[INFO ] WOULD run "git" "commit" "-am" "Bump a v0.9.0, safety bump b v0.9.0, c v8.1.0"
+[INFO ] WOULD persist changes to manifests with: "Bump a v0.9.0, safety bump 2 crates\n\nSAFETY BUMP: b v0.9.0, c v8.1.0"
+[INFO ] WOULD run "git" "commit" "-am" "Bump a v0.9.0, safety bump 2 crates\n\nSAFETY BUMP: b v0.9.0, c v8.1.0"
 [INFO ] WOULD create tag a-v0.9.0
