@@ -39,7 +39,7 @@ pub(crate) fn bump(
         "keep" => {}
         _ => bail!("Invalid version specification: '{}'", bump_spec),
     };
-    smallest_necessary_version_relative_to_crates_index(publishee, v, ctx, bump_when_needed, true, true)
+    smallest_necessary_version_relative_to_crates_index(publishee, v, ctx, bump_when_needed, true, true, false)
 }
 
 fn smallest_necessary_version_relative_to_crates_index(
@@ -49,19 +49,31 @@ fn smallest_necessary_version_relative_to_crates_index(
     bump_when_needed: bool,
     verbose: bool,
     will_be_published: bool,
+    package_version_must_be_breaking: bool,
 ) -> anyhow::Result<Version> {
     match ctx.crates_index.crate_(&package.name) {
         Some(published_crate) => {
             let latest_published_version = semver::Version::parse(published_crate.latest_version().version())?;
             if latest_published_version >= new_version {
                 bail!(
-                "Latest published version of '{}' is {}, the new version is {}. Consider using --bump <level> or --bump-dependencies <level> or update the index with --update-crates-index.",
-                package.name,
-                published_crate.latest_version().version(),
-                new_version
-            );
+                    "Latest published version of '{}' is {}, the new version is {}. Consider using --bump <level> or --bump-dependencies <level> or update the index with --update-crates-index.",
+                    package.name,
+                    published_crate.latest_version().version(),
+                    new_version
+                );
             }
             if bump_when_needed && package.version > latest_published_version {
+                let verbose = if package_version_must_be_breaking {
+                    if rhs_is_breaking_bump_for_lhs(&package.version, &new_version) {
+                        new_version = package.version.clone();
+                        verbose
+                    } else {
+                        false
+                    }
+                } else {
+                    new_version = package.version.clone();
+                    verbose
+                };
                 if new_version > package.version {
                     if verbose {
                         log::info!(
@@ -80,7 +92,6 @@ fn smallest_necessary_version_relative_to_crates_index(
                         latest_published_version
                     );
                 }
-                new_version = package.version.clone();
             }
         }
         None => {
@@ -126,6 +137,7 @@ pub(crate) fn conservative_dependent_version(
         bump_when_needed,
         verbose,
         false,
+        true,
     )
     .ok()
 }
