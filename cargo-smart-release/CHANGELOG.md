@@ -2,6 +2,9 @@
 
 - Conservative pre-release version handling along with a flag to turn it off. See [this issue][194] for details.
 - Rename `--allow-auto-publish-of-stable-crates` to `--no-auto-publish-of-stable-crates`, inverting its meaning.
+- Add `--no-multi-crate-release` flag to return to previous default behaviour. All crate manifest changes are put into one commit.
+- automatically bump pre-release transient dependents of published crates to prevent breakage down the road unless 
+  `--no-conservative-pre-release-version-handling` is set.
 
 [194]: https://github.com/Byron/gitoxide/issues/194
 
