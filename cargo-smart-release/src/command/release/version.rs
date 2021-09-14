@@ -112,13 +112,15 @@ pub(crate) fn conservative_dependent_version(
     new_publishee_version: &str,
     dependent: &Package,
     ctx: &Context,
+    bump_when_needed: bool,
 ) -> Option<Version> {
     let new_publishee_version: Version = new_publishee_version.parse().expect("new versions are always valid");
     if !rhs_is_major_bump_for_lhs(&publishee.version, &new_publishee_version) {
         return None;
     }
     let new_dependent_version = breaking_version_bump(&dependent.version);
-    smallest_necessary_version_relative_to_crates_index(dependent, new_dependent_version, ctx, true, false).ok()
+    smallest_necessary_version_relative_to_crates_index(dependent, new_dependent_version, ctx, bump_when_needed, false)
+        .ok()
 }
 
 fn breaking_version_bump(v: &Version) -> Version {

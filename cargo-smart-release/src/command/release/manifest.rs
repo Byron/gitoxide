@@ -36,6 +36,16 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
 
     let mut dependent_packages =
         collect_directly_dependent_packages(meta, publishees, &mut locks_by_manifest_path, ctx, opts)?;
+    let publishees_and_bumped_dependent_packages = publishees
+        .iter()
+        .map(|(p, v)| (*p, v.to_owned()))
+        .chain(
+            dependent_packages
+                .clone()
+                .into_iter()
+                .filter_map(|(p, v)| v.map(|v| (p, v))),
+        )
+        .collect::<Vec<_>>();
     let mut made_change = false;
     for (publishee, new_version) in publishees {
         let mut lock = locks_by_manifest_path
@@ -44,7 +54,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
         made_change |= set_version_and_update_package_dependency(
             publishee,
             Some(&new_version.to_string()),
-            publishees,
+            &publishees_and_bumped_dependent_packages,
             &mut lock,
             opts,
         )?;
@@ -57,7 +67,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
         made_change |= set_version_and_update_package_dependency(
             dependant_on_publishee,
             possibly_new_version.as_deref(),
-            publishees,
+            &publishees_and_bumped_dependent_packages,
             &mut lock,
             opts,
         )?;
@@ -89,6 +99,7 @@ fn collect_directly_dependent_packages<'a>(
     ctx: &Context,
     Options {
         conservative_pre_release_version_handling,
+        bump_when_needed,
         ..
     }: Options,
 ) -> anyhow::Result<Vec<(&'a Package, Option<String>)>> {
@@ -135,6 +146,7 @@ fn collect_directly_dependent_packages<'a>(
                             new_version,
                             workspace_package,
                             ctx,
+                            bump_when_needed,
                         ) {
                             desired_versions.push(version)
                         }

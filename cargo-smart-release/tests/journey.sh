@@ -25,6 +25,10 @@ function set-static-git-environment() {
   set +a
 }
 
+function init-git-repo() {
+  git init . && git add . && git commit -q -m "initial"
+}
+
 title "smart-release"
 (sandbox
   set-static-git-environment
@@ -32,7 +36,7 @@ title "smart-release"
 
   snapshot="$snapshot/triple-depth-workspace"
   cp -R $fixtures/tri-depth-workspace/* .
-  { echo 'target/' > .gitignore && git init . && git add . && git commit -q -m "initial"; } &>/dev/null
+  { echo 'target/' > .gitignore && init-git-repo; } &>/dev/null
 
   (with "'c'"
     (with '-d minor to bump minor dependencies'
@@ -48,16 +52,26 @@ title "smart-release"
         expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish -v
       }
     )
-    (with '--execute (but without side-effects'
+    (with '--execute but without side-effects'
       it "succeeds" && {
         expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish --execute --allow-dirty
       }
-    )
-    (with ".git and target/ directories removed"
-      rm -Rf .git/ target/
-      it "managed to bump B's minor but left C alone as it's not pre-release anymore" && {
-        expect_snapshot "$snapshot/crate-a-released" .
-      }
+      (with ".git and target/ directories removed"
+        rm -Rf .git/ target/
+        it "managed to bump B's minor but left C alone as it's not pre-release anymore" && {
+          expect_snapshot "$snapshot/crate-a-released" .
+        }
+        (with 'unconditional version minor bumping'
+          init-git-repo &>/dev/null
+          it "succeeds" && {
+            expect_run $SUCCESSFULLY "$exe" smart-release -b minor a --skip-push --skip-publish --no-bump-on-demand --execute --allow-dirty
+          }
+          rm -Rf .git/
+          it "managed additionally bumped b but not c as it's not pre-release" && {
+            expect_snapshot "$snapshot/crate-a-released-force-bump" .
+          }
+        )
+      )
     )
   )
 )
