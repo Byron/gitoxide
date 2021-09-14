@@ -125,7 +125,7 @@ fn breaking_version_bump(v: &Version) -> Version {
     let (major, minor, patch) = match (v.major, v.minor, v.patch) {
         (0, 0, patch) => (0, 0, patch + 1),
         (0, minor, _) => (0, minor + 1, 0),
-        (major, _, _) => (major + 1, 0, 0),
+        (major, minor, _) => (major, minor + 1, 0),
     };
     Version {
         major,
