@@ -10,6 +10,7 @@ use super::{
     utils::{names_and_versions, package_by_id, package_eq_dependency, will},
     version, Context, Oid, Options,
 };
+use std::borrow::Cow;
 
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<'repo>(
     meta: &Metadata,
@@ -74,9 +75,20 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
     }
 
     let message = format!(
-        "{} {}",
+        "{} {}{}",
         if skip_publish { "Bump" } else { "Release" },
-        names_and_versions(publishees)
+        names_and_versions(&publishees),
+        {
+            let safety_bumped_packages = dependent_packages
+                .into_iter()
+                .filter_map(|(p, v)| v.map(|v| (p, v)))
+                .collect::<Vec<_>>();
+            if safety_bumped_packages.is_empty() {
+                Cow::from("")
+            } else {
+                format!(", safety bump {}", names_and_versions(&safety_bumped_packages)).into()
+            }
+        }
     );
     if verbose {
         log::info!("{} persist changes to manifests with: {:?}", will(dry_run), message);
