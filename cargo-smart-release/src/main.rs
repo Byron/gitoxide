@@ -27,6 +27,7 @@ fn main() -> anyhow::Result<()> {
             no_bump_on_demand,
             skip_dependencies,
             no_multi_crate_release,
+            no_isolate_dependencies_from_breaking_changes,
         }) => command::release(
             command::release::Options {
                 dry_run: !execute,
@@ -34,6 +35,7 @@ fn main() -> anyhow::Result<()> {
                 conservative_pre_release_version_handling: !no_conservative_pre_release_version_handling,
                 bump_when_needed: !no_bump_on_demand,
                 multi_crate_release: !no_multi_crate_release,
+                isolate_dependencies_from_breaking_changes: !no_isolate_dependencies_from_breaking_changes,
                 allow_dirty,
                 ignore_instability,
                 skip_publish,

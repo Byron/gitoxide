@@ -70,6 +70,12 @@ pub struct SmartRelease {
     #[argh(switch)]
     pub no_conservative_pre_release_version_handling: bool,
 
+    /// do not bump versions of dependent crates if the crates to be published indicate breaking changes with their semantic version.
+    ///
+    /// For details, it's best to look at https://github.com/Byron/gitoxide/issues/192
+    #[argh(switch)]
+    pub no_isolate_dependencies_from_breaking_changes: bool,
+
     /// don't actually publish, but perform all other operations like manifest adjustments and tag creation.
     #[argh(switch)]
     pub skip_publish: bool,

@@ -118,7 +118,7 @@ fn collect_directly_dependent_packages<'a>(
     locks_by_manifest_path: &mut BTreeMap<&'a Utf8PathBuf, File>,
     ctx: &Context,
     Options {
-        conservative_pre_release_version_handling,
+        isolate_dependencies_from_breaking_changes,
         bump_when_needed,
         ..
     }: Options,
@@ -133,7 +133,7 @@ fn collect_directly_dependent_packages<'a>(
 
     loop {
         for workspace_package in meta.workspace_members.iter().map(|id| package_by_id(meta, id)) {
-            if !conservative_pre_release_version_handling {
+            if !isolate_dependencies_from_breaking_changes {
                 let has_publishee_in_dependencies = workspace_package.dependencies.iter().any(|dep| {
                     publishees_and_dependents
                         .iter()
@@ -212,7 +212,7 @@ fn collect_directly_dependent_packages<'a>(
         packages_to_fix.append(&mut dependent_packages_this_round);
         publishees_and_dependents = packages_to_fix.as_slice();
 
-        if !conservative_pre_release_version_handling {
+        if !isolate_dependencies_from_breaking_changes {
             break;
         }
     }
