@@ -77,7 +77,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
     let message = format!(
         "{} {}{}",
         if skip_publish { "Bump" } else { "Release" },
-        names_and_versions(&publishees),
+        names_and_versions(publishees),
         {
             let safety_bumped_packages = dependent_packages
                 .into_iter()
