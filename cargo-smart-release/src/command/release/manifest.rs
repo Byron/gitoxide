@@ -89,7 +89,6 @@ fn collect_directly_dependent_packages<'a>(
     ctx: &Context,
     Options {
         conservative_pre_release_version_handling,
-        verbose,
         ..
     }: Options,
 ) -> anyhow::Result<Vec<(&'a Package, Option<String>)>> {
@@ -99,32 +98,31 @@ fn collect_directly_dependent_packages<'a>(
         .iter()
         .map(|(p, v)| (*p, Some(v.to_owned())))
         .collect::<Vec<_>>();
-    let publishees_and_dependents = publishees_backing.as_slice();
+    let mut publishees_and_dependents = publishees_backing.as_slice();
 
-    // eprintln!("start");
     loop {
-        // dbg!(publishees.iter().map(|(p, _)| &p.name).collect::<Vec<_>>());
-        for package_to_fix in meta.workspace_members.iter().map(|id| package_by_id(meta, id)) {
-            if conservative_pre_release_version_handling {
-                let has_publishee_in_dependencies = package_to_fix.dependencies.iter().any(|dep| {
+        for workspace_package in meta.workspace_members.iter().map(|id| package_by_id(meta, id)) {
+            if !conservative_pre_release_version_handling {
+                let has_publishee_in_dependencies = workspace_package.dependencies.iter().any(|dep| {
                     publishees_and_dependents
                         .iter()
                         .any(|(publishee, _)| package_eq_dependency(publishee, dep))
                 });
-                if !has_publishee_in_dependencies || locks_by_manifest_path.contains_key(&package_to_fix.manifest_path)
+                if !has_publishee_in_dependencies
+                    || locks_by_manifest_path.contains_key(&workspace_package.manifest_path)
                 {
                     continue;
                 }
                 let lock = git_lock::File::acquire_to_update_resource(
-                    &package_to_fix.manifest_path,
+                    &workspace_package.manifest_path,
                     git_lock::acquire::Fail::Immediately,
                     None,
                 )?;
-                locks_by_manifest_path.insert(&package_to_fix.manifest_path, lock);
-                dependent_packages_this_round.push((package_to_fix, None));
+                locks_by_manifest_path.insert(&workspace_package.manifest_path, lock);
+                dependent_packages_this_round.push((workspace_package, None));
             } else {
                 let mut desired_versions = Vec::<Version>::new();
-                for dep in package_to_fix.dependencies.iter() {
+                for dep in workspace_package.dependencies.iter() {
                     for (publishee_as_dependency, new_version) in
                         publishees_and_dependents.iter().filter_map(|(publishee, new_version)| {
                             new_version
@@ -135,9 +133,8 @@ fn collect_directly_dependent_packages<'a>(
                         if let Some(version) = version::conservative_dependent_version(
                             publishee_as_dependency,
                             new_version,
-                            package_to_fix,
+                            workspace_package,
                             ctx,
-                            verbose,
                         ) {
                             desired_versions.push(version)
                         }
@@ -149,37 +146,31 @@ fn collect_directly_dependent_packages<'a>(
                 desired_versions.sort();
 
                 let greatest_version = desired_versions.pop().expect("at least one version");
-                let new_version = version::rhs_is_major_bump_for_lhs(&package_to_fix.version, &greatest_version)
+                let new_version = version::rhs_is_major_bump_for_lhs(&workspace_package.version, &greatest_version)
                     .then(|| greatest_version.to_string());
 
-                if locks_by_manifest_path.contains_key(&package_to_fix.manifest_path) {
+                if locks_by_manifest_path.contains_key(&workspace_package.manifest_path) {
                     if let Some(previous_version) = packages_to_fix
                         .iter()
-                        .find_map(|(p, v)| (p.id == package_to_fix.id && *v < new_version).then(|| v))
+                        .find_map(|(p, v)| (p.id == workspace_package.id && *v < new_version).then(|| v))
                     {
                         log::warn!(
                             "BUG: we encountered package {} again, and would need to update its version {:?} to {:?}",
-                            package_to_fix.name,
+                            workspace_package.name,
                             previous_version,
                             new_version
                         )
                     }
                     continue;
                 }
-                if new_version.is_some()
-                    || package_to_fix.dependencies.iter().any(|dep| {
-                        publishees
-                            .iter()
-                            .any(|(publishee, _)| package_eq_dependency(publishee, dep))
-                    })
-                {
+                if new_version.is_some() || is_direct_dependency_of(publishees, workspace_package) {
                     let lock = git_lock::File::acquire_to_update_resource(
-                        &package_to_fix.manifest_path,
+                        &workspace_package.manifest_path,
                         git_lock::acquire::Fail::Immediately,
                         None,
                     )?;
-                    locks_by_manifest_path.insert(&package_to_fix.manifest_path, lock);
-                    dependent_packages_this_round.push((package_to_fix, new_version));
+                    locks_by_manifest_path.insert(&workspace_package.manifest_path, lock);
+                    dependent_packages_this_round.push((workspace_package, new_version));
                 }
             };
         }
@@ -187,12 +178,21 @@ fn collect_directly_dependent_packages<'a>(
             break;
         }
         packages_to_fix.append(&mut dependent_packages_this_round);
+        publishees_and_dependents = packages_to_fix.as_slice();
 
         if !conservative_pre_release_version_handling {
             break;
         }
     }
     Ok(packages_to_fix)
+}
+
+fn is_direct_dependency_of(publishees: &[(&Package, String)], package_to_fix: &Package) -> bool {
+    package_to_fix.dependencies.iter().any(|dep| {
+        publishees
+            .iter()
+            .any(|(publishee, _)| package_eq_dependency(publishee, dep))
+    })
 }
 
 fn set_version_and_update_package_dependency(

@@ -1,6 +1,6 @@
 use anyhow::bail;
 use cargo_metadata::Package;
-use semver::Version;
+use semver::{BuildMetadata, Prerelease, Version};
 
 use super::Context;
 
@@ -19,7 +19,6 @@ pub(crate) fn bump(
     ctx: &Context,
     bump_when_needed: bool,
 ) -> anyhow::Result<Version> {
-    use semver::Prerelease;
     let mut v = publishee.version.clone();
     match bump_spec {
         "major" => {
@@ -40,14 +39,15 @@ pub(crate) fn bump(
         "keep" => {}
         _ => bail!("Invalid version specification: '{}'", bump_spec),
     };
-    validate(publishee, v, ctx, bump_when_needed)
+    smallest_necessary_version_relative_to_crates_index(publishee, v, ctx, bump_when_needed, true)
 }
 
-fn validate(
+fn smallest_necessary_version_relative_to_crates_index(
     publishee: &Package,
     mut new_version: Version,
     ctx: &Context,
     bump_when_needed: bool,
+    verbose: bool,
 ) -> anyhow::Result<Version> {
     match ctx.crates_index.crate_(&publishee.name) {
         Some(published_crate) => {
@@ -62,34 +62,42 @@ fn validate(
             }
             if bump_when_needed && publishee.version > latest_published_version {
                 if new_version > publishee.version {
-                    log::info!(
-                        "Using manifest version {} of crate {} instead of new version {} as it is sufficient to succeed latest published version {}.",
-                        publishee.version,
-                        publishee.name,
-                        new_version,
-                        latest_published_version
-                    );
+                    if verbose {
+                        log::info!(
+                            "Using manifest version {} of crate {} instead of new version {} as it is sufficient to succeed latest published version {}.",
+                            publishee.version,
+                            publishee.name,
+                            new_version,
+                            latest_published_version
+                        );
+                    }
                 } else {
-                    log::info!(
-                        "Using manifest version {} of crate {} as it is sufficient to succeed latest published version {}.",
-                        publishee.version,
-                        publishee.name,
-                        latest_published_version
-                    );
+                    if verbose {
+                        log::info!(
+                            "Using manifest version {} of crate {} as it is sufficient to succeed latest published version {}.",
+                            publishee.version,
+                            publishee.name,
+                            latest_published_version
+                        );
+                    }
                 }
                 new_version = publishee.version.clone();
             }
         }
         None => {
             if bump_when_needed {
-                log::info!(
-                    "Using current version {} instead of bumped one {}.",
-                    publishee.version,
-                    new_version
-                );
+                if verbose {
+                    log::info!(
+                        "Using current version {} instead of bumped one {}.",
+                        publishee.version,
+                        new_version
+                    );
+                }
                 new_version = publishee.version.clone();
             }
-            log::info!("Congratulations for the new release of '{}' 🎉", publishee.name);
+            if verbose {
+                log::info!("Congratulations for the new release of '{}' 🎉", publishee.name);
+            }
         }
     };
     Ok(new_version)
@@ -100,14 +108,32 @@ pub(crate) fn is_pre_release(semver: &Version) -> bool {
 }
 
 pub(crate) fn conservative_dependent_version(
-    _publishee: &Package,
-    _new_publishee_version: &str,
-    _dependent: &Package,
-    _ctx: &Context,
-    _verbose: bool,
+    publishee: &Package,
+    new_publishee_version: &str,
+    dependent: &Package,
+    ctx: &Context,
 ) -> Option<Version> {
-    // TODO: actual computation
-    None
+    let new_publishee_version: Version = new_publishee_version.parse().expect("new versions are always valid");
+    if !rhs_is_major_bump_for_lhs(&publishee.version, &new_publishee_version) {
+        return None;
+    }
+    let new_dependent_version = breaking_version_bump(&dependent.version);
+    smallest_necessary_version_relative_to_crates_index(dependent, new_dependent_version, ctx, true, false).ok()
+}
+
+fn breaking_version_bump(v: &Version) -> Version {
+    let (major, minor, patch) = match (v.major, v.minor, v.patch) {
+        (0, 0, patch) => (0, 0, patch + 1),
+        (0, minor, _) => (0, minor + 1, 0),
+        (major, _, _) => (major + 1, 0, 0),
+    };
+    Version {
+        major,
+        minor,
+        patch,
+        pre: Prerelease::EMPTY,
+        build: BuildMetadata::EMPTY,
+    }
 }
 
 pub(crate) fn rhs_is_major_bump_for_lhs(lhs: &Version, rhs: &Version) -> bool {
