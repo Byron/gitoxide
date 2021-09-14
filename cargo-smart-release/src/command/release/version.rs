@@ -71,15 +71,13 @@ fn smallest_necessary_version_relative_to_crates_index(
                             latest_published_version
                         );
                     }
-                } else {
-                    if verbose {
-                        log::info!(
-                            "Using manifest version {} of crate {} as it is sufficient to succeed latest published version {}.",
-                            publishee.version,
-                            publishee.name,
-                            latest_published_version
-                        );
-                    }
+                } else if verbose {
+                    log::info!(
+                        "Using manifest version {} of crate {} as it is sufficient to succeed latest published version {}.",
+                        publishee.version,
+                        publishee.name,
+                        latest_published_version
+                    );
                 }
                 new_version = publishee.version.clone();
             }
