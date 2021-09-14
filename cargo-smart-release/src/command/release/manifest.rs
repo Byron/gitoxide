@@ -236,8 +236,9 @@ fn set_version_and_update_package_dependency(
                     .and_then(|name_table| name_table.get_mut("version"))
                 {
                     let version_req = VersionReq::parse(current_version_req.as_str().expect("versions are strings"))?;
-                    let force_update =
-                        conservative_pre_release_version_handling && version::is_pre_release(&new_version);
+                    let force_update = conservative_pre_release_version_handling
+                        && version::is_pre_release(&new_version) // setting the lower bound unnecessarily can be harmful
+                        && !version::rhs_is_major_bump_for_lhs(&req_as_version(&version_req), &new_version); // don't claim to be conservative if this is necessary anyway
                     if !version_req.matches(&new_version) || force_update {
                         let supported_op = Op::Caret;
                         if version_req.comparators.is_empty()
@@ -268,4 +269,15 @@ fn set_version_and_update_package_dependency(
     out.write_all(new_manifest.as_bytes())?;
 
     Ok(manifest != new_manifest)
+}
+
+fn req_as_version(req: &VersionReq) -> Version {
+    let comp = &req.comparators.get(0).expect("at least one version comparator");
+    Version {
+        major: comp.major,
+        minor: comp.minor.unwrap_or(0),
+        patch: comp.patch.unwrap_or(0),
+        pre: comp.pre.clone(),
+        build: Default::default(),
+    }
 }
