@@ -16,6 +16,7 @@ pub mod release {
         pub verbose: bool,
         pub skip_push: bool,
         pub skip_dependencies: bool,
+        pub multi_crate_release: bool,
     }
 }
 #[path = "release/mod.rs"]

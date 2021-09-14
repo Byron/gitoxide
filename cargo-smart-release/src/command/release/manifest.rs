@@ -158,7 +158,7 @@ fn collect_directly_dependent_packages<'a>(
                 desired_versions.sort();
 
                 let greatest_version = desired_versions.pop().expect("at least one version");
-                let new_version = version::rhs_is_major_bump_for_lhs(&workspace_package.version, &greatest_version)
+                let new_version = version::rhs_is_breaking_bump_for_lhs(&workspace_package.version, &greatest_version)
                     .then(|| greatest_version.to_string());
 
                 if locks_by_manifest_path.contains_key(&workspace_package.manifest_path) {
@@ -250,7 +250,7 @@ fn set_version_and_update_package_dependency(
                     let version_req = VersionReq::parse(current_version_req.as_str().expect("versions are strings"))?;
                     let force_update = conservative_pre_release_version_handling
                         && version::is_pre_release(&new_version) // setting the lower bound unnecessarily can be harmful
-                        && !version::rhs_is_major_bump_for_lhs(&req_as_version(&version_req), &new_version); // don't claim to be conservative if this is necessary anyway
+                        && !version::rhs_is_breaking_bump_for_lhs(&req_as_version(&version_req), &new_version); // don't claim to be conservative if this is necessary anyway
                     if !version_req.matches(&new_version) || force_update {
                         let supported_op = Op::Caret;
                         if version_req.comparators.is_empty()

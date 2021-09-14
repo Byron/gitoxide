@@ -26,12 +26,14 @@ fn main() -> anyhow::Result<()> {
             update_crates_index,
             no_bump_on_demand,
             skip_dependencies,
+            no_multi_crate_release,
         }) => command::release(
             command::release::Options {
                 dry_run: !execute,
                 verbose: execute || verbose,
                 conservative_pre_release_version_handling: !no_conservative_pre_release_version_handling,
                 bump_when_needed: !no_bump_on_demand,
+                multi_crate_release: !no_multi_crate_release,
                 allow_dirty,
                 ignore_instability,
                 skip_publish,

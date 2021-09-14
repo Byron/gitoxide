@@ -45,12 +45,44 @@ title "smart-release"
       }
     )
   )
-  (with "'a'"
+  (when "releasing 'a'"
     (with 'dry-run only'
-      it "succeeds" && {
-        WITH_SNAPSHOT="$snapshot/a-dry-run-success" \
-        expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish -v
-      }
+      (with 'conditional version bumping'
+        it "succeeds" && {
+          WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate" \
+          expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish -v --allow-dirty -b minor
+        }
+        (with '--no-multi-crate-release'
+          it "succeeds" && {
+            WITH_SNAPSHOT="$snapshot/a-dry-run-success" \
+            expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish -v --no-multi-crate-release -b minor
+          }
+        )
+      )
+      (with 'unconditional version bumping'
+        it "succeeds" && {
+          WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-unconditional" \
+          expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish -v --no-bump-on-demand -b minor
+        }
+        (with '--no-multi-crate-release'
+          it "succeeds" && {
+            WITH_SNAPSHOT="$snapshot/a-dry-run-success-unconditional" \
+            expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish -v --no-multi-crate-release --no-bump-on-demand -b minor
+          }
+        )
+        (when 'releasing b as well'
+          it "succeeds" && {
+            WITH_SNAPSHOT="$snapshot/a-b-dry-run-success-multi-crate-unconditional" \
+            expect_run $SUCCESSFULLY "$exe" smart-release b a --skip-push --skip-publish -v --no-bump-on-demand -b minor
+          }
+          (with '--no-multi-crate-release'
+            it "succeeds" && {
+              WITH_SNAPSHOT="$snapshot/a-b-dry-run-success-unconditional" \
+              expect_run $SUCCESSFULLY "$exe" smart-release b a --skip-push --skip-publish -v --no-multi-crate-release --no-bump-on-demand -b minor
+            }
+          )
+        )
+      )
     )
     (with '--execute but without side-effects'
       it "succeeds" && {

@@ -113,7 +113,7 @@ pub(crate) fn conservative_dependent_version(
     bump_when_needed: bool,
 ) -> Option<Version> {
     let new_publishee_version: Version = new_publishee_version.parse().expect("new versions are always valid");
-    if !rhs_is_major_bump_for_lhs(&publishee.version, &new_publishee_version) {
+    if !rhs_is_breaking_bump_for_lhs(&publishee.version, &new_publishee_version) {
         return None;
     }
     let new_dependent_version = breaking_version_bump(&dependent.version);
@@ -136,6 +136,6 @@ fn breaking_version_bump(v: &Version) -> Version {
     }
 }
 
-pub(crate) fn rhs_is_major_bump_for_lhs(lhs: &Version, rhs: &Version) -> bool {
+pub(crate) fn rhs_is_breaking_bump_for_lhs(lhs: &Version, rhs: &Version) -> bool {
     rhs.major > lhs.major || rhs.minor > lhs.minor
 }

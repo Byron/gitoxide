@@ -102,23 +102,24 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
 
     assure_working_tree_is_unchanged(options)?;
 
-    for publishee_name in changed_crate_names_to_publish
-        .iter()
-        .filter(|n| !crates_to_publish_together.contains(n))
-    {
-        let publishee = package_by_name(meta, publishee_name)?;
+    if options.multi_crate_release && !changed_crate_names_to_publish.is_empty() {
+        perforrm_multi_version_release(&ctx, options, meta, changed_crate_names_to_publish)?;
+    } else {
+        for publishee_name in changed_crate_names_to_publish
+            .iter()
+            .filter(|n| !crates_to_publish_together.contains(n))
+        {
+            let publishee = package_by_name(meta, publishee_name)?;
 
-        let (new_version, commit_id) = perform_single_release(meta, publishee, options, &ctx)?;
-        let tag_name = git::create_version_tag(publishee, &new_version, commit_id, &ctx, options)?;
-        git::push_tags_and_head(tag_name, options)?;
+            let (new_version, commit_id) = perform_single_release(meta, publishee, options, &ctx)?;
+            let tag_name = git::create_version_tag(publishee, &new_version, commit_id, &ctx, options)?;
+            git::push_tags_and_head(tag_name, options)?;
+        }
     }
 
     if !crates_to_publish_together.is_empty() {
         perforrm_multi_version_release(&ctx, options, meta, crates_to_publish_together)?;
     }
-    // if !changed_crate_names_to_publish.is_empty() {
-    //     perforrm_multi_version_release(&ctx, options, meta, changed_crate_names_to_publish)?;
-    // }
 
     Ok(())
 }

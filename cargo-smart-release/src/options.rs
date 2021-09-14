@@ -32,6 +32,13 @@ pub struct SmartRelease {
     #[argh(switch, short = 'v')]
     pub verbose: bool,
 
+    /// as dependencies are automatically picked up for release, put all manifest changes into a single commit.
+    ///
+    /// If this flag is set, each dependency will yield its own commit with respective manifest changes, possibly
+    /// adding a lot of additional commits even though the release could have looked like coherent.
+    #[argh(switch)]
+    pub no_multi_crate_release: bool,
+
     /// always bump versions as specified by --bump or --bump-dependencies even if this is not required.
     ///
     /// If it's required or not is determined by looking at the published versions in the crates index.
