@@ -1008,7 +1008,7 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
-version = "0.9.2"
+version = "0.10.0"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1080,7 +1080,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.21.3"
+version = "0.22.0"
 dependencies = [
  "btoi",
  "git-actor",
@@ -1096,7 +1096,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -1126,7 +1126,7 @@ dependencies = [
 
 [[package]]
 name = "git-packetline"
-version = "0.10.1"
+version = "0.11.0"
 dependencies = [
  "async-std",
  "bstr",
@@ -1142,7 +1142,7 @@ dependencies = [
 
 [[package]]
 name = "git-protocol"
-version = "0.10.4"
+version = "0.11.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1163,7 +1163,7 @@ dependencies = [
 
 [[package]]
 name = "git-ref"
-version = "0.7.3"
+version = "0.8.0"
 dependencies = [
  "filebuffer",
  "git-actor",
@@ -1238,7 +1238,7 @@ dependencies = [
 
 [[package]]
 name = "git-transport"
-version = "0.11.1"
+version = "0.12.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1261,7 +1261,7 @@ dependencies = [
 
 [[package]]
 name = "git-traverse"
-version = "0.8.2"
+version = "0.9.0"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1311,7 +1311,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide"
-version = "0.8.4"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "argh",

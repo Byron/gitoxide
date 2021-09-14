@@ -5,7 +5,7 @@ repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
-version = "0.8.4"
+version = "0.9.0"
 default-run = "gix"
 include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 resolver = "2"
@@ -70,7 +70,7 @@ gitoxide-core = { version ="^0.10.5", path = "gitoxide-core" }
 git-features = { version = "^0.16.0", path = "git-features" }
 git-repository = { version ="^0.10.0", path = "git-repository", default-features = false }
 
-git-transport-for-configuration-only = { package = "git-transport", optional = true, version ="^0.11.0", path = "git-transport" }
+git-transport-for-configuration-only = { package = "git-transport", optional = true, version ="^0.12.0", path = "git-transport" }
 
 clap = { version = "3.0.0-beta.4", optional = true }
 argh = { version = "0.1.5", optional = true, default-features = false }
