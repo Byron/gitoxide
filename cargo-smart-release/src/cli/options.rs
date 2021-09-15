@@ -26,6 +26,13 @@ pub struct ChangeLog {
     #[argh(switch, short = 'w')]
     pub write: bool,
 
+    /// take into consideration any dependencies of the crates to generate the changelog for.
+    ///
+    /// This flag is useful if you plan to review and finalize changelogs before a a smart-release, where dependencies
+    /// are taken into consideration by default.
+    #[argh(switch)]
+    pub dependencies: bool,
+
     /// the name of the crates to generate a changelog for.
     ///
     /// Defaults to the top-level workspace crate if unset.

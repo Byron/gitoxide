@@ -8,28 +8,16 @@ fn main() -> anyhow::Result<()> {
     init_logging();
 
     match args.subcommands {
-        SubCommands::Changelog(ChangeLog { write, crates }) => command::release(
-            command::release::Options {
+        SubCommands::Changelog(ChangeLog {
+            write,
+            crates,
+            dependencies,
+        }) => command::changelog(
+            command::changelog::Options {
                 dry_run: !write,
-                verbose: false,
-                conservative_pre_release_version_handling: true,
-                bump_when_needed: true,
-                multi_crate_release: true,
-                isolate_dependencies_from_breaking_changes: true,
-                allow_dirty: false,
-                ignore_instability: false,
-                skip_publish: true,
-                skip_tag: true,
-                skip_push: true,
-                skip_dependencies: true,
-                dry_run_cargo_publish: false,
-                no_verify: false,
-                allow_auto_publish_of_stable_crates: true,
-                update_crates_index: false,
+                dependencies,
             },
             crates,
-            "keep".into(),
-            "keep".into(),
         )?,
         SubCommands::SmartRelease(SmartRelease {
             execute,

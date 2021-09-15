@@ -109,7 +109,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
         // For now we leave it that way without auto-restoring originals to facilitate debugging.
         cargo::refresh_lock_file()?;
     }
-    git::commit_changes(message, verbose, dry_run, !made_change, ctx)
+    git::commit_changes(message, verbose, dry_run, !made_change, &ctx.base)
 }
 
 fn collect_directly_dependent_packages<'a>(

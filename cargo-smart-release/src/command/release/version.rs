@@ -6,7 +6,7 @@ use super::Context;
 
 #[allow(clippy::ptr_arg)]
 pub(crate) fn select_publishee_bump_spec<'a>(name: &String, ctx: &'a Context) -> &'a str {
-    if ctx.crate_names.contains(name) {
+    if ctx.base.crate_names.contains(name) {
         &ctx.bump
     } else {
         &ctx.bump_dependencies

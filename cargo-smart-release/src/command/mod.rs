@@ -23,3 +23,14 @@ pub mod release {
 #[path = "release/mod.rs"]
 mod release_impl;
 pub use release_impl::release;
+
+pub mod changelog {
+    #[derive(Debug, Clone, Copy)]
+    pub struct Options {
+        pub dry_run: bool,
+        pub dependencies: bool,
+    }
+}
+#[path = "changelog/mod.rs"]
+mod changelog_impl;
+pub use changelog_impl::changelog;

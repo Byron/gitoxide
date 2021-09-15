@@ -1,5 +1,0 @@
-[WARN ] Consider running with --update-crates-index to assure bumping on demand uses the latest information
-[WARN ] Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already
-[INFO ] Using current version 0.8.0 instead of bumped one 0.8.0.
-[INFO ] Congratulations for the new release of 'a' 🎉
-[INFO ] WOULD prepare releases of a v0.8.0

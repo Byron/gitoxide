@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use anyhow::bail;
-use cargo_metadata::{camino::Utf8PathBuf, Dependency, DependencyKind, Metadata, Package};
+use cargo_metadata::{Dependency, DependencyKind, Metadata, Package};
 
 use crate::command::release::Options;
 
@@ -20,27 +20,18 @@ mod version;
 type Oid<'repo> = git_repository::easy::Oid<'repo, git_repository::Easy>;
 
 pub(crate) struct Context {
-    root: Utf8PathBuf,
-    meta: Metadata,
-    git_easy: git_repository::Easy,
+    base: crate::Context,
     crates_index: Index,
-    crate_names: Vec<String>,
     bump: String,
     bump_dependencies: String,
 }
 
 impl Context {
     fn new(crate_names: Vec<String>, bump: String, bump_dependencies: String) -> anyhow::Result<Self> {
-        let meta = cargo_metadata::MetadataCommand::new().exec()?;
-        let root = meta.workspace_root.clone();
-        let repo = git_repository::discover(&root)?;
-        let index = Index::new_cargo_default();
+        let crates_index = Index::new_cargo_default();
         Ok(Context {
-            root,
-            git_easy: repo.into(),
-            meta,
-            crates_index: index,
-            crate_names,
+            base: crate::Context::new(crate_names)?,
+            crates_index,
             bump,
             bump_dependencies,
         })
@@ -53,7 +44,7 @@ pub fn release(options: Options, crates: Vec<String>, bump: String, bump_depende
     if options.dry_run_cargo_publish && !options.dry_run {
         bail!("The --no-dry-run-cargo-publish flag is only effective without --execute")
     }
-    let mut ctx = Context::new(crates, bump, bump_dependencies)?;
+    let ctx = Context::new(crates, bump, bump_dependencies)?;
     if options.update_crates_index {
         log::info!("Updating crates-io index at '{}'", ctx.crates_index.path().display());
         ctx.crates_index.update()?;
@@ -66,36 +57,16 @@ pub fn release(options: Options, crates: Vec<String>, bump: String, bump_depende
         log::warn!("Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already");
     }
 
-    if ctx.crate_names.is_empty() {
-        let current_dir = std::env::current_dir()?;
-        let manifest = current_dir.join("Cargo.toml");
-        let dir_name = current_dir
-            .file_name()
-            .expect("a valid directory with a name")
-            .to_str()
-            .expect("directory is UTF8 representable");
-        let crate_name = if manifest.is_file() {
-            let manifest = cargo_toml::Manifest::from_path(manifest)?;
-            manifest.package.map_or(dir_name.to_owned(), |p| p.name)
-        } else {
-            dir_name.to_owned()
-        };
-        log::warn!(
-            "Using '{}' as crate name as no one was provided. Specify one if this isn't correct",
-            crate_name
-        );
-        ctx.crate_names = vec![crate_name];
-    }
     release_depth_first(ctx, options)?;
     Ok(())
 }
 
 fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
-    let meta = &ctx.meta;
+    let meta = &ctx.base.meta;
     let changed_crate_names_to_publish = if options.skip_dependencies {
-        ctx.crate_names.clone()
+        ctx.base.crate_names.clone()
     } else {
-        traverse_dependencies_and_find_changed_crates(meta, &ctx.crate_names, &ctx, options)?
+        traverse_dependencies_and_find_changed_crates(meta, &ctx.base.crate_names, &ctx.base, options)?
     };
 
     let crates_to_publish_together = resolve_cycles_with_publish_group(meta, &changed_crate_names_to_publish, options)?;
@@ -112,7 +83,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
             let publishee = package_by_name(meta, publishee_name)?;
 
             let (new_version, commit_id) = perform_single_release(meta, publishee, options, &ctx)?;
-            let tag_name = git::create_version_tag(publishee, &new_version, commit_id, &ctx, options)?;
+            let tag_name = git::create_version_tag(publishee, &new_version, commit_id, &ctx.base, options)?;
             git::push_tags_and_head(tag_name, options)?;
         }
     }
@@ -174,7 +145,8 @@ fn perforrm_multi_version_release(
             .collect();
 
         cargo::publish_crate(publishee, &unpublished_crates, options)?;
-        if let Some(tag_name) = git::create_version_tag(publishee, &new_version, commit_id.clone(), ctx, options)? {
+        if let Some(tag_name) = git::create_version_tag(publishee, &new_version, commit_id.clone(), &ctx.base, options)?
+        {
             tag_names.push(tag_name);
         };
     }
@@ -233,7 +205,7 @@ fn resolve_cycles_with_publish_group(
 fn traverse_dependencies_and_find_changed_crates(
     meta: &Metadata,
     crate_names: &[String],
-    ctx: &Context,
+    ctx: &crate::Context,
     Options {
         verbose,
         allow_auto_publish_of_stable_crates,
@@ -287,7 +259,7 @@ fn traverse_dependencies_and_find_changed_crates(
 
 fn depth_first_traversal(
     meta: &Metadata,
-    ctx: &Context,
+    ctx: &crate::Context,
     allow_auto_publish_of_stable_crates: bool,
     seen: &mut BTreeSet<String>,
     changed_crate_names_to_publish: &mut Vec<String>,

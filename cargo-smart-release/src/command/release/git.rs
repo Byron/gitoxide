@@ -8,7 +8,7 @@ use cargo_metadata::{
 };
 use git_repository::{easy::object, prelude::ReferenceAccessExt, refs, refs::transaction::PreviousValue};
 
-use super::{tag_name_for, utils::will, Context, Oid, Options};
+use super::{tag_name_for, utils::will, Oid, Options};
 
 fn is_top_level_package(manifest_path: &Utf8Path, shared: &git_repository::Easy) -> bool {
     manifest_path
@@ -18,7 +18,7 @@ fn is_top_level_package(manifest_path: &Utf8Path, shared: &git_repository::Easy)
 
 pub(in crate::command::release_impl) fn has_changed_since_last_release(
     package: &Package,
-    ctx: &Context,
+    ctx: &crate::Context,
     verbose: bool,
 ) -> anyhow::Result<bool> {
     let version_tag_name = tag_name_for(
@@ -105,7 +105,7 @@ pub(in crate::command::release_impl) fn commit_changes(
     verbose: bool,
     dry_run: bool,
     empty_commit_possible: bool,
-    ctx: &Context,
+    ctx: &crate::Context,
 ) -> anyhow::Result<Option<Oid<'_>>> {
     // TODO: replace with gitoxide one day
     let mut cmd = Command::new("git");
@@ -130,7 +130,7 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
     publishee: &Package,
     new_version: &str,
     commit_id: Option<Oid<'repo>>,
-    ctx: &'repo Context,
+    ctx: &'repo crate::Context,
     Options {
         verbose,
         dry_run,
