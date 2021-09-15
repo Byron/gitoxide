@@ -95,7 +95,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     let changed_crate_names_to_publish = if options.skip_dependencies {
         ctx.crate_names.clone()
     } else {
-        traverse_dependencies_and_find_crates_for_publishing(meta, &ctx.crate_names, &ctx, options)?
+        traverse_dependencies_and_find_changed_crates(meta, &ctx.crate_names, &ctx, options)?
     };
 
     let crates_to_publish_together = resolve_cycles_with_publish_group(meta, &changed_crate_names_to_publish, options)?;
@@ -230,7 +230,7 @@ fn resolve_cycles_with_publish_group(
     ))
 }
 
-fn traverse_dependencies_and_find_crates_for_publishing(
+fn traverse_dependencies_and_find_changed_crates(
     meta: &Metadata,
     crate_names: &[String],
     ctx: &Context,

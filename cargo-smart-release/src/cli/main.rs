@@ -1,7 +1,7 @@
 mod options;
 use options::{Args, ChangeLog, SmartRelease, SubCommands};
 
-mod command;
+use cargo_smart_release::command;
 
 fn main() -> anyhow::Result<()> {
     let args: Args = argh::from_env();

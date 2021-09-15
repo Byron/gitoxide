@@ -13,11 +13,11 @@ keywords = ["cargo"]
 
 [[bin]]
 name = "cargo-smart-release"
-path = "src/main-smart-release.rs"
+path = "src/cli/main-smart-release.rs"
 
 [[bin]]
 name = "cargo-changelog"
-path = "src/main-changelog.rs"
+path = "src/cli/main-changelog.rs"
 
 [dependencies]
 git-repository = { version ="^0.10.0", path = "../git-repository" }
