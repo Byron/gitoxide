@@ -41,16 +41,22 @@ mod ancestor {
 
     fn new_iter(
         tips: impl IntoIterator<Item = impl Into<ObjectId>>,
+        mode: commit::Parents,
     ) -> impl Iterator<Item = Result<ObjectId, commit::ancestors::Error>> {
         let db = db().expect("db instantiation works as its definitely valid");
         commit::Ancestors::new(tips, commit::ancestors::State::default(), move |oid, buf| {
             db.find_commit_iter(oid, buf, &mut pack::cache::Never).ok()
         })
+        .mode(mode)
     }
 
-    fn check_traversal_with_shared_reference(tips: &[&str], expected: &[&str]) -> crate::Result {
+    fn check_traversal(tips: &[&str], expected: &[&str]) -> crate::Result {
+        check_traversal_with_mode(tips, expected, Default::default())
+    }
+
+    fn check_traversal_with_mode(tips: &[&str], expected: &[&str], mode: commit::Parents) -> crate::Result {
         let tips: Vec<_> = tips.iter().copied().map(hex_to_id).collect();
-        let oids: Result<Vec<_>, _> = new_iter(tips.iter().cloned()).collect();
+        let oids: Result<Vec<_>, _> = new_iter(tips.iter().cloned(), mode).collect();
         let expected: Vec<_> = tips
             .into_iter()
             .chain(expected.iter().map(|hex_id| hex_to_id(hex_id)))
@@ -61,19 +67,19 @@ mod ancestor {
 
     #[test]
     fn instantiate_with_arc() -> crate::Result {
-        let _ = new_iter(vec![git_hash::ObjectId::null_sha1()]);
+        let _ = new_iter(vec![git_hash::ObjectId::null_sha1()], Default::default());
         Ok(())
     }
 
     #[test]
     fn instantiate_with_box() -> crate::Result {
-        let _ = new_iter(vec![git_hash::ObjectId::null_sha1()]);
+        let _ = new_iter(vec![git_hash::ObjectId::null_sha1()], Default::default());
         Ok(())
     }
 
     #[test]
     fn linear_history_no_branch() -> crate::Result {
-        check_traversal_with_shared_reference(
+        check_traversal(
             &["9556057aee5abb06912922e9f26c46386a816822"],
             &[
                 "17d78c64cef6c33a10a604573fd2c429e477fd63",
@@ -85,7 +91,7 @@ mod ancestor {
 
     #[test]
     fn simple_branch_with_merge() -> crate::Result {
-        check_traversal_with_shared_reference(
+        check_traversal(
             &["01ec18a3ebf2855708ad3c9d244306bc1fae3e9b"],
             &[
                 "efd9a841189668f1bab5b8ebade9cd0a1b139a37",
@@ -100,8 +106,23 @@ mod ancestor {
     }
 
     #[test]
+    fn simple_branch_first_parent_only() -> crate::Result {
+        check_traversal_with_mode(
+            &["01ec18a3ebf2855708ad3c9d244306bc1fae3e9b"],
+            &[
+                "efd9a841189668f1bab5b8ebade9cd0a1b139a37",
+                "9556057aee5abb06912922e9f26c46386a816822",
+                "17d78c64cef6c33a10a604573fd2c429e477fd63",
+                "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7",
+                "134385f6d781b7e97062102c6a483440bfda2a03",
+            ],
+            commit::Parents::First,
+        )
+    }
+
+    #[test]
     fn multiple_tips() -> crate::Result {
-        check_traversal_with_shared_reference(
+        check_traversal(
             &[
                 "01ec18a3ebf2855708ad3c9d244306bc1fae3e9b",
                 "9556057aee5abb06912922e9f26c46386a816822",
