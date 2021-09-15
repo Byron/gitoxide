@@ -10,9 +10,9 @@ pub struct Segment {
 
 /// Return the head reference followed by all tags affecting `crate_name` as per our tag name rules, ordered by ancestry.
 pub fn crate_references_descending(
-    crate_name: &str,
-    meta: &Metadata,
-    repo: &git::Easy,
+    _crate_name: &str,
+    _meta: &Metadata,
+    _repo: &git::Easy,
 ) -> anyhow::Result<Vec<Segment>> {
-    todo!("heads with their commits until the next head")
+    Ok(vec![])
 }
