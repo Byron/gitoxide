@@ -87,7 +87,7 @@ where
                         let repo = self.access.repo()?;
                         let state = self.access.state();
                         let mut pack_cache = state.try_borrow_mut_pack_cache()?;
-                        r.peel_to_id_in_place(&repo.refs, self.packed_refs.clone(), |oid, buf| {
+                        r.peel_to_id_in_place(&repo.refs, self.packed_refs, |oid, buf| {
                             repo.odb
                                 .try_find(oid, buf, pack_cache.deref_mut())
                                 .map(|po| po.map(|o| (o.kind, o.data)))
