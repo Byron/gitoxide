@@ -1,5 +1,6 @@
 //!
 use std::cell::Ref;
+use std::{ops::Deref, path::Path};
 
 use crate::easy;
 
@@ -98,7 +99,4 @@ mod error {
         }
     }
 }
-
-use std::{ops::Deref, path::Path};
-
 pub use error::Error;

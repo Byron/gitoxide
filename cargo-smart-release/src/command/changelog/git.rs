@@ -1,6 +1,7 @@
 use crate::utils::{is_tag_name, is_tag_version, package_by_name, tag_prefix};
 use cargo_metadata::Metadata;
 use git_repository as git;
+use git_repository::bstr::{BStr, ByteSlice};
 use git_repository::prelude::ReferenceAccessExt;
 use std::path::PathBuf;
 
@@ -25,18 +26,24 @@ pub fn crate_references_descending(
             Some(prefix) => refs
                 .prefixed(PathBuf::from(format!("refs/tags/{}", prefix)))?
                 .filter_map(Result::ok)
-                .filter(|r| is_tag_name(prefix, r.name().as_bstr()))
-                .filter_map(|mut r| r.peel_to_id_in_place().ok().map(|_| r))
-                .map(|r| r.detach())
+                .filter(|r| is_tag_name(prefix, strip_tag_path(r.name().as_bstr())))
+                .filter_map(|mut r| r.peel_to_id_in_place().ok().map(|_| r.detach()))
                 .collect(),
             None => refs
                 .prefixed("refs/tags")?
                 .filter_map(Result::ok)
-                .filter(|r| is_tag_version(r.name().as_bstr()))
-                .filter_map(|mut r| r.peel_to_id_in_place().ok().map(|_| r))
-                .map(|r| r.detach())
+                .filter(|r| is_tag_version(strip_tag_path(r.name().as_bstr())))
+                .filter_map(|mut r| r.peel_to_id_in_place().ok().map(|_| r.detach()))
                 .collect(),
         }
     };
+    // dbg!(_tags);
     Ok(vec![])
+}
+
+fn strip_tag_path(fullname: &BStr) -> &BStr {
+    fullname
+        .strip_prefix(b"refs/tags/")
+        .expect("prefix iteration works")
+        .as_bstr()
 }
