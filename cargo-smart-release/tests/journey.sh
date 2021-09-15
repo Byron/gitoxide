@@ -29,6 +29,36 @@ function init-git-repo() {
   git init . && git add . && git commit -q -m "initial"
 }
 
+title "changelog"
+(sandbox
+  set-static-git-environment
+  export CARGO_HOME=$PWD
+
+  snapshot="$snapshot/triple-depth-workspace-changelog"
+  cp -R $fixtures/tri-depth-workspace/* .
+  { echo $'target/\n.package-cache' > .gitignore && init-git-repo; } &>/dev/null
+
+  (when "interacting with 'a'"
+    (with 'dry-run only'
+      it "succeeds" && {
+        WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate" \
+        expect_run $SUCCESSFULLY "$exe" changelog a
+      }
+    )
+    (with '--write'
+      it "succeeds" && {
+        expect_run $SUCCESSFULLY "$exe" changelog a --write
+      }
+      (with ".git and target/ directories removed"
+        rm -Rf .git/ target/
+        it "managed to write a changelog" && {
+          expect_snapshot "$snapshot/crate-a-released" .
+        }
+      )
+    )
+  )
+)
+
 title "smart-release"
 (sandbox
   set-static-git-environment
