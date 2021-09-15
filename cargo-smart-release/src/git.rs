@@ -33,33 +33,38 @@ pub fn has_changed_since_last_release(package: &Package, ctx: &crate::Context, v
         .strip_prefix(&ctx.root)
         .expect("workspace members are releative to the root directory");
 
-    let current_commit = ctx.git_easy.find_reference("HEAD")?.peel_to_id_in_place()?;
-    let released_target = tag_ref.peel_to_id_in_place()?;
+    Ok(match ctx.git_easy.head()?.into_fully_peeled_id() {
+        Some(c) => {
+            let current_commit = c?;
+            let released_target = tag_ref.peel_to_id_in_place()?;
 
-    if repo_relative_crate_dir.as_os_str().is_empty() {
-        Ok(current_commit != released_target)
-    } else {
-        let components = repo_relative_crate_dir.components().map(|c| match c {
-            Utf8Component::Normal(c) => c.as_bytes(),
-            _ => unreachable!("only normal components are possible in paths here"),
-        });
-        let current_dir_id = current_commit
-            .object()?
-            .peel_to_kind(object::Kind::Tree)?
-            .into_tree()
-            .lookup_path(components.clone())?
-            .expect("path must exist in current commit")
-            .oid;
-        let released_dir_id = released_target
-            .object()?
-            .peel_to_kind(object::Kind::Tree)?
-            .into_tree()
-            .lookup_path(components)?
-            .expect("path must exist as it was supposedly released there")
-            .oid;
+            if repo_relative_crate_dir.as_os_str().is_empty() {
+                current_commit != released_target
+            } else {
+                let components = repo_relative_crate_dir.components().map(|c| match c {
+                    Utf8Component::Normal(c) => c.as_bytes(),
+                    _ => unreachable!("only normal components are possible in paths here"),
+                });
+                let current_dir_id = current_commit
+                    .object()?
+                    .peel_to_kind(object::Kind::Tree)?
+                    .into_tree()
+                    .lookup_path(components.clone())?
+                    .expect("path must exist in current commit")
+                    .oid;
+                let released_dir_id = released_target
+                    .object()?
+                    .peel_to_kind(object::Kind::Tree)?
+                    .into_tree()
+                    .lookup_path(components)?
+                    .expect("path must exist as it was supposedly released there")
+                    .oid;
 
-        Ok(released_dir_id != current_dir_id)
-    }
+                released_dir_id != current_dir_id
+            }
+        }
+        None => true,
+    })
 }
 
 pub fn assure_clean_working_tree() -> anyhow::Result<()> {

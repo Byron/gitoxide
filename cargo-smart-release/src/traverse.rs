@@ -7,11 +7,11 @@ use crate::{
     utils::{is_pre_release_version, is_workspace_member, package_by_name},
 };
 
-pub fn dependencies_and_find_changed_crates(
+pub fn dependencies(
     meta: &Metadata,
     ctx: &crate::Context,
     verbose: bool,
-    allow_auto_publish_of_stable_crates: bool,
+    add_production_crates: bool,
 ) -> anyhow::Result<Vec<String>> {
     let mut seen = BTreeSet::new();
     let mut changed_crate_names_to_publish = Vec::new();
@@ -29,7 +29,7 @@ pub fn dependencies_and_find_changed_crates(
         let skipped = depth_first_traversal(
             meta,
             ctx,
-            allow_auto_publish_of_stable_crates,
+            add_production_crates,
             &mut seen,
             &mut changed_crate_names_to_publish,
             package,
@@ -61,7 +61,7 @@ pub fn dependencies_and_find_changed_crates(
 fn depth_first_traversal(
     meta: &Metadata,
     ctx: &crate::Context,
-    allow_auto_publish_of_stable_crates: bool,
+    add_production_crates: bool,
     seen: &mut BTreeSet<String>,
     changed_crate_names_to_publish: &mut Vec<String>,
     package: &Package,
@@ -77,14 +77,14 @@ fn depth_first_traversal(
         skipped += depth_first_traversal(
             meta,
             ctx,
-            allow_auto_publish_of_stable_crates,
+            add_production_crates,
             seen,
             changed_crate_names_to_publish,
             dep_package,
             verbose,
         )?;
         if git::has_changed_since_last_release(dep_package, ctx, verbose)? {
-            if is_pre_release_version(&dep_package.version) || allow_auto_publish_of_stable_crates {
+            if is_pre_release_version(&dep_package.version) || add_production_crates {
                 if verbose {
                     log::info!(
                         "Adding {} v{} to set of published crates as it changed since last release",

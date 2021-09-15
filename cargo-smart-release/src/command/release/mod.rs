@@ -66,7 +66,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     let changed_crate_names_to_publish = if options.skip_dependencies {
         ctx.base.crate_names.clone()
     } else {
-        crate::traverse::dependencies_and_find_changed_crates(
+        crate::traverse::dependencies(
             meta,
             &ctx.base,
             options.verbose,
