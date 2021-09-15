@@ -114,7 +114,7 @@ fn smallest_necessary_version_relative_to_crates_index(
 }
 
 pub(crate) fn is_pre_release(semver: &Version) -> bool {
-    semver.major == 0
+    crate::utils::is_pre_release_version(semver)
 }
 
 pub(crate) fn conservative_dependent_version(

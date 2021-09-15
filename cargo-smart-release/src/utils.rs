@@ -1,5 +1,7 @@
 use anyhow::anyhow;
+use cargo_metadata::camino::Utf8Path;
 use cargo_metadata::{Dependency, Metadata, Package, PackageId};
+use semver::Version;
 
 pub fn will(not_really: bool) -> &'static str {
     if not_really {
@@ -7,6 +9,16 @@ pub fn will(not_really: bool) -> &'static str {
     } else {
         "Will"
     }
+}
+
+pub fn is_pre_release_version(semver: &Version) -> bool {
+    semver.major == 0
+}
+
+pub fn is_top_level_package(manifest_path: &Utf8Path, shared: &git_repository::Easy) -> bool {
+    manifest_path
+        .strip_prefix(shared.repo.work_tree.as_ref().expect("repo with working tree"))
+        .map_or(false, |p| p.components().count() == 1)
 }
 
 pub fn is_dependency_with_version_requirement(dep: &Dependency) -> bool {
@@ -64,7 +76,7 @@ pub fn package_by_id<'a>(meta: &'a Metadata, id: &PackageId) -> &'a Package {
         .expect("workspace members are in packages")
 }
 
-pub fn tag_name_for(package: &str, version: &str, is_single_package_workspace: bool) -> String {
+pub fn tag_name(package: &str, version: &str, is_single_package_workspace: bool) -> String {
     if is_single_package_workspace {
         format!("v{}", version)
     } else {

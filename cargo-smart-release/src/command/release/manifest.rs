@@ -1,16 +1,15 @@
+use std::borrow::Cow;
 use std::{collections::BTreeMap, str::FromStr};
 
 use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
-use git_lock::File;
 use semver::{Op, Version, VersionReq};
 
-use super::{
-    cargo, git,
-    utils::{names_and_versions, package_by_id, package_eq_dependency, will},
-    version, Context, Oid, Options,
-};
-use std::borrow::Cow;
+use git_lock::File;
+
+use crate::utils::{names_and_versions, package_by_id, package_eq_dependency, will};
+
+use super::{cargo, git, version, Context, Oid, Options};
 
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<'repo>(
     meta: &Metadata,

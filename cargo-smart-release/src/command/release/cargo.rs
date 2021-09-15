@@ -3,7 +3,9 @@ use std::process::Command;
 use anyhow::bail;
 use cargo_metadata::Package;
 
-use super::{utils::will, Options};
+use crate::utils::will;
+
+use super::Options;
 
 pub(in crate::command::release_impl) fn publish_crate(
     publishee: &Package,
