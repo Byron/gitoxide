@@ -7,27 +7,21 @@ use crate::{
     utils::{is_pre_release_version, is_workspace_member, package_by_name},
 };
 
-pub fn dependencies(
-    meta: &Metadata,
-    ctx: &crate::Context,
-    verbose: bool,
-    add_production_crates: bool,
-) -> anyhow::Result<Vec<String>> {
+pub fn dependencies(ctx: &crate::Context, verbose: bool, add_production_crates: bool) -> anyhow::Result<Vec<String>> {
     let mut seen = BTreeSet::new();
     let mut changed_crate_names_to_publish = Vec::new();
     for crate_name in &ctx.crate_names {
         if seen.contains(crate_name) {
             continue;
         }
-        if dependency_tree_has_link_to_existing_crate_names(meta, crate_name, &changed_crate_names_to_publish)? {
+        if dependency_tree_has_link_to_existing_crate_names(&ctx.meta, crate_name, &changed_crate_names_to_publish)? {
             // redo all work which includes the previous tree. Could be more efficient but that would be more complicated.
             seen.clear();
             changed_crate_names_to_publish.clear();
         }
         let num_crates_for_publishing_without_dependencies = changed_crate_names_to_publish.len();
-        let package = package_by_name(meta, crate_name)?;
+        let package = package_by_name(&ctx.meta, crate_name)?;
         let skipped = depth_first_traversal(
-            meta,
             ctx,
             add_production_crates,
             &mut seen,
@@ -42,7 +36,7 @@ pub fn dependencies(
             );
         }
         if num_crates_for_publishing_without_dependencies == changed_crate_names_to_publish.len() {
-            let crate_package = package_by_name(meta, crate_name)?;
+            let crate_package = package_by_name(&ctx.meta, crate_name)?;
             if !git::has_changed_since_last_release(crate_package, ctx, verbose)? {
                 log::info!(
                     "Skipping provided {} v{} hasn't changed since last released",
@@ -59,7 +53,6 @@ pub fn dependencies(
 }
 
 fn depth_first_traversal(
-    meta: &Metadata,
     ctx: &crate::Context,
     add_production_crates: bool,
     seen: &mut BTreeSet<String>,
@@ -69,13 +62,12 @@ fn depth_first_traversal(
 ) -> anyhow::Result<usize> {
     let mut skipped = 0;
     for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
-        if seen.contains(&dependency.name) || !is_workspace_member(meta, &dependency.name) {
+        if seen.contains(&dependency.name) || !is_workspace_member(&ctx.meta, &dependency.name) {
             continue;
         }
         seen.insert(dependency.name.clone());
-        let dep_package = package_by_name(meta, &dependency.name)?;
+        let dep_package = package_by_name(&ctx.meta, &dependency.name)?;
         skipped += depth_first_traversal(
-            meta,
             ctx,
             add_production_crates,
             seen,
