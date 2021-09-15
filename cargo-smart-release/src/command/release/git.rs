@@ -6,7 +6,7 @@ use cargo_metadata::Package;
 use git_repository::{prelude::ReferenceAccessExt, refs, refs::transaction::PreviousValue};
 
 use super::{tag_name, Oid, Options};
-use crate::utils::{is_top_level_package, will};
+use crate::utils::will;
 
 pub(in crate::command::release_impl) fn commit_changes(
     message: impl AsRef<str>,
@@ -49,11 +49,7 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
     if skip_tag {
         return Ok(None);
     }
-    let tag_name = tag_name(
-        &publishee.name,
-        new_version,
-        is_top_level_package(&publishee.manifest_path, &ctx.git_easy),
-    );
+    let tag_name = tag_name(&publishee, new_version, &ctx.git_easy);
     if dry_run {
         if verbose {
             log::info!("WOULD create tag {}", tag_name);
