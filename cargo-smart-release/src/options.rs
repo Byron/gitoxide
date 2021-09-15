@@ -14,6 +14,23 @@ pub struct Args {
 #[argh(subcommand)]
 pub enum SubCommands {
     SmartRelease(SmartRelease),
+    Changelog(ChangeLog),
+}
+#[derive(FromArgs)]
+#[argh(subcommand, name = "changelog")]
+/// Generate changelogs from commit histories, none-destructively.
+///
+/// Use --write to actually write generated changelogs
+pub struct ChangeLog {
+    /// actually write the changelog to the respective files
+    #[argh(switch, short = 'w')]
+    pub write: bool,
+
+    /// the name of the crates to generate a changelog for.
+    ///
+    /// Defaults to the top-level workspace crate if unset.
+    #[argh(positional)]
+    pub crates: Vec<String>,
 }
 
 #[derive(FromArgs)]
@@ -122,7 +139,9 @@ pub struct SmartRelease {
     #[argh(option, short = 'd')]
     pub bump_dependencies: Option<String>,
 
-    /// the name of the crates to be released, along with all of their dependencies if needed, using `cargo release`
+    /// the name of the crates to be released, along with all of their dependencies if needed.
+    ///
+    /// Defaults to the top-level workspace crate if unset.
     #[argh(positional)]
     pub crates: Vec<String>,
 }
