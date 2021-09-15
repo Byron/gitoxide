@@ -1,6 +1,5 @@
 use anyhow::anyhow;
-use cargo_metadata::camino::Utf8Path;
-use cargo_metadata::{Dependency, Metadata, Package, PackageId};
+use cargo_metadata::{camino::Utf8Path, Dependency, Metadata, Package, PackageId};
 use semver::Version;
 
 pub fn will(not_really: bool) -> &'static str {

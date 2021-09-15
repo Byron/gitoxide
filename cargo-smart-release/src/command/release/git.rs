@@ -3,12 +3,10 @@ use std::{convert::TryInto, process::Command};
 use anyhow::bail;
 use bstr::ByteSlice;
 use cargo_metadata::Package;
-
 use git_repository::{prelude::ReferenceAccessExt, refs, refs::transaction::PreviousValue};
 
-use crate::utils::{is_top_level_package, will};
-
 use super::{tag_name, Oid, Options};
+use crate::utils::{is_top_level_package, will};
 
 pub(in crate::command::release_impl) fn commit_changes(
     message: impl AsRef<str>,

@@ -4,10 +4,12 @@ use anyhow::bail;
 use cargo_metadata::{Dependency, DependencyKind, Metadata, Package};
 use crates_index::Index;
 
-use crate::command::release::Options;
-use crate::utils::{
-    is_dependency_with_version_requirement, names_and_versions, package_by_id, package_by_name, package_eq_dependency,
-    package_for_dependency, tag_name, will, workspace_package_by_id,
+use crate::{
+    command::release::Options,
+    utils::{
+        is_dependency_with_version_requirement, names_and_versions, package_by_id, package_by_name,
+        package_eq_dependency, package_for_dependency, tag_name, will, workspace_package_by_id,
+    },
 };
 
 mod cargo;

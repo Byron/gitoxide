@@ -1,7 +1,11 @@
-use crate::git;
-use crate::utils::{is_pre_release_version, is_workspace_member, package_by_name};
-use cargo_metadata::{DependencyKind, Metadata, Package};
 use std::collections::BTreeSet;
+
+use cargo_metadata::{DependencyKind, Metadata, Package};
+
+use crate::{
+    git,
+    utils::{is_pre_release_version, is_workspace_member, package_by_name},
+};
 
 pub fn dependencies_and_find_changed_crates(
     meta: &Metadata,

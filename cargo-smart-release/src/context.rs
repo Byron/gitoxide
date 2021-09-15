@@ -1,5 +1,4 @@
-use cargo_metadata::camino::Utf8PathBuf;
-use cargo_metadata::Metadata;
+use cargo_metadata::{camino::Utf8PathBuf, Metadata};
 
 pub struct Context {
     pub root: Utf8PathBuf,
