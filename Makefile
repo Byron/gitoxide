@@ -7,13 +7,13 @@ always:
 ##@ Publishing & Versioning
 
 try-publish-all: ## Dry-run publish all crates in the currently set version if they are not published yet.
-	cargo run --package cargo-smart-release -- smart-release gitoxide
+	cargo run --package cargo-smart-release --bin cargo-smart-release -- smart-release gitoxide
 
 try-bump-minor-version: ## Show how updating the minor version of PACKAGE=<name> would look like.
-	cargo run --package cargo-smart-release -- smart-release --update-crates-index --bump minor --skip-dependencies --skip-publish --skip-tag --skip-push -v $(PACKAGE)
+	cargo run --package cargo-smart-release --bin cargo-smart-release -- smart-release --update-crates-index --bump minor --skip-dependencies --skip-publish --skip-tag --skip-push -v $(PACKAGE)
 
 bump-minor-version: ## Similar to try-bump-minor-version, but actually performs the operation on PACKAGE=<name>
-	cargo run --package cargo-smart-release -- smart-release --update-crates-index --bump minor --skip-dependencies --skip-publish --skip-tag --skip-push -v $(PACKAGE) --execute
+	cargo run --package cargo-smart-release --bin cargo-smart-release -- smart-release --update-crates-index --bump minor --skip-dependencies --skip-publish --skip-tag --skip-push -v $(PACKAGE) --execute
 
 ##@ Release Builds
 
@@ -138,7 +138,7 @@ check: ## Build all code in suitable configurations
 					  && cargo check --no-default-features --features blocking-network-client,blocking-http-transport \
 					  && cargo check --no-default-features --features one-stop-shop \
 					  && cargo check --no-default-features
-	cd cargo-smart-release && cargo check
+	cd cargo-smart-release && cargo check --all
 	cd experiments/object-access && cargo check
 	cd experiments/diffing && cargo check
 	cd experiments/traversal && cargo check

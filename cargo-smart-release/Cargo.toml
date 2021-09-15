@@ -11,6 +11,14 @@ keywords = ["cargo"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "cargo-smart-release"
+path = "src/main-smart-release.rs"
+
+[[bin]]
+name = "cargo-changelog"
+path = "src/main-changelog.rs"
+
 [dependencies]
 git-repository = { version ="^0.10.0", path = "../git-repository" }
 git-lock = { version ="^1.0.0", path = "../git-lock" }
