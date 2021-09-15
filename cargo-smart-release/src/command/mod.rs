@@ -29,6 +29,7 @@ pub mod changelog {
     pub struct Options {
         pub dry_run: bool,
         pub dependencies: bool,
+        pub allow_dirty: bool,
     }
 }
 #[path = "changelog/mod.rs"]

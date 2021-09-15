@@ -26,6 +26,12 @@ pub struct ChangeLog {
     #[argh(switch, short = 'w')]
     pub write: bool,
 
+    /// allow changelog updates to take place on a dirty working tree when --write is set as well.
+    ///
+    /// For now this is not recommended as changelogs might be damaged beyond repair.
+    #[argh(switch)]
+    pub allow_dirty: bool,
+
     /// take into consideration any dependencies of the crates to generate the changelog for.
     ///
     /// This flag is useful if you plan to review and finalize changelogs before a a smart-release, where dependencies
