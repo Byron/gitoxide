@@ -49,7 +49,7 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
     if skip_tag {
         return Ok(None);
     }
-    let tag_name = tag_name(&publishee, new_version, &ctx.git_easy);
+    let tag_name = tag_name(publishee, new_version, &ctx.git_easy);
     if dry_run {
         if verbose {
             log::info!("WOULD create tag {}", tag_name);

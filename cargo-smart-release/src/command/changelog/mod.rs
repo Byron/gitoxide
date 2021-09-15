@@ -26,7 +26,7 @@ fn assure_working_tree_is_unchanged(options: Options) -> anyhow::Result<()> {
                 log::warn!("The working tree has changes which will prevent changelog updates with --write unless --allow-dirty is also specified. The latter isn't recommended.");
                 Ok(())
             } else {
-                return Err(err);
+                Err(err)
             })
     }
 }

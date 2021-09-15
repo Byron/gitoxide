@@ -8,7 +8,7 @@ use git_repository::{easy::object, prelude::ReferenceAccessExt};
 use crate::utils::tag_name;
 
 pub fn has_changed_since_last_release(package: &Package, ctx: &crate::Context, verbose: bool) -> anyhow::Result<bool> {
-    let version_tag_name = tag_name(&package, &package.version.to_string(), &ctx.git_easy);
+    let version_tag_name = tag_name(package, &package.version.to_string(), &ctx.git_easy);
     let mut tag_ref = match ctx.git_easy.try_find_reference(&version_tag_name)? {
         None => {
             if verbose {
