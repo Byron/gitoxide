@@ -1,4 +1,5 @@
 use std::{
+    ffi::OsString,
     io::Read,
     path::{Path, PathBuf},
 };
@@ -15,14 +16,20 @@ use crate::{
 /// An iterator over all valid loose reference paths as seen from a particular base directory.
 pub(in crate::store::file) struct SortedLoosePaths {
     pub(crate) base: PathBuf,
+    filename_prefix: Option<OsString>,
     file_walk: DirEntryIter,
 }
 
 impl SortedLoosePaths {
-    pub fn at_root_with_names(path: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
+    pub fn at_root_with_names(
+        path: impl AsRef<Path>,
+        base: impl Into<PathBuf>,
+        filename_prefix: Option<OsString>,
+    ) -> Self {
         let file_walk = git_features::fs::walkdir_sorted_new(path).into_iter();
         SortedLoosePaths {
             base: base.into(),
+            filename_prefix,
             file_walk,
         }
     }
@@ -39,6 +46,15 @@ impl Iterator for SortedLoosePaths {
                         continue;
                     }
                     let full_path = entry.path().to_owned();
+                    if let Some((prefix, name)) = self
+                        .filename_prefix
+                        .as_deref()
+                        .and_then(|prefix| full_path.file_name().map(|name| (prefix, name)))
+                    {
+                        if !name.to_raw_bytes().starts_with(&prefix.to_raw_bytes()) {
+                            continue;
+                        }
+                    }
                     let full_name = full_path
                         .strip_prefix(&self.base)
                         .expect("prefix-stripping cannot fail as prefix is our root")
@@ -74,7 +90,20 @@ impl Loose {
     /// path to which resulting reference names should be relative to.
     pub fn at_root(root: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
         Loose {
-            ref_paths: SortedLoosePaths::at_root_with_names(root, base),
+            ref_paths: SortedLoosePaths::at_root_with_names(root, base, None),
+            buf: Vec::new(),
+        }
+    }
+
+    /// Initialize a loose reference iterator owned by `store` at the given iteration `root`, where `base` is the
+    /// path to which resulting reference names should be relative to, and where all filenames must start with `prefix`
+    pub fn at_root_with_filename_prefix(
+        root: impl AsRef<Path>,
+        base: impl Into<PathBuf>,
+        prefix: Option<OsString>,
+    ) -> Self {
+        Loose {
+            ref_paths: SortedLoosePaths::at_root_with_names(root, base, prefix),
             buf: Vec::new(),
         }
     }
@@ -130,14 +159,18 @@ impl file::Store {
     ///
     /// Otherwise it's similar to [`loose_iter()`][file::Store::loose_iter()].
     pub fn loose_iter_prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<Loose> {
-        let prefix = self.validate_prefix(prefix.as_ref())?;
-        Ok(Loose::at_root(self.base.join(prefix), self.base.clone()))
+        let (root, remainder) = self.validate_prefix(&self.base, prefix.as_ref())?;
+        Ok(Loose::at_root_with_filename_prefix(root, self.base.clone(), remainder))
     }
 
     pub(in crate::store::file) fn refs_dir(&self) -> PathBuf {
         self.base.join("refs")
     }
-    pub(in crate::store::file) fn validate_prefix<'a>(&self, prefix: &'a Path) -> std::io::Result<&'a Path> {
+    pub(in crate::store::file) fn validate_prefix(
+        &self,
+        base: &Path,
+        prefix: &Path,
+    ) -> std::io::Result<(PathBuf, Option<OsString>)> {
         if prefix.is_absolute() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
@@ -151,7 +184,15 @@ impl file::Store {
                 "Refusing to handle prefixes with relative path components",
             ));
         }
-        Ok(prefix)
+        let base = base.join(prefix);
+        if base.is_dir() {
+            Ok((base, None))
+        } else {
+            Ok((
+                base.parent().expect("a parent is always there unless empty").to_owned(),
+                base.file_name().map(ToOwned::to_owned),
+            ))
+        }
     }
 }
 

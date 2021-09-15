@@ -41,6 +41,15 @@ fn iter_prefix() -> crate::Result {
 
     assert_eq!(
         packed
+            .iter_prefixed("refs/heads/d")?
+            .map(|r| r.map(|r| r.name.as_bstr()))
+            .collect::<Result<Vec<_>, _>>()?,
+        vec!["refs/heads/d1".as_bytes().as_bstr(), "refs/heads/dt1".into(),],
+        "partial prefixes are fine, they don't have to resemble or be a directory"
+    );
+
+    assert_eq!(
+        packed
             .iter_prefixed("refs/remotes/")?
             .map(|r| r.map(|r| r.name.as_bstr()))
             .collect::<Result<Vec<_>, _>>()?,
@@ -66,7 +75,7 @@ fn iter_prefix() -> crate::Result {
             .map(|r| r.map(|r| r.name.as_bstr()))
             .collect::<Result<Vec<_>, _>>()?,
         vec![first_ref_in_file.as_bytes().as_bstr()],
-        "prefixes which are a ref also work, and this one is at the end"
+        "prefixes which are a ref also work, and this one at the beginning of the file"
     );
     Ok(())
 }

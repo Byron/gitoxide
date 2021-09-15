@@ -1,9 +1,13 @@
-use crate::utils::{is_tag_name, is_tag_version, package_by_name, tag_prefix};
+use std::path::PathBuf;
+
 use cargo_metadata::Metadata;
 use git_repository as git;
-use git_repository::bstr::{BStr, ByteSlice};
-use git_repository::prelude::ReferenceAccessExt;
-use std::path::PathBuf;
+use git_repository::{
+    bstr::{BStr, ByteSlice},
+    prelude::ReferenceAccessExt,
+};
+
+use crate::utils::{is_tag_name, is_tag_version, package_by_name, tag_prefix};
 
 /// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -24,7 +28,7 @@ pub fn crate_references_descending(
         let refs = repo.references()?;
         match tag_prefix {
             Some(prefix) => refs
-                .prefixed(PathBuf::from(format!("refs/tags/{}", prefix)))?
+                .prefixed(PathBuf::from(format!("refs/tags/{}-", prefix)))?
                 .peeled()
                 .filter_map(|r| r.ok().map(|r| r.detach()))
                 .filter(|r| is_tag_name(prefix, strip_tag_path(r.name.as_bstr())))

@@ -1,9 +1,12 @@
 //!
+use std::{
+    cell::Ref,
+    ops::{Deref, DerefMut},
+    path::Path,
+};
+
 use git_odb::Find;
 use git_ref::file::ReferenceExt;
-use std::cell::Ref;
-use std::ops::DerefMut;
-use std::{ops::Deref, path::Path};
 
 use crate::easy;
 

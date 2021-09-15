@@ -329,6 +329,29 @@ fn loose_iter_with_prefix() -> crate::Result {
 }
 
 #[test]
+fn loose_iter_with_partial_prefix() -> crate::Result {
+    let store = store()?;
+
+    let actual = store
+        .loose_iter_prefixed("refs/heads/d")?
+        .collect::<Result<Vec<_>, _>>()
+        .expect("no broken ref in this subset")
+        .into_iter()
+        .map(|e| e.name.into_inner())
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        actual,
+        vec!["refs/heads/d1", "refs/heads/dt1",]
+            .into_iter()
+            .map(String::from)
+            .collect::<Vec<_>>(),
+        "all paths are as expected"
+    );
+    Ok(())
+}
+
+#[test]
 fn overlay_iter() -> crate::Result {
     use git_ref::Target::*;
 
@@ -391,5 +414,19 @@ fn overlay_prefixed_iter() -> crate::Result {
             ("refs/heads/newer-as-loose".into(), Peeled(c2)),
         ]
     );
+    Ok(())
+}
+
+#[test]
+fn overlay_partial_prefix_iter() -> crate::Result {
+    use git_ref::Target::*;
+
+    let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
+    let ref_names = store
+        .iter_prefixed(store.packed_buffer()?.as_ref(), "refs/heads/m")?
+        .map(|r| r.map(|r| (r.name.as_bstr().to_owned(), r.target)))
+        .collect::<Result<Vec<_>, _>>()?;
+    let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+    assert_eq!(ref_names, vec![(b"refs/heads/main".as_bstr().to_owned(), Peeled(c1)),]);
     Ok(())
 }

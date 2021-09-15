@@ -117,7 +117,7 @@ impl file::Store {
     /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themeselves.
     pub fn iter<'p, 's>(&'s self, packed: Option<&'p packed::Buffer>) -> std::io::Result<LooseThenPacked<'p, 's>> {
         match &self.namespace {
-            Some(namespace) => self.iter_prefixed_unvalidated(packed, namespace.to_path()),
+            Some(namespace) => self.iter_prefixed_unvalidated(packed, namespace.to_path(), (None, None)),
             None => Ok(LooseThenPacked {
                 base: &self.base,
                 packed: match packed {
@@ -129,7 +129,7 @@ impl file::Store {
                     ),
                     None => None,
                 },
-                loose: loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.to_owned())
+                loose: loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.to_owned(), None)
                     .peekable(),
                 buf: Vec::new(),
                 namespace: None,
@@ -145,11 +145,15 @@ impl file::Store {
         packed: Option<&'p packed::Buffer>,
         prefix: impl AsRef<Path>,
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
-        self.validate_prefix(prefix.as_ref())?;
         match &self.namespace {
-            None => self.iter_prefixed_unvalidated(packed, prefix),
+            None => {
+                let (root, remainder) = self.validate_prefix(&self.base, prefix.as_ref())?;
+                self.iter_prefixed_unvalidated(packed, prefix, (root.into(), remainder))
+            }
             Some(namespace) => {
-                self.iter_prefixed_unvalidated(packed, namespace.to_owned().into_namespaced_prefix(prefix))
+                let prefix = namespace.to_owned().into_namespaced_prefix(prefix);
+                let (root, remainder) = self.validate_prefix(&self.base, &prefix)?;
+                self.iter_prefixed_unvalidated(packed, prefix, (root.into(), remainder))
             }
         }
     }
@@ -158,6 +162,7 @@ impl file::Store {
         &'s self,
         packed: Option<&'p packed::Buffer>,
         prefix: impl AsRef<Path>,
+        loose_root_and_filename_prefix: (Option<PathBuf>, Option<OsString>),
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         let packed_prefix = path_to_name(prefix.as_ref());
         Ok(LooseThenPacked {
@@ -171,8 +176,14 @@ impl file::Store {
                 ),
                 None => None,
             },
-            loose: loose::iter::SortedLoosePaths::at_root_with_names(self.base.join(prefix), self.base.to_owned())
-                .peekable(),
+            loose: loose::iter::SortedLoosePaths::at_root_with_names(
+                loose_root_and_filename_prefix
+                    .0
+                    .unwrap_or_else(|| self.base.join(prefix)),
+                self.base.to_owned(),
+                loose_root_and_filename_prefix.1,
+            )
+            .peekable(),
             buf: Vec::new(),
             namespace: self.namespace.as_ref(),
         })
@@ -210,5 +221,7 @@ mod error {
         }
     }
 }
+
+use std::ffi::OsString;
 
 pub use error::Error;

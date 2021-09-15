@@ -115,8 +115,9 @@ pub fn is_tag_version(name: &git::bstr::BStr) -> bool {
 mod tests {
     mod is_tag_name {
         mod no_match {
-            use crate::utils::{is_tag_name, tag_name_inner};
             use git_repository::bstr::ByteSlice;
+
+            use crate::utils::{is_tag_name, tag_name_inner};
 
             #[test]
             fn due_to_crate_name() {
@@ -127,8 +128,9 @@ mod tests {
             }
         }
         mod matches {
-            use crate::utils::{is_tag_name, tag_name_inner};
             use git_repository::bstr::ByteSlice;
+
+            use crate::utils::{is_tag_name, tag_name_inner};
 
             #[test]
             fn whatever_tag_name_would_return() {
@@ -146,8 +148,9 @@ mod tests {
     }
     mod is_tag_version {
         mod no_match {
-            use crate::utils::is_tag_version;
             use git_repository::bstr::ByteSlice;
+
+            use crate::utils::is_tag_version;
 
             #[test]
             fn not_enough_numbers() {
@@ -159,8 +162,9 @@ mod tests {
             }
         }
         mod matches {
-            use crate::utils::is_tag_version;
             use git_repository::bstr::ByteSlice;
+
+            use crate::utils::is_tag_version;
 
             #[test]
             fn funky() {
