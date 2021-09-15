@@ -69,7 +69,7 @@ where
         let mut pack_cache = state.try_borrow_mut_pack_cache()?;
         let oid = self.inner.peel_to_id_in_place(
             &repo.refs,
-            state.assure_packed_refs_uptodate(&repo.refs)?.packed_refs.as_ref(),
+            state.assure_packed_refs_uptodate(&repo.refs)?.buffer.as_ref(),
             |oid, buf| {
                 repo.odb
                     .try_find(oid, buf, pack_cache.deref_mut())

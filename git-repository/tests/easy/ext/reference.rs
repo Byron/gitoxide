@@ -94,6 +94,7 @@ mod set_namespace {
 mod iter_references {
     use git_repository as git;
     use git_repository::prelude::ReferenceAccessExt;
+    use git_testtools::hex_to_id;
 
     fn repo() -> crate::Result<git::Easy> {
         crate::repo("make_references_repo.sh").map(|r| r.into_easy())
@@ -135,13 +136,60 @@ mod iter_references {
             repo.references()?
                 .prefixed("refs/heads/")?
                 .filter_map(Result::ok)
-                .map(|r| r.name().as_bstr().to_owned())
+                .map(|r| (
+                    r.name().as_bstr().to_string(),
+                    r.target().as_id().map(ToOwned::to_owned)
+                ))
                 .collect::<Vec<_>>(),
             vec![
-                "refs/heads/d1",
-                "refs/heads/dt1",
-                "refs/heads/main",
-                "refs/heads/multi-link-target1",
+                (
+                    "refs/heads/d1".to_string(),
+                    Some(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"))
+                ),
+                (
+                    "refs/heads/dt1".into(),
+                    hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03").into()
+                ),
+                (
+                    "refs/heads/main".into(),
+                    hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03").into()
+                ),
+                ("refs/heads/multi-link-target1".into(), None),
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn prefixed_and_peeled() -> crate::Result {
+        let repo = repo()?;
+        assert_eq!(
+            repo.references()?
+                .prefixed("refs/heads/")?
+                .peeled()
+                .filter_map(Result::ok)
+                .map(|r| (
+                    r.name().as_bstr().to_string(),
+                    r.target().as_id().map(ToOwned::to_owned)
+                ))
+                .collect::<Vec<_>>(),
+            vec![
+                (
+                    "refs/heads/d1".to_string(),
+                    Some(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03"))
+                ),
+                (
+                    "refs/heads/dt1".into(),
+                    hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03").into()
+                ),
+                (
+                    "refs/heads/main".into(),
+                    hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03").into()
+                ),
+                (
+                    "refs/remotes/origin/multi-link-target3".into(),
+                    hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03").into()
+                ),
             ]
         );
         Ok(())

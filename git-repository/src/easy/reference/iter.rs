@@ -1,5 +1,8 @@
 //!
+use git_odb::Find;
+use git_ref::file::ReferenceExt;
 use std::cell::Ref;
+use std::ops::DerefMut;
 use std::{ops::Deref, path::Path};
 
 use crate::easy;
@@ -18,6 +21,8 @@ where
 /// An iterator over references, with or without filter.
 pub struct Iter<'r, A> {
     inner: git_ref::file::iter::LooseThenPacked<'r, 'r>,
+    packed_refs: Option<&'r git_ref::packed::Buffer>,
+    peel: bool,
     access: &'r A,
 }
 
@@ -32,7 +37,9 @@ where
     pub fn all(&self) -> Result<Iter<'_, A>, init::Error> {
         let repo = self.repo.deref();
         Ok(Iter {
-            inner: repo.refs.iter(self.packed_refs.packed_refs.as_ref())?,
+            inner: repo.refs.iter(self.packed_refs.buffer.as_ref())?,
+            packed_refs: self.packed_refs.buffer.as_ref(),
+            peel: false,
             access: self.access,
         })
     }
@@ -43,9 +50,26 @@ where
     pub fn prefixed(&self, prefix: impl AsRef<Path>) -> Result<Iter<'_, A>, init::Error> {
         let repo = self.repo.deref();
         Ok(Iter {
-            inner: repo.refs.iter_prefixed(self.packed_refs.packed_refs.as_ref(), prefix)?,
+            inner: repo.refs.iter_prefixed(self.packed_refs.buffer.as_ref(), prefix)?,
+            packed_refs: self.packed_refs.buffer.as_ref(),
+            peel: false,
             access: self.access,
         })
+    }
+}
+
+impl<'r, A> Iter<'r, A> {
+    /// Automatically peel references before yielding them during iteration.
+    ///
+    /// This has the same effect as using `iter.map(|r| {r.peel_to_id_in_place(); r})`.
+    ///
+    /// # Note
+    ///
+    /// Doing this is necessary as the packed-refs buffer is already held by the iterator, disallowing the consumer of the iterator
+    /// to peel the returned references themselves.
+    pub fn peeled(mut self) -> Self {
+        self.peel = true;
+        self
     }
 }
 
@@ -58,6 +82,22 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next().map(|res| {
             res.map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
+                .and_then(|mut r| {
+                    if self.peel {
+                        let repo = self.access.repo()?;
+                        let state = self.access.state();
+                        let mut pack_cache = state.try_borrow_mut_pack_cache()?;
+                        r.peel_to_id_in_place(&repo.refs, self.packed_refs.clone(), |oid, buf| {
+                            repo.odb
+                                .try_find(oid, buf, pack_cache.deref_mut())
+                                .map(|po| po.map(|o| (o.kind, o.data)))
+                        })
+                        .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
+                        .map(|_| r)
+                    } else {
+                        Ok(r)
+                    }
+                })
                 .map(|r| easy::Reference::from_ref(r, self.access))
         })
     }

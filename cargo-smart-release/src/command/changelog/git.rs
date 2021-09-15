@@ -25,19 +25,19 @@ pub fn crate_references_descending(
         match tag_prefix {
             Some(prefix) => refs
                 .prefixed(PathBuf::from(format!("refs/tags/{}", prefix)))?
-                .filter_map(Result::ok)
-                .filter(|r| is_tag_name(prefix, strip_tag_path(r.name().as_bstr())))
-                .filter_map(|mut r| r.peel_to_id_in_place().ok().map(|_| r.detach()))
+                .peeled()
+                .filter_map(|r| r.ok().map(|r| r.detach()))
+                .filter(|r| is_tag_name(prefix, strip_tag_path(r.name.as_bstr())))
                 .collect(),
             None => refs
                 .prefixed("refs/tags")?
-                .filter_map(Result::ok)
-                .filter(|r| is_tag_version(strip_tag_path(r.name().as_bstr())))
-                .filter_map(|mut r| r.peel_to_id_in_place().ok().map(|_| r.detach()))
+                .peeled()
+                .filter_map(|r| r.ok().map(|r| r.detach()))
+                .filter(|r| is_tag_version(strip_tag_path(r.name.as_bstr())))
                 .collect(),
         }
     };
-    // dbg!(_tags);
+    dbg!(_tags);
     Ok(vec![])
 }
 
