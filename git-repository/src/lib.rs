@@ -33,6 +33,9 @@
 //! Use the `cache-efficiency-debug` cargo feature to learn how efficient the cache actually is - it's easy to end up with lowered
 //! performance if the cache is not hit in 50% of the time.
 //!
+//! Use the `GITOXIDE_DISABLE_PACK_CACHE` environment variable to turn off any pack cache, which can be beneficial when it's known that
+//! the cache efficiency is low. TODO: Offer altnative memory cache configuration.
+//!
 //! ### Shortcomings & Limitations
 //!
 //! - Only one `easy::Object` or derivatives can be held in memory at a time, _per `Easy*`_.
