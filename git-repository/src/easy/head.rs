@@ -60,8 +60,7 @@ where
     pub fn id(&self) -> Option<easy::Oid<'repo, A>> {
         match &self.kind {
             Kind::Symbolic(r) => r.target.as_id().map(|oid| oid.to_owned().attach(self.access)),
-            Kind::Detached { peeled, target } => peeled
-                .clone()
+            Kind::Detached { peeled, target } => (*peeled)
                 .unwrap_or_else(|| target.to_owned())
                 .attach(self.access)
                 .into(),
