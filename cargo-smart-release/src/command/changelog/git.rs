@@ -1,4 +1,3 @@
-#![allow(unused)]
 use std::{collections::BTreeMap, iter::FromIterator, path::PathBuf, time::Instant};
 
 use anyhow::bail;
@@ -15,7 +14,7 @@ use git_repository::prelude::{ObjectAccessExt, ReferenceExt, RepositoryAccessExt
 
 /// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
 pub struct Segment<'a> {
-    head: git::refs::Reference,
+    _head: git::refs::Reference,
     /// only relevant history items, that is those that change code in the respective crate.
     history: Vec<&'a HistoryItem>,
 }
@@ -27,13 +26,13 @@ pub struct History {
 
 pub struct HistoryItem {
     id: git::hash::ObjectId,
-    message: git::bstr::BString,
-    tree_data: Vec<u8>,
+    _message: git::bstr::BString,
+    _tree_data: Vec<u8>,
 }
 
 pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
     let start = Instant::now();
-    let prev = repo.object_cache(64 * 1024)?;
+    let prev = repo.object_cache_size(64 * 1024)?;
     let reference = match repo.head()?.peeled()?.kind {
         head::Kind::Detached { .. } => bail!("Refusing to operate on a detached head."),
         head::Kind::Unborn { .. } => return Ok(None),
@@ -51,11 +50,11 @@ pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
 
         items.push(HistoryItem {
             id: commit_id.detach(),
-            message,
-            tree_data: repo.find_object(tree_id)?.data.to_owned(),
+            _message: message,
+            _tree_data: repo.find_object(tree_id)?.data.to_owned(),
         });
     }
-    repo.object_cache(None)?;
+    repo.object_cache_size(prev)?;
 
     let elapsed = start.elapsed();
     log::trace!(
@@ -117,7 +116,7 @@ pub fn crate_references_descending<'h>(
     let start = Instant::now();
     let mut segments = Vec::new();
     let mut segment = Segment {
-        head: history.head.to_owned(),
+        _head: history.head.to_owned(),
         history: vec![],
     };
     for item in &history.items {
@@ -129,7 +128,7 @@ pub fn crate_references_descending<'h>(
             Some(next_ref) => segments.push(std::mem::replace(
                 &mut segment,
                 Segment {
-                    head: next_ref,
+                    _head: next_ref,
                     history: vec![item],
                 },
             )),

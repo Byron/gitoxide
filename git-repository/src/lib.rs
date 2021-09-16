@@ -28,7 +28,7 @@
 //! On miss, the object is looked up and if ia pack is hit, there is a small fixed-size cache for delta-base objects.
 //!
 //! In scenarios where the same objects are accessed multiple times, an object cache can be useful and is to be configured specifically
-//! using the [`object_cache(…)`][prelude::RepositoryAccessExt::object_cache()] method.
+//! using the [`object_cache_size(…)`][prelude::RepositoryAccessExt::object_cache_size()] method.
 //!
 //! Use the `cache-efficiency-debug` cargo feature to learn how efficient the cache actually is - it's easy to end up with lowered
 //! performance if the cache is not hit in 50% of the time.
@@ -39,6 +39,9 @@
 //! the cache efficiency is low. Use GITOXIDE_PACK_CACHE_MEMORY_IN_BYTES=536870912 to use up to 512MB of RAM for the pack delta base
 //! cache. If none of these are set, the default cache is fast enough to nearly never cause a (marginal) slow-down while providing
 //! some gains most of the time. Note that the value given is _per-thread_.
+//!
+//! Programmatically the pack-cache can be changed using the `pack_cache(…)` method.
+//!
 //!
 //! ### Shortcomings & Limitations
 //!

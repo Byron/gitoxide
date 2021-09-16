@@ -24,11 +24,11 @@ mod find {
         for round in 1..=2 {
             match round {
                 1 => assert!(
-                    repo.object_cache(None).unwrap().is_none(),
+                    repo.object_cache_size(None).unwrap().is_none(),
                     "default is to have no object cache"
                 ),
                 2 => {
-                    repo.object_cache(128 * 1024).unwrap();
+                    repo.object_cache_size(128 * 1024).unwrap();
                 }
                 _ => unreachable!("BUG"),
             }
@@ -60,7 +60,7 @@ mod find {
 
             if round == 2 {
                 assert_eq!(
-                    repo.object_cache(None).unwrap(),
+                    repo.object_cache_size(None).unwrap(),
                     Some(128 * 1024),
                     "it returns the previous cache"
                 );

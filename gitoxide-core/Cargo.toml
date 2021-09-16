@@ -28,7 +28,7 @@ estimate-hours = ["itertools", "rayon", "bstr", "fs-err"]
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
 git-repository = { version ="^0.10.0", path = "../git-repository", default-features = false, features = ["local", "unstable"]} # TODO: eventually 'unstable' shouldn't be needed anymore
-git-pack-for-configuration-only = { package = "git-pack", version ="^0.12.0", path = "../git-pack", default-features = false, features = ["pack-cache-lru-static"] }
+git-pack-for-configuration-only = { package = "git-pack", version ="^0.12.0", path = "../git-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
 git-commitgraph = { version = "^0.4.0", path = "../git-commitgraph" }
 git-config = { version = "^0.1.0", path = "../git-config" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
