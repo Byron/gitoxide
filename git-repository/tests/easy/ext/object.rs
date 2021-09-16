@@ -15,6 +15,60 @@ mod write_object {
     }
 }
 
+mod find {
+    use git_repository::prelude::{ReferenceAccessExt, RepositoryAccessExt};
+
+    #[test]
+    fn find_and_try_find_with_and_without_object_cache() {
+        let repo = crate::basic_repo().unwrap();
+        for round in 1..=2 {
+            match round {
+                1 => assert!(
+                    repo.object_cache(None).unwrap().is_none(),
+                    "default is to have no object cache"
+                ),
+                2 => {
+                    repo.object_cache(128 * 1024).unwrap();
+                }
+                _ => unreachable!("BUG"),
+            }
+            for commit_id in repo
+                .head()
+                .unwrap()
+                .peeled()
+                .unwrap()
+                .id()
+                .expect("born")
+                .ancestors()
+                .unwrap()
+                .all()
+            {
+                let commit = commit_id.unwrap();
+                assert_eq!(commit.object().unwrap().kind, git_object::Kind::Commit);
+                if round == 2 {
+                    assert_eq!(
+                        commit.object().unwrap().kind,
+                        git_object::Kind::Commit,
+                        "repeated request triggers cache and doesn't fail"
+                    );
+                }
+                assert_eq!(
+                    commit.try_object().unwrap().expect("exists").kind,
+                    git_object::Kind::Commit,
+                );
+            }
+
+            if round == 2 {
+                assert_eq!(
+                    repo.object_cache(None).unwrap(),
+                    Some(128 * 1024),
+                    "it returns the previous cache"
+                );
+            }
+        }
+    }
+}
+
 mod commit {
     use git_repository as git;
     use git_repository::prelude::{ObjectAccessExt, ReferenceAccessExt};
@@ -77,6 +131,16 @@ mod commit {
         let (repo, _keep) = crate::basic_rw_repo()?;
         let parent = repo.find_reference("HEAD")?.peel_to_id_in_place()?;
         let empty_tree_id = parent.object()?.commit_iter().tree_id().expect("tree to be set");
+        assert_eq!(
+            parent
+                .try_object()?
+                .expect("present")
+                .commit_iter()
+                .tree_id()
+                .expect("tree to be set"),
+            empty_tree_id,
+            "try and non-try work the same"
+        );
         let author = git::actor::Signature::empty();
         let first_commit_id = repo.commit(
             "HEAD",

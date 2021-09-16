@@ -23,6 +23,7 @@ local-time-support = ["git-actor/local-time-support"]
 async-network-client = ["git-protocol/async-client"]
 blocking-network-client = ["git-protocol/blocking-client"]
 blocking-http-transport = ["git-transport/http-client-curl"]
+cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
 local = [
     "git-url",
     "git-diff",
@@ -59,6 +60,7 @@ bstr = { version = "0.2.13", default-features = false, features = ["std", "unico
 signal-hook = { version = "0.3.9", default-features = false }
 thiserror = "1.0.26"
 parking_lot = { version = "0.11.2", features = ["arc_lock"] }
+clru = "0.5.0"
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }

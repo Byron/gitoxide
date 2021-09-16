@@ -11,7 +11,7 @@ use git_repository::{
 };
 
 use crate::utils::{is_tag_name, is_tag_version, package_by_name, tag_prefix};
-use git_repository::prelude::{ObjectAccessExt, ReferenceExt};
+use git_repository::prelude::{ObjectAccessExt, ReferenceExt, RepositoryAccessExt};
 
 /// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
 pub struct Segment<'a> {
@@ -33,6 +33,7 @@ pub struct HistoryItem {
 
 pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
     let start = Instant::now();
+    let prev = repo.object_cache(64 * 1024)?;
     let reference = match repo.head()?.peeled()?.kind {
         head::Kind::Detached { .. } => bail!("Refusing to operate on a detached head."),
         head::Kind::Unborn { .. } => return Ok(None),
@@ -54,6 +55,7 @@ pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
             tree_data: repo.find_object(tree_id)?.data.to_owned(),
         });
     }
+    repo.object_cache(None)?;
 
     let elapsed = start.elapsed();
     log::trace!(
@@ -136,7 +138,6 @@ pub fn crate_references_descending<'h>(
     segments.push(segment);
 
     if !tags_by_commit.is_empty() {
-        use git::bstr::ByteVec;
         log::warn!(
             "The following tags were on branches which are ignored during traversal: {}",
             tags_by_commit

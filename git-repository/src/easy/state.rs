@@ -3,10 +3,7 @@ use std::cell::{Ref, RefMut};
 
 use git_ref::file;
 
-use crate::{
-    easy,
-    easy::{borrow, PackCache},
-};
+use crate::{easy, easy::borrow};
 
 impl Clone for easy::State {
     fn clone(&self) -> Self {
@@ -26,17 +23,24 @@ impl easy::State {
     }
 
     #[inline]
-    pub(crate) fn try_borrow_mut_pack_cache(&self) -> Result<RefMut<'_, PackCache>, borrow::state::Error> {
+    pub(crate) fn try_borrow_mut_pack_cache(&self) -> borrow::state::Result<RefMut<'_, easy::PackCache>> {
         self.pack_cache.try_borrow_mut().map_err(Into::into)
     }
 
     #[inline]
-    pub(crate) fn try_borrow_mut_buf(&self) -> Result<RefMut<'_, Vec<u8>>, borrow::state::Error> {
+    pub(crate) fn try_borrow_mut_object_cache(
+        &self,
+    ) -> borrow::state::Result<RefMut<'_, Option<easy::object::cache::MemoryCappedHashmap>>> {
+        self.object_cache.try_borrow_mut().map_err(Into::into)
+    }
+
+    #[inline]
+    pub(crate) fn try_borrow_mut_buf(&self) -> borrow::state::Result<RefMut<'_, Vec<u8>>> {
         self.buf.try_borrow_mut().map_err(Into::into)
     }
 
     #[inline]
-    pub(crate) fn try_borrow_buf(&self) -> Result<Ref<'_, Vec<u8>>, borrow::state::Error> {
+    pub(crate) fn try_borrow_buf(&self) -> borrow::state::Result<Ref<'_, Vec<u8>>> {
         self.buf.try_borrow().map_err(Into::into)
     }
 }

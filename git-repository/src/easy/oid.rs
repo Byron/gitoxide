@@ -105,14 +105,21 @@ pub mod ancestors {
                     Some(self.tip),
                     git_traverse::commit::ancestors::State::default(),
                     move |oid, buf| {
-                        self.repo
+                        let state = self.access.state();
+                        let mut object_cache = state.try_borrow_mut_object_cache().ok()?;
+                        if let Some(c) = object_cache.deref_mut() {
+                            if let Some(kind) = c.get(&oid.to_owned(), buf) {
+                                return git_pack::data::Object::new(kind, buf).try_into_commit_iter();
+                            }
+                        }
+                        match self
+                            .repo
                             .deref()
                             .odb
                             .try_find(
                                 oid,
                                 buf,
-                                self.access
-                                    .state()
+                                state
                                     .try_borrow_mut_pack_cache()
                                     .expect("BUG: pack cache is already borrowed")
                                     .deref_mut(),
@@ -120,6 +127,15 @@ pub mod ancestors {
                             .ok()
                             .flatten()
                             .and_then(|obj| obj.try_into_commit_iter())
+                        {
+                            Some(_) => {
+                                if let Some(c) = object_cache.deref_mut() {
+                                    c.put(oid.to_owned(), git_object::Kind::Commit, buf);
+                                }
+                                Some(git_object::CommitRefIter::from_bytes(buf))
+                            }
+                            None => None,
+                        }
                     },
                 )),
             }

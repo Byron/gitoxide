@@ -35,13 +35,24 @@ pub trait ObjectAccessExt: easy::Access + Sized {
         let id = id.into();
         let kind = {
             let mut buf = self.state().try_borrow_mut_buf()?;
-            let obj = self
+            let mut object_cache = state.try_borrow_mut_object_cache()?;
+            if let Some(c) = object_cache.deref_mut() {
+                if let Some(kind) = c.get(&id, &mut buf) {
+                    drop(buf);
+                    return ObjectRef::from_current_buf(id, kind, self).map_err(Into::into);
+                }
+            }
+            let kind = self
                 .repo()?
                 .odb
-                .find(&id, &mut buf, state.try_borrow_mut_pack_cache()?.deref_mut())?;
-            obj.kind
-        };
+                .find(&id, &mut buf, state.try_borrow_mut_pack_cache()?.deref_mut())?
+                .kind;
 
+            if let Some(c) = object_cache.deref_mut() {
+                c.put(id, kind, &buf);
+            }
+            kind
+        };
         ObjectRef::from_current_buf(id, kind, self).map_err(Into::into)
     }
 
@@ -55,19 +66,31 @@ pub trait ObjectAccessExt: easy::Access + Sized {
     fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<ObjectRef<'_, Self>>, object::find::Error> {
         let state = self.state();
         let id = id.into();
-        self.repo()?
+
+        let mut object_cache = state.try_borrow_mut_object_cache()?;
+        let mut buf = state.try_borrow_mut_buf()?;
+        if let Some(c) = object_cache.deref_mut() {
+            if let Some(kind) = c.get(&id, &mut buf) {
+                drop(buf);
+                return Ok(Some(ObjectRef::from_current_buf(id, kind, self)?));
+            }
+        }
+        match self
+            .repo()?
             .odb
-            .try_find(
-                &id,
-                state.try_borrow_mut_buf()?.deref_mut(),
-                state.try_borrow_mut_pack_cache()?.deref_mut(),
-            )?
-            .map(|obj| {
+            .try_find(&id, &mut buf, state.try_borrow_mut_pack_cache()?.deref_mut())?
+        {
+            Some(obj) => {
                 let kind = obj.kind;
                 drop(obj);
-                ObjectRef::from_current_buf(id, kind, self).map_err(Into::into)
-            })
-            .transpose()
+                if let Some(c) = object_cache.deref_mut() {
+                    c.put(id, kind, &buf);
+                }
+                drop(buf);
+                Ok(Some(ObjectRef::from_current_buf(id, kind, self)?))
+            }
+            None => Ok(None),
+        }
     }
 
     /// Write the given object into the object database and return its object id.

@@ -19,6 +19,20 @@
 //! When starting out, use `easy(…)` and migrate to the more detailed method signatures to squeeze out the last inkling of performance
 //! if it really does make a difference.
 //!
+//! ## Object-Access Performance
+//!
+//! Accessing objects quickly is the bread-and-butter of working with git, right after accessing references. Hence it's vital
+//! to understand which cache levels exist and how to leverage them.
+//!
+//! When accessing an object, the first cache that's queried is a  memory-capped LRU object cache, mapping their id to data and kind.
+//! On miss, the object is looked up and if ia pack is hit, there is a small fixed-size cache for delta-base objects.
+//!
+//! In scenarios where the same objects are accessed multiple times, an object cache can be useful and is to be configured specifically
+//! using the [`object_cache(…)`][prelude::RepositoryAccessExt::object_cache()] method.
+//!
+//! Use the `cache-efficiency-debug` cargo feature to learn how efficient the cache actually is - it's easy to end up with lowered
+//! performance if the cache is not hit in 50% of the time.
+//!
 //! ### Shortcomings & Limitations
 //!
 //! - Only one `easy::Object` or derivatives can be held in memory at a time, _per `Easy*`_.

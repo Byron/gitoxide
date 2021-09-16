@@ -19,6 +19,9 @@ path = "src/cli/main-smart-release.rs"
 name = "cargo-changelog"
 path = "src/cli/main-changelog.rs"
 
+[features]
+cache-efficiency-debug = ["git-repository/cache-efficiency-debug"]
+
 [dependencies]
 git-repository = { version ="^0.10.0", path = "../git-repository" }
 git-lock = { version ="^1.0.0", path = "../git-lock" }

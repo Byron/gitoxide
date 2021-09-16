@@ -7,21 +7,18 @@ mod set_namespace {
     }
 
     #[test]
-    fn affects_edits_and_iteration() {
-        let (mut repo, _keep) = easy_repo_rw().unwrap();
+    fn affects_edits_and_iteration() -> crate::Result {
+        let (mut repo, _keep) = easy_repo_rw()?;
         assert_eq!(
-            repo.references().unwrap().all().unwrap().count(),
+            repo.references()?.all()?.count(),
             15,
             "there are plenty of references in the default namespace"
         );
-        assert!(repo.namespace().unwrap().is_none(), "no namespace is set initially");
-        assert!(
-            repo.set_namespace("foo").unwrap().is_none(),
-            "there is no previous namespace"
-        );
+        assert!(repo.namespace()?.is_none(), "no namespace is set initially");
+        assert!(repo.set_namespace("foo")?.is_none(), "there is no previous namespace");
 
         assert_eq!(
-            repo.references().unwrap().all().unwrap().filter_map(Result::ok).count(),
+            repo.references()?.all()?.filter_map(Result::ok).count(),
             0,
             "no references are in the namespace yet"
         );
@@ -30,22 +27,18 @@ mod set_namespace {
             "new-tag",
             git::hash::ObjectId::empty_tree(git::hash::Kind::Sha1),
             PreviousValue::MustNotExist,
-        )
-        .unwrap();
+        )?;
 
         repo.reference(
             "refs/heads/new-branch",
             git::hash::ObjectId::empty_tree(git::hash::Kind::Sha1),
             PreviousValue::MustNotExist,
             "message",
-        )
-        .unwrap();
+        )?;
 
         assert_eq!(
-            repo.references()
-                .unwrap()
-                .all()
-                .unwrap()
+            repo.references()?
+                .all()?
                 .filter_map(Result::ok)
                 .map(|r| r.name().as_bstr().to_owned())
                 .collect::<Vec<_>>(),
@@ -54,10 +47,8 @@ mod set_namespace {
         );
 
         assert_eq!(
-            repo.references()
-                .unwrap()
-                .prefixed("refs/tags/")
-                .unwrap()
+            repo.references()?
+                .prefixed("refs/tags/")?
                 .filter_map(Result::ok)
                 .map(|r| r.name().as_bstr().to_owned())
                 .collect::<Vec<_>>(),
@@ -66,28 +57,26 @@ mod set_namespace {
         );
         let fully_qualified_tag_name = "refs/tags/new-tag";
         assert_eq!(
-            repo.find_reference(fully_qualified_tag_name).unwrap().name().as_bstr(),
+            repo.find_reference(fully_qualified_tag_name)?.name().as_bstr(),
             fully_qualified_tag_name,
             "fully qualified (yet namespaced) names work"
         );
         assert_eq!(
-            repo.find_reference("new-tag").unwrap().name().as_bstr(),
+            repo.find_reference("new-tag")?.name().as_bstr(),
             fully_qualified_tag_name,
             "namespaces are transparent"
         );
 
-        let previous_ns = repo.clear_namespace().unwrap().expect("namespace set");
+        let previous_ns = repo.clear_namespace()?.expect("namespace set");
         assert_eq!(previous_ns.as_bstr(), "refs/namespaces/foo/");
-        assert!(
-            repo.clear_namespace().unwrap().is_none(),
-            "it doesn't invent namespaces"
-        );
+        assert!(repo.clear_namespace()?.is_none(), "it doesn't invent namespaces");
 
         assert_eq!(
-            repo.references().unwrap().all().unwrap().count(),
+            repo.references()?.all()?.count(),
             17,
             "it lists all references, also the ones in namespaces"
         );
+        Ok(())
     }
 }
 

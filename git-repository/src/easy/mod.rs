@@ -111,6 +111,7 @@ pub struct State {
     /// for too long. At least `packed_refs` is lazily initialized.
     packed_refs: RefCell<reference::packed::ModifieablePackedRefsBuffer>,
     pack_cache: RefCell<PackCache>,
+    object_cache: RefCell<Option<object::cache::MemoryCappedHashmap>>,
     buf: RefCell<Vec<u8>>,
 }
 

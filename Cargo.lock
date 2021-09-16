@@ -1188,6 +1188,7 @@ version = "0.10.0"
 dependencies = [
  "anyhow",
  "bstr",
+ "clru",
  "git-actor",
  "git-config",
  "git-diff",

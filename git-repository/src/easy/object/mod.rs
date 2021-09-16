@@ -10,10 +10,11 @@ use crate::{
 };
 
 mod errors;
-mod impls;
-mod tree;
 pub use errors::{find, write};
+pub(crate) mod cache;
+mod impls;
 pub mod peel;
+mod tree;
 
 impl Object {
     /// Infuse this owned object with an [`easy::Access`].
