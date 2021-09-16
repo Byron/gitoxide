@@ -1,11 +1,12 @@
-use cargo_metadata::{camino::Utf8PathBuf, Metadata};
+use cargo_metadata::camino::Utf8Path;
+use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
 use git_repository as git;
 use git_repository::prelude::CacheAccessExt;
 
 pub struct Context {
     pub root: Utf8PathBuf,
     pub meta: Metadata,
-    pub git_easy: git::Easy,
+    pub repo: git::Easy,
     pub crate_names: Vec<String>,
 }
 
@@ -16,10 +17,25 @@ impl Context {
         let repo = git::discover(&root)?;
         Ok(Context {
             root,
-            git_easy: repo.into_easy().apply_environment()?,
+            repo: repo.into_easy().apply_environment()?,
             meta,
             crate_names: fill_in_root_crate_if_needed(crate_names)?,
         })
+    }
+
+    pub(crate) fn repo_relative_path<'a>(&self, p: &'a Package) -> Option<&'a Utf8Path> {
+        let dir = p
+            .manifest_path
+            .parent()
+            .expect("parent of a file is always present")
+            .strip_prefix(&self.root)
+            .expect("workspace members are releative to the root directory");
+
+        if dir.as_os_str().is_empty() {
+            None
+        } else {
+            dir.into()
+        }
     }
 }
 

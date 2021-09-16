@@ -31,7 +31,7 @@ pub(in crate::command::release_impl) fn commit_changes(
     if !cmd.status()?.success() {
         bail!("Failed to commit changed manifests");
     }
-    Ok(Some(ctx.git_easy.find_reference("HEAD")?.peel_to_id_in_place()?))
+    Ok(Some(ctx.repo.find_reference("HEAD")?.peel_to_id_in_place()?))
 }
 
 pub(in crate::command::release_impl) fn create_version_tag<'repo>(
@@ -49,7 +49,7 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
     if skip_tag {
         return Ok(None);
     }
-    let tag_name = tag_name(publishee, new_version, &ctx.git_easy);
+    let tag_name = tag_name(publishee, new_version, &ctx.repo);
     if dry_run {
         if verbose {
             log::info!("WOULD create tag {}", tag_name);
@@ -57,7 +57,7 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
         Ok(Some(format!("refs/tags/{}", tag_name).try_into()?))
     } else {
         let tag = ctx
-            .git_easy
+            .repo
             .tag(tag_name, commit_id.expect("set in --execute mode"), PreviousValue::Any)?;
         log::info!("Created tag {}", tag.name().as_bstr());
         Ok(Some(tag.inner.name))

@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use cargo_metadata::camino::Utf8Component;
 use cargo_metadata::{camino::Utf8Path, Dependency, Metadata, Package, PackageId};
 use git_repository as git;
 use semver::Version;
@@ -109,6 +110,13 @@ pub fn is_tag_name(package_name: &str, tag_name: &git::bstr::BStr) -> bool {
 pub fn is_tag_version(name: &git::bstr::BStr) -> bool {
     use git::bstr::ByteSlice;
     name.starts_with_str(b"v") && name.split_str(b".").count() >= 3
+}
+
+pub fn component_to_bytes(c: Utf8Component<'_>) -> &[u8] {
+    match c {
+        Utf8Component::Normal(c) => c.as_bytes(),
+        _ => unreachable!("only normal components are possible in paths here"),
+    }
 }
 
 #[cfg(test)]

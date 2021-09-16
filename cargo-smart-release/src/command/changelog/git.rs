@@ -1,7 +1,6 @@
 use std::{collections::BTreeMap, iter::FromIterator, path::PathBuf, time::Instant};
 
 use anyhow::bail;
-use cargo_metadata::Metadata;
 use git_repository as git;
 use git_repository::{
     bstr::{BStr, ByteSlice},
@@ -9,7 +8,7 @@ use git_repository::{
     prelude::{CacheAccessExt, ObjectAccessExt, ReferenceAccessExt, ReferenceExt},
 };
 
-use crate::utils::{is_tag_name, is_tag_version, package_by_name, tag_prefix};
+use crate::utils::{component_to_bytes, is_tag_name, is_tag_version, package_by_name, tag_prefix};
 
 /// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
 pub struct Segment<'a> {
@@ -71,15 +70,15 @@ pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
 /// Return the head reference followed by all tags affecting `crate_name` as per our tag name rules, ordered by ancestry.
 pub fn crate_references_descending<'h>(
     crate_name: &str,
-    meta: &Metadata,
-    repo: &git::Easy,
+    ctx: &crate::Context,
     history: &'h History,
 ) -> anyhow::Result<Vec<Segment<'h>>> {
+    let meta = &ctx.meta;
     let package = package_by_name(meta, crate_name)?;
-    let tag_prefix = tag_prefix(package, repo);
+    let tag_prefix = tag_prefix(package, &ctx.repo);
     let start = Instant::now();
     let mut tags_by_commit = {
-        let refs = repo.references()?;
+        let refs = ctx.repo.references()?;
         match tag_prefix {
             Some(prefix) => BTreeMap::from_iter(
                 refs.prefixed(PathBuf::from(format!("refs/tags/{}-", prefix)))?
@@ -106,7 +105,8 @@ pub fn crate_references_descending<'h>(
 
     let elapsed = start.elapsed();
     log::trace!(
-        "Mapped {} tags in {}s ({:.0} refs/s)",
+        "{}: Mapped {} tags in {}s ({:.0} refs/s)",
+        crate_name,
         tags_by_commit.len(),
         elapsed.as_secs_f32(),
         tags_by_commit.len() as f32 / elapsed.as_secs_f32()
@@ -118,12 +118,28 @@ pub fn crate_references_descending<'h>(
         _head: history.head.to_owned(),
         history: vec![],
     };
+
+    let dir = ctx.repo_relative_path(package);
+    enum Filter<'a> {
+        None,
+        Fast(&'a [u8]),
+    }
+    let filter = dir
+        .map(|dir| {
+            let mut components = dir.components().collect::<Vec<_>>();
+            match components.len() {
+                0 => unreachable!("BUG: it's None if empty"),
+                1 => Filter::Fast(components.pop().map(component_to_bytes).expect("exactly one")),
+                _ => todo!("slow mode"),
+            }
+        })
+        .unwrap_or(Filter::None);
     for item in &history.items {
         match tags_by_commit.remove(&item.id) {
-            None => {
-                // TODO: filter by touched panifest path, fast or slow path
-                segment.history.push(item)
-            }
+            None => match filter {
+                Filter::None => segment.history.push(item),
+                Filter::Fast(_comp) => todo!("fast lookup"),
+            },
             Some(next_ref) => segments.push(std::mem::replace(
                 &mut segment,
                 Segment {
@@ -137,7 +153,8 @@ pub fn crate_references_descending<'h>(
 
     if !tags_by_commit.is_empty() {
         log::warn!(
-            "The following tags were on branches which are ignored during traversal: {}",
+            "{}: The following tags were on branches which are ignored during traversal: {}",
+            crate_name,
             tags_by_commit
                 .into_values()
                 .map(|v| v.name.as_bstr().to_str_lossy().into_owned())
@@ -149,7 +166,8 @@ pub fn crate_references_descending<'h>(
     let elapsed = start.elapsed();
     let num_commits = segments.iter().map(|s| s.history.len()).sum::<usize>();
     log::trace!(
-        "Found {} relevant commits out of {} in {} segments {}s ({:.0} commits/s)",
+        "{}: Found {} relevant commits out of {} in {} segments {}s ({:.0} commits/s)",
+        crate_name,
         num_commits,
         history.items.len(),
         segments.len(),
