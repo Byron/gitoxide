@@ -10,6 +10,7 @@ use std::collections::BTreeMap;
 
 use crate::utils::{is_tag_name, is_tag_version, package_by_name, tag_prefix};
 use std::iter::FromIterator;
+use std::time::Instant;
 
 /// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -26,7 +27,8 @@ pub fn crate_references_descending(
 ) -> anyhow::Result<Vec<Segment>> {
     let package = package_by_name(meta, crate_name)?;
     let tag_prefix = tag_prefix(package, repo);
-    let _tags_by_commit = {
+    let start = Instant::now();
+    let tags_by_commit = {
         let refs = repo.references()?;
         match tag_prefix {
             Some(prefix) => BTreeMap::from_iter(
@@ -51,7 +53,13 @@ pub fn crate_references_descending(
             ),
         }
     };
-    // dbg!(_tags);
+    let elapsed = start.elapsed();
+    log::trace!(
+        "Mapped {} tags in {}s ({:.0} refs/s)",
+        tags_by_commit.len(),
+        elapsed.as_secs_f32(),
+        tags_by_commit.len() as f32 / elapsed.as_secs_f32()
+    );
     Ok(vec![])
 }
 

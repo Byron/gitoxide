@@ -70,10 +70,9 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn init_logging() {
-    env_logger::Builder::new()
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
         .format_module_path(false)
         .format_target(false)
         .format_timestamp(None)
-        .filter_level(log::LevelFilter::Info)
         .init();
 }
