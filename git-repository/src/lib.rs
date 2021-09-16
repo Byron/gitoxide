@@ -33,8 +33,12 @@
 //! Use the `cache-efficiency-debug` cargo feature to learn how efficient the cache actually is - it's easy to end up with lowered
 //! performance if the cache is not hit in 50% of the time.
 //!
+//! TODO: move this to application level and make these the pack-cache configurable elsewhere, needs unstable right now, but make
+//! supporting these opt-in, to allow auto-configuring this even across multiple gitoxide applications.
 //! Use the `GITOXIDE_DISABLE_PACK_CACHE` environment variable to turn off any pack cache, which can be beneficial when it's known that
-//! the cache efficiency is low. TODO: Offer altnative memory cache configuration.
+//! the cache efficiency is low. Use GITOXIDE_PACK_CACHE_MEMORY_IN_BYTES=536870912 to use up to 512MB of RAM for the pack delta base
+//! cache. If none of these are set, the default cache is fast enough to nearly never cause a (marginal) slow-down while providing
+//! some gains most of the time. Note that the value given is _per-thread_.
 //!
 //! ### Shortcomings & Limitations
 //!

@@ -4,6 +4,7 @@ use std::cell::{Ref, RefCell, RefMut};
 use git_ref::file;
 
 use crate::{easy, easy::borrow};
+use std::str::FromStr;
 
 impl Clone for easy::State {
     fn clone(&self) -> Self {
@@ -16,12 +17,19 @@ impl Default for easy::State {
         easy::State {
             packed_refs: RefCell::new(Default::default()),
             #[cfg(not(feature = "max-performance"))]
-            pack_cache: RefCell::new(git_odb::pack::cache::Never),
+            pack_cache: RefCell::new(git_pack::cache::Never),
             #[cfg(feature = "max-performance")]
             pack_cache: if std::env::var_os("GITOXIDE_DISABLE_PACK_CACHE").is_some() {
                 RefCell::new(Box::new(git_pack::cache::Never))
             } else {
-                RefCell::new(Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default()))
+                if let Some(num_bytes) = std::env::var("GITOXIDE_PACK_CACHE_MEMORY_IN_BYTES")
+                    .ok()
+                    .and_then(|v| usize::from_str(&v).ok())
+                {
+                    RefCell::new(Box::new(git_pack::cache::lru::MemoryCappedHashmap::new(num_bytes)))
+                } else {
+                    RefCell::new(Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default()))
+                }
             },
             object_cache: RefCell::new(None),
             buf: RefCell::new(vec![]),
