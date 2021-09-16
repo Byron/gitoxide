@@ -216,7 +216,7 @@ mod head {
             }
             _ => panic!("unexpected head kind"),
         }
-        assert_eq!(head.name().expect("born").as_bstr(), "refs/heads/main");
+        assert_eq!(head.try_name().expect("born").as_bstr(), "refs/heads/main");
         assert!(!head.is_detached());
         Ok(())
     }
@@ -233,7 +233,7 @@ mod head {
 
         let head = repo.head()?;
         assert!(head.is_detached(), "head is detached");
-        assert!(head.name().is_none());
+        assert!(head.try_name().is_none());
         Ok(())
     }
 }

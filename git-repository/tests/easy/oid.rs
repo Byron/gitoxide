@@ -6,7 +6,7 @@ mod ancestors {
         let repo = crate::basic_repo()?;
         assert_eq!(
             repo.head()?
-                .into_fully_peeled_id()
+                .try_into_fully_peeled_id()
                 .expect("born")?
                 .ancestors()?
                 .all()

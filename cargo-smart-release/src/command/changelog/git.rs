@@ -26,6 +26,7 @@ pub fn crate_references_descending(
     repo: &git::Easy,
 ) -> anyhow::Result<Vec<Segment>> {
     let package = package_by_name(meta, crate_name)?;
+    let _head = repo.head()?.peeled();
     let tag_prefix = tag_prefix(package, repo);
     let start = Instant::now();
     let tags_by_commit = {
@@ -60,6 +61,7 @@ pub fn crate_references_descending(
         elapsed.as_secs_f32(),
         tags_by_commit.len() as f32 / elapsed.as_secs_f32()
     );
+
     Ok(vec![])
 }
 

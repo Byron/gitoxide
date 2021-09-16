@@ -34,7 +34,7 @@ impl Kind {
 
 impl<'repo, A> Head<'repo, A> {
     /// Returns the full reference name of this head if it is not detached, or `None` otherwise.
-    pub fn name(&self) -> Option<FullNameRef<'_>> {
+    pub fn try_name(&self) -> Option<FullNameRef<'_>> {
         Some(match &self.kind {
             Kind::Symbolic(r) => r.name.to_ref(),
             Kind::Unborn(name) => name.to_ref(),
@@ -102,6 +102,21 @@ pub mod peel {
         ext::{ObjectIdExt, ReferenceExt},
     };
 
+    mod error {
+        use crate::easy::head;
+
+        /// The error returned by [Head::peeled()][super::Head::peeled()].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error(transparent)]
+            Peel(#[from] head::peel::to_id::Error),
+            #[error("Cannot peel an unborn head reference")]
+            Unborn,
+        }
+    }
+    pub use error::Error;
+
     ///
     pub mod to_id {
         use crate::easy::{object, reference};
@@ -121,6 +136,18 @@ pub mod peel {
     where
         A: Access + Sized,
     {
+        // TODO: tests
+        /// Peel this instance to make obtaining its final target id possible, while returning an error on unborn heads.
+        pub fn peeled(mut self) -> Result<Self, Error> {
+            match self.peel_to_id_in_place() {
+                Some(res) => {
+                    res?;
+                    Ok(self)
+                }
+                None => Err(Error::Unborn),
+            }
+        }
+
         // TODO: tests
         /// Follow the symbolic reference of this head until its target object and peel it by following tag objects there is no
         /// more object to follow, and return that object id.
@@ -159,7 +186,7 @@ pub mod peel {
 
         /// Consume this instance and transform it into the final object that it points to, or `None` if the `HEAD`
         /// reference is yet to be born.
-        pub fn into_fully_peeled_id(self) -> Option<Result<easy::Oid<'repo, A>, to_id::Error>> {
+        pub fn try_into_fully_peeled_id(self) -> Option<Result<easy::Oid<'repo, A>, to_id::Error>> {
             Some(match self.kind {
                 Kind::Unborn(_name) => return None,
                 Kind::Detached {
