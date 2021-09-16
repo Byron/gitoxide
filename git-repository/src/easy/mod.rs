@@ -46,7 +46,7 @@ pub struct Head<'repo, A> {
 #[derive(Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct Oid<'r, A> {
     /// The actual object id
-    pub inner: ObjectId,
+    inner: ObjectId,
     access: &'r A,
 }
 

@@ -3,7 +3,6 @@ use std::{cell::Ref, convert::TryInto};
 
 use git_hash::ObjectId;
 pub use git_object::Kind;
-use git_object::{CommitRefIter, TagRefIter};
 
 use crate::{
     easy,
@@ -95,26 +94,34 @@ where
     A: easy::Access + Sized,
 {
     /// Obtain a an iterator over commit tokens like in [`to_commit_iter()`][ObjectRef::try_to_commit_iter()], but panic if this is not a commit.
-    pub fn commit_iter(&self) -> CommitRefIter<'_> {
+    pub fn commit_iter(&self) -> git_object::CommitRefIter<'_> {
         git_odb::data::Object::new(self.kind, &self.data)
             .try_into_commit_iter()
             .expect("BUG: This object must be a commit")
     }
 
+    /// Obtain a fully parsed commit whose fields reference our data buffer, or panic if this is not a commit.
+    pub fn commit(&self) -> Result<git_object::CommitRef<'_>, git_object::decode::Error> {
+        Ok(git_odb::data::Object::new(self.kind, &self.data)
+            .decode()?
+            .into_commit()
+            .expect("BUG: This object must be a commit"))
+    }
+
     /// Obtain a commit token iterator from the data in this instance, if it is a commit.
-    pub fn try_to_commit_iter(&self) -> Option<CommitRefIter<'_>> {
+    pub fn try_to_commit_iter(&self) -> Option<git_object::CommitRefIter<'_>> {
         git_odb::data::Object::new(self.kind, &self.data).try_into_commit_iter()
     }
 
     /// Obtain a tag token iterator from the data in this instance, or panic if it is not a tag
-    pub fn tag_iter(&self) -> TagRefIter<'_> {
+    pub fn tag_iter(&self) -> git_object::TagRefIter<'_> {
         git_odb::data::Object::new(self.kind, &self.data)
             .try_into_tag_iter()
             .expect("BUG: this object must be a tag")
     }
 
     /// Obtain a tag token iterator from the data in this instance, if it is a tag.
-    pub fn try_to_tag_iter(&self) -> Option<TagRefIter<'_>> {
+    pub fn try_to_tag_iter(&self) -> Option<git_object::TagRefIter<'_>> {
         git_odb::data::Object::new(self.kind, &self.data).try_into_tag_iter()
     }
 }

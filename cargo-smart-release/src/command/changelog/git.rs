@@ -11,6 +11,7 @@ use git_repository::{
 };
 
 use crate::utils::{is_tag_name, is_tag_version, package_by_name, tag_prefix};
+use git_repository::prelude::{ObjectAccessExt, ObjectIdExt, ReferenceExt};
 
 /// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -31,14 +32,40 @@ pub struct HistoryItem {
 }
 
 pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
+    let start = Instant::now();
     let reference = match repo.head()?.peeled()?.kind {
         head::Kind::Detached { .. } => bail!("Refusing to operate on a detached head."),
         head::Kind::Unborn { .. } => return Ok(None),
-        head::Kind::Symbolic(r) => r,
+        head::Kind::Symbolic(r) => r.attach(repo),
     };
 
-    // reference.target.id();
-    todo!("history")
+    let mut items = Vec::new();
+    for commit_id in reference.id().ancestors()?.all() {
+        let commit_id = commit_id?;
+        let (message, tree_id) = {
+            let object = commit_id.object()?;
+            let commit = object.commit()?;
+            (commit.message.to_owned(), commit.tree())
+        };
+
+        items.push(HistoryItem {
+            id: commit_id.detach(),
+            message,
+            tree_data: repo.find_object(tree_id)?.data.to_owned(),
+        });
+    }
+
+    let elapsed = start.elapsed();
+    log::trace!(
+        "Cached commit history of {} commits and trees in {}s ({:.0} items/s)",
+        items.len(),
+        elapsed.as_secs_f32(),
+        items.len() as f32 / elapsed.as_secs_f32()
+    );
+    Ok(Some(History {
+        head: reference.detach(),
+        items,
+    }))
 }
 
 /// Return the head reference followed by all tags affecting `crate_name` as per our tag name rules, ordered by ancestry.

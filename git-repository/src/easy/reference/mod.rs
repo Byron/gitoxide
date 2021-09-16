@@ -14,6 +14,7 @@ pub mod iter;
 mod errors;
 use std::{borrow::Borrow, cell::RefMut, marker::PhantomData};
 
+use crate::ext::ObjectIdExt;
 pub use errors::{edit, find, namespace, peel};
 
 pub mod logs;
@@ -56,6 +57,14 @@ where
         Reference {
             inner: reference,
             access,
+        }
+    }
+
+    /// Returns the attached id we point to, or panic if this is a symbolic ref.
+    pub fn id(&self) -> easy::Oid<'repo, A> {
+        match self.inner.target {
+            git_ref::Target::Symbolic(_) => panic!("BUG: tries to obtain object id from symbolic target"),
+            git_ref::Target::Peeled(oid) => oid.to_owned().attach(self.access),
         }
     }
 
