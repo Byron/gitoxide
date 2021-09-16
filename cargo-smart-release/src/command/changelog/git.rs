@@ -11,13 +11,13 @@ use git_repository::{
 };
 
 use crate::utils::{is_tag_name, is_tag_version, package_by_name, tag_prefix};
-use git_repository::prelude::{ObjectAccessExt, ObjectIdExt, ReferenceExt};
+use git_repository::prelude::{ObjectAccessExt, ReferenceExt};
 
 /// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct Segment {
+pub struct Segment<'a> {
     head: git::refs::Reference,
-    commits: Vec<git::hash::ObjectId>,
+    /// only relevant history items, that is those that change code in the respective crate.
+    history: Vec<&'a HistoryItem>,
 }
 
 pub struct History {
@@ -69,16 +69,16 @@ pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
 }
 
 /// Return the head reference followed by all tags affecting `crate_name` as per our tag name rules, ordered by ancestry.
-pub fn crate_references_descending(
+pub fn crate_references_descending<'h>(
     crate_name: &str,
     meta: &Metadata,
     repo: &git::Easy,
-    history: &History,
-) -> anyhow::Result<Vec<Segment>> {
+    history: &'h History,
+) -> anyhow::Result<Vec<Segment<'h>>> {
     let package = package_by_name(meta, crate_name)?;
     let tag_prefix = tag_prefix(package, repo);
     let start = Instant::now();
-    let tags_by_commit = {
+    let mut tags_by_commit = {
         let refs = repo.references()?;
         match tag_prefix {
             Some(prefix) => BTreeMap::from_iter(
@@ -103,6 +103,7 @@ pub fn crate_references_descending(
             ),
         }
     };
+
     let elapsed = start.elapsed();
     log::trace!(
         "Mapped {} tags in {}s ({:.0} refs/s)",
@@ -111,7 +112,53 @@ pub fn crate_references_descending(
         tags_by_commit.len() as f32 / elapsed.as_secs_f32()
     );
 
-    Ok(vec![])
+    let start = Instant::now();
+    let mut segments = Vec::new();
+    let mut segment = Segment {
+        head: history.head.to_owned(),
+        history: vec![],
+    };
+    for item in &history.items {
+        match tags_by_commit.remove(&item.id) {
+            None => {
+                // TODO: filter by touched panifest path, fast or slow path
+                segment.history.push(item)
+            }
+            Some(next_ref) => segments.push(std::mem::replace(
+                &mut segment,
+                Segment {
+                    head: next_ref,
+                    history: vec![item],
+                },
+            )),
+        }
+    }
+    segments.push(segment);
+
+    if !tags_by_commit.is_empty() {
+        use git::bstr::ByteVec;
+        log::warn!(
+            "The following tags were on branches which are ignored during traversal: {}",
+            tags_by_commit
+                .into_values()
+                .map(|v| v.name.as_bstr().to_str_lossy().into_owned())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+    }
+
+    let elapsed = start.elapsed();
+    let num_commits = segments.iter().map(|s| s.history.len()).sum::<usize>();
+    log::trace!(
+        "Found {} relevant commits out of {} in {} segments {}s ({:.0} commits/s)",
+        num_commits,
+        history.items.len(),
+        segments.len(),
+        elapsed.as_secs_f32(),
+        num_commits as f32 / elapsed.as_secs_f32()
+    );
+
+    Ok(segments)
 }
 
 fn strip_tag_path(fullname: &BStr) -> &BStr {
