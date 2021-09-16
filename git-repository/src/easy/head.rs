@@ -2,6 +2,7 @@
 use git_hash::ObjectId;
 use git_ref::FullNameRef;
 
+use crate::ext::ObjectIdExt;
 use crate::{easy, easy::Head, ext::ReferenceExt};
 
 /// Represents the kind of `HEAD` reference.
@@ -34,7 +35,7 @@ impl Kind {
 
 impl<'repo, A> Head<'repo, A> {
     /// Returns the full reference name of this head if it is not detached, or `None` otherwise.
-    pub fn try_name(&self) -> Option<FullNameRef<'_>> {
+    pub fn referent_name(&self) -> Option<FullNameRef<'_>> {
         Some(match &self.kind {
             Kind::Symbolic(r) => r.name.to_ref(),
             Kind::Unborn(name) => name.to_ref(),
@@ -51,6 +52,20 @@ impl<'repo, A> Head<'repo, A>
 where
     A: easy::Access + Sized,
 {
+    // TODO: tests
+    /// Returns the id the head points to, which isn't possible on unborn heads.
+    pub fn id(&self) -> Option<easy::Oid<'repo, A>> {
+        match &self.kind {
+            Kind::Symbolic(r) => r.target.as_id().map(|oid| oid.to_owned().attach(self.access)),
+            Kind::Detached { peeled, target } => peeled
+                .clone()
+                .unwrap_or_else(|| target.to_owned())
+                .attach(self.access)
+                .into(),
+            Kind::Unborn(_) => None,
+        }
+    }
+
     /// Force transforming this instance into the symbolic reference that it points to, or panic if it is unborn or detached.
     pub fn into_referent(self) -> easy::Reference<'repo, A> {
         match self.kind {
@@ -103,22 +118,6 @@ pub mod peel {
     };
 
     mod error {
-        use crate::easy::head;
-
-        /// The error returned by [Head::peeled()][super::Head::peeled()].
-        #[derive(Debug, thiserror::Error)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            #[error(transparent)]
-            Peel(#[from] head::peel::to_id::Error),
-            #[error("Cannot peel an unborn head reference")]
-            Unborn,
-        }
-    }
-    pub use error::Error;
-
-    ///
-    pub mod to_id {
         use crate::easy::{object, reference};
 
         /// The error returned by [Head::peel_to_id_in_place()][super::Head::peel_to_id_in_place()] and [Head::into_fully_peeled_id()][super::Head::into_fully_peeled_id()].
@@ -131,6 +130,7 @@ pub mod peel {
             PeelReference(#[from] reference::peel::Error),
         }
     }
+    pub use error::Error;
 
     impl<'repo, A> Head<'repo, A>
     where
@@ -139,19 +139,16 @@ pub mod peel {
         // TODO: tests
         /// Peel this instance to make obtaining its final target id possible, while returning an error on unborn heads.
         pub fn peeled(mut self) -> Result<Self, Error> {
-            match self.peel_to_id_in_place() {
-                Some(res) => {
-                    res?;
-                    Ok(self)
-                }
-                None => Err(Error::Unborn),
-            }
+            self.peel_to_id_in_place().transpose()?;
+            Ok(self)
         }
 
         // TODO: tests
         /// Follow the symbolic reference of this head until its target object and peel it by following tag objects there is no
         /// more object to follow, and return that object id.
-        pub fn peel_to_id_in_place(&mut self) -> Option<Result<easy::Oid<'repo, A>, to_id::Error>> {
+        ///
+        /// Returns `None` if the head is unborn.
+        pub fn peel_to_id_in_place(&mut self) -> Option<Result<easy::Oid<'repo, A>, Error>> {
             Some(match &mut self.kind {
                 Kind::Unborn(_name) => return None,
                 Kind::Detached {
@@ -186,7 +183,7 @@ pub mod peel {
 
         /// Consume this instance and transform it into the final object that it points to, or `None` if the `HEAD`
         /// reference is yet to be born.
-        pub fn try_into_fully_peeled_id(self) -> Option<Result<easy::Oid<'repo, A>, to_id::Error>> {
+        pub fn into_fully_peeled_id(self) -> Option<Result<easy::Oid<'repo, A>, Error>> {
             Some(match self.kind {
                 Kind::Unborn(_name) => return None,
                 Kind::Detached {

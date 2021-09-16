@@ -105,7 +105,7 @@ mod commit {
             vec!["commit: hello there", "commit: c2", "commit (initial): c1"],
             "we get the actual HEAD log, not the log of some reference"
         );
-        let current_commit = repo.head()?.try_into_fully_peeled_id().expect("born")?;
+        let current_commit = repo.head()?.into_fully_peeled_id().expect("born")?;
         assert_eq!(current_commit, first_commit_id, "the commit was set");
 
         let second_commit_id = repo.commit(

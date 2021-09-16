@@ -46,7 +46,7 @@ pub mod peel {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        PeelToId(#[from] git_ref::peel::to_id::Error),
+        ToId(#[from] git_ref::peel::to_id::Error),
         #[error(transparent)]
         PackedRefsOpen(#[from] git_ref::packed::buffer::open::Error),
         #[error("BUG: Part of interior state could not be borrowed.")]
