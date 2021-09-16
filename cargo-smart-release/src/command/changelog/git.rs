@@ -8,26 +8,9 @@ use git_repository::{
     prelude::{CacheAccessExt, ObjectAccessExt, ReferenceAccessExt, ReferenceExt},
 };
 
+use crate::command::changelog_impl::{history, History};
 use crate::utils::{component_to_bytes, is_tag_name, is_tag_version, package_by_name, tag_prefix};
 use std::cell::RefCell;
-
-/// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
-pub struct Segment<'a> {
-    _head: git::refs::Reference,
-    /// only relevant history items, that is those that change code in the respective crate.
-    history: Vec<&'a HistoryItem>,
-}
-
-pub struct History {
-    head: git::refs::Reference,
-    items: Vec<HistoryItem>,
-}
-
-pub struct HistoryItem {
-    id: git::hash::ObjectId,
-    _message: git::bstr::BString,
-    tree_data: Vec<u8>,
-}
 
 pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
     let start = Instant::now();
@@ -47,7 +30,7 @@ pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
             (commit.message.to_owned(), commit.tree())
         };
 
-        items.push(HistoryItem {
+        items.push(history::Item {
             id: commit_id.detach(),
             _message: message,
             tree_data: repo.find_object(tree_id)?.data.to_owned(),
@@ -69,11 +52,11 @@ pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
 }
 
 /// Return the head reference followed by all tags affecting `crate_name` as per our tag name rules, ordered by ancestry.
-pub fn crate_references_descending<'h>(
+pub fn ref_segments<'h>(
     crate_name: &str,
     ctx: &crate::Context,
     history: &'h History,
-) -> anyhow::Result<Vec<Segment<'h>>> {
+) -> anyhow::Result<Vec<history::Segment<'h>>> {
     let meta = &ctx.meta;
     let package = package_by_name(meta, crate_name)?;
     let tag_prefix = tag_prefix(package, &ctx.repo);
@@ -115,7 +98,7 @@ pub fn crate_references_descending<'h>(
 
     let start = Instant::now();
     let mut segments = Vec::new();
-    let mut segment = Segment {
+    let mut segment = history::Segment {
         _head: history.head.to_owned(),
         history: vec![],
     };
@@ -196,7 +179,7 @@ pub fn crate_references_descending<'h>(
             },
             Some(next_ref) => segments.push(std::mem::replace(
                 &mut segment,
-                Segment {
+                history::Segment {
                     _head: next_ref,
                     history: vec![item],
                 },

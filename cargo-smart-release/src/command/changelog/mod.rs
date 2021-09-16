@@ -1,6 +1,12 @@
 use crate::command::changelog::Options;
 
 mod git;
+mod history;
+
+pub struct History {
+    head: git_repository::refs::Reference,
+    items: Vec<history::Item>,
+}
 
 pub fn changelog(options: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let ctx = crate::Context::new(crates)?;
@@ -15,7 +21,7 @@ pub fn changelog(options: Options, crates: Vec<String>) -> anyhow::Result<()> {
         Some(history) => history,
     };
     for crate_name in &crate_names {
-        git::crate_references_descending(crate_name, &ctx, &history)?;
+        let _segments = git::ref_segments(crate_name, &ctx, &history)?;
     }
 
     Ok(())
