@@ -25,7 +25,7 @@ pub struct History {
 pub struct HistoryItem {
     id: git::hash::ObjectId,
     _message: git::bstr::BString,
-    _tree_data: Vec<u8>,
+    tree_data: Vec<u8>,
 }
 
 pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
@@ -49,7 +49,7 @@ pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
         items.push(HistoryItem {
             id: commit_id.detach(),
             _message: message,
-            _tree_data: repo.find_object(tree_id)?.data.to_owned(),
+            tree_data: repo.find_object(tree_id)?.data.to_owned(),
         });
     }
     repo.object_cache_size(prev)?;
@@ -134,11 +134,31 @@ pub fn crate_references_descending<'h>(
             }
         })
         .unwrap_or(Filter::None);
-    for item in &history.items {
+
+    let mut items = history.items.iter().peekable();
+    while let Some(item) = items.next() {
         match tags_by_commit.remove(&item.id) {
             None => match filter {
                 Filter::None => segment.history.push(item),
-                Filter::Fast(_comp) => todo!("fast lookup"),
+                Filter::Fast(comp) => {
+                    let current = git::objs::TreeRefIter::from_bytes(&item.tree_data)
+                        .filter_map(Result::ok)
+                        .find(|e| e.filename == comp);
+                    let parent = items.peek().and_then(|parent| {
+                        git::objs::TreeRefIter::from_bytes(&parent.tree_data)
+                            .filter_map(Result::ok)
+                            .find(|e| e.filename == comp)
+                    });
+                    match (current, parent) {
+                        (Some(current), Some(parent)) => {
+                            if current.oid != parent.oid {
+                                segment.history.push(item)
+                            }
+                        }
+                        (Some(_), None) => segment.history.push(item),
+                        (None, Some(_)) | (None, None) => {}
+                    };
+                }
             },
             Some(next_ref) => segments.push(std::mem::replace(
                 &mut segment,
