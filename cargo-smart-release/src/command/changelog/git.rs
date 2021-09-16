@@ -1,6 +1,8 @@
+use std::cell::RefCell;
 use std::{collections::BTreeMap, iter::FromIterator, path::PathBuf, time::Instant};
 
 use anyhow::bail;
+
 use git_repository as git;
 use git_repository::{
     bstr::{BStr, ByteSlice},
@@ -8,9 +10,9 @@ use git_repository::{
     prelude::{CacheAccessExt, ObjectAccessExt, ReferenceAccessExt, ReferenceExt},
 };
 
-use crate::command::changelog_impl::{history, History};
+use crate::command::changelog_impl::commit;
+use crate::command::changelog_impl::commit::History;
 use crate::utils::{component_to_bytes, is_tag_name, is_tag_version, package_by_name, tag_prefix};
-use std::cell::RefCell;
 
 pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
     let start = Instant::now();
@@ -30,7 +32,7 @@ pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
             (commit.message.to_owned(), commit.tree())
         };
 
-        items.push(history::Item {
+        items.push(commit::HistoryItem {
             id: commit_id.detach(),
             _message: message,
             tree_data: repo.find_object(tree_id)?.data.to_owned(),
@@ -56,7 +58,7 @@ pub fn ref_segments<'h>(
     crate_name: &str,
     ctx: &crate::Context,
     history: &'h History,
-) -> anyhow::Result<Vec<history::Segment<'h>>> {
+) -> anyhow::Result<Vec<commit::HistorySegment<'h>>> {
     let meta = &ctx.meta;
     let package = package_by_name(meta, crate_name)?;
     let tag_prefix = tag_prefix(package, &ctx.repo);
@@ -98,7 +100,7 @@ pub fn ref_segments<'h>(
 
     let start = Instant::now();
     let mut segments = Vec::new();
-    let mut segment = history::Segment {
+    let mut segment = commit::HistorySegment {
         _head: history.head.to_owned(),
         history: vec![],
     };
@@ -179,7 +181,7 @@ pub fn ref_segments<'h>(
             },
             Some(next_ref) => segments.push(std::mem::replace(
                 &mut segment,
-                history::Segment {
+                commit::HistorySegment {
                     _head: next_ref,
                     history: vec![item],
                 },

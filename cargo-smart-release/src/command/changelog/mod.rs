@@ -1,12 +1,7 @@
 use crate::command::changelog::Options;
 
+mod commit;
 mod git;
-mod history;
-
-pub struct History {
-    head: git_repository::refs::Reference,
-    items: Vec<history::Item>,
-}
 
 pub fn changelog(options: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let ctx = crate::Context::new(crates)?;
