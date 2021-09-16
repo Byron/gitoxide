@@ -1,5 +1,5 @@
 //!
-use std::{cell::RefMut, ops::Deref};
+use std::ops::Deref;
 
 use git_hash::{oid, ObjectId};
 
@@ -63,7 +63,6 @@ where
     A: easy::Access + Sized,
 {
     repo: A::RepoRef,
-    pack_cache: RefMut<'repo, easy::PackCache>,
     access: &'repo A,
     tip: ObjectId,
 }
@@ -85,10 +84,8 @@ pub mod ancestors {
     {
         /// Obtain a platform for traversing ancestors of this commit.
         pub fn ancestors(&self) -> Result<Ancestors<'repo, A>, Error> {
-            let pack_cache = self.access.state().try_borrow_mut_pack_cache()?;
             let repo = self.access.repo()?;
             Ok(Ancestors {
-                pack_cache,
                 repo,
                 access: self.access,
                 tip: self.inner,
@@ -111,7 +108,15 @@ pub mod ancestors {
                         self.repo
                             .deref()
                             .odb
-                            .try_find(oid, buf, self.pack_cache.deref_mut())
+                            .try_find(
+                                oid,
+                                buf,
+                                self.access
+                                    .state()
+                                    .try_borrow_mut_pack_cache()
+                                    .expect("BUG: pack cache is already borrowed")
+                                    .deref_mut(),
+                            )
                             .ok()
                             .flatten()
                             .and_then(|obj| obj.try_into_commit_iter())
