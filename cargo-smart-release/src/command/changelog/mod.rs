@@ -10,8 +10,12 @@ pub fn changelog(options: Options, crates: Vec<String>) -> anyhow::Result<()> {
         ctx.crate_names.clone()
     };
     assure_working_tree_is_unchanged(options)?;
+    let history = match git::commit_history(&ctx.git_easy)? {
+        None => return Ok(()),
+        Some(history) => history,
+    };
     for crate_name in &crate_names {
-        git::crate_references_descending(crate_name, &ctx.meta, &ctx.git_easy)?;
+        git::crate_references_descending(crate_name, &ctx.meta, &ctx.git_easy, &history)?;
     }
 
     Ok(())

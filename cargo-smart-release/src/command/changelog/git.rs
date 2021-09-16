@@ -1,16 +1,16 @@
-use std::path::PathBuf;
+#![allow(unused)]
+use std::{collections::BTreeMap, iter::FromIterator, path::PathBuf, time::Instant};
 
+use anyhow::bail;
 use cargo_metadata::Metadata;
 use git_repository as git;
 use git_repository::{
     bstr::{BStr, ByteSlice},
+    easy::head,
     prelude::ReferenceAccessExt,
 };
-use std::collections::BTreeMap;
 
 use crate::utils::{is_tag_name, is_tag_version, package_by_name, tag_prefix};
-use std::iter::FromIterator;
-use std::time::Instant;
 
 /// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -19,14 +19,36 @@ pub struct Segment {
     commits: Vec<git::hash::ObjectId>,
 }
 
+pub struct History {
+    head: git::refs::Reference,
+    items: Vec<HistoryItem>,
+}
+
+pub struct HistoryItem {
+    id: git::hash::ObjectId,
+    message: git::bstr::BString,
+    tree_data: Vec<u8>,
+}
+
+pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
+    let reference = match repo.head()?.peeled()?.kind {
+        head::Kind::Detached { .. } => bail!("Refusing to operate on a detached head."),
+        head::Kind::Unborn { .. } => return Ok(None),
+        head::Kind::Symbolic(r) => r,
+    };
+
+    // reference.target.id();
+    todo!("history")
+}
+
 /// Return the head reference followed by all tags affecting `crate_name` as per our tag name rules, ordered by ancestry.
 pub fn crate_references_descending(
     crate_name: &str,
     meta: &Metadata,
     repo: &git::Easy,
+    history: &History,
 ) -> anyhow::Result<Vec<Segment>> {
     let package = package_by_name(meta, crate_name)?;
-    let _head = repo.head()?.peeled();
     let tag_prefix = tag_prefix(package, repo);
     let start = Instant::now();
     let tags_by_commit = {

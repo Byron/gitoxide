@@ -29,7 +29,7 @@ pub fn has_changed_since_last_release(package: &Package, ctx: &crate::Context, v
         .strip_prefix(&ctx.root)
         .expect("workspace members are releative to the root directory");
 
-    Ok(match ctx.git_easy.head()?.try_into_fully_peeled_id() {
+    Ok(match ctx.git_easy.head()?.into_fully_peeled_id() {
         Some(c) => {
             let current_commit = c?;
             let released_target = tag_ref.peel_to_id_in_place()?;

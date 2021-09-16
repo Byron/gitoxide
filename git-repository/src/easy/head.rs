@@ -2,8 +2,11 @@
 use git_hash::ObjectId;
 use git_ref::FullNameRef;
 
-use crate::ext::ObjectIdExt;
-use crate::{easy, easy::Head, ext::ReferenceExt};
+use crate::{
+    easy,
+    easy::Head,
+    ext::{ObjectIdExt, ReferenceExt},
+};
 
 /// Represents the kind of `HEAD` reference.
 pub enum Kind {
