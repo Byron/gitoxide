@@ -2,7 +2,6 @@ use std::{borrow::Cow, collections::BTreeMap, str::FromStr};
 
 use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
-use git_lock::File;
 use semver::{Op, Version, VersionReq};
 
 use super::{cargo, git, version, Context, Oid, Options};
@@ -22,9 +21,9 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
         ..
     } = opts;
     for (publishee, _) in publishees {
-        let lock = git_lock::File::acquire_to_update_resource(
+        let lock = git_repository::lock::File::acquire_to_update_resource(
             &publishee.manifest_path,
-            git_lock::acquire::Fail::Immediately,
+            git_repository::lock::acquire::Fail::Immediately,
             None,
         )?;
         let previous = locks_by_manifest_path.insert(&publishee.manifest_path, lock);
@@ -111,7 +110,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
 fn collect_directly_dependent_packages<'a>(
     meta: &'a Metadata,
     publishees: &[(&Package, String)],
-    locks_by_manifest_path: &mut BTreeMap<&'a Utf8PathBuf, File>,
+    locks_by_manifest_path: &mut BTreeMap<&'a Utf8PathBuf, git_repository::lock::File>,
     ctx: &Context,
     Options {
         isolate_dependencies_from_breaking_changes,
@@ -141,9 +140,9 @@ fn collect_directly_dependent_packages<'a>(
                 {
                     continue;
                 }
-                let lock = git_lock::File::acquire_to_update_resource(
+                let lock = git_repository::lock::File::acquire_to_update_resource(
                     &workspace_package.manifest_path,
-                    git_lock::acquire::Fail::Immediately,
+                    git_repository::lock::acquire::Fail::Immediately,
                     None,
                 )?;
                 locks_by_manifest_path.insert(&workspace_package.manifest_path, lock);
@@ -194,9 +193,9 @@ fn collect_directly_dependent_packages<'a>(
                     continue;
                 }
                 if new_version.is_some() || is_direct_dependency_of(publishees, workspace_package) {
-                    let lock = git_lock::File::acquire_to_update_resource(
+                    let lock = git_repository::lock::File::acquire_to_update_resource(
                         &workspace_package.manifest_path,
-                        git_lock::acquire::Fail::Immediately,
+                        git_repository::lock::acquire::Fail::Immediately,
                         None,
                     )?;
                     locks_by_manifest_path.insert(&workspace_package.manifest_path, lock);
