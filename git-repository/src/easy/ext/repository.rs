@@ -41,7 +41,7 @@ pub trait RepositoryAccessExt: easy::Access + Sized {
         let bytes = bytes.into();
         Ok(std::mem::replace(
             self.state().try_borrow_mut_object_cache()?.deref_mut(),
-            bytes.map(|bytes| easy::object::cache::MemoryCappedHashmap::new(bytes)),
+            bytes.map(easy::object::cache::MemoryCappedHashmap::new),
         )
         .map(|c| c.capacity()))
     }
