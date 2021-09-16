@@ -11,10 +11,9 @@ use git_repository::{
 };
 
 use crate::command::changelog_impl::commit;
-use crate::command::changelog_impl::commit::History;
 use crate::utils::{component_to_bytes, is_tag_name, is_tag_version, package_by_name, tag_prefix};
 
-pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
+pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<commit::History>> {
     let start = Instant::now();
     let prev = repo.object_cache_size(64 * 1024)?;
     let reference = match repo.head()?.peeled()?.kind {
@@ -32,7 +31,7 @@ pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
             (commit.message.to_owned(), commit.tree())
         };
 
-        items.push(commit::HistoryItem {
+        items.push(commit::history::Item {
             id: commit_id.detach(),
             _message: message,
             tree_data: repo.find_object(tree_id)?.data.to_owned(),
@@ -47,7 +46,7 @@ pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
         elapsed.as_secs_f32(),
         items.len() as f32 / elapsed.as_secs_f32()
     );
-    Ok(Some(History {
+    Ok(Some(commit::History {
         head: reference.detach(),
         items,
     }))
@@ -57,8 +56,8 @@ pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<History>> {
 pub fn ref_segments<'h>(
     crate_name: &str,
     ctx: &crate::Context,
-    history: &'h History,
-) -> anyhow::Result<Vec<commit::HistorySegment<'h>>> {
+    history: &'h commit::History,
+) -> anyhow::Result<Vec<commit::history::Segment<'h>>> {
     let meta = &ctx.meta;
     let package = package_by_name(meta, crate_name)?;
     let tag_prefix = tag_prefix(package, &ctx.repo);
@@ -100,7 +99,7 @@ pub fn ref_segments<'h>(
 
     let start = Instant::now();
     let mut segments = Vec::new();
-    let mut segment = commit::HistorySegment {
+    let mut segment = commit::history::Segment {
         _head: history.head.to_owned(),
         history: vec![],
     };
@@ -181,7 +180,7 @@ pub fn ref_segments<'h>(
             },
             Some(next_ref) => segments.push(std::mem::replace(
                 &mut segment,
-                commit::HistorySegment {
+                commit::history::Segment {
                     _head: next_ref,
                     history: vec![item],
                 },
