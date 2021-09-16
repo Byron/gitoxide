@@ -36,6 +36,36 @@ pub trait CacheAccessExt: easy::Access + Sized {
             Box::new(cache),
         ))
     }
+
+    /// Read well-known environment variables related to caches and apply them to this instance, but not to clones of it - each
+    /// needs their own configuration.
+    ///
+    /// Note that environment configuration never fails due to invalid environment values, but it should be used with caution as it
+    /// could be used to cause high memory consumption.
+    ///
+    /// Use the `GITOXIDE_DISABLE_PACK_CACHE` environment variable to turn off any pack cache, which can be beneficial when it's known that
+    /// the cache efficiency is low. Use `GITOXIDE_PACK_CACHE_MEMORY_IN_BYTES=512000` to use up to 512MB of RAM for the pack delta base
+    /// cache. If none of these are set, the default cache is fast enough to nearly never cause a (marginal) slow-down while providing
+    /// some gains most of the time. Note that the value given is _per-thread_.
+    fn apply_environment(self) -> easy::borrow::state::Result<Self> {
+        #[cfg(not(feature = "max-performance"))]
+        let pack_cache = git_pack::cache::Never;
+        #[cfg(feature = "max-performance")]
+        let pack_cache: crate::easy::PackCache = {
+            if std::env::var_os("GITOXIDE_DISABLE_PACK_CACHE").is_some() {
+                Box::new(git_pack::cache::Never)
+            } else if let Some(num_bytes) = std::env::var("GITOXIDE_PACK_CACHE_MEMORY_IN_BYTES")
+                .ok()
+                .and_then(|v| <usize as std::str::FromStr>::from_str(&v).ok())
+            {
+                Box::new(git_pack::cache::lru::MemoryCappedHashmap::new(num_bytes))
+            } else {
+                Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default())
+            }
+        };
+        *self.state().try_borrow_mut_pack_cache()? = pack_cache;
+        Ok(self)
+    }
 }
 
 impl<A> CacheAccessExt for A where A: easy::Access + Sized {}

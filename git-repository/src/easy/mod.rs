@@ -105,6 +105,10 @@ type PackCache = git_pack::cache::Never;
 type PackCache = Box<dyn git_pack::cache::DecodeEntry + Send + 'static>;
 
 /// State for use in `Easy*` to provide mutable parts of a repository such as caches and buffers.
+///
+/// Note that it clones itself so that it is empty, requiring the user to configure each clone separately, specifically
+/// and explicitly. This is to have the fastest-possible default configuration available by default, but allow
+/// those who experiment with workloads to get speed boosts of 2x or more.
 pub struct State {
     /// As the packed-buffer may hold onto a memory map, so ideally this State is freed after use instead of keeping it around
     /// for too long. At least `packed_refs` is lazily initialized.

@@ -18,18 +18,7 @@ impl Default for easy::State {
             #[cfg(not(feature = "max-performance"))]
             pack_cache: RefCell::new(git_pack::cache::Never),
             #[cfg(feature = "max-performance")]
-            pack_cache: {
-                RefCell::new(if std::env::var_os("GITOXIDE_DISABLE_PACK_CACHE").is_some() {
-                    Box::new(git_pack::cache::Never)
-                } else if let Some(num_bytes) = std::env::var("GITOXIDE_PACK_CACHE_MEMORY_IN_BYTES")
-                    .ok()
-                    .and_then(|v| <usize as std::str::FromStr>::from_str(&v).ok())
-                {
-                    Box::new(git_pack::cache::lru::MemoryCappedHashmap::new(num_bytes))
-                } else {
-                    Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default())
-                })
-            },
+            pack_cache: RefCell::new(Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default())),
             object_cache: RefCell::new(None),
             buf: RefCell::new(vec![]),
         }

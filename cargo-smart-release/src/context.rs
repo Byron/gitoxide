@@ -1,5 +1,6 @@
 use cargo_metadata::{camino::Utf8PathBuf, Metadata};
 use git_repository as git;
+use git_repository::prelude::CacheAccessExt;
 
 pub struct Context {
     pub root: Utf8PathBuf,
@@ -15,7 +16,7 @@ impl Context {
         let repo = git::discover(&root)?;
         Ok(Context {
             root,
-            git_easy: repo.into_easy(),
+            git_easy: repo.into_easy().apply_environment()?,
             meta,
             crate_names: fill_in_root_crate_if_needed(crate_names)?,
         })
