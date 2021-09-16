@@ -6,11 +6,10 @@ use git_repository as git;
 use git_repository::{
     bstr::{BStr, ByteSlice},
     easy::head,
-    prelude::ReferenceAccessExt,
+    prelude::{CacheAccessExt, ObjectAccessExt, ReferenceAccessExt, ReferenceExt},
 };
 
 use crate::utils::{is_tag_name, is_tag_version, package_by_name, tag_prefix};
-use git_repository::prelude::{ObjectAccessExt, ReferenceExt, RepositoryAccessExt};
 
 /// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
 pub struct Segment<'a> {

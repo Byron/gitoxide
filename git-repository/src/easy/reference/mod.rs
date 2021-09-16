@@ -14,8 +14,9 @@ pub mod iter;
 mod errors;
 use std::{borrow::Borrow, cell::RefMut, marker::PhantomData};
 
-use crate::ext::ObjectIdExt;
 pub use errors::{edit, find, namespace, peel};
+
+use crate::ext::ObjectIdExt;
 
 pub mod logs;
 pub(crate) mod packed;

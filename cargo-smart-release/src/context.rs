@@ -1,9 +1,10 @@
 use cargo_metadata::{camino::Utf8PathBuf, Metadata};
+use git_repository as git;
 
 pub struct Context {
     pub root: Utf8PathBuf,
     pub meta: Metadata,
-    pub git_easy: git_repository::Easy,
+    pub git_easy: git::Easy,
     pub crate_names: Vec<String>,
 }
 
@@ -11,10 +12,10 @@ impl Context {
     pub fn new(crate_names: Vec<String>) -> anyhow::Result<Self> {
         let meta = cargo_metadata::MetadataCommand::new().exec()?;
         let root = meta.workspace_root.clone();
-        let repo = git_repository::discover(&root)?;
+        let repo = git::discover(&root)?;
         Ok(Context {
             root,
-            git_easy: repo.into(),
+            git_easy: repo.into_easy(),
             meta,
             crate_names: fill_in_root_crate_if_needed(crate_names)?,
         })
