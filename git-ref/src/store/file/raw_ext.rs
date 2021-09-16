@@ -130,7 +130,7 @@ impl ReferenceExt for Reference {
                 };
                 self.peeled = Some(peeled_id);
                 self.target = Target::Peeled(peeled_id);
-                Ok(self.target.as_id().expect("to be peeled").to_owned())
+                Ok(peeled_id)
             }
         }
     }

@@ -20,6 +20,13 @@ impl<'a> TargetRef<'a> {
             TargetRef::Peeled(oid) => Some(oid),
         }
     }
+    /// Interpret this target as object id or panic if it is symbolic.
+    pub fn id(&self) -> &oid {
+        match self {
+            TargetRef::Symbolic(_) => panic!("BUG: tries to obtain object id from symbolic target"),
+            TargetRef::Peeled(oid) => oid,
+        }
+    }
     /// Interpret this target as name of the reference it points to which maybe `None` if it an object id.
     pub fn as_name(&self) -> Option<&BStr> {
         match self {
@@ -63,6 +70,13 @@ impl Target {
         match self {
             Target::Symbolic(_) => None,
             Target::Peeled(oid) => Some(oid),
+        }
+    }
+    /// Interpret this target as object id or panic if it is symbolic.
+    pub fn id(&self) -> &oid {
+        match self {
+            Target::Symbolic(_) => panic!("BUG: tries to obtain object id from symbolic target"),
+            Target::Peeled(oid) => oid,
         }
     }
     /// Return the contained object id or panic
