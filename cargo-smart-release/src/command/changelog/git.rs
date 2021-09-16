@@ -9,6 +9,7 @@ use git_repository::{
 };
 
 use crate::utils::{component_to_bytes, is_tag_name, is_tag_version, package_by_name, tag_prefix};
+use std::cell::RefCell;
 
 /// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
 pub struct Segment<'a> {
@@ -123,6 +124,7 @@ pub fn crate_references_descending<'h>(
     enum Filter<'a> {
         None,
         Fast(&'a [u8]),
+        Slow(Vec<&'a [u8]>),
     }
     let filter = dir
         .map(|dir| {
@@ -130,7 +132,7 @@ pub fn crate_references_descending<'h>(
             match components.len() {
                 0 => unreachable!("BUG: it's None if empty"),
                 1 => Filter::Fast(components.pop().map(component_to_bytes).expect("exactly one")),
-                _ => todo!("slow mode"),
+                _ => Filter::Slow(components.into_iter().map(component_to_bytes).collect()),
             }
         })
         .unwrap_or(Filter::None);
@@ -158,6 +160,38 @@ pub fn crate_references_descending<'h>(
                         (Some(_), None) => segment.history.push(item),
                         (None, Some(_)) | (None, None) => {}
                     };
+                }
+                Filter::Slow(ref components) => {
+                    let prev = ctx.repo.object_cache_size(1024 * 1024)?;
+                    let current_data = RefCell::new(item.tree_data.clone());
+                    let current = git::easy::TreeRef::from_id_and_data(
+                        item.id,
+                        std::cell::Ref::map(current_data.borrow(), |v| v.as_slice()),
+                        &ctx.repo,
+                    )
+                    .lookup_path(components.iter().copied())?;
+                    let parent = match items.peek() {
+                        Some(parent) => {
+                            let parent_data = RefCell::new(parent.tree_data.clone());
+                            git::easy::TreeRef::from_id_and_data(
+                                parent.id,
+                                std::cell::Ref::map(parent_data.borrow(), |v| v.as_slice()),
+                                &ctx.repo,
+                            )
+                            .lookup_path(components.iter().copied())?
+                        }
+                        None => None,
+                    };
+                    match (current, parent) {
+                        (Some(current), Some(parent)) => {
+                            if current.oid != parent.oid {
+                                segment.history.push(item)
+                            }
+                        }
+                        (Some(_), None) => segment.history.push(item),
+                        (None, Some(_)) | (None, None) => {}
+                    };
+                    ctx.repo.object_cache_size(prev)?;
                 }
             },
             Some(next_ref) => segments.push(std::mem::replace(

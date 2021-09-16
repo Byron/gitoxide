@@ -4,11 +4,20 @@ use crate::{
     easy,
     easy::{ext::ObjectAccessExt, object::find, TreeRef},
 };
+use git_hash::ObjectId;
 
 impl<'repo, A> TreeRef<'repo, A>
 where
     A: easy::Access + Sized,
 {
+    /// Obtain a tree instance by handing in all components that it is made up of.
+    pub fn from_id_and_data(id: impl Into<ObjectId>, data: std::cell::Ref<'repo, [u8]>, access: &'repo A) -> Self {
+        TreeRef {
+            id: id.into(),
+            data,
+            access,
+        }
+    }
     // TODO: move implementation to git-object, tests.
     /// Follow a sequence of `path` components starting from this instance, and look them up one by one until the last component
     /// is looked up and its tree entry is returned.
