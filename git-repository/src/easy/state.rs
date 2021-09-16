@@ -1,5 +1,5 @@
 //!
-use std::cell::{Ref, RefMut};
+use std::cell::{Ref, RefCell, RefMut};
 
 use git_ref::file;
 
@@ -8,6 +8,20 @@ use crate::{easy, easy::borrow};
 impl Clone for easy::State {
     fn clone(&self) -> Self {
         easy::State { ..Default::default() }
+    }
+}
+
+impl Default for easy::State {
+    fn default() -> Self {
+        easy::State {
+            packed_refs: RefCell::new(Default::default()),
+            #[cfg(not(feature = "max-performance"))]
+            pack_cache: RefCell::new(git_odb::pack::cache::Never),
+            #[cfg(feature = "max-performance")]
+            pack_cache: RefCell::new(Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default())),
+            object_cache: RefCell::new(None),
+            buf: RefCell::new(vec![]),
+        }
     }
 }
 

@@ -99,13 +99,12 @@ pub struct Reference<'r, A> {
     pub(crate) access: &'r A,
 }
 
-#[cfg(not(feature = "local"))]
+#[cfg(not(feature = "max-performance"))]
 type PackCache = git_odb::pack::cache::Never;
-#[cfg(feature = "local")]
-type PackCache = git_odb::pack::cache::lru::StaticLinkedList<64>;
+#[cfg(feature = "max-performance")]
+type PackCache = Box<dyn git_odb::pack::cache::DecodeEntry + Send + Sync + 'static>;
 
 /// State for use in `Easy*` to provide mutable parts of a repository such as caches and buffers.
-#[derive(Default)]
 pub struct State {
     /// As the packed-buffer may hold onto a memory map, so ideally this State is freed after use instead of keeping it around
     /// for too long. At least `packed_refs` is lazily initialized.

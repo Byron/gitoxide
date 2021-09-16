@@ -1344,6 +1344,7 @@ dependencies = [
  "futures-lite",
  "git-commitgraph",
  "git-config",
+ "git-pack",
  "git-repository",
  "git-url",
  "itertools",
