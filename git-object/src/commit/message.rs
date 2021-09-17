@@ -6,25 +6,25 @@ use crate::{
 };
 
 mod decode {
-    use nom::{
-        branch::alt,
-        bytes::complete::{tag, take_while},
-        combinator::map,
-        error::ParseError,
-        sequence::{pair, terminated},
-        IResult,
-    };
-
     use crate::bstr::{BStr, ByteSlice};
 
-    pub fn newline<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
-        alt((tag(b"\r\n"), tag(b"\n")))(i)
-    }
     /// Returns title and body, without separator
-    pub fn bytes<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], &'a BStr, E> {
-        map(terminated(take_while(|c| c != b'\n'), pair(newline, newline)), |t| {
-            t.as_bstr()
-        })(i)
+    pub fn bytes(i: &[u8]) -> (&BStr, Option<&BStr>) {
+        let message = i;
+        match message
+            .find(b"\n\n")
+            .map(|pos| (2, pos))
+            .or_else(|| message.find(b"\r\n\r\n").map(|pos| (4, pos)))
+        {
+            Some((sep_len, end_of_title)) => {
+                let body = &message[end_of_title + sep_len..];
+                (
+                    &message[..end_of_title].as_bstr(),
+                    if body.is_empty() { None } else { Some(body.as_bstr()) },
+                )
+            }
+            None => (message.as_bstr(), None),
+        }
     }
 }
 
@@ -33,9 +33,7 @@ impl<'a> MessageRef<'a> {
     ///
     /// Note that this cannot fail as everything will be interpreted as title if there is no body separator.
     pub fn from_bytes(input: &'a [u8]) -> Self {
-        let (title, body) = decode::bytes::<()>(input)
-            .map(|(body, title)| (title, Some(body.as_bstr())))
-            .unwrap_or_else(|_| (input.as_bstr(), None));
+        let (title, body) = decode::bytes(input);
         MessageRef { title, body }
     }
     /// Produce a short commit summary for the message title.
