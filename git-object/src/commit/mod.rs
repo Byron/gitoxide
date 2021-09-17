@@ -3,6 +3,21 @@ use bstr::{BStr, ByteSlice};
 use crate::{Commit, CommitRef, TagRef};
 
 mod decode;
+mod message;
+
+/// A parsed commit message that assumes a title separated from the body by two consecutive newlines.
+///
+/// Titles can have any amount of whitespace
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct MessageRef<'a> {
+    /// The title of the commit, as separated from the body with two consecutive newlines. The newlines are not included.
+    pub title: &'a BStr,
+    /// All bytes not consumed by the title, excluding the separating newlines.
+    ///
+    /// The body is `None` if there was now title separation or the body was empty after the separator.
+    pub body: Option<&'a BStr>,
+}
 
 ///
 pub mod ref_iter;
@@ -29,6 +44,11 @@ impl<'a> CommitRef<'a> {
     /// Returns a convenient iterator over all extra headers.
     pub fn extra_headers(&self) -> crate::commit::ExtraHeaders<impl Iterator<Item = (&BStr, &BStr)>> {
         crate::commit::ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (*k, v.as_ref())))
+    }
+
+    /// Returns a partially parsed message from which more information can be derived.
+    pub fn message(&self) -> MessageRef<'a> {
+        MessageRef::from_bytes(&self.message)
     }
 }
 
