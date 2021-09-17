@@ -15,11 +15,12 @@ mod message {
     }
 
     mod decode {
-        use crate::command::changelog_impl::commit::message;
         use nom::{
             error::{ContextError, ParseError},
             IResult,
         };
+
+        use crate::command::changelog_impl::commit::message;
 
         /// Parse a signature from the bytes input `i` using `nom`.
         pub fn _decode_description<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(

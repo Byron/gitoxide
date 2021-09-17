@@ -1,15 +1,30 @@
-use crate::bstr::{BStr, BString, ByteSlice, ByteVec};
-use crate::commit::MessageRef;
 use std::borrow::Cow;
 
-mod decode {
-    use crate::bstr::BStr;
-    use nom::error::ParseError;
-    use nom::IResult;
+use crate::{
+    bstr::{BStr, BString, ByteSlice, ByteVec},
+    commit::MessageRef,
+};
 
+mod decode {
+    use nom::{
+        branch::alt,
+        bytes::complete::{tag, take_while},
+        combinator::map,
+        error::ParseError,
+        sequence::{pair, terminated},
+        IResult,
+    };
+
+    use crate::bstr::{BStr, ByteSlice};
+
+    pub fn newline<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
+        alt((tag(b"\r\n"), tag(b"\n")))(i)
+    }
     /// Returns title and body, without separator
-    pub fn bytes<'a, E: ParseError<&'a [u8]>>(_i: &'a [u8]) -> IResult<&[u8], (&'a BStr, &'a BStr), E> {
-        todo!("actual decoding")
+    pub fn bytes<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&[u8], &'a BStr, E> {
+        map(terminated(take_while(|c| c != b'\n'), pair(newline, newline)), |t| {
+            t.as_bstr()
+        })(i)
     }
 }
 
@@ -18,10 +33,9 @@ impl<'a> MessageRef<'a> {
     ///
     /// Note that this cannot fail as everything will be interpreted as title if there is no body separator.
     pub fn from_bytes(input: &'a [u8]) -> Self {
-        let (rest, (title, body)) = decode::bytes::<()>(input)
-            .map(|(i, (title, body))| (i, (title, Some(body))))
-            .unwrap_or_else(|_| (&[], (input.as_bstr(), None)));
-        debug_assert!(rest.is_empty(), "all consuming message parsing");
+        let (title, body) = decode::bytes::<()>(input)
+            .map(|(body, title)| (title, Some(body.as_bstr())))
+            .unwrap_or_else(|_| (input.as_bstr(), None));
         MessageRef { title, body }
     }
     /// Produce a short commit summary for the message title.
