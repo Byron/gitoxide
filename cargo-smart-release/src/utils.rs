@@ -1,6 +1,8 @@
 use anyhow::anyhow;
-use cargo_metadata::camino::Utf8Component;
-use cargo_metadata::{camino::Utf8Path, Dependency, Metadata, Package, PackageId};
+use cargo_metadata::{
+    camino::{Utf8Component, Utf8Path},
+    Dependency, Metadata, Package, PackageId,
+};
 use git_repository as git;
 use semver::Version;
 

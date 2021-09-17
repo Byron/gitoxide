@@ -1,10 +1,10 @@
+use git_hash::ObjectId;
 use git_object::{bstr::BStr, TreeRefIter};
 
 use crate::{
     easy,
     easy::{ext::ObjectAccessExt, object::find, TreeRef},
 };
-use git_hash::ObjectId;
 
 impl<'repo, A> TreeRef<'repo, A>
 where

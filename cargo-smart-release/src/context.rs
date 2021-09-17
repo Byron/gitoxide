@@ -1,5 +1,7 @@
-use cargo_metadata::camino::Utf8Path;
-use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
+use cargo_metadata::{
+    camino::{Utf8Path, Utf8PathBuf},
+    Metadata, Package,
+};
 use git_repository as git;
 use git_repository::prelude::CacheAccessExt;
 

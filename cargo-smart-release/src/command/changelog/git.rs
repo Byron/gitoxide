@@ -1,17 +1,17 @@
-use std::cell::RefCell;
-use std::{collections::BTreeMap, iter::FromIterator, path::PathBuf, time::Instant};
+use std::{cell::RefCell, collections::BTreeMap, iter::FromIterator, path::PathBuf, time::Instant};
 
 use anyhow::bail;
-
 use git_repository as git;
 use git_repository::{
-    bstr::{BStr, ByteSlice},
+    bstr::{BStr, ByteSlice, ByteVec},
     easy::head,
     prelude::{CacheAccessExt, ObjectAccessExt, ReferenceAccessExt, ReferenceExt},
 };
 
-use crate::command::changelog_impl::commit;
-use crate::utils::{component_to_bytes, is_tag_name, is_tag_version, package_by_name, tag_prefix};
+use crate::{
+    command::changelog_impl::commit,
+    utils::{component_to_bytes, is_tag_name, is_tag_version, package_by_name, tag_prefix},
+};
 
 pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<commit::History>> {
     let start = Instant::now();
@@ -28,12 +28,12 @@ pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<commit::History
         let (message, tree_id) = {
             let object = commit_id.object()?;
             let commit = object.commit()?;
-            (commit.message.to_owned(), commit.tree())
+            (commit.message.to_vec(), commit.tree())
         };
 
         items.push(commit::history::Item {
             id: commit_id.detach(),
-            _message: message,
+            _message: message.into_string().unwrap_or_default(),
             tree_data: repo.find_object(tree_id)?.data.to_owned(),
         });
     }

@@ -9,6 +9,6 @@ pub struct Segment<'a> {
 
 pub struct Item {
     pub id: git::hash::ObjectId,
-    pub _message: git::bstr::BString,
+    pub _message: String,
     pub tree_data: Vec<u8>,
 }
