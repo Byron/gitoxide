@@ -157,7 +157,11 @@ pub trait ObjectAccessExt: easy::Access + Sized {
                     log: LogChange {
                         mode: RefLog::AndReference,
                         force_create_reflog: false,
-                        message: crate::reference::log::message("commit", &commit),
+                        message: crate::reference::log::message(
+                            "commit",
+                            commit.message.as_ref(),
+                            commit.parents.len(),
+                        ),
                     },
                     expected: match commit.parents.get(0).map(|p| Target::Peeled(*p)) {
                         Some(previous) => {

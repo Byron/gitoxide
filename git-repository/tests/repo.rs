@@ -24,7 +24,6 @@ fn basic_rw_repo() -> crate::Result<(Easy, tempfile::TempDir)> {
     easy_repo_rw("make_basic_repo.sh")
 }
 
-mod commit;
 mod discover;
 mod easy;
 mod init;

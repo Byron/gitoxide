@@ -95,8 +95,10 @@ fn title_with_windows_separator_and_empty_body() {
 pub mod summary {
     use std::borrow::Cow;
 
-    use git_object::bstr::{BStr, ByteSlice};
-    use git_object::commit::MessageRef;
+    use git_object::{
+        bstr::{BStr, ByteSlice},
+        commit::MessageRef,
+    };
 
     fn summary(input: &[u8]) -> Cow<'_, BStr> {
         MessageRef::from_bytes(input).summary()

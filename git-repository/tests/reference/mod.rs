@@ -3,25 +3,17 @@ mod log {
 
     #[test]
     fn message() {
-        let mut commit = git::objs::Commit {
-            tree: git::hash::ObjectId::empty_tree(git_hash::Kind::Sha1),
-            parents: Default::default(),
-            author: Default::default(),
-            committer: Default::default(),
-            encoding: None,
-            message: "the subject\n\nthe body".into(),
-            extra_headers: vec![],
-        };
         assert_eq!(
-            git::reference::log::message("commit", &commit),
+            git::reference::log::message("commit", "the subject\n\nthe body".into(), 0),
             "commit (initial): the subject"
         );
-        commit.parents.push(git::hash::ObjectId::null_sha1());
-        assert_eq!(git::reference::log::message("other", &commit), "other: the subject");
-
-        commit.parents.push(git::hash::ObjectId::null_sha1());
         assert_eq!(
-            git::reference::log::message("rebase", &commit),
+            git::reference::log::message("other", "the subject".into(), 1),
+            "other: the subject"
+        );
+
+        assert_eq!(
+            git::reference::log::message("rebase", "the subject".into(), 2),
             "rebase (merge): the subject"
         );
     }
