@@ -19,7 +19,7 @@ mod decode {
             Some((sep_len, end_of_title)) => {
                 let body = &message[end_of_title + sep_len..];
                 (
-                    &message[..end_of_title].as_bstr(),
+                    message[..end_of_title].as_bstr(),
                     if body.is_empty() { None } else { Some(body.as_bstr()) },
                 )
             }

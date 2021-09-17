@@ -12,6 +12,7 @@ mod message;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MessageRef<'a> {
     /// The title of the commit, as separated from the body with two consecutive newlines. The newlines are not included.
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     pub title: &'a BStr,
     /// All bytes not consumed by the title, excluding the separating newlines.
     ///
@@ -48,7 +49,7 @@ impl<'a> CommitRef<'a> {
 
     /// Returns a partially parsed message from which more information can be derived.
     pub fn message(&self) -> MessageRef<'a> {
-        MessageRef::from_bytes(&self.message)
+        MessageRef::from_bytes(self.message)
     }
 }
 
