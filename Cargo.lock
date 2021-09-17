@@ -351,6 +351,7 @@ dependencies = [
  "cargo_toml",
  "crates-index",
  "env_logger",
+ "git-conventional",
  "git-repository",
  "log",
  "nom",
@@ -824,6 +825,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "doc-comment"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
+
+[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1004,6 +1011,17 @@ dependencies = [
  "nom",
  "serde",
  "serde_derive",
+]
+
+[[package]]
+name = "git-conventional"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc574c897f85ed0a16517cb9318409cd4f8213475c25ffd413bedb2c4d917def"
+dependencies = [
+ "doc-comment",
+ "nom",
+ "unicase",
 ]
 
 [[package]]
@@ -2517,6 +2535,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "794a32261a1f5eb6a4462c81b59cec87b5c27d5deea7dd1ac8fc781c41d226db"
 dependencies = [
  "arrayvec",
+]
+
+[[package]]
+name = "unicase"
+version = "2.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50f37be617794602aabbeee0be4f259dc1778fabe05e2d67ee8f79326d5cb4f6"
+dependencies = [
+ "version_check",
 ]
 
 [[package]]

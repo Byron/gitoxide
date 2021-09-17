@@ -35,3 +35,4 @@ semver = "1.0.4"
 crates-index = "0.17.0"
 cargo_toml = "0.9.2"
 nom = { version = "7", default-features = false, features = ["std"]}
+git-conventional = "0.10.2"
