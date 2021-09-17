@@ -1,9 +1,8 @@
 use std::process::Command;
 
 use anyhow::{anyhow, bail};
-use bstr::ByteSlice;
 use cargo_metadata::Package;
-use git_repository::{easy::object, prelude::ReferenceAccessExt};
+use git_repository::{bstr::ByteSlice, easy::object, prelude::ReferenceAccessExt};
 
 use crate::utils::{component_to_bytes, tag_name};
 
@@ -74,7 +73,7 @@ pub fn assure_clean_working_tree() -> anyhow::Result<()> {
         .output()?
         .stdout;
     if !untracked.trim().is_empty() {
-        let err = anyhow!(bstr::BString::from(untracked));
+        let err = anyhow!(git_repository::bstr::BString::from(untracked));
         return Err(err.context("Found untracked files which would possibly be packaged when publishing."));
     }
     Ok(())

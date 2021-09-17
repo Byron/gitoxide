@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use bstr::ByteSlice;
+use crate::bstr::ByteSlice;
 
 /// The error used in [`into()`].
 #[derive(Debug, thiserror::Error)]

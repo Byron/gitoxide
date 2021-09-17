@@ -3,7 +3,6 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use bstr::BString;
 use git_actor as actor;
 use git_hash::ObjectId;
 use git_lock as lock;
@@ -13,6 +12,7 @@ use git_ref::{
 };
 
 use crate::{
+    bstr::BString,
     easy,
     easy::{ext::RepositoryAccessExt, reference, Reference},
     ext::ReferenceExt,

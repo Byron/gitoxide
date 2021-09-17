@@ -1,5 +1,6 @@
-use bstr::{BStr, BString, ByteVec};
 use git_object::commit::MessageRef;
+
+use crate::bstr::{BStr, BString, ByteVec};
 
 /// Generate a message typical for git commit logs based on the given `operation`, commit `message` and `num_parents` of the commit.
 pub fn message(operation: &str, message: &BStr, num_parents: usize) -> BString {

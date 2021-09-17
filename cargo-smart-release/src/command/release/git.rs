@@ -1,9 +1,8 @@
 use std::{convert::TryInto, process::Command};
 
 use anyhow::bail;
-use bstr::ByteSlice;
 use cargo_metadata::Package;
-use git_repository::{prelude::ReferenceAccessExt, refs, refs::transaction::PreviousValue};
+use git_repository::{bstr::ByteSlice, prelude::ReferenceAccessExt, refs, refs::transaction::PreviousValue};
 
 use super::{tag_name, Oid, Options};
 use crate::utils::will;
