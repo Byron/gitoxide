@@ -4,6 +4,7 @@ use crate::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
     commit::MessageRef,
 };
+use std::ops::Deref;
 
 mod decode {
     use nom::{
@@ -75,6 +76,7 @@ impl<'a> MessageRef<'a> {
         let (title, body) = decode::bytes(input);
         MessageRef { title, body }
     }
+
     /// Produce a short commit summary for the message title.
     ///
     /// This means the following
@@ -85,38 +87,73 @@ impl<'a> MessageRef<'a> {
     /// The resulting summary will have folded whitespace before a newline into spaces and stopped that process
     /// once two consecutive newlines are encountered.
     pub fn summary(&self) -> Cow<'a, BStr> {
-        let message = self.title.trim();
-        match message.find_byte(b'\n') {
-            Some(mut pos) => {
-                let mut out = BString::default();
-                let mut previous_pos = None;
-                loop {
-                    if let Some(previous_pos) = previous_pos {
-                        if previous_pos + 1 == pos {
-                            let len_after_trim = out.trim_end().len();
-                            out.resize(len_after_trim, 0);
-                            break out.into();
-                        }
-                    }
-                    let message_to_newline = &message[previous_pos.map(|p| p + 1).unwrap_or(0)..pos];
+        summary(self.title)
+    }
 
-                    if let Some(pos_before_whitespace) = message_to_newline.rfind_not_byteset(b"\t\n\x0C\r ") {
-                        out.extend_from_slice(&message_to_newline[..pos_before_whitespace + 1]);
+    /// Further parse the body into into non-trailer and trailers, which can be iterated from the returned [`BodyRef`].
+    pub fn body(&self) -> Option<BodyRef<'a>> {
+        self.body.map(|b| BodyRef {
+            _body_without_footer: b,
+            _start_of_footer: &[],
+        })
+    }
+}
+
+pub fn summary(message: &BStr) -> Cow<'_, BStr> {
+    let message = message.trim();
+    match message.find_byte(b'\n') {
+        Some(mut pos) => {
+            let mut out = BString::default();
+            let mut previous_pos = None;
+            loop {
+                if let Some(previous_pos) = previous_pos {
+                    if previous_pos + 1 == pos {
+                        let len_after_trim = out.trim_end().len();
+                        out.resize(len_after_trim, 0);
+                        break out.into();
                     }
-                    out.push_byte(b' ');
-                    previous_pos = Some(pos);
-                    match message.get(pos + 1..).and_then(|i| i.find_byte(b'\n')) {
-                        Some(next_nl_pos) => pos += next_nl_pos + 1,
-                        None => {
-                            if let Some(slice) = message.get((pos + 1)..) {
-                                out.extend_from_slice(slice);
-                            }
-                            break out.into();
+                }
+                let message_to_newline = &message[previous_pos.map(|p| p + 1).unwrap_or(0)..pos];
+
+                if let Some(pos_before_whitespace) = message_to_newline.rfind_not_byteset(b"\t\n\x0C\r ") {
+                    out.extend_from_slice(&message_to_newline[..pos_before_whitespace + 1]);
+                }
+                out.push_byte(b' ');
+                previous_pos = Some(pos);
+                match message.get(pos + 1..).and_then(|i| i.find_byte(b'\n')) {
+                    Some(next_nl_pos) => pos += next_nl_pos + 1,
+                    None => {
+                        if let Some(slice) = message.get((pos + 1)..) {
+                            out.extend_from_slice(slice);
                         }
+                        break out.into();
                     }
                 }
             }
-            None => message.as_bstr().into(),
         }
+        None => message.as_bstr().into(),
+    }
+}
+
+/// A reference to a message body, further parsed to only contain the non-trailer parts.
+///
+/// See [git-interpret-trailers](https://git-scm.com/docs/git-interpret-trailers) for more information
+/// on what constitutes trailers and not that this implementation is only good for typical sign-off footer or key-value parsing.
+pub struct BodyRef<'a> {
+    _body_without_footer: &'a BStr,
+    _start_of_footer: &'a [u8],
+}
+
+impl<'a> AsRef<BStr> for BodyRef<'a> {
+    fn as_ref(&self) -> &BStr {
+        self._body_without_footer
+    }
+}
+
+impl<'a> Deref for BodyRef<'a> {
+    type Target = BStr;
+
+    fn deref(&self) -> &Self::Target {
+        self._body_without_footer
     }
 }

@@ -184,7 +184,12 @@ Signed-off-by: Kim Altintop <kim@eagain.st>"
                 .into()
         )
     );
-    // let body = message.body();
+    assert_eq!(
+        commit.summary(),
+        message.summary(),
+        "both summaries are the same, but the commit one does less parsing"
+    );
+    let _body = message.body();
     Ok(())
 }
 
