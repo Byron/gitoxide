@@ -9,27 +9,29 @@ mod decode {
     use crate::bstr::{BStr, ByteSlice};
     use nom::branch::alt;
     use nom::bytes::complete::tag;
-    use nom::combinator::{consumed, map, map_parser, opt, rest};
+    use nom::combinator::opt;
     use nom::error::ParseError;
     use nom::sequence::{pair, terminated};
-    use nom::{IResult, Parser};
+    use nom::IResult;
 
     fn newline<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
         alt((tag(b"\r\n"), tag(b"\n")))(i)
     }
 
-    fn subject<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
+    fn subject<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
         todo!("subject")
     }
 
     /// Parse a signature from the bytes input `i` using `nom`.
     pub fn nomfoo<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
-        map(
-            consumed(terminated(subject, pair(newline, newline))),
-            |(subject_and_sep, subject)| (subject, Some(i[subject_and_sep.len()..].as_bstr())),
-        )
-        .or(|i: &'a [u8]| Ok((&[][..], (i.as_bstr(), None))))
-        .parse(i)
+        let (rest, subject) = opt(terminated(subject, pair(newline, newline)))(i)?;
+        Ok((
+            &[],
+            match subject {
+                Some(subject) => (subject.as_bstr(), Some(rest.as_bstr())),
+                None => (i.as_bstr(), None),
+            },
+        ))
     }
 
     /// Returns title and body, without separator
