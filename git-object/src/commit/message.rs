@@ -8,8 +8,8 @@ use crate::{
 mod decode {
     use crate::bstr::{BStr, ByteSlice};
     use nom::branch::alt;
-    use nom::bytes::complete::tag;
-    use nom::combinator::opt;
+    use nom::bytes::complete::{tag, take_till1};
+    use nom::combinator::{all_consuming, opt};
     use nom::error::ParseError;
     use nom::sequence::{pair, terminated};
     use nom::IResult;
@@ -19,7 +19,7 @@ mod decode {
     }
 
     fn subject<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
-        todo!("subject")
+        take_till1(|c| c == b'\n')(i)
     }
 
     /// Parse a signature from the bytes input `i` using `nom`.
@@ -28,29 +28,29 @@ mod decode {
         Ok((
             &[],
             match subject {
-                Some(subject) => (subject.as_bstr(), Some(rest.as_bstr())),
+                Some(subject) => (subject.as_bstr(), (!rest.is_empty()).then(|| rest.as_bstr())),
                 None => (i.as_bstr(), None),
             },
         ))
     }
 
     /// Returns title and body, without separator
-    pub fn bytes(i: &[u8]) -> (&BStr, Option<&BStr>) {
-        let message = i;
-        match message
-            .find(b"\n\n")
-            .map(|pos| (2, pos))
-            .or_else(|| message.find(b"\r\n\r\n").map(|pos| (4, pos)))
-        {
-            Some((sep_len, end_of_title)) => {
-                let body = &message[end_of_title + sep_len..];
-                (
-                    message[..end_of_title].as_bstr(),
-                    if body.is_empty() { None } else { Some(body.as_bstr()) },
-                )
-            }
-            None => (message.as_bstr(), None),
-        }
+    pub fn bytes(message: &[u8]) -> (&BStr, Option<&BStr>) {
+        all_consuming(nomfoo::<()>)(message).expect("cannot fail").1
+        // match message
+        //     .find(b"\n\n")
+        //     .map(|pos| (2, pos))
+        //     .or_else(|| message.find(b"\r\n\r\n").map(|pos| (4, pos)))
+        // {
+        //     Some((sep_len, end_of_title)) => {
+        //         let body = &message[end_of_title + sep_len..];
+        //         (
+        //             message[..end_of_title].as_bstr(),
+        //             if body.is_empty() { None } else { Some(body.as_bstr()) },
+        //         )
+        //     }
+        //     None => (message.as_bstr(), None),
+        // }
     }
 }
 
