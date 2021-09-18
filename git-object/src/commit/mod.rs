@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use bstr::{BStr, ByteSlice};
 
 use crate::{Commit, CommitRef, TagRef};
@@ -53,11 +51,6 @@ impl<'a> CommitRef<'a> {
     /// Returns a partially parsed message from which more information can be derived.
     pub fn message(&self) -> MessageRef<'a> {
         MessageRef::from_bytes(self.message)
-    }
-
-    /// Return exactly the same message as [`MessageRef::summary()`].
-    pub fn summary(&self) -> Cow<'a, BStr> {
-        message::summary(self.message)
     }
 }
 

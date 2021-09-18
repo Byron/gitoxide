@@ -1,5 +1,5 @@
 use git_actor::{Sign, SignatureRef, Time};
-use git_object::{bstr::ByteSlice, CommitRef};
+use git_object::{bstr::ByteSlice, commit::message::body::TrailerRef, CommitRef};
 use smallvec::SmallVec;
 
 use crate::immutable::{
@@ -185,7 +185,7 @@ Signed-off-by: Kim Altintop <kim@eagain.st>"
         )
     );
     assert_eq!(
-        commit.summary(),
+        commit.message_summary(),
         message.summary(),
         "both summaries are the same, but the commit one does less parsing"
     );
@@ -199,6 +199,24 @@ instead of depending directly on the lower-level crates.
 [stability]: https://github.com/Byron/gitoxide/blob/main/STABILITY.md"
             .as_bstr(),
         "body doesn't contain footer"
+    );
+    assert_eq!(
+        body.trailers().collect::<Vec<_>>(),
+        vec![
+            TrailerRef {
+                token: "Signed-off-by".into(),
+                value: "Sebastian Thiel <sebastian.thiel@icloud.com>".into()
+            },
+            TrailerRef {
+                token: "Signed-off-by".into(),
+                value: "Kim Altintop <kim@eagain.st>".into()
+            }
+        ]
+    );
+    assert_eq!(
+        body.trailers().collect::<Vec<_>>(),
+        commit.message_trailers().collect::<Vec<_>>(),
+        "messages trailers are accessible on commit level and yield the same result"
     );
     Ok(())
 }

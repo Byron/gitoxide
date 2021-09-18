@@ -3,6 +3,7 @@ use std::{borrow::Cow, ops::Deref};
 use crate::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
     commit::MessageRef,
+    CommitRef,
 };
 
 ///
@@ -10,7 +11,7 @@ pub mod body {
     use nom::{
         bytes::complete::{tag, take_until1},
         combinator::all_consuming,
-        error::ParseError,
+        error::{ErrorKind, ParseError},
         sequence::terminated,
         IResult,
     };
@@ -19,7 +20,6 @@ pub mod body {
         bstr::{BStr, ByteSlice},
         commit::message::BodyRef,
     };
-    use nom::error::ErrorKind;
 
     /// An iterator over trailers as parsed from a commit message body.
     ///
@@ -193,6 +193,19 @@ mod decode {
     /// Returns title and body, without separator
     pub fn message(input: &[u8]) -> (&BStr, Option<&BStr>) {
         all_consuming(subject_and_body::<()>)(input).expect("cannot fail").1
+    }
+}
+
+impl<'a> CommitRef<'a> {
+    /// Return exactly the same message as [`MessageRef::summary()`].
+    pub fn message_summary(&self) -> Cow<'a, BStr> {
+        summary(self.message)
+    }
+
+    /// Return an iterator over message trailers as obtained from the last paragraph of the commit message.
+    /// May be empty.
+    pub fn message_trailers(&self) -> body::Trailers<'a> {
+        BodyRef::from_bytes(&self.message).trailers()
     }
 }
 

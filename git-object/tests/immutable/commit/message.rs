@@ -250,7 +250,7 @@ mod summary {
                 message: input.as_bstr(),
                 extra_headers: vec![]
             }
-            .summary(),
+            .message_summary(),
             summary,
             "both versions create the same result"
         );
