@@ -1,0 +1,22 @@
+tree 25a19c29c5e36884c1ad85d8faf23f1246b7961b
+parent 699ae71105dddfcbb9711ed3a92df09e91a04e90
+author Kim Altintop <kim@eagain.st> 1631514803 +0200
+committer Kim Altintop <kim@eagain.st> 1631514803 +0200
+gpgsig -----BEGIN PGP SIGNATURE-----
+ 
+ iHUEABYIAB0WIQSuZwcGWSQItmusNgR5URpSUCnwXQUCYT7xpAAKCRB5URpSUCnw
+ XWB3AP9q323HlxnI8MyqszNOeYDwa7Y3yEZaUM2y/IRjz+z4YQEAq0yr1Syt3mrK
+ OSFCqL2vDm3uStP+vF31f6FnzayhNg0=
+ =Mhpp
+ -----END PGP SIGNATURE-----
+
+test: use gitoxide for link-git-protocol tests
+
+Showcases the abilities of the `git-repository` crate, and standardises
+on using the re-exports through this crate for [stability] reasons
+instead of depending directly on the lower-level crates.
+
+[stability]: https://github.com/Byron/gitoxide/blob/main/STABILITY.md
+
+Signed-off-by: Sebastian Thiel <sebastian.thiel@icloud.com>
+Signed-off-by: Kim Altintop <kim@eagain.st>

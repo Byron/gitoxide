@@ -5,6 +5,7 @@ use crate::immutable::{
     commit::{LONG_MESSAGE, MERGE_TAG, SIGNATURE},
     fixture_bytes, linus_signature, signature,
 };
+use git_actor::{Sign, SignatureRef, Time};
 
 #[test]
 fn unsigned() -> crate::Result {
@@ -129,6 +130,61 @@ fn with_encoding() -> crate::Result {
             extra_headers: vec![]
         }
     );
+    Ok(())
+}
+
+#[test]
+fn with_footer() -> crate::Result {
+    let kim = SignatureRef {
+        name: "Kim Altintop".into(),
+        email: "kim@eagain.st".into(),
+        time: Time {
+            time: 1631514803,
+            offset: 7200,
+            sign: Sign::Plus,
+        },
+    };
+    let backing = fixture_bytes("commit", "message-with-footer.txt");
+    let commit = CommitRef::from_bytes(&backing)?;
+    assert_eq!(
+        commit,
+        CommitRef {
+            tree: b"25a19c29c5e36884c1ad85d8faf23f1246b7961b".as_bstr(),
+            parents: SmallVec::from(vec![b"699ae71105dddfcbb9711ed3a92df09e91a04e90".as_bstr()]),
+            author: kim.clone(),
+            committer: kim,
+            encoding: None,
+            message: b"test: use gitoxide for link-git-protocol tests
+
+Showcases the abilities of the `git-repository` crate, and standardises
+on using the re-exports through this crate for [stability] reasons
+instead of depending directly on the lower-level crates.
+
+[stability]: https://github.com/Byron/gitoxide/blob/main/STABILITY.md
+
+Signed-off-by: Sebastian Thiel <sebastian.thiel@icloud.com>
+Signed-off-by: Kim Altintop <kim@eagain.st>"
+                .as_bstr(),
+            extra_headers: vec![(b"gpgsig".as_bstr(), b"-----BEGIN PGP SIGNATURE-----\n\niHUEABYIAB0WIQSuZwcGWSQItmusNgR5URpSUCnwXQUCYT7xpAAKCRB5URpSUCnw\nXWB3AP9q323HlxnI8MyqszNOeYDwa7Y3yEZaUM2y/IRjz+z4YQEAq0yr1Syt3mrK\nOSFCqL2vDm3uStP+vF31f6FnzayhNg0=\n=Mhpp\n-----END PGP SIGNATURE-----".as_bstr().into())]
+        }
+    );
+    let message = commit.message();
+    assert_eq!(message.title, "test: use gitoxide for link-git-protocol tests");
+    assert_eq!(
+        message.body,
+        Some(
+            "Showcases the abilities of the `git-repository` crate, and standardises
+on using the re-exports through this crate for [stability] reasons
+instead of depending directly on the lower-level crates.
+
+[stability]: https://github.com/Byron/gitoxide/blob/main/STABILITY.md
+
+Signed-off-by: Sebastian Thiel <sebastian.thiel@icloud.com>
+Signed-off-by: Kim Altintop <kim@eagain.st>"
+                .into()
+        )
+    );
+    // let body = message.body();
     Ok(())
 }
 
