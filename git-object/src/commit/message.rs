@@ -7,6 +7,32 @@ use crate::{
 
 mod decode {
     use crate::bstr::{BStr, ByteSlice};
+    use nom::branch::alt;
+    use nom::bytes::complete::tag;
+    use nom::combinator::opt;
+    use nom::error::ParseError;
+    use nom::sequence::{pair, terminated};
+    use nom::IResult;
+
+    fn newline<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
+        alt((tag(b"\r\n"), tag(b"\n")))(i)
+    }
+
+    fn subject<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
+        todo!("subject")
+    }
+
+    /// Parse a signature from the bytes input `i` using `nom`.
+    pub fn nomfoo<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
+        let (rest, subject) = opt(terminated(subject, pair(newline, newline)))(i)?;
+        Ok((
+            &[],
+            match subject {
+                Some(subject) => (subject.as_bstr(), Some(rest.as_bstr())),
+                None => (i.as_bstr(), None),
+            },
+        ))
+    }
 
     /// Returns title and body, without separator
     pub fn bytes(i: &[u8]) -> (&BStr, Option<&BStr>) {
