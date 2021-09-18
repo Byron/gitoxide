@@ -28,6 +28,19 @@ fn title_and_body() {
 }
 
 #[test]
+fn title_and_body_inconsistent_newlines() {
+    let msg = MessageRef::from_bytes(b"hello\n\r\nthere");
+    assert_eq!(
+        msg,
+        MessageRef {
+            title: b"hello".as_bstr(),
+            body: Some("there".into())
+        }
+    );
+    assert_eq!(msg.summary().as_ref(), "hello");
+}
+
+#[test]
 fn only_title_trailing_newline_is_retained() {
     let msg = MessageRef::from_bytes(b"hello there\n");
     assert_eq!(

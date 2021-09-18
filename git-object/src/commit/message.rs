@@ -6,43 +6,54 @@ use crate::{
 };
 
 mod decode {
+    use nom::{
+        branch::alt,
+        bytes::complete::{tag, take_till1},
+        combinator::all_consuming,
+        error::ParseError,
+        sequence::pair,
+        IResult,
+    };
+
     use crate::bstr::{BStr, ByteSlice};
-    use nom::branch::alt;
-    use nom::bytes::complete::{tag, take_till1};
-    use nom::combinator::all_consuming;
-    use nom::error::ParseError;
-    use nom::sequence::pair;
-    use nom::IResult;
-    use std::convert::TryInto;
 
     fn newline<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
         alt((tag(b"\r\n"), tag(b"\n")))(i)
     }
 
-    pub fn nomfoo<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
+    fn subject_and_body<'a, E: ParseError<&'a [u8]>>(
+        i: &'a [u8],
+    ) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
         let mut c = i;
+        let mut consumed_bytes = 0;
         while !c.is_empty() {
             c = match take_till1::<_, _, E>(|c| c == b'\n' || c == b'\r')(c) {
-                Ok((i1, segment)) => match pair::<_, _, _, E, _, _>(newline, newline)(i1) {
-                    Ok((body, _)) => {
-                        // SAFETY: the pointers are pointing to the same slice.
-                        #[allow(unsafe_code)]
-                        let consumed_bytes = unsafe { segment.as_ptr_range().end.offset_from(i.as_ptr()) };
-                        return Ok((
-                            &[],
-                            (
-                                &i[0usize..consumed_bytes.try_into().expect("positive offset")].as_bstr(),
-                                (!body.is_empty()).then(|| body.as_bstr()),
-                            ),
-                        ));
+                Ok((i1, segment)) => {
+                    consumed_bytes += segment.len();
+                    match pair::<_, _, _, E, _, _>(newline, newline)(i1) {
+                        Ok((body, _)) => {
+                            return Ok((
+                                &[],
+                                (
+                                    &i[0usize..consumed_bytes].as_bstr(),
+                                    (!body.is_empty()).then(|| body.as_bstr()),
+                                ),
+                            ));
+                        }
+                        Err(_) => match i1.get(1..) {
+                            Some(next) => {
+                                consumed_bytes += 1;
+                                next
+                            }
+                            None => break,
+                        },
                     }
-                    Err(_) => match i1.get(1..) {
-                        Some(next) => next,
-                        None => break,
-                    },
-                },
+                }
                 Err(_) => match c.get(1..) {
-                    Some(next) => next,
+                    Some(next) => {
+                        consumed_bytes += 1;
+                        next
+                    }
                     None => break,
                 },
             };
@@ -52,7 +63,7 @@ mod decode {
 
     /// Returns title and body, without separator
     pub fn bytes(message: &[u8]) -> (&BStr, Option<&BStr>) {
-        all_consuming(nomfoo::<()>)(message).expect("cannot fail").1
+        all_consuming(subject_and_body::<()>)(message).expect("cannot fail").1
     }
 }
 
