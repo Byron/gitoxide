@@ -6,7 +6,7 @@ use nom::{
     combinator::{all_consuming, opt},
     error::{context, ContextError, ParseError},
     multi::many0,
-    IResult,
+    IResult, Parser,
 };
 use smallvec::SmallVec;
 
@@ -48,7 +48,7 @@ pub fn commit<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
     let (i, extra_headers) = context(
         "<field> <single-line|multi-line>",
         many0(alt((
-            |i| parse::any_header_field_multi_line(i).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Owned(o)))),
+            parse::any_header_field_multi_line.map(|(k, o)| (k.as_bstr(), Cow::Owned(o))),
             |i| {
                 parse::any_header_field(i, is_not(NL)).map(|(i, (k, o))| (i, (k.as_bstr(), Cow::Borrowed(o.as_bstr()))))
             },
