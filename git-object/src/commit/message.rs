@@ -7,22 +7,31 @@ use crate::{
 
 ///
 pub mod body {
+    use nom::{
+        bytes::complete::{tag, take_until1},
+        combinator::all_consuming,
+        error::ParseError,
+        sequence::terminated,
+        IResult,
+    };
+
     use crate::{
         bstr::{BStr, ByteSlice},
         commit::message::BodyRef,
     };
+    use nom::error::ErrorKind;
 
     /// An iterator over trailers as parsed from a commit message body.
     ///
     /// lines with parsing failures will be skipped
     pub struct Trailers<'a> {
-        cursor: &'a [u8],
+        pub(crate) cursor: &'a [u8],
     }
 
     /// A trailer as parsed from the commit message body.
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-    pub struct Trailer<'a> {
+    pub struct TrailerRef<'a> {
         /// The name of the trailer, like "Signed-off-by", up to the separator ": "
         #[cfg_attr(feature = "serde1", serde(borrow))]
         pub token: &'a BStr,
@@ -31,12 +40,73 @@ pub mod body {
         pub value: &'a BStr,
     }
 
+    fn parse_single_line_trailer<'a, E: ParseError<&'a [u8]>>(
+        i: &'a [u8],
+    ) -> IResult<&'a [u8], (&'a BStr, &'a BStr), E> {
+        let (value, token) = terminated(take_until1(b":".as_ref()), tag(b": "))(i.trim_end())?;
+        if token.trim_end().len() != token.len() {
+            Err(nom::Err::Failure(E::from_error_kind(i, ErrorKind::Fail)))
+        } else {
+            Ok((&[], (token.as_bstr(), value.as_bstr())))
+        }
+    }
+
+    #[cfg(test)]
+    mod test_parse_trailer {
+        use super::*;
+
+        fn parse(input: &str) -> (&BStr, &BStr) {
+            parse_single_line_trailer::<()>(input.as_bytes()).unwrap().1
+        }
+
+        #[test]
+        fn simple_newline() {
+            assert_eq!(parse("foo: bar\n"), ("foo".into(), "bar".into()));
+        }
+
+        #[test]
+        fn simple_non_ascii_no_newline() {
+            assert_eq!(parse("🤗: 🎉"), ("🤗".into(), "🎉".into()));
+        }
+
+        #[test]
+        fn with_lots_of_whitespace_newline() {
+            assert_eq!(
+                parse("hello foo: bar there   \n"),
+                ("hello foo".into(), "bar there".into())
+            );
+        }
+
+        #[test]
+        fn whitespace_before_token_is_error() {
+            assert!(parse_single_line_trailer::<()>(b"foo : bar").is_err())
+        }
+
+        #[test]
+        fn simple_newline_windows() {
+            assert_eq!(parse("foo: bar\r\n"), ("foo".into(), "bar".into()));
+        }
+    }
+
     impl<'a> Iterator for Trailers<'a> {
-        type Item = Trailer<'a>;
+        type Item = TrailerRef<'a>;
 
         fn next(&mut self) -> Option<Self::Item> {
             if self.cursor.is_empty() {
                 return None;
+            }
+            for line in self.cursor.lines_with_terminator() {
+                self.cursor = &self.cursor[line.len()..];
+                if let Some(trailer) =
+                    all_consuming(parse_single_line_trailer::<()>)(line)
+                        .ok()
+                        .map(|(_, (token, value))| TrailerRef {
+                            token: token.trim().as_bstr(),
+                            value: value.trim().as_bstr(),
+                        })
+                {
+                    return Some(trailer);
+                }
             }
             None
         }
@@ -75,7 +145,7 @@ mod decode {
 
     use crate::bstr::{BStr, ByteSlice};
 
-    fn newline<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
+    pub(crate) fn newline<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
         alt((tag(b"\r\n"), tag(b"\n")))(i)
     }
 
@@ -149,10 +219,7 @@ impl<'a> MessageRef<'a> {
 
     /// Further parse the body into into non-trailer and trailers, which can be iterated from the returned [`BodyRef`].
     pub fn body(&self) -> Option<BodyRef<'a>> {
-        self.body.map(|b| BodyRef {
-            body_without_trailer: b,
-            start_of_trailer: &[],
-        })
+        self.body.map(|b| BodyRef::from_bytes(b))
     }
 }
 
@@ -202,6 +269,15 @@ pub(crate) fn summary(message: &BStr) -> Cow<'_, BStr> {
 pub struct BodyRef<'a> {
     body_without_trailer: &'a BStr,
     start_of_trailer: &'a [u8],
+}
+
+impl<'a> BodyRef<'a> {
+    /// Return an iterator over the trailers parsed from the last paragraph of the body. May be empty.
+    pub fn trailers(&self) -> body::Trailers<'a> {
+        body::Trailers {
+            cursor: self.start_of_trailer,
+        }
+    }
 }
 
 impl<'a> AsRef<BStr> for BodyRef<'a> {

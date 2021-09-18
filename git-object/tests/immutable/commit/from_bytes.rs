@@ -134,8 +134,7 @@ fn with_encoding() -> crate::Result {
 }
 
 #[test]
-#[ignore]
-fn with_footer() -> crate::Result {
+fn with_trailer() -> crate::Result {
     let kim = SignatureRef {
         name: "Kim Altintop".into(),
         email: "kim@eagain.st".into(),

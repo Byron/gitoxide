@@ -132,7 +132,10 @@ fn title_with_windows_separator_and_empty_body() {
 }
 
 mod body {
-    use git_object::commit::{message::BodyRef, MessageRef};
+    use git_object::commit::{
+        message::{body::TrailerRef, BodyRef},
+        MessageRef,
+    };
 
     fn body(input: &str) -> BodyRef<'_> {
         BodyRef::from_bytes(input.as_bytes())
@@ -173,6 +176,20 @@ mod body {
     fn no_trailer_after_a_few_paragraphs() {
         let input = "foo\nbar\n\nbar\n\nbaz";
         assert_eq!(body(input).as_ref(), input);
+    }
+
+    #[test]
+    fn single_trailer_after_a_few_paragraphs() {
+        let input = "foo\nbar\n\nbar\n\nbaz\n\ntoken: value";
+        let body = body(input);
+        assert_eq!(body.as_ref(), "foo\nbar\n\nbar\n\nbaz");
+        assert_eq!(
+            body.trailers().collect::<Vec<_>>(),
+            vec![TrailerRef {
+                token: "token".into(),
+                value: "value".into()
+            }]
+        )
     }
 
     #[test]
