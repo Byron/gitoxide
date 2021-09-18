@@ -1,7 +1,6 @@
 //! This crate provides types for [read-only git objects][crate::ObjectRef] backed by bytes provided in git's serialization format
 //! as well as [mutable versions][Object] of these. Both types of objects can be encoded.
-#![forbid(unsafe_code)]
-#![deny(rust_2018_idioms, missing_docs)]
+#![deny(unsafe_code, rust_2018_idioms, missing_docs)]
 
 use std::borrow::Cow;
 

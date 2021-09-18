@@ -8,72 +8,51 @@ use crate::{
 mod decode {
     use crate::bstr::{BStr, ByteSlice};
     use nom::branch::alt;
-    use nom::bytes::complete::{tag, take_till1, take_until1};
-    use nom::combinator::{all_consuming, map, opt, peek, recognize};
+    use nom::bytes::complete::{tag, take_till1};
+    use nom::combinator::all_consuming;
     use nom::error::ParseError;
-    use nom::multi::{fold_many1, length_data};
-    use nom::sequence::{pair, terminated};
+    use nom::sequence::pair;
     use nom::IResult;
+    use std::convert::TryInto;
 
     fn newline<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a [u8], E> {
         alt((tag(b"\r\n"), tag(b"\n")))(i)
     }
 
-    fn subject<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
-        map(
-            length_data(peek(fold_many1(
-                recognize(terminated(take_till1(|c| c == b'\n'), tag(b"\n"))),
-                || 0,
-                |acc: usize, item: &'a [u8]| acc + item.len(),
-            ))),
-            |s| s.as_bstr(),
-        )(i)
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-
-        #[test]
-        fn subject_ending_in_newline_with_newline() {
-            assert_eq!(subject::<()>(b"a\nb\n").unwrap(), (b"".as_ref(), b"a\nb\nc".as_bstr()));
-        }
-
-        #[test]
-        fn subject_with_single_newline() {
-            assert_eq!(subject::<()>(b"a\n").unwrap(), (b"".as_ref(), b"a\n".as_bstr()));
-        }
-    }
-
-    /// Parse a signature from the bytes input `i` using `nom`.
     pub fn nomfoo<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], (&'a BStr, Option<&'a BStr>), E> {
-        let (rest, subject) = opt(terminated(subject, pair(newline, newline)))(i)?;
-        Ok((
-            &[],
-            match subject {
-                Some(subject) => (subject.as_bstr(), (!rest.is_empty()).then(|| rest.as_bstr())),
-                None => (i.as_bstr(), None),
-            },
-        ))
+        let mut c = i;
+        while !c.is_empty() {
+            c = match take_till1::<_, _, E>(|c| c == b'\n' || c == b'\r')(c) {
+                Ok((i1, segment)) => match pair::<_, _, _, E, _, _>(newline, newline)(i1) {
+                    Ok((body, _)) => {
+                        // SAFETY: the pointers are pointing to the same slice.
+                        #[allow(unsafe_code)]
+                        let consumed_bytes = unsafe { segment.as_ptr_range().end.offset_from(i.as_ptr()) };
+                        return Ok((
+                            &[],
+                            (
+                                &i[0usize..consumed_bytes.try_into().expect("positive offset")].as_bstr(),
+                                (!body.is_empty()).then(|| body.as_bstr()),
+                            ),
+                        ));
+                    }
+                    Err(_) => match i1.get(1..) {
+                        Some(next) => next,
+                        None => break,
+                    },
+                },
+                Err(_) => match c.get(1..) {
+                    Some(next) => next,
+                    None => break,
+                },
+            };
+        }
+        Ok((&[], (i.as_bstr(), None)))
     }
 
     /// Returns title and body, without separator
     pub fn bytes(message: &[u8]) -> (&BStr, Option<&BStr>) {
         all_consuming(nomfoo::<()>)(message).expect("cannot fail").1
-        // match message
-        //     .find(b"\n\n")
-        //     .map(|pos| (2, pos))
-        //     .or_else(|| message.find(b"\r\n\r\n").map(|pos| (4, pos)))
-        // {
-        //     Some((sep_len, end_of_title)) => {
-        //         let body = &message[end_of_title + sep_len..];
-        //         (
-        //             message[..end_of_title].as_bstr(),
-        //             if body.is_empty() { None } else { Some(body.as_bstr()) },
-        //         )
-        //     }
-        //     None => (message.as_bstr(), None),
-        // }
     }
 }
 

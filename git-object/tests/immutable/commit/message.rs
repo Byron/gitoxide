@@ -67,6 +67,19 @@ fn title_with_whitespace_and_body() {
 }
 
 #[test]
+fn title_with_more_whitespace_and_body() {
+    let msg = MessageRef::from_bytes(b"hello \r\r\r\n there\nanother line\n\nthe body\n\n");
+    assert_eq!(msg.summary().as_ref(), "hello  there another line");
+    assert_eq!(
+        msg,
+        MessageRef {
+            title: b"hello \r\r\r\n there\nanother line".as_bstr(),
+            body: Some(b"the body\n\n".as_bstr())
+        }
+    );
+}
+
+#[test]
 fn title_with_whitespace_and_body_windows_lineending() {
     let msg = MessageRef::from_bytes(b"hello \r\n \r\n there\nanother line\r\n\r\nthe body\n\r\n");
     assert_eq!(msg.summary().as_ref(), "hello   there another line");
