@@ -193,6 +193,26 @@ mod body {
     }
 
     #[test]
+    fn two_trailers_with_broken_one_inbetween_after_a_few_paragraphs() {
+        let input = "foo\nbar\n\nbar\n\nbaz\n\na: b\ncannot parse this\r\nc: d\n";
+        let body = body(input);
+        assert_eq!(body.as_ref(), "foo\nbar\n\nbar\n\nbaz");
+        assert_eq!(
+            body.trailers().collect::<Vec<_>>(),
+            vec![
+                TrailerRef {
+                    token: "a".into(),
+                    value: "b".into()
+                },
+                TrailerRef {
+                    token: "c".into(),
+                    value: "d".into()
+                }
+            ]
+        )
+    }
+
+    #[test]
     fn no_trailer_after_a_paragraph_windows() {
         let input = "foo\nbar\n\nbar\r\n\r\nbaz";
         assert_eq!(body(input).as_ref(), input);

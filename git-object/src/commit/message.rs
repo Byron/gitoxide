@@ -44,7 +44,7 @@ pub mod body {
         i: &'a [u8],
     ) -> IResult<&'a [u8], (&'a BStr, &'a BStr), E> {
         let (value, token) = terminated(take_until1(b":".as_ref()), tag(b": "))(i.trim_end())?;
-        if token.trim_end().len() != token.len() {
+        if token.trim_end().len() != token.len() || value.trim_start().len() != value.len() {
             Err(nom::Err::Failure(E::from_error_kind(i, ErrorKind::Fail)))
         } else {
             Ok((&[], (token.as_bstr(), value.as_bstr())))
@@ -78,8 +78,9 @@ pub mod body {
         }
 
         #[test]
-        fn whitespace_before_token_is_error() {
-            assert!(parse_single_line_trailer::<()>(b"foo : bar").is_err())
+        fn extra_whitespace_before_token_or_value_is_error() {
+            assert!(parse_single_line_trailer::<()>(b"foo : bar").is_err());
+            assert!(parse_single_line_trailer::<()>(b"foo:  bar").is_err())
         }
 
         #[test]
