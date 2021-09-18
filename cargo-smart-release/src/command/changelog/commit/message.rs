@@ -7,7 +7,38 @@ use crate::command::changelog_impl::commit::Message;
 #[cfg_attr(test, derive(PartialEq, Eq))]
 pub enum Addition<'a> {
     /// The plain issue ID, like "123".
-    IssueId(Option<&'a BStr>),
+    IssueId(&'a str),
+}
+
+mod additions {
+    use std::borrow::Cow;
+
+    use crate::command::changelog_impl::commit::message::Addition;
+
+    fn strip(title: &str) -> (Cow<'_, str>, Vec<Addition<'_>>) {
+        todo!("strip")
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        #[ignore]
+        fn no_addition() {
+            let (nt, a) = strip("hello there [abc] (abc)");
+            assert_eq!(nt, "hello there [abc] (abc)");
+            assert_eq!(a, vec![]);
+        }
+
+        #[test]
+        #[ignore]
+        fn strip_trailing_issue_number() {
+            let (nt, a) = strip("hello (#1)");
+            assert_eq!(nt, "hello");
+            assert_eq!(a, vec![Addition::IssueId("1")]);
+        }
+    }
 }
 
 mod decode {
@@ -47,7 +78,7 @@ impl<'a> From<&'a str> for Message<'a> {
             .unwrap_or_else(|_| {
                 let m = git::objs::commit::MessageRef::from_bytes(m.as_bytes());
                 (
-                    m.title.to_str_lossy(),
+                    m.summary().as_ref().to_string().into(),
                     None,
                     m.body().map(|b| b.without_trailer().to_str_lossy()),
                     false,
@@ -76,6 +107,21 @@ mod tests {
             Message {
                 title: "hi".into(),
                 body: None,
+                kind: None,
+                breaking: false,
+                breaking_description: None,
+                additions: vec![]
+            }
+        )
+    }
+
+    #[test]
+    fn no_conventional_uses_summary() {
+        assert_eq!(
+            Message::from("hi\nho\nfoo\n\nbody"),
+            Message {
+                title: "hi ho foo".into(),
+                body: Some("body".into()),
                 kind: None,
                 breaking: false,
                 breaking_description: None,
