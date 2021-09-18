@@ -19,7 +19,7 @@ impl<'a> CommitRef<'a> {
     /// Return an iterator over message trailers as obtained from the last paragraph of the commit message.
     /// May be empty.
     pub fn message_trailers(&self) -> body::Trailers<'a> {
-        BodyRef::from_bytes(&self.message).trailers()
+        BodyRef::from_bytes(self.message).trailers()
     }
 }
 
