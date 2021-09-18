@@ -15,6 +15,19 @@ fn only_title_no_trailing_newline() {
 }
 
 #[test]
+fn title_and_body() {
+    let msg = MessageRef::from_bytes(b"hello\n\nthere");
+    assert_eq!(
+        msg,
+        MessageRef {
+            title: b"hello".as_bstr(),
+            body: Some("there".into())
+        }
+    );
+    assert_eq!(msg.summary().as_ref(), "hello");
+}
+
+#[test]
 fn only_title_trailing_newline_is_retained() {
     let msg = MessageRef::from_bytes(b"hello there\n");
     assert_eq!(
