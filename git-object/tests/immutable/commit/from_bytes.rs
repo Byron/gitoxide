@@ -1,3 +1,4 @@
+use git_actor::{Sign, SignatureRef, Time};
 use git_object::{bstr::ByteSlice, CommitRef};
 use smallvec::SmallVec;
 
@@ -5,7 +6,6 @@ use crate::immutable::{
     commit::{LONG_MESSAGE, MERGE_TAG, SIGNATURE},
     fixture_bytes, linus_signature, signature,
 };
-use git_actor::{Sign, SignatureRef, Time};
 
 #[test]
 fn unsigned() -> crate::Result {
@@ -134,6 +134,7 @@ fn with_encoding() -> crate::Result {
 }
 
 #[test]
+#[ignore]
 fn with_footer() -> crate::Result {
     let kim = SignatureRef {
         name: "Kim Altintop".into(),
@@ -189,7 +190,17 @@ Signed-off-by: Kim Altintop <kim@eagain.st>"
         message.summary(),
         "both summaries are the same, but the commit one does less parsing"
     );
-    let _body = message.body();
+    let body = message.body().expect("body present");
+    assert_eq!(
+        body.as_ref(),
+        b"Showcases the abilities of the `git-repository` crate, and standardises
+on using the re-exports through this crate for [stability] reasons
+instead of depending directly on the lower-level crates.
+
+[stability]: https://github.com/Byron/gitoxide/blob/main/STABILITY.md"
+            .as_bstr(),
+        "body doesn't contain footer"
+    );
     Ok(())
 }
 

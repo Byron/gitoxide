@@ -131,16 +131,93 @@ fn title_with_windows_separator_and_empty_body() {
     );
 }
 
-pub mod summary {
+mod body {
+    use git_object::commit::{message::BodyRef, MessageRef};
+
+    fn body(input: &str) -> BodyRef<'_> {
+        BodyRef::from_bytes(input.as_bytes())
+    }
+
+    #[test]
+    fn created_manually_is_the_same_as_through_message_ref() {
+        assert_eq!(
+            MessageRef {
+                title: "title unused".into(),
+                body: Some("hello".into()),
+            }
+            .body()
+            .expect("present"),
+            BodyRef::from_bytes("hello".as_bytes())
+        )
+    }
+
+    #[test]
+    fn no_trailer() {
+        let input = "foo\nbar";
+        assert_eq!(body(input).as_ref(), input);
+    }
+
+    #[test]
+    fn no_trailer_after_a_few_paragraphs_empty_last_block() {
+        let input = "foo\nbar\n\nbar\n\nbaz\n\n";
+        assert_eq!(body(input).as_ref(), input);
+    }
+
+    #[test]
+    fn no_trailer_after_a_few_paragraphs_empty_last_block_windows() {
+        let input = "foo\nbar\n\nbar\n\nbaz\r\n\r\n";
+        assert_eq!(body(input).as_ref(), input);
+    }
+
+    #[test]
+    fn no_trailer_after_a_few_paragraphs() {
+        let input = "foo\nbar\n\nbar\n\nbaz";
+        assert_eq!(body(input).as_ref(), input);
+    }
+
+    #[test]
+    fn no_trailer_after_a_paragraph_windows() {
+        let input = "foo\nbar\n\nbar\r\n\r\nbaz";
+        assert_eq!(body(input).as_ref(), input);
+    }
+}
+
+mod summary {
     use std::borrow::Cow;
 
+    use git_actor::{Sign, SignatureRef, Time};
     use git_object::{
         bstr::{BStr, ByteSlice},
         commit::MessageRef,
+        CommitRef,
     };
 
     fn summary(input: &[u8]) -> Cow<'_, BStr> {
-        MessageRef::from_bytes(input).summary()
+        let summary = MessageRef::from_bytes(input).summary();
+        let actor = SignatureRef {
+            name: "name".into(),
+            email: "email".into(),
+            time: Time {
+                time: 0,
+                offset: 0,
+                sign: Sign::Plus,
+            },
+        };
+        assert_eq!(
+            CommitRef {
+                tree: "tree".into(),
+                parents: Default::default(),
+                author: actor.clone(),
+                committer: actor,
+                encoding: None,
+                message: input.as_bstr(),
+                extra_headers: vec![]
+            }
+            .summary(),
+            summary,
+            "both versions create the same result"
+        );
+        summary
     }
 
     #[test]

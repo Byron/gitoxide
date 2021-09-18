@@ -1,15 +1,17 @@
+use std::borrow::Cow;
+
 use bstr::{BStr, ByteSlice};
 
 use crate::{Commit, CommitRef, TagRef};
-use std::borrow::Cow;
 
 mod decode;
-mod message;
+///
+pub mod message;
 
 /// A parsed commit message that assumes a title separated from the body by two consecutive newlines.
 ///
 /// Titles can have any amount of whitespace
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct MessageRef<'a> {
     /// The title of the commit, as separated from the body with two consecutive newlines. The newlines are not included.

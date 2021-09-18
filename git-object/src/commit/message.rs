@@ -1,11 +1,68 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, ops::Deref};
 
 use crate::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
     commit::MessageRef,
 };
-use std::ops::Deref;
 
+///
+pub mod body {
+    use crate::{
+        bstr::{BStr, ByteSlice},
+        commit::message::BodyRef,
+    };
+
+    /// An iterator over trailers as parsed from a commit message body.
+    ///
+    /// lines with parsing failures will be skipped
+    pub struct Trailers<'a> {
+        cursor: &'a [u8],
+    }
+
+    /// A trailer as parsed from the commit message body.
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub struct Trailer<'a> {
+        /// The name of the trailer, like "Signed-off-by", up to the separator ": "
+        #[cfg_attr(feature = "serde1", serde(borrow))]
+        pub token: &'a BStr,
+        /// The value right after the separator ": ", with leading and trailing whitespace trimmed.
+        /// Note that multi-line values aren't currently supported.
+        pub value: &'a BStr,
+    }
+
+    impl<'a> Iterator for Trailers<'a> {
+        type Item = Trailer<'a>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            if self.cursor.is_empty() {
+                return None;
+            }
+            None
+        }
+    }
+
+    impl<'a> BodyRef<'a> {
+        /// Parse `body` bytes into the trailer and the actual body.
+        pub fn from_bytes(body: &'a [u8]) -> Self {
+            body.rfind(b"\n\n")
+                .map(|pos| (2, pos))
+                .or_else(|| body.rfind(b"\r\n\r\n").map(|pos| (4, pos)))
+                .and_then(|(sep_len, pos)| {
+                    let trailer = &body[pos + sep_len..];
+                    let body = &body[..pos];
+                    Trailers { cursor: trailer }.next().map(|_| BodyRef {
+                        body_without_trailer: body.as_bstr(),
+                        start_of_trailer: trailer,
+                    })
+                })
+                .unwrap_or_else(|| BodyRef {
+                    body_without_trailer: body.as_bstr(),
+                    start_of_trailer: &[],
+                })
+        }
+    }
+}
 mod decode {
     use nom::{
         branch::alt,
@@ -63,8 +120,8 @@ mod decode {
     }
 
     /// Returns title and body, without separator
-    pub fn bytes(message: &[u8]) -> (&BStr, Option<&BStr>) {
-        all_consuming(subject_and_body::<()>)(message).expect("cannot fail").1
+    pub fn message(input: &[u8]) -> (&BStr, Option<&BStr>) {
+        all_consuming(subject_and_body::<()>)(input).expect("cannot fail").1
     }
 }
 
@@ -73,7 +130,7 @@ impl<'a> MessageRef<'a> {
     ///
     /// Note that this cannot fail as everything will be interpreted as title if there is no body separator.
     pub fn from_bytes(input: &'a [u8]) -> Self {
-        let (title, body) = decode::bytes(input);
+        let (title, body) = decode::message(input);
         MessageRef { title, body }
     }
 
@@ -93,13 +150,13 @@ impl<'a> MessageRef<'a> {
     /// Further parse the body into into non-trailer and trailers, which can be iterated from the returned [`BodyRef`].
     pub fn body(&self) -> Option<BodyRef<'a>> {
         self.body.map(|b| BodyRef {
-            _body_without_footer: b,
-            _start_of_footer: &[],
+            body_without_trailer: b,
+            start_of_trailer: &[],
         })
     }
 }
 
-pub fn summary(message: &BStr) -> Cow<'_, BStr> {
+pub(crate) fn summary(message: &BStr) -> Cow<'_, BStr> {
     let message = message.trim();
     match message.find_byte(b'\n') {
         Some(mut pos) => {
@@ -139,14 +196,17 @@ pub fn summary(message: &BStr) -> Cow<'_, BStr> {
 ///
 /// See [git-interpret-trailers](https://git-scm.com/docs/git-interpret-trailers) for more information
 /// on what constitutes trailers and not that this implementation is only good for typical sign-off footer or key-value parsing.
+///
+/// Note that we only parse trailers from the bottom of the body.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct BodyRef<'a> {
-    _body_without_footer: &'a BStr,
-    _start_of_footer: &'a [u8],
+    body_without_trailer: &'a BStr,
+    start_of_trailer: &'a [u8],
 }
 
 impl<'a> AsRef<BStr> for BodyRef<'a> {
     fn as_ref(&self) -> &BStr {
-        self._body_without_footer
+        self.body_without_trailer
     }
 }
 
@@ -154,6 +214,6 @@ impl<'a> Deref for BodyRef<'a> {
     type Target = BStr;
 
     fn deref(&self) -> &Self::Target {
-        self._body_without_footer
+        self.body_without_trailer
     }
 }
