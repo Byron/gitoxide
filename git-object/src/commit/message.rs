@@ -36,7 +36,7 @@ mod decode {
                             return Ok((
                                 &[],
                                 (
-                                    &i[0usize..consumed_bytes].as_bstr(),
+                                    i[0usize..consumed_bytes].as_bstr(),
                                     (!body.is_empty()).then(|| body.as_bstr()),
                                 ),
                             ));
