@@ -4,17 +4,21 @@ use std::borrow::Cow;
 
 pub mod history;
 
+#[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct Message<'a> {
     /// The cleared, plain title with any `additions` removed.
-    title: Cow<'a, str>,
+    pub title: Cow<'a, str>,
     /// More detailed information about the changes.
-    body: &'a str,
+    pub body: Option<Cow<'a, str>>,
+    /// If set, the git-conventional scope to help organizing changes
+    pub kind: Option<git_conventional::Type<'a>>,
     /// If set, this is a breaking change as indicated git-conventional.
-    breaking: bool,
+    pub breaking: bool,
     /// If set, this commit message body contains a specific description of the breaking change.
-    breaking_description: Option<&'a str>,
+    pub breaking_description: Option<String>, // TODO: make borrowed once https://github.com/crate-ci/git-conventional/pull/16 is available
     /// all dditional information parsed from the title.
-    additions: message::Addition<'a>,
+    pub additions: Vec<message::Addition<'a>>,
 }
 
 pub struct History {
@@ -22,27 +26,4 @@ pub struct History {
     pub items: Vec<history::Item>,
 }
 
-mod message {
-    use git_repository::bstr::BStr;
-
-    pub enum Addition<'a> {
-        /// The plain issue ID, like "123".
-        IssueId(Option<&'a BStr>),
-    }
-
-    mod decode {
-        use nom::{
-            error::{ContextError, ParseError},
-            IResult,
-        };
-
-        use crate::command::changelog_impl::commit::message;
-
-        /// Parse a signature from the bytes input `i` using `nom`.
-        pub fn _decode_description<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
-            _i: &'a [u8],
-        ) -> IResult<&'a [u8], message::Addition<'a>, E> {
-            todo!("probably not to be done")
-        }
-    }
-}
+mod message;
