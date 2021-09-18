@@ -1,4 +1,4 @@
-use std::{borrow::Cow, ops::Deref};
+use std::borrow::Cow;
 
 use crate::{
     bstr::{BStr, BString, ByteSlice, ByteVec},
@@ -97,27 +97,4 @@ pub(crate) fn summary(message: &BStr) -> Cow<'_, BStr> {
 pub struct BodyRef<'a> {
     body_without_trailer: &'a BStr,
     start_of_trailer: &'a [u8],
-}
-
-impl<'a> BodyRef<'a> {
-    /// Return an iterator over the trailers parsed from the last paragraph of the body. May be empty.
-    pub fn trailers(&self) -> body::Trailers<'a> {
-        body::Trailers {
-            cursor: self.start_of_trailer,
-        }
-    }
-}
-
-impl<'a> AsRef<BStr> for BodyRef<'a> {
-    fn as_ref(&self) -> &BStr {
-        self.body_without_trailer
-    }
-}
-
-impl<'a> Deref for BodyRef<'a> {
-    type Target = BStr;
-
-    fn deref(&self) -> &Self::Target {
-        self.body_without_trailer
-    }
 }

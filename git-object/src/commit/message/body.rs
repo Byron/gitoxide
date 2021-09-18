@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use nom::{
     bytes::complete::{tag, take_until1},
     combinator::all_consuming,
@@ -36,44 +38,6 @@ fn parse_single_line_trailer<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResul
         Err(nom::Err::Failure(E::from_error_kind(i, ErrorKind::Fail)))
     } else {
         Ok((&[], (token.as_bstr(), value.as_bstr())))
-    }
-}
-
-#[cfg(test)]
-mod test_parse_trailer {
-    use super::*;
-
-    fn parse(input: &str) -> (&BStr, &BStr) {
-        parse_single_line_trailer::<()>(input.as_bytes()).unwrap().1
-    }
-
-    #[test]
-    fn simple_newline() {
-        assert_eq!(parse("foo: bar\n"), ("foo".into(), "bar".into()));
-    }
-
-    #[test]
-    fn simple_non_ascii_no_newline() {
-        assert_eq!(parse("🤗: 🎉"), ("🤗".into(), "🎉".into()));
-    }
-
-    #[test]
-    fn with_lots_of_whitespace_newline() {
-        assert_eq!(
-            parse("hello foo: bar there   \n"),
-            ("hello foo".into(), "bar there".into())
-        );
-    }
-
-    #[test]
-    fn extra_whitespace_before_token_or_value_is_error() {
-        assert!(parse_single_line_trailer::<()>(b"foo : bar").is_err());
-        assert!(parse_single_line_trailer::<()>(b"foo:  bar").is_err())
-    }
-
-    #[test]
-    fn simple_newline_windows() {
-        assert_eq!(parse("foo: bar\r\n"), ("foo".into(), "bar".into()));
     }
 }
 
@@ -119,5 +83,70 @@ impl<'a> BodyRef<'a> {
                 body_without_trailer: body.as_bstr(),
                 start_of_trailer: &[],
             })
+    }
+
+    /// Returns the body with the trailers stripped.
+    ///
+    /// You can iterate trailers with the [`trailers()`][BodyRef::trailers()] method.
+    pub fn without_trailer(&self) -> &'a BStr {
+        self.body_without_trailer
+    }
+
+    /// Return an iterator over the trailers parsed from the last paragraph of the body. May be empty.
+    pub fn trailers(&self) -> Trailers<'a> {
+        Trailers {
+            cursor: self.start_of_trailer,
+        }
+    }
+}
+
+impl<'a> AsRef<BStr> for BodyRef<'a> {
+    fn as_ref(&self) -> &BStr {
+        self.body_without_trailer
+    }
+}
+
+impl<'a> Deref for BodyRef<'a> {
+    type Target = BStr;
+
+    fn deref(&self) -> &Self::Target {
+        self.body_without_trailer
+    }
+}
+#[cfg(test)]
+mod test_parse_trailer {
+    use super::*;
+
+    fn parse(input: &str) -> (&BStr, &BStr) {
+        parse_single_line_trailer::<()>(input.as_bytes()).unwrap().1
+    }
+
+    #[test]
+    fn simple_newline() {
+        assert_eq!(parse("foo: bar\n"), ("foo".into(), "bar".into()));
+    }
+
+    #[test]
+    fn simple_non_ascii_no_newline() {
+        assert_eq!(parse("🤗: 🎉"), ("🤗".into(), "🎉".into()));
+    }
+
+    #[test]
+    fn with_lots_of_whitespace_newline() {
+        assert_eq!(
+            parse("hello foo: bar there   \n"),
+            ("hello foo".into(), "bar there".into())
+        );
+    }
+
+    #[test]
+    fn extra_whitespace_before_token_or_value_is_error() {
+        assert!(parse_single_line_trailer::<()>(b"foo : bar").is_err());
+        assert!(parse_single_line_trailer::<()>(b"foo:  bar").is_err())
+    }
+
+    #[test]
+    fn simple_newline_windows() {
+        assert_eq!(parse("foo: bar\r\n"), ("foo".into(), "bar".into()));
     }
 }

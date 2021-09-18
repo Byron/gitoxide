@@ -158,6 +158,7 @@ mod body {
     fn no_trailer() {
         let input = "foo\nbar";
         assert_eq!(body(input).as_ref(), input);
+        assert_eq!(body(input).without_trailer(), input);
     }
 
     #[test]
