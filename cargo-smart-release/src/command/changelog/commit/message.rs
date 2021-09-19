@@ -5,18 +5,49 @@ use crate::command::changelog_impl::commit::Message;
 
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq, Eq))]
-pub enum Addition<'a> {
+pub enum Addition {
     /// The plain issue ID, like "123".
-    IssueId(&'a str),
+    IssueId(String),
 }
 
 mod additions {
-    use std::borrow::Cow;
+    use std::{borrow::Cow, ops::Range};
 
     use crate::command::changelog_impl::commit::message::Addition;
 
-    fn strip(title: &str) -> (Cow<'_, str>, Vec<Addition<'_>>) {
-        todo!("strip")
+    fn cut(mut s: String, Range { start, end }: Range<usize>) -> String {
+        let new_start = s[..start]
+            .rfind(|c: char| !c.is_whitespace())
+            .map(|p| p + 1)
+            .unwrap_or(start);
+        let new_end = s[end..]
+            .find(|c: char| !c.is_whitespace())
+            .map(|p| p + end)
+            .unwrap_or(end);
+        s.replace_range(
+            new_start..new_end,
+            if new_end != end && new_start != start { " " } else { "" },
+        );
+        s
+    }
+
+    pub fn strip(mut title: Cow<'_, str>) -> (Cow<'_, str>, Vec<Addition>) {
+        let mut additions = Vec::new();
+        loop {
+            let previous_len = title.len();
+            let issue_sep = "(#";
+            if let Some((pos, end_pos)) = title.find(issue_sep).and_then(|mut pos| {
+                pos += issue_sep.len();
+                title[pos..].find(')').map(|ep| (pos, ep))
+            }) {
+                additions.push(Addition::IssueId(title[pos..][..end_pos].to_owned()));
+                title = cut(title.into_owned(), (pos - issue_sep.len())..(pos + end_pos + 1)).into();
+            };
+            if title.len() == previous_len {
+                break;
+            }
+        }
+        (title, additions)
     }
 
     #[cfg(test)]
@@ -24,36 +55,25 @@ mod additions {
         use super::*;
 
         #[test]
-        #[ignore]
         fn no_addition() {
-            let (nt, a) = strip("hello there [abc] (abc)");
+            let (nt, a) = strip("hello there [abc] (abc)".into());
             assert_eq!(nt, "hello there [abc] (abc)");
             assert_eq!(a, vec![]);
         }
 
         #[test]
-        #[ignore]
-        fn strip_trailing_issue_number() {
-            let (nt, a) = strip("hello (#1)");
-            assert_eq!(nt, "hello");
-            assert_eq!(a, vec![Addition::IssueId("1")]);
+        fn strip_multiple_issue_numbers() {
+            let (nt, a) = strip("(#other) foo (#123) hello (#42)".into());
+            assert_eq!(nt, "foo hello");
+            assert_eq!(
+                a,
+                vec![
+                    Addition::IssueId("other".into()),
+                    Addition::IssueId("123".into()),
+                    Addition::IssueId("42".into())
+                ]
+            );
         }
-    }
-}
-
-mod decode {
-    use nom::{
-        error::{ContextError, ParseError},
-        IResult,
-    };
-
-    use crate::command::changelog_impl::commit::message;
-
-    /// Parse a signature from the bytes input `i` using `nom`.
-    pub fn _decode_description<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
-        _i: &'a [u8],
-    ) -> IResult<&'a [u8], message::Addition<'a>, E> {
-        todo!("probably not to be done")
     }
 }
 
@@ -80,13 +100,14 @@ impl<'a> From<&'a str> for Message<'a> {
                     None,
                 )
             });
+        let (title, additions) = additions::strip(title);
         Message {
             title,
             kind,
             body,
             breaking,
             breaking_description,
-            additions: vec![],
+            additions,
         }
     }
 }

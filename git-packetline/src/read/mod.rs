@@ -10,8 +10,9 @@ type ExhaustiveOutcome<'a> = (
 );
 
 mod error {
-    use bstr::BString;
     use std::fmt::{Debug, Display, Formatter};
+
+    use bstr::BString;
 
     /// The error representing an ERR packet line, as possibly wrapped into an `std::io::Error` in
     /// [`read_line(…)`][super::StreamingPeekableIter::read_line()].

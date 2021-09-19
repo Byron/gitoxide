@@ -18,7 +18,7 @@ pub struct Message<'a> {
     /// If set, this commit message body contains a specific description of the breaking change.
     pub breaking_description: Option<&'a str>,
     /// all dditional information parsed from the title.
-    pub additions: Vec<message::Addition<'a>>,
+    pub additions: Vec<message::Addition>,
 }
 
 pub struct History {
