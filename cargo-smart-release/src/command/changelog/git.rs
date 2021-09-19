@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::BTreeMap, iter::FromIterator, path::PathBu
 use anyhow::bail;
 use git_repository as git;
 use git_repository::{
-    bstr::{BStr, ByteSlice, ByteVec},
+    bstr::{BStr, ByteSlice},
     easy::head,
     prelude::{CacheAccessExt, ObjectAccessExt, ReferenceAccessExt, ReferenceExt},
 };
@@ -31,9 +31,19 @@ pub fn commit_history(repo: &git::Easy) -> anyhow::Result<Option<commit::History
             (commit.message.to_vec(), commit.tree())
         };
 
+        let message = match message.to_str() {
+            Err(_) => {
+                log::warn!(
+                    "Commit message of {} could not be decoded to UTF-8 - ignored",
+                    commit_id.as_ref()
+                );
+                continue;
+            }
+            Ok(m) => m,
+        };
         items.push(commit::history::Item {
             id: commit_id.detach(),
-            _message: message.into_string().unwrap_or_default(),
+            _message: commit::Message::from(message),
             tree_data: repo.find_object(tree_id)?.data.to_owned(),
         });
     }

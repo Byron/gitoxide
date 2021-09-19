@@ -2,6 +2,7 @@ use git_repository as git;
 use git_repository::bstr::{BStr, ByteSlice};
 
 use crate::command::changelog_impl::commit::Message;
+use git_conventional::Type;
 
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq, Eq))]
@@ -77,8 +78,8 @@ mod additions {
     }
 }
 
-impl<'a> From<&'a str> for Message<'a> {
-    fn from(m: &'a str) -> Self {
+impl From<&'_ str> for Message {
+    fn from(m: &str) -> Self {
         let (title, kind, body, breaking, breaking_description) = git_conventional::Commit::parse(m)
             .map(|c: git_conventional::Commit| {
                 (
@@ -102,14 +103,29 @@ impl<'a> From<&'a str> for Message<'a> {
             });
         let (title, additions) = additions::strip(title);
         Message {
-            title,
-            kind,
-            body,
+            title: title.into_owned(),
+            kind: to_static(kind),
+            body: body.map(|b| b.into_owned()),
             breaking,
-            breaking_description,
+            breaking_description: breaking_description.map(ToOwned::to_owned),
             additions,
         }
     }
+}
+
+fn to_static(kind: Option<git_conventional::Type<'_>>) -> Option<git_conventional::Type<'static>> {
+    kind.map(|kind| match kind.as_str() {
+        "feat" => git_conventional::Type::FEAT,
+        "fix" => git_conventional::Type::FIX,
+        "revert" => git_conventional::Type::REVERT,
+        "docs" => git_conventional::Type::DOCS,
+        "style" => git_conventional::Type::STYLE,
+        "refactor" => git_conventional::Type::REFACTOR,
+        "perf" => git_conventional::Type::PERF,
+        "test" => git_conventional::Type::TEST,
+        "chore" => git_conventional::Type::CHORE,
+        _ => git_conventional::Type::new_unchecked("other"),
+    })
 }
 
 #[cfg(test)]
@@ -170,7 +186,7 @@ mod tests {
                 body: Some("the body".into()),
                 kind: Some(git_conventional::Type::new_unchecked("feat")),
                 breaking: true,
-                breaking_description: Some("breaks"),
+                breaking_description: Some("breaks".into()),
                 additions: vec![Addition::IssueId("123".into())]
             }
         )
