@@ -17,9 +17,15 @@ mod additions {
     use crate::command::changelog_impl::commit::message::Addition;
 
     fn cut(mut s: String, Range { start, end }: Range<usize>) -> String {
-        let new_start = s[..start]
+        let part_to_left = &s[..start];
+        let new_start = part_to_left
             .rfind(|c: char| !c.is_whitespace())
-            .map(|p| p + 1)
+            .and_then(|p| {
+                part_to_left
+                    .is_char_boundary(p + 1)
+                    .then(|| p + 1)
+                    .or_else(|| part_to_left[p..].chars().next().map(|c| p + c.len_utf8()))
+            })
             .unwrap_or(start);
         let new_end = s[end..]
             .find(|c: char| !c.is_whitespace())

@@ -28,7 +28,7 @@
 //! On miss, the object is looked up and if ia pack is hit, there is a small fixed-size cache for delta-base objects.
 //!
 //! In scenarios where the same objects are accessed multiple times, an object cache can be useful and is to be configured specifically
-//! using the [`object_cache_size(…)`][prelude::RepositoryAccessExt::object_cache_size()] method.
+//! using the [`object_cache_size(…)`][prelude::CacheAccessExt::object_cache_size()] method.
 //!
 //! Use the `cache-efficiency-debug` cargo feature to learn how efficient the cache actually is - it's easy to end up with lowered
 //! performance if the cache is not hit in 50% of the time.
