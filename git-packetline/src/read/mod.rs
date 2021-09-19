@@ -9,6 +9,28 @@ type ExhaustiveOutcome<'a> = (
     Option<std::io::Result<Result<PacketLineRef<'a>, crate::decode::Error>>>, // actual method result
 );
 
+mod error {
+    use bstr::BString;
+    use std::fmt::{Debug, Display, Formatter};
+
+    /// The error representing an ERR packet line, as possibly wrapped into an `std::io::Error` in
+    /// [`read_line(…)`][super::StreamingPeekableIter::read_line()].
+    #[derive(Debug)]
+    pub struct Error {
+        /// The contents of the ERR line, with `ERR` portion stripped.
+        pub message: BString,
+    }
+
+    impl Display for Error {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            Display::fmt(&self.message, f)
+        }
+    }
+
+    impl std::error::Error for Error {}
+}
+pub use error::Error;
+
 impl<T> StreamingPeekableIter<T> {
     /// Return a new instance from `read` which will stop decoding packet lines when receiving one of the given `delimiters`.
     pub fn new(read: T, delimiters: &'static [PacketLineRef<'static>]) -> Self {

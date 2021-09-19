@@ -53,9 +53,16 @@ where
                         return (true, stopped_at, None);
                     } else if fail_on_err_lines {
                         if let Some(err) = line.check_error() {
-                            let err = err.0.as_bstr().to_string();
+                            let err = err.0.as_bstr().to_owned();
                             buf.clear();
-                            return (true, None, Some(Err(io::Error::new(io::ErrorKind::Other, err))));
+                            return (
+                                true,
+                                None,
+                                Some(Err(io::Error::new(
+                                    io::ErrorKind::Other,
+                                    crate::read::Error { message: err },
+                                ))),
+                            );
                         }
                     }
                     let len = line
