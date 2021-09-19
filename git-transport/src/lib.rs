@@ -5,6 +5,8 @@
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 
+pub use git_packetline as packetline;
+
 /// The version of the way client and server communicate.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

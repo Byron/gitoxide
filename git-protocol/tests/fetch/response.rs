@@ -197,6 +197,22 @@ mod v2 {
         }
 
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
+        async fn fetch_with_err_response() {
+            let mut provider = mock_reader("v2/fetch-err-line.response");
+            provider.fail_on_err_lines(true);
+            let mut sidebands = provider.as_read_without_sidebands();
+            match fetch::Response::from_line_reader(Protocol::V2, &mut sidebands).await {
+                Ok(_) => panic!("need error response"),
+                Err(err) => match err {
+                    fetch::response::Error::UploadPack(err) => {
+                        assert_eq!(err.message, "segmentation fault\n")
+                    }
+                    err => panic!("we expect upload pack errors, got {:#?}", err),
+                },
+            }
+        }
+
+        #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn fetch_acks_and_pack() -> crate::Result {
             let mut provider = mock_reader("v2/fetch.response");
             let mut reader = provider.as_read_without_sidebands();

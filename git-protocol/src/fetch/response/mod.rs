@@ -13,7 +13,10 @@ quick_error! {
     pub enum Error {
         Io(err: io::Error) {
             display("Failed to read from line reader")
-            from()
+            source(err)
+        }
+        UploadPack(err: git_transport::packetline::read::Error) {
+            display("Upload pack reported an error")
             source(err)
         }
         Transport(err: client::Error) {
@@ -29,6 +32,22 @@ quick_error! {
         }
         UnknownSectionHeader(header: String) {
             display("Unknown or unsupported header: '{}'", header)
+        }
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        if err.kind() == io::ErrorKind::Other {
+            match err.into_inner() {
+                Some(err) => match err.downcast::<git_transport::packetline::read::Error>() {
+                    Ok(err) => Error::UploadPack(*err),
+                    Err(err) => Error::Io(io::Error::new(io::ErrorKind::Other, err)),
+                },
+                None => Error::Io(io::ErrorKind::Other.into()),
+            }
+        } else {
+            Error::Io(err)
         }
     }
 }

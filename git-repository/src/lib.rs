@@ -85,6 +85,7 @@
 //! * [`interrupt`]
 //! * [`protocol`]
 //!   * [`transport`][protocol::transport]
+//!     * [`packetline`][protocol::transport::packetline]
 //!
 #![deny(missing_docs, unsafe_code, rust_2018_idioms)]
 
