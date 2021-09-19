@@ -119,18 +119,18 @@ impl From<&'_ str> for Message {
     }
 }
 
-fn to_static(kind: Option<git_conventional::Type<'_>>) -> Option<git_conventional::Type<'static>> {
+fn to_static(kind: Option<git_conventional::Type<'_>>) -> Option<&'static str> {
     kind.map(|kind| match kind.as_str() {
-        "feat" => git_conventional::Type::FEAT,
-        "fix" => git_conventional::Type::FIX,
-        "revert" => git_conventional::Type::REVERT,
-        "docs" => git_conventional::Type::DOCS,
-        "style" => git_conventional::Type::STYLE,
-        "refactor" => git_conventional::Type::REFACTOR,
-        "perf" => git_conventional::Type::PERF,
-        "test" => git_conventional::Type::TEST,
-        "chore" => git_conventional::Type::CHORE,
-        _ => git_conventional::Type::new_unchecked("other"),
+        "feat" => "feat",
+        "fix" => "fix",
+        "revert" => "revert",
+        "docs" => "docs",
+        "style" => "style",
+        "refactor" => "refactor",
+        "perf" => "perf",
+        "test" => "test",
+        "chore" => "chore",
+        _ => "other",
     })
 }
 
@@ -190,7 +190,7 @@ mod tests {
             Message {
                 title: "hi".into(),
                 body: Some("the body".into()),
-                kind: Some(git_conventional::Type::new_unchecked("feat")),
+                kind: Some("feat"),
                 breaking: true,
                 breaking_description: Some("breaks".into()),
                 additions: vec![Addition::IssueId("123".into())]

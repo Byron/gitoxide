@@ -11,8 +11,8 @@ pub struct Message {
     pub title: String,
     /// More detailed information about the changes.
     pub body: Option<String>,
-    /// If set, the git-conventional scope to help organizing changes
-    pub kind: Option<git_conventional::Type<'static>>,
+    /// If set, the git-conventional scope to help organizing changes.
+    pub kind: Option<&'static str>,
     /// If set, this is a breaking change as indicated git-conventional.
     pub breaking: bool,
     /// If set, this commit message body contains a specific description of the breaking change.
