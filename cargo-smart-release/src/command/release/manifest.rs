@@ -239,13 +239,15 @@ fn set_version_and_update_package_dependency(
     let mut doc = toml_edit::Document::from_str(&manifest)?;
 
     if let Some(new_version) = new_package_version {
-        doc["package"]["version"] = toml_edit::value(new_version);
-        if verbose {
-            log::info!(
-                "Pending '{}' manifest version update: \"{}\"",
-                package_to_update.name,
-                new_version
-            );
+        if doc["package"]["version"].as_str() != Some(new_version) {
+            doc["package"]["version"] = toml_edit::value(new_version);
+            if verbose {
+                log::info!(
+                    "Pending '{}' manifest version update: \"{}\"",
+                    package_to_update.name,
+                    new_version
+                );
+            }
         }
     }
     for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {

@@ -118,10 +118,18 @@ title "gixp pack-receive"
       launch-git-daemon
       (with "version 1"
         (with "NO output directory"
-          it "generates the correct output" && {
-            WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 git://localhost/
-          }
+          (with "no wanted refs"
+            it "generates the correct output" && {
+              WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 git://localhost/
+            }
+          )
+          (with "wanted refs"
+            it "generates the correct output" && {
+              WITH_SNAPSHOT="$snapshot/file-v-any-no-output-wanted-ref-p1" \
+              expect_run $WITH_FAILURE "$exe_plumbing" pack-receive -p 1 git://localhost/ -r =refs/heads/main
+            }
+          )
         )
         (with "output directory"
           mkdir out
@@ -133,10 +141,18 @@ title "gixp pack-receive"
       )
       (with "version 2"
         (with "NO output directory"
-          it "generates the correct output" && {
-            WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 2 git://localhost/
-          }
+          (with "NO wanted refs"
+            it "generates the correct output" && {
+              WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 2 git://localhost/
+            }
+          )
+          (with "wanted refs"
+            it "generates the correct output" && {
+              WITH_SNAPSHOT="$snapshot/file-v-any-no-output-single-ref" \
+              expect_run $WITH_FAILURE "$exe_plumbing" pack-receive -p 2 git://localhost/ -r refs/heads/main
+            }
+          )
         )
         (with "output directory"
           it "generates the correct output" && {

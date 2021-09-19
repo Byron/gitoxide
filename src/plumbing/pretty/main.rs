@@ -83,6 +83,7 @@ pub fn main() -> Result<()> {
             protocol,
             url,
             directory,
+            refs,
             refs_directory,
         } => prepare_and_run(
             "pack-receive",
@@ -96,6 +97,7 @@ pub fn main() -> Result<()> {
                     &url,
                     directory,
                     refs_directory,
+                    refs.into_iter().map(|r| r.into()).collect(),
                     git_features::progress::DoOrDiscard::from(progress),
                     core::pack::receive::Context {
                         thread_limit,

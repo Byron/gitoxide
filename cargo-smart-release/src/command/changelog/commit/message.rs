@@ -149,7 +149,7 @@ mod tests {
                 body: Some("the body".into()),
                 kind: Some(git_conventional::Type::new_unchecked("feat")),
                 breaking: true,
-                breaking_description: Some("breaks".into()),
+                breaking_description: Some("breaks"),
                 additions: vec![]
             }
         )

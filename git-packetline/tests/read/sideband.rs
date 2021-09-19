@@ -193,10 +193,15 @@ async fn handling_of_err_lines() {
     let mut buf = [0u8; 2];
     let mut reader = rd.as_read();
     let res = reader.read(buf.as_mut()).await;
+    let err = res.unwrap_err();
+    assert_eq!(err.to_string(), "e", "it respects errors and passes them on");
     assert_eq!(
-        res.unwrap_err().to_string(),
+        err.into_inner()
+            .expect("inner err")
+            .downcast::<git_packetline::read::Error>()
+            .expect("it's this type")
+            .message,
         "e",
-        "it respects errors and passes them on"
     );
     let res = reader.read(buf.as_mut()).await;
     assert_eq!(

@@ -92,6 +92,7 @@ pub fn main() -> Result<()> {
             protocol,
             url,
             directory,
+            refs,
             refs_directory,
         }) => {
             let (_handle, progress) = prepare(verbose, "pack-receive", core::pack::receive::PROGRESS_RANGE);
@@ -100,6 +101,7 @@ pub fn main() -> Result<()> {
                 &url,
                 directory,
                 refs_directory,
+                refs.into_iter().map(|s| s.into()).collect(),
                 DoOrDiscard::from(progress),
                 core::pack::receive::Context {
                     thread_limit,

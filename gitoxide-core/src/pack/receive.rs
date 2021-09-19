@@ -32,8 +32,16 @@ struct CloneDelegate<W> {
     directory: Option<PathBuf>,
     refs_directory: Option<PathBuf>,
     ref_filter: Option<&'static [&'static str]>,
+    wanted_refs: Vec<BString>,
 }
 static FILTER: &[&str] = &["HEAD", "refs/tags", "refs/heads"];
+
+fn remote_supports_ref_in_want(server: &Capabilities) -> bool {
+    server
+        .capability("fetch")
+        .and_then(|cap| cap.supports("ref-in-want"))
+        .unwrap_or(false)
+}
 
 impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
     fn prepare_ls_refs(
@@ -45,16 +53,26 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         if server.contains("ls-refs") {
             arguments.extend(FILTER.iter().map(|r| format!("ref-prefix {}", r).into()));
         }
-        Ok(LsRefsAction::Continue)
+        Ok(if self.wanted_refs.is_empty() {
+            LsRefsAction::Continue
+        } else {
+            LsRefsAction::Skip
+        })
     }
 
     fn prepare_fetch(
         &mut self,
         version: transport::Protocol,
-        _server: &Capabilities,
+        server: &Capabilities,
         _features: &mut Vec<(&str, Option<&str>)>,
         _refs: &[Ref],
     ) -> io::Result<Action> {
+        if !self.wanted_refs.is_empty() && !remote_supports_ref_in_want(server) {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Want to get specific refs, but remote doesn't support this capability",
+            ));
+        }
         if version == transport::Protocol::V1 {
             self.ref_filter = Some(FILTER);
         }
@@ -67,15 +85,21 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         arguments: &mut Arguments,
         _previous_response: Option<&Response>,
     ) -> io::Result<Action> {
-        for r in refs {
-            let (path, id) = r.unpack();
-            match self.ref_filter {
-                Some(ref_prefixes) => {
-                    if ref_prefixes.iter().any(|prefix| path.starts_with_str(prefix)) {
-                        arguments.want(id);
+        if self.wanted_refs.is_empty() {
+            for r in refs {
+                let (path, id) = r.unpack();
+                match self.ref_filter {
+                    Some(ref_prefixes) => {
+                        if ref_prefixes.iter().any(|prefix| path.starts_with_str(prefix)) {
+                            arguments.want(id);
+                        }
                     }
+                    None => arguments.want(id),
                 }
-                None => arguments.want(id),
+            }
+        } else {
+            for r in &self.wanted_refs {
+                arguments.want_ref(r.as_ref())
             }
         }
         Ok(Action::Cancel)
@@ -87,6 +111,7 @@ mod blocking_io {
     use std::{io, io::BufRead, path::PathBuf};
 
     use git_repository::{
+        bstr::BString,
         protocol,
         protocol::fetch::{Ref, Response},
         Progress,
@@ -119,6 +144,7 @@ mod blocking_io {
         url: &str,
         directory: Option<PathBuf>,
         refs_directory: Option<PathBuf>,
+        wanted_refs: Vec<BString>,
         progress: P,
         ctx: Context<W>,
     ) -> anyhow::Result<()> {
@@ -128,6 +154,7 @@ mod blocking_io {
             directory,
             refs_directory,
             ref_filter: None,
+            wanted_refs,
         };
         protocol::fetch(
             transport,
@@ -150,7 +177,7 @@ mod async_io {
     use async_trait::async_trait;
     use futures_io::AsyncBufRead;
     use git_repository::{
-        objs::bstr::{BString, ByteSlice},
+        bstr::{BString, ByteSlice},
         odb::pack,
         protocol,
         protocol::fetch::{Ref, Response},
@@ -185,6 +212,7 @@ mod async_io {
         url: &str,
         directory: Option<PathBuf>,
         refs_directory: Option<PathBuf>,
+        wanted_refs: Vec<BString>,
         progress: P,
         ctx: Context<W>,
     ) -> anyhow::Result<()> {
@@ -194,6 +222,7 @@ mod async_io {
             directory,
             refs_directory,
             ref_filter: None,
+            wanted_refs,
         };
         blocking::unblock(move || {
             futures_lite::future::block_on(protocol::fetch(

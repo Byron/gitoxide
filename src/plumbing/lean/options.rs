@@ -102,7 +102,7 @@ pub struct PackReceive {
     /// the directory into which to write references. Existing files will be overwritten.
     ///
     /// Note that the directory will be created if needed.
-    #[argh(option, short = 'r')]
+    #[argh(option, short = 'd')]
     pub refs_directory: Option<PathBuf>,
 
     /// the URLs or path from which to receive the pack.
@@ -110,6 +110,12 @@ pub struct PackReceive {
     /// See here for a list of supported URLs: https://www.git-scm.com/docs/git-clone#_git_urls
     #[argh(positional)]
     pub url: String,
+
+    /// if set once or more times, these references will be fetched instead of all advertised ones.
+    ///
+    /// Note that this requires a reasonably modern git server.
+    #[argh(option, long = "reference", short = 'r')]
+    pub refs: Vec<String>,
 
     /// the directory into which to write the received pack and index.
     ///
