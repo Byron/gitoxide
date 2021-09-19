@@ -147,31 +147,31 @@ mod tests {
     }
 
     #[test]
-    fn no_conventional_no_additions() {
+    fn no_conventional_additions() {
         assert_eq!(
-            Message::from("hi\n\nbody\nother\n\nSigned: bar"),
+            Message::from("hi (#14123)\n\nbody\nother\n\nSigned: bar"),
             Message {
                 title: "hi".into(),
                 body: Some("body\nother".into()),
                 kind: None,
                 breaking: false,
                 breaking_description: None,
-                additions: vec![]
+                additions: vec![Addition::IssueId("14123".into())]
             }
         )
     }
 
     #[test]
-    fn conventional_no_additions() {
+    fn conventional_with_additions() {
         assert_eq!(
-            Message::from("feat!: hi\n\nthe body\nBREAKING-CHANGE: breaks\n\nSigned: foobar"),
+            Message::from("feat!: hi (#123)\n\nthe body\nBREAKING-CHANGE: breaks\n\nSigned: foobar"),
             Message {
                 title: "hi".into(),
                 body: Some("the body".into()),
                 kind: Some(git_conventional::Type::new_unchecked("feat")),
                 breaking: true,
                 breaking_description: Some("breaks"),
-                additions: vec![]
+                additions: vec![Addition::IssueId("123".into())]
             }
         )
     }
