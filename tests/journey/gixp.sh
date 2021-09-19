@@ -150,8 +150,14 @@ title "gixp pack-receive"
           (with "wanted refs"
             it "generates the correct output" && {
               WITH_SNAPSHOT="$snapshot/file-v-any-no-output-single-ref" \
-              expect_run $WITH_FAILURE "$exe_plumbing" pack-receive -p 2 git://localhost/ -r refs/heads/main
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 2 git://localhost/ -r refs/heads/main
             }
+            (when "ref does not exist"
+              it "fails with a detailed error message including what the server said" && {
+                WITH_SNAPSHOT="$snapshot/file-v-any-no-output-non-existing-single-ref" \
+                expect_run $WITH_FAILURE "$exe_plumbing" pack-receive -p 2 git://localhost/ -r refs/heads/does-not-exist
+              }
+            )
           )
         )
         (with "output directory"

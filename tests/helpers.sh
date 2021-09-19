@@ -57,7 +57,7 @@ function small-repo-in-sandbox() {
 }
 
 function launch-git-daemon() {
-    git daemon  --verbose --base-path=. --export-all --user-path &>/dev/null &
+    git -c uploadpack.allowrefinwant daemon --verbose --base-path=. --export-all --user-path &>/dev/null &
     daemon_pid=$!
     while ! nc -z localhost 9418; do
       sleep 0.1
