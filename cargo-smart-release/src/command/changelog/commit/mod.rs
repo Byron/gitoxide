@@ -16,7 +16,7 @@ pub struct Message<'a> {
     /// If set, this is a breaking change as indicated git-conventional.
     pub breaking: bool,
     /// If set, this commit message body contains a specific description of the breaking change.
-    pub breaking_description: Option<String>, // TODO: make borrowed once https://github.com/crate-ci/git-conventional/pull/16 is available
+    pub breaking_description: Option<&'a str>,
     /// all dditional information parsed from the title.
     pub additions: Vec<message::Addition<'a>>,
 }
