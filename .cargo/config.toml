@@ -1,5 +1,2 @@
-[profile.dev]
-debug = false
-
 [build]
 rustflags = "--cfg unsound_local_offset"
