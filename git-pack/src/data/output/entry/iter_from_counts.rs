@@ -205,6 +205,7 @@ where
                                                 .expect("pack used for counts is still available")
                                         });
                                         debug_assert_eq!(*cached_pack_id, pack_id);
+                                        stats.ref_delta_objects += 1;
                                         cache
                                             .binary_search_by_key(&base_offset, |e| e.0)
                                             .ok()
@@ -338,6 +339,8 @@ mod types {
         /// The amount of base or delta objects that could be copied directly from the pack. These are cheapest as they
         /// only cost a memory copy for the most part.
         pub objects_copied_from_pack: usize,
+        /// The amount of objects that ref to their base as ref-delta, an indication for a thin back being created.
+        pub ref_delta_objects: usize,
     }
 
     impl Outcome {
@@ -347,11 +350,13 @@ mod types {
                 decoded_and_recompressed_objects: decoded_objects,
                 missing_objects,
                 objects_copied_from_pack,
+                ref_delta_objects,
             }: Self,
         ) {
             self.decoded_and_recompressed_objects += decoded_objects;
             self.missing_objects += missing_objects;
             self.objects_copied_from_pack += objects_copied_from_pack;
+            self.ref_delta_objects += ref_delta_objects;
         }
     }
 

@@ -138,11 +138,18 @@ where
             (odb, iter)
         }
         Some(input) => {
-            let iter = Box::new(input.lines().map(|hex_id| {
-                hex_id
-                    .map_err(Into::into)
-                    .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).map_err(Into::into))
-            }));
+            let mut progress = progress.add_child("iterating");
+            progress.init(None, progress::count("objects"));
+            let iter = Box::new(
+                input
+                    .lines()
+                    .map(|hex_id| {
+                        hex_id
+                            .map_err(Into::into)
+                            .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).map_err(Into::into))
+                    })
+                    .inspect(move |_| progress.inc()),
+            );
             (Arc::new(repo.odb), iter)
         }
     };
@@ -296,6 +303,7 @@ fn human_output(
                 decoded_and_recompressed_objects,
                 missing_objects,
                 objects_copied_from_pack,
+                ref_delta_objects,
             },
     }: Statistics,
     mut out: impl std::io::Write,
@@ -316,9 +324,10 @@ fn human_output(
     #[rustfmt::skip]
     writeln!(
         out,
-        "\t{:<width$} {}\n\t{:<width$} {}\n\t{:<width$} {}",
+        "\t{:<width$} {}\n\t{:<width$} {}\n\t{:<width$} {}\n\t{:<width$} {}",
         "decoded and recompressed", decoded_and_recompressed_objects,
         "pack-to-pack copies", objects_copied_from_pack,
+        "ref-delta-objects", ref_delta_objects,
         "missing objects", missing_objects,
         width = width
     )?;
