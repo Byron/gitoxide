@@ -70,14 +70,6 @@ pub struct Options {
     pub chunk_size: usize,
     /// The way input objects are handled
     pub input_object_expansion: ObjectExpansion,
-    /// The size of a per-thread object cache in bytes to accelerate tree diffs in conjunction
-    /// with [ObjectExpansion::TreeAdditionsComparedToAncestor].
-    ///
-    /// If zero, the cache is disabled but in a costly way. Consider using a low value instead.
-    ///
-    /// Defaults to 10 megabytes which usually leads to 2.5x speedups.
-    #[cfg(feature = "object-cache-dynamic")]
-    pub object_cache_size_in_bytes: usize,
 }
 
 impl Default for Options {
@@ -86,8 +78,6 @@ impl Default for Options {
             thread_limit: None,
             chunk_size: 10,
             input_object_expansion: Default::default(),
-            #[cfg(feature = "object-cache-dynamic")]
-            object_cache_size_in_bytes: 10 * 1024 * 1024,
         }
     }
 }

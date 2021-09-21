@@ -36,9 +36,9 @@ pub type Result<E1, E2> = std::result::Result<(Vec<output::Count>, Outcome), Err
 ///  * A flag that is set to true if the operation should stop
 /// * `options`
 ///   * more configuration
-pub fn objects<Find, Iter, IterErr, Oid, Cache>(
+pub fn objects<Find, Iter, IterErr, Oid, PackCache, ObjectCache>(
     db: Find,
-    make_cache: impl Fn() -> Cache + Send + Sync,
+    make_caches: impl Fn() -> (PackCache, ObjectCache) + Send + Sync,
     objects_ids: Iter,
     progress: impl Progress,
     should_interrupt: &AtomicBool,
@@ -46,8 +46,6 @@ pub fn objects<Find, Iter, IterErr, Oid, Cache>(
         thread_limit,
         input_object_expansion,
         chunk_size,
-        #[cfg(feature = "object-cache-dynamic")]
-        object_cache_size_in_bytes,
     }: Options,
 ) -> Result<find::existing::Error<Find::Error>, IterErr>
 where
@@ -56,7 +54,8 @@ where
     Iter: Iterator<Item = std::result::Result<Oid, IterErr>> + Send,
     Oid: Into<ObjectId> + Send,
     IterErr: std::error::Error + Send,
-    Cache: crate::cache::DecodeEntry,
+    PackCache: crate::cache::DecodeEntry,
+    ObjectCache: crate::cache::Object,
 {
     let lower_bound = objects_ids.size_hint().0;
     let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(
@@ -79,9 +78,9 @@ where
             let progress = Arc::clone(&progress);
             move |n| {
                 (
-                    Vec::new(),   // object data buffer
-                    Vec::new(),   // object data buffer 2 to hold two objects at a time
-                    make_cache(), // cache to speed up pack operations
+                    Vec::new(),    // object data buffer
+                    Vec::new(),    // object data buffer 2 to hold two objects at a time
+                    make_caches(), // cache to speed up pack and tree traveral operations
                     {
                         let mut p = progress.lock().add_child(format!("thread {}", n));
                         p.init(None, git_features::progress::count("objects"));
@@ -91,7 +90,7 @@ where
             }
         },
         {
-            move |oids: Vec<std::result::Result<Oid, IterErr>>, (buf1, buf2, cache, progress)| {
+            move |oids: Vec<std::result::Result<Oid, IterErr>>, (buf1, buf2, (pack_cache, object_cache), progress)| {
                 expand::this(
                     &db,
                     input_object_expansion,
@@ -99,12 +98,11 @@ where
                     oids,
                     buf1,
                     buf2,
-                    cache,
+                    pack_cache,
+                    object_cache,
                     progress,
                     should_interrupt,
                     true,
-                    #[cfg(feature = "object-cache-dynamic")]
-                    object_cache_size_in_bytes,
                 )
             }
         },
@@ -115,12 +113,11 @@ where
 /// Like [`objects()`] but using a single thread only to mostly save on the otherwise required overhead.
 pub fn objects_unthreaded<Find, IterErr, Oid>(
     db: Find,
-    pack_cache: &mut impl crate::cache::DecodeEntry,
+    (pack_cache, obj_cache): (&mut impl crate::cache::DecodeEntry, &mut impl crate::cache::Object),
     object_ids: impl Iterator<Item = std::result::Result<Oid, IterErr>>,
     mut progress: impl Progress,
     should_interrupt: &AtomicBool,
     input_object_expansion: ObjectExpansion,
-    #[cfg(feature = "object-cache-dynamic")] object_cache_size_in_bytes: usize,
 ) -> Result<find::existing::Error<Find::Error>, IterErr>
 where
     Find: crate::Find + Send + Sync,
@@ -138,11 +135,10 @@ where
         &mut buf1,
         &mut buf2,
         pack_cache,
+        obj_cache,
         &mut progress,
         should_interrupt,
         false,
-        #[cfg(feature = "object-cache-dynamic")]
-        object_cache_size_in_bytes,
     )
 }
 
@@ -159,7 +155,6 @@ mod expand {
         util,
     };
     use crate::{
-        cache::Object,
         data::{output, output::count::PackLocation},
         find, FindExt,
     };
@@ -173,10 +168,10 @@ mod expand {
         buf1: &mut Vec<u8>,
         buf2: &mut Vec<u8>,
         cache: &mut impl crate::cache::DecodeEntry,
+        obj_cache: &mut impl crate::cache::Object,
         progress: &mut impl Progress,
         should_interrupt: &AtomicBool,
         allow_pack_lookups: bool,
-        #[cfg(feature = "object-cache-dynamic")] object_cache_size_in_bytes: usize,
     ) -> super::Result<find::existing::Error<Find::Error>, IterErr>
     where
         Find: crate::Find + Send + Sync,
@@ -192,10 +187,6 @@ mod expand {
         let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs);
         let mut changes_delegate = tree::changes::AllNew::new(seen_objs);
         let mut outcome = Outcome::default();
-        #[cfg(feature = "object-cache-dynamic")]
-        let mut obj_cache = crate::cache::object::MemoryCappedHashmap::new(object_cache_size_in_bytes);
-        #[cfg(not(feature = "object-cache-dynamic"))]
-        let mut obj_cache = crate::cache::object::Never;
 
         let stats = &mut outcome;
         for id in oids.into_iter() {

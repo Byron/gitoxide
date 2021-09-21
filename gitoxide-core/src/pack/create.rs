@@ -164,21 +164,31 @@ where
         } else {
             Some(1)
         };
-        let make_cache = move || {
-            if may_use_multiple_threads {
-                Box::new(pack::cache::Never) as Box<dyn DecodeEntry>
+        let make_caches = move || {
+            let total_object_cache_size = 50 * 1024 * 1024; // TODO: make configurable
+            let (pack_cache, obj_cache_size) = if may_use_multiple_threads {
+                (
+                    Box::new(pack::cache::Never) as Box<dyn DecodeEntry>,
+                    total_object_cache_size / thread_limit.unwrap_or(1),
+                )
             } else {
-                Box::new(pack::cache::lru::MemoryCappedHashmap::new(512 * 1024 * 1024)) as Box<dyn DecodeEntry>
+                (
+                    Box::new(pack::cache::lru::MemoryCappedHashmap::new(512 * 1024 * 1024)) as Box<dyn DecodeEntry>,
+                    total_object_cache_size,
+                )
                 // todo: Make that configurable
-            }
+            };
+            (
+                pack_cache,
+                git::odb::pack::cache::object::MemoryCappedHashmap::new(obj_cache_size),
+            )
         };
         let progress = progress::ThroughputOnDrop::new(progress);
         let input_object_expansion = expansion.into();
-        let total_object_cache_size = 50 * 1024 * 1024; // TODO: make configurable
         let (mut counts, count_stats) = if may_use_multiple_threads {
             pack::data::output::count::objects(
                 Arc::clone(&odb),
-                make_cache,
+                make_caches,
                 input,
                 progress,
                 &interrupt::IS_INTERRUPTED,
@@ -186,18 +196,17 @@ where
                     thread_limit,
                     chunk_size,
                     input_object_expansion,
-                    object_cache_size_in_bytes: total_object_cache_size / thread_limit.unwrap_or(1),
                 },
             )?
         } else {
+            let mut caches = make_caches();
             pack::data::output::count::objects_unthreaded(
                 Arc::clone(&odb),
-                &mut make_cache(),
+                (&mut caches.0, &mut caches.1),
                 input,
                 progress,
                 &interrupt::IS_INTERRUPTED,
                 input_object_expansion,
-                total_object_cache_size,
             )?
         };
         stats.counts = count_stats;

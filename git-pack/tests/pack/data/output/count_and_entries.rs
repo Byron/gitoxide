@@ -250,7 +250,7 @@ fn traversals() -> crate::Result {
         let deterministic_count_needs_single_thread = Some(1);
         let (counts, stats) = output::count::objects(
             db.clone(),
-            || pack::cache::Never,
+            || (pack::cache::Never, pack::cache::object::Never),
             commits
                 .into_iter()
                 .chain(std::iter::once(hex_to_id(if take.is_some() {
