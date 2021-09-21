@@ -39,6 +39,8 @@ pub fn objects<Find, Iter, IterErr, Oid, Cache>(
         thread_limit,
         input_object_expansion,
         chunk_size,
+        #[cfg(feature = "object-cache-dynamic")]
+        object_cache_size_in_bytes,
     }: Options,
 ) -> Result<find::existing::Error<Find::Error>, IterErr>
 where
@@ -94,6 +96,8 @@ where
                     progress,
                     should_interrupt,
                     true,
+                    #[cfg(feature = "object-cache-dynamic")]
+                    object_cache_size_in_bytes,
                 )
             }
         },
@@ -109,6 +113,7 @@ pub fn objects_unthreaded<Find, IterErr, Oid>(
     mut progress: impl Progress,
     should_interrupt: &AtomicBool,
     input_object_expansion: ObjectExpansion,
+    #[cfg(feature = "object-cache-dynamic")] object_cache_size_in_bytes: usize,
 ) -> Result<find::existing::Error<Find::Error>, IterErr>
 where
     Find: crate::Find + Send + Sync,
@@ -129,6 +134,8 @@ where
         &mut progress,
         should_interrupt,
         false,
+        #[cfg(feature = "object-cache-dynamic")]
+        object_cache_size_in_bytes,
     )
 }
 
@@ -144,6 +151,7 @@ fn expand_inner<Find, IterErr, Oid>(
     progress: &mut impl Progress,
     should_interrupt: &AtomicBool,
     allow_pack_lookups: bool,
+    #[cfg(feature = "object-cache-dynamic")] object_cache_size_in_bytes: usize,
 ) -> Result<find::existing::Error<Find::Error>, IterErr>
 where
     Find: crate::Find + Send + Sync,
@@ -160,7 +168,7 @@ where
     let mut changes_delegate = tree::changes::AllNew::new(seen_objs);
     let mut outcome = Outcome::default();
     #[cfg(feature = "object-cache-dynamic")]
-    let mut obj_cache = crate::cache::object::MemoryCappedHashmap::new(10 * 1024 * 1024); // TODO: make configurable
+    let mut obj_cache = crate::cache::object::MemoryCappedHashmap::new(object_cache_size_in_bytes);
     #[cfg(not(feature = "object-cache-dynamic"))]
     let mut obj_cache = crate::cache::object::Never;
 
@@ -637,6 +645,14 @@ mod types {
         pub chunk_size: usize,
         /// The way input objects are handled
         pub input_object_expansion: ObjectExpansion,
+        /// The size of a per-thread object cache in bytes to accelerate tree diffs in conjunction
+        /// with [ObjectExpansion::TreeAdditionsComparedToAncestor].
+        ///
+        /// If zero, the cache is disabled but in a costly way. Consider using a low value instead.
+        ///
+        /// Defaults to 10 megabytes which usually leads to 2.5x speedups.
+        #[cfg(feature = "object-cache-dynamic")]
+        pub object_cache_size_in_bytes: usize,
     }
 
     impl Default for Options {
@@ -645,6 +661,8 @@ mod types {
                 thread_limit: None,
                 chunk_size: 10,
                 input_object_expansion: Default::default(),
+                #[cfg(feature = "object-cache-dynamic")]
+                object_cache_size_in_bytes: 10 * 1024 * 1024,
             }
         }
     }

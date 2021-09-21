@@ -175,6 +175,7 @@ where
         };
         let progress = progress::ThroughputOnDrop::new(progress);
         let input_object_expansion = expansion.into();
+        let total_object_cache_size = 50 * 1024 * 1024; // TODO: make configurable
         let (mut counts, count_stats) = if may_use_multiple_threads {
             pack::data::output::count::objects(
                 Arc::clone(&odb),
@@ -186,6 +187,7 @@ where
                     thread_limit,
                     chunk_size,
                     input_object_expansion,
+                    object_cache_size_in_bytes: total_object_cache_size / thread_limit.unwrap_or(1),
                 },
             )?
         } else {
@@ -196,6 +198,7 @@ where
                 progress,
                 &interrupt::IS_INTERRUPTED,
                 input_object_expansion,
+                total_object_cache_size,
             )?
         };
         stats.counts = count_stats;
