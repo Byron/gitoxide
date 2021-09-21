@@ -40,5 +40,7 @@ impl<T: DecodeEntry + ?Sized> DecodeEntry for Box<T> {
 #[cfg(any(feature = "pack-cache-lru-dynamic", feature = "pack-cache-lru-static"))]
 pub mod lru;
 
+pub mod object;
+
 ///
 pub(crate) mod delta;

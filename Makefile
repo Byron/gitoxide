@@ -101,6 +101,7 @@ check: ## Build all code in suitable configurations
 	cd git-pack && cargo check --features serde1 \
 			   && cargo check --features pack-cache-lru-static \
 			   && cargo check --features pack-cache-lru-dynamic \
+			   && cargo check --features object-cache-dynamic \
 			   && cargo check
 	cd git-packetline && cargo check \
 					   && cargo check --features blocking-io \

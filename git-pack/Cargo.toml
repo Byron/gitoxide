@@ -14,6 +14,7 @@ doctest = false
 [features]
 pack-cache-lru-static = ["uluru"]
 pack-cache-lru-dynamic = ["clru"]
+object-cache-dynamic = ["clru"]
 serde1 = ["serde", "git-object/serde1"]
 internal-testing-git-features-parallel = ["git-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []

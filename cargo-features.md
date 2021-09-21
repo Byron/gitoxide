@@ -85,6 +85,8 @@ The library powering the command-line interface.
       for the LRU-cache itself low.
 * **pack-cache-lru-dynamic**
     * Provide a hash-map based LRU cache whose eviction is based a memory cap calculated from object data.
+* **object-cache-dynamic**
+    * If set, select algorithms may additionally use a full-object cache which is queried before the pack itself.
    
 ### git-actor
 

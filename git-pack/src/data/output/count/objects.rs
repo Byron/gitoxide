@@ -159,6 +159,11 @@ where
     let mut traverse_delegate = tree::traverse::AllUnseen::new(seen_objs);
     let mut changes_delegate = tree::changes::AllNew::new(seen_objs);
     let mut outcome = Outcome::default();
+    #[cfg(feature = "object-cache-dynamic")]
+    let mut obj_cache = crate::cache::object::MemoryCappedHashmap::new(10 * 1024 * 1024); // TODO: make configurable
+    #[cfg(not(feature = "object-cache-dynamic"))]
+    let mut obj_cache = crate::cache::object::Never;
+
     let stats = &mut outcome;
     for id in oids.into_iter() {
         if should_interrupt.load(Ordering::Relaxed) {
@@ -265,7 +270,17 @@ where
                                             &mut tree_diff_state,
                                             |oid, buf| {
                                                 stats.decoded_objects += 1;
-                                                db.find_tree_iter(oid, buf, cache).ok()
+                                                let id = oid.to_owned();
+                                                match obj_cache.get(&id, buf) {
+                                                    Some(_kind) => git_object::TreeRefIter::from_bytes(buf).into(),
+                                                    None => match db.find_tree_iter(oid, buf, cache).ok() {
+                                                        Some(_) => {
+                                                            obj_cache.put(id, git_object::Kind::Tree, buf);
+                                                            git_object::TreeRefIter::from_bytes(buf).into()
+                                                        }
+                                                        None => None,
+                                                    },
+                                                }
                                             },
                                             &mut changes_delegate,
                                         )
