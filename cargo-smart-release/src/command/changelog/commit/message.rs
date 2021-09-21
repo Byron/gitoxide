@@ -1,8 +1,8 @@
+use git_conventional::Type;
 use git_repository as git;
 use git_repository::bstr::{BStr, ByteSlice};
 
 use crate::command::changelog_impl::commit::Message;
-use git_conventional::Type;
 
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq, Eq))]

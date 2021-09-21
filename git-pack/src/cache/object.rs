@@ -8,8 +8,9 @@ use crate::cache;
 mod memory {
     use std::num::NonZeroUsize;
 
-    use crate::cache;
     use clru::WeightScale;
+
+    use crate::cache;
 
     struct Entry {
         data: Vec<u8>,

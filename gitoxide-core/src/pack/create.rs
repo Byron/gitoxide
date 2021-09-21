@@ -7,13 +7,12 @@ use git_repository::{
     hash::ObjectId,
     interrupt,
     objs::bstr::ByteVec,
-    odb::{pack, pack::cache::DecodeEntry},
+    odb::{pack, pack::cache::DecodeEntry, FindExt},
     prelude::{Finalize, ReferenceAccessExt},
     progress, traverse, Progress,
 };
 
 use crate::OutputFormat;
-use git_repository::odb::FindExt;
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 

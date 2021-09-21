@@ -39,6 +39,11 @@ impl Count {
     }
 }
 
+#[path = "objects/mod.rs"]
+mod objects_impl;
+pub use objects_impl::{objects, objects_unthreaded};
+
 ///
-pub mod objects;
-pub use objects::{objects, objects_unthreaded};
+pub mod objects {
+    pub use super::objects_impl::{Error, ObjectExpansion, Options, Outcome, Result};
+}

@@ -177,9 +177,9 @@ pub mod ancestors {
         }
     }
     pub use error::Error;
+    use git_pack::cache::Object;
 
     use crate::ext::ObjectIdExt;
-    use git_pack::cache::Object;
 }
 
 mod impls {

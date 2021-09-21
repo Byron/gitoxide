@@ -2,6 +2,7 @@ use std::{convert::TryInto, ops::DerefMut};
 
 use git_hash::ObjectId;
 use git_odb::{Find, FindExt};
+use git_pack::cache::Object;
 use git_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
     FullName,
@@ -12,7 +13,6 @@ use crate::{
     easy::{commit, object, ObjectRef, Oid},
     ext::ObjectIdExt,
 };
-use git_pack::cache::Object;
 
 /// Methods related to object creation.
 pub trait ObjectAccessExt: easy::Access + Sized {

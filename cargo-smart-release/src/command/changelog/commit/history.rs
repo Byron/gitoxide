@@ -1,5 +1,6 @@
-use crate::command::changelog_impl::commit::Message;
 use git_repository as git;
+
+use crate::command::changelog_impl::commit::Message;
 
 /// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
 pub struct Segment<'a> {
