@@ -12,6 +12,7 @@ use crate::{
     easy::{commit, object, ObjectRef, Oid},
     ext::ObjectIdExt,
 };
+use git_pack::cache::Object;
 
 /// Methods related to object creation.
 pub trait ObjectAccessExt: easy::Access + Sized {
