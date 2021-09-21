@@ -2,11 +2,13 @@
 //!
 //! This module is a bit 'misplaced' if spelled out like 'git_pack::cache::object::*' but is best placed here for code re-use and
 //! general usefulnes.
+use crate::cache;
 
 #[cfg(feature = "object-cache-dynamic")]
 mod memory {
     use std::num::NonZeroUsize;
 
+    use crate::cache;
     use clru::WeightScale;
 
     struct Entry {
@@ -50,9 +52,9 @@ mod memory {
         }
     }
 
-    impl MemoryCappedHashmap {
+    impl cache::Object for MemoryCappedHashmap {
         /// Put the object going by `id` of `kind` with `data` into the cache.
-        pub fn put(&mut self, id: git_hash::ObjectId, kind: git_object::Kind, data: &[u8]) {
+        fn put(&mut self, id: git_hash::ObjectId, kind: git_object::Kind, data: &[u8]) {
             self.debug.put();
             if let Ok(Some(previous_entry)) = self.inner.put_with_weight(
                 id,
@@ -75,7 +77,7 @@ mod memory {
         }
 
         /// Try to retrieve the object named `id` and place its data into `out` if available and return `Some(kind)` if found.
-        pub fn get(&mut self, id: &git_hash::ObjectId, out: &mut Vec<u8>) -> Option<git_object::Kind> {
+        fn get(&mut self, id: &git_hash::ObjectId, out: &mut Vec<u8>) -> Option<git_object::Kind> {
             let res = self.inner.get(id).map(|e| {
                 out.resize(e.data.len(), 0);
                 out.copy_from_slice(&e.data);
@@ -96,12 +98,12 @@ pub use memory::MemoryCappedHashmap;
 /// A cache implementation that doesn't do any caching.
 pub struct Never;
 
-impl Never {
+impl cache::Object for Never {
     /// Noop
-    pub fn put(&mut self, _id: git_hash::ObjectId, _kind: git_object::Kind, _data: &[u8]) {}
+    fn put(&mut self, _id: git_hash::ObjectId, _kind: git_object::Kind, _data: &[u8]) {}
 
     /// Noop
-    pub fn get(&mut self, _id: &git_hash::ObjectId, _out: &mut Vec<u8>) -> Option<git_object::Kind> {
+    fn get(&mut self, _id: &git_hash::ObjectId, _out: &mut Vec<u8>) -> Option<git_object::Kind> {
         None
     }
 }

@@ -693,6 +693,7 @@ use std::{cell::RefCell, collections::HashSet};
 
 pub use types::{Error, ObjectExpansion, Options, Outcome};
 
+use crate::cache::Object;
 use crate::data::output::count::PackLocation;
 
 mod reduce {
