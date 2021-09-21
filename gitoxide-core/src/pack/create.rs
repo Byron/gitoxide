@@ -3,17 +3,17 @@ use std::{convert::TryFrom, ffi::OsStr, io, path::Path, str::FromStr, sync::Arc,
 use anyhow::anyhow;
 use git_repository as git;
 use git_repository::{
-    easy::Access,
     hash,
     hash::ObjectId,
     interrupt,
     objs::bstr::ByteVec,
     odb::{pack, pack::cache::DecodeEntry},
     prelude::{Finalize, ReferenceAccessExt},
-    progress, Progress,
+    progress, traverse, Progress,
 };
 
 use crate::OutputFormat;
+use git_repository::odb::FindExt;
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 
@@ -103,11 +103,11 @@ pub fn create<W>(
 where
     W: std::io::Write,
 {
-    let repo = git::discover(repository_path)?.into_easy_arc();
+    let repo = git::discover(repository_path)?;
     progress.init(Some(2), progress::steps());
     let tips = tips.into_iter();
     let make_cancellation_err = || anyhow!("Cancelled by user");
-    let (repo, input): (
+    let (odb, input): (
         _,
         Box<dyn Iterator<Item = Result<ObjectId, input_iteration::Error>> + Send>,
     ) = match input {
@@ -115,23 +115,27 @@ where
             use git::bstr::ByteSlice;
             use os_str_bytes::OsStrBytes;
             let mut progress = progress.add_child("traversing");
+            let repo = repo.into_easy();
             progress.init(None, progress::count("commits"));
             let tips = tips
                 .map(|tip| {
                     ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else(|_| {
                         repo.find_reference(tip.as_ref().to_raw_bytes().as_bstr())
-                            .map_err(Into::into)
+                            .map_err(anyhow::Error::from)
                             .and_then(|r| r.into_fully_peeled_id().map(|oid| oid.detach()).map_err(Into::into))
                     })
                 })
                 .collect::<Result<Vec<_>, _>>()?;
+            let odb = Arc::new(git::Repository::try_from(repo)?.odb);
             let iter = Box::new(
-                git::easy::oid::ancestors(tips, &repo)?
-                    .all()
-                    .map(|res| res.map(|oid| oid.detach()).map_err(Into::into))
-                    .inspect(move |_| progress.inc()),
+                traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), {
+                    let db = Arc::clone(&odb);
+                    move |oid, buf| db.find_commit_iter(oid, buf, &mut pack::cache::Never).ok()
+                })
+                .map(|res| res.map_err(Into::into))
+                .inspect(move |_| progress.inc()),
             );
-            (repo.clone(), iter)
+            (odb, iter)
         }
         Some(input) => {
             let iter = Box::new(input.lines().map(|hex_id| {
@@ -139,7 +143,7 @@ where
                     .map_err(Into::into)
                     .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).map_err(Into::into))
             }));
-            (repo, iter)
+            (Arc::new(repo.odb), iter)
         }
     };
 
@@ -164,10 +168,9 @@ where
         };
         let progress = progress::ThroughputOnDrop::new(progress);
         let input_object_expansion = expansion.into();
-        let db = &repo.repo()?.odb;
         let (mut counts, count_stats) = if may_use_multiple_threads {
             pack::data::output::count::objects(
-                db,
+                Arc::clone(&odb),
                 make_cache,
                 input,
                 progress,
@@ -180,7 +183,7 @@ where
             )?
         } else {
             pack::data::output::count::objects_unthreaded(
-                db,
+                Arc::clone(&odb),
                 &mut make_cache(),
                 input,
                 progress,
@@ -195,12 +198,11 @@ where
 
     progress.inc();
     let num_objects = counts.len();
-    let odb = git::Repository::try_from(repo)?.odb;
     let mut in_order_entries = {
         let progress = progress.add_child("creating entries");
         pack::data::output::InOrderIter::from(pack::data::output::entry::iter_from_counts(
             counts,
-            Arc::new(odb),
+            Arc::clone(&odb),
             || pack::cache::Never,
             progress,
             pack::data::output::entry::iter_from_counts::Options {

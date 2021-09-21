@@ -67,19 +67,6 @@ where
     tips: Box<dyn Iterator<Item = ObjectId>>,
 }
 
-/// Obtain a platform for traversing ancestors of this commit.
-pub fn ancestors<A: easy::Access + Sized>(
-    ids: impl IntoIterator<Item = ObjectId> + 'static,
-    access: &A,
-) -> Result<Ancestors<'_, A>, ancestors::Error> {
-    let repo = access.repo()?;
-    Ok(Ancestors {
-        repo,
-        access,
-        tips: Box::new(ids.into_iter()),
-    })
-}
-
 ///
 pub mod ancestors {
     use std::ops::{Deref, DerefMut};
