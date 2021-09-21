@@ -1,4 +1,4 @@
-use std::{rc::Rc, sync::Arc};
+use std::{convert::TryFrom, rc::Rc, sync::Arc};
 
 use parking_lot::lock_api::{ArcRwLockReadGuard, ArcRwLockWriteGuard};
 
@@ -10,6 +10,22 @@ impl From<Repository> for Easy {
             repo: Rc::new(repo),
             state: Default::default(),
         }
+    }
+}
+
+impl TryFrom<Easy> for Repository {
+    type Error = easy::borrow::repo::Error;
+
+    fn try_from(value: Easy) -> Result<Self, Self::Error> {
+        Rc::try_unwrap(value.repo).map_err(|_| easy::borrow::repo::Error)
+    }
+}
+
+impl TryFrom<EasyArc> for Repository {
+    type Error = easy::borrow::repo::Error;
+
+    fn try_from(value: EasyArc) -> Result<Self, Self::Error> {
+        Arc::try_unwrap(value.repo).map_err(|_| easy::borrow::repo::Error)
     }
 }
 

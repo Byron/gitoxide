@@ -64,7 +64,20 @@ where
 {
     repo: A::RepoRef,
     access: &'repo A,
-    tip: ObjectId,
+    tips: Box<dyn Iterator<Item = ObjectId>>,
+}
+
+/// Obtain a platform for traversing ancestors of this commit.
+pub fn ancestors<A: easy::Access + Sized>(
+    ids: impl IntoIterator<Item = ObjectId> + 'static,
+    access: &A,
+) -> Result<Ancestors<'_, A>, ancestors::Error> {
+    let repo = access.repo()?;
+    Ok(Ancestors {
+        repo,
+        access,
+        tips: Box::new(ids.into_iter()),
+    })
 }
 
 ///
@@ -88,7 +101,7 @@ pub mod ancestors {
             Ok(Ancestors {
                 repo,
                 access: self.access,
-                tip: self.inner,
+                tips: Box::new(Some(self.inner).into_iter()),
             })
         }
     }
@@ -99,10 +112,11 @@ pub mod ancestors {
     {
         /// Return an iterator to traverse all commits in the history of the commit the parent [Oid] is pointing to.
         pub fn all(&mut self) -> Iter<'_, 'repo, A> {
+            let tips = std::mem::replace(&mut self.tips, Box::new(None.into_iter()));
             Iter {
                 access: self.access,
                 inner: Box::new(git_traverse::commit::Ancestors::new(
-                    Some(self.tip),
+                    tips,
                     git_traverse::commit::ancestors::State::default(),
                     move |oid, buf| {
                         let state = self.access.state();
@@ -175,7 +189,7 @@ pub mod ancestors {
             BorrowBufMut(#[from] easy::borrow::state::Error),
         }
     }
-    use error::Error;
+    pub use error::Error;
 
     use crate::ext::ObjectIdExt;
 }

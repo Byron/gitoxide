@@ -1,16 +1,16 @@
-use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc, time::Instant};
+use std::{convert::TryFrom, ffi::OsStr, io, path::Path, str::FromStr, sync::Arc, time::Instant};
 
 use anyhow::anyhow;
+use git_repository as git;
 use git_repository::{
+    easy::Access,
     hash,
     hash::ObjectId,
     interrupt,
     objs::bstr::ByteVec,
-    odb::{pack, pack::cache::DecodeEntry, Find},
-    prelude::{Finalize, FindExt},
-    progress,
-    refs::file::ReferenceExt,
-    traverse, Progress,
+    odb::{pack, pack::cache::DecodeEntry},
+    prelude::{Finalize, ReferenceAccessExt},
+    progress, Progress,
 };
 
 use crate::OutputFormat;
@@ -103,67 +103,43 @@ pub fn create<W>(
 where
     W: std::io::Write,
 {
-    // TODO: review need for Arc for the counting part, use different kinds of Easy depending on need
-    let repo = Arc::new(git_repository::discover(repository_path)?);
+    let repo = git::discover(repository_path)?.into_easy_arc();
     progress.init(Some(2), progress::steps());
     let tips = tips.into_iter();
     let make_cancellation_err = || anyhow!("Cancelled by user");
-    let (db, input): (
+    let (repo, input): (
         _,
         Box<dyn Iterator<Item = Result<ObjectId, input_iteration::Error>> + Send>,
     ) = match input {
         None => {
+            use git::bstr::ByteSlice;
+            use os_str_bytes::OsStrBytes;
             let mut progress = progress.add_child("traversing");
             progress.init(None, progress::count("commits"));
             let tips = tips
                 .map(|tip| {
-                    ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else({
-                        // TODO: Use Easy when ready…
-                        let packed = repo.refs.packed_buffer().ok().flatten();
-                        let refs = &repo.refs;
-                        let repo = Arc::clone(&repo);
-                        move |_| {
-                            refs.find(tip.as_ref().to_string_lossy().as_ref(), packed.as_ref())
-                                .map_err(anyhow::Error::from)
-                                .and_then(|mut r| {
-                                    r.peel_to_id_in_place(refs, packed.as_ref(), |oid, buf| {
-                                        repo.odb
-                                            .try_find(oid, buf, &mut pack::cache::Never)
-                                            .map(|obj| obj.map(|obj| (obj.kind, obj.data)))
-                                    })
-                                    .map(|oid| oid.to_owned())
-                                    .map_err(anyhow::Error::from)
-                                })
-                        }
+                    ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else(|_| {
+                        repo.find_reference(tip.as_ref().to_raw_bytes().as_bstr())
+                            .map_err(Into::into)
+                            .and_then(|r| r.into_fully_peeled_id().map(|oid| oid.detach()).map_err(Into::into))
                     })
                 })
                 .collect::<Result<Vec<_>, _>>()?;
-            let db = match Arc::try_unwrap(repo) {
-                Ok(repo) => Arc::new(repo.odb),
-                Err(_) => unreachable!("there is only one instance left here"),
-            };
             let iter = Box::new(
-                // TODO: Easy-based traversal
-                traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), {
-                    let db = Arc::clone(&db);
-                    move |oid, buf| db.find_commit_iter(oid, buf, &mut pack::cache::Never).ok()
-                })
-                .map(|res| res.map_err(Into::into))
-                .inspect(move |_| progress.inc()),
+                git::easy::oid::ancestors(tips, &repo)?
+                    .all()
+                    .map(|res| res.map(|oid| oid.detach()).map_err(Into::into))
+                    .inspect(move |_| progress.inc()),
             );
-            (db, iter)
+            (repo.clone(), iter)
         }
         Some(input) => {
-            let db = match Arc::try_unwrap(repo) {
-                Ok(repo) => Arc::new(repo.odb),
-                Err(_) => unreachable!("there is only one instance left here"),
-            };
             let iter = Box::new(input.lines().map(|hex_id| {
                 hex_id
                     .map_err(Into::into)
                     .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).map_err(Into::into))
             }));
-            (db, iter)
+            (repo, iter)
         }
     };
 
@@ -186,9 +162,9 @@ where
                 // todo: Make that configurable
             }
         };
-        let db = Arc::clone(&db);
         let progress = progress::ThroughputOnDrop::new(progress);
         let input_object_expansion = expansion.into();
+        let db = &repo.repo()?.odb;
         let (mut counts, count_stats) = if may_use_multiple_threads {
             pack::data::output::count::objects(
                 db,
@@ -219,11 +195,12 @@ where
 
     progress.inc();
     let num_objects = counts.len();
+    let odb = git::Repository::try_from(repo)?.odb;
     let mut in_order_entries = {
         let progress = progress.add_child("creating entries");
         pack::data::output::InOrderIter::from(pack::data::output::entry::iter_from_counts(
             counts,
-            Arc::clone(&db),
+            Arc::new(odb),
             || pack::cache::Never,
             progress,
             pack::data::output::entry::iter_from_counts::Options {
