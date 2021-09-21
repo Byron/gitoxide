@@ -377,8 +377,7 @@ mod types {
         /// If set, the resulting back can have deltas that refer to an object which is not in the pack. This can happen
         /// if the initial counted objects do not contain an object that an existing packed delta refers to, for example, because
         /// it wasn't part of the iteration, for instance when the iteration was performed on tree deltas or only a part of the
-        /// commit graph. Please note that thin packs are not valid packs when stored on disk, thus they are only valid for packs
-        /// that are being send over the wire.
+        /// commit graph. Please note that thin packs are not valid packs at rest, thus they are only valid for packs in transit.
         ///
         /// If set to false, delta objects will be decompressed and recompressed as base objects.
         pub allow_thin_pack: bool,

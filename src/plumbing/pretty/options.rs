@@ -68,6 +68,14 @@ pub enum Subcommands {
         /// It's a form of instrumentation for developers to help improve pack generation.
         statistics: bool,
 
+        #[clap(long)]
+        /// if set, delta-objects whose base object wouldn't be in the pack will not be recompressed as base object, but instead
+        /// refer to its base object using its object id.
+        ///
+        /// This allows for smaller packs but requires the receiver of the pack to resolve these ids before storing the pack.
+        /// Packs produced with this option enabled are only valid in transit, but not at rest.
+        thin: bool,
+
         /// The directory into which to write the pack file.
         #[clap(long, short = 'o')]
         output_directory: Option<PathBuf>,

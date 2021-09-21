@@ -36,6 +36,7 @@ pub fn main() -> Result<()> {
         Subcommands::PackCreate {
             repository,
             expansion,
+            thin,
             statistics,
             nondeterministic_count,
             tips,
@@ -62,6 +63,7 @@ pub fn main() -> Result<()> {
                     let repository = repository.unwrap_or_else(|| PathBuf::from("."));
                     let context = core::pack::create::Context {
                         thread_limit,
+                        thin,
                         nondeterministic_count,
                         statistics: if statistics { Some(format) } else { None },
                         out,

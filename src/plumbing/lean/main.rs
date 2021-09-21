@@ -34,6 +34,7 @@ pub fn main() -> Result<()> {
             nondeterministic_count,
             statistics,
             tips,
+            thin,
             output_directory,
         }) => {
             let (_handle, progress) = prepare(verbose, "pack-create", Some(core::pack::create::PROGRESS_RANGE));
@@ -62,6 +63,7 @@ pub fn main() -> Result<()> {
                 DoOrDiscard::from(progress),
                 core::pack::create::Context {
                     expansion,
+                    thin,
                     nondeterministic_count,
                     statistics: if statistics { Some(OutputFormat::Human) } else { None },
                     out: stdout(),

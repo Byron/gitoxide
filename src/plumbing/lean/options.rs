@@ -194,6 +194,14 @@ pub struct PackCreate {
     /// It's a form of instrumentation for developers to help improve pack generation.
     pub statistics: bool,
 
+    #[argh(switch)]
+    /// if set, delta-objects whose base object wouldn't be in the pack will not be recompressed as base object, but instead
+    /// refer to its base object using its object id.
+    ///
+    /// This allows for smaller packs but requires the receiver of the pack to resolve these ids before storing the pack.
+    /// Packs produced with this option enabled are only valid in transit, but not at rest.
+    pub thin: bool,
+
     /// the directory into which to write the pack file.
     #[argh(option, short = 'o')]
     pub output_directory: Option<PathBuf>,

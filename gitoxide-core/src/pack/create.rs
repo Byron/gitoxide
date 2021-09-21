@@ -72,6 +72,9 @@ pub struct Context<W> {
     /// If unset, counting will only use one thread and thus yield the same sequence of objects in any case.
     /// If the `thread_limit` is 1, the count is always deterministic.
     pub nondeterministic_count: bool,
+    /// If true, delta objects may refer to their base as reference, allowing it not to be included in the created back.
+    /// Otherwise these have to be recompressed in order to make the pack self-contained.
+    pub thin: bool,
     /// If set, don't use more than this amount of threads.
     /// Otherwise, usually use as many threads as there are logical cores.
     /// A value of 0 is interpreted as no-limit
@@ -91,6 +94,7 @@ pub fn create<W>(
     Context {
         expansion,
         nondeterministic_count,
+        thin,
         thread_limit,
         statistics,
         mut out,
@@ -225,7 +229,7 @@ where
             pack::data::output::entry::iter_from_counts::Options {
                 thread_limit,
                 mode: pack::data::output::entry::iter_from_counts::Mode::PackCopyAndBaseObjects,
-                allow_thin_pack: false, // todo: make this configurable
+                allow_thin_pack: thin,
                 chunk_size,
                 version: Default::default(),
             },
