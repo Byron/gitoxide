@@ -10,8 +10,10 @@ use crate::{
 };
 
 mod errors;
+pub(crate) mod cache {
+    pub use git_pack::cache::object::MemoryCappedHashmap;
+}
 pub use errors::{find, write};
-pub(crate) mod cache;
 mod impls;
 pub mod peel;
 mod tree;
