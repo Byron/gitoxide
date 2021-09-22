@@ -80,6 +80,23 @@ impl<'a> TryFrom<&'a [u8]> for tree::EntryMode {
     }
 }
 
+impl TryFrom<u32> for tree::EntryMode {
+    type Error = u32;
+
+    fn try_from(mode: u32) -> Result<Self, Self::Error> {
+        Ok(match mode {
+            0o40000 => tree::EntryMode::Tree,
+            0o100644 => tree::EntryMode::Blob,
+            0o100755 => tree::EntryMode::BlobExecutable,
+            0o120000 => tree::EntryMode::Link,
+            0o160000 => tree::EntryMode::Commit,
+            0o100664 => tree::EntryMode::Blob, // rare and found in the linux kernel
+            0o100640 => tree::EntryMode::Blob, // rare and found in the Rust repo
+            _ => return Err(mode),
+        })
+    }
+}
+
 mod decode {
     use std::convert::TryFrom;
 
@@ -99,15 +116,22 @@ mod decode {
     const NULL: &[u8] = b"\0";
 
     pub fn fast_entry(i: &[u8]) -> Option<(&[u8], EntryRef<'_>)> {
-        let (mode, i) = i.split_at(i.find_byte(b' ')?);
+        let mut mode = 0u32;
+        let mut spacer_pos = 1;
+        for b in i.iter().take_while(|b| **b != b' ') {
+            if *b < b'0' || *b > b'7' {
+                return None;
+            }
+            mode = (mode << 3) + (b - b'0') as u32;
+            spacer_pos += 1;
+        }
+        let (_, i) = i.split_at(spacer_pos);
         let mode = tree::EntryMode::try_from(mode).ok()?;
-        let i = &i[1..];
         let (filename, i) = i.split_at(i.find_byte(0)?);
         let i = &i[1..];
         const HASH_LEN_FIXME: usize = 20; // TODO: know actual /desired length or we may overshoot
         let (oid, i) = match i.len() {
             len if len < HASH_LEN_FIXME => return None,
-            HASH_LEN_FIXME => (i, &[] as &[u8]),
             _ => i.split_at(20),
         };
         Some((
