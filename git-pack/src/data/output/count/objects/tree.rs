@@ -7,6 +7,7 @@ pub mod changes {
     use git_object::bstr::BStr;
 
     use crate::data::output::count::objects_impl::util::InsertImmutable;
+    use git_object::tree::EntryMode;
 
     pub struct AllNew<'a, H> {
         pub objects: Vec<ObjectId>,
@@ -42,7 +43,10 @@ pub mod changes {
 
         fn visit(&mut self, change: Change) -> Action {
             match change {
-                Change::Addition { oid, .. } | Change::Modification { oid, .. } => {
+                Change::Addition { oid, entry_mode } | Change::Modification { oid, entry_mode, .. } => {
+                    if entry_mode == EntryMode::Commit {
+                        return Action::Continue;
+                    }
                     let inserted = self.all_seen.insert(oid);
                     if inserted {
                         self.objects.push(oid);
@@ -61,6 +65,7 @@ pub mod traverse {
     use git_traverse::tree::{visit::Action, Visit};
 
     use crate::data::output::count::objects_impl::util::InsertImmutable;
+    use git_object::tree::EntryMode;
 
     pub struct AllUnseen<'a, H> {
         pub non_trees: Vec<ObjectId>,
@@ -104,6 +109,10 @@ pub mod traverse {
         }
 
         fn visit_nontree(&mut self, entry: &EntryRef<'_>) -> Action {
+            if entry.mode == EntryMode::Commit {
+                // links don't have a representation
+                return Action::Continue;
+            }
             let inserted = self.all_seen.insert(entry.oid.to_owned());
             if inserted {
                 self.non_trees.push(entry.oid.to_owned());
