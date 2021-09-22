@@ -1,5 +1,6 @@
 #![allow(unused)]
 
+use git_repository as git;
 use std::borrow::Cow;
 
 pub mod history;
@@ -22,7 +23,7 @@ pub struct Message {
 }
 
 pub struct History {
-    pub head: git_repository::refs::Reference,
+    pub head: git::refs::Reference,
     pub items: Vec<history::Item>,
 }
 

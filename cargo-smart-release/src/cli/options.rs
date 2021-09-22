@@ -123,7 +123,7 @@ pub struct SmartRelease {
     ///
     /// This flag is useful when various `--skip-X` are specified in order to bump versions only, without publishing.
     #[argh(switch)]
-    pub skip_dependencies: bool,
+    pub no_dependencies: bool,
 
     /// pass --no-verify to 'cargo publish' which should only be a last resort when fixing up packages that
     /// otherwise wouldn't publish, but need to be publish to resolve the situation.
