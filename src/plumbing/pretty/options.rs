@@ -69,6 +69,22 @@ pub enum Subcommands {
         statistics: bool,
 
         #[clap(long)]
+        /// The size in megabytes for a cache to speed up pack access for packs with long delta chains.
+        /// It is shared among all threads, so 4 threads would use their own cache 1/4th of the size.
+        ///
+        /// If unset, no cache will be used.
+        pack_cache_size_mb: Option<usize>,
+
+        #[clap(long)]
+        /// The size in megabytes for a cache to speed up accessing entire objects, bypassing object database access when hit.
+        /// It is shared among all threads, so 4 threads would use their own cache 1/4th of the size.
+        ///
+        /// This cache type is currently only effective when using the 'diff-tree' object expansion.
+        ///
+        /// If unset, no cache will be used.
+        object_cache_size_mb: Option<usize>,
+
+        #[clap(long)]
         /// if set, delta-objects whose base object wouldn't be in the pack will not be recompressed as base object, but instead
         /// refer to its base object using its object id.
         ///

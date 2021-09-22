@@ -80,6 +80,17 @@ pub struct Context<W> {
     pub thread_limit: Option<usize>,
     /// If set, statistics about the operation will be written to the output stream.
     pub statistics: Option<OutputFormat>,
+    /// The size of the cache storing fully decoded delta objects. This can greatly speed up pack decoding by reducing the length of delta
+    /// chains. Note that caches also incur a cost and poorly used caches may reduce overall performance.
+    /// This is a total, shared among all threads if `thread_limit` permits.
+    ///
+    /// If 0, the cache is disabled entirely.
+    pub pack_cache_size_in_bytes: usize,
+    /// The size of the cache to store full objects by their ID, bypassing any lookup in the object database.
+    /// Note that caches also incur a cost and poorly used caches may reduce overall performance.
+    ///
+    /// This is a total, shared among all threads if `thread_limit` permits.
+    pub object_cache_size_in_bytes: usize,
     /// The output stream for use of additional information
     pub out: W,
 }
@@ -96,6 +107,8 @@ pub fn create<W>(
         thin,
         thread_limit,
         statistics,
+        pack_cache_size_in_bytes,
+        object_cache_size_in_bytes,
         mut out,
     }: Context<W>,
 ) -> anyhow::Result<()>
@@ -164,24 +177,23 @@ where
         } else {
             Some(1)
         };
+        let (_, _, thread_count) = git::parallel::optimize_chunk_size_and_thread_limit(50, None, thread_limit, None);
         let make_caches = move || {
-            let total_object_cache_size = 50 * 1024 * 1024; // TODO: make configurable
-            let (pack_cache, obj_cache_size) = if may_use_multiple_threads {
-                (
-                    Box::new(pack::cache::Never) as Box<dyn DecodeEntry>,
-                    total_object_cache_size / thread_limit.unwrap_or(1),
-                )
+            let per_thread_object_cache_size = object_cache_size_in_bytes / thread_count;
+            let object_cache: Box<dyn pack::cache::Object> = if per_thread_object_cache_size < 10_000 {
+                Box::new(pack::cache::object::Never) as Box<dyn pack::cache::Object>
             } else {
-                (
-                    Box::new(pack::cache::lru::MemoryCappedHashmap::new(512 * 1024 * 1024)) as Box<dyn DecodeEntry>,
-                    total_object_cache_size,
-                )
-                // todo: Make that configurable
+                Box::new(pack::cache::object::MemoryCappedHashmap::new(
+                    per_thread_object_cache_size,
+                ))
             };
-            (
-                pack_cache,
-                git::odb::pack::cache::object::MemoryCappedHashmap::new(obj_cache_size),
-            )
+            let per_thread_object_pack_size = pack_cache_size_in_bytes / thread_count;
+            let pack_cache: Box<dyn DecodeEntry> = if per_thread_object_pack_size < 10_000 {
+                Box::new(pack::cache::Never) as Box<dyn DecodeEntry>
+            } else {
+                Box::new(pack::cache::lru::MemoryCappedHashmap::new(per_thread_object_pack_size))
+            };
+            (pack_cache, object_cache)
         };
         let progress = progress::ThroughputOnDrop::new(progress);
         let input_object_expansion = expansion.into();

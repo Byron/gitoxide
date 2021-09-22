@@ -35,6 +35,8 @@ pub fn main() -> Result<()> {
             statistics,
             tips,
             thin,
+            pack_cache_size_mb,
+            object_cache_size_mb,
             output_directory,
         }) => {
             let (_handle, progress) = prepare(verbose, "pack-create", Some(core::pack::create::PROGRESS_RANGE));
@@ -65,6 +67,8 @@ pub fn main() -> Result<()> {
                     expansion,
                     thin,
                     nondeterministic_count,
+                    pack_cache_size_in_bytes: pack_cache_size_mb.unwrap_or(0) * 1_000_000,
+                    object_cache_size_in_bytes: object_cache_size_mb.unwrap_or(0) * 1_000_000,
                     statistics: if statistics { Some(OutputFormat::Human) } else { None },
                     out: stdout(),
                     thread_limit,

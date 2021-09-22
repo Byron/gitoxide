@@ -194,6 +194,22 @@ pub struct PackCreate {
     /// It's a form of instrumentation for developers to help improve pack generation.
     pub statistics: bool,
 
+    #[argh(option)]
+    /// the size in megabytes for a cache to speed up pack access for packs with long delta chains.
+    /// It is shared among all threads, so 4 threads would use their own cache 1/4th of the size.
+    ///
+    /// If unset, no cache will be used.
+    pub pack_cache_size_mb: Option<usize>,
+
+    #[argh(option)]
+    /// the size in megabytes for a cache to speed up accessing entire objects, bypassing object database access when hit.
+    /// It is shared among all threads, so 4 threads would use their own cache 1/4th of the size.
+    ///
+    /// This cache type is currently only effective when using the 'diff-tree' object expansion.
+    ///
+    /// If unset, no cache will be used.
+    pub object_cache_size_mb: Option<usize>,
+
     #[argh(switch)]
     /// if set, delta-objects whose base object wouldn't be in the pack will not be recompressed as base object, but instead
     /// refer to its base object using its object id.

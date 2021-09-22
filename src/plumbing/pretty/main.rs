@@ -40,6 +40,8 @@ pub fn main() -> Result<()> {
             statistics,
             nondeterministic_count,
             tips,
+            pack_cache_size_mb,
+            object_cache_size_mb,
             output_directory,
         } => {
             let has_tips = !tips.is_empty();
@@ -65,6 +67,8 @@ pub fn main() -> Result<()> {
                         thread_limit,
                         thin,
                         nondeterministic_count,
+                        pack_cache_size_in_bytes: pack_cache_size_mb.unwrap_or(0) * 1_000_000,
+                        object_cache_size_in_bytes: object_cache_size_mb.unwrap_or(0) * 1_000_000,
                         statistics: if statistics { Some(format) } else { None },
                         out,
                         expansion: expansion.unwrap_or_else(|| {

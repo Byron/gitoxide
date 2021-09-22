@@ -22,6 +22,11 @@ use crate::data::{output, output::ChunkId};
 ///
 /// ## Discussion
 ///
+/// ### Caches
+///
+/// `make_cache` is only suitable for speeding up cache access of blobs as these are not looked up during counting anymore - it only
+/// sees trees as only these are needed for traversal/object counting.
+///
 /// ### Advantages
 ///
 /// * Begins writing immediately and supports back-pressure.
@@ -62,9 +67,7 @@ where
     let chunks = util::ChunkRanges::new(chunk_size, counts.len());
     {
         let progress = Arc::new(parking_lot::Mutex::new(progress.add_child("resolving")));
-        progress
-            .lock()
-            .init(Some(counts.len()), git_features::progress::count("counts"));
+        progress.lock().init(None, git_features::progress::count("counts"));
         let enough_counts_present = counts.len() > 4_000;
         let start = std::time::Instant::now();
         parallel::in_parallel_if(
