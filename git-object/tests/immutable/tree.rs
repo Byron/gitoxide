@@ -129,3 +129,16 @@ mod from_bytes {
         Ok(())
     }
 }
+
+mod entry_mode {
+    use git_object::tree::EntryMode;
+
+    #[test]
+    fn size_in_bytes() {
+        assert_eq!(
+            std::mem::size_of::<EntryMode>(),
+            2,
+            "it should not change without notiice"
+        );
+    }
+}

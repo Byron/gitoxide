@@ -15,12 +15,16 @@ pub mod write;
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Ord, PartialOrd, Hash)]
 #[repr(u16)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[allow(missing_docs)]
 pub enum EntryMode {
+    /// A tree, or directory
     Tree = 0o040000u16,
+    /// A file that is not executable
     Blob = 0o100644,
+    /// A file that is executable
     BlobExecutable = 0o100755,
+    /// A symbolic link
     Link = 0o120000,
+    /// A commit of a git submodule
     Commit = 0o160000,
 }
 
