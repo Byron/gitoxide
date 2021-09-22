@@ -4,10 +4,9 @@ pub mod changes {
         Visit,
     };
     use git_hash::ObjectId;
-    use git_object::bstr::BStr;
+    use git_object::{bstr::BStr, tree::EntryMode};
 
     use crate::data::output::count::objects_impl::util::InsertImmutable;
-    use git_object::tree::EntryMode;
 
     pub struct AllNew<'a, H> {
         pub objects: Vec<ObjectId>,
@@ -61,11 +60,13 @@ pub mod changes {
 
 pub mod traverse {
     use git_hash::ObjectId;
-    use git_object::{bstr::BStr, tree::EntryRef};
+    use git_object::{
+        bstr::BStr,
+        tree::{EntryMode, EntryRef},
+    };
     use git_traverse::tree::{visit::Action, Visit};
 
     use crate::data::output::count::objects_impl::util::InsertImmutable;
-    use git_object::tree::EntryMode;
 
     pub struct AllUnseen<'a, H> {
         pub non_trees: Vec<ObjectId>,

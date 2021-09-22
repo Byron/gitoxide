@@ -8,14 +8,15 @@ mod trait_impls {
     use dashmap::DashSet;
 
     use super::InsertImmutable;
+    use crate::data::output::count::objects_impl::types::OidState;
 
-    impl<T: Eq + Hash> InsertImmutable<T> for DashSet<T> {
+    impl<T: Eq + Hash> InsertImmutable<T> for DashSet<T, OidState> {
         fn insert(&self, item: T) -> bool {
             self.insert(item)
         }
     }
 
-    impl<T: Eq + Hash> InsertImmutable<T> for RefCell<HashSet<T>> {
+    impl<T: Eq + Hash> InsertImmutable<T> for RefCell<HashSet<T, OidState>> {
         fn insert(&self, item: T) -> bool {
             self.borrow_mut().insert(item)
         }

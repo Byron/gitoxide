@@ -1,3 +1,8 @@
+use std::{
+    convert::TryInto,
+    hash::{BuildHasher, Hasher},
+};
+
 /// Information gathered during the run of [`iter_from_objects()`][super::objects()].
 #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -12,6 +17,32 @@ pub struct Outcome {
     pub decoded_objects: usize,
     /// The total amount of encountered objects. Should be `expanded_objects + input_objects`.
     pub total_objects: usize,
+}
+
+#[derive(Default, Clone)]
+pub struct OidState;
+
+#[derive(Default, Clone)]
+pub struct OidHasher {
+    digest: u64,
+}
+
+impl Hasher for OidHasher {
+    fn finish(&self) -> u64 {
+        self.digest
+    }
+
+    fn write(&mut self, bytes: &[u8]) {
+        self.digest = u64::from_be_bytes(bytes[..8].try_into().expect("any git hash has more than 8 bytes"));
+    }
+}
+
+impl BuildHasher for OidState {
+    type Hasher = OidHasher;
+
+    fn build_hasher(&self) -> Self::Hasher {
+        OidHasher::default()
+    }
 }
 
 impl Outcome {

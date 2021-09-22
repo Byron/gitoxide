@@ -14,6 +14,7 @@ mod util;
 
 mod types;
 pub use types::{Error, ObjectExpansion, Options, Outcome};
+
 mod tree;
 
 /// The return type used by [`objects()`].
@@ -68,7 +69,7 @@ where
         iter: objects_ids,
         size: chunk_size,
     };
-    let seen_objs = dashmap::DashSet::<ObjectId>::new();
+    let seen_objs = dashmap::DashSet::<ObjectId, types::OidState>::default();
     let progress = Arc::new(parking_lot::Mutex::new(progress));
 
     parallel::in_parallel(
@@ -124,7 +125,7 @@ where
     Oid: Into<ObjectId> + Send,
     IterErr: std::error::Error + Send,
 {
-    let seen_objs = RefCell::new(HashSet::<ObjectId>::new());
+    let seen_objs = RefCell::new(HashSet::<ObjectId, types::OidState>::default());
 
     let (mut buf1, mut buf2) = (Vec::new(), Vec::new());
     expand::this(
