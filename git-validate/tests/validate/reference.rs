@@ -18,6 +18,7 @@ mod name_partial {
         mktest!(all_uppercase_with_underscore, b"NEW_HEAD");
         mktest!(partial_name_lowercase, b"main");
         mktest!(chinese_utf8, "heads/你好吗".as_bytes());
+        mktest!(parantheses_special_case_upload_pack, b"(null)");
     }
 
     mod invalid {
@@ -119,6 +120,7 @@ mod name {
             b"refs/../somewhere",
             RefError::Tag(TagError::DoubleDot)
         );
+        mktest!(refs_name_special_case_upload_pack, b"(null)", RefError::SomeLowercase);
         mktest!(
             refs_path_name_starts_with_dot,
             b".refs/somewhere",
