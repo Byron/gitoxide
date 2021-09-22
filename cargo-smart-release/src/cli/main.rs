@@ -11,13 +11,13 @@ fn main() -> anyhow::Result<()> {
         SubCommands::Changelog(ChangeLog {
             write,
             crates,
-            dependencies,
+            no_dependencies,
             allow_dirty,
         }) => command::changelog(
             command::changelog::Options {
                 dry_run: !write,
                 allow_dirty,
-                dependencies,
+                dependencies: !no_dependencies,
             },
             crates,
         )?,

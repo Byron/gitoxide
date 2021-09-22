@@ -32,12 +32,12 @@ pub struct ChangeLog {
     #[argh(switch)]
     pub allow_dirty: bool,
 
-    /// take into consideration any dependencies of the crates to generate the changelog for.
+    /// do not take into consideration any dependencies of the crates to generate the changelog for.
     ///
     /// This flag is useful if you plan to review and finalize changelogs before a a smart-release, where dependencies
-    /// are taken into consideration by default.
+    /// are taken into consideration by default, but would like to do so one at a time.
     #[argh(switch)]
-    pub dependencies: bool,
+    pub no_dependencies: bool,
 
     /// the name of the crates to generate a changelog for.
     ///
