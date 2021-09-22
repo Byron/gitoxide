@@ -307,7 +307,10 @@ fn write_raw_refs(refs: &[Ref], directory: PathBuf) -> std::io::Result<()> {
     };
     for r in refs {
         let (path, content) = match r {
-            Ref::Symbolic { path, target, .. } => (assure_dir_exists(path)?, format!("ref: {}", target)),
+            Ref::Symbolic { path, target, .. } => match target {
+                Some(target) => (assure_dir_exists(path)?, format!("ref: {}", target)),
+                None => continue,
+            },
             Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
                 (assure_dir_exists(path)?, object.to_string())
             }

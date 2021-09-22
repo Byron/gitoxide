@@ -186,7 +186,7 @@ pub mod refs {
         },
         Symbolic {
             path: String,
-            target: String,
+            target: Option<String>,
             object: String,
         },
     }
@@ -200,7 +200,7 @@ pub mod refs {
                 },
                 Ref::Symbolic { path, target, object } => JsonRef::Symbolic {
                     path: path.to_string(),
-                    target: target.to_string(),
+                    target: target.map(|t| t.to_string()),
                     object: object.to_string(),
                 },
                 Ref::Peeled { path, tag, object } => JsonRef::Peeled {
@@ -224,7 +224,7 @@ pub mod refs {
                     "{} {} symref-target:{}",
                     object.to_sha1_hex_string(),
                     path,
-                    target
+                    target.clone().unwrap_or_else(|| "(null)".into())
                 ),
             }?;
         }

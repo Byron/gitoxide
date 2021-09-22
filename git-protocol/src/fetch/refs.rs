@@ -61,7 +61,14 @@ pub enum Ref {
         /// The path at which the symbolic ref is located, like `/refs/heads/main`.
         path: BString,
         /// The path of the ref the symbolic ref points to.
-        target: BString,
+        ///
+        /// It is `None` if the target is unreachable as it points to another namespace than the one is currently set
+        /// on the server (i.e. based on the repository at hand or the user performing the operation).
+        ///
+        /// The latter is more of an edge case, please [this issue][#205] for details.
+        ///
+        /// [#205]: https://github.com/Byron/gitoxide/issues/205
+        target: Option<BString>,
         /// The hash of the object the `target` ref points to.
         object: git_hash::ObjectId,
     },
@@ -111,12 +118,12 @@ pub(crate) mod shared {
         /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
         Symbolic {
             path: BString,
-            target: BString,
+            target: Option<BString>,
             object: git_hash::ObjectId,
         },
         /// extracted from V1 capabilities, which contain some important symbolic refs along with their targets
         /// These don't contain the Id
-        SymbolicForLookup { path: BString, target: BString },
+        SymbolicForLookup { path: BString, target: Option<BString> },
     }
 
     impl InternalRef {
@@ -153,7 +160,10 @@ pub(crate) mod shared {
             }
             out_refs.push(InternalRef::SymbolicForLookup {
                 path: left.into(),
-                target: right[1..].into(),
+                target: match &right[1..] {
+                    b"(null)" => None,
+                    name => Some(name.into()),
+                },
             })
         }
         Ok(out_refs)
@@ -244,7 +254,10 @@ pub(crate) mod shared {
                                 "symref-target" => Ref::Symbolic {
                                     path: path.into(),
                                     object: id,
-                                    target: value.into(),
+                                    target: match value {
+                                        "(null)" => None,
+                                        name => Some(name.into()),
+                                    },
                                 },
                                 _ => {
                                     return Err(refs::Error::UnkownAttribute(attribute.to_owned(), trimmed.to_owned()))
