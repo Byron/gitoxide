@@ -2,6 +2,11 @@
 //!
 //! This module is a bit 'misplaced' if spelled out like 'git_pack::cache::object::*' but is best placed here for code re-use and
 //! general usefulnes.
+use std::{
+    convert::TryInto,
+    hash::{BuildHasher, Hasher},
+};
+
 use crate::cache;
 
 #[cfg(feature = "object-cache-dynamic")]
@@ -29,7 +34,7 @@ mod memory {
 
     /// An LRU cache with hash map backing and an eviction rule based on the memory usage for object data in bytes.
     pub struct MemoryCappedHashmap {
-        inner: clru::CLruCache<Key, Entry, std::collections::hash_map::RandomState, CustomScale>,
+        inner: clru::CLruCache<Key, Entry, super::State, CustomScale>,
         free_list: Vec<Vec<u8>>,
         debug: git_features::cache::Debug,
     }
@@ -45,6 +50,7 @@ mod memory {
             MemoryCappedHashmap {
                 inner: clru::CLruCache::with_config(
                     clru::CLruCacheConfig::new(NonZeroUsize::new(memory_cap_in_bytes).expect("non zero"))
+                        .with_hasher(super::State::default())
                         .with_scale(CustomScale),
                 ),
                 free_list: Vec::new(),
@@ -95,6 +101,33 @@ mod memory {
 }
 #[cfg(feature = "object-cache-dynamic")]
 pub use memory::MemoryCappedHashmap;
+
+/// A state suitable for hash maps tuned to just reuse the key assuming it is an object id.
+#[derive(Default, Clone)]
+pub(crate) struct State;
+
+#[derive(Default, Clone)]
+pub(crate) struct OidHasher {
+    digest: u64,
+}
+
+impl Hasher for OidHasher {
+    fn finish(&self) -> u64 {
+        self.digest
+    }
+
+    fn write(&mut self, bytes: &[u8]) {
+        self.digest = u64::from_be_bytes(bytes[..8].try_into().expect("any git hash has more than 8 bytes"));
+    }
+}
+
+impl BuildHasher for State {
+    type Hasher = OidHasher;
+
+    fn build_hasher(&self) -> Self::Hasher {
+        OidHasher::default()
+    }
+}
 
 /// A cache implementation that doesn't do any caching.
 pub struct Never;

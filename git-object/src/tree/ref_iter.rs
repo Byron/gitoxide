@@ -1,7 +1,8 @@
 use std::convert::TryFrom;
 
-use crate::{tree, tree::EntryRef, TreeRef, TreeRefIter};
 use nom::error::ParseError;
+
+use crate::{tree, tree::EntryRef, TreeRef, TreeRefIter};
 
 impl<'a> TreeRefIter<'a> {
     /// Instantiate an iterator from the given tree data.
