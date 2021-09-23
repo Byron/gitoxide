@@ -1,8 +1,8 @@
 use cargo_metadata::Package;
 use git_repository as git;
+use git_repository::prelude::ObjectIdExt;
 
 use crate::{commit, utils, utils::is_top_level_package, ChangeLog};
-use git_repository::prelude::ObjectIdExt;
 
 pub enum Section {
     /// A part of a changelog which couldn't be understood and is taken in verbatim. This is usually the pre-amble of the changelog
@@ -40,8 +40,7 @@ impl Section {
             .attach(repo)
             .object()
             .expect("object exists")
-            .commit()
-            .expect("target is a commit")
+            .to_commit()
             .committer
             .time;
         let date_time = time::OffsetDateTime::from_unix_timestamp(time.time as i64)

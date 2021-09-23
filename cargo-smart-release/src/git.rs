@@ -116,7 +116,7 @@ pub mod history {
             let commit_id = commit_id?;
             let (message, tree_id) = {
                 let object = commit_id.object()?;
-                let commit = object.commit()?;
+                let commit = object.to_commit();
                 (commit.message.to_vec(), commit.tree())
             };
 
