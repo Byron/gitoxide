@@ -11,6 +11,7 @@ use nom::{
 };
 
 use crate::{changelog, ChangeLog};
+use pulldown_cmark::{Event, Tag};
 
 impl ChangeLog {
     /// Obtain as much information as possible from `input` and keep everything we didn't understand in respective sections.
@@ -24,7 +25,10 @@ impl ChangeLog {
                 Ok(headline) => {
                     match previous_headline {
                         Some(headline) => {
-                            sections.push(changelog::Section::from_headline_and_body(headline, &mut plain_text));
+                            sections.push(changelog::Section::from_headline_and_body(
+                                headline,
+                                std::mem::take(&mut plain_text),
+                            ));
                         }
                         None => sections.push(changelog::Section::Verbatim {
                             text: std::mem::take(&mut plain_text),
@@ -41,7 +45,10 @@ impl ChangeLog {
 
         match previous_headline {
             Some(headline) => {
-                sections.push(changelog::Section::from_headline_and_body(headline, &mut plain_text));
+                sections.push(changelog::Section::from_headline_and_body(
+                    headline,
+                    std::mem::take(&mut plain_text),
+                ));
             }
             None => sections.push(changelog::Section::Verbatim {
                 text: plain_text,
@@ -53,9 +60,42 @@ impl ChangeLog {
 }
 
 impl changelog::Section {
-    fn from_headline_and_body(Headline { level, version, date }: Headline, body: &mut String) -> Self {
-        // TODO: parse body
-        body.clear();
+    fn from_headline_and_body(Headline { level, version, date }: Headline, body: String) -> Self {
+        let mut events = pulldown_cmark::Parser::new(&body);
+        let mut unknown = String::new();
+
+        while let Some(e) = events.next() {
+            match e {
+                Event::Html(text) if text.starts_with(changelog::Section::UNKNOWN_TAG_START) => {
+                    for text in events
+                        .by_ref()
+                        .take_while(
+                            |e| !matches!(e, Event::Html(text) if text.starts_with(changelog::Section::UNKNOWN_TAG_END)),
+                        )
+                        .filter_map(|e| match e {
+                            Event::Html(text) => Some(text),
+                            _ => None,
+                        })
+                    {
+                        unknown.push_str(text.as_ref());
+                    }
+                }
+                unknown_event => {
+                    log::trace!("Cannot handle {:?}", unknown_event);
+                    match unknown_event {
+                        Event::Html(text)
+                        | Event::Code(text)
+                        | Event::Text(text)
+                        | Event::FootnoteReference(text)
+                        | Event::Start(Tag::FootnoteDefinition(text))
+                        | Event::Start(Tag::CodeBlock(pulldown_cmark::CodeBlockKind::Fenced(text)))
+                        | Event::Start(Tag::Link(_, text, _))
+                        | Event::Start(Tag::Image(_, text, _)) => unknown.push_str(text.as_ref()),
+                        _ => {}
+                    }
+                }
+            };
+        }
         changelog::Section::Release {
             name: match version {
                 Some(version) => changelog::Version::Semantic(version),
@@ -63,6 +103,7 @@ impl changelog::Section {
             },
             date,
             heading_level: level,
+            unknown,
         }
     }
 }

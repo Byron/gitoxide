@@ -43,6 +43,7 @@ impl Section {
             name: version,
             date: date_time.into(),
             heading_level: 2,
+            unknown: Default::default(),
         }
     }
 }

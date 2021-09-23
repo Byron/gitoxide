@@ -10,6 +10,9 @@ impl std::fmt::Display for changelog::Version {
 }
 
 impl Section {
+    pub const UNKNOWN_TAG_START: &'static str = "<csm-unknown>";
+    pub const UNKNOWN_TAG_END: &'static str = "<csm-unknown/>";
+
     pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
             Section::Verbatim { text, .. } => out.write_all(text.as_bytes()),
@@ -17,8 +20,9 @@ impl Section {
                 name,
                 date,
                 heading_level,
+                unknown,
             } => {
-                out.write_all(format!("{} {}", "#".repeat(*heading_level), name).as_bytes())?;
+                write!(out, "{} {}", "#".repeat(*heading_level), name)?;
                 match date {
                     None => out.write_all(b"\n"),
                     Some(date) => writeln!(
@@ -29,6 +33,11 @@ impl Section {
                         date.day()
                     ),
                 }?;
+                if !unknown.is_empty() {
+                    writeln!(out, "{}", Section::UNKNOWN_TAG_START)?;
+                    out.write_all(unknown.as_bytes())?;
+                    writeln!(out, "{}", Section::UNKNOWN_TAG_END)?;
+                }
                 out.write_all(b"\n")
             }
         }

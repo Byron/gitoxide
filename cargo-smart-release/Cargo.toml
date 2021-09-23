@@ -37,6 +37,7 @@ cargo_toml = "0.9.2"
 nom = { version = "7", default-features = false, features = ["std"]}
 git-conventional = "0.10.3"
 time = "0.3.2"
+pulldown-cmark = "0.8.0"
 
 [dev-dependencies]
 insta = "1.8.0"
