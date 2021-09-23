@@ -98,8 +98,8 @@ impl Section {
                         State::ParseClippy => {
                             if let Some(p) = collect_paragraph(events.by_ref(), &mut unknown) {
                                 thanks_clippy_count = p
-                                    .split(" ")
-                                    .filter_map(|possibly_num| usize::from_str_radix(possibly_num, 10).ok())
+                                    .split(' ')
+                                    .filter_map(|num| num.parse::<usize>().ok())
                                     .next()
                                     .unwrap_or(0)
                             }
@@ -138,7 +138,7 @@ fn track_unknown_event(unknown_event: Event<'_>, unknown: &mut String) {
     }
 }
 
-fn collect_paragraph<'a>(events: &mut Parser, unknown: &mut String) -> Option<String> {
+fn collect_paragraph(events: &mut Parser, unknown: &mut String) -> Option<String> {
     match events.next() {
         Some(Event::Start(Tag::Paragraph)) => {
             return events

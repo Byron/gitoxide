@@ -45,7 +45,7 @@ impl Section {
             thanks_clippy_count: segment
                 .history
                 .iter()
-                .map(|item| item.message.title == "thanks clippy")
+                .filter(|item| item.message.title.starts_with("thanks clippy"))
                 .count(),
             heading_level: 2,
             unknown: Default::default(),
