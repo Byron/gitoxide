@@ -77,7 +77,7 @@ impl ChangeLog {
         let package = package_by_name(&ctx.meta, crate_name)?;
         let mut log = ChangeLog::from_history_segments(
             package,
-            &crate::git::history::crate_ref_segments(package, &ctx, history)?,
+            &crate::git::history::crate_ref_segments(package, ctx, history)?,
             &ctx.repo,
         );
         log.sections.insert(
