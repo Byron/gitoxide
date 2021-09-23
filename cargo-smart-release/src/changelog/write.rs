@@ -4,7 +4,7 @@ impl std::fmt::Display for changelog::Version {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             changelog::Version::Unreleased => f.write_str("Unreleased"),
-            changelog::Version::Semantic(v) => v.fmt(f),
+            changelog::Version::Semantic(v) => write!(f, "v{}", v),
         }
     }
 }

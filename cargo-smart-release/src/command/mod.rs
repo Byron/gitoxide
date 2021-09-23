@@ -30,6 +30,8 @@ pub mod changelog {
         pub dry_run: bool,
         pub dependencies: bool,
         pub allow_dirty: bool,
+        /// Run `bat` to show created changelog.
+        pub bat: bool,
     }
 }
 #[path = "changelog/mod.rs"]

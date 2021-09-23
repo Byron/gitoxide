@@ -1,5 +1,5 @@
 ---
-source: cargo-smart-release/src/changelog/tests.rs
+source: cargo-smart-release/src/changelog/tests/mod.rs
 expression: buf.to_str().unwrap()
 
 ---
@@ -10,7 +10,7 @@ my very own header
 ## Unreleased
 
 
-#### 1.0.2-beta.2 (1970-01-02)
+#### v1.0.2-beta.2 (1970-01-02)
 
 
 

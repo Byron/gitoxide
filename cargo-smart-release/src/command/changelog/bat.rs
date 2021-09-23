@@ -1,0 +1,31 @@
+use std::io;
+use std::path::Path;
+use std::process::Command;
+
+pub struct Support {
+    bat_found: bool,
+}
+
+impl Support {
+    pub fn new() -> Self {
+        Support {
+            bat_found: Command::new("bat").arg("--version").output().is_ok(),
+        }
+    }
+
+    pub fn display_to_tty(&self, path: &Path) -> io::Result<()> {
+        if !self.bat_found {
+            return Ok(());
+        }
+        if Command::new("bat")
+            .args(&["--paging=always", "-l=md"])
+            .arg(path)
+            .status()?
+            .success()
+        {
+            Ok(())
+        } else {
+            Err(io::Error::new(io::ErrorKind::Other, "bat exited with an error"))
+        }
+    }
+}

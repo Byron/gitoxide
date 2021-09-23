@@ -13,6 +13,8 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         Some(history) => history,
     };
 
+    let bat = (opts.dry_run && opts.bat).then(|| bat::Support::new());
+
     for crate_name in &crate_names {
         let (log, _package, mut lock) = ChangeLog::for_package_with_write_lock(crate_name, &history, &ctx)?;
         log::info!(
@@ -25,6 +27,9 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
                 .display()
         );
         lock.with_mut(|file| log.write_to(file))?;
+        if let Some(bat) = bat.as_ref() {
+            bat.display_to_tty(lock.lock_path())?;
+        }
     }
 
     Ok(())
@@ -43,3 +48,5 @@ fn assure_working_tree_is_unchanged(options: Options) -> anyhow::Result<()> {
             })
     }
 }
+
+mod bat;
