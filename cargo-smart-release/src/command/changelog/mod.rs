@@ -1,5 +1,4 @@
-use crate::utils::will;
-use crate::{command::changelog::Options, git, ChangeLog};
+use crate::{command::changelog::Options, git, utils::will, ChangeLog};
 
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let ctx = crate::Context::new(crates)?;

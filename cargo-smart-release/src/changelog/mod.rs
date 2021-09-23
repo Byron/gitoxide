@@ -1,10 +1,15 @@
-use cargo_metadata::Package;
+use cargo_metadata::{
+    camino::{Utf8Path, Utf8PathBuf},
+    Package,
+};
 use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
 
-use crate::utils::package_by_name;
-use crate::{commit, utils, utils::is_top_level_package, ChangeLog};
-use cargo_metadata::camino::{Utf8Path, Utf8PathBuf};
+use crate::{
+    commit, utils,
+    utils::{is_top_level_package, package_by_name},
+    ChangeLog,
+};
 
 pub enum Section {
     /// A part of a changelog which couldn't be understood and is taken in verbatim. This is usually the pre-amble of the changelog
@@ -20,6 +25,8 @@ pub enum Section {
     Release {
         name: Version,
         date: Option<time::OffsetDateTime>,
+        /// the amount of # in front of the heading denoting the release name
+        heading_level: usize,
     },
 }
 
@@ -56,6 +63,7 @@ impl Section {
         Section::Release {
             name: version,
             date: date_time.into(),
+            heading_level: 2,
         }
     }
 }
@@ -95,3 +103,8 @@ impl ChangeLog {
         }
     }
 }
+
+mod write;
+
+#[cfg(test)]
+mod tests;
