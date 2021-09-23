@@ -1,4 +1,4 @@
-use crate::{command::changelog::Options, git};
+use crate::{command::changelog::Options, git, ChangeLog};
 
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let ctx = crate::Context::new(crates)?;
@@ -13,7 +13,10 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         Some(history) => history,
     };
     for crate_name in &crate_names {
-        let _segments = git::history::crate_ref_segments(crate_name, &ctx, &history)?;
+        let _log = ChangeLog::from_history_segments(
+            &git::history::crate_ref_segments(crate_name, &ctx, &history)?,
+            &ctx.repo,
+        );
     }
 
     Ok(())

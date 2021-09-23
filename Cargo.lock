@@ -355,6 +355,7 @@ dependencies = [
  "log",
  "nom",
  "semver",
+ "time 0.3.2",
  "toml_edit",
 ]
 

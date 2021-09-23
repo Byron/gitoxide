@@ -1,4 +1,4 @@
-### v0.4.0 (2021-09-??)
+### Unreleased
 
 - Conservative pre-release version handling along with a flag to turn it off. See [this issue][194] for details.
 - Rename `--allow-auto-publish-of-stable-crates` to `--no-auto-publish-of-stable-crates`, inverting its meaning.
