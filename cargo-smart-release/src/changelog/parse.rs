@@ -17,9 +17,8 @@ impl ChangeLog {
     pub fn from_markdown(input: &str) -> ChangeLog {
         let mut sections = Vec::new();
         let mut plain_text = String::new();
-        let mut lines = input.as_bytes().as_bstr().lines_with_terminator();
         let mut previous_headline = None;
-        while let Some(line) = lines.next() {
+        for line in input.as_bytes().as_bstr().lines_with_terminator() {
             let line = line.to_str().expect("valid UTF-8");
             match Headline::try_from(line) {
                 Ok(headline) => {
