@@ -4,7 +4,7 @@ use crate::commit::Message;
 
 /// A head reference will all commits that are 'governed' by it, that is are in its exclusive ancestry.
 pub struct Segment<'a> {
-    pub _head: git::refs::Reference,
+    pub head: git::refs::Reference,
     /// only relevant history items, that is those that change code in the respective crate.
     pub history: Vec<&'a Item>,
 }

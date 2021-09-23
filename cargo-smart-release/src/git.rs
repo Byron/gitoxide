@@ -2,7 +2,12 @@ use std::process::Command;
 
 use anyhow::{anyhow, bail};
 use cargo_metadata::Package;
-use git_repository::{bstr::ByteSlice, easy::object, prelude::ReferenceAccessExt};
+use git_repository::{
+    bstr::{BStr, ByteSlice},
+    easy::object,
+    prelude::ReferenceAccessExt,
+    refs::FullNameRef,
+};
 
 use crate::utils::{component_to_bytes, tag_name};
 
@@ -83,16 +88,18 @@ pub mod history {
     use std::{cell::RefCell, collections::BTreeMap, iter::FromIterator, path::PathBuf, time::Instant};
 
     use anyhow::bail;
+    use cargo_metadata::Package;
     use git_repository as git;
     use git_repository::{
-        bstr::{BStr, ByteSlice},
+        bstr::ByteSlice,
         easy::head,
         prelude::{CacheAccessExt, ObjectAccessExt, ReferenceAccessExt, ReferenceExt},
     };
 
     use crate::{
         commit,
-        utils::{component_to_bytes, is_tag_name, is_tag_version, package_by_name, tag_prefix},
+        git::strip_tag_path,
+        utils::{component_to_bytes, is_tag_name, is_tag_version, tag_prefix},
     };
 
     pub fn collect(repo: &git::Easy) -> anyhow::Result<Option<commit::History>> {
@@ -146,12 +153,10 @@ pub mod history {
 
     /// Return the head reference followed by all tags affecting `crate_name` as per our tag name rules, ordered by ancestry.
     pub fn crate_ref_segments<'h>(
-        crate_name: &str,
+        package: &Package,
         ctx: &crate::Context,
         history: &'h commit::History,
     ) -> anyhow::Result<Vec<commit::history::Segment<'h>>> {
-        let meta = &ctx.meta;
-        let package = package_by_name(meta, crate_name)?;
         let tag_prefix = tag_prefix(package, &ctx.repo);
         let start = Instant::now();
         let mut tags_by_commit = {
@@ -161,7 +166,7 @@ pub mod history {
                     refs.prefixed(PathBuf::from(format!("refs/tags/{}-", prefix)))?
                         .peeled()
                         .filter_map(|r| r.ok().map(|r| r.detach()))
-                        .filter(|r| is_tag_name(prefix, strip_tag_path(r.name.as_bstr())))
+                        .filter(|r| is_tag_name(prefix, strip_tag_path(r.name.to_ref())))
                         .map(|r| {
                             let t = r.peeled.expect("already peeled");
                             (t, r)
@@ -171,7 +176,7 @@ pub mod history {
                     refs.prefixed("refs/tags")?
                         .peeled()
                         .filter_map(|r| r.ok().map(|r| r.detach()))
-                        .filter(|r| is_tag_version(strip_tag_path(r.name.as_bstr())))
+                        .filter(|r| is_tag_version(strip_tag_path(r.name.to_ref())))
                         .map(|r| {
                             let t = r.peeled.expect("already peeled");
                             (t, r)
@@ -183,7 +188,7 @@ pub mod history {
         let elapsed = start.elapsed();
         log::trace!(
             "{}: Mapped {} tags in {}s ({:.0} refs/s)",
-            crate_name,
+            package.name,
             tags_by_commit.len(),
             elapsed.as_secs_f32(),
             tags_by_commit.len() as f32 / elapsed.as_secs_f32()
@@ -192,7 +197,7 @@ pub mod history {
         let start = Instant::now();
         let mut segments = Vec::new();
         let mut segment = commit::history::Segment {
-            _head: history.head.to_owned(),
+            head: history.head.to_owned(),
             history: vec![],
         };
 
@@ -273,7 +278,7 @@ pub mod history {
                 Some(next_ref) => segments.push(std::mem::replace(
                     &mut segment,
                     commit::history::Segment {
-                        _head: next_ref,
+                        head: next_ref,
                         history: vec![item],
                     },
                 )),
@@ -284,7 +289,7 @@ pub mod history {
         if !tags_by_commit.is_empty() {
             log::warn!(
                 "{}: The following tags were on branches which are ignored during traversal: {}",
-                crate_name,
+                package.name,
                 tags_by_commit
                     .into_values()
                     .map(|v| v.name.as_bstr().to_str_lossy().into_owned())
@@ -297,7 +302,7 @@ pub mod history {
         let num_commits = segments.iter().map(|s| s.history.len()).sum::<usize>();
         log::trace!(
             "{}: Found {} relevant commits out of {} in {} segments {}s ({:.0} commits/s)",
-            crate_name,
+            package.name,
             num_commits,
             history.items.len(),
             segments.len(),
@@ -307,11 +312,12 @@ pub mod history {
 
         Ok(segments)
     }
+}
 
-    fn strip_tag_path(fullname: &BStr) -> &BStr {
-        fullname
-            .strip_prefix(b"refs/tags/")
-            .expect("prefix iteration works")
-            .as_bstr()
-    }
+pub fn strip_tag_path(name: FullNameRef<'_>) -> &BStr {
+    try_strip_tag_path(name).expect("prefix iteration works")
+}
+
+pub fn try_strip_tag_path(name: FullNameRef<'_>) -> Option<&BStr> {
+    name.as_bstr().strip_prefix(b"refs/tags/").map(|b| b.as_bstr())
 }
