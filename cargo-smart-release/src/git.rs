@@ -132,7 +132,7 @@ pub mod history {
             };
             items.push(commit::history::Item {
                 id: commit_id.detach(),
-                _message: commit::Message::from(message),
+                message: commit::Message::from(message),
                 tree_data: repo.find_object(tree_id)?.data.to_owned(),
             });
         }

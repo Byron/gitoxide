@@ -10,8 +10,8 @@ use nom::{
     Finish, IResult,
 };
 
-use crate::{changelog, ChangeLog};
-use pulldown_cmark::{Event, Tag};
+use crate::{changelog, changelog::Section, ChangeLog};
+use pulldown_cmark::{Event, Parser, Tag};
 
 impl ChangeLog {
     /// Obtain as much information as possible from `input` and keep everything we didn't understand in respective sections.
@@ -25,12 +25,12 @@ impl ChangeLog {
                 Ok(headline) => {
                     match previous_headline {
                         Some(headline) => {
-                            sections.push(changelog::Section::from_headline_and_body(
+                            sections.push(Section::from_headline_and_body(
                                 headline,
                                 std::mem::take(&mut plain_text),
                             ));
                         }
-                        None => sections.push(changelog::Section::Verbatim {
+                        None => sections.push(Section::Verbatim {
                             text: std::mem::take(&mut plain_text),
                             generated: false,
                         }),
@@ -45,12 +45,12 @@ impl ChangeLog {
 
         match previous_headline {
             Some(headline) => {
-                sections.push(changelog::Section::from_headline_and_body(
+                sections.push(Section::from_headline_and_body(
                     headline,
                     std::mem::take(&mut plain_text),
                 ));
             }
-            None => sections.push(changelog::Section::Verbatim {
+            None => sections.push(Section::Verbatim {
                 text: plain_text,
                 generated: false,
             }),
@@ -59,19 +59,18 @@ impl ChangeLog {
     }
 }
 
-impl changelog::Section {
+impl Section {
     fn from_headline_and_body(Headline { level, version, date }: Headline, body: String) -> Self {
         let mut events = pulldown_cmark::Parser::new(&body);
         let mut unknown = String::new();
+        let mut thanks_clippy_count = 0;
 
         while let Some(e) = events.next() {
             match e {
-                Event::Html(text) if text.starts_with(changelog::Section::UNKNOWN_TAG_START) => {
+                Event::Html(text) if text.starts_with(Section::UNKNOWN_TAG_START) => {
                     for text in events
                         .by_ref()
-                        .take_while(
-                            |e| !matches!(e, Event::Html(text) if text.starts_with(changelog::Section::UNKNOWN_TAG_END)),
-                        )
+                        .take_while(|e| !matches!(e, Event::Html(text) if text.starts_with(Section::UNKNOWN_TAG_END)))
                         .filter_map(|e| match e {
                             Event::Html(text) => Some(text),
                             _ => None,
@@ -80,32 +79,84 @@ impl changelog::Section {
                         unknown.push_str(text.as_ref());
                     }
                 }
-                unknown_event => {
-                    log::trace!("Cannot handle {:?}", unknown_event);
-                    match unknown_event {
-                        Event::Html(text)
-                        | Event::Code(text)
-                        | Event::Text(text)
-                        | Event::FootnoteReference(text)
-                        | Event::Start(Tag::FootnoteDefinition(text))
-                        | Event::Start(Tag::CodeBlock(pulldown_cmark::CodeBlockKind::Fenced(text)))
-                        | Event::Start(Tag::Link(_, text, _))
-                        | Event::Start(Tag::Image(_, text, _)) => unknown.push_str(text.as_ref()),
-                        _ => {}
+                Event::Start(Tag::Heading(_indent)) => {
+                    enum State {
+                        ParseClippy,
+                        DoNothing,
+                    }
+                    let state = match events.next() {
+                        Some(Event::Text(title)) if title.starts_with(Section::THANKS_CLIPPY_TITLE) => {
+                            State::ParseClippy
+                        }
+                        _ => State::DoNothing,
+                    };
+                    events
+                        .by_ref()
+                        .take_while(|e| !matches!(e, Event::End(Tag::Heading(_))))
+                        .count();
+                    match state {
+                        State::ParseClippy => {
+                            if let Some(p) = collect_paragraph(events.by_ref(), &mut unknown) {
+                                thanks_clippy_count = p
+                                    .split(" ")
+                                    .filter_map(|possibly_num| usize::from_str_radix(possibly_num, 10).ok())
+                                    .next()
+                                    .unwrap_or(0)
+                            }
+                        }
+                        State::DoNothing => {}
                     }
                 }
+                unknown_event => track_unknown_event(unknown_event, &mut unknown),
             };
         }
-        changelog::Section::Release {
+        Section::Release {
             name: match version {
                 Some(version) => changelog::Version::Semantic(version),
                 None => changelog::Version::Unreleased,
             },
             date,
             heading_level: level,
+            thanks_clippy_count,
             unknown,
         }
     }
+}
+
+fn track_unknown_event(unknown_event: Event<'_>, unknown: &mut String) {
+    log::trace!("Cannot handle {:?}", unknown_event);
+    match unknown_event {
+        Event::Html(text)
+        | Event::Code(text)
+        | Event::Text(text)
+        | Event::FootnoteReference(text)
+        | Event::Start(Tag::FootnoteDefinition(text))
+        | Event::Start(Tag::CodeBlock(pulldown_cmark::CodeBlockKind::Fenced(text)))
+        | Event::Start(Tag::Link(_, text, _))
+        | Event::Start(Tag::Image(_, text, _)) => unknown.push_str(text.as_ref()),
+        _ => {}
+    }
+}
+
+fn collect_paragraph<'a>(events: &mut Parser, unknown: &mut String) -> Option<String> {
+    match events.next() {
+        Some(Event::Start(Tag::Paragraph)) => {
+            return events
+                .take_while(|e| !matches!(e, Event::End(Tag::Paragraph)))
+                .filter_map(|e| match e {
+                    Event::Text(text) => Some(text),
+                    _ => None,
+                })
+                .fold(String::new(), |mut acc, text| {
+                    acc.push_str(&text);
+                    acc
+                })
+                .into()
+        }
+        Some(event) => track_unknown_event(event, unknown),
+        None => {}
+    };
+    None
 }
 
 struct Headline {

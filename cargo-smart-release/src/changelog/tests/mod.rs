@@ -14,11 +14,13 @@ mod write_and_parse {
                 Section::Release {
                     heading_level: 2,
                     date: None,
+                    thanks_clippy_count: 0,
                     name: changelog::Version::Unreleased,
                     unknown: "hello\nworld\n".into(),
                 },
                 Section::Release {
                     heading_level: 4,
+                    thanks_clippy_count: 42,
                     date: Some(time::OffsetDateTime::from_unix_timestamp(0).unwrap()),
                     name: changelog::Version::Semantic("1.0.2-beta.2".parse().unwrap()),
                     unknown: String::new(),

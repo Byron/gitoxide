@@ -12,6 +12,7 @@ impl std::fmt::Display for changelog::Version {
 impl Section {
     pub const UNKNOWN_TAG_START: &'static str = "<csm-unknown>";
     pub const UNKNOWN_TAG_END: &'static str = "<csm-unknown/>";
+    pub const THANKS_CLIPPY_TITLE: &'static str = "Thanks Clippy…";
 
     pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
@@ -20,6 +21,7 @@ impl Section {
                 name,
                 date,
                 heading_level,
+                thanks_clippy_count,
                 unknown,
             } => {
                 write!(out, "{} {}", "#".repeat(*heading_level), name)?;
@@ -33,6 +35,15 @@ impl Section {
                         date.day()
                     ),
                 }?;
+                if *thanks_clippy_count > 0 {
+                    writeln!(
+                        out,
+                        "{} {}\n",
+                        "#".repeat(*heading_level + 1),
+                        Section::THANKS_CLIPPY_TITLE
+                    )?;
+                    writeln!(out, "Clippy is a linter to help keeping code idiomatic. It was helpful {} time(s) in this release.\n", thanks_clippy_count)?;
+                }
                 if !unknown.is_empty() {
                     writeln!(out, "{}", Section::UNKNOWN_TAG_START)?;
                     out.write_all(unknown.as_bytes())?;

@@ -42,6 +42,11 @@ impl Section {
         Section::Release {
             name: version,
             date: date_time.into(),
+            thanks_clippy_count: segment
+                .history
+                .iter()
+                .map(|item| item.message.title == "thanks clippy")
+                .count(),
             heading_level: 2,
             unknown: Default::default(),
         }
