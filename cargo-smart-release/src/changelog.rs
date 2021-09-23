@@ -2,12 +2,14 @@ use cargo_metadata::Package;
 use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
 
+use crate::utils::package_by_name;
 use crate::{commit, utils, utils::is_top_level_package, ChangeLog};
+use cargo_metadata::camino::{Utf8Path, Utf8PathBuf};
 
 pub enum Section {
     /// A part of a changelog which couldn't be understood and is taken in verbatim. This is usually the pre-amble of the changelog
     /// or a custom footer.
-    Verbatim(String),
+    Verbatim { text: String },
 
     /// A segment describing a particular release
     Release {
@@ -28,7 +30,7 @@ impl Section {
             .map(|tag_name| {
                 Version::Semantic(
                     utils::parse_possibly_prefixed_tag_version(package_name, tag_name)
-                        .expect("here we always have a valid version as it passed a filter"),
+                        .expect("here we always have a valid version as it passed a filter when creating it"),
                 )
             })
             .unwrap_or_else(|| Version::Unreleased);
@@ -54,13 +56,29 @@ impl Section {
 }
 
 impl ChangeLog {
-    pub fn from_history_segments(
-        package: &Package,
-        segments: &[commit::history::Segment<'_>],
-        repo: &git::Easy,
-    ) -> Self {
+    pub fn for_package<'a>(
+        crate_name: &str,
+        history: &commit::History,
+        ctx: &'a crate::Context,
+    ) -> anyhow::Result<(Self, &'a Package)> {
+        let package = package_by_name(&ctx.meta, crate_name)?;
+        Ok((
+            ChangeLog::from_history_segments(
+                package,
+                &crate::git::history::crate_ref_segments(package, &ctx, history)?,
+                &ctx.repo,
+            ),
+            package,
+        ))
+    }
+
+    pub fn path_from_manifest(path: &Utf8Path) -> Utf8PathBuf {
+        path.parent().expect("parent for Cargo.toml").join("CHANGELOG.md")
+    }
+
+    fn from_history_segments(package: &Package, segments: &[commit::history::Segment<'_>], repo: &git::Easy) -> Self {
         ChangeLog {
-            _segments: segments.iter().fold(Vec::new(), |mut acc, item| {
+            sections: segments.iter().fold(Vec::new(), |mut acc, item| {
                 acc.push(Section::from_history_segment(package, item, repo));
                 acc
             }),

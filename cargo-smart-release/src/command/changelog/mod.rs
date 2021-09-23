@@ -1,4 +1,5 @@
-use crate::{command::changelog::Options, git, utils::package_by_name, ChangeLog};
+use crate::utils::will;
+use crate::{command::changelog::Options, git, ChangeLog};
 
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let ctx = crate::Context::new(crates)?;
@@ -12,13 +13,17 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         None => return Ok(()),
         Some(history) => history,
     };
+
     for crate_name in &crate_names {
-        let package = package_by_name(&ctx.meta, crate_name)?;
-        let _log = ChangeLog::from_history_segments(
-            package,
-            &git::history::crate_ref_segments(package, &ctx, &history)?,
-            &ctx.repo,
-        );
+        let (log, package) = ChangeLog::for_package(crate_name, &history, &ctx)?;
+        log::info!(
+            "{} write {} sections to {}",
+            will(opts.dry_run),
+            log.sections.len(),
+            ChangeLog::path_from_manifest(&package.manifest_path)
+                .strip_prefix(&ctx.root)
+                .expect("contained in workspace")
+        )
     }
 
     Ok(())

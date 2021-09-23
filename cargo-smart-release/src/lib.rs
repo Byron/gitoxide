@@ -1,5 +1,5 @@
 pub struct ChangeLog {
-    _segments: Vec<changelog::Section>,
+    sections: Vec<changelog::Section>,
 }
 
 pub mod changelog;
