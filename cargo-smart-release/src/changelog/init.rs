@@ -5,9 +5,10 @@ use cargo_metadata::{
 use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
 
-use crate::changelog::Section;
 use crate::{
-    changelog, commit, utils,
+    changelog,
+    changelog::Section,
+    commit, utils,
     utils::{is_top_level_package, package_by_name},
     ChangeLog,
 };

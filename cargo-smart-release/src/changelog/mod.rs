@@ -1,6 +1,8 @@
 mod init;
+mod parse;
 mod write;
 
+#[cfg_attr(test, derive(PartialEq, Eq, Debug))]
 pub enum Section {
     /// A part of a changelog which couldn't be understood and is taken in verbatim. This is usually the pre-amble of the changelog
     /// or a custom footer.
@@ -20,6 +22,7 @@ pub enum Section {
     },
 }
 
+#[cfg_attr(test, derive(PartialEq, Eq, Debug))]
 pub enum Version {
     Unreleased,
     Semantic(semver::Version),

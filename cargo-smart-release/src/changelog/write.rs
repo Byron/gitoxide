@@ -23,13 +23,13 @@ impl Section {
                     None => out.write_all(b"\n"),
                     Some(date) => writeln!(
                         out,
-                        " ({:02}-{:02}-{:02})",
+                        " ({:04}-{:02}-{:02})",
                         date.year(),
                         date.month() as u32,
                         date.day()
                     ),
                 }?;
-                out.write_all(b"\n\n")
+                out.write_all(b"\n")
             }
         }
     }

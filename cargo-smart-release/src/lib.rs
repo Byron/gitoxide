@@ -1,3 +1,4 @@
+#[cfg_attr(test, derive(PartialEq, Eq, Debug))]
 pub struct ChangeLog {
     sections: Vec<changelog::Section>,
 }

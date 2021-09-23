@@ -1,6 +1,4 @@
-use std::io;
-use std::path::Path;
-use std::process::Command;
+use std::{io, path::Path, process::Command};
 
 pub struct Support {
     bat_found: bool,
