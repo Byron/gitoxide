@@ -9,7 +9,12 @@ use cargo_metadata::camino::{Utf8Path, Utf8PathBuf};
 pub enum Section {
     /// A part of a changelog which couldn't be understood and is taken in verbatim. This is usually the pre-amble of the changelog
     /// or a custom footer.
-    Verbatim { text: String },
+    Verbatim {
+        /// The section text, unchanged, up until the next `Release`.
+        text: String,
+        /// True if this is not created by a human
+        generated: bool,
+    },
 
     /// A segment describing a particular release
     Release {
@@ -62,14 +67,19 @@ impl ChangeLog {
         ctx: &'a crate::Context,
     ) -> anyhow::Result<(Self, &'a Package)> {
         let package = package_by_name(&ctx.meta, crate_name)?;
-        Ok((
-            ChangeLog::from_history_segments(
-                package,
-                &crate::git::history::crate_ref_segments(package, &ctx, history)?,
-                &ctx.repo,
-            ),
+        let mut log = ChangeLog::from_history_segments(
             package,
-        ))
+            &crate::git::history::crate_ref_segments(package, &ctx, history)?,
+            &ctx.repo,
+        );
+        log.sections.insert(
+            0,
+            Section::Verbatim {
+                text: include_str!("header.md").to_owned(),
+                generated: true,
+            },
+        );
+        Ok((log, package))
     }
 
     pub fn path_from_manifest(path: &Utf8Path) -> Utf8PathBuf {
