@@ -1,7 +1,8 @@
 #![allow(unused)]
 
-use git_repository as git;
 use std::borrow::Cow;
+
+use git_repository as git;
 
 pub mod history;
 

@@ -1,7 +1,4 @@
-use crate::command::changelog::Options;
-
-mod commit;
-mod git;
+use crate::{command::changelog::Options, git};
 
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let ctx = crate::Context::new(crates)?;
@@ -11,12 +8,12 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         ctx.crate_names.clone()
     };
     assure_working_tree_is_unchanged(opts)?;
-    let history = match git::commit_history(&ctx.repo)? {
+    let history = match git::history::collect(&ctx.repo)? {
         None => return Ok(()),
         Some(history) => history,
     };
     for crate_name in &crate_names {
-        let _segments = git::ref_segments(crate_name, &ctx, &history)?;
+        let _segments = git::history::crate_ref_segments(crate_name, &ctx, &history)?;
     }
 
     Ok(())

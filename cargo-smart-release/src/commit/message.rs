@@ -2,7 +2,7 @@ use git_conventional::Type;
 use git_repository as git;
 use git_repository::bstr::{BStr, ByteSlice};
 
-use crate::command::changelog_impl::commit::Message;
+use crate::commit::Message;
 
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq, Eq))]
@@ -14,7 +14,7 @@ pub enum Addition {
 mod additions {
     use std::{borrow::Cow, ops::Range};
 
-    use crate::command::changelog_impl::commit::message::Addition;
+    use crate::commit::message::Addition;
 
     fn cut(mut s: String, Range { start, end }: Range<usize>) -> String {
         let part_to_left = &s[..start];
