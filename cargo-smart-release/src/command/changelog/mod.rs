@@ -14,15 +14,17 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     };
 
     for crate_name in &crate_names {
-        let (log, package) = ChangeLog::for_package(crate_name, &history, &ctx)?;
+        let (log, _package, mut lock) = ChangeLog::for_package_with_write_lock(crate_name, &history, &ctx)?;
         log::info!(
             "{} write {} sections to {}",
             will(opts.dry_run),
             log.sections.len(),
-            ChangeLog::path_from_manifest(&package.manifest_path)
+            lock.resource_path()
                 .strip_prefix(&ctx.root)
                 .expect("contained in workspace")
-        )
+                .display()
+        );
+        lock.with_mut(|file| log.write_to(file))?;
     }
 
     Ok(())

@@ -47,11 +47,11 @@ impl Section {
 }
 
 impl ChangeLog {
-    pub fn for_package<'a>(
+    pub fn for_package_with_write_lock<'a>(
         crate_name: &str,
         history: &commit::History,
         ctx: &'a crate::Context,
-    ) -> anyhow::Result<(Self, &'a Package)> {
+    ) -> anyhow::Result<(Self, &'a Package, git::lock::File)> {
         let package = package_by_name(&ctx.meta, crate_name)?;
         let mut log = ChangeLog::from_history_segments(
             package,
@@ -65,11 +65,12 @@ impl ChangeLog {
                 generated: true,
             },
         );
-        Ok((log, package))
-    }
-
-    pub fn path_from_manifest(path: &Utf8Path) -> Utf8PathBuf {
-        path.parent().expect("parent for Cargo.toml").join("CHANGELOG.md")
+        let lock = git::lock::File::acquire_to_update_resource(
+            path_from_manifest(&package.manifest_path),
+            git::lock::acquire::Fail::Immediately,
+            None,
+        )?;
+        Ok((log, package, lock))
     }
 
     fn from_history_segments(package: &Package, segments: &[commit::history::Segment<'_>], repo: &git::Easy) -> Self {
@@ -80,4 +81,8 @@ impl ChangeLog {
             }),
         }
     }
+}
+
+fn path_from_manifest(path: &Utf8Path) -> Utf8PathBuf {
+    path.parent().expect("parent for Cargo.toml").join("CHANGELOG.md")
 }
