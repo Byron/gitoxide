@@ -104,14 +104,14 @@ mod merge {
                     unknown: Default::default(),
                 },
                 Section::Release {
-                    date: date_m_d(time::Month::July, 01).into(), // generated has a date
+                    date: date_m_d(time::Month::July, 1).into(), // generated has a date
                     name: changelog::Version::Semantic("0.9.0".parse().unwrap()),
                     unknown: String::new(),
                     heading_level: 2,
                     thanks_clippy_count: 2,
                 },
                 Section::Release {
-                    date: date_m_d(time::Month::June, 01).into(),
+                    date: date_m_d(time::Month::June, 1).into(),
                     name: changelog::Version::Semantic("0.8.0".parse().unwrap()),
                     unknown: "undocumented".into(),
                     heading_level: 2,
@@ -153,14 +153,14 @@ mod merge {
                         generated: false,
                     },
                     Section::Release {
-                        date: date_m_d(time::Month::July, 01).into(),
+                        date: date_m_d(time::Month::July, 1).into(),
                         name: changelog::Version::Semantic("0.9.0".parse().unwrap()),
                         unknown: String::new(),
                         heading_level: 3,
                         thanks_clippy_count: 2,
                     },
                     Section::Release {
-                        date: date_m_d(time::Month::June, 01).into(),
+                        date: date_m_d(time::Month::June, 1).into(),
                         name: changelog::Version::Semantic("0.8.0".parse().unwrap()),
                         unknown: "undocumented".into(),
                         heading_level: 3,
