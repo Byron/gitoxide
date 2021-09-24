@@ -61,14 +61,8 @@ pub enum Ref {
         /// The path at which the symbolic ref is located, like `/refs/heads/main`.
         path: BString,
         /// The path of the ref the symbolic ref points to.
-        ///
-        /// It is `None` if the target is unreachable as it points to another namespace than the one is currently set
-        /// on the server (i.e. based on the repository at hand or the user performing the operation).
-        ///
-        /// The latter is more of an edge case, please [this issue][#205] for details.
-        ///
         /// [#205]: https://github.com/Byron/gitoxide/issues/205
-        target: Option<BString>,
+        target: BString,
         /// The hash of the object the `target` ref points to.
         object: git_hash::ObjectId,
     },
@@ -95,7 +89,16 @@ pub(crate) mod shared {
     impl From<InternalRef> for Ref {
         fn from(v: InternalRef) -> Self {
             match v {
-                InternalRef::Symbolic { path, target, object } => Ref::Symbolic { path, target, object },
+                InternalRef::Symbolic {
+                    path,
+                    target: Some(target),
+                    object,
+                } => Ref::Symbolic { path, target, object },
+                InternalRef::Symbolic {
+                    path,
+                    target: None,
+                    object,
+                } => Ref::Direct { path, object },
                 InternalRef::Peeled { path, tag, object } => Ref::Peeled { path, tag, object },
                 InternalRef::Direct { path, object } => Ref::Direct { path, object },
                 InternalRef::SymbolicForLookup { .. } => {
@@ -118,6 +121,10 @@ pub(crate) mod shared {
         /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
         Symbolic {
             path: BString,
+            /// It is `None` if the target is unreachable as it points to another namespace than the one is currently set
+            /// on the server (i.e. based on the repository at hand or the user performing the operation).
+            ///
+            /// The latter is more of an edge case, please [this issue][#205] for details.
             target: Option<BString>,
             object: git_hash::ObjectId,
         },
@@ -251,12 +258,15 @@ pub(crate) mod shared {
                                     object: git_hash::ObjectId::from_hex(value.as_bytes())?,
                                     tag: id,
                                 },
-                                "symref-target" => Ref::Symbolic {
-                                    path: path.into(),
-                                    object: id,
-                                    target: match value {
-                                        "(null)" => None,
-                                        name => Some(name.into()),
+                                "symref-target" => match value {
+                                    "(null)" => Ref::Direct {
+                                        path: path.into(),
+                                        object: id,
+                                    },
+                                    name => Ref::Symbolic {
+                                        path: path.into(),
+                                        object: id,
+                                        target: name.into(),
                                     },
                                 },
                                 _ => {

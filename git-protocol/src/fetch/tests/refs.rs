@@ -20,12 +20,11 @@ async fn extract_references_from_v2_refs() {
         vec![
             Ref::Symbolic {
                 path: "HEAD".into(),
-                target: Some("refs/heads/main".into()),
+                target: "refs/heads/main".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
             },
-            Ref::Symbolic {
+            Ref::Direct {
                 path: "MISSING_NAMESPACE_TARGET".into(),
-                target: None,
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
             },
             Ref::Direct {
@@ -68,12 +67,11 @@ dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/git-commitgraph-v0.0.0
         vec![
             Ref::Symbolic {
                 path: "HEAD".into(),
-                target: Some("refs/heads/main".into()),
+                target: "refs/heads/main".into(),
                 object: oid("73a6868963993a3328e7d8fe94e5a6ac5078a944")
             },
-            Ref::Symbolic {
+            Ref::Direct {
                 path: "MISSING_NAMESPACE_TARGET".into(),
-                target: None,
                 object: oid("21c9b7500cb144b3169a6537961ec2b9e865be81")
             },
             Ref::Direct {
