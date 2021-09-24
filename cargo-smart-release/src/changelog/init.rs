@@ -72,11 +72,12 @@ impl ChangeLog {
                 generated: true,
             },
         );
-        let lock = git::lock::File::acquire_to_update_resource(
-            path_from_manifest(&package.manifest_path),
-            git::lock::acquire::Fail::Immediately,
-            None,
-        )?;
+        let changelog_path = path_from_manifest(&package.manifest_path);
+        let lock =
+            git::lock::File::acquire_to_update_resource(&changelog_path, git::lock::acquire::Fail::Immediately, None)?;
+        if let Ok(existing) = std::fs::read_to_string(changelog_path) {
+            let _existing = ChangeLog::from_markdown(&existing);
+        }
         Ok((log, package, lock))
     }
 

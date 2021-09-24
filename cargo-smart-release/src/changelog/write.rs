@@ -42,7 +42,12 @@ impl Section {
                         "#".repeat(*heading_level + 1),
                         Section::THANKS_CLIPPY_TITLE
                     )?;
-                    writeln!(out, "Clippy is a linter to help keeping code idiomatic. It was helpful {} time(s) in this release.\n", thanks_clippy_count)?;
+                    writeln!(
+                        out,
+                        "Clippy is a linter to help keeping code idiomatic. It was helpful {} {} in this release.\n",
+                        thanks_clippy_count,
+                        if *thanks_clippy_count > 1 { "times" } else { "time" }
+                    )?;
                 }
                 if !unknown.is_empty() {
                     writeln!(out, "{}", Section::UNKNOWN_TAG_START)?;
