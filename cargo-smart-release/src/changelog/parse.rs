@@ -9,9 +9,9 @@ use nom::{
     sequence::{delimited, preceded, separated_pair, terminated, tuple},
     Finish, IResult,
 };
+use pulldown_cmark::{Event, Parser, Tag};
 
 use crate::{changelog, changelog::Section, ChangeLog};
-use pulldown_cmark::{Event, Parser, Tag};
 
 impl ChangeLog {
     /// Obtain as much information as possible from `input` and keep everything we didn't understand in respective sections.

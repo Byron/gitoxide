@@ -1,4 +1,5 @@
 mod init;
+mod merge;
 mod parse;
 mod write;
 
