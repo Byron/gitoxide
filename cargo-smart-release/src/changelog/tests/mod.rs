@@ -1,9 +1,9 @@
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 
 mod write_and_parse {
-    use super::Result;
     use git_repository::bstr::ByteSlice;
 
+    use super::Result;
     use crate::{changelog, changelog::Section, ChangeLog};
 
     #[test]
@@ -45,12 +45,11 @@ mod write_and_parse {
 }
 
 mod merge {
-    use crate::changelog::Section;
-    use crate::{changelog, ChangeLog};
     use time::OffsetDateTime;
 
+    use crate::{changelog, changelog::Section, ChangeLog};
+
     #[test]
-    #[ignore]
     fn into_only_last_release_without_unreleased_section() {
         let parsed = ChangeLog {
             sections: vec![

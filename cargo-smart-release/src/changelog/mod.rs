@@ -27,7 +27,8 @@ pub enum Section {
     },
 }
 
-#[cfg_attr(test, derive(PartialEq, Eq, Debug))]
+#[cfg_attr(test, derive(Debug))]
+#[derive(PartialEq, Eq)]
 pub enum Version {
     Unreleased,
     Semantic(semver::Version),
