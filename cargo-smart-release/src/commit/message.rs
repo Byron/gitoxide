@@ -87,7 +87,7 @@ mod additions {
 impl From<&'_ str> for Message {
     fn from(m: &str) -> Self {
         let (title, kind, body, breaking, breaking_description) = git_conventional::Commit::parse(m)
-            .map(|c: git_conventional::Commit| {
+            .map(|c: git_conventional::Commit<'_>| {
                 (
                     c.description().into(),
                     Some(c.type_()),

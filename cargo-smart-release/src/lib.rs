@@ -1,3 +1,5 @@
+#![deny(rust_2018_idioms)]
+
 #[derive(PartialEq, Eq, Debug)]
 pub struct ChangeLog {
     pub sections: Vec<changelog::Section>,

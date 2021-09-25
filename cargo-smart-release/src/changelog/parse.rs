@@ -9,7 +9,7 @@ use nom::{
     sequence::{delimited, preceded, separated_pair, terminated, tuple},
     Finish, IResult,
 };
-use pulldown_cmark::{Event, Parser, Tag};
+use pulldown_cmark::{Event, OffsetIter, Tag};
 
 use crate::{changelog, changelog::Section, ChangeLog};
 
@@ -65,17 +65,21 @@ impl ChangeLog {
 
 impl Section {
     fn from_headline_and_body(Headline { level, version, date }: Headline, body: String) -> Self {
-        let mut events = pulldown_cmark::Parser::new(&body);
+        let mut events = pulldown_cmark::Parser::new(&body).into_offset_iter();
         let mut unknown = String::new();
         let mut thanks_clippy_count = 0;
 
-        while let Some(e) = events.next() {
+        // let mut user_authored = String::new();
+        // let mut unknown_range = 0..0;
+        while let Some((e, _range)) = events.next() {
             match e {
                 Event::Html(text) if text.starts_with(Section::UNKNOWN_TAG_START) => {
                     for text in events
                         .by_ref()
-                        .take_while(|e| !matches!(e, Event::Html(text) if text.starts_with(Section::UNKNOWN_TAG_END)))
-                        .filter_map(|e| match e {
+                        .take_while(
+                            |(e, _range)| !matches!(e, Event::Html(text) if text.starts_with(Section::UNKNOWN_TAG_END)),
+                        )
+                        .filter_map(|(e, _range)| match e {
                             Event::Html(text) => Some(text),
                             _ => None,
                         })
@@ -86,17 +90,17 @@ impl Section {
                 Event::Start(Tag::Heading(_indent)) => {
                     enum State {
                         ParseClippy,
-                        DoNothing,
+                        ConsiderUserAuthored,
                     }
                     let state = match events.next() {
-                        Some(Event::Text(title)) if title.starts_with(Section::THANKS_CLIPPY_TITLE) => {
+                        Some((Event::Text(title), _range)) if title.starts_with(Section::THANKS_CLIPPY_TITLE) => {
                             State::ParseClippy
                         }
-                        _ => State::DoNothing,
+                        _ => State::ConsiderUserAuthored,
                     };
                     events
                         .by_ref()
-                        .take_while(|e| !matches!(e, Event::End(Tag::Heading(_))))
+                        .take_while(|(e, _range)| !matches!(e, Event::End(Tag::Heading(_))))
                         .count();
                     match state {
                         State::ParseClippy => {
@@ -108,7 +112,7 @@ impl Section {
                                     .unwrap_or(0)
                             }
                         }
-                        State::DoNothing => {}
+                        State::ConsiderUserAuthored => {}
                     }
                 }
                 unknown_event => track_unknown_event(unknown_event, &mut unknown),
@@ -142,12 +146,12 @@ fn track_unknown_event(unknown_event: Event<'_>, unknown: &mut String) {
     }
 }
 
-fn collect_paragraph(events: &mut Parser, unknown: &mut String) -> Option<String> {
+fn collect_paragraph(events: &mut OffsetIter<'_>, unknown: &mut String) -> Option<String> {
     match events.next() {
-        Some(Event::Start(Tag::Paragraph)) => {
+        Some((Event::Start(Tag::Paragraph), _range)) => {
             return events
-                .take_while(|e| !matches!(e, Event::End(Tag::Paragraph)))
-                .filter_map(|e| match e {
+                .take_while(|(e, _range)| !matches!(e, Event::End(Tag::Paragraph)))
+                .filter_map(|(e, _range)| match e {
                     Event::Text(text) => Some(text),
                     _ => None,
                 })
@@ -157,7 +161,7 @@ fn collect_paragraph(events: &mut Parser, unknown: &mut String) -> Option<String
                 })
                 .into()
         }
-        Some(event) => track_unknown_event(event, unknown),
+        Some((event, _range)) => track_unknown_event(event, unknown),
         None => {}
     };
     None
