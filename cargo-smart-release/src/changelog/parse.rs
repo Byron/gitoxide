@@ -30,10 +30,14 @@ impl ChangeLog {
                                 std::mem::take(&mut plain_text),
                             ));
                         }
-                        None => sections.push(Section::Verbatim {
-                            text: std::mem::take(&mut plain_text),
-                            generated: false,
-                        }),
+                        None => {
+                            if !plain_text.is_empty() {
+                                sections.push(Section::Verbatim {
+                                    text: std::mem::take(&mut plain_text),
+                                    generated: false,
+                                })
+                            }
+                        }
                     };
                     previous_headline = Some(headline);
                 }
