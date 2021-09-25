@@ -5,6 +5,7 @@ use cargo_metadata::{
 use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
 
+use crate::utils::will;
 use crate::{
     changelog,
     changelog::Section,
@@ -58,6 +59,7 @@ impl ChangeLog {
         crate_name: &str,
         history: &commit::History,
         ctx: &'a crate::Context,
+        dry_run: bool,
     ) -> anyhow::Result<(Self, &'a Package, git::lock::File)> {
         let package = package_by_name(&ctx.meta, crate_name)?;
         let mut log = ChangeLog::from_history_segments(
@@ -75,9 +77,13 @@ impl ChangeLog {
         let changelog_path = path_from_manifest(&package.manifest_path);
         let lock =
             git::lock::File::acquire_to_update_resource(&changelog_path, git::lock::acquire::Fail::Immediately, None)?;
-        if let Ok(existing) = std::fs::read_to_string(changelog_path) {
-            let _existing = ChangeLog::from_markdown(&existing);
-        }
+        let log = if let Ok(existing) = std::fs::read_to_string(changelog_path) {
+            let existing = ChangeLog::from_markdown(&existing);
+            existing.merge_generated(log)
+        } else {
+            log::info!("{} create a new changelog for '{}'", will(dry_run), crate_name);
+            log
+        };
         Ok((log, package, lock))
     }
 
