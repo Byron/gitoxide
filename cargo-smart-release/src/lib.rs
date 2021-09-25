@@ -1,6 +1,6 @@
-#[cfg_attr(test, derive(PartialEq, Eq, Debug))]
+#[derive(PartialEq, Eq, Debug)]
 pub struct ChangeLog {
-    sections: Vec<changelog::Section>,
+    pub sections: Vec<changelog::Section>,
 }
 
 pub mod changelog;
