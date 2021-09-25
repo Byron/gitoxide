@@ -7,14 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unreleased
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 9 times in this release.
 
 
 ### v0.10.4 (2021-09-10)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
@@ -30,11 +30,12 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 - instruct docs.rs which features to use for more useful documentation
 
 
+
 ### v0.10.0 (2021-08-27)
 
 - Various minor updates of pre-release dependencies
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 3 times in this release.
 
@@ -45,19 +46,20 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 3 times in thi
 
 - Add fifth argument to `fetch(…)`
 
+
 ### v0.8.1 (2021-08-13)
 
 
 ### v0.8.0 (2021-08-10)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 5 times in this release.
 
 
 ### v0.7.0 (2021-05-09)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
@@ -67,14 +69,14 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 
 ### v0.5.0 (2021-03-26)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 2 times in this release.
 
 
 ### v0.4.1 (2021-01-05)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
@@ -87,21 +89,21 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 
 ### v0.2.0 (2020-12-15)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
 
 ### v0.1.1 (2020-09-14)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 10 times in this release.
 
 
 ### v0.1.0 (2020-09-12)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 

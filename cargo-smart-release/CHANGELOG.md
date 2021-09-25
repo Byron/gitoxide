@@ -42,6 +42,7 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 9 times in thi
 - Fix auto-push functionality
 
 
+
 ## v0.2.3 (2021-08-15)
 
 - Less verbosity by default which is helpful on the first run to get an overview. Use `--verbose/-v` for all the details.
@@ -55,6 +56,7 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 ## v0.2.2 (2021-08-15)
 
 - support for unsorted packed-refs files
+
 
 
 ## v0.2.1 (2021-08-13)

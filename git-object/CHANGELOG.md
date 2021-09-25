@@ -7,28 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## Thanks Clippy…
+### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 6 times in this release.
 
 
 ## v0.14.0 (2021-09-08)
 
-## Thanks Clippy…
+### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
 
 ## v0.13.1 (2021-09-07)
 
-## Thanks Clippy…
+### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
 
 ## v0.13.0 (2021-08-27)
 
-## Thanks Clippy…
+### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 5 times in this release.
 
@@ -47,7 +47,7 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 5 times in thi
 
 ## v0.10.0 (2021-08-10)
 
-## Thanks Clippy…
+### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 3 times in this release.
 
@@ -57,14 +57,14 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 3 times in thi
 
 ## v0.8.0 (2021-04-30)
 
-## Thanks Clippy…
+### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 2 times in this release.
 
 
 ## v0.7.0 (2021-04-08)
 
-## Thanks Clippy…
+### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
@@ -74,21 +74,21 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 
 ## v0.5.0 (2020-12-15)
 
-## Thanks Clippy…
+### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 3 times in this release.
 
 
 ## v0.4.0 (2020-09-12)
 
-## Thanks Clippy…
+### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
 
 ## v0.3.0 (2020-08-12)
 
-## Thanks Clippy…
+### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 

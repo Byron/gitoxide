@@ -7,14 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unreleased
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 9 times in this release.
 
 
 ### v0.21.3 (2021-09-10)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
@@ -42,14 +42,14 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 
 ### v0.16.0 (2021-08-10)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 5 times in this release.
 
 
 ### v0.15.0 (2021-05-09)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 2 times in this release.
 
@@ -59,14 +59,14 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 2 times in thi
 
 ### v0.12.0 (2021-04-30)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 8 times in this release.
 
 
 ### v0.10.0 (2021-04-08)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
@@ -76,7 +76,7 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 
 ### v0.9.0 (2021-03-29)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
@@ -86,7 +86,7 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 
 ### v0.7.1 (2021-01-24)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
@@ -99,14 +99,14 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 
 ### v0.5.0 (2020-12-15)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
 
 ### v0.4.2 (2020-11-18)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 3 times in this release.
 
@@ -116,14 +116,14 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 3 times in thi
 
 ### v0.4.0 (2020-09-12)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
 
 ### v0.3.0 (2020-08-12)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 5 times in this release.
 
@@ -136,12 +136,13 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 5 times in thi
 * added `linked::Store::refresh()`
 
 
+
 ### v0.21.0 (2021-08-27)
 
 - **renames**
    - `compound::Store::find()` -> `compound::Store::try_find()`
    - `loose::Store::find()` -> `loose::Store::try_find()`
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 2 times in this release.
 

@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## Thanks Clippy…
+### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 10 times in this release.
 
@@ -50,7 +50,7 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 10 times in th
 
 ## v0.1.0 (2021-04-30)
 
-## Thanks Clippy…
+### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 

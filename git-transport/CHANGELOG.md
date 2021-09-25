@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unreleased
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 10 times in this release.
 
@@ -15,6 +15,7 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 10 times in th
 ### v0.11.1 (2021-08-29)
 
 - instruct docs.rs which features to use for more useful documentation
+
 
 
 ### v0.10.1 (2021-08-17)
@@ -25,7 +26,7 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 10 times in th
 
 ### v0.9.0 (2021-08-10)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 4 times in this release.
 
@@ -38,14 +39,14 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 4 times in thi
 
 ### v0.6.0 (2021-03-26)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
 
 ### v0.5.1 (2021-01-05)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
@@ -58,21 +59,21 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 
 ### v0.3.0 (2020-12-15)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 2 times in this release.
 
 
 ### v0.2.1 (2020-09-14)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 14 times in this release.
 
 
 ### v0.2.0 (2020-09-12)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
@@ -83,7 +84,7 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 ### v0.11.0 (2021-08-27)
 
 - upgrade to the latest git-packetline release
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 3 times in this release.
 

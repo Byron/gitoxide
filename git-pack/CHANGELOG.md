@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unreleased
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 10 times in this release.
 
@@ -17,12 +17,14 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 10 times in th
 - manual bump for safety as its dependencies have breaking changes
 
 
+
 ### v0.10.0 (2021-09-07)
 
 - **renames**
    - `data::Object::into_commit_iter()` -> `data::Object::try_into_commit_iter()`
    - `data::Object::into_tree_iter()` -> `data::Object::try_into_tree_iter()`
    - `data::Object::into_tag_iter()` -> `data::Object::try_into_tag_iter()`
+
 
 
 ### v0.9.0 (2021-08-27)
@@ -42,7 +44,7 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 10 times in th
 
 * **new methods**
    - `Find::find_tag_iter()`
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 4 times in this release.
 
@@ -67,7 +69,7 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 4 times in thi
 
 ### v0.3.0 (2021-08-10)
 
-### Thanks Clippy…
+#### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 7 times in this release.
 

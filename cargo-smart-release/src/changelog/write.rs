@@ -40,11 +40,12 @@ impl Section {
                         date.day()
                     ),
                 }?;
+                let section_level = *heading_level + 1;
                 for segment in segments {
                     segment.write_to(&mut out)?;
                 }
                 if *thanks_clippy_count > 0 {
-                    writeln!(out, "{} {}\n", heading(*heading_level), Section::THANKS_CLIPPY_TITLE)?;
+                    writeln!(out, "{} {}\n", heading(section_level), Section::THANKS_CLIPPY_TITLE)?;
                     writeln!(
                         out,
                         "Clippy is a linter to help keeping code idiomatic. It was helpful {} {} in this release.\n",
