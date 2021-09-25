@@ -1,5 +1,6 @@
-use crate::changelog::Section;
+use crate::changelog::{Section, Version};
 use crate::ChangeLog;
+use std::cmp::Ordering;
 use std::collections::VecDeque;
 use std::iter::FromIterator;
 
@@ -32,14 +33,24 @@ impl ChangeLog {
                 Section::Verbatim { .. } => {
                     unreachable!("BUG: generated logs may only have verbatim sections at the beginning")
                 }
-                Section::Release { name: _, .. } => {
-                    todo!("find matching section and merge it, or find good insertion spot")
-                }
+                Section::Release { ref name, .. } => match find_target_section(name, sections) {
+                    (pos, Ordering::Equal) => merge_section(&mut sections[pos], section_to_merge),
+                    (pos, Ordering::Greater) => sections.insert(pos, section_to_merge),
+                    (pos, Ordering::Less) => sections.insert(pos + 1, section_to_merge),
+                },
             }
         }
 
         self
     }
+}
+
+fn find_target_section(_name: &Version, _sections: &[Section]) -> (usize, Ordering) {
+    todo!("find insertion point")
+}
+
+fn merge_section(_dest: &mut Section, _src: Section) {
+    todo!("actual merge")
 }
 
 fn merge_generated_verbatim_section_if_there_is_only_releases_on_lhs(
