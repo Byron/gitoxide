@@ -15,10 +15,12 @@ include = ["src/**/*", "README.md", "CHANGELOG.md", "!**/tests/**/*"]
 [[bin]]
 name = "cargo-smart-release"
 path = "src/cli/main-smart-release.rs"
+test = false
 
 [[bin]]
 name = "cargo-changelog"
 path = "src/cli/main-changelog.rs"
+test = false
 
 [features]
 cache-efficiency-debug = ["git-repository/cache-efficiency-debug"]
