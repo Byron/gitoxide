@@ -122,17 +122,14 @@ impl Section {
                         State::ConsiderUserAuthored => {}
                     }
                 }
-                unknown_event => {
-                    match &mut unknown_range {
-                        Some(range_thus_far) => {
-                            if range.end > range_thus_far.end {
-                                range_thus_far.end = range.end;
-                            }
+                _unknown_event => match &mut unknown_range {
+                    Some(range_thus_far) => {
+                        if range.end > range_thus_far.end {
+                            range_thus_far.end = range.end;
                         }
-                        None => unknown_range = range.into(),
                     }
-                    track_unknown_event(unknown_event, &mut unknown);
-                }
+                    None => unknown_range = range.into(),
+                },
             };
         }
         consume_unknown_range(&mut segments, unknown_range.take(), &body);

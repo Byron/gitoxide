@@ -17,7 +17,7 @@ fn all_unknown_in_section() {
                 segments: vec![section::Segment::Unknown {
                     text: "- hello ~~this is not understood~~\n* this isn't either\n\n".into()
                 }],
-                unknown: "hello ~~this is not understood~~this isn't either".into()
+                unknown: String::new(),
             },
             Section::Release {
                 name: Version::Semantic("1.0.0".parse().unwrap()),
@@ -27,7 +27,7 @@ fn all_unknown_in_section() {
                 segments: vec![section::Segment::Unknown {
                     text: "Some free text in a paragraph\nthat won't parse.\n".into()
                 }],
-                unknown: "Some free text in a paragraphthat won't parse.".into()
+                unknown: String::new(),
             }
         ]
     )
