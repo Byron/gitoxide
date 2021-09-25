@@ -32,10 +32,10 @@ pub struct ChangeLog {
     #[argh(switch)]
     pub allow_dirty: bool,
 
-    /// if --write is not set, 'bat' will be used (if available) to print the new changelog to stdout. Use this flag
+    /// if --write is not set, 'bat' will be used (if available) to print the new changelog to stdout as preview. Use this flag
     /// to disable such behaviour.
     #[argh(switch)]
-    pub no_bat: bool,
+    pub no_preview: bool,
 
     /// do not take into consideration any dependencies of the crates to generate the changelog for.
     ///

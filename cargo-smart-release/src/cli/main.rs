@@ -12,13 +12,13 @@ fn main() -> anyhow::Result<()> {
             write,
             crates,
             no_dependencies,
-            no_bat,
+            no_preview,
             allow_dirty,
         }) => command::changelog(
             command::changelog::Options {
                 dry_run: !write,
                 allow_dirty,
-                bat: !no_bat,
+                preview: !no_preview,
                 dependencies: !no_dependencies,
             },
             crates,
