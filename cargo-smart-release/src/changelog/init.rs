@@ -40,9 +40,13 @@ impl Section {
         let date_time = time::OffsetDateTime::from_unix_timestamp(time.time as i64)
             .expect("always valid unix time")
             .replace_offset(time::UtcOffset::from_whole_seconds(time.offset).expect("valid offset"));
+        let date = match version {
+            changelog::Version::Unreleased => None,
+            changelog::Version::Semantic(_) => Some(date_time),
+        };
         Section::Release {
             name: version,
-            date: date_time.into(),
+            date,
             thanks_clippy_count: segment
                 .history
                 .iter()
