@@ -1,7 +1,9 @@
-use crate::changelog::{Section, Version};
-use crate::ChangeLog;
-use std::collections::VecDeque;
-use std::iter::FromIterator;
+use std::{collections::VecDeque, iter::FromIterator};
+
+use crate::{
+    changelog::{Section, Version},
+    ChangeLog,
+};
 
 impl ChangeLog {
     /// Bring `generated` into `self` in such a way that `self` preserves everything while enriching itself from `generated`.

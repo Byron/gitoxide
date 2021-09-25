@@ -1,4 +1,8 @@
-use crate::{changelog, changelog::Section, ChangeLog};
+use crate::{
+    changelog,
+    changelog::{section, Section},
+    ChangeLog,
+};
 
 impl std::fmt::Display for changelog::Version {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -22,6 +26,7 @@ impl Section {
                 date,
                 heading_level,
                 thanks_clippy_count,
+                segments,
                 unknown,
             } => {
                 write!(out, "{} {}", "#".repeat(*heading_level), name)?;
@@ -35,6 +40,9 @@ impl Section {
                         date.day()
                     ),
                 }?;
+                for segment in segments {
+                    segment.write_to(&mut out)?;
+                }
                 if *thanks_clippy_count > 0 {
                     writeln!(
                         out,
@@ -66,5 +74,13 @@ impl ChangeLog {
             section.write_to(&mut out)?;
         }
         Ok(())
+    }
+}
+
+impl section::Segment {
+    pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+        match self {
+            section::Segment::Unknown { text } => out.write_all(text.as_bytes()),
+        }
     }
 }

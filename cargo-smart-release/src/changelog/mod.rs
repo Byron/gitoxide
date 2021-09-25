@@ -3,6 +3,14 @@ mod merge;
 mod parse;
 mod write;
 
+pub mod section {
+    #[derive(PartialEq, Eq, Debug)]
+    pub enum Segment {
+        /// A portion of a Section that we couldn't make sense of, but which should be kept as is nonetheless.
+        Unknown { text: String },
+    }
+}
+
 #[derive(PartialEq, Eq, Debug)]
 pub enum Section {
     /// A part of a changelog which couldn't be understood and is taken in verbatim. This is usually the pre-amble of the changelog
@@ -24,6 +32,8 @@ pub enum Section {
         thanks_clippy_count: usize,
         /// text of events of everything we couldn't parse
         unknown: String,
+        /// portions of a release
+        segments: Vec<section::Segment>,
     },
 }
 

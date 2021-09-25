@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, str::FromStr};
+use std::{convert::TryFrom, ops::Range, str::FromStr};
 
 use git_repository::bstr::ByteSlice;
 use nom::{
@@ -11,7 +11,11 @@ use nom::{
 };
 use pulldown_cmark::{Event, OffsetIter, Tag};
 
-use crate::{changelog, changelog::Section, ChangeLog};
+use crate::{
+    changelog,
+    changelog::{section, Section},
+    ChangeLog,
+};
 
 impl ChangeLog {
     /// Obtain as much information as possible from `input` and keep everything we didn't understand in respective sections.
@@ -68,12 +72,14 @@ impl Section {
         let mut events = pulldown_cmark::Parser::new(&body).into_offset_iter();
         let mut unknown = String::new();
         let mut thanks_clippy_count = 0;
+        let mut segments = Vec::new();
 
         // let mut user_authored = String::new();
-        // let mut unknown_range = 0..0;
-        while let Some((e, _range)) = events.next() {
+        let mut unknown_range = None;
+        while let Some((e, range)) = events.next() {
             match e {
                 Event::Html(text) if text.starts_with(Section::UNKNOWN_TAG_START) => {
+                    consume_unknown_range(&mut segments, unknown_range.take(), &body);
                     for text in events
                         .by_ref()
                         .take_while(
@@ -88,6 +94,7 @@ impl Section {
                     }
                 }
                 Event::Start(Tag::Heading(_indent)) => {
+                    consume_unknown_range(&mut segments, unknown_range.take(), &body);
                     enum State {
                         ParseClippy,
                         ConsiderUserAuthored,
@@ -115,9 +122,20 @@ impl Section {
                         State::ConsiderUserAuthored => {}
                     }
                 }
-                unknown_event => track_unknown_event(unknown_event, &mut unknown),
+                unknown_event => {
+                    match &mut unknown_range {
+                        Some(range_thus_far) => {
+                            if range.end > range_thus_far.end {
+                                range_thus_far.end = range.end;
+                            }
+                        }
+                        None => unknown_range = range.into(),
+                    }
+                    track_unknown_event(unknown_event, &mut unknown);
+                }
             };
         }
+        consume_unknown_range(&mut segments, unknown_range.take(), &body);
         Section::Release {
             name: match version {
                 Some(version) => changelog::Version::Semantic(version),
@@ -126,8 +144,17 @@ impl Section {
             date,
             heading_level: level,
             thanks_clippy_count,
+            segments,
             unknown,
         }
+    }
+}
+
+fn consume_unknown_range(out: &mut Vec<section::Segment>, range: Option<Range<usize>>, markdown: &str) {
+    if let Some(range) = range {
+        out.push(section::Segment::Unknown {
+            text: markdown[range].to_owned(),
+        })
     }
 }
 

@@ -5,12 +5,11 @@ use cargo_metadata::{
 use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
 
-use crate::utils::will;
 use crate::{
     changelog,
     changelog::Section,
     commit, utils,
-    utils::{is_top_level_package, package_by_name},
+    utils::{is_top_level_package, package_by_name, will},
     ChangeLog,
 };
 
@@ -53,6 +52,7 @@ impl Section {
                 .filter(|item| item.message.title.starts_with("thanks clippy"))
                 .count(),
             heading_level: 2,
+            segments: Vec::new(), // TODO: actually generate these once there is more than 'Unknown'
             unknown: Default::default(),
         }
     }

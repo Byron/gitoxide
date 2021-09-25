@@ -1,10 +1,8 @@
+use cargo_smart_release::{changelog, changelog::Section, ChangeLog};
 use time::OffsetDateTime;
 
-use cargo_smart_release::changelog::Section;
-use cargo_smart_release::{changelog, ChangeLog};
-
 #[test]
-fn into_only_last_release_without_unreleased_section() {
+fn only_last_release_without_unreleased_section() {
     let parsed = ChangeLog {
         sections: vec![
             Section::Verbatim {
@@ -21,6 +19,7 @@ fn into_only_last_release_without_unreleased_section() {
                 ),
                 thanks_clippy_count: 0,
                 name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
+                segments: Vec::new(),
                 unknown: "never changed".into(),
             },
             Section::Verbatim {
@@ -32,6 +31,7 @@ fn into_only_last_release_without_unreleased_section() {
                 date: None,
                 thanks_clippy_count: 0,
                 name: changelog::Version::Semantic("0.9.0".parse().unwrap()),
+                segments: Vec::new(),
                 unknown: String::new(),
             },
         ],
@@ -47,6 +47,7 @@ fn into_only_last_release_without_unreleased_section() {
                 name: changelog::Version::Unreleased,
                 heading_level: 2,
                 thanks_clippy_count: 4,
+                segments: Vec::new(),
                 unknown: Default::default(),
             },
             Section::Release {
@@ -54,6 +55,7 @@ fn into_only_last_release_without_unreleased_section() {
                 name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
                 heading_level: 2,
                 thanks_clippy_count: 3,
+                segments: Vec::new(),
                 unknown: Default::default(),
             },
             Section::Release {
@@ -61,6 +63,7 @@ fn into_only_last_release_without_unreleased_section() {
                 name: changelog::Version::Semantic("0.9.0".parse().unwrap()),
                 unknown: String::new(),
                 heading_level: 2,
+                segments: Vec::new(),
                 thanks_clippy_count: 2,
             },
             Section::Release {
@@ -68,6 +71,7 @@ fn into_only_last_release_without_unreleased_section() {
                 name: changelog::Version::Semantic("0.8.0".parse().unwrap()),
                 unknown: "undocumented".into(),
                 heading_level: 2,
+                segments: Vec::new(),
                 thanks_clippy_count: 0,
             },
         ],
@@ -87,6 +91,7 @@ fn into_only_last_release_without_unreleased_section() {
                     name: changelog::Version::Unreleased,
                     heading_level: 3,
                     thanks_clippy_count: 4,
+                    segments: Vec::new(),
                     unknown: Default::default(),
                 },
                 Section::Release {
@@ -99,6 +104,7 @@ fn into_only_last_release_without_unreleased_section() {
                     ),
                     thanks_clippy_count: 3,
                     name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
+                    segments: Vec::new(),
                     unknown: "never changed".into(),
                 },
                 Section::Verbatim {
@@ -110,6 +116,7 @@ fn into_only_last_release_without_unreleased_section() {
                     name: changelog::Version::Semantic("0.9.0".parse().unwrap()),
                     unknown: String::new(),
                     heading_level: 3,
+                    segments: Vec::new(),
                     thanks_clippy_count: 2,
                 },
                 Section::Release {
@@ -117,6 +124,7 @@ fn into_only_last_release_without_unreleased_section() {
                     name: changelog::Version::Semantic("0.8.0".parse().unwrap()),
                     unknown: "undocumented".into(),
                     heading_level: 3,
+                    segments: Vec::new(),
                     thanks_clippy_count: 0,
                 },
             ]

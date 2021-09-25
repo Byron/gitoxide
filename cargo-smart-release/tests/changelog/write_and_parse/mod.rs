@@ -1,8 +1,7 @@
+use cargo_smart_release::{changelog, changelog::Section, ChangeLog};
 use git_repository::bstr::ByteSlice;
 
 use crate::Result;
-use cargo_smart_release::changelog::Section;
-use cargo_smart_release::{changelog, ChangeLog};
 
 #[test]
 fn all_section_types_round_trip() -> Result {
@@ -17,6 +16,7 @@ fn all_section_types_round_trip() -> Result {
                 date: None,
                 thanks_clippy_count: 0,
                 name: changelog::Version::Unreleased,
+                segments: Vec::new(), // TODO: actually write out some sections and see if they parse perfectly
                 unknown: "hello\nworld\n".into(),
             },
             Section::Release {
@@ -24,6 +24,7 @@ fn all_section_types_round_trip() -> Result {
                 thanks_clippy_count: 42,
                 date: Some(time::OffsetDateTime::from_unix_timestamp(0)?),
                 name: changelog::Version::Semantic("1.0.2-beta.2".parse()?),
+                segments: Vec::new(),
                 unknown: String::new(),
             },
         ],

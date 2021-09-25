@@ -1,5 +1,7 @@
-use cargo_smart_release::changelog::{Section, Version};
-use cargo_smart_release::ChangeLog;
+use cargo_smart_release::{
+    changelog::{section, Section, Version},
+    ChangeLog,
+};
 
 #[test]
 fn all_unknown_in_section() {
@@ -12,6 +14,9 @@ fn all_unknown_in_section() {
                 date: None,
                 heading_level: 3,
                 thanks_clippy_count: 0,
+                segments: vec![section::Segment::Unknown {
+                    text: "- hello ~~this is not understood~~\n* this isn't either\n\n".into()
+                }],
                 unknown: "hello ~~this is not understood~~this isn't either".into()
             },
             Section::Release {
@@ -19,6 +24,9 @@ fn all_unknown_in_section() {
                 date: None,
                 heading_level: 4,
                 thanks_clippy_count: 0,
+                segments: vec![section::Segment::Unknown {
+                    text: "Some free text in a paragraph\nthat won't parse.\n".into()
+                }],
                 unknown: "Some free text in a paragraphthat won't parse.".into()
             }
         ]

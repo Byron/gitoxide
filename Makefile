@@ -308,6 +308,6 @@ force-update-assets: ## As update-assets, but will run git to update the baselin
 check-size: ## Run cargo-diet on all crates to see that they are still in bound
 	./etc/check-package-size.sh
 
-rustfmt: ## run nightly rustfmt for its extra features, but check that it won't upset stable rustfmt
+fmt: ## run nightly rustfmt for its extra features, but check that it won't upset stable rustfmt
 	cargo +nightly fmt --all -- --config-path rustfmt-nightly.toml
 	cargo +stable fmt --all -- --check
