@@ -36,11 +36,11 @@ impl ChangeLog {
                 Section::Release { ref name, .. } => match find_target_section(name, sections, first_release_pos) {
                     Insertion::MergeWith(pos) => merge_section(&mut sections[pos], section_to_merge),
                     Insertion::At(pos) => {
-                        match section_to_merge {
-                            Section::Release {
-                                ref mut heading_level, ..
-                            } => *heading_level = first_release_indentation,
-                            _ => {}
+                        if let Section::Release {
+                            ref mut heading_level, ..
+                        } = section_to_merge
+                        {
+                            *heading_level = first_release_indentation;
                         }
                         sections.insert(pos, section_to_merge);
                     }
