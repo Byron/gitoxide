@@ -44,7 +44,7 @@ fn unknown_link_and_headling() {
             heading_level: 4,
             thanks_clippy_count: 0,
             segments: vec![section::Segment::Unknown {
-                text: "Hello [there][194] period.\n".into()
+                text: "##### Special\n\nHello [there][194] period.\n".into()
             }],
             unknown: String::new(),
         },]

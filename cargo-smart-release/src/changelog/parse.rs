@@ -69,7 +69,7 @@ impl ChangeLog {
 
 impl Section {
     fn from_headline_and_body(Headline { level, version, date }: Headline, body: String) -> Self {
-        let mut events = pulldown_cmark::Parser::new(&body).into_offset_iter();
+        let mut events = pulldown_cmark::Parser::new_ext(&body, pulldown_cmark::Options::all()).into_offset_iter();
         let mut unknown = String::new();
         let mut thanks_clippy_count = 0;
         let mut segments = Vec::new();
@@ -77,6 +77,7 @@ impl Section {
         // let mut user_authored = String::new();
         let mut unknown_range = None;
         while let Some((e, range)) = events.next() {
+            // dbg!(&e, &range);
             match e {
                 Event::Html(text) if text.starts_with(Section::UNKNOWN_TAG_START) => {
                     consume_unknown_range(&mut segments, unknown_range.take(), &body);
@@ -96,11 +97,22 @@ impl Section {
                         Some((Event::Text(title), _range)) if title.starts_with(Section::THANKS_CLIPPY_TITLE) => {
                             State::ParseClippy
                         }
-                        _ => State::ConsiderUserAuthored,
+                        Some((_event, next_range)) => {
+                            update_unknown_range(&mut unknown_range, range);
+                            update_unknown_range(&mut unknown_range, next_range);
+                            State::ConsiderUserAuthored
+                        }
+                        None => State::ConsiderUserAuthored,
                     };
+
                     events
                         .by_ref()
-                        .take_while(|(e, _range)| !matches!(e, Event::End(Tag::Heading(_))))
+                        .take_while(|(e, range)| {
+                            if matches!(state, State::ConsiderUserAuthored) {
+                                update_unknown_range(&mut unknown_range, range.clone());
+                            }
+                            !matches!(e, Event::End(Tag::Heading(_)))
+                        })
                         .count();
                     match state {
                         State::ParseClippy => {
@@ -115,14 +127,7 @@ impl Section {
                         State::ConsiderUserAuthored => {}
                     }
                 }
-                _unknown_event => match &mut unknown_range {
-                    Some(range_thus_far) => {
-                        if range.end > range_thus_far.end {
-                            range_thus_far.end = range.end;
-                        }
-                    }
-                    None => unknown_range = range.into(),
-                },
+                _unknown_event => update_unknown_range(&mut unknown_range, range),
             };
         }
         consume_unknown_range(&mut segments, unknown_range.take(), &body);
@@ -137,6 +142,17 @@ impl Section {
             segments,
             unknown,
         }
+    }
+}
+
+fn update_unknown_range(target: &mut Option<Range<usize>>, source: Range<usize>) {
+    match target {
+        Some(range_thus_far) => {
+            if source.end > range_thus_far.end {
+                range_thus_far.end = source.end;
+            }
+        }
+        None => *target = source.into(),
     }
 }
 
