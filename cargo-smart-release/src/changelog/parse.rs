@@ -80,17 +80,10 @@ impl Section {
             match e {
                 Event::Html(text) if text.starts_with(Section::UNKNOWN_TAG_START) => {
                     consume_unknown_range(&mut segments, unknown_range.take(), &body);
-                    for text in events
-                        .by_ref()
-                        .take_while(
-                            |(e, _range)| !matches!(e, Event::Html(text) if text.starts_with(Section::UNKNOWN_TAG_END)),
-                        )
-                        .filter_map(|(e, _range)| match e {
-                            Event::Html(text) => Some(text),
-                            _ => None,
-                        })
-                    {
-                        unknown.push_str(text.as_ref());
+                    for (event, _range) in events.by_ref().take_while(
+                        |(e, _range)| !matches!(e, Event::Html(text) if text.starts_with(Section::UNKNOWN_TAG_END)),
+                    ) {
+                        track_unknown_event(event, &mut unknown);
                     }
                 }
                 Event::Start(Tag::Heading(_indent)) => {

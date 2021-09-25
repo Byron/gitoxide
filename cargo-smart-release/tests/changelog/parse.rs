@@ -32,3 +32,21 @@ fn all_unknown_in_section() {
         ]
     )
 }
+
+#[test]
+fn unknown_link_and_headling() {
+    let log = ChangeLog::from_markdown(include_str!("fixtures/known-section-unknown-headline-with-link.md"));
+    assert_eq!(
+        log.sections,
+        vec![Section::Release {
+            name: Version::Unreleased,
+            date: None,
+            heading_level: 4,
+            thanks_clippy_count: 0,
+            segments: vec![section::Segment::Unknown {
+                text: "Hello [there][194] period.\n".into()
+            }],
+            unknown: String::new(),
+        },]
+    )
+}
