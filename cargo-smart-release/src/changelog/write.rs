@@ -29,12 +29,12 @@ impl Section {
                 segments,
                 unknown,
             } => {
-                write!(out, "{} {}", "#".repeat(*heading_level), name)?;
+                write!(out, "{} {}", heading(*heading_level), name)?;
                 match date {
-                    None => out.write_all(b"\n"),
+                    None => out.write_all(b"\n\n"),
                     Some(date) => writeln!(
                         out,
-                        " ({:04}-{:02}-{:02})",
+                        " ({:04}-{:02}-{:02})\n",
                         date.year(),
                         date.month() as u32,
                         date.day()
@@ -44,12 +44,7 @@ impl Section {
                     segment.write_to(&mut out)?;
                 }
                 if *thanks_clippy_count > 0 {
-                    writeln!(
-                        out,
-                        "{} {}\n",
-                        "#".repeat(*heading_level + 1),
-                        Section::THANKS_CLIPPY_TITLE
-                    )?;
+                    writeln!(out, "{} {}\n", heading(*heading_level), Section::THANKS_CLIPPY_TITLE)?;
                     writeln!(
                         out,
                         "Clippy is a linter to help keeping code idiomatic. It was helpful {} {} in this release.\n",
@@ -66,6 +61,10 @@ impl Section {
             }
         }
     }
+}
+
+fn heading(level: usize) -> String {
+    "#".repeat(level)
 }
 
 impl ChangeLog {
