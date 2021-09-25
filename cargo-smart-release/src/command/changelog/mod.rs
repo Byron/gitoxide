@@ -15,6 +15,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
 
     let bat = (opts.dry_run && opts.preview).then(bat::Support::new);
 
+    let mut pending_changes = Vec::new();
     for crate_name in &crate_names {
         let (log, _package, mut lock) =
             ChangeLog::for_package_with_write_lock(crate_name, &history, &ctx, opts.dry_run)?;
@@ -31,6 +32,17 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         if let Some(bat) = bat.as_ref() {
             bat.display_to_tty(lock.lock_path())?;
         }
+        if !opts.dry_run {
+            pending_changes.push(lock);
+        }
+    }
+
+    let num_changes = pending_changes.len();
+    for change in pending_changes {
+        change.commit()?;
+    }
+    if num_changes != 0 {
+        log::info!("Wrote {} changelogs", num_changes);
     }
 
     Ok(())
