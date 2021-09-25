@@ -58,7 +58,7 @@ impl Section {
                     out.write_all(unknown.as_bytes())?;
                     writeln!(out, "{}", Section::UNKNOWN_TAG_END)?;
                 }
-                out.write_all(b"\n")
+                Ok(())
             }
         }
     }

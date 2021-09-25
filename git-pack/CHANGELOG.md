@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 10 times in this release.
 
-
 ### v0.11.0 (2021-09-08)
 
 - manual bump for safety as its dependencies have breaking changes
@@ -48,24 +47,17 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 10 times in th
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 4 times in this release.
 
-
 ### v0.8.2 (2021-08-17)
-
 
 ### v0.8.1 (2021-08-13)
 
-
 ### v0.8.0 (2021-08-12)
-
 
 ### v0.6.0 (2021-08-11)
 
-
 ### v0.5.0 (2021-08-11)
 
-
 ### v0.3.1 (2021-08-10)
-
 
 ### v0.3.0 (2021-08-10)
 
@@ -73,10 +65,7 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 4 times in thi
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 7 times in this release.
 
-
 ### v0.2.0 (2021-05-25)
 
-
 ### v0.1.0 (2021-05-24)
-
 

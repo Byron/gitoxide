@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 8 times in this release.
 
-
 ## v0.7.3 (2021-09-10)
 
 - Compatibility with Rust 1.55. It informed about the incorrect usage of `std::io::ErrorKind::Other` which this crate also dependent on causing
@@ -21,16 +20,13 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 8 times in thi
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 2 times in this release.
 
-
 ## v0.7.2 (2021-09-10)
 
 ### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
-
 ## v0.7.1 (2021-09-08)
-
 
 ## v0.7.0 (2021-09-07)
 
@@ -41,9 +37,7 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 * Move `file::log::Line` to `log::Line`
 * `TargetRef::Symbolic(&BStr)` -> `TargetRef::Symbolic(FullNameRef)`
 * replace `Transaction::namespacce()` with `file::Store::namespace`
-
-
-
+ 
 ## v0.6.1
 
 ### Bugfixes
@@ -51,19 +45,13 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 * splits of edits to symbolic references will now 'move' the desired previous values down to the
   referents while resorting to not having any requirements in the symbolic ref instead.
 
-
-
 ## v0.5.4 (2021-08-17)
-
 
 ## v0.5.3 (2021-08-15)
 
-
 ## v0.5.2 (2021-08-13)
 
-
 ## v0.5.1 (2021-08-10)
-
 
 ## v0.4.1 (2020-12-19)
 
@@ -71,29 +59,23 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
-
 ## v0.4.0 (2020-09-12)
 
 ### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
 
-
 ## v0.3.0 (2020-08-12)
-
 
 ## v0.2.0 (2020-07-23)
 
-
 ## v0.1.0 (2020-07-15)
-
 
 ## v0.5.0 (2021-08-10)
 
 ### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 15 times in this release.
-
 
 ## v0.6.0 (2021-08-27)
 
@@ -103,5 +85,3 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 15 times in th
 ### Thanks Clippy…
 
 Clippy is a linter to help keeping code idiomatic. It was helpful 7 times in this release.
-
-
