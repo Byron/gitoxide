@@ -1,3 +1,5 @@
+use crate::ChangeLog;
+
 mod init;
 mod merge;
 mod parse;
@@ -41,4 +43,13 @@ pub enum Section {
 pub enum Version {
     Unreleased,
     Semantic(semver::Version),
+}
+
+impl ChangeLog {
+    pub fn most_recent_release_mut(&mut self) -> &mut Section {
+        self.sections
+            .iter_mut()
+            .find(|s| matches!(s, Section::Release { .. }))
+            .expect("we never have an entirely empty changelog")
+    }
 }

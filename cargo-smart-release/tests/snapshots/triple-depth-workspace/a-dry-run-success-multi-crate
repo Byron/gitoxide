@@ -6,5 +6,6 @@
 [INFO ] WOULD prepare releases of a v0.8.0
 [INFO ] WOULD edit existing changelog for 'a'
 [INFO ] WOULD persist changes to 1 manifests and 1 changelogs with: "Bump a v0.8.0"
+[WARN ] WOULD ask for review after commit as the changelog entry is empty for crates a
 [INFO ] WOULD run "git" "commit" "-am" "Bump a v0.8.0" "--allow-empty"
 [INFO ] WOULD create tag a-v0.8.0

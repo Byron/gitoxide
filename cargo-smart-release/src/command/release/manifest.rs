@@ -6,7 +6,7 @@ use semver::{Op, Version, VersionReq};
 
 use super::{cargo, git, version, Context, Oid, Options};
 use crate::utils::{names_and_versions, package_by_id, package_eq_dependency, will};
-use crate::ChangeLog;
+use crate::{changelog, ChangeLog};
 
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_and_handle_changelog<'repo>(
     meta: &Metadata,
@@ -22,7 +22,8 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         skip_publish,
         ..
     } = opts;
-    for (publishee, _) in publishees {
+    let mut empty_changelogs_for_current_version = Vec::new();
+    for (publishee, new_version) in publishees {
         let lock = git_repository::lock::File::acquire_to_update_resource(
             &publishee.manifest_path,
             git_repository::lock::acquire::Fail::Immediately,
@@ -31,12 +32,38 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         let previous = locks_by_manifest_path.insert(&publishee.manifest_path, lock);
         assert!(previous.is_none(), "publishees are unique so insertion always happens");
         if let Some(history) = ctx.history.as_ref() {
-            pending_changelog_changes.push(ChangeLog::for_package_with_write_lock(
-                publishee,
-                history,
-                &ctx.base,
-                opts.dry_run,
-            )?);
+            let (mut log, lock) = ChangeLog::for_package_with_write_lock(publishee, history, &ctx.base, opts.dry_run)?;
+            let release_in_log = log.most_recent_release_mut();
+            let new_version: semver::Version = new_version.parse()?;
+            let section_segments = match release_in_log {
+                changelog::Section::Release {
+                    name: name @ changelog::Version::Unreleased,
+                    segments,
+                    ..
+                } => {
+                    *name = changelog::Version::Semantic(new_version);
+                    Some(segments)
+                }
+                changelog::Section::Release {
+                    name: changelog::Version::Semantic(recent_version),
+                    segments,
+                    ..
+                } => {
+                    if *recent_version != new_version {
+                        log::warn!("'{}' does not have an unreleased version, and most recent release is unexpected. Wanted {}, got {}.", publishee.name, new_version, recent_version);
+                        None
+                    } else {
+                        Some(segments)
+                    }
+                }
+                changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
+            };
+            if let Some(segments) = section_segments {
+                if segments.is_empty() {
+                    empty_changelogs_for_current_version.push(pending_changelog_changes.len());
+                }
+                pending_changelog_changes.push((publishee, log, lock));
+            }
         }
     }
 
@@ -81,7 +108,13 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
 
     let message = format!(
         "{} {}{}",
-        if skip_publish { "Bump" } else { "Release" },
+        if skip_publish {
+            "Bump"
+        } else if empty_changelogs_for_current_version.is_empty() {
+            "Release"
+        } else {
+            "Adjusting Changelogs prior to release of"
+        },
         names_and_versions(publishees),
         {
             let safety_bumped_packages = dependent_packages
@@ -103,6 +136,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             }
         }
     );
+
     if verbose {
         log::info!(
             "{} persist changes to {} manifests {}with: {:?}",
@@ -110,7 +144,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             locks_by_manifest_path.len(),
             match (
                 pending_changelog_changes.len(),
-                pending_changelog_changes.iter().fold(0usize, |mut acc, (_, lock)| {
+                pending_changelog_changes.iter().fold(0usize, |mut acc, (_, _, lock)| {
                     acc += if !lock.resource_path().is_file() { 1 } else { 0 };
                     acc
                 })
@@ -129,15 +163,80 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             message
         );
     }
-    if !dry_run {
+
+    let bail_message_after_commit = if !dry_run {
+        let mut committed_changelogs = None;
+        // TODO: add a preview mode, 'auto' to only previous when we added something that isn't the version change,
+        // and 'always' and 'off', but before committing anything so people can abort without changing any file.
+        // Previous only if we wouldn't stop otherwise anyway.
+        for (idx, (package, log, mut lock)) in pending_changelog_changes.into_iter().enumerate() {
+            if empty_changelogs_for_current_version.is_empty() || empty_changelogs_for_current_version.contains(&idx) {
+                lock.with_mut(|file| log.write_to(file))?;
+                lock.commit()?;
+                if !empty_changelogs_for_current_version.is_empty() {
+                    committed_changelogs.get_or_insert_with(Vec::new).push(package);
+                }
+            }
+        }
         for manifest_lock in locks_by_manifest_path.into_values() {
             manifest_lock.commit()?;
         }
         // This is dangerous as incompatibilities can happen here, leaving the working tree dirty.
         // For now we leave it that way without auto-restoring originals to facilitate debugging.
         cargo::refresh_lock_file()?;
+
+        if let Some(committed_changelogs) = committed_changelogs {
+            let names_of_crates_in_need_of_changelog_entry = committed_changelogs
+                .iter()
+                .map(|p| p.name.as_str())
+                .collect::<Vec<_>>()
+                .join(", ");
+            if skip_publish {
+                log::warn!(
+                    "Please consider creating changelog entries for crate(s) {}",
+                    names_of_crates_in_need_of_changelog_entry
+                );
+                None
+            } else {
+                Some(format!(
+                    "Write changelog entries for crate(s) {} and try again",
+                    names_of_crates_in_need_of_changelog_entry
+                ))
+            }
+        } else {
+            None
+        }
+    } else {
+        if !empty_changelogs_for_current_version.is_empty() {
+            let names_of_crates_that_would_need_review = empty_changelogs_for_current_version
+                .iter()
+                .filter_map(|idx| {
+                    pending_changelog_changes
+                        .iter()
+                        .enumerate()
+                        .find_map(|(pidx, (p, _, _))| if *idx == pidx { Some(p.name.as_str()) } else { None })
+                })
+                .collect::<Vec<_>>()
+                .join(", ");
+            log::warn!(
+                "WOULD {} as the changelog entry is empty for crates {}",
+                if skip_publish {
+                    "ask for review after commit"
+                } else {
+                    "stop release after commit"
+                },
+                names_of_crates_that_would_need_review
+            );
+        }
+        None
+    };
+
+    let res = git::commit_changes(message, verbose, dry_run, !made_change, &ctx.base)?;
+    if let Some(bail_message) = bail_message_after_commit {
+        bail!(bail_message);
+    } else {
+        Ok(res)
     }
-    git::commit_changes(message, verbose, dry_run, !made_change, &ctx.base)
 }
 
 /// Packages that depend on any of the publishees, where publishee is used by them.

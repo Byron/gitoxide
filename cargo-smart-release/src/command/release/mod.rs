@@ -51,7 +51,13 @@ pub fn release(opts: Options, crates: Vec<String>, bump: String, bump_dependenci
     if opts.dry_run_cargo_publish && !opts.dry_run {
         bail!("The --no-dry-run-cargo-publish flag is only effective without --execute")
     }
-    let ctx = Context::new(crates, bump, bump_dependencies, opts.changelog)?;
+    let allow_changelog = if opts.changelog && opts.skip_tag {
+        log::warn!("With --no-tag enabled, changelog generation will be disabled as it relies on tags to segment commit history.");
+        false
+    } else {
+        opts.changelog
+    };
+    let ctx = Context::new(crates, bump, bump_dependencies, allow_changelog)?;
     if opts.update_crates_index {
         log::info!("Updating crates-io index at '{}'", ctx.crates_index.path().display());
         ctx.crates_index.update()?;
