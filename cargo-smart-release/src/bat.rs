@@ -4,6 +4,12 @@ pub struct Support {
     bat_found: bool,
 }
 
+impl Default for Support {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Support {
     pub fn new() -> Self {
         Support {
