@@ -60,7 +60,8 @@ pub enum Ref {
     Symbolic {
         /// The path at which the symbolic ref is located, like `/refs/heads/main`.
         path: BString,
-        /// The path of the ref the symbolic ref points to.
+        /// The path of the ref the symbolic ref points to, see issue [#205] for details
+        ///
         /// [#205]: https://github.com/Byron/gitoxide/issues/205
         target: BString,
         /// The hash of the object the `target` ref points to.
