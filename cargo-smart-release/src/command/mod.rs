@@ -19,6 +19,7 @@ pub mod release {
         pub multi_crate_release: bool,
         pub isolate_dependencies_from_breaking_changes: bool,
         pub changelog: bool,
+        pub preview: bool,
     }
 }
 #[path = "release/mod.rs"]
@@ -26,6 +27,7 @@ mod release_impl;
 pub use release_impl::release;
 
 pub mod changelog {
+
     #[derive(Debug, Clone, Copy)]
     pub struct Options {
         pub dry_run: bool,

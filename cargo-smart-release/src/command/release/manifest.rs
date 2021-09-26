@@ -32,7 +32,8 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         let previous = locks_by_manifest_path.insert(&publishee.manifest_path, lock);
         assert!(previous.is_none(), "publishees are unique so insertion always happens");
         if let Some(history) = ctx.history.as_ref() {
-            let (mut log, lock) = ChangeLog::for_package_with_write_lock(publishee, history, &ctx.base, opts.dry_run)?;
+            let (mut log, mut changed, lock) =
+                ChangeLog::for_package_with_write_lock(publishee, history, &ctx.base, opts.dry_run)?;
             let release_in_log = log.most_recent_release_mut();
             let new_version: semver::Version = new_version.parse()?;
             let section_segments = match release_in_log {
@@ -41,7 +42,16 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                     segments,
                     ..
                 } => {
+                    if !changed {
+                        log::info!(
+                            "{}: {} only change 'Unreleased' to '{}' headline",
+                            publishee.name,
+                            will(dry_run),
+                            new_version
+                        );
+                    }
                     *name = changelog::Version::Semantic(new_version);
+                    changed = true;
                     Some(segments)
                 }
                 changelog::Section::Release {
@@ -58,11 +68,15 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 }
                 changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
             };
-            if let Some(segments) = section_segments {
-                if segments.is_empty() {
-                    empty_changelogs_for_current_version.push(pending_changelog_changes.len());
+            if changed {
+                if let Some(segments) = section_segments {
+                    if segments.is_empty() {
+                        empty_changelogs_for_current_version.push(pending_changelog_changes.len());
+                    }
+                    pending_changelog_changes.push((publishee, log, lock));
                 }
-                pending_changelog_changes.push((publishee, log, lock));
+            } else {
+                log::info!("Won't rewrite changelog for '{}' as it didn't change", publishee.name);
             }
         }
     }

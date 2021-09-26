@@ -86,6 +86,12 @@ pub struct SmartRelease {
     #[argh(switch)]
     pub no_changelog: bool,
 
+    /// if unset, about-to-be changed changelogs will be previewed using 'bat', if available.
+    ///
+    /// If set, no preview will ever be displayed, but note that empty changelogs will always stop the release process.
+    #[argh(switch)]
+    pub no_changelog_preview: bool,
+
     /// additionally run 'cargo publish --dry-run' when --execute is not set. This can be useful to see which local
     /// crates do not build with the released versions of their workspace dependencies anymore.
     #[argh(switch)]

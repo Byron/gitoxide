@@ -6,14 +6,14 @@ mod parse;
 mod write;
 
 pub mod section {
-    #[derive(PartialEq, Eq, Debug)]
+    #[derive(PartialEq, Eq, Debug, Clone)]
     pub enum Segment {
         /// A portion of a Section that we couldn't make sense of, but which should be kept as is nonetheless.
         Unknown { text: String },
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Section {
     /// A part of a changelog which couldn't be understood and is taken in verbatim. This is usually the pre-amble of the changelog
     /// or a custom footer.
@@ -39,7 +39,7 @@ pub enum Section {
     },
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Version {
     Unreleased,
     Semantic(semver::Version),

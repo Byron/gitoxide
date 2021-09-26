@@ -64,13 +64,13 @@ impl ChangeLog {
         history: &commit::History,
         ctx: &'a crate::Context,
         dry_run: bool,
-    ) -> anyhow::Result<(Self, git::lock::File)> {
-        let mut log = ChangeLog::from_history_segments(
+    ) -> anyhow::Result<(Self, bool, git::lock::File)> {
+        let mut generated = ChangeLog::from_history_segments(
             package,
             &crate::git::history::crate_ref_segments(package, ctx, history)?,
             &ctx.repo,
         );
-        log.sections.insert(
+        generated.sections.insert(
             0,
             Section::Verbatim {
                 text: include_str!("header.md").to_owned(),
@@ -80,15 +80,18 @@ impl ChangeLog {
         let changelog_path = path_from_manifest(&package.manifest_path);
         let lock =
             git::lock::File::acquire_to_update_resource(&changelog_path, git::lock::acquire::Fail::Immediately, None)?;
-        let log = if let Ok(existing) = std::fs::read_to_string(changelog_path) {
+        let (log, changed) = if let Ok(existing) = std::fs::read_to_string(changelog_path) {
             log::info!("{} edit existing changelog for '{}'", will(dry_run), package.name);
             let existing = ChangeLog::from_markdown(&existing);
-            existing.merge_generated(log)
+            let copy_of_existing = existing.clone();
+            let merged = existing.merge_generated(generated);
+            let changed = merged != copy_of_existing;
+            (merged, changed)
         } else {
             log::info!("{} create a new changelog for '{}'", will(dry_run), package.name);
-            log
+            (generated, true)
         };
-        Ok((log, lock))
+        Ok((log, changed, lock))
     }
 
     pub fn for_crate_by_name_with_write_lock<'a>(
@@ -98,7 +101,7 @@ impl ChangeLog {
         dry_run: bool,
     ) -> anyhow::Result<(Self, &'a Package, git::lock::File)> {
         let package = package_by_name(&ctx.meta, crate_name)?;
-        let (log, lock) = Self::for_package_with_write_lock(package, history, ctx, dry_run)?;
+        let (log, _changed, lock) = Self::for_package_with_write_lock(package, history, ctx, dry_run)?;
         Ok((log, package, lock))
     }
 
