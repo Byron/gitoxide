@@ -53,3 +53,15 @@ impl ChangeLog {
             .expect("we never have an entirely empty changelog")
     }
 }
+
+impl Section {
+    /// Returns true if there are segments that would always be present as they carry essential information about the release.
+    pub fn is_essential(&self) -> bool {
+        match self {
+            Section::Verbatim { .. } => true,
+            Section::Release { segments, .. } => segments.iter().any(|s| match s {
+                section::Segment::Unknown { .. } => true,
+            }),
+        }
+    }
+}

@@ -37,10 +37,9 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 ChangeLog::for_package_with_write_lock(publishee, history, &ctx.base, opts.dry_run)?;
             let release_in_log = log.most_recent_release_mut();
             let new_version: semver::Version = new_version.parse()?;
-            let section_segments = match release_in_log {
+            match release_in_log {
                 changelog::Section::Release {
                     name: name @ changelog::Version::Unreleased,
-                    segments,
                     ..
                 } => {
                     if !changed {
@@ -53,30 +52,23 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                     }
                     *name = changelog::Version::Semantic(new_version);
                     changed = true;
-                    Some(segments)
                 }
                 changelog::Section::Release {
                     name: changelog::Version::Semantic(recent_version),
-                    segments,
                     ..
                 } => {
                     if *recent_version != new_version {
-                        log::warn!("'{}' does not have an unreleased version, and most recent release is unexpected. Wanted {}, got {}.", publishee.name, new_version, recent_version);
-                        None
-                    } else {
-                        Some(segments)
+                        anyhow::bail!("'{}' does not have an unreleased version, and most recent release is unexpected. Wanted {}, got {}.", publishee.name, new_version, recent_version);
                     }
                 }
                 changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
             };
             if changed {
-                if let Some(segments) = section_segments {
-                    if segments.is_empty() {
-                        empty_changelogs_for_current_version.push(pending_changelog_changes.len());
-                    }
-                    lock.with_mut(|file| log.write_to(file))?;
-                    pending_changelog_changes.push((publishee, lock));
+                if !release_in_log.is_essential() {
+                    empty_changelogs_for_current_version.push(pending_changelog_changes.len());
                 }
+                lock.with_mut(|file| log.write_to(file))?;
+                pending_changelog_changes.push((publishee, lock));
             } else {
                 log::info!("Won't rewrite changelog for '{}' as it didn't change", publishee.name);
             }
@@ -182,7 +174,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
 
     if !pending_changelog_changes.is_empty() && preview {
         log::info!(
-            "About to preview {} changelog(s), use --no-changelog-preview to disable or Ctrl-C to abort.",
+            "About to preview {} changelog(s), use --no-changelog-preview to disable or Ctrl-C to abort, or the 'changelog' subcommand to write it out for adjustments.",
             pending_changelog_changes.len()
         );
 
@@ -194,9 +186,6 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
 
     let bail_message_after_commit = if !dry_run {
         let mut committed_changelogs = None;
-        // TODO: add a preview mode, 'auto' to only previous when we added something that isn't the version change,
-        // and 'always' and 'off', but before committing anything so people can abort without changing any file.
-        // Previous only if we wouldn't stop otherwise anyway.
         for (idx, (package, lock)) in pending_changelog_changes.into_iter().enumerate() {
             if empty_changelogs_for_current_version.is_empty() || empty_changelogs_for_current_version.contains(&idx) {
                 lock.commit()?;
