@@ -20,6 +20,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         verbose,
         dry_run,
         skip_publish,
+        preview,
         ..
     } = opts;
     let mut empty_changelogs_for_current_version = Vec::new();
@@ -32,7 +33,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         let previous = locks_by_manifest_path.insert(&publishee.manifest_path, lock);
         assert!(previous.is_none(), "publishees are unique so insertion always happens");
         if let Some(history) = ctx.history.as_ref() {
-            let (mut log, mut changed, lock) =
+            let (mut log, mut changed, mut lock) =
                 ChangeLog::for_package_with_write_lock(publishee, history, &ctx.base, opts.dry_run)?;
             let release_in_log = log.most_recent_release_mut();
             let new_version: semver::Version = new_version.parse()?;
@@ -44,7 +45,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 } => {
                     if !changed {
                         log::info!(
-                            "{}: {} only change 'Unreleased' to '{}' headline",
+                            "{}: {} only change headline from 'Unreleased' to '{}'",
                             publishee.name,
                             will(dry_run),
                             new_version
@@ -73,7 +74,8 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                     if segments.is_empty() {
                         empty_changelogs_for_current_version.push(pending_changelog_changes.len());
                     }
-                    pending_changelog_changes.push((publishee, log, lock));
+                    lock.with_mut(|file| log.write_to(file))?;
+                    pending_changelog_changes.push((publishee, lock));
                 }
             } else {
                 log::info!("Won't rewrite changelog for '{}' as it didn't change", publishee.name);
@@ -158,7 +160,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             locks_by_manifest_path.len(),
             match (
                 pending_changelog_changes.len(),
-                pending_changelog_changes.iter().fold(0usize, |mut acc, (_, _, lock)| {
+                pending_changelog_changes.iter().fold(0usize, |mut acc, (_, lock)| {
                     acc += if !lock.resource_path().is_file() { 1 } else { 0 };
                     acc
                 })
@@ -178,14 +180,25 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         );
     }
 
+    if !pending_changelog_changes.is_empty() && preview {
+        log::info!(
+            "About to preview {} changelog(s), use --no-changelog-preview to disable or Ctrl-C to abort.",
+            pending_changelog_changes.len()
+        );
+
+        let bat = crate::bat::Support::new();
+        for (_package, lock) in &pending_changelog_changes {
+            bat.display_to_tty(lock.lock_path())?;
+        }
+    }
+
     let bail_message_after_commit = if !dry_run {
         let mut committed_changelogs = None;
         // TODO: add a preview mode, 'auto' to only previous when we added something that isn't the version change,
         // and 'always' and 'off', but before committing anything so people can abort without changing any file.
         // Previous only if we wouldn't stop otherwise anyway.
-        for (idx, (package, log, mut lock)) in pending_changelog_changes.into_iter().enumerate() {
+        for (idx, (package, lock)) in pending_changelog_changes.into_iter().enumerate() {
             if empty_changelogs_for_current_version.is_empty() || empty_changelogs_for_current_version.contains(&idx) {
-                lock.with_mut(|file| log.write_to(file))?;
                 lock.commit()?;
                 if !empty_changelogs_for_current_version.is_empty() {
                     committed_changelogs.get_or_insert_with(Vec::new).push(package);
@@ -225,10 +238,13 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             let names_of_crates_that_would_need_review = empty_changelogs_for_current_version
                 .iter()
                 .filter_map(|idx| {
-                    pending_changelog_changes
-                        .iter()
-                        .enumerate()
-                        .find_map(|(pidx, (p, _, _))| if *idx == pidx { Some(p.name.as_str()) } else { None })
+                    pending_changelog_changes.iter().enumerate().find_map(|(pidx, (p, _))| {
+                        if *idx == pidx {
+                            Some(p.name.as_str())
+                        } else {
+                            None
+                        }
+                    })
                 })
                 .collect::<Vec<_>>()
                 .join(", ");

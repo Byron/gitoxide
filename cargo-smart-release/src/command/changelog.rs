@@ -1,4 +1,4 @@
-use crate::{command::changelog::Options, git, utils::will, ChangeLog};
+use crate::{bat, command::changelog::Options, git, utils::will, ChangeLog};
 
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let ctx = crate::Context::new(crates)?;
@@ -61,5 +61,3 @@ fn assure_working_tree_is_unchanged(options: Options) -> anyhow::Result<()> {
             })
     }
 }
-
-mod bat;

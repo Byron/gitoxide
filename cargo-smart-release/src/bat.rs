@@ -13,7 +13,10 @@ impl Support {
 
     pub fn display_to_tty(&self, path: &Path) -> io::Result<()> {
         if !self.bat_found {
-            log::info!("Would want to use 'bat' for colored preview, but it wasn't available in the PATH.");
+            log::info!(
+                "Would want to use 'bat' for colored preview of '{}', but it wasn't available in the PATH.",
+                path.display()
+            );
             return Ok(());
         }
         if Command::new("bat")

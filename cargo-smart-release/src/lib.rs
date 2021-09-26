@@ -12,6 +12,7 @@ pub mod commit;
 mod context;
 pub use context::Context;
 
+pub mod bat;
 pub mod git;
 pub mod traverse;
 mod utils;

@@ -27,7 +27,6 @@ mod release_impl;
 pub use release_impl::release;
 
 pub mod changelog {
-
     #[derive(Debug, Clone, Copy)]
     pub struct Options {
         pub dry_run: bool,
@@ -36,6 +35,6 @@ pub mod changelog {
         pub preview: bool,
     }
 }
-#[path = "changelog/mod.rs"]
+#[path = "changelog.rs"]
 mod changelog_impl;
 pub use changelog_impl::changelog;
