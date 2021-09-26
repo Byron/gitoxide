@@ -113,16 +113,16 @@ pub struct SmartRelease {
 
     /// don't actually publish, but perform all other operations like manifest adjustments and tag creation.
     #[argh(switch)]
-    pub skip_publish: bool,
+    pub no_publish: bool,
 
     /// don't create tags indicating the version numbers of all crates that are to be published after changing
     /// their manifests.
     #[argh(switch)]
-    pub skip_tag: bool,
+    pub no_tag: bool,
 
     /// don't push tags and the HEAD branch after any successful run of `cargo publish`.
     #[argh(switch)]
-    pub skip_push: bool,
+    pub no_push: bool,
 
     /// do not take into consideration any dependencies of the crates to publish.
     ///

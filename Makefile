@@ -10,7 +10,7 @@ try-publish-all: ## Dry-run publish all crates in the currently set version if t
 	cargo run --package cargo-smart-release --bin cargo-smart-release -- smart-release gitoxide
 
 try-bump-minor-version: ## Show how updating the minor version of PACKAGE=<name> would look like.
-	cargo run --package cargo-smart-release --bin cargo-smart-release -- smart-release --update-crates-index --bump minor --no-dependencies --skip-publish --skip-tag --skip-push -v $(PACKAGE)
+	cargo run --package cargo-smart-release --bin cargo-smart-release -- smart-release --update-crates-index --bump minor --no-dependencies --no-publish --no-tag --no-push -v $(PACKAGE)
 
 bump-minor-version: ## Similar to try-bump-minor-version, but actually performs the operation on PACKAGE=<name>
 	cargo run --package cargo-smart-release --bin cargo-smart-release -- smart-release --update-crates-index --bump minor --no-dependencies --skip-publish --skip-tag --skip-push -v $(PACKAGE) --execute

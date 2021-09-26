@@ -80,35 +80,35 @@ title "smart-release"
       (with 'conditional version bumping'
         it "succeeds" && {
           WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate" \
-          expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish -v --allow-dirty -b minor
+          expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty -b minor
         }
         (with '--no-multi-crate-release'
           it "succeeds" && {
             WITH_SNAPSHOT="$snapshot/a-dry-run-success" \
-            expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish -v --no-multi-crate-release -b minor
+            expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-multi-crate-release -b minor
           }
         )
       )
       (with 'unconditional version bumping'
         it "succeeds" && {
           WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-unconditional" \
-          expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish -v --no-bump-on-demand -b minor
+          expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-bump-on-demand -b minor
         }
         (with '--no-multi-crate-release'
           it "succeeds" && {
             WITH_SNAPSHOT="$snapshot/a-dry-run-success-unconditional" \
-            expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish -v --no-multi-crate-release --no-bump-on-demand -b minor
+            expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-multi-crate-release --no-bump-on-demand -b minor
           }
         )
         (when 'releasing b as well'
           it "succeeds" && {
             WITH_SNAPSHOT="$snapshot/a-b-dry-run-success-multi-crate-unconditional" \
-            expect_run $SUCCESSFULLY "$exe" smart-release b a --skip-push --skip-publish -v --no-bump-on-demand -b minor
+            expect_run $SUCCESSFULLY "$exe" smart-release b a --no-push --no-publish -v --no-bump-on-demand -b minor
           }
           (with '--no-multi-crate-release'
             it "succeeds" && {
               WITH_SNAPSHOT="$snapshot/a-b-dry-run-success-unconditional" \
-              expect_run $SUCCESSFULLY "$exe" smart-release b a --skip-push --skip-publish -v --no-multi-crate-release --no-bump-on-demand -b minor
+              expect_run $SUCCESSFULLY "$exe" smart-release b a --no-push --no-publish -v --no-multi-crate-release --no-bump-on-demand -b minor
             }
           )
         )
@@ -116,7 +116,7 @@ title "smart-release"
     )
     (with '--execute but without side-effects'
       it "succeeds" && {
-        expect_run $SUCCESSFULLY "$exe" smart-release a --skip-push --skip-publish --execute --allow-dirty
+        expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish --execute --allow-dirty
       }
       (with ".git and target/ directories removed"
         rm -Rf .git/ target/
@@ -126,7 +126,7 @@ title "smart-release"
         (with 'unconditional version minor bumping'
           init-git-repo &>/dev/null
           it "succeeds" && {
-            expect_run $SUCCESSFULLY "$exe" smart-release -b minor a --skip-push --skip-publish --no-bump-on-demand --execute --allow-dirty
+            expect_run $SUCCESSFULLY "$exe" smart-release -b minor a --no-push --no-publish --no-bump-on-demand --execute --allow-dirty
           }
           rm -Rf .git/
           it "managed additionally bumped b but not c as it's not pre-release" && {
