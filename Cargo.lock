@@ -352,6 +352,7 @@ dependencies = [
  "env_logger",
  "git-conventional",
  "git-repository",
+ "git-testtools",
  "insta",
  "log",
  "nom",
