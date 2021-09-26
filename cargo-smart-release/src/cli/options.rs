@@ -32,12 +32,17 @@ pub struct ChangeLog {
     #[argh(switch)]
     pub allow_dirty: bool,
 
-    /// take into consideration any dependencies of the crates to generate the changelog for.
+    /// if --write is not set, 'bat' will be used (if available) to print the new changelog to stdout as preview. Use this flag
+    /// to disable such behaviour.
+    #[argh(switch)]
+    pub no_preview: bool,
+
+    /// do not take into consideration any dependencies of the crates to generate the changelog for.
     ///
     /// This flag is useful if you plan to review and finalize changelogs before a a smart-release, where dependencies
-    /// are taken into consideration by default.
+    /// are taken into consideration by default, but would like to do so one at a time.
     #[argh(switch)]
-    pub dependencies: bool,
+    pub no_dependencies: bool,
 
     /// the name of the crates to generate a changelog for.
     ///
@@ -75,6 +80,18 @@ pub struct SmartRelease {
     #[argh(switch)]
     pub no_bump_on_demand: bool,
 
+    /// don't generate a changelog automatically or update existing ones. This is useful if a manual changelog
+    /// is preferred or if its format strays to far from the suggestions on https://keepachangelog.com, making
+    /// generated content impossible to properly integrate with what's there.
+    #[argh(switch)]
+    pub no_changelog: bool,
+
+    /// if unset, about-to-be changed changelogs will be previewed using 'bat', if available.
+    ///
+    /// If set, no preview will ever be displayed, but note that empty changelogs will always stop the release process.
+    #[argh(switch)]
+    pub no_changelog_preview: bool,
+
     /// additionally run 'cargo publish --dry-run' when --execute is not set. This can be useful to see which local
     /// crates do not build with the released versions of their workspace dependencies anymore.
     #[argh(switch)]
@@ -108,22 +125,22 @@ pub struct SmartRelease {
 
     /// don't actually publish, but perform all other operations like manifest adjustments and tag creation.
     #[argh(switch)]
-    pub skip_publish: bool,
+    pub no_publish: bool,
 
     /// don't create tags indicating the version numbers of all crates that are to be published after changing
     /// their manifests.
     #[argh(switch)]
-    pub skip_tag: bool,
+    pub no_tag: bool,
 
     /// don't push tags and the HEAD branch after any successful run of `cargo publish`.
     #[argh(switch)]
-    pub skip_push: bool,
+    pub no_push: bool,
 
     /// do not take into consideration any dependencies of the crates to publish.
     ///
     /// This flag is useful when various `--skip-X` are specified in order to bump versions only, without publishing.
     #[argh(switch)]
-    pub skip_dependencies: bool,
+    pub no_dependencies: bool,
 
     /// pass --no-verify to 'cargo publish' which should only be a last resort when fixing up packages that
     /// otherwise wouldn't publish, but need to be publish to resolve the situation.

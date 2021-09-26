@@ -18,6 +18,8 @@ pub mod release {
         pub skip_dependencies: bool,
         pub multi_crate_release: bool,
         pub isolate_dependencies_from_breaking_changes: bool,
+        pub changelog: bool,
+        pub preview: bool,
     }
 }
 #[path = "release/mod.rs"]
@@ -30,8 +32,9 @@ pub mod changelog {
         pub dry_run: bool,
         pub dependencies: bool,
         pub allow_dirty: bool,
+        pub preview: bool,
     }
 }
-#[path = "changelog/mod.rs"]
+#[path = "changelog.rs"]
 mod changelog_impl;
 pub use changelog_impl::changelog;

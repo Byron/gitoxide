@@ -16,7 +16,7 @@ pub fn hex_to_id(hex: &str) -> git_hash::ObjectId {
     git_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
 }
 
-pub fn fixture_path(path: impl AsRef<str>) -> PathBuf {
+pub fn fixture_path(path: impl AsRef<Path>) -> PathBuf {
     PathBuf::from("tests").join("fixtures").join(path.as_ref())
 }
 pub fn scripted_fixture_repo_read_only(script_name: &str) -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
@@ -74,11 +74,7 @@ pub fn scripted_fixture_repo_read_only_with_args(
             crc_digest.finalize()
         })
         .to_owned();
-    let script_result_directory = fixture_path(
-        Path::new("generated")
-            .join(format!("{}", script_identity))
-            .to_string_lossy(),
-    );
+    let script_result_directory = fixture_path(Path::new("generated").join(format!("{}", script_identity)));
     if !script_result_directory.is_dir() {
         std::fs::create_dir_all(&script_result_directory)?;
         let script_absolute_path = std::env::current_dir()?.join(script_path);
