@@ -18,6 +18,7 @@ pub mod release {
         pub skip_dependencies: bool,
         pub multi_crate_release: bool,
         pub isolate_dependencies_from_breaking_changes: bool,
+        pub changelog: bool,
     }
 }
 #[path = "release/mod.rs"]

@@ -60,12 +60,11 @@ impl Section {
 
 impl ChangeLog {
     pub fn for_package_with_write_lock<'a>(
-        crate_name: &str,
+        package: &'a Package,
         history: &commit::History,
         ctx: &'a crate::Context,
         dry_run: bool,
-    ) -> anyhow::Result<(Self, &'a Package, git::lock::File)> {
-        let package = package_by_name(&ctx.meta, crate_name)?;
+    ) -> anyhow::Result<(Self, git::lock::File)> {
         let mut log = ChangeLog::from_history_segments(
             package,
             &crate::git::history::crate_ref_segments(package, ctx, history)?,
@@ -82,12 +81,24 @@ impl ChangeLog {
         let lock =
             git::lock::File::acquire_to_update_resource(&changelog_path, git::lock::acquire::Fail::Immediately, None)?;
         let log = if let Ok(existing) = std::fs::read_to_string(changelog_path) {
+            log::info!("{} edit existing changelog for '{}'", will(dry_run), package.name);
             let existing = ChangeLog::from_markdown(&existing);
             existing.merge_generated(log)
         } else {
-            log::info!("{} create a new changelog for '{}'", will(dry_run), crate_name);
+            log::info!("{} create a new changelog for '{}'", will(dry_run), package.name);
             log
         };
+        Ok((log, lock))
+    }
+
+    pub fn for_crate_by_name_with_write_lock<'a>(
+        crate_name: &str,
+        history: &commit::History,
+        ctx: &'a crate::Context,
+        dry_run: bool,
+    ) -> anyhow::Result<(Self, &'a Package, git::lock::File)> {
+        let package = package_by_name(&ctx.meta, crate_name)?;
+        let (log, lock) = Self::for_package_with_write_lock(package, history, ctx, dry_run)?;
         Ok((log, package, lock))
     }
 

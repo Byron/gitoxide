@@ -4,6 +4,7 @@
 [INFO ] Using current version 0.8.0 instead of bumped one 0.9.0.
 [INFO ] Congratulations for the new release of 'a' 🎉
 [INFO ] WOULD prepare releases of a v0.8.0
-[INFO ] WOULD persist changes to manifests with: "Bump a v0.8.0"
+[INFO ] WOULD edit existing changelog for 'a'
+[INFO ] WOULD persist changes to 1 manifests and 1 changelogs with: "Bump a v0.8.0"
 [INFO ] WOULD run "git" "commit" "-am" "Bump a v0.8.0" "--allow-empty"
 [INFO ] WOULD create tag a-v0.8.0

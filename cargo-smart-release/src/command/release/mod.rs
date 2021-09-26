@@ -22,15 +22,22 @@ type Oid<'repo> = git_repository::easy::Oid<'repo, git_repository::Easy>;
 pub(crate) struct Context {
     base: crate::Context,
     crates_index: Index,
+    history: Option<crate::commit::History>,
     bump: String,
     bump_dependencies: String,
 }
 
 impl Context {
-    fn new(crate_names: Vec<String>, bump: String, bump_dependencies: String) -> anyhow::Result<Self> {
+    fn new(crate_names: Vec<String>, bump: String, bump_dependencies: String, changelog: bool) -> anyhow::Result<Self> {
         let crates_index = Index::new_cargo_default();
+        let base = crate::Context::new(crate_names)?;
+        let history = changelog
+            .then(|| crate::git::history::collect(&base.repo))
+            .transpose()?
+            .flatten();
         Ok(Context {
-            base: crate::Context::new(crate_names)?,
+            base,
+            history,
             crates_index,
             bump,
             bump_dependencies,
@@ -40,15 +47,15 @@ impl Context {
 
 /// In order to try dealing with https://github.com/sunng87/cargo-release/issues/224 and also to make workspace
 /// releases more selective.
-pub fn release(options: Options, crates: Vec<String>, bump: String, bump_dependencies: String) -> anyhow::Result<()> {
-    if options.dry_run_cargo_publish && !options.dry_run {
+pub fn release(opts: Options, crates: Vec<String>, bump: String, bump_dependencies: String) -> anyhow::Result<()> {
+    if opts.dry_run_cargo_publish && !opts.dry_run {
         bail!("The --no-dry-run-cargo-publish flag is only effective without --execute")
     }
-    let ctx = Context::new(crates, bump, bump_dependencies)?;
-    if options.update_crates_index {
+    let ctx = Context::new(crates, bump, bump_dependencies, opts.changelog)?;
+    if opts.update_crates_index {
         log::info!("Updating crates-io index at '{}'", ctx.crates_index.path().display());
         ctx.crates_index.update()?;
-    } else if options.bump_when_needed {
+    } else if opts.bump_when_needed {
         log::warn!(
             "Consider running with --update-crates-index to assure bumping on demand uses the latest information"
         );
@@ -57,7 +64,7 @@ pub fn release(options: Options, crates: Vec<String>, bump: String, bump_depende
         log::warn!("Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already");
     }
 
-    release_depth_first(ctx, options)?;
+    release_depth_first(ctx, opts)?;
     Ok(())
 }
 
@@ -134,7 +141,12 @@ fn perforrm_multi_version_release(
         names_and_versions(&crates_to_publish_together)
     );
 
-    let commit_id = manifest::edit_version_and_fixup_dependent_crates(meta, &crates_to_publish_together, options, ctx)?;
+    let commit_id = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
+        meta,
+        &crates_to_publish_together,
+        options,
+        ctx,
+    )?;
 
     crates_to_publish_together.reverse();
     let mut tag_names = Vec::new();
@@ -169,8 +181,12 @@ fn perform_single_release<'repo>(
         new_version
     );
     let new_version = new_version.to_string();
-    let commit_id =
-        manifest::edit_version_and_fixup_dependent_crates(meta, &[(publishee, new_version.clone())], options, ctx)?;
+    let commit_id = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
+        meta,
+        &[(publishee, new_version.clone())],
+        options,
+        ctx,
+    )?;
     cargo::publish_crate(publishee, &[], options)?;
     Ok((new_version, commit_id))
 }

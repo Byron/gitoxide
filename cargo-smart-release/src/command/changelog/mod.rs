@@ -18,7 +18,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let mut pending_changes = Vec::new();
     for crate_name in &crate_names {
         let (log, _package, mut lock) =
-            ChangeLog::for_package_with_write_lock(crate_name, &history, &ctx, opts.dry_run)?;
+            ChangeLog::for_crate_by_name_with_write_lock(crate_name, &history, &ctx, opts.dry_run)?;
         log::info!(
             "{} write {} sections to {}",
             will(opts.dry_run),

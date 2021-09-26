@@ -6,14 +6,16 @@ use semver::{Op, Version, VersionReq};
 
 use super::{cargo, git, version, Context, Oid, Options};
 use crate::utils::{names_and_versions, package_by_id, package_eq_dependency, will};
+use crate::ChangeLog;
 
-pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<'repo>(
+pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_and_handle_changelog<'repo>(
     meta: &Metadata,
     publishees: &[(&Package, String)],
     opts: Options,
     ctx: &'repo Context,
 ) -> anyhow::Result<Option<Oid<'repo>>> {
     let mut locks_by_manifest_path = BTreeMap::new();
+    let mut pending_changelog_changes = Vec::new();
     let Options {
         verbose,
         dry_run,
@@ -28,6 +30,14 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
         )?;
         let previous = locks_by_manifest_path.insert(&publishee.manifest_path, lock);
         assert!(previous.is_none(), "publishees are unique so insertion always happens");
+        if let Some(history) = ctx.history.as_ref() {
+            pending_changelog_changes.push(ChangeLog::for_package_with_write_lock(
+                publishee,
+                history,
+                &ctx.base,
+                opts.dry_run,
+            )?);
+        }
     }
 
     let mut dependent_packages =
@@ -94,7 +104,30 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
         }
     );
     if verbose {
-        log::info!("{} persist changes to manifests with: {:?}", will(dry_run), message);
+        log::info!(
+            "{} persist changes to {} manifests {}with: {:?}",
+            will(dry_run),
+            locks_by_manifest_path.len(),
+            match (
+                pending_changelog_changes.len(),
+                pending_changelog_changes.iter().fold(0usize, |mut acc, (_, lock)| {
+                    acc += if !lock.resource_path().is_file() { 1 } else { 0 };
+                    acc
+                })
+            ) {
+                (0, _) => Cow::Borrowed(""),
+                (num_logs, num_new) => format!(
+                    "and {} changelogs {}",
+                    num_logs,
+                    match num_new {
+                        0 => Cow::Borrowed(""),
+                        num_new => format!("({} new) ", num_new).into(),
+                    }
+                )
+                .into(),
+            },
+            message
+        );
     }
     if !dry_run {
         for manifest_lock in locks_by_manifest_path.into_values() {
@@ -107,6 +140,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates<
     git::commit_changes(message, verbose, dry_run, !made_change, &ctx.base)
 }
 
+/// Packages that depend on any of the publishees, where publishee is used by them.
 fn collect_directly_dependent_packages<'a>(
     meta: &'a Metadata,
     publishees: &[(&Package, String)],

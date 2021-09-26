@@ -80,6 +80,12 @@ pub struct SmartRelease {
     #[argh(switch)]
     pub no_bump_on_demand: bool,
 
+    /// don't generate a changelog automatically or update existing ones. This is useful if a manual changelog
+    /// is preferred or if its format strays to far from the suggestions on https://keepachangelog.com, making
+    /// generated content impossible to properly integrate with what's there.
+    #[argh(switch)]
+    pub no_changelog: bool,
+
     /// additionally run 'cargo publish --dry-run' when --execute is not set. This can be useful to see which local
     /// crates do not build with the released versions of their workspace dependencies anymore.
     #[argh(switch)]
