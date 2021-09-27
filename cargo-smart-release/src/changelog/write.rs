@@ -14,8 +14,9 @@ impl std::fmt::Display for changelog::Version {
 }
 
 impl Section {
-    pub const UNKNOWN_TAG_START: &'static str = "<csm-unknown>";
-    pub const UNKNOWN_TAG_END: &'static str = "<csm-unknown/>";
+    pub const UNKNOWN_TAG_START: &'static str = "<csr-unknown>";
+    pub const UNKNOWN_TAG_END: &'static str = "<csr-unknown/>";
+    pub const READONLY_TAG: &'static str = "<csr-read-only-do-not-edit/>";
 
     pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
@@ -72,6 +73,7 @@ impl section::Segment {
             section::Segment::User { text } => out.write_all(text.as_bytes())?,
             section::Segment::Clippy(Some(clippy)) if clippy.count > 0 => {
                 writeln!(out, "{} {}\n", heading(section_level), section::ThanksClippy::TITLE)?;
+                writeln!(out, "{}", Section::READONLY_TAG)?;
                 writeln!(
                     out,
                     "Clippy is a linter to help keeping code idiomatic. It was helpful {} {} in this release.\n",
