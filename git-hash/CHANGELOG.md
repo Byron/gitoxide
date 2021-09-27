@@ -1,16 +1,17 @@
-### 0.6.0
+# Changelog
 
-#### Breaking
+All notable changes to this project will be documented in this file.
 
-- `ObjectId::empty_tree()` now has a parameter: `Kind`
-- `ObjectId::null_sha(…)` -> `ObjectId::null(…)`
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ## Unreleased
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -21,10 +22,16 @@
 <details><summary>view details</summary>
 
  * **#198**
+    - Generate changelogs with details (fd0f3bd)
     - oid::short_hex(len) for truncated hex representations (d234b97)
 </details>
 
 ## v0.6.0 (2021-09-07)
+
+### Breaking
+
+- `ObjectId::empty_tree()` now has a parameter: `Kind`
+- `ObjectId::null_sha(…)` -> `ObjectId::null(…)`
 
 ### Commit Statistics
 

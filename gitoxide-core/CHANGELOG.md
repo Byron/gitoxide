@@ -7,19 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 205 commits contributed to the release over the course of 12 calendar days.
+ - 46 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 9 unique issues were worked on
+
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 16 times to make code idiomatic. 
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 222 commits contributed to the release over the course of 12 calendar days.
- - 53 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 8 unique issues were worked on
 
 ### Commit Details
 
@@ -67,16 +67,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: an algorithm to collect dependencies by 'growing' (73794a4)
     - smart-release: foundation for bumping versions (d1145d1)
  * **#198**
-    - Generate changelogs with details (fd0f3bd)
-    - Update all changelogs with details (0732699)
-    - Update changelogs (b30db3b)
-    - fix docs (90056c8)
-    - introduce notion of essential sections in a changelog… (be891e2)
-    - Preview changelog support for smart-release as well (b9e6de1)
-    - Detect changes after merge; add flag for controlling changelog preview (6beb734)
-    - A lot of logic to handle messaging around changelog generation and halting… (28f6e18)
-    - Unconditional changelog creation in smart-release (48b5228)
-    - rename --skip-* flags to --no-* for consistency (3c0a638)
     - fix windows tests by transforming line endings (e276d77)
     - Avoid adding newlines which make writing unstable (6b5c394)
     - Fix section headline level (9d6f263)
@@ -106,9 +96,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - prepare test for basic merging… (0a14ced)
     - update git-conventional dependency (2d369e8)
     - nicer 'thanks clippy' message (4344216)
+    - first test and sketch for stripping of additional title values (55b7fe8)
+    - Basic message parsing, either conventional or not, without additions (b3b6a2d)
     - Show with simple example how the round-tripping works, neat (9510d9b)
+    - Sketch Message fields from which change logs can be built (b167d39)
     - collect unknown text so things don't get lost entirely… (60040c9)
+    - feat: `BodyRef::without_trailer()` for more obvious access than `*body` or `body.as_ref()` (f0ea526)
     - parse back what we write out, perfectly… (5cab315)
+    - refactor (ef3fc6d)
     - fix journey test (3006e59)
     - feat: `CommitRef::message_trailers()` as shortcut… (5324391)
     - more tests for trailers iterator (c3b0161)
@@ -176,8 +171,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Add 'references().all().peeled().'… (6502412)
     - smart-release: filter refs correctly, but… (2b4a615)
     - smart-release: find tag references by name… (72e1752)
-    - commit traversal along the first parent… (7bce49c)
-    - git-ref(docs): improve changelog format (90e6128)
  * **#200**
     - clear error message if upload-pack reports an error (4701c84)
     - parse issue numbers from description and clean it up (95c0a51)
@@ -189,13 +182,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - fetch::Ref::Symbolic::target is now an option… (da68bfb)
     - validate assumption about '(null)' as ref-name (2576168)
  * **#67**
-    - describe variants (899c579)
-    - parse entry mode into number instead of comparing it to byte strings (83d591d)
-    - ObjectID specific hashers, using the fact that object ids are hashes (f9232ac)
-    - Tree parsing now probably is twice as fast… (d1e2b89)
-    - Use a custom hasher for 'seen' objects hashset… (70179e2)
-    - don't include submodules in count… (faf6f81)
-    - control pack and object cache size in megabytes (60c9fad)
     - Use 'cache::Object' trait where it matters (71c628d)
     - split data::output::count::objects into files (8fe4612)
     - use new git_pack::cache::Object trait (b209da2)
@@ -209,8 +195,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - try to create persistent Easy iterator, but can't make it Send… (54a64a5)
     - Add '--thin' flag to pack-create and pass it on (2664d73)
  * **Uncategorized**
-    - Merge branch 'changelog-generation' (bf0106e)
-    - thanks clippy (b856da4)
     - thanks clippy (31498bb)
     - let's not force folks to not use debug info… (bc458c8)
     - Merge branch 'main' into changelog-generation (c956f33)
@@ -218,6 +202,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - don't claim to change manifest version if it's the same one (11eebdc)
     - thanks clippy (b200ee8)
     - thanks clippy (4b3407d)
+    - thanks clippy (d78d382)
     - Bump git-traverse v0.9.0, safety bump 8 crates (d39fabb)
     - thanks clippy (1dece2b)
     - thanks clippy (2b55427)
@@ -256,25 +241,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - thanks clippy (7899ef1)
     - Update changelogs retro-actively… (78cfe0a)
     - Release gitoxide v0.8.4 (effb2a6)
-    - Release gitoxide-core v0.10.5 (590e59b)
-    - Release git-ref v0.7.2 (e940e9a)
 </details>
 
-## v0.10.4 (2021-09-10)
+## v0.10.5 (2021-09-10)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 30 commits contributed to the release over the course of 1 calendar day.
+ - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 24 commits contributed to the release.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -283,6 +266,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
+    - commit traversal along the first parent… (7bce49c)
+    - git-ref(docs): improve changelog format (90e6128)
     - smart-release: sketch first step of info generation (ff894e5)
     - smart-release: changelog gets crates to work on (78d31d9)
     - smart-release: handle unborn heads (0e02831)
@@ -295,6 +280,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: add 'cargo changelog' sub-command binary (3677b78)
     - smart-release(test): add changelog to most tests (cdf4199)
  * **Uncategorized**
+    - Release gitoxide-core v0.10.5 (590e59b)
+    - Release git-ref v0.7.2 (e940e9a)
     - Release git-protocol v0.10.4 (898ee08)
     - Release git-odb v0.21.3 (223f930)
     - Release git-tempfile v1.0.1 (295eb37)
@@ -308,17 +295,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [smart-release #195] fix docs (8d7e132)
     - improved changelog… (8b82f7d)
     - [smart-release #195] assure dependent packages are not packages to be published (6792ebc)
+    - Bump git-repository v0.9.0 (b797fc1)
+    - [repository #193] Add feature flags for async/blocking (57f482c)
 </details>
 
-## v0.10.3 (2021-09-07)
+## v0.10.4 (2021-09-07)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 40 commits contributed to the release.
+ - 38 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -327,7 +316,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release git-protocol v0.10.3 (aa90f98)
+    - Release gitoxide-core v0.10.4 (5ae584c)
     - Merge branch 'repository-integration' (49f5453)
     - [features #189] simple UTC-offset support for git-features (b58134b)
     - [odb #190] Read all eligble packed refs, no "pack-" prefix needed (ab250f7)
@@ -365,27 +354,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [#190] disable caching to see if this fixes windows (0660a6f)
     - Notes about 'git-notes' and 'git-trailers' (459dd37)
     - [repository #190] prepare for namespacing support on file store level (d2d1db6)
-    - Release gitoxide-core v0.10.3 (e132680)
-    - [repository #190] refactor (609c249)
 </details>
 
-### v0.10.2 (2021-08-29)
+## v0.10.3 (2021-08-29)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 24 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 243 commits contributed to the release over the course of 11 calendar days.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 5 times to make code idiomatic. 
+
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release gitoxide-core v0.10.3 (e132680)
+    - [repository #190] refactor (609c249)
     - Release git-protocol v0.10.2 (54a4400)
     - [ref #190] refactor (1ef6cb3)
     - Release git-transport v0.11.1 (0952976)
@@ -410,27 +405,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [repository #190] cleanup usage of bstr… (e4411ff)
     - Release git-repository v0.8.0 (1c9c5f1)
     - [ref #190] more conversion trait impls (1795a33)
-</details>
-
-## v0.10.1 (2021-08-27)
-
-- instruct docs.rs which features to use for more useful documentation
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 14 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
     - Release git-protocol v0.10.1 (cec8ee3)
     - [repository #190] prefixed reference iteration (a6e19c9)
     - [repository #174] conditionally compile future parking_lot version… (5375fc8)
@@ -445,35 +419,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [repository #190] obtain the kind fo hash used in a repo (a985491)
     - Release git-ref v0.6.0 (b191a88)
     - [ref #190] refactor (e34be7e)
-</details>
-
-## v0.10.0 (2021-08-27)
-
-- Various minor updates of pre-release dependencies
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 168 commits contributed to the release over the course of 3 calendar days.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **#163**
-    - Adjust collaboration guidelines to allow and even require PRs (998ae6b)
- * **Uncategorized**
     - Release git-protocol v0.10.0 (b60ddae)
     - [ref #190] more Target conversions… (1fe1b42)
     - Release git-transport v0.11.0 (cac343c)
@@ -580,13 +525,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [repository #190] Make local-offset available on demand only… (1927be7)
     - [object #177] move mutable objects to crate::* (c551c02)
     - [actor #190] methods to get an actor signature at the current time (6d0bedd)
+    - [object #177] move immutable::* to crate::*Ref, start `iter` adjustments (461dc53)
+    - [object #177] rename immutable::* to immutable::*Ref (6deb012)
+    - Merge branch 'git-ref-refactor' (5dbf753)
+    - [pack #172] A note about empty packs in Bundle writer (09a777f)
+    - [ref #175] follow (try_)find(_what) naming convention (679895c)
     - Fix formatting of performance-tasks.md (917967e)
     - Merge branch 'Byron:main' into main (dc58eca)
     - Release git-actor v0.4.0 (16358c9)
-    - Allow creation of empty indices (d122fc7)
     - Release git-testtools v0.5.0 (574ede9)
     - [actor #173] fix docs (2d7956a)
-    - A note about the project board to help with transparency (d850004)
     - Release git-testtools v0.5.0 (86e0a92)
     - [actor #173] refactor (08a1849)
     - Upgrade to nom-7 (f0aa3e1)
@@ -622,40 +570,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [pack #67] Optimize caches based on cache debugging (1271c01)
     - Merge branch 'main' into stability (11bae43)
     - [pack #67] Add cache debugging capabilities to git-features (8776c98)
+    - [stability #171] document git-repository cargo features (8f21e3d)
     - cleanup imports (e669303)
     - [pack #167] Use custom uluru version to avoid a lot of allocations… (7bd3671)
+    - [stability #171] Further loosen MSRV constraints (6b1095a)
     - update dependencies (e9a98bc)
     - [pack #164] fix docs (08ee674)
     - [stability #171] Don't provide access to less stable crates in `Respository` (e4c5b58)
     - Merge branch 'main' into 162-repo-design-sketch (e63b634)
     - [stability #171] update README with stability information… (f330daa)
+    - [repository #164] top-level easy docs (6b71c51)
     - Revert "[pack #167] Use custom uluru version to avoid a lot of allocations…" (4c2ea21)
     - [stability #171] How to handle the MSRV (9be1fce)
+    - [repository #165] see if `git-config` can already be placed… (d287a4a)
     - [pack #167] Use custom uluru version to avoid a lot of allocations… (8d49976)
     - [stability #171] Don't leak unstable plumbing crates in git-repository… (71eb30f)
+    - [repository #165] fix docs (b4fdfd7)
     - [pack #167] a single-threaded special case for counting… (65e29de)
     - [stability #171] about transitioning from pre-release to release (bdbdb65)
+    - [repository #165] add limitations along with possible workarouds (7578f1e)
     - [pack #167] generalize over immutable insertions… (169f000)
     - [stability #171] finish tier description… (4fe1259)
+    - [repository #165] assure packed-refs are always uptodate (a5605df)
     - [pack #167] refactor (6bf0f7e)
     - [stability #171] Rough descriptions of ST 3 and 2 (340935c)
+    - [repository #165] Allow cloning packed-refs and try to see how it differs… (7ec32b7)
     - [pack #167] progress is handled by reducer… (a22f8e1)
     - [stability #164] First sketch of stability MD… (a7353cd)
+    - Release git-ref v0.6.0 (0bb4c13)
+    - [pack #167] Error handling for object input (0aac40c)
+    - [ref #165] refactor (66624c3)
+    - thanks clippy (d689599)
+    - Revert "[repository #165] PROOF: GATs will work as expected!" (853f072)
+    - [pack #167] remove iterator based count objects impl… (7ec2f2b)
+    - [repository #165] PROOF: GATs will work as expected! (7f56dbd)
+    - [features] refactor (0958fc8)
+    - [repository #165] refactor (1547d0b)
+    - [pack] A non-iterator version of parallel object counting… (04fe855)
+    - [repository #165] refactor; fine grained allow(missing_docs)… (aa0511f)
+    - [features] refactor (d4605cd)
+    - [repository #165] prepare for writing light docs for Easy (f8834c9)
+    - thanks clippy (41d7a44)
+    - [repository #165] refactor (3a0160e)
+    - [repository #165] An experiment on transforming panics into errors… (1f52226)
+    - [smart-release #162] a sketch for accessing objects data… (ba27101)
+    - [repository #165] offer panicking type conversions for objects (f802f8c)
+    - [smart-release #162] refactor (7f2421b)
+    - [repository #165] try a more common naming convention for fallbile things… (fc70393)
+    - [smart-release #162] peeling objects to a certain target kind… (5785136)
+    - [repository #165] refactor (6207735)
+    - [smart-release #162] a single import path for ReferenceExt (7060797)
+    - [repository #162] update crate status to reflect now 'easy' mode (6d00139)
+    - [smart-release #162] rename git-repository::object -> objs (ac70d81)
 </details>
 
-## v0.9.0 (2021-08-17)
-
-### BREAKING
-
-- Add fifth argument to `fetch(…)`
+## v0.10.2 (2021-08-17)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 1 calendar day.
+ - 3 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -664,21 +641,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release git-protocol v0.9.0 (466d8ea)
-    - [protocol] prepare release to fix crates-io instalations (83d7423)
+    - Release gitoxide-core v0.10.2 (b96a518)
     - bump git-protocol to v0.9.0 as there are breaking changes (b4e3340)
     - Apply nightly rustfmt rules. (5e0edba)
 </details>
 
-## v0.8.1 (2021-08-13)
+## v0.10.1 (2021-08-15)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 2 calendar days.
+ - 2 commits contributed to the release over the course of 3 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -687,26 +663,296 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release git-protocol v0.8.1 (b57c339)
-    - Release git-transport v0.10.0 (b944278)
-    - Release git-packetline v0.9.0 (7ffbd60)
-    - remove dev-dependency cycles by removing their version (c40faca)
-    - bump transport version to 0.10 (f26a3d3)
-    - (cargo-release) version 0.8.0 (ad6d7f9)
-    - (cargo-release) version 0.7.0 (2ef3106)
-    - [transport] A much better name for 'is_stateful()` (f15f1e8)
+    - Release gitoxide-core v0.10.1 (8b21d82)
     - [protocol] Make fetch-connection usage explicit (29696f9)
 </details>
 
-## v0.8.0 (2021-08-10)
+## v0.10.0 (2021-08-10)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 125 commits contributed to the release over the course of 90 calendar days.
+ - 165 commits contributed to the release over the course of 90 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 2 unique issues were worked on
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **#83**
+    - [organize] Auto-strip .git suffix for non-bare repos (ea0ecc2)
+ * **Uncategorized**
+    - (cargo-release) version 0.10.0 (310dd22)
+    - (cargo-release) version 0.7.0 (1c5dfb8)
+    - [core] refactor (e3d708f)
+    - [core] refactor (869d162)
+    - [gitoxide-core] avoid lossy path conversions (63c2951)
+    - Use AsRef<Path> when opening from path (515d256)
+    - [protocol #145] Unify the `previous` and `previous_result` parameters… (96f77c7)
+    - thanks clippy (e1964e4)
+    - Bump async-trait from 0.1.50 to 0.1.51 (ce0b81e)
+    - Bump serde_json from 1.0.64 to 1.0.65 (9117feb)
+    - [ref #140] do actual tag peeling in programs that matter (e404852)
+    - [ref #140] sketch ref tag peeling (ef90652)
+    - [pack] fix build (e680854)
+    - Bump futures-io from 0.3.15 to 0.3.16 (3c23820)
+    - [pack] Make use of thin-pack resolver when writing bundles… (9f43bf0)
+    - [pack] it seems git is just skipping bad objects during pack-gen (0f29b82)
+    - [pack] In single-threaded mode, use a huge cache for some speedup (aec8a9b)
+    - [pack] pack-create with immediate counting and traversing… (b74a98f)
+    - [pack] refactor; entry-iterator now produces delta-objects (5dc370b)
+    - [pack] support poor reference resolution if input is not an object hash… (1b985a1)
+    - [pack] better identify the currently implemented pack generation mode. (f9e3b3c)
+    - [pack] refactor (78d46c1)
+    - [ref] fix build (0b732e1)
+    - [ref] figure out how peeling works with packed-refs… (2801f7a)
+    - [ref] fix build (83002df)
+    - [ref] rename find_one to 'find' in git-ref… (ae7746a)
+    - Bump anyhow from 1.0.41 to 1.0.42 (352e468)
+    - Bump async-io from 1.4.1 to 1.6.0 (99e4732)
+    - [protocol] fix build (38aca40)
+    - Merge branch 'negotiate-fallible' (27c8abe)
+    - [object] Generalize nom error handling and use nom-errors instead of custom ones (47c8a97)
+    - [protocol] adjust description of fetch::Error to match io::Error sources (23dafc6)
+    - [actor] refactor (bccb738)
+    - [protocol] fallible negotiation (e269a2c)
+    - [ref] rename Action::Close to Action::Cancel… (cac1f6c)
+    - Merge branch 'ref-in-want' (f248557)
+    - [ref] refactor (8694488)
+    - [protocol] refactor (11b2fd1)
+    - [ref] getting there! (bd73d8e)
+    - [protocol] refactor (967946a)
+    - [ref] a step forward to nom error handling, but… (426ae5b)
+    - [protocol] refactor (8dc425f)
+    - [ref] try really hard to use generic verbose nom errors but… (1031625)
+    - [protocol] assure we don't coerce refs into UTF-8 representation (5ceb64d)
+    - [ref] tests and impl for happy cases (7be82f0)
+    - [protocol] support ref-in-want (b6df400)
+    - [actor] fix gix hours (b4e95fd)
+    - [actor] git-object uses git-actor (d01dd2f)
+    - clippy cleanup; fix CI build (3e943f2)
+    - thanks clippy (3f7e27b)
+    - Fix everything up so that… (5930563)
+    - A first attempt to make intrerupt tools work, but… (8fb8d37)
+    - fix build (ea2bfac)
+    - refactor (7f9be36)
+    - And one less usage of the global interrupt handler… (5da57a3)
+    - Make most interrupts local to the method or function (4588993)
+    - [hours] use new interrupt::Iter; refactor (2355f0b)
+    - [pack-create] also show throughput (74d8d57)
+    - [tempfile] interruptible traversal (4eeaa1b)
+    - [pack-create] better handling of input paths (1825e1a)
+    - [pack-create] progress for ancestor traversal (9349286)
+    - refactor (e0b7f69)
+    - [pack] refactor (25f04ba)
+    - [pack] validate tips as well… (ec8864f)
+    - [pack] refactor (18cabb8)
+    - [pack] Force single-threading (with toggle) for counting phase… (8d3ba0b)
+    - [pack] also put counts in order for stable packs (f299160)
+    - [pack] gixp pack-create uses in-order adapter as well (365c582)
+    - [pack] refactor (cfdf802)
+    - [pack] print the pack file name even if there is no output directory (832fa29)
+    - [pack] refactor (9d9def3)
+    - [pack] pack-create --output-directory is now optional (2150be8)
+    - [pack] print statistics for entries iteration as well (eb6554b)
+    - [pack] add --statistics flag to pack-create (51a3077)
+    - refactor (24697bc)
+    - [async-receive] refactor (7e28831)
+    - Bump anyhow from 1.0.40 to 1.0.41 (f6d48c8)
+    - [pack] write packs to a directory with the proper name (3fbca7d)
+    - [pack] refactor (f10adea)
+    - [pack] fix build (81ee633)
+    - [pack] refactor (0514f1d)
+    - [pack] refactor (37922d1)
+    - Bump itertools from 0.10.0 to 0.10.1 (b54f21d)
+    - [async-client] refactor (e7d115c)
+    - [async-client] cleanup Send bounds! (c7dee44)
+    - [async-client] refactor (89e6f66)
+    - Revert "[async-client] FAIL with the brutal copy-paste way" (7f29adc)
+    - [async-client] FAIL with the brutal copy-paste way (b91ecb5)
+    - Revert "[async-client] the beginning of an unholy transformation…" (c8423a8)
+    - [async-client] the beginning of an unholy transformation… (1f314df)
+    - [async-client] refactor (b252932)
+    - [async-client] unblock the async delegate in the cheapest possible way… (a3b5d75)
+    - [async-client] prepare for unblocking the protocol delegate (796c7d5)
+    - [async-client] refactor (0d5b911)
+    - Revert "[async-client] Try to bring 'Send' back but…" (52eb953)
+    - [async-client] Try to bring 'Send' back but… (3a06adb)
+    - [async-client] refactor (dc742df)
+    - [async-client] Unblock printing in pack-receive (156bed6)
+    - [async-client] Sketch of (partially blocking) pack-receive (e58859d)
+    - [async-client] ls-remote in async (but for git protocol only) (fd8edca)
+    - [async-client] basic git_connect functionality using async_io/async_net (af60297)
+    - [async-client] frame for async connect (9ada080)
+    - [async-client] frame from A to Z to actually implement it… (ac4715c)
+    - Separate networking via feature toggles and pass that through in the main crate (2c749f1)
+    - dependency update (6d2278b)
+    - [git-protocol] refactor (990099b)
+    - Bump crossbeam-utils from 0.8.4 to 0.8.5 (fce4d10)
+    - [git-protocol] refactor (d623cf7)
+    - Bump maybe-async from 0.2.4 to 0.2.6 (d99a1a8)
+    - [git-protocol] async response (c498557)
+    - Bump cargo_toml from 0.9.1 to 0.9.2 (28687b1)
+    - [gix-organize] fast-prefilter + close look at the repository itself (eda440a)
+    - [gix-organize]: this version fails to detect any git repo (8802fa7)
+    - [gix-organize] use git-repository a little more (20f76a5)
+    - Revert 'gix-organize' to normal thanks to performance regression (eda452e)
+    - (cargo-release) version 0.6.0 (d35c55d)
+    - thanks clippy (6a80d5c)
+    - [git-repository] gitoxide-core uses more of git-repository (bb5b074)
+    - [git-repository] replaces git-features and git-protocol in gitoxide-core (081d20f)
+    - refactor (2ba9f91)
+    - [git-repository] used by gix-hours (24e0258)
+    - [git-repository] refactor (b5ebcfa)
+    - [git-repository] now used by gixp-organize (aa91fad)
+    - (cargo-release) version 0.4.0 (866f86f)
+    - [git-repository] towards git-repository as one stop shop (aea6cc5)
+    - [git-odb] much better docs; cleanup exposed API (3d5b229)
+    - (cargo-release) version 0.2.0 (b213628)
+    - [git-odb] refactor (2958145)
+    - [git-odb] refactor (1eab15d)
+    - [git-pack] compilation (b392a55)
+    - [git-pack] refactor (157b6ff)
+    - (cargo-release) version 0.16.0 (769c649)
+    - [git-pack] refactor (e5b00ee)
+    - [git-pack] the world compiles again (f0c0e36)
+    - [git-odb] refactor (e07478c)
+    - [git-odb] refactor (721303d)
+    - [git-odb] refactor (ea224e9)
+    - [git-odb] refactor (6a1b16a)
+    - [git-odb] refactor (47c4042)
+    - Configure git-features properly for gitoxide-core… (251e690)
+    - (cargo-release) version 0.15.0 (d69d9fb)
+    - Prevent pack-index-from-data to block if stdin is a terminal (39dec0e)
+    - [pack-gen] release a little memory, hopefully (f25293a)
+    - Revert "[pack-gen] remove tree-diff as traversal option." (2907a5f)
+    - [pack-gen] remove tree-diff as traversal option. (8373671)
+    - [pack-gen] a lot more progress, even though it's not perfect yet (480f8b7)
+    - [pack-gen] basic progress for entry generation (953190d)
+    - [pack-gen] better progress (fdee381)
+    - [pack-gen] the first barely working progress (5b89a0e)
+    - [pack-gen] the basics to get the program going (03b67b0)
+    - [pack-gen] very close to a basic impl of count + entries-gen… (c927429)
+    - [pack-gen] Try to just ignore the amount of objects inside… (918b222)
+    - thanks clippy (89b1ee4)
+    - [pack-gen] And it shows we really need to let the traversal be done first (a870eb2)
+    - [pack-gen] And now it creates an entries iterator (27c9bc1)
+    - [pack-gen] A step further, but it looks like input object iteration is tricky (abf4276)
+    - [pack-gen] Frame for plumbing command (a2203ca)
+    - (cargo-release) version 0.10.0 (5d7ee6a)
+    - refactor (9f0a8cc)
+    - (cargo-release) version 0.3.0 (684de4b)
+    - (cargo-release) version 0.8.0 (ccea4b6)
+    - [git-transport] remove default features to force being explicit everywhere (d1b39f8)
+    - [organize] Be clear about what the traversal really does (ed945ab)
+    - refactor (ef80fd6)
+</details>
+
+## v0.9.0 (2021-05-09)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 60 commits contributed to the release over the course of 27 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **#79**
+    - refactor; add test for empty tree iteration (6340296)
+ * **Uncategorized**
+    - [track publish] git-protocol/0.7.0 (99ddf42)
+    - (cargo-release) version 0.9.0 (e6cdd84)
+    - (cargo-release) version 0.7.0 (069184e)
+    - (cargo-release) version 0.15.0 (d91b241)
+    - (cargo-release) version 0.2.0 (3fb8377)
+    - (cargo-release) version 0.9.0 (84897fd)
+    - Merge branch 'patch-1' (5edc076)
+    - refactor (a9e4feb)
+    - Allow empty trees when parsing them at once, fixes #79 (d34fd19)
+    - Fix formatting (a341995)
+    - Remove almost all unsafe code from Tree. (42b6033)
+    - refactor (9870923)
+    - An alias for tools (8dc5ed3)
+    - [hours-tool] interruptability of long-running commit interations (4fd8a63)
+    - Better handling of 'tools' subcommands (ee704c0)
+    - Make use of auto-configuration for line renderer (d28424f)
+    - [hours-demo] remove progress for deduplication - it's too fast (a81395a)
+    - Fix compile warnings (42fd77b)
+    - Adjust journey tests to new porcelain (232a96c)
+    - dependency update to fix prodash bug (cb427fc)
+    - refactor (171b1bf)
+    - Add missing docs; add local-only snapshot file (7c56366)
+    - Remove 'argh' implementation in porcelain, opening it up to sub-sub commands… (4382802)
+    - [hours-tool] remove original example (9eadd21)
+    - developer guide: differentiate examples, experiments, plumbing and porcelain. (4c87a9c)
+    - [hours-tool] Better error messages (86b4570)
+    - [hours-demo] deduplication is enabled by default (cede327)
+    - [hours-tool] basic journey tests (6aab8e3)
+    - [hours-demo] Make deduplication go fast (4b87deb)
+    - [hours-tool] control verbosity and progress using global 'gix' options (cf4d5a3)
+    - [hours-demo] nicer handling of unique contributors (7faf123)
+    - [hours-tool] integrate progress, remove direct writes to stderr (2778447)
+    - [hours-demo] Proper logic for flags; performance stats for deduplication (d5ac96d)
+    - [hours-tool] bring in all the code, mostly unchanged. (df16b3c)
+    - [hours-demo] Allow turning identity unification off (f6ee0f2)
+    - [hours-tool] hookup new gitoxide-core command (680f274)
+    - thanks clippy (17258cc)
+    - refactor (8b10434)
+    - (cargo-release) version 0.14.0 (a760f8c)
+    - (cargo-release) version 0.14.0 (d9514ee)
+    - rename 'Locate' to 'Find' - shorter and just as good (60f72f5)
+    - (cargo-release) version 0.13.0 (5c791af)
+    - (cargo-release) version 0.8.0 (a1ce210)
+    - (cargo-release) version 0.3.0 (e9665c7)
+    - Don't mention skips anymore… (afb87d9)
+    - refactor (c1013dd)
+    - refactor (ca98221)
+    - refactor (d490b65)
+    - refactor (08fafaa)
+    - git-odb::borrowed::Object => git-odb::data::Object (747a13e)
+    - bump git-odb minor version (5c833ce)
+    - Remove loose::Object entirely #(67) (5cf4840)
+    - (cargo-release) version 0.13.0 (ac2eddb)
+    - (cargo-release) version 0.11.0 (fd698e3)
+    - Introduce pack_id for use in pack cache, preventing (most collisions) (ad04ad3)
+    - Feature toggle for uluru based Lru cache (98eec48)
+    - gitoxide-core:pack-verify: be explicit about pack-cache choice in relation to algorithm (e7971a9)
+    - refactor (d624d09)
+    - LruCache with const-generics (93618d1)
+</details>
+
+## v0.8.0 (2021-04-08)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 68 commits contributed to the release over the course of 98 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on
 
 ### Thanks Clippy
 
@@ -720,262 +966,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **Uncategorized**
-    - Revert "[ref] break dev-dependency cycle" (436e89b)
-    - (cargo-release) version 0.5.0 (ae02dab)
-    - (cargo-release) version 0.16.0 (1231dbd)
-    - [protocol RL-#741] Respect delegate configuration when running only ls-refs (65ce8e1)
-    - [protocol #145] Unify the `previous` and `previous_result` parameters… (96f77c7)
-    - Merge pull request #145 from kim/ref-in-want-corrections (8dfc943)
-    - Turn incremental compilation in dev off for now (2449621)
-    - [protocol] remove misleading documentation about ref-in-want (9a8f6b5)
-    - clippy on tests and thanks clippy (a77a71c)
-    - thanks clippy (e1964e4)
-    - Bump async-trait from 0.1.50 to 0.1.51 (ce0b81e)
-    - Bump futures-io from 0.3.15 to 0.3.16 (3c23820)
-    - [protocol] Delegate will indicate end-of-operation when fetch is done (928f75a)
-    - [protocol] Let 'fetch()' only be used via `git_protocol::fetch` (4bae2f9)
-    - thanks clippy (eccbecb)
-    - [protocol] fix build (38aca40)
-    - [protocol] Allow both preparation delegate methods to fail (d89393b)
-    - [protocol] start trying LsRefsAction::Abort(Box<dyn Error>)… (660b9dc)
-    - Merge branch 'negotiate-fallible' (27c8abe)
-    - [object] Generalize nom error handling and use nom-errors instead of custom ones (47c8a97)
-    - [protocol] adjust description of fetch::Error to match io::Error sources (23dafc6)
-    - [actor] refactor (bccb738)
-    - [protocol] fallible negotiation (e269a2c)
-    - [actor] FAIL an attempt to remove btoi errors (3f99cf5)
-    - [ref] Try using BorrowMut to avoid blanket trait impls, but… (4bb9bba)
-    - [protocol] only send flush packets in stateful connections (0995c22)
-    - [transport] remove Transport::close()… (4268a9b)
-    - [ref] rename Action::Close to Action::Cancel… (cac1f6c)
-    - [transport] impl Delegate for &mut T: Delegate; refactor fetch() signature (2ded7f9)
-    - [transport] implement Transport for &mut T: Transport as well (372fb81)
-    - Merge branch 'ref-in-want' (f248557)
-    - [ref] refactor (8694488)
-    - [protocol] refactor (11b2fd1)
-    - [ref] getting there! (bd73d8e)
-    - [protocol] refactor (967946a)
-    - [ref] a step forward to nom error handling, but… (426ae5b)
-    - [protocol] refactor (8dc425f)
-    - [ref] try really hard to use generic verbose nom errors but… (1031625)
-    - [protocol] assure we don't coerce refs into UTF-8 representation (5ceb64d)
-    - [ref] tests and impl for happy cases (7be82f0)
-    - [protocol] support ref-in-want (b6df400)
-    - [transport] tests for extra parameters (fffd926)
-    - [protocol] extra_parameters are forwarded from delegate to handshake (03e3db3)
-    - [transport] unsupported protocol versions now abort the fetch operation (812aa3b)
-    - [transport] flexible version of version support check doesn't actually work :D (2b220f0)
-    - [protocol] make refs parsing functionality public (d6da891)
-    - [protocol] async-io path handles improved refs parsing (328ab9c)
-    - [protocol] first step towards keeping InternalRef internal in blocking-io (6c4ed2d)
-    - refactor (24697bc)
-    - [async-client] cleanup Send bounds! (c7dee44)
-    - [async-client] refactor (b252932)
-    - [async-client] unblock the async delegate in the cheapest possible way… (a3b5d75)
-    - Revert "[async-client] a taste of what it means to unblock the delegate" (2ba452f)
-    - [async-client] a taste of what it means to unblock the delegate (4d6c10a)
-    - [async-client] prepare for unblocking the protocol delegate (796c7d5)
-    - [async-client] refactor (0d5b911)
-    - Revert "[async-client] Try to bring 'Send' back but…" (52eb953)
-    - [async-client] Try to bring 'Send' back but… (3a06adb)
-    - [git-protocol] fix test (e30ea36)
-    - [git-protocol] no warnings when building without client (2f30666)
-    - (cargo-release) version 0.2.0 (3286e42)
-    - Manually fix crc in tooling (48fa9bc)
-    - [git-protocol] update cargo-features (1fdb5ac)
-    - Bump crc from 1.8.1 to 2.0.0 (07f08ac)
-    - [git-protocol] remove compile warnings if no client type is specified… (478a980)
-    - tryout dependabot (872eb12)
-    - thanks clippy (57106e2)
-    - fix docs (bca7594)
-    - [git-transport] Fix http build (3469e99)
-    - [git-protocol] fix build (4cce648)
-    - [git-protocol] builds without features work (a1945ff)
-    - [git-protocol] async Delegate (1aa6781)
-    - [git-protocol] async fetch tests work (fe434a5)
-    - thanks clippy (0759ade)
-    - [git-protocol] fetch tests nearly compile in async (97fb186)
-    - [git-transport] refactor (d09153f)
-    - [git-protocol] fetch in sync and async… (4776039)
-    - [git-transport] Properly implement Transport for Boxed types (47b10c9)
-    - [git-protocol] refactor (80379fd)
-    - [git-transport] refactor (3b0baee)
-    - [git-protocol] build should fail if mutually exclusiive features are set (72cf940)
-    - [git-protocol] refactor (94d7be4)
-    - dependency update (6d2278b)
-    - [git-protocol] refactor (990099b)
-    - Bump crossbeam-utils from 0.8.4 to 0.8.5 (fce4d10)
-    - [git-protocol] refactor (d623cf7)
-    - Bump maybe-async from 0.2.4 to 0.2.6 (d99a1a8)
-    - [git-protocol] async response (c498557)
-    - Bump cargo_toml from 0.9.1 to 0.9.2 (28687b1)
-    - [git-protocol] refactor (a8dc078)
-    - refactor (2eefe17)
-    - [git-protocol] prepare response module for async (08b891b)
-    - [git-protocol] fix tests without any feature toggles (1da0b1a)
-    - thanks clippy (91fdfba)
-    - [git-protocol] refs now available in async (3a5b2cf)
-    - [git-protocol] refactor (abf0b9d)
-    - [git-protocol] prepare to translate refs (bf79c91)
-    - [git-protocol] no warnings if there is no client feature set (335e831)
-    - [git-protocol] fix tests in case there is no client feature set (1ee5518)
-    - [git-protocol] refactor (0b4ff16)
-    - [git-protocol] refactor (e99a03b)
-    - [git-protocol] async capabilities and arguments abstractions (aa3eacb)
-    - [git-protocol] now just a dummy async transport impl and… (c7f0b80)
-    - [git-protocol] a big step towards getting 'Arguments' test into async (5d1c30f)
-    - [git-protocol] move everything into `blocking_io` for later translation… (fa03374)
-    - [git-protocol] all blocking fetch tests (0d39b5d)
-    - [git-protocol] re-introduce credentials helper code (6a5575f)
-    - [git-protocol] separate test configuration for async mode (62a117c)
-    - [git-transport] fix git-protocol (0cc9537)
-    - [git-protocol] simplify test setup (189ed2c)
-    - refactor (2ba9f91)
-    - (cargo-release) version 0.4.0 (866f86f)
-    - Switch to latest nom (859e57e)
-    - (cargo-release) version 0.15.0 (d69d9fb)
-    - Put prodash behind a feature toggle, too (966058d)
-    - [git-packetline] refactor (1328c5b)
-    - (cargo-release) version 0.6.0 (ec5a54e)
-    - [git-packetline] refactor (e5769d1)
-    - (cargo-release) version 0.8.0 (ccea4b6)
-    - (cargo-release) version 0.9.0 (18f6d01)
-    - [git-transport] simplify parsing capabilities from lines (401af09)
-    - [git-protocol] separate tests those who need feature toggles (4a49d64)
-    - [git-transport] remove default features to force being explicit everywhere (d1b39f8)
-    - Fix git-protocol (284f8af)
-    - refactor (1412282)
-</details>
-
-## v0.7.0 (2021-05-09)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 8 commits contributed to the release over the course of 21 calendar days.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - [track publish] git-transport/0.8.0 (76f7f1c)
-    - (cargo-release) version 0.7.0 (069184e)
-    - (cargo-release) version 0.8.0 (411a05e)
-    - (cargo-release) version 0.5.0 (8c4cc3f)
-    - thanks clippy (17258cc)
-    - (cargo-release) version 0.14.0 (a760f8c)
-    - (cargo-release) version 0.3.0 (e9665c7)
-    - (cargo-release) version 0.13.0 (ac2eddb)
-</details>
-
-## v0.6.0 (2021-04-08)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 10 commits contributed to the release over the course of 1 calendar day.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
  * **#63**
     - git-protocol uses `oid` type (3930a6f)
-    - refactor; better errors for invalid hash sizes (be84b36)
+    - Use new `oid` where possible in git-odb (68a709e)
     - Make ObjectId/oid happen! (ca78d15)
     - Remove all public exports of git-hash types in git-object (accf89d)
-    - Remove re-export of git_object::borrowed::Id (a3f2816)
-    - Make git-hash Error usage explicit (it's for decoding only) (4805cfc)
  * **Uncategorized**
+    - (cargo-release) version 0.5.0 (02df134)
+    - (cargo-release) version 0.8.0 (1a2a5cc)
     - (cargo-release) version 0.6.0 (8513f0f)
-    - (cargo-release) version 0.7.0 (334b7e1)
+    - (cargo-release) version 0.10.0 (3161777)
+    - (cargo-release) version 0.7.0 (b900914)
+    - (cargo-release) version 0.4.0 (06612eb)
     - (cargo-release) version 0.12.0 (3b71e7e)
     - (cargo-release) version 0.2.0 (4ec09f4)
-</details>
-
-## v0.5.0 (2021-03-26)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 5 commits contributed to the release over the course of 60 calendar days.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
+    - Remove locate(…) -> Option<Result<…>> in favor of Result<Option<…>> (40ee743)
+    - A trial for Result<Option<Object>>  for loose object databases (3842859)
+    - Merge branch 'daniel-levin/main' into main (1e727af)
+    - dependency update (9e00d1b)
+    - refactor (170215d)
+    - Update goals and non-goals to not make them appear 'fixed' forever (f606075)
+    - Add journey test (5c2fe3a)
+    - Add experiment based on Josh Triplett's gist, related to #59 (76236d0)
+    - Ensured linter checks pass (51f2183)
+    - refactor (dee8c66)
+    - Ensured output of directory-less git init unchanged (539a573)
+    - Remove timesheet, move it to Byron/byron/timesheets/gitoxide.csv (a8899c9)
+    - Added [directory] to lean CLI as well. (9c12f90)
+    - Plans for 'gixp-cat' plumbing program (942e8bc)
+    - Added [directory] argument to init. (62f8dc6)
+    - (cargo-release) version 0.9.0 (efc8983)
     - (cargo-release) version 0.5.0 (3cc4a57)
-    - (cargo-release) version 0.6.0 (50fb6f2)
+    - (cargo-release) version 0.3.0 (d5c6643)
+    - thanks clippy (f25598a)
     - thanks clippy (0fc239c)
-    - thanks clippy (749ceba)
+    - Slim down git-config with cargo-diet (1c555e0)
+    - [gix] Add optional zlib feature (f1f9665)
+    - [organize]: make it work with bare and non-bare repositories (b85a389)
+    - [organize]: Make client state meaning explicit (0f4265f)
+    - [gitoxide-core] Fix find_origin_remote location (a3c19fc)
+    - [gitoxide-core] Use git-config for remote url parsing (c45feed)
+    - [gitoxide-core] Use git-config as dependency (c567925)
+    - Make 'find' reproducable (c5af6eb)
+    - mildly improve performance in case there is nothing to do for 'organize' (4f9fdc5)
+    - Fix journey tests by not allowing canonicalization of possibly… (532ff2b)
+    - Avoid claiming we would move something even though we won't (in 'organize') (47c7fb3)
+    - (cargo-release) version 0.8.0 (1ccfdcd)
+    - Implement `find` subcommand (28d506a)
     - (cargo-release) version 0.11.0 (1aa1f5e)
-</details>
-
-## v0.4.1 (2021-01-05)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 9 commits contributed to the release over the course of 5 calendar days.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - (cargo-release) version 0.4.1 (6244fb4)
-    - finish docs for `git-protocol` crate (598f700)
-    - revise trait documentation of git-protocol (5271128)
-    - docs for response in git-protocol (487de13)
-    - more docs for git-protocol (bca0cbd)
-    - docs for fetch::refs (6a97a3e)
-    - docs for git credentials helper utilities (eb6bb6e)
-    - first pieces of docs for git-protocol (12d8a83)
+    - Fix tests (da94cfc)
+    - thanks clippy (de32204)
+    - Avoid moving nested repositories out of their place (5d7e6bf)
+    - Recurse into directories much less… (87561eb)
+    - Better use of jwalk filter capabilities… (781ea7f)
+    - optimize number of CPUs for directory walk for M1 chips (129a699)
+    - Remove usage of gitfeatures::fs in organize subcommand (b567d37)
+    - prepare to put 'organize' behind a feature flag (9986509)
+    - refactor; planning (5df492c)
+    - fix progress (1abd761)
+    - Assure basic 'organize' operation is working as expected (deb6073)
+    - A version of organize which works; in theory (800a2f4)
+    - A first stab at finding git repositories (e4dc964)
+    - Fix verbose parsing unit tests (ce38ede)
+    - (cargo-release) version 0.2.0 (0c39373)
+    - thanks clippy (9e93a71)
+    - first sketch of parsing git remotes (from git :D) (f8ab261)
+    - first tiny journey test for dry run of organize subcommand (7bbba5a)
+    - refactor (64495b0)
+    - first sketch of interface for 'organize' subcommand (4f64d12)
+    - silence so far unknown clippy lints (b5f2a4b)
     - thanks clippy (343ab9a)
 </details>
 
-## v0.4.0 (2020-12-16)
+## v0.7.0 (2020-12-16)
 
 ### Commit Statistics
 
@@ -983,7 +1046,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 3 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -997,45 +1060,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - use git-hash in git-features (5b307e0)
 </details>
 
-## v0.3.0 (2020-12-15)
+## v0.6.0 (2020-12-15)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - (cargo-release) version 0.3.0 (e60dbe6)
-    - (cargo-release) version 0.4.0 (32aefc0)
-    - (cargo-release) version 0.4.0 (72eaece)
-    - (cargo-release) version 0.9.0 (a89fdb9)
-    - (cargo-release) version 0.5.0 (fc7d600)
-</details>
-
-## v0.2.0 (2020-12-15)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 67 commits contributed to the release over the course of 82 calendar days.
+ - 116 commits contributed to the release over the course of 82 calendar days.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -1044,12 +1083,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - (cargo-release) version 0.6.0 (4df97ce)
+    - (cargo-release) version 0.3.0 (e60dbe6)
+    - (cargo-release) version 0.6.0 (27f5955)
+    - (cargo-release) version 0.2.0 (d61ad88)
+    - (cargo-release) version 0.9.0 (a89fdb9)
+    - (cargo-release) version 0.5.0 (fc7d600)
+    - (cargo-release) version 0.5.0 (ae9c52b)
     - (cargo-release) version 0.2.0 (a476a46)
-    - (cargo-release) version 0.3.0 (d19ee35)
-    - (cargo-release) version 0.3.0 (eade7d1)
+    - (cargo-release) version 0.5.0 (c767e07)
     - (cargo-release) version 0.8.0 (47c00c2)
     - cargo clippy Rust 1.48 (475a68c)
+    - finish refactoring git-odb (ec282ae)
     - (cargo-release) version 0.7.0 (7fa7bae)
+    - refactor (6b909a2)
+    - refactor (b511a2b)
+    - Merge branch 'commit-graph' into main (9cb09b2)
+    - the daily commit (single handedly) (b528c2e)
+    - Note about why git_features::hash::bytes_of_file() is not yet used (ca48fc4)
+    - dependency update (988f905)
+    - specify the hash to create with 'hash::bytes_of_file' (c000294)
+    - document `loose::Object` entirely (d5eef9c)
+    - move 'git_odb::hash::bytes_of_file' into git_features::hash (c5f6b45)
+    - thanks clippy (b9e0a87)
     - Add and use borrowed::Id::null_sha1() (c717492)
     - docs for Sink (e7a09f0)
     - refactor (e4935e0)
@@ -1078,276 +1134,82 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Revert "remove git-config from workspace while it's so fresh…" (99214f4)
     - [commitgraph] Stub out commit-graph-verify plumbing command. (aacf0f0)
     - remove dash in all repository links (98c1360)
+    - Merge branch 'main' into commit-graph (ca5b801)
+    - [commitgraph] Attempt to fix bash script execution on Windows. (5e78213)
+    - dependency update (44e0f05)
+    - [commitgraph] Use crate::graph::Graph instead of crate::Graph. (21e4527)
+    - thanks clippy (e355b4a)
+    - [commitgraph] Rearrange some `use` statements. (185d14b)
+    - refactor (5a1cbf2)
+    - [commitgraph] Don't export Commit symbol at crate level. (be0e845)
+    - And octal values unquoting works too (5effc7b)
+    - [commitgraph] Include Conor in crate manifest. (000748c)
+    - All explicit escapes (1841544)
+    - [commitgraph] Add some doc comments. (6cf5cd8)
+    - First bunch of simple unescapes (a45c594)
+    - [commitgraph] Remove unused error variant. (66588f2)
+    - prepare for actual unescaping (284da44)
+    - [commitgraph] Rename GraphFile -> File. (f451822)
+    - basic infrastructure for unquoting c-style strings (f81bb03)
+    - [commitgraph] Rename CommitData -> Commit. (d8c2007)
+    - fix incorrect cycle detection, which worked on MacOS by accident (a6e7765)
+    - [commitgraph] Don't re-export graph_file symbols at crate level. (7c405ab)
+    - Also use alternates for looking up objects… (ade929d)
+    - Merge from main. (b59bd5e)
     - increase git-odb crate size limit (75bcc85)
     - [commitgraph] Ditch pre-generated test repos. (1ce8468)
+    - refactor (8877b77)
     - prepare for unquoting c-strings (47e2fa0)
     - [commitgraph] Include in `make check` target. (724f391)
+    - dependency update (7c2419b)
     - Read multiple alternates from single file; ignore comments (1f8d367)
     - [commitgraph] Remove `Kind` enum. (3c92761)
+    - refactor (4a0d034)
     - support for relateive alternates (b20e9ee)
     - [commitgraph] Take `info` dir as arg, not `objects` dir. (36953e0)
+    - refactor (485aa91)
     - Ignore all cycles and be happy if we have found at least one actual odb (1effdfd)
     - [commitgraph] implement basic, low-level read API (d1f0e9c)
+    - refactor (c1d2f41)
     - prepare for multi-line parsing and all the bells and whistles (08f9ec4)
     - Revert "FAIL: try to get rid of tree-traversal Boxed error…" (1b42b31)
+    - refactor (07aff14)
     - Make compound DB initialization less lazy… (6dc57b3)
     - try to get rid of tree-traversal Boxed error… (13159eb)
+    - refactor (57d463f)
     - Use parallel walkdir (via jwalk) when parallel feature is enabled (f444c85)
     - Parameterize traversal error with Processor error (1513a13)
+    - refactor (c6be43d)
     - alternate now handles cycles (71167e4)
     - Switch to prodash 10 and safe a lot of trait bounds in the process (e2fb1d9)
+    - refactor (524d0fe)
     - first simple alternate tests (7372118)
     - Prepare next iteration (4f656b2)
+    - refactor (a8f4cd7)
     - test for circular alternates (fc92709)
     - Provide terminal dimensions to better use horizontal space (11f6b84)
+    - Checksum verification for compound object (3be08b0)
     - dependency update (6b0796a)
     - asciinema link for pack-receive (79ac34c)
+    - refactor (59d989a)
     - thanks clippy (4ddc64f)
     - asciinema link for remote-ref-list (aafd5f8)
+    - More methods for compound object (84d2b0e)
     - Actually resolve alternates when creating a compound DB (9be7aed)
     - (cargo-release) version 0.4.0 (f667785)
+    - refactor (e5a9343)
     - refactor (c1eff58)
-    - (cargo-release) version 0.4.0 (92e8b27)
-    - first sketch of alternate resolution (6cc8a94)
-    - (cargo-release) version 0.4.0 (2b1bca8)
-    - take not of a few more obscure features (8f9570c)
 </details>
 
-## v0.1.1 (2020-09-14)
+## v0.4.0 (2020-09-12)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 201 commits contributed to the release over the course of 31 calendar days.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 10 times to make code idiomatic. 
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - (cargo-release) version 0.2.1 (ebf3419)
-    - (cargo-release) version 0.4.1 (60ac8b0)
-    - [clone] Don't hide nested pack-decoding information (4d4be97)
-    - (cargo-release) version 0.6.0 (9ef184e)
-    - refactor (ad17bfd)
-    - [clone] Don't try to explicitly close the connection… (17200b3)
-    - (cargo-release) version 0.1.1 (bb38c6b)
-    - refactor (91d9f78)
-    - [clone] Fix encoding of V1 capabilities in first want (b68a5c5)
-    - (cargo-release) version 0.2.1 (abc218c)
-    - refactor (6ebb5d1)
-    - [clone] When unpacking peeled refs, use the object that refers to the tag… (fe8bb39)
-    - Support V2 shallow-info section (6679c91)
-    - [clone] All it took was a an intermediary to call 'read' as expected (7c8ecb7)
-    - Tests for V2 shallow section parsing (5bf58ab)
-    - [clone] minor refactor; it's definitely the read() that doesn't work… (406829b)
-    - Support for the 'deepen-relative' argument (b86fed6)
-    - [clone] none the wiser - it really looks like everything is alright… (3b8d613)
-    - Assure peek behaves exactly as we want it to with ERR lines (bbdaee5)
-    - [clone] it looks like in order to figure out the issue, it needs tests higher up… (edf1540)
-    - V1 parsing of shallow and unshallow lines… (8bcf535)
-    - [clone] Don't send V2 capabilities that don't have a value… (9c9a4ee)
-    - remove unused fixtures (6ae69f5)
-    - [clone] Handle remote progress name prefixing (more) correctly (51d4d15)
-    - Fix wants/haves separator handling for stateful V1 (1629575)
-    - [clone] This actually works: first MVP of retrieving packs via clone (c06d819)
-    - Make really clear that V2 is stateless no matter what the transport supports :D (c296845)
-    - [clone] First step towards implementing a working pack receiving… (264ec82)
-    - Assure the first 'want' in V1 is always first (e729ec8)
-    - Use git attributes to prevent crlf conversion of fixtures on windows (80ca8b2)
-    - Properly handle statelessness in V2 protocol (1b49f1e)
-    - [clone] increase git transport size limit (422993d)
-    - add some samples for deepen clones (61bc41a)
-    - [clone] Support for reading multi-step negoritaions, but… (507d342)
-    - upgrade futures-lite (1d83033)
-    - [clone] refactor (ded46fd)
-    - [clone] support for progress that can handle writing pack files (46e0055)
-    - [clone] leave aborting the negotiation loop in the hands of the delegate (ea83ce7)
-    - [clone] sideband-all support (ecc8e09)
-    - [clone] Actually pass pack file to the delegate (94c5e62)
-    - [clone] Response parsing up to (optional) pack (24064c7)
-    - [clone] FAIL: try to model pack reading using ownership… (4ee14e3)
-    - [clone] properly handle V2 response parsing (0d7d768)
-    - refactor (f2c31ec)
-    - refactor (fab9f99)
-    - [clone] Provide a handle to the packfile, if it is present in the response (fcb4cc1)
-    - [ref-ls] A way to abort on multiple delimiters; first tests work (8d44912)
-    - refactor (feec5be)
-    - [ref-ls] Allow multiple delimiters at the same time (cfae63a)
-    - [ref-ls] basic V2 acknowledgement and packfile parsing, but… (549f404)
-    - thanks clippy (ac88eef)
-    - [ref-ls] parse all V1 acknowledgements, without duplication (f7c1580)
-    - [ref-ls] first stab at V1 acknowledgement parsing (1d21cd4)
-    - [ref-ls] It would be practical to simply have access to the line provider… (5fba787)
-    - thanks clippy (27f30df)
-    - [ref-ls] support for line peeking in packet line readers (0c0c575)
-    - [ref-ls] Let's make Acks copy, because owned::Id is as well (1f9cc44)
-    - refactor (935d5fe)
-    - [ref-ls] first sketch of V1 tests for result parsing (ack + pack) (fd16a5f)
-    - [ref-ls] tests for stateless V1/V2 (d34afc6)
-    - [ref-ls] first step towards parsing negotiation result (51ecf7e)
-    - refactor (61e9812)
-    - thanks clippy (6b1294a)
-    - [ref-ls] Argument tests for fetches (50cd260)
-    - [ref-ls] first argument tests for clone (83490ef)
-    - [ref-ls] Also add 'haves' in V2; some more assertions (3e6bfb1)
-    - [ref-ls] Do feature assertions to not have to support old servers (9980ff9)
-    - [ref-ls] don't do anything on drop (9f18d9b)
-    - [ref-ls] A step towards getting the negotiation right, really need tests (abb56d8)
-    - [ref-ls] Transport layer knows whether it's stateful or not (22c3640)
-    - [ref-ls] Also re-send V1 features in each request, independently of statefulness for now (f8669d6)
-    - [ref-ls] potentially fix 'is-done' logic (f9e338f)
-    - [ref-ls] Sketch of sending arguments in V1 & V2 (e1d27b6)
-    - [ref-ls] first step towards supporting negotiation (27b6d2d)
-    - [ref-ls] probably all it takes to handle all capabilities of fetch arguments (d956ecc)
-    - [ref-ls] first sketch of argument utility to help creating wants/haves (b0b0166)
-    - [ref-ls] fix feature validation in V2 (eb387d2)
-    - update tasks (079fc02)
-    - [ref-ls] Always send a flush before closing the connection (918f19f)
-    - [ref-ls] Make credentials helper truly work (7f3c3a7)
-    - [ref-ls] And it even doesn't work if it is the very same transport (4ba50fe)
-    - [clone] support automatic downgrade to protocol version 1 (4cf3643)
-    - [clone] basic progress for fetch in protocol (1925d02)
-    - refactor (aa7e8b1)
-    - refactor (b97507e)
-    - [clone] update README, improve delegate docs (dc7908f)
-    - [clone] test ls-remote V2 (0907771)
-    - thanks clippy (baf0b2c)
-    - [clone] more tests for fetch features and arguments (a946861)
-    - [clone] features for V1 fetch (5b24a55)
-    - [clone] assert on ref-prefix for ls-refs command (70347a5)
-    - thanks clippy (d55cd56)
-    - refactor (f02232d)
-    - [clone] Getting there with feature handling for ls-refs (27c5adc)
-    - [clone] Remove intermediary mutable Capabilities implementation (f59344a)
-    - refactor (5ea42ba)
-    - [clone] first step towards better organizing features/capabilities/argument names (7d45f3a)
-    - dependency update (dea0028)
-    - [clone] first sign of somethign working: ls-remote (df58fa1)
-    - refactor; thanks clippy (03c3d17)
-    - refactor (25122f2)
-    - [clone] V2 ref parsing (455fa0f)
-    - [clone] A better way to set the agent in V2 invocations (325d3a2)
-    - [clone] Make the actual ls-refs call (898cb8b)
-    - [clone] sketch of delegating simple commands along with arg/feature verification (c2ebc48)
-    - refactor (a6bcdc4)
-    - ignore keep-alive packages in case of 'sideband-all' (2e77b86)
-    - refactor (ad0b2e9)
-    - thanks clippy (8b1ea29)
-    - [clone] apply another mild workaround to be able to use 'transport.close()' (ea636ae)
-    - [clone] remove workaround (55cf167)
-    - [clone] more safety checks (6f5a9f3)
-    - thanks clippy (423458e)
-    - refactor (f29ea65)
-    - [clone] proper parsing of V1 refs (d262307)
-    - [clone] A little more ref V1 parsing (4bc7842)
-    - [clone] preparation of test for proper ref parsing (V1) (85cd580)
-    - refactor (99247f4)
-    - refactor (c985370)
-    - [clone] symref parsing from capabilities (8c2ff64)
-    - [clone] A step closer to parsing symrefs correctly (250a340)
-    - [clone] attempt to make refs more accessible… (fa1112c)
-    - refactor (c138059)
-    - [clone] Prevent accidental leakage by transforming back to the 'right' type (2d469c6)
-    - thanks clippy (9afa7f9)
-    - [clone] a better workaround for the 'drop scope' issue (3ccf32b)
-    - [clone] First step of workarounding rusts drop rules (6b47923)
-    - [clone] update tracking ticket information (650c452)
-    - [clone] add Rustc issue to see if this is just my bad (ccb9b53)
-    - thanks clippy (fd6f9e5)
-    - [clone] Workaround for the drop-issue (43c6159)
-    - [clone] first attempt at adding authentication logic, but… (a36d14a)
-    - [clone] first rough sketch of (mutable) capabailities in the protocol side (13f7ecb)
-    - refactor (a567b24)
-    - refactor (88ecda1)
-    - [clone] frame for first 'fetch' tests (2da70f6)
-    - refactor (89aabde)
-    - refactor (51f6142)
-    - [clone] support for git-credentials helper (a6546da)
-    - refactor (cf0e45a)
-    - [clone] decoding of credential message replies (1c2f56d)
-    - [clone] encode message for git credentials helper (143549e)
-    - [clone] sketch for identity handling (b23f470)
-    - [clone] put remaining remote progress parsing code into protocol (e03e0e5)
-    - refactor - decouple protocol from packetline (dc98db2)
-    - [clone] move packet-line code into own crate (879af67)
-    - [clone] move packet-lint into transport layer (c0dd831)
-    - [clone] link up lean plumbing command with gitoxide-core: pack-receive (5ea49c8)
-    - [url] basic frame and first failing test (60aacf0)
-    - [protocol] properly implement remote progress reporting (a81954a)
-    - refactor (66e9cd1)
-    - thanks clippy (7f6e290)
-    - [protocol] prepare passing most of remote progress on to prodash… (b8a34e5)
-    - refactor (df8ebdc)
-    - refactor (2ea3288)
-    - refactor (2102cab)
-    - [protocol] remote::Progress can now parse the usual progress (b0e5601)
-    - [protocol] first steps towards parsing remote progress (c3d0e7a)
-    - [protocol] even starting to parse remote progress by hand is painful… (d68db3c)
-    - Less ambiguous name for 'index-from-pack': 'pack-index-from-data' (386673c)
-    - [protocol] handle errors as well; transmit progress (first part) (c484398)
-    - [protocol] first successful test with pack reading (ad1e8bf)
-    - [protocol] first stab at decoding sidebands in Read (51fe596)
-    - [protocol] allow Reader delimiter to be configured (5a01596)
-    - refactor (78f27d8)
-    - Revert "[protocol] an alternative version with external buffer" (157d810)
-    - Revert "[protocol] But external buffers also don't help at all" (579a697)
-    - [protocol] But external buffers also don't help at all (8e711df)
-    - [protocol] an alternative version with external buffer (a862d22)
-    - [protocol] a struggle - putting buffers in Read adapters = bad idea (e257426)
-    - [protocol] FAIL: keep referenced PacketLine for minimal copy (7e4d1f3)
-    - [protocol] sketch of Read impl for pack line iterator (fe3b050)
-    - refactor (c81caa3)
-    - Revert "[protocol] FAIL: attempt to add an actual Iterator impl for packet lines" (2989781)
-    - [protocol] FAIL: attempt to add an actual Iterator impl for packet lines (a6e4cb1)
-    - refactor (20b10c5)
-    - [protocol] thanks clippy (10b9017)
-    - [protocol] tests for the reader (86d1a40)
-    - [protocol] A chance for the reader to actually work (d6aebed)
-    - refactor (8ebdcbd)
-    - [protocol] FAIL: finally the reader compiles with the 'slice split technique'… (58543cb)
-    - [protocol] FAIL3: giving up - it's quite impossible to do that without 'bytes' (047d67c)
-    - [protocol] reader FAIL: wherever the loop moves, it will not borrowcheck (cb154f2)
-    - [protocol] FAIL2: lifetime issues with loop (c2ff070)
-    - [protocol] decode-band can fail on malformed input (0f468f9)
-    - refactor (ed1f364)
-    - [protocol] better handling of text-lines (7ad1db0)
-    - [protocol] attempt to implement a streaming pack line reader (FAIL :D) (cc45cec)
-    - [protocol] add cargo-diet assertions (831b758)
-    - refactor (73e24c9)
-    - [protocol] side-band channel encoding and decoding (9b4fb3e)
-    - [protocol] suppot for V2 special lines (4e46719)
-    - Encode and decode errors (3f4fd90)
-    - decode ERR lines as actual errors (1f58568)
-    - more tests (c34d88b)
-    - the first succeeding tests for streaming decoding :D (7ea25c5)
-    - first stab at implementing streaming decoding of packet line… (843c6fb)
-    - cargo fmt (60cd21b)
-    - Allow dual-licensing with Apache 2.0 (ea353eb)
-    - refactor (7e3f67d)
-    - packet line encoding with flush support (e924a59)
-</details>
-
-## v0.1.0 (2020-09-12)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 60 commits contributed to the release.
+ - 65 commits contributed to the release.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Thanks Clippy
 
@@ -1362,7 +1224,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - (cargo-release) version 0.4.0 (92e8b27)
+    - Finish removal of rust 2018 idioms (0d1699e)
+    - first sketch of alternate resolution (6cc8a94)
+    - (cargo-release) version 0.4.0 (2b1bca8)
+    - refactor (ba1d883)
+    - take not of a few more obscure features (8f9570c)
     - (cargo-release) version 0.4.0 (2272fa4)
+    - refactor (7c3c80a)
     - (cargo-release) version 0.4.3 (5b47a1a)
     - (cargo-release) version 0.4.0 (0d7b60e)
     - refactor (8930610)
@@ -1420,19 +1289,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - (cargo-release) version 0.4.1 (64fff36)
     - [clone] Assure we don't hang due to unprocessed headers when peeking lines! (d9ced27)
     - refactor (203ba99)
-    - (cargo-release) version 0.4.1 (105c501)
-    - [clone] more correct handling of 'no-done'/done when sending wants/haves… (50f4516)
 </details>
 
-## v0.0.0 (2020-08-13)
+## v0.4.1 (2020-09-18)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 51 commits contributed to the release over the course of 35 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -1441,7 +1308,188 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - some README updates (1461514)
-    - first bunch of tasks I see after studying parts of the protocol docs (9bd97ba)
+    - (cargo-release) version 0.4.1 (105c501)
+    - [clone] more correct handling of 'no-done'/done when sending wants/haves… (50f4516)
+    - (cargo-release) version 0.2.1 (ebf3419)
+    - (cargo-release) version 0.4.1 (60ac8b0)
+    - [clone] Don't hide nested pack-decoding information (4d4be97)
+    - (cargo-release) version 0.6.0 (9ef184e)
+    - refactor (ad17bfd)
+    - [clone] Don't try to explicitly close the connection… (17200b3)
+    - (cargo-release) version 0.1.1 (bb38c6b)
+    - refactor (91d9f78)
+    - [clone] Fix encoding of V1 capabilities in first want (b68a5c5)
+    - (cargo-release) version 0.2.1 (abc218c)
+    - refactor (6ebb5d1)
+    - [clone] When unpacking peeled refs, use the object that refers to the tag… (fe8bb39)
+    - Support V2 shallow-info section (6679c91)
+    - [clone] All it took was a an intermediary to call 'read' as expected (7c8ecb7)
+    - Tests for V2 shallow section parsing (5bf58ab)
+    - [clone] minor refactor; it's definitely the read() that doesn't work… (406829b)
+    - Support for the 'deepen-relative' argument (b86fed6)
+    - [clone] none the wiser - it really looks like everything is alright… (3b8d613)
+    - Assure peek behaves exactly as we want it to with ERR lines (bbdaee5)
+    - [clone] it looks like in order to figure out the issue, it needs tests higher up… (edf1540)
+    - V1 parsing of shallow and unshallow lines… (8bcf535)
+    - [clone] Don't send V2 capabilities that don't have a value… (9c9a4ee)
+    - remove unused fixtures (6ae69f5)
+    - [clone] Handle remote progress name prefixing (more) correctly (51d4d15)
+    - Fix wants/haves separator handling for stateful V1 (1629575)
+    - [clone] This actually works: first MVP of retrieving packs via clone (c06d819)
+    - Make really clear that V2 is stateless no matter what the transport supports :D (c296845)
+    - [clone] First step towards implementing a working pack receiving… (264ec82)
+    - Assure the first 'want' in V1 is always first (e729ec8)
+    - Use git attributes to prevent crlf conversion of fixtures on windows (80ca8b2)
+    - Properly handle statelessness in V2 protocol (1b49f1e)
+    - [clone] increase git transport size limit (422993d)
+    - add some samples for deepen clones (61bc41a)
+    - [clone] Support for reading multi-step negoritaions, but… (507d342)
+    - upgrade futures-lite (1d83033)
+    - [clone] support for progress that can handle writing pack files (46e0055)
+    - [clone] Actually pass pack file to the delegate (94c5e62)
+    - refactor (61e9812)
+    - [ref-ls] first step towards supporting negotiation (27b6d2d)
+    - [ref-ls] usable JSON output (735ae50)
+    - [ref-ls] Fix progress display (2fcb557)
+    - [ref-ls] Make things compile (b6506a4)
+    - [ref-ls] And it even doesn't work if it is the very same transport (4ba50fe)
+    - [ref-ls] first actual call of ls-remote, but… (5fc4330)
+    - [ref-ls] Frame for remote-ref-ls command in gitoxide-core (161e7df)
+    - bump git-features to 0.4 to allow publishes after breaking changes (9d6b879)
+    - [clone] first sketch of transport layer's connection logic (f10cee5)
+    - [clone] link up lean plumbing command with gitoxide-core: pack-receive (5ea49c8)
+    - Allow dual-licensing with Apache 2.0 (ea353eb)
+</details>
+
+## v0.3.0 (2020-08-12)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 68 commits contributed to the release over the course of 30 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - update release script to match dependency order (e8df6c1)
+    - bump minor version to 0.3 (4351e28)
+    - first step towards parallelizing file hashes and traversal! (9573836)
+    - update to quick-error 2.0 (4b1b784)
+    - better progress for Sha1 of pack and index (310a59e)
+    - first successful test of moving the streaming iterator into its own thread (c9fcb68)
+    - unify used ranges for line renderer amond pretty and lean interface (f59f66e)
+    - Add convenience method to get a new bundle for the index/data just written (a6d74ad)
+    - support for JSON format output (1931575)
+    - first pieces of the index-from-pack journey tests (181d69c)
+    - more flexible error types for processors - anything goes (be3a947)
+    - refactor (c7dd581)
+    - interrupt support for pretty plumbing (bca7ce2)
+    - count object types as well (e04a8d1)
+    - refactor (b77d148)
+    - remove memory mode entirely (and some complexity with it) (8812e91)
+    - turns out you never want to keep deltas in memory (657aa2c)
+    - Remove support for keeping compressed memory to reduce the index size (1e2ec7e)
+    - Use call to produce the resolver, allowing to delay opening a file mapping… (dd30e8d)
+    - minor fixes after first local tests - it's up to twice as fast!! (43c7fd1)
+    - quick and dirty impl of lean command-line for index-from-pack (9660bbf)
+    - quick and dirty impl of gitoxide layer for bundle writing, aka index-pack (e78386b)
+    - first sketch of gitoxide index::from_pack(…) (da0eace)
+    - refactor; better tests (12d14bf)
+    - update tasks (45c3520)
+    - it looks like something is wrong with the object stream implementation (d187b5a)
+    - Loose object verifycation - but it doesn't seem to work as expected (9dd5676)
+    - prepare full 'verify' implementation (ee45c7f)
+    - refactor (0a33b24)
+    - Allow sink-compress configuration; choose best algorithm (29b9c23)
+    - Always compress values when using a sink when exploding packs (70562fa)
+    - Most tests and clearer error message if object directory is inaccessible (1d8f597)
+    - Nice error message on failure (adbc82c)
+    - inform about deleted files using progress (a3ee516)
+    - Don't uncondionally delete packs/indices on explode :D (1979715)
+    - The first 'explode' implementation… (0d31ad1)
+    - Get all pieces ready for action (1805d64)
+    - Pass option for safety checks down to explode(…) (0bcb790)
+    - Restore original verification functionality (0e3c1b9)
+    - nearly there! Interesting that anyhow errors must be sync! (eaee77e)
+    - refactor (bae7781)
+    - refactor (f66b116)
+    - basic tests and CLI args for explode pack (f932256)
+    - refactor (d3c00c8)
+    - (cargo-release) version 0.2.0 (76fe0ab)
+    - (cargo-release) version 0.2.0 (0bb8314)
+    - Run clippy first; pacify clippy (0a5b883)
+    - use faster algorithm by default (bb45c3d)
+    - refactor; enable testing of reverse-delta lookup (512daf9)
+    - Fix clippy (ec40e09)
+    - refactor (fdfab40)
+    - Easy access to sorted offsets in pack index files (d93540f)
+    - refactor (cb8d561)
+    - Change course and do pack streaming first (bcb275e)
+    - Switch to latest quick-error (9760856)
+    - Fully implement --encode and --re-encode flags (a7cfac8)
+    - prepare for re-encoding each pack object (afae684)
+    - move git_object::Id into git_object::owned::Id - much better already! (50c7136)
+    - fix naming change, which was introduced accidentally (fbb9f98)
+    - refactor (34e85f2)
+    - refactor (2888f1b)
+    - refactor (dcacd3b)
+    - refactor (b113da9)
+    - refactor (bed5dc8)
+    - refactor (8b416d4)
+    - Respect thread limit in 'in_parallel' (babfd84)
+    - pass threadlimit down from CLIs (f98c5b1)
+    - add new Context argument to support more configuration options (7c5d8b8)
+</details>
+
+## v0.1.0 (2020-07-12)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 26 commits contributed to the release over the course of 19 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Cargo-diet for the top-level crate (19e7fec)
+    - Make crates publishable (5688a34)
+    - Add metadata to allow docs.rs build all featueres (10f9386)
+    - first release test (3ef85fc)
+    - git-odb with serde support (0da930c)
+    - pass serde1 through from gitoxide (1991b9f)
+    - don't print 'OK' at the end of verify-pack (4956ef2)
+    - \#[forbid(unsafe)] for all crates (afda803)
+    - Allow for more screen space when formatting (6794300)
+    - disable LRU cache if we have to get statistics (befba3b)
+    - wonderful statistics on compression efficiency! (1bb09c5)
+    - pretty-print objects per delta chain length (66553b1)
+    - count objects per chain level (209d53f)
+    - Pretty-printing of some statistics (125b565)
+    - fix pretty build (6adf615)
+    - pass average stats through to the top level (5b4979c)
+    - first very basic progress implementation (b820717)
+    - Pass progress everywhere, for now just to discard it (da3ae1c)
+    - Control which hashing crates to use from the top-level as well. (dfe9b20)
+    - Use git-features to toggle 'parallel' mode from the 'gitoxide' level (d944fbf)
+    - first working version of actually parallel `in_parallel` (145ee39)
+    - Support for verifying pack files and index files (b09b4e1)
+    - cleanup - don't build and run tests while there is nothing to test (4a153da)
+    - First basic index file verification (994700f)
+    - reorganize crates to make 'gitoxide' the CLI, and 'gitoxide-core' the library (0ac9c5a)
+    - rename grit to 'gitoxide', CLI name is 'gio' (9d6007f)
 </details>
 

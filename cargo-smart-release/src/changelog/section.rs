@@ -145,50 +145,14 @@ mod from_history {
             };
             let mut segments = Vec::new();
             let history = &segment.history;
-            {
-                let duration = history
-                    .last()
-                    .map(|last| date_time - time_to_offset_date_time(last.commit_time));
-                segments.push(section::Segment::Statistics(section::Data::Generated(
-                    section::CommitStatistics {
-                        count: history.len(),
-                        duration,
-                        conventional_count: history.iter().filter(|item| item.message.kind.is_some()).count(),
-                        unique_issues_count: {
-                            let mut issue_names = history
-                                .iter()
-                                .map(|item| item.message.additions.iter())
-                                .flatten()
-                                .map(|addition| match addition {
-                                    commit::message::Addition::IssueId(id) => id,
-                                })
-                                .collect::<Vec<_>>();
-                            issue_names.sort();
-                            issue_names.dedup();
-                            issue_names.len()
-                        },
-                    },
-                )))
-            }
-            {
-                let count = history
-                    .iter()
-                    .filter(|item| item.message.title.starts_with("thanks clippy"))
-                    .count();
-                if count > 0 {
-                    segments.push(section::Segment::Clippy(section::Data::Generated(
-                        section::ThanksClippy { count },
-                    )))
-                }
-            }
-            {
-                let mut categories = BTreeMap::default();
+            if !history.is_empty() {
+                let mut commits_by_category = BTreeMap::default();
                 for &item in history {
                     let mut issue_associaions = 0;
                     for possibly_issue in &item.message.additions {
                         match possibly_issue {
                             commit::message::Addition::IssueId(issue) => {
-                                categories
+                                commits_by_category
                                     .entry(section::details::Category::Issue(issue.to_owned()))
                                     .or_insert_with(Vec::new)
                                     .push(item.into());
@@ -197,14 +161,38 @@ mod from_history {
                         }
                     }
                     if issue_associaions == 0 {
-                        categories
+                        commits_by_category
                             .entry(section::details::Category::Uncategorized)
                             .or_insert_with(Vec::new)
                             .push(item.into());
                     }
                 }
+                {
+                    let duration = history
+                        .last()
+                        .map(|last| date_time - time_to_offset_date_time(last.commit_time));
+                    segments.push(section::Segment::Statistics(section::Data::Generated(
+                        section::CommitStatistics {
+                            count: history.len(),
+                            duration,
+                            conventional_count: history.iter().filter(|item| item.message.kind.is_some()).count(),
+                            unique_issues_count: commits_by_category.len(),
+                        },
+                    )))
+                }
+                {
+                    let count = history
+                        .iter()
+                        .filter(|item| item.message.title.starts_with("thanks clippy"))
+                        .count();
+                    if count > 0 {
+                        segments.push(section::Segment::Clippy(section::Data::Generated(
+                            section::ThanksClippy { count },
+                        )))
+                    }
+                }
                 segments.push(section::Segment::Details(section::Data::Generated(section::Details {
-                    commits_by_category: categories,
+                    commits_by_category,
                 })));
             }
             Section::Release {
