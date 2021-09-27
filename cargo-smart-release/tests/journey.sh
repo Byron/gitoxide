@@ -26,7 +26,9 @@ function set-static-git-environment() {
 }
 
 function init-git-repo() {
-  git init . && git add . && git commit -q -m "initial"
+  git init . &&
+  git config commit.gpgsign false &&
+  git add . && git commit -q -m "initial"
 }
 
 title "changelog"
