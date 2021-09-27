@@ -14,11 +14,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `--no-isolate-dependencies-from-breaking-change` is set.
 
 ## v0.3.1 (2021-09-07) - internal improvements
-### Thanks Clippy…
+### Thanks Clippy
 
-Clippy is a linter to help keeping code idiomatic. It was helpful 18 times in this release.
+<csr-read-only-do-not-edit/>
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 20 times to make code idiomatic. 
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+ - 268 commits contributed to the release over the course of 18 calendar days.
+ - 54 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 8 unique issues were worked on
 
 ## v0.3.1 (2021-09-07)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+ - 54 commits contributed to the release over the course of 1 calendar day.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 unique issues were worked on
 
 ## v0.3.0 (2021-08-27)
 
@@ -30,39 +45,92 @@ Clippy is a linter to help keeping code idiomatic. It was helpful 18 times in th
 
 - Use short flag for `--no-bump-on-demand` in `--bump-dependencies`
 
-### Thanks Clippy…
+### Thanks Clippy
 
-Clippy is a linter to help keeping code idiomatic. It was helpful 9 times in this release.
+<csr-read-only-do-not-edit/>
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 9 times to make code idiomatic. 
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+ - 287 commits contributed to the release over the course of 11 calendar days.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 unique issues were worked on
 
 ## v0.2.4 (2021-08-15)
 
 - Fix auto-push functionality
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+ - 2 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 unique issues were worked on
 
 ## v0.2.3 (2021-08-15)
 
 - Less verbosity by default which is helpful on the first run to get an overview. Use `--verbose/-v` for all the details.
 - Also push tags and HEAD by default, unless `--skip-push` is specified.
 
-### Thanks Clippy…
+### Thanks Clippy
 
-Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
+<csr-read-only-do-not-edit/>
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+ - 7 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 unique issues were worked on
 
 ## v0.2.2 (2021-08-15)
 
 - support for unsorted packed-refs files
 
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+ - 1 commit contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 unique issues were worked on
+
 ## v0.2.1 (2021-08-13)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+ - 3 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 unique issues were worked on
 
 ## v0.2.0 (2021-08-13)
 
-### Thanks Clippy…
+### Thanks Clippy
 
-Clippy is a linter to help keeping code idiomatic. It was helpful 1 time in this release.
+<csr-read-only-do-not-edit/>
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+ - 8 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 unique issues were worked on
 
 ## v0.1.0 (2021-08-13)
 
 - initial release
-### Thanks Clippy…
+### Thanks Clippy
 
-Clippy is a linter to help keeping code idiomatic. It was helpful 2 times in this release.
+<csr-read-only-do-not-edit/>
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+ - 46 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 unique issues were worked on
 
