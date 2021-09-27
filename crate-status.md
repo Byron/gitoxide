@@ -263,7 +263,9 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
   * [x] initialize
       * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
   * [ ] All mutations are multi-process safe and this is tested and configurable (i.e. abort or wait if lock is encountered)
-* **Easy** (_porcelain_) 
+* **Easy** (_porcelain_)
+  * **oid**
+    * [ ] short hashes with detection of ambiguity.
   * **objects**
     * [x] lookup
     * [x] peel to object kind
