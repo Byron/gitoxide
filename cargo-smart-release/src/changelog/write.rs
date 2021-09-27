@@ -16,7 +16,6 @@ impl std::fmt::Display for changelog::Version {
 impl Section {
     pub const UNKNOWN_TAG_START: &'static str = "<csm-unknown>";
     pub const UNKNOWN_TAG_END: &'static str = "<csm-unknown/>";
-    pub const THANKS_CLIPPY_TITLE: &'static str = "Thanks Clippy…";
 
     pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
@@ -25,7 +24,6 @@ impl Section {
                 name,
                 date,
                 heading_level,
-                thanks_clippy_count,
                 segments,
                 unknown,
             } => {
@@ -43,15 +41,6 @@ impl Section {
                 let section_level = *heading_level + 1;
                 for segment in segments {
                     segment.write_to(section_level, &mut out)?;
-                }
-                if *thanks_clippy_count > 0 {
-                    writeln!(out, "{} {}\n", heading(section_level), Section::THANKS_CLIPPY_TITLE)?;
-                    writeln!(
-                        out,
-                        "Clippy is a linter to help keeping code idiomatic. It was helpful {} {} in this release.\n",
-                        thanks_clippy_count,
-                        if *thanks_clippy_count > 1 { "times" } else { "time" }
-                    )?;
                 }
                 if !unknown.is_empty() {
                     writeln!(out, "{}", Section::UNKNOWN_TAG_START)?;
@@ -82,7 +71,7 @@ impl section::Segment {
         match self {
             section::Segment::User { text } => out.write_all(text.as_bytes())?,
             section::Segment::Clippy(Some(clippy)) if clippy.count > 0 => {
-                writeln!(out, "{} {}\n", heading(section_level), Section::THANKS_CLIPPY_TITLE)?;
+                writeln!(out, "{} {}\n", heading(section_level), section::ThanksClippy::TITLE)?;
                 writeln!(
                     out,
                     "Clippy is a linter to help keeping code idiomatic. It was helpful {} {} in this release.\n",

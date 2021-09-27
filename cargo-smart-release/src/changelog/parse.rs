@@ -71,7 +71,6 @@ impl Section {
     fn from_headline_and_body(Headline { level, version, date }: Headline, body: String) -> Self {
         let mut events = pulldown_cmark::Parser::new_ext(&body, pulldown_cmark::Options::all()).into_offset_iter();
         let mut unknown = String::new();
-        let mut thanks_clippy_count = 0;
         let mut segments = Vec::new();
 
         // let mut user_authored = String::new();
@@ -94,7 +93,7 @@ impl Section {
                         ConsiderUserAuthored,
                     }
                     let state = match events.next() {
-                        Some((Event::Text(title), _range)) if title.starts_with(Section::THANKS_CLIPPY_TITLE) => {
+                        Some((Event::Text(title), _range)) if title.starts_with(section::ThanksClippy::TITLE) => {
                             State::ParseClippy
                         }
                         Some((_event, next_range)) => {
@@ -116,13 +115,9 @@ impl Section {
                         .count();
                     match state {
                         State::ParseClippy => {
-                            if let Some(p) = collect_paragraph(events.by_ref(), &mut unknown) {
-                                thanks_clippy_count = p
-                                    .split(' ')
-                                    .filter_map(|num| num.parse::<usize>().ok())
-                                    .next()
-                                    .unwrap_or(0)
-                            }
+                            collect_paragraph(events.by_ref(), &mut unknown)
+                                .expect("have to parse clippy as paragraph, TODO: more robust parsing");
+                            segments.push(section::Segment::Clippy(None));
                         }
                         State::ConsiderUserAuthored => {}
                     }
@@ -138,7 +133,6 @@ impl Section {
             },
             date,
             heading_level: level,
-            thanks_clippy_count,
             segments,
             unknown,
         }
@@ -179,6 +173,7 @@ fn track_unknown_event(unknown_event: Event<'_>, unknown: &mut String) {
     }
 }
 
+// TODO: review - do we need this?
 fn collect_paragraph(events: &mut OffsetIter<'_>, unknown: &mut String) -> Option<String> {
     match events.next() {
         Some((Event::Start(Tag::Paragraph), _range)) => {
