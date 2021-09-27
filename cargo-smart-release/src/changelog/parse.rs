@@ -88,6 +88,15 @@ impl Section {
                         track_unknown_event(event, &mut unknown);
                     }
                 }
+                Event::Html(text) if text.starts_with(section::Details::PREFIX) => {
+                    record_unknown_range(&mut segments, unknown_range.take(), &body);
+                    events
+                        .by_ref()
+                        .take_while(
+                            |(e, _range)| !matches!(e, Event::Html(text) if text.starts_with(section::Details::END)),
+                        )
+                        .count();
+                }
                 Event::Start(Tag::Heading(indent)) => {
                     record_unknown_range(&mut segments, unknown_range.take(), &body);
                     enum State {

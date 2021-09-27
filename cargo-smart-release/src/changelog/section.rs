@@ -1,12 +1,14 @@
+use std::collections::BTreeMap;
+
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub enum Segment {
     /// A portion of a Section that we couldn't make sense of, but which should be kept as is nonetheless.
     User {
         text: String,
     },
-    /// A thanks clippy headline with the amount of times clippy helped
-    Clippy(Data<ThanksClippy>),
+    Details(Data<Details>),
     Statistics(Data<CommitStatistics>),
+    Clippy(Data<ThanksClippy>),
 }
 
 #[derive(Eq, Debug, Clone)]
@@ -22,6 +24,42 @@ impl<T: PartialEq<T>> PartialEq<Data<T>> for Data<T> {
             (_, _) => true,
         }
     }
+}
+
+pub mod details {
+    use std::fmt;
+
+    #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Clone)]
+    pub enum Category {
+        Issue(String),
+        Uncategorized,
+    }
+
+    impl fmt::Display for Category {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Category::Uncategorized => f.write_str("Uncategorized"),
+                Category::Issue(issue) => write!(f, "#{}", issue),
+            }
+        }
+    }
+
+    #[derive(PartialEq, Eq, Debug, Clone)]
+    pub struct Message {
+        pub title: String,
+        pub body: Option<String>,
+    }
+}
+
+#[derive(PartialEq, Eq, Debug, Clone)]
+pub struct Details {
+    pub commits_by_category: BTreeMap<details::Category, Vec<details::Message>>,
+}
+
+impl Details {
+    pub const TITLE: &'static str = "Commit Details";
+    pub const PREFIX: &'static str = "<details><summary>view details</summary>";
+    pub const END: &'static str = "</details>";
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
