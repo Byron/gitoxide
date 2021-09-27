@@ -80,7 +80,7 @@ impl section::Segment {
                 for (category, messages) in commits_by_category.iter() {
                     writeln!(out, " * **{}**", category)?;
                     for message in messages {
-                        writeln!(out, "    - {} ({})", message.title, message.id)?;
+                        writeln!(out, "    - {} ({})", message.title, message.id.short_hex(7))?;
                     }
                 }
                 writeln!(out, "{}\n", section::Details::END)?;
