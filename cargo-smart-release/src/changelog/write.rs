@@ -74,7 +74,7 @@ impl section::Segment {
             section::Segment::Details(section::Data::Generated(section::Details { commits_by_category }))
                 if !commits_by_category.is_empty() =>
             {
-                // writeln!(out, "{} {}\n", heading(section_level), section::Details::TITLE)?;
+                writeln!(out, "{} {}\n", heading(section_level), section::Details::TITLE)?;
                 writeln!(out, "{}", Section::READONLY_TAG)?;
                 writeln!(out, "{}", section::Details::PREFIX)?;
                 for (category, messages) in commits_by_category.iter() {
