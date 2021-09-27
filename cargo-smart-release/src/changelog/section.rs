@@ -27,6 +27,7 @@ impl<T: PartialEq<T>> PartialEq<Data<T>> for Data<T> {
 }
 
 pub mod details {
+    use git_repository as git;
     use std::fmt;
 
     #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Clone)]
@@ -47,14 +48,14 @@ pub mod details {
     #[derive(PartialEq, Eq, Debug, Clone)]
     pub struct Message {
         pub title: String,
-        pub body: Option<String>,
+        pub id: git::hash::ObjectId,
     }
 
     impl From<&crate::commit::history::Item> for Message {
         fn from(v: &crate::commit::history::Item) -> Self {
             Message {
                 title: v.message.title.to_owned(),
-                body: v.message.body.as_ref().map(|s| s.to_owned()),
+                id: v.id,
             }
         }
     }
