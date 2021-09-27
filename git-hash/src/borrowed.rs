@@ -24,12 +24,12 @@ pub struct oid {
 
 /// A utility able to format itself with the given amount of characters in hex
 #[derive(PartialEq, Eq, Hash, Ord, PartialOrd)]
-pub struct ShortHex<'a> {
+pub struct HexDisplay<'a> {
     inner: &'a oid,
     hex_len: usize,
 }
 
-impl<'a> fmt::Display for ShortHex<'a> {
+impl<'a> fmt::Display for HexDisplay<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.inner.kind() {
             crate::Kind::Sha1 => {
@@ -111,9 +111,12 @@ impl oid {
         &self.bytes
     }
 
-    /// Return a type which can draw itself in hexadecimal form with the `hex_len` amount of characters.
-    pub fn short_hex(&self, hex_len: usize) -> ShortHex<'_> {
-        ShortHex { inner: self, hex_len }
+    /// Return a type which can draw itself in hexadecimal form with the `len` amount of characters.
+    pub fn to_hex(&self, len: usize) -> HexDisplay<'_> {
+        HexDisplay {
+            inner: self,
+            hex_len: len,
+        }
     }
 }
 
