@@ -114,10 +114,10 @@ pub mod history {
         let mut items = Vec::new();
         for commit_id in reference.id().ancestors()?.all() {
             let commit_id = commit_id?;
-            let (message, tree_id) = {
+            let (message, tree_id, commit_time) = {
                 let object = commit_id.object()?;
                 let commit = object.to_commit();
-                (commit.message.to_vec(), commit.tree())
+                (commit.message.to_vec(), commit.tree(), commit.committer.time)
             };
 
             let message = match message.to_str() {
@@ -132,6 +132,7 @@ pub mod history {
             };
             items.push(commit::history::Item {
                 id: commit_id.detach(),
+                commit_time,
                 message: commit::Message::from(message),
                 tree_data: repo.find_object(tree_id)?.data.to_owned(),
             });

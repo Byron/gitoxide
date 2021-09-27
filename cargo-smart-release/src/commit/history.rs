@@ -12,5 +12,6 @@ pub struct Segment<'a> {
 pub struct Item {
     pub id: git::hash::ObjectId,
     pub message: Message,
+    pub commit_time: git::actor::Time,
     pub tree_data: Vec<u8>,
 }
