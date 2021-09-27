@@ -6,12 +6,27 @@ mod parse;
 mod write;
 
 pub mod section {
-    #[derive(Eq, Debug, Clone)]
+    #[derive(Eq, PartialEq, Debug, Clone)]
     pub enum Segment {
         /// A portion of a Section that we couldn't make sense of, but which should be kept as is nonetheless.
         User { text: String },
         /// A thanks clippy headline with information, either parsed as `None` or generated as `Some(data)`
-        Clippy(Option<ThanksClippy>),
+        Clippy(Data<ThanksClippy>),
+    }
+
+    #[derive(Eq, Debug, Clone)]
+    pub enum Data<T> {
+        Parsed,
+        Generated(T),
+    }
+
+    impl<T: PartialEq<T>> PartialEq<Data<T>> for Data<T> {
+        fn eq(&self, other: &Data<T>) -> bool {
+            match (self, other) {
+                (Data::Generated(lhs), Data::Generated(rhs)) => lhs == rhs,
+                (_, _) => true,
+            }
+        }
     }
 
     #[derive(PartialEq, Eq, Debug, Clone)]
@@ -21,17 +36,6 @@ pub mod section {
 
     impl ThanksClippy {
         pub const TITLE: &'static str = "Thanks Clippy…";
-    }
-
-    impl PartialEq<Segment> for Segment {
-        fn eq(&self, other: &Segment) -> bool {
-            match (self, other) {
-                (Segment::User { text: lhs }, Segment::User { text: rhs }) => lhs == rhs,
-                (Segment::Clippy(Some(lhs)), Segment::Clippy(Some(rhs))) => lhs == rhs,
-                (Segment::Clippy(_), Segment::Clippy(_)) => true,
-                _ => false,
-            }
-        }
     }
 }
 

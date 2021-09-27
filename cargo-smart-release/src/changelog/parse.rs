@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, ops::Range, str::FromStr};
+use std::{convert::TryFrom, iter::Peekable, ops::Range, str::FromStr};
 
 use git_repository::bstr::ByteSlice;
 use nom::{
@@ -16,7 +16,6 @@ use crate::{
     changelog::{section, Section},
     ChangeLog,
 };
-use std::iter::Peekable;
 
 impl ChangeLog {
     /// Obtain as much information as possible from `input` and keep everything we didn't understand in respective sections.
@@ -119,7 +118,7 @@ impl Section {
                     match state {
                         State::ParseClippy => {
                             skip_to_next_section_title(&mut events, indent);
-                            segments.push(section::Segment::Clippy(None));
+                            segments.push(section::Segment::Clippy(section::Data::Parsed));
                         }
                         State::ConsiderUserAuthored => {}
                     }

@@ -1,8 +1,11 @@
-use cargo_smart_release::{changelog, changelog::Section, ChangeLog};
+use cargo_smart_release::{
+    changelog,
+    changelog::{section, Section},
+    ChangeLog,
+};
 use git_repository::bstr::ByteSlice;
 
 use crate::Result;
-use cargo_smart_release::changelog::section;
 
 #[test]
 fn all_section_types_round_trips_lossy() -> Result {
@@ -27,7 +30,7 @@ fn all_section_types_round_trips_lossy() -> Result {
                     section::Segment::User {
                         text: "* hello world\n\tthis\n".into(),
                     },
-                    section::Segment::Clippy(Some(section::ThanksClippy { count: 42 })),
+                    section::Segment::Clippy(section::Data::Generated(section::ThanksClippy { count: 42 })),
                 ],
                 unknown: String::new(),
             },
