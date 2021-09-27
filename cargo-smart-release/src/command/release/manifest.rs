@@ -36,16 +36,16 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         let previous = locks_by_manifest_path.insert(&publishee.manifest_path, lock);
         assert!(previous.is_none(), "publishees are unique so insertion always happens");
         if let Some(history) = ctx.history.as_ref() {
-            let (mut log, mut changed, mut lock) =
+            let (mut log, changed_relevant_content, mut lock) =
                 ChangeLog::for_package_with_write_lock(publishee, history, &ctx.base, opts.dry_run)?;
-            let release_in_log = log.most_recent_release_mut();
+            let recent_release_in_log = log.most_recent_release_mut();
             let new_version: semver::Version = new_version.parse()?;
-            match release_in_log {
+            match recent_release_in_log {
                 changelog::Section::Release {
                     name: name @ changelog::Version::Unreleased,
                     ..
                 } => {
-                    if !changed {
+                    if !changed_relevant_content {
                         log::info!(
                             "{}: {} only change headline from 'Unreleased' to '{}'",
                             publishee.name,
@@ -54,7 +54,6 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                         );
                     }
                     *name = changelog::Version::Semantic(new_version);
-                    changed = true;
                 }
                 changelog::Section::Release {
                     name: changelog::Version::Semantic(recent_version),
@@ -66,15 +65,12 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 }
                 changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
             };
-            if changed {
-                if !release_in_log.is_essential() {
-                    empty_changelogs_for_current_version.push(pending_changelog_changes.len());
-                }
-                lock.with_mut(|file| log.write_to(file))?;
-                pending_changelog_changes.push((publishee, lock));
-            } else {
-                log::info!("Won't rewrite changelog for '{}' as it didn't change", publishee.name);
+
+            if !recent_release_in_log.is_essential() {
+                empty_changelogs_for_current_version.push(pending_changelog_changes.len());
             }
+            lock.with_mut(|file| log.write_to(file))?;
+            pending_changelog_changes.push((publishee, changed_relevant_content, lock));
         }
     }
 
@@ -155,7 +151,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             locks_by_manifest_path.len(),
             match (
                 pending_changelog_changes.len(),
-                pending_changelog_changes.iter().fold(0usize, |mut acc, (_, lock)| {
+                pending_changelog_changes.iter().fold(0usize, |mut acc, (_, _, lock)| {
                     acc += if !lock.resource_path().is_file() { 1 } else { 0 };
                     acc
                 })
@@ -178,18 +174,18 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     if !pending_changelog_changes.is_empty() && preview {
         log::info!(
             "About to preview {} changelog(s), use --no-changelog-preview to disable or Ctrl-C to abort, or the 'changelog' subcommand to write it out for adjustments.",
-            pending_changelog_changes.len()
+            pending_changelog_changes.iter().filter(|(_, relevant_changes, _)| *relevant_changes).count()
         );
 
         let bat = crate::bat::Support::new();
-        for (_package, lock) in &pending_changelog_changes {
+        for (_, _, lock) in pending_changelog_changes.iter().filter(|(_, c, _)| *c) {
             bat.display_to_tty(lock.lock_path())?;
         }
     }
 
     let bail_message_after_commit = if !dry_run {
         let mut committed_changelogs = None;
-        for (idx, (package, lock)) in pending_changelog_changes.into_iter().enumerate() {
+        for (idx, (package, _, lock)) in pending_changelog_changes.into_iter().enumerate() {
             if empty_changelogs_for_current_version.is_empty() || empty_changelogs_for_current_version.contains(&idx) {
                 lock.commit()?;
                 if !empty_changelogs_for_current_version.is_empty() {
@@ -230,13 +226,18 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             let names_of_crates_that_would_need_review = empty_changelogs_for_current_version
                 .iter()
                 .filter_map(|idx| {
-                    pending_changelog_changes.iter().enumerate().find_map(|(pidx, (p, _))| {
-                        if *idx == pidx {
-                            Some(p.name.as_str())
-                        } else {
-                            None
-                        }
-                    })
+                    pending_changelog_changes
+                        .iter()
+                        .enumerate()
+                        .find_map(
+                            |(pidx, (p, _, _))| {
+                                if *idx == pidx {
+                                    Some(p.name.as_str())
+                                } else {
+                                    None
+                                }
+                            },
+                        )
                 })
                 .collect::<Vec<_>>()
                 .join(", ");
