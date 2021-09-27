@@ -146,32 +146,6 @@ mod from_history {
             let mut segments = Vec::new();
             let history = &segment.history;
             {
-                let mut categories = BTreeMap::default();
-                for &item in history {
-                    let mut issue_associaions = 0;
-                    for possibly_issue in &item.message.additions {
-                        match possibly_issue {
-                            commit::message::Addition::IssueId(issue) => {
-                                categories
-                                    .entry(section::details::Category::Issue(issue.to_owned()))
-                                    .or_insert_with(Vec::new)
-                                    .push(item.into());
-                                issue_associaions += 1;
-                            }
-                        }
-                    }
-                    if issue_associaions == 0 {
-                        categories
-                            .entry(section::details::Category::Uncategorized)
-                            .or_insert_with(Vec::new)
-                            .push(item.into());
-                    }
-                }
-                segments.push(section::Segment::Details(section::Data::Generated(section::Details {
-                    commits_by_category: categories,
-                })));
-            }
-            {
                 let duration = history
                     .last()
                     .map(|last| date_time - time_to_offset_date_time(last.commit_time));
@@ -206,6 +180,32 @@ mod from_history {
                         section::ThanksClippy { count },
                     )))
                 }
+            }
+            {
+                let mut categories = BTreeMap::default();
+                for &item in history {
+                    let mut issue_associaions = 0;
+                    for possibly_issue in &item.message.additions {
+                        match possibly_issue {
+                            commit::message::Addition::IssueId(issue) => {
+                                categories
+                                    .entry(section::details::Category::Issue(issue.to_owned()))
+                                    .or_insert_with(Vec::new)
+                                    .push(item.into());
+                                issue_associaions += 1;
+                            }
+                        }
+                    }
+                    if issue_associaions == 0 {
+                        categories
+                            .entry(section::details::Category::Uncategorized)
+                            .or_insert_with(Vec::new)
+                            .push(item.into());
+                    }
+                }
+                segments.push(section::Segment::Details(section::Data::Generated(section::Details {
+                    commits_by_category: categories,
+                })));
             }
             Section::Release {
                 name: version,
