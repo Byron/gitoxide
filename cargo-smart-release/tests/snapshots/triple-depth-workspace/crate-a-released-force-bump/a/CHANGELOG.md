@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 1 commit contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - initial (81c6160)
+    - initial (f666346)
 </details>
 
 ## v0.8.0

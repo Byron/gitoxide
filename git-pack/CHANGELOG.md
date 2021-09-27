@@ -5,23 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### Unreleased
+## Unreleased
 
-#### Thanks Clippy
+### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 17 times to make code idiomatic. 
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 242 commits contributed to the release over the course of 13 calendar days.
+ - 243 commits contributed to the release over the course of 13 calendar days.
  - 54 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 8 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: an algorithm to collect dependencies by 'growing' (73794a4)
     - smart-release: foundation for bumping versions (d1145d1)
  * **#198**
+    - Generate changelogs with details (fd0f3bd)
     - Update all changelogs with details (0732699)
     - Update changelogs (b30db3b)
     - introduce notion of essential sections in a changelog… (be891e2)
@@ -280,13 +281,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [smart-release #195] assure dependent packages are not packages to be published (6792ebc)
 </details>
 
-### v0.11.0 (2021-09-08)
+## v0.11.0 (2021-09-08)
 
 - manual bump for safety as its dependencies have breaking changes
 
-
-
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
@@ -294,7 +293,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -307,16 +306,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [repository #164] generic write_object() (c569f83)
 </details>
 
-### v0.10.0 (2021-09-07)
+## v0.10.0 (2021-09-07)
 
 - **renames**
    - `data::Object::into_commit_iter()` -> `data::Object::try_into_commit_iter()`
    - `data::Object::into_tree_iter()` -> `data::Object::try_into_tree_iter()`
    - `data::Object::into_tag_iter()` -> `data::Object::try_into_tag_iter()`
 
-
-
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
@@ -324,7 +321,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -419,7 +416,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [ref #190] add forward log iter and localize iter types… (c3e240d)
 </details>
 
-### v0.9.0 (2021-08-27)
+## v0.9.0 (2021-08-27)
 
 - **renames / moves / visibility**
    - `find::Find`  and `find::FindExt` only in `Find` and `FindExt` (not in `find` anymore)
@@ -436,13 +433,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * **new methods**
    - `Find::find_tag_iter()`
-#### Thanks Clippy
+ 
+### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
@@ -450,7 +448,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 0 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -644,9 +642,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [pack] A non-iterator version of parallel object counting… (04fe855)
 </details>
 
-### v0.8.2 (2021-08-17)
+## v0.8.2 (2021-08-17)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
@@ -654,7 +652,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -665,9 +663,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Apply nightly rustfmt rules. (5e0edba)
 </details>
 
-### v0.8.1 (2021-08-13)
+## v0.8.1 (2021-08-13)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
@@ -675,7 +673,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -686,9 +684,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - remove dev-dependency cycles by removing their version (c40faca)
 </details>
 
-### v0.8.0 (2021-08-12)
+## v0.8.0 (2021-08-12)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
@@ -696,7 +694,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -709,9 +707,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - (cargo-release) version 0.18.0 (b327590)
 </details>
 
-### v0.6.0 (2021-08-11)
+## v0.6.0 (2021-08-11)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
@@ -719,7 +717,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -732,9 +730,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - (cargo-release) version 0.17.0 (c52a491)
 </details>
 
-### v0.5.0 (2021-08-11)
+## v0.5.0 (2021-08-11)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
@@ -742,7 +740,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -760,9 +758,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Revert "break more dev-depedency cycles up to git-odb" (22337ce)
 </details>
 
-### v0.3.1 (2021-08-10)
+## v0.3.1 (2021-08-10)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
@@ -770,7 +768,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -782,15 +780,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - break more dev-depedency cycles up to git-odb (7ee278b)
 </details>
 
-### v0.3.0 (2021-08-10)
+## v0.3.0 (2021-08-10)
 
-#### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 7 times to make code idiomatic. 
-
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
@@ -798,7 +790,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 unique issues were worked on
 
-#### Commit Details
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 7 times to make code idiomatic. 
+
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -949,9 +947,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [git-ref] the first failing test (7e802a0)
 </details>
 
-### v0.2.0 (2021-05-25)
+## v0.2.0 (2021-05-25)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
@@ -959,7 +957,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -981,9 +979,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [git-pack] move hash-writer to git-features as it's quite general purpose (80e5640)
 </details>
 
-### v0.1.0 (2021-05-24)
+## v0.1.0 (2021-05-24)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
@@ -991,7 +989,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 

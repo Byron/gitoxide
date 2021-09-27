@@ -5,23 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### Unreleased
+## Unreleased
 
-#### Thanks Clippy
+### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 16 times to make code idiomatic. 
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 215 commits contributed to the release over the course of 13 calendar days.
+ - 216 commits contributed to the release over the course of 13 calendar days.
  - 48 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 8 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: an algorithm to collect dependencies by 'growing' (73794a4)
     - smart-release: foundation for bumping versions (d1145d1)
  * **#198**
+    - Generate changelogs with details (fd0f3bd)
     - Update all changelogs with details (0732699)
     - Update changelogs (b30db3b)
     - introduce notion of essential sections in a changelog… (be891e2)

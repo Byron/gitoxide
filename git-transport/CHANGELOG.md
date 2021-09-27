@@ -5,23 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### Unreleased
+## Unreleased
 
-#### Thanks Clippy
+### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 16 times to make code idiomatic. 
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 209 commits contributed to the release over the course of 13 calendar days.
+ - 210 commits contributed to the release over the course of 13 calendar days.
  - 47 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 8 unique issues were worked on
+ - 9 unique issues were worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: an algorithm to collect dependencies by 'growing' (73794a4)
     - smart-release: foundation for bumping versions (d1145d1)
  * **#198**
+    - Generate changelogs with details (fd0f3bd)
     - Update all changelogs with details (0732699)
     - Update changelogs (b30db3b)
     - introduce notion of essential sections in a changelog… (be891e2)
@@ -247,21 +248,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [smart-release #195] assure dependent packages are not packages to be published (6792ebc)
 </details>
 
-### v0.11.1 (2021-08-29)
+## v0.11.1 (2021-08-29)
 
 - instruct docs.rs which features to use for more useful documentation
 
-
-
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 38 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -308,17 +307,146 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [ref #190] more Target conversions… (1fe1b42)
 </details>
 
-### v0.10.1 (2021-08-17)
+## v0.11.0 (2021-08-27)
 
-#### Commit Statistics
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 104 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release git-transport v0.11.0 (cac343c)
+    - [repository #190] refactor (7a111b1)
+    - Release git-packetline v0.10.0 (0899338)
+    - [repository #190] shortcut to create references (28afd8e)
+    - Release git-odb v0.21.0 (d4a6341)
+    - [ref #190] add forward log iter and localize iter types… (c3e240d)
+    - Release git-pack v0.9.0 (355d6c4)
+    - [repository #190] refactor (e751688)
+    - Release git-traverse v0.8.0 (40c8506)
+    - [ref #190] refactor (49fe1dc)
+    - Release git-features v0.16.3 (342475f)
+    - thanks clippy (023dedc)
+    - Release git-diff v0.9.0 (021318f)
+    - [ref #190] reverse reflog ergonomics (2de86f9)
+    - Release git-object v0.13.0 (bfaaf52)
+    - [repository #190] ref log for HEAD specifically (946bbf1)
+    - Release git-actor v0.5.0 (f74e89b)
+    - [ref #190] check for zero sized buffers in reverse log iterators… (998c7c6)
+    - [smart-release #174] prepare changelog (0d9a2b8)
+    - [repository #190] reflog tests (641edde)
+    - Bump git-repository v0.8.0 (cdb45ff)
+    - [ref #190] First working sketch of reverse log iter access (4a36ded)
+    - [repository #174] adjust various changelogs (081faf5)
+    - [ref #190] move remaining file store functions to extension trait (60fc215)
+    - Bump git-protocol v0.10.0 (82d5a0b)
+    - [ref #190] Move file-log-specific functionality into own extension trait. (0b635e9)
+    - Bump git-transport v0.11.0 (1149f1b)
+    - thanks clippy (376c045)
+    - [transport #174] prepare for release (f8bc517)
+    - [repository #190] refactor (15d4ac8)
+    - [odb #180] fix docs (bd50752)
+    - [repository #190] a major step forward with `head()` access (43ac4f5)
+    - [odb #180] refactor (eff21da)
+    - [ref #190] cache peeled objects properly (2cb511e)
+    - Bump git-odb v0.21.0 (7b9854f)
+    - [ref #190] fix docs (3e64ec1)
+    - [odb #180] add changelog (acf1193)
+    - Bump git-ref v0.7.0 (ac4413c)
+    - [pack #179] refactor (76e66d1)
+    - [repository #190] experiment with 'HEAD' API… (c55ce4d)
+    - [pack #179] move Tree traversal cache private (34e45d7)
+    - [ref #190] fix remaining tests (df21f25)
+    - [pack #179] refactor (5a3677d)
+    - thanks clippy (14dff63)
+    - [pack #179] refactor bundle (420dca2)
+    - [ref #190] Use Raw Reference everywhere for great simplification… (7aeea9c)
+    - [pack #179] fix docs (7ad7a44)
+    - [ref #190] raw reference peeling (9473a71)
+    - [pack #179] refactor (ab6554b)
+    - [repository #190] refactor (d6bef3a)
+    - [pack #179] refactor (620d8a5)
+    - [ref #190] introduce Raw reference type that simplifies everything… (8634341)
+    - [pack #179] add changelog (2102569)
+    - [ref #190] more tests (980e16a)
+    - [packetline #178] fix compile warnings (c8d2e72)
+    - [ref #190] deletions also use PreviousValue now (74f85b1)
+    - Bump git-packetline v0.10.0 (b09f391)
+    - [ref #190] refactor (0e65559)
+    - [packetline #178] fix docs (878d8e8)
+    - [ref #190] be explicit about what the previous reflog oid is for… (c04c8b9)
+    - [packetline #178] refactor (0c7c599)
+    - [ref #190] don't claim there was a previous oid unnecessarily… (68f7fc2)
+    - [packetline #178] fix docs (b3fd65d)
+    - [ref #190] refactor (07126d6)
+    - [packetline #178] refactor (23438fd)
+    - [ref #190] Allow for explicit expected previous values (1a4786f)
+    - [packetline #178] rename PacketLine to PacketLineRef… (d4c16a9)
+    - [ref #190] prepare massive refactoring to get additional constraint (9741987)
+    - [packetline #178] add changelog in preparation for breaking changes (ffd96f9)
+    - [repository #190] show that unconditional creation of references doesn't is lacking… (06b9270)
+    - Bump git-traverse v0.8.0 (54f3541)
+    - allow incremental builds… (e4abcf3)
+    - Bump git-diff v0.9.0 (2e2e798)
+    - [repository #190] another commit() test… (4ec631c)
+    - [smart-release] Adjust commit message depending on whether we are skipping the publish… (c190c6b)
+    - [repository #190] produce nice reflog messages (e7a8b62)
+    - [object #177] cleanup CommitRefIter imports and git_object::Error (058f68a)
+    - [repository #190] commit::summary() (43f7568)
+    - [object #177] dissolve 'immutable' module (70e11c2)
+    - [repository #190] thanks clippy (0763ac2)
+    - [object #177] fix docs (2fd23ed)
+    - [repository #190] first version of 'commit(…)' without reflog message handling (bfcf8f1)
+    - [object #177] resolve 'mutable' module (b201b32)
+    - [refs #190] refactor; handle value-checks in dereffed symlinks correctly (63bedc7)
+    - [object #177] refactor (216dd0f)
+    - [object #190] consistent method naming (c5de433)
+    - [object #177] refactor (472e13b)
+    - [features #190] be more explicit about why sha1-asm is disabled (507d710)
+    - [object #177] Commit::write_to migration (60b9365)
+    - [ref #190] refactor (3f36a01)
+    - [object #177]  commit::RefIter -> CommitRefIter (e603306)
+    - [object #190] More conversion methods for Object (78bacf9)
+    - [object #177] migrate immutable::commit into crate::commit (45d3934)
+    - [repository #190] put git-lock into ST1… (26a6637)
+    - [object #177] refactor tag write_to (7f19559)
+    - [repository #190] refactor (1e029b4)
+    - [object #177] tag::RefIter -> TagRefIter (28587c6)
+    - [repository #190] A way to write objects and the empty tree specifically (7c559d6)
+    - [object #177] into_mutable() -> into_owned() (7e701ce)
+    - [various #190] rename 'local-offset' to 'local-time-support' (3a7d379)
+    - [object #177] fix docs (25d8e7b)
+    - [repository #190] Make local-offset available on demand only… (1927be7)
+    - [object #177] move mutable objects to crate::* (c551c02)
+    - [actor #190] methods to get an actor signature at the current time (6d0bedd)
+</details>
+
+## v0.10.1 (2021-08-17)
+
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -329,17 +457,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Apply nightly rustfmt rules. (5e0edba)
 </details>
 
-### v0.10.0 (2021-08-13)
+## v0.10.0 (2021-08-13)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 12 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -360,23 +488,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [transport] A much better name for 'is_stateful()` (f15f1e8)
 </details>
 
-### v0.9.0 (2021-08-10)
+## v0.9.0 (2021-08-10)
 
-#### Thanks Clippy
+### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 147 commits contributed to the release over the course of 90 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -532,17 +660,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - refactor git-transport test in preparation for async testing (42d5bf7)
 </details>
 
-### v0.8.0 (2021-05-09)
+## v0.8.0 (2021-05-09)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 7 commits contributed to the release over the course of 21 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -558,17 +686,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - (cargo-release) version 0.13.0 (ac2eddb)
 </details>
 
-### v0.7.0 (2021-04-08)
+## v0.7.0 (2021-04-08)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -579,23 +707,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - (cargo-release) version 0.12.0 (3b71e7e)
 </details>
 
-### v0.6.0 (2021-03-26)
+## v0.6.0 (2021-03-26)
 
-#### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 21 commits contributed to the release over the course of 70 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -625,23 +753,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - support for radicle urls (2c5b955)
 </details>
 
-### v0.5.1 (2021-01-05)
+## v0.5.1 (2021-01-05)
 
-#### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 7 commits contributed to the release over the course of 7 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -657,17 +785,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - more git-transport docs (6cd69b9)
 </details>
 
-### v0.5.0 (2020-12-16)
+## v0.5.0 (2020-12-16)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -678,17 +806,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - use git-hash in git-features (5b307e0)
 </details>
 
-### v0.4.0 (2020-12-15)
+## v0.4.0 (2020-12-15)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 3 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -700,23 +828,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - (cargo-release) version 0.9.0 (a89fdb9)
 </details>
 
-### v0.3.0 (2020-12-15)
+## v0.3.0 (2020-12-15)
 
-#### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
-
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 49 commits contributed to the release over the course of 84 calendar days.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -774,23 +902,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Enforce using the correct version of clap (fd6457f)
 </details>
 
-### v0.2.1 (2020-09-14)
+## v0.2.1 (2020-09-14)
 
-#### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 14 times to make code idiomatic. 
-
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 217 commits contributed to the release over the course of 31 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 14 times to make code idiomatic. 
+
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -1016,23 +1144,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Allow dual-licensing with Apache 2.0 (ea353eb)
 </details>
 
-### v0.2.0 (2020-09-12)
+## v0.2.0 (2020-09-12)
 
-#### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 55 commits contributed to the release.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -1096,17 +1224,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [clone] more correct handling of 'no-done'/done when sending wants/haves… (50f4516)
 </details>
 
-### v0.0.0 (2020-07-12)
+## v0.0.0 (2020-07-12)
 
-#### Commit Statistics
+### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 6 commits contributed to the release over the course of 17 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
-#### Commit Details
+### Commit Details
 
 <csr-read-only-do-not-edit/>
 
@@ -1119,135 +1247,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - \#[forbid(unsafe)] for all crates (afda803)
     - cleanup - don't build and run tests while there is nothing to test (4a153da)
     - prepare git-transport just so that we don't forget to take the name (2c3ad7d)
-</details>
-
-### v0.11.0 (2021-08-27)
-
-- upgrade to the latest git-packetline release
-#### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
-
-#### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 104 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
-
-#### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - Release git-transport v0.11.0 (cac343c)
-    - [repository #190] refactor (7a111b1)
-    - Release git-packetline v0.10.0 (0899338)
-    - [repository #190] shortcut to create references (28afd8e)
-    - Release git-odb v0.21.0 (d4a6341)
-    - [ref #190] add forward log iter and localize iter types… (c3e240d)
-    - Release git-pack v0.9.0 (355d6c4)
-    - [repository #190] refactor (e751688)
-    - Release git-traverse v0.8.0 (40c8506)
-    - [ref #190] refactor (49fe1dc)
-    - Release git-features v0.16.3 (342475f)
-    - thanks clippy (023dedc)
-    - Release git-diff v0.9.0 (021318f)
-    - [ref #190] reverse reflog ergonomics (2de86f9)
-    - Release git-object v0.13.0 (bfaaf52)
-    - [repository #190] ref log for HEAD specifically (946bbf1)
-    - Release git-actor v0.5.0 (f74e89b)
-    - [ref #190] check for zero sized buffers in reverse log iterators… (998c7c6)
-    - [smart-release #174] prepare changelog (0d9a2b8)
-    - [repository #190] reflog tests (641edde)
-    - Bump git-repository v0.8.0 (cdb45ff)
-    - [ref #190] First working sketch of reverse log iter access (4a36ded)
-    - [repository #174] adjust various changelogs (081faf5)
-    - [ref #190] move remaining file store functions to extension trait (60fc215)
-    - Bump git-protocol v0.10.0 (82d5a0b)
-    - [ref #190] Move file-log-specific functionality into own extension trait. (0b635e9)
-    - Bump git-transport v0.11.0 (1149f1b)
-    - thanks clippy (376c045)
-    - [transport #174] prepare for release (f8bc517)
-    - [repository #190] refactor (15d4ac8)
-    - [odb #180] fix docs (bd50752)
-    - [repository #190] a major step forward with `head()` access (43ac4f5)
-    - [odb #180] refactor (eff21da)
-    - [ref #190] cache peeled objects properly (2cb511e)
-    - Bump git-odb v0.21.0 (7b9854f)
-    - [ref #190] fix docs (3e64ec1)
-    - [odb #180] add changelog (acf1193)
-    - Bump git-ref v0.7.0 (ac4413c)
-    - [pack #179] refactor (76e66d1)
-    - [repository #190] experiment with 'HEAD' API… (c55ce4d)
-    - [pack #179] move Tree traversal cache private (34e45d7)
-    - [ref #190] fix remaining tests (df21f25)
-    - [pack #179] refactor (5a3677d)
-    - thanks clippy (14dff63)
-    - [pack #179] refactor bundle (420dca2)
-    - [ref #190] Use Raw Reference everywhere for great simplification… (7aeea9c)
-    - [pack #179] fix docs (7ad7a44)
-    - [ref #190] raw reference peeling (9473a71)
-    - [pack #179] refactor (ab6554b)
-    - [repository #190] refactor (d6bef3a)
-    - [pack #179] refactor (620d8a5)
-    - [ref #190] introduce Raw reference type that simplifies everything… (8634341)
-    - [pack #179] add changelog (2102569)
-    - [ref #190] more tests (980e16a)
-    - [packetline #178] fix compile warnings (c8d2e72)
-    - [ref #190] deletions also use PreviousValue now (74f85b1)
-    - Bump git-packetline v0.10.0 (b09f391)
-    - [ref #190] refactor (0e65559)
-    - [packetline #178] fix docs (878d8e8)
-    - [ref #190] be explicit about what the previous reflog oid is for… (c04c8b9)
-    - [packetline #178] refactor (0c7c599)
-    - [ref #190] don't claim there was a previous oid unnecessarily… (68f7fc2)
-    - [packetline #178] fix docs (b3fd65d)
-    - [ref #190] refactor (07126d6)
-    - [packetline #178] refactor (23438fd)
-    - [ref #190] Allow for explicit expected previous values (1a4786f)
-    - [packetline #178] rename PacketLine to PacketLineRef… (d4c16a9)
-    - [ref #190] prepare massive refactoring to get additional constraint (9741987)
-    - [packetline #178] add changelog in preparation for breaking changes (ffd96f9)
-    - [repository #190] show that unconditional creation of references doesn't is lacking… (06b9270)
-    - Bump git-traverse v0.8.0 (54f3541)
-    - allow incremental builds… (e4abcf3)
-    - Bump git-diff v0.9.0 (2e2e798)
-    - [repository #190] another commit() test… (4ec631c)
-    - [smart-release] Adjust commit message depending on whether we are skipping the publish… (c190c6b)
-    - [repository #190] produce nice reflog messages (e7a8b62)
-    - [object #177] cleanup CommitRefIter imports and git_object::Error (058f68a)
-    - [repository #190] commit::summary() (43f7568)
-    - [object #177] dissolve 'immutable' module (70e11c2)
-    - [repository #190] thanks clippy (0763ac2)
-    - [object #177] fix docs (2fd23ed)
-    - [repository #190] first version of 'commit(…)' without reflog message handling (bfcf8f1)
-    - [object #177] resolve 'mutable' module (b201b32)
-    - [refs #190] refactor; handle value-checks in dereffed symlinks correctly (63bedc7)
-    - [object #177] refactor (216dd0f)
-    - [object #190] consistent method naming (c5de433)
-    - [object #177] refactor (472e13b)
-    - [features #190] be more explicit about why sha1-asm is disabled (507d710)
-    - [object #177] Commit::write_to migration (60b9365)
-    - [ref #190] refactor (3f36a01)
-    - [object #177]  commit::RefIter -> CommitRefIter (e603306)
-    - [object #190] More conversion methods for Object (78bacf9)
-    - [object #177] migrate immutable::commit into crate::commit (45d3934)
-    - [repository #190] put git-lock into ST1… (26a6637)
-    - [object #177] refactor tag write_to (7f19559)
-    - [repository #190] refactor (1e029b4)
-    - [object #177] tag::RefIter -> TagRefIter (28587c6)
-    - [repository #190] A way to write objects and the empty tree specifically (7c559d6)
-    - [object #177] into_mutable() -> into_owned() (7e701ce)
-    - [various #190] rename 'local-offset' to 'local-time-support' (3a7d379)
-    - [object #177] fix docs (25d8e7b)
-    - [repository #190] Make local-offset available on demand only… (1927be7)
-    - [object #177] move mutable objects to crate::* (c551c02)
-    - [actor #190] methods to get an actor signature at the current time (6d0bedd)
 </details>
 
