@@ -9,7 +9,14 @@ pub mod section {
     #[derive(PartialEq, Eq, Debug, Clone)]
     pub enum Segment {
         /// A portion of a Section that we couldn't make sense of, but which should be kept as is nonetheless.
-        Unknown { text: String },
+        User { text: String },
+        /// A thanks clippy headline with information, either parsed as `None` or generated as `Some(data)`
+        Clippy(Option<ThanksClippy>),
+    }
+
+    #[derive(PartialEq, Eq, Debug, Clone)]
+    pub struct ThanksClippy {
+        pub count: usize,
     }
 }
 
@@ -60,7 +67,8 @@ impl Section {
         match self {
             Section::Verbatim { .. } => true,
             Section::Release { segments, .. } => segments.iter().any(|s| match s {
-                section::Segment::Unknown { .. } => true,
+                section::Segment::User { .. } => true,
+                section::Segment::Clippy(_) => false,
             }),
         }
     }

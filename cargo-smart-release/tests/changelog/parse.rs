@@ -35,7 +35,7 @@ fn all_unknown_in_section() {
                 date: None,
                 heading_level: 3,
                 thanks_clippy_count: 0,
-                segments: vec![section::Segment::Unknown {
+                segments: vec![section::Segment::User {
                     text: "- hello ~~this is not understood~~\n* this isn't either\n\n".into()
                 }],
                 unknown: String::new(),
@@ -45,7 +45,7 @@ fn all_unknown_in_section() {
                 date: None,
                 heading_level: 4,
                 thanks_clippy_count: 0,
-                segments: vec![section::Segment::Unknown {
+                segments: vec![section::Segment::User {
                     text: "Some free text in a paragraph\nthat won't parse.\n".into()
                 }],
                 unknown: String::new(),
@@ -65,7 +65,7 @@ fn unknown_link_and_headling() {
             date: None,
             heading_level: 4,
             thanks_clippy_count: 0,
-            segments: vec![section::Segment::Unknown {
+            segments: vec![section::Segment::User {
                 text: "##### Special\n\nHello [there][194] period.\n".into()
             }],
             unknown: String::new(),
