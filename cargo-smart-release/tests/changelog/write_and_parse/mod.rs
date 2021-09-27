@@ -25,7 +25,7 @@ fn all_section_types_round_trip() -> Result {
                 thanks_clippy_count: 42,
                 date: Some(time::OffsetDateTime::from_unix_timestamp(0)?),
                 name: changelog::Version::Semantic("1.0.2-beta.2".parse()?),
-                segments: vec![section::Segment::Unknown {
+                segments: vec![section::Segment::User {
                     text: "* hello world\n\tthis\n".into(),
                 }],
                 unknown: String::new(),

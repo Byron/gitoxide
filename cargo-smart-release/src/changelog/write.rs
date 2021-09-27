@@ -42,7 +42,7 @@ impl Section {
                 }?;
                 let section_level = *heading_level + 1;
                 for segment in segments {
-                    segment.write_to(&mut out)?;
+                    segment.write_to(section_level, &mut out)?;
                 }
                 if *thanks_clippy_count > 0 {
                     writeln!(out, "{} {}\n", heading(section_level), Section::THANKS_CLIPPY_TITLE)?;
@@ -78,9 +78,20 @@ impl ChangeLog {
 }
 
 impl section::Segment {
-    pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+    pub fn write_to(&self, section_level: usize, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
-            section::Segment::Unknown { text } => out.write_all(text.as_bytes()),
-        }
+            section::Segment::User { text } => out.write_all(text.as_bytes())?,
+            section::Segment::Clippy(Some(clippy)) if clippy.count > 0 => {
+                writeln!(out, "{} {}\n", heading(section_level), Section::THANKS_CLIPPY_TITLE)?;
+                writeln!(
+                    out,
+                    "Clippy is a linter to help keeping code idiomatic. It was helpful {} {} in this release.\n",
+                    clippy.count,
+                    if clippy.count > 1 { "times" } else { "time" }
+                )?;
+            }
+            section::Segment::Clippy(_) => {}
+        };
+        Ok(())
     }
 }
