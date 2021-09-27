@@ -38,14 +38,11 @@ world
 <details><summary>view details</summary>
 
  * **#42**
-    - Just the title
-    - another title
+    - Just the title (e69de29bb2d1d6434b8b29ae775ad8c2e48c5392)
+    - another title (e69de29bb2d1d6434b8b29ae775ad8c2e48c5391)
  * **Uncategorized**
-    - Just the title
-    - title and body
-body with
-multiple newlines
-which probably should be put into a single line but we don't go there for now.
+    - Just the title (e69de29bb2d1d6434b8b29ae775ad8c2e48c5391)
+    - title and body (e69de29bb2d1d6434b8b29ae775ad8c2e48c5392)
 </details>
 
 

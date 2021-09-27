@@ -80,10 +80,7 @@ impl section::Segment {
                 for (category, messages) in commits_by_category.iter() {
                     writeln!(out, " * **{}**", category)?;
                     for message in messages {
-                        writeln!(out, "    - {}", message.title)?;
-                        if let Some(body) = &message.body {
-                            writeln!(out, "{}", body)?;
-                        }
+                        writeln!(out, "    - {} ({})", message.title, message.id)?;
                     }
                 }
                 writeln!(out, "{}\n", section::Details::END)?;
