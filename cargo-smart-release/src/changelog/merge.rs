@@ -82,6 +82,9 @@ fn merge_section(dest: &mut Section, src: Section) {
                     clippy @ section::Segment::Clippy(_) => {
                         replace_all_or_append(lhs_segments, |s| matches!(s, section::Segment::Clippy(_)), clippy)
                     }
+                    stats @ section::Segment::Statistics(_) => {
+                        replace_all_or_append(lhs_segments, |s| matches!(s, section::Segment::Statistics(_)), stats)
+                    }
                 }
             }
             *lhs_date = rhs_date;

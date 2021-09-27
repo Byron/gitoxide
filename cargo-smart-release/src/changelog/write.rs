@@ -71,6 +71,16 @@ impl section::Segment {
     pub fn write_to(&self, section_level: usize, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
             section::Segment::User { text } => out.write_all(text.as_bytes())?,
+            section::Segment::Statistics(section::Data::Generated(stats)) => {
+                writeln!(out, "{} {}\n", heading(section_level), section::CommitStatistics::TITLE)?;
+                writeln!(out, "{}", Section::READONLY_TAG)?;
+                writeln!(
+                    out,
+                    " - {} {} contributed to the release. \n",
+                    stats.count,
+                    if stats.count > 1 { "commits" } else { "commit" }
+                )?;
+            }
             section::Segment::Clippy(section::Data::Generated(clippy)) if clippy.count > 0 => {
                 writeln!(out, "{} {}\n", heading(section_level), section::ThanksClippy::TITLE)?;
                 writeln!(out, "{}", Section::READONLY_TAG)?;
@@ -82,6 +92,7 @@ impl section::Segment {
                 )?;
             }
             section::Segment::Clippy(_) => {}
+            section::Segment::Statistics(_) => {}
         };
         Ok(())
     }

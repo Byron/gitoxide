@@ -9,9 +9,12 @@ pub mod section {
     #[derive(Eq, PartialEq, Debug, Clone)]
     pub enum Segment {
         /// A portion of a Section that we couldn't make sense of, but which should be kept as is nonetheless.
-        User { text: String },
-        /// A thanks clippy headline with information, either parsed as `None` or generated as `Some(data)`
+        User {
+            text: String,
+        },
+        /// A thanks clippy headline with the amount of times clippy helped
         Clippy(Data<ThanksClippy>),
+        Statistics(Data<CommitStatistics>),
     }
 
     #[derive(Eq, Debug, Clone)]
@@ -27,6 +30,16 @@ pub mod section {
                 (_, _) => true,
             }
         }
+    }
+
+    #[derive(PartialEq, Eq, Debug, Clone)]
+    pub struct CommitStatistics {
+        /// Amount of commits that contributed to the release
+        pub count: usize,
+    }
+
+    impl CommitStatistics {
+        pub const TITLE: &'static str = "Commit Statistics";
     }
 
     #[derive(PartialEq, Eq, Debug, Clone)]
@@ -85,7 +98,7 @@ impl Section {
             Section::Verbatim { .. } => true,
             Section::Release { segments, .. } => segments.iter().any(|s| match s {
                 section::Segment::User { .. } => true,
-                section::Segment::Clippy(_) => false,
+                section::Segment::Clippy(_) | section::Segment::Statistics(_) => false,
             }),
         }
     }

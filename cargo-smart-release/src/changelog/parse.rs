@@ -81,7 +81,7 @@ impl Section {
             // dbg!(&e, &range);
             match e {
                 Event::Html(text) if text.starts_with(Section::UNKNOWN_TAG_START) => {
-                    consume_unknown_range(&mut segments, unknown_range.take(), &body);
+                    record_unknown_range(&mut segments, unknown_range.take(), &body);
                     for (event, _range) in events.by_ref().take_while(
                         |(e, _range)| !matches!(e, Event::Html(text) if text.starts_with(Section::UNKNOWN_TAG_END)),
                     ) {
@@ -89,14 +89,19 @@ impl Section {
                     }
                 }
                 Event::Start(Tag::Heading(indent)) => {
-                    consume_unknown_range(&mut segments, unknown_range.take(), &body);
+                    record_unknown_range(&mut segments, unknown_range.take(), &body);
                     enum State {
-                        ParseClippy,
+                        SkipGenerated,
                         ConsiderUserAuthored,
                     }
                     let state = match events.next() {
                         Some((Event::Text(title), _range)) if title.starts_with(section::ThanksClippy::TITLE) => {
-                            State::ParseClippy
+                            segments.push(section::Segment::Clippy(section::Data::Parsed));
+                            State::SkipGenerated
+                        }
+                        Some((Event::Text(title), _range)) if title.starts_with(section::CommitStatistics::TITLE) => {
+                            segments.push(section::Segment::Statistics(section::Data::Parsed));
+                            State::SkipGenerated
                         }
                         Some((_event, next_range)) => {
                             update_unknown_range(&mut unknown_range, range);
@@ -116,9 +121,8 @@ impl Section {
                         })
                         .count();
                     match state {
-                        State::ParseClippy => {
+                        State::SkipGenerated => {
                             skip_to_next_section_title(&mut events, indent);
-                            segments.push(section::Segment::Clippy(section::Data::Parsed));
                         }
                         State::ConsiderUserAuthored => {}
                     }
@@ -126,7 +130,7 @@ impl Section {
                 _unknown_event => update_unknown_range(&mut unknown_range, range),
             };
         }
-        consume_unknown_range(&mut segments, unknown_range.take(), &body);
+        record_unknown_range(&mut segments, unknown_range.take(), &body);
         Section::Release {
             name: match version {
                 Some(version) => changelog::Version::Semantic(version),
@@ -151,7 +155,7 @@ fn update_unknown_range(target: &mut Option<Range<usize>>, source: Range<usize>)
     }
 }
 
-fn consume_unknown_range(out: &mut Vec<section::Segment>, range: Option<Range<usize>>, markdown: &str) {
+fn record_unknown_range(out: &mut Vec<section::Segment>, range: Option<Range<usize>>, markdown: &str) {
     if let Some(range) = range {
         out.push(section::Segment::User {
             text: markdown[range].to_owned(),
