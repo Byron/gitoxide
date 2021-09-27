@@ -31,7 +31,11 @@ fn all_section_types_round_trips_lossy() -> Result {
                         text: "* hello world\n\tthis\n".into(),
                     },
                     section::Segment::Clippy(section::Data::Generated(section::ThanksClippy { count: 42 })),
-                    section::Segment::Statistics(section::Data::Generated(section::CommitStatistics { count: 100 })),
+                    section::Segment::Statistics(section::Data::Generated(section::CommitStatistics {
+                        count: 100,
+                        conventional_count: 20,
+                        unique_issues_count: 3,
+                    })),
                 ],
                 unknown: String::new(),
             },
