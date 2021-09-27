@@ -16,6 +16,7 @@ use crate::{
     changelog::{section, Section},
     ChangeLog,
 };
+use std::iter::Peekable;
 
 impl ChangeLog {
     /// Obtain as much information as possible from `input` and keep everything we didn't understand in respective sections.
@@ -69,7 +70,9 @@ impl ChangeLog {
 
 impl Section {
     fn from_headline_and_body(Headline { level, version, date }: Headline, body: String) -> Self {
-        let mut events = pulldown_cmark::Parser::new_ext(&body, pulldown_cmark::Options::all()).into_offset_iter();
+        let mut events = pulldown_cmark::Parser::new_ext(&body, pulldown_cmark::Options::all())
+            .into_offset_iter()
+            .peekable();
         let mut unknown = String::new();
         let mut segments = Vec::new();
 
@@ -86,7 +89,7 @@ impl Section {
                         track_unknown_event(event, &mut unknown);
                     }
                 }
-                Event::Start(Tag::Heading(_indent)) => {
+                Event::Start(Tag::Heading(indent)) => {
                     consume_unknown_range(&mut segments, unknown_range.take(), &body);
                     enum State {
                         ParseClippy,
@@ -115,8 +118,7 @@ impl Section {
                         .count();
                     match state {
                         State::ParseClippy => {
-                            collect_paragraph(events.by_ref(), &mut unknown)
-                                .expect("have to parse clippy as paragraph, TODO: more robust parsing");
+                            skip_to_next_section_title(&mut events, indent);
                             segments.push(section::Segment::Clippy(None));
                         }
                         State::ConsiderUserAuthored => {}
@@ -173,26 +175,16 @@ fn track_unknown_event(unknown_event: Event<'_>, unknown: &mut String) {
     }
 }
 
-// TODO: review - do we need this?
-fn collect_paragraph(events: &mut OffsetIter<'_>, unknown: &mut String) -> Option<String> {
-    match events.next() {
-        Some((Event::Start(Tag::Paragraph), _range)) => {
-            return events
-                .take_while(|(e, _range)| !matches!(e, Event::End(Tag::Paragraph)))
-                .filter_map(|(e, _range)| match e {
-                    Event::Text(text) => Some(text),
-                    _ => None,
-                })
-                .fold(String::new(), |mut acc, text| {
-                    acc.push_str(&text);
-                    acc
-                })
-                .into()
+fn skip_to_next_section_title(events: &mut Peekable<OffsetIter<'_>>, level: u32) {
+    while let Some((event, _range)) = events.peek() {
+        match event {
+            Event::Start(Tag::Heading(indent)) if *indent == level => break,
+            _ => {
+                events.next();
+                continue;
+            }
         }
-        Some((event, _range)) => track_unknown_event(event, unknown),
-        None => {}
-    };
-    None
+    }
 }
 
 struct Headline {
