@@ -1,5 +1,7 @@
 use std::{collections::VecDeque, iter::FromIterator};
 
+use crate::changelog::section;
+use crate::changelog::section::Segment;
 use crate::{
     changelog::{Section, Version},
     ChangeLog,
@@ -61,21 +63,40 @@ fn merge_section(dest: &mut Section, src: Section) {
         }
         (
             Section::Release {
-                thanks_clippy_count: lhs_thanks_clippy,
                 date: lhs_date,
+                segments: lhs_segments,
                 ..
             },
             Section::Release {
-                thanks_clippy_count: rhs_thanks_clippy,
                 date: rhs_date,
+                segments: rhs_segments,
                 unknown: rhs_unknown,
                 ..
             },
         ) => {
             assert!(rhs_unknown.is_empty(), "shouldn't ever generate 'unknown' portions");
-            *lhs_thanks_clippy = rhs_thanks_clippy;
+            for rhs_segment in rhs_segments {
+                match rhs_segment {
+                    section::Segment::User { .. } => unreachable!("BUG: User segments are never auto-generated"),
+                    section::Segment::Clippy(None) => unreachable!("BUG: Clippy is set if generated, or not present"),
+                    clippy @ section::Segment::Clippy(_) => {
+                        replace_all_or_append(lhs_segments, |s| matches!(s, section::Segment::Clippy(_)), clippy)
+                    }
+                }
+            }
             *lhs_date = rhs_date;
         }
+    }
+}
+
+fn replace_all_or_append(dest: &mut Vec<Segment>, mut filter: impl FnMut(&section::Segment) -> bool, insert: Segment) {
+    let mut found_one = false;
+    for dest_segment in dest.iter_mut().filter(|s| filter(s)) {
+        *dest_segment = insert.clone();
+        found_one = true;
+    }
+    if !found_one {
+        dest.push(insert);
     }
 }
 

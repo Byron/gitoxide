@@ -1,3 +1,4 @@
+use cargo_smart_release::changelog::section;
 use cargo_smart_release::{changelog, changelog::Section, ChangeLog};
 use time::OffsetDateTime;
 
@@ -17,7 +18,6 @@ fn only_last_release_without_unreleased_section() {
                         .midnight()
                         .assume_utc(),
                 ),
-                thanks_clippy_count: 0,
                 name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
                 segments: Vec::new(),
                 unknown: "never changed".into(),
@@ -29,7 +29,6 @@ fn only_last_release_without_unreleased_section() {
             Section::Release {
                 heading_level: 3,
                 date: None,
-                thanks_clippy_count: 0,
                 name: changelog::Version::Semantic("0.9.0".parse().unwrap()),
                 segments: Vec::new(),
                 unknown: String::new(),
@@ -46,16 +45,14 @@ fn only_last_release_without_unreleased_section() {
                 date: None,
                 name: changelog::Version::Unreleased,
                 heading_level: 2,
-                thanks_clippy_count: 4,
-                segments: Vec::new(),
+                segments: vec![section::Segment::Clippy(Some(section::ThanksClippy { count: 4 }))],
                 unknown: Default::default(),
             },
             Section::Release {
                 date: date_m_d(time::Month::September, 15).into(), // generated has a date is 'correct'
                 name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
                 heading_level: 2,
-                thanks_clippy_count: 3,
-                segments: Vec::new(),
+                segments: vec![section::Segment::Clippy(Some(section::ThanksClippy { count: 3 }))],
                 unknown: Default::default(),
             },
             Section::Release {
@@ -63,8 +60,7 @@ fn only_last_release_without_unreleased_section() {
                 name: changelog::Version::Semantic("0.9.0".parse().unwrap()),
                 unknown: String::new(),
                 heading_level: 2,
-                segments: Vec::new(),
-                thanks_clippy_count: 2,
+                segments: vec![section::Segment::Clippy(Some(section::ThanksClippy { count: 2 }))],
             },
             Section::Release {
                 date: date_m_d(time::Month::June, 1).into(),
@@ -72,7 +68,6 @@ fn only_last_release_without_unreleased_section() {
                 unknown: "undocumented".into(),
                 heading_level: 2,
                 segments: Vec::new(),
-                thanks_clippy_count: 0,
             },
         ],
     };
@@ -90,8 +85,7 @@ fn only_last_release_without_unreleased_section() {
                     date: None,
                     name: changelog::Version::Unreleased,
                     heading_level: 3,
-                    thanks_clippy_count: 4,
-                    segments: Vec::new(),
+                    segments: vec![section::Segment::Clippy(Some(section::ThanksClippy { count: 4 }))],
                     unknown: Default::default(),
                 },
                 Section::Release {
@@ -102,9 +96,8 @@ fn only_last_release_without_unreleased_section() {
                             .midnight()
                             .assume_utc(),
                     ),
-                    thanks_clippy_count: 3,
                     name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
-                    segments: Vec::new(),
+                    segments: vec![section::Segment::Clippy(Some(section::ThanksClippy { count: 3 }))],
                     unknown: "never changed".into(),
                 },
                 Section::Verbatim {
@@ -116,8 +109,7 @@ fn only_last_release_without_unreleased_section() {
                     name: changelog::Version::Semantic("0.9.0".parse().unwrap()),
                     unknown: String::new(),
                     heading_level: 3,
-                    segments: Vec::new(),
-                    thanks_clippy_count: 2,
+                    segments: vec![section::Segment::Clippy(Some(section::ThanksClippy { count: 2 }))],
                 },
                 Section::Release {
                     date: date_m_d(time::Month::June, 1).into(),
@@ -125,7 +117,6 @@ fn only_last_release_without_unreleased_section() {
                     unknown: "undocumented".into(),
                     heading_level: 3,
                     segments: Vec::new(),
-                    thanks_clippy_count: 0,
                 },
             ]
         },

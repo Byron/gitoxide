@@ -5,6 +5,7 @@ use cargo_metadata::{
 use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
 
+use crate::changelog::section;
 use crate::{
     changelog,
     changelog::Section,
@@ -43,16 +44,21 @@ impl Section {
             changelog::Version::Unreleased => None,
             changelog::Version::Semantic(_) => Some(date_time),
         };
+        let mut segments = Vec::new();
+
+        let count = segment
+            .history
+            .iter()
+            .filter(|item| item.message.title.starts_with("thanks clippy"))
+            .count();
+        if count > 0 {
+            segments.push(section::Segment::Clippy(Some(section::ThanksClippy { count })))
+        }
         Section::Release {
             name: version,
             date,
-            thanks_clippy_count: segment
-                .history
-                .iter()
-                .filter(|item| item.message.title.starts_with("thanks clippy"))
-                .count(),
             heading_level: 2,
-            segments: Vec::new(), // TODO: actually generate these once there is more than 'Unknown'
+            segments,
             unknown: Default::default(),
         }
     }

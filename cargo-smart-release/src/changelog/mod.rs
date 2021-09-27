@@ -6,7 +6,7 @@ mod parse;
 mod write;
 
 pub mod section {
-    #[derive(PartialEq, Eq, Debug, Clone)]
+    #[derive(Eq, Debug, Clone)]
     pub enum Segment {
         /// A portion of a Section that we couldn't make sense of, but which should be kept as is nonetheless.
         User { text: String },
@@ -17,6 +17,21 @@ pub mod section {
     #[derive(PartialEq, Eq, Debug, Clone)]
     pub struct ThanksClippy {
         pub count: usize,
+    }
+
+    impl ThanksClippy {
+        pub const TITLE: &'static str = "Thanks Clippy…";
+    }
+
+    impl PartialEq<Segment> for Segment {
+        fn eq(&self, other: &Segment) -> bool {
+            match (self, other) {
+                (Segment::User { text: lhs }, Segment::User { text: rhs }) => lhs == rhs,
+                (Segment::Clippy(Some(lhs)), Segment::Clippy(Some(rhs))) => lhs == rhs,
+                (Segment::Clippy(_), Segment::Clippy(_)) => true,
+                _ => false,
+            }
+        }
     }
 }
 
@@ -37,8 +52,6 @@ pub enum Section {
         date: Option<time::OffsetDateTime>,
         /// the amount of # in front of the heading denoting the release name
         heading_level: usize,
-        /// How often we saw 'thanks clippy' as message
-        thanks_clippy_count: usize,
         /// text of events of everything we couldn't parse
         unknown: String,
         /// portions of a release
