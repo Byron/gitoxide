@@ -1,9 +1,7 @@
 use std::{collections::VecDeque, iter::FromIterator};
 
-use crate::changelog::section;
-use crate::changelog::section::Segment;
 use crate::{
-    changelog::{Section, Version},
+    changelog::{section, section::Segment, Section, Version},
     ChangeLog,
 };
 
@@ -78,7 +76,9 @@ fn merge_section(dest: &mut Section, src: Section) {
             for rhs_segment in rhs_segments {
                 match rhs_segment {
                     section::Segment::User { .. } => unreachable!("BUG: User segments are never auto-generated"),
-                    section::Segment::Clippy(None) => unreachable!("BUG: Clippy is set if generated, or not present"),
+                    section::Segment::Clippy(section::Data::Parsed) => {
+                        unreachable!("BUG: Clippy is set if generated, or not present")
+                    }
                     clippy @ section::Segment::Clippy(_) => {
                         replace_all_or_append(lhs_segments, |s| matches!(s, section::Segment::Clippy(_)), clippy)
                     }

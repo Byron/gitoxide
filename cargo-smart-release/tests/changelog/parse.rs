@@ -1,8 +1,9 @@
+use std::path::Path;
+
 use cargo_smart_release::{
     changelog::{section, Section, Version},
     ChangeLog,
 };
-use std::path::Path;
 
 #[cfg(not(windows))]
 fn fixup(v: String) -> String {

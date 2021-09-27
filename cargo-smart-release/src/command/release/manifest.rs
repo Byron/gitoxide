@@ -5,8 +5,11 @@ use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
 use semver::{Op, Version, VersionReq};
 
 use super::{cargo, git, version, Context, Oid, Options};
-use crate::utils::{names_and_versions, package_by_id, package_eq_dependency, will};
-use crate::{changelog, ChangeLog};
+use crate::{
+    changelog,
+    utils::{names_and_versions, package_by_id, package_eq_dependency, will},
+    ChangeLog,
+};
 
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_and_handle_changelog<'repo>(
     meta: &Metadata,

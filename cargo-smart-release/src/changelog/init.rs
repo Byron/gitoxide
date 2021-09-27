@@ -5,10 +5,9 @@ use cargo_metadata::{
 use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
 
-use crate::changelog::section;
 use crate::{
     changelog,
-    changelog::Section,
+    changelog::{section, Section},
     commit, utils,
     utils::{is_top_level_package, package_by_name, will},
     ChangeLog,
@@ -52,7 +51,9 @@ impl Section {
             .filter(|item| item.message.title.starts_with("thanks clippy"))
             .count();
         if count > 0 {
-            segments.push(section::Segment::Clippy(Some(section::ThanksClippy { count })))
+            segments.push(section::Segment::Clippy(section::Data::Generated(
+                section::ThanksClippy { count },
+            )))
         }
         Section::Release {
             name: version,

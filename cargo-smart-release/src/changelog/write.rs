@@ -71,7 +71,7 @@ impl section::Segment {
     pub fn write_to(&self, section_level: usize, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
             section::Segment::User { text } => out.write_all(text.as_bytes())?,
-            section::Segment::Clippy(Some(clippy)) if clippy.count > 0 => {
+            section::Segment::Clippy(section::Data::Generated(clippy)) if clippy.count > 0 => {
                 writeln!(out, "{} {}\n", heading(section_level), section::ThanksClippy::TITLE)?;
                 writeln!(out, "{}", Section::READONLY_TAG)?;
                 writeln!(
