@@ -3,58 +3,8 @@ use crate::ChangeLog;
 mod init;
 mod merge;
 mod parse;
+pub mod section;
 mod write;
-
-pub mod section {
-    #[derive(Eq, PartialEq, Debug, Clone)]
-    pub enum Segment {
-        /// A portion of a Section that we couldn't make sense of, but which should be kept as is nonetheless.
-        User {
-            text: String,
-        },
-        /// A thanks clippy headline with the amount of times clippy helped
-        Clippy(Data<ThanksClippy>),
-        Statistics(Data<CommitStatistics>),
-    }
-
-    #[derive(Eq, Debug, Clone)]
-    pub enum Data<T> {
-        Parsed,
-        Generated(T),
-    }
-
-    impl<T: PartialEq<T>> PartialEq<Data<T>> for Data<T> {
-        fn eq(&self, other: &Data<T>) -> bool {
-            match (self, other) {
-                (Data::Generated(lhs), Data::Generated(rhs)) => lhs == rhs,
-                (_, _) => true,
-            }
-        }
-    }
-
-    #[derive(PartialEq, Eq, Debug, Clone)]
-    pub struct CommitStatistics {
-        /// Amount of commits that contributed to the release
-        pub count: usize,
-        /// Amount of commits that could be parsed as git-conventional
-        pub conventional_count: usize,
-        /// The issue numbers that were referenced in commit messages
-        pub unique_issues_count: usize,
-    }
-
-    impl CommitStatistics {
-        pub const TITLE: &'static str = "Commit Statistics";
-    }
-
-    #[derive(PartialEq, Eq, Debug, Clone)]
-    pub struct ThanksClippy {
-        pub count: usize,
-    }
-
-    impl ThanksClippy {
-        pub const TITLE: &'static str = "Thanks Clippy…";
-    }
-}
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Section {
