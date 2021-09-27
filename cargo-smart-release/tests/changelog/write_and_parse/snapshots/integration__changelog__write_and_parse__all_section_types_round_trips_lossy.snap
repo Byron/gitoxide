@@ -20,7 +20,7 @@ world
 ##### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
-[Clippy](https://github.com/rust-lang/rust-clippy) is a linter to help keeping code idiomatic. It was helpful 42 times in this release.
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 42 times to make code idiomatic. 
 
 ##### Commit Statistics
 

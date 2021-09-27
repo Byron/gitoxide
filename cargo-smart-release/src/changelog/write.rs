@@ -113,7 +113,7 @@ impl section::Segment {
                 writeln!(out, "{}", Section::READONLY_TAG)?;
                 writeln!(
                     out,
-                    "[Clippy](https://github.com/rust-lang/rust-clippy) is a linter to help keeping code idiomatic. It was helpful {} {} in this release.\n",
+                    "[Clippy](https://github.com/rust-lang/rust-clippy) helped {} {} to make code idiomatic. \n",
                     count,
                     if *count > 1 { "times" } else { "time" }
                 )?;
