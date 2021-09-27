@@ -22,8 +22,29 @@ pub struct oid {
     bytes: [u8],
 }
 
-impl std::fmt::Debug for oid {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+/// A utility able to format itself with the given amount of characters in hex
+#[derive(PartialEq, Eq, Hash, Ord, PartialOrd)]
+pub struct ShortHex<'a> {
+    inner: &'a oid,
+    hex_len: usize,
+}
+
+impl<'a> fmt::Display for ShortHex<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.inner.kind() {
+            crate::Kind::Sha1 => {
+                let buf = self.inner.to_sha1_hex();
+                f.write_str(
+                    std::str::from_utf8(&buf[..self.hex_len.min(crate::Kind::Sha1.len_in_hex())])
+                        .expect("hex is always utf8 representable"),
+                )
+            }
+        }
+    }
+}
+
+impl fmt::Debug for oid {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
         match self.kind() {
             crate::Kind::Sha1 => f.write_str("Sha1(")?,
         }
@@ -88,6 +109,11 @@ impl oid {
     /// Interpret this object id as raw byte slice.
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
+    }
+
+    /// Return a type which can draw itself in hexadecimal form with the `hex_len` amount of characters.
+    pub fn short_hex(&self, hex_len: usize) -> ShortHex<'_> {
+        ShortHex { inner: self, hex_len }
     }
 }
 
