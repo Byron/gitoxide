@@ -36,6 +36,10 @@ pub mod section {
     pub struct CommitStatistics {
         /// Amount of commits that contributed to the release
         pub count: usize,
+        /// Amount of commits that could be parsed as git-conventional
+        pub conventional_count: usize,
+        /// The issue numbers that were referenced in commit messages
+        pub unique_issues_count: usize,
     }
 
     impl CommitStatistics {

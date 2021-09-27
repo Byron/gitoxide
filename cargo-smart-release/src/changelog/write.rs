@@ -71,24 +71,42 @@ impl section::Segment {
     pub fn write_to(&self, section_level: usize, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
             section::Segment::User { text } => out.write_all(text.as_bytes())?,
-            section::Segment::Statistics(section::Data::Generated(stats)) => {
+            section::Segment::Statistics(section::Data::Generated(section::CommitStatistics {
+                count,
+                conventional_count,
+                unique_issues_count,
+            })) => {
                 writeln!(out, "{} {}\n", heading(section_level), section::CommitStatistics::TITLE)?;
                 writeln!(out, "{}", Section::READONLY_TAG)?;
                 writeln!(
                     out,
-                    " - {} {} contributed to the release. \n",
-                    stats.count,
-                    if stats.count > 1 { "commits" } else { "commit" }
+                    " - {} {} contributed to the release.",
+                    count,
+                    if *count == 1 { "commit" } else { "commits" }
                 )?;
+                writeln!(
+                    out,
+                    " - {} {} where understood as [conventional](https://www.conventionalcommits.org).",
+                    conventional_count,
+                    if *conventional_count == 1 { "commit" } else { "commits" }
+                )?;
+                writeln!(
+                    out,
+                    " - {} unique {} {} worked on",
+                    unique_issues_count,
+                    if *unique_issues_count == 1 { "issue" } else { "issues" },
+                    if *unique_issues_count == 1 { "was" } else { "were" },
+                )?;
+                writeln!(out)?;
             }
-            section::Segment::Clippy(section::Data::Generated(clippy)) if clippy.count > 0 => {
+            section::Segment::Clippy(section::Data::Generated(section::ThanksClippy { count })) if *count > 0 => {
                 writeln!(out, "{} {}\n", heading(section_level), section::ThanksClippy::TITLE)?;
                 writeln!(out, "{}", Section::READONLY_TAG)?;
                 writeln!(
                     out,
-                    "Clippy is a linter to help keeping code idiomatic. It was helpful {} {} in this release.\n",
-                    clippy.count,
-                    if clippy.count > 1 { "times" } else { "time" }
+                    "[Clippy](https://github.com/rust-lang/rust-clippy) is a linter to help keeping code idiomatic. It was helpful {} {} in this release.\n",
+                    count,
+                    if *count > 1 { "times" } else { "time" }
                 )?;
             }
             section::Segment::Clippy(_) => {}

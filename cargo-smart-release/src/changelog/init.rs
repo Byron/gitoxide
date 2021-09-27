@@ -46,9 +46,25 @@ impl Section {
         let mut segments = Vec::new();
 
         {
+            let history = &segment.history;
             segments.push(section::Segment::Statistics(section::Data::Generated(
                 section::CommitStatistics {
-                    count: segment.history.len(),
+                    count: history.len(),
+                    conventional_count: history.iter().filter(|item| item.message.kind.is_some()).count(),
+                    unique_issues_count: {
+                        let mut issue_names = segment
+                            .history
+                            .iter()
+                            .map(|item| item.message.additions.iter())
+                            .flatten()
+                            .filter_map(|addition| match addition {
+                                commit::message::Addition::IssueId(id) => Some(id),
+                            })
+                            .collect::<Vec<_>>();
+                        issue_names.sort();
+                        issue_names.dedup();
+                        issue_names.len()
+                    },
                 },
             )))
         }

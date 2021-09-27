@@ -28,4 +28,4 @@ pub struct History {
     pub items: Vec<history::Item>,
 }
 
-mod message;
+pub mod message;
