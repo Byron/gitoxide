@@ -50,10 +50,16 @@ impl Section {
     pub fn is_essential(&self) -> bool {
         match self {
             Section::Verbatim { .. } => true,
-            Section::Release { segments, .. } => segments.iter().any(|s| match s {
-                section::Segment::User { .. } => true,
-                section::Segment::Clippy(_) | section::Segment::Statistics(_) => false,
-            }),
+            Section::Release { segments, .. } => segments.iter().any(|s| !s.is_read_only()),
+        }
+    }
+}
+
+impl section::Segment {
+    pub fn is_read_only(&self) -> bool {
+        match self {
+            section::Segment::User { .. } => false,
+            section::Segment::Clippy(_) | section::Segment::Statistics(_) | section::Segment::Details(_) => true,
         }
     }
 }

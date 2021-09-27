@@ -6,6 +6,7 @@ use cargo_smart_release::{
 use git_repository::bstr::ByteSlice;
 
 use crate::Result;
+use std::collections::BTreeMap;
 
 #[test]
 fn all_section_types_round_trips_lossy() -> Result {
@@ -36,6 +37,35 @@ fn all_section_types_round_trips_lossy() -> Result {
                         duration: time::Duration::days(32).into(),
                         conventional_count: 20,
                         unique_issues_count: 3,
+                    })),
+                    section::Segment::Details(section::Data::Generated(section::Details {
+                        commits_by_category: {
+                            let mut h = BTreeMap::default();
+                            h.insert(
+                                section::details::Category::Uncategorized,
+                                vec![section::details::Message {
+                                    title: "Just the title".into(),
+                                    body: None,
+                                }, section::details::Message {
+                                    title: "title and body".into(),
+                                    body: Some("body with\nmultiple newlines\nwhich probably should be put into a single line but we don't go there for now.".into()),
+                                }],
+                            );
+                            h.insert(
+                                section::details::Category::Issue("42".into()),
+                                vec![
+                                    section::details::Message {
+                                        title: "Just the title".into(),
+                                        body: None,
+                                    },
+                                    section::details::Message {
+                                        title: "another title".into(),
+                                        body: None,
+                                    },
+                                ],
+                            );
+                            h
+                        },
                     })),
                 ],
                 unknown: String::new(),

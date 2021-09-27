@@ -71,6 +71,23 @@ impl section::Segment {
     pub fn write_to(&self, section_level: usize, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
             section::Segment::User { text } => out.write_all(text.as_bytes())?,
+            section::Segment::Details(section::Data::Generated(section::Details { commits_by_category }))
+                if !commits_by_category.is_empty() =>
+            {
+                // writeln!(out, "{} {}\n", heading(section_level), section::Details::TITLE)?;
+                writeln!(out, "{}", Section::READONLY_TAG)?;
+                writeln!(out, "{}", section::Details::PREFIX)?;
+                for (category, messages) in commits_by_category.iter() {
+                    writeln!(out, " * **{}**", category)?;
+                    for message in messages {
+                        writeln!(out, "    - {}", message.title)?;
+                        if let Some(body) = &message.body {
+                            writeln!(out, "{}", body)?;
+                        }
+                    }
+                }
+                writeln!(out, "{}\n", section::Details::END)?;
+            }
             section::Segment::Statistics(section::Data::Generated(section::CommitStatistics {
                 count,
                 duration,
@@ -120,6 +137,7 @@ impl section::Segment {
             }
             section::Segment::Clippy(_) => {}
             section::Segment::Statistics(_) => {}
+            section::Segment::Details(_) => {}
         };
         Ok(())
     }
