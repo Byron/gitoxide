@@ -45,15 +45,24 @@ impl Section {
         };
         let mut segments = Vec::new();
 
-        let count = segment
-            .history
-            .iter()
-            .filter(|item| item.message.title.starts_with("thanks clippy"))
-            .count();
-        if count > 0 {
-            segments.push(section::Segment::Clippy(section::Data::Generated(
-                section::ThanksClippy { count },
+        {
+            segments.push(section::Segment::Statistics(section::Data::Generated(
+                section::CommitStatistics {
+                    count: segment.history.len(),
+                },
             )))
+        }
+        {
+            let count = segment
+                .history
+                .iter()
+                .filter(|item| item.message.title.starts_with("thanks clippy"))
+                .count();
+            if count > 0 {
+                segments.push(section::Segment::Clippy(section::Data::Generated(
+                    section::ThanksClippy { count },
+                )))
+            }
         }
         Section::Release {
             name: version,
