@@ -44,7 +44,7 @@ pub struct ThanksClippy {
 }
 
 impl ThanksClippy {
-    pub const TITLE: &'static str = "Thanks Clippy…";
+    pub const TITLE: &'static str = "Thanks Clippy";
 }
 
 mod from_history {

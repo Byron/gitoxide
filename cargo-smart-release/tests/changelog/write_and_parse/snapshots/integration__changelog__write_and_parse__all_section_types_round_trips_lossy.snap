@@ -17,7 +17,7 @@ world
 
 * hello world
 	this
-##### Thanks Clippy…
+##### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 [Clippy](https://github.com/rust-lang/rust-clippy) is a linter to help keeping code idiomatic. It was helpful 42 times in this release.

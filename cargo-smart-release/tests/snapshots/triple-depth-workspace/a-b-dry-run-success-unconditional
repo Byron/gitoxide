@@ -17,7 +17,6 @@
 [INFO ] Congratulations for the new release of 'b' 🎉
 [INFO ] WOULD prepare release of b v0.9.0
 [INFO ] WOULD edit existing changelog for 'b'
-[INFO ] b: WOULD only change headline from 'Unreleased' to '0.9.0'
 [INFO ] Pending 'b' manifest version update: "0.9.0"
 [INFO ] Pending 'c' manifest version update: "8.1.0"
 [INFO ] Pending 'c' manifest dependencies update: 'b = "^0.9.0"' (from  "0.8.0" )
