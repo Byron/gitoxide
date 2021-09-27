@@ -110,8 +110,8 @@ mod from_history {
                                 .iter()
                                 .map(|item| item.message.additions.iter())
                                 .flatten()
-                                .filter_map(|addition| match addition {
-                                    commit::message::Addition::IssueId(id) => Some(id),
+                                .map(|addition| match addition {
+                                    commit::message::Addition::IssueId(id) => id,
                                 })
                                 .collect::<Vec<_>>();
                             issue_names.sort();
