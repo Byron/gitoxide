@@ -33,6 +33,7 @@ fn all_section_types_round_trips_lossy() -> Result {
                     section::Segment::Clippy(section::Data::Generated(section::ThanksClippy { count: 42 })),
                     section::Segment::Statistics(section::Data::Generated(section::CommitStatistics {
                         count: 100,
+                        duration: time::Duration::days(32).into(),
                         conventional_count: 20,
                         unique_issues_count: 3,
                     })),

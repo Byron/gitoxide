@@ -73,6 +73,7 @@ impl section::Segment {
             section::Segment::User { text } => out.write_all(text.as_bytes())?,
             section::Segment::Statistics(section::Data::Generated(section::CommitStatistics {
                 count,
+                duration,
                 conventional_count,
                 unique_issues_count,
             })) => {
@@ -80,9 +81,17 @@ impl section::Segment {
                 writeln!(out, "{}", Section::READONLY_TAG)?;
                 writeln!(
                     out,
-                    " - {} {} contributed to the release.",
+                    " - {} {} contributed to the release{}",
                     count,
-                    if *count == 1 { "commit" } else { "commits" }
+                    if *count == 1 { "commit" } else { "commits" },
+                    match duration {
+                        Some(duration) if duration.whole_days() > 0 => format!(
+                            " over the course of {} calendar {}.",
+                            duration.whole_days(),
+                            if duration.whole_days() == 1 { "day" } else { "days" }
+                        ),
+                        _ => ".".into(),
+                    }
                 )?;
                 writeln!(
                     out,

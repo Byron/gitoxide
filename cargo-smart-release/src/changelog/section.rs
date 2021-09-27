@@ -28,6 +28,8 @@ impl<T: PartialEq<T>> PartialEq<Data<T>> for Data<T> {
 pub struct CommitStatistics {
     /// Amount of commits that contributed to the release
     pub count: usize,
+    /// The time span from first to last commit, if there is more than one.
+    pub duration: Option<time::Duration>,
     /// Amount of commits that could be parsed as git-conventional
     pub conventional_count: usize,
     /// The issue numbers that were referenced in commit messages
@@ -58,6 +60,7 @@ mod from_history {
         commit, utils,
         utils::is_top_level_package,
     };
+    use time::OffsetDateTime;
 
     impl Section {
         pub fn from_history_segment(
@@ -86,24 +89,24 @@ mod from_history {
                 .to_commit()
                 .committer
                 .time;
-            let date_time = time::OffsetDateTime::from_unix_timestamp(time.time as i64)
-                .expect("always valid unix time")
-                .replace_offset(time::UtcOffset::from_whole_seconds(time.offset).expect("valid offset"));
+            let date_time = time_to_offset_date_time(time);
             let date = match version {
                 changelog::Version::Unreleased => None,
                 changelog::Version::Semantic(_) => Some(date_time),
             };
             let mut segments = Vec::new();
-
+            let history = &segment.history;
             {
-                let history = &segment.history;
+                let duration = history
+                    .last()
+                    .map(|last| date_time - time_to_offset_date_time(last.commit_time));
                 segments.push(section::Segment::Statistics(section::Data::Generated(
                     section::CommitStatistics {
                         count: history.len(),
+                        duration,
                         conventional_count: history.iter().filter(|item| item.message.kind.is_some()).count(),
                         unique_issues_count: {
-                            let mut issue_names = segment
-                                .history
+                            let mut issue_names = history
                                 .iter()
                                 .map(|item| item.message.additions.iter())
                                 .flatten()
@@ -119,8 +122,7 @@ mod from_history {
                 )))
             }
             {
-                let count = segment
-                    .history
+                let count = history
                     .iter()
                     .filter(|item| item.message.title.starts_with("thanks clippy"))
                     .count();
@@ -138,5 +140,11 @@ mod from_history {
                 unknown: Default::default(),
             }
         }
+    }
+
+    fn time_to_offset_date_time(time: git::actor::Time) -> OffsetDateTime {
+        time::OffsetDateTime::from_unix_timestamp(time.time as i64)
+            .expect("always valid unix time")
+            .replace_offset(time::UtcOffset::from_whole_seconds(time.offset).expect("valid offset"))
     }
 }
