@@ -16,7 +16,7 @@ impl std::fmt::Display for changelog::Version {
 impl Section {
     pub const UNKNOWN_TAG_START: &'static str = "<csr-unknown>";
     pub const UNKNOWN_TAG_END: &'static str = "<csr-unknown/>";
-    pub const READONLY_TAG: &'static str = "<csr-read-only-do-not-edit/>";
+    pub const READONLY_TAG: &'static str = "<csr-read-only-do-not-edit/>\n"; // needs a newline to not interfere with formatting
 
     pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
@@ -76,7 +76,7 @@ impl section::Segment {
             {
                 writeln!(out, "{} {}\n", heading(section_level), section::Details::TITLE)?;
                 writeln!(out, "{}", Section::READONLY_TAG)?;
-                writeln!(out, "{}", section::Details::PREFIX)?;
+                writeln!(out, "{}\n", section::Details::PREFIX)?;
                 for (category, messages) in commits_by_category.iter() {
                     writeln!(out, " * **{}**", category)?;
                     for message in messages {

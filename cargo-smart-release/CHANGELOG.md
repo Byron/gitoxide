@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - automatically bump pre-release transient dependents of published crates to prevent breakage down the road unless 
   `--no-isolate-dependencies-from-breaking-change` is set.
 
-## v0.3.1 (2021-09-07) - internal improvements
+## v0.3.1 (2021-09-07)
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
