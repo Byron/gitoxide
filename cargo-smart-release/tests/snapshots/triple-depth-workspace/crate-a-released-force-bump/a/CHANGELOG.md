@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - initial (0fc80d8a9955f74578174fa0f75562d33124f683)
+    - initial (81c6160)
 </details>
 
 ## v0.8.0
