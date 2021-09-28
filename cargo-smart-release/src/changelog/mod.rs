@@ -1,4 +1,5 @@
 use crate::ChangeLog;
+use std::cmp::Ordering;
 
 mod init;
 mod merge;
@@ -30,10 +31,20 @@ pub enum Section {
     },
 }
 
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialOrd, PartialEq, Eq, Debug, Clone)]
 pub enum Version {
     Unreleased,
     Semantic(semver::Version),
+}
+
+impl Ord for Version {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self, other) {
+            (Version::Unreleased, _) => Ordering::Greater,
+            (_, Version::Unreleased) => Ordering::Less,
+            (Version::Semantic(lhs), Version::Semantic(rhs)) => lhs.cmp(rhs),
+        }
+    }
 }
 
 impl ChangeLog {
