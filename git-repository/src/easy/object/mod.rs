@@ -97,6 +97,9 @@ where
     A: easy::Access + Sized,
 {
     /// Obtain a fully parsed commit whose fields reference our data buffer, or panic if this is not a commit.
+    // TODO: probably this should not panic, instead return an error to indicate decode issues and kind issues, to allow
+    //       any object type to be decoded that way without forcing panics. Then again, it's probably OK and servers would chose the
+    //       explicit route. Maybe just document the panic!
     pub fn to_commit(&self) -> git_object::CommitRef<'_> {
         self.try_to_commit().expect("can be decoded").expect("is a commit")
     }

@@ -1,13 +1,14 @@
+use std::collections::BTreeMap;
+
 use cargo_smart_release::{
     changelog,
     changelog::{section, Section},
     ChangeLog,
 };
 use git_repository::bstr::ByteSlice;
+use git_testtools::hex_to_id;
 
 use crate::Result;
-use git_testtools::hex_to_id;
-use std::collections::BTreeMap;
 
 #[test]
 fn all_section_types_round_trips_lossy() -> Result {
