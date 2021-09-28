@@ -1,5 +1,17 @@
 use std::collections::BTreeMap;
 
+pub mod segment {
+    use bitflags::bitflags;
+
+    bitflags! {
+        pub struct Selection: u32 {
+            const CLIPPY = 1<<0;
+            const COMMIT_DETAILS = 1<<1;
+            const COMMIT_STATISTICS = 1<<2;
+        }
+    }
+}
+
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub enum Segment {
     /// A portion of a Section that we couldn't make sense of, but which should be kept as is nonetheless.
@@ -106,6 +118,7 @@ mod from_history {
     use git_repository::prelude::ObjectIdExt;
     use time::OffsetDateTime;
 
+    use crate::changelog::section::segment::Selection;
     use crate::{
         changelog,
         changelog::{section, Section},
@@ -118,6 +131,7 @@ mod from_history {
             package: &Package,
             segment: &commit::history::Segment<'_>,
             repo: &git::Easy,
+            selection: section::segment::Selection,
         ) -> Self {
             let package_name = (!is_top_level_package(&package.manifest_path, repo)).then(|| package.name.as_str());
 
@@ -148,27 +162,35 @@ mod from_history {
             let mut segments = Vec::new();
             let history = &segment.history;
             if !history.is_empty() {
-                let mut commits_by_category = BTreeMap::default();
-                for &item in history {
-                    let mut issue_associaions = 0;
-                    for possibly_issue in &item.message.additions {
-                        match possibly_issue {
-                            commit::message::Addition::IssueId(issue) => {
-                                commits_by_category
-                                    .entry(section::details::Category::Issue(issue.to_owned()))
+                let derivate = selection
+                    .intersects(Selection::COMMIT_STATISTICS | Selection::COMMIT_DETAILS)
+                    .then(|| {
+                        let mut mapping = BTreeMap::default();
+                        for &item in history {
+                            let mut issue_associations = 0;
+                            for possibly_issue in &item.message.additions {
+                                match possibly_issue {
+                                    commit::message::Addition::IssueId(issue) => {
+                                        mapping
+                                            .entry(section::details::Category::Issue(issue.to_owned()))
+                                            .or_insert_with(Vec::new)
+                                            .push(item.into());
+                                        issue_associations += 1;
+                                    }
+                                }
+                            }
+                            if issue_associations == 0 {
+                                mapping
+                                    .entry(section::details::Category::Uncategorized)
                                     .or_insert_with(Vec::new)
                                     .push(item.into());
-                                issue_associaions += 1;
                             }
                         }
-                    }
-                    if issue_associaions == 0 {
-                        commits_by_category
-                            .entry(section::details::Category::Uncategorized)
-                            .or_insert_with(Vec::new)
-                            .push(item.into());
-                    }
-                }
+                        mapping
+                    });
+                if let Some(commits_by_category) = derivate
+                    .as_ref()
+                    .filter(|_| selection.contains(Selection::COMMIT_STATISTICS))
                 {
                     let duration = history
                         .last()
@@ -180,9 +202,9 @@ mod from_history {
                             conventional_count: history.iter().filter(|item| item.message.kind.is_some()).count(),
                             unique_issues_count: commits_by_category.len(),
                         },
-                    )))
+                    )));
                 }
-                {
+                if selection.contains(Selection::CLIPPY) {
                     let count = history
                         .iter()
                         .filter(|item| item.message.title.starts_with("thanks clippy"))
@@ -193,9 +215,11 @@ mod from_history {
                         )))
                     }
                 }
-                segments.push(section::Segment::Details(section::Data::Generated(section::Details {
-                    commits_by_category,
-                })));
+                if let Some(commits_by_category) = derivate.filter(|_| selection.contains(Selection::COMMIT_DETAILS)) {
+                    segments.push(section::Segment::Details(section::Data::Generated(section::Details {
+                        commits_by_category,
+                    })));
+                }
             }
             Section::Release {
                 name: version,

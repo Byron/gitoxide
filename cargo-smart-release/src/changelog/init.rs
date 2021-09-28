@@ -4,6 +4,7 @@ use cargo_metadata::{
 };
 use git_repository as git;
 
+use crate::changelog::section::segment;
 use crate::{
     changelog::Section,
     commit,
@@ -17,11 +18,13 @@ impl ChangeLog {
         history: &commit::History,
         ctx: &'a crate::Context,
         dry_run: bool,
+        selection: segment::Selection,
     ) -> anyhow::Result<(Self, bool, git::lock::File)> {
         let mut generated = ChangeLog::from_history_segments(
             package,
             &crate::git::history::crate_ref_segments(package, ctx, history)?,
             &ctx.repo,
+            selection,
         );
         generated.sections.insert(
             0,
@@ -52,16 +55,22 @@ impl ChangeLog {
         history: &commit::History,
         ctx: &'a crate::Context,
         dry_run: bool,
+        selection: segment::Selection,
     ) -> anyhow::Result<(Self, &'a Package, git::lock::File)> {
         let package = package_by_name(&ctx.meta, crate_name)?;
-        let (log, _changed, lock) = Self::for_package_with_write_lock(package, history, ctx, dry_run)?;
+        let (log, _changed, lock) = Self::for_package_with_write_lock(package, history, ctx, dry_run, selection)?;
         Ok((log, package, lock))
     }
 
-    fn from_history_segments(package: &Package, segments: &[commit::history::Segment<'_>], repo: &git::Easy) -> Self {
+    fn from_history_segments(
+        package: &Package,
+        segments: &[commit::history::Segment<'_>],
+        repo: &git::Easy,
+        selection: segment::Selection,
+    ) -> Self {
         ChangeLog {
             sections: segments.iter().fold(Vec::new(), |mut acc, item| {
-                acc.push(Section::from_history_segment(package, item, repo));
+                acc.push(Section::from_history_segment(package, item, repo, selection));
                 acc
             }),
         }

@@ -27,12 +27,16 @@ mod release_impl;
 pub use release_impl::release;
 
 pub mod changelog {
+    use crate::changelog::section::segment;
+
     #[derive(Debug, Clone, Copy)]
     pub struct Options {
         pub dry_run: bool,
         pub dependencies: bool,
         pub allow_dirty: bool,
         pub preview: bool,
+        // All the segments to generate
+        pub generator_segments: segment::Selection,
     }
 }
 #[path = "changelog.rs"]

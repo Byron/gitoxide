@@ -13,6 +13,7 @@ fn main() -> anyhow::Result<()> {
             crates,
             no_dependencies,
             no_preview,
+            without,
             allow_dirty,
         }) => command::changelog(
             command::changelog::Options {
@@ -20,6 +21,7 @@ fn main() -> anyhow::Result<()> {
                 allow_dirty,
                 preview: !no_preview,
                 dependencies: !no_dependencies,
+                generator_segments: names_to_segment_selection(&without)?,
             },
             crates,
         )?,
@@ -73,6 +75,26 @@ fn main() -> anyhow::Result<()> {
     };
 
     Ok(())
+}
+
+fn names_to_segment_selection(
+    names: &[String],
+) -> anyhow::Result<cargo_smart_release::changelog::section::segment::Selection> {
+    use cargo_smart_release::changelog::section::segment::Selection;
+    Ok(if names.is_empty() {
+        Selection::all()
+    } else {
+        let mut deselected = Selection::empty();
+        for name in names {
+            deselected |= match name.as_str() {
+                "clippy" => Selection::CLIPPY,
+                "commit-details" => Selection::COMMIT_DETAILS,
+                "commit-statistics" => Selection::COMMIT_STATISTICS,
+                other => anyhow::bail!("Invalid changelog segment selector: {:?}", other),
+            };
+        }
+        Selection::all().difference(deselected)
+    })
 }
 
 fn init_logging() {

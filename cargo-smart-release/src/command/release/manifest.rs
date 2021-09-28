@@ -5,6 +5,7 @@ use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
 use semver::{Op, Version, VersionReq};
 
 use super::{cargo, git, version, Context, Oid, Options};
+use crate::changelog::section::segment;
 use crate::{
     changelog,
     utils::{names_and_versions, package_by_id, package_eq_dependency, will},
@@ -36,8 +37,13 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         let previous = locks_by_manifest_path.insert(&publishee.manifest_path, lock);
         assert!(previous.is_none(), "publishees are unique so insertion always happens");
         if let Some(history) = ctx.history.as_ref() {
-            let (mut log, changed_relevant_content, mut lock) =
-                ChangeLog::for_package_with_write_lock(publishee, history, &ctx.base, opts.dry_run)?;
+            let (mut log, changed_relevant_content, mut lock) = ChangeLog::for_package_with_write_lock(
+                publishee,
+                history,
+                &ctx.base,
+                opts.dry_run,
+                segment::Selection::all(),
+            )?;
             let recent_release_in_log = log.most_recent_release_mut();
             let new_version: semver::Version = new_version.parse()?;
             match recent_release_in_log {
