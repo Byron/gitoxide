@@ -38,10 +38,7 @@ impl ChangeLog {
                 Section::Release { ref name, .. } => match find_target_section(name, sections, first_release_pos) {
                     Insertion::MergeWith(pos) => merge_section(&mut sections[pos], section_to_merge),
                     Insertion::At(pos) => {
-                        if let Section::Release {
-                            ref mut heading_level, ..
-                        } = section_to_merge
-                        {
+                        if let Section::Release { heading_level, .. } = &mut section_to_merge {
                             *heading_level = first_release_indentation;
                         }
                         sections.insert(pos, section_to_merge);
@@ -73,6 +70,11 @@ fn merge_section(dest: &mut Section, src: Section) {
             },
         ) => {
             assert!(rhs_unknown.is_empty(), "shouldn't ever generate 'unknown' portions");
+            let mode = if lhs_segments.is_empty() {
+                ReplaceMode::ReplaceAllOrAppend
+            } else {
+                ReplaceMode::ReplaceAllOrAppendIfPresentInLhs
+            };
             for rhs_segment in rhs_segments {
                 match rhs_segment {
                     section::Segment::User { .. } => unreachable!("BUG: User segments are never auto-generated"),
@@ -80,14 +82,20 @@ fn merge_section(dest: &mut Section, src: Section) {
                         unreachable!("BUG: Clippy is set if generated, or not present")
                     }
                     clippy @ section::Segment::Clippy(_) => {
-                        replace_all_or_append(lhs_segments, |s| matches!(s, section::Segment::Clippy(_)), clippy)
+                        merge_segment(lhs_segments, |s| matches!(s, section::Segment::Clippy(_)), clippy, mode)
                     }
-                    stats @ section::Segment::Statistics(_) => {
-                        replace_all_or_append(lhs_segments, |s| matches!(s, section::Segment::Statistics(_)), stats)
-                    }
-                    details @ section::Segment::Details(_) => {
-                        replace_all_or_append(lhs_segments, |s| matches!(s, section::Segment::Details(_)), details)
-                    }
+                    stats @ section::Segment::Statistics(_) => merge_segment(
+                        lhs_segments,
+                        |s| matches!(s, section::Segment::Statistics(_)),
+                        stats,
+                        mode,
+                    ),
+                    details @ section::Segment::Details(_) => merge_segment(
+                        lhs_segments,
+                        |s| matches!(s, section::Segment::Details(_)),
+                        details,
+                        mode,
+                    ),
                 }
             }
             *lhs_date = rhs_date;
@@ -95,13 +103,24 @@ fn merge_section(dest: &mut Section, src: Section) {
     }
 }
 
-fn replace_all_or_append(dest: &mut Vec<Segment>, mut filter: impl FnMut(&section::Segment) -> bool, insert: Segment) {
+#[derive(Clone, Copy)]
+enum ReplaceMode {
+    ReplaceAllOrAppend,
+    ReplaceAllOrAppendIfPresentInLhs,
+}
+
+fn merge_segment(
+    dest: &mut Vec<Segment>,
+    mut filter: impl FnMut(&section::Segment) -> bool,
+    insert: Segment,
+    mode: ReplaceMode,
+) {
     let mut found_one = false;
     for dest_segment in dest.iter_mut().filter(|s| filter(s)) {
         *dest_segment = insert.clone();
         found_one = true;
     }
-    if !found_one {
+    if !found_one && matches!(mode, ReplaceMode::ReplaceAllOrAppend) {
         dest.push(insert);
     }
 }
