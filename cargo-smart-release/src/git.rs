@@ -96,11 +96,10 @@ pub mod history {
     use anyhow::bail;
     use cargo_metadata::Package;
     use git_repository as git;
-    use git_repository::prelude::ObjectIdExt;
     use git_repository::{
         bstr::ByteSlice,
         easy::head,
-        prelude::{CacheAccessExt, ObjectAccessExt, ReferenceAccessExt, ReferenceExt},
+        prelude::{CacheAccessExt, ObjectAccessExt, ObjectIdExt, ReferenceAccessExt, ReferenceExt},
     };
 
     use crate::{
@@ -248,8 +247,7 @@ pub mod history {
             })
             .unwrap_or(Filter::None);
 
-        let mut items = history.items.iter();
-        while let Some(item) = items.next() {
+        for item in history.items.iter() {
             match tags_by_commit.remove(&item.id) {
                 None => add_item_if_package_changed(ctx, &mut segment, &filter, item, &history.data_by_tree_id)?,
                 Some(next_ref) => {
@@ -330,7 +328,7 @@ pub mod history {
             }
             Filter::Slow(ref components) => {
                 let prev = ctx.repo.object_cache_size(1024 * 1024)?;
-                let current_data = RefCell::new(item.tree_id.clone());
+                let current_data = RefCell::new(item.tree_id);
                 let current = git::easy::TreeRef::from_id_and_data(
                     item.id,
                     std::cell::Ref::map(current_data.borrow(), |v| v.as_slice()),

@@ -1,8 +1,7 @@
 use std::path::Path;
 
-use cargo_smart_release::changelog::section::Segment;
 use cargo_smart_release::{
-    changelog::{Section, Version},
+    changelog::{section::Segment, Section, Version},
     ChangeLog,
 };
 
