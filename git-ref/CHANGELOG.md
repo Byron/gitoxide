@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 13 calendar days.
+ - 13 commits contributed to the release over the course of 14 calendar days.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on
 
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
+    - Sort all commits by time, descending… (7c37a3d)
     - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - Generate changelogs with details (fd0f3bd)
     - Update all changelogs with details (0732699)
@@ -200,6 +201,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * splits of edits to symbolic references will now 'move' the desired previous values down to the
   referents while resorting to not having any requirements in the symbolic ref instead.
 
+## v0.6.0 (2021-08-27)
+
+### BREAKING
+
+- rename `file::Store::packed()` to `file::Store::packed_buffer()`
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 27 commits contributed to the release over the course of 8 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - [odb #180] refactor (eff21da)
+    - [pack #179] refactor (ab6554b)
+    - [object #177] fix docs (2fd23ed)
+    - [object #177] tag::RefIter -> TagRefIter (28587c6)
+    - [object #177] migrate immutable::tree to crate::tree (fa5cd06)
+    - [object #177] move immutable::* to crate::*Ref, start `iter` adjustments (461dc53)
+    - [object #177] rename immutable::* to immutable::*Ref (6deb012)
+    - Release git-object v0.13.0 (708fc5a)
+    - [ref #175] follow (try_)find(_what) naming convention (679895c)
+    - [ref #175] fix docs (dd1edc3)
+    - [ref #175] refactor log line (7ac948a)
+    - Merge pull request #172 from mellowagain/main (61aebbf)
+    - [ref #175] refactor (1243459)
+    - [ref #175] make 'mutable' module private (a80dbcf)
+    - Release git-actor v0.5.0 (a684b0f)
+    - [actor #175] refactor (ec88c59)
+    - [ref #175] refactor (292e567)
+    - Release git-actor v0.4.0 (16358c9)
+    - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
+    - Release git-lock v1.0.0 (f38f72c)
+    - Release git-tempfile v1.0.0 (1238535)
+    - Upgrade to nom-7 (f0aa3e1)
+    - Merge branch 'main' into 162-repo-design-sketch (e63b634)
+    - [repository #165] fix docs (b4fdfd7)
+    - Release git-ref v0.6.0 (0bb4c13)
+    - [ref #165] refactor (66624c3)
+    - [repository #165] refactor (00ec15d)
+</details>
+
 ## v0.5.4 (2021-08-17)
 
 ### Commit Statistics
@@ -298,118 +348,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **Uncategorized**
     - (cargo-release) version 0.5.1 (6f61fca)
     - [ref] break dev-dependency cycle (d5af428)
-</details>
-
-## v0.4.1 (2020-12-19)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 4 commits contributed to the release over the course of 94 calendar days.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - (cargo-release) version 0.4.1 (25d2c2e)
-    - Document `git-ref` (91dce23)
-    - remove dash in all repository links (98c1360)
-    - refactor (ba1d883)
-</details>
-
-## v0.4.0 (2020-09-12)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 3 commits contributed to the release over the course of 29 calendar days.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - (cargo-release) version 0.4.0 (f9dd225)
-    - Allow dual-licensing with Apache 2.0 (ea353eb)
-    - refactor (63c1292)
-</details>
-
-## v0.3.0 (2020-08-12)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 2 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - bump minor version to 0.3 (4351e28)
-    - update to quick-error 2.0 (4b1b784)
-</details>
-
-## v0.2.0 (2020-07-23)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 3 commits contributed to the release over the course of 6 calendar days.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - (cargo-release) version 0.2.0 (d350a13)
-    - Switch to latest quick-error (9760856)
-    - assert we don't exeed package sizes (df66d74)
-</details>
-
-## v0.1.0 (2020-07-15)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 5 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - refactor (6ad9304)
-    - refactor (1fd90f7)
-    - test for common ascii control characters (ae0c885)
-    - all test for valid ref name except for ascii control chars (a157acf)
-    - add new 'git-ref' crate; place ref name validation code there (1a0e84e)
 </details>
 
 ## v0.5.0 (2021-08-10)
@@ -831,16 +769,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 15 times to make code idiomatic. 
 
-## v0.6.0 (2021-08-27)
+## v0.4.1 (2020-12-19)
 
-### BREAKING
-
-- rename `file::Store::packed()` to `file::Store::packed_buffer()`
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 27 commits contributed to the release over the course of 8 calendar days.
+ - 4 commits contributed to the release over the course of 94 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -851,32 +786,98 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - [odb #180] refactor (eff21da)
-    - [pack #179] refactor (ab6554b)
-    - [object #177] fix docs (2fd23ed)
-    - [object #177] tag::RefIter -> TagRefIter (28587c6)
-    - [object #177] migrate immutable::tree to crate::tree (fa5cd06)
-    - [object #177] move immutable::* to crate::*Ref, start `iter` adjustments (461dc53)
-    - [object #177] rename immutable::* to immutable::*Ref (6deb012)
-    - Release git-object v0.13.0 (708fc5a)
-    - [ref #175] follow (try_)find(_what) naming convention (679895c)
-    - [ref #175] fix docs (dd1edc3)
-    - [ref #175] refactor log line (7ac948a)
-    - Merge pull request #172 from mellowagain/main (61aebbf)
-    - [ref #175] refactor (1243459)
-    - [ref #175] make 'mutable' module private (a80dbcf)
-    - Release git-actor v0.5.0 (a684b0f)
-    - [actor #175] refactor (ec88c59)
-    - [ref #175] refactor (292e567)
-    - Release git-actor v0.4.0 (16358c9)
-    - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
-    - Release git-lock v1.0.0 (f38f72c)
-    - Release git-tempfile v1.0.0 (1238535)
-    - Upgrade to nom-7 (f0aa3e1)
-    - Merge branch 'main' into 162-repo-design-sketch (e63b634)
-    - [repository #165] fix docs (b4fdfd7)
-    - Release git-ref v0.6.0 (0bb4c13)
-    - [ref #165] refactor (66624c3)
-    - [repository #165] refactor (00ec15d)
+    - (cargo-release) version 0.4.1 (25d2c2e)
+    - Document `git-ref` (91dce23)
+    - remove dash in all repository links (98c1360)
+    - refactor (ba1d883)
+</details>
+
+## v0.4.0 (2020-09-12)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release over the course of 29 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - (cargo-release) version 0.4.0 (f9dd225)
+    - Allow dual-licensing with Apache 2.0 (ea353eb)
+    - refactor (63c1292)
+</details>
+
+## v0.3.0 (2020-08-12)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - bump minor version to 0.3 (4351e28)
+    - update to quick-error 2.0 (4b1b784)
+</details>
+
+## v0.2.0 (2020-07-23)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release over the course of 6 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - (cargo-release) version 0.2.0 (d350a13)
+    - Switch to latest quick-error (9760856)
+    - assert we don't exeed package sizes (df66d74)
+</details>
+
+## v0.1.0 (2020-07-15)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - refactor (6ad9304)
+    - refactor (1fd90f7)
+    - test for common ascii control characters (ae0c885)
+    - all test for valid ref name except for ascii control chars (a157acf)
+    - add new 'git-ref' crate; place ref name validation code there (1a0e84e)
 </details>
 

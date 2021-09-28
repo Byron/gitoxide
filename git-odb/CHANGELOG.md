@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release over the course of 13 calendar days.
+ - 12 commits contributed to the release over the course of 14 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on
 
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
+    - Sort all commits by time, descending… (7c37a3d)
     - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - Fixup remaining changelogs… (0ac488a)
     - Generate changelogs with details (fd0f3bd)
@@ -82,6 +83,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [repository #164] generic write_object() (c569f83)
     - [repository #164] Support for refreshing the object database (46e10f8)
     - [odb #164] Add refresh() functionality (ee16d04)
+</details>
+
+## v0.21.1 (2021-09-07)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release over the course of 1 calendar day.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release git-odb v0.21.1 (cb33c2f)
+    - [odb #190] Read all eligble packed refs, no "pack-" prefix needed (ab250f7)
+    - Bump git-pack v0.10.0 (e5e3c80)
+    - Bump git-hash v0.6.0 (6efd90d)
+</details>
+
+## v0.21.0 (2021-08-27)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 16 commits contributed to the release over the course of 4 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - [repository #174] adjust various changelogs (081faf5)
+    - [odb #180] fix docs (bd50752)
+    - [odb #180] refactor (eff21da)
+    - Bump git-odb v0.21.0 (7b9854f)
+    - [odb #180] add changelog (acf1193)
+    - [pack #179] refactor bundle (420dca2)
+    - [pack #179] refactor (ab6554b)
+    - [object #177] move mutable objects to crate::* (c551c02)
+    - [object #177] migrate immutable::tree to crate::tree (fa5cd06)
+    - [object #177] move immutable::* to crate::*Ref, start `iter` adjustments (461dc53)
+    - [object #177] rename immutable::* to immutable::*Ref (6deb012)
+    - Release git-object v0.13.0 (708fc5a)
+    - Merge pull request #172 from mellowagain/main (61aebbf)
+    - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
+    - Release git-pack v0.9.0 (7fbc961)
+    - [pack #67] refactor (14717f6)
 </details>
 
 ## v0.20.2 (2021-08-17)
@@ -1653,63 +1712,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Get rid of nightly requirement, just parse tags differently soon (f037c4d)
     - cargo fmt (2aa0857)
     - reorganize repository a bit; use different contact email address (cb9fa28)
-</details>
-
-## v0.21.1 (2021-09-07)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 4 commits contributed to the release over the course of 1 calendar day.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - Release git-odb v0.21.1 (cb33c2f)
-    - [odb #190] Read all eligble packed refs, no "pack-" prefix needed (ab250f7)
-    - Bump git-pack v0.10.0 (e5e3c80)
-    - Bump git-hash v0.6.0 (6efd90d)
-</details>
-
-## v0.21.0 (2021-08-27)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 16 commits contributed to the release over the course of 4 calendar days.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - [repository #174] adjust various changelogs (081faf5)
-    - [odb #180] fix docs (bd50752)
-    - [odb #180] refactor (eff21da)
-    - Bump git-odb v0.21.0 (7b9854f)
-    - [odb #180] add changelog (acf1193)
-    - [pack #179] refactor bundle (420dca2)
-    - [pack #179] refactor (ab6554b)
-    - [object #177] move mutable objects to crate::* (c551c02)
-    - [object #177] migrate immutable::tree to crate::tree (fa5cd06)
-    - [object #177] move immutable::* to crate::*Ref, start `iter` adjustments (461dc53)
-    - [object #177] rename immutable::* to immutable::*Ref (6deb012)
-    - Release git-object v0.13.0 (708fc5a)
-    - Merge pull request #172 from mellowagain/main (61aebbf)
-    - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
-    - Release git-pack v0.9.0 (7fbc961)
-    - [pack #67] refactor (14717f6)
 </details>
 
