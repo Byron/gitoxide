@@ -17,15 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 172 commits contributed to the release over the course of 19 calendar days.
- - 12 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 178 commits contributed to the release over the course of 19 calendar days.
+ - 14 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 14 times to make code idiomatic. 
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 16 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -52,6 +52,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: an algorithm to collect dependencies by 'growing' (73794a4)
     - smart-release: foundation for bumping versions (d1145d1)
  * **#198**
+    - smart-release with --changelog-without option… (7db19a8)
+    - changelog command learns the --without <section> option (1df3ad7)
+    - Easy removal of statistical sections, by just removing them… (dce113d)
+    - Rebuild all changelogs to assure properly ordered headlines (cfcaa66)
     - reorder headlines according to version ordering… (733d7f1)
     - Sort all commits by time, descending… (7c37a3d)
     - greatly reduce changelog size now that the traversal fix is applied (3924c03)
@@ -180,6 +184,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **#67**
     - split data::output::count::objects into files (8fe4612)
  * **Uncategorized**
+    - thanks clippy (738538c)
+    - thanks clippy (b693e62)
     - thanks clippy (11bd4a3)
     - thanks clippy (b856da4)
     - thanks clippy (31498bb)
