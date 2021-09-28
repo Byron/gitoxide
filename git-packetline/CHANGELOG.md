@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 217 commits contributed to the release over the course of 13 calendar days.
+ - 218 commits contributed to the release over the course of 13 calendar days.
  - 48 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 9 unique issues were worked on
 
@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: an algorithm to collect dependencies by 'growing' (73794a4)
     - smart-release: foundation for bumping versions (d1145d1)
  * **#198**
+    - The first headline level controls all the other ones (302b267)
     - Fixup remaining changelogs… (0ac488a)
     - Generate changelogs with details (fd0f3bd)
     - Update all changelogs with details (0732699)
@@ -436,7 +437,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 136 commits contributed to the release over the course of 89 calendar days.
+ - 135 commits contributed to the release over the course of 89 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on
 
@@ -449,7 +450,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **#77**
     - [git-packetline] refactor (aa61993)
  * **Uncategorized**
-    - Revert "[ref] break dev-dependency cycle" (436e89b)
     - clippy on tests and thanks clippy (a77a71c)
     - thanks clippy (e1964e4)
     - [ref] refactor (bd94ea5)
@@ -598,7 +598,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 15 commits contributed to the release over the course of 133 calendar days.
+ - 14 commits contributed to the release over the course of 133 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -609,7 +609,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - [track publish] git-odb/0.15.0 (7617998)
     - (cargo-release) version 0.5.0 (8c4cc3f)
     - (cargo-release) version 0.15.0 (d91b241)
     - (cargo-release) version 0.14.0 (d9514ee)
@@ -970,7 +969,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 82 commits contributed to the release.
+ - 81 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -981,7 +980,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Release git-packetline v0.10.0 (0899338)
     - [ref #190] move remaining file store functions to extension trait (60fc215)
     - Bump git-protocol v0.10.0 (82d5a0b)
     - [ref #190] Move file-log-specific functionality into own extension trait. (0b635e9)
