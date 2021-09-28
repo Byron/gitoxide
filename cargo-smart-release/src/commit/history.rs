@@ -14,4 +14,5 @@ pub struct Item {
     pub message: Message,
     pub commit_time: git::actor::Time,
     pub tree_id: git::hash::ObjectId,
+    pub parent_tree_id: Option<git::hash::ObjectId>,
 }
