@@ -37,6 +37,10 @@ pub struct ChangeLog {
     #[argh(switch)]
     pub no_preview: bool,
 
+    /// omits these kinds of generated changelog content, values are 'clippy', 'commit-statistics' and 'commit-details'
+    #[argh(option)]
+    pub without: Vec<String>,
+
     /// do not take into consideration any dependencies of the crates to generate the changelog for.
     ///
     /// This flag is useful if you plan to review and finalize changelogs before a a smart-release, where dependencies

@@ -346,6 +346,7 @@ version = "0.3.1"
 dependencies = [
  "anyhow",
  "argh",
+ "bitflags",
  "cargo_metadata",
  "cargo_toml",
  "crates-index",
