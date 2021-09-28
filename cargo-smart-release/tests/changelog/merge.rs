@@ -248,7 +248,7 @@ fn into_previously_generated_with_removed_statistical_segments() {
                             .assume_utc(),
                     ),
                     name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
-                    segments: segments.clone(),
+                    segments,
                     unknown: "".into(),
                 },
                 Section::Release {
