@@ -5,7 +5,6 @@ use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
 use semver::{Op, Version, VersionReq};
 
 use super::{cargo, git, version, Context, Oid, Options};
-use crate::changelog::section::segment;
 use crate::{
     changelog,
     utils::{names_and_versions, package_by_id, package_eq_dependency, will},
@@ -42,7 +41,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 history,
                 &ctx.base,
                 opts.dry_run,
-                segment::Selection::all(),
+                opts.generator_segments,
             )?;
             let recent_release_in_log = log.most_recent_release_mut();
             let new_version: semver::Version = new_version.parse()?;

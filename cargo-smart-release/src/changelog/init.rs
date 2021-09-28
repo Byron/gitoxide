@@ -4,9 +4,8 @@ use cargo_metadata::{
 };
 use git_repository as git;
 
-use crate::changelog::section::segment;
 use crate::{
-    changelog::Section,
+    changelog::{section::segment, Section},
     commit,
     utils::{package_by_name, will},
     ChangeLog,

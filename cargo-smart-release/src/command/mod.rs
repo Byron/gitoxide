@@ -1,4 +1,6 @@
 pub mod release {
+    use crate::changelog::section::segment;
+
     #[derive(Debug, Clone, Copy)]
     pub struct Options {
         pub dry_run: bool,
@@ -20,6 +22,7 @@ pub mod release {
         pub isolate_dependencies_from_breaking_changes: bool,
         pub changelog: bool,
         pub preview: bool,
+        pub generator_segments: segment::Selection,
     }
 }
 #[path = "release/mod.rs"]

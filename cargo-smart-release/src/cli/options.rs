@@ -90,6 +90,10 @@ pub struct SmartRelease {
     #[argh(switch)]
     pub no_changelog: bool,
 
+    /// omits these kinds of generated changelog content, values are 'clippy', 'commit-statistics' and 'commit-details'
+    #[argh(option)]
+    pub changelog_without: Vec<String>,
+
     /// if unset, about-to-be changed changelogs will be previewed using 'bat', if available.
     ///
     /// If set, no preview will ever be displayed, but note that empty changelogs will always stop the release process.
