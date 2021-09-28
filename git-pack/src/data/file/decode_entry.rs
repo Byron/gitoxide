@@ -317,17 +317,7 @@ impl File {
                 let base_entry = cursor;
                 debug_assert!(!base_entry.header.is_delta());
                 object_kind = base_entry.header.as_kind();
-                let packed_size = self.decompress_entry_from_data_offset(base_entry.data_offset, out)?;
-                cache.put(
-                    self.id,
-                    base_entry.data_offset,
-                    &out[..base_entry
-                        .decompressed_size
-                        .try_into()
-                        .expect("successful decompression should make this successful too")],
-                    object_kind.expect("non-delta object"),
-                    packed_size,
-                );
+                self.decompress_entry_from_data_offset(base_entry.data_offset, out)?;
             }
 
             (first_buffer_size, second_buffer_end)
