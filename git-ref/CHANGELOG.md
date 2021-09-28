@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 12 calendar days.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 12 commits contributed to the release over the course of 13 calendar days.
+ - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on
 
 ### Commit Details
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
+    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - Generate changelogs with details (fd0f3bd)
     - Update all changelogs with details (0732699)
     - Update changelogs (b30db3b)
@@ -29,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Fix section headline level (9d6f263)
     - Write first version of changlogs thus far… (719b6bd)
     - add panicking `Target::id()` and `TargetRef::id()` (4ed4b2d)
+    - loose reference iteration with non-dir prefixes… (293bfc0)
+    - git-ref(docs): improve changelog format (90e6128)
  * **Uncategorized**
     - Merge branch 'main' into changelog-generation (c956f33)
     - Bump git-traverse v0.9.0, safety bump 8 crates (d39fabb)
@@ -43,9 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
- - 2 unique issues were worked on
+ - 3 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -53,8 +56,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#198**
-    - loose reference iteration with non-dir prefixes… (293bfc0)
  * **Uncategorized**
     - Release git-ref v0.7.3 (b0a9815)
     - Update changelogs once more… (d57d279)
@@ -63,19 +64,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.7.2 (2021-09-10)
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 2 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -83,13 +78,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#198**
-    - git-ref(docs): improve changelog format (90e6128)
  * **Uncategorized**
     - Release git-ref v0.7.2 (e940e9a)
     - [#195] Fix previously incorrect usage of io::Kind::Other… (4dae07d)
     - thanks clippy (4701296)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.7.1 (2021-09-08)
 
@@ -126,7 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 21 commits contributed to the release over the course of 1 calendar day.
+ - 49 commits contributed to the release over the course of 5 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -158,7 +157,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [ref #190] more conversion trait impls (1795a33)
     - Bump git-hash v0.6.0 (6efd90d)
     - [repository #190] obtain the kind fo hash used in a repo (a985491)
+    - [ref #190] refactor (e34be7e)
+    - [ref #190] more Target conversions… (1fe1b42)
+    - [repository #190] refactor (7a111b1)
+    - [ref #190] refactor (49fe1dc)
+    - [ref #190] reverse reflog ergonomics (2de86f9)
+    - [ref #190] check for zero sized buffers in reverse log iterators… (998c7c6)
+    - [ref #190] move remaining file store functions to extension trait (60fc215)
+    - [ref #190] Move file-log-specific functionality into own extension trait. (0b635e9)
+    - [repository #190] a major step forward with `head()` access (43ac4f5)
+    - [ref #190] cache peeled objects properly (2cb511e)
+    - [ref #190] fix docs (3e64ec1)
+    - Bump git-ref v0.7.0 (ac4413c)
+    - [ref #190] fix remaining tests (df21f25)
+    - thanks clippy (14dff63)
+    - [ref #190] Use Raw Reference everywhere for great simplification… (7aeea9c)
+    - [ref #190] raw reference peeling (9473a71)
+    - [ref #190] introduce Raw reference type that simplifies everything… (8634341)
+    - [ref #190] more tests (980e16a)
+    - [ref #190] deletions also use PreviousValue now (74f85b1)
+    - [ref #190] refactor (0e65559)
+    - [ref #190] be explicit about what the previous reflog oid is for… (c04c8b9)
+    - [ref #190] don't claim there was a previous oid unnecessarily… (68f7fc2)
+    - [ref #190] refactor (07126d6)
+    - [ref #190] Allow for explicit expected previous values (1a4786f)
+    - [ref #190] prepare massive refactoring to get additional constraint (9741987)
+    - [refs #190] refactor; handle value-checks in dereffed symlinks correctly (63bedc7)
+    - [ref #190] refactor (3f36a01)
+    - [object #190] More conversion methods for Object (78bacf9)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.6.1
 
@@ -381,12 +414,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.5.0 (2021-08-10)
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 15 times to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -549,9 +576,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [ref] basic lookup rule impl; needs more test cases (3226f77)
     - [ref] fix compile warning on windows (c328774)
     - [ref] a test case specifically for lookup rules (ab3a34f)
+    - Remove unnecessary pub(crate) exports (3d2456e)
     - [ref] refactor (140da9a)
     - [ref] improve parse failure handling in packed-ref lookup (ba62aab)
-    - Remove unnecessary pub(crate) exports (3d2456e)
     - [ref] refactor (959abc7)
     - [ref] prepare for proper full-name conversion (0e6d3f2)
     - [ref] searching fully qualified reference names actually works. (9b2579c)
@@ -798,22 +825,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [pack-gen] refactor (61554e2)
 </details>
 
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 15 times to make code idiomatic. 
+
 ## v0.6.0 (2021-08-27)
 
 ### BREAKING
 
 - rename `file::Store::packed()` to `file::Store::packed_buffer()`
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 55 commits contributed to the release over the course of 8 calendar days.
+ - 27 commits contributed to the release over the course of 8 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -824,56 +851,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - [ref #190] refactor (e34be7e)
-    - [ref #190] more Target conversions… (1fe1b42)
-    - [repository #190] refactor (7a111b1)
-    - [ref #190] refactor (49fe1dc)
-    - [ref #190] reverse reflog ergonomics (2de86f9)
-    - [ref #190] check for zero sized buffers in reverse log iterators… (998c7c6)
-    - [ref #190] move remaining file store functions to extension trait (60fc215)
-    - [ref #190] Move file-log-specific functionality into own extension trait. (0b635e9)
-    - [repository #190] a major step forward with `head()` access (43ac4f5)
     - [odb #180] refactor (eff21da)
-    - [ref #190] cache peeled objects properly (2cb511e)
-    - [ref #190] fix docs (3e64ec1)
-    - Bump git-ref v0.7.0 (ac4413c)
-    - [ref #190] fix remaining tests (df21f25)
-    - thanks clippy (14dff63)
-    - [ref #190] Use Raw Reference everywhere for great simplification… (7aeea9c)
-    - [ref #190] raw reference peeling (9473a71)
     - [pack #179] refactor (ab6554b)
-    - [ref #190] introduce Raw reference type that simplifies everything… (8634341)
-    - [ref #190] more tests (980e16a)
-    - [ref #190] deletions also use PreviousValue now (74f85b1)
-    - [ref #190] refactor (0e65559)
-    - [ref #190] be explicit about what the previous reflog oid is for… (c04c8b9)
-    - [ref #190] don't claim there was a previous oid unnecessarily… (68f7fc2)
-    - [ref #190] refactor (07126d6)
-    - [ref #190] Allow for explicit expected previous values (1a4786f)
-    - [ref #190] prepare massive refactoring to get additional constraint (9741987)
     - [object #177] fix docs (2fd23ed)
-    - [refs #190] refactor; handle value-checks in dereffed symlinks correctly (63bedc7)
-    - [ref #190] refactor (3f36a01)
-    - [object #190] More conversion methods for Object (78bacf9)
     - [object #177] tag::RefIter -> TagRefIter (28587c6)
     - [object #177] migrate immutable::tree to crate::tree (fa5cd06)
     - [object #177] move immutable::* to crate::*Ref, start `iter` adjustments (461dc53)
     - [object #177] rename immutable::* to immutable::*Ref (6deb012)
     - Release git-object v0.13.0 (708fc5a)
     - [ref #175] follow (try_)find(_what) naming convention (679895c)
-    - Merge pull request #172 from mellowagain/main (61aebbf)
     - [ref #175] fix docs (dd1edc3)
     - [ref #175] refactor log line (7ac948a)
-    - Release git-actor v0.4.0 (16358c9)
+    - Merge pull request #172 from mellowagain/main (61aebbf)
     - [ref #175] refactor (1243459)
     - [ref #175] make 'mutable' module private (a80dbcf)
-    - Upgrade to nom-7 (f0aa3e1)
     - Release git-actor v0.5.0 (a684b0f)
-    - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
     - [actor #175] refactor (ec88c59)
     - [ref #175] refactor (292e567)
+    - Release git-actor v0.4.0 (16358c9)
+    - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
     - Release git-lock v1.0.0 (f38f72c)
     - Release git-tempfile v1.0.0 (1238535)
+    - Upgrade to nom-7 (f0aa3e1)
     - Merge branch 'main' into 162-repo-design-sketch (e63b634)
     - [repository #165] fix docs (b4fdfd7)
     - Release git-ref v0.6.0 (0bb4c13)

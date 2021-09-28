@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release over the course of 13 calendar days.
+ - 8 commits contributed to the release over the course of 13 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on
 
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
+    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - Generate changelogs with details (fd0f3bd)
     - Update all changelogs with details (0732699)
     - Update changelogs (b30db3b)
@@ -327,12 +328,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.1.0 (2021-04-30)
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -414,6 +409,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Frame for testing tree(&tree) diffing (28c78f5)
     - More explicit expectations towards entries in mutable Trees (d94f84c)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.0.0 (2021-04-26)
 

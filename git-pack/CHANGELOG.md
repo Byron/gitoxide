@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 22 commits contributed to the release over the course of 14 calendar days.
+ - 23 commits contributed to the release over the course of 14 calendar days.
  - 10 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on
 
@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **#164**
     - Avoid duplicate module paths in 'tree' and 'commit' (2f2d856)
  * **#198**
+    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - don't put more objects into the pack cache than needed (d89e474)
     - Fixup remaining changelogs… (0ac488a)
     - Generate changelogs with details (fd0f3bd)
@@ -84,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 1 calendar day.
+ - 4 commits contributed to the release over the course of 8 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -97,8 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **Uncategorized**
     - Bump git-pack v0.10.0 (e5e3c80)
     - [repository #190] first shot at ancestor iteration… (85f1a48)
-    - [repository #185] refactor (7604935)
     - Bump git-hash v0.6.0 (6efd90d)
+    - [repository #185] refactor (7604935)
 </details>
 
 ## v0.9.0 (2021-08-27)
@@ -119,12 +120,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **new methods**
    - `Find::find_tag_iter()`
  
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -167,11 +162,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Merge branch 'git-ref-refactor' (5dbf753)
     - [pack #172] A note about empty packs in Bundle writer (09a777f)
     - Merge pull request #172 from mellowagain/main (61aebbf)
-    - Merge branch 'Byron:main' into main (dc58eca)
-    - Allow creation of empty indices (d122fc7)
     - [actor #173] fix docs (2d7956a)
     - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
     - Release git-tempfile v1.0.0 (1238535)
+    - cleanup imports (e669303)
+    - Merge branch 'Byron:main' into main (dc58eca)
+    - Allow creation of empty indices (d122fc7)
     - [pack #170] there can only be one (dce4f97)
     - [pack #170] clru allows for free lists, reducing allocation pressure... (4d820d2)
     - [pack #170] basic progress for resolution (ada0b96)
@@ -183,7 +179,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Release git-pack v0.9.0 (7fbc961)
     - [pack #67] refactor (14717f6)
     - [pack #67] Add cache debugging capabilities to git-features (8776c98)
-    - cleanup imports (e669303)
     - [pack #167] Use custom uluru version to avoid a lot of allocations… (7bd3671)
     - [pack #164] fix docs (08ee674)
     - Revert "[pack #167] Use custom uluru version to avoid a lot of allocations…" (4c2ea21)
@@ -197,6 +192,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [pack #167] remove iterator based count objects impl… (7ec2f2b)
     - [pack] A non-iterator version of parallel object counting… (04fe855)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.8.2 (2021-08-17)
 
@@ -345,12 +346,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 7 times to make code idiomatic. 
-
 ### Commit Details
 
 <csr-read-only-do-not-edit/>
@@ -495,6 +490,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [git-repository] towards git-repository as one stop shop (aea6cc5)
     - [git-ref] the first failing test (7e802a0)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 7 times to make code idiomatic. 
 
 ## v0.2.0 (2021-05-25)
 

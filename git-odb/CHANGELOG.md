@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 13 calendar days.
+ - 11 commits contributed to the release over the course of 13 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on
 
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
+    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - Fixup remaining changelogs… (0ac488a)
     - Generate changelogs with details (fd0f3bd)
     - Update all changelogs with details (0732699)
@@ -225,12 +226,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 5 times to make code idiomatic. 
-
 ### Commit Details
 
 <csr-read-only-do-not-edit/>
@@ -353,6 +348,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [pack-gen] refactor (08b136f)
 </details>
 
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 5 times to make code idiomatic. 
+
 ## v0.15.0 (2021-05-09)
 
 ### Commit Statistics
@@ -380,8 +381,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - (cargo-release) version 0.9.0 (84897fd)
     - Merge branch 'patch-2' (f01dc54)
     - refactor (a9e4feb)
-    - Use Seek to skip large objects during indexing. (95e2af7)
     - Fix formatting (a341995)
+    - Use Seek to skip large objects during indexing. (95e2af7)
     - Remove almost all unsafe code from Tree. (42b6033)
     - thanks clippy (17258cc)
     - thanks clippy (09decde)
@@ -428,12 +429,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 153 commits contributed to the release over the course of 18 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 8 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -598,6 +593,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [experiment] cached version of compound::locate() (ec988dc)
 </details>
 
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 8 times to make code idiomatic. 
+
 ## v0.10.0 (2021-04-08)
 
 ### Commit Statistics
@@ -681,12 +682,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Details
 
 <csr-read-only-do-not-edit/>
@@ -708,6 +703,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [gix] Add optional zlib feature (f1f9665)
     - [git-odb] Add feature flag for zlib-ng (96b3810)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.8.0 (2021-01-24)
 
@@ -739,12 +740,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Details
 
 <csr-read-only-do-not-edit/>
@@ -761,6 +756,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - refactor (5b1328f)
     - Add missing '.' at end of doc comments (7136854)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.7.0 (2020-12-16)
 
@@ -816,12 +817,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Details
 
 <csr-read-only-do-not-edit/>
@@ -839,14 +834,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - finish refactoring git-odb (ec282ae)
 </details>
 
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
 ## v0.4.2 (2020-11-18)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 79 commits contributed to the release over the course of 55 calendar days.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 74 commits contributed to the release over the course of 60 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
 ### Thanks Clippy
@@ -890,10 +891,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - some more docs for 'pack' module (c32850d)
     - some more documentation (201f67c)
     - Merge branch 'commit-graph' into main (9cb09b2)
-    - the daily commit (single handedly) (b528c2e)
     - specify the hash to create with 'hash::bytes_of_file' (c000294)
-    - document `loose::Object` entirely (d5eef9c)
     - move 'git_odb::hash::bytes_of_file' into git_features::hash (c5f6b45)
+    - the daily commit (single handedly) (b528c2e)
+    - document `loose::Object` entirely (d5eef9c)
     - thanks clippy (b9e0a87)
     - docs for Sink (e7a09f0)
     - docs for compound object databases (813df71)
@@ -910,37 +911,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - basic infrastructure for unquoting c-style strings (f81bb03)
     - fix incorrect cycle detection, which worked on MacOS by accident (a6e7765)
     - Also use alternates for looking up objects… (ade929d)
-    - refactor (8877b77)
     - prepare for unquoting c-strings (47e2fa0)
     - Read multiple alternates from single file; ignore comments (1f8d367)
-    - refactor (4a0d034)
     - support for relateive alternates (b20e9ee)
-    - refactor (485aa91)
     - Ignore all cycles and be happy if we have found at least one actual odb (1effdfd)
-    - refactor (c1d2f41)
     - prepare for multi-line parsing and all the bells and whistles (08f9ec4)
-    - Revert "FAIL: try to get rid of tree-traversal Boxed error…" (1b42b31)
-    - refactor (07aff14)
     - Make compound DB initialization less lazy… (6dc57b3)
-    - try to get rid of tree-traversal Boxed error… (13159eb)
-    - refactor (57d463f)
     - Use parallel walkdir (via jwalk) when parallel feature is enabled (f444c85)
-    - Parameterize traversal error with Processor error (1513a13)
-    - refactor (c6be43d)
     - alternate now handles cycles (71167e4)
-    - Switch to prodash 10 and safe a lot of trait bounds in the process (e2fb1d9)
-    - refactor (524d0fe)
     - first simple alternate tests (7372118)
-    - refactor (a8f4cd7)
     - test for circular alternates (fc92709)
-    - Checksum verification for compound object (3be08b0)
-    - refactor (59d989a)
     - thanks clippy (4ddc64f)
-    - More methods for compound object (84d2b0e)
     - Actually resolve alternates when creating a compound DB (9be7aed)
-    - refactor (e5a9343)
     - refactor (c1eff58)
     - first sketch of alternate resolution (6cc8a94)
+    - remove quickerror dependency from git-odb (7e27495)
+    - refactor (7874c35)
+    - refactor (3ec99dc)
+    - refactor (519dd12)
+    - refacator (7ac2153)
+    - refactor (d4f288c)
+    - refactor (3a8fb61)
+    - refactor (98b3f4a)
+    - refactor (127b8b2)
+    - refactor (669b726)
+    - refactor (7bc321e)
+    - refactor (0752b45)
 </details>
 
 ## v0.4.1 (2020-09-18)
@@ -949,7 +945,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 17 commits contributed to the release over the course of 36 calendar days.
+ - 39 commits contributed to the release over the course of 5 calendar days.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -961,10 +957,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  * **Uncategorized**
     - (cargo-release) version 0.4.1 (60ac8b0)
-    - (cargo-release) version 0.6.0 (9ef184e)
     - refactor (ad17bfd)
     - refactor (91d9f78)
     - refactor (6ebb5d1)
+    - refactor (8877b77)
+    - refactor (4a0d034)
+    - refactor (485aa91)
+    - refactor (c1d2f41)
+    - refactor (07aff14)
+    - refactor (57d463f)
+    - refactor (c6be43d)
+    - refactor (524d0fe)
+    - refactor (a8f4cd7)
+    - Checksum verification for compound object (3be08b0)
+    - refactor (59d989a)
+    - More methods for compound object (84d2b0e)
+    - refactor (e5a9343)
+    - refactor (6a84f13)
+    - refactor (4e89c3b)
+    - Document why we won't use nightly for fixing NLL issue (ca29368)
+    - Revert "Fix NLL issue by using nightly" (6864a55)
+    - Fix NLL issue by using nightly (8c5bd09)
+    - Update tasks, prepare for NLL fix (52af8d1)
+    - Thanks clippy (6c4d1ec)
+    - This works, but locates twice… (4e709f6)
+    - Also the imperative version doesn't borrowcheck… (c5720f1)
+    - Looks like the functional approach to locate(…) doesn't borrowcheck (5df6867)
+    - refactor (9e68c6b)
+    - refactor (f219d5a)
+    - sketch compound::Db::locate; sort packs by size (6609a53)
+    - refactor (4a09754)
+    - Implement Write in terms of writing to the loose object DB (02b88c2)
+    - First sketch of compound Db (9bf2279)
+    - refactor (203ba99)
+    - (cargo-release) version 0.6.0 (9ef184e)
+    - Revert "FAIL: try to get rid of tree-traversal Boxed error…" (1b42b31)
+    - try to get rid of tree-traversal Boxed error… (13159eb)
+    - Parameterize traversal error with Processor error (1513a13)
+    - Switch to prodash 10 and safe a lot of trait bounds in the process (e2fb1d9)
+</details>
+
+## v0.4.0 (2020-09-12)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 15 commits contributed to the release over the course of 30 calendar days.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - (cargo-release) version 0.4.0 (2272fa4)
+    - (cargo-release) version 0.4.0 (0d7b60e)
+    - (cargo-release) version 0.5.0 (82b7313)
     - [clone] All it took was a an intermediary to call 'read' as expected (7c8ecb7)
     - [clone] minor refactor; it's definitely the read() that doesn't work… (406829b)
     - [clone] This actually works: first MVP of retrieving packs via clone (c06d819)
@@ -979,57 +1031,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - See if tree compaction saves considerable amounts of memory (0092c25)
 </details>
 
-## v0.4.0 (2020-09-12)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 32 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - (cargo-release) version 0.4.0 (2272fa4)
-    - (cargo-release) version 0.4.0 (0d7b60e)
-    - remove quickerror dependency from git-odb (7e27495)
-    - refactor (6a84f13)
-    - refactor (7874c35)
-    - refactor (4e89c3b)
-    - refactor (3ec99dc)
-    - Document why we won't use nightly for fixing NLL issue (ca29368)
-    - refactor (519dd12)
-    - (cargo-release) version 0.5.0 (82b7313)
-    - Revert "Fix NLL issue by using nightly" (6864a55)
-    - refacator (7ac2153)
-    - Fix NLL issue by using nightly (8c5bd09)
-    - refactor (d4f288c)
-    - Update tasks, prepare for NLL fix (52af8d1)
-    - refactor (3a8fb61)
-    - Thanks clippy (6c4d1ec)
-    - This works, but locates twice… (4e709f6)
-    - Also the imperative version doesn't borrowcheck… (c5720f1)
-    - refactor (98b3f4a)
-    - Looks like the functional approach to locate(…) doesn't borrowcheck (5df6867)
-    - refactor (9e68c6b)
-    - refactor (127b8b2)
-    - refactor (f219d5a)
-    - refactor (669b726)
-    - sketch compound::Db::locate; sort packs by size (6609a53)
-    - refactor (7bc321e)
-    - refactor (4a09754)
-    - Implement Write in terms of writing to the loose object DB (02b88c2)
-    - refactor (0752b45)
-    - First sketch of compound Db (9bf2279)
-    - refactor (203ba99)
-</details>
-
 ## v0.3.0 (2020-08-12)
 
 ### Commit Statistics
@@ -1039,12 +1040,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 413 commits contributed to the release over the course of 31 calendar days.
  - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 5 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -1467,6 +1462,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Respect thread limit in 'in_parallel' (babfd84)
     - apply cargo diet (79b9b73)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 5 times to make code idiomatic. 
 
 ## v0.1.0 (2020-07-12)
 

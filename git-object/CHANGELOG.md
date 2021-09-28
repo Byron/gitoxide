@@ -7,17 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 37 commits contributed to the release over the course of 11 calendar days.
+ - 38 commits contributed to the release over the course of 11 calendar days.
  - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on
 
@@ -28,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
+    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - Generate changelogs with details (fd0f3bd)
     - Update all changelogs with details (0732699)
     - Update changelogs (b30db3b)
@@ -69,6 +64,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - thanks clippy (e56af5a)
 </details>
 
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
+
 ## v0.14.0 (2021-09-08)
 
 ### Thanks Clippy
@@ -106,7 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 1 calendar day.
+ - 5 commits contributed to the release over the course of 5 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -119,6 +120,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **Uncategorized**
     - Release git-object v0.13.1 (2c55ea7)
     - Bump git-hash v0.6.0 (6efd90d)
+    - [object #190] consistent method naming (c5de433)
+    - [object #190] More conversion methods for Object (78bacf9)
+    - [repository #190] A way to write objects and the empty tree specifically (7c559d6)
 </details>
 
 ## v0.13.0 (2021-08-27)
@@ -127,7 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 31 commits contributed to the release over the course of 8 calendar days.
+ - 28 commits contributed to the release over the course of 8 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -143,15 +147,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [object #177] fix docs (2fd23ed)
     - [object #177] resolve 'mutable' module (b201b32)
     - [object #177] refactor (216dd0f)
-    - [object #190] consistent method naming (c5de433)
     - [object #177] refactor (472e13b)
     - [object #177] Commit::write_to migration (60b9365)
     - [object #177]  commit::RefIter -> CommitRefIter (e603306)
-    - [object #190] More conversion methods for Object (78bacf9)
     - [object #177] migrate immutable::commit into crate::commit (45d3934)
     - [object #177] refactor tag write_to (7f19559)
     - [object #177] tag::RefIter -> TagRefIter (28587c6)
-    - [repository #190] A way to write objects and the empty tree specifically (7c559d6)
     - [object #177] into_mutable() -> into_owned() (7e701ce)
     - [object #177] fix docs (25d8e7b)
     - [object #177] move mutable objects to crate::* (c551c02)
@@ -161,12 +162,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [object #177] rename immutable::* to immutable::*Ref (6deb012)
     - Release git-object v0.13.0 (708fc5a)
     - Merge pull request #172 from mellowagain/main (61aebbf)
+    - Release git-actor v0.5.0 (a684b0f)
+    - [actor #175] refactor (ec88c59)
     - Release git-actor v0.4.0 (16358c9)
     - [actor #173] fix docs (2d7956a)
-    - Upgrade to nom-7 (f0aa3e1)
-    - Release git-actor v0.5.0 (a684b0f)
     - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
-    - [actor #175] refactor (ec88c59)
+    - Upgrade to nom-7 (f0aa3e1)
     - [smart-release #162] use TreeRef capabilities to lookup path (51d1943)
     - [repository #162] what could be a correct implementation of a tree path lookup (1f638ee)
 </details>
@@ -262,12 +263,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.10.0 (2021-08-10)
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -328,6 +323,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [pack-gen] the first green test for Tag iterators (df5ef8a)
 </details>
 
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
+
 ## v0.9.0 (2021-05-09)
 
 ### Commit Statistics
@@ -362,12 +363,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v0.8.0 (2021-04-30)
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
 
 ### Commit Statistics
 
@@ -418,6 +413,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - rename git-object::(owned->mutable)|(borrowed|immutable) #(67) (91ee558)
     - The first basic traversal utility #(67) (ea6610b)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
 
 ## v0.7.0 (2021-04-08)
 
@@ -481,17 +482,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.5.0 (2020-12-15)
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 16 commits contributed to the release over the course of 90 calendar days.
+ - 17 commits contributed to the release over the course of 90 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -518,7 +513,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Document borrowed odb objects (7626f7f)
     - remove dash in all repository links (98c1360)
     - Finish removal of rust 2018 idioms (0d1699e)
+    - refactor (e4bcfe6)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.4.0 (2020-09-12)
 
@@ -526,7 +528,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release over the course of 29 calendar days.
+ - 6 commits contributed to the release over the course of 29 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -538,7 +540,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  * **Uncategorized**
     - (cargo-release) version 0.4.0 (0d7b60e)
-    - refactor (e4bcfe6)
     - (cargo-release) version 0.4.0 (f9dd225)
     - [clone] proper parsing of V1 refs (d262307)
     - [clone] Don't expose hex-error in public interfaces anymore (92dab30)
@@ -547,12 +548,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v0.3.0 (2020-08-12)
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Statistics
 
@@ -641,6 +636,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - refactor (dedd4dc)
     - apply cargo-diet (better late than never :D) (295fc81)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.1.0 (2020-07-12)
 
