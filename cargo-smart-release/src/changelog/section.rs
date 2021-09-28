@@ -27,8 +27,9 @@ impl<T: PartialEq<T>> PartialEq<Data<T>> for Data<T> {
 }
 
 pub mod details {
-    use git_repository as git;
     use std::fmt;
+
+    use git_repository as git;
 
     #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Clone)]
     pub enum Category {
@@ -98,9 +99,12 @@ impl ThanksClippy {
 }
 
 mod from_history {
+    use std::collections::BTreeMap;
+
     use cargo_metadata::Package;
     use git_repository as git;
     use git_repository::prelude::ObjectIdExt;
+    use time::OffsetDateTime;
 
     use crate::{
         changelog,
@@ -108,8 +112,6 @@ mod from_history {
         commit, utils,
         utils::is_top_level_package,
     };
-    use std::collections::BTreeMap;
-    use time::OffsetDateTime;
 
     impl Section {
         pub fn from_history_segment(
