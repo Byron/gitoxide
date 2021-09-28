@@ -14,18 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename `State` structs that serve as platform for iterators or other dependent types into `Platform`. These are usually intermediate objects only.
 - Rename `easy::Reference::log()` into `easy::Reference::logs()`
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 68 commits contributed to the release over the course of 16 calendar days.
- - 31 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 74 commits contributed to the release over the course of 16 calendar days.
+ - 34 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 5 unique issues were worked on
 
 ### Commit Details
@@ -52,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - rename easy::reference::log::State to easy::reference::Logs (03fe8a7)
     - rename `*::State` into `*::Platform` (0cd585e)
  * **#198**
+    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - Use hashmap based lookup for trees… (55d2d17)
     - Fixup remaining changelogs… (0ac488a)
     - Generate changelogs with details (fd0f3bd)
@@ -60,8 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Avoid adding newlines which make writing unstable (6b5c394)
     - Fix section headline level (9d6f263)
     - Write first version of changlogs thus far… (719b6bd)
-    - Fix panic related to incorrect handling of character boundaries (9e92cff)
     - Use 'to_*' when converting `easy::Object` to specific object kind (1cb41f8)
+    - Fix panic related to incorrect handling of character boundaries (9e92cff)
     - Fix build (d0a956f)
     - refactor!: Use git_object::commit::MessageRef::summary()… (13e7c3a)
     - Sketch data for parsed messages (32dd280)
@@ -79,6 +74,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - various small API changes (89f1505)
     - add 'Head::peeled()' method (56e39fa)
     - move easy::head::peel::Error -> easy::head::peel::to_id::Error (f644d0e)
+    - loose reference iteration with non-dir prefixes… (293bfc0)
+    - Add 'references().all().peeled().'… (6502412)
+    - smart-release: filter refs correctly, but… (2b4a615)
  * **#200**
     - feat: Lift io::Errors to response::Error::UploadPack(…)… (f293b63)
  * **#67**
@@ -89,15 +87,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - try to create persistent Easy iterator, but can't make it Send… (54a64a5)
  * **Uncategorized**
     - Merge branch 'main' into changelog-generation (c956f33)
+    - thanks clippy (ae7826e)
+    - thanks clippy (b02edb5)
+    - thanks clippy (68ea77d)
+    - improved changelog… (8b82f7d)
     - Bump git-traverse v0.9.0, safety bump 8 crates (d39fabb)
     - Bump git-repository v0.10.0 (5a10dde)
-    - thanks clippy (ae7826e)
     - [repository #164] docs for easy::reference::log (7de7c7e)
     - [repository #164] docs for easy::reference::iter (d86c713)
     - [repository #164] refactor (437e63b)
     - [repository #164] docs for top-level of easy::reference (9e465e0)
     - [repository #164] docs for easy::oid (b66b6fe)
-    - thanks clippy (b02edb5)
     - [repository #164] docs for easy::commit and easy::odb (abf37e5)
     - [repository #164] Documentation for `easy::borrow` (3e612f4)
     - [repository #164] docs for easy::head::* (516fde7)
@@ -109,23 +109,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [repository #164] (4111d22)
 </details>
 
-## v0.9.1 (2021-09-10)
-
-- Remove `max-performance` feature from default set until the `msvc` build issue is fixed. Otherwise it will surprisingly break windows builds.
-
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
+
+## v0.9.1 (2021-09-10)
+
+- Remove `max-performance` feature from default set until the `msvc` build issue is fixed. Otherwise it will surprisingly break windows builds.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release.
- - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 2 unique issues were worked on
+ - 6 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -133,19 +133,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#198**
-    - loose reference iteration with non-dir prefixes… (293bfc0)
-    - Add 'references().all().peeled().'… (6502412)
-    - smart-release: filter refs correctly, but… (2b4a615)
  * **Uncategorized**
     - Release git-repository v0.9.1 (262c122)
     - Release git-ref v0.7.3 (b0a9815)
-    - thanks clippy (68ea77d)
     - [repository] don't enforce feature flags that may fail on windows by default (afdec2e)
     - Release git-ref v0.7.2 (e940e9a)
     - Release git-protocol v0.10.4 (898ee08)
     - Release git-odb v0.21.3 (223f930)
-    - improved changelog… (8b82f7d)
 </details>
 
 ## v0.9.0 (2021-09-08)
@@ -200,7 +194,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 23 commits contributed to the release.
+ - 66 commits contributed to the release over the course of 8 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -215,26 +209,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [repository #190] test for oid.ancestors().all() (fdc3678)
     - [repository #190] fix build, lets just make traversal available by default (6da3599)
     - Bump git-pack v0.10.0 (e5e3c80)
-    - [repository #185] rustfmt (dfbb015)
     - [repository #190] access to repository directories (f4d1ec4)
     - [repository #190] first shot at ancestor iteration… (85f1a48)
     - [repository #190] refactor (e7188e0)
-    - [repository #185] remove quick-error infavor of thiserror (212c44c)
     - [ref #190] fix tests (e426e15)
-    - [repository #185] on the way to removing quick-error (6ecd431)
     - [repository #190] fix tests; needs inbound transaction handling… (e5a5c09)
-    - [repository #185] support for initializing bare repositories (9e8a39e)
-    - [repository #185] use git-config to handle bare repos more properly (8a5aac5)
-    - [repository #185] sketch of how to open a repository… (48207b5)
     - [repository #190] leverage git-ref namespace support (1aa9c11)
-    - [repository #185] refactor (63089ff)
-    - [repository #185] refactor (7604935)
-    - [repository #185] refactor repository initialization… (5ff7eaa)
     - [repository #190] refactor (609c249)
     - [repository #190] fix build (f5e118c)
     - [repository #190] note a known limitation about finding references in namespaces… (d335731)
     - [repository #190] transparent namespace support (d14f073)
+    - [repository #190] turns out we need bstr with unicode support (3d8796e)
+    - [repository #190] public bstr re-export (3b7ffde)
+    - [repository #190] cleanup usage of bstr… (e4411ff)
+    - [repository #190] prefixed reference iteration (a6e19c9)
+    - [repository #190] implementation of reference iteration (all() for now)… (2c0939a)
+    - [repository #190] refactor (8c532a4)
+    - [repository #190] prepare reference iteration (427f146)
+    - Bump git-hash v0.6.0 (6efd90d)
+    - [repository #190] obtain the kind fo hash used in a repo (a985491)
+    - [repository #190] refactor (7a111b1)
+    - [repository #190] shortcut to create references (28afd8e)
+    - [ref #190] add forward log iter and localize iter types… (c3e240d)
+    - [repository #190] refactor (e751688)
+    - thanks clippy (023dedc)
+    - [ref #190] reverse reflog ergonomics (2de86f9)
+    - [repository #190] ref log for HEAD specifically (946bbf1)
+    - [repository #190] reflog tests (641edde)
+    - [ref #190] First working sketch of reverse log iter access (4a36ded)
+    - [ref #190] move remaining file store functions to extension trait (60fc215)
+    - thanks clippy (376c045)
+    - [repository #190] refactor (15d4ac8)
+    - [repository #190] a major step forward with `head()` access (43ac4f5)
+    - [ref #190] cache peeled objects properly (2cb511e)
+    - Bump git-ref v0.7.0 (ac4413c)
+    - [repository #190] experiment with 'HEAD' API… (c55ce4d)
+    - thanks clippy (14dff63)
+    - [ref #190] Use Raw Reference everywhere for great simplification… (7aeea9c)
+    - [repository #190] refactor (d6bef3a)
+    - [ref #190] introduce Raw reference type that simplifies everything… (8634341)
+    - [ref #190] refactor (07126d6)
+    - [ref #190] Allow for explicit expected previous values (1a4786f)
+    - [repository #190] show that unconditional creation of references doesn't is lacking… (06b9270)
+    - [repository #190] another commit() test… (4ec631c)
+    - [repository #190] produce nice reflog messages (e7a8b62)
+    - [repository #190] commit::summary() (43f7568)
+    - [repository #190] thanks clippy (0763ac2)
+    - [repository #190] first version of 'commit(…)' without reflog message handling (bfcf8f1)
+    - [refs #190] refactor; handle value-checks in dereffed symlinks correctly (63bedc7)
+    - [repository #190] put git-lock into ST1… (26a6637)
+    - [repository #190] refactor (1e029b4)
+    - [repository #190] A way to write objects and the empty tree specifically (7c559d6)
+    - [various #190] rename 'local-offset' to 'local-time-support' (3a7d379)
+    - [repository #190] Make local-offset available on demand only… (1927be7)
+    - [repository #185] rustfmt (dfbb015)
+    - [repository #185] remove quick-error infavor of thiserror (212c44c)
+    - [repository #185] on the way to removing quick-error (6ecd431)
+    - [repository #185] support for initializing bare repositories (9e8a39e)
+    - [repository #185] use git-config to handle bare repos more properly (8a5aac5)
+    - [repository #185] sketch of how to open a repository… (48207b5)
+    - [repository #185] refactor (63089ff)
+    - [repository #185] refactor (7604935)
+    - [repository #185] refactor repository initialization… (5ff7eaa)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
 
 ## v0.7.2 (2021-08-17)
 
@@ -321,12 +364,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.7.0 (2021-08-10)
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -385,6 +422,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - (cargo-release) version 0.2.0 (3286e42)
 </details>
 
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
 ## v0.6.0 (2021-05-28)
 
 ### Commit Statistics
@@ -441,7 +484,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release over the course of 188 calendar days.
+ - 8 commits contributed to the release over the course of 204 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -459,6 +502,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Added [directory] argument to init. (62f8dc6)
     - Spelling fix in error message (944d0f4)
     - remove dash in all repository links (98c1360)
+    - refactor (ba1d883)
 </details>
 
 ## v0.4.0 (2020-09-12)
@@ -467,7 +511,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 28 calendar days.
+ - 2 commits contributed to the release over the course of 28 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -479,7 +523,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  * **Uncategorized**
     - (cargo-release) version 0.4.0 (2b1bca8)
-    - refactor (ba1d883)
     - Allow dual-licensing with Apache 2.0 (ea353eb)
 </details>
 
@@ -558,17 +601,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rename `object` to `objs` to be equivalent to `refs` and make space for the new `object` module
 - various minor version updates of pre-release dependencies
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 7 times to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 160 commits contributed to the release over the course of 10 calendar days.
+ - 117 commits contributed to the release over the course of 10 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -579,64 +616,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - [repository #190] turns out we need bstr with unicode support (3d8796e)
     - [repository #174] keep assets (e0fca77)
-    - [repository #190] public bstr re-export (3b7ffde)
     - [repository #174] remove arc_lock code entirely (dcbe742)
-    - [repository #190] cleanup usage of bstr… (e4411ff)
-    - [repository #190] prefixed reference iteration (a6e19c9)
     - [repository #174] conditionally compile future parking_lot version… (5375fc8)
-    - [repository #190] implementation of reference iteration (all() for now)… (2c0939a)
-    - [repository #190] refactor (8c532a4)
-    - [repository #190] prepare reference iteration (427f146)
-    - Bump git-hash v0.6.0 (6efd90d)
-    - [repository #190] obtain the kind fo hash used in a repo (a985491)
-    - [repository #190] refactor (7a111b1)
-    - [repository #190] shortcut to create references (28afd8e)
-    - [ref #190] add forward log iter and localize iter types… (c3e240d)
-    - [repository #190] refactor (e751688)
-    - thanks clippy (023dedc)
-    - [ref #190] reverse reflog ergonomics (2de86f9)
-    - [repository #190] ref log for HEAD specifically (946bbf1)
-    - [repository #190] reflog tests (641edde)
     - Bump git-repository v0.8.0 (cdb45ff)
-    - [ref #190] First working sketch of reverse log iter access (4a36ded)
     - [repository #174] adjust various changelogs (081faf5)
-    - [ref #190] move remaining file store functions to extension trait (60fc215)
     - Bump git-protocol v0.10.0 (82d5a0b)
-    - thanks clippy (376c045)
-    - [repository #190] refactor (15d4ac8)
-    - [repository #190] a major step forward with `head()` access (43ac4f5)
-    - [ref #190] cache peeled objects properly (2cb511e)
     - Bump git-odb v0.21.0 (7b9854f)
-    - Bump git-ref v0.7.0 (ac4413c)
-    - [repository #190] experiment with 'HEAD' API… (c55ce4d)
-    - thanks clippy (14dff63)
-    - [ref #190] Use Raw Reference everywhere for great simplification… (7aeea9c)
     - [pack #179] refactor (ab6554b)
-    - [repository #190] refactor (d6bef3a)
-    - [ref #190] introduce Raw reference type that simplifies everything… (8634341)
     - [packetline #178] fix compile warnings (c8d2e72)
-    - [ref #190] refactor (07126d6)
-    - [ref #190] Allow for explicit expected previous values (1a4786f)
-    - [repository #190] show that unconditional creation of references doesn't is lacking… (06b9270)
     - Bump git-traverse v0.8.0 (54f3541)
     - Bump git-diff v0.9.0 (2e2e798)
-    - [repository #190] another commit() test… (4ec631c)
-    - [repository #190] produce nice reflog messages (e7a8b62)
     - [object #177] cleanup CommitRefIter imports and git_object::Error (058f68a)
-    - [repository #190] commit::summary() (43f7568)
-    - [repository #190] thanks clippy (0763ac2)
     - [object #177] fix docs (2fd23ed)
-    - [repository #190] first version of 'commit(…)' without reflog message handling (bfcf8f1)
-    - [refs #190] refactor; handle value-checks in dereffed symlinks correctly (63bedc7)
     - [object #177] migrate immutable::commit into crate::commit (45d3934)
-    - [repository #190] put git-lock into ST1… (26a6637)
-    - [repository #190] refactor (1e029b4)
     - [object #177] tag::RefIter -> TagRefIter (28587c6)
-    - [repository #190] A way to write objects and the empty tree specifically (7c559d6)
-    - [various #190] rename 'local-offset' to 'local-time-support' (3a7d379)
-    - [repository #190] Make local-offset available on demand only… (1927be7)
     - [object #177] move mutable objects to crate::* (c551c02)
     - [object #177] migrate immutable::tree to crate::tree (fa5cd06)
     - [object #177] move immutable::* to crate::*Ref, start `iter` adjustments (461dc53)
@@ -644,26 +638,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Release git-object v0.13.0 (708fc5a)
     - [ref #175] follow (try_)find(_what) naming convention (679895c)
     - Merge pull request #172 from mellowagain/main (61aebbf)
-    - Release git-actor v0.4.0 (16358c9)
     - [ref #175] make 'mutable' module private (a80dbcf)
     - Release git-actor v0.5.0 (a684b0f)
-    - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
     - [ref #175] refactor (292e567)
+    - Release git-actor v0.4.0 (16358c9)
+    - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
     - Release git-lock v1.0.0 (f38f72c)
     - Release git-tempfile v1.0.0 (1238535)
     - [smart-release #171] it's about time we get some tests (48a489b)
     - [stability #171] Prime git-tempfile and git-lock for release (01278fe)
     - [stability #171] mark git-hash and git-actor as ST1 as well (32caae1)
     - [stability #171] git-ref is now ST1 and available through git-repository (50154cd)
-    - Release git-pack v0.9.0 (7fbc961)
     - [smart-release #171] Try to avoid unstable git-repository features… (c8f325b)
     - Merge branch 'main' into stability (11bae43)
-    - cleanup imports (e669303)
     - [stability #171] Don't provide access to less stable crates in `Respository` (e4c5b58)
+    - cleanup imports (e669303)
+    - [stability #171] Don't leak unstable plumbing crates in git-repository… (71eb30f)
+    - Release git-pack v0.9.0 (7fbc961)
     - Merge branch 'main' into 162-repo-design-sketch (e63b634)
     - [repository #164] top-level easy docs (6b71c51)
     - [repository #165] see if `git-config` can already be placed… (d287a4a)
-    - [stability #171] Don't leak unstable plumbing crates in git-repository… (71eb30f)
     - [repository #165] add limitations along with possible workarouds (7578f1e)
     - [repository #165] assure packed-refs are always uptodate (a5605df)
     - [repository #165] Allow cloning packed-refs and try to see how it differs… (7ec32b7)
@@ -674,61 +668,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [repository #165] refactor (1547d0b)
     - [repository #165] refactor; fine grained allow(missing_docs)… (aa0511f)
     - [repository #165] prepare for writing light docs for Easy (f8834c9)
-    - thanks clippy (41d7a44)
     - [repository #165] refactor (3a0160e)
-    - [repository #162] cleanup imports (983d11a)
     - [repository #165] fmt (a02d5aa)
-    - [smart-release #162] use TreeRef capabilities to lookup path (51d1943)
     - [repository #165] Don't panic on repo borrow error… (b2f644a)
-    - [repository #162] what could be a correct implementation of a tree path lookup (1f638ee)
     - thanks clippy (b496d99)
-    - [repository #162] detachable ObjectRefs and a few conversions (ec123bb)
     - [repository #165] Write about the GAT plan to make this better one day (d793ecd)
-    - [repository #162] finally let smart-release use the correct abstraction for peeling (ba243a3)
     - [repository #165] quick test to see if Access2 can become Access… (45acc7a)
-    - [repository #162] Add id field to ObjectRef… (f5ba98e)
     - [repository #165] Generalizing over mutable Repos is possible too… (0f7efe3)
-    - [repository #162] Make clear that Objects are actually references… (d1e6843)
     - [repository #165] show that Access2 works for all Easy* types… (b8ceefe)
-    - [repository #162] another attempt to find a decent peeling abstraction… (716d623)
     - [repository #165] First success with creating a shared borrow to the repo (f2a38b2)
-    - [repository #162] attach the Object to 'Access' (9a12564)
     - Revert "[repository #165] FAIL Look into `owned_ref` crate" (a1443e4)
-    - [repository #162] refactor (a32d361)
     - [repository #165] FAIL Look into `owned_ref` crate (09aa714)
-    - [repository #162] trying new names (b3f453b)
     - [repository #165] FAIL AsRef works for basic refs but… (02979b6)
-    - [repository #162] put impl for finding object data into the extension trait (91b9446)
     - [repository #165] FAIL try to generalize with Borrow… (295ba95)
-    - [repository #162] experiment with finding objects… (312a692)
     - [repository #165] FAIL See if EasyExclusive can work… (016debb)
-    - thanks clippy (f2fb026)
     - [repository #165] introduce EasyShared (a119ad9)
-    - [repository #162] Cannot ever store a RefCell Ref in an object… (5c17199)
     - [repository #165] First thoughts about stale caches (7f8b63e)
-    - [repository #162] experiemnt with optionally keeping data in Object (b8a8e08)
     - [repository #165] hide all easy::State fields behind result-enforcing methods (000c537)
     - [repository #165] pack cache access only with errors (2353e50)
-    - [smart-release #162] Object can be used like a git_hash::ObjectId (c7bc730)
     - [repository #165] assure packed-refs is only used non-panicking (a355d94)
-    - [smart-release #162] format everything (8ff83e5)
     - [repository #165] refactor (16fce63)
     - [repository #165] a sample of a simpler way to create a tag (fb8f584)
-    - [smart-release #162] don't throw away work… (b43b780)
     - [smart-release #165] Use generic edit-reference functionality (be3e57f)
-    - [smart-release #162] a demo of attaching and detaching objects… (ff2927c)
     - [repository #165] sketch generic ref file editing (3a026ae)
-    - [smart-release #162] an actual Data type… (7fd996f)
     - [repository #165] refactor (00ec15d)
-    - [smart-release #162] unify 'ext' visibility (ca082a7)
     - [repository #165] refactor (0f13104)
-    - thanks clippy (1f2d458)
     - [repository #165] An experiment on transforming panics into errors… (1f52226)
-    - [smart-release #162] a sketch for accessing objects data… (ba27101)
     - [repository #165] offer panicking type conversions for objects (f802f8c)
     - [repository #165] try a more common naming convention for fallbile things… (fc70393)
-    - [smart-release #162] peeling objects to a certain target kind… (5785136)
     - [repository #165] refactor (6207735)
+    - thanks clippy (41d7a44)
+    - [repository #162] cleanup imports (983d11a)
+    - [smart-release #162] use TreeRef capabilities to lookup path (51d1943)
+    - [repository #162] what could be a correct implementation of a tree path lookup (1f638ee)
+    - [repository #162] detachable ObjectRefs and a few conversions (ec123bb)
+    - [repository #162] finally let smart-release use the correct abstraction for peeling (ba243a3)
+    - [repository #162] Add id field to ObjectRef… (f5ba98e)
+    - [repository #162] Make clear that Objects are actually references… (d1e6843)
+    - [repository #162] another attempt to find a decent peeling abstraction… (716d623)
+    - [repository #162] attach the Object to 'Access' (9a12564)
+    - [repository #162] refactor (a32d361)
+    - [repository #162] trying new names (b3f453b)
+    - [repository #162] put impl for finding object data into the extension trait (91b9446)
+    - [repository #162] experiment with finding objects… (312a692)
+    - thanks clippy (f2fb026)
+    - [repository #162] Cannot ever store a RefCell Ref in an object… (5c17199)
+    - [repository #162] experiemnt with optionally keeping data in Object (b8a8e08)
+    - [smart-release #162] Object can be used like a git_hash::ObjectId (c7bc730)
+    - [smart-release #162] format everything (8ff83e5)
+    - [smart-release #162] don't throw away work… (b43b780)
+    - [smart-release #162] a demo of attaching and detaching objects… (ff2927c)
+    - [smart-release #162] an actual Data type… (7fd996f)
+    - [smart-release #162] unify 'ext' visibility (ca082a7)
+    - thanks clippy (1f2d458)
+    - [smart-release #162] a sketch for accessing objects data… (ba27101)
+    - [smart-release #162] peeling objects to a certain target kind… (5785136)
     - [smart-release #162] a single import path for ReferenceExt (7060797)
     - [smart-release #162] rename git-repository::object -> objs (ac70d81)
     - [smart-release #162] replace reference peeling with git_easy (7cfd5f9)
@@ -740,4 +734,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [smart-release #162] FAIL: definitely need better granularity (5f27871)
     - [smart-release #162] FAIL: promising at first, but not really working… (fa01f76)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
 

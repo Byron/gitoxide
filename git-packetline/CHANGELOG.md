@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 13 commits contributed to the release over the course of 13 calendar days.
+ - 14 commits contributed to the release over the course of 13 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on
 
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
+    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - refactor and improve path filtering to find relevant commits… (99db079)
     - The first headline level controls all the other ones (302b267)
     - Fixup remaining changelogs… (0ac488a)
@@ -156,12 +157,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
-
 ### Commit Details
 
 <csr-read-only-do-not-edit/>
@@ -187,9 +182,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [async-client] Try to bring 'Send' back but… (3a06adb)
     - Prevent selecting mutually exclusive features (7f5da18)
     - Merge branch 'dependabot/cargo/crc-2.0.0' (683c44d)
-    - [git-protocol] fix build (4cce648)
     - [git-protocol] fetch in sync and async… (4776039)
     - Bump maybe-async from 0.2.4 to 0.2.6 (d99a1a8)
+    - [git-protocol] fix build (4cce648)
     - refactor (14c9093)
     - [git-transport] upgrade to futures-lite 1.12 with BufRead support (ee01c79)
     - [git-transport] ExtendedBufRead for Async… (d4e56c8)
@@ -274,6 +269,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [git-packetline] refactor (e5769d1)
     - [git-packetline] refactor (fef3c9f)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
 
 ## v0.5.0 (2021-05-09)
 
@@ -369,7 +370,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 90 calendar days.
+ - 4 commits contributed to the release over the course of 90 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -383,7 +384,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - (cargo-release) version 0.3.0 (eade7d1)
     - (cargo-release) version 0.5.0 (c767e07)
     - remove dash in all repository links (98c1360)
-    - (cargo-release) version 0.4.0 (2272fa4)
     - refactor (8930610)
 </details>
 
@@ -393,15 +393,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 47 commits contributed to the release over the course of 26 calendar days.
+ - 4 commits contributed to the release over the course of 2 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -413,6 +407,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - (cargo-release) version 0.2.1 (abc218c)
     - Assure peek behaves exactly as we want it to with ERR lines (bbdaee5)
     - V1 parsing of shallow and unshallow lines… (8bcf535)
+    - (cargo-release) version 0.4.0 (2272fa4)
+</details>
+
+## v0.2.0 (2020-09-12)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 45 commits contributed to the release over the course of 23 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - (cargo-release) version 0.2.0 (da830de)
     - [clone] Support for reading multi-step negoritaions, but… (507d342)
     - thanks clippy (6aeb68c)
     - [clone] support for stopped_at() in provider and reader (6bd8c87)
@@ -459,25 +474,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [clone] prepare for making progress in packet line reader optional (ffe84c0)
 </details>
 
-## v0.2.0 (2020-09-12)
-
-### Commit Statistics
+### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - (cargo-release) version 0.2.0 (da830de)
-</details>
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
 
 ## v0.1.0 (2020-08-18)
 

@@ -166,6 +166,11 @@ pub mod history {
             });
         }
         repo.object_cache_size(prev)?;
+        items.sort_by(|lhs, rhs| {
+            (lhs.commit_time.time as i64 + lhs.commit_time.offset as i64)
+                .cmp(&(rhs.commit_time.time as i64 + rhs.commit_time.offset as i64))
+                .reverse()
+        });
 
         let elapsed = start.elapsed();
         log::trace!(

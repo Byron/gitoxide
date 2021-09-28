@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 13 calendar days.
+ - 15 commits contributed to the release over the course of 13 calendar days.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on
 
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
+    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - Fixup remaining changelogs… (0ac488a)
     - Generate changelogs with details (fd0f3bd)
     - Update all changelogs with details (0732699)
@@ -43,12 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.10.4 (2021-09-10)
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -68,13 +63,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - thanks clippy (4701296)
 </details>
 
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
 ## v0.10.3 (2021-09-07)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -86,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  * **Uncategorized**
     - Release git-protocol v0.10.3 (aa90f98)
+    - Bump git-hash v0.6.0 (6efd90d)
 </details>
 
 ## v0.10.2 (2021-08-29)
@@ -117,7 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 2 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -130,7 +132,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **Uncategorized**
     - Release git-protocol v0.10.1 (cec8ee3)
     - [protocol #174] fix tests… (cdc16fc)
-    - Bump git-hash v0.6.0 (6efd90d)
 </details>
 
 ## v0.10.0 (2021-08-27)
@@ -141,7 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release over the course of 2 calendar days.
+ - 7 commits contributed to the release over the course of 3 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -157,8 +158,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Bump git-packetline v0.10.0 (b09f391)
     - [packetline #178] rename PacketLine to PacketLineRef… (d4c16a9)
     - Merge pull request #172 from mellowagain/main (61aebbf)
-    - Upgrade to nom-7 (f0aa3e1)
     - [stability #171] Prime git-tempfile and git-lock for release (01278fe)
+    - Upgrade to nom-7 (f0aa3e1)
 </details>
 
 ## v0.9.0 (2021-08-17)
@@ -225,12 +226,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 5 times to make code idiomatic. 
-
 ### Commit Details
 
 <csr-read-only-do-not-edit/>
@@ -254,7 +249,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [protocol] Allow both preparation delegate methods to fail (d89393b)
     - [protocol] start trying LsRefsAction::Abort(Box<dyn Error>)… (660b9dc)
     - [protocol] adjust description of fetch::Error to match io::Error sources (23dafc6)
-    - [protocol] fallible negotiation (e269a2c)
     - Revert "[ref] Try using BorrowMut to avoid blanket trait impls, but…" (8212536)
     - [ref] Try using BorrowMut to avoid blanket trait impls, but… (4bb9bba)
     - [protocol] only send flush packets in stateful connections (0995c22)
@@ -262,6 +256,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [ref] rename Action::Close to Action::Cancel… (cac1f6c)
     - [transport] impl Delegate for &mut T: Delegate; refactor fetch() signature (2ded7f9)
     - [transport] implement Transport for &mut T: Transport as well (372fb81)
+    - [protocol] fallible negotiation (e269a2c)
     - [protocol] refactor (11b2fd1)
     - [protocol] refactor (967946a)
     - [protocol] refactor (8dc425f)
@@ -289,19 +284,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Merge branch 'dependabot/cargo/crc-2.0.0' (683c44d)
     - [git-protocol] remove compile warnings if no client type is specified… (478a980)
     - thanks clippy (57106e2)
-    - [git-protocol] fix build (4cce648)
     - [git-protocol] builds without features work (a1945ff)
-    - [git-protocol] async Delegate (1aa6781)
     - [git-protocol] async fetch tests work (fe434a5)
-    - thanks clippy (0759ade)
     - [git-protocol] fetch tests nearly compile in async (97fb186)
     - [git-protocol] fetch in sync and async… (4776039)
     - [git-protocol] refactor (80379fd)
     - [git-protocol] build should fail if mutually exclusiive features are set (72cf940)
+    - Bump maybe-async from 0.2.4 to 0.2.6 (d99a1a8)
+    - [git-protocol] fix build (4cce648)
+    - [git-protocol] async Delegate (1aa6781)
+    - thanks clippy (0759ade)
     - [git-protocol] refactor (94d7be4)
     - [git-protocol] refactor (990099b)
     - [git-protocol] refactor (d623cf7)
-    - Bump maybe-async from 0.2.4 to 0.2.6 (d99a1a8)
     - [git-protocol] async response (c498557)
     - [git-protocol] refactor (a8dc078)
     - refactor (2eefe17)
@@ -340,6 +335,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Fix git-protocol (284f8af)
     - refactor (1412282)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 5 times to make code idiomatic. 
 
 ## v0.7.0 (2021-05-09)
 
@@ -413,12 +414,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
-
 ### Commit Details
 
 <csr-read-only-do-not-edit/>
@@ -432,6 +427,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - thanks clippy (749ceba)
     - (cargo-release) version 0.11.0 (1aa1f5e)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
 
 ## v0.4.1 (2021-01-05)
 
@@ -519,15 +520,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 93 calendar days.
+ - 9 commits contributed to the release over the course of 90 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Details
 
@@ -544,8 +539,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - (cargo-release) version 0.7.0 (7fa7bae)
     - thanks clippy (b9e0a87)
     - remove dash in all repository links (98c1360)
-    - Switch to prodash 10 and safe a lot of trait bounds in the process (e2fb1d9)
+    - refactor (7c3c80a)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.1.1 (2020-09-14)
 
@@ -553,15 +554,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 188 commits contributed to the release over the course of 31 calendar days.
+ - 13 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 10 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -571,26 +566,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  * **Uncategorized**
     - (cargo-release) version 0.6.0 (9ef184e)
-    - [clone] Don't try to explicitly close the connection… (17200b3)
     - (cargo-release) version 0.1.1 (bb38c6b)
-    - [clone] Fix encoding of V1 capabilities in first want (b68a5c5)
-    - [clone] When unpacking peeled refs, use the object that refers to the tag… (fe8bb39)
     - Support V2 shallow-info section (6679c91)
     - Tests for V2 shallow section parsing (5bf58ab)
     - Support for the 'deepen-relative' argument (b86fed6)
-    - [clone] none the wiser - it really looks like everything is alright… (3b8d613)
-    - [clone] it looks like in order to figure out the issue, it needs tests higher up… (edf1540)
     - V1 parsing of shallow and unshallow lines… (8bcf535)
-    - [clone] Don't send V2 capabilities that don't have a value… (9c9a4ee)
     - remove unused fixtures (6ae69f5)
-    - [clone] Handle remote progress name prefixing (more) correctly (51d4d15)
     - Fix wants/haves separator handling for stateful V1 (1629575)
-    - [clone] This actually works: first MVP of retrieving packs via clone (c06d819)
     - Make really clear that V2 is stateless no matter what the transport supports :D (c296845)
     - Assure the first 'want' in V1 is always first (e729ec8)
-    - Use git attributes to prevent crlf conversion of fixtures on windows (80ca8b2)
     - Properly handle statelessness in V2 protocol (1b49f1e)
     - add some samples for deepen clones (61bc41a)
+    - Switch to prodash 10 and safe a lot of trait bounds in the process (e2fb1d9)
+</details>
+
+## v0.1.0 (2020-09-12)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 182 commits contributed to the release over the course of 29 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - (cargo-release) version 0.4.0 (0d7b60e)
+    - (cargo-release) version 0.2.0 (779e9d0)
+    - (cargo-release) version 0.2.0 (da830de)
+    - (cargo-release) version 0.5.0 (82b7313)
+    - [clone] Assure we don't hang due to unprocessed headers when peeking lines! (d9ced27)
+    - [clone] more correct handling of 'no-done'/done when sending wants/haves… (50f4516)
+    - [clone] Don't try to explicitly close the connection… (17200b3)
+    - [clone] Fix encoding of V1 capabilities in first want (b68a5c5)
+    - [clone] When unpacking peeled refs, use the object that refers to the tag… (fe8bb39)
+    - [clone] none the wiser - it really looks like everything is alright… (3b8d613)
+    - [clone] it looks like in order to figure out the issue, it needs tests higher up… (edf1540)
+    - [clone] Don't send V2 capabilities that don't have a value… (9c9a4ee)
+    - [clone] Handle remote progress name prefixing (more) correctly (51d4d15)
+    - [clone] This actually works: first MVP of retrieving packs via clone (c06d819)
+    - Use git attributes to prevent crlf conversion of fixtures on windows (80ca8b2)
     - [clone] Support for reading multi-step negoritaions, but… (507d342)
     - [clone] refactor (ded46fd)
     - [clone] support for progress that can handle writing pack files (46e0055)
@@ -760,31 +781,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - packet line encoding with flush support (e924a59)
 </details>
 
-## v0.1.0 (2020-09-12)
-
-### Commit Statistics
+### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - refactor (7c3c80a)
-    - (cargo-release) version 0.4.0 (0d7b60e)
-    - (cargo-release) version 0.2.0 (779e9d0)
-    - (cargo-release) version 0.2.0 (da830de)
-    - (cargo-release) version 0.5.0 (82b7313)
-    - [clone] Assure we don't hang due to unprocessed headers when peeking lines! (d9ced27)
-    - [clone] more correct handling of 'no-done'/done when sending wants/haves… (50f4516)
-</details>
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 10 times to make code idiomatic. 
 
 ## v0.0.0 (2020-08-13)
 

@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 169 commits contributed to the release over the course of 19 calendar days.
+ - 170 commits contributed to the release over the course of 19 calendar days.
  - 12 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on
 
@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: an algorithm to collect dependencies by 'growing' (73794a4)
     - smart-release: foundation for bumping versions (d1145d1)
  * **#198**
+    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - Use most relevant parent tree for change comparison… (6d02ac8)
     - Use hashmap based lookup for trees… (55d2d17)
     - refactor and improve path filtering to find relevant commits… (99db079)
@@ -101,24 +102,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - setup test for old method of parsing unknown text… (996c39d)
     - refactor tests: unit to integration level (4326322)
     - Don't add a date to unreleased versions (ba4d024)
-    - Remove strong-weak typing for conventional type (b71c579)
     - Actually integrated generated changelog with existing ones… (aa095e2)
-    - Fix panic related to incorrect handling of character boundaries (9e92cff)
     - inform about 'bat's  absence (c82c5bc)
-    - Parse message fully (and own it) to allow markdown generation (b8107e5)
     - rename --no-bat to --no-preview… (1087dd8)
-    - tests for conventional and unconventional description parsing (faade3f)
     - basic merging now works (6c6c200)
     - sketch for finding insertion points and merging sections (2a49033)
     - Sketch merging logic… (1932e2c)
-    - Make use of fixed git-conventional (b7b92b6)
     - prepare test for basic merging… (0a14ced)
-    - update git-conventional dependency (2d369e8)
     - nicer 'thanks clippy' message (4344216)
-    - first test and sketch for stripping of additional title values (55b7fe8)
-    - Basic message parsing, either conventional or not, without additions (b3b6a2d)
     - Show with simple example how the round-tripping works, neat (9510d9b)
-    - Sketch Message fields from which change logs can be built (b167d39)
     - collect unknown text so things don't get lost entirely… (60040c9)
     - parse back what we write out, perfectly… (5cab315)
     - fix journey test (3006e59)
@@ -135,6 +127,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - more general commit history (39522ec)
     - Invert meaning of changelog's --dependencies flag… (51eb8cb)
     - rename --skip-dependencies to --no-dependencies… (77ed17c)
+    - Remove strong-weak typing for conventional type (b71c579)
+    - Fix panic related to incorrect handling of character boundaries (9e92cff)
+    - Parse message fully (and own it) to allow markdown generation (b8107e5)
+    - tests for conventional and unconventional description parsing (faade3f)
+    - Make use of fixed git-conventional (b7b92b6)
+    - update git-conventional dependency (2d369e8)
+    - first test and sketch for stripping of additional title values (55b7fe8)
+    - Basic message parsing, either conventional or not, without additions (b3b6a2d)
+    - Sketch Message fields from which change logs can be built (b167d39)
     - Fix build (d0a956f)
     - More message parsing tests, now with legit failure… (625be8d)
     - Sketch data for parsed messages (32dd280)
@@ -180,21 +181,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - thanks clippy (11bd4a3)
     - thanks clippy (b856da4)
     - thanks clippy (31498bb)
-    - Merge branch 'main' into changelog-generation (c956f33)
     - thanks clippy (c55f909)
-    - don't claim to change manifest version if it's the same one (11eebdc)
     - thanks clippy (b200ee8)
     - thanks clippy (4b3407d)
     - thanks clippy (1dece2b)
-    - thanks clippy (2b55427)
     - thanks clippy (a89d08c)
+    - Merge branch 'main' into changelog-generation (c956f33)
+    - don't claim to change manifest version if it's the same one (11eebdc)
+    - thanks clippy (68ea77d)
+    - thanks clippy (7899ef1)
+    - thanks clippy (2b55427)
     - thanks clippy (a554b9d)
     - Bump git-repository v0.10.0 (5a10dde)
     - thanks clippy (d15fded)
     - [repository #164] fix build (1db5542)
     - Release git-repository v0.9.1 (262c122)
-    - thanks clippy (68ea77d)
-    - thanks clippy (7899ef1)
     - [smart-release] auto-detect changes in production crates as well (24bc1bd)
     - [smart-release #195] update test output to match CI… (f864386)
     - [smart-release #195] better error for untracked files. (f5266f9)
@@ -216,7 +217,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release over the course of 2 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -230,6 +231,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Release cargo-smart-release v0.3.1 (1bcea9a)
     - [repository #190] refactor (e7188e0)
     - [repository #190] fix build (f5e118c)
+    - [repository #190] a major step forward with `head()` access (43ac4f5)
 </details>
 
 ## v0.3.0 (2021-08-27)
@@ -242,17 +244,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Use short flag for `--no-bump-on-demand` in `--bump-dependencies`
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 50 commits contributed to the release over the course of 11 calendar days.
+ - 49 commits contributed to the release over the course of 11 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -267,7 +263,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [smart-release #174] add asciinema recording of failed release (6668527)
     - [smart-release #174] prepare changelog (0d9a2b8)
     - Bump git-repository v0.8.0 (cdb45ff)
-    - [repository #190] a major step forward with `head()` access (43ac4f5)
     - [smart-release] Adjust commit message depending on whether we are skipping the publish… (c190c6b)
     - [object #177] migrate immutable::tree to crate::tree (fa5cd06)
     - Merge pull request #172 from mellowagain/main (61aebbf)
@@ -277,14 +272,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [smart-release #171] Try to avoid unstable git-repository features… (c8f325b)
     - Merge branch 'main' into stability (11bae43)
     - [stability #171] Don't provide access to less stable crates in `Respository` (e4c5b58)
-    - Merge branch 'main' into 162-repo-design-sketch (e63b634)
     - [stability #171] Don't leak unstable plumbing crates in git-repository… (71eb30f)
     - [stability #171] finish tier description… (4fe1259)
+    - Merge branch 'main' into 162-repo-design-sketch (e63b634)
     - [ref #165] refactor (66624c3)
     - [repository #165] refactor (1547d0b)
     - [repository #165] refactor; fine grained allow(missing_docs)… (aa0511f)
     - [repository #165] prepare for writing light docs for Easy (f8834c9)
     - [repository #165] refactor (3a0160e)
+    - [repository #165] a sample of a simpler way to create a tag (fb8f584)
+    - [smart-release #165] Use generic edit-reference functionality (be3e57f)
+    - [repository #165] refactor (00ec15d)
+    - [repository #165] offer panicking type conversions for objects (f802f8c)
+    - [repository #165] try a more common naming convention for fallbile things… (fc70393)
     - [smart-release #162] use TreeRef capabilities to lookup path (51d1943)
     - [repository #162] finally let smart-release use the correct abstraction for peeling (ba243a3)
     - [repository #162] Add id field to ObjectRef… (f5ba98e)
@@ -292,13 +292,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [repository #162] Cannot ever store a RefCell Ref in an object… (5c17199)
     - [repository #162] experiemnt with optionally keeping data in Object (b8a8e08)
     - [smart-release #162] Fix short flags (08f3418)
-    - [repository #165] a sample of a simpler way to create a tag (fb8f584)
     - [smart-release #162] don't throw away work… (b43b780)
-    - [smart-release #165] Use generic edit-reference functionality (be3e57f)
-    - [repository #165] refactor (00ec15d)
-    - [repository #165] offer panicking type conversions for objects (f802f8c)
     - [smart-release #162] refactor (7f2421b)
-    - [repository #165] try a more common naming convention for fallbile things… (fc70393)
     - [smart-release #162] peeling objects to a certain target kind… (5785136)
     - [smart-release #162] a single import path for ReferenceExt (7060797)
     - [smart-release #162] replace reference peeling with git_easy (7cfd5f9)
@@ -314,6 +309,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [smart-release] properly obtain top-level crate name using manifest (d74b32e)
     - Apply nightly rustfmt rules. (5e0edba)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.2.4 (2021-08-15)
 
@@ -343,12 +344,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Less verbosity by default which is helpful on the first run to get an overview. Use `--verbose/-v` for all the details.
 - Also push tags and HEAD by default, unless `--skip-push` is specified.
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -372,6 +367,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - thanks clippy (bc7c9a8)
     - [smart-release #160] avoid trying to use an empty path when detecting changes… (836324e)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.2.2 (2021-08-15)
 
@@ -418,12 +419,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.2.0 (2021-08-13)
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -447,6 +442,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - thanks clippy (c50bd73)
     - [smart-release #155] inform about latest features (133e43a)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.1.0 (2021-08-13)
 

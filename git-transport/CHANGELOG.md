@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 13 calendar days.
+ - 11 commits contributed to the release over the course of 13 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on
 
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
+    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - Fixup remaining changelogs… (0ac488a)
     - Generate changelogs with details (fd0f3bd)
     - Update all changelogs with details (0732699)
@@ -136,12 +137,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.9.0 (2021-08-10)
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -190,14 +185,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [async-client] frame for async connect (9ada080)
     - Prevent selecting mutually exclusive features (7f5da18)
     - Merge branch 'dependabot/cargo/crc-2.0.0' (683c44d)
-    - fix docs (bca7594)
     - [git-transport] Fix http build (3469e99)
+    - [git-protocol] fetch in sync and async… (4776039)
+    - Bump maybe-async from 0.2.4 to 0.2.6 (d99a1a8)
+    - fix docs (bca7594)
     - [git-protocol] fix build (4cce648)
     - [git-transport] refactor (d09153f)
-    - [git-protocol] fetch in sync and async… (4776039)
     - [git-transport] Properly implement Transport for Boxed types (47b10c9)
     - [git-transport] refactor (3b0baee)
-    - Bump maybe-async from 0.2.4 to 0.2.6 (d99a1a8)
     - refactor (2eefe17)
     - refactor (14c9093)
     - [git-protocol] async capabilities and arguments abstractions (aa3eacb)
@@ -275,6 +270,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - refactor git-transport test in preparation for async testing (42d5bf7)
 </details>
 
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+
 ## v0.8.0 (2021-05-09)
 
 ### Commit Statistics
@@ -331,12 +332,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Details
 
 <csr-read-only-do-not-edit/>
@@ -352,6 +347,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - (cargo-release) version 0.2.0 (0c39373)
     - support for radicle urls (2c5b955)
 </details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.5.1 (2021-01-05)
 
@@ -438,12 +439,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
 ### Commit Details
 
 <csr-read-only-do-not-edit/>
@@ -464,21 +459,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - refactor (ba1d883)
 </details>
 
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
 ## v0.2.1 (2020-09-14)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 185 commits contributed to the release over the course of 31 calendar days.
+ - 2 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 14 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -489,6 +484,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **Uncategorized**
     - (cargo-release) version 0.2.1 (ebf3419)
     - (cargo-release) version 0.6.0 (9ef184e)
+</details>
+
+## v0.2.0 (2020-09-12)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 189 commits contributed to the release over the course of 28 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - (cargo-release) version 0.2.0 (779e9d0)
+    - (cargo-release) version 0.2.0 (da830de)
+    - (cargo-release) version 0.5.0 (82b7313)
+    - thanks clippy (e5d80b1)
+    - [clone] make cloning the linux kernel work (e780526)
+    - [clone] Assure we don't hang due to unprocessed headers when peeking lines! (d9ced27)
     - [clone] none the wiser - it really looks like everything is alright… (3b8d613)
     - [clone] reassure ourselves that ERR lines are handled, always (925370b)
     - [clone] Response parsing up to (optional) pack (24064c7)
@@ -674,36 +694,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Allow dual-licensing with Apache 2.0 (ea353eb)
 </details>
 
-## v0.2.0 (2020-09-12)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 6 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - (cargo-release) version 0.2.0 (779e9d0)
-    - (cargo-release) version 0.2.0 (da830de)
-    - (cargo-release) version 0.5.0 (82b7313)
-    - thanks clippy (e5d80b1)
-    - [clone] make cloning the linux kernel work (e780526)
-    - [clone] Assure we don't hang due to unprocessed headers when peeking lines! (d9ced27)
-</details>
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 15 times to make code idiomatic. 
 
 ## v0.0.0 (2020-07-12)
 
