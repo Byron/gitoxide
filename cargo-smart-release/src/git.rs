@@ -263,7 +263,7 @@ pub mod history {
 
         if !tags_by_commit.is_empty() {
             log::warn!(
-                "{}: The following tags were on branches which are ignored during traversal: {}",
+                "{}: The following tags were not encountered during commit graph traversal: {}",
                 package.name,
                 tags_by_commit
                     .into_values()

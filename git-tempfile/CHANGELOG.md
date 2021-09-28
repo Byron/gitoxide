@@ -7,23 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## v1.0.2 (2021-09-10)
-
-- Compatibility with Rust 1.55. It informed about the incorrect usage of `std::io::ErrorKind::Other` which this crate also dependent on in its tests.
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 20 commits contributed to the release.
- - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 2 unique issues were worked on
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+ - 1 commit contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -32,27 +22,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
-    - loose reference iteration with non-dir prefixes… (293bfc0)
-    - Add 'references().all().peeled().'… (6502412)
-    - smart-release: filter refs correctly, but… (2b4a615)
-    - smart-release: find tag references by name… (72e1752)
-    - commit traversal along the first parent… (7bce49c)
-    - git-ref(docs): improve changelog format (90e6128)
-    - smart-release: sketch first step of info generation (ff894e5)
-    - smart-release: changelog gets crates to work on (78d31d9)
+    - Fixup remaining changelogs… (0ac488a)
+</details>
+
+## v1.0.2 (2021-09-10)
+
+- Compatibility with Rust 1.55. It informed about the incorrect usage of `std::io::ErrorKind::Other` which this crate also dependent on in its tests.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
  * **Uncategorized**
     - Release git-tempfile v1.0.2 (310ea73)
     - Update changelogs once more… (d57d279)
-    - thanks clippy (68ea77d)
-    - [repository] don't enforce feature flags that may fail on windows by default (afdec2e)
-    - Dependency update (d2f23f8)
-    - thanks clippy (7899ef1)
     - Update changelogs retro-actively… (78cfe0a)
-    - Release gitoxide v0.8.4 (effb2a6)
-    - Release gitoxide-core v0.10.5 (590e59b)
-    - Release git-ref v0.7.2 (e940e9a)
-    - Release git-protocol v0.10.4 (898ee08)
-    - Release git-odb v0.21.3 (223f930)
 </details>
 
 ## v1.0.1 (2021-09-10)
@@ -61,9 +55,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 34 commits contributed to the release over the course of 17 calendar days.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 2 unique issues were worked on
+ - 4 commits contributed to the release over the course of 15 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
 
 ### Thanks Clippy
 
@@ -77,42 +71,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#198**
-    - smart-release: handle unborn heads (0e02831)
-    - smart-release: fmt (d66c5ae)
-    - smart-release: refactor (d4ffb4f)
-    - smart-release: refactor (9fc15f9)
-    - smart-release: refactor (9e430df)
-    - smart-release: initial test for changelog (a33dd5d)
-    - smart-release: very basic support for changelog command… (1a683a9)
-    - smart-release: add 'cargo changelog' sub-command binary (3677b78)
-    - smart-release(test): add changelog to most tests (cdf4199)
  * **Uncategorized**
     - Release git-tempfile v1.0.1 (295eb37)
-    - [smart-release] auto-detect changes in production crates as well (24bc1bd)
-    - [smart-release #195] update test output to match CI… (f864386)
-    - [smart-release #195] better error for untracked files. (f5266f9)
-    - [#195] Provide nix-shell target for macos… (5e75e8c)
     - [tempfile #195] adapt to Rust 1.55 (d9e71ac)
-    - [#195] Fix previously incorrect usage of io::Kind::Other… (4dae07d)
     - thanks clippy (4701296)
-    - [smart-release #195] fix docs (8d7e132)
-    - improved changelog… (8b82f7d)
-    - [smart-release #195] assure dependent packages are not packages to be published (6792ebc)
-    - Fix formatting of performance-tasks.md (917967e)
-    - Merge branch 'Byron:main' into main (dc58eca)
-    - Release git-actor v0.4.0 (16358c9)
-    - Release git-testtools v0.5.0 (574ede9)
-    - [actor #173] fix docs (2d7956a)
-    - Release git-testtools v0.5.0 (86e0a92)
-    - [actor #173] refactor (08a1849)
-    - Upgrade to nom-7 (f0aa3e1)
-    - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
-    - some helpful remarks; be more specific about fixing breakage (7783965)
-    - [stability #171] Another question to ask before stabilizing a crate… (c2bc1a6)
-    - Update COLLABORATING.md (e1a04cf)
-    - Release git-lock v1.0.0 (f38f72c)
-    - First draft of collaboration guide (ec3f0ec)
+    - Merge pull request #172 from mellowagain/main (61aebbf)
 </details>
 
 ## v1.0.0 (2021-08-25)
@@ -123,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -135,11 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  * **Uncategorized**
     - Release git-tempfile v1.0.0 (1238535)
-    - Adjust contribution recommendation (3aae2e2)
-    - [smart-release #171] it's about time we get some tests (48a489b)
-    - [pack #170] there can only be one (dce4f97)
     - [stability #171] prepare git-lock and git-tempfile release (3a1cf4d)
-    - [pack #170] clru allows for free lists, reducing allocation pressure... (4d820d2)
     - [stability #171] Prime git-tempfile and git-lock for release (01278fe)
 </details>
 
@@ -191,7 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 20 commits contributed to the release over the course of 40 calendar days.
+ - 13 commits contributed to the release over the course of 40 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
@@ -212,14 +171,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [pack #153] implement io traits for tempfiles (59d03d6)
     - clippy on tests and thanks clippy (a77a71c)
     - thanks clippy (e1964e4)
-    - [ref] basic lookup rule impl; needs more test cases (3226f77)
-    - Remove unnecessary unsafe code (83e207a)
-    - [ref] fix compile warning on windows (c328774)
-    - Merge branch 'parser-into-iter-without-alloc' (a799ca8)
-    - [ref] a test case specifically for lookup rules (ab3a34f)
-    - Implement Parser::into_iter without extra allocation (aa79924)
-    - dependency update (059fa33)
-    - [ref] improve parse failure handling in packed-ref lookup (ba62aab)
+    - Merge branch 'remove-unnecessary-unsafe' (7a3c5c1)
     - Remove unnecessary pub(crate) exports (3d2456e)
     - [lock] support recoverable commits (b2217e7)
     - [ref] support for persistence with recovery (d8b2d66)

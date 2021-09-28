@@ -11,9 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 34 calendar days.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 2 commits contributed to the release over the course of 33 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on
 
 ### Commit Details
 
@@ -21,19 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
+ * **#198**
+    - Fixup remaining changelogs… (0ac488a)
  * **Uncategorized**
-    - Fix formatting of performance-tasks.md (917967e)
-    - Merge branch 'Byron:main' into main (dc58eca)
-    - Release git-actor v0.4.0 (16358c9)
-    - Release git-testtools v0.5.0 (574ede9)
-    - [actor #173] fix docs (2d7956a)
-    - Release git-testtools v0.5.0 (86e0a92)
-    - [actor #173] refactor (08a1849)
-    - Upgrade to nom-7 (f0aa3e1)
-    - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
-    - some helpful remarks; be more specific about fixing breakage (7783965)
-    - [stability #171] Another question to ask before stabilizing a crate… (c2bc1a6)
-    - Update COLLABORATING.md (e1a04cf)
+    - Merge pull request #172 from mellowagain/main (61aebbf)
 </details>
 
 ## v1.0.0 (2021-08-25)
@@ -44,9 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -56,13 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  * **Uncategorized**
     - Release git-lock v1.0.0 (f38f72c)
-    - First draft of collaboration guide (ec3f0ec)
     - Release git-tempfile v1.0.0 (1238535)
-    - Adjust contribution recommendation (3aae2e2)
-    - [smart-release #171] it's about time we get some tests (48a489b)
-    - [pack #170] there can only be one (dce4f97)
     - [stability #171] prepare git-lock and git-tempfile release (3a1cf4d)
-    - [pack #170] clru allows for free lists, reducing allocation pressure... (4d820d2)
     - [stability #171] Prime git-tempfile and git-lock for release (01278fe)
 </details>
 
@@ -74,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 2 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -95,7 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 2 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -116,7 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 2 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -137,7 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 14 commits contributed to the release over the course of 40 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Commit Details
 
@@ -170,7 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 24 commits contributed to the release over the course of 3 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Thanks Clippy
 
@@ -219,7 +205,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 1 commit contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 unique issues were worked on
+ - 1 unique issue was worked on
 
 ### Commit Details
 
