@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 75 commits contributed to the release over the course of 16 calendar days.
+ - 76 commits contributed to the release over the course of 16 calendar days.
  - 34 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 5 unique issues were worked on
 
@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - rename easy::reference::log::State to easy::reference::Logs (03fe8a7)
     - rename `*::State` into `*::Platform` (0cd585e)
  * **#198**
+    - Rebuild all changelogs to assure properly ordered headlines (cfcaa66)
     - Sort all commits by time, descending… (7c37a3d)
     - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - Use hashmap based lookup for trees… (55d2d17)
