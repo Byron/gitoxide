@@ -22,13 +22,16 @@ impl ChangeLog {
     pub fn from_markdown(input: &str) -> ChangeLog {
         let mut sections = Vec::new();
         let mut plain_text = String::new();
-        let mut previous_headline = None;
+        let mut previous_headline = None::<Headline>;
+        let mut first_heading_level = None;
         for line in input.as_bytes().as_bstr().lines_with_terminator() {
             let line = line.to_str().expect("valid UTF-8");
             match Headline::try_from(line) {
                 Ok(headline) => {
+                    first_heading_level.get_or_insert(headline.level);
                     match previous_headline {
-                        Some(headline) => {
+                        Some(mut headline) => {
+                            headline.level = first_heading_level.expect("set first");
                             sections.push(Section::from_headline_and_body(
                                 headline,
                                 std::mem::take(&mut plain_text),
