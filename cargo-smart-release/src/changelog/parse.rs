@@ -1,5 +1,9 @@
-use std::iter::FromIterator;
-use std::{convert::TryFrom, iter::Peekable, ops::Range, str::FromStr};
+use std::{
+    convert::TryFrom,
+    iter::{FromIterator, Peekable},
+    ops::Range,
+    str::FromStr,
+};
 
 use git_repository::bstr::ByteSlice;
 use nom::{
