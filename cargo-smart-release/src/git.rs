@@ -85,6 +85,8 @@ pub fn assure_clean_working_tree() -> anyhow::Result<()> {
 }
 
 pub mod history {
+    use std::iter::Peekable;
+    use std::slice::Iter;
     use std::{cell::RefCell, collections::BTreeMap, iter::FromIterator, path::PathBuf, time::Instant};
 
     use anyhow::bail;
@@ -96,10 +98,12 @@ pub mod history {
         prelude::{CacheAccessExt, ObjectAccessExt, ReferenceAccessExt, ReferenceExt},
     };
 
+    use crate::commit::history::{Item, Segment};
     use crate::{
         commit,
         git::strip_tag_path,
         utils::{component_to_bytes, is_tag_name, is_tag_version, tag_prefix},
+        Context,
     };
 
     pub fn collect(repo: &git::Easy) -> anyhow::Result<Option<commit::History>> {
@@ -203,11 +207,6 @@ pub mod history {
         };
 
         let dir = ctx.repo_relative_path(package);
-        enum Filter<'a> {
-            None,
-            Fast(&'a [u8]),
-            Slow(Vec<&'a [u8]>),
-        }
         let filter = dir
             .map(|dir| {
                 let mut components = dir.components().collect::<Vec<_>>();
@@ -222,67 +221,17 @@ pub mod history {
         let mut items = history.items.iter().peekable();
         while let Some(item) = items.next() {
             match tags_by_commit.remove(&item.id) {
-                None => match filter {
-                    Filter::None => segment.history.push(item),
-                    Filter::Fast(comp) => {
-                        let current = git::objs::TreeRefIter::from_bytes(&item.tree_data)
-                            .filter_map(Result::ok)
-                            .find(|e| e.filename == comp);
-                        let parent = items.peek().and_then(|parent| {
-                            git::objs::TreeRefIter::from_bytes(&parent.tree_data)
-                                .filter_map(Result::ok)
-                                .find(|e| e.filename == comp)
-                        });
-                        match (current, parent) {
-                            (Some(current), Some(parent)) => {
-                                if current.oid != parent.oid {
-                                    segment.history.push(item)
-                                }
-                            }
-                            (Some(_), None) => segment.history.push(item),
-                            (None, Some(_)) | (None, None) => {}
-                        };
-                    }
-                    Filter::Slow(ref components) => {
-                        let prev = ctx.repo.object_cache_size(1024 * 1024)?;
-                        let current_data = RefCell::new(item.tree_data.clone());
-                        let current = git::easy::TreeRef::from_id_and_data(
-                            item.id,
-                            std::cell::Ref::map(current_data.borrow(), |v| v.as_slice()),
-                            &ctx.repo,
-                        )
-                        .lookup_path(components.iter().copied())?;
-                        let parent = match items.peek() {
-                            Some(parent) => {
-                                let parent_data = RefCell::new(parent.tree_data.clone());
-                                git::easy::TreeRef::from_id_and_data(
-                                    parent.id,
-                                    std::cell::Ref::map(parent_data.borrow(), |v| v.as_slice()),
-                                    &ctx.repo,
-                                )
-                                .lookup_path(components.iter().copied())?
-                            }
-                            None => None,
-                        };
-                        match (current, parent) {
-                            (Some(current), Some(parent)) => {
-                                if current.oid != parent.oid {
-                                    segment.history.push(item)
-                                }
-                            }
-                            (Some(_), None) => segment.history.push(item),
-                            (None, Some(_)) | (None, None) => {}
-                        };
-                        ctx.repo.object_cache_size(prev)?;
-                    }
-                },
-                Some(next_ref) => segments.push(std::mem::replace(
-                    &mut segment,
-                    commit::history::Segment {
-                        head: next_ref,
-                        history: vec![item],
-                    },
-                )),
+                None => add_item_if_package_changed(ctx, &mut segment, &filter, &mut items, item)?,
+                Some(next_ref) => {
+                    segments.push(std::mem::replace(
+                        &mut segment,
+                        commit::history::Segment {
+                            head: next_ref,
+                            history: vec![],
+                        },
+                    ));
+                    add_item_if_package_changed(ctx, &mut segment, &filter, &mut items, item)?
+                }
             }
         }
         segments.push(segment);
@@ -312,6 +261,76 @@ pub mod history {
         );
 
         Ok(segments)
+    }
+
+    enum Filter<'a> {
+        None,
+        Fast(&'a [u8]),
+        Slow(Vec<&'a [u8]>),
+    }
+
+    fn add_item_if_package_changed<'a>(
+        ctx: &Context,
+        segment: &mut Segment<'a>,
+        filter: &Filter<'_>,
+        items: &mut Peekable<Iter<'a, Item>>,
+        item: &'a Item,
+    ) -> anyhow::Result<()> {
+        match filter {
+            Filter::None => segment.history.push(item),
+            Filter::Fast(comp) => {
+                let current = git::objs::TreeRefIter::from_bytes(&item.tree_data)
+                    .filter_map(Result::ok)
+                    .find(|e| e.filename == comp);
+                let parent = items.peek().and_then(|parent| {
+                    git::objs::TreeRefIter::from_bytes(&parent.tree_data)
+                        .filter_map(Result::ok)
+                        .find(|e| e.filename == comp)
+                });
+                match (current, parent) {
+                    (Some(current), Some(parent)) => {
+                        if current.oid != parent.oid {
+                            segment.history.push(item)
+                        }
+                    }
+                    (Some(_), None) => segment.history.push(item),
+                    (None, Some(_)) | (None, None) => {}
+                };
+            }
+            Filter::Slow(ref components) => {
+                let prev = ctx.repo.object_cache_size(1024 * 1024)?;
+                let current_data = RefCell::new(item.tree_data.clone());
+                let current = git::easy::TreeRef::from_id_and_data(
+                    item.id,
+                    std::cell::Ref::map(current_data.borrow(), |v| v.as_slice()),
+                    &ctx.repo,
+                )
+                .lookup_path(components.iter().copied())?;
+                let parent = match items.peek() {
+                    Some(parent) => {
+                        let parent_data = RefCell::new(parent.tree_data.clone());
+                        git::easy::TreeRef::from_id_and_data(
+                            parent.id,
+                            std::cell::Ref::map(parent_data.borrow(), |v| v.as_slice()),
+                            &ctx.repo,
+                        )
+                        .lookup_path(components.iter().copied())?
+                    }
+                    None => None,
+                };
+                match (current, parent) {
+                    (Some(current), Some(parent)) => {
+                        if current.oid != parent.oid {
+                            segment.history.push(item)
+                        }
+                    }
+                    (Some(_), None) => segment.history.push(item),
+                    (None, Some(_)) | (None, None) => {}
+                };
+                ctx.repo.object_cache_size(prev)?;
+            }
+        };
+        Ok(())
     }
 }
 
