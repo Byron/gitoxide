@@ -1,7 +1,8 @@
 use std::path::Path;
 
+use cargo_smart_release::changelog::section::Segment;
 use cargo_smart_release::{
-    changelog::{section, Section, Version},
+    changelog::{Section, Version},
     ChangeLog,
 };
 
@@ -35,7 +36,7 @@ fn all_unknown_in_section() {
                 name: Version::Unreleased,
                 date: None,
                 heading_level: 3,
-                segments: vec![section::Segment::User {
+                segments: vec![Segment::User {
                     text: "- hello ~~this is not understood~~\n* this isn't either\n\n".into()
                 }],
                 unknown: String::new(),
@@ -44,7 +45,7 @@ fn all_unknown_in_section() {
                 name: Version::Semantic("1.0.0".parse().unwrap()),
                 date: None,
                 heading_level: 4,
-                segments: vec![section::Segment::User {
+                segments: vec![Segment::User {
                     text: "Some free text in a paragraph\nthat won't parse.\n".into()
                 }],
                 unknown: String::new(),
@@ -63,10 +64,46 @@ fn unknown_link_and_headling() {
             name: Version::Unreleased,
             date: None,
             heading_level: 4,
-            segments: vec![section::Segment::User {
+            segments: vec![Segment::User {
                 text: "##### Special\n\nHello [there][194] period.\n".into()
             }],
             unknown: String::new(),
         },]
+    )
+}
+
+#[test]
+fn known_and_unknown_sections_are_sorted() {
+    let fixture = fixture("unknown-known-unknown-known-unsorted.md").unwrap();
+    let log = ChangeLog::from_markdown(&fixture);
+    assert_eq!(
+        log.sections,
+        vec![
+            Section::Verbatim {
+                text: "Hello, this is a changelog.\n\n".into(),
+                generated: false
+            },
+            Section::Release {
+                name: Version::Unreleased,
+                date: None,
+                heading_level: 3,
+                unknown: "".into(),
+                segments: vec![Segment::User { text: "TBD\n".into() }]
+            },
+            Section::Release {
+                name: Version::Semantic(semver::Version::parse("1.0.0").unwrap()),
+                date: None,
+                heading_level: 3,
+                unknown: "".into(),
+                segments: vec![
+                    Segment::User {
+                        text: "- initial release\n\n".into()
+                    },
+                    Segment::User {
+                        text: "### Something inbetween\n\nintermezzo\n".into()
+                    },
+                ]
+            },
+        ],
     )
 }

@@ -1,3 +1,4 @@
+use std::iter::FromIterator;
 use std::{convert::TryFrom, iter::Peekable, ops::Range, str::FromStr};
 
 use git_repository::bstr::ByteSlice;
@@ -21,7 +22,7 @@ impl ChangeLog {
     /// Obtain as much information as possible from `input` and keep everything we didn't understand in respective sections.
     pub fn from_markdown(input: &str) -> ChangeLog {
         let mut sections = Vec::new();
-        let mut plain_text = String::new();
+        let mut section_body = String::new();
         let mut previous_headline = None::<Headline>;
         let mut first_heading_level = None;
         for line in input.as_bytes().as_bstr().lines_with_terminator() {
@@ -34,13 +35,13 @@ impl ChangeLog {
                             headline.level = first_heading_level.expect("set first");
                             sections.push(Section::from_headline_and_body(
                                 headline,
-                                std::mem::take(&mut plain_text),
+                                std::mem::take(&mut section_body),
                             ));
                         }
                         None => {
-                            if !plain_text.is_empty() {
+                            if !section_body.is_empty() {
                                 sections.push(Section::Verbatim {
-                                    text: std::mem::take(&mut plain_text),
+                                    text: std::mem::take(&mut section_body),
                                     generated: false,
                                 })
                             }
@@ -49,7 +50,7 @@ impl ChangeLog {
                     previous_headline = Some(headline);
                 }
                 Err(()) => {
-                    plain_text.push_str(line);
+                    section_body.push_str(line);
                 }
             }
         }
@@ -58,14 +59,37 @@ impl ChangeLog {
             Some(headline) => {
                 sections.push(Section::from_headline_and_body(
                     headline,
-                    std::mem::take(&mut plain_text),
+                    std::mem::take(&mut section_body),
                 ));
             }
             None => sections.push(Section::Verbatim {
-                text: plain_text,
+                text: section_body,
                 generated: false,
             }),
         }
+
+        let insert_sorted_at_pos = sections
+            .first()
+            .map(|s| match s {
+                Section::Verbatim { .. } => 1,
+                Section::Release { .. } => 0,
+            })
+            .unwrap_or(0);
+        let mut non_release_sections = Vec::new();
+        let mut release_sections = Vec::new();
+        for section in sections {
+            match section {
+                Section::Verbatim { .. } => non_release_sections.push(section),
+                Section::Release { .. } => release_sections.push(section),
+            }
+        }
+        release_sections.sort_by(|lhs, rhs| match (lhs, rhs) {
+            (Section::Release { name: lhs, .. }, Section::Release { name: rhs, .. }) => lhs.cmp(rhs).reverse(),
+            _ => unreachable!("BUG: there are only release sections here"),
+        });
+        let mut sections = Vec::from_iter(non_release_sections.drain(..insert_sorted_at_pos));
+        sections.append(&mut release_sections);
+        sections.append(&mut non_release_sections);
         ChangeLog { sections }
     }
 }
