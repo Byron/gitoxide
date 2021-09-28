@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 23 commits contributed to the release over the course of 14 calendar days.
+ - 24 commits contributed to the release over the course of 14 calendar days.
  - 10 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on
 
@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **#164**
     - Avoid duplicate module paths in 'tree' and 'commit' (2f2d856)
  * **#198**
+    - Sort all commits by time, descending… (7c37a3d)
     - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - don't put more objects into the pack cache than needed (d89e474)
     - Fixup remaining changelogs… (0ac488a)

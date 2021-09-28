@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 170 commits contributed to the release over the course of 19 calendar days.
+ - 172 commits contributed to the release over the course of 19 calendar days.
  - 12 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on
 
@@ -52,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: an algorithm to collect dependencies by 'growing' (73794a4)
     - smart-release: foundation for bumping versions (d1145d1)
  * **#198**
+    - reorder headlines according to version ordering… (733d7f1)
+    - Sort all commits by time, descending… (7c37a3d)
     - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - Use most relevant parent tree for change comparison… (6d02ac8)
     - Use hashmap based lookup for trees… (55d2d17)

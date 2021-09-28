@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 74 commits contributed to the release over the course of 16 calendar days.
+ - 75 commits contributed to the release over the course of 16 calendar days.
  - 34 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 5 unique issues were worked on
 
@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - rename easy::reference::log::State to easy::reference::Logs (03fe8a7)
     - rename `*::State` into `*::Platform` (0cd585e)
  * **#198**
+    - Sort all commits by time, descending… (7c37a3d)
     - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - Use hashmap based lookup for trees… (55d2d17)
     - Fixup remaining changelogs… (0ac488a)
@@ -278,6 +279,173 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
+
+## v0.8.1 (2021-08-28)
+
+- Introduce `EasyArcExclusive` type, now available thanks to `parking_lot` 0.11.2
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release git-repository v0.8.1 (b269a12)
+    - [repository #164] make EasyArcExclusive available (2fa3dcb)
+</details>
+
+## v0.8.0 (2021-08-27)
+
+- Rename `object` to `objs` to be equivalent to `refs` and make space for the new `object` module
+- various minor version updates of pre-release dependencies
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 117 commits contributed to the release over the course of 10 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - [repository #174] keep assets (e0fca77)
+    - [repository #174] remove arc_lock code entirely (dcbe742)
+    - [repository #174] conditionally compile future parking_lot version… (5375fc8)
+    - Bump git-repository v0.8.0 (cdb45ff)
+    - [repository #174] adjust various changelogs (081faf5)
+    - Bump git-protocol v0.10.0 (82d5a0b)
+    - Bump git-odb v0.21.0 (7b9854f)
+    - [pack #179] refactor (ab6554b)
+    - [packetline #178] fix compile warnings (c8d2e72)
+    - Bump git-traverse v0.8.0 (54f3541)
+    - Bump git-diff v0.9.0 (2e2e798)
+    - [object #177] cleanup CommitRefIter imports and git_object::Error (058f68a)
+    - [object #177] fix docs (2fd23ed)
+    - [object #177] migrate immutable::commit into crate::commit (45d3934)
+    - [object #177] tag::RefIter -> TagRefIter (28587c6)
+    - [object #177] move mutable objects to crate::* (c551c02)
+    - [object #177] migrate immutable::tree to crate::tree (fa5cd06)
+    - [object #177] move immutable::* to crate::*Ref, start `iter` adjustments (461dc53)
+    - [object #177] rename immutable::* to immutable::*Ref (6deb012)
+    - Release git-object v0.13.0 (708fc5a)
+    - [ref #175] follow (try_)find(_what) naming convention (679895c)
+    - Merge pull request #172 from mellowagain/main (61aebbf)
+    - [ref #175] make 'mutable' module private (a80dbcf)
+    - Release git-actor v0.5.0 (a684b0f)
+    - [ref #175] refactor (292e567)
+    - Release git-actor v0.4.0 (16358c9)
+    - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
+    - Release git-lock v1.0.0 (f38f72c)
+    - Release git-tempfile v1.0.0 (1238535)
+    - [smart-release #171] it's about time we get some tests (48a489b)
+    - [stability #171] Prime git-tempfile and git-lock for release (01278fe)
+    - [stability #171] mark git-hash and git-actor as ST1 as well (32caae1)
+    - [stability #171] git-ref is now ST1 and available through git-repository (50154cd)
+    - [smart-release #171] Try to avoid unstable git-repository features… (c8f325b)
+    - Merge branch 'main' into stability (11bae43)
+    - [stability #171] Don't provide access to less stable crates in `Respository` (e4c5b58)
+    - cleanup imports (e669303)
+    - [stability #171] Don't leak unstable plumbing crates in git-repository… (71eb30f)
+    - Release git-pack v0.9.0 (7fbc961)
+    - Merge branch 'main' into 162-repo-design-sketch (e63b634)
+    - [repository #164] top-level easy docs (6b71c51)
+    - [repository #165] see if `git-config` can already be placed… (d287a4a)
+    - [repository #165] add limitations along with possible workarouds (7578f1e)
+    - [repository #165] assure packed-refs are always uptodate (a5605df)
+    - [repository #165] Allow cloning packed-refs and try to see how it differs… (7ec32b7)
+    - Release git-ref v0.6.0 (0bb4c13)
+    - [ref #165] refactor (66624c3)
+    - Revert "[repository #165] PROOF: GATs will work as expected!" (853f072)
+    - [repository #165] PROOF: GATs will work as expected! (7f56dbd)
+    - [repository #165] refactor (1547d0b)
+    - [repository #165] refactor; fine grained allow(missing_docs)… (aa0511f)
+    - [repository #165] prepare for writing light docs for Easy (f8834c9)
+    - [repository #165] refactor (3a0160e)
+    - [repository #165] fmt (a02d5aa)
+    - [repository #165] Don't panic on repo borrow error… (b2f644a)
+    - thanks clippy (b496d99)
+    - [repository #165] Write about the GAT plan to make this better one day (d793ecd)
+    - [repository #165] quick test to see if Access2 can become Access… (45acc7a)
+    - [repository #165] Generalizing over mutable Repos is possible too… (0f7efe3)
+    - [repository #165] show that Access2 works for all Easy* types… (b8ceefe)
+    - [repository #165] First success with creating a shared borrow to the repo (f2a38b2)
+    - Revert "[repository #165] FAIL Look into `owned_ref` crate" (a1443e4)
+    - [repository #165] FAIL Look into `owned_ref` crate (09aa714)
+    - [repository #165] FAIL AsRef works for basic refs but… (02979b6)
+    - [repository #165] FAIL try to generalize with Borrow… (295ba95)
+    - [repository #165] FAIL See if EasyExclusive can work… (016debb)
+    - [repository #165] introduce EasyShared (a119ad9)
+    - [repository #165] First thoughts about stale caches (7f8b63e)
+    - [repository #165] hide all easy::State fields behind result-enforcing methods (000c537)
+    - [repository #165] pack cache access only with errors (2353e50)
+    - [repository #165] assure packed-refs is only used non-panicking (a355d94)
+    - [repository #165] refactor (16fce63)
+    - [repository #165] a sample of a simpler way to create a tag (fb8f584)
+    - [smart-release #165] Use generic edit-reference functionality (be3e57f)
+    - [repository #165] sketch generic ref file editing (3a026ae)
+    - [repository #165] refactor (00ec15d)
+    - [repository #165] refactor (0f13104)
+    - [repository #165] An experiment on transforming panics into errors… (1f52226)
+    - [repository #165] offer panicking type conversions for objects (f802f8c)
+    - [repository #165] try a more common naming convention for fallbile things… (fc70393)
+    - [repository #165] refactor (6207735)
+    - thanks clippy (41d7a44)
+    - [repository #162] cleanup imports (983d11a)
+    - [smart-release #162] use TreeRef capabilities to lookup path (51d1943)
+    - [repository #162] what could be a correct implementation of a tree path lookup (1f638ee)
+    - [repository #162] detachable ObjectRefs and a few conversions (ec123bb)
+    - [repository #162] finally let smart-release use the correct abstraction for peeling (ba243a3)
+    - [repository #162] Add id field to ObjectRef… (f5ba98e)
+    - [repository #162] Make clear that Objects are actually references… (d1e6843)
+    - [repository #162] another attempt to find a decent peeling abstraction… (716d623)
+    - [repository #162] attach the Object to 'Access' (9a12564)
+    - [repository #162] refactor (a32d361)
+    - [repository #162] trying new names (b3f453b)
+    - [repository #162] put impl for finding object data into the extension trait (91b9446)
+    - [repository #162] experiment with finding objects… (312a692)
+    - thanks clippy (f2fb026)
+    - [repository #162] Cannot ever store a RefCell Ref in an object… (5c17199)
+    - [repository #162] experiemnt with optionally keeping data in Object (b8a8e08)
+    - [smart-release #162] Object can be used like a git_hash::ObjectId (c7bc730)
+    - [smart-release #162] format everything (8ff83e5)
+    - [smart-release #162] don't throw away work… (b43b780)
+    - [smart-release #162] a demo of attaching and detaching objects… (ff2927c)
+    - [smart-release #162] an actual Data type… (7fd996f)
+    - [smart-release #162] unify 'ext' visibility (ca082a7)
+    - thanks clippy (1f2d458)
+    - [smart-release #162] a sketch for accessing objects data… (ba27101)
+    - [smart-release #162] peeling objects to a certain target kind… (5785136)
+    - [smart-release #162] a single import path for ReferenceExt (7060797)
+    - [smart-release #162] rename git-repository::object -> objs (ac70d81)
+    - [smart-release #162] replace reference peeling with git_easy (7cfd5f9)
+    - [smart-release #162] smart-release uses Easy repository in 'plumbing' mode (4fb672a)
+    - [smart-release #162] refactor (ef623a6)
+    - [smart-release #162] reduce visibility of Cache (397fbfe)
+    - [smart-release #162] more granular cache control WORKS (25dce2a)
+    - Revert "[smart-release #162] FAIL: definitely need better granularity" (499993f)
+    - [smart-release #162] FAIL: definitely need better granularity (5f27871)
+    - [smart-release #162] FAIL: promising at first, but not really working… (fa01f76)
+</details>
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
 
 ## v0.7.2 (2021-08-17)
 
@@ -573,171 +741,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Allow for more screen space when formatting (6794300)
     - goodbye git-core, hello git-repository (7cec2b6)
 </details>
-
-## v0.8.1 (2021-08-28)
-
-- Introduce `EasyArcExclusive` type, now available thanks to `parking_lot` 0.11.2
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 2 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - Release git-repository v0.8.1 (b269a12)
-    - [repository #164] make EasyArcExclusive available (2fa3dcb)
-</details>
-
-## v0.8.0 (2021-08-27)
-
-- Rename `object` to `objs` to be equivalent to `refs` and make space for the new `object` module
-- various minor version updates of pre-release dependencies
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 117 commits contributed to the release over the course of 10 calendar days.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - [repository #174] keep assets (e0fca77)
-    - [repository #174] remove arc_lock code entirely (dcbe742)
-    - [repository #174] conditionally compile future parking_lot version… (5375fc8)
-    - Bump git-repository v0.8.0 (cdb45ff)
-    - [repository #174] adjust various changelogs (081faf5)
-    - Bump git-protocol v0.10.0 (82d5a0b)
-    - Bump git-odb v0.21.0 (7b9854f)
-    - [pack #179] refactor (ab6554b)
-    - [packetline #178] fix compile warnings (c8d2e72)
-    - Bump git-traverse v0.8.0 (54f3541)
-    - Bump git-diff v0.9.0 (2e2e798)
-    - [object #177] cleanup CommitRefIter imports and git_object::Error (058f68a)
-    - [object #177] fix docs (2fd23ed)
-    - [object #177] migrate immutable::commit into crate::commit (45d3934)
-    - [object #177] tag::RefIter -> TagRefIter (28587c6)
-    - [object #177] move mutable objects to crate::* (c551c02)
-    - [object #177] migrate immutable::tree to crate::tree (fa5cd06)
-    - [object #177] move immutable::* to crate::*Ref, start `iter` adjustments (461dc53)
-    - [object #177] rename immutable::* to immutable::*Ref (6deb012)
-    - Release git-object v0.13.0 (708fc5a)
-    - [ref #175] follow (try_)find(_what) naming convention (679895c)
-    - Merge pull request #172 from mellowagain/main (61aebbf)
-    - [ref #175] make 'mutable' module private (a80dbcf)
-    - Release git-actor v0.5.0 (a684b0f)
-    - [ref #175] refactor (292e567)
-    - Release git-actor v0.4.0 (16358c9)
-    - [actor #173] rename immutable::Signature to SignatureRef! (96461ac)
-    - Release git-lock v1.0.0 (f38f72c)
-    - Release git-tempfile v1.0.0 (1238535)
-    - [smart-release #171] it's about time we get some tests (48a489b)
-    - [stability #171] Prime git-tempfile and git-lock for release (01278fe)
-    - [stability #171] mark git-hash and git-actor as ST1 as well (32caae1)
-    - [stability #171] git-ref is now ST1 and available through git-repository (50154cd)
-    - [smart-release #171] Try to avoid unstable git-repository features… (c8f325b)
-    - Merge branch 'main' into stability (11bae43)
-    - [stability #171] Don't provide access to less stable crates in `Respository` (e4c5b58)
-    - cleanup imports (e669303)
-    - [stability #171] Don't leak unstable plumbing crates in git-repository… (71eb30f)
-    - Release git-pack v0.9.0 (7fbc961)
-    - Merge branch 'main' into 162-repo-design-sketch (e63b634)
-    - [repository #164] top-level easy docs (6b71c51)
-    - [repository #165] see if `git-config` can already be placed… (d287a4a)
-    - [repository #165] add limitations along with possible workarouds (7578f1e)
-    - [repository #165] assure packed-refs are always uptodate (a5605df)
-    - [repository #165] Allow cloning packed-refs and try to see how it differs… (7ec32b7)
-    - Release git-ref v0.6.0 (0bb4c13)
-    - [ref #165] refactor (66624c3)
-    - Revert "[repository #165] PROOF: GATs will work as expected!" (853f072)
-    - [repository #165] PROOF: GATs will work as expected! (7f56dbd)
-    - [repository #165] refactor (1547d0b)
-    - [repository #165] refactor; fine grained allow(missing_docs)… (aa0511f)
-    - [repository #165] prepare for writing light docs for Easy (f8834c9)
-    - [repository #165] refactor (3a0160e)
-    - [repository #165] fmt (a02d5aa)
-    - [repository #165] Don't panic on repo borrow error… (b2f644a)
-    - thanks clippy (b496d99)
-    - [repository #165] Write about the GAT plan to make this better one day (d793ecd)
-    - [repository #165] quick test to see if Access2 can become Access… (45acc7a)
-    - [repository #165] Generalizing over mutable Repos is possible too… (0f7efe3)
-    - [repository #165] show that Access2 works for all Easy* types… (b8ceefe)
-    - [repository #165] First success with creating a shared borrow to the repo (f2a38b2)
-    - Revert "[repository #165] FAIL Look into `owned_ref` crate" (a1443e4)
-    - [repository #165] FAIL Look into `owned_ref` crate (09aa714)
-    - [repository #165] FAIL AsRef works for basic refs but… (02979b6)
-    - [repository #165] FAIL try to generalize with Borrow… (295ba95)
-    - [repository #165] FAIL See if EasyExclusive can work… (016debb)
-    - [repository #165] introduce EasyShared (a119ad9)
-    - [repository #165] First thoughts about stale caches (7f8b63e)
-    - [repository #165] hide all easy::State fields behind result-enforcing methods (000c537)
-    - [repository #165] pack cache access only with errors (2353e50)
-    - [repository #165] assure packed-refs is only used non-panicking (a355d94)
-    - [repository #165] refactor (16fce63)
-    - [repository #165] a sample of a simpler way to create a tag (fb8f584)
-    - [smart-release #165] Use generic edit-reference functionality (be3e57f)
-    - [repository #165] sketch generic ref file editing (3a026ae)
-    - [repository #165] refactor (00ec15d)
-    - [repository #165] refactor (0f13104)
-    - [repository #165] An experiment on transforming panics into errors… (1f52226)
-    - [repository #165] offer panicking type conversions for objects (f802f8c)
-    - [repository #165] try a more common naming convention for fallbile things… (fc70393)
-    - [repository #165] refactor (6207735)
-    - thanks clippy (41d7a44)
-    - [repository #162] cleanup imports (983d11a)
-    - [smart-release #162] use TreeRef capabilities to lookup path (51d1943)
-    - [repository #162] what could be a correct implementation of a tree path lookup (1f638ee)
-    - [repository #162] detachable ObjectRefs and a few conversions (ec123bb)
-    - [repository #162] finally let smart-release use the correct abstraction for peeling (ba243a3)
-    - [repository #162] Add id field to ObjectRef… (f5ba98e)
-    - [repository #162] Make clear that Objects are actually references… (d1e6843)
-    - [repository #162] another attempt to find a decent peeling abstraction… (716d623)
-    - [repository #162] attach the Object to 'Access' (9a12564)
-    - [repository #162] refactor (a32d361)
-    - [repository #162] trying new names (b3f453b)
-    - [repository #162] put impl for finding object data into the extension trait (91b9446)
-    - [repository #162] experiment with finding objects… (312a692)
-    - thanks clippy (f2fb026)
-    - [repository #162] Cannot ever store a RefCell Ref in an object… (5c17199)
-    - [repository #162] experiemnt with optionally keeping data in Object (b8a8e08)
-    - [smart-release #162] Object can be used like a git_hash::ObjectId (c7bc730)
-    - [smart-release #162] format everything (8ff83e5)
-    - [smart-release #162] don't throw away work… (b43b780)
-    - [smart-release #162] a demo of attaching and detaching objects… (ff2927c)
-    - [smart-release #162] an actual Data type… (7fd996f)
-    - [smart-release #162] unify 'ext' visibility (ca082a7)
-    - thanks clippy (1f2d458)
-    - [smart-release #162] a sketch for accessing objects data… (ba27101)
-    - [smart-release #162] peeling objects to a certain target kind… (5785136)
-    - [smart-release #162] a single import path for ReferenceExt (7060797)
-    - [smart-release #162] rename git-repository::object -> objs (ac70d81)
-    - [smart-release #162] replace reference peeling with git_easy (7cfd5f9)
-    - [smart-release #162] smart-release uses Easy repository in 'plumbing' mode (4fb672a)
-    - [smart-release #162] refactor (ef623a6)
-    - [smart-release #162] reduce visibility of Cache (397fbfe)
-    - [smart-release #162] more granular cache control WORKS (25dce2a)
-    - Revert "[smart-release #162] FAIL: definitely need better granularity" (499993f)
-    - [smart-release #162] FAIL: definitely need better granularity (5f27871)
-    - [smart-release #162] FAIL: promising at first, but not really working… (fa01f76)
-</details>
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
 

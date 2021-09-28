@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 13 calendar days.
+ - 15 commits contributed to the release over the course of 14 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on
 
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
+    - Sort all commits by time, descending… (7c37a3d)
     - greatly reduce changelog size now that the traversal fix is applied (3924c03)
     - refactor and improve path filtering to find relevant commits… (99db079)
     - The first headline level controls all the other ones (302b267)
@@ -59,6 +60,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **Uncategorized**
     - Release git-packetline v0.10.1 (4f9da02)
     - [ref #190] more conversion trait impls (1795a33)
+</details>
+
+## v0.10.0 (2021-08-27)
+
+#### Breaking
+
+* **renames / moves**
+    - `immutable::PacketLine` -> `PacketLineRef`
+    - `immutable::Error` -> `ErrorRef`
+    - `immutable::Text` -> `TextRef`
+    - `immutable::Band` -> `BandRef`
+    - `immutable::DecodeBandError` -> `decode::band::Error`
+    - `pub immutable::` -> `line::`
+    - `pub write::` -> `write::`
+
+* **removals**
+   - `write::Writer` (is now only `Writer`)
+   - `read::StreamingPeekableIter` (is now only `StreamingPeekableIter`)
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - [repository #174] adjust various changelogs (081faf5)
+    - Bump git-packetline v0.10.0 (b09f391)
+    - [packetline #178] fix docs (878d8e8)
+    - [packetline #178] refactor (0c7c599)
+    - [packetline #178] fix docs (b3fd65d)
+    - [packetline #178] refactor (23438fd)
+    - [packetline #178] rename PacketLine to PacketLineRef… (d4c16a9)
+    - [packetline #178] add changelog in preparation for breaking changes (ffd96f9)
 </details>
 
 ## v0.9.1 (2021-08-17)
@@ -499,46 +541,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **Uncategorized**
     - bump git-features to 0.4 to allow publishes after breaking changes (9d6b879)
     - [clone] move packet-line code into own crate (879af67)
-</details>
-
-### v0.10.0 (2021-08-27)
-
-#### Breaking
-
-* **renames / moves**
-    - `immutable::PacketLine` -> `PacketLineRef`
-    - `immutable::Error` -> `ErrorRef`
-    - `immutable::Text` -> `TextRef`
-    - `immutable::Band` -> `BandRef`
-    - `immutable::DecodeBandError` -> `decode::band::Error`
-    - `pub immutable::` -> `line::`
-    - `pub write::` -> `write::`
-
-* **removals**
-   - `write::Writer` (is now only `Writer`)
-   - `read::StreamingPeekableIter` (is now only `StreamingPeekableIter`)
-#### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 8 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
-
-#### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - [repository #174] adjust various changelogs (081faf5)
-    - Bump git-packetline v0.10.0 (b09f391)
-    - [packetline #178] fix docs (878d8e8)
-    - [packetline #178] refactor (0c7c599)
-    - [packetline #178] fix docs (b3fd65d)
-    - [packetline #178] refactor (23438fd)
-    - [packetline #178] rename PacketLine to PacketLineRef… (d4c16a9)
-    - [packetline #178] add changelog in preparation for breaking changes (ffd96f9)
 </details>
 
