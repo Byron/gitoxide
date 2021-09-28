@@ -118,10 +118,9 @@ mod from_history {
     use git_repository::prelude::ObjectIdExt;
     use time::OffsetDateTime;
 
-    use crate::changelog::section::segment::Selection;
     use crate::{
         changelog,
-        changelog::{section, Section},
+        changelog::{section, section::segment::Selection, Section},
         commit, utils,
         utils::is_top_level_package,
     };
