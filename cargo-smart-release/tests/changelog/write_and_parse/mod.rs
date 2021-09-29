@@ -33,37 +33,37 @@ fn all_section_types_round_trips_lossy() -> Result {
                     section::Segment::User {
                         text: "* hello world\n\tthis\n".into(),
                     },
-                    section::Segment::Clippy(section::Data::Generated(section::ThanksClippy { count: 42 })),
-                    section::Segment::Statistics(section::Data::Generated(section::CommitStatistics {
+                    section::Segment::Clippy(section::Data::Generated(section::segment::ThanksClippy { count: 42 })),
+                    section::Segment::Statistics(section::Data::Generated(section::segment::CommitStatistics {
                         count: 100,
                         duration: time::Duration::days(32).into(),
                         conventional_count: 20,
                         unique_issues_count: 3,
                     })),
-                    section::Segment::Details(section::Data::Generated(section::Details {
+                    section::Segment::Details(section::Data::Generated(section::segment::Details {
                         commits_by_category: {
                             let mut h = BTreeMap::default();
                             h.insert(
-                                section::details::Category::Uncategorized,
+                                section::segment::details::Category::Uncategorized,
                                 vec![
-                                    section::details::Message {
+                                    section::segment::details::Message {
                                         title: "Just the title".into(),
                                         id: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                                     },
-                                    section::details::Message {
+                                    section::segment::details::Message {
                                         title: "title and body".into(),
                                         id: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5392"),
                                     },
                                 ],
                             );
                             h.insert(
-                                section::details::Category::Issue("42".into()),
+                                section::segment::details::Category::Issue("42".into()),
                                 vec![
-                                    section::details::Message {
+                                    section::segment::details::Message {
                                         title: "Just the title".into(),
                                         id: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5392"),
                                     },
-                                    section::details::Message {
+                                    section::segment::details::Message {
                                         title: "another title".into(),
                                         id: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                                     },

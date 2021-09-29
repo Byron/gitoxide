@@ -55,11 +55,12 @@ Here is what `cargo smart-release` does differently: "It tries really hard to do
 
 ### Limitations
 
-* it's very young and probably tries to eat underwear
-* it needs a git repository to govern the workspace
 * it requires tables to be used when specifying versions, i.e. `crate = { version = "1" }` instead of `crate  = "1".
 * it gracefully fails when encountering version requirement comparators which are not `^`, like `=`
-* it's tested only by using it on `gitoxide`, there are no regression tests at all
+* it's tested only by using it on `gitoxide`, there are only very few regression tests with little coverage.
+* short object ids in changelogs may be ambiguous, as they are unconditionally truncated to 7 characters.
+* it's very young and probably tries to eat underwear
+* it needs a git repository to govern the workspace
 
 ### Acknowledgements
 

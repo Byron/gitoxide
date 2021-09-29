@@ -20,17 +20,6 @@ impl Section {
         repo: &git::Easy,
         selection: section::segment::Selection,
     ) -> Self {
-        let package_name = (!is_top_level_package(&package.manifest_path, repo)).then(|| package.name.as_str());
-
-        let version = crate::git::try_strip_tag_path(segment.head.name.to_ref())
-            .map(|tag_name| {
-                changelog::Version::Semantic(
-                    utils::parse_possibly_prefixed_tag_version(package_name, tag_name)
-                        .expect("here we always have a valid version as it passed a filter when creating it"),
-                )
-            })
-            .unwrap_or_else(|| changelog::Version::Unreleased);
-
         let time = segment
             .head
             .peeled
@@ -41,15 +30,15 @@ impl Section {
             .to_commit()
             .committer
             .time;
+
         let date_time = time_to_offset_date_time(time);
-        let date = match version {
-            changelog::Version::Unreleased => None,
-            changelog::Version::Semantic(_) => Some(date_time),
-        };
         let mut segments = Vec::new();
         let history = &segment.history;
         if !history.is_empty() {
-            let derivate = selection
+            if selection.contains(Selection::GIT_CONVENTIONAL) {
+                // let mut mapping = BTreeMap::default();
+            }
+            let message_by_category = selection
                 .intersects(Selection::COMMIT_STATISTICS | Selection::COMMIT_DETAILS)
                 .then(|| {
                     let mut mapping = BTreeMap::default();
@@ -59,7 +48,7 @@ impl Section {
                             match possibly_issue {
                                 commit::message::Addition::IssueId(issue) => {
                                     mapping
-                                        .entry(section::details::Category::Issue(issue.to_owned()))
+                                        .entry(section::segment::details::Category::Issue(issue.to_owned()))
                                         .or_insert_with(Vec::new)
                                         .push(item.into());
                                     issue_associations += 1;
@@ -68,14 +57,14 @@ impl Section {
                         }
                         if issue_associations == 0 {
                             mapping
-                                .entry(section::details::Category::Uncategorized)
+                                .entry(section::segment::details::Category::Uncategorized)
                                 .or_insert_with(Vec::new)
                                 .push(item.into());
                         }
                     }
                     mapping
                 });
-            if let Some(commits_by_category) = derivate
+            if let Some(commits_by_category) = message_by_category
                 .as_ref()
                 .filter(|_| selection.contains(Selection::COMMIT_STATISTICS))
             {
@@ -83,7 +72,7 @@ impl Section {
                     .last()
                     .map(|last| date_time.sub(time_to_offset_date_time(last.commit_time)));
                 segments.push(section::Segment::Statistics(section::Data::Generated(
-                    section::CommitStatistics {
+                    section::segment::CommitStatistics {
                         count: history.len(),
                         duration,
                         conventional_count: history.iter().filter(|item| item.message.kind.is_some()).count(),
@@ -98,16 +87,33 @@ impl Section {
                     .count();
                 if count > 0 {
                     segments.push(section::Segment::Clippy(section::Data::Generated(
-                        section::ThanksClippy { count },
+                        section::segment::ThanksClippy { count },
                     )))
                 }
             }
-            if let Some(commits_by_category) = derivate.filter(|_| selection.contains(Selection::COMMIT_DETAILS)) {
-                segments.push(section::Segment::Details(section::Data::Generated(section::Details {
-                    commits_by_category,
-                })));
+            if let Some(commits_by_category) =
+                message_by_category.filter(|_| selection.contains(Selection::COMMIT_DETAILS))
+            {
+                segments.push(section::Segment::Details(section::Data::Generated(
+                    section::segment::Details { commits_by_category },
+                )));
             }
         }
+
+        let version = crate::git::try_strip_tag_path(segment.head.name.to_ref())
+            .map(|tag_name| {
+                let package_name = (!is_top_level_package(&package.manifest_path, repo)).then(|| package.name.as_str());
+                changelog::Version::Semantic(
+                    utils::parse_possibly_prefixed_tag_version(package_name, tag_name)
+                        .expect("here we always have a valid version as it passed a filter when creating it"),
+                )
+            })
+            .unwrap_or_else(|| changelog::Version::Unreleased);
+        let date = match version {
+            changelog::Version::Unreleased => None,
+            changelog::Version::Semantic(_) => Some(date_time),
+        };
+
         Section::Release {
             name: version,
             date,

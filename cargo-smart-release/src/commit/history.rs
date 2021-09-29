@@ -16,3 +16,17 @@ pub struct Item {
     pub tree_id: git::hash::ObjectId,
     pub parent_tree_id: Option<git::hash::ObjectId>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn size_of_item() {
+        assert_eq!(
+            std::mem::size_of::<Item>(),
+            200,
+            "there are plenty of these loaded at a time and we should not let it grow unnnoticed."
+        )
+    }
+}

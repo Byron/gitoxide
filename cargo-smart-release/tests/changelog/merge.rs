@@ -49,7 +49,7 @@ fn only_last_release_without_unreleased_section() {
                 name: changelog::Version::Unreleased,
                 heading_level: 2,
                 segments: vec![section::Segment::Clippy(section::Data::Generated(
-                    section::ThanksClippy { count: 4 },
+                    section::segment::ThanksClippy { count: 4 },
                 ))],
                 unknown: Default::default(),
             },
@@ -58,7 +58,7 @@ fn only_last_release_without_unreleased_section() {
                 name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
                 heading_level: 2,
                 segments: vec![section::Segment::Clippy(section::Data::Generated(
-                    section::ThanksClippy { count: 3 },
+                    section::segment::ThanksClippy { count: 3 },
                 ))],
                 unknown: Default::default(),
             },
@@ -68,7 +68,7 @@ fn only_last_release_without_unreleased_section() {
                 unknown: String::new(),
                 heading_level: 2,
                 segments: vec![section::Segment::Clippy(section::Data::Generated(
-                    section::ThanksClippy { count: 2 },
+                    section::segment::ThanksClippy { count: 2 },
                 ))],
             },
             Section::Release {
@@ -95,7 +95,7 @@ fn only_last_release_without_unreleased_section() {
                     name: changelog::Version::Unreleased,
                     heading_level: 3,
                     segments: vec![section::Segment::Clippy(section::Data::Generated(
-                        section::ThanksClippy { count: 4 }
+                        section::segment::ThanksClippy { count: 4 }
                     ))],
                     unknown: Default::default(),
                 },
@@ -109,7 +109,7 @@ fn only_last_release_without_unreleased_section() {
                     ),
                     name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
                     segments: vec![section::Segment::Clippy(section::Data::Generated(
-                        section::ThanksClippy { count: 3 }
+                        section::segment::ThanksClippy { count: 3 }
                     ))],
                     unknown: "never changed".into(),
                 },
@@ -123,7 +123,7 @@ fn only_last_release_without_unreleased_section() {
                     unknown: String::new(),
                     heading_level: 3,
                     segments: vec![section::Segment::Clippy(section::Data::Generated(
-                        section::ThanksClippy { count: 2 }
+                        section::segment::ThanksClippy { count: 2 }
                     ))],
                 },
                 Section::Release {
@@ -178,14 +178,14 @@ fn into_previously_generated_with_removed_statistical_segments() {
             },
         ],
     };
-    let clippy = section::Segment::Clippy(section::Data::Generated(section::ThanksClippy { count: 42 }));
-    let statistics = section::Segment::Statistics(section::Data::Generated(section::CommitStatistics {
+    let clippy = section::Segment::Clippy(section::Data::Generated(section::segment::ThanksClippy { count: 42 }));
+    let statistics = section::Segment::Statistics(section::Data::Generated(section::segment::CommitStatistics {
         count: 1,
         duration: None,
         conventional_count: 2,
         unique_issues_count: 3,
     }));
-    let details = section::Segment::Details(section::Data::Generated(section::Details {
+    let details = section::Segment::Details(section::Data::Generated(section::segment::Details {
         commits_by_category: Default::default(),
     }));
     let segments = vec![statistics.clone(), clippy.clone(), details.clone()];

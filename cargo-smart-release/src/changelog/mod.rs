@@ -80,7 +80,7 @@ impl Section {
 impl section::Segment {
     pub fn is_read_only(&self) -> bool {
         match self {
-            section::Segment::User { .. } => false,
+            section::Segment::User { .. } | section::Segment::Conventional { .. } => false,
             section::Segment::Clippy(_) | section::Segment::Statistics(_) | section::Segment::Details(_) => true,
         }
     }
