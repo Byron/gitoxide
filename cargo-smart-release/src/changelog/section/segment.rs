@@ -1,4 +1,5 @@
 use bitflags::bitflags;
+use git_repository as git;
 use std::collections::BTreeMap;
 
 pub mod conventional {
@@ -16,6 +17,33 @@ pub mod conventional {
             id: git::hash::ObjectId,
             title: String,
         },
+    }
+}
+
+#[derive(Eq, PartialEq, Debug, Clone)]
+pub struct Conventional {
+    /// The git-conventional kind
+    pub kind: &'static str,
+    /// Whether or not the segment contains only breaking changes
+    pub is_breaking: bool,
+    /// object IDs parsed from markdown with no surrounding text. These are considered removed, so we shouldn't repopulate them.
+    pub removed: Vec<git::hash::ObjectId>,
+    /// The messages to convey
+    pub messages: Vec<conventional::Message>,
+}
+
+impl Conventional {
+    /// Note that this depends on `crate::commit::message::to_static()`,
+    pub fn as_headline_name(&self) -> &'static str {
+        match self.kind {
+            "fix" => "Fixed",
+            "feat" | "add" => "Added",
+            "revert" | "remove" => "Removed",
+            "change" => "Changed",
+            "docs" => "Documentation",
+            "perf" => "Performance",
+            _ => "Other",
+        }
     }
 }
 

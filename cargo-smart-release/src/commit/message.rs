@@ -110,7 +110,7 @@ impl From<&'_ str> for Message {
         let (title, additions) = additions::strip(title);
         Message {
             title: title.into_owned(),
-            kind: to_static(kind),
+            kind: as_static_str(kind),
             body: body.map(|b| b.into_owned()),
             breaking,
             breaking_description: breaking_description.map(ToOwned::to_owned),
@@ -119,14 +119,16 @@ impl From<&'_ str> for Message {
     }
 }
 
-fn to_static(kind: Option<git_conventional::Type<'_>>) -> Option<&'static str> {
+/// Note that this depends on `crate::changelog::section::segment::Conventional::as_headline_name()`,
+fn as_static_str(kind: Option<git_conventional::Type<'_>>) -> Option<&'static str> {
     kind.map(|kind| match kind.as_str() {
-        "feat" => "feat",
+        "feat" | "add" | "added" => "feat",
         "fix" => "fix",
-        "revert" => "revert",
+        "revert" | "remove" => "revert",
         "docs" => "docs",
         "style" => "style",
         "refactor" => "refactor",
+        "change" => "change",
         "perf" => "perf",
         "test" => "test",
         "chore" => "chore",
