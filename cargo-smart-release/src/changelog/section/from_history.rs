@@ -1,0 +1,125 @@
+use std::collections::BTreeMap;
+use std::ops::Sub;
+
+use cargo_metadata::Package;
+use git_repository as git;
+use git_repository::prelude::ObjectIdExt;
+use time::OffsetDateTime;
+
+use crate::{
+    changelog,
+    changelog::{section, section::segment::Selection, Section},
+    commit, utils,
+    utils::is_top_level_package,
+};
+
+impl Section {
+    pub fn from_history_segment(
+        package: &Package,
+        segment: &commit::history::Segment<'_>,
+        repo: &git::Easy,
+        selection: section::segment::Selection,
+    ) -> Self {
+        let package_name = (!is_top_level_package(&package.manifest_path, repo)).then(|| package.name.as_str());
+
+        let version = crate::git::try_strip_tag_path(segment.head.name.to_ref())
+            .map(|tag_name| {
+                changelog::Version::Semantic(
+                    utils::parse_possibly_prefixed_tag_version(package_name, tag_name)
+                        .expect("here we always have a valid version as it passed a filter when creating it"),
+                )
+            })
+            .unwrap_or_else(|| changelog::Version::Unreleased);
+
+        let time = segment
+            .head
+            .peeled
+            .expect("all refs here are peeled")
+            .attach(repo)
+            .object()
+            .expect("object exists")
+            .to_commit()
+            .committer
+            .time;
+        let date_time = time_to_offset_date_time(time);
+        let date = match version {
+            changelog::Version::Unreleased => None,
+            changelog::Version::Semantic(_) => Some(date_time),
+        };
+        let mut segments = Vec::new();
+        let history = &segment.history;
+        if !history.is_empty() {
+            let derivate = selection
+                .intersects(Selection::COMMIT_STATISTICS | Selection::COMMIT_DETAILS)
+                .then(|| {
+                    let mut mapping = BTreeMap::default();
+                    for &item in history {
+                        let mut issue_associations = 0;
+                        for possibly_issue in &item.message.additions {
+                            match possibly_issue {
+                                commit::message::Addition::IssueId(issue) => {
+                                    mapping
+                                        .entry(section::details::Category::Issue(issue.to_owned()))
+                                        .or_insert_with(Vec::new)
+                                        .push(item.into());
+                                    issue_associations += 1;
+                                }
+                            }
+                        }
+                        if issue_associations == 0 {
+                            mapping
+                                .entry(section::details::Category::Uncategorized)
+                                .or_insert_with(Vec::new)
+                                .push(item.into());
+                        }
+                    }
+                    mapping
+                });
+            if let Some(commits_by_category) = derivate
+                .as_ref()
+                .filter(|_| selection.contains(Selection::COMMIT_STATISTICS))
+            {
+                let duration = history
+                    .last()
+                    .map(|last| date_time.sub(time_to_offset_date_time(last.commit_time)));
+                segments.push(section::Segment::Statistics(section::Data::Generated(
+                    section::CommitStatistics {
+                        count: history.len(),
+                        duration,
+                        conventional_count: history.iter().filter(|item| item.message.kind.is_some()).count(),
+                        unique_issues_count: commits_by_category.len(),
+                    },
+                )));
+            }
+            if selection.contains(Selection::CLIPPY) {
+                let count = history
+                    .iter()
+                    .filter(|item| item.message.title.starts_with("thanks clippy"))
+                    .count();
+                if count > 0 {
+                    segments.push(section::Segment::Clippy(section::Data::Generated(
+                        section::ThanksClippy { count },
+                    )))
+                }
+            }
+            if let Some(commits_by_category) = derivate.filter(|_| selection.contains(Selection::COMMIT_DETAILS)) {
+                segments.push(section::Segment::Details(section::Data::Generated(section::Details {
+                    commits_by_category,
+                })));
+            }
+        }
+        Section::Release {
+            name: version,
+            date,
+            heading_level: 2,
+            segments,
+            unknown: Default::default(),
+        }
+    }
+}
+
+fn time_to_offset_date_time(time: git::actor::Time) -> OffsetDateTime {
+    time::OffsetDateTime::from_unix_timestamp(time.time as i64)
+        .expect("always valid unix time")
+        .replace_offset(time::UtcOffset::from_whole_seconds(time.offset).expect("valid offset"))
+}

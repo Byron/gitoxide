@@ -68,8 +68,8 @@ impl ChangeLog {
         selection: segment::Selection,
     ) -> Self {
         ChangeLog {
-            sections: segments.iter().fold(Vec::new(), |mut acc, item| {
-                acc.push(Section::from_history_segment(package, item, repo, selection));
+            sections: segments.iter().fold(Vec::new(), |mut acc, segment| {
+                acc.push(Section::from_history_segment(package, segment, repo, selection));
                 acc
             }),
         }
