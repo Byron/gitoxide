@@ -4,6 +4,7 @@ use std::collections::BTreeMap;
 
 pub mod conventional {
     use git_repository as git;
+    use std::borrow::Cow;
 
     /// A message that is associated with a Segment for a particular git-conventional segment
     #[derive(PartialEq, Eq, Debug, Clone)]
@@ -17,6 +18,22 @@ pub mod conventional {
             id: git::hash::ObjectId,
             title: String,
         },
+    }
+
+    /// Note that this depends on `crate::commit::message::to_static()`,
+    pub fn as_headline(kind: &str) -> Cow<'static, str> {
+        match kind {
+            "fix" => "Fixed",
+            "add" => "Added",
+            "feat" => "New Features",
+            "revert" => "Reverted",
+            "remove" => "Removed",
+            "change" => "Changed",
+            "docs" => "Documentation",
+            "perf" => "Performance",
+            unknown => return Cow::Owned(unknown.into()),
+        }
+        .into()
     }
 }
 
@@ -33,18 +50,7 @@ pub struct Conventional {
 }
 
 impl Conventional {
-    /// Note that this depends on `crate::commit::message::to_static()`,
-    pub fn as_headline_name(&self) -> &'static str {
-        match self.kind {
-            "fix" => "Fixed",
-            "feat" | "add" => "Added",
-            "revert" | "remove" => "Removed",
-            "change" => "Changed",
-            "docs" => "Documentation",
-            "perf" => "Performance",
-            _ => "Other",
-        }
-    }
+    pub const REMOVED_HTML_PREFIX: &'static str = "<csr-id-";
 }
 
 pub mod details {
