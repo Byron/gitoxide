@@ -1,5 +1,3 @@
-use git_repository as git;
-
 mod from_history;
 pub mod segment;
 
@@ -9,16 +7,7 @@ pub enum Segment {
     User {
         text: String,
     },
-    Conventional {
-        /// The git-conventional kind
-        kind: &'static str,
-        /// Whether or not the segment contains only breaking changes
-        is_breaking: bool,
-        /// object IDs parsed from markdown with no surrounding text. These are considered removed, so we shouldn't repopulate them.
-        removed: Vec<git::hash::ObjectId>,
-        /// The messages to convey
-        messages: Vec<segment::conventional::Message>,
-    },
+    Conventional(segment::Conventional),
     Details(Data<segment::Details>),
     Statistics(Data<segment::CommitStatistics>),
     Clippy(Data<segment::ThanksClippy>),

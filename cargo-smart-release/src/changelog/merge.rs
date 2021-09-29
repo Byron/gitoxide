@@ -78,10 +78,16 @@ fn merge_section(dest: &mut Section, src: Section) {
             for rhs_segment in rhs_segments {
                 match rhs_segment {
                     section::Segment::User { .. } => unreachable!("BUG: User segments are never auto-generated"),
-                    section::Segment::Conventional { .. } => todo!("conventional merging"),
                     section::Segment::Clippy(section::Data::Parsed) => {
                         unreachable!("BUG: Clippy is set if generated, or not present")
                     }
+                    // TODO: proper merging, dealing with special cases
+                    conventional @ section::Segment::Conventional(_) => merge_segment(
+                        lhs_segments,
+                        |s| matches!(s, section::Segment::Conventional(_)),
+                        conventional,
+                        mode,
+                    ),
                     clippy @ section::Segment::Clippy(_) => {
                         merge_segment(lhs_segments, |s| matches!(s, section::Segment::Clippy(_)), clippy, mode)
                     }

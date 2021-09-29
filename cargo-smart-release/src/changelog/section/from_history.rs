@@ -36,7 +36,27 @@ impl Section {
         let history = &segment.history;
         if !history.is_empty() {
             if selection.contains(Selection::GIT_CONVENTIONAL) {
-                // let mut mapping = BTreeMap::default();
+                let mut mapping = BTreeMap::default();
+                for (id, kind, title, is_breaking) in history.iter().filter_map(|i| {
+                    i.message
+                        .kind
+                        .as_ref()
+                        .map(|kind| (i.id, kind, i.message.title.clone(), i.message.breaking))
+                }) {
+                    mapping
+                        .entry((is_breaking, kind))
+                        .or_insert_with(Vec::new)
+                        .push(section::segment::conventional::Message::Generated { id, title })
+                }
+                // TODO: proper sorting
+                segments.extend(mapping.into_iter().map(|((is_breaking, kind), messages)| {
+                    section::Segment::Conventional(section::segment::Conventional {
+                        kind,
+                        is_breaking,
+                        removed: Vec::new(),
+                        messages,
+                    })
+                }));
             }
             let message_by_category = selection
                 .intersects(Selection::COMMIT_STATISTICS | Selection::COMMIT_DETAILS)
