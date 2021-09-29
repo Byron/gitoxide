@@ -1,6 +1,5 @@
-use std::collections::BTreeMap;
+use git_repository as git;
 
-pub mod details;
 mod from_history;
 pub mod segment;
 
@@ -10,9 +9,19 @@ pub enum Segment {
     User {
         text: String,
     },
-    Details(Data<Details>),
-    Statistics(Data<CommitStatistics>),
-    Clippy(Data<ThanksClippy>),
+    Conventional {
+        /// The git-conventional kind
+        kind: &'static str,
+        /// Whether or not the segment contains only breaking changes
+        is_breaking: bool,
+        /// object IDs parsed from markdown with no surrounding text. These are considered removed, so we shouldn't repopulate them.
+        removed: Vec<git::hash::ObjectId>,
+        /// The messages to convey
+        messages: Vec<segment::conventional::Message>,
+    },
+    Details(Data<segment::Details>),
+    Statistics(Data<segment::CommitStatistics>),
+    Clippy(Data<segment::ThanksClippy>),
 }
 
 #[derive(Eq, Debug, Clone)]
@@ -28,40 +37,4 @@ impl<T: PartialEq<T>> PartialEq<Data<T>> for Data<T> {
             (_, _) => true,
         }
     }
-}
-
-#[derive(PartialEq, Eq, Debug, Clone)]
-pub struct Details {
-    pub commits_by_category: BTreeMap<details::Category, Vec<details::Message>>,
-}
-
-impl Details {
-    pub const TITLE: &'static str = "Commit Details";
-    pub const PREFIX: &'static str = "<details><summary>view details</summary>";
-    pub const END: &'static str = "</details>";
-}
-
-#[derive(PartialEq, Eq, Debug, Clone)]
-pub struct CommitStatistics {
-    /// Amount of commits that contributed to the release
-    pub count: usize,
-    /// The time span from first to last commit, if there is more than one.
-    pub duration: Option<time::Duration>,
-    /// Amount of commits that could be parsed as git-conventional
-    pub conventional_count: usize,
-    /// The issue numbers that were referenced in commit messages
-    pub unique_issues_count: usize,
-}
-
-impl CommitStatistics {
-    pub const TITLE: &'static str = "Commit Statistics";
-}
-
-#[derive(PartialEq, Eq, Debug, Clone)]
-pub struct ThanksClippy {
-    pub count: usize,
-}
-
-impl ThanksClippy {
-    pub const TITLE: &'static str = "Thanks Clippy";
 }

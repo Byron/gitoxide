@@ -92,6 +92,7 @@ fn names_to_segment_selection(
                 "clippy" => Selection::CLIPPY,
                 "commit-details" => Selection::COMMIT_DETAILS,
                 "commit-statistics" => Selection::COMMIT_STATISTICS,
+                "git-conventional" => Selection::GIT_CONVENTIONAL,
                 other => anyhow::bail!("Invalid changelog segment selector: {:?}", other),
             };
         }

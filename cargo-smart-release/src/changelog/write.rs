@@ -71,27 +71,33 @@ impl section::Segment {
     pub fn write_to(&self, section_level: usize, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
             section::Segment::User { text } => out.write_all(text.as_bytes())?,
-            section::Segment::Details(section::Data::Generated(section::Details { commits_by_category }))
+            section::Segment::Conventional { .. } => todo!("conventional writing"),
+            section::Segment::Details(section::Data::Generated(section::segment::Details { commits_by_category }))
                 if !commits_by_category.is_empty() =>
             {
-                writeln!(out, "{} {}\n", heading(section_level), section::Details::TITLE)?;
+                writeln!(out, "{} {}\n", heading(section_level), section::segment::Details::TITLE)?;
                 writeln!(out, "{}", Section::READONLY_TAG)?;
-                writeln!(out, "{}\n", section::Details::PREFIX)?;
+                writeln!(out, "{}\n", section::segment::Details::PREFIX)?;
                 for (category, messages) in commits_by_category.iter() {
                     writeln!(out, " * **{}**", category)?;
                     for message in messages {
                         writeln!(out, "    - {} ({})", message.title, message.id.to_hex(7))?;
                     }
                 }
-                writeln!(out, "{}\n", section::Details::END)?;
+                writeln!(out, "{}\n", section::segment::Details::END)?;
             }
-            section::Segment::Statistics(section::Data::Generated(section::CommitStatistics {
+            section::Segment::Statistics(section::Data::Generated(section::segment::CommitStatistics {
                 count,
                 duration,
                 conventional_count,
                 unique_issues_count,
             })) => {
-                writeln!(out, "{} {}\n", heading(section_level), section::CommitStatistics::TITLE)?;
+                writeln!(
+                    out,
+                    "{} {}\n",
+                    heading(section_level),
+                    section::segment::CommitStatistics::TITLE
+                )?;
                 writeln!(out, "{}", Section::READONLY_TAG)?;
                 writeln!(
                     out,
@@ -122,8 +128,15 @@ impl section::Segment {
                 )?;
                 writeln!(out)?;
             }
-            section::Segment::Clippy(section::Data::Generated(section::ThanksClippy { count })) if *count > 0 => {
-                writeln!(out, "{} {}\n", heading(section_level), section::ThanksClippy::TITLE)?;
+            section::Segment::Clippy(section::Data::Generated(section::segment::ThanksClippy { count }))
+                if *count > 0 =>
+            {
+                writeln!(
+                    out,
+                    "{} {}\n",
+                    heading(section_level),
+                    section::segment::ThanksClippy::TITLE
+                )?;
                 writeln!(out, "{}", Section::READONLY_TAG)?;
                 writeln!(
                     out,

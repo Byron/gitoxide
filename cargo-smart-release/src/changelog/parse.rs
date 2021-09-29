@@ -126,15 +126,19 @@ impl Section {
                         ConsiderUserAuthored,
                     }
                     let state = match events.next() {
-                        Some((Event::Text(title), _range)) if title.starts_with(section::ThanksClippy::TITLE) => {
+                        Some((Event::Text(title), _range))
+                            if title.starts_with(section::segment::ThanksClippy::TITLE) =>
+                        {
                             segments.push(section::Segment::Clippy(section::Data::Parsed));
                             State::SkipGenerated
                         }
-                        Some((Event::Text(title), _range)) if title.starts_with(section::CommitStatistics::TITLE) => {
+                        Some((Event::Text(title), _range))
+                            if title.starts_with(section::segment::CommitStatistics::TITLE) =>
+                        {
                             segments.push(section::Segment::Statistics(section::Data::Parsed));
                             State::SkipGenerated
                         }
-                        Some((Event::Text(title), _range)) if title.starts_with(section::Details::TITLE) => {
+                        Some((Event::Text(title), _range)) if title.starts_with(section::segment::Details::TITLE) => {
                             segments.push(section::Segment::Details(section::Data::Parsed));
                             State::SkipGenerated
                         }
