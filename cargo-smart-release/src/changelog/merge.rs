@@ -81,23 +81,20 @@ fn merge_section(dest: &mut Section, src: Section) {
                     section::Segment::Clippy(section::Data::Parsed) => {
                         unreachable!("BUG: Clippy is set if generated, or not present")
                     }
-                    // TODO: proper merging, dealing with special cases
-                    conventional @ section::Segment::Conventional(_) => merge_segment(
+                    section::Segment::Conventional(conventional) => merge_conventional(lhs_segments, conventional),
+                    clippy @ section::Segment::Clippy(_) => merge_read_only_segment(
                         lhs_segments,
-                        |s| matches!(s, section::Segment::Conventional(_)),
-                        conventional,
+                        |s| matches!(s, section::Segment::Clippy(_)),
+                        clippy,
                         mode,
                     ),
-                    clippy @ section::Segment::Clippy(_) => {
-                        merge_segment(lhs_segments, |s| matches!(s, section::Segment::Clippy(_)), clippy, mode)
-                    }
-                    stats @ section::Segment::Statistics(_) => merge_segment(
+                    stats @ section::Segment::Statistics(_) => merge_read_only_segment(
                         lhs_segments,
                         |s| matches!(s, section::Segment::Statistics(_)),
                         stats,
                         mode,
                     ),
-                    details @ section::Segment::Details(_) => merge_segment(
+                    details @ section::Segment::Details(_) => merge_read_only_segment(
                         lhs_segments,
                         |s| matches!(s, section::Segment::Details(_)),
                         details,
@@ -116,7 +113,7 @@ enum ReplaceMode {
     ReplaceAllOrAppendIfPresentInLhs,
 }
 
-fn merge_segment(
+fn merge_read_only_segment(
     dest: &mut Vec<Segment>,
     mut filter: impl FnMut(&section::Segment) -> bool,
     insert: Segment,
@@ -129,6 +126,22 @@ fn merge_segment(
     }
     if !found_one && matches!(mode, ReplaceMode::ReplaceAllOrAppend) {
         dest.push(insert);
+    }
+}
+
+fn merge_conventional(dest: &mut Vec<Segment>, insert: section::segment::Conventional) {
+    let mut found_one = false;
+    for dest_segment in dest
+        .iter_mut()
+        .filter(|s| matches!(s, section::Segment::Conventional(rhs) if rhs.kind == insert.kind && rhs.is_breaking == insert.is_breaking))
+    {
+        // TODO: actual merging, and handling of removed items
+        *dest_segment = section::Segment::Conventional(insert.clone());
+        found_one = true;
+    }
+    if !found_one {
+        // TODO: find first non-user section and put things after that
+        dest.insert(0, section::Segment::Conventional(insert));
     }
 }
 

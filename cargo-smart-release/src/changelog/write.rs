@@ -71,7 +71,42 @@ impl section::Segment {
     pub fn write_to(&self, section_level: usize, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
             section::Segment::User { text } => out.write_all(text.as_bytes())?,
-            section::Segment::Conventional { .. } => todo!("conventional writing"),
+            section::Segment::Conventional(section::segment::Conventional {
+                kind,
+                is_breaking,
+                removed,
+                messages,
+            }) => {
+                writeln!(
+                    out,
+                    "{} {}{}\n",
+                    heading(section_level),
+                    section::segment::conventional::as_headline(kind),
+                    if *is_breaking { " (BREAKING)" } else { "" },
+                )?;
+
+                for id in removed {
+                    writeln!(out, "{}{}/>", section::segment::Conventional::REMOVED_HTML_PREFIX, id)?;
+                }
+                if !removed.is_empty() {
+                    writeln!(out)?;
+                }
+
+                use section::segment::conventional::Message;
+                for message in messages {
+                    match message {
+                        Message::Generated { title, id } => writeln!(
+                            out,
+                            " - {}{}/> {}",
+                            section::segment::Conventional::REMOVED_HTML_PREFIX,
+                            id,
+                            title
+                        )?,
+                        Message::User { markdown } => out.write_all(markdown.as_bytes())?,
+                    }
+                }
+                writeln!(out)?;
+            }
             section::Segment::Details(section::Data::Generated(section::segment::Details { commits_by_category }))
                 if !commits_by_category.is_empty() =>
             {
