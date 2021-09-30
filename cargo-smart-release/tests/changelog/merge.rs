@@ -288,7 +288,7 @@ fn segments() {
                     ),
                     name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
                     segments: {
-                        let mut s = segments.clone();
+                        let mut s = segments;
                         s.insert(
                             0,
                             section::Segment::User {
