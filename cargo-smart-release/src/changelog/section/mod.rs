@@ -27,3 +27,12 @@ impl<T: PartialEq<T>> PartialEq<Data<T>> for Data<T> {
         }
     }
 }
+
+impl Segment {
+    pub fn is_read_only(&self) -> bool {
+        match self {
+            Segment::User { .. } | Segment::Conventional { .. } => false,
+            Segment::Clippy(_) | Segment::Statistics(_) | Segment::Details(_) => true,
+        }
+    }
+}
