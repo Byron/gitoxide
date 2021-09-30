@@ -6,7 +6,7 @@ use cargo_smart_release::{
 use time::OffsetDateTime;
 
 #[test]
-fn only_last_release_without_unreleased_section() {
+fn sections() {
     let parsed = ChangeLog {
         sections: vec![
             Section::Verbatim {
@@ -140,12 +140,27 @@ fn only_last_release_without_unreleased_section() {
 }
 
 #[test]
-fn into_previously_generated_with_removed_statistical_segments() {
+fn segments() {
     let parsed = ChangeLog {
         sections: vec![
             Section::Verbatim {
                 text: "preamble".into(),
                 generated: false,
+            },
+            Section::Release {
+                date: date_m_d(time::Month::January, 1).into(),
+                name: changelog::Version::Semantic("0.7.0".parse().unwrap()),
+                unknown: "".into(),
+                heading_level: 3,
+                segments: vec![
+                    section::Segment::Conventional(section::segment::Conventional {
+                        kind: "feat",
+                        is_breaking: false,
+                        removed: vec![],
+                        messages: vec![],
+                    }), // conventional is present and prevents new conventionals from showing up
+                    section::Segment::Clippy(section::Data::Parsed), // statistical items prevent others from showing up
+                ],
             },
             Section::Release {
                 date: None,
@@ -223,6 +238,13 @@ fn into_previously_generated_with_removed_statistical_segments() {
                 heading_level: 3,
                 segments: segments.clone(),
             },
+            Section::Release {
+                date: date_m_d(time::Month::January, 1).into(),
+                name: changelog::Version::Semantic("0.7.0".parse().unwrap()),
+                unknown: "".into(),
+                heading_level: 3,
+                segments: segments.clone(),
+            },
         ],
     };
     let merged = parsed.merge_generated(generated);
@@ -234,6 +256,21 @@ fn into_previously_generated_with_removed_statistical_segments() {
                     text: "preamble".into(),
                     generated: false,
                 },
+                Section::Release {
+                    date: date_m_d(time::Month::January, 1).into(),
+                    name: changelog::Version::Semantic("0.7.0".parse().unwrap()),
+                    unknown: "".into(),
+                    heading_level: 3,
+                    segments: vec![
+                        section::Segment::Conventional(section::segment::Conventional {
+                            kind: "feat",
+                            is_breaking: false,
+                            removed: vec![],
+                            messages: vec![],
+                        }), // conventional is present and prevents new conventionals from showing up
+                        clippy.clone(), // statistical items prevent others from showing up
+                    ],
+                }, // merge does not change the order of sections
                 Section::Release {
                     date: None,
                     name: changelog::Version::Unreleased,
