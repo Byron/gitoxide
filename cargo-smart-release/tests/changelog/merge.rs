@@ -163,7 +163,9 @@ fn into_previously_generated_with_removed_statistical_segments() {
                         .assume_utc(),
                 ),
                 name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
-                segments: vec![], // all segments removed
+                segments: vec![section::Segment::User {
+                    text: "user generated".into(),
+                }], // all segments removed, but user segment present
                 unknown: "".into(),
             },
             Section::Release {
@@ -248,7 +250,16 @@ fn into_previously_generated_with_removed_statistical_segments() {
                             .assume_utc(),
                     ),
                     name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
-                    segments,
+                    segments: {
+                        let mut s = segments.clone();
+                        s.insert(
+                            0,
+                            section::Segment::User {
+                                text: "user generated".into(),
+                            },
+                        );
+                        s
+                    },
                     unknown: "".into(),
                 },
                 Section::Release {

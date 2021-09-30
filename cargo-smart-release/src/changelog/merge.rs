@@ -70,7 +70,7 @@ fn merge_section(dest: &mut Section, src: Section) {
             },
         ) => {
             assert!(rhs_unknown.is_empty(), "shouldn't ever generate 'unknown' portions");
-            let mode = if lhs_segments.is_empty() {
+            let mode = if !lhs_segments.iter().any(|s| s.is_read_only()) {
                 ReplaceMode::ReplaceAllOrAppend
             } else {
                 ReplaceMode::ReplaceAllOrAppendIfPresentInLhs

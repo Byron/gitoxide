@@ -18,9 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 76 commits contributed to the release over the course of 16 calendar days.
+ - 77 commits contributed to the release over the course of 18 calendar days.
  - 34 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 5 unique issues were worked on
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -88,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Use Easy in the one spot where it is possible… (6a97bfa)
     - try to create persistent Easy iterator, but can't make it Send… (54a64a5)
  * **Uncategorized**
+    - Update changelogs just for fun (fa91ba3)
     - Merge branch 'main' into changelog-generation (c956f33)
     - thanks clippy (ae7826e)
     - thanks clippy (b02edb5)
@@ -110,12 +117,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [repository #164] easy::ext::ObjectAccessExt docs (c4984af)
     - [repository #164] (4111d22)
 </details>
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
 
 ## v0.9.1 (2021-09-10)
 
@@ -200,6 +201,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
+
 ### Commit Details
 
 <csr-read-only-do-not-edit/>
@@ -275,12 +282,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [repository #185] refactor repository initialization… (5ff7eaa)
 </details>
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
-
 ## v0.8.1 (2021-08-28)
 
 - Introduce `EasyArcExclusive` type, now available thanks to `parking_lot` 0.11.2
@@ -315,6 +316,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 117 commits contributed to the release over the course of 10 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -442,19 +449,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [smart-release #162] FAIL: promising at first, but not really working… (fa01f76)
 </details>
 
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
-
 ## v0.7.2 (2021-08-17)
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Statistics
 
@@ -463,6 +458,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 20 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ### Commit Details
 
@@ -541,6 +542,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on
 
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
 ### Commit Details
 
 <csr-read-only-do-not-edit/>
@@ -590,12 +597,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Merge branch 'dependabot/cargo/crc-2.0.0' (683c44d)
     - (cargo-release) version 0.2.0 (3286e42)
 </details>
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.6.0 (2021-05-28)
 
