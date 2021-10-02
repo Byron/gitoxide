@@ -134,7 +134,7 @@ mod blocking_io {
                 &mut self.ctx,
                 input,
                 progress,
-                &refs,
+                refs,
             )
         }
     }
