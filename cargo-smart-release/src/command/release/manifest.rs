@@ -45,9 +45,10 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             )?;
             let recent_release_in_log = log.most_recent_release_mut();
             let new_version: semver::Version = new_version.parse()?;
-            match recent_release_in_log {
+            let date = match recent_release_in_log {
                 changelog::Section::Release {
                     name: name @ changelog::Version::Unreleased,
+                    date,
                     ..
                 } => {
                     if !changed_relevant_content {
@@ -59,18 +60,21 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                         );
                     }
                     *name = changelog::Version::Semantic(new_version);
+                    date
                 }
                 changelog::Section::Release {
                     name: changelog::Version::Semantic(recent_version),
+                    date,
                     ..
                 } => {
                     if *recent_version != new_version {
                         anyhow::bail!("'{}' does not have an unreleased version, and most recent release is unexpected. Wanted {}, got {}.", publishee.name, new_version, recent_version);
                     }
+                    date
                 }
                 changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
             };
-
+            *date = Some(time::OffsetDateTime::now_local().unwrap_or_else(|_| time::OffsetDateTime::now_utc()));
             if !recent_release_in_log.is_essential() {
                 empty_changelogs_for_current_version.push(pending_changelog_changes.len());
             }
