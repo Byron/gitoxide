@@ -310,9 +310,10 @@ fn make_user_message_and_consume_item(
 
 fn parse_message_id(html: &str) -> Option<git_repository::hash::ObjectId> {
     let html = html.strip_prefix(section::segment::Conventional::REMOVED_HTML_PREFIX)?;
-    let end_of_hex = html.find(|c| match c {
-        'a'..='f' | '0'..='9' => false,
-        _ => true,
+    let end_of_hex = html.find(|c| {
+        !matches!(c,
+            'a'..='f' | '0'..='9'
+        )
     })?;
     git_repository::hash::ObjectId::from_hex(html[..end_of_hex].as_bytes()).ok()
 }
