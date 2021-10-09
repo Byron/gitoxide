@@ -3,6 +3,7 @@ use cargo_smart_release::{
     changelog::{section, Section},
     ChangeLog,
 };
+use git_testtools::hex_to_id;
 use time::OffsetDateTime;
 
 #[test]
@@ -141,6 +142,8 @@ fn sections() {
 
 #[test]
 fn segments() {
+    let removed_message_id = hex_to_id("0000000000000000000000000000000000000001");
+    let changed_message_id = hex_to_id("0000000000000000000000000000000000000002");
     let parsed = ChangeLog {
         sections: vec![
             Section::Verbatim {
@@ -156,8 +159,16 @@ fn segments() {
                     section::Segment::Conventional(section::segment::Conventional {
                         kind: "feat",
                         is_breaking: false,
-                        removed: vec![],
-                        messages: vec![],
+                        removed: vec![removed_message_id],
+                        messages: vec![
+                            section::segment::conventional::Message::User {
+                                markdown: "user text".into(),
+                            },
+                            section::segment::conventional::Message::Generated {
+                                id: changed_message_id,
+                                title: "content changed by user".to_string(),
+                            },
+                        ],
                     }), // conventional is present and prevents new conventionals from showing up
                     section::Segment::Clippy(section::Data::Parsed), // statistical items prevent others from showing up
                 ],
@@ -179,7 +190,7 @@ fn segments() {
                 ),
                 name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
                 segments: vec![section::Segment::User {
-                    text: "user generated".into(),
+                    markdown: "user generated".into(),
                 }], // all segments removed, but user segment present
                 unknown: "".into(),
             },
@@ -205,6 +216,26 @@ fn segments() {
     let details = section::Segment::Details(section::Data::Generated(section::segment::Details {
         commits_by_category: Default::default(),
     }));
+    let added_message_id = hex_to_id("0000000000000000000000000000000000000003");
+    let feat_conventional = section::Segment::Conventional(section::segment::Conventional {
+        kind: "feat",
+        is_breaking: false,
+        removed: vec![],
+        messages: vec![
+            section::segment::conventional::Message::Generated {
+                id: removed_message_id,
+                title: "something removed".to_string(),
+            },
+            section::segment::conventional::Message::Generated {
+                id: changed_message_id,
+                title: "something added/changed".to_string(),
+            },
+            section::segment::conventional::Message::Generated {
+                id: added_message_id,
+                title: "to be inserted after user message".to_string(),
+            },
+        ],
+    });
     let segments = vec![statistics.clone(), clippy.clone(), details.clone()];
     let generated = ChangeLog {
         sections: vec![
@@ -243,7 +274,11 @@ fn segments() {
                 name: changelog::Version::Semantic("0.7.0".parse().unwrap()),
                 unknown: "".into(),
                 heading_level: 3,
-                segments: segments.clone(),
+                segments: {
+                    let mut v = segments.clone();
+                    v.push(feat_conventional);
+                    v
+                },
             },
         ],
     };
@@ -265,9 +300,21 @@ fn segments() {
                         section::Segment::Conventional(section::segment::Conventional {
                             kind: "feat",
                             is_breaking: false,
-                            removed: vec![],
-                            messages: vec![],
-                        }), // conventional is present and prevents new conventionals from showing up
+                            removed: vec![removed_message_id],
+                            messages: vec![
+                                section::segment::conventional::Message::User {
+                                    markdown: "user text".into(),
+                                },
+                                section::segment::conventional::Message::Generated {
+                                    id: added_message_id,
+                                    title: "to be inserted after user message".to_string(),
+                                }, // new messages are inserted after user content
+                                section::segment::conventional::Message::Generated {
+                                    id: changed_message_id,
+                                    title: "content changed by user".to_string(),
+                                }, // changed user content is preserved, don't overwrite, ever
+                            ],
+                        }), // conventional is present and prevents new conventionals from showing up, they have messages merged though
                         clippy.clone(), // statistical items prevent others from showing up
                     ],
                 }, // merge does not change the order of sections
@@ -292,7 +339,7 @@ fn segments() {
                         s.insert(
                             0,
                             section::Segment::User {
-                                text: "user generated".into(),
+                                markdown: "user generated".into(),
                             },
                         );
                         s

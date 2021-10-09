@@ -71,7 +71,12 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                     ..
                 } => {
                     if *recent_version != new_version {
-                        anyhow::bail!("'{}' does not have an unreleased version, and most recent release is unexpected. Wanted {}, got {}.", publishee.name, new_version, recent_version);
+                        anyhow::bail!(
+                            "'{}' does not have an unreleased version, and most recent release is unexpected. Wanted {}, got {}.",
+                            publishee.name,
+                            new_version,
+                            recent_version
+                        );
                     }
                     date
                 }
@@ -443,7 +448,12 @@ fn set_version_and_update_package_dependency(
                             || (version_req.comparators.len() > 1)
                             || version_req.comparators.last().expect("exists").op != supported_op
                         {
-                            bail!("{} has it's {} dependency set to a version requirement with comparator {} - cannot currently handle that.", package_to_update.name, name_to_find, current_version_req);
+                            bail!(
+                                "{} has it's {} dependency set to a version requirement with comparator {} - cannot currently handle that.",
+                                package_to_update.name,
+                                name_to_find,
+                                current_version_req
+                            );
                         }
                         let new_version = format!("^{}", new_version);
                         if verbose && version_req.to_string() != new_version {

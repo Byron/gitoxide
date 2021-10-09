@@ -70,7 +70,7 @@ impl ChangeLog {
 impl section::Segment {
     pub fn write_to(&self, section_level: usize, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
-            section::Segment::User { text } => out.write_all(text.as_bytes())?,
+            section::Segment::User { markdown } => out.write_all(markdown.as_bytes())?,
             section::Segment::Conventional(section::segment::Conventional {
                 kind,
                 is_breaking,

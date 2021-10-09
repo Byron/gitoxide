@@ -197,7 +197,7 @@ fn update_unknown_range(target: &mut Option<Range<usize>>, source: Range<usize>)
 fn record_unknown_range(out: &mut Vec<section::Segment>, range: Option<Range<usize>>, markdown: &str) {
     if let Some(range) = range {
         out.push(section::Segment::User {
-            text: markdown[range].to_owned(),
+            markdown: markdown[range].to_owned(),
         })
     }
 }

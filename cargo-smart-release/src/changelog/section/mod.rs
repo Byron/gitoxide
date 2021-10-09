@@ -5,7 +5,7 @@ pub mod segment;
 pub enum Segment {
     /// A portion of a Section that we couldn't make sense of, but which should be kept as is nonetheless.
     User {
-        text: String,
+        markdown: String,
     },
     Conventional(segment::Conventional),
     Details(Data<segment::Details>),

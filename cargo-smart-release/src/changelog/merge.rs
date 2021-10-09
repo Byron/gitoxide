@@ -1,5 +1,6 @@
 use std::{collections::VecDeque, iter::FromIterator};
 
+use crate::changelog::section::segment::conventional;
 use crate::{
     changelog::{section, section::Segment, Section, Version},
     ChangeLog,
@@ -70,36 +71,30 @@ fn merge_section(dest: &mut Section, src: Section) {
             },
         ) => {
             assert!(rhs_unknown.is_empty(), "shouldn't ever generate 'unknown' portions");
-            let mode = if !lhs_segments.iter().any(|s| s.is_read_only()) {
+            let has_no_read_only_segments = !lhs_segments.iter().any(|s| s.is_read_only());
+            let mode = if has_no_read_only_segments {
                 ReplaceMode::ReplaceAllOrAppend
             } else {
                 ReplaceMode::ReplaceAllOrAppendIfPresentInLhs
             };
             for rhs_segment in rhs_segments {
                 match rhs_segment {
-                    section::Segment::User { .. } => unreachable!("BUG: User segments are never auto-generated"),
-                    section::Segment::Clippy(section::Data::Parsed) => {
-                        unreachable!("BUG: Clippy is set if generated, or not present")
+                    Segment::User { .. } => unreachable!("BUG: User segments are never auto-generated"),
+                    Segment::Details(section::Data::Parsed)
+                    | Segment::Statistics(section::Data::Parsed)
+                    | Segment::Clippy(section::Data::Parsed) => {
+                        unreachable!("BUG: Clippy, statistics, and details are set if generated, or not present")
                     }
-                    section::Segment::Conventional(conventional) => merge_conventional(lhs_segments, conventional),
-                    clippy @ section::Segment::Clippy(_) => merge_read_only_segment(
-                        lhs_segments,
-                        |s| matches!(s, section::Segment::Clippy(_)),
-                        clippy,
-                        mode,
-                    ),
-                    stats @ section::Segment::Statistics(_) => merge_read_only_segment(
-                        lhs_segments,
-                        |s| matches!(s, section::Segment::Statistics(_)),
-                        stats,
-                        mode,
-                    ),
-                    details @ section::Segment::Details(_) => merge_read_only_segment(
-                        lhs_segments,
-                        |s| matches!(s, section::Segment::Details(_)),
-                        details,
-                        mode,
-                    ),
+                    Segment::Conventional(conventional) => merge_conventional(lhs_segments, conventional),
+                    clippy @ Segment::Clippy(_) => {
+                        merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Clippy(_)), clippy, mode)
+                    }
+                    stats @ Segment::Statistics(_) => {
+                        merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Statistics(_)), stats, mode)
+                    }
+                    details @ Segment::Details(_) => {
+                        merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Details(_)), details, mode)
+                    }
                 }
             }
             *lhs_date = rhs_date;
@@ -129,19 +124,65 @@ fn merge_read_only_segment(
     }
 }
 
-fn merge_conventional(dest: &mut Vec<Segment>, insert: section::segment::Conventional) {
+fn merge_conventional(dest: &mut Vec<Segment>, src: section::segment::Conventional) {
+    assert!(
+        src.removed.is_empty(),
+        "generated sections never contains removed items"
+    );
     let mut found_one = false;
-    for dest_segment in dest
-        .iter_mut()
-        .filter(|s| matches!(s, section::Segment::Conventional(rhs) if rhs.kind == insert.kind && rhs.is_breaking == insert.is_breaking))
-    {
-        // TODO: actual merging, and handling of removed items
-        *dest_segment = section::Segment::Conventional(insert.clone());
+    for dest_segment in dest.iter_mut().filter(
+        |s| matches!(s, Segment::Conventional(rhs) if rhs.kind == src.kind && rhs.is_breaking == src.is_breaking),
+    ) {
+        match dest_segment {
+            Segment::Conventional(section::segment::Conventional {
+                removed,
+                messages,
+                kind: _,
+                is_breaking: _,
+            }) => {
+                for src_message in src.messages.clone() {
+                    match src_message {
+                        conventional::Message::Generated { id, title } => {
+                            if removed.contains(&id)
+                                || messages.iter().any(
+                                    |m| matches!(m, conventional::Message::Generated {id: lhs_id, ..} if *lhs_id == id),
+                                )
+                            {
+                                continue;
+                            }
+                            let pos = messages
+                                .iter()
+                                .take_while(|m| matches!(m, conventional::Message::User { .. }))
+                                .enumerate()
+                                .map(|(pos, _)| pos + 1)
+                                .last()
+                                .unwrap_or(messages.len());
+                            messages.insert(pos, conventional::Message::Generated { id, title });
+                        }
+                        conventional::Message::User { .. } => unreachable!("User messages are never generated"),
+                    }
+                }
+            }
+            _ => unreachable!("assured correct type in filter"),
+        }
         found_one = true;
     }
+
     if !found_one {
-        // TODO: find first non-user section and put things after that
-        dest.insert(0, section::Segment::Conventional(insert));
+        dest.insert(
+            dest.iter()
+                .enumerate()
+                .find_map(|(pos, item)| {
+                    if matches!(item, Segment::User { .. }) {
+                        // we know that the segment that follows (if one) is generated, so this won't be between two user segments
+                        Some(pos + 1)
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or(0),
+            Segment::Conventional(src),
+        );
     }
 }
 

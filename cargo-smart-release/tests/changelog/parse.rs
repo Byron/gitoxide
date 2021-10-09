@@ -36,7 +36,7 @@ fn all_unknown_in_section() {
                 date: None,
                 heading_level: 3,
                 segments: vec![Segment::User {
-                    text: "- hello ~~this is not understood~~\n* this isn't either\n\n".into()
+                    markdown: "- hello ~~this is not understood~~\n* this isn't either\n\n".into()
                 }],
                 unknown: String::new(),
             },
@@ -45,7 +45,7 @@ fn all_unknown_in_section() {
                 date: None,
                 heading_level: 4,
                 segments: vec![Segment::User {
-                    text: "Some free text in a paragraph\nthat won't parse.\n".into()
+                    markdown: "Some free text in a paragraph\nthat won't parse.\n".into()
                 }],
                 unknown: String::new(),
             }
@@ -64,7 +64,7 @@ fn unknown_link_and_headling() {
             date: None,
             heading_level: 4,
             segments: vec![Segment::User {
-                text: "##### Special\n\nHello [there][194] period.\n".into()
+                markdown: "##### Special\n\nHello [there][194] period.\n".into()
             }],
             unknown: String::new(),
         },]
@@ -87,7 +87,9 @@ fn known_and_unknown_sections_are_sorted() {
                 date: None,
                 heading_level: 3,
                 unknown: "".into(),
-                segments: vec![Segment::User { text: "TBD\n".into() }]
+                segments: vec![Segment::User {
+                    markdown: "TBD\n".into()
+                }]
             },
             Section::Release {
                 name: Version::Semantic(semver::Version::parse("1.0.0").unwrap()),
@@ -96,10 +98,10 @@ fn known_and_unknown_sections_are_sorted() {
                 unknown: "".into(),
                 segments: vec![
                     Segment::User {
-                        text: "- initial release\n\n".into()
+                        markdown: "- initial release\n\n".into()
                     },
                     Segment::User {
-                        text: "### Something inbetween\n\nintermezzo\n".into()
+                        markdown: "### Something inbetween\n\nintermezzo\n".into()
                     },
                 ]
             },
