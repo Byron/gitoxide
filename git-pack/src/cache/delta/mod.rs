@@ -11,7 +11,9 @@ pub enum Error {
         /// The invariant violating offset
         pack_offset: u64,
     },
-    #[error("The delta at pack offset {delta_pack_offset} could not find its base at {base_pack_offset} - it should have been seen already")]
+    #[error(
+        "The delta at pack offset {delta_pack_offset} could not find its base at {base_pack_offset} - it should have been seen already"
+    )]
     InvariantBasesBeforeDeltasNeedThem {
         /// The delta pack offset whose base we could not find
         delta_pack_offset: u64,

@@ -72,7 +72,11 @@ mod decode_entry {
     fn blob_ofs_delta_two_links() {
         let buf = decode_entry_at_offset(3033);
         assert_eq!(buf.len(), 173, "buffer length is the acutal object size");
-        assert_eq!(buf.capacity(), 2381, "capacity is much higher as we allocate everything into a single, bigger, reusable buffer, which depends on base sizes");
+        assert_eq!(
+            buf.capacity(),
+            2381,
+            "capacity is much higher as we allocate everything into a single, bigger, reusable buffer, which depends on base sizes"
+        );
         assert_eq!(
             buf.as_bstr(),
             content_of("objects/b8aa61be84b78d7fcff788e8d844406cc97132bf.txt").as_bstr()
@@ -83,7 +87,11 @@ mod decode_entry {
     fn blob_ofs_delta_single_link() {
         let buf = decode_entry_at_offset(3569);
         assert_eq!(buf.len(), 1163, "buffer length is the acutal object size");
-        assert_eq!(buf.capacity(), 2398, "capacity is much higher as we allocate everything into a single, bigger, reusable buffer, which depends on base sizes");
+        assert_eq!(
+            buf.capacity(),
+            2398,
+            "capacity is much higher as we allocate everything into a single, bigger, reusable buffer, which depends on base sizes"
+        );
         assert_eq!(
             buf.as_bstr(),
             content_of("objects/f139391424a8c623adadf2388caec73e5e90865b.txt").as_bstr()

@@ -238,7 +238,8 @@ mod v2 {
 0032want ff333369de1221f9bfbbe03a3a13e9a09bc1ffff
 0009done
 0000"
-                .as_bstr(), "we filter features/capabilities without value as these apparently sholdn't be listed (remote dies otherwise)"
+                .as_bstr(),
+            "we filter features/capabilities without value as these apparently sholdn't be listed (remote dies otherwise)"
         );
     }
 

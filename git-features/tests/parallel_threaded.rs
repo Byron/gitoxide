@@ -86,10 +86,10 @@ mod optimize_chunk_size_and_thread_limit {
         #[test]
         fn small_chunk_size_many_threads() {
             assert_eq!(
-                    optimize_chunk_size_and_thread_limit(1, None, None, Some(4)),
-                    (50, Some(4), 4),
-                    "we prefer an arbitrary number, which should really be based on effort, but the caller has to adjust for that"
-                );
+                optimize_chunk_size_and_thread_limit(1, None, None, Some(4)),
+                (50, Some(4), 4),
+                "we prefer an arbitrary number, which should really be based on effort, but the caller has to adjust for that"
+            );
         }
     }
 

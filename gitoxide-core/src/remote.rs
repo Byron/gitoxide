@@ -219,13 +219,15 @@ pub mod refs {
                 Ref::Peeled { path, object, tag } => {
                     writeln!(&mut out, "{} {} tag:{}", object.to_sha1_hex_string(), path, tag)
                 }
-                Ref::Symbolic { path, target, object } => writeln!(
-                    &mut out,
-                    "{} {} symref-target:{}",
-                    object.to_sha1_hex_string(),
-                    path,
-                    target
-                ),
+                Ref::Symbolic { path, target, object } => {
+                    writeln!(
+                        &mut out,
+                        "{} {} symref-target:{}",
+                        object.to_sha1_hex_string(),
+                        path,
+                        target
+                    )
+                }
             }?;
         }
         Ok(())

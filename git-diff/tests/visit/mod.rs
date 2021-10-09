@@ -152,8 +152,9 @@ mod changes {
                     entry_mode: EntryMode::Blob,
                     oid: hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
                     path: "f".into()
-                }]
-                , ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A      f");
+                }],
+                ":000000 100644 0000000000000000000000000000000000000000 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 A      f"
+            );
 
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[1])?,
@@ -163,8 +164,9 @@ mod changes {
                     entry_mode: EntryMode::Blob,
                     oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
                     path: "f".into()
-                }]
-                , ":100644 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 28ce6a8b26aa170e1de65536fe8abe1832bd3242 M      f");
+                }],
+                ":100644 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 28ce6a8b26aa170e1de65536fe8abe1832bd3242 M      f"
+            );
 
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[2])?,
@@ -179,23 +181,26 @@ mod changes {
 
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[4])?,
-                vec![Deletion {
-                    entry_mode: EntryMode::Blob,
-                    oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
-                    path: "f".into()
-                },
-                     Addition {
-                         entry_mode: EntryMode::Tree,
-                         oid: hex_to_id("10f2f4b82222d2b5c31985130979a91fd87410f7"),
-                         path: "f".into()
-                     },
-                     Addition {
-                         entry_mode: EntryMode::Blob,
-                         oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
-                         path: "f/f".into()
-                     }]
-                , ":100644 000000 28ce6a8b26aa170e1de65536fe8abe1832bd3242 0000000000000000000000000000000000000000 D      f
-                   :000000 100644 0000000000000000000000000000000000000000 28ce6a8b26aa170e1de65536fe8abe1832bd3242 A      f/f");
+                vec![
+                    Deletion {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
+                        path: "f".into()
+                    },
+                    Addition {
+                        entry_mode: EntryMode::Tree,
+                        oid: hex_to_id("10f2f4b82222d2b5c31985130979a91fd87410f7"),
+                        path: "f".into()
+                    },
+                    Addition {
+                        entry_mode: EntryMode::Blob,
+                        oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
+                        path: "f/f".into()
+                    }
+                ],
+                ":100644 000000 28ce6a8b26aa170e1de65536fe8abe1832bd3242 0000000000000000000000000000000000000000 D      f
+                   :000000 100644 0000000000000000000000000000000000000000 28ce6a8b26aa170e1de65536fe8abe1832bd3242 A      f/f"
+            );
 
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[5])?,
@@ -485,8 +490,10 @@ mod changes {
                         entry_mode: EntryMode::Blob,
                         oid: hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242"),
                         path: "a/f".into()
-                    }]
-                , ":100644 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 28ce6a8b26aa170e1de65536fe8abe1832bd3242 M      a/f");
+                    }
+                ],
+                ":100644 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 28ce6a8b26aa170e1de65536fe8abe1832bd3242 M      a/f"
+            );
 
             for commit in all_commits {
                 // Just make sure it works - checked results with dbg!() once and am too ~~lazy~~ time constrained to add the

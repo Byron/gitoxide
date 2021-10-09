@@ -32,7 +32,9 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
         offset: u64,
         kind: git_object::Kind,
     },
-    #[error("The CRC32 of {kind} object at offset {offset} didn't match the checksum in the index file: expected {expected}, got {actual}")]
+    #[error(
+        "The CRC32 of {kind} object at offset {offset} didn't match the checksum in the index file: expected {expected}, got {actual}"
+    )]
     Crc32Mismatch {
         expected: u32,
         actual: u32,
