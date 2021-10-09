@@ -1,10 +1,12 @@
-use bitflags::bitflags;
-use git_repository as git;
 use std::collections::BTreeMap;
 
+use bitflags::bitflags;
+use git_repository as git;
+
 pub mod conventional {
-    use git_repository as git;
     use std::borrow::Cow;
+
+    use git_repository as git;
 
     /// A message that is associated with a Segment for a particular git-conventional segment
     #[derive(PartialEq, Eq, Debug, Clone)]

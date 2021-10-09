@@ -6,6 +6,7 @@ use cargo_metadata::{
 use git_repository as git;
 use git_repository::bstr::{BStr, ByteSlice};
 use semver::Version;
+use time::OffsetDateTime;
 
 pub fn will(not_really: bool) -> &'static str {
     if not_really {
@@ -243,4 +244,10 @@ mod tests {
             }
         }
     }
+}
+
+pub fn time_to_offset_date_time(time: git::actor::Time) -> OffsetDateTime {
+    time::OffsetDateTime::from_unix_timestamp(time.time as i64)
+        .expect("always valid unix time")
+        .replace_offset(time::UtcOffset::from_whole_seconds(time.offset).expect("valid offset"))
 }

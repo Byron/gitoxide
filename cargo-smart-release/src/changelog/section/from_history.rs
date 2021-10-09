@@ -1,16 +1,14 @@
-use std::collections::BTreeMap;
-use std::ops::Sub;
+use std::{collections::BTreeMap, ops::Sub};
 
 use cargo_metadata::Package;
 use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
-use time::OffsetDateTime;
 
 use crate::{
     changelog,
     changelog::{section, section::segment::Selection, Section},
     commit, utils,
-    utils::is_top_level_package,
+    utils::{is_top_level_package, time_to_offset_date_time},
 };
 
 impl Section {
@@ -142,10 +140,4 @@ impl Section {
             unknown: Default::default(),
         }
     }
-}
-
-fn time_to_offset_date_time(time: git::actor::Time) -> OffsetDateTime {
-    time::OffsetDateTime::from_unix_timestamp(time.time as i64)
-        .expect("always valid unix time")
-        .replace_offset(time::UtcOffset::from_whole_seconds(time.offset).expect("valid offset"))
 }

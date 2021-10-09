@@ -28,6 +28,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     } = opts;
     let mut empty_changelogs_for_current_version = Vec::new();
     let mut made_change = false;
+    let next_commit_date = crate::utils::time_to_offset_date_time(crate::git::author()?.time);
     for (publishee, new_version) in publishees {
         let lock = git_repository::lock::File::acquire_to_update_resource(
             &publishee.manifest_path,
@@ -76,7 +77,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 }
                 changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
             };
-            *date = Some(time::OffsetDateTime::now_local().unwrap_or_else(|_| time::OffsetDateTime::now_utc()));
+            *date = Some(next_commit_date);
             if !recent_release_in_log.is_essential() {
                 empty_changelogs_for_current_version.push(pending_changelog_changes.len());
             }

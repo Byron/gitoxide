@@ -363,6 +363,13 @@ pub mod history {
     }
 }
 
+pub fn author() -> anyhow::Result<git_repository::actor::Signature> {
+    Ok(git_repository::actor::SignatureRef::from_bytes::<()>(
+        &Command::new("git").arg("var").arg("GIT_AUTHOR_IDENT").output()?.stdout,
+    )?
+    .to_owned())
+}
+
 pub fn strip_tag_path(name: FullNameRef<'_>) -> &BStr {
     try_strip_tag_path(name).expect("prefix iteration works")
 }
