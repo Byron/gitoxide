@@ -1,0 +1,15 @@
+---
+source: cargo-smart-release/tests/changelog/write_and_parse/mod.rs
+expression: md
+
+---
+#### v1.0.2-beta.2 (1970-01-01)
+
+<csr-id-0000000000000000000000000000000000000002/>
+
+##### New Features (BREAKING)
+
+<csr-id-0000000000000000000000000000000000000001/>
+
+
+

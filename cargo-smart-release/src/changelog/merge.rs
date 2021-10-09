@@ -124,13 +124,13 @@ fn merge_read_only_segment(
     }
 }
 
-fn merge_conventional(dest: &mut Vec<Segment>, src: section::segment::Conventional) {
+fn merge_conventional(dest_segments: &mut Vec<Segment>, src: section::segment::Conventional) {
     assert!(
         src.removed.is_empty(),
         "generated sections never contains removed items"
     );
     let mut found_one = false;
-    for dest_segment in dest.iter_mut().filter(
+    for dest_segment in dest_segments.iter_mut().filter(
         |s| matches!(s, Segment::Conventional(rhs) if rhs.kind == src.kind && rhs.is_breaking == src.is_breaking),
     ) {
         match dest_segment {
@@ -169,8 +169,9 @@ fn merge_conventional(dest: &mut Vec<Segment>, src: section::segment::Convention
     }
 
     if !found_one {
-        dest.insert(
-            dest.iter()
+        dest_segments.insert(
+            dest_segments
+                .iter()
                 .enumerate()
                 .find_map(|(pos, item)| {
                     if matches!(item, Segment::User { .. }) {

@@ -16,6 +16,7 @@ use nom::{
 };
 use pulldown_cmark::{Event, OffsetIter, Tag};
 
+use crate::changelog::section::Segment;
 use crate::{
     changelog,
     changelog::{section, Section},
@@ -106,10 +107,9 @@ impl Section {
         let mut unknown = String::new();
         let mut segments = Vec::new();
 
-        // let mut user_authored = String::new();
         let mut unknown_range = None;
+        let mut removed_messages = Vec::new();
         while let Some((e, range)) = events.next() {
-            // dbg!(&e, &range);
             match e {
                 Event::Html(text) if text.starts_with(Section::UNKNOWN_TAG_START) => {
                     record_unknown_range(&mut segments, unknown_range.take(), &body);
@@ -119,9 +119,15 @@ impl Section {
                         track_unknown_event(event, &mut unknown);
                     }
                 }
+                Event::Html(text) if text.starts_with(section::segment::Conventional::REMOVED_HTML_PREFIX) => {
+                    if let Some(id) = parse_message_id(text.as_ref()) {
+                        removed_messages.push(id);
+                    }
+                }
                 Event::Start(Tag::Heading(indent)) => {
                     record_unknown_range(&mut segments, unknown_range.take(), &body);
                     enum State {
+                        ParseConventional { title: String },
                         SkipGenerated,
                         ConsiderUserAuthored,
                     }
@@ -129,18 +135,25 @@ impl Section {
                         Some((Event::Text(title), _range))
                             if title.starts_with(section::segment::ThanksClippy::TITLE) =>
                         {
-                            segments.push(section::Segment::Clippy(section::Data::Parsed));
+                            segments.push(Segment::Clippy(section::Data::Parsed));
                             State::SkipGenerated
                         }
                         Some((Event::Text(title), _range))
                             if title.starts_with(section::segment::CommitStatistics::TITLE) =>
                         {
-                            segments.push(section::Segment::Statistics(section::Data::Parsed));
+                            segments.push(Segment::Statistics(section::Data::Parsed));
                             State::SkipGenerated
                         }
                         Some((Event::Text(title), _range)) if title.starts_with(section::segment::Details::TITLE) => {
-                            segments.push(section::Segment::Details(section::Data::Parsed));
+                            segments.push(Segment::Details(section::Data::Parsed));
                             State::SkipGenerated
+                        }
+                        Some((Event::Text(title), _range))
+                            if title.starts_with(section::segment::conventional::as_headline("feat").as_ref()) =>
+                        {
+                            State::ParseConventional {
+                                title: title.into_string(),
+                            }
                         }
                         Some((_event, next_range)) => {
                             update_unknown_range(&mut unknown_range, range);
@@ -160,6 +173,14 @@ impl Section {
                         })
                         .count();
                     match state {
+                        State::ParseConventional { title } => {
+                            segments.push(parse_conventional_to_next_section_title(
+                                title,
+                                &mut events,
+                                indent,
+                                &mut unknown,
+                            ));
+                        }
                         State::SkipGenerated => {
                             skip_to_next_section_title(&mut events, indent);
                         }
@@ -176,11 +197,60 @@ impl Section {
                 None => changelog::Version::Unreleased,
             },
             date,
+            removed_messages,
             heading_level: level,
             segments,
             unknown,
         }
     }
+}
+
+fn parse_conventional_to_next_section_title(
+    title: String,
+    events: &mut Peekable<OffsetIter<'_>>,
+    level: u32,
+    unknown: &mut String,
+) -> Segment {
+    let is_breaking = title.ends_with(section::segment::Conventional::BREAKING_TITLE);
+    let kind = ["fix", "add", "feat", "revert", "remove", "change", "docs", "perf"]
+        .iter()
+        .find(|kind| title.starts_with(section::segment::conventional::as_headline(*kind).as_ref()))
+        .expect("BUG: this list needs an update too if new kinds of conventional messages are added");
+
+    let mut conventional = section::segment::Conventional {
+        kind: *kind,
+        is_breaking,
+        removed: vec![],
+        messages: vec![],
+    };
+    while let Some((event, _range)) = events.peek() {
+        match event {
+            Event::Start(Tag::Heading(indent)) if *indent == level => break,
+            _ => {
+                let (event, _range) = events.next().expect("peeked before so event is present");
+                match event {
+                    Event::Html(ref tag) if tag.starts_with(section::segment::Conventional::REMOVED_HTML_PREFIX) => {
+                        match parse_message_id(tag.as_ref()) {
+                            Some(id) => conventional.removed.push(id),
+                            None => track_unknown_event(event, unknown),
+                        }
+                    }
+                    event => track_unknown_event(event, unknown),
+                }
+                continue;
+            }
+        }
+    }
+    section::Segment::Conventional(conventional)
+}
+
+fn parse_message_id(html: &str) -> Option<git_repository::hash::ObjectId> {
+    let html = html.strip_prefix(section::segment::Conventional::REMOVED_HTML_PREFIX)?;
+    let end_of_hex = html.find(|c| match c {
+        'a'..='f' | '0'..='9' => false,
+        _ => true,
+    })?;
+    git_repository::hash::ObjectId::from_hex(html[..end_of_hex].as_bytes()).ok()
 }
 
 fn update_unknown_range(target: &mut Option<Range<usize>>, source: Range<usize>) {
@@ -196,7 +266,7 @@ fn update_unknown_range(target: &mut Option<Range<usize>>, source: Range<usize>)
 
 fn record_unknown_range(out: &mut Vec<section::Segment>, range: Option<Range<usize>>, markdown: &str) {
     if let Some(range) = range {
-        out.push(section::Segment::User {
+        out.push(Segment::User {
             markdown: markdown[range].to_owned(),
         })
     }

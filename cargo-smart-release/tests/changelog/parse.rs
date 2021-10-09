@@ -33,6 +33,7 @@ fn all_unknown_in_section() {
         vec![
             Section::Release {
                 name: Version::Unreleased,
+                removed_messages: vec![],
                 date: None,
                 heading_level: 3,
                 segments: vec![Segment::User {
@@ -42,6 +43,7 @@ fn all_unknown_in_section() {
             },
             Section::Release {
                 name: Version::Semantic("1.0.0".parse().unwrap()),
+                removed_messages: vec![],
                 date: None,
                 heading_level: 4,
                 segments: vec![Segment::User {
@@ -61,6 +63,7 @@ fn unknown_link_and_headling() {
         log.sections,
         vec![Section::Release {
             name: Version::Unreleased,
+            removed_messages: vec![],
             date: None,
             heading_level: 4,
             segments: vec![Segment::User {
@@ -84,6 +87,7 @@ fn known_and_unknown_sections_are_sorted() {
             },
             Section::Release {
                 name: Version::Unreleased,
+                removed_messages: vec![],
                 date: None,
                 heading_level: 3,
                 unknown: "".into(),
@@ -93,6 +97,7 @@ fn known_and_unknown_sections_are_sorted() {
             },
             Section::Release {
                 name: Version::Semantic(semver::Version::parse("1.0.0").unwrap()),
+                removed_messages: vec![],
                 date: None,
                 heading_level: 3,
                 unknown: "".into(),

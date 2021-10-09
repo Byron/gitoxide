@@ -11,6 +11,39 @@ use git_testtools::hex_to_id;
 use crate::Result;
 
 #[test]
+fn conventional_write_empty_messages() -> Result {
+    let first_message = hex_to_id("0000000000000000000000000000000000000001");
+    let second_message = hex_to_id("0000000000000000000000000000000000000002");
+
+    let log = ChangeLog {
+        sections: vec![Section::Release {
+            heading_level: 4,
+            date: Some(time::OffsetDateTime::from_unix_timestamp(0)?),
+            name: changelog::Version::Semantic("1.0.2-beta.2".parse()?),
+            removed_messages: vec![second_message],
+            segments: vec![section::Segment::Conventional(section::segment::Conventional {
+                kind: "feat",
+                is_breaking: true,
+                removed: vec![first_message],
+                messages: vec![], // TODO: put message and parse it back
+            })],
+            unknown: String::new(),
+        }],
+    };
+
+    for _round in 1..=2 {
+        let mut buf = Vec::<u8>::new();
+        log.write_to(&mut buf)?;
+        let md = buf.to_str()?;
+        insta::assert_snapshot!(md);
+
+        let parsed_log = ChangeLog::from_markdown(md);
+        assert_eq!(parsed_log, log, "we can parse this back losslessly");
+    }
+    Ok(())
+}
+
+#[test]
 fn all_section_types_round_trips_lossy() -> Result {
     let mut log = ChangeLog {
         sections: vec![
@@ -20,6 +53,7 @@ fn all_section_types_round_trips_lossy() -> Result {
             },
             Section::Release {
                 heading_level: 2,
+                removed_messages: vec![],
                 date: None,
                 name: changelog::Version::Unreleased,
                 segments: Vec::new(),
@@ -27,6 +61,7 @@ fn all_section_types_round_trips_lossy() -> Result {
             },
             Section::Release {
                 heading_level: 4,
+                removed_messages: vec![],
                 date: Some(time::OffsetDateTime::from_unix_timestamp(0)?),
                 name: changelog::Version::Semantic("1.0.2-beta.2".parse()?),
                 segments: vec![

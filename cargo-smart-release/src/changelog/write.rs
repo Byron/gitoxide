@@ -1,3 +1,4 @@
+use crate::changelog::section::{segment, Segment};
 use crate::{
     changelog,
     changelog::{section, Section},
@@ -26,6 +27,7 @@ impl Section {
                 date,
                 heading_level,
                 segments,
+                removed_messages,
                 unknown,
             } => {
                 write!(out, "{} {}", heading(*heading_level), name)?;
@@ -39,6 +41,13 @@ impl Section {
                         date.day()
                     ),
                 }?;
+                if !removed_messages.is_empty() {
+                    for id in removed_messages {
+                        writeln!(out, "{}{}/>", segment::Conventional::REMOVED_HTML_PREFIX, id)?;
+                    }
+                    writeln!(out)?;
+                }
+
                 let section_level = *heading_level + 1;
                 for segment in segments {
                     segment.write_to(section_level, &mut out)?;
@@ -70,8 +79,8 @@ impl ChangeLog {
 impl section::Segment {
     pub fn write_to(&self, section_level: usize, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
-            section::Segment::User { markdown } => out.write_all(markdown.as_bytes())?,
-            section::Segment::Conventional(section::segment::Conventional {
+            Segment::User { markdown } => out.write_all(markdown.as_bytes())?,
+            Segment::Conventional(segment::Conventional {
                 kind,
                 is_breaking,
                 removed,
@@ -81,24 +90,28 @@ impl section::Segment {
                     out,
                     "{} {}{}\n",
                     heading(section_level),
-                    section::segment::conventional::as_headline(kind),
-                    if *is_breaking { " (BREAKING)" } else { "" },
+                    segment::conventional::as_headline(kind),
+                    if *is_breaking {
+                        format!(" {}", segment::Conventional::BREAKING_TITLE)
+                    } else {
+                        "".into()
+                    },
                 )?;
 
-                for id in removed {
-                    writeln!(out, "{}{}/>", section::segment::Conventional::REMOVED_HTML_PREFIX, id)?;
-                }
                 if !removed.is_empty() {
+                    for id in removed {
+                        writeln!(out, "{}{}/>", segment::Conventional::REMOVED_HTML_PREFIX, id)?;
+                    }
                     writeln!(out)?;
                 }
 
-                use section::segment::conventional::Message;
+                use segment::conventional::Message;
                 for message in messages {
                     match message {
                         Message::Generated { title, id } => writeln!(
                             out,
                             " - {}{}/> {}",
-                            section::segment::Conventional::REMOVED_HTML_PREFIX,
+                            segment::Conventional::REMOVED_HTML_PREFIX,
                             id,
                             title
                         )?,
@@ -107,32 +120,27 @@ impl section::Segment {
                 }
                 writeln!(out)?;
             }
-            section::Segment::Details(section::Data::Generated(section::segment::Details { commits_by_category }))
+            Segment::Details(section::Data::Generated(segment::Details { commits_by_category }))
                 if !commits_by_category.is_empty() =>
             {
-                writeln!(out, "{} {}\n", heading(section_level), section::segment::Details::TITLE)?;
+                writeln!(out, "{} {}\n", heading(section_level), segment::Details::TITLE)?;
                 writeln!(out, "{}", Section::READONLY_TAG)?;
-                writeln!(out, "{}\n", section::segment::Details::PREFIX)?;
+                writeln!(out, "{}\n", segment::Details::PREFIX)?;
                 for (category, messages) in commits_by_category.iter() {
                     writeln!(out, " * **{}**", category)?;
                     for message in messages {
                         writeln!(out, "    - {} ({})", message.title, message.id.to_hex(7))?;
                     }
                 }
-                writeln!(out, "{}\n", section::segment::Details::END)?;
+                writeln!(out, "{}\n", segment::Details::END)?;
             }
-            section::Segment::Statistics(section::Data::Generated(section::segment::CommitStatistics {
+            Segment::Statistics(section::Data::Generated(segment::CommitStatistics {
                 count,
                 duration,
                 conventional_count,
                 unique_issues_count,
             })) => {
-                writeln!(
-                    out,
-                    "{} {}\n",
-                    heading(section_level),
-                    section::segment::CommitStatistics::TITLE
-                )?;
+                writeln!(out, "{} {}\n", heading(section_level), segment::CommitStatistics::TITLE)?;
                 writeln!(out, "{}", Section::READONLY_TAG)?;
                 writeln!(
                     out,
@@ -163,15 +171,8 @@ impl section::Segment {
                 )?;
                 writeln!(out)?;
             }
-            section::Segment::Clippy(section::Data::Generated(section::segment::ThanksClippy { count }))
-                if *count > 0 =>
-            {
-                writeln!(
-                    out,
-                    "{} {}\n",
-                    heading(section_level),
-                    section::segment::ThanksClippy::TITLE
-                )?;
+            Segment::Clippy(section::Data::Generated(segment::ThanksClippy { count })) if *count > 0 => {
+                writeln!(out, "{} {}\n", heading(section_level), segment::ThanksClippy::TITLE)?;
                 writeln!(out, "{}", Section::READONLY_TAG)?;
                 writeln!(
                     out,
@@ -180,9 +181,9 @@ impl section::Segment {
                     if *count > 1 { "times" } else { "time" }
                 )?;
             }
-            section::Segment::Clippy(_) => {}
-            section::Segment::Statistics(_) => {}
-            section::Segment::Details(_) => {}
+            Segment::Clippy(_) => {}
+            Segment::Statistics(_) => {}
+            Segment::Details(_) => {}
         };
         Ok(())
     }

@@ -4,6 +4,7 @@ use cargo_metadata::Package;
 use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
 
+use crate::changelog::section::Segment;
 use crate::{
     changelog,
     changelog::{section, section::segment::Selection, Section},
@@ -48,7 +49,7 @@ impl Section {
                 }
                 // TODO: proper sorting
                 segments.extend(mapping.into_iter().map(|((is_breaking, kind), messages)| {
-                    section::Segment::Conventional(section::segment::Conventional {
+                    Segment::Conventional(section::segment::Conventional {
                         kind,
                         is_breaking,
                         removed: Vec::new(),
@@ -89,7 +90,7 @@ impl Section {
                 let duration = history
                     .last()
                     .map(|last| date_time.sub(time_to_offset_date_time(last.commit_time)));
-                segments.push(section::Segment::Statistics(section::Data::Generated(
+                segments.push(Segment::Statistics(section::Data::Generated(
                     section::segment::CommitStatistics {
                         count: history.len(),
                         duration,
@@ -104,7 +105,7 @@ impl Section {
                     .filter(|item| item.message.title.starts_with("thanks clippy"))
                     .count();
                 if count > 0 {
-                    segments.push(section::Segment::Clippy(section::Data::Generated(
+                    segments.push(Segment::Clippy(section::Data::Generated(
                         section::segment::ThanksClippy { count },
                     )))
                 }
@@ -112,9 +113,9 @@ impl Section {
             if let Some(commits_by_category) =
                 message_by_category.filter(|_| selection.contains(Selection::COMMIT_DETAILS))
             {
-                segments.push(section::Segment::Details(section::Data::Generated(
-                    section::segment::Details { commits_by_category },
-                )));
+                segments.push(Segment::Details(section::Data::Generated(section::segment::Details {
+                    commits_by_category,
+                })));
             }
         }
 
@@ -137,6 +138,7 @@ impl Section {
             date,
             heading_level: 2,
             segments,
+            removed_messages: Default::default(),
             unknown: Default::default(),
         }
     }
