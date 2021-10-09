@@ -27,6 +27,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         ..
     } = opts;
     let mut empty_changelogs_for_current_version = Vec::new();
+    let mut made_change = false;
     for (publishee, new_version) in publishees {
         let lock = git_repository::lock::File::acquire_to_update_resource(
             &publishee.manifest_path,
@@ -43,6 +44,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 opts.dry_run,
                 opts.generator_segments,
             )?;
+            made_change |= changed_relevant_content;
             let recent_release_in_log = log.most_recent_release_mut();
             let new_version: semver::Version = new_version.parse()?;
             let date = match recent_release_in_log {
@@ -95,7 +97,6 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 .filter_map(|(p, v)| v.map(|v| (p, v))),
         )
         .collect::<Vec<_>>();
-    let mut made_change = false;
     for (publishee, new_version) in publishees {
         let mut lock = locks_by_manifest_path
             .get_mut(&publishee.manifest_path)
