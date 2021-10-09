@@ -1,7 +1,10 @@
-use crate::changelog::section::{segment, Segment};
 use crate::{
     changelog,
-    changelog::{section, Section},
+    changelog::{
+        section,
+        section::{segment, Segment},
+        Section,
+    },
     ChangeLog,
 };
 

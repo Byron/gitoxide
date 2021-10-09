@@ -16,6 +16,7 @@ use nom::{
 };
 use pulldown_cmark::{Event, OffsetIter, Tag};
 
+use crate::changelog::section::segment::Conventional;
 use crate::changelog::section::Segment;
 use crate::{
     changelog,
@@ -175,6 +176,7 @@ impl Section {
                     match state {
                         State::ParseConventional { title } => {
                             segments.push(parse_conventional_to_next_section_title(
+                                &body,
                                 title,
                                 &mut events,
                                 indent,
@@ -206,6 +208,7 @@ impl Section {
 }
 
 fn parse_conventional_to_next_section_title(
+    markdown: &str,
     title: String,
     events: &mut Peekable<OffsetIter<'_>>,
     level: u32,
@@ -229,10 +232,57 @@ fn parse_conventional_to_next_section_title(
             _ => {
                 let (event, _range) = events.next().expect("peeked before so event is present");
                 match event {
-                    Event::Html(ref tag) if tag.starts_with(section::segment::Conventional::REMOVED_HTML_PREFIX) => {
-                        match parse_message_id(tag.as_ref()) {
-                            Some(id) => conventional.removed.push(id),
-                            None => track_unknown_event(event, unknown),
+                    Event::Html(ref tag) => match parse_message_id(tag.as_ref()) {
+                        Some(id) => conventional.removed.push(id),
+                        None => track_unknown_event(event, unknown),
+                    },
+                    Event::Start(Tag::List(_)) => {
+                        while let Some((event, range)) = events.next() {
+                            match event {
+                                Event::Start(Tag::Item) => {
+                                    if let Some((possibly_html, _)) = events.next() {
+                                        match possibly_html {
+                                            Event::Html(tag) => {
+                                                match parse_message_id(tag.as_ref()) {
+                                                    Some(id) => {
+                                                        let mut events = events
+                                                            .by_ref()
+                                                            .take_while(|(e, _r)| !matches!(e, Event::End(Tag::Item)))
+                                                            .map(|(_, r)| r);
+                                                        let start = events.next();
+                                                        let end = events.last();
+                                                        if let Some((start, end)) = start
+                                                            .map(|r| r.start)
+                                                            .and_then(|start| end.map(|r| (start, r.end)))
+                                                        {
+                                                            conventional.messages.push(
+                                                                section::segment::conventional::Message::Generated {
+                                                                    id,
+                                                                    title: markdown[start..end].to_owned(),
+                                                                },
+                                                            )
+                                                        }
+                                                    }
+                                                    None => make_user_message_and_consume_item(
+                                                        markdown,
+                                                        events,
+                                                        &mut conventional,
+                                                        range,
+                                                    ),
+                                                };
+                                            }
+                                            _other_event => make_user_message_and_consume_item(
+                                                markdown,
+                                                events,
+                                                &mut conventional,
+                                                range,
+                                            ),
+                                        }
+                                    }
+                                }
+                                Event::End(Tag::List(_)) => break,
+                                event => track_unknown_event(event, unknown),
+                            }
                         }
                     }
                     event => track_unknown_event(event, unknown),
@@ -242,6 +292,20 @@ fn parse_conventional_to_next_section_title(
         }
     }
     section::Segment::Conventional(conventional)
+}
+
+fn make_user_message_and_consume_item(
+    markdown: &str,
+    events: &mut Peekable<OffsetIter<'_>>,
+    conventional: &mut Conventional,
+    range: Range<usize>,
+) {
+    conventional
+        .messages
+        .push(section::segment::conventional::Message::User {
+            markdown: markdown[range].to_owned(),
+        });
+    events.take_while(|(e, _)| !matches!(e, Event::End(Tag::Item))).count();
 }
 
 fn parse_message_id(html: &str) -> Option<git_repository::hash::ObjectId> {

@@ -4,10 +4,13 @@ use cargo_metadata::Package;
 use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
 
-use crate::changelog::section::Segment;
 use crate::{
     changelog,
-    changelog::{section, section::segment::Selection, Section},
+    changelog::{
+        section,
+        section::{segment::Selection, Segment},
+        Section,
+    },
     commit, utils,
     utils::{is_top_level_package, time_to_offset_date_time},
 };

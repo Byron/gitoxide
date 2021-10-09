@@ -1,8 +1,11 @@
 use std::{collections::VecDeque, iter::FromIterator};
 
-use crate::changelog::section::segment::conventional;
 use crate::{
-    changelog::{section, section::Segment, Section, Version},
+    changelog::{
+        section,
+        section::{segment::conventional, Segment},
+        Section, Version,
+    },
     ChangeLog,
 };
 
