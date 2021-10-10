@@ -1505,14 +1505,21 @@ a"#,
 
 #[cfg(test)]
 mod from_env {
-    use super::GitConfig;
+    use super::{GitConfig, GitConfigFromEnvError};
     use std::env;
 
     #[test]
-    pub fn git_config_count_zero() {
+    fn git_config_count_zero() {
         env::set_var("GIT_CONFIG_COUNT", "0");
         let config = GitConfig::from_env().unwrap();
         assert!(config.is_none());
+    }
+
+    #[test]
+    fn git_config_count_parse_error() {
+        env::set_var("GIT_CONFIG_COUNT", "invalid");
+        let err = GitConfig::from_env().unwrap_err();
+        assert!(matches!(err, GitConfigFromEnvError::ParseError(_)));
     }
 }
 
