@@ -322,13 +322,38 @@ fn parse_id_fallback_to_user_message(
                 .map(|(_, r)| r);
             let start = events.next();
             let end = events.last();
-            if let Some((start, end)) = start.map(|r| r.start).and_then(|start| end.map(|r| (start, r.end))) {
+            if let Some(title_and_body) = start
+                .map(|r| r.start)
+                .and_then(|start| end.map(|r| markdown[start..r.end].trim()))
+            {
+                let mut lines = title_and_body
+                    .as_bytes()
+                    .as_bstr()
+                    .lines_with_terminator()
+                    .map(|b| b.to_str().expect("always valid as source is UTF-8"));
                 conventional
                     .messages
                     .push(section::segment::conventional::Message::Generated {
                         id,
-                        title: markdown[start..end].trim().to_owned(),
-                    })
+                        title: lines.next().map(|l| l.trim()).unwrap_or("").to_owned(),
+                        body: lines
+                            .map(|l| {
+                                match l
+                                    .chars()
+                                    .take_while(|c| *c == ' ' || *c == '\t')
+                                    .enumerate()
+                                    .map(|(idx, _)| idx)
+                                    .last()
+                                {
+                                    Some(last_pos_to_truncate) => &l[last_pos_to_truncate + 1..],
+                                    None => l,
+                                }
+                            })
+                            .fold(None::<String>, |mut acc, l| {
+                                acc.get_or_insert_with(String::new).push_str(l);
+                                acc
+                            }),
+                    });
             }
         }
         None => make_user_message_and_consume_item(markdown, events, &mut conventional, item_range),

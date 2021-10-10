@@ -178,6 +178,7 @@ fn segments() {
                             section::segment::conventional::Message::Generated {
                                 id: changed_message_id,
                                 title: "content changed by user".to_string(),
+                                body: None,
                             },
                         ],
                     }), // conventional is present and prevents new conventionals from showing up
@@ -239,14 +240,17 @@ fn segments() {
             section::segment::conventional::Message::Generated {
                 id: removed_message_id,
                 title: "something removed".to_string(),
+                body: None,
             },
             section::segment::conventional::Message::Generated {
                 id: changed_message_id,
                 title: "something added/changed".to_string(),
+                body: None,
             },
             section::segment::conventional::Message::Generated {
                 id: added_message_id,
                 title: "to be inserted after user message".to_string(),
+                body: None,
             },
         ],
     });
@@ -327,10 +331,12 @@ fn segments() {
                                 section::segment::conventional::Message::Generated {
                                     id: added_message_id,
                                     title: "to be inserted after user message".to_string(),
+                                    body: None
                                 }, // new messages are inserted after user content
                                 section::segment::conventional::Message::Generated {
                                     id: changed_message_id,
                                     title: "content changed by user".to_string(),
+                                    body: None
                                 }, // changed user content is preserved, don't overwrite, ever
                             ],
                         }), // conventional is present and prevents new conventionals from showing up, they have messages merged though

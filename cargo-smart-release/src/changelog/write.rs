@@ -7,6 +7,7 @@ use crate::{
     },
     ChangeLog,
 };
+use git_repository::bstr::ByteSlice;
 
 impl std::fmt::Display for changelog::Version {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -112,13 +113,23 @@ impl section::Segment {
                     use segment::conventional::Message;
                     for message in messages {
                         match message {
-                            Message::Generated { title, id } => writeln!(
-                                out,
-                                " - {}{}/> {}",
-                                segment::Conventional::REMOVED_HTML_PREFIX,
-                                id,
-                                title
-                            )?,
+                            Message::Generated { title, id, body } => {
+                                writeln!(
+                                    out,
+                                    " - {}{}/> {}",
+                                    segment::Conventional::REMOVED_HTML_PREFIX,
+                                    id,
+                                    title
+                                )?;
+                                if let Some(body) = body {
+                                    for line in body.as_bytes().as_bstr().lines_with_terminator() {
+                                        write!(out, "   {}", line.to_str().expect("cannot fail as original is UTF-8"))?;
+                                    }
+                                    if !body.ends_with('\n') {
+                                        writeln!(out)?;
+                                    }
+                                }
+                            }
                             Message::User { markdown } => {
                                 out.write_all(markdown.as_bytes())?;
                                 if !markdown.ends_with('\n') {

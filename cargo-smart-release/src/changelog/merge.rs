@@ -154,7 +154,7 @@ fn merge_conventional(
             }) => {
                 for src_message in src.messages.clone() {
                     match src_message {
-                        conventional::Message::Generated { id, title } => {
+                        conventional::Message::Generated { id, title, body } => {
                             if removed.contains(&id)
                                 || removed_in_release.contains(&id)
                                 || messages.iter().any(
@@ -170,7 +170,7 @@ fn merge_conventional(
                                 .map(|(pos, _)| pos + 1)
                                 .last()
                                 .unwrap_or(messages.len());
-                            messages.insert(pos, conventional::Message::Generated { id, title });
+                            messages.insert(pos, conventional::Message::Generated { id, title, body });
                         }
                         conventional::Message::User { .. } => unreachable!("User messages are never generated"),
                     }

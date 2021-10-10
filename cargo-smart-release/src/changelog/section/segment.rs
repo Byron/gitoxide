@@ -17,6 +17,7 @@ pub mod conventional {
             /// The id of the message/commit the data is coming from, useful to identify the markdown associate with this message.
             id: git::hash::ObjectId,
             title: String,
+            body: Option<String>,
         },
     }
 

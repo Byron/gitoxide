@@ -39,16 +39,21 @@ impl Section {
         if !history.is_empty() {
             if selection.contains(Selection::GIT_CONVENTIONAL) {
                 let mut mapping = BTreeMap::default();
-                for (id, kind, title, is_breaking) in history.iter().filter_map(|i| {
-                    i.message
-                        .kind
-                        .as_ref()
-                        .map(|kind| (i.id, kind, i.message.title.clone(), i.message.breaking))
+                for (id, kind, title, is_breaking, body) in history.iter().filter_map(|i| {
+                    i.message.kind.as_ref().map(|kind| {
+                        (
+                            i.id,
+                            kind,
+                            i.message.title.clone(),
+                            i.message.breaking,
+                            i.message.body.clone(),
+                        )
+                    })
                 }) {
                     mapping
                         .entry((is_breaking, kind))
                         .or_insert_with(Vec::new)
-                        .push(section::segment::conventional::Message::Generated { id, title })
+                        .push(section::segment::conventional::Message::Generated { id, title, body })
                 }
                 // TODO: proper sorting
                 segments.extend(mapping.into_iter().map(|((is_breaking, kind), messages)| {

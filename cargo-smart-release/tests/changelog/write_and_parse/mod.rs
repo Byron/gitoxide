@@ -32,6 +32,7 @@ fn conventional_write_empty_messages() -> Result {
                     conventional::Message::Generated {
                         id: hex_to_id("0000000000000000000000000000000000000003"),
                         title: "this messages comes straight from git conventional and _may_ contain markdown".into(),
+                        body: Some("first line\nsecond line\n\nanother paragraph".into()),
                     },
                     conventional::Message::User {
                         markdown:
