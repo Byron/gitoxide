@@ -1504,6 +1504,19 @@ a"#,
 }
 
 #[cfg(test)]
+mod from_env {
+    use super::GitConfig;
+    use std::env;
+
+    #[test]
+    pub fn git_config_count_zero() {
+        env::set_var("GIT_CONFIG_COUNT", "0");
+        let config = GitConfig::from_env().unwrap();
+        assert!(config.is_none());
+    }
+}
+
+#[cfg(test)]
 mod from_parser {
     use super::{Cow, Event, GitConfig, HashMap, LookupTreeNode, SectionBody, SectionId, TryFrom};
     use crate::{
