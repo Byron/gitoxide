@@ -52,10 +52,12 @@ fn alternate_with_content(
 #[test]
 fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
-    let (from, _) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
+    let tmp = tmp.path().join("sub-dir");
+    std::fs::create_dir(&tmp)?;
+    let (from, _) = alternate(tmp.join("a"), tmp.join("b"))?;
     alternate_with_content(
-        tmp.path().join("b"),
-        tmp.path().join("..").join("a"),
+        tmp.join("b"),
+        tmp.join("..").join("a"),
         Path::new("..")
             .join("a")
             .to_str()
