@@ -1,3 +1,4 @@
+use git_repository::hash::ObjectId;
 use std::{collections::VecDeque, iter::FromIterator};
 
 use crate::{
@@ -64,6 +65,7 @@ fn merge_section(dest: &mut Section, src: Section) {
             Section::Release {
                 date: lhs_date,
                 segments: lhs_segments,
+                removed_messages,
                 ..
             },
             Section::Release {
@@ -88,7 +90,9 @@ fn merge_section(dest: &mut Section, src: Section) {
                     | Segment::Clippy(section::Data::Parsed) => {
                         unreachable!("BUG: Clippy, statistics, and details are set if generated, or not present")
                     }
-                    Segment::Conventional(conventional) => merge_conventional(lhs_segments, conventional),
+                    Segment::Conventional(conventional) => {
+                        merge_conventional(&removed_messages, lhs_segments, conventional)
+                    }
                     clippy @ Segment::Clippy(_) => {
                         merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Clippy(_)), clippy, mode)
                     }
@@ -127,7 +131,11 @@ fn merge_read_only_segment(
     }
 }
 
-fn merge_conventional(dest_segments: &mut Vec<Segment>, src: section::segment::Conventional) {
+fn merge_conventional(
+    removed_in_release: &[git_repository::hash::ObjectId],
+    dest_segments: &mut Vec<Segment>,
+    src: section::segment::Conventional,
+) {
     assert!(
         src.removed.is_empty(),
         "generated sections never contains removed items"
@@ -147,6 +155,7 @@ fn merge_conventional(dest_segments: &mut Vec<Segment>, src: section::segment::C
                     match src_message {
                         conventional::Message::Generated { id, title } => {
                             if removed.contains(&id)
+                                || removed_in_release.contains(&id)
                                 || messages.iter().any(
                                     |m| matches!(m, conventional::Message::Generated {id: lhs_id, ..} if *lhs_id == id),
                                 )
@@ -171,7 +180,10 @@ fn merge_conventional(dest_segments: &mut Vec<Segment>, src: section::segment::C
         found_one = true;
     }
 
-    if !found_one {
+    if !found_one
+        && (has_user_messages(&src.messages)
+            || at_least_one_generated_message_visible(removed_in_release, &src.messages))
+    {
         dest_segments.insert(
             dest_segments
                 .iter()
@@ -188,6 +200,16 @@ fn merge_conventional(dest_segments: &mut Vec<Segment>, src: section::segment::C
             Segment::Conventional(src),
         );
     }
+}
+
+fn at_least_one_generated_message_visible(removed_in_release: &[ObjectId], messages: &[conventional::Message]) -> bool {
+    messages
+        .iter()
+        .any(|m| matches!(m, conventional::Message::Generated {id,..} if !removed_in_release.contains(id)))
+}
+
+fn has_user_messages(messages: &[conventional::Message]) -> bool {
+    messages.iter().any(|m| matches!(m, conventional::Message::User { .. }))
 }
 
 enum Insertion {

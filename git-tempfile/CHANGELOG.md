@@ -11,9 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
+ - 6 commits contributed to the release over the course of 6 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 2 unique issues were worked on
 
 ### Commit Details
 
@@ -22,10 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
-    - Rebuild all changelogs to assure properly ordered headlines (cfcaa66)
-    - Sort all commits by time, descending… (7c37a3d)
-    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
-    - Fixup remaining changelogs… (0ac488a)
+    - Rebuild all changelogs to assure properly ordered headlines (4a9a05f)
+    - Sort all commits by time, descending… (f536bad)
+    - greatly reduce changelog size now that the traversal fix is applied (a0bc98c)
+    - Fixup remaining changelogs… (2f75db2)
+ * **Uncategorized**
+    - make fmt, but now it picked up some parts that usually don't get altered… (01f7b72)
+    - Update changelogs just for fun (21541b3)
 </details>
 
 ## v1.0.2 (2021-09-10)

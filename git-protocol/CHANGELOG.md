@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+<csr-id-da68bfb8104ecf58e73e3f99d87f81c90712a2ca/>
+
+### Fixed
+
+ - <csr-id-c77bd7a01820110154f2c66cd954c1ccfff173c1/> '(null)' symref targets are turned into direct refs instead…
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 17 commits contributed to the release over the course of 14 calendar days.
+ - 19 commits contributed to the release over the course of 26 calendar days.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on
 
@@ -22,14 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
-    - Rebuild all changelogs to assure properly ordered headlines (cfcaa66)
-    - Sort all commits by time, descending… (7c37a3d)
-    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
-    - Fixup remaining changelogs… (0ac488a)
-    - Generate changelogs with details (fd0f3bd)
-    - Update all changelogs with details (0732699)
-    - Update changelogs (b30db3b)
-    - fix docs (90056c8)
+    - Rebuild all changelogs to assure properly ordered headlines (4a9a05f)
+    - Sort all commits by time, descending… (f536bad)
+    - greatly reduce changelog size now that the traversal fix is applied (a0bc98c)
+    - Fixup remaining changelogs… (2f75db2)
+    - Generate changelogs with details (e1861ca)
+    - Update all changelogs with details (58ab2ae)
+    - Update changelogs (c857d61)
+    - fix docs (f1fa6dd)
     - Avoid adding newlines which make writing unstable (6b5c394)
     - Fix section headline level (9d6f263)
     - Write first version of changlogs thus far… (719b6bd)
@@ -40,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - '(null)' symref targets are turned into direct refs instead… (c77bd7a)
     - fetch::Ref::Symbolic::target is now an option… (da68bfb)
  * **Uncategorized**
+    - make fmt, but now it picked up some parts that usually don't get altered… (01f7b72)
+    - Update changelogs just for fun (21541b3)
     - Merge branch 'changelog-generation' (bf0106e)
     - Bump git-traverse v0.9.0, safety bump 8 crates (d39fabb)
 </details>
