@@ -17,6 +17,21 @@ fn alternate_with(
     objects_to: impl Into<PathBuf>,
     content_before_to: Option<&str>,
 ) -> Result<(PathBuf, PathBuf), io::Error> {
+    let objects_to = objects_to.into();
+    alternate_with_content(
+        objects_at,
+        objects_to.clone(),
+        objects_to.to_str().expect("valid UTF-8").as_bytes().to_owned(),
+        content_before_to,
+    )
+}
+
+fn alternate_with_content(
+    objects_at: impl Into<PathBuf>,
+    objects_to: impl Into<PathBuf>,
+    to_content: Vec<u8>,
+    content_before_to: Option<&str>,
+) -> Result<(PathBuf, PathBuf), io::Error> {
     let at = objects_at.into();
     let to = objects_to.into();
     let at_info = at.join("info");
@@ -25,10 +40,10 @@ fn alternate_with(
     let contents = if let Some(content) = content_before_to {
         let mut c = vec![b'\n'];
         c.extend(content.as_bytes());
-        c.extend(to.to_string_lossy().as_bytes());
+        c.extend(to_content);
         c
     } else {
-        to.to_string_lossy().as_bytes().to_owned()
+        to_content
     };
     fs::write(at_info.join("alternates"), contents)?;
     Ok((at, to))
@@ -38,8 +53,17 @@ fn alternate_with(
 fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
     let (from, _) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
-    let parent_a = Path::new("..").join("a");
-    alternate(tmp.path().join("b"), &parent_a)?;
+    alternate_with_content(
+        tmp.path().join("b"),
+        tmp.path().join("..").join("a"),
+        Path::new("..")
+            .join("a")
+            .to_str()
+            .expect("valid UTF-8")
+            .as_bytes()
+            .to_owned(),
+        None,
+    )?;
 
     match alternate::resolve(&from) {
         Err(alternate::Error::Cycle(chain)) => {
@@ -53,7 +77,6 @@ fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
         }
         res => unreachable!("should be a specific kind of error: {:?}", res),
     }
-    std::fs::remove_dir(parent_a)?;
     Ok(())
 }
 
