@@ -164,6 +164,7 @@ impl Section {
                                 || title.starts_with(as_headline("perf").expect("valid"))
                                 || title.starts_with("refactor")
                                 || title.starts_with("other")
+                                || title.starts_with("style")
                                 || title.starts_with(as_headline("fix").expect("valid")) =>
                         {
                             State::ParseConventional {
@@ -230,7 +231,7 @@ fn parse_conventional_to_next_section_title(
 ) -> Segment {
     let is_breaking = title.ends_with(section::segment::Conventional::BREAKING_TITLE_ENCLOSED);
     let kind = [
-        "fix", "add", "feat", "revert", "remove", "change", "docs", "perf", "refactor", "other",
+        "fix", "add", "feat", "revert", "remove", "change", "docs", "perf", "refactor", "other", "style",
     ]
     .iter()
     .find(|kind| title.starts_with(section::segment::conventional::as_headline(*kind).unwrap_or(*kind)))

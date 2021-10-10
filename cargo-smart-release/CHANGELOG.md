@@ -7,17 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- Conservative pre-release version handling along with a flag to turn it off. See [this issue][194] for details.
-- Rename `--allow-auto-publish-of-stable-crates` to `--no-auto-publish-of-stable-crates`, inverting its meaning.
-- Add `--no-multi-crate-release` flag to return to previous default behaviour. All crate manifest changes are put into one commit.
-- automatically bump pre-release transient dependents of published crates to prevent breakage down the road unless 
-  `--no-isolate-dependencies-from-breaking-change` is set.
+<csr-id-3c0a6389fe5ff981dadca20e8a4a4a0d2ef66e13/>
+<csr-id-77ed17c703e502e132cda9a94eb8c63db0b627ad/>
+
+### New Features
+
+ - <csr-id-ae8780e08303946412cedc19ea4d2679be49ec97/> smart-release with --changelog-without option…
+   
+   …to allow disabling various changelog segments like clippy, or commit
+   statistics.
+   
+   Note that it's always possible to delete individual sections afterwards.
+ - <csr-id-509550f8aa8210f3688c78167a56a21fc1817515/> changelog command learns the --without <section> option
+   With it one can omit auto-generated sections of the given name.
+
+### Fixed
+
+ - <csr-id-11eebdcc572a72b2e66a9db3cae0a01f12a81619/> don't claim to change manifest version if it's the same one
+
+### refactor (BREAKING)
+
+ - <csr-id-1cb41f81cffe19c75aadf49a5cc7ec390ec6cae7/> Use 'to_*' when converting `easy::Object` to specific object kind
+   This also makes the API more consistent while being more idiomatic.
+ - rename --skip-* flags to --no-* for consistency
+ - rename --skip-dependencies to --no-dependencies…
+  
+   …to be more inline with existing terminology of other flags.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 178 commits contributed to the release over the course of 19 calendar days.
+ - 199 commits contributed to the release over the course of 31 calendar days.
  - 14 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on
 
@@ -25,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 16 times to make code idiomatic. 
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 18 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -52,41 +73,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: an algorithm to collect dependencies by 'growing' (73794a4)
     - smart-release: foundation for bumping versions (d1145d1)
  * **#198**
-    - smart-release with --changelog-without option… (7db19a8)
-    - changelog command learns the --without <section> option (1df3ad7)
-    - Easy removal of statistical sections, by just removing them… (dce113d)
-    - Rebuild all changelogs to assure properly ordered headlines (cfcaa66)
-    - reorder headlines according to version ordering… (733d7f1)
-    - Sort all commits by time, descending… (7c37a3d)
-    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
-    - Use most relevant parent tree for change comparison… (6d02ac8)
-    - Use hashmap based lookup for trees… (55d2d17)
-    - refactor and improve path filtering to find relevant commits… (99db079)
-    - The first headline level controls all the other ones (302b267)
-    - adapt to git-hash refactor (d881734)
-    - Fixup remaining changelogs… (0ac488a)
-    - Generate changelogs with details (fd0f3bd)
-    - Only use short hashes for logs, without detecting ambiguity for now (8d48d59)
-    - boost allowed package sizes… (c1636e4)
-    - Stable smart-release journey tests… (d5b3099)
-    - Update all changelogs with details (0732699)
-    - Put commit details to the end of generated segments (bef2e0e)
-    - Use message commit id instead of body… (2746d93)
-    - fix md formatting on github (f90f3ce)
-    - create details headline based on log message (4eaab37)
-    - Add details behind a fold, but… (3c711f4)
-    - Use the notion of 'changes after merge' only to drive previews… (fb0e46b)
-    - Update changelogs (b30db3b)
-    - refactor (90c304e)
-    - Also provide a duration in days for preparing a release as part of statistics (4d36844)
-    - Fix tests (ff15c1b)
-    - refactor (bcec911)
-    - More commit statistics (29a01d6)
-    - Basic commit statistics with round-trip, more actual information to come (83e2b2d)
-    - refactor… (6edf196)
-    - More robust parsing of read-only sections (252e84f)
-    - treat clippy as generated statistical section… (96df84d)
-    - Add new section type and write it out: clippy (37280cd)
+    - Allow 'refactor' and 'other' in conventional messages if they have breaking changes (4eebaac)
+    - Support writing whole bodies in conventional messages… (c1f3c9d)
+    - Support for paragraphs in conventional items (7f52823)
+    - respect release-wide ignore list to allow removing entire conventional headlines (145103d)
+    - Only write headlines that we can parse back… (d44369a)
+    - handle all possible changelog headlines and add roundtrip tests (fda5ccf)
+    - First basic parsing of conventional user and generated messages (56cd4ac)
+    - parsing of removed conventional messages from changelogs (c593252)
+    - first basic merging of conventional messages… (9af3248)
+    - Trivially emulate gits way of handling commit dates… (f58b30a)
+    - Also consider changes of changelogs themselves… (8a2042c)
+    - Adjust date of upcoming version as well (fab4649)
+    - assure git-conventional is treated like user generated content for statistics (1fd5acb)
+    - merge doesn't consider user generated sections, only the ones it would want to add (ebbebdd)
+    - Quick and dirty writing of conventional messages… (adfbd0d)
+    - basic generation of git-conventional information (77b0feb)
+    - Sketch out data structure for git-conventional segments (2713c02)
+    - refactor (bcdec5e)
+    - smart-release with --changelog-without option… (ae8780e)
+    - changelog command learns the --without <section> option (509550f)
+    - Easy removal of statistical sections, by just removing them… (91efd68)
+    - Rebuild all changelogs to assure properly ordered headlines (4a9a05f)
+    - reorder headlines according to version ordering… (2ff0c20)
+    - Sort all commits by time, descending… (f536bad)
+    - greatly reduce changelog size now that the traversal fix is applied (a0bc98c)
+    - Use most relevant parent tree for change comparison… (5b9dd14)
+    - Use hashmap based lookup for trees… (48a0c76)
+    - refactor and improve path filtering to find relevant commits… (01b2466)
+    - The first headline level controls all the other ones (715ea54)
+    - adapt to git-hash refactor (925d668)
+    - Fixup remaining changelogs… (2f75db2)
+    - Generate changelogs with details (e1861ca)
+    - Only use short hashes for logs, without detecting ambiguity for now (772525c)
+    - boost allowed package sizes… (1b21d71)
+    - Stable smart-release journey tests… (fc79188)
+    - Update all changelogs with details (58ab2ae)
+    - Put commit details to the end of generated segments (054d207)
+    - Use message commit id instead of body… (9b46f32)
+    - fix md formatting on github (262c000)
+    - create details headline based on log message (04bbcbb)
+    - Add details behind a fold, but… (3360b2e)
+    - Use the notion of 'changes after merge' only to drive previews… (634267c)
+    - Update changelogs (c857d61)
+    - refactor (7a83103)
+    - Also provide a duration in days for preparing a release as part of statistics (bd12cac)
+    - Fix tests (6c98afc)
+    - refactor (65fa0a4)
+    - More commit statistics (0840e7e)
+    - Basic commit statistics with round-trip, more actual information to come (6d097ae)
+    - refactor… (ce0dda2)
+    - More robust parsing of read-only sections (a3954f4)
+    - treat clippy as generated statistical section… (1cff425)
+    - Add new section type and write it out: clippy (6fca2ac)
     - introduce notion of essential sections in a changelog… (be891e2)
     - Preview changelog support for smart-release as well (b9e6de1)
     - Detect changes after merge; add flag for controlling changelog preview (6beb734)
@@ -184,9 +223,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **#67**
     - split data::output::count::objects into files (8fe4612)
  * **Uncategorized**
-    - thanks clippy (738538c)
-    - thanks clippy (b693e62)
-    - thanks clippy (11bd4a3)
+    - thanks clippy (ce48e18)
+    - thanks clippy (af9d137)
+    - Update changelogs just for fun (21541b3)
+    - thanks clippy (bf514a2)
+    - thanks clippy (ead04f2)
+    - thanks clippy (e4f1c09)
     - thanks clippy (b856da4)
     - thanks clippy (31498bb)
     - thanks clippy (c55f909)
