@@ -92,7 +92,7 @@ fn merge_section(dest: &mut Section, src: Section) {
                         unreachable!("BUG: Clippy, statistics, and details are set if generated, or not present")
                     }
                     Segment::Conventional(conventional) => {
-                        merge_conventional(&removed_messages, lhs_segments, conventional)
+                        merge_conventional(removed_messages, lhs_segments, conventional)
                     }
                     clippy @ Segment::Clippy(_) => {
                         merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Clippy(_)), clippy, mode)
