@@ -7,18 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Breaking
+### refactor (BREAKING)
 
-- Change return value of `prelude::RepositoryAccessExt::committer()` from `git_actor::Signature` to `Result<git_actor::Signature, easy::borrow:repo::Error>`
-- Change return value of `prelude::ReferenceAccessExt` from `Result<Vec<RefEdit>>, _>` to `Result<easy::Reference, _>`.
-- Rename `State` structs that serve as platform for iterators or other dependent types into `Platform`. These are usually intermediate objects only.
-- Rename `easy::Reference::log()` into `easy::Reference::logs()`
+ - <csr-id-1cb41f81cffe19c75aadf49a5cc7ec390ec6cae7/> Use 'to_*' when converting `easy::Object` to specific object kind
+   This also makes the API more consistent while being more idiomatic.
+
+### other (BREAKING)
+
+ - <csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/> Avoid duplicate module paths in 'tree' and 'commit'
+ - <csr-id-a19567eceab0dd7f5478b83c2ff9ce79754db308/> rename ObjectIdExt::ancestors_iter() to *::ancestors()
+ - <csr-id-61793ff42f5c2f9ddf302901adea2dac6149eac8/> rename `easy::Object::to_(commit|tag)_iter()`…
+   …to  `easy::Object::try_to_(commit|tag)_iter()` for consistency.
+ - <csr-id-0cd585e20a5abd323a34ec32d92fbd48531b3b18/> rename `*::State` into `*::Platform`
+ - <csr-id-89f15051763a03627f332c46beedfc53b8b9b15b/> various small API changes
+ - <csr-id-f644d0ede7a2e8d344a81c7003c3877eed64a6b0/> move easy::head::peel::Error -> easy::head::peel::to_id::Error
+ - <csr-id-ac3b9efb7b90958274ce55800959d930f8641115/> rename path::is_git to path::is
+ - <csr-id-03fe8a7ebd34608d725d4585da5c1630123762ec/> rename easy::reference::log::State to easy::reference::Logs
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 77 commits contributed to the release over the course of 18 calendar days.
+ - 79 commits contributed to the release over the course of 28 calendar days.
  - 34 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 5 unique issues were worked on
 
@@ -52,14 +62,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - rename easy::reference::log::State to easy::reference::Logs (03fe8a7)
     - rename `*::State` into `*::Platform` (0cd585e)
  * **#198**
-    - Rebuild all changelogs to assure properly ordered headlines (cfcaa66)
-    - Sort all commits by time, descending… (7c37a3d)
-    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
-    - Use hashmap based lookup for trees… (55d2d17)
-    - Fixup remaining changelogs… (0ac488a)
-    - Generate changelogs with details (fd0f3bd)
-    - Update all changelogs with details (0732699)
-    - Update changelogs (b30db3b)
+    - merge doesn't consider user generated sections, only the ones it would want to add (ebbebdd)
+    - Rebuild all changelogs to assure properly ordered headlines (4a9a05f)
+    - Sort all commits by time, descending… (f536bad)
+    - greatly reduce changelog size now that the traversal fix is applied (a0bc98c)
+    - Use hashmap based lookup for trees… (48a0c76)
+    - Fixup remaining changelogs… (2f75db2)
+    - Generate changelogs with details (e1861ca)
+    - Update all changelogs with details (58ab2ae)
+    - Update changelogs (c857d61)
     - Avoid adding newlines which make writing unstable (6b5c394)
     - Fix section headline level (9d6f263)
     - Write first version of changlogs thus far… (719b6bd)
@@ -94,7 +105,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Use Easy in the one spot where it is possible… (6a97bfa)
     - try to create persistent Easy iterator, but can't make it Send… (54a64a5)
  * **Uncategorized**
-    - Update changelogs just for fun (fa91ba3)
+    - make fmt, but now it picked up some parts that usually don't get altered… (01f7b72)
+    - Update changelogs just for fun (21541b3)
     - Merge branch 'main' into changelog-generation (c956f33)
     - thanks clippy (ae7826e)
     - thanks clippy (b02edb5)

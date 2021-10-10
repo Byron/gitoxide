@@ -7,11 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### New Features
+
+ - <csr-id-d6c44e6ab8f436020d4fb235e423b018fd1e7a9f/> dynamically sized full-object speeds up diff-based object counting
+   which is what happens when counting objects for fetches where only changed objects should be sent.
+ - <csr-id-50cf610e8939812c3d2268c48835e2dac67d0c31/> `cache::Object` trait for caching and retrieving whole objects
+ - <csr-id-60c9fad8002b4e3f6b9607bba6361871752f4d3d/> control pack and object cache size in megabytes
+ - <csr-id-5a8c2da6cb1e2accf7cfdccc16bc3a1d0b2a7dbc/> object cache size is configurable
+
+### Fixed
+
+ - <csr-id-d8fe8141e80a9e9a433b5e1a072b850325c806c8/> don't put more objects into the pack cache than needed.
+   
+   Previously when accessing a packed object, it would store the base
+   object into the pack cache (if it wasn't retrieved from there)
+   which is great if that operation is free.
+   
+   Since it isn't, it's better not to stress the cache with puts
+   and trash more objects than necessary.
+   
+   Now only the last decompressed object will be put into the LRU cache.
+ - <csr-id-faf6f813927720c5adf62102f9ce46606ff2617c/> don't include submodules in count,
+   which avoids dealing with missing objects entirely. Those ominous missing objects where just git submodules after all.
+   
+   It's still a good idea to handle these gracefully though, git itself
+   seems to ignore them, too, and so do we at least for now.
+
+### Performance
+
+ - <csr-id-f9232acf8e52f8cd95520d122469e136eb07b39f/> ObjectID specific hashers, using the fact that object ids are hashes
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 25 commits contributed to the release over the course of 15 calendar days.
+ - 27 commits contributed to the release over the course of 27 calendar days.
  - 10 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on
 
@@ -24,14 +54,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **#164**
     - Avoid duplicate module paths in 'tree' and 'commit' (2f2d856)
  * **#198**
-    - Rebuild all changelogs to assure properly ordered headlines (cfcaa66)
-    - Sort all commits by time, descending… (7c37a3d)
-    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
-    - don't put more objects into the pack cache than needed (d89e474)
-    - Fixup remaining changelogs… (0ac488a)
-    - Generate changelogs with details (fd0f3bd)
-    - Update all changelogs with details (0732699)
-    - Update changelogs (b30db3b)
+    - Rebuild all changelogs to assure properly ordered headlines (4a9a05f)
+    - Sort all commits by time, descending… (f536bad)
+    - greatly reduce changelog size now that the traversal fix is applied (a0bc98c)
+    - don't put more objects into the pack cache than needed (d8fe814)
+    - Fixup remaining changelogs… (2f75db2)
+    - Generate changelogs with details (e1861ca)
+    - Update all changelogs with details (58ab2ae)
+    - Update changelogs (c857d61)
     - Avoid adding newlines which make writing unstable (6b5c394)
     - Fix section headline level (9d6f263)
     - Write first version of changlogs thus far… (719b6bd)
@@ -49,6 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Count ref-deltas in thin packs as well (80c6994)
     - Add '--thin' flag to pack-create and pass it on (2664d73)
  * **Uncategorized**
+    - make fmt, but now it picked up some parts that usually don't get altered… (01f7b72)
+    - Update changelogs just for fun (21541b3)
     - Bump git-traverse v0.9.0, safety bump 8 crates (d39fabb)
 </details>
 

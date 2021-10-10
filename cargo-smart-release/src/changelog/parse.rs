@@ -162,6 +162,8 @@ impl Section {
                                 || title.starts_with(as_headline("change").expect("valid"))
                                 || title.starts_with(as_headline("docs").expect("valid"))
                                 || title.starts_with(as_headline("perf").expect("valid"))
+                                || title.starts_with("refactor")
+                                || title.starts_with("other")
                                 || title.starts_with(as_headline("fix").expect("valid")) =>
                         {
                             State::ParseConventional {
@@ -226,11 +228,13 @@ fn parse_conventional_to_next_section_title(
     level: u32,
     unknown: &mut String,
 ) -> Segment {
-    let is_breaking = title.ends_with(section::segment::Conventional::BREAKING_TITLE);
-    let kind = ["fix", "add", "feat", "revert", "remove", "change", "docs", "perf"]
-        .iter()
-        .find(|kind| title.starts_with(section::segment::conventional::as_headline(*kind).expect("valid")))
-        .expect("BUG: this list needs an update too if new kinds of conventional messages are added");
+    let is_breaking = title.ends_with(section::segment::Conventional::BREAKING_TITLE_ENCLOSED);
+    let kind = [
+        "fix", "add", "feat", "revert", "remove", "change", "docs", "perf", "refactor", "other",
+    ]
+    .iter()
+    .find(|kind| title.starts_with(section::segment::conventional::as_headline(*kind).unwrap_or(*kind)))
+    .expect("BUG: this list needs an update too if new kinds of conventional messages are added");
 
     let mut conventional = section::segment::Conventional {
         kind: *kind,

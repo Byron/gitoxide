@@ -11,9 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 2 unique issues were worked on
 
 ### Commit Details
 
@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
+ * **#198**
+    - new changelogs for actor and features crates (e0d437c)
  * **Uncategorized**
     - make fmt, but now it picked up some parts that usually don't get altered… (01f7b72)
 </details>
@@ -623,10 +625,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v0.1.0 (2020-07-12)
-
-### other
-
- - <csr-id-ab6f98b905f13ed2a7c0c483f34fab63141fbc5b/> try-join with static typing works, but…
 
 ### Commit Statistics
 

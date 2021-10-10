@@ -7,11 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Performance
+
+ - <csr-id-83d591d536d1a43e8523082824ec0b95cca55d34/> parse entry mode into number instead of comparing it to byte strings
+ - <csr-id-f9232acf8e52f8cd95520d122469e136eb07b39f/> ObjectID specific hashers, using the fact that object ids are hashes
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 40 commits contributed to the release over the course of 11 calendar days.
+ - 41 commits contributed to the release over the course of 23 calendar days.
  - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on
 
@@ -22,12 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
-    - Rebuild all changelogs to assure properly ordered headlines (cfcaa66)
-    - Sort all commits by time, descending… (7c37a3d)
-    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
-    - Generate changelogs with details (fd0f3bd)
-    - Update all changelogs with details (0732699)
-    - Update changelogs (b30db3b)
+    - Rebuild all changelogs to assure properly ordered headlines (4a9a05f)
+    - Sort all commits by time, descending… (f536bad)
+    - greatly reduce changelog size now that the traversal fix is applied (a0bc98c)
+    - Generate changelogs with details (e1861ca)
+    - Update all changelogs with details (58ab2ae)
+    - Update changelogs (c857d61)
     - Avoid adding newlines which make writing unstable (6b5c394)
     - Fix section headline level (9d6f263)
     - Write first version of changlogs thus far… (719b6bd)
@@ -60,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - ObjectID specific hashers, using the fact that object ids are hashes (f9232ac)
     - Tree parsing now probably is twice as fast… (d1e2b89)
  * **Uncategorized**
+    - Update changelogs just for fun (21541b3)
     - Merge branch 'main' into changelog-generation (c956f33)
     - thanks clippy (d78d382)
     - thanks clippy (4ea1126)

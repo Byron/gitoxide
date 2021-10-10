@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 16 commits contributed to the release over the course of 14 calendar days.
+ - 17 commits contributed to the release over the course of 26 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on
 
@@ -22,15 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
-    - Rebuild all changelogs to assure properly ordered headlines (cfcaa66)
-    - Sort all commits by time, descending… (7c37a3d)
-    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
-    - refactor and improve path filtering to find relevant commits… (99db079)
-    - The first headline level controls all the other ones (302b267)
-    - Fixup remaining changelogs… (0ac488a)
-    - Generate changelogs with details (fd0f3bd)
-    - Update all changelogs with details (0732699)
-    - Update changelogs (b30db3b)
+    - Rebuild all changelogs to assure properly ordered headlines (4a9a05f)
+    - Sort all commits by time, descending… (f536bad)
+    - greatly reduce changelog size now that the traversal fix is applied (a0bc98c)
+    - refactor and improve path filtering to find relevant commits… (01b2466)
+    - The first headline level controls all the other ones (715ea54)
+    - Fixup remaining changelogs… (2f75db2)
+    - Generate changelogs with details (e1861ca)
+    - Update all changelogs with details (58ab2ae)
+    - Update changelogs (c857d61)
     - Avoid adding newlines which make writing unstable (6b5c394)
     - Fix section headline level (9d6f263)
     - Write first version of changlogs thus far… (719b6bd)
@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - parse issue numbers from description and clean it up (95c0a51)
     - feat: add git_packetline::read::Error to represent ERR lines (454c840)
  * **Uncategorized**
+    - Update changelogs just for fun (21541b3)
     - Bump git-traverse v0.9.0, safety bump 8 crates (d39fabb)
 </details>
 

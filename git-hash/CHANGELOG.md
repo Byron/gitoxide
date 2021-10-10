@@ -7,13 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### New Features
+
+ - <csr-id-ed16bce97c235e7e188444afd7a0d3f7e04a6c72/> `oid::short_hex(len)` for truncated hex representations
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release.
+ - 8 commits contributed to the release over the course of 7 calendar days.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 2 unique issues were worked on
 
 ### Commit Details
 
@@ -22,13 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
-    - Rebuild all changelogs to assure properly ordered headlines (cfcaa66)
-    - Sort all commits by time, descending… (7c37a3d)
-    - greatly reduce changelog size now that the traversal fix is applied (3924c03)
-    - rename `oid::short_hex()` to `oid::to_hex()` (deb99b3)
-    - Fixup remaining changelogs… (0ac488a)
-    - Generate changelogs with details (fd0f3bd)
-    - oid::short_hex(len) for truncated hex representations (d234b97)
+    - Rebuild all changelogs to assure properly ordered headlines (4a9a05f)
+    - Sort all commits by time, descending… (f536bad)
+    - greatly reduce changelog size now that the traversal fix is applied (a0bc98c)
+    - rename `oid::short_hex()` to `oid::to_hex()` (8be4036)
+    - Fixup remaining changelogs… (2f75db2)
+    - Generate changelogs with details (e1861ca)
+    - oid::short_hex(len) for truncated hex representations (ed16bce)
+ * **Uncategorized**
+    - Update changelogs just for fun (21541b3)
 </details>
 
 ## v0.6.0 (2021-09-07)

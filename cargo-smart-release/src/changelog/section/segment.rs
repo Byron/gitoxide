@@ -22,6 +22,7 @@ pub mod conventional {
     }
 
     /// Note that this depends on `crate::commit::message::to_static()`,
+    /// Note having a headline means it won't be written back unless it contains breaking changes.
     pub fn as_headline(kind: &str) -> Option<&'static str> {
         // NOTE: adding one here needs additions to parse.rs
         Some(match kind {
@@ -52,7 +53,8 @@ pub struct Conventional {
 
 impl Conventional {
     pub const REMOVED_HTML_PREFIX: &'static str = "<csr-id-";
-    pub const BREAKING_TITLE: &'static str = "(BREAKING)";
+    pub const BREAKING_TITLE: &'static str = "BREAKING";
+    pub const BREAKING_TITLE_ENCLOSED: &'static str = "(BREAKING)";
 }
 
 pub mod details {

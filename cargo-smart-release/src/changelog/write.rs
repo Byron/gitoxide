@@ -89,7 +89,7 @@ impl section::Segment {
                 is_breaking,
                 removed,
                 messages,
-            }) => match segment::conventional::as_headline(kind) {
+            }) => match segment::conventional::as_headline(kind).or_else(|| is_breaking.then(|| *kind)) {
                 Some(headline) => {
                     writeln!(
                         out,
@@ -97,7 +97,7 @@ impl section::Segment {
                         heading(section_level),
                         headline,
                         if *is_breaking {
-                            format!(" {}", segment::Conventional::BREAKING_TITLE)
+                            format!(" {}", segment::Conventional::BREAKING_TITLE_ENCLOSED)
                         } else {
                             "".into()
                         },
