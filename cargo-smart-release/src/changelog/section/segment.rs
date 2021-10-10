@@ -4,8 +4,6 @@ use bitflags::bitflags;
 use git_repository as git;
 
 pub mod conventional {
-    use std::borrow::Cow;
-
     use git_repository as git;
 
     /// A message that is associated with a Segment for a particular git-conventional segment
@@ -23,9 +21,9 @@ pub mod conventional {
     }
 
     /// Note that this depends on `crate::commit::message::to_static()`,
-    pub fn as_headline(kind: &str) -> Cow<'static, str> {
+    pub fn as_headline(kind: &str) -> Option<&'static str> {
         // NOTE: adding one here needs additions to parse.rs
-        match kind {
+        Some(match kind {
             "fix" => "Fixed",
             "add" => "Added",
             "feat" => "New Features",
@@ -34,9 +32,8 @@ pub mod conventional {
             "change" => "Changed",
             "docs" => "Documentation",
             "perf" => "Performance",
-            unknown => return Cow::Owned(unknown.into()),
-        }
-        .into()
+            _unknown => return None,
+        })
     }
 }
 

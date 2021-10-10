@@ -88,46 +88,53 @@ impl section::Segment {
                 is_breaking,
                 removed,
                 messages,
-            }) => {
-                writeln!(
-                    out,
-                    "{} {}{}\n",
-                    heading(section_level),
-                    segment::conventional::as_headline(kind),
-                    if *is_breaking {
-                        format!(" {}", segment::Conventional::BREAKING_TITLE)
-                    } else {
-                        "".into()
-                    },
-                )?;
+            }) => match segment::conventional::as_headline(kind) {
+                Some(headline) => {
+                    writeln!(
+                        out,
+                        "{} {}{}\n",
+                        heading(section_level),
+                        headline,
+                        if *is_breaking {
+                            format!(" {}", segment::Conventional::BREAKING_TITLE)
+                        } else {
+                            "".into()
+                        },
+                    )?;
 
-                if !removed.is_empty() {
-                    for id in removed {
-                        writeln!(out, "{}{}/>", segment::Conventional::REMOVED_HTML_PREFIX, id)?;
+                    if !removed.is_empty() {
+                        for id in removed {
+                            writeln!(out, "{}{}/>", segment::Conventional::REMOVED_HTML_PREFIX, id)?;
+                        }
+                        writeln!(out)?;
                     }
-                    writeln!(out)?;
-                }
 
-                use segment::conventional::Message;
-                for message in messages {
-                    match message {
-                        Message::Generated { title, id } => writeln!(
-                            out,
-                            " - {}{}/> {}",
-                            segment::Conventional::REMOVED_HTML_PREFIX,
-                            id,
-                            title
-                        )?,
-                        Message::User { markdown } => {
-                            out.write_all(markdown.as_bytes())?;
-                            if !markdown.ends_with('\n') {
-                                writeln!(out)?;
+                    use segment::conventional::Message;
+                    for message in messages {
+                        match message {
+                            Message::Generated { title, id } => writeln!(
+                                out,
+                                " - {}{}/> {}",
+                                segment::Conventional::REMOVED_HTML_PREFIX,
+                                id,
+                                title
+                            )?,
+                            Message::User { markdown } => {
+                                out.write_all(markdown.as_bytes())?;
+                                if !markdown.ends_with('\n') {
+                                    writeln!(out)?;
+                                }
                             }
                         }
                     }
+                    writeln!(out)?;
                 }
-                writeln!(out)?;
-            }
+                None => log::trace!(
+                    "Skipping unknown git-conventional kind {:?} and all {} message(s) in it.",
+                    kind,
+                    messages.len()
+                ),
+            },
             Segment::Details(section::Data::Generated(segment::Details { commits_by_category }))
                 if !commits_by_category.is_empty() =>
             {

@@ -151,14 +151,14 @@ impl Section {
                             State::SkipGenerated
                         }
                         Some((Event::Text(title), _range))
-                            if title.starts_with(as_headline("feat").as_ref())
-                                || title.starts_with(as_headline("add").as_ref())
-                                || title.starts_with(as_headline("revert").as_ref())
-                                || title.starts_with(as_headline("remove").as_ref())
-                                || title.starts_with(as_headline("change").as_ref())
-                                || title.starts_with(as_headline("docs").as_ref())
-                                || title.starts_with(as_headline("perf").as_ref())
-                                || title.starts_with(as_headline("fix").as_ref()) =>
+                            if title.starts_with(as_headline("feat").expect("valid"))
+                                || title.starts_with(as_headline("add").expect("valid"))
+                                || title.starts_with(as_headline("revert").expect("valid"))
+                                || title.starts_with(as_headline("remove").expect("valid"))
+                                || title.starts_with(as_headline("change").expect("valid"))
+                                || title.starts_with(as_headline("docs").expect("valid"))
+                                || title.starts_with(as_headline("perf").expect("valid"))
+                                || title.starts_with(as_headline("fix").expect("valid")) =>
                         {
                             State::ParseConventional {
                                 title: title.into_string(),
@@ -225,7 +225,7 @@ fn parse_conventional_to_next_section_title(
     let is_breaking = title.ends_with(section::segment::Conventional::BREAKING_TITLE);
     let kind = ["fix", "add", "feat", "revert", "remove", "change", "docs", "perf"]
         .iter()
-        .find(|kind| title.starts_with(section::segment::conventional::as_headline(*kind).as_ref()))
+        .find(|kind| title.starts_with(section::segment::conventional::as_headline(*kind).expect("valid")))
         .expect("BUG: this list needs an update too if new kinds of conventional messages are added");
 
     let mut conventional = section::segment::Conventional {
