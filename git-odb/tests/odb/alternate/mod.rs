@@ -38,7 +38,8 @@ fn alternate_with(
 fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
     let (from, _) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
-    alternate(tmp.path().join("b"), Path::new("..").join("a"))?;
+    let parent_a = Path::new("..").join("a");
+    alternate(tmp.path().join("b"), &parent_a)?;
 
     match alternate::resolve(&from) {
         Err(alternate::Error::Cycle(chain)) => {
@@ -52,6 +53,7 @@ fn circular_alternates_are_detected_with_relative_paths() -> crate::Result {
         }
         res => unreachable!("should be a specific kind of error: {:?}", res),
     }
+    std::fs::remove_dir(parent_a)?;
     Ok(())
 }
 
@@ -60,7 +62,6 @@ fn single_link_with_comment_before_path_and_ansi_c_escape() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
     let non_alternate = tmp.path().join("actual");
 
-    // let (from, to) = alternate_with(tmp.path().join("a"), non_alternate, Some("# comment\n\"../a\"\n"))?;
     let (from, to) = alternate_with(tmp.path().join("a"), non_alternate, Some("# comment\n"))?;
     let alternates = alternate::resolve(from)?;
     assert_eq!(alternates.len(), 1);
