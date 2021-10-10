@@ -16,6 +16,7 @@ use nom::{
 };
 use pulldown_cmark::{Event, OffsetIter, Tag};
 
+use crate::changelog::section::segment::conventional::as_headline;
 use crate::changelog::section::segment::Conventional;
 use crate::changelog::section::Segment;
 use crate::{
@@ -150,7 +151,14 @@ impl Section {
                             State::SkipGenerated
                         }
                         Some((Event::Text(title), _range))
-                            if title.starts_with(section::segment::conventional::as_headline("feat").as_ref()) =>
+                            if title.starts_with(as_headline("feat").as_ref())
+                                || title.starts_with(as_headline("add").as_ref())
+                                || title.starts_with(as_headline("revert").as_ref())
+                                || title.starts_with(as_headline("remove").as_ref())
+                                || title.starts_with(as_headline("change").as_ref())
+                                || title.starts_with(as_headline("docs").as_ref())
+                                || title.starts_with(as_headline("perf").as_ref())
+                                || title.starts_with(as_headline("fix").as_ref()) =>
                         {
                             State::ParseConventional {
                                 title: title.into_string(),
@@ -258,7 +266,7 @@ fn parse_conventional_to_next_section_title(
                                                             conventional.messages.push(
                                                                 section::segment::conventional::Message::Generated {
                                                                     id,
-                                                                    title: markdown[start..end].to_owned(),
+                                                                    title: markdown[start..end].trim_start().to_owned(),
                                                                 },
                                                             )
                                                         }
@@ -303,7 +311,7 @@ fn make_user_message_and_consume_item(
     conventional
         .messages
         .push(section::segment::conventional::Message::User {
-            markdown: markdown[range].to_owned(),
+            markdown: markdown[range].trim_end().to_owned(),
         });
     events.take_while(|(e, _)| !matches!(e, Event::End(Tag::Item))).count();
 }

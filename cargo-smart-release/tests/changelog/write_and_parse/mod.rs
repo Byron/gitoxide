@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use cargo_smart_release::changelog::section::segment::conventional;
 use cargo_smart_release::{
     changelog,
     changelog::{section, Section},
@@ -25,7 +26,19 @@ fn conventional_write_empty_messages() -> Result {
                 kind: "feat",
                 is_breaking: true,
                 removed: vec![first_message],
-                messages: vec![], // TODO: put message and parse it back
+                messages: vec![
+                    conventional::Message::User {
+                        markdown: " - verbatim `whatever` the _user_ writes [hello](world)".into(),
+                    },
+                    conventional::Message::Generated {
+                        id: hex_to_id("0000000000000000000000000000000000000003"),
+                        title: "this messages comes straight from git conventional and _may_ contain markdown".into(),
+                    },
+                    conventional::Message::User {
+                        markdown: " - just another user message, this time\n   with multiple lines\n   and a body"
+                            .into(),
+                    },
+                ],
             })],
             unknown: String::new(),
         }],

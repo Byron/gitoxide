@@ -118,7 +118,12 @@ impl section::Segment {
                             id,
                             title
                         )?,
-                        Message::User { markdown } => out.write_all(markdown.as_bytes())?,
+                        Message::User { markdown } => {
+                            out.write_all(markdown.as_bytes())?;
+                            if !markdown.ends_with('\n') {
+                                writeln!(out)?;
+                            }
+                        }
                     }
                 }
                 writeln!(out)?;
