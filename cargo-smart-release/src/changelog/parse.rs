@@ -14,14 +14,18 @@ use nom::{
     sequence::{delimited, preceded, separated_pair, terminated, tuple},
     Finish, IResult,
 };
-use pulldown_cmark::{Event, OffsetIter, Tag};
+use pulldown_cmark::{CowStr, Event, OffsetIter, Tag};
 
-use crate::changelog::section::segment::conventional::as_headline;
-use crate::changelog::section::segment::Conventional;
-use crate::changelog::section::Segment;
 use crate::{
     changelog,
-    changelog::{section, Section},
+    changelog::{
+        section,
+        section::{
+            segment::{conventional::as_headline, Conventional},
+            Segment,
+        },
+        Section,
+    },
     ChangeLog,
 };
 
@@ -245,45 +249,46 @@ fn parse_conventional_to_next_section_title(
                         None => track_unknown_event(event, unknown),
                     },
                     Event::Start(Tag::List(_)) => {
-                        while let Some((event, range)) = events.next() {
+                        while let Some((event, item_range)) = events.next() {
                             match event {
                                 Event::Start(Tag::Item) => {
                                     if let Some((possibly_html, _)) = events.next() {
                                         match possibly_html {
-                                            Event::Html(tag) => {
-                                                match parse_message_id(tag.as_ref()) {
-                                                    Some(id) => {
-                                                        let mut events = events
-                                                            .by_ref()
-                                                            .take_while(|(e, _r)| !matches!(e, Event::End(Tag::Item)))
-                                                            .map(|(_, r)| r);
-                                                        let start = events.next();
-                                                        let end = events.last();
-                                                        if let Some((start, end)) = start
-                                                            .map(|r| r.start)
-                                                            .and_then(|start| end.map(|r| (start, r.end)))
-                                                        {
-                                                            conventional.messages.push(
-                                                                section::segment::conventional::Message::Generated {
-                                                                    id,
-                                                                    title: markdown[start..end].trim_start().to_owned(),
-                                                                },
-                                                            )
+                                            Event::Start(Tag::Paragraph) => {
+                                                if let Some((possibly_html, _)) = events.next() {
+                                                    match possibly_html {
+                                                        Event::Html(tag) => {
+                                                            parse_id_fallback_to_user_message(
+                                                                markdown,
+                                                                events,
+                                                                &mut conventional,
+                                                                item_range,
+                                                                tag,
+                                                            );
                                                         }
+                                                        _other_event => make_user_message_and_consume_item(
+                                                            markdown,
+                                                            events,
+                                                            &mut conventional,
+                                                            item_range,
+                                                        ),
                                                     }
-                                                    None => make_user_message_and_consume_item(
-                                                        markdown,
-                                                        events,
-                                                        &mut conventional,
-                                                        range,
-                                                    ),
-                                                };
+                                                }
+                                            }
+                                            Event::Html(tag) => {
+                                                parse_id_fallback_to_user_message(
+                                                    markdown,
+                                                    events,
+                                                    &mut conventional,
+                                                    item_range,
+                                                    tag,
+                                                );
                                             }
                                             _other_event => make_user_message_and_consume_item(
                                                 markdown,
                                                 events,
                                                 &mut conventional,
-                                                range,
+                                                item_range,
                                             ),
                                         }
                                     }
@@ -300,6 +305,34 @@ fn parse_conventional_to_next_section_title(
         }
     }
     section::Segment::Conventional(conventional)
+}
+
+fn parse_id_fallback_to_user_message(
+    markdown: &str,
+    events: &mut Peekable<OffsetIter<'_>>,
+    mut conventional: &mut Conventional,
+    item_range: Range<usize>,
+    tag: CowStr<'_>,
+) {
+    match parse_message_id(tag.as_ref()) {
+        Some(id) => {
+            let mut events = events
+                .by_ref()
+                .take_while(|(e, _r)| !matches!(e, Event::End(Tag::Item)))
+                .map(|(_, r)| r);
+            let start = events.next();
+            let end = events.last();
+            if let Some((start, end)) = start.map(|r| r.start).and_then(|start| end.map(|r| (start, r.end))) {
+                conventional
+                    .messages
+                    .push(section::segment::conventional::Message::Generated {
+                        id,
+                        title: markdown[start..end].trim().to_owned(),
+                    })
+            }
+        }
+        None => make_user_message_and_consume_item(markdown, events, &mut conventional, item_range),
+    };
 }
 
 fn make_user_message_and_consume_item(

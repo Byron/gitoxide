@@ -1,9 +1,8 @@
 use std::collections::BTreeMap;
 
-use cargo_smart_release::changelog::section::segment::conventional;
 use cargo_smart_release::{
     changelog,
-    changelog::{section, Section},
+    changelog::{section, section::segment::conventional, Section},
     ChangeLog,
 };
 use git_repository::bstr::ByteSlice;
@@ -35,8 +34,9 @@ fn conventional_write_empty_messages() -> Result {
                         title: "this messages comes straight from git conventional and _may_ contain markdown".into(),
                     },
                     conventional::Message::User {
-                        markdown: " - just another user message, this time\n   with multiple lines\n   and a body"
-                            .into(),
+                        markdown:
+                            " - just another user message, this time\n   with multiple lines\n\n   and a new paragraph"
+                                .into(),
                     },
                 ],
             })],

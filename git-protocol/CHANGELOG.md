@@ -11,13 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
- - <csr-id-c77bd7a01820110154f2c66cd954c1ccfff173c1/> '(null)' symref targets are turned into direct refs instead…
+ - <csr-id-c77bd7a01820110154f2c66cd954c1ccfff173c12/> '(null)' symref targets are turned into direct refs instead…
+   
+   …because that's what 'git' would do if it would care enough.
+   On the client side this means one has to deal with detached heads
+   and it's obvious that these are detached. It's not clear anymore
+   why this is the case, and probably it's good to hide it as the
+   current git behaviour is accidental and may change in future, and
+   do so in a way we predict.
+
+   There is the possibility that git would abort the entire
+   fetch/upload-pack operation, but that's already handled correctly
+   by our implementation as well as we understand ERR messages in packet
+   lines.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 19 commits contributed to the release over the course of 26 calendar days.
+ - 20 commits contributed to the release over the course of 26 calendar days.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on
 
@@ -28,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
+    - respect release-wide ignore list to allow removing entire conventional headlines (145103d)
     - Rebuild all changelogs to assure properly ordered headlines (4a9a05f)
     - Sort all commits by time, descending… (f536bad)
     - greatly reduce changelog size now that the traversal fix is applied (a0bc98c)

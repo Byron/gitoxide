@@ -1,5 +1,6 @@
-use git_repository::hash::ObjectId;
 use std::{collections::VecDeque, iter::FromIterator};
+
+use git_repository::hash::ObjectId;
 
 use crate::{
     changelog::{

@@ -15,6 +15,7 @@ expression: md
  - <csr-id-0000000000000000000000000000000000000003/> this messages comes straight from git conventional and _may_ contain markdown
  - just another user message, this time
    with multiple lines
-   and a body
+
+   and a new paragraph
 
 
