@@ -103,7 +103,15 @@ impl Section {
                         count: history.len(),
                         duration,
                         conventional_count: history.iter().filter(|item| item.message.kind.is_some()).count(),
-                        unique_issues_count: commits_by_category.len(),
+                        unique_issues: {
+                            let mut v = commits_by_category
+                                .keys()
+                                .filter(|c| matches!(c, section::segment::details::Category::Issue(_)))
+                                .cloned()
+                                .collect::<Vec<_>>();
+                            v.sort();
+                            v
+                        },
                     },
                 )));
             }

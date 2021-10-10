@@ -226,7 +226,7 @@ fn segments() {
         count: 1,
         duration: None,
         conventional_count: 2,
-        unique_issues_count: 3,
+        unique_issues: vec![],
     }));
     let details = section::Segment::Details(section::Data::Generated(section::segment::Details {
         commits_by_category: Default::default(),

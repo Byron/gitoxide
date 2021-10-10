@@ -87,7 +87,11 @@ fn all_section_types_round_trips_lossy() -> Result {
                         count: 100,
                         duration: time::Duration::days(32).into(),
                         conventional_count: 20,
-                        unique_issues_count: 3,
+                        unique_issues: vec![
+                            section::segment::details::Category::Issue("1".into()),
+                            section::segment::details::Category::Uncategorized,
+                            section::segment::details::Category::Issue("42".into()),
+                        ],
                     })),
                     section::Segment::Details(section::Data::Generated(section::segment::Details {
                         commits_by_category: {

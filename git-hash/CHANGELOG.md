@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### refactor (BREAKING)
+
+ - <csr-id-8be4036dce4a857cc14a8b9467aaf2fc0fc2e827/> rename `oid::short_hex()` to `oid::to_hex()`
+
 ### New Features
 
  - <csr-id-ed16bce97c235e7e188444afd7a0d3f7e04a6c72/> `oid::short_hex(len)` for truncated hex representations
@@ -15,9 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 7 calendar days.
+ - 9 commits contributed to the release over the course of 7 calendar days.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 2 unique issues were worked on
+ - 1 unique issue was worked on: #198
 
 ### Commit Details
 
@@ -26,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
+    - Allow 'refactor' and 'other' in conventional messages if they have breaking changes (4eebaac)
     - Rebuild all changelogs to assure properly ordered headlines (4a9a05f)
     - Sort all commits by time, descending… (f536bad)
     - greatly reduce changelog size now that the traversal fix is applied (a0bc98c)
@@ -50,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 2 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -71,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 2 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -92,7 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 10 commits contributed to the release over the course of 74 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -127,7 +132,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 5 commits contributed to the release over the course of 16 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -151,7 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 20 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 2 unique issues were worked on
+ - 1 unique issue was worked on: #63
 
 ### Commit Details
 
@@ -191,7 +196,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 3 commits contributed to the release over the course of 26 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -213,7 +218,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 2 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -234,7 +239,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 1 commit contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 

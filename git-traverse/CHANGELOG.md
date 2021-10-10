@@ -7,13 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### other (BREAKING)
+
+ - <csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/> Avoid duplicate module paths in 'tree' and 'commit'
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 17 commits contributed to the release over the course of 27 calendar days.
+ - 18 commits contributed to the release over the course of 27 calendar days.
  - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 4 unique issues were worked on
+ - 3 unique issues were worked on: #164, #196, #198
 
 ### Commit Details
 
@@ -28,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Revert "traverse(chore): try git-cliff…" (cd293ae)
     - try git-cliff… (cbc5b81)
  * **#198**
+    - respect release-wide ignore list to allow removing entire conventional headlines (145103d)
     - Rebuild all changelogs to assure properly ordered headlines (4a9a05f)
     - Sort all commits by time, descending… (f536bad)
     - greatly reduce changelog size now that the traversal fix is applied (a0bc98c)
@@ -52,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 2 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -73,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 2 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -94,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 14 commits contributed to the release over the course of 2 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -127,7 +132,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 2 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -148,7 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 2 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -169,7 +174,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 4 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -192,7 +197,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 2 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -213,7 +218,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 3 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -235,7 +240,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 2 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -256,7 +261,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 23 commits contributed to the release over the course of 83 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -298,7 +303,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 17 commits contributed to the release over the course of 8 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -334,7 +339,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 6 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 
@@ -359,7 +364,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 1 commit contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on
+ - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
 

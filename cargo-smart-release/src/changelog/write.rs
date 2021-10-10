@@ -1,3 +1,5 @@
+use git_repository::bstr::ByteSlice;
+
 use crate::{
     changelog,
     changelog::{
@@ -7,7 +9,6 @@ use crate::{
     },
     ChangeLog,
 };
-use git_repository::bstr::ByteSlice;
 
 impl std::fmt::Display for changelog::Version {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -164,7 +165,7 @@ impl section::Segment {
                 count,
                 duration,
                 conventional_count,
-                unique_issues_count,
+                unique_issues,
             })) => {
                 writeln!(out, "{} {}\n", heading(section_level), segment::CommitStatistics::TITLE)?;
                 writeln!(out, "{}", Section::READONLY_TAG)?;
@@ -188,13 +189,22 @@ impl section::Segment {
                     conventional_count,
                     if *conventional_count == 1 { "commit" } else { "commits" }
                 )?;
-                writeln!(
-                    out,
-                    " - {} unique {} {} worked on",
-                    unique_issues_count,
-                    if *unique_issues_count == 1 { "issue" } else { "issues" },
-                    if *unique_issues_count == 1 { "was" } else { "were" },
-                )?;
+                if unique_issues.is_empty() {
+                    writeln!(out, " - 0 issues like '(#ID)' where seen in commit messages")?;
+                } else {
+                    writeln!(
+                        out,
+                        " - {} unique {} {} worked on: {}",
+                        unique_issues.len(),
+                        if unique_issues.len() == 1 { "issue" } else { "issues" },
+                        if unique_issues.len() == 1 { "was" } else { "were" },
+                        unique_issues
+                            .iter()
+                            .map(ToString::to_string)
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )?;
+                }
                 writeln!(out)?;
             }
             Segment::Clippy(section::Data::Generated(segment::ThanksClippy { count })) if *count > 0 => {
