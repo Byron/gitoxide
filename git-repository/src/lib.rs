@@ -132,6 +132,11 @@ pub use git_traverse as traverse;
 #[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url as url;
 
+#[doc(inline)]
+pub use git_hash::{oid, ObjectId};
+#[doc(inline)]
+pub use git_url::Url;
+
 pub mod interrupt;
 
 mod ext;

@@ -302,7 +302,7 @@ pub mod history {
         segment: &mut Segment<'a>,
         filter: &Filter<'_>,
         item: &'a Item,
-        data_by_tree_id: &HashMap<git::hash::ObjectId, Vec<u8>>,
+        data_by_tree_id: &HashMap<git::ObjectId, Vec<u8>>,
     ) -> anyhow::Result<()> {
         let history = &mut segment.history;
         match filter {

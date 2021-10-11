@@ -1,3 +1,4 @@
+use git_repository as git;
 use git_repository::bstr::ByteSlice;
 
 use crate::{
@@ -24,8 +25,8 @@ impl std::fmt::Display for changelog::Version {
 pub enum Linkables {
     /// Use markdown links to link directly to the linkable items
     AsLinks {
-        /// The location of the repository to link to, without trailing slash
-        repository_url: String,
+        /// The location of the repository to link to
+        repository_url: git::Url,
     },
     /// Leave them in a textual representation for the hosting platform to auto-link them
     AsText,

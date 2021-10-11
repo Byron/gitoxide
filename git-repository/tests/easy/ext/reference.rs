@@ -25,13 +25,13 @@ mod set_namespace {
 
         repo.tag(
             "new-tag",
-            git::hash::ObjectId::empty_tree(git::hash::Kind::Sha1),
+            git::ObjectId::empty_tree(git::hash::Kind::Sha1),
             PreviousValue::MustNotExist,
         )?;
 
         repo.reference(
             "refs/heads/new-branch",
-            git::hash::ObjectId::empty_tree(git::hash::Kind::Sha1),
+            git::ObjectId::empty_tree(git::hash::Kind::Sha1),
             PreviousValue::MustNotExist,
             "message",
         )?;

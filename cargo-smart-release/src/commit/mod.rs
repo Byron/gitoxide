@@ -27,7 +27,7 @@ pub struct History {
     pub head: git::refs::Reference,
     pub items: Vec<history::Item>,
     /// A mapping between trees and their data
-    pub data_by_tree_id: HashMap<git::hash::ObjectId, Vec<u8>>,
+    pub data_by_tree_id: HashMap<git::ObjectId, Vec<u8>>,
 }
 
 pub mod message;

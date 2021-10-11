@@ -15,7 +15,7 @@ pub mod conventional {
         },
         Generated {
             /// The id of the message/commit the data is coming from, useful to identify the markdown associate with this message.
-            id: git::hash::ObjectId,
+            id: git::ObjectId,
             title: String,
             body: Option<String>,
         },
@@ -46,7 +46,7 @@ pub struct Conventional {
     /// Whether or not the segment contains only breaking changes
     pub is_breaking: bool,
     /// object IDs parsed from markdown with no surrounding text. These are considered removed, so we shouldn't repopulate them.
-    pub removed: Vec<git::hash::ObjectId>,
+    pub removed: Vec<git::ObjectId>,
     /// The messages to convey
     pub messages: Vec<conventional::Message>,
 }
@@ -80,7 +80,7 @@ pub mod details {
     #[derive(PartialEq, Eq, Debug, Clone)]
     pub struct Message {
         pub title: String,
-        pub id: git::hash::ObjectId,
+        pub id: git::ObjectId,
     }
 
     impl From<&crate::commit::history::Item> for Message {
