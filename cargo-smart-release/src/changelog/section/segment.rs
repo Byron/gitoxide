@@ -26,7 +26,7 @@ pub mod conventional {
     pub fn as_headline(kind: &str) -> Option<&'static str> {
         // NOTE: adding one here needs additions to parse.rs
         Some(match kind {
-            "fix" => "Fixed",
+            "fix" => "Bug Fixed",
             "add" => "Added",
             "feat" => "New Features",
             "revert" => "Reverted",
