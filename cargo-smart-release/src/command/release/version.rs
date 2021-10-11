@@ -41,7 +41,19 @@ pub(crate) fn bump(
         Keep => {}
         Auto => todo!("impl auto history based bump"),
     };
-    smallest_necessary_version_relative_to_crates_index(publishee, v, ctx, bump_when_needed, true, true, false)
+    let new_version = v;
+    let verbose = true;
+    let will_be_published = true;
+    let package_version_must_be_breaking = false;
+    smallest_necessary_version_relative_to_crates_index(
+        publishee,
+        new_version,
+        ctx,
+        bump_when_needed,
+        verbose,
+        will_be_published,
+        package_version_must_be_breaking,
+    )
 }
 
 fn smallest_necessary_version_relative_to_crates_index(

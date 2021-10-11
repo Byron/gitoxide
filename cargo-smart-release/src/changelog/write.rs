@@ -172,7 +172,7 @@ impl section::Segment {
                 writeln!(out, "{}", Section::READONLY_TAG)?;
                 writeln!(out, "{}\n", segment::Details::PREFIX)?;
                 for (category, messages) in commits_by_category.iter() {
-                    writeln!(out, " * **{}**", category)?;
+                    writeln!(out, " * **{}**", format_category(category, link_mode))?;
                     for message in messages {
                         writeln!(out, "    - {} ({})", message.title, format_oid(&message.id, link_mode))?;
                     }

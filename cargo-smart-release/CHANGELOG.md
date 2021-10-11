@@ -9,37 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-id-3c0a6389fe5ff981dadca20e8a4a4a0d2ef66e13/>
 <csr-id-77ed17c703e502e132cda9a94eb8c63db0b627ad/>
+<csr-id-1cb41f81cffe19c75aadf49a5cc7ec390ec6cae7/>
 
-### Bug Fixes
+### BREAKING
 
- - <csr-id-11eebdcc572a72b2e66a9db3cae0a01f12a81619/> don't claim to change manifest version if it's the same one
-
+- Use 'to_*' when converting `easy::Object` to specific object kind This also makes the API more consistent while being more idiomatic.
+- rename --skip-* flags to --no-* for consistency
+- rename --skip-dependencies to --no-dependencies to be more inline with existing terminology of other flags.
+ 
 ### New Features
 
- - <csr-id-ae8780e08303946412cedc19ea4d2679be49ec97/> smart-release with --changelog-without option…
+ - <csr-id-ae8780e08303946412cedc19ea4d2679be49ec97/> smart-release with --changelog-without option.
    
-   …to allow disabling various changelog segments like clippy, or commit
-   statistics.
+   This allows disabling various changelog segments like clippy, or commit statistics.
    
    Note that it's always possible to delete individual sections afterwards.
  - <csr-id-509550f8aa8210f3688c78167a56a21fc1817515/> changelog command learns the --without <section> option
    With it one can omit auto-generated sections of the given name.
  - <csr-id-11b64fce4630371633b6415f227eecdc6b42b20b/> Make `git_url::Url` available under `git_repository::Url`
 
-### refactor (BREAKING)
+### Bug Fixes
 
- - <csr-id-1cb41f81cffe19c75aadf49a5cc7ec390ec6cae7/> Use 'to_*' when converting `easy::Object` to specific object kind
-   This also makes the API more consistent while being more idiomatic.
- - rename --skip-* flags to --no-* for consistency
- - rename --skip-dependencies to --no-dependencies…
-  
-   …to be more inline with existing terminology of other flags.
+ - <csr-id-11eebdcc572a72b2e66a9db3cae0a01f12a81619/> don't claim to change manifest version if it's the same one
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 209 commits contributed to the release over the course of 32 calendar days.
+ - 213 commits contributed to the release over the course of 32 calendar days.
  - 15 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 5 unique issues were worked on: [#192](https://github.com//Byron/gitoxide/issues/192), [#197](https://github.com//Byron/gitoxide/issues/197), [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200), [#67](https://github.com//Byron/gitoxide/issues/67)
 
@@ -47,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 19 times to make code idiomatic. 
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 20 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -55,12 +52,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#192**
+ * **[#192](https://github.com//Byron/gitoxide/issues/192)**
     - smart-release: assure the current package version is actually breaking ([`fb750b6`](https://github.com//Byron/gitoxide/commit/fb750b65ca64c894ffb79cd0049f10a8db255ab6))
     - smart-release: better verbosity handling when comparing to crates-index ([`f6f2d1b`](https://github.com//Byron/gitoxide/commit/f6f2d1b2c1c50d36ee046ed58ffffed0444cd25a))
     - smart-release(feat): turn off safety bump with its own flag ([`a040f7d`](https://github.com//Byron/gitoxide/commit/a040f7d882eb5f6db0d54ba7e32437da3579a075))
     - smart-release(refactor): ([`443f000`](https://github.com//Byron/gitoxide/commit/443f000015de2117eae08fedf7d23f0d1ac6abff))
- * **#197**
+ * **[#197](https://github.com//Byron/gitoxide/issues/197)**
     - smart-release: improved safety bump log message ([`9b78c34`](https://github.com//Byron/gitoxide/commit/9b78c344ee287c4c2908ccbe64bd64c2c9648459))
     - smart-release: commit message reveals safety bumps ([`b1a3904`](https://github.com//Byron/gitoxide/commit/b1a39046056bf4a862cebe69f44f3ea1e53a2069))
     - smart-release: released crates only receive minor bumps… ([`ecf38b8`](https://github.com//Byron/gitoxide/commit/ecf38b8c013e46a33aa0b2c1b4e9cf547c8393c4))
@@ -73,7 +70,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: all logic to calculate dependent version bumps ([`7ca029c`](https://github.com//Byron/gitoxide/commit/7ca029c73eee51302d6828c6f9e8862d3fd4fbd4))
     - smart-release: an algorithm to collect dependencies by 'growing' ([`73794a4`](https://github.com//Byron/gitoxide/commit/73794a4e382404cb7b684c9054278fb4ff8a84ce))
     - smart-release: foundation for bumping versions ([`d1145d1`](https://github.com//Byron/gitoxide/commit/d1145d1a6219ddafa7a41c82d6149b289f033640))
- * **#198**
+ * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - prepare for arrival of 'auto' bump mode ([`3e7e53d`](https://github.com//Byron/gitoxide/commit/3e7e53d6c2e036c6695f3c2580c37a2a75d899ad))
+    - Fix git-url re-export to respect feature flags ([`e284e54`](https://github.com//Byron/gitoxide/commit/e284e54a221bb9fc611200d5b34456ca9245639d))
+    - deduplicate conventional message ids ([`2fc45b7`](https://github.com//Byron/gitoxide/commit/2fc45b71116b19dd6d908686518a8620b78b8fb7))
     - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
     - link up github issue ids in statistics ([`b9b3b70`](https://github.com//Byron/gitoxide/commit/b9b3b70674e4e1fa7d80a253781861b4fe647850))
     - format links for commit ids ([`6ea2c34`](https://github.com//Byron/gitoxide/commit/6ea2c340252233742bb926626074efb4d057fb15))
@@ -228,11 +228,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: very basic support for changelog command… ([`1a683a9`](https://github.com//Byron/gitoxide/commit/1a683a91a2850d663cf87fb326e5ab66ae86fc96))
     - smart-release: add 'cargo changelog' sub-command binary ([`3677b78`](https://github.com//Byron/gitoxide/commit/3677b782f8bc63a38d4d49b8555b5a6b9a618f84))
     - smart-release(test): add changelog to most tests ([`cdf4199`](https://github.com//Byron/gitoxide/commit/cdf41998360527161a1b04821bab377489f6c5f0))
- * **#200**
+ * **[#200](https://github.com//Byron/gitoxide/issues/200)**
     - parse issue numbers from description and clean it up ([`95c0a51`](https://github.com//Byron/gitoxide/commit/95c0a510f875e8fd889b87caee356a4c1e099ea8))
- * **#67**
+ * **[#67](https://github.com//Byron/gitoxide/issues/67)**
     - split data::output::count::objects into files ([`8fe4612`](https://github.com//Byron/gitoxide/commit/8fe461281842b58aa11437445637c6e587bedd63))
  * **Uncategorized**
+    - thanks clippy ([`fbe08e2`](https://github.com//Byron/gitoxide/commit/fbe08e2fb9a7fd682921d0438b5faefb6afca28c))
     - thanks clippy ([`8b3d9ea`](https://github.com//Byron/gitoxide/commit/8b3d9ea5aa7f161d2baebeafc4c1ab966583f5ac))
     - thanks clippy ([`ce48e18`](https://github.com//Byron/gitoxide/commit/ce48e184f37bf0a9c558f8e9a0eaa3b4526fdc2e))
     - thanks clippy ([`af9d137`](https://github.com//Byron/gitoxide/commit/af9d13745ae4e14d9553d3a4aa5a82cc15957a7e))
