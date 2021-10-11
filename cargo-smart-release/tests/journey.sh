@@ -13,6 +13,7 @@ fixtures="$root/fixtures"
 
 SUCCESSFULLY=0
 # WITH_FAILURE=1
+TODO=101
 
 function set-static-git-environment() {
   set -a
@@ -73,21 +74,29 @@ title "smart-release"
   (with "'c'"
     (with '-d minor to bump minor dependencies'
       it "succeeds" && {
-        expect_run $SUCCESSFULLY "$exe" smart-release c -d minor --no-changelog-preview
+        expect_run $SUCCESSFULLY "$exe" smart-release c -d minor -b keep --no-changelog-preview
       }
     )
   )
   (when "releasing 'a'"
     (with 'dry-run only'
       (with 'conditional version bumping'
-        it "succeeds" && {
-          WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate" \
-          expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty -b minor --no-changelog-preview
-        }
-        (with '--no-multi-crate-release'
+        (with 'explicit bump specification'
           it "succeeds" && {
-            WITH_SNAPSHOT="$snapshot/a-dry-run-success" \
-            expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-multi-crate-release -b minor --no-changelog-preview
+            WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate" \
+            expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty -b minor --no-changelog-preview
+          }
+          (with '--no-multi-crate-release'
+            it "succeeds" && {
+              WITH_SNAPSHOT="$snapshot/a-dry-run-success" \
+              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-multi-crate-release -b minor --no-changelog-preview
+            }
+          )
+        )
+        (with 'explicit bump specification derived from commit history'
+          it "succeeds" && {
+            WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-no-change" \
+            expect_run $TODO "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview
           }
         )
       )
@@ -118,7 +127,7 @@ title "smart-release"
     )
     (with '--execute but without side-effects'
       it "succeeds" && {
-        expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish --execute --allow-dirty --no-changelog-preview
+        expect_run $SUCCESSFULLY "$exe" smart-release a -b keep -d keep --no-push --no-publish --execute --allow-dirty --no-changelog-preview
       }
       (with ".git and target/ directories removed"
         rm -Rf .git/ target/

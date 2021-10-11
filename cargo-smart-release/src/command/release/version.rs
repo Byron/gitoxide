@@ -1,3 +1,4 @@
+use crate::command::release::BumpSpec;
 use anyhow::bail;
 use cargo_metadata::Package;
 use semver::{BuildMetadata, Prerelease, Version};
@@ -5,39 +6,40 @@ use semver::{BuildMetadata, Prerelease, Version};
 use super::Context;
 
 #[allow(clippy::ptr_arg)]
-pub(crate) fn select_publishee_bump_spec<'a>(name: &String, ctx: &'a Context) -> &'a str {
+pub(crate) fn select_publishee_bump_spec<'a>(name: &String, ctx: &'a Context) -> BumpSpec {
     if ctx.base.crate_names.contains(name) {
-        &ctx.bump
+        ctx.bump
     } else {
-        &ctx.bump_dependencies
+        ctx.bump_dependencies
     }
 }
 
 pub(crate) fn bump(
     publishee: &Package,
-    bump_spec: &str,
+    bump_spec: BumpSpec,
     ctx: &Context,
     bump_when_needed: bool,
 ) -> anyhow::Result<Version> {
     let mut v = publishee.version.clone();
+    use BumpSpec::*;
     match bump_spec {
-        "major" => {
+        Major => {
             v.major += 1;
             v.minor = 0;
             v.patch = 0;
             v.pre = Prerelease::EMPTY;
         }
-        "minor" => {
+        Minor => {
             v.minor += 1;
             v.patch = 0;
             v.pre = Prerelease::EMPTY;
         }
-        "patch" => {
+        Patch => {
             v.patch += 1;
             v.pre = Prerelease::EMPTY;
         }
-        "keep" => {}
-        _ => bail!("Invalid version specification: '{}'", bump_spec),
+        Keep => {}
+        Auto => todo!("impl auto history based bump"),
     };
     smallest_necessary_version_relative_to_crates_index(publishee, v, ctx, bump_when_needed, true, true, false)
 }

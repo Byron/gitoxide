@@ -71,12 +71,26 @@ fn main() -> anyhow::Result<()> {
                 generator_segments: names_to_segment_selection(&changelog_without)?,
             },
             crates,
-            bump.unwrap_or_else(|| "keep".into()),
-            bump_dependencies.unwrap_or_else(|| "keep".into()),
+            to_bump_spec(bump.as_deref().unwrap_or_else(|| DEFAULT_BUMP_SPEC))?,
+            to_bump_spec(bump_dependencies.as_deref().unwrap_or_else(|| DEFAULT_BUMP_SPEC))?,
         )?,
     };
 
     Ok(())
+}
+
+const DEFAULT_BUMP_SPEC: &str = "auto";
+
+fn to_bump_spec(spec: &str) -> anyhow::Result<command::release::BumpSpec> {
+    use command::release::BumpSpec::*;
+    Ok(match spec {
+        "patch" | "Patch" => Patch,
+        "minor" | "Minor" => Minor,
+        "major" | "Major" => Major,
+        "keep" | "Keep" => Keep,
+        "auto" | "Auto" => Auto,
+        unknown_spec => anyhow::bail!("Unknown bump specification: {:?}", unknown_spec),
+    })
 }
 
 fn names_to_segment_selection(

@@ -23,12 +23,17 @@ pub(crate) struct Context {
     base: crate::Context,
     crates_index: Index,
     history: Option<crate::commit::History>,
-    bump: String,
-    bump_dependencies: String,
+    bump: BumpSpec,
+    bump_dependencies: BumpSpec,
 }
 
 impl Context {
-    fn new(crate_names: Vec<String>, bump: String, bump_dependencies: String, changelog: bool) -> anyhow::Result<Self> {
+    fn new(
+        crate_names: Vec<String>,
+        bump: BumpSpec,
+        bump_dependencies: BumpSpec,
+        changelog: bool,
+    ) -> anyhow::Result<Self> {
         let crates_index = Index::new_cargo_default();
         let base = crate::Context::new(crate_names)?;
         let history = changelog
@@ -45,9 +50,18 @@ impl Context {
     }
 }
 
+#[derive(Copy, Clone)]
+pub enum BumpSpec {
+    Auto,
+    Keep,
+    Patch,
+    Minor,
+    Major,
+}
+
 /// In order to try dealing with https://github.com/sunng87/cargo-release/issues/224 and also to make workspace
 /// releases more selective.
-pub fn release(opts: Options, crates: Vec<String>, bump: String, bump_dependencies: String) -> anyhow::Result<()> {
+pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependencies: BumpSpec) -> anyhow::Result<()> {
     if opts.dry_run_cargo_publish && !opts.dry_run {
         bail!("The --no-dry-run-cargo-publish flag is only effective without --execute")
     }

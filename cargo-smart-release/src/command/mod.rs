@@ -24,6 +24,7 @@ pub mod release {
         pub preview: bool,
         pub generator_segments: segment::Selection,
     }
+    pub use super::release_impl::BumpSpec;
 }
 #[path = "release/mod.rs"]
 mod release_impl;

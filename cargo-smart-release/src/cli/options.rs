@@ -78,9 +78,12 @@ pub struct SmartRelease {
     #[argh(switch)]
     pub no_multi_crate_release: bool,
 
-    /// always bump versions as specified by --bump or --bump-dependencies even if this is not required.
+    /// always bump versions as specified by --bump or --bump-dependencies even if this is not required
+    /// to publish a new version to crates.io.
     ///
-    /// If it's required or not is determined by looking at the published versions in the crates index.
+    /// For instance, if the currently set version is 1.0 and the latest published version is 0.5, while
+    /// a minor version bump is specified like -b minor, 1.0 would be published instead of 1.1 unless this
+    /// flag is set.
     #[argh(switch)]
     pub no_bump_on_demand: bool,
 
@@ -165,15 +168,21 @@ pub struct SmartRelease {
 
     /// specify the kind of version bump you seek for the crate and potentially it's dependencies.
     ///
-    /// Can be 'major', 'minor' or 'patch', or 'keep' which doesn't alter the version.
-    /// If unspecified, the current version will be kept, useful if versions are specified manually.
+    /// Can be 'major', 'minor' or 'patch', 'keep' and 'auto'.
+    /// With 'keep', the current version will be kept, useful if versions are specified by hand in the manifest.
+    ///
+    /// The default is 'auto', which derives the necessary information from the git commit history and occasional
+    /// conventional messages.
     #[argh(option, short = 'b')]
     pub bump: Option<String>,
 
     /// specify the kind of version bump to apply to dependencies only.
     ///
-    /// Can be 'major', 'minor' or 'patch', or 'keep' which doesn't alter the version.
-    /// If unspecified, "keep" will be used.
+    /// Can be 'major', 'minor' or 'patch', 'keep' and 'auto'.
+    /// With 'keep', the current version will be kept, useful if versions are specified by hand in the manifest.
+    ///
+    /// The default is 'auto', which derives the necessary information from the git commit history and occasional
+    /// conventional messages.
     #[argh(option, short = 'd')]
     pub bump_dependencies: Option<String>,
 
