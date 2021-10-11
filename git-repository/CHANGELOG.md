@@ -7,32 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+<csr-id-1cb41f81cffe19c75aadf49a5cc7ec390ec6cae7/>
+<csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/>
+<csr-id-a19567eceab0dd7f5478b83c2ff9ce79754db308/>
+<csr-id-61793ff42f5c2f9ddf302901adea2dac6149eac8/>
+<csr-id-0cd585e20a5abd323a34ec32d92fbd48531b3b18/>
+<csr-id-89f15051763a03627f332c46beedfc53b8b9b15b/>
+<csr-id-f644d0ede7a2e8d344a81c7003c3877eed64a6b0/>
+<csr-id-ac3b9efb7b90958274ce55800959d930f8641115/>
+<csr-id-03fe8a7ebd34608d725d4585da5c1630123762ec/>
+
 ### New Features
 
  - <csr-id-11b64fce4630371633b6415f227eecdc6b42b20b/> Make `git_url::Url` available under `git_repository::Url`
 
-### refactor (BREAKING)
+### BREAKING Changes
 
- - <csr-id-1cb41f81cffe19c75aadf49a5cc7ec390ec6cae7/> Use 'to_*' when converting `easy::Object` to specific object kind
+ - Use 'to_*' when converting `easy::Object` to specific object kind
    This also makes the API more consistent while being more idiomatic.
-
-### other (BREAKING)
-
- - <csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/> Avoid duplicate module paths in 'tree' and 'commit'
- - <csr-id-a19567eceab0dd7f5478b83c2ff9ce79754db308/> rename ObjectIdExt::ancestors_iter() to *::ancestors()
- - <csr-id-61793ff42f5c2f9ddf302901adea2dac6149eac8/> rename `easy::Object::to_(commit|tag)_iter()`…
+ - Avoid duplicate module paths in 'tree' and 'commit'
+ - rename ObjectIdExt::ancestors_iter() to *::ancestors()
+ - rename `easy::Object::to_(commit|tag)_iter()`…
    …to  `easy::Object::try_to_(commit|tag)_iter()` for consistency.
- - <csr-id-0cd585e20a5abd323a34ec32d92fbd48531b3b18/> rename `*::State` into `*::Platform`
- - <csr-id-89f15051763a03627f332c46beedfc53b8b9b15b/> various small API changes
- - <csr-id-f644d0ede7a2e8d344a81c7003c3877eed64a6b0/> move easy::head::peel::Error -> easy::head::peel::to_id::Error
- - <csr-id-ac3b9efb7b90958274ce55800959d930f8641115/> rename path::is_git to path::is
- - <csr-id-03fe8a7ebd34608d725d4585da5c1630123762ec/> rename easy::reference::log::State to easy::reference::Logs
+ - rename `*::State` into `*::Platform`
+ - various small API changes
+ - move easy::head::peel::Error -> easy::head::peel::to_id::Error
+ - rename path::is_git to path::is
+ - rename easy::reference::log::State to easy::reference::Logs
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 84 commits contributed to the release over the course of 29 calendar days.
+ - 86 commits contributed to the release over the course of 29 calendar days.
  - 35 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#164](https://github.com//Byron/gitoxide/issues/164), [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200), [#67](https://github.com//Byron/gitoxide/issues/67)
 
@@ -66,6 +73,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - rename easy::reference::log::State to easy::reference::Logs ([`03fe8a7`](https://github.com//Byron/gitoxide/commit/03fe8a7ebd34608d725d4585da5c1630123762ec))
     - rename `*::State` into `*::Platform` ([`0cd585e`](https://github.com//Byron/gitoxide/commit/0cd585e20a5abd323a34ec32d92fbd48531b3b18))
  * **#198**
+    - Fix git-url re-export to respect feature flags ([`8adc18a`](https://github.com//Byron/gitoxide/commit/8adc18a3bfd5fcb468d38cd54c9a8cc1f1f9d8bc))
+    - deduplicate conventional message ids ([`2fc45b7`](https://github.com//Byron/gitoxide/commit/2fc45b71116b19dd6d908686518a8620b78b8fb7))
     - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
     - pass actual repository url down from commands ([`a10f51d`](https://github.com//Byron/gitoxide/commit/a10f51d2da0a4291bfd907ff6a963dac2e7cdc8e))
     - Make `git_url::Url` available under `git_repository::Url` ([`11b64fc`](https://github.com//Byron/gitoxide/commit/11b64fce4630371633b6415f227eecdc6b42b20b))
