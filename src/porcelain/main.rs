@@ -10,7 +10,7 @@ use gitoxide_core as core;
 
 use crate::{
     porcelain::options::{Args, EstimateHours, Subcommands, ToolCommands},
-    shared::pretty::prepare_and_run,
+    shared::prepare_and_run,
 };
 
 pub fn main() -> Result<()> {

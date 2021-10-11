@@ -1369,7 +1369,6 @@ name = "gitoxide"
 version = "0.9.0"
 dependencies = [
  "anyhow",
- "argh",
  "atty",
  "clap 3.0.0-beta.4",
  "crosstermion",

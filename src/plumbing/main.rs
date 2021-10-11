@@ -13,8 +13,8 @@ use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
 use crate::{
-    plumbing::pretty::options::{Args, Subcommands},
-    shared::pretty::prepare_and_run,
+    plumbing::options::{Args, Subcommands},
+    shared::prepare_and_run,
 };
 
 pub fn main() -> Result<()> {
