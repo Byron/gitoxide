@@ -1,7 +1,8 @@
-use std::process::Command;
+use std::{convert::TryInto, process::Command};
 
 use anyhow::{anyhow, bail};
 use cargo_metadata::Package;
+use git_repository as git;
 use git_repository::{
     bstr::{BStr, ByteSlice},
     easy::object,
@@ -82,6 +83,23 @@ pub fn assure_clean_working_tree() -> anyhow::Result<()> {
         return Err(err.context("Found untracked files which would possibly be packaged when publishing."));
     }
     Ok(())
+}
+
+// TODO: actually derive this from the repository by doing a lot of git-config work, better to add that to git-repository
+pub fn head_remote_symbol() -> &'static str {
+    "origin"
+}
+
+// TODO: use git-repository for this
+pub fn remote_url() -> anyhow::Result<git::Url> {
+    Command::new("git")
+        .arg("config")
+        .arg(format!("remote.{}.url", head_remote_symbol()))
+        .output()?
+        .stdout
+        .as_slice()
+        .try_into()
+        .map_err(Into::into)
 }
 
 pub mod history {

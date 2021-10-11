@@ -117,6 +117,8 @@ pub use git_diff as diff;
 #[cfg(feature = "unstable")]
 pub use git_features::{parallel, progress, progress::Progress};
 pub use git_hash as hash;
+#[doc(inline)]
+pub use git_hash::{oid, ObjectId};
 pub use git_lock as lock;
 pub use git_object as objs;
 pub use git_object::bstr;
@@ -131,9 +133,6 @@ pub use git_tempfile as tempfile;
 pub use git_traverse as traverse;
 #[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url as url;
-
-#[doc(inline)]
-pub use git_hash::{oid, ObjectId};
 #[doc(inline)]
 pub use git_url::Url;
 

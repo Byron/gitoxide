@@ -1,5 +1,4 @@
-use crate::changelog::write::Linkables;
-use crate::{bat, command::changelog::Options, git, utils::will, ChangeLog};
+use crate::{bat, changelog::write::Linkables, command::changelog::Options, git, utils::will, ChangeLog};
 
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let ctx = crate::Context::new(crates)?;
@@ -17,6 +16,13 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let bat = (opts.dry_run && opts.preview).then(bat::Support::new);
 
     let mut pending_changes = Vec::new();
+    let linkables = if opts.dry_run {
+        Linkables::AsText
+    } else {
+        Linkables::AsLinks {
+            repository_url: crate::git::remote_url()?,
+        }
+    };
     for crate_name in &crate_names {
         let (log, _package, mut lock) = ChangeLog::for_crate_by_name_with_write_lock(
             crate_name,
@@ -34,16 +40,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
                 .expect("contained in workspace")
                 .display()
         );
-        lock.with_mut(|file| {
-            log.write_to(
-                file,
-                &if opts.dry_run {
-                    Linkables::AsText
-                } else {
-                    Linkables::AsText // TODO: figure out repo url
-                },
-            )
-        })?;
+        lock.with_mut(|file| log.write_to(file, &linkables))?;
         if let Some(bat) = bat.as_ref() {
             bat.display_to_tty(lock.lock_path())?;
         }

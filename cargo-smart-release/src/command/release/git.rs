@@ -63,14 +63,14 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
     }
 }
 
-// TODO: Make this gitoxide
+// TODO: Use gitoxide here
 pub fn push_tags_and_head(tag_names: impl IntoIterator<Item = refs::FullName>, options: Options) -> anyhow::Result<()> {
     if options.skip_push {
         return Ok(());
     }
 
     let mut cmd = Command::new("git");
-    cmd.arg("push").arg("origin").arg("HEAD");
+    cmd.arg("push").arg(crate::git::head_remote_symbol()).arg("HEAD");
     for tag_name in tag_names {
         cmd.arg(tag_name.as_bstr().to_str()?);
     }

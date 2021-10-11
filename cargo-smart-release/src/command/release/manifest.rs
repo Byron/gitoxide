@@ -29,6 +29,9 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     let mut empty_changelogs_for_current_version = Vec::new();
     let mut made_change = false;
     let next_commit_date = crate::utils::time_to_offset_date_time(crate::git::author()?.time);
+    let linkables = changelog::write::Linkables::AsLinks {
+        repository_url: crate::git::remote_url()?,
+    };
     for (publishee, new_version) in publishees {
         let lock = git_repository::lock::File::acquire_to_update_resource(
             &publishee.manifest_path,
@@ -86,7 +89,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             if !recent_release_in_log.is_essential() {
                 empty_changelogs_for_current_version.push(pending_changelog_changes.len());
             }
-            lock.with_mut(|file| log.write_to(file, &changelog::write::Linkables::AsText))?; // TODO: use repo url
+            lock.with_mut(|file| log.write_to(file, &linkables))?;
             pending_changelog_changes.push((publishee, changed_relevant_content, lock));
         }
     }

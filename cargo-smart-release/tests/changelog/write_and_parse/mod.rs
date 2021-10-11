@@ -1,6 +1,4 @@
-use nom::AsBytes;
-use std::collections::BTreeMap;
-use std::convert::TryInto;
+use std::{collections::BTreeMap, convert::TryInto};
 
 use cargo_smart_release::{
     changelog,
@@ -9,6 +7,7 @@ use cargo_smart_release::{
 };
 use git_repository::bstr::ByteSlice;
 use git_testtools::hex_to_id;
+use nom::AsBytes;
 
 use crate::Result;
 
