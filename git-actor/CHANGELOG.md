@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
-    - regenerate all changelogs to get links ([`a932aa7`](https://github.com//Byron/gitoxide/commit/a932aa76c289ee2f2e81627506ff19aea7b869ac))
+    - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
     - Mention actual issues that where worked on ([`a517e39`](https://github.com//Byron/gitoxide/commit/a517e39a81145b331f6c7a6cc2fc22e25daf42e2))
     - Allow 'refactor' and 'other' in conventional messages if they have breaking changes ([`4eebaac`](https://github.com//Byron/gitoxide/commit/4eebaac669e590beed112b622752997c64772ef1))
     - new changelogs for actor and features crates ([`e0d437c`](https://github.com//Byron/gitoxide/commit/e0d437c4cfa06e0792609f41ed5876c390634921))

@@ -74,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: an algorithm to collect dependencies by 'growing' ([`73794a4`](https://github.com//Byron/gitoxide/commit/73794a4e382404cb7b684c9054278fb4ff8a84ce))
     - smart-release: foundation for bumping versions ([`d1145d1`](https://github.com//Byron/gitoxide/commit/d1145d1a6219ddafa7a41c82d6149b289f033640))
  * **#198**
-    - regenerate all changelogs to get links ([`a932aa7`](https://github.com//Byron/gitoxide/commit/a932aa76c289ee2f2e81627506ff19aea7b869ac))
+    - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
     - link up github issue ids in statistics ([`b9b3b70`](https://github.com//Byron/gitoxide/commit/b9b3b70674e4e1fa7d80a253781861b4fe647850))
     - format links for commit ids ([`6ea2c34`](https://github.com//Byron/gitoxide/commit/6ea2c340252233742bb926626074efb4d057fb15))
     - pass actual repository url down from commands ([`a10f51d`](https://github.com//Byron/gitoxide/commit/a10f51d2da0a4291bfd907ff6a963dac2e7cdc8e))

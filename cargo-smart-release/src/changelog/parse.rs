@@ -127,7 +127,9 @@ impl Section {
                 }
                 Event::Html(text) if text.starts_with(section::segment::Conventional::REMOVED_HTML_PREFIX) => {
                     if let Some(id) = parse_message_id(text.as_ref()) {
-                        removed_messages.push(id);
+                        if !removed_messages.contains(&id) {
+                            removed_messages.push(id);
+                        }
                     }
                 }
                 Event::Start(Tag::Heading(indent)) => {
@@ -250,7 +252,11 @@ fn parse_conventional_to_next_section_title(
                 let (event, _range) = events.next().expect("peeked before so event is present");
                 match event {
                     Event::Html(ref tag) => match parse_message_id(tag.as_ref()) {
-                        Some(id) => conventional.removed.push(id),
+                        Some(id) => {
+                            if !conventional.removed.contains(&id) {
+                                conventional.removed.push(id)
+                            }
+                        }
                         None => track_unknown_event(event, unknown),
                     },
                     Event::Start(Tag::List(_)) => {

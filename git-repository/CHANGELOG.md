@@ -66,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - rename easy::reference::log::State to easy::reference::Logs ([`03fe8a7`](https://github.com//Byron/gitoxide/commit/03fe8a7ebd34608d725d4585da5c1630123762ec))
     - rename `*::State` into `*::Platform` ([`0cd585e`](https://github.com//Byron/gitoxide/commit/0cd585e20a5abd323a34ec32d92fbd48531b3b18))
  * **#198**
-    - regenerate all changelogs to get links ([`a932aa7`](https://github.com//Byron/gitoxide/commit/a932aa76c289ee2f2e81627506ff19aea7b869ac))
+    - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
     - pass actual repository url down from commands ([`a10f51d`](https://github.com//Byron/gitoxide/commit/a10f51d2da0a4291bfd907ff6a963dac2e7cdc8e))
     - Make `git_url::Url` available under `git_repository::Url` ([`11b64fc`](https://github.com//Byron/gitoxide/commit/11b64fce4630371633b6415f227eecdc6b42b20b))
     - Mention actual issues that where worked on ([`a517e39`](https://github.com//Byron/gitoxide/commit/a517e39a81145b331f6c7a6cc2fc22e25daf42e2))

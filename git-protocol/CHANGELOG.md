@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **#198**
-    - regenerate all changelogs to get links ([`a932aa7`](https://github.com//Byron/gitoxide/commit/a932aa76c289ee2f2e81627506ff19aea7b869ac))
+    - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
     - Mention actual issues that where worked on ([`a517e39`](https://github.com//Byron/gitoxide/commit/a517e39a81145b331f6c7a6cc2fc22e25daf42e2))
     - Support writing whole bodies in conventional messages… ([`c1f3c9d`](https://github.com//Byron/gitoxide/commit/c1f3c9d2bd5a8e123ac9b376c257e3d5630876a0))
     - Support for paragraphs in conventional items ([`7f52823`](https://github.com//Byron/gitoxide/commit/7f528239089788f4dd1f75a85bee1d0492285d60))
