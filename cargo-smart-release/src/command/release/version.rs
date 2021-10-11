@@ -1,12 +1,12 @@
-use crate::command::release::BumpSpec;
 use anyhow::bail;
 use cargo_metadata::Package;
 use semver::{BuildMetadata, Prerelease, Version};
 
 use super::Context;
+use crate::command::release::BumpSpec;
 
 #[allow(clippy::ptr_arg)]
-pub(crate) fn select_publishee_bump_spec<'a>(name: &String, ctx: &'a Context) -> BumpSpec {
+pub(crate) fn select_publishee_bump_spec(name: &String, ctx: &Context) -> BumpSpec {
     if ctx.base.crate_names.contains(name) {
         ctx.bump
     } else {

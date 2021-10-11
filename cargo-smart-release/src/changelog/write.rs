@@ -1,12 +1,11 @@
 use git_repository as git;
 use git_repository::bstr::ByteSlice;
 
-use crate::changelog::section::segment::details::Category;
 use crate::{
     changelog,
     changelog::{
         section,
-        section::{segment, Segment},
+        section::{segment, segment::details::Category, Segment},
         Section,
     },
     ChangeLog,
