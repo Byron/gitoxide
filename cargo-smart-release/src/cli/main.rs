@@ -71,8 +71,8 @@ fn main() -> anyhow::Result<()> {
                 generator_segments: names_to_segment_selection(&changelog_without)?,
             },
             crates,
-            to_bump_spec(bump.as_deref().unwrap_or_else(|| DEFAULT_BUMP_SPEC))?,
-            to_bump_spec(bump_dependencies.as_deref().unwrap_or_else(|| DEFAULT_BUMP_SPEC))?,
+            to_bump_spec(bump.as_deref().unwrap_or(DEFAULT_BUMP_SPEC))?,
+            to_bump_spec(bump_dependencies.as_deref().unwrap_or(DEFAULT_BUMP_SPEC))?,
         )?,
     };
 
