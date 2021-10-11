@@ -1,6 +1,7 @@
 use git_repository as git;
 use git_repository::bstr::ByteSlice;
 
+use crate::changelog::section::segment::details::Category;
 use crate::{
     changelog,
     changelog::{
@@ -218,7 +219,7 @@ impl section::Segment {
                         if unique_issues.len() == 1 { "was" } else { "were" },
                         unique_issues
                             .iter()
-                            .map(ToString::to_string)
+                            .map(|c| format_category(c, link_mode))
                             .collect::<Vec<_>>()
                             .join(", ")
                     )?;
@@ -240,6 +241,24 @@ impl section::Segment {
             Segment::Details(_) => {}
         };
         Ok(())
+    }
+}
+
+fn format_category(cat: &Category, link_mode: &Linkables) -> String {
+    match (cat, link_mode) {
+        (Category::Issue(id), Linkables::AsLinks { repository_url }) => match &repository_url.host {
+            Some(host) if host == "github.com" => {
+                format!(
+                    "[#{}](https://{}/{}/issues/{})",
+                    id,
+                    host,
+                    repository_url.path.to_str_lossy(),
+                    id
+                )
+            }
+            Some(_) | None => format_category(cat, &Linkables::AsText),
+        },
+        (_, _) => cat.to_string(),
     }
 }
 
