@@ -1505,7 +1505,7 @@ a"#,
 
 #[cfg(test)]
 mod from_env {
-    use super::{GitConfig, GitConfigFromEnvError, Cow};
+    use super::{Cow, GitConfig, GitConfigFromEnvError};
     use std::env;
 
     #[test]
@@ -1530,7 +1530,10 @@ mod from_env {
 
         let config = GitConfig::from_env().unwrap().unwrap();
         assert_eq!(config.len(), 1);
-        assert_eq!(config.get_raw_value("core", None, "key"), Ok(Cow::<[u8]>::Borrowed(b"value")));
+        assert_eq!(
+            config.get_raw_value("core", None, "key"),
+            Ok(Cow::<[u8]>::Borrowed(b"value"))
+        );
     }
 }
 
