@@ -6,7 +6,7 @@ mod init;
 mod merge;
 mod parse;
 pub mod section;
-mod write;
+pub mod write;
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Section {

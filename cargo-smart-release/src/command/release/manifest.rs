@@ -86,7 +86,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             if !recent_release_in_log.is_essential() {
                 empty_changelogs_for_current_version.push(pending_changelog_changes.len());
             }
-            lock.with_mut(|file| log.write_to(file))?;
+            lock.with_mut(|file| log.write_to(file, &changelog::write::Linkables::AsText))?; // TODO: use repo url
             pending_changelog_changes.push((publishee, changed_relevant_content, lock));
         }
     }

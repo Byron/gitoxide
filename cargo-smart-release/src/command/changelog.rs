@@ -1,3 +1,4 @@
+use crate::changelog::write::Linkables;
 use crate::{bat, command::changelog::Options, git, utils::will, ChangeLog};
 
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
@@ -33,7 +34,16 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
                 .expect("contained in workspace")
                 .display()
         );
-        lock.with_mut(|file| log.write_to(file))?;
+        lock.with_mut(|file| {
+            log.write_to(
+                file,
+                &if opts.dry_run {
+                    Linkables::AsText
+                } else {
+                    Linkables::AsText // TODO: figure out repo url
+                },
+            )
+        })?;
         if let Some(bat) = bat.as_ref() {
             bat.display_to_tty(lock.lock_path())?;
         }

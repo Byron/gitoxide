@@ -19,12 +19,24 @@ impl std::fmt::Display for changelog::Version {
     }
 }
 
+/// Define how linkable items should be written
+#[derive(Clone)]
+pub enum Linkables {
+    /// Use markdown links to link directly to the linkable items
+    AsLinks {
+        /// The location of the repository to link to, without trailing slash
+        repository_url: String,
+    },
+    /// Leave them in a textual representation for the hosting platform to auto-link them
+    AsText,
+}
+
 impl Section {
     pub const UNKNOWN_TAG_START: &'static str = "<csr-unknown>";
     pub const UNKNOWN_TAG_END: &'static str = "<csr-unknown/>";
     pub const READONLY_TAG: &'static str = "<csr-read-only-do-not-edit/>\n"; // needs a newline to not interfere with formatting
 
-    pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+    pub fn write_to(&self, mut out: impl std::io::Write, link_mode: &Linkables) -> std::io::Result<()> {
         match self {
             Section::Verbatim { text, .. } => out.write_all(text.as_bytes()),
             Section::Release {
@@ -55,7 +67,7 @@ impl Section {
 
                 let section_level = *heading_level + 1;
                 for segment in segments {
-                    segment.write_to(section_level, &mut out)?;
+                    segment.write_to(section_level, link_mode, &mut out)?;
                 }
                 if !unknown.is_empty() {
                     writeln!(out, "{}", Section::UNKNOWN_TAG_START)?;
@@ -73,16 +85,21 @@ fn heading(level: usize) -> String {
 }
 
 impl ChangeLog {
-    pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+    pub fn write_to(&self, mut out: impl std::io::Write, link_mode: &Linkables) -> std::io::Result<()> {
         for section in &self.sections {
-            section.write_to(&mut out)?;
+            section.write_to(&mut out, link_mode)?;
         }
         Ok(())
     }
 }
 
 impl section::Segment {
-    pub fn write_to(&self, section_level: usize, mut out: impl std::io::Write) -> std::io::Result<()> {
+    pub fn write_to(
+        &self,
+        section_level: usize,
+        _link_mode: &Linkables,
+        mut out: impl std::io::Write,
+    ) -> std::io::Result<()> {
         match self {
             Segment::User { markdown } => out.write_all(markdown.as_bytes())?,
             Segment::Conventional(segment::Conventional {

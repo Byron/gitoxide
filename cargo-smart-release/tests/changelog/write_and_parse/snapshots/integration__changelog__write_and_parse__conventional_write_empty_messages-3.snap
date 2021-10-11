@@ -1,0 +1,25 @@
+---
+source: cargo-smart-release/tests/changelog/write_and_parse/mod.rs
+expression: md
+
+---
+#### v1.0.2-beta.2 (1970-01-01)
+
+<csr-id-0000000000000000000000000000000000000002/>
+
+##### New Features (BREAKING)
+
+<csr-id-0000000000000000000000000000000000000001/>
+
+ - verbatim `whatever` the _user_ writes [hello](world)
+ - <csr-id-0000000000000000000000000000000000000003/> this messages comes straight from git conventional and _may_ contain markdown
+   first line
+   second line
+   
+   another paragraph
+ - just another user message, this time
+   with multiple lines
+
+   and a new paragraph
+
+
