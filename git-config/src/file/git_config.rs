@@ -1505,21 +1505,32 @@ a"#,
 
 #[cfg(test)]
 mod from_env {
-    use super::{GitConfig, GitConfigFromEnvError};
+    use super::{GitConfig, GitConfigFromEnvError, Cow};
     use std::env;
 
     #[test]
-    fn git_config_count_zero() {
+    fn empty_with_zero_count() {
         env::set_var("GIT_CONFIG_COUNT", "0");
         let config = GitConfig::from_env().unwrap();
         assert!(config.is_none());
     }
 
     #[test]
-    fn git_config_count_parse_error() {
+    fn parse_error_with_invalid_count() {
         env::set_var("GIT_CONFIG_COUNT", "invalid");
         let err = GitConfig::from_env().unwrap_err();
         assert!(matches!(err, GitConfigFromEnvError::ParseError(_)));
+    }
+
+    #[test]
+    fn one_key_value_pair() {
+        env::set_var("GIT_CONFIG_COUNT", "1");
+        env::set_var("GIT_CONFIG_KEY_0", "core.key");
+        env::set_var("GIT_CONFIG_VALUE_0", "value");
+
+        let config = GitConfig::from_env().unwrap().unwrap();
+        assert_eq!(config.len(), 1);
+        assert_eq!(config.get_raw_value("core", None, "key"), Ok(Cow::<[u8]>::Borrowed(b"value")));
     }
 }
 
