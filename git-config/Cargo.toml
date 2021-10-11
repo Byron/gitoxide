@@ -20,6 +20,7 @@ memchr = "2"
 serde_crate = { version = "1", package = "serde", optional = true }
 
 [dev-dependencies]
+serial_test = "0.5.1"
 serde_derive = "1.0"
 criterion = "0.3"
 

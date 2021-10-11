@@ -1506,9 +1506,11 @@ a"#,
 #[cfg(test)]
 mod from_env {
     use super::{Cow, GitConfig, GitConfigFromEnvError};
+    use serial_test::serial;
     use std::env;
 
     #[test]
+    #[serial]
     fn empty_with_zero_count() {
         env::set_var("GIT_CONFIG_COUNT", "0");
         let config = GitConfig::from_env().unwrap();
@@ -1516,6 +1518,7 @@ mod from_env {
     }
 
     #[test]
+    #[serial]
     fn parse_error_with_invalid_count() {
         env::set_var("GIT_CONFIG_COUNT", "invalid");
         let err = GitConfig::from_env().unwrap_err();
@@ -1523,6 +1526,7 @@ mod from_env {
     }
 
     #[test]
+    #[serial]
     fn single_key_value_pair() {
         env::set_var("GIT_CONFIG_COUNT", "1");
         env::set_var("GIT_CONFIG_KEY_0", "core.key");
@@ -1538,6 +1542,7 @@ mod from_env {
     }
 
     #[test]
+    #[serial]
     fn multiple_key_value_pairs() {
         env::set_var("GIT_CONFIG_COUNT", "3");
         env::set_var("GIT_CONFIG_KEY_0", "core.a");
@@ -1552,11 +1557,8 @@ mod from_env {
         let config = GitConfig::from_env().unwrap().unwrap();
 
         assert_eq!(config.get_raw_value("core", None, "a"), Ok(Cow::<[u8]>::Borrowed(b"a")));
-
         assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"b")));
-
         assert_eq!(config.get_raw_value("core", None, "c"), Ok(Cow::<[u8]>::Borrowed(b"c")));
-
         assert_eq!(config.len(), 3);
     }
 }
