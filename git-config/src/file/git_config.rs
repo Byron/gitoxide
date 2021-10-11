@@ -1523,17 +1523,41 @@ mod from_env {
     }
 
     #[test]
-    fn one_key_value_pair() {
+    fn single_key_value_pair() {
         env::set_var("GIT_CONFIG_COUNT", "1");
         env::set_var("GIT_CONFIG_KEY_0", "core.key");
         env::set_var("GIT_CONFIG_VALUE_0", "value");
 
         let config = GitConfig::from_env().unwrap().unwrap();
-        assert_eq!(config.len(), 1);
         assert_eq!(
             config.get_raw_value("core", None, "key"),
             Ok(Cow::<[u8]>::Borrowed(b"value"))
         );
+
+        assert_eq!(config.len(), 1);
+    }
+
+    #[test]
+    fn multiple_key_value_pairs() {
+        env::set_var("GIT_CONFIG_COUNT", "3");
+        env::set_var("GIT_CONFIG_KEY_0", "core.a");
+        env::set_var("GIT_CONFIG_VALUE_0", "a");
+
+        env::set_var("GIT_CONFIG_KEY_1", "core.b");
+        env::set_var("GIT_CONFIG_VALUE_1", "b");
+
+        env::set_var("GIT_CONFIG_KEY_2", "core.c");
+        env::set_var("GIT_CONFIG_VALUE_2", "c");
+
+        let config = GitConfig::from_env().unwrap().unwrap();
+
+        assert_eq!(config.get_raw_value("core", None, "a"), Ok(Cow::<[u8]>::Borrowed(b"a")));
+
+        assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"b")));
+
+        assert_eq!(config.get_raw_value("core", None, "c"), Ok(Cow::<[u8]>::Borrowed(b"c")));
+
+        assert_eq!(config.len(), 3);
     }
 }
 
