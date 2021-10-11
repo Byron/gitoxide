@@ -98,7 +98,7 @@ impl section::Segment {
     pub fn write_to(
         &self,
         section_level: usize,
-        _link_mode: &Linkables,
+        link_mode: &Linkables,
         mut out: impl std::io::Write,
     ) -> std::io::Result<()> {
         match self {
@@ -174,7 +174,7 @@ impl section::Segment {
                 for (category, messages) in commits_by_category.iter() {
                     writeln!(out, " * **{}**", category)?;
                     for message in messages {
-                        writeln!(out, "    - {} ({})", message.title, message.id.to_hex(7))?;
+                        writeln!(out, "    - {} ({})", message.title, format_oid(&message.id, link_mode))?;
                     }
                 }
                 writeln!(out, "{}\n", segment::Details::END)?;
@@ -240,5 +240,23 @@ impl section::Segment {
             Segment::Details(_) => {}
         };
         Ok(())
+    }
+}
+
+fn format_oid(id: &git::oid, link_mode: &Linkables) -> String {
+    match link_mode {
+        Linkables::AsText => id.to_hex(7).to_string(),
+        Linkables::AsLinks { repository_url } => match &repository_url.host {
+            Some(host) if host == "github.com" => {
+                format!(
+                    "[`{}`](https://{}/{}/commit/{})",
+                    id.to_hex(7),
+                    host,
+                    repository_url.path.to_str_lossy(),
+                    id
+                )
+            }
+            None | Some(_) => format_oid(id, &Linkables::AsText),
+        },
     }
 }

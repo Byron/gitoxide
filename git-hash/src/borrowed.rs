@@ -111,7 +111,7 @@ impl oid {
         &self.bytes
     }
 
-    /// Return a type which can draw itself in hexadecimal form with the `len` amount of characters.
+    /// Return a type which can display itself in hexadecimal form with the `len` amount of characters.
     pub fn to_hex(&self, len: usize) -> HexDisplay<'_> {
         HexDisplay {
             inner: self,
