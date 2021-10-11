@@ -1515,6 +1515,8 @@ mod from_env {
         env::set_var("GIT_CONFIG_COUNT", "0");
         let config = GitConfig::from_env().unwrap();
         assert!(config.is_none());
+
+        env::remove_var("GIT_CONFIG_COUNT");
     }
 
     #[test]
@@ -1539,6 +1541,10 @@ mod from_env {
         );
 
         assert_eq!(config.len(), 1);
+
+        env::remove_var("GIT_CONFIG_VALUE_0");
+        env::remove_var("GIT_CONFIG_KEY_0");
+        env::remove_var("GIT_CONFIG_COUNT");
     }
 
     #[test]
@@ -1560,6 +1566,14 @@ mod from_env {
         assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"b")));
         assert_eq!(config.get_raw_value("core", None, "c"), Ok(Cow::<[u8]>::Borrowed(b"c")));
         assert_eq!(config.len(), 3);
+
+        env::remove_var("GIT_CONFIG_VALUE_2");
+        env::remove_var("GIT_CONFIG_KEY_2");
+        env::remove_var("GIT_CONFIG_VALUE_1");
+        env::remove_var("GIT_CONFIG_KEY_1");
+        env::remove_var("GIT_CONFIG_VALUE_0");
+        env::remove_var("GIT_CONFIG_KEY_0");
+        env::remove_var("GIT_CONFIG_COUNT");
     }
 }
 
