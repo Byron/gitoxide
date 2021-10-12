@@ -342,7 +342,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-smart-release"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "argh",
@@ -1012,7 +1012,7 @@ dependencies = [
 
 [[package]]
 name = "git-actor"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "bstr",
  "btoi",
@@ -1027,7 +1027,7 @@ dependencies = [
 
 [[package]]
 name = "git-commitgraph"
-version = "0.4.4"
+version = "0.5.0"
 dependencies = [
  "bstr",
  "byteorder",
@@ -1077,7 +1077,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.16.4"
+version = "0.16.5"
 dependencies = [
  "bytes",
  "crc32fast",
@@ -1097,7 +1097,7 @@ dependencies = [
 
 [[package]]
 name = "git-hash"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "hex",
  "quick-error",
@@ -1110,7 +1110,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-lock"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "fastrand",
  "git-tempfile",
@@ -1120,7 +1120,7 @@ dependencies = [
 
 [[package]]
 name = "git-object"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "bstr",
  "git-actor",
@@ -1270,7 +1270,7 @@ dependencies = [
 
 [[package]]
 name = "git-tempfile"
-version = "1.0.2"
+version = "1.0.3"
 dependencies = [
  "dashmap",
  "libc",
@@ -1282,7 +1282,7 @@ dependencies = [
 
 [[package]]
 name = "git-testtools"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "bstr",
  "crc",
@@ -1333,7 +1333,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-url"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "bstr",
  "home",
@@ -1344,7 +1344,7 @@ dependencies = [
 
 [[package]]
 name = "git-validate"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "bstr",
  "git-testtools",
@@ -1386,7 +1386,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide-core"
-version = "0.10.5"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "async-io",

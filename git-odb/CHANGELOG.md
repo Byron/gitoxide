@@ -5,13 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.22.0 (2021-10-12)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 20 commits contributed to the release over the course of 27 calendar days.
+ - 21 commits contributed to the release over the course of 28 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#198](https://github.com//Byron/gitoxide/issues/198), [#67](https://github.com//Byron/gitoxide/issues/67)
 
@@ -21,7 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#198**
+ * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - deduplicate conventional message ids ([`2fc45b7`](https://github.com//Byron/gitoxide/commit/2fc45b71116b19dd6d908686518a8620b78b8fb7))
     - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
     - Mention actual issues that where worked on ([`a517e39`](https://github.com//Byron/gitoxide/commit/a517e39a81145b331f6c7a6cc2fc22e25daf42e2))
     - Allow 'refactor' and 'other' in conventional messages if they have breaking changes ([`4eebaac`](https://github.com//Byron/gitoxide/commit/4eebaac669e590beed112b622752997c64772ef1))
@@ -36,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Fix section headline level ([`9d6f263`](https://github.com//Byron/gitoxide/commit/9d6f263beef289d227dec1acc2d4240087cb9be6))
     - Write first version of changlogs thus far… ([`719b6bd`](https://github.com//Byron/gitoxide/commit/719b6bdf543b8269ccafad9ad6b46e0c55efaa38))
     - Parse more user generated section content, adapt existing changelogs to work correctly ([`2f43a54`](https://github.com//Byron/gitoxide/commit/2f43a54298e7ecfff2334627df149fe0882b5d1d))
- * **#67**
+ * **[#67](https://github.com//Byron/gitoxide/issues/67)**
     - Assure pack-ids are actually unique, the simple way… ([`0509b4f`](https://github.com//Byron/gitoxide/commit/0509b4fb5a78a3e4bfcacbeb661d262f8592884a))
  * **Uncategorized**
     - Don't let 'a' leak out of the tempdir to fix #212 ([`682dff8`](https://github.com//Byron/gitoxide/commit/682dff83520fa7a09c88ce83fd1d6439c377a480))
@@ -503,7 +504,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#67**
+ * **[#67](https://github.com//Byron/gitoxide/issues/67)**
     - The very first version of complete pack writing ([`4d76d53`](https://github.com//Byron/gitoxide/commit/4d76d53aabb956ed7c8a45c883486ec5596bcaa3))
     - A sketch of the pack::generation function signature ([`21b0aab`](https://github.com//Byron/gitoxide/commit/21b0aab81e7304da964dbef90c806134073ccef3))
  * **Uncategorized**
@@ -688,7 +689,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#63**
+ * **[#63](https://github.com//Byron/gitoxide/issues/63)**
     - Impl == and != for common combinations of ObjectId/oid ([`2455178`](https://github.com//Byron/gitoxide/commit/24551781cee4fcf312567ca9270d54a95bc4d7ae))
     - git-protocol uses `oid` type ([`3930a6f`](https://github.com//Byron/gitoxide/commit/3930a6ff508f5bb2249fb2c2f21e00b74fecda22))
     - Use new `oid` where possible in git-odb ([`68a709e`](https://github.com//Byron/gitoxide/commit/68a709e0337d4969138d30a5c25d60b7dbe51a73))
@@ -731,7 +732,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#59**
+ * **[#59](https://github.com//Byron/gitoxide/issues/59)**
     - Fix initializing pack bundles in compound db ([`5a48e08`](https://github.com//Byron/gitoxide/commit/5a48e085d49a191a85a9b043e34d844389c8342b))
     - Add failing test ([`d629339`](https://github.com//Byron/gitoxide/commit/d629339834479553ceef27c15e5115e820b875ee))
     - Move pack fixtures into place which resembles an actual object db ([`fb5cea4`](https://github.com//Byron/gitoxide/commit/fb5cea4b9a98997f105a6ccb9729371be994af3c))

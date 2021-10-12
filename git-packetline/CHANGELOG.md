@@ -5,13 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.11.0 (2021-10-12)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 20 commits contributed to the release over the course of 27 calendar days.
+ - 21 commits contributed to the release over the course of 28 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200)
 
@@ -21,7 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#198**
+ * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - deduplicate conventional message ids ([`2fc45b7`](https://github.com//Byron/gitoxide/commit/2fc45b71116b19dd6d908686518a8620b78b8fb7))
     - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
     - Mention actual issues that where worked on ([`a517e39`](https://github.com//Byron/gitoxide/commit/a517e39a81145b331f6c7a6cc2fc22e25daf42e2))
     - Allow 'refactor' and 'other' in conventional messages if they have breaking changes ([`4eebaac`](https://github.com//Byron/gitoxide/commit/4eebaac669e590beed112b622752997c64772ef1))
@@ -38,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Fix section headline level ([`9d6f263`](https://github.com//Byron/gitoxide/commit/9d6f263beef289d227dec1acc2d4240087cb9be6))
     - Write first version of changlogs thus far… ([`719b6bd`](https://github.com//Byron/gitoxide/commit/719b6bdf543b8269ccafad9ad6b46e0c55efaa38))
     - Parse more user generated section content, adapt existing changelogs to work correctly ([`2f43a54`](https://github.com//Byron/gitoxide/commit/2f43a54298e7ecfff2334627df149fe0882b5d1d))
- * **#200**
+ * **[#200](https://github.com//Byron/gitoxide/issues/200)**
     - parse issue numbers from description and clean it up ([`95c0a51`](https://github.com//Byron/gitoxide/commit/95c0a510f875e8fd889b87caee356a4c1e099ea8))
     - feat: add git_packetline::read::Error to represent ERR lines ([`454c840`](https://github.com//Byron/gitoxide/commit/454c840c652ecb5774d2e3d37be14db42749ea63))
  * **Uncategorized**
@@ -210,7 +211,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#77**
+ * **[#77](https://github.com//Byron/gitoxide/issues/77)**
     - [git-packetline] refactor ([`aa61993`](https://github.com//Byron/gitoxide/commit/aa61993066b0bcb29e53edbb6eb1525781827426))
  * **Uncategorized**
     - clippy on tests and thanks clippy ([`a77a71c`](https://github.com//Byron/gitoxide/commit/a77a71cf02d328a2a964388928d6b2a235a0aa85))

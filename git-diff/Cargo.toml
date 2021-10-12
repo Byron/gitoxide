@@ -14,8 +14,8 @@ doctest = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-git-hash = { version ="^0.6.0", path = "../git-hash" }
-git-object = { version ="^0.14.0", path = "../git-object" }
+git-hash = { version ="^0.7.0", path = "../git-hash" }
+git-object = { version ="^0.14.1", path = "../git-object" }
 quick-error = "2.0.0"
 
 [dev-dependencies]

@@ -5,13 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.5.3 (2021-10-12)
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 15 commits contributed to the release over the course of 19 calendar days.
+ - 16 commits contributed to the release over the course of 20 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#198](https://github.com//Byron/gitoxide/issues/198), [#205](https://github.com//Byron/gitoxide/issues/205)
 
@@ -21,7 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#198**
+ * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - deduplicate conventional message ids ([`2fc45b7`](https://github.com//Byron/gitoxide/commit/2fc45b71116b19dd6d908686518a8620b78b8fb7))
     - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
     - Mention actual issues that where worked on ([`a517e39`](https://github.com//Byron/gitoxide/commit/a517e39a81145b331f6c7a6cc2fc22e25daf42e2))
     - respect release-wide ignore list to allow removing entire conventional headlines ([`145103d`](https://github.com//Byron/gitoxide/commit/145103d4aa715386da9d4953f7f85fadc49fff9a))
@@ -35,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Avoid adding newlines which make writing unstable ([`6b5c394`](https://github.com//Byron/gitoxide/commit/6b5c394f49282a8d09c2a9ffece840e4683572db))
     - Fix section headline level ([`9d6f263`](https://github.com//Byron/gitoxide/commit/9d6f263beef289d227dec1acc2d4240087cb9be6))
     - Write first version of changlogs thus far… ([`719b6bd`](https://github.com//Byron/gitoxide/commit/719b6bdf543b8269ccafad9ad6b46e0c55efaa38))
- * **#205**
+ * **[#205](https://github.com//Byron/gitoxide/issues/205)**
     - validate assumption about '(null)' as ref-name ([`2576168`](https://github.com//Byron/gitoxide/commit/2576168aa04d6451fc29c5dadfa698a9a50dac32))
  * **Uncategorized**
     - Update changelogs just for fun ([`21541b3`](https://github.com//Byron/gitoxide/commit/21541b3301de1e053fc0e84373be60d2162fbaae))

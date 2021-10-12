@@ -2,7 +2,7 @@
 name = "git-features"
 description = "A crate to integrate various capabilities using compile-time feature flags"
 repository = "https://github.com/Byron/gitoxide"
-version = "0.16.4"
+version = "0.16.5"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
 edition = "2018"
@@ -49,7 +49,7 @@ path = "tests/pipe.rs"
 required-features = ["io-pipe"]
 
 [dependencies]
-git-hash = { version ="^0.6.0", path = "../git-hash" }
+git-hash = { version ="^0.7.0", path = "../git-hash" }
 
 # 'parallel' feature
 crossbeam-utils = { version = "0.8.5", optional = true }
