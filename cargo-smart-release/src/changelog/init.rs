@@ -21,7 +21,12 @@ impl ChangeLog {
     ) -> anyhow::Result<(Self, bool, git::lock::File)> {
         let mut generated = ChangeLog::from_history_segments(
             package,
-            &crate::git::history::crate_ref_segments(package, ctx, history)?,
+            &crate::git::history::crate_ref_segments(
+                package,
+                ctx,
+                history,
+                crate::git::history::SegmentScope::EntireHistory,
+            )?,
             &ctx.repo,
             selection,
         );
@@ -61,7 +66,7 @@ impl ChangeLog {
         Ok((log, package, lock))
     }
 
-    fn from_history_segments(
+    pub fn from_history_segments(
         package: &Package,
         segments: &[commit::history::Segment<'_>],
         repo: &git::Easy,

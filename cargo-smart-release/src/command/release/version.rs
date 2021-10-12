@@ -14,15 +14,10 @@ pub(crate) fn select_publishee_bump_spec(name: &String, ctx: &Context) -> BumpSp
     }
 }
 
-pub(crate) fn bump(
-    publishee: &Package,
-    bump_spec: BumpSpec,
-    ctx: &Context,
-    Options { bump_when_needed, .. }: &Options,
-) -> anyhow::Result<Version> {
-    let mut v = publishee.version.clone();
+/// Returns true if this would be a breaking change for `v`.
+fn bump_major_minor_patch(v: &mut semver::Version, bump_spec: BumpSpec) -> bool {
     use BumpSpec::*;
-    let package_version_must_be_breaking = match bump_spec {
+    match bump_spec {
         Major => {
             v.major += 1;
             v.minor = 0;
@@ -45,9 +40,90 @@ pub(crate) fn bump(
             v.pre = Prerelease::EMPTY;
             false
         }
+        Keep | Auto => unreachable!("BUG: auto mode or keep are unsupported"),
+    }
+}
+
+pub(crate) fn bump(
+    publishee: &Package,
+    bump_spec: BumpSpec,
+    ctx: &Context,
+    Options { bump_when_needed, .. }: &Options,
+) -> anyhow::Result<Version> {
+    let mut v = publishee.version.clone();
+    use BumpSpec::*;
+    let package_version_must_be_breaking = match bump_spec {
+        Major | Minor | Patch => bump_major_minor_patch(&mut v, bump_spec),
         Keep => false,
-        Auto => todo!("impl auto history based bump"),
+        Auto => {
+            let segments = crate::git::history::crate_ref_segments(
+                publishee,
+                &ctx.base,
+                ctx.history.as_ref().expect("BUG: assure history is set here"),
+                crate::git::history::SegmentScope::Unreleased,
+            )?;
+            assert_eq!(
+                segments.len(),
+                1,
+                "there should be exactly one section, the 'unreleased' one"
+            );
+            let unreleased = &segments[0];
+            if unreleased.history.is_empty() {
+                log::info!(
+                    "{}: no changes since the last release. Version unchanged",
+                    publishee.name
+                );
+                false
+            } else {
+                if unreleased.history.iter().any(|item| item.message.breaking) {
+                    let (is_breaking, level) = if is_pre_release(&v) {
+                        (bump_major_minor_patch(&mut v, Minor), "minor")
+                    } else {
+                        (bump_major_minor_patch(&mut v, Major), "major")
+                    };
+                    assert!(is_breaking, "BUG: breaking changes are…breaking :D");
+                    log::info!(
+                        "{}: auto-bumped {} version to {} from {} to signal breaking changes.",
+                        publishee.name,
+                        level,
+                        v,
+                        publishee.version
+                    );
+                    is_breaking
+                } else if unreleased
+                    .history
+                    .iter()
+                    .any(|item| item.message.kind.map(|kind| kind == "feat").unwrap_or(false))
+                {
+                    let (is_breaking, level) = if is_pre_release(&v) {
+                        (bump_major_minor_patch(&mut v, Patch), "patch")
+                    } else {
+                        (bump_major_minor_patch(&mut v, Minor), "minor")
+                    };
+                    assert!(!is_breaking, "BUG: new features are never breaking");
+                    log::info!(
+                        "{}: auto-bumped {} version to {} from {} to signal new features due to 'feat:' in commit message.",
+                        publishee.name,
+                        level,
+                        v,
+                        publishee.version
+                    );
+                    is_breaking
+                } else {
+                    let is_breaking = bump_major_minor_patch(&mut v, Patch);
+                    assert!(!is_breaking, "BUG: patch releases are never breaking");
+                    log::info!(
+                        "{}: auto-bumped patch version to {} from {}.",
+                        publishee.name,
+                        v,
+                        publishee.version
+                    );
+                    false
+                }
+            }
+        }
     };
+
     let new_version = v;
     let verbose = true;
     let assume_it_will_be_published_for_log_messages = true;
@@ -115,7 +191,7 @@ fn smallest_necessary_version_relative_to_crates_index(
             }
         }
         None => {
-            if bump_when_needed {
+            if bump_when_needed && new_version > package.version {
                 if verbose {
                     log::info!(
                         "Using current version {} instead of bumped one {}.",

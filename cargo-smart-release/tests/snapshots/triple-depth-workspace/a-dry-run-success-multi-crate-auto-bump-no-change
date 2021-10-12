@@ -1,5 +1,12 @@
 [WARN ] Consider running with --update-crates-index to assure bumping on demand uses the latest information
 [WARN ] Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already
 [INFO ] Package a wasn't tagged with a-v0.8.0 yet and thus needs a release
-thread 'main' panicked at 'not yet implemented: impl auto history based bump', cargo-smart-release/src/command/release/version.rs:49:17
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[INFO ] a: auto-bumped patch version to 0.8.1 from 0.8.0.
+[INFO ] Using current version 0.8.0 instead of bumped one 0.8.1.
+[INFO ] Congratulations for the new release of 'a' 🎉
+[INFO ] WOULD prepare releases of a v0.8.0
+[INFO ] WOULD edit existing changelog for 'a'
+[INFO ] WOULD persist changes to 1 manifests and 1 changelogs with: "Bump a v0.8.0"
+[WARN ] WOULD ask for review after commit as the changelog entry is empty for crates a
+[INFO ] WOULD run "git" "commit" "-am" "Bump a v0.8.0"
+[INFO ] WOULD create tag a-v0.8.0

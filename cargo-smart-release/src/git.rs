@@ -128,6 +128,13 @@ pub mod history {
         Context,
     };
 
+    pub enum SegmentScope {
+        /// Stop finding segments after the unreleased/first section was processed.
+        Unreleased,
+        /// Obtain all segments, including unreleased and tags
+        EntireHistory,
+    }
+
     pub fn collect(repo: &git::Easy) -> anyhow::Result<Option<commit::History>> {
         let start = Instant::now();
         let prev = repo.object_cache_size(64 * 1024)?;
@@ -208,6 +215,7 @@ pub mod history {
         package: &Package,
         ctx: &crate::Context,
         history: &'h commit::History,
+        scope: SegmentScope,
     ) -> anyhow::Result<Vec<commit::history::Segment<'h>>> {
         let tag_prefix = tag_prefix(package, &ctx.repo);
         let start = Instant::now();
@@ -269,20 +277,28 @@ pub mod history {
             match tags_by_commit.remove(&item.id) {
                 None => add_item_if_package_changed(ctx, &mut segment, &filter, item, &history.data_by_tree_id)?,
                 Some(next_ref) => {
-                    segments.push(std::mem::replace(
-                        &mut segment,
-                        commit::history::Segment {
-                            head: next_ref,
-                            history: vec![],
-                        },
-                    ));
+                    match scope {
+                        SegmentScope::EntireHistory => {
+                            segments.push(std::mem::replace(
+                                &mut segment,
+                                commit::history::Segment {
+                                    head: next_ref,
+                                    history: vec![],
+                                },
+                            ));
+                        }
+                        SegmentScope::Unreleased => {
+                            segments.push(segment);
+                            return Ok(segments);
+                        }
+                    }
                     add_item_if_package_changed(ctx, &mut segment, &filter, item, &history.data_by_tree_id)?
                 }
             }
         }
         segments.push(segment);
 
-        if !tags_by_commit.is_empty() {
+        if matches!(scope, SegmentScope::EntireHistory) && !tags_by_commit.is_empty() {
             log::warn!(
                 "{}: The following tags were not encountered during commit graph traversal: {}",
                 package.name,

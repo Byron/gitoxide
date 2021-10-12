@@ -13,7 +13,6 @@ fixtures="$root/fixtures"
 
 SUCCESSFULLY=0
 # WITH_FAILURE=1
-TODO=101
 
 function set-static-git-environment() {
   set -a
@@ -96,7 +95,7 @@ title "smart-release"
         (with 'explicit bump specification derived from commit history'
           it "succeeds" && {
             WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-no-change" \
-            expect_run $TODO "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview
+            expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview
           }
         )
       )
