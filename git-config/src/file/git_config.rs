@@ -1509,32 +1509,62 @@ mod from_env {
     use serial_test::serial;
     use std::env;
 
+    struct Env {
+        altered_vars: Vec<&'static str>,
+    }
+
+    impl Env {
+        fn new() -> Self {
+            Env {
+                altered_vars: Vec::new(),
+            }
+        }
+
+        fn set(mut self, var: &'static str, value: &'static str) -> Self {
+            env::set_var(var, value);
+            self.altered_vars.push(var);
+            self
+        }
+    }
+
+    impl Drop for Env {
+        fn drop(&mut self) {
+            for var in &self.altered_vars {
+                env::remove_var(var);
+            }
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn empty_without_relevant_environment() {
+        let config = GitConfig::from_env().unwrap();
+        assert!(config.is_none());
+    }
+
     #[test]
     #[serial]
     fn empty_with_zero_count() {
-        env::set_var("GIT_CONFIG_COUNT", "0");
+        let _env = Env::new().set("GIT_CONFIG_COUNT", "0");
         let config = GitConfig::from_env().unwrap();
         assert!(config.is_none());
-
-        env::remove_var("GIT_CONFIG_COUNT");
     }
 
     #[test]
     #[serial]
     fn parse_error_with_invalid_count() {
-        env::set_var("GIT_CONFIG_COUNT", "invalid");
+        let _env = Env::new().set("GIT_CONFIG_COUNT", "invalid");
         let err = GitConfig::from_env().unwrap_err();
         assert!(matches!(err, GitConfigFromEnvError::ParseError(_)));
-
-        env::remove_var("GIT_CONFIG_COUNT");
     }
 
     #[test]
     #[serial]
     fn single_key_value_pair() {
-        env::set_var("GIT_CONFIG_COUNT", "1");
-        env::set_var("GIT_CONFIG_KEY_0", "core.key");
-        env::set_var("GIT_CONFIG_VALUE_0", "value");
+        let _env = Env::new()
+            .set("GIT_CONFIG_COUNT", "1")
+            .set("GIT_CONFIG_KEY_0", "core.key")
+            .set("GIT_CONFIG_VALUE_0", "value");
 
         let config = GitConfig::from_env().unwrap().unwrap();
         assert_eq!(
@@ -1543,24 +1573,19 @@ mod from_env {
         );
 
         assert_eq!(config.len(), 1);
-
-        env::remove_var("GIT_CONFIG_VALUE_0");
-        env::remove_var("GIT_CONFIG_KEY_0");
-        env::remove_var("GIT_CONFIG_COUNT");
     }
 
     #[test]
     #[serial]
     fn multiple_key_value_pairs() {
-        env::set_var("GIT_CONFIG_COUNT", "3");
-        env::set_var("GIT_CONFIG_KEY_0", "core.a");
-        env::set_var("GIT_CONFIG_VALUE_0", "a");
-
-        env::set_var("GIT_CONFIG_KEY_1", "core.b");
-        env::set_var("GIT_CONFIG_VALUE_1", "b");
-
-        env::set_var("GIT_CONFIG_KEY_2", "core.c");
-        env::set_var("GIT_CONFIG_VALUE_2", "c");
+        let _env = Env::new()
+            .set("GIT_CONFIG_COUNT", "3")
+            .set("GIT_CONFIG_KEY_0", "core.a")
+            .set("GIT_CONFIG_VALUE_0", "a")
+            .set("GIT_CONFIG_KEY_1", "core.b")
+            .set("GIT_CONFIG_VALUE_1", "b")
+            .set("GIT_CONFIG_KEY_2", "core.c")
+            .set("GIT_CONFIG_VALUE_2", "c");
 
         let config = GitConfig::from_env().unwrap().unwrap();
 
@@ -1568,14 +1593,6 @@ mod from_env {
         assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"b")));
         assert_eq!(config.get_raw_value("core", None, "c"), Ok(Cow::<[u8]>::Borrowed(b"c")));
         assert_eq!(config.len(), 3);
-
-        env::remove_var("GIT_CONFIG_VALUE_2");
-        env::remove_var("GIT_CONFIG_KEY_2");
-        env::remove_var("GIT_CONFIG_VALUE_1");
-        env::remove_var("GIT_CONFIG_KEY_1");
-        env::remove_var("GIT_CONFIG_VALUE_0");
-        env::remove_var("GIT_CONFIG_KEY_0");
-        env::remove_var("GIT_CONFIG_COUNT");
     }
 }
 
