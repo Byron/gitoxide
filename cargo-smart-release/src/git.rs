@@ -18,7 +18,7 @@ pub fn has_changed_since_last_release(package: &Package, ctx: &crate::Context, v
         None => {
             if verbose {
                 log::info!(
-                    "Package {} wasn't tagged with {} yet and thus needs a release",
+                    "Package '{}' wasn't tagged with {} yet and thus needs a release",
                     package.name,
                     version_tag_name
                 );

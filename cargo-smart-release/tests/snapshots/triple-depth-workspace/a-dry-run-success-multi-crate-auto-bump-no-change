@@ -1,8 +1,8 @@
 [WARN ] Consider running with --update-crates-index to assure bumping on demand uses the latest information
 [WARN ] Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already
-[INFO ] Package a wasn't tagged with a-v0.8.0 yet and thus needs a release
-[INFO ] a: auto-bumped patch version to 0.8.1 from 0.8.0.
-[INFO ] Using current version 0.8.0 instead of bumped one 0.8.1.
+[INFO ] Package 'a' wasn't tagged with a-v0.8.0 yet and thus needs a release
+[INFO ] Auto-bumped 'a' patch version to 0.8.1 from 0.8.0.
+[INFO ] Using current version 0.8.0 of crate a instead of bumped one 0.8.1.
 [INFO ] Congratulations for the new release of 'a' 🎉
 [INFO ] WOULD prepare releases of a v0.8.0
 [INFO ] WOULD edit existing changelog for 'a'

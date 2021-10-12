@@ -78,7 +78,7 @@ pub(crate) fn bump(
                 };
                 assert!(is_breaking, "BUG: breaking changes are…breaking :D");
                 log::info!(
-                    "{}: auto-bumped {} version to {} from {} to signal breaking changes.",
+                    "Auto-bumped '{}' {} version to {} from {} to signal breaking changes.",
                     publishee.name,
                     level,
                     v,
@@ -97,7 +97,7 @@ pub(crate) fn bump(
                 };
                 assert!(!is_breaking, "BUG: new features are never breaking");
                 log::info!(
-                    "{}: auto-bumped {} version to {} from {} to signal new features due to 'feat:' in commit message.",
+                    "Auto-bumped '{}' {} version to {} from {} to signal new features due to 'feat:' in commit message.",
                     publishee.name,
                     level,
                     v,
@@ -108,7 +108,7 @@ pub(crate) fn bump(
                 let is_breaking = bump_major_minor_patch(&mut v, Patch);
                 assert!(!is_breaking, "BUG: patch releases are never breaking");
                 log::info!(
-                    "{}: auto-bumped patch version to {} from {}.",
+                    "Auto-bumped '{}' patch version to {} from {}.",
                     publishee.name,
                     v,
                     publishee.version
@@ -167,7 +167,7 @@ fn smallest_necessary_version_relative_to_crates_index(
                 if new_version > package.version {
                     if verbose {
                         log::info!(
-                            "Using manifest version {} of crate {} instead of new version {} as it is sufficient to succeed latest published version {}.",
+                            "Using manifest version {} of crate '{}' instead of new version {} as it is sufficient to succeed latest published version {}.",
                             package.version,
                             package.name,
                             new_version,
@@ -176,7 +176,7 @@ fn smallest_necessary_version_relative_to_crates_index(
                     }
                 } else if verbose {
                     log::info!(
-                        "Using manifest version {} of crate {} as it is sufficient to succeed latest published version {}.",
+                        "Using manifest version {} of crate '{}' as it is sufficient to succeed latest published version {}.",
                         package.version,
                         package.name,
                         latest_published_version
@@ -188,8 +188,9 @@ fn smallest_necessary_version_relative_to_crates_index(
             if bump_when_needed && new_version > package.version {
                 if verbose {
                     log::info!(
-                        "Using current version {} instead of bumped one {}.",
+                        "Using current version {} of crate {} instead of bumped one {}.",
                         package.version,
+                        package.name,
                         new_version
                     );
                 }

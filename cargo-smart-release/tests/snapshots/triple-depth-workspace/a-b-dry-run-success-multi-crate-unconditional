@@ -1,6 +1,6 @@
 [WARN ] Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already
-[INFO ] Package a wasn't tagged with a-v0.8.0 yet and thus needs a release
-[INFO ] Adding a v0.8.0 to set of published crates as it changed since last release
+[INFO ] Package 'a' wasn't tagged with a-v0.8.0 yet and thus needs a release
+[INFO ] Adding 'a' v0.8.0 to set of published crates as it changed since last release
 [WARN ] The working tree has changes which will prevent a release with --execute unless --allow-dirty is also specified. The latter isn't recommended.
 [INFO ] Congratulations for the new release of 'a' 🎉
 [INFO ] Congratulations for the new release of 'b' 🎉

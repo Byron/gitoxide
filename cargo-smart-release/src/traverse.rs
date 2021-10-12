@@ -79,7 +79,7 @@ fn depth_first_traversal(
             if is_pre_release_version(&dep_package.version) || add_production_crates {
                 if verbose {
                     log::info!(
-                        "Adding {} v{} to set of published crates as it changed since last release",
+                        "Adding '{}' v{} to set of published crates as it changed since last release",
                         dep_package.name,
                         dep_package.version
                     );
@@ -87,7 +87,7 @@ fn depth_first_traversal(
                 changed_crate_names_to_publish.push(dependency.name.clone());
             } else {
                 log::warn!(
-                    "{} v{} changed since last release - consider releasing it beforehand.",
+                    "'{}' v{} changed since last release - consider releasing it beforehand.",
                     dep_package.name,
                     dep_package.version
                 );
@@ -95,7 +95,7 @@ fn depth_first_traversal(
         } else {
             if verbose {
                 log::info!(
-                    "{} v{}  - skipped release as it didn't change",
+                    "'{}' v{}  - skipped release as it didn't change",
                     dep_package.name,
                     dep_package.version
                 );
