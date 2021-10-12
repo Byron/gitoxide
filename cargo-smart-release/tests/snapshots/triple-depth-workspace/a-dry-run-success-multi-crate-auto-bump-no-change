@@ -1,5 +1,5 @@
 [WARN ] Consider running with --update-crates-index to assure bumping on demand uses the latest information
 [WARN ] Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already
 [INFO ] Package a wasn't tagged with a-v0.8.0 yet and thus needs a release
-thread 'main' panicked at 'not yet implemented: impl auto history based bump', cargo-smart-release/src/command/release/version.rs:42:17
+thread 'main' panicked at 'not yet implemented: impl auto history based bump', cargo-smart-release/src/command/release/version.rs:49:17
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

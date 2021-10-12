@@ -3,7 +3,7 @@ use cargo_metadata::Package;
 use semver::{BuildMetadata, Prerelease, Version};
 
 use super::Context;
-use crate::command::release::BumpSpec;
+use crate::command::release::{BumpSpec, Options};
 
 #[allow(clippy::ptr_arg)]
 pub(crate) fn select_publishee_bump_spec(name: &String, ctx: &Context) -> BumpSpec {
@@ -18,40 +18,46 @@ pub(crate) fn bump(
     publishee: &Package,
     bump_spec: BumpSpec,
     ctx: &Context,
-    bump_when_needed: bool,
+    Options { bump_when_needed, .. }: &Options,
 ) -> anyhow::Result<Version> {
     let mut v = publishee.version.clone();
     use BumpSpec::*;
-    match bump_spec {
+    let package_version_must_be_breaking = match bump_spec {
         Major => {
             v.major += 1;
             v.minor = 0;
             v.patch = 0;
             v.pre = Prerelease::EMPTY;
+            true
         }
         Minor => {
             v.minor += 1;
             v.patch = 0;
             v.pre = Prerelease::EMPTY;
+            if is_pre_release(&v) {
+                true
+            } else {
+                false
+            }
         }
         Patch => {
             v.patch += 1;
             v.pre = Prerelease::EMPTY;
+            false
         }
-        Keep => {}
+        Keep => false,
         Auto => todo!("impl auto history based bump"),
     };
     let new_version = v;
     let verbose = true;
-    let will_be_published = true;
-    let package_version_must_be_breaking = false;
+    let assume_it_will_be_published_for_log_messages = true;
     smallest_necessary_version_relative_to_crates_index(
         publishee,
         new_version,
         ctx,
-        bump_when_needed,
+        *bump_when_needed,
         verbose,
-        will_be_published,
+        assume_it_will_be_published_for_log_messages,
         package_version_must_be_breaking,
     )
 }

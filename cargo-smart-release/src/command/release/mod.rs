@@ -36,7 +36,7 @@ impl Context {
     ) -> anyhow::Result<Self> {
         let crates_index = Index::new_cargo_default();
         let base = crate::Context::new(crate_names)?;
-        let history = changelog
+        let history = (changelog || matches!(bump, BumpSpec::Auto) || matches!(bump_dependencies, BumpSpec::Auto))
             .then(|| crate::git::history::collect(&base.repo))
             .transpose()?
             .flatten();
@@ -145,13 +145,8 @@ fn perforrm_multi_version_release(
         .into_iter()
         .map(|name| {
             let p = package_by_name(meta, &name)?;
-            version::bump(
-                p,
-                version::select_publishee_bump_spec(&p.name, ctx),
-                ctx,
-                options.bump_when_needed,
-            )
-            .map(|v| (p, v.to_string()))
+            version::bump(p, version::select_publishee_bump_spec(&p.name, ctx), ctx, &options)
+                .map(|v| (p, v.to_string()))
         })
         .collect::<Result<Vec<_>, _>>()?;
 
@@ -193,7 +188,7 @@ fn perform_single_release<'repo>(
     ctx: &'repo Context,
 ) -> anyhow::Result<(String, Option<Oid<'repo>>)> {
     let bump_spec = version::select_publishee_bump_spec(&publishee.name, ctx);
-    let new_version = version::bump(publishee, bump_spec, ctx, options.bump_when_needed)?;
+    let new_version = version::bump(publishee, bump_spec, ctx, &options)?;
     log::info!(
         "{} prepare release of {} v{}",
         will(options.dry_run),
