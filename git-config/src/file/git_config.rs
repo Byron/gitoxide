@@ -1525,6 +1525,8 @@ mod from_env {
         env::set_var("GIT_CONFIG_COUNT", "invalid");
         let err = GitConfig::from_env().unwrap_err();
         assert!(matches!(err, GitConfigFromEnvError::ParseError(_)));
+
+        env::remove_var("GIT_CONFIG_COUNT");
     }
 
     #[test]
