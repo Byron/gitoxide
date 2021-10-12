@@ -256,21 +256,17 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                     ))
                 }
             })
-            .or(packages_which_might_be_fully_generated.and_then(|packages| {
-                let crate_names = packages.iter().map(|p| p.name.as_str()).collect::<Vec<_>>().join(", ");
-                log::warn!(
-                    "Changelogs for these crates might be fully generated from commit history: {}",
-                    crate_names,
-                );
-                if allow_fully_generated_changelogs {
-                    None
-                } else {
-                    Some(format!(
-                        "These changelogs need edits by hand to avoid being entirely generated: {}",
-                        crate_names
-                    ))
-                }
-            }))
+            .or_else(|| {
+                packages_which_might_be_fully_generated.and_then(|packages| {
+                    let crate_names = packages.iter().map(|p| p.name.as_str()).collect::<Vec<_>>().join(", ");
+                    (!allow_fully_generated_changelogs).then(|| {
+                        format!(
+                            "These changelogs need edits by hand to avoid being entirely generated: {}",
+                            crate_names
+                        )
+                    })
+                })
+            })
     } else {
         if !changelog_ids_with_statistical_segments_only.is_empty() {
             let comma_separated_crate_names = |ids: &[usize]| {
