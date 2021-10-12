@@ -92,11 +92,49 @@ title "smart-release"
             }
           )
         )
-        (with 'explicit bump specification derived from commit history'
+        (with 'implicit bump specification derived from commit history'
           it "succeeds" && {
-            WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-no-change" \
-            expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview
+              WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-no-change" \
+              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview
           }
+          (with "a breaking change"
+            (cd a && touch break && git add break && git commit -m "refactor!: break") &>/dev/null
+            it "succeeds" && {
+              WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-breaking-change" \
+              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview
+            }
+            git reset --hard HEAD~1
+          )
+          (with "a new feature"
+            (cd a && touch feat && git add feat && git commit -m "feat: new") &>/dev/null
+            it "succeeds" && {
+              WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-minor-change" \
+              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview
+            }
+            git reset --hard HEAD~1
+          )
+          (when 'releasing "c" as well'
+            it "succeeds" && {
+              WITH_SNAPSHOT="$snapshot/c-dry-run-success-multi-crate-auto-bump-no-change" \
+              expect_run $SUCCESSFULLY "$exe" smart-release c a --no-push --no-publish -v --allow-dirty --no-changelog-preview
+            }
+            (with "a breaking change"
+              (cd c && touch break && git add break && git commit -m "refactor!: break") &>/dev/null
+              it "succeeds" && {
+                WITH_SNAPSHOT="$snapshot/c-dry-run-success-multi-crate-auto-bump-breaking-change" \
+                expect_run $SUCCESSFULLY "$exe" smart-release c a --no-push --no-publish -v --allow-dirty --no-changelog-preview
+              }
+              git reset --hard HEAD~1
+            )
+            (with "a new feature"
+              (cd c && touch feat && git add feat && git commit -m "feat: new") &>/dev/null
+              it "succeeds" && {
+                WITH_SNAPSHOT="$snapshot/c-dry-run-success-multi-crate-auto-bump-minor-change" \
+                expect_run $SUCCESSFULLY "$exe" smart-release c a --no-push --no-publish -v --allow-dirty --no-changelog-preview
+              }
+              git reset --hard HEAD~1
+            )
+          )
         )
       )
       (with 'unconditional version bumping'
