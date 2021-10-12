@@ -103,7 +103,7 @@ title "smart-release"
               WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-breaking-change" \
               expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview
             }
-            git reset --hard HEAD~1
+            git reset --hard HEAD~1 &>/dev/null
           )
           (with "a new feature"
             (cd a && touch feat && git add feat && git commit -m "feat: new") &>/dev/null
@@ -111,7 +111,7 @@ title "smart-release"
               WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-minor-change" \
               expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview
             }
-            git reset --hard HEAD~1
+            git reset --hard HEAD~1 &>/dev/null
           )
           (when 'releasing "c" as well'
             it "succeeds" && {
@@ -124,7 +124,7 @@ title "smart-release"
                 WITH_SNAPSHOT="$snapshot/c-dry-run-success-multi-crate-auto-bump-breaking-change" \
                 expect_run $SUCCESSFULLY "$exe" smart-release c a --no-push --no-publish -v --allow-dirty --no-changelog-preview
               }
-              git reset --hard HEAD~1
+              git reset --hard HEAD~1 &>/dev/null
             )
             (with "a new feature"
               (cd c && touch feat && git add feat && git commit -m "feat: new") &>/dev/null
@@ -132,7 +132,7 @@ title "smart-release"
                 WITH_SNAPSHOT="$snapshot/c-dry-run-success-multi-crate-auto-bump-minor-change" \
                 expect_run $SUCCESSFULLY "$exe" smart-release c a --no-push --no-publish -v --allow-dirty --no-changelog-preview
               }
-              git reset --hard HEAD~1
+              git reset --hard HEAD~1 &>/dev/null
             )
           )
         )

@@ -26,7 +26,8 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         preview,
         ..
     } = opts;
-    let mut empty_changelogs_for_current_version = Vec::new();
+    let mut changelog_ids_with_statistical_segments_only = Vec::new();
+    let mut changelog_ids_probably_lacking_user_edits = Vec::new();
     let mut made_change = false;
     let next_commit_date = crate::utils::time_to_offset_date_time(crate::git::author()?.time);
     let linkables = changelog::write::Linkables::AsLinks {
@@ -49,9 +50,9 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 opts.generator_segments,
             )?;
             made_change |= changed_relevant_content;
-            let recent_release_in_log = log.most_recent_release_mut();
+            let recent_release_section_in_log = log.most_recent_release_section_mut();
             let new_version: semver::Version = new_version.parse()?;
-            let date = match recent_release_in_log {
+            let date = match recent_release_section_in_log {
                 changelog::Section::Release {
                     name: name @ changelog::Version::Unreleased,
                     date,
@@ -86,8 +87,11 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
             };
             *date = Some(next_commit_date);
-            if !recent_release_in_log.is_essential() {
-                empty_changelogs_for_current_version.push(pending_changelog_changes.len());
+            if !recent_release_section_in_log.is_essential() {
+                changelog_ids_with_statistical_segments_only.push(pending_changelog_changes.len());
+            }
+            if recent_release_section_in_log.is_probably_lacking_user_edits() {
+                changelog_ids_probably_lacking_user_edits.push(pending_changelog_changes.len());
             }
             lock.with_mut(|file| log.write_to(file, &linkables))?;
             pending_changelog_changes.push((publishee, changed_relevant_content, lock));
@@ -136,10 +140,10 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         "{} {}{}",
         if skip_publish {
             "Bump"
-        } else if empty_changelogs_for_current_version.is_empty() {
+        } else if changelog_ids_with_statistical_segments_only.is_empty() {
             "Release"
         } else {
-            "Adjusting Changelogs prior to release of"
+            "Adjusting changelogs prior to release of"
         },
         names_and_versions(publishees),
         {
@@ -193,23 +197,36 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     if !pending_changelog_changes.is_empty() && preview {
         log::info!(
             "About to preview {} changelog(s), use --no-changelog-preview to disable or Ctrl-C to abort, or the 'changelog' subcommand to write it out for adjustments.",
-            pending_changelog_changes.iter().filter(|(_, relevant_changes, _)| *relevant_changes).count()
+            pending_changelog_changes.iter().filter(|(_, has_changes, _)| *has_changes).count()
         );
 
         let bat = crate::bat::Support::new();
-        for (_, _, lock) in pending_changelog_changes.iter().filter(|(_, c, _)| *c) {
+        for (_, _, lock) in pending_changelog_changes
+            .iter()
+            .filter(|(_, has_changes, _)| *has_changes)
+        {
             bat.display_to_tty(lock.lock_path())?;
         }
     }
 
     let bail_message_after_commit = if !dry_run {
-        let mut committed_changelogs = None;
+        let mut packages_whose_changelogs_need_edits = None;
+        let mut packages_which_might_be_fully_generated = Vec::new();
         for (idx, (package, _, lock)) in pending_changelog_changes.into_iter().enumerate() {
-            if empty_changelogs_for_current_version.is_empty() || empty_changelogs_for_current_version.contains(&idx) {
+            if changelog_ids_with_statistical_segments_only.is_empty()
+                || changelog_ids_with_statistical_segments_only.contains(&idx)
+            {
                 lock.commit()?;
-                if !empty_changelogs_for_current_version.is_empty() {
-                    committed_changelogs.get_or_insert_with(Vec::new).push(package);
+                if !changelog_ids_with_statistical_segments_only.is_empty() {
+                    packages_whose_changelogs_need_edits
+                        .get_or_insert_with(Vec::new)
+                        .push(package);
                 }
+            } else {
+                drop(lock);
+            }
+            if changelog_ids_probably_lacking_user_edits.contains(&idx) {
+                packages_which_might_be_fully_generated.push(package);
             }
         }
         for manifest_lock in locks_by_manifest_path.into_values() {
@@ -219,12 +236,20 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         // For now we leave it that way without auto-restoring originals to facilitate debugging.
         cargo::refresh_lock_file()?;
 
-        if let Some(committed_changelogs) = committed_changelogs {
-            let names_of_crates_in_need_of_changelog_entry = committed_changelogs
-                .iter()
-                .map(|p| p.name.as_str())
-                .collect::<Vec<_>>()
-                .join(", ");
+        if !packages_which_might_be_fully_generated.is_empty() {
+            log::warn!(
+                "Changelogs for these crates might be fully generated from commit history: {}",
+                packages_which_might_be_fully_generated
+                    .iter()
+                    .map(|p| p.name.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+        }
+
+        packages_whose_changelogs_need_edits.and_then(|logs| {
+            let names_of_crates_in_need_of_changelog_entry =
+                logs.iter().map(|p| p.name.as_str()).collect::<Vec<_>>().join(", ");
             if skip_publish {
                 log::warn!(
                     "Please consider creating changelog entries for crate(s) {}",
@@ -237,29 +262,30 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                     names_of_crates_in_need_of_changelog_entry
                 ))
             }
-        } else {
-            None
-        }
+        })
     } else {
-        if !empty_changelogs_for_current_version.is_empty() {
-            let names_of_crates_that_would_need_review = empty_changelogs_for_current_version
-                .iter()
-                .filter_map(|idx| {
-                    pending_changelog_changes
-                        .iter()
-                        .enumerate()
-                        .find_map(
-                            |(pidx, (p, _, _))| {
-                                if *idx == pidx {
-                                    Some(p.name.as_str())
-                                } else {
-                                    None
-                                }
-                            },
-                        )
-                })
-                .collect::<Vec<_>>()
-                .join(", ");
+        if !changelog_ids_with_statistical_segments_only.is_empty() {
+            let comma_separated_crate_names = |ids: &[usize]| {
+                ids.iter()
+                    .filter_map(|idx| {
+                        pending_changelog_changes
+                            .iter()
+                            .enumerate()
+                            .find_map(
+                                |(pidx, (p, _, _))| {
+                                    if *idx == pidx {
+                                        Some(p.name.as_str())
+                                    } else {
+                                        None
+                                    }
+                                },
+                            )
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            };
+            let names_of_crates_that_would_need_review =
+                comma_separated_crate_names(&changelog_ids_with_statistical_segments_only);
             log::warn!(
                 "WOULD {} as the changelog entry is empty for crates {}",
                 if skip_publish {
@@ -269,6 +295,12 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 },
                 names_of_crates_that_would_need_review
             );
+            if !changelog_ids_probably_lacking_user_edits.is_empty() {
+                log::warn!(
+                    "These changelogs are likely to be fully generated from commit history: {}",
+                    comma_separated_crate_names(&changelog_ids_probably_lacking_user_edits)
+                );
+            }
         }
         None
     };
