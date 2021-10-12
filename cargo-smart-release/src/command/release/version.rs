@@ -29,11 +29,7 @@ fn bump_major_minor_patch(v: &mut semver::Version, bump_spec: BumpSpec) -> bool 
             v.minor += 1;
             v.patch = 0;
             v.pre = Prerelease::EMPTY;
-            if is_pre_release(&v) {
-                true
-            } else {
-                false
-            }
+            is_pre_release(v)
         }
         Patch => {
             v.patch += 1;
@@ -74,52 +70,50 @@ pub(crate) fn bump(
                     publishee.name
                 );
                 false
-            } else {
-                if unreleased.history.iter().any(|item| item.message.breaking) {
-                    let (is_breaking, level) = if is_pre_release(&v) {
-                        (bump_major_minor_patch(&mut v, Minor), "minor")
-                    } else {
-                        (bump_major_minor_patch(&mut v, Major), "major")
-                    };
-                    assert!(is_breaking, "BUG: breaking changes are…breaking :D");
-                    log::info!(
-                        "{}: auto-bumped {} version to {} from {} to signal breaking changes.",
-                        publishee.name,
-                        level,
-                        v,
-                        publishee.version
-                    );
-                    is_breaking
-                } else if unreleased
-                    .history
-                    .iter()
-                    .any(|item| item.message.kind.map(|kind| kind == "feat").unwrap_or(false))
-                {
-                    let (is_breaking, level) = if is_pre_release(&v) {
-                        (bump_major_minor_patch(&mut v, Patch), "patch")
-                    } else {
-                        (bump_major_minor_patch(&mut v, Minor), "minor")
-                    };
-                    assert!(!is_breaking, "BUG: new features are never breaking");
-                    log::info!(
-                        "{}: auto-bumped {} version to {} from {} to signal new features due to 'feat:' in commit message.",
-                        publishee.name,
-                        level,
-                        v,
-                        publishee.version
-                    );
-                    is_breaking
+            } else if unreleased.history.iter().any(|item| item.message.breaking) {
+                let (is_breaking, level) = if is_pre_release(&v) {
+                    (bump_major_minor_patch(&mut v, Minor), "minor")
                 } else {
-                    let is_breaking = bump_major_minor_patch(&mut v, Patch);
-                    assert!(!is_breaking, "BUG: patch releases are never breaking");
-                    log::info!(
-                        "{}: auto-bumped patch version to {} from {}.",
-                        publishee.name,
-                        v,
-                        publishee.version
-                    );
-                    false
-                }
+                    (bump_major_minor_patch(&mut v, Major), "major")
+                };
+                assert!(is_breaking, "BUG: breaking changes are…breaking :D");
+                log::info!(
+                    "{}: auto-bumped {} version to {} from {} to signal breaking changes.",
+                    publishee.name,
+                    level,
+                    v,
+                    publishee.version
+                );
+                is_breaking
+            } else if unreleased
+                .history
+                .iter()
+                .any(|item| item.message.kind.map(|kind| kind == "feat").unwrap_or(false))
+            {
+                let (is_breaking, level) = if is_pre_release(&v) {
+                    (bump_major_minor_patch(&mut v, Patch), "patch")
+                } else {
+                    (bump_major_minor_patch(&mut v, Minor), "minor")
+                };
+                assert!(!is_breaking, "BUG: new features are never breaking");
+                log::info!(
+                    "{}: auto-bumped {} version to {} from {} to signal new features due to 'feat:' in commit message.",
+                    publishee.name,
+                    level,
+                    v,
+                    publishee.version
+                );
+                is_breaking
+            } else {
+                let is_breaking = bump_major_minor_patch(&mut v, Patch);
+                assert!(!is_breaking, "BUG: patch releases are never breaking");
+                log::info!(
+                    "{}: auto-bumped patch version to {} from {}.",
+                    publishee.name,
+                    v,
+                    publishee.version
+                );
+                false
             }
         }
     };
