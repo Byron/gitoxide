@@ -93,6 +93,14 @@ pub struct SmartRelease {
     #[argh(switch)]
     pub no_changelog: bool,
 
+    /// if changelogs are generated from git-conventional comments extracted from the commit history exclusively, publishes
+    /// will fail as in order to give opportunity to author at least a portion of the upcoming release.
+    ///
+    /// With this flag set, the release will not stop.
+    /// Note that changelog entries purely composed of statistical information will always stop a release.
+    #[argh(switch)]
+    pub allow_fully_generated_changelogs: bool,
+
     /// omits these kinds of generated changelog content, values are 'clippy', 'commit-statistics' and 'commit-details'
     #[argh(option)]
     pub changelog_without: Vec<String>,

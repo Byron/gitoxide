@@ -24,6 +24,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         dry_run,
         skip_publish,
         preview,
+        allow_fully_generated_changelogs,
         ..
     } = opts;
     let mut changelog_ids_with_statistical_segments_only = Vec::new();
@@ -211,7 +212,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
 
     let bail_message_after_commit = if !dry_run {
         let mut packages_whose_changelogs_need_edits = None;
-        let mut packages_which_might_be_fully_generated = Vec::new();
+        let mut packages_which_might_be_fully_generated = None;
         for (idx, (package, _, lock)) in pending_changelog_changes.into_iter().enumerate() {
             if changelog_ids_with_statistical_segments_only.is_empty()
                 || changelog_ids_with_statistical_segments_only.contains(&idx)
@@ -226,7 +227,9 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 drop(lock);
             }
             if changelog_ids_probably_lacking_user_edits.contains(&idx) {
-                packages_which_might_be_fully_generated.push(package);
+                packages_which_might_be_fully_generated
+                    .get_or_insert_with(Vec::new)
+                    .push(package);
             }
         }
         for manifest_lock in locks_by_manifest_path.into_values() {
@@ -236,33 +239,38 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         // For now we leave it that way without auto-restoring originals to facilitate debugging.
         cargo::refresh_lock_file()?;
 
-        if !packages_which_might_be_fully_generated.is_empty() {
-            log::warn!(
-                "Changelogs for these crates might be fully generated from commit history: {}",
-                packages_which_might_be_fully_generated
-                    .iter()
-                    .map(|p| p.name.as_str())
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            );
-        }
-
-        packages_whose_changelogs_need_edits.and_then(|logs| {
-            let names_of_crates_in_need_of_changelog_entry =
-                logs.iter().map(|p| p.name.as_str()).collect::<Vec<_>>().join(", ");
-            if skip_publish {
+        packages_whose_changelogs_need_edits
+            .and_then(|logs| {
+                let names_of_crates_in_need_of_changelog_entry =
+                    logs.iter().map(|p| p.name.as_str()).collect::<Vec<_>>().join(", ");
+                if skip_publish {
+                    log::warn!(
+                        "Please consider creating changelog entries for crate(s) {}",
+                        names_of_crates_in_need_of_changelog_entry
+                    );
+                    None
+                } else {
+                    Some(format!(
+                        "Write changelog entries for crate(s) {} and try again",
+                        names_of_crates_in_need_of_changelog_entry
+                    ))
+                }
+            })
+            .or(packages_which_might_be_fully_generated.and_then(|packages| {
+                let crate_names = packages.iter().map(|p| p.name.as_str()).collect::<Vec<_>>().join(", ");
                 log::warn!(
-                    "Please consider creating changelog entries for crate(s) {}",
-                    names_of_crates_in_need_of_changelog_entry
+                    "Changelogs for these crates might be fully generated from commit history: {}",
+                    crate_names,
                 );
-                None
-            } else {
-                Some(format!(
-                    "Write changelog entries for crate(s) {} and try again",
-                    names_of_crates_in_need_of_changelog_entry
-                ))
-            }
-        })
+                if allow_fully_generated_changelogs {
+                    None
+                } else {
+                    Some(format!(
+                        "These changelogs need edits by hand to avoid being entirely generated: {}",
+                        crate_names
+                    ))
+                }
+            }))
     } else {
         if !changelog_ids_with_statistical_segments_only.is_empty() {
             let comma_separated_crate_names = |ids: &[usize]| {
@@ -297,8 +305,13 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             );
             if !changelog_ids_probably_lacking_user_edits.is_empty() {
                 log::warn!(
-                    "These changelogs are likely to be fully generated from commit history: {}",
-                    comma_separated_crate_names(&changelog_ids_probably_lacking_user_edits)
+                    "These changelogs are likely to be fully generated from commit history: {}{}",
+                    comma_separated_crate_names(&changelog_ids_probably_lacking_user_edits),
+                    if allow_fully_generated_changelogs {
+                        ""
+                    } else {
+                        ". The release would stop to allow edits."
+                    }
                 );
             }
         }
