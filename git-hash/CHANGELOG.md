@@ -7,13 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### refactor (BREAKING)
+<csr-id-8be4036dce4a857cc14a8b9467aaf2fc0fc2e827/> 
+<csr-id-ed16bce97c235e7e188444afd7a0d3f7e04a6c72/> 
 
- - <csr-id-8be4036dce4a857cc14a8b9467aaf2fc0fc2e827/> rename `oid::short_hex()` to `oid::to_hex()`
+### BREAKING Changes
 
-### New Features
-
- - <csr-id-ed16bce97c235e7e188444afd7a0d3f7e04a6c72/> `oid::short_hex(len)` for truncated hex representations
+ - rename `oid::short_hex()` to `oid::to_hex()`
+ - `oid::short_hex(len)` for truncated hex representations
 
 ### Commit Statistics
 

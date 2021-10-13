@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### other (BREAKING)
+Some module paths have been removed to avoid path duplication, possibly leading to breakage.
 
- - <csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/> Avoid duplicate module paths in 'tree' and 'commit'
+<csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/> 
+
+### BREAKING
+
+ - Avoid duplicate module paths in `tree` and `commit`
 
 ### Commit Statistics
 

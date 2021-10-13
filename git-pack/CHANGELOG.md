@@ -7,12 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+This release contains bugfixes and features, but is considered breaking as `git-traverse`
+signalled a breaking change which is one of our dependencies.
+
 <csr-id-d8fe8141e80a9e9a433b5e1a072b850325c806c8/>
 <csr-id-faf6f813927720c5adf62102f9ce46606ff2617c/>
-
-### other (BREAKING)
-
- - <csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/> Avoid duplicate module paths in 'tree' and 'commit'
+<csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/> 
 
 ### New Features
 

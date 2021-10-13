@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+use crate::changelog::section::segment::conventional::as_headline;
 use crate::ChangeLog;
 
 pub mod init;
@@ -88,16 +89,12 @@ impl Section {
     pub fn is_probably_lacking_user_edits(&self) -> bool {
         match self {
             Section::Verbatim { .. } => false,
-            Section::Release {
-                removed_messages,
-                segments,
-                ..
-            } => {
-                if !removed_messages.is_empty() {
+            Section::Release { segments, .. } => {
+                if segments.iter().any(|s| matches!(s, section::Segment::User { .. })) {
                     return false;
-                }
+                };
                 segments.iter().any(
-                    |s| matches!(s, section::Segment::Conventional(section::segment::Conventional {removed, ..}) if !removed.is_empty()),
+                    |s| matches!(s, section::Segment::Conventional(section::segment::Conventional {kind, removed, ..}) if removed.is_empty() && as_headline(*kind).is_none()),
                 )
             }
         }

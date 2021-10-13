@@ -101,7 +101,7 @@ title "smart-release"
             (cd a && touch break && git add break && git commit -m "refactor!: break") &>/dev/null
             it "succeeds" && {
               WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-breaking-change" \
-              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview
+              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview --allow-fully-generated-changelogs
             }
             git reset --hard HEAD~1 &>/dev/null
           )

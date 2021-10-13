@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+This release contains no functional changes, but is considered breaking for safety reasons 
+as `git-traverse` is signalling a breaking change.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>

@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+This release greatly improves performance when decoding trees, a critical requirement when building packs
+or generally trying to figure out what changed between commits.
+
 ### Performance
 
- - <csr-id-83d591d536d1a43e8523082824ec0b95cca55d34/> parse entry mode into number instead of comparing it to byte strings
- - <csr-id-f9232acf8e52f8cd95520d122469e136eb07b39f/> ObjectID specific hashers, using the fact that object ids are hashes
+<csr-id-f9232acf8e52f8cd95520d122469e136eb07b39f/> 
+
+ - Provide a new fast parser for tree objects which is used by the tree entry iterator.
+- <csr-id-83d591d536d1a43e8523082824ec0b95cca55d34/> parse entry mode into number instead of comparing it to byte strings
 
 ### Commit Statistics
 

@@ -298,26 +298,26 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 })
             })
     } else {
+        let comma_separated_crate_names = |ids: &[usize]| {
+            ids.iter()
+                .filter_map(|idx| {
+                    pending_changelog_changes
+                        .iter()
+                        .enumerate()
+                        .find_map(
+                            |(pidx, (p, _, _))| {
+                                if *idx == pidx {
+                                    Some(p.name.as_str())
+                                } else {
+                                    None
+                                }
+                            },
+                        )
+                })
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
         if !changelog_ids_with_statistical_segments_only.is_empty() {
-            let comma_separated_crate_names = |ids: &[usize]| {
-                ids.iter()
-                    .filter_map(|idx| {
-                        pending_changelog_changes
-                            .iter()
-                            .enumerate()
-                            .find_map(
-                                |(pidx, (p, _, _))| {
-                                    if *idx == pidx {
-                                        Some(p.name.as_str())
-                                    } else {
-                                        None
-                                    }
-                                },
-                            )
-                    })
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            };
             let names_of_crates_that_would_need_review =
                 comma_separated_crate_names(&changelog_ids_with_statistical_segments_only);
             log::warn!(
@@ -334,17 +334,17 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 },
                 names_of_crates_that_would_need_review
             );
-            if !changelog_ids_probably_lacking_user_edits.is_empty() {
-                log::warn!(
-                    "These changelogs are likely to be fully generated from commit history: {}{}",
-                    comma_separated_crate_names(&changelog_ids_probably_lacking_user_edits),
-                    if allow_fully_generated_changelogs {
-                        ""
-                    } else {
-                        ". The release would stop to allow edits."
-                    }
-                );
-            }
+        }
+        if !changelog_ids_probably_lacking_user_edits.is_empty() {
+            log::warn!(
+                "These changelogs are likely to be fully generated from commit history or contain lower-case git-conventional headlines: {}{}",
+                comma_separated_crate_names(&changelog_ids_probably_lacking_user_edits),
+                if allow_fully_generated_changelogs {
+                    ""
+                } else {
+                    ". The release process would stop to allow edits."
+                }
+            );
         }
         None
     };
