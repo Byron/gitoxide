@@ -116,7 +116,7 @@ where
         git_odb::data::Object::new(self.kind, &self.data)
             .decode()?
             .into_tag()
-            .ok_or_else(|| conversion::Error::UnexpectedType {
+            .ok_or(conversion::Error::UnexpectedType {
                 expected: git_object::Kind::Tag,
                 actual: self.kind,
             })
