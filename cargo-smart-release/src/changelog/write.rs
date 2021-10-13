@@ -32,12 +32,26 @@ pub enum Linkables {
     AsText,
 }
 
+bitflags::bitflags! {
+    pub struct Components: u8 {
+        const SECTION_TITLE = 1<<0;
+        const HTML_TAGS = 1<<1;
+    }
+}
+
 impl Section {
     pub const UNKNOWN_TAG_START: &'static str = "<csr-unknown>";
     pub const UNKNOWN_TAG_END: &'static str = "<csr-unknown/>";
     pub const READONLY_TAG: &'static str = "<csr-read-only-do-not-edit/>\n"; // needs a newline to not interfere with formatting
 
-    pub fn write_to(&self, mut out: impl std::io::Write, link_mode: &Linkables) -> std::io::Result<()> {
+    /// Note that `headline` should be enabled by default as it will break parsing to some extend. It's a special case for tag
+    /// objects.
+    pub fn write_to(
+        &self,
+        mut out: impl std::io::Write,
+        link_mode: &Linkables,
+        components: Components,
+    ) -> std::io::Result<()> {
         match self {
             Section::Verbatim { text, .. } => out.write_all(text.as_bytes()),
             Section::Release {
@@ -48,18 +62,20 @@ impl Section {
                 removed_messages,
                 unknown,
             } => {
-                write!(out, "{} {}", heading(*heading_level), name)?;
-                match date {
-                    None => out.write_all(b"\n\n"),
-                    Some(date) => writeln!(
-                        out,
-                        " ({:04}-{:02}-{:02})\n",
-                        date.year(),
-                        date.month() as u32,
-                        date.day()
-                    ),
-                }?;
-                if !removed_messages.is_empty() {
+                if components.contains(Components::SECTION_TITLE) {
+                    write!(out, "{} {}", heading(*heading_level), name)?;
+                    match date {
+                        None => out.write_all(b"\n\n"),
+                        Some(date) => writeln!(
+                            out,
+                            " ({:04}-{:02}-{:02})\n",
+                            date.year(),
+                            date.month() as u32,
+                            date.day()
+                        ),
+                    }?;
+                }
+                if !removed_messages.is_empty() && components.contains(Components::HTML_TAGS) {
                     for id in removed_messages {
                         writeln!(out, "{}{}/>", segment::Conventional::REMOVED_HTML_PREFIX, id)?;
                     }
@@ -68,9 +84,9 @@ impl Section {
 
                 let section_level = *heading_level + 1;
                 for segment in segments {
-                    segment.write_to(section_level, link_mode, &mut out)?;
+                    segment.write_to(section_level, link_mode, components, &mut out)?;
                 }
-                if !unknown.is_empty() {
+                if !unknown.is_empty() && components.contains(Components::HTML_TAGS) {
                     writeln!(out, "{}", Section::UNKNOWN_TAG_START)?;
                     out.write_all(unknown.as_bytes())?;
                     writeln!(out, "{}", Section::UNKNOWN_TAG_END)?;
@@ -88,7 +104,7 @@ fn heading(level: usize) -> String {
 impl ChangeLog {
     pub fn write_to(&self, mut out: impl std::io::Write, link_mode: &Linkables) -> std::io::Result<()> {
         for section in &self.sections {
-            section.write_to(&mut out, link_mode)?;
+            section.write_to(&mut out, link_mode, Components::all())?;
         }
         Ok(())
     }
@@ -99,8 +115,10 @@ impl section::Segment {
         &self,
         section_level: usize,
         link_mode: &Linkables,
+        components: Components,
         mut out: impl std::io::Write,
     ) -> std::io::Result<()> {
+        let write_html = components.contains(Components::HTML_TAGS);
         match self {
             Segment::User { markdown } => out.write_all(markdown.as_bytes())?,
             Segment::Conventional(segment::Conventional {
@@ -122,7 +140,7 @@ impl section::Segment {
                         },
                     )?;
 
-                    if !removed.is_empty() {
+                    if !removed.is_empty() && write_html {
                         for id in removed {
                             writeln!(out, "{}{}/>", segment::Conventional::REMOVED_HTML_PREFIX, id)?;
                         }
@@ -133,13 +151,17 @@ impl section::Segment {
                     for message in messages {
                         match message {
                             Message::Generated { title, id, body } => {
-                                writeln!(
-                                    out,
-                                    " - {}{}/> {}",
-                                    segment::Conventional::REMOVED_HTML_PREFIX,
-                                    id,
-                                    title
-                                )?;
+                                if write_html {
+                                    writeln!(
+                                        out,
+                                        " - {}{}/> {}",
+                                        segment::Conventional::REMOVED_HTML_PREFIX,
+                                        id,
+                                        title
+                                    )?;
+                                } else {
+                                    writeln!(out, " - {}", title)?;
+                                }
                                 if let Some(body) = body {
                                     for line in body.as_bytes().as_bstr().lines_with_terminator() {
                                         write!(out, "   {}", line.to_str().expect("cannot fail as original is UTF-8"))?;
@@ -169,15 +191,19 @@ impl section::Segment {
                 if !commits_by_category.is_empty() =>
             {
                 writeln!(out, "{} {}\n", heading(section_level), segment::Details::TITLE)?;
-                writeln!(out, "{}", Section::READONLY_TAG)?;
-                writeln!(out, "{}\n", segment::Details::PREFIX)?;
+                if write_html {
+                    writeln!(out, "{}", Section::READONLY_TAG)?;
+                    writeln!(out, "{}\n", segment::Details::HTML_PREFIX)?;
+                }
                 for (category, messages) in commits_by_category.iter() {
                     writeln!(out, " * **{}**", format_category(category, link_mode))?;
                     for message in messages {
                         writeln!(out, "    - {} ({})", message.title, format_oid(&message.id, link_mode))?;
                     }
                 }
-                writeln!(out, "{}\n", segment::Details::END)?;
+                if write_html {
+                    writeln!(out, "{}\n", segment::Details::HTML_PREFIX_END)?;
+                }
             }
             Segment::Statistics(section::Data::Generated(segment::CommitStatistics {
                 count,
@@ -186,7 +212,9 @@ impl section::Segment {
                 unique_issues,
             })) => {
                 writeln!(out, "{} {}\n", heading(section_level), segment::CommitStatistics::TITLE)?;
-                writeln!(out, "{}", Section::READONLY_TAG)?;
+                if write_html {
+                    writeln!(out, "{}", Section::READONLY_TAG)?;
+                }
                 writeln!(
                     out,
                     " - {} {} contributed to the release{}",
@@ -227,7 +255,9 @@ impl section::Segment {
             }
             Segment::Clippy(section::Data::Generated(segment::ThanksClippy { count })) if *count > 0 => {
                 writeln!(out, "{} {}\n", heading(section_level), segment::ThanksClippy::TITLE)?;
-                writeln!(out, "{}", Section::READONLY_TAG)?;
+                if write_html {
+                    writeln!(out, "{}", Section::READONLY_TAG)?;
+                }
                 writeln!(
                     out,
                     "[Clippy](https://github.com/rust-lang/rust-clippy) helped {} {} to make code idiomatic. \n",

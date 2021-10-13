@@ -62,6 +62,16 @@ fn conventional_write_empty_messages() -> Result {
             assert_eq!(parsed_log, log, "we can parse this back losslessly");
         }
     }
+    for components in &[
+        changelog::write::Components::empty(),
+        changelog::write::Components::all(),
+    ] {
+        for section in &log.sections {
+            let mut buf = Vec::<u8>::new();
+            section.write_to(&mut buf, &changelog::write::Linkables::AsText, *components)?;
+            insta::assert_snapshot!(buf.to_str()?);
+        }
+    }
     Ok(())
 }
 
@@ -153,6 +163,17 @@ fn all_section_types_round_trips_lossy() -> Result {
 
         let parsed_log = ChangeLog::from_markdown(md);
         assert_eq!(parsed_log, log, "we must be able to parse the exact input back");
+    }
+
+    for components in &[
+        changelog::write::Components::empty(),
+        changelog::write::Components::all(),
+    ] {
+        for section in &log.sections {
+            let mut buf = Vec::<u8>::new();
+            section.write_to(&mut buf, &changelog::write::Linkables::AsText, *components)?;
+            insta::assert_snapshot!(buf.to_str()?);
+        }
     }
     Ok(())
 }

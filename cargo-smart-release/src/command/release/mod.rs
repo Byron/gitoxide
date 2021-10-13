@@ -206,7 +206,11 @@ fn perforrm_multi_version_release(
 fn section_to_string(section: Section) -> Option<String> {
     let mut b = Vec::<u8>::new();
     section
-        .write_to(&mut b, &changelog::write::Linkables::AsText)
+        .write_to(
+            &mut b,
+            &changelog::write::Linkables::AsText,
+            changelog::write::Components::empty(),
+        )
         .ok()
         .and_then(|_| b.into_string().ok())
 }

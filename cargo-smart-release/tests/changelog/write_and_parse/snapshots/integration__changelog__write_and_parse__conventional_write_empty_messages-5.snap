@@ -1,0 +1,19 @@
+---
+source: cargo-smart-release/tests/changelog/write_and_parse/mod.rs
+expression: buf.to_str()?
+
+---
+##### New Features (BREAKING)
+
+ - verbatim `whatever` the _user_ writes [hello](world)
+ - this messages comes straight from git conventional and _may_ contain markdown
+   first line
+   second line
+   
+   another paragraph
+ - just another user message, this time
+   with multiple lines
+
+   and a new paragraph
+
+

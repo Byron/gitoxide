@@ -100,8 +100,8 @@ pub struct Details {
 
 impl Details {
     pub const TITLE: &'static str = "Commit Details";
-    pub const PREFIX: &'static str = "<details><summary>view details</summary>";
-    pub const END: &'static str = "</details>";
+    pub const HTML_PREFIX: &'static str = "<details><summary>view details</summary>";
+    pub const HTML_PREFIX_END: &'static str = "</details>";
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]

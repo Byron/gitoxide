@@ -1,0 +1,12 @@
+---
+source: cargo-smart-release/tests/changelog/write_and_parse/mod.rs
+expression: buf.to_str()?
+
+---
+## Unreleased
+
+<csr-unknown>
+hello
+world
+<csr-unknown/>
+
