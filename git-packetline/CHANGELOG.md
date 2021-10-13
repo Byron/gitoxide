@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.11.0 (2021-10-12)
 
+### Dependency Upgrade (BREAKING)
+
+* `git-traverse` saw a breaking change moving to v0.9, which triggered this crate to signal a breaking change, too.
+
+### Type Change (BREAKING)
+
+* `read_line(…)` now strongly types `ERR` packet lines using the new `read::Error`
+   type instead of transforming it into a string-error.
+   This makes it easier to retrieve the exact error message from the
+   returned `std::io::Error` which is useful for presentation to the user.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>

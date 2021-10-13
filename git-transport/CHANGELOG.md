@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.12.0 (2021-10-12)
 
+### Dependency Upgrade (BREAKING)
+
+* `git-traverse` saw a breaking change moving to v0.9, which triggered this crate to signal a breaking change, too.
+
+### Improvements
+
+* `git-packetline` is now publicly re-exported as `packetline`.
+  
+  This helps to avoid additional dependencies which in turn may have breaking
+  changes. Re-using `packetline` assures it's usable.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.22.0 (2021-10-12)
 
+### Dependency Upgrade (BREAKING)
+
+* `git-traverse` saw a breaking change moving to v0.9, which triggered this crate to signal a breaking change, too.
+
+### Improvements
+
+* pack-ids as generated when instantiating a compound database are now sequential. That way, they never clash which
+  was possible before when it was using a CRC32 over the filename.
+
+  The latter was done to allow deduplicating packs, but it turns out not to be necessary just yet.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>

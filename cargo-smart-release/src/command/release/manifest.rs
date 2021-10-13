@@ -264,7 +264,8 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                     logs.iter().map(|p| p.name.as_str()).collect::<Vec<_>>().join(", ");
                 if skip_publish {
                     log::warn!(
-                        "Please consider creating changelog entries for crate(s) {}",
+                        "Please consider creating changelog entries for crate{}: {}",
+                        if logs.len() == 1 { "" } else { "s" },
                         names_of_crates_in_need_of_changelog_entry
                     );
                     None
@@ -310,11 +311,16 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             let names_of_crates_that_would_need_review =
                 comma_separated_crate_names(&changelog_ids_with_statistical_segments_only);
             log::warn!(
-                "WOULD {} as the changelog entry is empty for crates {}",
+                "WOULD {} as the changelog entry is empty for crate{}: {}",
                 if skip_publish {
                     "ask for review after commit"
                 } else {
                     "stop release after commit"
+                },
+                if changelog_ids_with_statistical_segments_only.len() == 1 {
+                    ""
+                } else {
+                    "s"
                 },
                 names_of_crates_that_would_need_review
             );

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.10.0 (2021-10-12)
 
+It looks like there were no functional changes despite the minor version bump.
+Please consider it a fluke that will be fixed with `cargo smart-release` automating
+version number generation.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
