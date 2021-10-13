@@ -5,9 +5,9 @@ use cargo_metadata::{Dependency, DependencyKind, Metadata, Package};
 use crates_index::Index;
 use git_repository::bstr::ByteVec;
 
-use crate::changelog::Section;
 use crate::{
     changelog,
+    changelog::Section,
     command::release::Options,
     utils::{
         is_dependency_with_version_requirement, names_and_versions, package_by_id, package_by_name,

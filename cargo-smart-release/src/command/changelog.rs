@@ -19,9 +19,9 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let linkables = if opts.dry_run || opts.no_links {
         Linkables::AsText
     } else {
-        Linkables::AsLinks {
-            repository_url: crate::git::remote_url()?,
-        }
+        crate::git::remote_url()?
+            .map(|url| Linkables::AsLinks { repository_url: url })
+            .unwrap_or(Linkables::AsText)
     };
     for crate_name in &crate_names {
         let (

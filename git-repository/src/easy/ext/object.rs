@@ -8,10 +8,9 @@ use git_ref::{
     FullName,
 };
 
-use crate::easy::{tag, Reference};
 use crate::{
     easy,
-    easy::{commit, object, ObjectRef, Oid},
+    easy::{commit, object, tag, ObjectRef, Oid, Reference},
     ext::ObjectIdExt,
 };
 

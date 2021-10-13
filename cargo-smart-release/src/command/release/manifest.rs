@@ -1,5 +1,4 @@
-use std::io::Write;
-use std::{borrow::Cow, collections::BTreeMap, str::FromStr};
+use std::{borrow::Cow, collections::BTreeMap, io::Write, str::FromStr};
 
 use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
@@ -9,6 +8,7 @@ use semver::{Op, Version, VersionReq};
 use super::{cargo, git, version, Context, Oid, Options};
 use crate::{
     changelog,
+    changelog::write::Linkables,
     utils::{names_and_versions, package_by_id, package_eq_dependency, will},
     ChangeLog,
 };
@@ -35,11 +35,11 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     let mut made_change = false;
     let next_commit_date = crate::utils::time_to_offset_date_time(crate::git::author()?.time);
     let linkables = if no_changelog_links {
-        changelog::write::Linkables::AsText
+        Linkables::AsText
     } else {
-        changelog::write::Linkables::AsLinks {
-            repository_url: crate::git::remote_url()?,
-        }
+        crate::git::remote_url()?
+            .map(|url| Linkables::AsLinks { repository_url: url })
+            .unwrap_or(Linkables::AsText)
     };
     let mut release_section_by_publishee = BTreeMap::default();
     for (publishee, new_version) in publishees {

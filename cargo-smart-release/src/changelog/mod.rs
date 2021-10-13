@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::changelog::section::segment::conventional::as_headline;
-use crate::ChangeLog;
+use crate::{changelog::section::segment::conventional::as_headline, ChangeLog};
 
 pub mod init;
 mod merge;

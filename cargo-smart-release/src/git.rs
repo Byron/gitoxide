@@ -91,15 +91,17 @@ pub fn head_remote_symbol() -> &'static str {
 }
 
 // TODO: use git-repository for this
-pub fn remote_url() -> anyhow::Result<git::Url> {
-    Command::new("git")
+pub fn remote_url() -> anyhow::Result<Option<git::Url>> {
+    let output = Command::new("git")
         .arg("config")
         .arg(format!("remote.{}.url", head_remote_symbol()))
-        .output()?
-        .stdout
-        .as_slice()
-        .try_into()
-        .map_err(Into::into)
+        .output()?;
+
+    output
+        .status
+        .success()
+        .then(|| output.stdout.as_slice().try_into().map_err(Into::into))
+        .transpose()
 }
 
 pub mod history {
