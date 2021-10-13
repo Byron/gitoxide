@@ -26,6 +26,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         dry_run,
         skip_publish,
         preview,
+        no_changelog_links,
         allow_fully_generated_changelogs,
         ..
     } = opts;
@@ -33,8 +34,12 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     let mut changelog_ids_probably_lacking_user_edits = Vec::new();
     let mut made_change = false;
     let next_commit_date = crate::utils::time_to_offset_date_time(crate::git::author()?.time);
-    let linkables = changelog::write::Linkables::AsLinks {
-        repository_url: crate::git::remote_url()?,
+    let linkables = if no_changelog_links {
+        changelog::write::Linkables::AsText
+    } else {
+        changelog::write::Linkables::AsLinks {
+            repository_url: crate::git::remote_url()?,
+        }
     };
     let mut release_section_by_publishee = BTreeMap::default();
     for (publishee, new_version) in publishees {

@@ -24,6 +24,7 @@ pub mod release {
         pub preview: bool,
         pub generator_segments: segment::Selection,
         pub allow_fully_generated_changelogs: bool,
+        pub no_changelog_links: bool,
     }
     pub use super::release_impl::BumpSpec;
 }
@@ -42,6 +43,7 @@ pub mod changelog {
         pub preview: bool,
         // All the segments to generate
         pub generator_segments: segment::Selection,
+        pub no_links: bool,
     }
 }
 #[path = "changelog.rs"]

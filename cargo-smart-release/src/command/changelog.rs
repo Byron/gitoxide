@@ -16,7 +16,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let bat = (opts.dry_run && opts.preview).then(bat::Support::new);
 
     let mut pending_changes = Vec::new();
-    let linkables = if opts.dry_run {
+    let linkables = if opts.dry_run || opts.no_links {
         Linkables::AsText
     } else {
         Linkables::AsLinks {

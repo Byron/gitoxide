@@ -37,6 +37,10 @@ pub struct ChangeLog {
     #[argh(switch)]
     pub no_preview: bool,
 
+    /// do not generate links to commits and issues when writing the changelogs. This currently only works for GitHub.
+    #[argh(switch)]
+    pub no_links: bool,
+
     /// omits these kinds of generated changelog content, values are 'clippy', 'commit-statistics' and 'commit-details'
     #[argh(option)]
     pub without: Vec<String>,
@@ -100,6 +104,10 @@ pub struct SmartRelease {
     /// Note that changelog entries purely composed of statistical information will always stop a release.
     #[argh(switch)]
     pub allow_fully_generated_changelogs: bool,
+
+    /// do not generate links to commits and issues when writing the changelogs. This currently only works for GitHub.
+    #[argh(switch)]
+    pub no_changelog_links: bool,
 
     /// omits these kinds of generated changelog content, values are 'clippy', 'commit-statistics' and 'commit-details'
     #[argh(option)]
