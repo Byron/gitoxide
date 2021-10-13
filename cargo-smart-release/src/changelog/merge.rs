@@ -42,7 +42,7 @@ impl ChangeLog {
                     unreachable!("BUG: generated logs may only have verbatim sections at the beginning")
                 }
                 Section::Release { ref name, .. } => match find_target_section(name, sections, first_release_pos) {
-                    Insertion::MergeWith(pos) => merge_section(&mut sections[pos], section_to_merge),
+                    Insertion::MergeWith(pos) => sections[pos].merge(section_to_merge),
                     Insertion::At(pos) => {
                         if let Section::Release { heading_level, .. } = &mut section_to_merge {
                             *heading_level = first_release_indentation;
@@ -57,55 +57,58 @@ impl ChangeLog {
     }
 }
 
-fn merge_section(dest: &mut Section, src: Section) {
-    match (dest, src) {
-        (Section::Verbatim { .. }, _) | (_, Section::Verbatim { .. }) => {
-            unreachable!("BUG: we should never try to merge into or from a verbatim section")
-        }
-        (
-            Section::Release {
-                date: lhs_date,
-                segments: lhs_segments,
-                removed_messages,
-                ..
-            },
-            Section::Release {
-                date: rhs_date,
-                segments: rhs_segments,
-                unknown: rhs_unknown,
-                ..
-            },
-        ) => {
-            assert!(rhs_unknown.is_empty(), "shouldn't ever generate 'unknown' portions");
-            let has_no_read_only_segments = !lhs_segments.iter().any(|s| s.is_read_only());
-            let mode = if has_no_read_only_segments {
-                ReplaceMode::ReplaceAllOrAppend
-            } else {
-                ReplaceMode::ReplaceAllOrAppendIfPresentInLhs
-            };
-            for rhs_segment in rhs_segments {
-                match rhs_segment {
-                    Segment::User { .. } => unreachable!("BUG: User segments are never auto-generated"),
-                    Segment::Details(section::Data::Parsed)
-                    | Segment::Statistics(section::Data::Parsed)
-                    | Segment::Clippy(section::Data::Parsed) => {
-                        unreachable!("BUG: Clippy, statistics, and details are set if generated, or not present")
-                    }
-                    Segment::Conventional(conventional) => {
-                        merge_conventional(removed_messages, lhs_segments, conventional)
-                    }
-                    clippy @ Segment::Clippy(_) => {
-                        merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Clippy(_)), clippy, mode)
-                    }
-                    stats @ Segment::Statistics(_) => {
-                        merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Statistics(_)), stats, mode)
-                    }
-                    details @ Segment::Details(_) => {
-                        merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Details(_)), details, mode)
+impl Section {
+    pub fn merge(&mut self, src: Section) {
+        let dest = self;
+        match (dest, src) {
+            (Section::Verbatim { .. }, _) | (_, Section::Verbatim { .. }) => {
+                unreachable!("BUG: we should never try to merge into or from a verbatim section")
+            }
+            (
+                Section::Release {
+                    date: lhs_date,
+                    segments: lhs_segments,
+                    removed_messages,
+                    ..
+                },
+                Section::Release {
+                    date: rhs_date,
+                    segments: rhs_segments,
+                    unknown: rhs_unknown,
+                    ..
+                },
+            ) => {
+                assert!(rhs_unknown.is_empty(), "shouldn't ever generate 'unknown' portions");
+                let has_no_read_only_segments = !lhs_segments.iter().any(|s| s.is_read_only());
+                let mode = if has_no_read_only_segments {
+                    ReplaceMode::ReplaceAllOrAppend
+                } else {
+                    ReplaceMode::ReplaceAllOrAppendIfPresentInLhs
+                };
+                for rhs_segment in rhs_segments {
+                    match rhs_segment {
+                        Segment::User { .. } => unreachable!("BUG: User segments are never auto-generated"),
+                        Segment::Details(section::Data::Parsed)
+                        | Segment::Statistics(section::Data::Parsed)
+                        | Segment::Clippy(section::Data::Parsed) => {
+                            unreachable!("BUG: Clippy, statistics, and details are set if generated, or not present")
+                        }
+                        Segment::Conventional(conventional) => {
+                            merge_conventional(removed_messages, lhs_segments, conventional)
+                        }
+                        clippy @ Segment::Clippy(_) => {
+                            merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Clippy(_)), clippy, mode)
+                        }
+                        stats @ Segment::Statistics(_) => {
+                            merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Statistics(_)), stats, mode)
+                        }
+                        details @ Segment::Details(_) => {
+                            merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Details(_)), details, mode)
+                        }
                     }
                 }
+                *lhs_date = rhs_date;
             }
-            *lhs_date = rhs_date;
         }
     }
 }

@@ -51,9 +51,14 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 opts.generator_segments,
             )?;
             made_change |= changed_relevant_content;
-            let recent_release_section_in_log = log.most_recent_release_section_mut();
+            let (recent_idx, recent_release_section_in_log) = log.most_recent_release_section_mut();
+            if !recent_release_section_in_log.is_essential() {
+                changelog_ids_with_statistical_segments_only.push(pending_changelog_changes.len());
+            } else if recent_release_section_in_log.is_probably_lacking_user_edits() {
+                changelog_ids_probably_lacking_user_edits.push(pending_changelog_changes.len());
+            }
             let new_version: semver::Version = new_version.parse()?;
-            let date = match recent_release_section_in_log {
+            match recent_release_section_in_log {
                 changelog::Section::Release {
                     name: name @ changelog::Version::Unreleased,
                     date,
@@ -67,8 +72,29 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                             new_version
                         );
                     }
-                    *name = changelog::Version::Semantic(new_version);
-                    date
+                    *name = changelog::Version::Semantic(new_version.clone());
+                    *date = Some(next_commit_date);
+                    let recent_section = log.sections.remove(recent_idx);
+                    match log
+                        .sections
+                        .iter_mut()
+                        .find(|s| matches!(s, changelog::Section::Release {name: changelog::Version::Semantic(v), ..} if *v == new_version))
+                    {
+                        Some(version_section) => {
+                            version_section.merge(recent_section);
+                            let pop_if_changelog_id_is_last = |v: &mut Vec<usize>| {
+                                if v.last().filter(|&&idx| idx == pending_changelog_changes.len()).is_some() {
+                                    v.pop();
+                                }
+                            };
+                            if version_section.is_essential() {
+                                pop_if_changelog_id_is_last(&mut changelog_ids_with_statistical_segments_only);
+                            } else if !version_section.is_probably_lacking_user_edits() {
+                                pop_if_changelog_id_is_last(&mut changelog_ids_probably_lacking_user_edits);
+                            }
+                        }
+                        None => log.sections.insert(recent_idx, recent_section),
+                    }
                 }
                 changelog::Section::Release {
                     name: changelog::Version::Semantic(recent_version),
@@ -83,17 +109,10 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                             recent_version
                         );
                     }
-                    date
+                    *date = Some(next_commit_date);
                 }
                 changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
             };
-            *date = Some(next_commit_date);
-            if !recent_release_section_in_log.is_essential() {
-                changelog_ids_with_statistical_segments_only.push(pending_changelog_changes.len());
-            }
-            if recent_release_section_in_log.is_probably_lacking_user_edits() {
-                changelog_ids_probably_lacking_user_edits.push(pending_changelog_changes.len());
-            }
             lock.with_mut(|file| log.write_to(file, &linkables))?;
             pending_changelog_changes.push((publishee, changed_relevant_content, lock));
         }

@@ -147,7 +147,7 @@ mod iter {
         std::fs::remove_dir(parent_dir)?;
 
         assert!(
-            matches!(it.next(), Some(Err(Permanent{ retries_left, dir, err, .. })) if retries_left.to_create_entire_directory == 0 
+            matches!(it.next(), Some(Err(Permanent{ retries_left, dir, err, .. })) if retries_left.to_create_entire_directory == 0
                                                                     && retries_left.on_create_directory_failure == 1
                                                                     && err.kind() == NotFound
                                                                     && dir == new_dir),

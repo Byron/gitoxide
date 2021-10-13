@@ -61,10 +61,11 @@ impl Ord for Version {
 }
 
 impl ChangeLog {
-    pub fn most_recent_release_section_mut(&mut self) -> &mut Section {
+    pub fn most_recent_release_section_mut(&mut self) -> (usize, &mut Section) {
         self.sections
             .iter_mut()
-            .find(|s| matches!(s, Section::Release { .. }))
+            .enumerate()
+            .find(|(_, s)| matches!(s, Section::Release { .. }))
             .expect("we never have an entirely empty changelog")
     }
 }
@@ -74,7 +75,12 @@ impl Section {
     pub fn is_essential(&self) -> bool {
         match self {
             Section::Verbatim { .. } => true,
-            Section::Release { segments, .. } => segments.iter().any(|s| !s.is_read_only()),
+            Section::Release {
+                segments,
+                unknown,
+                removed_messages,
+                ..
+            } => !unknown.is_empty() || !removed_messages.is_empty() || segments.iter().any(|s| !s.is_read_only()),
         }
     }
     /// Returns true if there is no user-made section, or no edit by users in conventional segments at all.
@@ -90,9 +96,9 @@ impl Section {
                 if !removed_messages.is_empty() {
                     return false;
                 }
-                segments
-                    .iter()
-                    .any(|s| matches!(s, section::Segment::Conventional(section::segment::Conventional {removed, ..}) if !removed.is_empty()))
+                segments.iter().any(
+                    |s| matches!(s, section::Segment::Conventional(section::segment::Conventional {removed, ..}) if !removed.is_empty()),
+                )
             }
         }
     }
