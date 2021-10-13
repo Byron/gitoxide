@@ -21,6 +21,6 @@
 [WARN ] WOULD ask for review after commit as the changelog entry is empty for crates: a, b
 [WARN ] These changelogs are likely to be fully generated from commit history or contain lower-case git-conventional headlines: c. The release process would stop to allow edits.
 [INFO ] WOULD run "git" "commit" "-am" "Bump a v0.8.0, b v0.8.0, c v8.0.0"
-[INFO ] WOULD create tag a-v0.8.0
-[INFO ] WOULD create tag b-v0.8.0
-[INFO ] WOULD create tag c-v8.0.0
+[INFO ] WOULD create tag object a-v0.8.0 with changelog message, first line is: '### Commit Statistics'
+[INFO ] WOULD create tag object b-v0.8.0 with changelog message, first line is: '### Commit Statistics'
+[INFO ] WOULD create tag object c-v8.0.0 with changelog message, first line is: '### refactor (BREAKING)'

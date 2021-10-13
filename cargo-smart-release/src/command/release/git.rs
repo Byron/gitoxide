@@ -52,7 +52,18 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
     let tag_name = tag_name(publishee, new_version, &ctx.repo);
     if dry_run {
         if verbose {
-            log::info!("WOULD create tag {}", tag_name);
+            match tag_message {
+                Some(message) => {
+                    log::info!(
+                        "WOULD create tag object {} with changelog message, first line is: '{}'",
+                        tag_name,
+                        message.lines().next().unwrap_or("")
+                    );
+                }
+                None => {
+                    log::info!("WOULD create tag {}", tag_name);
+                }
+            }
         }
         Ok(Some(format!("refs/tags/{}", tag_name).try_into()?))
     } else {
