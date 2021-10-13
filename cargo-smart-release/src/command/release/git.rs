@@ -56,12 +56,24 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
         }
         Ok(Some(format!("refs/tags/{}", tag_name).try_into()?))
     } else {
+        let target = commit_id.expect("set in --execute mode");
+        let constraint = PreviousValue::Any;
         let tag = match tag_message {
-            Some(_message) => todo!("tag object creation"),
+            Some(message) => {
+                let tag = git_repository::prelude::ObjectAccessExt::tag(
+                    &ctx.repo,
+                    tag_name,
+                    target,
+                    git_repository::objs::Kind::Commit,
+                    Some(&crate::git::author()?.to_ref()),
+                    message,
+                    constraint,
+                )?;
+                log::info!("Created tag object {} with release notes.", tag.name().as_bstr());
+                tag
+            }
             None => {
-                let tag = ctx
-                    .repo
-                    .tag(tag_name, commit_id.expect("set in --execute mode"), PreviousValue::Any)?;
+                let tag = ctx.repo.tag(tag_name, target, constraint)?;
                 log::info!("Created tag {}", tag.name().as_bstr());
                 tag
             }

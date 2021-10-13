@@ -1,6 +1,6 @@
 use std::{convert::TryInto, ops::DerefMut};
 
-use git_hash::ObjectId;
+use git_hash::{oid, ObjectId};
 use git_odb::{Find, FindExt};
 use git_pack::cache::Object;
 use git_ref::{
@@ -8,6 +8,7 @@ use git_ref::{
     FullName,
 };
 
+use crate::easy::{tag, Reference};
 use crate::{
     easy,
     easy::{commit, object, ObjectRef, Oid},
@@ -105,6 +106,34 @@ pub trait ObjectAccessExt: easy::Access + Sized {
             .map_err(Into::into)
     }
 
+    /// Create a tag reference named `name` (without `refs/tags/` prefix) pointing to a newly created tag object
+    /// which in turn points to `target` and return the newly created reference.
+    ///
+    /// It will be created with `constraint` which is most commonly to [only create it][PreviousValue::MustNotExist]
+    /// or to [force overwriting a possibly existing tag](PreviousValue::Any).
+    // TODO: tests
+    fn tag(
+        &self,
+        name: impl AsRef<str>,
+        target: impl AsRef<oid>,
+        target_kind: git_object::Kind,
+        tagger: Option<&git_actor::SignatureRef<'_>>,
+        message: impl AsRef<str>,
+        constraint: PreviousValue,
+    ) -> Result<Reference<'_, Self>, tag::Error> {
+        // NOTE: This could be more efficient if we use a TagRef instead.
+        let tag = git_object::Tag {
+            target: target.as_ref().into(),
+            target_kind,
+            name: name.as_ref().into(),
+            tagger: tagger.map(|t| t.to_owned()),
+            message: message.as_ref().into(),
+            pgp_signature: None,
+        };
+        let tag_id = self.write_object(&tag)?;
+        super::ReferenceAccessExt::tag(self, name, tag_id, constraint).map_err(Into::into)
+    }
+
     /// Create a new commit object with `author`, `committer` and `message` referring to `tree` with `parents`, and point `reference`
     /// to it. The commit is written without message encoding field, which can be assumed to be UTF-8.
     ///
@@ -116,11 +145,11 @@ pub trait ObjectAccessExt: easy::Access + Sized {
     /// If there is no parent, the `reference` is expected to not exist yet.
     ///
     /// The method fails immediately if a `reference` lock can't be acquired.
-    fn commit<'a, Name, E>(
+    fn commit<Name, E>(
         &self,
         reference: Name,
-        author: &git_actor::SignatureRef<'a>,
-        committer: &git_actor::SignatureRef<'a>,
+        author: &git_actor::SignatureRef<'_>,
+        committer: &git_actor::SignatureRef<'_>,
         message: impl AsRef<str>,
         tree: impl Into<ObjectId>,
         parents: impl IntoIterator<Item = impl Into<ObjectId>>,
@@ -139,7 +168,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
         // TODO: possibly use CommitRef to save a few allocations (but will have to allocate for object ids anyway.
         //       This can be made vastly more efficient though if we wanted to, so we lie in the API
         let reference = reference.try_into()?;
-        let commit: git_object::Object = git_object::Commit {
+        let commit = git_object::Commit {
             message: message.as_ref().into(),
             tree: tree.into(),
             author: author.to_owned(),
@@ -147,11 +176,9 @@ pub trait ObjectAccessExt: easy::Access + Sized {
             encoding: None,
             parents: parents.into_iter().map(|id| id.into()).collect(),
             extra_headers: Default::default(),
-        }
-        .into();
+        };
 
         let commit_id = self.write_object(&commit)?;
-        let commit = commit.into_commit();
         self.edit_reference(
             RefEdit {
                 change: Change::Update {

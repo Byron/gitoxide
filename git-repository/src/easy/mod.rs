@@ -32,6 +32,7 @@ pub mod odb;
 pub mod oid;
 pub mod reference;
 pub mod state;
+pub mod tag;
 
 /// The head reference, as created from looking at `.git/HEAD`, able to represent all of its possible states.
 ///
