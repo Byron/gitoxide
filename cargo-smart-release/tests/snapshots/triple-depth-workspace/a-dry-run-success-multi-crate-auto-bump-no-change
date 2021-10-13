@@ -5,7 +5,7 @@
 [INFO ] Using current version 0.8.0 of crate a instead of bumped one 0.8.1.
 [INFO ] Congratulations for the new release of 'a' 🎉
 [INFO ] WOULD prepare releases of a v0.8.0
-[INFO ] WOULD edit existing changelog for 'a'
+[INFO ] WOULD modify existing changelog for 'a'.
 [INFO ] WOULD persist changes to 1 manifests and 1 changelogs with: "Bump a v0.8.0"
 [WARN ] WOULD ask for review after commit as the changelog entry is empty for crate: a
 [INFO ] WOULD run "git" "commit" "-am" "Bump a v0.8.0"

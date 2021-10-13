@@ -43,14 +43,24 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         let previous = locks_by_manifest_path.insert(&publishee.manifest_path, lock);
         assert!(previous.is_none(), "publishees are unique so insertion always happens");
         if let Some(history) = ctx.history.as_ref() {
-            let (mut log, changed_relevant_content, mut lock) = ChangeLog::for_package_with_write_lock(
-                publishee,
-                history,
-                &ctx.base,
-                opts.dry_run,
-                opts.generator_segments,
-            )?;
-            made_change |= changed_relevant_content;
+            let changelog::init::Outcome {
+                mut log,
+                state: log_init_state,
+                mut lock,
+            } = ChangeLog::for_package_with_write_lock(publishee, history, &ctx.base, opts.generator_segments)?;
+            made_change |= log_init_state.is_modified();
+
+            log::info!(
+                "{} {} changelog for '{}'.",
+                will(opts.dry_run),
+                match log_init_state {
+                    changelog::init::State::Created => "create a new",
+                    changelog::init::State::Modified => "modify existing",
+                    changelog::init::State::Unchanged => "leave alone the",
+                },
+                publishee.name
+            );
+
             let (recent_idx, recent_release_section_in_log) = log.most_recent_release_section_mut();
             if !recent_release_section_in_log.is_essential() {
                 changelog_ids_with_statistical_segments_only.push(pending_changelog_changes.len());
@@ -64,7 +74,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                     date,
                     ..
                 } => {
-                    if !changed_relevant_content {
+                    if !log_init_state.is_modified() {
                         log::info!(
                             "{}: {} only change headline from 'Unreleased' to '{}'",
                             publishee.name,
@@ -114,7 +124,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
             };
             lock.with_mut(|file| log.write_to(file, &linkables))?;
-            pending_changelog_changes.push((publishee, changed_relevant_content, lock));
+            pending_changelog_changes.push((publishee, log_init_state.is_modified(), lock));
         }
     }
 

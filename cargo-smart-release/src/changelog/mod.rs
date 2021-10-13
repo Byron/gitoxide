@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use crate::ChangeLog;
 
-mod init;
+pub mod init;
 mod merge;
 mod parse;
 pub mod section;

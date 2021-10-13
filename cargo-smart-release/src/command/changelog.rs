@@ -24,21 +24,17 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         }
     };
     for crate_name in &crate_names {
-        let (log, _package, mut lock) = ChangeLog::for_crate_by_name_with_write_lock(
-            crate_name,
-            &history,
-            &ctx,
-            opts.dry_run,
-            opts.generator_segments,
-        )?;
+        let (crate::changelog::init::Outcome { log, mut lock, state }, _package) =
+            ChangeLog::for_crate_by_name_with_write_lock(crate_name, &history, &ctx, opts.generator_segments)?;
         log::info!(
-            "{} write {} sections to {}",
+            "{} write {} sections to {} ({})",
             will(opts.dry_run),
             log.sections.len(),
             lock.resource_path()
                 .strip_prefix(&ctx.root)
                 .expect("contained in workspace")
-                .display()
+                .display(),
+            state.as_str(),
         );
         lock.with_mut(|file| log.write_to(file, &linkables))?;
         if let Some(bat) = bat.as_ref() {
