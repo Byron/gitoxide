@@ -35,6 +35,7 @@ pub struct Outcome {
     pub log: ChangeLog,
     pub state: State,
     pub lock: git::lock::File,
+    pub previous_content: Option<String>,
 }
 
 impl ChangeLog {
@@ -65,16 +66,25 @@ impl ChangeLog {
         let changelog_path = path_from_manifest(&package.manifest_path);
         let lock =
             git::lock::File::acquire_to_update_resource(&changelog_path, git::lock::acquire::Fail::Immediately, None)?;
-        let (log, state) = if let Ok(existing) = std::fs::read_to_string(changelog_path) {
-            let existing = ChangeLog::from_markdown(&existing);
-            let copy_of_existing = existing.clone();
-            let merged = existing.merge_generated(generated);
+        let (log, state, previous_content) = if let Ok(markdown) = std::fs::read_to_string(changelog_path) {
+            let existing_log = ChangeLog::from_markdown(&markdown);
+            let copy_of_existing = existing_log.clone();
+            let merged = existing_log.merge_generated(generated);
             let changed = merged != copy_of_existing;
-            (merged, if changed { State::Modified } else { State::Unchanged })
+            (
+                merged,
+                if changed { State::Modified } else { State::Unchanged },
+                Some(markdown),
+            )
         } else {
-            (generated, State::Created)
+            (generated, State::Created, None)
         };
-        Ok(Outcome { log, state, lock })
+        Ok(Outcome {
+            log,
+            state,
+            lock,
+            previous_content,
+        })
     }
 
     pub fn for_crate_by_name_with_write_lock<'a>(

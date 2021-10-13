@@ -24,8 +24,12 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         }
     };
     for crate_name in &crate_names {
-        let (crate::changelog::init::Outcome { log, mut lock, state }, _package) =
-            ChangeLog::for_crate_by_name_with_write_lock(crate_name, &history, &ctx, opts.generator_segments)?;
+        let (
+            crate::changelog::init::Outcome {
+                log, mut lock, state, ..
+            },
+            _package,
+        ) = ChangeLog::for_crate_by_name_with_write_lock(crate_name, &history, &ctx, opts.generator_segments)?;
         log::info!(
             "{} write {} sections to {} ({})",
             will(opts.dry_run),

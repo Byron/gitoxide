@@ -1,7 +1,9 @@
+use std::io::Write;
 use std::{borrow::Cow, collections::BTreeMap, str::FromStr};
 
 use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
+use git_repository::bstr::ByteSlice;
 use semver::{Op, Version, VersionReq};
 
 use super::{cargo, git, version, Context, Oid, Options};
@@ -46,9 +48,9 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             let changelog::init::Outcome {
                 mut log,
                 state: log_init_state,
+                previous_content,
                 mut lock,
             } = ChangeLog::for_package_with_write_lock(publishee, history, &ctx.base, opts.generator_segments)?;
-            made_change |= log_init_state.is_modified();
 
             log::info!(
                 "{} {} changelog for '{}'.",
@@ -123,7 +125,12 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 }
                 changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
             };
-            lock.with_mut(|file| log.write_to(file, &linkables))?;
+            let mut write_buf = Vec::<u8>::new();
+            log.write_to(&mut write_buf, &linkables)?;
+            lock.with_mut(|file| file.write_all(&write_buf))?;
+            made_change |= previous_content
+                .map(|previous| write_buf.to_str_lossy() != previous)
+                .unwrap_or(true);
             pending_changelog_changes.push((publishee, log_init_state.is_modified(), lock));
         }
     }
@@ -170,7 +177,9 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         "{} {}{}",
         if skip_publish {
             "Bump"
-        } else if changelog_ids_with_statistical_segments_only.is_empty() {
+        } else if changelog_ids_with_statistical_segments_only.is_empty()
+            && changelog_ids_probably_lacking_user_edits.is_empty()
+        {
             "Release"
         } else {
             "Adjusting changelogs prior to release of"
@@ -226,7 +235,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
 
     if !pending_changelog_changes.is_empty() && preview {
         log::info!(
-            "About to preview {} changelog(s), use --no-changelog-preview to disable or Ctrl-C to abort, or the 'changelog' subcommand to write it out for adjustments.",
+            "About to preview {} pending changelog(s), use --no-changelog-preview to disable or Ctrl-C to abort, or the 'changelog' subcommand to write it out for adjustments.",
             pending_changelog_changes.iter().filter(|(_, has_changes, _)| *has_changes).count()
         );
 
