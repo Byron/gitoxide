@@ -13,12 +13,12 @@ use crate::{
     ChangeLog,
 };
 
-pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_and_handle_changelog<'repo>(
+pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_and_handle_changelog<'repo, 'a>(
     meta: &Metadata,
-    publishees: &[(&Package, String)],
+    publishees: &[(&'a Package, String)],
     opts: Options,
     ctx: &'repo Context,
-) -> anyhow::Result<Option<Oid<'repo>>> {
+) -> anyhow::Result<(Option<Oid<'repo>>, BTreeMap<&'a str, changelog::Section>)> {
     let mut locks_by_manifest_path = BTreeMap::new();
     let mut pending_changelog_changes = Vec::new();
     let Options {
@@ -36,6 +36,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     let linkables = changelog::write::Linkables::AsLinks {
         repository_url: crate::git::remote_url()?,
     };
+    let mut release_section_by_publishee = BTreeMap::default();
     for (publishee, new_version) in publishees {
         let lock = git_repository::lock::File::acquire_to_update_resource(
             &publishee.manifest_path,
@@ -132,6 +133,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 .map(|previous| write_buf.to_str_lossy() != previous)
                 .unwrap_or(true);
             pending_changelog_changes.push((publishee, log_init_state.is_modified(), lock));
+            release_section_by_publishee.insert(publishee.name.as_str(), log.take_recent_release_section());
         }
     }
 
@@ -362,7 +364,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     if let Some(bail_message) = bail_message_after_commit {
         bail!(bail_message);
     } else {
-        Ok(res)
+        Ok((res, release_section_by_publishee))
     }
 }
 

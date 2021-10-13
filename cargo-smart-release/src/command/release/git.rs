@@ -37,6 +37,7 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
     publishee: &Package,
     new_version: &str,
     commit_id: Option<Oid<'repo>>,
+    tag_message: Option<String>,
     ctx: &'repo crate::Context,
     Options {
         verbose,
@@ -55,10 +56,16 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
         }
         Ok(Some(format!("refs/tags/{}", tag_name).try_into()?))
     } else {
-        let tag = ctx
-            .repo
-            .tag(tag_name, commit_id.expect("set in --execute mode"), PreviousValue::Any)?;
-        log::info!("Created tag {}", tag.name().as_bstr());
+        let tag = match tag_message {
+            Some(_message) => todo!("tag object creation"),
+            None => {
+                let tag = ctx
+                    .repo
+                    .tag(tag_name, commit_id.expect("set in --execute mode"), PreviousValue::Any)?;
+                log::info!("Created tag {}", tag.name().as_bstr());
+                tag
+            }
+        };
         Ok(Some(tag.inner.name))
     }
 }

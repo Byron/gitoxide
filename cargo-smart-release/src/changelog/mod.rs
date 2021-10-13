@@ -62,6 +62,15 @@ impl Ord for Version {
 }
 
 impl ChangeLog {
+    pub fn take_recent_release_section(&mut self) -> Section {
+        let pos = self
+            .sections
+            .iter()
+            .enumerate()
+            .find_map(|(idx, s)| (matches!(s, Section::Release { .. })).then(|| idx))
+            .expect("we never have an entirely empty changelog");
+        self.sections.remove(pos)
+    }
     pub fn most_recent_release_section_mut(&mut self) -> (usize, &mut Section) {
         self.sections
             .iter_mut()

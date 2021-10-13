@@ -1,10 +1,13 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::bail;
 use cargo_metadata::{Dependency, DependencyKind, Metadata, Package};
 use crates_index::Index;
+use git_repository::bstr::ByteVec;
 
+use crate::changelog::Section;
 use crate::{
+    changelog,
     command::release::Options,
     utils::{
         is_dependency_with_version_requirement, names_and_versions, package_by_id, package_by_name,
@@ -109,8 +112,18 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
         {
             let publishee = package_by_name(meta, publishee_name)?;
 
-            let (new_version, commit_id) = perform_single_release(meta, publishee, options, &ctx)?;
-            let tag_name = git::create_version_tag(publishee, &new_version, commit_id, &ctx.base, options)?;
+            let (new_version, (commit_id, mut release_section_by_publishee)) =
+                perform_single_release(meta, publishee, options, &ctx)?;
+            let tag_name = git::create_version_tag(
+                publishee,
+                &new_version,
+                commit_id,
+                release_section_by_publishee
+                    .remove(publishee_name.as_str())
+                    .and_then(section_to_string),
+                &ctx.base,
+                options,
+            )?;
             git::push_tags_and_head(tag_name, options)?;
         }
     }
@@ -156,12 +169,13 @@ fn perforrm_multi_version_release(
         names_and_versions(&crates_to_publish_together)
     );
 
-    let commit_id = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
-        meta,
-        &crates_to_publish_together,
-        options,
-        ctx,
-    )?;
+    let (commit_id, mut release_section_by_publishee) =
+        manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
+            meta,
+            &crates_to_publish_together,
+            options,
+            ctx,
+        )?;
 
     crates_to_publish_together.reverse();
     let mut tag_names = Vec::new();
@@ -172,8 +186,16 @@ fn perforrm_multi_version_release(
             .collect();
 
         cargo::publish_crate(publishee, &unpublished_crates, options)?;
-        if let Some(tag_name) = git::create_version_tag(publishee, &new_version, commit_id.clone(), &ctx.base, options)?
-        {
+        if let Some(tag_name) = git::create_version_tag(
+            publishee,
+            &new_version,
+            commit_id.clone(),
+            release_section_by_publishee
+                .remove(&publishee.name.as_str())
+                .and_then(section_to_string),
+            &ctx.base,
+            options,
+        )? {
             tag_names.push(tag_name);
         };
     }
@@ -181,12 +203,20 @@ fn perforrm_multi_version_release(
     Ok(())
 }
 
-fn perform_single_release<'repo>(
+fn section_to_string(section: Section) -> Option<String> {
+    let mut b = Vec::<u8>::new();
+    section
+        .write_to(&mut b, &changelog::write::Linkables::AsText)
+        .ok()
+        .and_then(|_| b.into_string().ok())
+}
+
+fn perform_single_release<'repo, 'a>(
     meta: &Metadata,
-    publishee: &Package,
+    publishee: &'a Package,
     options: Options,
     ctx: &'repo Context,
-) -> anyhow::Result<(String, Option<Oid<'repo>>)> {
+) -> anyhow::Result<(String, (Option<Oid<'repo>>, BTreeMap<&'a str, changelog::Section>))> {
     let bump_spec = version::select_publishee_bump_spec(&publishee.name, ctx);
     let new_version = version::bump(publishee, bump_spec, ctx, &options)?;
     log::info!(
@@ -196,14 +226,14 @@ fn perform_single_release<'repo>(
         new_version
     );
     let new_version = new_version.to_string();
-    let commit_id = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
+    let commit_id_and_changelog_sections = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
         meta,
         &[(publishee, new_version.clone())],
         options,
         ctx,
     )?;
     cargo::publish_crate(publishee, &[], options)?;
-    Ok((new_version, commit_id))
+    Ok((new_version, commit_id_and_changelog_sections))
 }
 
 fn resolve_cycles_with_publish_group(
