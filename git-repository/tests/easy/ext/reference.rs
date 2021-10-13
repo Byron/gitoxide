@@ -23,7 +23,7 @@ mod set_namespace {
             "no references are in the namespace yet"
         );
 
-        repo.tag(
+        repo.tag_reference(
             "new-tag",
             git::ObjectId::empty_tree(git::hash::Kind::Sha1),
             PreviousValue::MustNotExist,

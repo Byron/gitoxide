@@ -57,6 +57,35 @@ mod find {
     }
 }
 
+mod tag {
+    use git_repository::prelude::{ObjectAccessExt, ReferenceAccessExt, RepositoryAccessExt};
+
+    #[test]
+    fn simple() -> crate::Result {
+        let (repo, _keep) = crate::easy_repo_rw("make_basic_repo.sh")?;
+        let current_head_id = repo.head()?.peeled()?.id().expect("born");
+        let message = "a multi\nline message";
+        let tag_ref = repo.tag(
+            "v1.0.0",
+            &current_head_id,
+            git_object::Kind::Commit,
+            Some(&repo.committer()?.to_ref()),
+            message,
+            git_ref::transaction::PreviousValue::MustNotExist,
+        )?;
+        assert_eq!(tag_ref.name().as_bstr(), "refs/tags/v1.0.0");
+        assert_ne!(tag_ref.id(), current_head_id, "it points to the tag object");
+        let tag = tag_ref.id().object()?;
+        let tag = tag.try_to_tag()?;
+        assert_eq!(tag.name, "v1.0.0");
+        assert_eq!(current_head_id, tag.target(), "the tag points to the commit");
+        assert_eq!(tag.target_kind, git_object::Kind::Commit);
+        assert_eq!(*tag.tagger.as_ref().expect("tagger"), repo.committer()?.to_ref());
+        assert_eq!(tag.message, message);
+        Ok(())
+    }
+}
+
 mod commit {
     use git_repository as git;
     use git_repository::prelude::{ObjectAccessExt, ReferenceAccessExt};

@@ -13,7 +13,7 @@ mod errors;
 pub(crate) mod cache {
     pub use git_pack::cache::object::MemoryCappedHashmap;
 }
-pub use errors::{find, write};
+pub use errors::{conversion, find, write};
 mod impls;
 pub mod peel;
 mod tree;
@@ -109,6 +109,17 @@ where
         Ok(git_odb::data::Object::new(self.kind, &self.data)
             .decode()?
             .into_commit())
+    }
+
+    /// Obtain a fully parsed tag object whose fields reference our data buffer.
+    pub fn try_to_tag(&self) -> Result<git_object::TagRef<'_>, conversion::Error> {
+        git_odb::data::Object::new(self.kind, &self.data)
+            .decode()?
+            .into_tag()
+            .ok_or_else(|| conversion::Error::UnexpectedType {
+                expected: git_object::Kind::Tag,
+                actual: self.kind,
+            })
     }
 
     /// Obtain a an iterator over commit tokens like in [`to_commit_iter()`][ObjectRef::try_to_commit_iter()], but panic if this is not a commit.

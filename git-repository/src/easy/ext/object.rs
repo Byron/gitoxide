@@ -111,7 +111,6 @@ pub trait ObjectAccessExt: easy::Access + Sized {
     ///
     /// It will be created with `constraint` which is most commonly to [only create it][PreviousValue::MustNotExist]
     /// or to [force overwriting a possibly existing tag](PreviousValue::Any).
-    // TODO: tests
     fn tag(
         &self,
         name: impl AsRef<str>,
@@ -131,7 +130,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
             pgp_signature: None,
         };
         let tag_id = self.write_object(&tag)?;
-        super::ReferenceAccessExt::tag(self, name, tag_id, constraint).map_err(Into::into)
+        super::ReferenceAccessExt::tag_reference(self, name, tag_id, constraint).map_err(Into::into)
     }
 
     /// Create a new commit object with `author`, `committer` and `message` referring to `tree` with `parents`, and point `reference`

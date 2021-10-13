@@ -26,7 +26,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     ///
     /// It will be created with `constraint` which is most commonly to [only create it][PreviousValue::MustNotExist]
     /// or to [force overwriting a possibly existing tag](PreviousValue::Any).
-    fn tag(
+    fn tag_reference(
         &self,
         name: impl AsRef<str>,
         target: impl Into<ObjectId>,

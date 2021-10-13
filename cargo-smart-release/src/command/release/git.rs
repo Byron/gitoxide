@@ -73,7 +73,7 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
                 tag
             }
             None => {
-                let tag = ctx.repo.tag(tag_name, target, constraint)?;
+                let tag = ctx.repo.tag_reference(tag_name, target, constraint)?;
                 log::info!("Created tag {}", tag.name().as_bstr());
                 tag
             }
