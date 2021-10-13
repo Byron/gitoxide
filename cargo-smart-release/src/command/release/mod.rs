@@ -215,12 +215,14 @@ fn section_to_string(section: Section) -> Option<String> {
         .and_then(|_| b.into_string().ok())
 }
 
+type ReleaseCommitSections<'repo, 'a> = (String, (Option<Oid<'repo>>, BTreeMap<&'a str, changelog::Section>));
+
 fn perform_single_release<'repo, 'a>(
     meta: &Metadata,
     publishee: &'a Package,
     options: Options,
     ctx: &'repo Context,
-) -> anyhow::Result<(String, (Option<Oid<'repo>>, BTreeMap<&'a str, changelog::Section>))> {
+) -> anyhow::Result<ReleaseCommitSections<'repo, 'a>> {
     let bump_spec = version::select_publishee_bump_spec(&publishee.name, ctx);
     let new_version = version::bump(publishee, bump_spec, ctx, &options)?;
     log::info!(
