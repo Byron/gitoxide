@@ -131,19 +131,31 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
         {
             let publishee = package_by_name(meta, publishee_name)?;
 
-            let (new_version, (commit_id, mut release_section_by_publishee)) =
+            let (new_version, (commit_id, release_section_by_publishee)) =
                 perform_single_release(meta, publishee, options, &ctx)?;
             let tag_name = git::create_version_tag(
                 publishee,
                 &new_version,
                 commit_id,
                 release_section_by_publishee
-                    .remove(publishee_name.as_str())
-                    .and_then(section_to_string),
+                    .get(publishee_name.as_str())
+                    .and_then(|s| section_to_string(s, WriteMode::Tag)),
                 &ctx.base,
                 options,
             )?;
-            git::push_tags_and_head(tag_name, options)?;
+            git::push_tags_and_head(tag_name.as_ref(), options)?;
+            if let Some((tag_name, message)) = tag_name.and_then(|tag_name| {
+                options
+                    .allow_changelog_github_release
+                    .then(|| {
+                        release_section_by_publishee
+                            .get(publishee_name.as_str())
+                            .and_then(|s| section_to_string(s, WriteMode::GitHubRelease).map(|m| (tag_name, m)))
+                    })
+                    .flatten()
+            }) {
+                github::create_release(tag_name.as_bstr(), &message, options)?;
+            }
         }
     }
 
@@ -188,7 +200,7 @@ fn perform_multi_version_release(
         names_and_versions(&crates_to_publish_together)
     );
 
-    let (commit_id, mut release_section_by_publishee) =
+    let (commit_id, release_section_by_publishee) =
         manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
             meta,
             &crates_to_publish_together,
@@ -210,25 +222,33 @@ fn perform_multi_version_release(
             &new_version,
             commit_id.clone(),
             release_section_by_publishee
-                .remove(&publishee.name.as_str())
-                .and_then(section_to_string),
+                .get(&publishee.name.as_str())
+                .and_then(|s| section_to_string(s, WriteMode::Tag)),
             &ctx.base,
             options,
         )? {
             tag_names.push(tag_name);
         };
     }
-    git::push_tags_and_head(tag_names, options)?;
+    git::push_tags_and_head(tag_names.iter(), options)?;
     Ok(())
 }
 
-fn section_to_string(section: Section) -> Option<String> {
+enum WriteMode {
+    Tag,
+    GitHubRelease,
+}
+
+fn section_to_string(section: &Section, mode: WriteMode) -> Option<String> {
     let mut b = Vec::<u8>::new();
     section
         .write_to(
             &mut b,
             &changelog::write::Linkables::AsText,
-            changelog::write::Components::empty(),
+            match mode {
+                WriteMode::Tag => changelog::write::Components::empty(),
+                WriteMode::GitHubRelease => changelog::write::Components::HTML_TAGS,
+            },
         )
         .ok()
         .and_then(|_| b.into_string().ok())
