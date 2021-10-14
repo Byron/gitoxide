@@ -5,6 +5,7 @@ use cargo_metadata::{Dependency, DependencyKind, Metadata, Package};
 use crates_index::Index;
 use git_repository::bstr::ByteVec;
 
+use crate::changelog::write::Linkables;
 use crate::{
     changelog,
     changelog::Section,
@@ -29,6 +30,7 @@ pub(crate) struct Context {
     history: Option<crate::commit::History>,
     bump: BumpSpec,
     bump_dependencies: BumpSpec,
+    changelog_links: Linkables,
 }
 
 impl Context {
@@ -37,6 +39,7 @@ impl Context {
         bump: BumpSpec,
         bump_dependencies: BumpSpec,
         changelog: bool,
+        changelog_links: bool,
     ) -> anyhow::Result<Self> {
         let crates_index = Index::new_cargo_default();
         let base = crate::Context::new(crate_names)?;
@@ -44,12 +47,20 @@ impl Context {
             .then(|| crate::git::history::collect(&base.repo))
             .transpose()?
             .flatten();
+        let changelog_links = if changelog_links {
+            Linkables::AsText
+        } else {
+            crate::git::remote_url()?
+                .map(|url| Linkables::AsLinks { repository_url: url })
+                .unwrap_or(Linkables::AsText)
+        };
         Ok(Context {
             base,
             history,
             crates_index,
             bump,
             bump_dependencies,
+            changelog_links,
         })
     }
 }
@@ -75,7 +86,13 @@ pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependen
     } else {
         opts.changelog
     };
-    let ctx = Context::new(crates, bump, bump_dependencies, allow_changelog)?;
+    let ctx = Context::new(
+        crates,
+        bump,
+        bump_dependencies,
+        allow_changelog,
+        !opts.no_changelog_links,
+    )?;
     if opts.update_crates_index {
         log::info!("Updating crates-io index at '{}'", ctx.crates_index.path().display());
         ctx.crates_index.update()?;
@@ -105,7 +122,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     assure_working_tree_is_unchanged(options)?;
 
     if options.multi_crate_release && !changed_crate_names_to_publish.is_empty() {
-        perforrm_multi_version_release(&ctx, options, meta, changed_crate_names_to_publish)?;
+        perform_multi_version_release(&ctx, options, meta, changed_crate_names_to_publish)?;
     } else {
         for publishee_name in changed_crate_names_to_publish
             .iter()
@@ -130,7 +147,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     }
 
     if !crates_to_publish_together.is_empty() {
-        perforrm_multi_version_release(&ctx, options, meta, crates_to_publish_together)?;
+        perform_multi_version_release(&ctx, options, meta, crates_to_publish_together)?;
     }
 
     Ok(())
@@ -149,7 +166,7 @@ fn assure_working_tree_is_unchanged(options: Options) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn perforrm_multi_version_release(
+fn perform_multi_version_release(
     ctx: &Context,
     options: Options,
     meta: &Metadata,

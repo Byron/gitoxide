@@ -97,6 +97,11 @@ pub struct SmartRelease {
     #[argh(switch)]
     pub no_changelog: bool,
 
+    /// do not create a github release (if the repo is located on github) reflecting the content of the changelogs most recent
+    /// release section.
+    #[argh(switch)]
+    pub no_changelog_github_release: bool,
+
     /// if changelogs are generated from git-conventional comments extracted from the commit history exclusively, publishes
     /// will fail as in order to give opportunity to author at least a portion of the upcoming release.
     ///

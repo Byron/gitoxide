@@ -8,7 +8,6 @@ use semver::{Op, Version, VersionReq};
 use super::{cargo, git, version, Context, Oid, Options};
 use crate::{
     changelog,
-    changelog::write::Linkables,
     utils::{names_and_versions, package_by_id, package_eq_dependency, will},
     ChangeLog,
 };
@@ -26,7 +25,6 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         dry_run,
         skip_publish,
         preview,
-        no_changelog_links,
         allow_fully_generated_changelogs,
         ..
     } = opts;
@@ -34,13 +32,6 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     let mut changelog_ids_probably_lacking_user_edits = Vec::new();
     let mut made_change = false;
     let next_commit_date = crate::utils::time_to_offset_date_time(crate::git::author()?.time);
-    let linkables = if no_changelog_links {
-        Linkables::AsText
-    } else {
-        crate::git::remote_url()?
-            .map(|url| Linkables::AsLinks { repository_url: url })
-            .unwrap_or(Linkables::AsText)
-    };
     let mut release_section_by_publishee = BTreeMap::default();
     for (publishee, new_version) in publishees {
         let lock = git_repository::lock::File::acquire_to_update_resource(
@@ -132,7 +123,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
             };
             let mut write_buf = Vec::<u8>::new();
-            log.write_to(&mut write_buf, &linkables)?;
+            log.write_to(&mut write_buf, &ctx.changelog_links)?;
             lock.with_mut(|file| file.write_all(&write_buf))?;
             made_change |= previous_content
                 .map(|previous| write_buf.to_str_lossy() != previous)
