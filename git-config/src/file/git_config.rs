@@ -1505,9 +1505,11 @@ a"#,
 
 #[cfg(test)]
 mod from_env {
-    use super::{Cow, GitConfig, GitConfigFromEnvError};
-    use serial_test::serial;
     use std::env;
+
+    use serial_test::serial;
+
+    use super::{Cow, GitConfig, GitConfigFromEnvError};
 
     struct Env {
         altered_vars: Vec<&'static str>,

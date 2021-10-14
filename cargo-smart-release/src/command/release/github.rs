@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::process::Command;
+use std::{borrow::Cow, process::Command};
 
 use cargo_metadata::Package;
 
@@ -40,7 +40,14 @@ pub fn create_release(
     cmd.args(["release", "create"])
         .arg(&tag_name)
         .arg("--title")
-        .arg(format!("{} v{}", publishee.name, new_version))
+        .arg(format!(
+            "{}v{}",
+            match crate::utils::tag_prefix(publishee, &ctx.repo) {
+                Some(prefix) => Cow::Owned(format!("{} ", prefix)),
+                None => "".into(),
+            },
+            new_version
+        ))
         .arg("--notes");
     if dry_run && verbose {
         log::info!(

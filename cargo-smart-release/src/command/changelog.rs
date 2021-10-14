@@ -1,5 +1,6 @@
-use crate::{bat, changelog::write::Linkables, command::changelog::Options, git, utils::will, ChangeLog};
 use std::io::Write;
+
+use crate::{bat, changelog::write::Linkables, command::changelog::Options, git, utils::will, ChangeLog};
 
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let ctx = crate::Context::new(crates)?;
