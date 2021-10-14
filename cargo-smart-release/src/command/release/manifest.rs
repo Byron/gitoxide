@@ -5,6 +5,7 @@ use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
 use semver::{Op, Version, VersionReq};
 
 use super::{cargo, git, version, Context, Oid, Options};
+use crate::changelog::write::Linkables;
 use crate::{
     changelog,
     utils::{names_and_versions, package_by_id, package_eq_dependency, will},
@@ -122,7 +123,19 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
             };
             let mut write_buf = String::new();
-            log.write_to(&mut write_buf, &ctx.changelog_links)?;
+            log.write_to(
+                &mut write_buf,
+                if opts.dry_run {
+                    &Linkables::AsText
+                } else {
+                    &ctx.changelog_links
+                },
+                if opts.dry_run {
+                    changelog::write::Components::SECTION_TITLE
+                } else {
+                    changelog::write::Components::all()
+                },
+            )?;
             lock.with_mut(|file| file.write_all(write_buf.as_bytes()))?;
             made_change |= previous_content.map(|previous| write_buf != previous).unwrap_or(true);
             pending_changelog_changes.push((publishee, log_init_state.is_modified(), lock));
@@ -241,7 +254,11 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         );
 
         let bat = crate::bat::Support::new();
-        let additional_info = format!("PREVIEW, {}", additional_info);
+        let additional_info = format!(
+            "PREVIEW, {}{}",
+            if opts.dry_run { "simplified, " } else { "" },
+            additional_info
+        );
         for (_, _, lock) in pending_changelog_changes
             .iter()
             .filter(|(_, has_changes, _)| *has_changes)

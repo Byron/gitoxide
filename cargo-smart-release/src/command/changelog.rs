@@ -1,6 +1,13 @@
 use std::io::Write;
 
-use crate::{bat, changelog::write::Linkables, command::changelog::Options, git, utils::will, ChangeLog};
+use crate::{
+    bat,
+    changelog::write::{Components, Linkables},
+    command::changelog::Options,
+    git,
+    utils::will,
+    ChangeLog,
+};
 
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let ctx = crate::Context::new(crates)?;
@@ -46,8 +53,16 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         );
         lock.with_mut(|file| {
             let mut buf = String::new();
-            log.write_to(&mut buf, &linkables)
-                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+            log.write_to(
+                &mut buf,
+                &linkables,
+                if opts.dry_run {
+                    Components::SECTION_TITLE
+                } else {
+                    Components::all()
+                },
+            )
+            .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
             file.write_all(buf.as_bytes())
         })?;
         if let Some(bat) = bat.as_ref() {

@@ -137,9 +137,14 @@ fn heading(level: usize) -> String {
 }
 
 impl ChangeLog {
-    pub fn write_to(&self, mut out: impl std::fmt::Write, link_mode: &Linkables) -> std::fmt::Result {
+    pub fn write_to(
+        &self,
+        mut out: impl std::fmt::Write,
+        link_mode: &Linkables,
+        components: Components,
+    ) -> std::fmt::Result {
         for section in &self.sections {
-            section.write_to(&mut out, link_mode, Components::all())?;
+            section.write_to(&mut out, link_mode, components)?;
         }
         Ok(())
     }

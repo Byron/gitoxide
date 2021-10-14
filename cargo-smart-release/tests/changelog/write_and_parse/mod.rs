@@ -53,7 +53,7 @@ fn conventional_write_empty_messages() -> Result {
     ] {
         for _round in 1..=2 {
             let mut md = String::new();
-            log.write_to(&mut md, link_mode)?;
+            log.write_to(&mut md, link_mode, changelog::write::Components::all())?;
             insta::assert_snapshot!(md);
 
             let parsed_log = ChangeLog::from_markdown(&md);
@@ -155,7 +155,7 @@ fn all_section_types_round_trips_lossy() -> Result {
     ] {
         // NOTE: we can't run this a second time as the statistical information will be gone (it was never parsed back)
         let mut md = String::new();
-        log.write_to(&mut md, link_mode)?;
+        log.write_to(&mut md, link_mode, changelog::write::Components::all())?;
         insta::assert_snapshot!(md);
 
         let parsed_log = ChangeLog::from_markdown(&md);
