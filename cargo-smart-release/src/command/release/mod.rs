@@ -217,7 +217,7 @@ fn perform_multi_version_release(
         cargo::publish_crate(publishee, &unpublished_crates, options)?;
         if let Some(tag_name) = git::create_version_tag(
             publishee,
-            &new_version,
+            new_version,
             commit_id.clone(),
             release_section_by_publishee
                 .get(&publishee.name.as_str())
