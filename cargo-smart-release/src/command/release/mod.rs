@@ -192,12 +192,6 @@ fn perform_multi_version_release(
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    log::info!(
-        "{} prepare releases of {}",
-        will(options.dry_run),
-        names_and_versions(&crates_to_publish_together)
-    );
-
     let (commit_id, release_section_by_publishee) =
         manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
             meta,
@@ -205,6 +199,12 @@ fn perform_multi_version_release(
             options,
             ctx,
         )?;
+
+    log::info!(
+        "{} prepare releases of {}",
+        will(options.dry_run),
+        names_and_versions(&crates_to_publish_together)
+    );
 
     crates_to_publish_together.reverse();
     let mut tag_names = Vec::new();
@@ -272,12 +272,6 @@ fn perform_single_release<'repo, 'a>(
 ) -> anyhow::Result<ReleaseCommitSections<'repo, 'a>> {
     let bump_spec = version::select_publishee_bump_spec(&publishee.name, ctx);
     let new_version = version::bump(publishee, bump_spec, ctx, &options)?;
-    log::info!(
-        "{} prepare release of {} v{}",
-        will(options.dry_run),
-        publishee.name,
-        new_version
-    );
     let new_version = new_version.to_string();
     let commit_id_and_changelog_sections = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
         meta,
@@ -285,6 +279,12 @@ fn perform_single_release<'repo, 'a>(
         options,
         ctx,
     )?;
+    log::info!(
+        "{} prepare release of {} v{}",
+        will(options.dry_run),
+        publishee.name,
+        new_version
+    );
     cargo::publish_crate(publishee, &[], options)?;
     Ok((new_version, commit_id_and_changelog_sections))
 }
