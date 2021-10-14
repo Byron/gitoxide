@@ -70,6 +70,7 @@ bitflags::bitflags! {
     pub struct Components: u8 {
         const SECTION_TITLE = 1<<0;
         const HTML_TAGS = 1<<1;
+        const DETAIL_TAGS = 1<<2;
     }
 }
 
@@ -224,8 +225,9 @@ impl section::Segment {
             Segment::Details(section::Data::Generated(segment::Details { commits_by_category }))
                 if !commits_by_category.is_empty() =>
             {
+                let write_details_tags = components.contains(Components::DETAIL_TAGS);
                 writeln!(out, "{} {}\n", heading(section_level), segment::Details::TITLE)?;
-                if write_html {
+                if write_details_tags {
                     writeln!(out, "{}", Section::READONLY_TAG)?;
                     writeln!(out, "{}\n", segment::Details::HTML_PREFIX)?;
                 }
@@ -235,7 +237,7 @@ impl section::Segment {
                         writeln!(out, "    - {} ({})", message.title, format_oid(&message.id, link_mode))?;
                     }
                 }
-                if write_html {
+                if write_details_tags {
                     writeln!(out, "{}\n", segment::Details::HTML_PREFIX_END)?;
                 }
             }

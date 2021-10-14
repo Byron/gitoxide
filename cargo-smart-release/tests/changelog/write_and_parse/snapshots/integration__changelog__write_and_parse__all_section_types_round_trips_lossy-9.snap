@@ -1,0 +1,10 @@
+---
+source: cargo-smart-release/tests/changelog/write_and_parse/mod.rs
+expression: buf.to_str()?
+
+---
+# Changelog
+
+my very own header
+
+

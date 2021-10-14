@@ -256,7 +256,7 @@ fn section_to_string(section: &Section, mode: WriteMode) -> Option<String> {
             &changelog::write::Linkables::AsText,
             match mode {
                 WriteMode::Tag => changelog::write::Components::empty(),
-                WriteMode::GitHubRelease => changelog::write::Components::HTML_TAGS,
+                WriteMode::GitHubRelease => changelog::write::Components::DETAIL_TAGS,
             },
         )
         .ok()

@@ -23,6 +23,14 @@
 [INFO ] WOULD create tag object a-v0.8.0 with changelog message, first line is: '### Commit Statistics'
 [INFO ] WOULD create tag object b-v0.8.0 with changelog message, first line is: '### Commit Statistics'
 [INFO ] WOULD create tag object c-v8.0.0 with changelog message, first line is: '### New Features'
-[INFO ] WOULD run "gh" "a-v0.8.0" "--notes" "### Commit Statistics\n\n<csr-read-only-do-not-edit/>\n\n - 1 commit contributed to the release.\n - 0 commits where understood as [conventional](https://www.conventionalcommits.org).\n - 0 issues like \'(#ID)\' where seen in commit messages\n\n### Commit Details\n\n<csr-read-only-do-not-edit/>\n\n<details><summary>view details</summary>\n\n * **Uncategorized**\n    - initial (5aca203)\n</details>\n\n" "--title" "a v0.8.0"
-[INFO ] WOULD run "gh" "b-v0.8.0" "--notes" "### Commit Statistics\n\n<csr-read-only-do-not-edit/>\n\n - 1 commit contributed to the release.\n - 0 commits where understood as [conventional](https://www.conventionalcommits.org).\n - 0 issues like \'(#ID)\' where seen in commit messages\n\n### Commit Details\n\n<csr-read-only-do-not-edit/>\n\n<details><summary>view details</summary>\n\n * **Uncategorized**\n    - initial (5aca203)\n</details>\n\n" "--title" "b v0.8.0"
-[INFO ] WOULD run "gh" "c-v8.0.0" "--notes" "### New Features\n\n - <csr-id-bdcf1d0b4c786b213b8d7750d82fe11532539bbd/> new\n\n### Commit Statistics\n\n<csr-read-only-do-not-edit/>\n\n - 2 commits contributed to the release.\n - 1 commit where understood as [conventional](https://www.conventionalcommits.org).\n - 0 issues like \'(#ID)\' where seen in commit messages\n\n### Commit Details\n\n<csr-read-only-do-not-edit/>\n\n<details><summary>view details</summary>\n\n * **Uncategorized**\n    - new (bdcf1d0)\n    - initial (5aca203)\n</details>\n\n" "--title" "c v8.0.0"
+[INFO ] WOULD run "gh" "a-v0.8.0" "--title" "a v0.8.0" "--notes" "### Commit Statistics
+    
+     - 1 commi…" [note truncated]
+[INFO ] WOULD run "gh" "b-v0.8.0" "--title" "b v0.8.0" "--notes" "### Commit Statistics
+    
+     - 1 commi…" [note truncated]
+[INFO ] WOULD run "gh" "c-v8.0.0" "--title" "c v8.0.0" "--notes" "### New Features
+    
+     - new
+    
+    ### Com…" [note truncated]

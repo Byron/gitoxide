@@ -1,0 +1,32 @@
+---
+source: cargo-smart-release/tests/changelog/write_and_parse/mod.rs
+expression: buf.to_str()?
+
+---
+* hello world
+	this
+##### Thanks Clippy
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 42 times to make code idiomatic. 
+
+##### Commit Statistics
+
+ - 100 commits contributed to the release over the course of 32 calendar days.
+ - 20 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 unique issues were worked on: #1, Uncategorized, #42
+
+##### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **#42**
+    - Just the title (e69de29)
+    - another title (e69de29)
+ * **Uncategorized**
+    - Just the title (e69de29)
+    - title and body (e69de29)
+</details>
+
+

@@ -168,6 +168,7 @@ fn all_section_types_round_trips_lossy() -> Result {
     for components in &[
         changelog::write::Components::empty(),
         changelog::write::Components::all(),
+        changelog::write::Components::DETAIL_TAGS,
     ] {
         for section in &log.sections {
             let mut buf = Vec::<u8>::new();
