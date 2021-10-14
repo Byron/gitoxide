@@ -168,16 +168,16 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         )?;
     }
 
+    let would_stop_release = !(changelog_ids_with_statistical_segments_only.is_empty()
+        && changelog_ids_probably_lacking_user_edits.is_empty());
     let message = format!(
         "{} {}{}",
-        if skip_publish {
-            "Bump"
-        } else if changelog_ids_with_statistical_segments_only.is_empty()
-            && changelog_ids_probably_lacking_user_edits.is_empty()
-        {
-            "Release"
-        } else {
+        if would_stop_release {
             "Adjusting changelogs prior to release of"
+        } else if skip_publish {
+            "Bump"
+        } else {
+            "Release"
         },
         names_and_versions(publishees),
         {
@@ -306,7 +306,12 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                     let crate_names = packages.iter().map(|p| p.name.as_str()).collect::<Vec<_>>().join(", ");
                     (!allow_fully_generated_changelogs).then(|| {
                         format!(
-                            "These changelogs need edits by hand to avoid being entirely generated: {}",
+                            "{} edits by hand to avoid being entirely generated: {}",
+                            if crate_names.len() == 1 {
+                                "This changelog needs"
+                            } else {
+                                "These changelogs need"
+                            },
                             crate_names
                         )
                     })
@@ -352,7 +357,12 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         }
         if !changelog_ids_probably_lacking_user_edits.is_empty() {
             log::warn!(
-                "These changelogs are likely to be fully generated from commit history or contain lower-case git-conventional headlines: {}{}",
+                "{} likely to be fully generated from commit history or contain lower-case git-conventional headlines: {}{}",
+                if changelog_ids_probably_lacking_user_edits.len() == 1 {
+                    "This changelog is"
+                } else {
+                    "These changelogs are"
+                },
                 comma_separated_crate_names(&changelog_ids_probably_lacking_user_edits),
                 if allow_fully_generated_changelogs {
                     ""
