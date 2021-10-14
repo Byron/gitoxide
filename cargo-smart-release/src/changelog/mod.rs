@@ -102,7 +102,7 @@ impl Section {
                     return false;
                 };
                 segments.iter().any(
-                    |s| matches!(s, section::Segment::Conventional(section::segment::Conventional {kind, removed, ..}) if removed.is_empty() && as_headline(*kind).is_none()),
+                    |s| matches!(s, section::Segment::Conventional(section::segment::Conventional {kind, removed, is_breaking, ..}) if *is_breaking && removed.is_empty() && as_headline(*kind).is_none()),
                 )
             }
         }
