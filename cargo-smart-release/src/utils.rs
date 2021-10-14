@@ -1,3 +1,5 @@
+use std::process::Stdio;
+
 use anyhow::anyhow;
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path},
@@ -6,7 +8,6 @@ use cargo_metadata::{
 use git_repository as git;
 use git_repository::bstr::{BStr, ByteSlice};
 use semver::Version;
-use std::process::Stdio;
 use time::OffsetDateTime;
 
 pub struct Program {

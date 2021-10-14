@@ -20,7 +20,9 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         Linkables::AsText
     } else {
         crate::git::remote_url()?
-            .map(|url| Linkables::AsLinks { repository_url: url })
+            .map(|url| Linkables::AsLinks {
+                repository_url: url.into(),
+            })
             .unwrap_or(Linkables::AsText)
     };
     for crate_name in &crate_names {

@@ -1,5 +1,5 @@
 use git_repository as git;
-use git_repository::bstr::ByteSlice;
+use git_repository::{bstr::ByteSlice, url::Scheme, Url};
 
 use crate::{
     changelog,
@@ -26,10 +26,44 @@ pub enum Linkables {
     /// Use markdown links to link directly to the linkable items
     AsLinks {
         /// The location of the repository to link to
-        repository_url: git::Url,
+        repository_url: RepositoryUrl,
     },
     /// Leave them in a textual representation for the hosting platform to auto-link them
     AsText,
+}
+
+#[derive(Clone)]
+pub struct RepositoryUrl {
+    pub inner: git::Url,
+}
+
+impl From<git::Url> for RepositoryUrl {
+    fn from(v: Url) -> Self {
+        RepositoryUrl { inner: v }
+    }
+}
+
+impl RepositoryUrl {
+    pub fn is_github(&self) -> bool {
+        self.inner.host.as_ref().map(|h| h == "github.com").unwrap_or(false)
+    }
+
+    pub fn github_https(&self) -> Option<String> {
+        match &self.inner.host {
+            Some(host) if host == "github.com" => match self.inner.scheme {
+                Scheme::Http | Scheme::Https | Scheme::Git => {
+                    format!("https://github.com/{}", self.inner.path.to_str_lossy()).into()
+                }
+                Scheme::Ssh => self
+                    .inner
+                    .user
+                    .as_ref()
+                    .map(|user| format!("https://github.com/{}/{}", user, self.inner.path.to_str_lossy())),
+                Scheme::Radicle | Scheme::File => None,
+            },
+            None | Some(_) => None,
+        }
+    }
 }
 
 bitflags::bitflags! {
@@ -275,17 +309,11 @@ impl section::Segment {
 
 fn format_category(cat: &Category, link_mode: &Linkables) -> String {
     match (cat, link_mode) {
-        (Category::Issue(id), Linkables::AsLinks { repository_url }) => match &repository_url.host {
-            Some(host) if host == "github.com" => {
-                format!(
-                    "[#{}](https://{}/{}/issues/{})",
-                    id,
-                    host,
-                    repository_url.path.to_str_lossy(),
-                    id
-                )
+        (Category::Issue(id), Linkables::AsLinks { repository_url }) => match repository_url.github_https() {
+            Some(base_url) => {
+                format!("[#{}]({}/issues/{})", id, base_url, id)
             }
-            Some(_) | None => format_category(cat, &Linkables::AsText),
+            None => format_category(cat, &Linkables::AsText),
         },
         (_, _) => cat.to_string(),
     }
@@ -294,17 +322,11 @@ fn format_category(cat: &Category, link_mode: &Linkables) -> String {
 fn format_oid(id: &git::oid, link_mode: &Linkables) -> String {
     match link_mode {
         Linkables::AsText => id.to_hex(7).to_string(),
-        Linkables::AsLinks { repository_url } => match &repository_url.host {
-            Some(host) if host == "github.com" => {
-                format!(
-                    "[`{}`](https://{}/{}/commit/{})",
-                    id.to_hex(7),
-                    host,
-                    repository_url.path.to_str_lossy(),
-                    id
-                )
+        Linkables::AsLinks { repository_url } => match repository_url.github_https() {
+            Some(base_url) => {
+                format!("[`{}`]({}/commit/{})", id.to_hex(7), base_url, id)
             }
-            None | Some(_) => format_oid(id, &Linkables::AsText),
+            None => format_oid(id, &Linkables::AsText),
         },
     }
 }

@@ -1,5 +1,6 @@
-use crate::utils::Program;
 use std::{io, path::Path, process::Command};
+
+use crate::utils::Program;
 
 pub struct Support {
     bat: Program,

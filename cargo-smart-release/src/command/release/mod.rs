@@ -5,10 +5,9 @@ use cargo_metadata::{Dependency, DependencyKind, Metadata, Package};
 use crates_index::Index;
 use git_repository::bstr::ByteVec;
 
-use crate::changelog::write::Linkables;
 use crate::{
     changelog,
-    changelog::Section,
+    changelog::{write::Linkables, Section},
     command::release::Options,
     utils::{
         is_dependency_with_version_requirement, names_and_versions, package_by_id, package_by_name,
@@ -51,7 +50,9 @@ impl Context {
             Linkables::AsText
         } else {
             crate::git::remote_url()?
-                .map(|url| Linkables::AsLinks { repository_url: url })
+                .map(|url| Linkables::AsLinks {
+                    repository_url: url.into(),
+                })
                 .unwrap_or(Linkables::AsText)
         };
         Ok(Context {
