@@ -1,10 +1,14 @@
 #![allow(dead_code)]
 
-use crate::command::release::Options;
-use crate::utils::{will, Program};
-use crate::Context;
-use cargo_metadata::Package;
 use std::process::Command;
+
+use cargo_metadata::Package;
+
+use crate::{
+    command::release::Options,
+    utils::{will, Program},
+    Context,
+};
 
 struct Support {
     gh: Program,
@@ -18,7 +22,9 @@ impl Default for Support {
 
 impl Support {
     fn new() -> Self {
-        Support { gh: Program::new("gh") }
+        Support {
+            gh: Program::named("gh"),
+        }
     }
 }
 
@@ -39,11 +45,11 @@ pub fn create_release(
     if dry_run && verbose {
         log::info!("{} run {:?}", will(dry_run), cmd);
     }
-    if !Program::new("gh").found {
+    if !Program::named("gh").found {
         log::warn!("To create github releases, please install the 'gh' program and try again");
         return Ok(());
     } else if !dry_run && !cmd.status()?.success() {
-        log::warn!("'gh' tool execution failed - this is considered non-critical and we keep trying.");
+        log::warn!("'gh' tool execution failed - we will keep trying, and you may try to create the release manually using the command invocation above.");
     }
     Ok(())
 }

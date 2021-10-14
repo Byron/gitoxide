@@ -9,3 +9,4 @@
 [WARN ] WOULD ask for review after commit as the changelog entry is empty for crate: a
 [INFO ] WOULD run "git" "commit" "-am" "Bump a v0.8.0"
 [INFO ] WOULD create tag object a-v0.8.0 with changelog message, first line is: '### Commit Statistics'
+[INFO ] WOULD run "gh" "a-v0.8.0" "--notes" "### Commit Statistics\n\n<csr-read-only-do-not-edit/>\n\n - 1 commit contributed to the release.\n - 0 commits where understood as [conventional](https://www.conventionalcommits.org).\n - 0 issues like \'(#ID)\' where seen in commit messages\n\n### Commit Details\n\n<csr-read-only-do-not-edit/>\n\n<details><summary>view details</summary>\n\n * **Uncategorized**\n    - initial (5aca203)\n</details>\n\n" "--title" "a v0.8.0"

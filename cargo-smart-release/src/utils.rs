@@ -15,7 +15,7 @@ pub struct Program {
 }
 
 impl Program {
-    pub fn new(name: &'static str) -> Self {
+    pub fn named(name: &'static str) -> Self {
         Program {
             found: std::process::Command::new(name)
                 .stdin(Stdio::null())

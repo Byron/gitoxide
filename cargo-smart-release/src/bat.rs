@@ -15,7 +15,7 @@ impl Default for Support {
 impl Support {
     pub fn new() -> Self {
         Support {
-            bat: Program::new("bat"),
+            bat: Program::named("bat"),
         }
     }
 

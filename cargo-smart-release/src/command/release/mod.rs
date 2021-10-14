@@ -209,7 +209,7 @@ fn perform_multi_version_release(
 
     crates_to_publish_together.reverse();
     let mut tag_names = Vec::new();
-    while let Some((publishee, new_version)) = crates_to_publish_together.pop() {
+    for (publishee, new_version) in crates_to_publish_together.iter().rev() {
         let unpublished_crates: Vec<_> = crates_to_publish_together
             .iter()
             .map(|(p, _)| p.name.to_owned())
@@ -230,6 +230,16 @@ fn perform_multi_version_release(
         };
     }
     git::push_tags_and_head(tag_names.iter(), options)?;
+    if options.allow_changelog_github_release {
+        for (publishee, new_version) in crates_to_publish_together.iter().rev() {
+            if let Some(message) = release_section_by_publishee
+                .get(&publishee.name.as_str())
+                .and_then(|s| section_to_string(s, WriteMode::GitHubRelease))
+            {
+                github::create_release(publishee, new_version, &message, options, &ctx.base)?;
+            }
+        }
+    }
     Ok(())
 }
 

@@ -9,3 +9,4 @@
 [INFO ] WOULD persist changes to 1 manifests and 1 changelogs with: "Bump a v0.8.0"
 [INFO ] WOULD run "git" "commit" "-am" "Bump a v0.8.0"
 [INFO ] WOULD create tag object a-v0.8.0 with changelog message, first line is: '### New Features'
+[INFO ] WOULD run "gh" "a-v0.8.0" "--notes" "### New Features\n\n - <csr-id-336a39614aa376205db51707ac40366e1b4fd817/> new\n\n### Commit Statistics\n\n<csr-read-only-do-not-edit/>\n\n - 2 commits contributed to the release.\n - 1 commit where understood as [conventional](https://www.conventionalcommits.org).\n - 0 issues like \'(#ID)\' where seen in commit messages\n\n### Commit Details\n\n<csr-read-only-do-not-edit/>\n\n<details><summary>view details</summary>\n\n * **Uncategorized**\n    - new (336a396)\n    - initial (5aca203)\n</details>\n\n" "--title" "a v0.8.0"
