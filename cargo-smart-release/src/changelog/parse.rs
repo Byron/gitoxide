@@ -332,7 +332,7 @@ fn parse_id_fallback_to_user_message(
                 .take_while(|(e, _r)| !matches!(e, Event::End(Tag::Item)))
                 .map(|(_, r)| r);
             let start = events.next();
-            let end = events.last();
+            let end = events.last().or(start.clone());
             if let Some(title_and_body) = start
                 .map(|r| r.start)
                 .and_then(|start| end.map(|r| markdown[start..r.end].trim()))
