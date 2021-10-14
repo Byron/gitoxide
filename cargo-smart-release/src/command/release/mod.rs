@@ -3,7 +3,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use anyhow::bail;
 use cargo_metadata::{Dependency, DependencyKind, Metadata, Package};
 use crates_index::Index;
-use git_repository::bstr::ByteVec;
 
 use crate::{
     changelog,
@@ -249,7 +248,7 @@ enum WriteMode {
 }
 
 fn section_to_string(section: &Section, mode: WriteMode) -> Option<String> {
-    let mut b = Vec::<u8>::new();
+    let mut b = String::new();
     section
         .write_to(
             &mut b,
@@ -260,7 +259,7 @@ fn section_to_string(section: &Section, mode: WriteMode) -> Option<String> {
             },
         )
         .ok()
-        .and_then(|_| b.into_string().ok())
+        .map(|_| b)
 }
 
 type ReleaseCommitSections<'repo, 'a> = (String, (Option<Oid<'repo>>, BTreeMap<&'a str, changelog::Section>));

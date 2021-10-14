@@ -5,7 +5,6 @@ use cargo_smart_release::{
     changelog::{section, section::segment::conventional, Section},
     ChangeLog,
 };
-use git_repository::bstr::ByteSlice;
 use git_testtools::hex_to_id;
 use nom::AsBytes;
 
@@ -53,12 +52,11 @@ fn conventional_write_empty_messages() -> Result {
         },
     ] {
         for _round in 1..=2 {
-            let mut buf = Vec::<u8>::new();
-            log.write_to(&mut buf, link_mode)?;
-            let md = buf.to_str()?;
+            let mut md = String::new();
+            log.write_to(&mut md, link_mode)?;
             insta::assert_snapshot!(md);
 
-            let parsed_log = ChangeLog::from_markdown(md);
+            let parsed_log = ChangeLog::from_markdown(&md);
             assert_eq!(parsed_log, log, "we can parse this back losslessly");
         }
     }
@@ -67,9 +65,9 @@ fn conventional_write_empty_messages() -> Result {
         changelog::write::Components::all(),
     ] {
         for section in &log.sections {
-            let mut buf = Vec::<u8>::new();
+            let mut buf = String::new();
             section.write_to(&mut buf, &changelog::write::Linkables::AsText, *components)?;
-            insta::assert_snapshot!(buf.to_str()?);
+            insta::assert_snapshot!(buf);
         }
     }
     Ok(())
@@ -156,12 +154,11 @@ fn all_section_types_round_trips_lossy() -> Result {
         },
     ] {
         // NOTE: we can't run this a second time as the statistical information will be gone (it was never parsed back)
-        let mut buf = Vec::<u8>::new();
-        log.write_to(&mut buf, link_mode)?;
-        let md = buf.to_str()?;
+        let mut md = String::new();
+        log.write_to(&mut md, link_mode)?;
         insta::assert_snapshot!(md);
 
-        let parsed_log = ChangeLog::from_markdown(md);
+        let parsed_log = ChangeLog::from_markdown(&md);
         assert_eq!(parsed_log, log, "we must be able to parse the exact input back");
     }
 
@@ -171,9 +168,9 @@ fn all_section_types_round_trips_lossy() -> Result {
         changelog::write::Components::DETAIL_TAGS,
     ] {
         for section in &log.sections {
-            let mut buf = Vec::<u8>::new();
+            let mut buf = String::new();
             section.write_to(&mut buf, &changelog::write::Linkables::AsText, *components)?;
-            insta::assert_snapshot!(buf.to_str()?);
+            insta::assert_snapshot!(buf);
         }
     }
     Ok(())

@@ -2,7 +2,6 @@ use std::{borrow::Cow, collections::BTreeMap, io::Write, str::FromStr};
 
 use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
-use git_repository::bstr::ByteSlice;
 use semver::{Op, Version, VersionReq};
 
 use super::{cargo, git, version, Context, Oid, Options};
@@ -122,12 +121,10 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 }
                 changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
             };
-            let mut write_buf = Vec::<u8>::new();
+            let mut write_buf = String::new();
             log.write_to(&mut write_buf, &ctx.changelog_links)?;
-            lock.with_mut(|file| file.write_all(&write_buf))?;
-            made_change |= previous_content
-                .map(|previous| write_buf.to_str_lossy() != previous)
-                .unwrap_or(true);
+            lock.with_mut(|file| file.write_all(write_buf.as_bytes()))?;
+            made_change |= previous_content.map(|previous| write_buf != previous).unwrap_or(true);
             pending_changelog_changes.push((publishee, log_init_state.is_modified(), lock));
             release_section_by_publishee.insert(publishee.name.as_str(), log.take_recent_release_section());
         }

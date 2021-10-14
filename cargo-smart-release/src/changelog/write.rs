@@ -83,12 +83,12 @@ impl Section {
     /// objects.
     pub fn write_to(
         &self,
-        mut out: impl std::io::Write,
+        mut out: impl std::fmt::Write,
         link_mode: &Linkables,
         components: Components,
-    ) -> std::io::Result<()> {
+    ) -> std::fmt::Result {
         match self {
-            Section::Verbatim { text, .. } => out.write_all(text.as_bytes()),
+            Section::Verbatim { text, .. } => out.write_str(text),
             Section::Release {
                 name,
                 date,
@@ -100,7 +100,7 @@ impl Section {
                 if components.contains(Components::SECTION_TITLE) {
                     write!(out, "{} {}", heading(*heading_level), name)?;
                     match date {
-                        None => out.write_all(b"\n\n"),
+                        None => out.write_str("\n\n"),
                         Some(date) => writeln!(
                             out,
                             " ({:04}-{:02}-{:02})\n",
@@ -123,7 +123,7 @@ impl Section {
                 }
                 if !unknown.is_empty() && components.contains(Components::HTML_TAGS) {
                     writeln!(out, "{}", Section::UNKNOWN_TAG_START)?;
-                    out.write_all(unknown.as_bytes())?;
+                    out.write_str(unknown)?;
                     writeln!(out, "{}", Section::UNKNOWN_TAG_END)?;
                 }
                 Ok(())
@@ -137,7 +137,7 @@ fn heading(level: usize) -> String {
 }
 
 impl ChangeLog {
-    pub fn write_to(&self, mut out: impl std::io::Write, link_mode: &Linkables) -> std::io::Result<()> {
+    pub fn write_to(&self, mut out: impl std::fmt::Write, link_mode: &Linkables) -> std::fmt::Result {
         for section in &self.sections {
             section.write_to(&mut out, link_mode, Components::all())?;
         }
@@ -151,11 +151,11 @@ impl section::Segment {
         section_level: usize,
         link_mode: &Linkables,
         components: Components,
-        mut out: impl std::io::Write,
-    ) -> std::io::Result<()> {
+        mut out: impl std::fmt::Write,
+    ) -> std::fmt::Result {
         let write_html = components.contains(Components::HTML_TAGS);
         match self {
-            Segment::User { markdown } => out.write_all(markdown.as_bytes())?,
+            Segment::User { markdown } => out.write_str(markdown)?,
             Segment::Conventional(segment::Conventional {
                 kind,
                 is_breaking,
@@ -207,7 +207,7 @@ impl section::Segment {
                                 }
                             }
                             Message::User { markdown } => {
-                                out.write_all(markdown.as_bytes())?;
+                                out.write_str(markdown)?;
                                 if !markdown.ends_with('\n') {
                                     writeln!(out)?;
                                 }
