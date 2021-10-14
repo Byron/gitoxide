@@ -13,22 +13,16 @@
 [INFO ] Auto-bumped 'c' patch version to 8.0.1 from 8.0.0.
 [INFO ] Using current version 8.0.0 of crate c instead of bumped one 8.0.1.
 [INFO ] Congratulations for the new release of 'c' 🎉
-[INFO ] WOULD prepare releases of a v0.8.0, b v0.8.0, c v8.0.0
 [INFO ] WOULD modify existing changelog for 'a'.
 [INFO ] WOULD modify existing changelog for 'b'.
 [INFO ] WOULD create a new changelog for 'c'.
-[INFO ] WOULD persist changes to 3 manifests and 3 changelogs (1 new) with: "Bump a v0.8.0, b v0.8.0, c v8.0.0"
+[INFO ] WOULD persist changes to 3 manifests and 3 changelogs (1 new) with: "Adjusting changelogs prior to release of a v0.8.0, b v0.8.0, c v8.0.0"
 [WARN ] WOULD ask for review after commit as the changelog entry is empty for crates: a, b, c
-[INFO ] WOULD run "git" "commit" "-am" "Bump a v0.8.0, b v0.8.0, c v8.0.0"
+[INFO ] WOULD run "git" "commit" "-am" "Adjusting changelogs prior to release of a v0.8.0, b v0.8.0, c v8.0.0"
+[INFO ] WOULD prepare releases of a v0.8.0, b v0.8.0, c v8.0.0
 [INFO ] WOULD create tag object a-v0.8.0 with changelog message, first line is: '### Commit Statistics'
 [INFO ] WOULD create tag object b-v0.8.0 with changelog message, first line is: '### Commit Statistics'
 [INFO ] WOULD create tag object c-v8.0.0 with changelog message, first line is: '### Commit Statistics'
-[INFO ] WOULD run "gh" "a-v0.8.0" "--title" "a v0.8.0" "--notes" "### Commit Statistics
-    
-     - 1 commi…" [note truncated]
-[INFO ] WOULD run "gh" "b-v0.8.0" "--title" "b v0.8.0" "--notes" "### Commit Statistics
-    
-     - 1 commi…" [note truncated]
-[INFO ] WOULD run "gh" "c-v8.0.0" "--title" "c v8.0.0" "--notes" "### Commit Statistics
-    
-     - 1 commi…" [note truncated]
+[INFO ] WOULD run "gh" "release" "create" "a-v0.8.0" "--title" "a v0.8.0" "--notes" "### Commit Stat…" [note truncated]
+[INFO ] WOULD run "gh" "release" "create" "b-v0.8.0" "--title" "b v0.8.0" "--notes" "### Commit Stat…" [note truncated]
+[INFO ] WOULD run "gh" "release" "create" "c-v8.0.0" "--title" "c v8.0.0" "--notes" "### Commit Stat…" [note truncated]

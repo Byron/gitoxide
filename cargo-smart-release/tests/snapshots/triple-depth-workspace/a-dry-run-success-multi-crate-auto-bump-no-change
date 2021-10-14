@@ -4,12 +4,10 @@
 [INFO ] Auto-bumped 'a' patch version to 0.8.1 from 0.8.0.
 [INFO ] Using current version 0.8.0 of crate a instead of bumped one 0.8.1.
 [INFO ] Congratulations for the new release of 'a' 🎉
-[INFO ] WOULD prepare releases of a v0.8.0
 [INFO ] WOULD modify existing changelog for 'a'.
-[INFO ] WOULD persist changes to 1 manifests and 1 changelogs with: "Bump a v0.8.0"
+[INFO ] WOULD persist changes to 1 manifests and 1 changelogs with: "Adjusting changelogs prior to release of a v0.8.0"
 [WARN ] WOULD ask for review after commit as the changelog entry is empty for crate: a
-[INFO ] WOULD run "git" "commit" "-am" "Bump a v0.8.0"
+[INFO ] WOULD run "git" "commit" "-am" "Adjusting changelogs prior to release of a v0.8.0"
+[INFO ] WOULD prepare releases of a v0.8.0
 [INFO ] WOULD create tag object a-v0.8.0 with changelog message, first line is: '### Commit Statistics'
-[INFO ] WOULD run "gh" "a-v0.8.0" "--title" "a v0.8.0" "--notes" "### Commit Statistics
-    
-     - 1 commi…" [note truncated]
+[INFO ] WOULD run "gh" "release" "create" "a-v0.8.0" "--title" "a v0.8.0" "--notes" "### Commit Stat…" [note truncated]

@@ -4,7 +4,6 @@
 [WARN ] The working tree has changes which will prevent a release with --execute unless --allow-dirty is also specified. The latter isn't recommended.
 [INFO ] Congratulations for the new release of 'a' 🎉
 [INFO ] Congratulations for the new release of 'b' 🎉
-[INFO ] WOULD prepare releases of a v0.9.0, b v0.9.0
 [INFO ] WOULD modify existing changelog for 'a'.
 [INFO ] WOULD modify existing changelog for 'b'.
 [INFO ] Pending 'a' manifest version update: "0.9.0"
@@ -12,14 +11,11 @@
 [INFO ] Pending 'b' manifest dependencies update: 'a = "^0.9.0"' (from  "0.8.0" )
 [INFO ] Pending 'c' manifest version update: "8.1.0"
 [INFO ] Pending 'c' manifest dependencies update: 'b = "^0.9.0"' (from  "0.8.0" )
-[INFO ] WOULD persist changes to 3 manifests and 2 changelogs with: "Bump a v0.9.0, b v0.9.0, safety bump c v8.1.0"
+[INFO ] WOULD persist changes to 3 manifests and 2 changelogs with: "Adjusting changelogs prior to release of a v0.9.0, b v0.9.0, safety bump c v8.1.0"
 [WARN ] WOULD ask for review after commit as the changelog entry is empty for crates: a, b
-[INFO ] WOULD run "git" "commit" "-am" "Bump a v0.9.0, b v0.9.0, safety bump c v8.1.0"
+[INFO ] WOULD run "git" "commit" "-am" "Adjusting changelogs prior to release of a v0.9.0, b v0.9.0, safety bump c v8.1.0"
+[INFO ] WOULD prepare releases of a v0.9.0, b v0.9.0
 [INFO ] WOULD create tag object a-v0.9.0 with changelog message, first line is: '### Commit Statistics'
 [INFO ] WOULD create tag object b-v0.9.0 with changelog message, first line is: '### Commit Statistics'
-[INFO ] WOULD run "gh" "a-v0.9.0" "--title" "a v0.9.0" "--notes" "### Commit Statistics
-    
-     - 1 commi…" [note truncated]
-[INFO ] WOULD run "gh" "b-v0.9.0" "--title" "b v0.9.0" "--notes" "### Commit Statistics
-    
-     - 1 commi…" [note truncated]
+[INFO ] WOULD run "gh" "release" "create" "a-v0.9.0" "--title" "a v0.9.0" "--notes" "### Commit Stat…" [note truncated]
+[INFO ] WOULD run "gh" "release" "create" "b-v0.9.0" "--title" "b v0.9.0" "--notes" "### Commit Stat…" [note truncated]
