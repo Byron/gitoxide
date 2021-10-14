@@ -6,7 +6,25 @@ use cargo_metadata::{
 use git_repository as git;
 use git_repository::bstr::{BStr, ByteSlice};
 use semver::Version;
+use std::process::Stdio;
 use time::OffsetDateTime;
+
+pub struct Program {
+    pub found: bool,
+}
+
+impl Program {
+    pub fn new(name: &'static str) -> Self {
+        Program {
+            found: std::process::Command::new(name)
+                .stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .status()
+                .is_ok(),
+        }
+    }
+}
 
 pub fn will(not_really: bool) -> &'static str {
     if not_really {

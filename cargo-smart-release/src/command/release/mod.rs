@@ -17,6 +17,7 @@ use crate::{
 
 mod cargo;
 mod git;
+mod github;
 mod manifest;
 mod version;
 

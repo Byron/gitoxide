@@ -1,7 +1,8 @@
+use crate::utils::Program;
 use std::{io, path::Path, process::Command};
 
 pub struct Support {
-    bat_found: bool,
+    bat: Program,
 }
 
 impl Default for Support {
@@ -13,12 +14,12 @@ impl Default for Support {
 impl Support {
     pub fn new() -> Self {
         Support {
-            bat_found: Command::new("bat").arg("--version").output().is_ok(),
+            bat: Program::new("bat"),
         }
     }
 
     pub fn display_to_tty(&self, path: &Path) -> io::Result<()> {
-        if !self.bat_found {
+        if !self.bat.found {
             log::info!(
                 "Would want to use 'bat' for colored preview of '{}', but it wasn't available in the PATH.",
                 path.display()
