@@ -37,7 +37,8 @@ pub fn create_release(
 ) -> anyhow::Result<()> {
     let tag_name = crate::utils::tag_name(publishee, new_version, &ctx.repo);
     let mut cmd = Command::new("gh");
-    cmd.arg(&tag_name)
+    cmd.args(["release", "create"])
+        .arg(&tag_name)
         .arg("--title")
         .arg(format!("{} v{}", publishee.name, new_version))
         .arg("--notes");
@@ -46,7 +47,7 @@ pub fn create_release(
             "{} run {:?} \"{}…\" [note truncated]",
             will(dry_run),
             cmd,
-            notes.chars().take(33).collect::<String>()
+            notes.chars().take(15).collect::<String>()
         );
     }
 
