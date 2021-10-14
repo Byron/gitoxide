@@ -4,6 +4,8 @@ use clap::{AppSettings, Clap};
 #[clap(setting = AppSettings::SubcommandRequired)]
 #[clap(setting = AppSettings::ColoredHelp)]
 #[clap(setting = AppSettings::DisableHelpSubcommand)]
+#[clap(setting = AppSettings::DisableVersionFlag)]
+#[clap(bin_name = "cargo")]
 /// Release workspace crates fearlessly.
 ///
 /// Use --execute to actually perform the operation.
@@ -15,8 +17,7 @@ pub struct Args {
 #[derive(Clap)]
 pub enum SubCommands {
     #[clap(setting = AppSettings::ColoredHelp)]
-    #[clap(setting = AppSettings::DisableVersionFlag)]
-    #[clap(name = "smart-release")]
+    #[clap(name = "smart-release", version = clap::crate_version!())]
     /// Release workspace crates fearlessly.
     ///
     /// Use --execute to actually perform the operation.
@@ -168,8 +169,7 @@ pub enum SubCommands {
         ignore_instability: bool,
     },
     #[clap(setting = AppSettings::ColoredHelp)]
-    #[clap(setting = AppSettings::DisableVersionFlag)]
-    #[clap(name = "changelog")]
+    #[clap(name = "changelog", version = clap::crate_version!())]
     /// Generate changelogs from commit histories, non-destructively.
     ///
     /// Use --write to actually write generated changelogs
