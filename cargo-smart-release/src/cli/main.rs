@@ -1,14 +1,15 @@
 mod options;
-use options::{Args, ChangeLog, SmartRelease, SubCommands};
+use clap::Clap;
+use options::{Args, SubCommands};
 
 use cargo_smart_release::command;
 
 fn main() -> anyhow::Result<()> {
-    let args: Args = argh::from_env();
+    let args: Args = Args::parse();
     init_logging();
 
     match args.subcommands {
-        SubCommands::Changelog(ChangeLog {
+        SubCommands::Changelog {
             write,
             crates,
             no_dependencies,
@@ -16,7 +17,7 @@ fn main() -> anyhow::Result<()> {
             no_links,
             without,
             allow_dirty,
-        }) => command::changelog(
+        } => command::changelog(
             command::changelog::Options {
                 dry_run: !write,
                 allow_dirty,
@@ -27,7 +28,7 @@ fn main() -> anyhow::Result<()> {
             },
             crates,
         )?,
-        SubCommands::SmartRelease(SmartRelease {
+        SubCommands::SmartRelease {
             execute,
             verbose,
             bump,
@@ -53,7 +54,7 @@ fn main() -> anyhow::Result<()> {
             no_dependencies,
             no_multi_crate_release,
             no_isolate_dependencies_from_breaking_changes,
-        }) => command::release(
+        } => command::release(
             command::release::Options {
                 dry_run: !execute,
                 verbose: execute || verbose,

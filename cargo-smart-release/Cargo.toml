@@ -28,7 +28,7 @@ cache-efficiency-debug = ["git-repository/cache-efficiency-debug"]
 [dependencies]
 git-repository = { version ="^0.10.0", path = "../git-repository", features = ["unstable"] }
 anyhow = "1.0.42"
-argh = { version = "0.1.5", default-features = false }
+clap = { version = "3.0.0-beta.4" }
 env_logger = { version = "0.9.0", default-features = false, features = ["humantime", "termcolor", "atty"] }
 cargo_metadata = "0.14.0"
 log = "0.4.14"

@@ -345,10 +345,10 @@ name = "cargo-smart-release"
 version = "0.4.0"
 dependencies = [
  "anyhow",
- "argh",
  "bitflags",
  "cargo_metadata",
  "cargo_toml",
+ "clap 3.0.0-beta.4",
  "crates-index",
  "env_logger",
  "git-conventional",
