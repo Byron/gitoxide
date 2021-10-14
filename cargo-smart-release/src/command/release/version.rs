@@ -152,9 +152,9 @@ fn smallest_necessary_version_relative_to_crates_index(
                     new_version
                 );
             }
-            if bump_when_needed && package.version > latest_published_version {
+            if bump_when_needed && package.version > latest_published_version && new_version != package.version {
                 let verbose = if package_version_must_be_breaking {
-                    if rhs_is_breaking_bump_for_lhs(&package.version, &new_version) {
+                    if rhs_is_breaking_bump_for_lhs(&latest_published_version, &package.version) {
                         new_version = package.version.clone();
                         verbose
                     } else {
