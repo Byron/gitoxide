@@ -19,7 +19,7 @@ impl Support {
         }
     }
 
-    pub fn display_to_tty(&self, path: &Path) -> io::Result<()> {
+    pub fn display_to_tty(&self, path: &Path, path_for_title: &Path) -> io::Result<()> {
         if !self.bat.found {
             log::info!(
                 "Would want to use 'bat' for colored preview of '{}', but it wasn't available in the PATH.",
@@ -28,7 +28,8 @@ impl Support {
             return Ok(());
         }
         if Command::new("bat")
-            .args(&["--paging=always", "-l=md"])
+            .args(&["--paging=always", "-l=md", "--file-name"])
+            .arg(path_for_title)
             .arg(path)
             .status()?
             .success()

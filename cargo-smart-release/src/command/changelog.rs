@@ -50,7 +50,10 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
             file.write_all(buf.as_bytes())
         })?;
         if let Some(bat) = bat.as_ref() {
-            bat.display_to_tty(lock.lock_path())?;
+            bat.display_to_tty(
+                lock.lock_path(),
+                lock.resource_path().strip_prefix(&ctx.root.to_path_buf())?,
+            )?;
         }
         if !opts.dry_run {
             pending_changes.push(lock);

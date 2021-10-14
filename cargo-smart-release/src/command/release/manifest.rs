@@ -239,7 +239,10 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             .iter()
             .filter(|(_, has_changes, _)| *has_changes)
         {
-            bat.display_to_tty(lock.lock_path())?;
+            bat.display_to_tty(
+                lock.lock_path(),
+                lock.resource_path().strip_prefix(&ctx.base.root.to_path_buf())?,
+            )?;
         }
     }
 
