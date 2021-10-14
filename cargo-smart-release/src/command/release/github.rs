@@ -38,18 +38,27 @@ pub fn create_release(
     let tag_name = crate::utils::tag_name(publishee, new_version, &ctx.repo);
     let mut cmd = Command::new("gh");
     cmd.arg(&tag_name)
-        .arg("--notes")
-        .arg(notes)
         .arg("--title")
-        .arg(format!("{} v{}", publishee.name, new_version));
+        .arg(format!("{} v{}", publishee.name, new_version))
+        .arg("--notes");
     if dry_run && verbose {
-        log::info!("{} run {:?}", will(dry_run), cmd);
+        log::info!(
+            "{} run {:?} \"{}…\" [note truncated]",
+            will(dry_run),
+            cmd,
+            notes.chars().take(33).collect::<String>()
+        );
     }
+
+    cmd.arg(notes);
     if !Program::named("gh").found {
         log::warn!("To create github releases, please install the 'gh' program and try again");
         return Ok(());
     } else if !dry_run && !cmd.status()?.success() {
-        log::warn!("'gh' tool execution failed - we will keep trying, and you may try to create the release manually using the command invocation above.");
+        log::warn!(
+            "'gh' tool execution failed - we will keep trying, and you may try to create the release with: {:?}",
+            cmd
+        );
     }
     Ok(())
 }
