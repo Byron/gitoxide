@@ -1,6 +1,6 @@
 ---
 source: cargo-smart-release/tests/changelog/write_and_parse/mod.rs
-expression: buf.to_str()?
+expression: buf
 
 ---
 #### v1.0.2-beta.2 (1970-01-01)
@@ -17,6 +17,7 @@ expression: buf.to_str()?
    second line
    
    another paragraph
+ - <csr-id-0000000000000000000000000000000000000004/> spelling. Hello
  - just another user message, this time
    with multiple lines
 

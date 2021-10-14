@@ -34,6 +34,11 @@ fn conventional_write_empty_messages() -> Result {
                         title: "this messages comes straight from git conventional and _may_ contain markdown".into(),
                         body: Some("first line\nsecond line\n\nanother paragraph".into()),
                     },
+                    conventional::Message::Generated {
+                        id: hex_to_id("0000000000000000000000000000000000000004"),
+                        title: "spelling. Hello".into(),
+                        body: None,
+                    },
                     conventional::Message::User {
                         markdown:
                             " - just another user message, this time\n   with multiple lines\n\n   and a new paragraph"
@@ -51,6 +56,7 @@ fn conventional_write_empty_messages() -> Result {
             repository_url: git_repository::Url::try_from(b"https://github.com/user/repo".as_bytes())?.into(),
         },
     ] {
+        let log = log.clone();
         for _round in 1..=2 {
             let mut md = String::new();
             log.write_to(&mut md, link_mode, changelog::write::Components::all())?;

@@ -1,6 +1,6 @@
 ---
 source: cargo-smart-release/tests/changelog/write_and_parse/mod.rs
-expression: buf.to_str()?
+expression: buf
 
 ---
 ##### New Features (BREAKING)
@@ -11,6 +11,7 @@ expression: buf.to_str()?
    second line
    
    another paragraph
+ - spelling. Hello
  - just another user message, this time
    with multiple lines
 
