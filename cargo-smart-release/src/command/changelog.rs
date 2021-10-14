@@ -53,6 +53,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
             bat.display_to_tty(
                 lock.lock_path(),
                 lock.resource_path().strip_prefix(&ctx.root.to_path_buf())?,
+                "PREVIEW",
             )?;
         }
         if !opts.dry_run {

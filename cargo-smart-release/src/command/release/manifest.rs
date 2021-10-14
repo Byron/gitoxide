@@ -229,12 +229,19 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     }
 
     if !pending_changelog_changes.is_empty() && preview {
+        let additional_info =
+            "use --no-changelog-preview to disable or Ctrl-C to abort, or the 'changelog' subcommand.";
         log::info!(
-            "About to preview {} pending changelog(s), use --no-changelog-preview to disable or Ctrl-C to abort, or the 'changelog' subcommand to write it out for adjustments.",
-            pending_changelog_changes.iter().filter(|(_, has_changes, _)| *has_changes).count()
+            "About to preview {} pending changelog(s), {}",
+            pending_changelog_changes
+                .iter()
+                .filter(|(_, has_changes, _)| *has_changes)
+                .count(),
+            additional_info
         );
 
         let bat = crate::bat::Support::new();
+        let additional_info = format!("PREVIEW, {}", additional_info);
         for (_, _, lock) in pending_changelog_changes
             .iter()
             .filter(|(_, has_changes, _)| *has_changes)
@@ -242,6 +249,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             bat.display_to_tty(
                 lock.lock_path(),
                 lock.resource_path().strip_prefix(&ctx.base.root.to_path_buf())?,
+                &additional_info,
             )?;
         }
     }
