@@ -2,7 +2,8 @@
 
 use crate::command::release::Options;
 use crate::utils::{will, Program};
-use git_repository::bstr::{BStr, ByteSlice};
+use crate::Context;
+use cargo_metadata::Package;
 use std::process::Command;
 
 struct Support {
@@ -21,10 +22,20 @@ impl Support {
     }
 }
 
-pub fn create_release(tag_name: &BStr, notes: &str, Options { verbose, dry_run, .. }: Options) -> anyhow::Result<()> {
+pub fn create_release(
+    publishee: &Package,
+    new_version: &str,
+    notes: &str,
+    Options { verbose, dry_run, .. }: Options,
+    ctx: &Context,
+) -> anyhow::Result<()> {
+    let tag_name = crate::utils::tag_name(publishee, new_version, &ctx.repo);
     let mut cmd = Command::new("gh");
-    let tag_name = tag_name.to_str().expect("only valid UTF-8 in tags");
-    cmd.arg(tag_name).arg("--notes").arg(notes).arg("--title").arg(tag_name);
+    cmd.arg(&tag_name)
+        .arg("--notes")
+        .arg(notes)
+        .arg("--title")
+        .arg(format!("{} v{}", publishee.name, new_version));
     if dry_run && verbose {
         log::info!("{} run {:?}", will(dry_run), cmd);
     }
