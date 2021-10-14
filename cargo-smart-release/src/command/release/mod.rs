@@ -144,16 +144,16 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
                 options,
             )?;
             git::push_tags_and_head(tag_name.as_ref(), options)?;
-            if let Some((tag_name, message)) = tag_name.and_then(|tag_name| {
-                options
-                    .allow_changelog_github_release
-                    .then(|| {
-                        release_section_by_publishee
-                            .get(publishee_name.as_str())
-                            .and_then(|s| section_to_string(s, WriteMode::GitHubRelease).map(|m| (tag_name, m)))
-                    })
-                    .flatten()
-            }) {
+            if let Some((tag_name, message)) = options
+                .allow_changelog_github_release
+                .then(|| tag_name)
+                .flatten()
+                .and_then(|tag| {
+                    release_section_by_publishee
+                        .get(publishee_name.as_str())
+                        .and_then(|s| section_to_string(s, WriteMode::GitHubRelease).map(|m| (tag, m)))
+                })
+            {
                 github::create_release(tag_name.as_bstr(), &message, options)?;
             }
         }
