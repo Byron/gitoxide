@@ -46,13 +46,13 @@ impl Context {
             .transpose()?
             .flatten();
         let changelog_links = if changelog_links {
-            Linkables::AsText
-        } else {
             crate::git::remote_url()?
                 .map(|url| Linkables::AsLinks {
                     repository_url: url.into(),
                 })
                 .unwrap_or(Linkables::AsText)
+        } else {
+            Linkables::AsText
         };
         Ok(Context {
             base,
