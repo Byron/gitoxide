@@ -10,41 +10,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-3c0a6389fe5ff981dadca20e8a4a4a0d2ef66e13/>
 <csr-id-77ed17c703e502e132cda9a94eb8c63db0b627ad/>
 <csr-id-1cb41f81cffe19c75aadf49a5cc7ec390ec6cae7/>
+<csr-id-ae8780e08303946412cedc19ea4d2679be49ec97/>
+<csr-id-509550f8aa8210f3688c78167a56a21fc1817515/>
+<csr-id-11b64fce4630371633b6415f227eecdc6b42b20b/>
 
-### BREAKING
+This major release adds **changelog** support to automatically generate scaffolding to be filled in by hand. The feature is driven by
+[conventional commit](https://www.conventionalcommits.org) messages which are used sparingly to mark important changes only.
 
-- Use 'to_*' when converting `easy::Object` to specific object kind This also makes the API more consistent while being more idiomatic.
-- rename --skip-* flags to --no-* for consistency
-- rename --skip-dependencies to --no-dependencies to be more inline with existing terminology of other flags.
- 
+If you have 10 minutes, the following video gives the whirlwind tour through the feature.
+
+[![12 minute introduction video](https://img.youtube.com/vi/EOft_uMDVYE/0.jpg)](https://www.youtube.com/watch?v=EOft_uMDVYE)
+
+If you have 30 minutes, there is also [a long version of the video](https://youtu.be/a4CzzxJ7ecE).
+
+### Changelog Support in `cargo smart-release`
+
+When using `cargo smart-release` in dry-run mode (_default_), additional information regarding changelog will be printed.
+This informs you a release would be attempted, or if manual adjustments to the changelogs would be required, for example as
+they are fully generated with statistical information only.
+
+
+### The `cargo changelog` Sub-Command
+
+TBD
+
+### Changed (BREAKING)
+
+ - <csr-id-e59f901f47fb0180211494a1591aed62b856406a/> rename `ObjectAccessExt::tag(…)` to `*::tag_reference(…)`, add `easy::Object::try_to_tag()`
+   This one also contains the first and probably only test for tag object
+   creation.
+
 ### New Features
 
- - <csr-id-ae8780e08303946412cedc19ea4d2679be49ec97/> smart-release with --changelog-without option.
-   
-   This allows disabling various changelog segments like clippy, or commit statistics.
-   
-   Note that it's always possible to delete individual sections afterwards.
- - <csr-id-509550f8aa8210f3688c78167a56a21fc1817515/> changelog command learns the --without <section> option
-   With it one can omit auto-generated sections of the given name.
- - <csr-id-11b64fce4630371633b6415f227eecdc6b42b20b/> Make `git_url::Url` available under `git_repository::Url`
+- smart-release with --changelog-without option.
 
+  This allows disabling various changelog segments like clippy, or commit statistics.
+
+  Note that it's always possible to delete individual sections afterwards.
+- changelog command learns the --without <section> option
+  With it one can omit auto-generated sections of the given name.
+ - <csr-id-0ebfeb614264ca06ab763189e55e6c016c9997af/> Make `git_url::Url` available under `git_repository::Url`
+
+ - <csr-id-80b8331092f4856f52afa1d85fa375ae688bdd28/> add easy::ext::ObjectAccessExt::tag(…) to create tag objects
+   It's a quick sketch on how tag object creation could work.
+   
+   Note the duplication the method name using traits, which seems like a good solution
+   to the problem of differentiating tag objects and tag references while
+   keeping the method name short.
+   
+   Most will only ever need one, right?
+   
+   Even in my example that's not the case, so maybe we have to rename it.
+
+### Other BREAKING Changes
+
+- renamed `--skip-*` flags to `--no-*` for consistency
+- rename `--skip-dependencies` to `--no-dependencies` to be more inline with existing terminology of other flags.
+ 
 ### Bug Fixes
 
- - <csr-id-11eebdcc572a72b2e66a9db3cae0a01f12a81619/> don't claim to change manifest version if it's the same one
+ - <csr-id-11eebdcc572a72b2e66a9db3cae0a01f12a81619/> Previously it might have been possible to see that it won't use a 'new' crate version as it's already in the manifest, _even_ if these are the same. This is now fixed.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 213 commits contributed to the release over the course of 32 calendar days.
- - 15 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 5 unique issues were worked on: [#192](https://github.com//Byron/gitoxide/issues/192), [#197](https://github.com//Byron/gitoxide/issues/197), [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200), [#67](https://github.com//Byron/gitoxide/issues/67)
+ - 269 commits contributed to the release over the course of 36 calendar days.
+ - 17 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 6 unique issues were worked on: [#192](https://github.com//Byron/gitoxide/issues/192), [#197](https://github.com//Byron/gitoxide/issues/197), [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200), [#213](https://github.com//Byron/gitoxide/issues/213), [#67](https://github.com//Byron/gitoxide/issues/67)
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 20 times to make code idiomatic. 
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 26 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -71,16 +110,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release: an algorithm to collect dependencies by 'growing' ([`73794a4`](https://github.com//Byron/gitoxide/commit/73794a4e382404cb7b684c9054278fb4ff8a84ce))
     - smart-release: foundation for bumping versions ([`d1145d1`](https://github.com//Byron/gitoxide/commit/d1145d1a6219ddafa7a41c82d6149b289f033640))
  * **[#198](https://github.com//Byron/gitoxide/issues/198)**
-    - prepare for arrival of 'auto' bump mode ([`3e7e53d`](https://github.com//Byron/gitoxide/commit/3e7e53d6c2e036c6695f3c2580c37a2a75d899ad))
-    - Fix git-url re-export to respect feature flags ([`e284e54`](https://github.com//Byron/gitoxide/commit/e284e54a221bb9fc611200d5b34456ca9245639d))
-    - deduplicate conventional message ids ([`2fc45b7`](https://github.com//Byron/gitoxide/commit/2fc45b71116b19dd6d908686518a8620b78b8fb7))
-    - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
-    - link up github issue ids in statistics ([`b9b3b70`](https://github.com//Byron/gitoxide/commit/b9b3b70674e4e1fa7d80a253781861b4fe647850))
-    - format links for commit ids ([`6ea2c34`](https://github.com//Byron/gitoxide/commit/6ea2c340252233742bb926626074efb4d057fb15))
-    - pass actual repository url down from commands ([`a10f51d`](https://github.com//Byron/gitoxide/commit/a10f51d2da0a4291bfd907ff6a963dac2e7cdc8e))
-    - Make `git_url::Url` available under `git_repository::Url` ([`11b64fc`](https://github.com//Byron/gitoxide/commit/11b64fce4630371633b6415f227eecdc6b42b20b))
-    - Foundation for rendering links if needed ([`9ae10d4`](https://github.com//Byron/gitoxide/commit/9ae10d48ac000fbf926d965032269f8f1b631879))
-    - Rename title for "Fixed" to "Bug Fixes" ([`f1d9c8f`](https://github.com//Byron/gitoxide/commit/f1d9c8f354ffb41fe35ed0887d08b6303e8b4ca0))
+    - Only use src/ directory for top-level crate change tracking… ([`f26b581`](https://github.com//Byron/gitoxide/commit/f26b58143491300c3375a815f3ffaa1a7ea2bcea))
+    - refactor ([`78c4ad5`](https://github.com//Byron/gitoxide/commit/78c4ad5d05a9bd02131238be4d503080cade8924))
+    - Don't show previews in dry-run mode; provide help on how to fix this before release ([`cdb8db4`](https://github.com//Byron/gitoxide/commit/cdb8db412fad2063f78f0e4c677a3bb429c0fd76))
+    - Fix naughty issue that isn't even reproducible… ([`95cb79c`](https://github.com//Byron/gitoxide/commit/95cb79cc7927c886080c0e7fef540e173eb51c3e))
+    - Correctly parse back single-word conventional messages ([`bfa0777`](https://github.com//Byron/gitoxide/commit/bfa0777719303e732c8a3314f1652bc3a33f6bc0))
+    - Fix logic to determine if breaking changes are already handled by package version ([`cb06e9d`](https://github.com//Byron/gitoxide/commit/cb06e9d74b2afd648ec81b1b279a2a416253579d))
+    - greatly simplify dry-run preview for clear visuals ([`2990028`](https://github.com//Byron/gitoxide/commit/2990028a7812790654293d0958713391018e15d3))
+    - Update expectations for log messages ([`494e8e5`](https://github.com//Byron/gitoxide/commit/494e8e51210bb5b392b507c6826953bae34d9f31))
+    - Use correct title for github release to match name of tag ([`90f39ad`](https://github.com//Byron/gitoxide/commit/90f39ad693e0998bc3307bf553fccdc37c8dc0c8))
+    - Fix logic to determine if links should be used… ([`dcc5c1c`](https://github.com//Byron/gitoxide/commit/dcc5c1c7d8a635869da73b58dd579636f69e06ff))
+    - Fix logic to determine if there are conventional headlines to fix - ignore non-breaking ([`f80b7fc`](https://github.com//Byron/gitoxide/commit/f80b7fc9ac7d85c52376d539f21ba9ecbe06d560))
+    - Fix commit subject line when release would stop due changelog ([`2cdc852`](https://github.com//Byron/gitoxide/commit/2cdc85223b30c93e73fb73f2f14c9961140d4d02))
+    - Fix github release invocation ([`6f0fdbf`](https://github.com//Byron/gitoxide/commit/6f0fdbfaf8bae53bd75adeac81d17bc124468bb0))
+    - less surprising location of the 'prepare release' message ([`0dd739b`](https://github.com//Byron/gitoxide/commit/0dd739b58b04e74090bbc2917c610498e788e5fb))
+    - Much better preview titles ([`b70f815`](https://github.com//Byron/gitoxide/commit/b70f81540ed69386f50e8876bd0913764b85c7ac))
+    - Use --file-name flag to shorten displayed path ([`6e6dcda`](https://github.com//Byron/gitoxide/commit/6e6dcda283dc56bd2c0d4342da1c2cb222cc05ce))
+    - Fix crate name and version for --version flag ([`4cc0213`](https://github.com//Byron/gitoxide/commit/4cc0213ac728e1c27a1d7c9a4167645e8bd8ebe7))
+    - clap second pass with arg headlines and better help messages ([`624076f`](https://github.com//Byron/gitoxide/commit/624076f4de0e0ad3483a5c0dec8a49c6d4210f43))
+    - First pass of using clap instead of argh ([`836837c`](https://github.com//Byron/gitoxide/commit/836837c53337c1c5f52804e33bfae93dab5f0bd3))
+    - Use fmt::Display instead of io::Write when creating markdown docs… ([`fb946b6`](https://github.com//Byron/gitoxide/commit/fb946b6d879e54244886079b3158456d611bec65))
+    - even cleaner release text, just with detail tags… ([`52a6cc8`](https://github.com//Byron/gitoxide/commit/52a6cc81e3152b1805ecc3422fc479c300d8dc05))
+    - less verbose gh tool logging in dry-run mode ([`75ebf0b`](https://github.com//Byron/gitoxide/commit/75ebf0bb35ee5757497964a0736dd3769bb34026))
+    - try to do github releases for multi-crate releases, too ([`552ae4f`](https://github.com//Byron/gitoxide/commit/552ae4f4e1aff192c767fe8ba4ad83b159c8ae63))
+    - improve commit message titles and simplify tag-name logic ([`4aa68bd`](https://github.com//Byron/gitoxide/commit/4aa68bdeac7f863a5e7ee9c833a1aa691bf13f4c))
+    - refactor ([`a6d3bb1`](https://github.com//Byron/gitoxide/commit/a6d3bb168096f1174e45a4bc544429c045859aa2))
+    - First sketch of running gh tool to create releases ([`bf7f020`](https://github.com//Byron/gitoxide/commit/bf7f02075b664ab6477fbe7e791b23c90a9ef7e8))
+    - support for ssh->https github urls; more robustness in general ([`ab7ea71`](https://github.com//Byron/gitoxide/commit/ab7ea7170f987991952da0c1c062513062f0891f))
+    - Add flag to allow disabling github releases ([`5f6c4de`](https://github.com//Byron/gitoxide/commit/5f6c4de7b09250d24f447571c47c80e1b8afabe7))
+    - sketch incorporation of github CLI support ([`5aa6ef9`](https://github.com//Byron/gitoxide/commit/5aa6ef9483498a18ee5aa548b7c29df7f228d3fb))
+    - git::remote_url() is now optional ([`e16603b`](https://github.com//Byron/gitoxide/commit/e16603b15b5488b81563c583cd8f5292ab9d24a2))
+    - Inform about the difference between tag objects and references in verbose logs ([`98a9f10`](https://github.com//Byron/gitoxide/commit/98a9f10fa0a544ea27f9dd98eeb008470f1616df))
+    - rename `ObjectAccessExt::tag(…)` to `*::tag_reference(…)`, add `easy::Object::try_to_tag()` ([`e59f901`](https://github.com//Byron/gitoxide/commit/e59f901f47fb0180211494a1591aed62b856406a))
+    - add easy::ext::ObjectAccessExt::tag(…) to create tag objects ([`80b8331`](https://github.com//Byron/gitoxide/commit/80b8331092f4856f52afa1d85fa375ae688bdd28))
+    - Allow to skip writing section titles and html tags ([`7b29406`](https://github.com//Byron/gitoxide/commit/7b29406d1b5814956a8474aa187d1e60e5eddf38))
+    - Allow to turn off changelog links ([`b33e737`](https://github.com//Byron/gitoxide/commit/b33e7375509a74762c43f03ffc74e33b69c8f800))
+    - pass release section text to function soon creating a tag object ([`a4ac96c`](https://github.com//Byron/gitoxide/commit/a4ac96c6ca834b91e5311f89f6cd35acb3f85f54))
+    - precise change tracking for changelogs ([`d038c06`](https://github.com//Byron/gitoxide/commit/d038c0673f3ee48446aa5fade071766ce23c5c6a))
+    - Fix stop-release-for-changelog logic and fix all affected changelogs ([`52b38bc`](https://github.com//Byron/gitoxide/commit/52b38bc4856be5ba8b5372a3dd20f5d06504e7ed))
+    - less verbose changelog and smart-release sub-commands related to changelogs ([`c096805`](https://github.com//Byron/gitoxide/commit/c09680524a8c07b09f8bf421381ce93b1ae4610b))
+    - Adjust all changelogs to fulfil requirements for publishing ([`04b9ca0`](https://github.com//Byron/gitoxide/commit/04b9ca025a1667529b2221ab4280bd3c8dae01cf))
+    - Handle changelogs with upcoming version section if they were left for editing ([`0f5f47d`](https://github.com//Byron/gitoxide/commit/0f5f47da4662b596cbbbd9c0d83e135e2cc52c11))
+    - refactor ([`6d30e2c`](https://github.com//Byron/gitoxide/commit/6d30e2c7e20ce1572afbebeee232d0c138a38462))
+    - Automatically stop releases if changelogs are fully generated, and a flag to disable that ([`7161340`](https://github.com//Byron/gitoxide/commit/7161340ba7c4f2802e1a87cb02268d0adea8c0f8))
+    - Check for changelog sections which are purely generated and warn about those ([`a9b8321`](https://github.com//Byron/gitoxide/commit/a9b83214cf425ec8853dacfbc96cba65e2005373))
+    - See how it deals with major versions and auto-bumping in journey tests ([`b450bf3`](https://github.com//Byron/gitoxide/commit/b450bf3fb26fc399b405fc45972820d50281cef3))
+    - more consistent log messages pertaining crate names ([`b32d8d6`](https://github.com//Byron/gitoxide/commit/b32d8d63841fed8c95436b9ae611aef9c11291cf))
+    - first working version of version auto-bumping based on changelog ([`5ca7b1d`](https://github.com//Byron/gitoxide/commit/5ca7b1d1d703387d2e690a5a32a4033d87742217))
+    - issue links for category headlines ([`425d3df`](https://github.com//Byron/gitoxide/commit/425d3dfc114e62db16c8c16c0b3e7c6b4a2a3ae4))
+    - prepare for arrival of 'auto' bump mode ([`306035c`](https://github.com//Byron/gitoxide/commit/306035cf68dcc29466e736081ca8cdd3a5f57134))
+    - Fix git-url re-export to respect feature flags ([`ec4e3ca`](https://github.com//Byron/gitoxide/commit/ec4e3ca4c7211655549a76cae252742633da1083))
+    - deduplicate conventional message ids ([`e695eda`](https://github.com//Byron/gitoxide/commit/e695eda8cd183f703d9a3e59b7c3c7fa496ea1d2))
+    - regenerate all changelogs to get links ([`0c81769`](https://github.com//Byron/gitoxide/commit/0c817690bd444f52bed2936b2b451cafd87dde92))
+    - link up github issue ids in statistics ([`661cd39`](https://github.com//Byron/gitoxide/commit/661cd3928002ef2f288d7410b37a046a6f0ea21b))
+    - format links for commit ids ([`9426db5`](https://github.com//Byron/gitoxide/commit/9426db53537162d58a65648f3f3a3a3b65f621dc))
+    - pass actual repository url down from commands ([`4e03515`](https://github.com//Byron/gitoxide/commit/4e03515622afd79b145db081ef9e3cb301ce6e97))
+    - Make `git_url::Url` available under `git_repository::Url` ([`0ebfeb6`](https://github.com//Byron/gitoxide/commit/0ebfeb614264ca06ab763189e55e6c016c9997af))
+    - Foundation for rendering links if needed ([`ba4ce96`](https://github.com//Byron/gitoxide/commit/ba4ce96e32676b2aed529330ee526da2fc2f6d49))
+    - Rename title for "Fixed" to "Bug Fixes" ([`e766b01`](https://github.com//Byron/gitoxide/commit/e766b01c73813dd80c72e13e43c5acdda741521a))
     - Mention actual issues that where worked on ([`a517e39`](https://github.com//Byron/gitoxide/commit/a517e39a81145b331f6c7a6cc2fc22e25daf42e2))
     - Also parse 'style' if there are breaking changes ([`bc9d85a`](https://github.com//Byron/gitoxide/commit/bc9d85a15d94a54dd2dbc67f20f1ffdbdf2b4789))
     - Allow 'refactor' and 'other' in conventional messages if they have breaking changes ([`4eebaac`](https://github.com//Byron/gitoxide/commit/4eebaac669e590beed112b622752997c64772ef1))
@@ -230,10 +317,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - smart-release(test): add changelog to most tests ([`cdf4199`](https://github.com//Byron/gitoxide/commit/cdf41998360527161a1b04821bab377489f6c5f0))
  * **[#200](https://github.com//Byron/gitoxide/issues/200)**
     - parse issue numbers from description and clean it up ([`95c0a51`](https://github.com//Byron/gitoxide/commit/95c0a510f875e8fd889b87caee356a4c1e099ea8))
+ * **[#213](https://github.com//Byron/gitoxide/issues/213)**
+    - fix version logic to handle breaking version updates correctly ([`67ed644`](https://github.com//Byron/gitoxide/commit/67ed6449c410cca61ac5b40589408695eee4df69))
  * **[#67](https://github.com//Byron/gitoxide/issues/67)**
     - split data::output::count::objects into files ([`8fe4612`](https://github.com//Byron/gitoxide/commit/8fe461281842b58aa11437445637c6e587bedd63))
  * **Uncategorized**
-    - thanks clippy ([`fbe08e2`](https://github.com//Byron/gitoxide/commit/fbe08e2fb9a7fd682921d0438b5faefb6afca28c))
+    - thanks clippy ([`7c78dcf`](https://github.com//Byron/gitoxide/commit/7c78dcf468a2947e7b46103f275c27eb49b1547c))
+    - thanks clippy ([`fc9da4c`](https://github.com//Byron/gitoxide/commit/fc9da4c3eef70bcc780224f42e0b78e477f3b199))
+    - thanks clippy ([`41ed695`](https://github.com//Byron/gitoxide/commit/41ed695a6a739df00d39bf86dae2cc12b8e280b6))
+    - thanks clippy ([`2b62956`](https://github.com//Byron/gitoxide/commit/2b629561ba7d08c6861746c512bd21dc5324e1bb))
+    - Adjusting changelogs prior to release of git-hash v0.7.0, git-features v0.16.5, git-actor v0.5.3, git-validate v0.5.3, git-object v0.14.1, git-diff v0.10.0, git-tempfile v1.0.3, git-lock v1.0.1, git-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, git-packetline v0.11.0, git-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, git-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0, safety bump 3 crates ([`a474395`](https://github.com//Byron/gitoxide/commit/a47439590e36b1cb8b516b6053fd5cbfc42efed7))
+    - thanks clippy ([`87d2f49`](https://github.com//Byron/gitoxide/commit/87d2f491b4c177bd5b67eea57e6a4e516f25d1e8))
+    - thanks clippy ([`a1ebd80`](https://github.com//Byron/gitoxide/commit/a1ebd800e46094ada7dbd8298a63b33724de0431))
+    - thanks clippy ([`ca0d943`](https://github.com//Byron/gitoxide/commit/ca0d9432869c40135cc8db26af29bec44f3ae74a))
     - thanks clippy ([`8b3d9ea`](https://github.com//Byron/gitoxide/commit/8b3d9ea5aa7f161d2baebeafc4c1ab966583f5ac))
     - thanks clippy ([`ce48e18`](https://github.com//Byron/gitoxide/commit/ce48e184f37bf0a9c558f8e9a0eaa3b4526fdc2e))
     - thanks clippy ([`af9d137`](https://github.com//Byron/gitoxide/commit/af9d13745ae4e14d9553d3a4aa5a82cc15957a7e))
