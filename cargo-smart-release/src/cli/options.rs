@@ -23,7 +23,7 @@ pub enum SubCommands {
     /// Use --execute to actually perform the operation.
     SmartRelease {
         /// Actually perform a release. Dry-run mode is the default
-        #[clap(long, short = 'n', help_heading = Some("MAJOR"))]
+        #[clap(long, short = 'e', help_heading = Some("MAJOR"))]
         execute: bool,
 
         /// Always update the crates-index beforehand. It is used to determine if the computed version to be published was
