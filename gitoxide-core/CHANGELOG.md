@@ -5,14 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.11.0 (2021-10-15)
+
+<csr-id-ac3b9efb7b90958274ce55800959d930f8641115/>
+<csr-id-a19567eceab0dd7f5478b83c2ff9ce79754db308/>
+<csr-id-da68bfb8104ecf58e73e3f99d87f81c90712a2ca/>
+<csr-id-c77bd7a01820110154f2c66cd954c1ccfff173c1/>
 
 This is a maintenance release signalling breaking changes because some of the crates it depends on have breaking changes.
-
-<csr-id-ac3b9efb7b90958274ce55800959d930f8641115/> 
-<csr-id-a19567eceab0dd7f5478b83c2ff9ce79754db308/> 
-<csr-id-da68bfb8104ecf58e73e3f99d87f81c90712a2ca/>
-<csr-id-c77bd7a01820110154f2c66cd954c1ccfff173c1/> 
 
 ### New Features
 
@@ -23,7 +23,7 @@ This is a maintenance release signalling breaking changes because some of the cr
 
 <csr-read-only-do-not-edit/>
 
- - 23 commits contributed to the release over the course of 34 calendar days.
+ - 24 commits contributed to the release over the course of 34 calendar days.
  - 12 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 5 unique issues were worked on: [#164](https://github.com//Byron/gitoxide/issues/164), [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200), [#205](https://github.com//Byron/gitoxide/issues/205), [#67](https://github.com//Byron/gitoxide/issues/67)
 
@@ -37,6 +37,7 @@ This is a maintenance release signalling breaking changes because some of the cr
     - rename path::is_git to path::is ([`ac3b9ef`](https://github.com//Byron/gitoxide/commit/ac3b9efb7b90958274ce55800959d930f8641115))
     - rename ObjectIdExt::ancestors_iter() to *::ancestors() ([`a19567e`](https://github.com//Byron/gitoxide/commit/a19567eceab0dd7f5478b83c2ff9ce79754db308))
  * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - A changelog for gitoxide-core ([`b9f6a37`](https://github.com//Byron/gitoxide/commit/b9f6a37b9c27f2405694795adb476c01574b31ed))
     - Fixup remaining changelogs… ([`2f75db2`](https://github.com//Byron/gitoxide/commit/2f75db294fcf20c325555822f65629611be52971))
     - set package cache via RepositoryAccessExt ([`66292fd`](https://github.com//Byron/gitoxide/commit/66292fd1076c2c9db4694c5ded09799a0be11a03))
     - prepare for configurable pack cache ([`7d2b6b6`](https://github.com//Byron/gitoxide/commit/7d2b6b66e09ff39727fccd68d190679b52d90126))
