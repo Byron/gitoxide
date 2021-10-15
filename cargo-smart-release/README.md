@@ -2,7 +2,7 @@
 
 Fearlessly release workspace crates and with beautiful semi-handcrafted changelogs.
 
-[![asciicast](https://asciinema.org/a/cJyZGUCCUIe75pQ9QZO2aZSOl.svg)](https://asciinema.org/a/cJyZGUCCUIe75pQ9QZO2aZSOl)
+[![asciicast](https://asciinema.org/a/65uPfzoWxGac43zEZ1gQ1yVVe.svg)](https://asciinema.org/a/65uPfzoWxGac43zEZ1gQ1yVVe)
 
 ## Key Features
 
