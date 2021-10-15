@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-80b8331092f4856f52afa1d85fa375ae688bdd28/>
 <csr-id-e59f901f47fb0180211494a1591aed62b856406a/>
 <csr-id-19fc134d2a34f2ea84b2cc8fbd15ca55c55df35e/>
+<csr-id-e668bf23ddba9a676a885f1f401d2d2885784eef/>
 
 This major release adds **changelog** support to automatically generate scaffolding to be filled in by hand. The feature is driven by
 [conventional commit](https://www.conventionalcommits.org) messages which are used sparingly to mark important changes only.
@@ -47,6 +48,8 @@ one by one, or the release operation will have left a single commit with all cha
 In any case, it's recommended to re-write the changelog after editing to assure it is indeed stable and won't change each time
 the generator is run.
 
+For more information, run `cargo smart-release -h`.
+
 ### The `cargo changelog` Sub-Command
 
 This new sub-command sports the same dependency resolution as `smart-release` itself, operates in dry-run mode by default
@@ -55,15 +58,17 @@ to preview changelogs that would be written. Use the `--write` flag to actually 
 It's primary use is to conveniently generate changelogs from time to time to add the final polish by hand before
 actually releasing them along with the crate with `smart-release`.
 
-### New Features
-
- - <csr-id-e668bf23ddba9a676a885f1f401d2d2885784eef/> `--no-dependencies` now has `--only` as alias
+For more information, run `cargo changelog -h`.
 
 ### Other BREAKING Changes
 
 - renamed `--skip-*` flags to `--no-*` for consistency
 - rename `--skip-dependencies` to `--no-dependencies` to be more inline with existing terminology of other flags.
 - rename short name for `--execute` to `-e` from `-n` for consistency
+
+### Other Changes
+
+ - <csr-id-e668bf23ddba9a676a885f1f401d2d2885784eef/> `--no-dependencies` now has `--only` as alias
 
 ### Bug Fixes
 
@@ -108,7 +113,7 @@ actually releasing them along with the crate with `smart-release`.
     - smart-release: an algorithm to collect dependencies by 'growing' ([`73794a4`](https://github.com//Byron/gitoxide/commit/73794a4e382404cb7b684c9054278fb4ff8a84ce))
     - smart-release: foundation for bumping versions ([`d1145d1`](https://github.com//Byron/gitoxide/commit/d1145d1a6219ddafa7a41c82d6149b289f033640))
  * **[#198](https://github.com//Byron/gitoxide/issues/198)**
-    - Enforce an empty line after user sections ([`d1962ed`](https://github.com//Byron/gitoxide/commit/d1962edc6fda450540344865427fe99a46ad446d))
+    - Enforce an empty line after user sections ([`79f0093`](https://github.com//Byron/gitoxide/commit/79f00933f4bbf24551fc093e33e8d94ff8365eb6))
     - Respect release-level removed-id list even when inserting sections ([`2970fff`](https://github.com//Byron/gitoxide/commit/2970fffc681657d0ab393b4c20d9be20675d808d))
     - rename short name for `--execute` to `-e` from `-n` for consistency ([`19fc134`](https://github.com//Byron/gitoxide/commit/19fc134d2a34f2ea84b2cc8fbd15ca55c55df35e))
     - `--no-dependencies` now has `--only` as alias ([`e668bf2`](https://github.com//Byron/gitoxide/commit/e668bf23ddba9a676a885f1f401d2d2885784eef))
