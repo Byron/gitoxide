@@ -5,11 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.9.0 (2021-10-15)
+
+<csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/>
 
 Some module paths have been removed to avoid path duplication, possibly leading to breakage.
-
-<csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/> 
 
 ### BREAKING
 
@@ -19,7 +19,7 @@ Some module paths have been removed to avoid path duplication, possibly leading 
 
 <csr-read-only-do-not-edit/>
 
- - 20 commits contributed to the release over the course of 28 calendar days.
+ - 23 commits contributed to the release over the course of 32 calendar days.
  - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#164](https://github.com//Byron/gitoxide/issues/164), [#196](https://github.com//Byron/gitoxide/issues/196), [#198](https://github.com//Byron/gitoxide/issues/198)
 
@@ -29,14 +29,16 @@ Some module paths have been removed to avoid path duplication, possibly leading 
 
 <details><summary>view details</summary>
 
- * **#164**
+ * **[#164](https://github.com//Byron/gitoxide/issues/164)**
     - Avoid duplicate module paths in 'tree' and 'commit' ([`2f2d856`](https://github.com//Byron/gitoxide/commit/2f2d856efe733d3cf81110c0e0607d2e7c40d968))
     - object_id ([`329d183`](https://github.com//Byron/gitoxide/commit/329d183ad4e256a4f9cdeb34589b5f3432495f79))
- * **#196**
+ * **[#196](https://github.com//Byron/gitoxide/issues/196)**
     - Revert "traverse(chore): try git-cliff…" ([`cd293ae`](https://github.com//Byron/gitoxide/commit/cd293aee7cf7fefba9e1f61108eba5400e48b9a7))
     - try git-cliff… ([`cbc5b81`](https://github.com//Byron/gitoxide/commit/cbc5b8171cdef5933d684c481300d9fcff43cf4b))
- * **#198**
-    - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
+ * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - Fix stop-release-for-changelog logic and fix all affected changelogs ([`52b38bc`](https://github.com//Byron/gitoxide/commit/52b38bc4856be5ba8b5372a3dd20f5d06504e7ed))
+    - deduplicate conventional message ids ([`e695eda`](https://github.com//Byron/gitoxide/commit/e695eda8cd183f703d9a3e59b7c3c7fa496ea1d2))
+    - regenerate all changelogs to get links ([`0c81769`](https://github.com//Byron/gitoxide/commit/0c817690bd444f52bed2936b2b451cafd87dde92))
     - Mention actual issues that where worked on ([`a517e39`](https://github.com//Byron/gitoxide/commit/a517e39a81145b331f6c7a6cc2fc22e25daf42e2))
     - respect release-wide ignore list to allow removing entire conventional headlines ([`145103d`](https://github.com//Byron/gitoxide/commit/145103d4aa715386da9d4953f7f85fadc49fff9a))
     - Rebuild all changelogs to assure properly ordered headlines ([`4a9a05f`](https://github.com//Byron/gitoxide/commit/4a9a05f95930bad5938d4ce9c517ebf0e0b990f1))
@@ -50,6 +52,7 @@ Some module paths have been removed to avoid path duplication, possibly leading 
     - Write first version of changlogs thus far… ([`719b6bd`](https://github.com//Byron/gitoxide/commit/719b6bdf543b8269ccafad9ad6b46e0c55efaa38))
     - commit traversal along the first parent… ([`7bce49c`](https://github.com//Byron/gitoxide/commit/7bce49c1d27cb279b61ff51de0038e01fcf3561e))
  * **Uncategorized**
+    - Adjusting changelogs prior to release of git-hash v0.7.0, git-features v0.16.5, git-actor v0.5.3, git-validate v0.5.3, git-object v0.14.1, git-diff v0.10.0, git-tempfile v1.0.3, git-lock v1.0.1, git-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, git-packetline v0.11.0, git-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, git-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0, safety bump 3 crates ([`a474395`](https://github.com//Byron/gitoxide/commit/a47439590e36b1cb8b516b6053fd5cbfc42efed7))
     - Update changelogs just for fun ([`21541b3`](https://github.com//Byron/gitoxide/commit/21541b3301de1e053fc0e84373be60d2162fbaae))
     - Merge branch 'main' into changelog-generation ([`c956f33`](https://github.com//Byron/gitoxide/commit/c956f3351d766c748faf0460780e32ac8dfe8165))
     - Bump git-traverse v0.9.0, safety bump 8 crates ([`d39fabb`](https://github.com//Byron/gitoxide/commit/d39fabb8757369aa19452a457f610fe21dc13a14))

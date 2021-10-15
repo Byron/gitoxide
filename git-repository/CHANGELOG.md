@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.10.0 (2021-10-15)
 
 <csr-id-1cb41f81cffe19c75aadf49a5cc7ec390ec6cae7/>
 <csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/>
@@ -20,6 +20,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
  - <csr-id-11b64fce4630371633b6415f227eecdc6b42b20b/> Make `git_url::Url` available under `git_repository::Url`
+ - <csr-id-80b8331092f4856f52afa1d85fa375ae688bdd28/> add easy::ext::ObjectAccessExt::tag(…) to create tag objects
+   It's a quick sketch on how tag object creation could work.
+   
+   Note the duplication the method name using traits, which seems like a good solution
+   to the problem of differentiating tag objects and tag references while
+   keeping the method name short.
+   
+   Most will only ever need one, right?
+   
+   Even in my example that's not the case, so maybe we have to rename it.
+ - <csr-id-0ebfeb614264ca06ab763189e55e6c016c9997af/> Make `git_url::Url` available under `git_repository::Url`
+
 
 ### BREAKING Changes
 
@@ -35,19 +47,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - rename path::is_git to path::is
  - rename easy::reference::log::State to easy::reference::Logs
 
+### Changed (BREAKING)
+
+ - <csr-id-c3385cd144298eb9f06d7751d180e26da7b4d338/> `easy::Object::try_to_commit()` now returns `Result<CommitRef>`…
+   …without the nested `Option`, folding the type mismatch into a specific
+   `conversion::Error` instad.
+ - <csr-id-e59f901f47fb0180211494a1591aed62b856406a/> rename `ObjectAccessExt::tag(…)` to `*::tag_reference(…)`, add `easy::Object::try_to_tag()`
+   This one also contains the first and probably only test for tag object
+   creation.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 86 commits contributed to the release over the course of 29 calendar days.
- - 35 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 93 commits contributed to the release over the course of 33 calendar days.
+ - 38 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#164](https://github.com//Byron/gitoxide/issues/164), [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200), [#67](https://github.com//Byron/gitoxide/issues/67)
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -55,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#164**
+ * **[#164](https://github.com//Byron/gitoxide/issues/164)**
     - path::is ([`1f4e45a`](https://github.com//Byron/gitoxide/commit/1f4e45a26a3d2727f00c3f248452dd41fc8a95be))
     - rename path::is_git to path::is ([`ac3b9ef`](https://github.com//Byron/gitoxide/commit/ac3b9efb7b90958274ce55800959d930f8641115))
     - path::discover ([`1958e8a`](https://github.com//Byron/gitoxide/commit/1958e8aa65eb97f9755f065d713f0a48c5e41b1b))
@@ -72,12 +93,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - update 'platform' information to reflect the current usage ([`42080ae`](https://github.com//Byron/gitoxide/commit/42080aefe3b286afb58235c1c22491579ab73919))
     - rename easy::reference::log::State to easy::reference::Logs ([`03fe8a7`](https://github.com//Byron/gitoxide/commit/03fe8a7ebd34608d725d4585da5c1630123762ec))
     - rename `*::State` into `*::Platform` ([`0cd585e`](https://github.com//Byron/gitoxide/commit/0cd585e20a5abd323a34ec32d92fbd48531b3b18))
- * **#198**
-    - Fix git-url re-export to respect feature flags ([`8adc18a`](https://github.com//Byron/gitoxide/commit/8adc18a3bfd5fcb468d38cd54c9a8cc1f1f9d8bc))
-    - deduplicate conventional message ids ([`2fc45b7`](https://github.com//Byron/gitoxide/commit/2fc45b71116b19dd6d908686518a8620b78b8fb7))
-    - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
-    - pass actual repository url down from commands ([`a10f51d`](https://github.com//Byron/gitoxide/commit/a10f51d2da0a4291bfd907ff6a963dac2e7cdc8e))
-    - Make `git_url::Url` available under `git_repository::Url` ([`11b64fc`](https://github.com//Byron/gitoxide/commit/11b64fce4630371633b6415f227eecdc6b42b20b))
+ * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - git::remote_url() is now optional ([`e16603b`](https://github.com//Byron/gitoxide/commit/e16603b15b5488b81563c583cd8f5292ab9d24a2))
+    - `easy::Object::try_to_commit()` now returns `Result<CommitRef>`… ([`c3385cd`](https://github.com//Byron/gitoxide/commit/c3385cd144298eb9f06d7751d180e26da7b4d338))
+    - rename `ObjectAccessExt::tag(…)` to `*::tag_reference(…)`, add `easy::Object::try_to_tag()` ([`e59f901`](https://github.com//Byron/gitoxide/commit/e59f901f47fb0180211494a1591aed62b856406a))
+    - add easy::ext::ObjectAccessExt::tag(…) to create tag objects ([`80b8331`](https://github.com//Byron/gitoxide/commit/80b8331092f4856f52afa1d85fa375ae688bdd28))
+    - prettify changelog also to practice user segments ([`5c57264`](https://github.com//Byron/gitoxide/commit/5c5726409d6f6343fc9a860f4b9ecde4730fe7d9))
+    - Fix git-url re-export to respect feature flags ([`ec4e3ca`](https://github.com//Byron/gitoxide/commit/ec4e3ca4c7211655549a76cae252742633da1083))
+    - deduplicate conventional message ids ([`e695eda`](https://github.com//Byron/gitoxide/commit/e695eda8cd183f703d9a3e59b7c3c7fa496ea1d2))
+    - regenerate all changelogs to get links ([`0c81769`](https://github.com//Byron/gitoxide/commit/0c817690bd444f52bed2936b2b451cafd87dde92))
+    - pass actual repository url down from commands ([`4e03515`](https://github.com//Byron/gitoxide/commit/4e03515622afd79b145db081ef9e3cb301ce6e97))
+    - Make `git_url::Url` available under `git_repository::Url` ([`0ebfeb6`](https://github.com//Byron/gitoxide/commit/0ebfeb614264ca06ab763189e55e6c016c9997af))
     - Mention actual issues that where worked on ([`a517e39`](https://github.com//Byron/gitoxide/commit/a517e39a81145b331f6c7a6cc2fc22e25daf42e2))
     - Allow 'refactor' and 'other' in conventional messages if they have breaking changes ([`4eebaac`](https://github.com//Byron/gitoxide/commit/4eebaac669e590beed112b622752997c64772ef1))
     - merge doesn't consider user generated sections, only the ones it would want to add ([`ebbebdd`](https://github.com//Byron/gitoxide/commit/ebbebdd70aeec9aa3ad453d61375429a7f555bbc))
@@ -114,15 +140,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - loose reference iteration with non-dir prefixes… ([`293bfc0`](https://github.com//Byron/gitoxide/commit/293bfc0278c5983c0beaec93253fb51f00d81156))
     - Add 'references().all().peeled().'… ([`6502412`](https://github.com//Byron/gitoxide/commit/650241251a420602f74037babfc24c9f64df78d8))
     - smart-release: filter refs correctly, but… ([`2b4a615`](https://github.com//Byron/gitoxide/commit/2b4a61589a7cba3f7600710e21304e731ae3b36a))
- * **#200**
+ * **[#200](https://github.com//Byron/gitoxide/issues/200)**
     - feat: Lift io::Errors to response::Error::UploadPack(…)… ([`f293b63`](https://github.com//Byron/gitoxide/commit/f293b633d16c0f7393d0ede64e12f14e47d0296b))
- * **#67**
+ * **[#67](https://github.com//Byron/gitoxide/issues/67)**
     - split data::output::count::objects into files ([`8fe4612`](https://github.com//Byron/gitoxide/commit/8fe461281842b58aa11437445637c6e587bedd63))
     - use new git_pack::cache::Object trait ([`b209da2`](https://github.com//Byron/gitoxide/commit/b209da29f361512ba757febf56bc1aca039f2a41))
     - remove object cache impl which now lives in git-pack ([`741558d`](https://github.com//Byron/gitoxide/commit/741558dd8194590c5cc8566aa22f96e73df38edf))
     - Use Easy in the one spot where it is possible… ([`6a97bfa`](https://github.com//Byron/gitoxide/commit/6a97bfabcec6597efe9282e6d5c9f0ac3ada61dc))
     - try to create persistent Easy iterator, but can't make it Send… ([`54a64a5`](https://github.com//Byron/gitoxide/commit/54a64a588ff72515451a3d0343306ac4abe1cb35))
  * **Uncategorized**
+    - thanks clippy ([`bcc9871`](https://github.com//Byron/gitoxide/commit/bcc98715b1bfd9613079071da59309aa8a5ab27b))
+    - Adjusting changelogs prior to release of git-hash v0.7.0, git-features v0.16.5, git-actor v0.5.3, git-validate v0.5.3, git-object v0.14.1, git-diff v0.10.0, git-tempfile v1.0.3, git-lock v1.0.1, git-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, git-packetline v0.11.0, git-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, git-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0, safety bump 3 crates ([`a474395`](https://github.com//Byron/gitoxide/commit/a47439590e36b1cb8b516b6053fd5cbfc42efed7))
     - make fmt, but now it picked up some parts that usually don't get altered… ([`01f7b72`](https://github.com//Byron/gitoxide/commit/01f7b729337bd2c99498321c479a9a13b1858e3e))
     - Update changelogs just for fun ([`21541b3`](https://github.com//Byron/gitoxide/commit/21541b3301de1e053fc0e84373be60d2162fbaae))
     - Merge branch 'main' into changelog-generation ([`c956f33`](https://github.com//Byron/gitoxide/commit/c956f3351d766c748faf0460780e32ac8dfe8165))
@@ -339,6 +367,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rename `object` to `objs` to be equivalent to `refs` and make space for the new `object` module
 - various minor version updates of pre-release dependencies
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>

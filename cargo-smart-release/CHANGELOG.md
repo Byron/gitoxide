@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.4.0 (2021-10-15)
 
 <csr-id-3c0a6389fe5ff981dadca20e8a4a4a0d2ef66e13/>
 <csr-id-77ed17c703e502e132cda9a94eb8c63db0b627ad/>
@@ -78,7 +78,7 @@ For more information, run `cargo changelog -h`.
 
 <csr-read-only-do-not-edit/>
 
- - 276 commits contributed to the release over the course of 36 calendar days.
+ - 280 commits contributed to the release over the course of 36 calendar days.
  - 19 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#192](https://github.com//Byron/gitoxide/issues/192), [#197](https://github.com//Byron/gitoxide/issues/197), [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200), [#213](https://github.com//Byron/gitoxide/issues/213), [#67](https://github.com//Byron/gitoxide/issues/67)
 
@@ -86,7 +86,7 @@ For more information, run `cargo changelog -h`.
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 26 times to make code idiomatic. 
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 27 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -113,6 +113,9 @@ For more information, run `cargo changelog -h`.
     - smart-release: an algorithm to collect dependencies by 'growing' ([`73794a4`](https://github.com//Byron/gitoxide/commit/73794a4e382404cb7b684c9054278fb4ff8a84ce))
     - smart-release: foundation for bumping versions ([`d1145d1`](https://github.com//Byron/gitoxide/commit/d1145d1a6219ddafa7a41c82d6149b289f033640))
  * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - Polish README a little more ([`455c45d`](https://github.com//Byron/gitoxide/commit/455c45d9a534805cf9659b9c33c3995673e8709f))
+    - First version of updated README ([`45dcc68`](https://github.com//Byron/gitoxide/commit/45dcc684e16017cb0289cff209fd1d436fa50c2c))
+    - Finish changelog ([`e341b22`](https://github.com//Byron/gitoxide/commit/e341b221086cb75a24053da61ed90aed166538cd))
     - Enforce an empty line after user sections ([`79f0093`](https://github.com//Byron/gitoxide/commit/79f00933f4bbf24551fc093e33e8d94ff8365eb6))
     - Respect release-level removed-id list even when inserting sections ([`2970fff`](https://github.com//Byron/gitoxide/commit/2970fffc681657d0ab393b4c20d9be20675d808d))
     - rename short name for `--execute` to `-e` from `-n` for consistency ([`19fc134`](https://github.com//Byron/gitoxide/commit/19fc134d2a34f2ea84b2cc8fbd15ca55c55df35e))
@@ -332,6 +335,7 @@ For more information, run `cargo changelog -h`.
  * **[#67](https://github.com//Byron/gitoxide/issues/67)**
     - split data::output::count::objects into files ([`8fe4612`](https://github.com//Byron/gitoxide/commit/8fe461281842b58aa11437445637c6e587bedd63))
  * **Uncategorized**
+    - thanks clippy ([`2113d79`](https://github.com//Byron/gitoxide/commit/2113d7989b5e5dde5fc7594e1c63abef0bfba650))
     - thanks clippy ([`7c78dcf`](https://github.com//Byron/gitoxide/commit/7c78dcf468a2947e7b46103f275c27eb49b1547c))
     - thanks clippy ([`fc9da4c`](https://github.com//Byron/gitoxide/commit/fc9da4c3eef70bcc780224f42e0b78e477f3b199))
     - thanks clippy ([`41ed695`](https://github.com//Byron/gitoxide/commit/41ed695a6a739df00d39bf86dae2cc12b8e280b6))

@@ -5,10 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.7.0 (2021-10-15)
 
-<csr-id-8be4036dce4a857cc14a8b9467aaf2fc0fc2e827/> 
-<csr-id-ed16bce97c235e7e188444afd7a0d3f7e04a6c72/> 
+<csr-id-8be4036dce4a857cc14a8b9467aaf2fc0fc2e827/>
+<csr-id-ed16bce97c235e7e188444afd7a0d3f7e04a6c72/>
 
 ### BREAKING Changes
 
@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 7 calendar days.
+ - 15 commits contributed to the release over the course of 11 calendar days.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#198](https://github.com//Byron/gitoxide/issues/198)
 
@@ -29,9 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#198**
-    - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
-    - format links for commit ids ([`6ea2c34`](https://github.com//Byron/gitoxide/commit/6ea2c340252233742bb926626074efb4d057fb15))
+ * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - Fix stop-release-for-changelog logic and fix all affected changelogs ([`52b38bc`](https://github.com//Byron/gitoxide/commit/52b38bc4856be5ba8b5372a3dd20f5d06504e7ed))
+    - deduplicate conventional message ids ([`e695eda`](https://github.com//Byron/gitoxide/commit/e695eda8cd183f703d9a3e59b7c3c7fa496ea1d2))
+    - regenerate all changelogs to get links ([`0c81769`](https://github.com//Byron/gitoxide/commit/0c817690bd444f52bed2936b2b451cafd87dde92))
+    - format links for commit ids ([`9426db5`](https://github.com//Byron/gitoxide/commit/9426db53537162d58a65648f3f3a3a3b65f621dc))
     - Mention actual issues that where worked on ([`a517e39`](https://github.com//Byron/gitoxide/commit/a517e39a81145b331f6c7a6cc2fc22e25daf42e2))
     - Allow 'refactor' and 'other' in conventional messages if they have breaking changes ([`4eebaac`](https://github.com//Byron/gitoxide/commit/4eebaac669e590beed112b622752997c64772ef1))
     - Rebuild all changelogs to assure properly ordered headlines ([`4a9a05f`](https://github.com//Byron/gitoxide/commit/4a9a05f95930bad5938d4ce9c517ebf0e0b990f1))
@@ -42,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Generate changelogs with details ([`e1861ca`](https://github.com//Byron/gitoxide/commit/e1861caa435d312953a9fea7ceff6d2e07b03443))
     - oid::short_hex(len) for truncated hex representations ([`ed16bce`](https://github.com//Byron/gitoxide/commit/ed16bce97c235e7e188444afd7a0d3f7e04a6c72))
  * **Uncategorized**
+    - Adjusting changelogs prior to release of git-hash v0.7.0, git-features v0.16.5, git-actor v0.5.3, git-validate v0.5.3, git-object v0.14.1, git-diff v0.10.0, git-tempfile v1.0.3, git-lock v1.0.1, git-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, git-packetline v0.11.0, git-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, git-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0, safety bump 3 crates ([`a474395`](https://github.com//Byron/gitoxide/commit/a47439590e36b1cb8b516b6053fd5cbfc42efed7))
     - Update changelogs just for fun ([`21541b3`](https://github.com//Byron/gitoxide/commit/21541b3301de1e053fc0e84373be60d2162fbaae))
 </details>
 
@@ -167,7 +170,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
- * **#63**
+ * **[#63](https://github.com//Byron/gitoxide/issues/63)**
     - Revert "Add additional variant for Sha256 in ObjectId" ([`bb24dc4`](https://github.com//Byron/gitoxide/commit/bb24dc44beb6354fe2d96d2318d4d3219f06ae85))
     - Add additional variant for Sha256 in ObjectId ([`3dd7c43`](https://github.com//Byron/gitoxide/commit/3dd7c4350e140b72c21598f95a4557e6115d3124))
     - Make ObjectId into an enum to soon hold more bytes (and type) ([`4bf0c1a`](https://github.com//Byron/gitoxide/commit/4bf0c1a5a5c23bb0c0836ab8cea41eb06a232906))

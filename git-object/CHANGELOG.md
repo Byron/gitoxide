@@ -5,23 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.14.1 (2021-10-15)
 
 This release greatly improves performance when decoding trees, a critical requirement when building packs
 or generally trying to figure out what changed between commits.
 
 ### Performance
 
-<csr-id-f9232acf8e52f8cd95520d122469e136eb07b39f/> 
+<csr-id-f9232acf8e52f8cd95520d122469e136eb07b39f/>
 
  - Provide a new fast parser for tree objects which is used by the tree entry iterator.
-- <csr-id-83d591d536d1a43e8523082824ec0b95cca55d34/> parse entry mode into number instead of comparing it to byte strings
+ - <csr-id-83d591d536d1a43e8523082824ec0b95cca55d34/> parse entry mode into number instead of comparing it to byte strings
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 44 commits contributed to the release over the course of 24 calendar days.
+ - 47 commits contributed to the release over the course of 28 calendar days.
  - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#198](https://github.com//Byron/gitoxide/issues/198), [#67](https://github.com//Byron/gitoxide/issues/67)
 
@@ -31,8 +31,10 @@ or generally trying to figure out what changed between commits.
 
 <details><summary>view details</summary>
 
- * **#198**
-    - regenerate all changelogs to get links ([`d654788`](https://github.com//Byron/gitoxide/commit/d65478880a170235e4f838156862ed035894fd5b))
+ * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - Fix stop-release-for-changelog logic and fix all affected changelogs ([`52b38bc`](https://github.com//Byron/gitoxide/commit/52b38bc4856be5ba8b5372a3dd20f5d06504e7ed))
+    - deduplicate conventional message ids ([`e695eda`](https://github.com//Byron/gitoxide/commit/e695eda8cd183f703d9a3e59b7c3c7fa496ea1d2))
+    - regenerate all changelogs to get links ([`0c81769`](https://github.com//Byron/gitoxide/commit/0c817690bd444f52bed2936b2b451cafd87dde92))
     - Mention actual issues that where worked on ([`a517e39`](https://github.com//Byron/gitoxide/commit/a517e39a81145b331f6c7a6cc2fc22e25daf42e2))
     - Allow 'refactor' and 'other' in conventional messages if they have breaking changes ([`4eebaac`](https://github.com//Byron/gitoxide/commit/4eebaac669e590beed112b622752997c64772ef1))
     - Rebuild all changelogs to assure properly ordered headlines ([`4a9a05f`](https://github.com//Byron/gitoxide/commit/4a9a05f95930bad5938d4ce9c517ebf0e0b990f1))
@@ -67,12 +69,13 @@ or generally trying to figure out what changed between commits.
     - A manual message parse impl and more tests ([`f4b8a0d`](https://github.com//Byron/gitoxide/commit/f4b8a0da787f9a16eebd2a36b342f5a2a66edabd))
     - More message parsing tests, now with legit failure… ([`625be8d`](https://github.com//Byron/gitoxide/commit/625be8dbd4204ea1a7131ade9b17f63dcc7e30d7))
     - feat(commit): Add `message()` method and `MessageRef` type… ([`6150b2d`](https://github.com//Byron/gitoxide/commit/6150b2db18034d5912029deac51d1affb38ae7b2))
- * **#67**
+ * **[#67](https://github.com//Byron/gitoxide/issues/67)**
     - describe variants ([`899c579`](https://github.com//Byron/gitoxide/commit/899c57927ce4ba2e1b5d8182f9e731c2a9094cba))
     - parse entry mode into number instead of comparing it to byte strings ([`83d591d`](https://github.com//Byron/gitoxide/commit/83d591d536d1a43e8523082824ec0b95cca55d34))
     - ObjectID specific hashers, using the fact that object ids are hashes ([`f9232ac`](https://github.com//Byron/gitoxide/commit/f9232acf8e52f8cd95520d122469e136eb07b39f))
     - Tree parsing now probably is twice as fast… ([`d1e2b89`](https://github.com//Byron/gitoxide/commit/d1e2b8910b454dd798be8a9a43871f0b0644d503))
  * **Uncategorized**
+    - Adjusting changelogs prior to release of git-hash v0.7.0, git-features v0.16.5, git-actor v0.5.3, git-validate v0.5.3, git-object v0.14.1, git-diff v0.10.0, git-tempfile v1.0.3, git-lock v1.0.1, git-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, git-packetline v0.11.0, git-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, git-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0, safety bump 3 crates ([`a474395`](https://github.com//Byron/gitoxide/commit/a47439590e36b1cb8b516b6053fd5cbfc42efed7))
     - Update changelogs just for fun ([`21541b3`](https://github.com//Byron/gitoxide/commit/21541b3301de1e053fc0e84373be60d2162fbaae))
     - Merge branch 'main' into changelog-generation ([`c956f33`](https://github.com//Byron/gitoxide/commit/c956f3351d766c748faf0460780e32ac8dfe8165))
     - thanks clippy ([`d78d382`](https://github.com//Byron/gitoxide/commit/d78d3828c7f80963c0b8803cb64e0ae5e08d0ba3))
@@ -361,7 +364,7 @@ or generally trying to figure out what changed between commits.
 
 <details><summary>view details</summary>
 
- * **#79**
+ * **[#79](https://github.com//Byron/gitoxide/issues/79)**
     - refactor; add test for empty tree iteration ([`6340296`](https://github.com//Byron/gitoxide/commit/634029682da374f912068f5c8d5ec79d4837f7ea))
  * **Uncategorized**
     - (cargo-release) version 0.9.0 ([`84897fd`](https://github.com//Byron/gitoxide/commit/84897fd8e6e1b0269da0303d6a0de8f9e0eb58e5))
@@ -458,7 +461,7 @@ or generally trying to figure out what changed between commits.
 
 <details><summary>view details</summary>
 
- * **#63**
+ * **[#63](https://github.com//Byron/gitoxide/issues/63)**
     - Use new `oid` where possible in git-odb ([`68a709e`](https://github.com//Byron/gitoxide/commit/68a709e0337d4969138d30a5c25d60b7dbe51a73))
     - refactor; better errors for invalid hash sizes ([`be84b36`](https://github.com//Byron/gitoxide/commit/be84b36129694a2e89d1b81d932f2eba23aedf54))
     - Make ObjectId/oid happen! ([`ca78d15`](https://github.com//Byron/gitoxide/commit/ca78d15373ec988d909be8f240baefe75555e077))

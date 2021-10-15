@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.1.7 (2021-10-15)
 
 This is a maintenance release without functional changes.
 
@@ -13,7 +13,7 @@ This is a maintenance release without functional changes.
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 2 calendar days.
+ - 12 commits contributed to the release over the course of 3 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#198](https://github.com//Byron/gitoxide/issues/198), [#213](https://github.com//Byron/gitoxide/issues/213)
 
@@ -24,6 +24,8 @@ This is a maintenance release without functional changes.
 <details><summary>view details</summary>
 
  * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - Maintenance release note to avoid being fully generated ([`56ef363`](https://github.com//Byron/gitoxide/commit/56ef363f0e7a8b9106765d96d0636e38b2bed550))
+    - Changlog for git-config ([`abdfe58`](https://github.com//Byron/gitoxide/commit/abdfe588030b0fbdd4d69a73c5739ef4a83e3616))
     - Use correct title for github release to match name of tag ([`90f39ad`](https://github.com//Byron/gitoxide/commit/90f39ad693e0998bc3307bf553fccdc37c8dc0c8))
  * **[#213](https://github.com//Byron/gitoxide/issues/213)**
     - refactor ([`e906d37`](https://github.com//Byron/gitoxide/commit/e906d37e0b4e088b7973728db386a23ea7645fc9))
