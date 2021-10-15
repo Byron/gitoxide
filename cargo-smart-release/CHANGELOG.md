@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-0ebfeb614264ca06ab763189e55e6c016c9997af/>
 <csr-id-80b8331092f4856f52afa1d85fa375ae688bdd28/>
 <csr-id-e59f901f47fb0180211494a1591aed62b856406a/>
+<csr-id-19fc134d2a34f2ea84b2cc8fbd15ca55c55df35e/>
 
 This major release adds **changelog** support to automatically generate scaffolding to be filled in by hand. The feature is driven by
 [conventional commit](https://www.conventionalcommits.org) messages which are used sparingly to mark important changes only.
@@ -43,7 +44,6 @@ If there are issues to be corrected, there will be suggestions to run `cargo cha
 one by one, or the release operation will have left a single commit with all changelogs written out.
 In any case, it's recommended to re-write the changelog after editing to assure it is indeed stable and won't change each time
 the generator is run.
-
 ### The `cargo changelog` Sub-Command
 
 This new sub-command sports the same dependency resolution as `smart-release` itself, operates in dry-run mode by default
@@ -51,12 +51,16 @@ to preview changelogs that would be written. Use the `--write` flag to actually 
 
 It's primary use is to conveniently generate changelogs from time to time to add the final polish by hand before
 actually releasing them along with the crate with `smart-release`.
+### New Features
+
+ - <csr-id-e668bf23ddba9a676a885f1f401d2d2885784eef/> `--no-dependencies` now has `--only` as alias
 
 ### Other BREAKING Changes
 
 - renamed `--skip-*` flags to `--no-*` for consistency
 - rename `--skip-dependencies` to `--no-dependencies` to be more inline with existing terminology of other flags.
- 
+- rename short name for `--execute` to `-e` from `-n` for consistency
+
 ### Bug Fixes
 
  - <csr-id-11eebdcc572a72b2e66a9db3cae0a01f12a81619/> Previously it might have been possible to see that it won't use a 'new' crate version as it's already in the manifest, _even_ if these are the same. This is now fixed.
@@ -65,8 +69,8 @@ actually releasing them along with the crate with `smart-release`.
 
 <csr-read-only-do-not-edit/>
 
- - 271 commits contributed to the release over the course of 36 calendar days.
- - 17 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 274 commits contributed to the release over the course of 36 calendar days.
+ - 19 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#192](https://github.com//Byron/gitoxide/issues/192), [#197](https://github.com//Byron/gitoxide/issues/197), [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200), [#213](https://github.com//Byron/gitoxide/issues/213), [#67](https://github.com//Byron/gitoxide/issues/67)
 
 ### Thanks Clippy
@@ -100,6 +104,9 @@ actually releasing them along with the crate with `smart-release`.
     - smart-release: an algorithm to collect dependencies by 'growing' ([`73794a4`](https://github.com//Byron/gitoxide/commit/73794a4e382404cb7b684c9054278fb4ff8a84ce))
     - smart-release: foundation for bumping versions ([`d1145d1`](https://github.com//Byron/gitoxide/commit/d1145d1a6219ddafa7a41c82d6149b289f033640))
  * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - rename short name for `--execute` to `-e` from `-n` for consistency ([`19fc134`](https://github.com//Byron/gitoxide/commit/19fc134d2a34f2ea84b2cc8fbd15ca55c55df35e))
+    - `--no-dependencies` now has `--only` as alias ([`e668bf2`](https://github.com//Byron/gitoxide/commit/e668bf23ddba9a676a885f1f401d2d2885784eef))
+    - Write more of the smart-release changelog to learn --no-dependencies needs an alias ([`65468c8`](https://github.com//Byron/gitoxide/commit/65468c88c241914847a91a563663c60b8931ef9f))
     - Show how many more changelogs are going to be previewed… ([`94a6788`](https://github.com//Byron/gitoxide/commit/94a678843edb7b0da98f2227745900f5c89b9b56))
     - Start writing the 0.4 changelog ([`5f18bc9`](https://github.com//Byron/gitoxide/commit/5f18bc96147a48226be957de2c996f14ba55f1bc))
     - Only use src/ directory for top-level crate change tracking… ([`f26b581`](https://github.com//Byron/gitoxide/commit/f26b58143491300c3375a815f3ffaa1a7ea2bcea))

@@ -138,7 +138,7 @@ fn merge_read_only_segment(
 fn merge_conventional(
     removed_in_release: &[git_repository::hash::ObjectId],
     dest_segments: &mut Vec<Segment>,
-    src: section::segment::Conventional,
+    mut src: section::segment::Conventional,
 ) {
     assert!(
         src.removed.is_empty(),
@@ -201,7 +201,13 @@ fn merge_conventional(
                     }
                 })
                 .unwrap_or(0),
-            Segment::Conventional(src),
+            {
+                src.messages.retain(|m| match m {
+                    conventional::Message::User { .. } => true,
+                    conventional::Message::Generated { id, .. } => !removed_in_release.contains(id),
+                });
+                Segment::Conventional(src)
+            },
         );
     }
 }
