@@ -20,6 +20,22 @@ Fearlessly release workspace crates and with beautiful semi-handcrafted changelo
   
 If seeing is believing, here is [a 12 minute demonstration](https://www.youtube.com/watch?v=EOft_uMDVYE), and the same in 30 minutes is [also available](https://youtu.be/a4CzzxJ7ecE).
 
+## Made for this Workflow
+
+When developing various crates in a workspace, when committing changes and if the edit is breaking, a feature, or another
+change I want to see in changelogs, [conventional] git messages will be used. This helps building changelog scaffolding automatically later.
+
+When ready for releasing a particular crate or set of crates of interest, run `cargo smart-release [<crate-name> ...]` to simulate a release. For particularly thorough
+but error-prone simulations (as in false positives) one could run `cargo smart-release --dry-run-cargo-publish`. To polish changelogs, run `cargo changelog --write --only <crate-name>`
+to update the scaffolding and edit it by hand until it fits.
+
+After evaluating the release procedure and following instructions,
+`cargo smart-release --execute` will cause the fully automatic release of one or more crates.
+
+There are various other options that shouldn't be needed in the common case, use `cargo smart-release --help` to see them.
+
+[conventional]: https://www.conventionalcommits.org
+
 ## Installation
 
 ### Cargo
@@ -28,19 +44,6 @@ Via `cargo`, which can be obtained using [rustup][rustup]
 ```
 cargo install cargo-smart-release
 ```
-
-## Preferred workflow
-
-When developing various crates in a workspace, when committing changes and if the edit is breaking, a feature, or another
-change I want to see in changelogs, [conventional] git messages will be used. This helps building changelog scaffolding automatically later.
-
-When ready for releasing a particular crate or set of crates of interest, run `cargo smart-release [<crate-name> ...]` to simulate a release. For particularly thorough
-but error-prone simulations (as in false positives) one could run `cargo smart-release --dry-run-cargo-publish`. After evaluating the release procedure and following
-instructions, `cargo smart-release --execute` will cause the fully automatic release of one or more crates. 
-
-There are various other options that shouldn't be needed in the common case, use `cargo smart-release --help` to see them.
-
-[conventional]: https://www.conventionalcommits.org
 
 ## Features
 
