@@ -241,7 +241,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         );
     }
 
-    if !pending_changelog_changes.is_empty() && preview {
+    if !pending_changelog_changes.is_empty() && preview && !dry_run {
         let additional_info =
             "use --no-changelog-preview to disable or Ctrl-C to abort, or the 'changelog' subcommand.";
         log::info!(
@@ -269,6 +269,12 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 &additional_info,
             )?;
         }
+    } else if !pending_changelog_changes.is_empty() && preview {
+        log::info!(
+            "{} changelog{} would be previewed if the --execute is set and --no-changelog-preview is unset.",
+            pending_changelog_changes.len(),
+            if pending_changelog_changes.len() == 1 { "" } else { "s" }
+        );
     }
 
     let bail_message_after_commit = if !dry_run {
@@ -335,7 +341,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 })
             })
     } else {
-        let comma_separated_crate_names = |ids: &[usize]| {
+        let crate_names = |ids: &[usize]| {
             ids.iter()
                 .filter_map(|idx| {
                     pending_changelog_changes
@@ -352,11 +358,11 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                         )
                 })
                 .collect::<Vec<_>>()
-                .join(", ")
         };
+        let fix_preamble = "To fix the changelog manually, run: cargo changelog --write --no-dependencies";
         if !changelog_ids_with_statistical_segments_only.is_empty() {
-            let names_of_crates_that_would_need_review =
-                comma_separated_crate_names(&changelog_ids_with_statistical_segments_only);
+            let crate_names = crate_names(&changelog_ids_with_statistical_segments_only);
+            let names_of_crates_that_would_need_review = crate_names.join(", ");
             log::warn!(
                 "WOULD {} as the changelog entry is empty for crate{}: {}",
                 if skip_publish {
@@ -371,8 +377,12 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 },
                 names_of_crates_that_would_need_review
             );
+            for crate_name in crate_names {
+                log::warn!("{} {}", fix_preamble, crate_name);
+            }
         }
         if !changelog_ids_probably_lacking_user_edits.is_empty() {
+            let crate_names = crate_names(&changelog_ids_probably_lacking_user_edits);
             log::warn!(
                 "{} likely to be fully generated from commit history or contain lower-case git-conventional headlines: {}{}",
                 if changelog_ids_probably_lacking_user_edits.len() == 1 {
@@ -380,13 +390,18 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 } else {
                     "These changelogs are"
                 },
-                comma_separated_crate_names(&changelog_ids_probably_lacking_user_edits),
+                crate_names.join(", "),
                 if allow_fully_generated_changelogs {
                     ""
                 } else {
-                    ". The release process would stop to allow edits."
+                    ". Would stop after commit to allow edits."
                 }
             );
+            if !allow_fully_generated_changelogs {
+                for crate_name in crate_names {
+                    log::warn!("{} {}", fix_preamble, crate_name);
+                }
+            }
         }
         None
     };

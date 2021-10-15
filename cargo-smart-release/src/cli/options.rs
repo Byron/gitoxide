@@ -109,7 +109,8 @@ pub enum SubCommands {
         /// Omits these kinds of generated changelog content, values are 'clippy', 'commit-statistics' and 'commit-details'
         #[clap(long, help_heading = Some("CHANGELOG"))]
         changelog_without: Vec<String>,
-        /// If unset, about-to-be changed changelogs will be previewed using 'bat', if available.
+
+        /// If unset, about-to-be changed changelogs will be previewed using 'bat', if available, and when executing.
         ///
         /// If set, no preview will ever be displayed, but note that empty changelogs will always stop the release process.
         #[clap(long, help_heading = Some("CHANGELOG"))]
