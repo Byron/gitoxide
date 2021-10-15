@@ -32,6 +32,10 @@ have been fixed :)_).
 
 If you have 30 minutes, there is also [a long version of the video](https://youtu.be/a4CzzxJ7ecE).
 
+And there is another one showing `cargo smart-release` releasing `gitoxide 0.9.0`, along with some explanation on how it works. 
+
+[![8 minute video releasing gitoxide](https://img.youtube.com/vi/ZS9fwPDYLpI/0.jpg)](https://www.youtube.com/watch?v=ZS9fwPDYLpI)
+
 ### Changelog Support in `cargo smart-release`
 
 When using `cargo smart-release` in dry-run mode (_default_), additional information regarding changelog will be printed.
