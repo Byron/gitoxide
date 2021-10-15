@@ -19,7 +19,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     ctx: &'repo Context,
 ) -> anyhow::Result<(Option<Oid<'repo>>, BTreeMap<&'a str, changelog::Section>)> {
     let mut locks_by_manifest_path = BTreeMap::new();
-    let mut pending_changelog_changes = Vec::new();
+    let mut pending_changelogs = Vec::new();
     let Options {
         verbose,
         dry_run,
@@ -62,9 +62,9 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
 
             let (recent_idx, recent_release_section_in_log) = log.most_recent_release_section_mut();
             if !recent_release_section_in_log.is_essential() {
-                changelog_ids_with_statistical_segments_only.push(pending_changelog_changes.len());
+                changelog_ids_with_statistical_segments_only.push(pending_changelogs.len());
             } else if recent_release_section_in_log.is_probably_lacking_user_edits() {
-                changelog_ids_probably_lacking_user_edits.push(pending_changelog_changes.len());
+                changelog_ids_probably_lacking_user_edits.push(pending_changelogs.len());
             }
             let new_version: semver::Version = new_version.parse()?;
             match recent_release_section_in_log {
@@ -92,7 +92,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                         Some(version_section) => {
                             version_section.merge(recent_section);
                             let pop_if_changelog_id_is_last = |v: &mut Vec<usize>| {
-                                if v.last().filter(|&&idx| idx == pending_changelog_changes.len()).is_some() {
+                                if v.last().filter(|&&idx| idx == pending_changelogs.len()).is_some() {
                                     v.pop();
                                 }
                             };
@@ -138,7 +138,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             )?;
             lock.with_mut(|file| file.write_all(write_buf.as_bytes()))?;
             made_change |= previous_content.map(|previous| write_buf != previous).unwrap_or(true);
-            pending_changelog_changes.push((publishee, log_init_state.is_modified(), lock));
+            pending_changelogs.push((publishee, log_init_state.is_modified(), lock));
             release_section_by_publishee.insert(publishee.name.as_str(), log.take_recent_release_section());
         }
     }
@@ -220,8 +220,8 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             will(dry_run),
             locks_by_manifest_path.len(),
             match (
-                pending_changelog_changes.len(),
-                pending_changelog_changes.iter().fold(0usize, |mut acc, (_, _, lock)| {
+                pending_changelogs.len(),
+                pending_changelogs.iter().fold(0usize, |mut acc, (_, _, lock)| {
                     acc += if !lock.resource_path().is_file() { 1 } else { 0 };
                     acc
                 })
@@ -241,46 +241,46 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         );
     }
 
-    if !pending_changelog_changes.is_empty() && preview && !dry_run {
+    if !pending_changelogs.is_empty() && preview && !dry_run {
         let additional_info =
             "use --no-changelog-preview to disable or Ctrl-C to abort, or the 'changelog' subcommand.";
+        let changelogs_with_changes = pending_changelogs
+            .iter()
+            .filter_map(|(_, has_changes, lock)| (*has_changes).then(|| lock))
+            .collect::<Vec<_>>();
         log::info!(
             "About to preview {} pending changelog(s), {}",
-            pending_changelog_changes
-                .iter()
-                .filter(|(_, has_changes, _)| *has_changes)
-                .count(),
+            changelogs_with_changes.len(),
             additional_info
         );
 
         let bat = crate::bat::Support::new();
-        let additional_info = format!(
-            "PREVIEW, {}{}",
-            if opts.dry_run { "simplified, " } else { "" },
-            additional_info
-        );
-        for (_, _, lock) in pending_changelog_changes
-            .iter()
-            .filter(|(_, has_changes, _)| *has_changes)
-        {
+        for (idx, lock) in changelogs_with_changes.iter().enumerate() {
+            let additional_info = format!(
+                "PREVIEW {} / {}, {}{}",
+                idx + 1,
+                changelogs_with_changes.len(),
+                if opts.dry_run { "simplified, " } else { "" },
+                additional_info
+            );
             bat.display_to_tty(
                 lock.lock_path(),
                 lock.resource_path().strip_prefix(&ctx.base.root.to_path_buf())?,
-                &additional_info,
+                additional_info,
             )?;
         }
-    } else if !pending_changelog_changes.is_empty() && preview {
+    } else if !pending_changelogs.is_empty() && preview {
         log::info!(
-            "{} changelog{} would be previewed if the --execute is set and --no-changelog-preview is unset.",
-            pending_changelog_changes.len(),
-            if pending_changelog_changes.len() == 1 { "" } else { "s" }
+            "Up to {} changelog{} would be previewed if the --execute is set and --no-changelog-preview is unset.",
+            pending_changelogs.len(),
+            if pending_changelogs.len() == 1 { "" } else { "s" }
         );
     }
 
     let bail_message_after_commit = if !dry_run {
         let mut packages_whose_changelogs_need_edits = None;
         let mut packages_which_might_be_fully_generated = None;
-        for (idx, (package, _, lock)) in pending_changelog_changes.into_iter().enumerate() {
+        for (idx, (package, _, lock)) in pending_changelogs.into_iter().enumerate() {
             if changelog_ids_with_statistical_segments_only.is_empty()
                 || changelog_ids_with_statistical_segments_only.contains(&idx)
             {
@@ -344,18 +344,13 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         let crate_names = |ids: &[usize]| {
             ids.iter()
                 .filter_map(|idx| {
-                    pending_changelog_changes
-                        .iter()
-                        .enumerate()
-                        .find_map(
-                            |(pidx, (p, _, _))| {
-                                if *idx == pidx {
-                                    Some(p.name.as_str())
-                                } else {
-                                    None
-                                }
-                            },
-                        )
+                    pending_changelogs.iter().enumerate().find_map(|(pidx, (p, _, _))| {
+                        if *idx == pidx {
+                            Some(p.name.as_str())
+                        } else {
+                            None
+                        }
+                    })
                 })
                 .collect::<Vec<_>>()
         };

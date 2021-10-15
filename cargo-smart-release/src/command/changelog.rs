@@ -34,7 +34,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
             })
             .unwrap_or(Linkables::AsText)
     };
-    for crate_name in &crate_names {
+    for (idx, crate_name) in crate_names.iter().enumerate() {
         let (
             crate::changelog::init::Outcome {
                 log, mut lock, state, ..
@@ -69,7 +69,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
             bat.display_to_tty(
                 lock.lock_path(),
                 lock.resource_path().strip_prefix(&ctx.root.to_path_buf())?,
-                "PREVIEW",
+                format!("PREVIEW {} / {}, press Ctrl+C to cancel", idx + 1, crate_names.len()),
             )?;
         }
         if !opts.dry_run {
