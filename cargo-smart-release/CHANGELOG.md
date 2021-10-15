@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-ae8780e08303946412cedc19ea4d2679be49ec97/>
 <csr-id-509550f8aa8210f3688c78167a56a21fc1817515/>
 <csr-id-11b64fce4630371633b6415f227eecdc6b42b20b/>
+<csr-id-0ebfeb614264ca06ab763189e55e6c016c9997af/>
+<csr-id-80b8331092f4856f52afa1d85fa375ae688bdd28/>
+<csr-id-e59f901f47fb0180211494a1591aed62b856406a/>
 
 This major release adds **changelog** support to automatically generate scaffolding to be filled in by hand. The feature is driven by
 [conventional commit](https://www.conventionalcommits.org) messages which are used sparingly to mark important changes only.
@@ -22,46 +25,21 @@ If you have 10 minutes, the following video gives the whirlwind tour through the
 [![12 minute introduction video](https://img.youtube.com/vi/EOft_uMDVYE/0.jpg)](https://www.youtube.com/watch?v=EOft_uMDVYE)
 
 If you have 30 minutes, there is also [a long version of the video](https://youtu.be/a4CzzxJ7ecE).
-
 ### Changelog Support in `cargo smart-release`
 
 When using `cargo smart-release` in dry-run mode (_default_), additional information regarding changelog will be printed.
 This informs you a release would be attempted, or if manual adjustments to the changelogs would be required, for example as
 they are fully generated with statistical information only.
 
+If there is no issue with the initial changelogs, passing the `--execute` flag will write the changelogs after
+providing them to you for preview (using `bat`) for a last chance to abort the operation. Otherwise the publishing
+will proceed, which includes the creation of tag objects containing the relevant section of the changelog, along with
+a GitHub release which is annotated with the same section (_only if the repository is hosted on GitHub_).
 
+If there are issues to be corrected, there will be suggestsions to run `cargo changelog --write --no-dependencies `
 ### The `cargo changelog` Sub-Command
 
 TBD
-
-### Changed (BREAKING)
-
- - <csr-id-e59f901f47fb0180211494a1591aed62b856406a/> rename `ObjectAccessExt::tag(…)` to `*::tag_reference(…)`, add `easy::Object::try_to_tag()`
-   This one also contains the first and probably only test for tag object
-   creation.
-
-### New Features
-
-- smart-release with --changelog-without option.
-
-  This allows disabling various changelog segments like clippy, or commit statistics.
-
-  Note that it's always possible to delete individual sections afterwards.
-- changelog command learns the --without <section> option
-  With it one can omit auto-generated sections of the given name.
- - <csr-id-0ebfeb614264ca06ab763189e55e6c016c9997af/> Make `git_url::Url` available under `git_repository::Url`
-
- - <csr-id-80b8331092f4856f52afa1d85fa375ae688bdd28/> add easy::ext::ObjectAccessExt::tag(…) to create tag objects
-   It's a quick sketch on how tag object creation could work.
-   
-   Note the duplication the method name using traits, which seems like a good solution
-   to the problem of differentiating tag objects and tag references while
-   keeping the method name short.
-   
-   Most will only ever need one, right?
-   
-   Even in my example that's not the case, so maybe we have to rename it.
-
 ### Other BREAKING Changes
 
 - renamed `--skip-*` flags to `--no-*` for consistency
@@ -75,7 +53,7 @@ TBD
 
 <csr-read-only-do-not-edit/>
 
- - 269 commits contributed to the release over the course of 36 calendar days.
+ - 271 commits contributed to the release over the course of 36 calendar days.
  - 17 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#192](https://github.com//Byron/gitoxide/issues/192), [#197](https://github.com//Byron/gitoxide/issues/197), [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200), [#213](https://github.com//Byron/gitoxide/issues/213), [#67](https://github.com//Byron/gitoxide/issues/67)
 
@@ -110,6 +88,8 @@ TBD
     - smart-release: an algorithm to collect dependencies by 'growing' ([`73794a4`](https://github.com//Byron/gitoxide/commit/73794a4e382404cb7b684c9054278fb4ff8a84ce))
     - smart-release: foundation for bumping versions ([`d1145d1`](https://github.com//Byron/gitoxide/commit/d1145d1a6219ddafa7a41c82d6149b289f033640))
  * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - Show how many more changelogs are going to be previewed… ([`94a6788`](https://github.com//Byron/gitoxide/commit/94a678843edb7b0da98f2227745900f5c89b9b56))
+    - Start writing the 0.4 changelog ([`5f18bc9`](https://github.com//Byron/gitoxide/commit/5f18bc96147a48226be957de2c996f14ba55f1bc))
     - Only use src/ directory for top-level crate change tracking… ([`f26b581`](https://github.com//Byron/gitoxide/commit/f26b58143491300c3375a815f3ffaa1a7ea2bcea))
     - refactor ([`78c4ad5`](https://github.com//Byron/gitoxide/commit/78c4ad5d05a9bd02131238be4d503080cade8924))
     - Don't show previews in dry-run mode; provide help on how to fix this before release ([`cdb8db4`](https://github.com//Byron/gitoxide/commit/cdb8db412fad2063f78f0e4c677a3bb429c0fd76))
