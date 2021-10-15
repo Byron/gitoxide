@@ -166,7 +166,18 @@ pub fn crate_ref_segments<'h>(
                 _ => Filter::Slow(components.into_iter().map(component_to_bytes).collect()),
             }
         })
-        .unwrap_or(Filter::None);
+        .unwrap_or_else(|| {
+            if ctx.meta.workspace_members.len() == 1 {
+                Filter::None
+            } else {
+                log::info!(
+                    "{}: Tracking top-level crate's changes in multi-crate workspace through 'src/' directory only.",
+                    package.name
+                );
+                // TODO: analyse .targets to find actual source directory.
+                Filter::Fast(b"src")
+            }
+        });
 
     for item in history.items.iter() {
         match tags_by_commit.remove(&item.id) {
