@@ -24,11 +24,13 @@ Furthermore, it will deduce the require version bump, i.e. patch, minor or major
 and interpreting _'conventional commit'_ messages. This means that from time to time one would sprinkle in a specifically formatted
 commit message to leave enough information to determine the correct release version and create changelog scaffolding.
 
-If you have 10 minutes, the following video gives the whirlwind tour through the new features.
+If you have 10 minutes, the following video gives the whirlwind tour through the new features (_and note that all issues discovered there
+have been fixed :)_).
 
 [![12 minute introduction video](https://img.youtube.com/vi/EOft_uMDVYE/0.jpg)](https://www.youtube.com/watch?v=EOft_uMDVYE)
 
 If you have 30 minutes, there is also [a long version of the video](https://youtu.be/a4CzzxJ7ecE).
+
 ### Changelog Support in `cargo smart-release`
 
 When using `cargo smart-release` in dry-run mode (_default_), additional information regarding changelog will be printed.
@@ -44,6 +46,7 @@ If there are issues to be corrected, there will be suggestions to run `cargo cha
 one by one, or the release operation will have left a single commit with all changelogs written out.
 In any case, it's recommended to re-write the changelog after editing to assure it is indeed stable and won't change each time
 the generator is run.
+
 ### The `cargo changelog` Sub-Command
 
 This new sub-command sports the same dependency resolution as `smart-release` itself, operates in dry-run mode by default
@@ -51,6 +54,7 @@ to preview changelogs that would be written. Use the `--write` flag to actually 
 
 It's primary use is to conveniently generate changelogs from time to time to add the final polish by hand before
 actually releasing them along with the crate with `smart-release`.
+
 ### New Features
 
  - <csr-id-e668bf23ddba9a676a885f1f401d2d2885784eef/> `--no-dependencies` now has `--only` as alias
@@ -69,7 +73,7 @@ actually releasing them along with the crate with `smart-release`.
 
 <csr-read-only-do-not-edit/>
 
- - 274 commits contributed to the release over the course of 36 calendar days.
+ - 276 commits contributed to the release over the course of 36 calendar days.
  - 19 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#192](https://github.com//Byron/gitoxide/issues/192), [#197](https://github.com//Byron/gitoxide/issues/197), [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200), [#213](https://github.com//Byron/gitoxide/issues/213), [#67](https://github.com//Byron/gitoxide/issues/67)
 
@@ -104,6 +108,8 @@ actually releasing them along with the crate with `smart-release`.
     - smart-release: an algorithm to collect dependencies by 'growing' ([`73794a4`](https://github.com//Byron/gitoxide/commit/73794a4e382404cb7b684c9054278fb4ff8a84ce))
     - smart-release: foundation for bumping versions ([`d1145d1`](https://github.com//Byron/gitoxide/commit/d1145d1a6219ddafa7a41c82d6149b289f033640))
  * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - Enforce an empty line after user sections ([`d1962ed`](https://github.com//Byron/gitoxide/commit/d1962edc6fda450540344865427fe99a46ad446d))
+    - Respect release-level removed-id list even when inserting sections ([`2970fff`](https://github.com//Byron/gitoxide/commit/2970fffc681657d0ab393b4c20d9be20675d808d))
     - rename short name for `--execute` to `-e` from `-n` for consistency ([`19fc134`](https://github.com//Byron/gitoxide/commit/19fc134d2a34f2ea84b2cc8fbd15ca55c55df35e))
     - `--no-dependencies` now has `--only` as alias ([`e668bf2`](https://github.com//Byron/gitoxide/commit/e668bf23ddba9a676a885f1f401d2d2885784eef))
     - Write more of the smart-release changelog to learn --no-dependencies needs an alias ([`65468c8`](https://github.com//Byron/gitoxide/commit/65468c88c241914847a91a563663c60b8931ef9f))
@@ -609,6 +615,7 @@ actually releasing them along with the crate with `smart-release`.
 ## v0.1.0 (2021-08-13)
 
 - initial release
+
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>

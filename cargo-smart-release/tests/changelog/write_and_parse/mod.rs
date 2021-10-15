@@ -102,7 +102,7 @@ fn all_section_types_round_trips_lossy() -> Result {
                 name: changelog::Version::Semantic("1.0.2-beta.2".parse()?),
                 segments: vec![
                     section::Segment::User {
-                        markdown: "* hello world\n\tthis\n".into(),
+                        markdown: "* hello world\n\tthis\n\n".into(),
                     },
                     section::Segment::Clippy(section::Data::Generated(section::segment::ThanksClippy { count: 42 })),
                     section::Segment::Statistics(section::Data::Generated(section::segment::CommitStatistics {

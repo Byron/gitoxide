@@ -78,6 +78,10 @@ impl Section {
     pub const UNKNOWN_TAG_START: &'static str = "<csr-unknown>";
     pub const UNKNOWN_TAG_END: &'static str = "<csr-unknown/>";
     pub const READONLY_TAG: &'static str = "<csr-read-only-do-not-edit/>\n"; // needs a newline to not interfere with formatting
+    #[cfg(windows)]
+    pub const NL: &'static str = "\r\n";
+    #[cfg(not(windows))]
+    pub const NL: &'static str = "\n";
 
     /// Note that `headline` should be enabled by default as it will break parsing to some extend. It's a special case for tag
     /// objects.
@@ -88,7 +92,10 @@ impl Section {
         components: Components,
     ) -> std::fmt::Result {
         match self {
-            Section::Verbatim { text, .. } => out.write_str(text),
+            Section::Verbatim { text, .. } => {
+                out.write_str(text)?;
+                assure_ends_with_empty_line(&mut out, text)
+            }
             Section::Release {
                 name,
                 date,
@@ -132,6 +139,17 @@ impl Section {
     }
 }
 
+fn assure_ends_with_empty_line(out: &mut impl std::fmt::Write, text: &String) -> std::fmt::Result {
+    if !(text.ends_with("\n\n") || text.ends_with("\r\n\r\n")) {
+        if text.ends_with("\n") || text.ends_with("\r\n") {
+            out.write_str(Section::NL)?;
+        } else {
+            out.write_str(Section::NL)?;
+            out.write_str(Section::NL)?;
+        }
+    };
+    Ok(())
+}
 fn heading(level: usize) -> String {
     "#".repeat(level)
 }
@@ -160,7 +178,10 @@ impl section::Segment {
     ) -> std::fmt::Result {
         let write_html = components.contains(Components::HTML_TAGS);
         match self {
-            Segment::User { markdown } => out.write_str(markdown)?,
+            Segment::User { markdown } => {
+                out.write_str(markdown)?;
+                assure_ends_with_empty_line(&mut out, markdown)?;
+            }
             Segment::Conventional(segment::Conventional {
                 kind,
                 is_breaking,

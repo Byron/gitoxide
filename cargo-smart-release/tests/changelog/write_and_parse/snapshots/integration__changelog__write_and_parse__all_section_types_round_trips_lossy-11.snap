@@ -1,10 +1,11 @@
 ---
 source: cargo-smart-release/tests/changelog/write_and_parse/mod.rs
-expression: buf.to_str()?
+expression: buf
 
 ---
 * hello world
 	this
+
 ##### Thanks Clippy
 
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 42 times to make code idiomatic. 
