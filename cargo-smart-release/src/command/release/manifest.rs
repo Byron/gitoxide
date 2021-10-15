@@ -354,7 +354,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 })
                 .collect::<Vec<_>>()
         };
-        let fix_preamble = "To fix the changelog manually, run: cargo changelog --write --no-dependencies";
+        let fix_preamble = "To fix the changelog manually, run: cargo changelog --write --only";
         if !changelog_ids_with_statistical_segments_only.is_empty() {
             let crate_names = crate_names(&changelog_ids_with_statistical_segments_only);
             let names_of_crates_that_would_need_review = crate_names.join(", ");

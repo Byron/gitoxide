@@ -19,8 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This major release adds **changelog** support to automatically generate scaffolding to be filled in by hand. The feature is driven by
 [conventional commit](https://www.conventionalcommits.org) messages which are used sparingly to mark important changes only.
+Furthermore, it will deduce the require version bump, i.e. patch, minor or major, automatically by looking at the commit history
+and interpreting _'conventional commit'_ messages. This means that from time to time one would sprinkle in a specifically formatted
+commit message to leave enough information to determine the correct release version and create changelog scaffolding.
 
-If you have 10 minutes, the following video gives the whirlwind tour through the feature.
+If you have 10 minutes, the following video gives the whirlwind tour through the new features.
 
 [![12 minute introduction video](https://img.youtube.com/vi/EOft_uMDVYE/0.jpg)](https://www.youtube.com/watch?v=EOft_uMDVYE)
 
@@ -36,10 +39,19 @@ providing them to you for preview (using `bat`) for a last chance to abort the o
 will proceed, which includes the creation of tag objects containing the relevant section of the changelog, along with
 a GitHub release which is annotated with the same section (_only if the repository is hosted on GitHub_).
 
-If there are issues to be corrected, there will be suggestsions to run `cargo changelog --write --no-dependencies `
+If there are issues to be corrected, there will be suggestions to run `cargo changelog --write --only <crate-name>`
+one by one, or the release operation will have left a single commit with all changelogs written out.
+In any case, it's recommended to re-write the changelog after editing to assure it is indeed stable and won't change each time
+the generator is run.
+
 ### The `cargo changelog` Sub-Command
 
-TBD
+This new sub-command sports the same dependency resolution as `smart-release` itself, operates in dry-run mode by default
+to preview changelogs that would be written. Use the `--write` flag to actually write changes to disk.
+
+It's primary use is to conveniently generate changelogs from time to time to add the final polish by hand before
+actually releasing them along with the crate with `smart-release`.
+
 ### Other BREAKING Changes
 
 - renamed `--skip-*` flags to `--no-*` for consistency

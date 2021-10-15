@@ -23,24 +23,18 @@ pub enum SubCommands {
     /// Use --execute to actually perform the operation.
     SmartRelease {
         /// Actually perform a release. Dry-run mode is the default
-        #[clap(long, short = 'n')]
+        #[clap(long, short = 'n', help_heading = Some("MAJOR"))]
         execute: bool,
-
-        /// Provide more detailed messages on the INFO log level in dry-run mode.
-        ///
-        /// Note --verbose is implied with --execute.
-        #[clap(long, short = 'v')]
-        verbose: bool,
 
         /// Always update the crates-index beforehand. It is used to determine if the computed version to be published was
         /// already published.
-        #[clap(long, short = 'u')]
+        #[clap(long, short = 'u', help_heading = Some("MAJOR"))]
         update_crates_index: bool,
 
         /// Don't generate a changelog automatically or update existing ones. This is useful if a manual changelog
         /// is preferred or if its format strays to far from the suggestions on https://keepachangelog.com, making
         /// generated content impossible to properly integrate with what's there.
-        #[clap(long)]
+        #[clap(long, help_heading = Some("MAJOR"))]
         no_changelog: bool,
 
         /// Specify the kind of version bump you seek for the crate and potentially it's dependencies.
@@ -50,7 +44,7 @@ pub enum SubCommands {
         ///
         /// The default is 'auto', which derives the necessary information from the git commit history and occasional
         /// conventional messages.
-        #[clap(long, short = 'b')]
+        #[clap(long, short = 'b', help_heading = Some("MAJOR"))]
         bump: Option<String>,
 
         /// Specify the kind of version bump to apply to dependencies only.
@@ -60,13 +54,19 @@ pub enum SubCommands {
         ///
         /// The default is 'auto', which derives the necessary information from the git commit history and occasional
         /// conventional messages.
-        #[clap(long, short = 'd')]
+        #[clap(long, short = 'd', help_heading = Some("MAJOR"))]
         bump_dependencies: Option<String>,
 
         /// The name of the crates to be released, along with all of their dependencies if needed.
         ///
         /// Defaults to the top-level workspace crate if unset.
         crates: Vec<String>,
+
+        /// Provide more detailed messages on the INFO log level in dry-run mode.
+        ///
+        /// Note --verbose is implied with --execute.
+        #[clap(long, short = 'v', help_heading = Some("CUSTOMIZATION"))]
+        verbose: bool,
 
         /// Additionally run 'cargo publish --dry-run' when --execute is not set. This can be useful to see which local
         /// crates do not build with the released versions of their workspace dependencies anymore.
@@ -153,7 +153,7 @@ pub enum SubCommands {
         /// Do not take into consideration any dependencies of the crates to publish.
         ///
         /// This flag is useful when various `--skip-X` are specified in order to bump versions only, without publishing.
-        #[clap(long, help_heading = Some("CUSTOMIZATION"))]
+        #[clap(long, visible_alias = "only", help_heading = Some("CUSTOMIZATION"))]
         no_dependencies: bool,
 
         /// Pass --no-verify to 'cargo publish' which should only be a last resort when fixing up packages that
@@ -176,18 +176,18 @@ pub enum SubCommands {
     /// Use --write to actually write generated changelogs
     Changelog {
         /// Actually write the changelog to the respective files
-        #[clap(long, short = 'w')]
+        #[clap(long, short = 'w', help_heading = Some("MAJOR"))]
         write: bool,
 
         /// omits these kinds of generated changelog content, values are 'clippy', 'commit-statistics' and 'commit-details'
-        #[clap(long)]
+        #[clap(long, help_heading = Some("CUSTOMIZATION"))]
         without: Vec<String>,
 
         /// Do not take into consideration any dependencies of the crates to generate the changelog for.
         ///
         /// This flag is useful if you plan to review and finalize changelogs before a a smart-release, where dependencies
         /// are taken into consideration by default, but would like to do so one at a time.
-        #[clap(long)]
+        #[clap(long, visible_alias = "only", help_heading = Some("CUSTOMIZATION"))]
         no_dependencies: bool,
 
         /// The name of the crates to generate a changelog for.
