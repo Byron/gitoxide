@@ -5,9 +5,9 @@ use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
 use semver::{Op, Version, VersionReq};
 
 use super::{cargo, git, version, Context, Oid, Options};
-use crate::changelog::write::Linkables;
 use crate::{
     changelog,
+    changelog::write::Linkables,
     utils::{names_and_versions, package_by_id, package_eq_dependency, will},
     ChangeLog,
 };
