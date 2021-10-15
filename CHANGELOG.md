@@ -7,7 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-This is a maintenance release signalling breaking changes because some of the crates it depends on have breaking changes.
+A first usable version of `git-repository` to make using `gitoxide` from your applications so much easier. It serves as a one-stop shop for application developers without sacrificing performance by default while making common use-cases more convenient.
+
+### Feature list
+
+* `git-repository` as hub crate for application development with focus on usability without sacrificing any knob to tune performance.
+* opt-in `async` for `git-packetline`, `git-transport` and `git-protocol` for fully async git clients, along with the `light-async` feature toggle to build a `gixp pack-receive` with an async client instead of a blocking one.
+* Statistics for `gixp pack-create` with the `-s/--statistics` flag to have data indicating the cost of the operation. Currently it's doing a lot of work that has to be avoided in order to be useable in production and the numbers underline that. Future iterations will cause key metrics to go down.
+* Packs are now reproducible by default, which means that the same tip will always generate a pack with the same hash. This may be a desirable property for some kinds of packs, but not for others which is why it can be turned off for a considerable speed boost.
+* `git-tempfile` crate
+* `git-lock` crate
+* `git-ref` crate with complete loose-ref, packed-ref and transaction support.
+
+
+### Performance
+
+* On M1, thanks to [a new release](https://github.com/RustCrypto/hashes/pull/289#event-5035369215), Sha1 is now computed much faster which unlocks a massive performance boost. In my test, verifying/decoding the entire linux kernel pack now happens in 17s, as compared to 37s for canonical `git`.
+* `git-object` parsing is a few percent faster thanks a reworked error handling for objects. By default, error collection is disabled entirely making the error case zero-sized. If needed, verbose and stacked errors can be turned on using a feature toggle for applications who expect repositories with malformed objects and need detailed diagnostics.
+
 ### New Features
 
  - <csr-id-60c9fad8002b4e3f6b9607bba6361871752f4d3d/> control pack and object cache size in megabytes in some sub-commands
@@ -16,13 +33,14 @@ This is a maintenance release signalling breaking changes because some of the cr
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 25 calendar days.
+ - 4 commits contributed to the release over the course of 26 calendar days.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#200](https://github.com//Byron/gitoxide/issues/200), [#67](https://github.com//Byron/gitoxide/issues/67)
 
 ## v0.8.4 (2021-09-10)
 
 This is a maintenance release.
+
 ## v0.8.3 (2021-09-07)
 
 ### Commit Statistics
@@ -87,9 +105,11 @@ This was eventually fixed with new minor releases across the ecosystem.
 Finally, yet another breaking change due to the introduction of the `git-hash`
 crate to break a dependency cycle between `git-object` and `git-features` caused
 yet another maintenance release.
+
 ## v0.5.0 (2020-12-15)
 
 Maintenance release without any new features.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -188,6 +208,7 @@ Maintenance release without any new features.
 * massive speed improvements for `pack-verify`
 
 Many small and possibly breaking changes are not mentioned here.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -254,6 +275,7 @@ Many small and possibly breaking changes are not mentioned here.
 ## v0.1.0 (2020-07-12)
 
 * Initial release with `pack-verify`
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
