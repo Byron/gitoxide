@@ -139,12 +139,10 @@ impl Section {
     }
 }
 
-fn assure_ends_with_empty_line(out: &mut impl std::fmt::Write, text: &String) -> std::fmt::Result {
+fn assure_ends_with_empty_line(out: &mut impl std::fmt::Write, text: &str) -> std::fmt::Result {
     if !(text.ends_with("\n\n") || text.ends_with("\r\n\r\n")) {
-        if text.ends_with("\n") || text.ends_with("\r\n") {
-            out.write_str(Section::NL)?;
-        } else {
-            out.write_str(Section::NL)?;
+        out.write_str(Section::NL)?;
+        if !(text.ends_with('\n') || text.ends_with("\r\n")) {
             out.write_str(Section::NL)?;
         }
     };
