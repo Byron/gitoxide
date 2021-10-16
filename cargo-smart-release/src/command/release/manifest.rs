@@ -15,7 +15,7 @@ use crate::{
 pub struct Outcome<'repo, 'meta> {
     pub commit_id: Option<Oid<'repo>>,
     pub section_by_package: BTreeMap<&'meta str, changelog::Section>,
-    pub safety_bumped_packages: Vec<(&'meta Package, semver::Version)>,
+    pub safety_bumped_packages: Vec<(&'meta Package, String)>,
 }
 
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_and_handle_changelog<'repo, 'meta>(
@@ -191,7 +191,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         && changelog_ids_probably_lacking_user_edits.is_empty());
     let safety_bumped_packages = dependent_packages
         .into_iter()
-        .filter_map(|(p, v)| v.map(|v| (p, semver::Version::parse(&v).expect("valid new version"))))
+        .filter_map(|(p, v)| v.map(|v| (p, v)))
         .collect::<Vec<_>>();
     let message = format!(
         "{} {}{}",
@@ -207,10 +207,6 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             if safety_bumped_packages.is_empty() {
                 Cow::from("")
             } else {
-                let safety_bumped_packages = safety_bumped_packages
-                    .iter()
-                    .map(|(p, v)| (*p, v.to_string()))
-                    .collect::<Vec<_>>();
                 match safety_bumped_packages.len() {
                     1 => format!(", safety bump {}", names_and_versions(&safety_bumped_packages)).into(),
                     num_crates => format!(
