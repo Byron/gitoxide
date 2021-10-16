@@ -135,6 +135,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
                 manifest::Outcome {
                     commit_id,
                     section_by_package: release_section_by_publishee,
+                    ..
                 },
             ) = perform_single_release(meta, publishee, options, &ctx)?;
             let tag_name = git::create_version_tag(
@@ -200,6 +201,7 @@ fn perform_multi_version_release(
     let manifest::Outcome {
         commit_id,
         section_by_package: release_section_by_publishee,
+        safety_bumped_packages,
     } = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
         meta,
         &crates_to_publish_together,
@@ -208,9 +210,18 @@ fn perform_multi_version_release(
     )?;
 
     log::info!(
-        "{} prepare releases of {}",
+        "{} prepare releases of {}{}",
         will(options.dry_run),
-        names_and_versions(&crates_to_publish_together)
+        names_and_versions(&crates_to_publish_together),
+        if safety_bumped_packages.is_empty() {
+            "".to_string()
+        } else {
+            format!(
+                ", bumping {} crate{} for safety",
+                safety_bumped_packages.len(),
+                if safety_bumped_packages.len() == 1 { "" } else { "s" }
+            )
+        }
     );
 
     crates_to_publish_together.reverse();
@@ -270,7 +281,7 @@ fn section_to_string(section: &Section, mode: WriteMode) -> Option<String> {
 }
 
 fn perform_single_release<'repo, 'meta>(
-    meta: &Metadata,
+    meta: &'meta Metadata,
     publishee: &'meta Package,
     options: Options,
     ctx: &'repo Context,

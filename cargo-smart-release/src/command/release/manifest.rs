@@ -15,10 +15,11 @@ use crate::{
 pub struct Outcome<'repo, 'meta> {
     pub commit_id: Option<Oid<'repo>>,
     pub section_by_package: BTreeMap<&'meta str, changelog::Section>,
+    pub safety_bumped_packages: Vec<(&'meta Package, semver::Version)>,
 }
 
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_and_handle_changelog<'repo, 'meta>(
-    meta: &Metadata,
+    meta: &'meta Metadata,
     publishees: &[(&'meta Package, String)],
     opts: Options,
     ctx: &'repo Context,
@@ -188,6 +189,10 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
 
     let would_stop_release = !(changelog_ids_with_statistical_segments_only.is_empty()
         && changelog_ids_probably_lacking_user_edits.is_empty());
+    let safety_bumped_packages = dependent_packages
+        .into_iter()
+        .filter_map(|(p, v)| v.map(|v| (p, semver::Version::parse(&v).expect("valid new version"))))
+        .collect::<Vec<_>>();
     let message = format!(
         "{} {}{}",
         if would_stop_release {
@@ -199,13 +204,13 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         },
         names_and_versions(publishees),
         {
-            let safety_bumped_packages = dependent_packages
-                .into_iter()
-                .filter_map(|(p, v)| v.map(|v| (p, v)))
-                .collect::<Vec<_>>();
             if safety_bumped_packages.is_empty() {
                 Cow::from("")
             } else {
+                let safety_bumped_packages = safety_bumped_packages
+                    .iter()
+                    .map(|(p, v)| (*p, v.to_string()))
+                    .collect::<Vec<_>>();
                 match safety_bumped_packages.len() {
                     1 => format!(", safety bump {}", names_and_versions(&safety_bumped_packages)).into(),
                     num_crates => format!(
@@ -413,6 +418,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         Ok(Outcome {
             commit_id: res,
             section_by_package: release_section_by_publishee,
+            safety_bumped_packages,
         })
     }
 }
