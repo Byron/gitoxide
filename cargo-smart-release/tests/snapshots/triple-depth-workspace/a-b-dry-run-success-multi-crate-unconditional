@@ -14,8 +14,8 @@
 [INFO ] WOULD persist changes to 3 manifests and 2 changelogs with: "Adjusting changelogs prior to release of a v0.9.0, b v0.9.0, safety bump c v8.1.0"
 [INFO ] Up to 2 changelogs would be previewed if the --execute is set and --no-changelog-preview is unset.
 [WARN ] WOULD ask for review after commit as the changelog entry is empty for crates: a, b
-[WARN ] To fix the changelog manually, run: cargo changelog --write --only a
-[WARN ] To fix the changelog manually, run: cargo changelog --write --only b
+[WARN ] To fix the changelog manually, run: cargo changelog --write a
+[WARN ] To fix the changelog manually, run: cargo changelog --write b
 [INFO ] WOULD run "git" "commit" "-am" "Adjusting changelogs prior to release of a v0.9.0, b v0.9.0, safety bump c v8.1.0"
 [INFO ] WOULD prepare releases of a v0.9.0, b v0.9.0, bumping 1 crate for safety
 [INFO ] WOULD create tag object a-v0.9.0 with changelog message, first line is: '### Commit Statistics'

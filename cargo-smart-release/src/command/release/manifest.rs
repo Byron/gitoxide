@@ -360,7 +360,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 })
                 .collect::<Vec<_>>()
         };
-        let fix_preamble = "To fix the changelog manually, run: cargo changelog --write --only";
+        let fix_preamble = "To fix the changelog manually, run: cargo changelog --write";
         if !changelog_ids_with_statistical_segments_only.is_empty() {
             let crate_names = crate_names(&changelog_ids_with_statistical_segments_only);
             let names_of_crates_that_would_need_review = crate_names.join(", ");
@@ -419,7 +419,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     }
 }
 
-/// Packages that depend on any of the publishees, where publishee is used by them.
+/// Packages that depend on any of the publishees, where publishee is used by them, and possibly propose a new version.
 fn collect_directly_dependent_packages<'a>(
     meta: &'a Metadata,
     publishees: &[(&Package, String)],
