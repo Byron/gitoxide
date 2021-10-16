@@ -7,9 +7,21 @@ use crate::{
     utils::{is_pre_release_version, is_workspace_member, package_by_name},
 };
 
-pub fn dependencies(ctx: &crate::Context, verbose: bool, add_production_crates: bool) -> anyhow::Result<Vec<String>> {
+pub mod dependencies {
+    pub struct Outcome {
+        pub crates_to_be_published: Vec<String>,
+        pub unchanged_crates_to_skip: Vec<String>,
+    }
+}
+
+pub fn dependencies(
+    ctx: &crate::Context,
+    verbose: bool,
+    add_production_crates: bool,
+) -> anyhow::Result<dependencies::Outcome> {
     let mut seen = BTreeSet::new();
     let mut changed_crate_names_to_publish = Vec::new();
+    let mut skipped = Vec::new();
     for crate_name in &ctx.crate_names {
         if seen.contains(crate_name) {
             continue;
@@ -21,7 +33,7 @@ pub fn dependencies(ctx: &crate::Context, verbose: bool, add_production_crates: 
         }
         let num_crates_for_publishing_without_dependencies = changed_crate_names_to_publish.len();
         let package = package_by_name(&ctx.meta, crate_name)?;
-        let skipped = depth_first_traversal(
+        let current_skipped = depth_first_traversal(
             ctx,
             add_production_crates,
             &mut seen,
@@ -29,12 +41,13 @@ pub fn dependencies(ctx: &crate::Context, verbose: bool, add_production_crates: 
             package,
             verbose,
         )?;
-        if !verbose && skipped > 0 {
+        if !verbose && current_skipped.len() > 0 {
             log::info!(
                 "Skipped {} dependent crates as they didn't change since their last release. Use --verbose/-v to see much more.",
-                skipped
+                current_skipped.len()
             );
         }
+        skipped.extend(current_skipped);
         if num_crates_for_publishing_without_dependencies == changed_crate_names_to_publish.len() {
             let crate_package = package_by_name(&ctx.meta, crate_name)?;
             if !git::has_changed_since_last_release(crate_package, ctx, verbose)? {
@@ -49,7 +62,10 @@ pub fn dependencies(ctx: &crate::Context, verbose: bool, add_production_crates: 
         changed_crate_names_to_publish.push(crate_name.to_owned());
         seen.insert(crate_name.to_owned());
     }
-    Ok(changed_crate_names_to_publish)
+    Ok(dependencies::Outcome {
+        crates_to_be_published: changed_crate_names_to_publish,
+        unchanged_crates_to_skip: skipped,
+    })
 }
 
 fn depth_first_traversal(
@@ -59,22 +75,22 @@ fn depth_first_traversal(
     changed_crate_names_to_publish: &mut Vec<String>,
     package: &Package,
     verbose: bool,
-) -> anyhow::Result<usize> {
-    let mut skipped = 0;
+) -> anyhow::Result<Vec<String>> {
+    let mut skipped = Vec::new();
     for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
         if seen.contains(&dependency.name) || !is_workspace_member(&ctx.meta, &dependency.name) {
             continue;
         }
         seen.insert(dependency.name.clone());
         let dep_package = package_by_name(&ctx.meta, &dependency.name)?;
-        skipped += depth_first_traversal(
+        skipped.extend(depth_first_traversal(
             ctx,
             add_production_crates,
             seen,
             changed_crate_names_to_publish,
             dep_package,
             verbose,
-        )?;
+        )?);
         if git::has_changed_since_last_release(dep_package, ctx, verbose)? {
             if is_pre_release_version(&dep_package.version) || add_production_crates {
                 if verbose {
@@ -100,7 +116,7 @@ fn depth_first_traversal(
                     dep_package.version
                 );
             }
-            skipped += 1;
+            skipped.push(dep_package.name.clone());
         }
     }
     Ok(skipped)

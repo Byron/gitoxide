@@ -115,6 +115,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
         ctx.base.crate_names.clone()
     } else {
         crate::traverse::dependencies(&ctx.base, options.verbose, options.allow_auto_publish_of_stable_crates)?
+            .crates_to_be_published
     };
 
     let crates_to_publish_together = resolve_cycles_with_publish_group(meta, &changed_crate_names_to_publish, options)?;

@@ -12,7 +12,7 @@ use crate::{
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let ctx = crate::Context::new(crates)?;
     let crate_names = if opts.dependencies {
-        crate::traverse::dependencies(&ctx, false, true)?
+        crate::traverse::dependencies(&ctx, false, true)?.crates_to_be_published
     } else {
         ctx.crate_names.clone()
     };
