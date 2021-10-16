@@ -41,7 +41,7 @@ pub fn dependencies(
             package,
             verbose,
         )?;
-        if !verbose && current_skipped.len() > 0 {
+        if !verbose && !current_skipped.is_empty() {
             log::info!(
                 "Skipped {} dependent crates as they didn't change since their last release. Use --verbose/-v to see much more.",
                 current_skipped.len()
