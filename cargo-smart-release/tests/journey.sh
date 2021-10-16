@@ -73,7 +73,7 @@ title "smart-release"
   (with "'c'"
     (with '-d minor to bump minor dependencies'
       it "succeeds" && {
-        expect_run $SUCCESSFULLY "$exe" smart-release c -d minor -b keep --no-changelog-preview
+        expect_run $SUCCESSFULLY "$exe" smart-release c -d minor -b keep
       }
     )
   )
@@ -83,25 +83,25 @@ title "smart-release"
         (with 'explicit bump specification'
           it "succeeds" && {
             WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate" \
-            expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty -b minor --no-changelog-preview
+            expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty -b minor
           }
           (with '--no-multi-crate-release'
             it "succeeds" && {
               WITH_SNAPSHOT="$snapshot/a-dry-run-success" \
-              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-multi-crate-release -b minor --no-changelog-preview
+              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-multi-crate-release -b minor
             }
           )
         )
         (with 'implicit bump specification derived from commit history'
           it "succeeds" && {
               WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-no-change" \
-              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview
+              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty
           }
           (with "a breaking change"
             (cd a && touch break && git add break && git commit -m "refactor!: break") &>/dev/null
             it "succeeds" && {
               WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-breaking-change" \
-              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview --allow-fully-generated-changelogs
+              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --allow-fully-generated-changelogs
             }
             git reset --hard HEAD~1 &>/dev/null
           )
@@ -109,20 +109,20 @@ title "smart-release"
             (cd a && touch feat && git add feat && git commit -m "feat: new") &>/dev/null
             it "succeeds" && {
               WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-minor-change" \
-              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --no-changelog-preview
+              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty
             }
             git reset --hard HEAD~1 &>/dev/null
           )
           (when 'releasing "c" as well'
             it "succeeds" && {
               WITH_SNAPSHOT="$snapshot/c-dry-run-success-multi-crate-auto-bump-no-change" \
-              expect_run $SUCCESSFULLY "$exe" smart-release c a --no-push --no-publish -v --allow-dirty --no-changelog-preview
+              expect_run $SUCCESSFULLY "$exe" smart-release c a --no-push --no-publish -v --allow-dirty
             }
             (with "a breaking change"
               (cd c && touch break && git add break && git commit -m "refactor!: break") &>/dev/null
               it "succeeds" && {
                 WITH_SNAPSHOT="$snapshot/c-dry-run-success-multi-crate-auto-bump-breaking-change" \
-                expect_run $SUCCESSFULLY "$exe" smart-release c a --no-push --no-publish -v --allow-dirty --no-changelog-preview
+                expect_run $SUCCESSFULLY "$exe" smart-release c a --no-push --no-publish -v --allow-dirty
               }
               git reset --hard HEAD~1 &>/dev/null
             )
@@ -130,7 +130,7 @@ title "smart-release"
               (cd c && touch feat && git add feat && git commit -m "feat: new") &>/dev/null
               it "succeeds" && {
                 WITH_SNAPSHOT="$snapshot/c-dry-run-success-multi-crate-auto-bump-minor-change" \
-                expect_run $SUCCESSFULLY "$exe" smart-release c a --no-push --no-publish -v --allow-dirty --no-changelog-preview
+                expect_run $SUCCESSFULLY "$exe" smart-release c a --no-push --no-publish -v --allow-dirty
               }
               git reset --hard HEAD~1 &>/dev/null
             )
@@ -140,23 +140,23 @@ title "smart-release"
       (with 'unconditional version bumping'
         it "succeeds" && {
           WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-unconditional" \
-          expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-bump-on-demand -b minor --no-changelog-preview
+          expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-bump-on-demand -b minor
         }
         (with '--no-multi-crate-release'
           it "succeeds" && {
             WITH_SNAPSHOT="$snapshot/a-dry-run-success-unconditional" \
-            expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-multi-crate-release --no-bump-on-demand -b minor --no-changelog-preview
+            expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-multi-crate-release --no-bump-on-demand -b minor
           }
         )
         (when 'releasing b as well'
           it "succeeds" && {
             WITH_SNAPSHOT="$snapshot/a-b-dry-run-success-multi-crate-unconditional" \
-            expect_run $SUCCESSFULLY "$exe" smart-release b a --no-push --no-publish -v --no-bump-on-demand -b minor --no-changelog-preview
+            expect_run $SUCCESSFULLY "$exe" smart-release b a --no-push --no-publish -v --no-bump-on-demand -b minor
           }
           (with '--no-multi-crate-release'
             it "succeeds" && {
               WITH_SNAPSHOT="$snapshot/a-b-dry-run-success-unconditional" \
-              expect_run $SUCCESSFULLY "$exe" smart-release b a --no-push --no-publish -v --no-multi-crate-release --no-bump-on-demand -b minor --no-changelog-preview
+              expect_run $SUCCESSFULLY "$exe" smart-release b a --no-push --no-publish -v --no-multi-crate-release --no-bump-on-demand -b minor
             }
           )
         )
