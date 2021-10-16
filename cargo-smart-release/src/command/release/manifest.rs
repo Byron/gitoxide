@@ -12,12 +12,17 @@ use crate::{
     ChangeLog,
 };
 
-pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_and_handle_changelog<'repo, 'a>(
+pub struct Outcome<'repo, 'meta> {
+    pub commit_id: Option<Oid<'repo>>,
+    pub section_by_package: BTreeMap<&'meta str, changelog::Section>,
+}
+
+pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_and_handle_changelog<'repo, 'meta>(
     meta: &Metadata,
-    publishees: &[(&'a Package, String)],
+    publishees: &[(&'meta Package, String)],
     opts: Options,
     ctx: &'repo Context,
-) -> anyhow::Result<(Option<Oid<'repo>>, BTreeMap<&'a str, changelog::Section>)> {
+) -> anyhow::Result<Outcome<'repo, 'meta>> {
     let mut locks_by_manifest_path = BTreeMap::new();
     let mut pending_changelogs = Vec::new();
     let Options {
@@ -405,7 +410,10 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     if let Some(bail_message) = bail_message_after_commit {
         bail!(bail_message);
     } else {
-        Ok((res, release_section_by_publishee))
+        Ok(Outcome {
+            commit_id: res,
+            section_by_package: release_section_by_publishee,
+        })
     }
 }
 

@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 use anyhow::bail;
 use cargo_metadata::{Dependency, DependencyKind, Metadata, Package};
@@ -130,8 +130,13 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
         {
             let publishee = package_by_name(meta, publishee_name)?;
 
-            let (new_version, (commit_id, release_section_by_publishee)) =
-                perform_single_release(meta, publishee, options, &ctx)?;
+            let (
+                new_version,
+                manifest::Outcome {
+                    commit_id,
+                    section_by_package: release_section_by_publishee,
+                },
+            ) = perform_single_release(meta, publishee, options, &ctx)?;
             let tag_name = git::create_version_tag(
                 publishee,
                 &new_version,
@@ -192,13 +197,15 @@ fn perform_multi_version_release(
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    let (commit_id, release_section_by_publishee) =
-        manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
-            meta,
-            &crates_to_publish_together,
-            options,
-            ctx,
-        )?;
+    let manifest::Outcome {
+        commit_id,
+        section_by_package: release_section_by_publishee,
+    } = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
+        meta,
+        &crates_to_publish_together,
+        options,
+        ctx,
+    )?;
 
     log::info!(
         "{} prepare releases of {}",
@@ -262,14 +269,12 @@ fn section_to_string(section: &Section, mode: WriteMode) -> Option<String> {
         .map(|_| b)
 }
 
-type ReleaseCommitSections<'repo, 'a> = (String, (Option<Oid<'repo>>, BTreeMap<&'a str, changelog::Section>));
-
-fn perform_single_release<'repo, 'a>(
+fn perform_single_release<'repo, 'meta>(
     meta: &Metadata,
-    publishee: &'a Package,
+    publishee: &'meta Package,
     options: Options,
     ctx: &'repo Context,
-) -> anyhow::Result<ReleaseCommitSections<'repo, 'a>> {
+) -> anyhow::Result<(String, manifest::Outcome<'repo, 'meta>)> {
     let bump_spec = version::select_publishee_bump_spec(&publishee.name, ctx);
     let new_version = version::bump(publishee, bump_spec, ctx, &options)?;
     let new_version = new_version.to_string();
