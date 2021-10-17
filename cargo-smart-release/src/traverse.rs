@@ -6,7 +6,7 @@ use crate::{
     git,
     traverse::dependency::VersionAdjustment,
     utils::{is_pre_release_version, package_by_id, package_by_name, workspace_package_by_name},
-    version,
+    version, Context,
 };
 
 pub mod dependency {
@@ -137,8 +137,15 @@ pub fn dependencies(
         }
     }
 
-    let crates_for_manifest_update = ctx
-        .meta
+    crates.extend(find_workspace_crates_depending_on_adjusted_crates(ctx, &crates));
+    Ok(crates)
+}
+
+fn find_workspace_crates_depending_on_adjusted_crates<'meta>(
+    ctx: &'meta Context,
+    crates: &[Dependency<'_>],
+) -> Vec<Dependency<'meta>> {
+    ctx.meta
         .workspace_members
         .iter()
         .map(|id| package_by_id(&ctx.meta, id))
@@ -153,9 +160,7 @@ pub fn dependencies(
             package: wsp,
             mode: dependency::Mode::ManifestNeedsUpdate,
         })
-        .collect::<Vec<_>>();
-    crates.extend(crates_for_manifest_update);
-    Ok(crates)
+        .collect()
 }
 
 fn depth_first_traversal<'meta>(
