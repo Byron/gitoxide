@@ -228,15 +228,25 @@ fn present_dependencies(
                     direct_dependency.name
                 );
             }
-            dependency::Mode::ManifestNeedsUpdate => {
-                log::info!(
-                    "Manifest of {} package '{}' will be adjusted as its dependencies see a version change",
-                    kind,
-                    dep.package.name
-                );
-            }
-            dependency::Mode::Skipped { .. } => {}
+            dependency::Mode::ManifestNeedsUpdate | dependency::Mode::Skipped { .. } => {}
         }
+    }
+
+    let crate_names_for_manifest_updates = deps
+        .iter()
+        .filter_map(|d| matches!(d.mode, dependency::Mode::ManifestNeedsUpdate).then(|| d.package.name.as_str()))
+        .collect::<Vec<_>>();
+    if !crate_names_for_manifest_updates.is_empty() {
+        let plural_s = (crate_names_for_manifest_updates.len() > 1)
+            .then(|| "s")
+            .unwrap_or_default();
+        log::info!(
+            "Manifest{} of {} package{} {} be adjusted as its direct dependencies see a version change.",
+            plural_s,
+            crate_names_for_manifest_updates.len(),
+            plural_s,
+            will(dry_run)
+        );
     }
 
     if error {
