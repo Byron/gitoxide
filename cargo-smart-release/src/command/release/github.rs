@@ -53,7 +53,12 @@ pub fn create_release(
         "{} run {:?} \"{}…\" [note truncated]",
         will(dry_run),
         cmd,
-        notes.chars().take(15).collect::<String>()
+        notes
+            .chars()
+            .take(22)
+            .collect::<String>()
+            .replace('\n', "\\n")
+            .replace("\r\n", "\\r\\n")
     );
 
     cmd.arg(notes);
