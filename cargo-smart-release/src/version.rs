@@ -2,12 +2,20 @@ use anyhow::bail;
 use cargo_metadata::Package;
 use semver::{BuildMetadata, Prerelease, Version};
 
-use super::Context;
-use crate::command::release::{BumpSpec, Options};
+use crate::Context;
+
+#[derive(Copy, Clone)]
+pub enum BumpSpec {
+    Auto,
+    Keep,
+    Patch,
+    Minor,
+    Major,
+}
 
 #[allow(clippy::ptr_arg)]
 pub(crate) fn select_publishee_bump_spec(name: &String, ctx: &Context) -> BumpSpec {
-    if ctx.base.crate_names.contains(name) {
+    if ctx.crate_names.contains(name) {
         ctx.bump
     } else {
         ctx.bump_dependencies
@@ -44,7 +52,7 @@ pub(crate) fn bump(
     publishee: &Package,
     bump_spec: BumpSpec,
     ctx: &Context,
-    Options { bump_when_needed, .. }: &Options,
+    bump_when_needed: bool,
 ) -> anyhow::Result<Version> {
     let mut v = publishee.version.clone();
     use BumpSpec::*;
@@ -54,7 +62,7 @@ pub(crate) fn bump(
         Auto => {
             let segments = crate::git::history::crate_ref_segments(
                 publishee,
-                &ctx.base,
+                ctx,
                 ctx.history.as_ref().expect("BUG: assure history is set here"),
                 crate::git::history::SegmentScope::Unreleased,
             )?;
@@ -125,7 +133,7 @@ pub(crate) fn bump(
         publishee,
         new_version,
         ctx,
-        *bump_when_needed,
+        bump_when_needed,
         verbose,
         assume_it_will_be_published_for_log_messages,
         package_version_must_be_breaking,

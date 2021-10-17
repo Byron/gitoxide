@@ -2,8 +2,8 @@ use std::collections::BTreeSet;
 
 use anyhow::bail;
 use cargo_metadata::{Dependency, DependencyKind, Metadata, Package};
-use crates_index::Index;
 
+use crate::version::BumpSpec;
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},
@@ -13,22 +13,18 @@ use crate::{
         is_dependency_with_version_requirement, names_and_versions, package_by_id, package_by_name,
         package_eq_dependency, package_for_dependency, tag_name, will, workspace_package_by_id,
     },
+    version,
 };
 
 mod cargo;
 mod git;
 mod github;
 mod manifest;
-mod version;
 
 type Oid<'repo> = git_repository::easy::Oid<'repo, git_repository::Easy>;
 
 pub(crate) struct Context {
     base: crate::Context,
-    crates_index: Index,
-    history: Option<crate::commit::History>,
-    bump: BumpSpec,
-    bump_dependencies: BumpSpec,
     changelog_links: Linkables,
 }
 
@@ -40,12 +36,6 @@ impl Context {
         changelog: bool,
         changelog_links: bool,
     ) -> anyhow::Result<Self> {
-        let crates_index = Index::new_cargo_default();
-        let base = crate::Context::new(crate_names)?;
-        let history = (changelog || matches!(bump, BumpSpec::Auto) || matches!(bump_dependencies, BumpSpec::Auto))
-            .then(|| crate::git::history::collect(&base.repo))
-            .transpose()?
-            .flatten();
         let changelog_links = if changelog_links {
             crate::git::remote_url()?
                 .map(|url| Linkables::AsLinks {
@@ -56,23 +46,10 @@ impl Context {
             Linkables::AsText
         };
         Ok(Context {
-            base,
-            history,
-            crates_index,
-            bump,
-            bump_dependencies,
+            base: crate::Context::new(crate_names, changelog, bump, bump_dependencies)?,
             changelog_links,
         })
     }
-}
-
-#[derive(Copy, Clone)]
-pub enum BumpSpec {
-    Auto,
-    Keep,
-    Patch,
-    Minor,
-    Major,
 }
 
 /// In order to try dealing with https://github.com/sunng87/cargo-release/issues/224 and also to make workspace
@@ -95,14 +72,17 @@ pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependen
         !opts.no_changelog_links,
     )?;
     if opts.update_crates_index {
-        log::info!("Updating crates-io index at '{}'", ctx.crates_index.path().display());
-        ctx.crates_index.update()?;
+        log::info!(
+            "Updating crates-io index at '{}'",
+            ctx.base.crates_index.path().display()
+        );
+        ctx.base.crates_index.update()?;
     } else if opts.bump_when_needed {
         log::warn!(
             "Consider running with --update-crates-index to assure bumping on demand uses the latest information"
         );
     }
-    if !ctx.crates_index.exists() {
+    if !ctx.base.crates_index.exists() {
         log::warn!("Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already");
     }
 
@@ -198,8 +178,13 @@ fn perform_multi_version_release(
     let mut crates_to_publish_together = crates_to_publish_together
         .into_iter()
         .map(|p| {
-            version::bump(p, version::select_publishee_bump_spec(&p.name, ctx), ctx, &options)
-                .map(|v| (p, v.to_string()))
+            version::bump(
+                p,
+                version::select_publishee_bump_spec(&p.name, &ctx.base),
+                &ctx.base,
+                options.bump_when_needed,
+            )
+            .map(|v| (p, v.to_string()))
         })
         .collect::<Result<Vec<_>, _>>()?;
 
@@ -291,8 +276,8 @@ fn perform_single_release<'repo, 'meta>(
     options: Options,
     ctx: &'repo Context,
 ) -> anyhow::Result<(String, manifest::Outcome<'repo, 'meta>)> {
-    let bump_spec = version::select_publishee_bump_spec(&publishee.name, ctx);
-    let new_version = version::bump(publishee, bump_spec, ctx, &options)?;
+    let bump_spec = version::select_publishee_bump_spec(&publishee.name, &ctx.base);
+    let new_version = version::bump(publishee, bump_spec, &ctx.base, options.bump_when_needed)?;
     let new_version = new_version.to_string();
     let commit_id_and_changelog_sections = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
         meta,

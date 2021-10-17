@@ -90,8 +90,8 @@ fn main() -> anyhow::Result<()> {
 
 const DEFAULT_BUMP_SPEC: &str = "auto";
 
-fn to_bump_spec(spec: &str) -> anyhow::Result<command::release::BumpSpec> {
-    use command::release::BumpSpec::*;
+fn to_bump_spec(spec: &str) -> anyhow::Result<cargo_smart_release::version::BumpSpec> {
+    use cargo_smart_release::version::BumpSpec::*;
     Ok(match spec {
         "patch" | "Patch" => Patch,
         "minor" | "Minor" => Minor,

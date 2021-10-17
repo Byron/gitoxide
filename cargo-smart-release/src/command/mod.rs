@@ -27,7 +27,6 @@ pub mod release {
         pub no_changelog_links: bool,
         pub allow_changelog_github_release: bool,
     }
-    pub use super::release_impl::BumpSpec;
 }
 #[path = "release/mod.rs"]
 mod release_impl;

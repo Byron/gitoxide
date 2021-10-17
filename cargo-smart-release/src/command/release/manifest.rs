@@ -4,13 +4,14 @@ use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
 use semver::{Op, Version, VersionReq};
 
-use super::{cargo, git, version, Context, Oid, Options};
 use crate::{
     changelog,
     changelog::write::Linkables,
     utils::{names_and_versions, package_by_id, package_eq_dependency, will},
-    ChangeLog,
+    version, ChangeLog,
 };
+
+use super::{cargo, git, Context, Oid, Options};
 
 pub struct Outcome<'repo, 'meta> {
     pub commit_id: Option<Oid<'repo>>,
@@ -47,7 +48,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         )?;
         let previous = locks_by_manifest_path.insert(&publishee.manifest_path, lock);
         assert!(previous.is_none(), "publishees are unique so insertion always happens");
-        if let Some(history) = ctx.history.as_ref() {
+        if let Some(history) = ctx.base.history.as_ref() {
             let changelog::init::Outcome {
                 mut log,
                 state: log_init_state,
@@ -474,7 +475,7 @@ fn collect_directly_dependent_packages<'a>(
                             publishee_as_dependency,
                             new_version,
                             workspace_package,
-                            ctx,
+                            &ctx.base,
                             bump_when_needed,
                             verbose,
                         ) {

@@ -1,7 +1,9 @@
+use crate::version::BumpSpec;
 use cargo_metadata::{
     camino::{Utf8Path, Utf8PathBuf},
     Metadata, Package,
 };
+use crates_index::Index;
 use git_repository as git;
 use git_repository::prelude::CacheAccessExt;
 
@@ -10,18 +12,38 @@ pub struct Context {
     pub meta: Metadata,
     pub repo: git::Easy,
     pub crate_names: Vec<String>,
+    pub crates_index: Index,
+    pub history: Option<crate::commit::History>,
+    pub bump: BumpSpec,
+    pub bump_dependencies: BumpSpec,
 }
 
 impl Context {
-    pub fn new(crate_names: Vec<String>) -> anyhow::Result<Self> {
+    pub fn new(
+        crate_names: Vec<String>,
+        force_history_segmentation: bool,
+        bump: BumpSpec,
+        bump_dependencies: BumpSpec,
+    ) -> anyhow::Result<Self> {
         let meta = cargo_metadata::MetadataCommand::new().exec()?;
         let root = meta.workspace_root.clone();
-        let repo = git::discover(&root)?;
+        let repo = git::discover(&root)?.into_easy().apply_environment()?;
+        let crates_index = Index::new_cargo_default();
+        let history = (force_history_segmentation
+            || matches!(bump, BumpSpec::Auto)
+            || matches!(bump_dependencies, BumpSpec::Auto))
+        .then(|| crate::git::history::collect(&repo))
+        .transpose()?
+        .flatten();
         Ok(Context {
             root,
-            repo: repo.into_easy().apply_environment()?,
+            repo,
             meta,
             crate_names: fill_in_root_crate_if_needed(crate_names)?,
+            crates_index,
+            history,
+            bump,
+            bump_dependencies,
         })
     }
 

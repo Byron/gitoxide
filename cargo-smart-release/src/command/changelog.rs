@@ -1,6 +1,7 @@
 use std::io::Write;
 
 use crate::utils::package_by_name;
+use crate::version::BumpSpec;
 use crate::{
     bat,
     changelog::write::{Components, Linkables},
@@ -12,7 +13,8 @@ use crate::{
 };
 
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
-    let ctx = crate::Context::new(crates)?;
+    let bump_spec = opts.dependencies.then(|| BumpSpec::Auto).unwrap_or(BumpSpec::Keep);
+    let ctx = crate::Context::new(crates, false, bump_spec, bump_spec)?;
     let crates = if opts.dependencies {
         crate::traverse::dependencies(&ctx, false, true)?
             .into_iter()
