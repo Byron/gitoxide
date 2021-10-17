@@ -73,13 +73,6 @@ pub enum SubCommands {
         #[clap(long, help_heading = Some("CUSTOMIZATION"))]
         dry_run_cargo_publish: bool,
 
-        /// As dependencies are automatically picked up for release, put all manifest changes into a single commit.
-        ///
-        /// If this flag is set, each dependency will yield its own commit with respective manifest changes, possibly
-        /// adding a lot of additional commits even though the release could have looked like coherent.
-        #[clap(long, help_heading = Some("EXPERT"))]
-        no_multi_crate_release: bool,
-
         /// Always bump versions as specified by --bump or --bump-dependencies even if this is not required
         /// to publish a new version to crates.io.
         ///

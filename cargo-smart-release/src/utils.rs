@@ -45,10 +45,6 @@ pub fn is_top_level_package(manifest_path: &Utf8Path, shared: &git::Easy) -> boo
         .map_or(false, |p| p.components().count() == 1)
 }
 
-pub fn is_dependency_with_version_requirement(dep: &Dependency) -> bool {
-    !dep.req.comparators.is_empty()
-}
-
 pub fn package_eq_dependency(package: &Package, dependency: &Dependency) -> bool {
     package.name == dependency.name
 }
@@ -60,25 +56,11 @@ pub fn workspace_package_by_name<'a>(meta: &'a Metadata, crate_name: &str) -> Op
         .filter(|p| meta.workspace_members.iter().any(|m| m == &p.id))
 }
 
-pub fn workspace_package_by_id<'a>(meta: &'a Metadata, id: &PackageId) -> Option<&'a Package> {
-    meta.packages
-        .iter()
-        .find(|p| &p.id == id)
-        .filter(|p| meta.workspace_members.iter().any(|m| m == &p.id))
-}
-
 pub fn package_by_name<'a>(meta: &'a Metadata, name: &str) -> anyhow::Result<&'a Package> {
     meta.packages
         .iter()
         .find(|p| p.name == name)
         .ok_or_else(|| anyhow!("workspace member '{}' must be a listed package", name))
-}
-
-pub fn package_for_dependency<'a>(meta: &'a Metadata, dep: &Dependency) -> &'a Package {
-    meta.packages
-        .iter()
-        .find(|p| package_eq_dependency(p, dep))
-        .expect("dependency always available as package")
 }
 
 pub fn names_and_versions(publishees: &[(&Package, semver::Version)]) -> String {

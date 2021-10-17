@@ -2,16 +2,17 @@ use std::collections::BTreeSet;
 
 use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 
-use crate::traverse::dependency::VersionAdjustment;
 use crate::{
     git,
+    traverse::dependency::VersionAdjustment,
     utils::{is_pre_release_version, package_by_name, workspace_package_by_name},
     version,
 };
 
 pub mod dependency {
-    use crate::{git, version};
     use cargo_metadata::Package;
+
+    use crate::{git, version};
 
     /// Skipped crates are always dependent ones
     #[derive(Copy, Clone, Debug)]

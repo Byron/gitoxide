@@ -1,18 +1,12 @@
-use std::collections::BTreeSet;
-
 use anyhow::bail;
-use cargo_metadata::{Dependency, DependencyKind, Metadata, Package};
+use cargo_metadata::{Metadata, Package};
 
-use crate::traverse::dependency::VersionAdjustment;
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},
     command::release::Options,
-    traverse::{self, dependency},
-    utils::{
-        is_dependency_with_version_requirement, names_and_versions, package_by_id, package_by_name,
-        package_eq_dependency, package_for_dependency, tag_name, will, workspace_package_by_id,
-    },
+    traverse::{self, dependency, dependency::VersionAdjustment},
+    utils::{names_and_versions, package_by_name, tag_name, will},
     version,
     version::BumpSpec,
 };
@@ -98,8 +92,6 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
         dry_run,
         allow_auto_publish_of_stable_crates,
         skip_dependencies,
-        multi_crate_release,
-        allow_changelog_github_release,
         verbose,
         ..
     } = options;
@@ -119,51 +111,10 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
             .collect()
     };
 
-    let crates_to_publish_together = resolve_cycles_with_publish_group(meta, &changed_crate_names_to_publish, options)?;
-
     assure_working_tree_is_unchanged(options)?;
 
-    if multi_crate_release && !changed_crate_names_to_publish.is_empty() {
+    if !changed_crate_names_to_publish.is_empty() {
         perform_multi_version_release(&ctx, options, meta, changed_crate_names_to_publish)?;
-    } else {
-        for publishee in changed_crate_names_to_publish
-            .iter()
-            .filter(|package| !crates_to_publish_together.iter().any(|p| p.id == package.id))
-        {
-            let (
-                new_version,
-                manifest::Outcome {
-                    commit_id,
-                    section_by_package: release_section_by_publishee,
-                    ..
-                },
-            ) = perform_single_release(meta, publishee, options, &ctx)?;
-            let tag_name = git::create_version_tag(
-                publishee,
-                &new_version,
-                commit_id,
-                release_section_by_publishee
-                    .get(publishee.name.as_str())
-                    .and_then(|s| section_to_string(s, WriteMode::Tag)),
-                &ctx.base,
-                options,
-            )?;
-            git::push_tags_and_head(tag_name.as_ref(), options)?;
-            if let Some(message) = allow_changelog_github_release
-                .then(|| {
-                    release_section_by_publishee
-                        .get(publishee.name.as_str())
-                        .and_then(|s| section_to_string(s, WriteMode::GitHubRelease))
-                })
-                .flatten()
-            {
-                github::create_release(publishee, &new_version, &message, options, &ctx.base)?;
-            }
-        }
-    }
-
-    if !crates_to_publish_together.is_empty() {
-        perform_multi_version_release(&ctx, options, meta, crates_to_publish_together)?;
     }
 
     Ok(())
@@ -396,148 +347,4 @@ fn section_to_string(section: &Section, mode: WriteMode) -> Option<String> {
         )
         .ok()
         .map(|_| b)
-}
-
-fn perform_single_release<'repo, 'meta>(
-    meta: &'meta Metadata,
-    publishee: &'meta Package,
-    options: Options,
-    ctx: &'repo Context,
-) -> anyhow::Result<(semver::Version, manifest::Outcome<'repo, 'meta>)> {
-    let bump_spec = version::select_publishee_bump_spec(&publishee.name, &ctx.base);
-    let new_version = version::bump(publishee, bump_spec, &ctx.base, options.bump_when_needed)?;
-    let commit_id_and_changelog_sections = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
-        meta,
-        &[(publishee, new_version.clone())],
-        options,
-        ctx,
-    )?;
-    log::info!(
-        "{} prepare release of {} v{}",
-        will(options.dry_run),
-        publishee.name,
-        new_version
-    );
-    cargo::publish_crate(publishee, &[], options)?;
-    Ok((new_version, commit_id_and_changelog_sections))
-}
-
-fn resolve_cycles_with_publish_group<'meta>(
-    meta: &'meta Metadata,
-    changed_crate_names_to_publish: &[&'meta Package],
-    options: Options,
-) -> anyhow::Result<Vec<&'meta Package>> {
-    let mut crates_to_publish_additionally_to_avoid_instability = Vec::new();
-    let mut publish_group = Vec::<&Package>::new();
-    for publishee in changed_crate_names_to_publish.iter() {
-        let cycles = workspace_members_referring_to_publishee(meta, publishee);
-        for Cycle { from, hops } in cycles {
-            log::warn!(
-                "'{}' links to '{}' {} causing publishes to never settle.",
-                publishee.name,
-                from.name,
-                if hops == 1 {
-                    "directly".to_string()
-                } else {
-                    format!("via {} hops", hops)
-                }
-            );
-            if !changed_crate_names_to_publish.iter().any(|p| p.id == from.id) {
-                crates_to_publish_additionally_to_avoid_instability.push(from.name.as_str());
-            } else {
-                for package in &[from, publishee] {
-                    if !publish_group.iter().any(|p| p.id == package.id) {
-                        publish_group.push(package)
-                    }
-                }
-            }
-        }
-    }
-    if !crates_to_publish_additionally_to_avoid_instability.is_empty() && !options.ignore_instability {
-        bail!(
-            "Refusing to publish unless --ignore-instability is provided or crate(s) {} is/are included in the publish. To avoid this, don't specify versions in your dev dependencies.",
-            crates_to_publish_additionally_to_avoid_instability.join(", ")
-        )
-    }
-    Ok(reorder_according_to_existing_order(
-        changed_crate_names_to_publish,
-        &publish_group,
-    ))
-}
-
-fn reorder_according_to_existing_order<'meta>(
-    reference_order: &[&'meta Package],
-    packages_to_order: &[&'meta Package],
-) -> Vec<&'meta Package> {
-    let new_order = reference_order
-        .iter()
-        .filter(|package| packages_to_order.iter().any(|p| p.id == package.id))
-        .fold(Vec::new(), |mut acc, package| {
-            acc.push(*package);
-            acc
-        });
-    assert_eq!(
-        new_order.len(),
-        packages_to_order.len(),
-        "the reference order must contain all items to be ordered"
-    );
-    new_order
-}
-
-struct Cycle<'meta> {
-    from: &'meta Package,
-    hops: usize,
-}
-
-fn workspace_members_referring_to_publishee<'a>(meta: &'a Metadata, publishee: &Package) -> Vec<Cycle<'a>> {
-    publishee
-        .dependencies
-        .iter()
-        .filter(|dep| is_dependency_with_version_requirement(dep)) // unspecified versions don't matter for publishing
-        .filter(|dep| {
-            dep.kind != DependencyKind::Normal
-                && meta
-                    .workspace_members
-                    .iter()
-                    .map(|id| package_by_id(meta, id))
-                    .any(|potential_cycle| package_eq_dependency(potential_cycle, dep))
-        })
-        .filter_map(|dep| {
-            hops_for_dependency_to_link_back_to_publishee(meta, dep, publishee).map(|hops| Cycle {
-                hops,
-                from: package_by_name(meta, &dep.name).expect("package exists"),
-            })
-        })
-        .collect()
-}
-
-fn hops_for_dependency_to_link_back_to_publishee<'a>(
-    meta: &'a Metadata,
-    source: &Dependency,
-    destination: &Package,
-) -> Option<usize> {
-    let source = package_for_dependency(meta, source);
-    let mut package_ids = vec![(0, &source.id)];
-    let mut seen = BTreeSet::new();
-    while let Some((level, id)) = package_ids.pop() {
-        if !seen.insert(id) {
-            continue;
-        }
-        if let Some(package) = workspace_package_by_id(meta, id) {
-            if package
-                .dependencies
-                .iter()
-                .any(|dep| package_eq_dependency(destination, dep))
-            {
-                return Some(level + 1);
-            }
-            package_ids.extend(
-                package
-                    .dependencies
-                    .iter()
-                    .map(|dep| (level + 1, &package_for_dependency(meta, dep).id)),
-            );
-        };
-    }
-    None
 }

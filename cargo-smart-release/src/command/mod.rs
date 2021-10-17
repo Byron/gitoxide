@@ -18,7 +18,6 @@ pub mod release {
         pub verbose: bool,
         pub skip_push: bool,
         pub skip_dependencies: bool,
-        pub multi_crate_release: bool,
         pub isolate_dependencies_from_breaking_changes: bool,
         pub changelog: bool,
         pub preview: bool,

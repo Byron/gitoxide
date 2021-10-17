@@ -53,7 +53,6 @@ fn main() -> anyhow::Result<()> {
             no_changelog_github_release,
             allow_fully_generated_changelogs,
             no_dependencies,
-            no_multi_crate_release,
             no_isolate_dependencies_from_breaking_changes,
         } => {
             let verbose = execute || verbose;
@@ -64,7 +63,6 @@ fn main() -> anyhow::Result<()> {
                     verbose,
                     conservative_pre_release_version_handling: !no_conservative_pre_release_version_handling,
                     bump_when_needed: !no_bump_on_demand,
-                    multi_crate_release: !no_multi_crate_release,
                     isolate_dependencies_from_breaking_changes: !no_isolate_dependencies_from_breaking_changes,
                     allow_dirty,
                     ignore_instability,
