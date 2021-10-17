@@ -185,7 +185,7 @@ fn present_dependencies(
                     },
                     _kind,
                 ) => {
-                    log::info!(
+                    log::trace!(
                         "{} '{}' wasn't tagged with {} yet and thus needs a release",
                         match dep.kind {
                             Kind::UserSelection => "Provided package",
@@ -202,7 +202,7 @@ fn present_dependencies(
                     },
                     Kind::DependencyOfUserSelection,
                 ) => {
-                    log::info!(
+                    log::trace!(
                         "Dependent package '{}' v{} will be published as it changed since last release",
                         dep.package.name,
                         dep.package.version
@@ -214,7 +214,7 @@ fn present_dependencies(
                     },
                     kind,
                 ) => {
-                    log::info!(
+                    log::trace!(
                         "Skipped {} '{}' v{} as it didn't change since last release",
                         match kind {
                             Kind::UserSelection => "provided package",
@@ -471,27 +471,23 @@ fn resolve_cycles_with_publish_group<'meta>(
     let mut publish_group = Vec::<&Package>::new();
     for publishee in changed_crate_names_to_publish.iter() {
         let cycles = workspace_members_referring_to_publishee(meta, publishee);
-        if cycles.is_empty() {
-            log::debug!("'{}' is cycle-free", publishee.name);
-        } else {
-            for Cycle { from, hops } in cycles {
-                log::warn!(
-                    "'{}' links to '{}' {} causing publishes to never settle.",
-                    publishee.name,
-                    from.name,
-                    if hops == 1 {
-                        "directly".to_string()
-                    } else {
-                        format!("via {} hops", hops)
-                    }
-                );
-                if !changed_crate_names_to_publish.iter().any(|p| p.id == from.id) {
-                    crates_to_publish_additionally_to_avoid_instability.push(from.name.as_str());
+        for Cycle { from, hops } in cycles {
+            log::warn!(
+                "'{}' links to '{}' {} causing publishes to never settle.",
+                publishee.name,
+                from.name,
+                if hops == 1 {
+                    "directly".to_string()
                 } else {
-                    for package in &[from, publishee] {
-                        if !publish_group.iter().any(|p| p.id == package.id) {
-                            publish_group.push(package)
-                        }
+                    format!("via {} hops", hops)
+                }
+            );
+            if !changed_crate_names_to_publish.iter().any(|p| p.id == from.id) {
+                crates_to_publish_additionally_to_avoid_instability.push(from.name.as_str());
+            } else {
+                for package in &[from, publishee] {
+                    if !publish_group.iter().any(|p| p.id == package.id) {
+                        publish_group.push(package)
                     }
                 }
             }

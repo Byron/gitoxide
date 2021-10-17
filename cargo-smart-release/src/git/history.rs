@@ -113,7 +113,6 @@ pub fn crate_ref_segments<'h>(
     scope: SegmentScope,
 ) -> anyhow::Result<Vec<commit::history::Segment<'h>>> {
     let tag_prefix = tag_prefix(package, &ctx.repo);
-    let start = Instant::now();
     let mut tags_by_commit = {
         let refs = ctx.repo.references()?;
         match tag_prefix {
@@ -139,15 +138,6 @@ pub fn crate_ref_segments<'h>(
             ),
         }
     };
-
-    let elapsed = start.elapsed();
-    log::trace!(
-        "{}: Mapped {} tags in {}s ({:.0} refs/s)",
-        package.name,
-        tags_by_commit.len(),
-        elapsed.as_secs_f32(),
-        tags_by_commit.len() as f32 / elapsed.as_secs_f32()
-    );
 
     let start = Instant::now();
     let mut segments = Vec::new();

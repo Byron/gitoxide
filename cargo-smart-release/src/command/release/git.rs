@@ -9,7 +9,6 @@ use crate::utils::will;
 
 pub(in crate::command::release_impl) fn commit_changes(
     message: impl AsRef<str>,
-    verbose: bool,
     dry_run: bool,
     empty_commit_possible: bool,
     ctx: &crate::Context,
@@ -20,9 +19,7 @@ pub(in crate::command::release_impl) fn commit_changes(
     if empty_commit_possible {
         cmd.arg("--allow-empty");
     }
-    if verbose {
-        log::info!("{} run {:?}", will(dry_run), cmd);
-    }
+    log::trace!("{} run {:?}", will(dry_run), cmd);
     if dry_run {
         return Ok(None);
     }
@@ -39,30 +36,23 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
     commit_id: Option<Oid<'repo>>,
     tag_message: Option<String>,
     ctx: &'repo crate::Context,
-    Options {
-        verbose,
-        dry_run,
-        skip_tag,
-        ..
-    }: Options,
+    Options { dry_run, skip_tag, .. }: Options,
 ) -> anyhow::Result<Option<refs::FullName>> {
     if skip_tag {
         return Ok(None);
     }
     let tag_name = tag_name(publishee, new_version, &ctx.repo);
     if dry_run {
-        if verbose {
-            match tag_message {
-                Some(message) => {
-                    log::info!(
-                        "WOULD create tag object {} with changelog message, first line is: '{}'",
-                        tag_name,
-                        message.lines().next().unwrap_or("")
-                    );
-                }
-                None => {
-                    log::info!("WOULD create tag {}", tag_name);
-                }
+        match tag_message {
+            Some(message) => {
+                log::trace!(
+                    "WOULD create tag object {} with changelog message, first line is: '{}'",
+                    tag_name,
+                    message.lines().next().unwrap_or("")
+                );
+            }
+            None => {
+                log::trace!("WOULD create tag {}", tag_name);
             }
         }
         Ok(Some(format!("refs/tags/{}", tag_name).try_into()?))
@@ -96,9 +86,9 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
 // TODO: Use gitoxide here
 pub fn push_tags_and_head<'a>(
     tag_names: impl IntoIterator<Item = &'a refs::FullName>,
-    options: Options,
+    Options { dry_run, skip_push, .. }: Options,
 ) -> anyhow::Result<()> {
-    if options.skip_push {
+    if skip_push {
         return Ok(());
     }
 
@@ -108,10 +98,8 @@ pub fn push_tags_and_head<'a>(
         cmd.arg(tag_name.as_bstr().to_str()?);
     }
 
-    if options.verbose {
-        log::info!("{} run {:?}", will(options.dry_run), cmd);
-    }
-    if options.dry_run || cmd.status()?.success() {
+    log::trace!("{} run {:?}", will(dry_run), cmd);
+    if dry_run || cmd.status()?.success() {
         Ok(())
     } else {
         bail!("'git push' invocation failed. Try to push manually and repeat the smart-release invocation to resume, possibly with --skip-push.");

@@ -44,7 +44,7 @@ pub(in crate::command::release_impl) fn publish_crate(
         }
         c.arg("--manifest-path").arg(&publishee.manifest_path);
         if verbose {
-            log::info!("{} run {:?}", will(!cargo_must_run), c);
+            log::trace!("{} run {:?}", will(!cargo_must_run), c);
         }
         if !cargo_must_run || c.status()?.success() {
             break;

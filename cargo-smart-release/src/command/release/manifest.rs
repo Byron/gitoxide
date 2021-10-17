@@ -28,7 +28,6 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     let mut locks_by_manifest_path = BTreeMap::new();
     let mut pending_changelogs = Vec::new();
     let Options {
-        verbose,
         dry_run,
         skip_publish,
         preview,
@@ -221,32 +220,30 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         }
     );
 
-    if verbose {
-        log::info!(
-            "{} persist changes to {} manifests {}with: {:?}",
-            will(dry_run),
-            locks_by_manifest_path.len(),
-            match (
-                pending_changelogs.len(),
-                pending_changelogs.iter().fold(0usize, |mut acc, (_, _, lock)| {
-                    acc += if !lock.resource_path().is_file() { 1 } else { 0 };
-                    acc
-                })
-            ) {
-                (0, _) => Cow::Borrowed(""),
-                (num_logs, num_new) => format!(
-                    "and {} changelogs {}",
-                    num_logs,
-                    match num_new {
-                        0 => Cow::Borrowed(""),
-                        num_new => format!("({} new) ", num_new).into(),
-                    }
-                )
-                .into(),
-            },
-            message
-        );
-    }
+    log::trace!(
+        "{} persist changes to {} manifests {}with: {:?}",
+        will(dry_run),
+        locks_by_manifest_path.len(),
+        match (
+            pending_changelogs.len(),
+            pending_changelogs.iter().fold(0usize, |mut acc, (_, _, lock)| {
+                acc += if !lock.resource_path().is_file() { 1 } else { 0 };
+                acc
+            })
+        ) {
+            (0, _) => Cow::Borrowed(""),
+            (num_logs, num_new) => format!(
+                "and {} changelogs {}",
+                num_logs,
+                match num_new {
+                    0 => Cow::Borrowed(""),
+                    num_new => format!("({} new) ", num_new).into(),
+                }
+            )
+            .into(),
+        },
+        message
+    );
 
     if !pending_changelogs.is_empty() && preview && !dry_run {
         let additional_info =
@@ -408,7 +405,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         None
     };
 
-    let res = git::commit_changes(message, verbose, dry_run, !made_change, &ctx.base)?;
+    let res = git::commit_changes(message, dry_run, !made_change, &ctx.base)?;
     if let Some(bail_message) = bail_message_after_commit {
         bail!(bail_message);
     } else {
@@ -544,7 +541,6 @@ fn set_version_and_update_package_dependency(
     publishees: &[(&Package, String)],
     mut out: impl std::io::Write,
     Options {
-        verbose,
         conservative_pre_release_version_handling,
         ..
     }: Options,
@@ -555,13 +551,11 @@ fn set_version_and_update_package_dependency(
     if let Some(new_version) = new_package_version {
         if doc["package"]["version"].as_str() != Some(new_version) {
             doc["package"]["version"] = toml_edit::value(new_version);
-            if verbose {
-                log::info!(
-                    "Pending '{}' manifest version update: \"{}\"",
-                    package_to_update.name,
-                    new_version
-                );
-            }
+            log::trace!(
+                "Pending '{}' manifest version update: \"{}\"",
+                package_to_update.name,
+                new_version
+            );
         }
     }
     for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {
@@ -598,8 +592,8 @@ fn set_version_and_update_package_dependency(
                             );
                         }
                         let new_version = format!("^{}", new_version);
-                        if verbose && version_req.to_string() != new_version {
-                            log::info!(
+                        if version_req.to_string() != new_version {
+                            log::trace!(
                                 "Pending '{}' {}manifest {} update: '{} = \"{}\"' (from {})",
                                 package_to_update.name,
                                 if force_update { "conservative " } else { "" },
