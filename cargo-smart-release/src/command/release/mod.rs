@@ -131,7 +131,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     } else {
         for publishee in changed_crate_names_to_publish
             .iter()
-            .filter(|package| crates_to_publish_together.iter().find(|p| p.id == package.id).is_none())
+            .filter(|package| !crates_to_publish_together.iter().any(|p| p.id == package.id))
         {
             let (
                 new_version,
@@ -330,15 +330,11 @@ fn resolve_cycles_with_publish_group<'meta>(
                         format!("via {} hops", hops)
                     }
                 );
-                if changed_crate_names_to_publish
-                    .iter()
-                    .find(|p| p.id == from.id)
-                    .is_none()
-                {
+                if !changed_crate_names_to_publish.iter().any(|p| p.id == from.id) {
                     crates_to_publish_additionally_to_avoid_instability.push(from.name.as_str());
                 } else {
                     for package in &[from, publishee] {
-                        if publish_group.iter().find(|p| p.id == package.id).is_none() {
+                        if !publish_group.iter().any(|p| p.id == package.id) {
                             publish_group.push(package)
                         }
                     }
@@ -364,7 +360,7 @@ fn reorder_according_to_existing_order<'meta>(
 ) -> Vec<&'meta Package> {
     let new_order = reference_order
         .iter()
-        .filter(|package| packages_to_order.iter().find(|p| p.id == package.id).is_some())
+        .filter(|package| packages_to_order.iter().any(|p| p.id == package.id))
         .fold(Vec::new(), |mut acc, package| {
             acc.push(*package);
             acc

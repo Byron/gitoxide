@@ -50,15 +50,15 @@ pub fn dependencies(
             );
         }
         skipped.extend(current_skipped);
-        if num_crates_for_publishing_without_dependencies == changed_crate_names_to_publish.len() {
-            if !git::has_changed_since_last_release(package, ctx, verbose)? {
-                log::info!(
-                    "Skipping provided {} v{} hasn't changed since last released",
-                    package.name,
-                    package.version
-                );
-                continue;
-            }
+        if num_crates_for_publishing_without_dependencies == changed_crate_names_to_publish.len()
+            && !git::has_changed_since_last_release(package, ctx, verbose)?
+        {
+            log::info!(
+                "Skipping provided {} v{} hasn't changed since last released",
+                package.name,
+                package.version
+            );
+            continue;
         }
         changed_crate_names_to_publish.push(package);
         seen.insert(&package.id);
