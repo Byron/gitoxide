@@ -13,6 +13,18 @@ pub enum BumpSpec {
     Major,
 }
 
+impl std::fmt::Display for BumpSpec {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            BumpSpec::Auto => "auto",
+            BumpSpec::Keep => "no",
+            BumpSpec::Patch => "patch",
+            BumpSpec::Minor => "minor",
+            BumpSpec::Major => "major",
+        })
+    }
+}
+
 #[allow(clippy::ptr_arg)]
 pub(crate) fn select_publishee_bump_spec(name: &String, ctx: &Context) -> BumpSpec {
     if ctx.crate_names.contains(name) {
@@ -46,6 +58,15 @@ fn bump_major_minor_patch(v: &mut semver::Version, bump_spec: BumpSpec) -> bool 
         }
         Keep | Auto => unreachable!("BUG: auto mode or keep are unsupported"),
     }
+}
+
+pub(crate) fn bump_package(publishee: &Package, ctx: &Context, bump_when_needed: bool) -> anyhow::Result<Version> {
+    bump(
+        publishee,
+        select_publishee_bump_spec(&publishee.name, ctx),
+        ctx,
+        bump_when_needed,
+    )
 }
 
 pub(crate) fn bump(

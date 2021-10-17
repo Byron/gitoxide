@@ -92,15 +92,26 @@ pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependen
 
 fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     let meta = &ctx.base.meta;
-    let changed_crate_names_to_publish = if options.skip_dependencies {
+    let Options {
+        bump_when_needed,
+        dry_run,
+        allow_auto_publish_of_stable_crates,
+        skip_dependencies,
+        multi_crate_release,
+        allow_changelog_github_release,
+        verbose,
+        ..
+    } = options;
+    let changed_crate_names_to_publish = if skip_dependencies {
         ctx.base
             .crate_names
             .iter()
             .map(|name| package_by_name(&ctx.base.meta, name))
             .collect::<Result<Vec<_>, _>>()?
     } else {
-        let dependencies = crate::traverse::dependencies(&ctx.base, options.allow_auto_publish_of_stable_crates)?;
-        present_dependencies(&dependencies, options.verbose);
+        let dependencies =
+            crate::traverse::dependencies(&ctx.base, allow_auto_publish_of_stable_crates, bump_when_needed)?;
+        present_dependencies(&dependencies, &ctx, verbose, dry_run);
         dependencies
             .into_iter()
             .filter_map(|d| matches!(d.mode, dependency::Mode::ToBePublished { .. }).then(|| d.package))
@@ -111,7 +122,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
 
     assure_working_tree_is_unchanged(options)?;
 
-    if options.multi_crate_release && !changed_crate_names_to_publish.is_empty() {
+    if multi_crate_release && !changed_crate_names_to_publish.is_empty() {
         perform_multi_version_release(&ctx, options, meta, changed_crate_names_to_publish)?;
     } else {
         for publishee in changed_crate_names_to_publish
@@ -137,8 +148,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
                 options,
             )?;
             git::push_tags_and_head(tag_name.as_ref(), options)?;
-            if let Some(message) = options
-                .allow_changelog_github_release
+            if let Some(message) = allow_changelog_github_release
                 .then(|| {
                     release_section_by_publishee
                         .get(publishee.name.as_str())
@@ -158,7 +168,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn present_dependencies(deps: &[traverse::Dependency<'_>], verbose: bool) {
+fn present_dependencies(deps: &[traverse::Dependency<'_>], ctx: &Context, verbose: bool, dry_run: bool) {
     use dependency::{Kind, SkippedReason};
     if verbose {
         for dep in deps {
@@ -166,6 +176,7 @@ fn present_dependencies(deps: &[traverse::Dependency<'_>], verbose: bool) {
                 dependency::Mode::ToBePublished {
                     kind,
                     change_kind: crate::git::PackageChangeKind::Untagged { wanted_tag_name },
+                    ..
                 } => {
                     log::info!(
                         "{} '{}' wasn't tagged with {} yet and thus needs a release",
@@ -180,6 +191,7 @@ fn present_dependencies(deps: &[traverse::Dependency<'_>], verbose: bool) {
                 dependency::Mode::ToBePublished {
                     kind: Kind::DependencyOfUserSelection,
                     change_kind: crate::git::PackageChangeKind::ChangedOrNew,
+                    ..
                 } => {
                     log::info!(
                         "Dependent package '{}' v{} will be published as it changed since last release",
@@ -214,6 +226,7 @@ fn present_dependencies(deps: &[traverse::Dependency<'_>], verbose: bool) {
                 dependency::Mode::ToBePublished {
                     kind: Kind::UserSelection,
                     change_kind: _,
+                    ..
                 } => {}
             }
         }
@@ -227,6 +240,37 @@ fn present_dependencies(deps: &[traverse::Dependency<'_>], verbose: bool) {
                 "Skipped {} dependent crates as they didn't change since their last release. Use --verbose/-v to see much more.",
                 num_skipped
             );
+        }
+    }
+    for dep in deps {
+        match &dep.mode {
+            dependency::Mode::ToBePublished {
+                next_release_version,
+                kind,
+                ..
+            } => {
+                let bump_spec = match kind {
+                    dependency::Kind::UserSelection => ctx.base.bump,
+                    dependency::Kind::DependencyOfUserSelection => ctx.base.bump_dependencies,
+                };
+                if next_release_version > &dep.package.version {
+                    log::info!(
+                        "{} {}-bump '{}' from {} to {}",
+                        will(dry_run),
+                        bump_spec,
+                        dep.package.name,
+                        dep.package.version,
+                        next_release_version
+                    );
+                } else {
+                    log::info!(
+                        "'{}' v{} in manifest is sufficient for release",
+                        dep.package.name,
+                        dep.package.version,
+                    );
+                }
+            }
+            dependency::Mode::Skipped { .. } => {}
         }
     }
 }

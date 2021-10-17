@@ -13,11 +13,21 @@ use crate::{
 };
 
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
-    let bump_spec = opts.dependencies.then(|| BumpSpec::Auto).unwrap_or(BumpSpec::Keep);
-    let ctx = crate::Context::new(crates, false, bump_spec, bump_spec)?;
-    let crates = if opts.dependencies {
+    let Options {
+        generator_segments,
+        dependencies,
+        dry_run,
+        preview,
+        no_links,
+        ..
+    } = opts;
+    let bump_spec = dependencies.then(|| BumpSpec::Auto).unwrap_or(BumpSpec::Keep);
+    let force_history_segmentation = false;
+    let ctx = crate::Context::new(crates, force_history_segmentation, bump_spec, bump_spec)?;
+    let crates = if dependencies {
         let add_production_crates = true;
-        crate::traverse::dependencies(&ctx, add_production_crates)?
+        let bump_only_when_needed = true;
+        crate::traverse::dependencies(&ctx, add_production_crates, bump_only_when_needed)?
             .into_iter()
             .filter_map(|d| matches!(d.mode, dependency::Mode::ToBePublished { .. }).then(|| d.package))
             .collect()
@@ -33,10 +43,10 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         Some(history) => history,
     };
 
-    let bat = (opts.dry_run && opts.preview).then(bat::Support::new);
+    let bat = (dry_run && preview).then(bat::Support::new);
 
     let mut pending_changes = Vec::new();
-    let linkables = if opts.dry_run || opts.no_links {
+    let linkables = if dry_run || no_links {
         Linkables::AsText
     } else {
         crate::git::remote_url()?
@@ -51,10 +61,10 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
                 log, mut lock, state, ..
             },
             _package,
-        ) = ChangeLog::for_crate_by_name_with_write_lock(package, &history, &ctx, opts.generator_segments)?;
+        ) = ChangeLog::for_crate_by_name_with_write_lock(package, &history, &ctx, generator_segments)?;
         log::info!(
             "{} write {} sections to {} ({})",
-            will(opts.dry_run),
+            will(dry_run),
             log.sections.len(),
             lock.resource_path()
                 .strip_prefix(&ctx.root)
@@ -67,7 +77,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
             log.write_to(
                 &mut buf,
                 &linkables,
-                if opts.dry_run {
+                if dry_run {
                     Components::SECTION_TITLE
                 } else {
                     Components::all()
@@ -83,7 +93,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
                 format!("PREVIEW {} / {}, press Ctrl+C to cancel", idx + 1, crates.len()),
             )?;
         }
-        if !opts.dry_run {
+        if !dry_run {
             pending_changes.push(lock);
         }
     }

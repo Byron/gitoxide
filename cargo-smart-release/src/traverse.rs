@@ -5,6 +5,7 @@ use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 use crate::{
     git,
     utils::{is_pre_release_version, package_by_name, workspace_package_by_name},
+    version,
 };
 
 pub mod dependency {
@@ -17,7 +18,11 @@ pub mod dependency {
 
     #[derive(Clone, Debug)]
     pub enum Kind {
+        /// Initially selected by user
         UserSelection,
+        // /// A dependency of the user selection, added because it needs a breaking version bump. It may also have changed.
+        // DependencyOfUserSelectionForBreakingReleaseSafety,
+        /// A changed dependency of the user selected crate that thus needs publishing
         DependencyOfUserSelection,
     }
 
@@ -26,6 +31,9 @@ pub mod dependency {
         ToBePublished {
             kind: Kind,
             change_kind: crate::git::PackageChangeKind,
+            /// The version suitable for the upcoming release. Maybe the same as in the current manifest as the latter already
+            /// is sufficient to fulfill our constraints.
+            next_release_version: semver::Version,
         },
         Skipped {
             kind: Kind,
@@ -40,7 +48,11 @@ pub struct Dependency<'meta> {
     pub mode: dependency::Mode,
 }
 
-pub fn dependencies(ctx: &crate::Context, add_production_crates: bool) -> anyhow::Result<Vec<Dependency<'_>>> {
+pub fn dependencies(
+    ctx: &crate::Context,
+    add_production_crates: bool,
+    bump_when_needed: bool,
+) -> anyhow::Result<Vec<Dependency<'_>>> {
     let mut seen = BTreeSet::new();
     let mut crates = Vec::new();
     for crate_name in &ctx.crate_names {
@@ -54,7 +66,14 @@ pub fn dependencies(ctx: &crate::Context, add_production_crates: bool) -> anyhow
             crates.clear();
         }
         let num_crates_for_publishing_without_dependencies = crates.len();
-        let current_skipped = depth_first_traversal(ctx, add_production_crates, &mut seen, &mut crates, package)?;
+        let current_skipped = depth_first_traversal(
+            ctx,
+            &mut seen,
+            &mut crates,
+            package,
+            add_production_crates,
+            bump_when_needed,
+        )?;
         crates.extend(current_skipped);
 
         match git::change_since_last_release(package, ctx)? {
@@ -64,6 +83,7 @@ pub fn dependencies(ctx: &crate::Context, add_production_crates: bool) -> anyhow
                     mode: dependency::Mode::ToBePublished {
                         kind: dependency::Kind::UserSelection,
                         change_kind: user_package_change,
+                        next_release_version: version::bump_package(package, ctx, bump_when_needed)?,
                     },
                 });
                 seen.insert(&package.id);
@@ -88,10 +108,11 @@ pub fn dependencies(ctx: &crate::Context, add_production_crates: bool) -> anyhow
 
 fn depth_first_traversal<'meta>(
     ctx: &'meta crate::Context,
-    add_production_crates: bool,
     seen: &mut BTreeSet<&'meta PackageId>,
     crates: &mut Vec<Dependency<'meta>>,
     root: &Package,
+    add_production_crates: bool,
+    bump_when_needed: bool,
 ) -> anyhow::Result<Vec<Dependency<'meta>>> {
     let mut skipped = Vec::new();
     for dependency in root.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
@@ -105,10 +126,11 @@ fn depth_first_traversal<'meta>(
         seen.insert(&workspace_dependency.id);
         skipped.extend(depth_first_traversal(
             ctx,
-            add_production_crates,
             seen,
             crates,
             workspace_dependency,
+            add_production_crates,
+            bump_when_needed,
         )?);
         if let Some(change) = git::change_since_last_release(workspace_dependency, ctx)? {
             if is_pre_release_version(&workspace_dependency.version) || add_production_crates {
@@ -117,6 +139,7 @@ fn depth_first_traversal<'meta>(
                     mode: dependency::Mode::ToBePublished {
                         kind: dependency::Kind::DependencyOfUserSelection,
                         change_kind: change,
+                        next_release_version: version::bump_package(workspace_dependency, ctx, bump_when_needed)?,
                     },
                 });
             } else {
