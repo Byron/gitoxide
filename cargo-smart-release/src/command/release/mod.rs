@@ -133,16 +133,16 @@ fn present_dependencies(
         .count();
     if num_skipped != 0 {
         log::info!(
-                "Skipped {} dependent crates as they didn't change since their last release. Use --verbose/-v to see much more.",
-                num_skipped
-            );
+            "Skipped {} dependent crates as they didn't change since their last release.",
+            num_skipped
+        );
     }
 
     let mut error = false;
     for dep in deps {
         let (bump_spec, kind) = match dep.kind {
             Kind::UserSelection => (ctx.base.bump, "provided"),
-            Kind::DependencyOfUserSelection => (ctx.base.bump_dependencies, "dependent"),
+            Kind::DependencyOrDependentOfUserSelection => (ctx.base.bump_dependencies, "dependent"),
         };
         match &dep.mode {
             dependency::Mode::ToBePublished { adjustment } => {
@@ -223,7 +223,13 @@ fn present_dependencies(
                     direct_dependency.name
                 );
             }
-
+            dependency::Mode::ManifestNeedsUpdate => {
+                log::info!(
+                    "Manifest of {} package '{}' will be adjusted as its dependencies see a version change",
+                    kind,
+                    dep.package.name
+                );
+            }
             dependency::Mode::Skipped { .. } => {}
         }
     }

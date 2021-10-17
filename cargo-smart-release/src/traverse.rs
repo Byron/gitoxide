@@ -5,7 +5,7 @@ use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 use crate::{
     git,
     traverse::dependency::VersionAdjustment,
-    utils::{is_pre_release_version, package_by_name, workspace_package_by_name},
+    utils::{is_pre_release_version, package_by_id, package_by_name, workspace_package_by_name},
     version,
 };
 
@@ -26,7 +26,7 @@ pub mod dependency {
         /// Initially selected by user
         UserSelection,
         /// A changed dependency of the user selected crate that thus needs publishing
-        DependencyOfUserSelection,
+        DependencyOrDependentOfUserSelection,
     }
 
     #[derive(Clone, Debug)]
@@ -53,6 +53,8 @@ pub mod dependency {
             reason: SkippedReason,
             adjustment: Option<VersionAdjustment<'meta>>,
         },
+        /// One of our dependencies will see a version adjustment, which we must update in our manifest
+        ManifestNeedsUpdate,
     }
 }
 
@@ -121,6 +123,25 @@ pub fn dependencies(
             }
         }
     }
+
+    let crates_for_manifest_update = ctx
+        .meta
+        .workspace_members
+        .iter()
+        .map(|id| package_by_id(&ctx.meta, id))
+        .filter(|wsp| crates.iter().all(|c| c.package.id != wsp.id))
+        .filter(|wsp| {
+            wsp.dependencies
+                .iter()
+                .any(|d| crates.iter().any(|c| c.package.name == d.name))
+        })
+        .map(|wsp| Dependency {
+            kind: dependency::Kind::DependencyOrDependentOfUserSelection,
+            package: wsp,
+            mode: dependency::Mode::ManifestNeedsUpdate,
+        })
+        .collect::<Vec<_>>();
+    crates.extend(crates_for_manifest_update);
     Ok(crates)
 }
 
@@ -154,7 +175,7 @@ fn depth_first_traversal<'meta>(
             if is_pre_release_version(&workspace_dependency.version) || add_production_crates {
                 crates.push(Dependency {
                     package: workspace_dependency,
-                    kind: dependency::Kind::DependencyOfUserSelection,
+                    kind: dependency::Kind::DependencyOrDependentOfUserSelection,
                     mode: dependency::Mode::ToBePublished {
                         adjustment: VersionAdjustment::Changed {
                             change,
@@ -165,7 +186,7 @@ fn depth_first_traversal<'meta>(
             } else {
                 crates.push(Dependency {
                     package: workspace_dependency,
-                    kind: dependency::Kind::DependencyOfUserSelection,
+                    kind: dependency::Kind::DependencyOrDependentOfUserSelection,
                     mode: dependency::Mode::Skipped {
                         reason: dependency::SkippedReason::DeniedAutopublishOfProductionCrate,
                         adjustment: None,
@@ -175,7 +196,7 @@ fn depth_first_traversal<'meta>(
         } else {
             skipped.push(Dependency {
                 package: workspace_dependency,
-                kind: dependency::Kind::DependencyOfUserSelection,
+                kind: dependency::Kind::DependencyOrDependentOfUserSelection,
                 mode: dependency::Mode::Skipped {
                     reason: dependency::SkippedReason::Unchanged,
                     adjustment: None,
