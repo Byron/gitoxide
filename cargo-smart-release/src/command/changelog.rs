@@ -6,6 +6,7 @@ use crate::{
     changelog::write::{Components, Linkables},
     command::changelog::Options,
     git,
+    traverse::dependency,
     utils::will,
     ChangeLog,
 };
@@ -13,7 +14,10 @@ use crate::{
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let ctx = crate::Context::new(crates)?;
     let crates = if opts.dependencies {
-        crate::traverse::dependencies(&ctx, false, true)?.crates_to_be_published
+        crate::traverse::dependencies(&ctx, false, true)?
+            .into_iter()
+            .filter_map(|d| matches!(d.kind, dependency::Kind::ToBePublished).then(|| d.package))
+            .collect()
     } else {
         ctx.crate_names
             .iter()

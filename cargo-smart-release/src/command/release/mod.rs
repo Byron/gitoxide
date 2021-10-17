@@ -8,6 +8,7 @@ use crate::{
     changelog,
     changelog::{write::Linkables, Section},
     command::release::Options,
+    traverse::dependency,
     utils::{
         is_dependency_with_version_requirement, names_and_versions, package_by_id, package_by_name,
         package_eq_dependency, package_for_dependency, tag_name, will, workspace_package_by_id,
@@ -119,7 +120,9 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
             .collect::<Result<Vec<_>, _>>()?
     } else {
         crate::traverse::dependencies(&ctx.base, options.verbose, options.allow_auto_publish_of_stable_crates)?
-            .crates_to_be_published
+            .into_iter()
+            .filter_map(|d| matches!(d.kind, dependency::Kind::ToBePublished).then(|| d.package))
+            .collect()
     };
 
     let crates_to_publish_together = resolve_cycles_with_publish_group(meta, &changed_crate_names_to_publish, options)?;
