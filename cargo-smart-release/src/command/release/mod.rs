@@ -177,15 +177,17 @@ fn present_dependencies(
     use dependency::{Kind, SkippedReason};
     if verbose {
         for dep in deps {
-            match &dep.mode {
-                dependency::Mode::ToBePublished {
-                    kind,
-                    change_kind: Some(crate::git::PackageChangeKind::Untagged { wanted_tag_name }),
-                    ..
-                } => {
+            match (&dep.mode, dep.kind) {
+                (
+                    dependency::Mode::ToBePublished {
+                        change_kind: Some(crate::git::PackageChangeKind::Untagged { wanted_tag_name }),
+                        ..
+                    },
+                    _kind,
+                ) => {
                     log::info!(
                         "{} '{}' wasn't tagged with {} yet and thus needs a release",
-                        match kind {
+                        match dep.kind {
                             Kind::UserSelection => "Provided package",
                             Kind::DependencyOfUserSelection => "Dependent package",
                         },
@@ -193,21 +195,25 @@ fn present_dependencies(
                         wanted_tag_name
                     );
                 }
-                dependency::Mode::ToBePublished {
-                    kind: Kind::DependencyOfUserSelection,
-                    change_kind: Some(crate::git::PackageChangeKind::ChangedOrNew),
-                    ..
-                } => {
+                (
+                    dependency::Mode::ToBePublished {
+                        change_kind: Some(crate::git::PackageChangeKind::ChangedOrNew),
+                        ..
+                    },
+                    Kind::DependencyOfUserSelection,
+                ) => {
                     log::info!(
                         "Dependent package '{}' v{} will be published as it changed since last release",
                         dep.package.name,
                         dep.package.version
                     );
                 }
-                dependency::Mode::Skipped {
+                (
+                    dependency::Mode::Skipped {
+                        reason: SkippedReason::Unchanged,
+                    },
                     kind,
-                    reason: SkippedReason::Unchanged,
-                } => {
+                ) => {
                     log::info!(
                         "Skipped {} '{}' v{} as it didn't change since last release",
                         match kind {
@@ -218,21 +224,19 @@ fn present_dependencies(
                         dep.package.version
                     );
                 }
-                dependency::Mode::Skipped {
-                    kind: _,
-                    reason: SkippedReason::DeniedAutopublishOfProductionCrate,
-                } => {
+                (
+                    dependency::Mode::Skipped {
+                        reason: SkippedReason::DeniedAutopublishOfProductionCrate,
+                    },
+                    _,
+                ) => {
                     log::warn!(
                         "Production crate '{}' v{} changed since last release - consider releasing it beforehand.",
                         dep.package.name,
                         dep.package.version
                     );
                 }
-                dependency::Mode::ToBePublished {
-                    kind: Kind::DependencyOfUserSelection | Kind::UserSelection,
-                    change_kind: _,
-                    ..
-                } => {}
+                _ => {}
             }
         }
     } else {
@@ -253,12 +257,11 @@ fn present_dependencies(
         match &dep.mode {
             dependency::Mode::ToBePublished {
                 bump,
-                kind,
                 breaking_dependency,
                 ..
             } => match &bump.next_release {
                 Ok(next_release) => {
-                    let (bump_spec, kind) = match kind {
+                    let (bump_spec, kind) = match dep.kind {
                         Kind::UserSelection => (ctx.base.bump, "provided"),
                         Kind::DependencyOfUserSelection => (ctx.base.bump_dependencies, "dependent"),
                     };

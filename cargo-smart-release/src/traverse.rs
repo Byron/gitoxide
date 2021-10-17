@@ -18,7 +18,7 @@ pub mod dependency {
         DeniedAutopublishOfProductionCrate,
     }
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Copy, Debug)]
     pub enum Kind {
         /// Initially selected by user
         UserSelection,
@@ -29,14 +29,12 @@ pub mod dependency {
     #[derive(Clone, Debug)]
     pub enum Mode<'meta> {
         ToBePublished {
-            kind: Kind,
             change_kind: Option<crate::git::PackageChangeKind>,
             bump: crate::version::bump::Outcome,
             /// If `Some`, this package in its dependency list is breaking, and causes this one to be a breaking change, too
             breaking_dependency: Option<&'meta Package>,
         },
         Skipped {
-            kind: Kind,
             reason: SkippedReason,
         },
     }
@@ -45,6 +43,7 @@ pub mod dependency {
 #[derive(Debug)]
 pub struct Dependency<'meta> {
     pub package: &'meta Package,
+    pub kind: dependency::Kind,
     pub mode: dependency::Mode<'meta>,
 }
 
@@ -80,8 +79,8 @@ pub fn dependencies(
             Some(user_package_change) => {
                 crates.push(Dependency {
                     package,
+                    kind: dependency::Kind::UserSelection,
                     mode: dependency::Mode::ToBePublished {
-                        kind: dependency::Kind::UserSelection,
                         change_kind: user_package_change.into(),
                         bump: version::bump_package(package, ctx, bump_when_needed)?,
                         breaking_dependency: None,
@@ -94,8 +93,8 @@ pub fn dependencies(
                 if found_no_dependencies {
                     crates.push(Dependency {
                         package,
+                        kind: dependency::Kind::UserSelection,
                         mode: dependency::Mode::Skipped {
-                            kind: dependency::Kind::UserSelection,
                             reason: dependency::SkippedReason::Unchanged,
                         },
                     });
@@ -137,8 +136,8 @@ fn depth_first_traversal<'meta>(
             if is_pre_release_version(&workspace_dependency.version) || add_production_crates {
                 crates.push(Dependency {
                     package: workspace_dependency,
+                    kind: dependency::Kind::DependencyOfUserSelection,
                     mode: dependency::Mode::ToBePublished {
-                        kind: dependency::Kind::DependencyOfUserSelection,
                         change_kind: change.into(),
                         bump: version::bump_package(workspace_dependency, ctx, bump_when_needed)?,
                         breaking_dependency: None,
@@ -147,8 +146,8 @@ fn depth_first_traversal<'meta>(
             } else {
                 crates.push(Dependency {
                     package: workspace_dependency,
+                    kind: dependency::Kind::DependencyOfUserSelection,
                     mode: dependency::Mode::Skipped {
-                        kind: dependency::Kind::DependencyOfUserSelection,
                         reason: dependency::SkippedReason::DeniedAutopublishOfProductionCrate,
                     },
                 });
@@ -156,8 +155,8 @@ fn depth_first_traversal<'meta>(
         } else {
             skipped.push(Dependency {
                 package: workspace_dependency,
+                kind: dependency::Kind::DependencyOfUserSelection,
                 mode: dependency::Mode::Skipped {
-                    kind: dependency::Kind::DependencyOfUserSelection,
                     reason: dependency::SkippedReason::Unchanged,
                 },
             });
