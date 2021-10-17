@@ -1,9 +1,8 @@
 [WARN ] Consider running with --update-crates-index to assure bumping on demand uses the latest information
 [WARN ] Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already
-[INFO ] Package 'a' wasn't tagged with a-v0.8.0 yet and thus needs a release
-[INFO ] Adding 'a' v0.8.0 to set of published crates as it changed since last release
-[INFO ] Package 'b' wasn't tagged with b-v0.8.0 yet and thus needs a release
-[INFO ] Adding 'b' v0.8.0 to set of published crates as it changed since last release
+[INFO ] Dependent package 'a' wasn't tagged with a-v0.8.0 yet and thus needs a release
+[INFO ] Dependent package 'b' wasn't tagged with b-v0.8.0 yet and thus needs a release
+[INFO ] Provided package 'c' wasn't tagged with c-v8.0.0 yet and thus needs a release
 [INFO ] Auto-bumped 'a' patch version to 0.8.1 from 0.8.0.
 [INFO ] Using current version 0.8.0 of crate a instead of bumped one 0.8.1.
 [INFO ] Congratulations for the new release of 'a' 🎉

@@ -8,13 +8,7 @@ use crate::{
 };
 
 pub mod dependency {
-    #[derive(Clone, Debug)]
-    pub enum PublishReason {
-        UserSelected,
-        ChangedDependencyOfUserSelection,
-        UnpublishedDependencyOfUserSelection { wanted_tag_name: String },
-    }
-
+    /// Skipped crates are always dependent ones
     #[derive(Copy, Clone, Debug)]
     pub enum SkippedReason {
         Unchanged,
@@ -22,16 +16,28 @@ pub mod dependency {
     }
 
     #[derive(Clone, Debug)]
-    pub enum Outcome {
-        ToBePublished { reason: PublishReason },
-        Skipped { reason: SkippedReason },
+    pub enum Kind {
+        UserSelection,
+        DependencyOfUserSelection,
+    }
+
+    #[derive(Clone, Debug)]
+    pub enum Mode {
+        ToBePublished {
+            kind: Kind,
+            change_kind: crate::git::PackageChangeKind,
+        },
+        Skipped {
+            kind: Kind,
+            reason: SkippedReason,
+        },
     }
 }
 
 #[derive(Debug)]
 pub struct Dependency<'meta> {
     pub package: &'meta Package,
-    pub kind: dependency::Outcome,
+    pub mode: dependency::Mode,
 }
 
 pub fn dependencies(ctx: &crate::Context, add_production_crates: bool) -> anyhow::Result<Vec<Dependency<'_>>> {
@@ -50,24 +56,32 @@ pub fn dependencies(ctx: &crate::Context, add_production_crates: bool) -> anyhow
         let num_crates_for_publishing_without_dependencies = crates.len();
         let current_skipped = depth_first_traversal(ctx, add_production_crates, &mut seen, &mut crates, package)?;
         crates.extend(current_skipped);
-        if num_crates_for_publishing_without_dependencies == crates.len()
-            && git::change_since_last_release(package, ctx)?.is_none()
-        {
-            crates.push(Dependency {
-                package,
-                kind: dependency::Outcome::Skipped {
-                    reason: dependency::SkippedReason::Unchanged,
-                },
-            });
-            continue;
+
+        match git::change_since_last_release(package, ctx)? {
+            Some(user_package_change) => {
+                crates.push(Dependency {
+                    package,
+                    mode: dependency::Mode::ToBePublished {
+                        kind: dependency::Kind::UserSelection,
+                        change_kind: user_package_change,
+                    },
+                });
+                seen.insert(&package.id);
+            }
+            None => {
+                let found_no_dependencies = num_crates_for_publishing_without_dependencies == crates.len();
+                if found_no_dependencies {
+                    crates.push(Dependency {
+                        package,
+                        mode: dependency::Mode::Skipped {
+                            kind: dependency::Kind::UserSelection,
+                            reason: dependency::SkippedReason::Unchanged,
+                        },
+                    });
+                    continue;
+                }
+            }
         }
-        crates.push(Dependency {
-            package,
-            kind: dependency::Outcome::ToBePublished {
-                reason: dependency::PublishReason::UserSelected,
-            },
-        });
-        seen.insert(&package.id);
     }
     Ok(crates)
 }
@@ -100,21 +114,16 @@ fn depth_first_traversal<'meta>(
             if is_pre_release_version(&workspace_dependency.version) || add_production_crates {
                 crates.push(Dependency {
                     package: workspace_dependency,
-                    kind: dependency::Outcome::ToBePublished {
-                        reason: match change {
-                            git::PackageChangeKind::ChangedOrNew => {
-                                dependency::PublishReason::ChangedDependencyOfUserSelection
-                            }
-                            git::PackageChangeKind::Untagged { wanted_tag_name } => {
-                                dependency::PublishReason::UnpublishedDependencyOfUserSelection { wanted_tag_name }
-                            }
-                        },
+                    mode: dependency::Mode::ToBePublished {
+                        kind: dependency::Kind::DependencyOfUserSelection,
+                        change_kind: change,
                     },
                 });
             } else {
                 crates.push(Dependency {
                     package: workspace_dependency,
-                    kind: dependency::Outcome::Skipped {
+                    mode: dependency::Mode::Skipped {
+                        kind: dependency::Kind::DependencyOfUserSelection,
                         reason: dependency::SkippedReason::DeniedAutopublishOfProductionCrate,
                     },
                 });
@@ -122,7 +131,8 @@ fn depth_first_traversal<'meta>(
         } else {
             skipped.push(Dependency {
                 package: workspace_dependency,
-                kind: dependency::Outcome::Skipped {
+                mode: dependency::Mode::Skipped {
+                    kind: dependency::Kind::DependencyOfUserSelection,
                     reason: dependency::SkippedReason::Unchanged,
                 },
             });

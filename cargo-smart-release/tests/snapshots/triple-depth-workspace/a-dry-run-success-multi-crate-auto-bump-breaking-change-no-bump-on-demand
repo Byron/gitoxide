@@ -1,5 +1,5 @@
 [WARN ] Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already
-[INFO ] Package 'a' wasn't tagged with a-v0.8.0 yet and thus needs a release
+[INFO ] Provided package 'a' wasn't tagged with a-v0.8.0 yet and thus needs a release
 [INFO ] Auto-bumped 'a' minor version to 0.9.0 from 0.8.0 to signal breaking changes.
 [INFO ] Congratulations for the new release of 'a' 🎉
 [INFO ] WOULD modify existing changelog for 'a'.

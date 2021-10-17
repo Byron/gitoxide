@@ -14,7 +14,7 @@ use crate::utils::{component_to_bytes, tag_name};
 
 pub mod history;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum PackageChangeKind {
     Untagged { wanted_tag_name: String },
     ChangedOrNew,

@@ -19,7 +19,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         let add_production_crates = true;
         crate::traverse::dependencies(&ctx, add_production_crates)?
             .into_iter()
-            .filter_map(|d| matches!(d.kind, dependency::Outcome::ToBePublished { .. }).then(|| d.package))
+            .filter_map(|d| matches!(d.mode, dependency::Mode::ToBePublished { .. }).then(|| d.package))
             .collect()
     } else {
         ctx.crate_names

@@ -100,10 +100,10 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
             .collect::<Result<Vec<_>, _>>()?
     } else {
         let dependencies = crate::traverse::dependencies(&ctx.base, options.allow_auto_publish_of_stable_crates)?;
-        present_dependencies(&dependencies, &ctx.base.crate_names, options.verbose);
+        present_dependencies(&dependencies, options.verbose);
         dependencies
             .into_iter()
-            .filter_map(|d| matches!(d.kind, dependency::Outcome::ToBePublished { .. }).then(|| d.package))
+            .filter_map(|d| matches!(d.mode, dependency::Mode::ToBePublished { .. }).then(|| d.package))
             .collect()
     };
 
@@ -158,47 +158,51 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn present_dependencies(deps: &[traverse::Dependency<'_>], provided_crate_names: &[String], verbose: bool) {
-    use dependency::{PublishReason, SkippedReason};
+fn present_dependencies(deps: &[traverse::Dependency<'_>], verbose: bool) {
+    use dependency::{Kind, SkippedReason};
     if verbose {
         for dep in deps {
-            match &dep.kind {
-                dependency::Outcome::ToBePublished {
-                    reason: PublishReason::UnpublishedDependencyOfUserSelection { wanted_tag_name },
+            match &dep.mode {
+                dependency::Mode::ToBePublished {
+                    kind,
+                    change_kind: crate::git::PackageChangeKind::Untagged { wanted_tag_name },
                 } => {
                     log::info!(
-                        "Package '{}' wasn't tagged with {} yet and thus needs a release",
+                        "{} '{}' wasn't tagged with {} yet and thus needs a release",
+                        match kind {
+                            Kind::UserSelection => "Provided package",
+                            Kind::DependencyOfUserSelection => "Dependent package",
+                        },
                         dep.package.name,
                         wanted_tag_name
                     );
                 }
-                dependency::Outcome::ToBePublished {
-                    reason: PublishReason::ChangedDependencyOfUserSelection,
+                dependency::Mode::ToBePublished {
+                    kind: Kind::DependencyOfUserSelection,
+                    change_kind: crate::git::PackageChangeKind::ChangedOrNew,
                 } => {
                     log::info!(
-                        "Adding '{}' v{} to set of published crates as it changed since last release",
+                        "Dependent package '{}' v{} will be published as it changed since last release",
                         dep.package.name,
                         dep.package.version
                     );
                 }
-                dependency::Outcome::Skipped {
+                dependency::Mode::Skipped {
+                    kind,
                     reason: SkippedReason::Unchanged,
                 } => {
-                    if provided_crate_names.contains(&dep.package.name) {
-                        log::info!(
-                            "Skipping provided {} v{} hasn't changed since last released",
-                            dep.package.name,
-                            dep.package.version
-                        );
-                    } else {
-                        log::info!(
-                            "'{}' v{}  - skipped release as it didn't change",
-                            dep.package.name,
-                            dep.package.version
-                        );
-                    }
+                    log::info!(
+                        "Skipped {} '{}' v{} as it didn't change since last release",
+                        match kind {
+                            Kind::UserSelection => "provided package",
+                            Kind::DependencyOfUserSelection => "dependent package",
+                        },
+                        dep.package.name,
+                        dep.package.version
+                    );
                 }
-                dependency::Outcome::Skipped {
+                dependency::Mode::Skipped {
+                    kind: _,
                     reason: SkippedReason::DeniedAutopublishOfProductionCrate,
                 } => {
                     log::warn!(
@@ -207,15 +211,16 @@ fn present_dependencies(deps: &[traverse::Dependency<'_>], provided_crate_names:
                         dep.package.version
                     );
                 }
-                dependency::Outcome::ToBePublished {
-                    reason: PublishReason::UserSelected,
+                dependency::Mode::ToBePublished {
+                    kind: Kind::UserSelection,
+                    change_kind: _,
                 } => {}
             }
         }
     } else {
         let num_skipped = deps
             .iter()
-            .filter(|dep| matches!(&dep.kind, dependency::Outcome::Skipped { .. }))
+            .filter(|dep| matches!(&dep.mode, dependency::Mode::Skipped { .. }))
             .count();
         if num_skipped != 0 {
             log::info!(
