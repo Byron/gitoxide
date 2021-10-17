@@ -339,7 +339,7 @@ pub(crate) fn conservative_dependent_version(
     bump_when_needed: bool,
     verbose: bool,
 ) -> Option<Version> {
-    if !rhs_is_breaking_bump_for_lhs(&publishee.version, &new_publishee_version) {
+    if !rhs_is_breaking_bump_for_lhs(&publishee.version, new_publishee_version) {
         return None;
     }
     let new_dependent_version = breaking_version_bump(&dependent.version);

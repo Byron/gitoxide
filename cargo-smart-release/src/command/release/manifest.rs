@@ -165,7 +165,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             .expect("lock available");
         made_change |= set_version_and_update_package_dependency(
             publishee,
-            Some(&new_version),
+            Some(new_version),
             &publishees_and_bumped_dependent_packages,
             &mut lock,
             opts,
@@ -574,9 +574,9 @@ fn set_version_and_update_package_dependency(
                 {
                     let version_req = VersionReq::parse(current_version_req.as_str().expect("versions are strings"))?;
                     let force_update = conservative_pre_release_version_handling
-                        && version::is_pre_release(&new_version) // setting the lower bound unnecessarily can be harmful
-                        && !version::rhs_is_breaking_bump_for_lhs(&req_as_version(&version_req), &new_version); // don't claim to be conservative if this is necessary anyway
-                    if !version_req.matches(&new_version) || force_update {
+                        && version::is_pre_release(new_version) // setting the lower bound unnecessarily can be harmful
+                        && !version::rhs_is_breaking_bump_for_lhs(&req_as_version(&version_req), new_version); // don't claim to be conservative if this is necessary anyway
+                    if !version_req.matches(new_version) || force_update {
                         let supported_op = Op::Caret;
                         if version_req.comparators.is_empty()
                             || (version_req.comparators.len() > 1)
