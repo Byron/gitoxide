@@ -1,16 +1,18 @@
 use std::collections::BTreeSet;
 
-use cargo_metadata::{DependencyKind, Metadata, Package};
+use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 
 use crate::{
     git,
-    utils::{is_pre_release_version, is_workspace_member, package_by_name},
+    utils::{is_pre_release_version, package_by_name, workspace_package_by_name},
 };
 
 pub mod dependencies {
-    pub struct Outcome {
-        pub crates_to_be_published: Vec<String>,
-        pub unchanged_crates_to_skip: Vec<String>,
+    use cargo_metadata::Package;
+
+    pub struct Outcome<'meta> {
+        pub crates_to_be_published: Vec<&'meta Package>,
+        pub unchanged_crates_to_skip: Vec<&'meta Package>,
     }
 }
 
@@ -18,21 +20,21 @@ pub fn dependencies(
     ctx: &crate::Context,
     verbose: bool,
     add_production_crates: bool,
-) -> anyhow::Result<dependencies::Outcome> {
+) -> anyhow::Result<dependencies::Outcome<'_>> {
     let mut seen = BTreeSet::new();
     let mut changed_crate_names_to_publish = Vec::new();
     let mut skipped = Vec::new();
     for crate_name in &ctx.crate_names {
-        if seen.contains(crate_name) {
+        let package = package_by_name(&ctx.meta, crate_name)?;
+        if seen.contains(&&package.id) {
             continue;
         }
-        if dependency_tree_has_link_to_existing_crate_names(&ctx.meta, crate_name, &changed_crate_names_to_publish)? {
+        if dependency_tree_has_link_to_existing_crate_names(&ctx.meta, package, &changed_crate_names_to_publish)? {
             // redo all work which includes the previous tree. Could be more efficient but that would be more complicated.
             seen.clear();
             changed_crate_names_to_publish.clear();
         }
         let num_crates_for_publishing_without_dependencies = changed_crate_names_to_publish.len();
-        let package = package_by_name(&ctx.meta, crate_name)?;
         let current_skipped = depth_first_traversal(
             ctx,
             add_production_crates,
@@ -49,18 +51,17 @@ pub fn dependencies(
         }
         skipped.extend(current_skipped);
         if num_crates_for_publishing_without_dependencies == changed_crate_names_to_publish.len() {
-            let crate_package = package_by_name(&ctx.meta, crate_name)?;
-            if !git::has_changed_since_last_release(crate_package, ctx, verbose)? {
+            if !git::has_changed_since_last_release(package, ctx, verbose)? {
                 log::info!(
                     "Skipping provided {} v{} hasn't changed since last released",
-                    crate_package.name,
-                    crate_package.version
+                    package.name,
+                    package.version
                 );
                 continue;
             }
         }
-        changed_crate_names_to_publish.push(crate_name.to_owned());
-        seen.insert(crate_name.to_owned());
+        changed_crate_names_to_publish.push(package);
+        seen.insert(&package.id);
     }
     Ok(dependencies::Outcome {
         crates_to_be_published: changed_crate_names_to_publish,
@@ -68,55 +69,58 @@ pub fn dependencies(
     })
 }
 
-fn depth_first_traversal(
-    ctx: &crate::Context,
+fn depth_first_traversal<'meta>(
+    ctx: &'meta crate::Context,
     add_production_crates: bool,
-    seen: &mut BTreeSet<String>,
-    changed_crate_names_to_publish: &mut Vec<String>,
-    package: &Package,
+    seen: &mut BTreeSet<&'meta PackageId>,
+    changed_crate_names_to_publish: &mut Vec<&'meta Package>,
+    root: &Package,
     verbose: bool,
-) -> anyhow::Result<Vec<String>> {
+) -> anyhow::Result<Vec<&'meta Package>> {
     let mut skipped = Vec::new();
-    for dependency in package.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
-        if seen.contains(&dependency.name) || !is_workspace_member(&ctx.meta, &dependency.name) {
+    for dependency in root.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
+        let workspace_dependency = match workspace_package_by_name(&ctx.meta, &dependency.name) {
+            Some(p) => p,
+            None => continue,
+        };
+        if seen.contains(&&workspace_dependency.id) {
             continue;
         }
-        seen.insert(dependency.name.clone());
-        let dep_package = package_by_name(&ctx.meta, &dependency.name)?;
+        seen.insert(&workspace_dependency.id);
         skipped.extend(depth_first_traversal(
             ctx,
             add_production_crates,
             seen,
             changed_crate_names_to_publish,
-            dep_package,
+            workspace_dependency,
             verbose,
         )?);
-        if git::has_changed_since_last_release(dep_package, ctx, verbose)? {
-            if is_pre_release_version(&dep_package.version) || add_production_crates {
+        if git::has_changed_since_last_release(workspace_dependency, ctx, verbose)? {
+            if is_pre_release_version(&workspace_dependency.version) || add_production_crates {
                 if verbose {
                     log::info!(
                         "Adding '{}' v{} to set of published crates as it changed since last release",
-                        dep_package.name,
-                        dep_package.version
+                        workspace_dependency.name,
+                        workspace_dependency.version
                     );
                 }
-                changed_crate_names_to_publish.push(dependency.name.clone());
+                changed_crate_names_to_publish.push(workspace_dependency);
             } else {
                 log::warn!(
                     "'{}' v{} changed since last release - consider releasing it beforehand.",
-                    dep_package.name,
-                    dep_package.version
+                    workspace_dependency.name,
+                    workspace_dependency.version
                 );
             }
         } else {
             if verbose {
                 log::info!(
                     "'{}' v{}  - skipped release as it didn't change",
-                    dep_package.name,
-                    dep_package.version
+                    workspace_dependency.name,
+                    workspace_dependency.version
                 );
             }
-            skipped.push(dep_package.name.clone());
+            skipped.push(workspace_dependency);
         }
     }
     Ok(skipped)
@@ -124,24 +128,23 @@ fn depth_first_traversal(
 
 fn dependency_tree_has_link_to_existing_crate_names(
     meta: &Metadata,
-    root_name: &str,
-    existing_names: &[String],
+    root: &Package,
+    existing: &[&Package],
 ) -> anyhow::Result<bool> {
-    let mut dependency_names = vec![root_name];
+    let mut dependencies = vec![root];
     let mut seen = BTreeSet::new();
-    while let Some(crate_name) = dependency_names.pop() {
-        if !seen.insert(crate_name) {
+    while let Some(package) = dependencies.pop() {
+        if !seen.insert(&package.id) {
             continue;
         }
-        if existing_names.iter().any(|n| n == crate_name) {
+        if existing.iter().any(|n| n.id == package.id) {
             return Ok(true);
         }
-        dependency_names.extend(
-            package_by_name(meta, crate_name)?
+        dependencies.extend(
+            package
                 .dependencies
                 .iter()
-                .filter(|dep| is_workspace_member(meta, &dep.name))
-                .map(|dep| dep.name.as_str()),
+                .filter_map(|dep| workspace_package_by_name(meta, &dep.name)),
         )
     }
     Ok(false)

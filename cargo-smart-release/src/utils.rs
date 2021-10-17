@@ -49,10 +49,6 @@ pub fn is_dependency_with_version_requirement(dep: &Dependency) -> bool {
     !dep.req.comparators.is_empty()
 }
 
-pub fn is_workspace_member(meta: &Metadata, crate_name: &str) -> bool {
-    workspace_package_by_name(meta, crate_name).is_some()
-}
-
 pub fn package_eq_dependency(package: &Package, dependency: &Dependency) -> bool {
     package.name == dependency.name
 }

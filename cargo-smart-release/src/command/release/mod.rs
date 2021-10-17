@@ -112,7 +112,11 @@ pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependen
 fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     let meta = &ctx.base.meta;
     let changed_crate_names_to_publish = if options.skip_dependencies {
-        ctx.base.crate_names.clone()
+        ctx.base
+            .crate_names
+            .iter()
+            .map(|name| package_by_name(&ctx.base.meta, name))
+            .collect::<Result<Vec<_>, _>>()?
     } else {
         crate::traverse::dependencies(&ctx.base, options.verbose, options.allow_auto_publish_of_stable_crates)?
             .crates_to_be_published
@@ -125,12 +129,10 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     if options.multi_crate_release && !changed_crate_names_to_publish.is_empty() {
         perform_multi_version_release(&ctx, options, meta, changed_crate_names_to_publish)?;
     } else {
-        for publishee_name in changed_crate_names_to_publish
+        for publishee in changed_crate_names_to_publish
             .iter()
-            .filter(|n| !crates_to_publish_together.contains(n))
+            .filter(|package| crates_to_publish_together.iter().find(|p| p.id == package.id).is_none())
         {
-            let publishee = package_by_name(meta, publishee_name)?;
-
             let (
                 new_version,
                 manifest::Outcome {
@@ -144,7 +146,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
                 &new_version,
                 commit_id,
                 release_section_by_publishee
-                    .get(publishee_name.as_str())
+                    .get(publishee.name.as_str())
                     .and_then(|s| section_to_string(s, WriteMode::Tag)),
                 &ctx.base,
                 options,
@@ -154,7 +156,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
                 .allow_changelog_github_release
                 .then(|| {
                     release_section_by_publishee
-                        .get(publishee_name.as_str())
+                        .get(publishee.name.as_str())
                         .and_then(|s| section_to_string(s, WriteMode::GitHubRelease))
                 })
                 .flatten()
@@ -188,12 +190,11 @@ fn perform_multi_version_release(
     ctx: &Context,
     options: Options,
     meta: &Metadata,
-    crates_to_publish_together: Vec<String>,
+    crates_to_publish_together: Vec<&Package>,
 ) -> anyhow::Result<()> {
     let mut crates_to_publish_together = crates_to_publish_together
         .into_iter()
-        .map(|name| {
-            let p = package_by_name(meta, &name)?;
+        .map(|p| {
             version::bump(p, version::select_publishee_bump_spec(&p.name, ctx), ctx, &options)
                 .map(|v| (p, v.to_string()))
         })
@@ -306,15 +307,14 @@ fn perform_single_release<'repo, 'meta>(
     Ok((new_version, commit_id_and_changelog_sections))
 }
 
-fn resolve_cycles_with_publish_group(
-    meta: &Metadata,
-    changed_crate_names_to_publish: &[String],
+fn resolve_cycles_with_publish_group<'meta>(
+    meta: &'meta Metadata,
+    changed_crate_names_to_publish: &[&'meta Package],
     options: Options,
-) -> anyhow::Result<Vec<String>> {
+) -> anyhow::Result<Vec<&'meta Package>> {
     let mut crates_to_publish_additionally_to_avoid_instability = Vec::new();
-    let mut publish_group = Vec::<String>::new();
-    for publishee_name in changed_crate_names_to_publish.iter() {
-        let publishee = package_by_name(meta, publishee_name)?;
+    let mut publish_group = Vec::<&Package>::new();
+    for publishee in changed_crate_names_to_publish.iter() {
         let cycles = workspace_members_referring_to_publishee(meta, publishee);
         if cycles.is_empty() {
             log::debug!("'{}' is cycle-free", publishee.name);
@@ -330,12 +330,16 @@ fn resolve_cycles_with_publish_group(
                         format!("via {} hops", hops)
                     }
                 );
-                if !changed_crate_names_to_publish.contains(&from.name) {
-                    crates_to_publish_additionally_to_avoid_instability.push(from.name.clone());
+                if changed_crate_names_to_publish
+                    .iter()
+                    .find(|p| p.id == from.id)
+                    .is_none()
+                {
+                    crates_to_publish_additionally_to_avoid_instability.push(from.name.as_str());
                 } else {
-                    for name in &[&from.name, &publishee.name] {
-                        if !publish_group.contains(name) {
-                            publish_group.push(name.to_string())
+                    for package in &[from, publishee] {
+                        if publish_group.iter().find(|p| p.id == package.id).is_none() {
+                            publish_group.push(package)
                         }
                     }
                 }
@@ -354,24 +358,27 @@ fn resolve_cycles_with_publish_group(
     ))
 }
 
-fn reorder_according_to_existing_order(reference_order: &[String], names_to_order: &[String]) -> Vec<String> {
+fn reorder_according_to_existing_order<'meta>(
+    reference_order: &[&'meta Package],
+    packages_to_order: &[&'meta Package],
+) -> Vec<&'meta Package> {
     let new_order = reference_order
         .iter()
-        .filter(|name| names_to_order.contains(name))
-        .fold(Vec::new(), |mut acc, name| {
-            acc.push(name.clone());
+        .filter(|package| packages_to_order.iter().find(|p| p.id == package.id).is_some())
+        .fold(Vec::new(), |mut acc, package| {
+            acc.push(*package);
             acc
         });
     assert_eq!(
         new_order.len(),
-        names_to_order.len(),
+        packages_to_order.len(),
         "the reference order must contain all items to be ordered"
     );
     new_order
 }
 
-struct Cycle<'a> {
-    from: &'a Package,
+struct Cycle<'meta> {
+    from: &'meta Package,
     hops: usize,
 }
 

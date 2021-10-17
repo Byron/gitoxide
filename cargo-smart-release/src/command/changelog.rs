@@ -1,5 +1,6 @@
 use std::io::Write;
 
+use crate::utils::package_by_name;
 use crate::{
     bat,
     changelog::write::{Components, Linkables},
@@ -11,10 +12,13 @@ use crate::{
 
 pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let ctx = crate::Context::new(crates)?;
-    let crate_names = if opts.dependencies {
+    let crates = if opts.dependencies {
         crate::traverse::dependencies(&ctx, false, true)?.crates_to_be_published
     } else {
-        ctx.crate_names.clone()
+        ctx.crate_names
+            .iter()
+            .map(|name| package_by_name(&ctx.meta, name))
+            .collect::<Result<Vec<_>, _>>()?
     };
     assure_working_tree_is_unchanged(opts)?;
     let history = match git::history::collect(&ctx.repo)? {
@@ -34,13 +38,13 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
             })
             .unwrap_or(Linkables::AsText)
     };
-    for (idx, crate_name) in crate_names.iter().enumerate() {
+    for (idx, package) in crates.iter().enumerate() {
         let (
             crate::changelog::init::Outcome {
                 log, mut lock, state, ..
             },
             _package,
-        ) = ChangeLog::for_crate_by_name_with_write_lock(crate_name, &history, &ctx, opts.generator_segments)?;
+        ) = ChangeLog::for_crate_by_name_with_write_lock(package, &history, &ctx, opts.generator_segments)?;
         log::info!(
             "{} write {} sections to {} ({})",
             will(opts.dry_run),
@@ -69,7 +73,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
             bat.display_to_tty(
                 lock.lock_path(),
                 lock.resource_path().strip_prefix(&ctx.root.to_path_buf())?,
-                format!("PREVIEW {} / {}, press Ctrl+C to cancel", idx + 1, crate_names.len()),
+                format!("PREVIEW {} / {}, press Ctrl+C to cancel", idx + 1, crates.len()),
             )?;
         }
         if !opts.dry_run {

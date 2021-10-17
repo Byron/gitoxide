@@ -6,9 +6,7 @@ use git_repository as git;
 
 use crate::{
     changelog::{section::segment, Section},
-    commit,
-    utils::package_by_name,
-    ChangeLog,
+    commit, ChangeLog,
 };
 
 #[derive(Clone, Copy)]
@@ -88,12 +86,11 @@ impl ChangeLog {
     }
 
     pub fn for_crate_by_name_with_write_lock<'a>(
-        crate_name: &str,
+        package: &'a Package,
         history: &commit::History,
         ctx: &'a crate::Context,
         selection: segment::Selection,
     ) -> anyhow::Result<(Outcome, &'a Package)> {
-        let package = package_by_name(&ctx.meta, crate_name)?;
         let out = Self::for_package_with_write_lock(package, history, ctx, selection)?;
         Ok((out, package))
     }
