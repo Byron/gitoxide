@@ -3,7 +3,6 @@ use std::{
     collections::{BTreeMap, HashMap},
     iter::FromIterator,
     path::PathBuf,
-    time::Instant,
 };
 
 use anyhow::bail;
@@ -31,7 +30,6 @@ pub enum SegmentScope {
 }
 
 pub fn collect(repo: &git::Easy) -> anyhow::Result<Option<commit::History>> {
-    let start = Instant::now();
     let prev = repo.object_cache_size(64 * 1024)?;
     let reference = match repo.head()?.peeled()?.kind {
         head::Kind::Detached { .. } => bail!("Refusing to operate on a detached head."),
@@ -91,13 +89,6 @@ pub fn collect(repo: &git::Easy) -> anyhow::Result<Option<commit::History>> {
             .reverse()
     });
 
-    let elapsed = start.elapsed();
-    log::trace!(
-        "Cached commit history of {} commits and trees in {}s ({:.0} items/s)",
-        items.len(),
-        elapsed.as_secs_f32(),
-        items.len() as f32 / elapsed.as_secs_f32()
-    );
     Ok(Some(commit::History {
         head: reference.detach(),
         items,
@@ -139,7 +130,6 @@ pub fn crate_ref_segments<'h>(
         }
     };
 
-    let start = Instant::now();
     let mut segments = Vec::new();
     let mut segment = commit::history::Segment {
         head: history.head.to_owned(),
@@ -205,18 +195,6 @@ pub fn crate_ref_segments<'h>(
                 .join(", ")
         )
     }
-
-    let elapsed = start.elapsed();
-    let num_commits = segments.iter().map(|s| s.history.len()).sum::<usize>();
-    log::trace!(
-        "{}: Found {} relevant commits out of {} in {} segments {}s ({:.0} commits/s)",
-        package.name,
-        num_commits,
-        history.items.len(),
-        segments.len(),
-        elapsed.as_secs_f32(),
-        num_commits as f32 / elapsed.as_secs_f32()
-    );
 
     Ok(segments)
 }
