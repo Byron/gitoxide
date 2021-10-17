@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 use anyhow::bail;
 use cargo_metadata::{Dependency, DependencyKind, Metadata, Package};
 
+use crate::traverse::dependency::VersionAdjustment;
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},
@@ -171,125 +172,64 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
 fn present_dependencies(
     deps: &[traverse::Dependency<'_>],
     ctx: &Context,
-    verbose: bool,
+    _verbose: bool,
     dry_run: bool,
 ) -> anyhow::Result<()> {
-    use dependency::{Kind, SkippedReason};
-    if verbose {
-        for dep in deps {
-            match (&dep.mode, dep.kind) {
-                (
-                    dependency::Mode::ToBePublished {
-                        change_kind: Some(crate::git::PackageChangeKind::Untagged { wanted_tag_name }),
-                        ..
-                    },
-                    _kind,
-                ) => {
-                    log::trace!(
-                        "{} '{}' wasn't tagged with {} yet and thus needs a release",
-                        match dep.kind {
-                            Kind::UserSelection => "Provided package",
-                            Kind::DependencyOfUserSelection => "Dependent package",
-                        },
-                        dep.package.name,
-                        wanted_tag_name
-                    );
-                }
-                (
-                    dependency::Mode::ToBePublished {
-                        change_kind: Some(crate::git::PackageChangeKind::ChangedOrNew),
-                        ..
-                    },
-                    Kind::DependencyOfUserSelection,
-                ) => {
-                    log::trace!(
-                        "Dependent package '{}' v{} will be published as it changed since last release",
-                        dep.package.name,
-                        dep.package.version
-                    );
-                }
-                (
-                    dependency::Mode::Skipped {
-                        reason: SkippedReason::Unchanged,
-                    },
-                    kind,
-                ) => {
-                    log::trace!(
-                        "Skipped {} '{}' v{} as it didn't change since last release",
-                        match kind {
-                            Kind::UserSelection => "provided package",
-                            Kind::DependencyOfUserSelection => "dependent package",
-                        },
-                        dep.package.name,
-                        dep.package.version
-                    );
-                }
-                (
-                    dependency::Mode::Skipped {
-                        reason: SkippedReason::DeniedAutopublishOfProductionCrate,
-                    },
-                    _,
-                ) => {
-                    log::warn!(
-                        "Production crate '{}' v{} changed since last release - consider releasing it beforehand.",
-                        dep.package.name,
-                        dep.package.version
-                    );
-                }
-                _ => {}
-            }
-        }
-    } else {
-        let num_skipped = deps
-            .iter()
-            .filter(|dep| matches!(&dep.mode, dependency::Mode::Skipped { .. }))
-            .count();
-        if num_skipped != 0 {
-            log::info!(
+    use dependency::Kind;
+    let num_skipped = deps
+        .iter()
+        .filter(|dep| matches!(&dep.mode, dependency::Mode::Skipped { .. }))
+        .count();
+    if num_skipped != 0 {
+        log::info!(
                 "Skipped {} dependent crates as they didn't change since their last release. Use --verbose/-v to see much more.",
                 num_skipped
             );
-        }
     }
 
     let mut error = false;
     for dep in deps {
+        let (bump_spec, kind) = match dep.kind {
+            Kind::UserSelection => (ctx.base.bump, "provided"),
+            Kind::DependencyOfUserSelection => (ctx.base.bump_dependencies, "dependent"),
+        };
         match &dep.mode {
-            dependency::Mode::ToBePublished {
-                bump,
-                breaking_dependency,
-                ..
-            } => match &bump.next_release {
-                Ok(next_release) => {
-                    let (bump_spec, kind) = match dep.kind {
-                        Kind::UserSelection => (ctx.base.bump, "provided"),
-                        Kind::DependencyOfUserSelection => (ctx.base.bump_dependencies, "dependent"),
-                    };
-                    if next_release > &dep.package.version {
-                        log::info!(
-                            "{} {}-bump {} package '{}' from {} to {}{}{}{}",
-                            will(dry_run),
-                            bump_spec,
-                            kind,
-                            dep.package.name,
-                            dep.package.version,
-                            next_release,
-                            bump.latest_release
-                                .as_ref()
-                                .and_then(|latest_release| {
-                                    (dep.package.version != *latest_release)
-                                        .then(|| format!(", {} on crates.io", latest_release))
-                                })
-                                .unwrap_or_default(),
-                            (*next_release != bump.desired_release)
-                                .then(|| format!(", ignoring computed version {}", bump.desired_release))
-                                .unwrap_or_default(),
-                            breaking_dependency
-                                .map(|cause| format!(", for SAFETY due to breaking package '{}'", cause.name))
-                                .unwrap_or_default()
-                        );
-                    } else {
-                        log::info!(
+            dependency::Mode::ToBePublished { adjustment } => {
+                let (bump, breaking_dependency) = match adjustment {
+                    VersionAdjustment::Breakage {
+                        bump,
+                        direct_dependency,
+                        ..
+                    } => (bump, Some(direct_dependency)),
+                    VersionAdjustment::Changed { bump, .. } => (bump, None),
+                };
+                match &bump.next_release {
+                    Ok(next_release) => {
+                        if next_release > &dep.package.version {
+                            log::info!(
+                                "{} {}-bump {} package '{}' from {} to {}{}{}{}",
+                                will(dry_run),
+                                bump_spec,
+                                kind,
+                                dep.package.name,
+                                dep.package.version,
+                                next_release,
+                                bump.latest_release
+                                    .as_ref()
+                                    .and_then(|latest_release| {
+                                        (dep.package.version != *latest_release)
+                                            .then(|| format!(", {} on crates.io", latest_release))
+                                    })
+                                    .unwrap_or_default(),
+                                (*next_release != bump.desired_release)
+                                    .then(|| format!(", ignoring computed version {}", bump.desired_release))
+                                    .unwrap_or_default(),
+                                breaking_dependency
+                                    .map(|cause| format!(", for SAFETY due to breaking package '{}'", cause.name))
+                                    .unwrap_or_default()
+                            );
+                        } else {
+                            log::info!(
                             "Manifest version of {} package '{}' at {} is sufficient{}, ignoring computed version {}",
                             kind,
                             dep.package.name,
@@ -300,18 +240,39 @@ fn present_dependencies(
                                 .unwrap_or_else(|| ", creating a new release 🎉".into()),
                             bump.desired_release
                         );
+                        }
                     }
-                }
-                Err(version::bump::Error::LatestReleaseMoreRecentThanDesiredOne(latest_release)) => {
-                    log::warn!(
+                    Err(version::bump::Error::LatestReleaseMoreRecentThanDesiredOne(latest_release)) => {
+                        log::warn!(
                         "Latest published version of '{}' is {}, the new version is {}. Consider using --bump <level> or --bump-dependencies <level> or update the index with --update-crates-index.",
                         dep.package.name,
                         latest_release,
                         bump.desired_release
                     );
-                    error = true;
-                }
-            },
+                        error = true;
+                    }
+                };
+            }
+            dependency::Mode::Skipped {
+                adjustment:
+                    Some(VersionAdjustment::Breakage {
+                        bump,
+                        direct_dependency,
+                        ..
+                    }),
+                ..
+            } => {
+                log::info!(
+                    "Adjusting manifest of {} package '{}' to {} for SAFETY due to breaking change in '{}'",
+                    kind,
+                    dep.package.name,
+                    bump.next_release
+                        .as_ref()
+                        .expect("next version always set for safety bumps"),
+                    direct_dependency.name
+                );
+            }
+
             dependency::Mode::Skipped { .. } => {}
         }
     }

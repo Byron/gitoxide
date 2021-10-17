@@ -2,6 +2,7 @@ use std::collections::BTreeSet;
 
 use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 
+use crate::traverse::dependency::VersionAdjustment;
 use crate::{
     git,
     utils::{is_pre_release_version, package_by_name, workspace_package_by_name},
@@ -9,6 +10,7 @@ use crate::{
 };
 
 pub mod dependency {
+    use crate::{git, version};
     use cargo_metadata::Package;
 
     /// Skipped crates are always dependent ones
@@ -27,15 +29,28 @@ pub mod dependency {
     }
 
     #[derive(Clone, Debug)]
+    pub enum VersionAdjustment<'meta> {
+        Changed {
+            change: git::PackageChangeKind,
+            bump: version::bump::Outcome,
+        },
+        Breakage {
+            bump: version::bump::Outcome,
+            change: Option<git::PackageChangeKind>,
+            /// The direct dependency causing the breakage because it's breaking itself
+            direct_dependency: &'meta Package,
+        },
+    }
+
+    #[derive(Clone, Debug)]
     pub enum Mode<'meta> {
         ToBePublished {
-            change_kind: Option<crate::git::PackageChangeKind>,
-            bump: crate::version::bump::Outcome,
-            /// If `Some`, this package in its dependency list is breaking, and causes this one to be a breaking change, too
-            breaking_dependency: Option<&'meta Package>,
+            adjustment: VersionAdjustment<'meta>,
         },
+        /// Won't be published but manifest might have to be fixed if a version bump is present.
         Skipped {
             reason: SkippedReason,
+            adjustment: Option<VersionAdjustment<'meta>>,
         },
     }
 }
@@ -81,9 +96,10 @@ pub fn dependencies(
                     package,
                     kind: dependency::Kind::UserSelection,
                     mode: dependency::Mode::ToBePublished {
-                        change_kind: user_package_change.into(),
-                        bump: version::bump_package(package, ctx, bump_when_needed)?,
-                        breaking_dependency: None,
+                        adjustment: VersionAdjustment::Changed {
+                            change: user_package_change,
+                            bump: version::bump_package(package, ctx, bump_when_needed)?,
+                        },
                     },
                 });
                 seen.insert(&package.id);
@@ -96,6 +112,7 @@ pub fn dependencies(
                         kind: dependency::Kind::UserSelection,
                         mode: dependency::Mode::Skipped {
                             reason: dependency::SkippedReason::Unchanged,
+                            adjustment: None,
                         },
                     });
                     continue;
@@ -138,9 +155,10 @@ fn depth_first_traversal<'meta>(
                     package: workspace_dependency,
                     kind: dependency::Kind::DependencyOfUserSelection,
                     mode: dependency::Mode::ToBePublished {
-                        change_kind: change.into(),
-                        bump: version::bump_package(workspace_dependency, ctx, bump_when_needed)?,
-                        breaking_dependency: None,
+                        adjustment: VersionAdjustment::Changed {
+                            change,
+                            bump: version::bump_package(workspace_dependency, ctx, bump_when_needed)?,
+                        },
                     },
                 });
             } else {
@@ -149,6 +167,7 @@ fn depth_first_traversal<'meta>(
                     kind: dependency::Kind::DependencyOfUserSelection,
                     mode: dependency::Mode::Skipped {
                         reason: dependency::SkippedReason::DeniedAutopublishOfProductionCrate,
+                        adjustment: None,
                     },
                 });
             }
@@ -158,6 +177,7 @@ fn depth_first_traversal<'meta>(
                 kind: dependency::Kind::DependencyOfUserSelection,
                 mode: dependency::Mode::Skipped {
                     reason: dependency::SkippedReason::Unchanged,
+                    adjustment: None,
                 },
             });
         }
