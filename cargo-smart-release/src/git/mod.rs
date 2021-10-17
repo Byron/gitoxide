@@ -14,18 +14,19 @@ use crate::utils::{component_to_bytes, tag_name};
 
 pub mod history;
 
-pub fn has_changed_since_last_release(package: &Package, ctx: &crate::Context, verbose: bool) -> anyhow::Result<bool> {
+#[derive(Clone)]
+pub enum PackageChangeKind {
+    Untagged { wanted_tag_name: String },
+    ChangedOrNew,
+}
+
+pub fn change_since_last_release(package: &Package, ctx: &crate::Context) -> anyhow::Result<Option<PackageChangeKind>> {
     let version_tag_name = tag_name(package, &package.version.to_string(), &ctx.repo);
     let mut tag_ref = match ctx.repo.try_find_reference(&version_tag_name)? {
         None => {
-            if verbose {
-                log::info!(
-                    "Package '{}' wasn't tagged with {} yet and thus needs a release",
-                    package.name,
-                    version_tag_name
-                );
-            }
-            return Ok(true);
+            return Ok(Some(PackageChangeKind::Untagged {
+                wanted_tag_name: version_tag_name,
+            }));
         }
         Some(r) => r,
     };
@@ -36,7 +37,7 @@ pub fn has_changed_since_last_release(package: &Package, ctx: &crate::Context, v
             let released_target = tag_ref.peel_to_id_in_place()?;
 
             match repo_relative_crate_dir {
-                None => current_commit != released_target,
+                None => (current_commit != released_target).then(|| PackageChangeKind::ChangedOrNew),
                 Some(dir) => {
                     let components = dir.components().map(component_to_bytes);
                     let current_dir_id = current_commit
@@ -54,11 +55,11 @@ pub fn has_changed_since_last_release(package: &Package, ctx: &crate::Context, v
                         .expect("path must exist as it was supposedly released there")
                         .oid;
 
-                    released_dir_id != current_dir_id
+                    (released_dir_id != current_dir_id).then(|| PackageChangeKind::ChangedOrNew)
                 }
             }
         }
-        None => true,
+        None => Some(PackageChangeKind::ChangedOrNew),
     })
 }
 

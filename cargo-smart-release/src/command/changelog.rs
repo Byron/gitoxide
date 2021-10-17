@@ -16,9 +16,10 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let bump_spec = opts.dependencies.then(|| BumpSpec::Auto).unwrap_or(BumpSpec::Keep);
     let ctx = crate::Context::new(crates, false, bump_spec, bump_spec)?;
     let crates = if opts.dependencies {
-        crate::traverse::dependencies(&ctx, false, true)?
+        let add_production_crates = true;
+        crate::traverse::dependencies(&ctx, add_production_crates)?
             .into_iter()
-            .filter_map(|d| matches!(d.kind, dependency::Kind::ToBePublished).then(|| d.package))
+            .filter_map(|d| matches!(d.kind, dependency::Outcome::ToBePublished { .. }).then(|| d.package))
             .collect()
     } else {
         ctx.crate_names

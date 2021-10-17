@@ -8,7 +8,7 @@ use crate::{
     changelog,
     changelog::{write::Linkables, Section},
     command::release::Options,
-    traverse::dependency,
+    traverse::{self, dependency},
     utils::{
         is_dependency_with_version_requirement, names_and_versions, package_by_id, package_by_name,
         package_eq_dependency, package_for_dependency, tag_name, will, workspace_package_by_id,
@@ -99,9 +99,11 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
             .map(|name| package_by_name(&ctx.base.meta, name))
             .collect::<Result<Vec<_>, _>>()?
     } else {
-        crate::traverse::dependencies(&ctx.base, options.verbose, options.allow_auto_publish_of_stable_crates)?
+        let dependencies = crate::traverse::dependencies(&ctx.base, options.allow_auto_publish_of_stable_crates)?;
+        present_dependencies(&dependencies, &ctx.base.crate_names, options.verbose);
+        dependencies
             .into_iter()
-            .filter_map(|d| matches!(d.kind, dependency::Kind::ToBePublished).then(|| d.package))
+            .filter_map(|d| matches!(d.kind, dependency::Outcome::ToBePublished { .. }).then(|| d.package))
             .collect()
     };
 
@@ -154,6 +156,74 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+fn present_dependencies(deps: &[traverse::Dependency<'_>], provided_crate_names: &[String], verbose: bool) {
+    use dependency::{PublishReason, SkippedReason};
+    if verbose {
+        for dep in deps {
+            match &dep.kind {
+                dependency::Outcome::ToBePublished {
+                    reason: PublishReason::UnpublishedDependencyOfUserSelection { wanted_tag_name },
+                } => {
+                    log::info!(
+                        "Package '{}' wasn't tagged with {} yet and thus needs a release",
+                        dep.package.name,
+                        wanted_tag_name
+                    );
+                }
+                dependency::Outcome::ToBePublished {
+                    reason: PublishReason::ChangedDependencyOfUserSelection,
+                } => {
+                    log::info!(
+                        "Adding '{}' v{} to set of published crates as it changed since last release",
+                        dep.package.name,
+                        dep.package.version
+                    );
+                }
+                dependency::Outcome::Skipped {
+                    reason: SkippedReason::Unchanged,
+                } => {
+                    if provided_crate_names.contains(&dep.package.name) {
+                        log::info!(
+                            "Skipping provided {} v{} hasn't changed since last released",
+                            dep.package.name,
+                            dep.package.version
+                        );
+                    } else {
+                        log::info!(
+                            "'{}' v{}  - skipped release as it didn't change",
+                            dep.package.name,
+                            dep.package.version
+                        );
+                    }
+                }
+                dependency::Outcome::Skipped {
+                    reason: SkippedReason::DeniedAutopublishOfProductionCrate,
+                } => {
+                    log::warn!(
+                        "Production crate '{}' v{} changed since last release - consider releasing it beforehand.",
+                        dep.package.name,
+                        dep.package.version
+                    );
+                }
+                dependency::Outcome::ToBePublished {
+                    reason: PublishReason::UserSelected,
+                } => {}
+            }
+        }
+    } else {
+        let num_skipped = deps
+            .iter()
+            .filter(|dep| matches!(&dep.kind, dependency::Outcome::Skipped { .. }))
+            .count();
+        if num_skipped != 0 {
+            log::info!(
+                "Skipped {} dependent crates as they didn't change since their last release. Use --verbose/-v to see much more.",
+                num_skipped
+            );
+        }
+    }
 }
 
 fn assure_working_tree_is_unchanged(options: Options) -> anyhow::Result<()> {

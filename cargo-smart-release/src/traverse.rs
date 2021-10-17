@@ -8,23 +8,33 @@ use crate::{
 };
 
 pub mod dependency {
-    #[derive(Copy, Clone)]
-    pub enum Kind {
-        ToBePublished,
-        Skipped,
+    #[derive(Clone, Debug)]
+    pub enum PublishReason {
+        UserSelected,
+        ChangedDependencyOfUserSelection,
+        UnpublishedDependencyOfUserSelection { wanted_tag_name: String },
+    }
+
+    #[derive(Copy, Clone, Debug)]
+    pub enum SkippedReason {
+        Unchanged,
+        DeniedAutopublishOfProductionCrate,
+    }
+
+    #[derive(Clone, Debug)]
+    pub enum Outcome {
+        ToBePublished { reason: PublishReason },
+        Skipped { reason: SkippedReason },
     }
 }
 
+#[derive(Debug)]
 pub struct Dependency<'meta> {
     pub package: &'meta Package,
-    pub kind: dependency::Kind,
+    pub kind: dependency::Outcome,
 }
 
-pub fn dependencies(
-    ctx: &crate::Context,
-    verbose: bool,
-    add_production_crates: bool,
-) -> anyhow::Result<Vec<Dependency<'_>>> {
+pub fn dependencies(ctx: &crate::Context, add_production_crates: bool) -> anyhow::Result<Vec<Dependency<'_>>> {
     let mut seen = BTreeSet::new();
     let mut crates = Vec::new();
     for crate_name in &ctx.crate_names {
@@ -38,31 +48,24 @@ pub fn dependencies(
             crates.clear();
         }
         let num_crates_for_publishing_without_dependencies = crates.len();
-        let current_skipped =
-            depth_first_traversal(ctx, add_production_crates, &mut seen, &mut crates, package, verbose)?;
-        if !verbose && !current_skipped.is_empty() {
-            log::info!(
-                "Skipped {} dependent crates as they didn't change since their last release. Use --verbose/-v to see much more.",
-                current_skipped.len()
-            );
-        }
-        crates.extend(current_skipped.into_iter().map(|p| Dependency {
-            package: p,
-            kind: dependency::Kind::Skipped,
-        }));
+        let current_skipped = depth_first_traversal(ctx, add_production_crates, &mut seen, &mut crates, package)?;
+        crates.extend(current_skipped);
         if num_crates_for_publishing_without_dependencies == crates.len()
-            && !git::has_changed_since_last_release(package, ctx, verbose)?
+            && git::change_since_last_release(package, ctx)?.is_none()
         {
-            log::info!(
-                "Skipping provided {} v{} hasn't changed since last released",
-                package.name,
-                package.version
-            );
+            crates.push(Dependency {
+                package,
+                kind: dependency::Outcome::Skipped {
+                    reason: dependency::SkippedReason::Unchanged,
+                },
+            });
             continue;
         }
         crates.push(Dependency {
             package,
-            kind: dependency::Kind::ToBePublished,
+            kind: dependency::Outcome::ToBePublished {
+                reason: dependency::PublishReason::UserSelected,
+            },
         });
         seen.insert(&package.id);
     }
@@ -75,8 +78,7 @@ fn depth_first_traversal<'meta>(
     seen: &mut BTreeSet<&'meta PackageId>,
     crates: &mut Vec<Dependency<'meta>>,
     root: &Package,
-    verbose: bool,
-) -> anyhow::Result<Vec<&'meta Package>> {
+) -> anyhow::Result<Vec<Dependency<'meta>>> {
     let mut skipped = Vec::new();
     for dependency in root.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
         let workspace_dependency = match workspace_package_by_name(&ctx.meta, &dependency.name) {
@@ -93,37 +95,37 @@ fn depth_first_traversal<'meta>(
             seen,
             crates,
             workspace_dependency,
-            verbose,
         )?);
-        if git::has_changed_since_last_release(workspace_dependency, ctx, verbose)? {
+        if let Some(change) = git::change_since_last_release(workspace_dependency, ctx)? {
             if is_pre_release_version(&workspace_dependency.version) || add_production_crates {
-                if verbose {
-                    log::info!(
-                        "Adding '{}' v{} to set of published crates as it changed since last release",
-                        workspace_dependency.name,
-                        workspace_dependency.version
-                    );
-                }
                 crates.push(Dependency {
                     package: workspace_dependency,
-                    kind: dependency::Kind::ToBePublished,
+                    kind: dependency::Outcome::ToBePublished {
+                        reason: match change {
+                            git::PackageChangeKind::ChangedOrNew => {
+                                dependency::PublishReason::ChangedDependencyOfUserSelection
+                            }
+                            git::PackageChangeKind::Untagged { wanted_tag_name } => {
+                                dependency::PublishReason::UnpublishedDependencyOfUserSelection { wanted_tag_name }
+                            }
+                        },
+                    },
                 });
             } else {
-                log::warn!(
-                    "Production crate '{}' v{} changed since last release - consider releasing it beforehand.",
-                    workspace_dependency.name,
-                    workspace_dependency.version
-                );
+                crates.push(Dependency {
+                    package: workspace_dependency,
+                    kind: dependency::Outcome::Skipped {
+                        reason: dependency::SkippedReason::DeniedAutopublishOfProductionCrate,
+                    },
+                });
             }
         } else {
-            if verbose {
-                log::info!(
-                    "'{}' v{}  - skipped release as it didn't change",
-                    workspace_dependency.name,
-                    workspace_dependency.version
-                );
-            }
-            skipped.push(workspace_dependency);
+            skipped.push(Dependency {
+                package: workspace_dependency,
+                kind: dependency::Outcome::Skipped {
+                    reason: dependency::SkippedReason::Unchanged,
+                },
+            });
         }
     }
     Ok(skipped)
