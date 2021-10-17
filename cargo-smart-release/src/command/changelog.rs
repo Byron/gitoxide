@@ -5,7 +5,6 @@ use crate::{
     changelog::write::{Components, Linkables},
     command::changelog::Options,
     git,
-    traverse::dependency,
     utils::{package_by_name, will},
     version::BumpSpec,
     ChangeLog,
@@ -28,7 +27,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         let bump_only_when_needed = true;
         crate::traverse::dependencies(&ctx, add_production_crates, bump_only_when_needed)?
             .into_iter()
-            .filter_map(|d| matches!(d.mode, dependency::Mode::ToBePublished { .. }).then(|| d.package))
+            .filter_map(|d| d.mode.has_version_adjustment().then(|| d.package))
             .collect()
     } else {
         ctx.crate_names

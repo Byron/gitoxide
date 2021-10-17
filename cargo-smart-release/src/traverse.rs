@@ -56,6 +56,19 @@ pub mod dependency {
         /// One of our dependencies will see a version adjustment, which we must update in our manifest
         ManifestNeedsUpdate,
     }
+
+    impl<'meta> Mode<'meta> {
+        pub fn has_version_adjustment(&self) -> bool {
+            matches!(
+                self,
+                Mode::ToBePublished { .. }
+                    | Mode::Skipped {
+                        adjustment: Some(_),
+                        ..
+                    }
+            )
+        }
+    }
 }
 
 #[derive(Debug)]
