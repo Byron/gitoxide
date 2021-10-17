@@ -333,13 +333,12 @@ pub(crate) fn is_pre_release(semver: &Version) -> bool {
 
 pub(crate) fn conservative_dependent_version(
     publishee: &Package,
-    new_publishee_version: &str,
+    new_publishee_version: &semver::Version,
     dependent: &Package,
     ctx: &Context,
     bump_when_needed: bool,
     verbose: bool,
 ) -> Option<Version> {
-    let new_publishee_version: Version = new_publishee_version.parse().expect("new versions are always valid");
     if !rhs_is_breaking_bump_for_lhs(&publishee.version, &new_publishee_version) {
         return None;
     }

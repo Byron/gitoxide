@@ -4,6 +4,7 @@ use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
 use semver::{Op, Version, VersionReq};
 
+use super::{cargo, git, Context, Oid, Options};
 use crate::{
     changelog,
     changelog::write::Linkables,
@@ -11,17 +12,15 @@ use crate::{
     version, ChangeLog,
 };
 
-use super::{cargo, git, Context, Oid, Options};
-
 pub struct Outcome<'repo, 'meta> {
     pub commit_id: Option<Oid<'repo>>,
     pub section_by_package: BTreeMap<&'meta str, changelog::Section>,
-    pub safety_bumped_packages: Vec<(&'meta Package, String)>,
+    pub safety_bumped_packages: Vec<(&'meta Package, semver::Version)>,
 }
 
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_and_handle_changelog<'repo, 'meta>(
     meta: &'meta Metadata,
-    publishees: &[(&'meta Package, String)],
+    publishees: &[(&'meta Package, semver::Version)],
     opts: Options,
     ctx: &'repo Context,
 ) -> anyhow::Result<Outcome<'repo, 'meta>> {
@@ -72,7 +71,6 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             } else if recent_release_section_in_log.is_probably_lacking_user_edits() {
                 changelog_ids_probably_lacking_user_edits.push(pending_changelogs.len());
             }
-            let new_version: semver::Version = new_version.parse()?;
             match recent_release_section_in_log {
                 changelog::Section::Release {
                     name: name @ changelog::Version::Unreleased,
@@ -93,7 +91,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                     match log
                         .sections
                         .iter_mut()
-                        .find(|s| matches!(s, changelog::Section::Release {name: changelog::Version::Semantic(v), ..} if *v == new_version))
+                        .find(|s| matches!(s, changelog::Section::Release {name: changelog::Version::Semantic(v), ..} if v == new_version))
                     {
                         Some(version_section) => {
                             version_section.merge(recent_section);
@@ -116,7 +114,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                     date,
                     ..
                 } => {
-                    if *recent_version != new_version {
+                    if recent_version != new_version {
                         anyhow::bail!(
                             "'{}' does not have an unreleased version, and most recent release is unexpected. Wanted {}, got {}.",
                             publishee.name,
@@ -167,7 +165,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             .expect("lock available");
         made_change |= set_version_and_update_package_dependency(
             publishee,
-            Some(&new_version.to_string()),
+            Some(&new_version),
             &publishees_and_bumped_dependent_packages,
             &mut lock,
             opts,
@@ -180,7 +178,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             .expect("lock written once");
         made_change |= set_version_and_update_package_dependency(
             dependant_on_publishee,
-            possibly_new_version.as_deref(),
+            possibly_new_version.as_ref(),
             &publishees_and_bumped_dependent_packages,
             &mut lock,
             opts,
@@ -420,7 +418,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
 /// Packages that depend on any of the publishees, where publishee is used by them, and possibly propose a new version.
 fn collect_directly_dependent_packages<'a>(
     meta: &'a Metadata,
-    publishees: &[(&Package, String)],
+    publishees: &[(&Package, semver::Version)],
     locks_by_manifest_path: &mut BTreeMap<&'a Utf8PathBuf, git_repository::lock::File>,
     ctx: &Context,
     Options {
@@ -429,8 +427,8 @@ fn collect_directly_dependent_packages<'a>(
         verbose,
         ..
     }: Options,
-) -> anyhow::Result<Vec<(&'a Package, Option<String>)>> {
-    let mut packages_to_fix = Vec::<(&Package, Option<String>)>::new();
+) -> anyhow::Result<Vec<(&'a Package, Option<semver::Version>)>> {
+    let mut packages_to_fix = Vec::<(&Package, Option<semver::Version>)>::new();
     let mut dependent_packages_this_round = Vec::new();
     let publishees_backing = publishees
         .iter()
@@ -464,7 +462,7 @@ fn collect_directly_dependent_packages<'a>(
                     for (publishee_as_dependency, new_version) in
                         publishees_and_dependents.iter().filter_map(|(publishee, new_version)| {
                             new_version
-                                .as_deref()
+                                .as_ref()
                                 .and_then(|v| package_eq_dependency(publishee, dep).then(|| (*publishee, v)))
                         })
                     {
@@ -487,7 +485,7 @@ fn collect_directly_dependent_packages<'a>(
 
                 let greatest_version = desired_versions.pop().expect("at least one version");
                 let new_version = version::rhs_is_breaking_bump_for_lhs(&workspace_package.version, &greatest_version)
-                    .then(|| greatest_version.to_string());
+                    .then(|| greatest_version);
 
                 if locks_by_manifest_path.contains_key(&workspace_package.manifest_path) {
                     if let Some(previous_version) = packages_to_fix
@@ -527,7 +525,7 @@ fn collect_directly_dependent_packages<'a>(
     Ok(packages_to_fix)
 }
 
-fn is_direct_dependency_of(publishees: &[(&Package, String)], package_to_fix: &Package) -> bool {
+fn is_direct_dependency_of(publishees: &[(&Package, semver::Version)], package_to_fix: &Package) -> bool {
     package_to_fix.dependencies.iter().any(|dep| {
         publishees
             .iter()
@@ -537,8 +535,8 @@ fn is_direct_dependency_of(publishees: &[(&Package, String)], package_to_fix: &P
 
 fn set_version_and_update_package_dependency(
     package_to_update: &Package,
-    new_package_version: Option<&str>,
-    publishees: &[(&Package, String)],
+    new_package_version: Option<&semver::Version>,
+    publishees: &[(&Package, semver::Version)],
     mut out: impl std::io::Write,
     Options {
         conservative_pre_release_version_handling,
@@ -549,18 +547,18 @@ fn set_version_and_update_package_dependency(
     let mut doc = toml_edit::Document::from_str(&manifest)?;
 
     if let Some(new_version) = new_package_version {
-        if doc["package"]["version"].as_str() != Some(new_version) {
-            doc["package"]["version"] = toml_edit::value(new_version);
+        let new_version = new_version.to_string();
+        if doc["package"]["version"].as_str() != Some(new_version.as_str()) {
             log::trace!(
                 "Pending '{}' manifest version update: \"{}\"",
                 package_to_update.name,
                 new_version
             );
+            doc["package"]["version"] = toml_edit::value(new_version);
         }
     }
     for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {
         for (name_to_find, new_version) in publishees.iter().map(|(p, nv)| (&p.name, nv)) {
-            let new_version = Version::parse(new_version)?;
             for name_to_find in package_to_update
                 .dependencies
                 .iter()

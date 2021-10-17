@@ -30,7 +30,7 @@ impl Support {
 
 pub fn create_release(
     publishee: &Package,
-    new_version: &str,
+    new_version: &semver::Version,
     notes: &str,
     Options { dry_run, .. }: Options,
     ctx: &Context,

@@ -32,7 +32,7 @@ pub(in crate::command::release_impl) fn commit_changes(
 
 pub(in crate::command::release_impl) fn create_version_tag<'repo>(
     publishee: &Package,
-    new_version: &str,
+    new_version: &semver::Version,
     commit_id: Option<Oid<'repo>>,
     tag_message: Option<String>,
     ctx: &'repo crate::Context,

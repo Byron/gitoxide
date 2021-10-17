@@ -1,14 +1,13 @@
 use std::io::Write;
 
-use crate::utils::package_by_name;
-use crate::version::BumpSpec;
 use crate::{
     bat,
     changelog::write::{Components, Linkables},
     command::changelog::Options,
     git,
     traverse::dependency,
-    utils::will,
+    utils::{package_by_name, will},
+    version::BumpSpec,
     ChangeLog,
 };
 

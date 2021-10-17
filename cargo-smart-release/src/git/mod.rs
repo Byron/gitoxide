@@ -21,7 +21,7 @@ pub enum PackageChangeKind {
 }
 
 pub fn change_since_last_release(package: &Package, ctx: &crate::Context) -> anyhow::Result<Option<PackageChangeKind>> {
-    let version_tag_name = tag_name(package, &package.version.to_string(), &ctx.repo);
+    let version_tag_name = tag_name(package, &package.version, &ctx.repo);
     let mut tag_ref = match ctx.repo.try_find_reference(&version_tag_name)? {
         None => {
             return Ok(Some(PackageChangeKind::Untagged {

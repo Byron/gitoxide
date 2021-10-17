@@ -1,4 +1,3 @@
-use crate::version::BumpSpec;
 use cargo_metadata::{
     camino::{Utf8Path, Utf8PathBuf},
     Metadata, Package,
@@ -6,6 +5,8 @@ use cargo_metadata::{
 use crates_index::Index;
 use git_repository as git;
 use git_repository::prelude::CacheAccessExt;
+
+use crate::version::BumpSpec;
 
 pub struct Context {
     pub root: Utf8PathBuf,

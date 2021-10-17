@@ -3,7 +3,6 @@ use std::collections::BTreeSet;
 use anyhow::bail;
 use cargo_metadata::{Dependency, DependencyKind, Metadata, Package};
 
-use crate::version::BumpSpec;
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},
@@ -14,6 +13,7 @@ use crate::{
         package_eq_dependency, package_for_dependency, tag_name, will, workspace_package_by_id,
     },
     version,
+    version::BumpSpec,
 };
 
 mod cargo;
@@ -351,7 +351,7 @@ fn perform_multi_version_release(
                 &ctx.base,
                 options.bump_when_needed,
             )
-            .map(|v| (p, v.to_string()))
+            .map(|v| (p, v))
         })
         .collect::<Result<Vec<_>, _>>()?;
 
@@ -442,10 +442,9 @@ fn perform_single_release<'repo, 'meta>(
     publishee: &'meta Package,
     options: Options,
     ctx: &'repo Context,
-) -> anyhow::Result<(String, manifest::Outcome<'repo, 'meta>)> {
+) -> anyhow::Result<(semver::Version, manifest::Outcome<'repo, 'meta>)> {
     let bump_spec = version::select_publishee_bump_spec(&publishee.name, &ctx.base);
     let new_version = version::bump(publishee, bump_spec, &ctx.base, options.bump_when_needed)?;
-    let new_version = new_version.to_string();
     let commit_id_and_changelog_sections = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
         meta,
         &[(publishee, new_version.clone())],
