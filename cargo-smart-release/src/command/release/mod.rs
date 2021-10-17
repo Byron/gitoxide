@@ -179,15 +179,30 @@ fn present_dependencies(
         for dep in deps {
             match &dep.mode {
                 dependency::Mode::ToBePublished {
+                    kind: Kind::DependencyOfUserSelectionForBreakingReleaseSafety(cause),
+                    change_kind: _,
+                    bump,
+                } => {
+                    if let Ok(next_release) = bump.next_release.as_ref() {
+                        log::info!(
+                            "Dependent or provided package '{}' was bumped to {} for SAFETY as {} has breaking changes",
+                            dep.package.name,
+                            next_release,
+                            cause.name
+                        );
+                    }
+                }
+                dependency::Mode::ToBePublished {
                     kind,
-                    change_kind: crate::git::PackageChangeKind::Untagged { wanted_tag_name },
+                    change_kind: Some(crate::git::PackageChangeKind::Untagged { wanted_tag_name }),
                     ..
                 } => {
                     log::info!(
                         "{} '{}' wasn't tagged with {} yet and thus needs a release",
                         match kind {
                             Kind::UserSelection => "Provided package",
-                            Kind::DependencyOfUserSelection => "Dependent package",
+                            Kind::DependencyOfUserSelection
+                            | Kind::DependencyOfUserSelectionForBreakingReleaseSafety(_) => "Dependent package",
                         },
                         dep.package.name,
                         wanted_tag_name
@@ -195,7 +210,7 @@ fn present_dependencies(
                 }
                 dependency::Mode::ToBePublished {
                     kind: Kind::DependencyOfUserSelection,
-                    change_kind: crate::git::PackageChangeKind::ChangedOrNew,
+                    change_kind: Some(crate::git::PackageChangeKind::ChangedOrNew),
                     ..
                 } => {
                     log::info!(
@@ -212,7 +227,8 @@ fn present_dependencies(
                         "Skipped {} '{}' v{} as it didn't change since last release",
                         match kind {
                             Kind::UserSelection => "provided package",
-                            Kind::DependencyOfUserSelection => "dependent package",
+                            Kind::DependencyOfUserSelection
+                            | Kind::DependencyOfUserSelectionForBreakingReleaseSafety(_) => "dependent package",
                         },
                         dep.package.name,
                         dep.package.version
@@ -229,7 +245,7 @@ fn present_dependencies(
                     );
                 }
                 dependency::Mode::ToBePublished {
-                    kind: Kind::UserSelection,
+                    kind: Kind::DependencyOfUserSelection | Kind::UserSelection,
                     change_kind: _,
                     ..
                 } => {}
@@ -254,8 +270,11 @@ fn present_dependencies(
             dependency::Mode::ToBePublished { bump, kind, .. } => match &bump.next_release {
                 Ok(next_release) => {
                     let (bump_spec, kind) = match kind {
-                        dependency::Kind::UserSelection => (ctx.base.bump, "provided"),
-                        dependency::Kind::DependencyOfUserSelection => (ctx.base.bump_dependencies, "dependent"),
+                        Kind::UserSelection => (ctx.base.bump, "provided"),
+                        Kind::DependencyOfUserSelection
+                        | Kind::DependencyOfUserSelectionForBreakingReleaseSafety(_) => {
+                            (ctx.base.bump_dependencies, "dependent")
+                        }
                     };
                     if next_release > &dep.package.version {
                         log::info!(

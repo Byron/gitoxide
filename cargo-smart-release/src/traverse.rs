@@ -9,6 +9,8 @@ use crate::{
 };
 
 pub mod dependency {
+    use cargo_metadata::Package;
+
     /// Skipped crates are always dependent ones
     #[derive(Copy, Clone, Debug)]
     pub enum SkippedReason {
@@ -17,24 +19,24 @@ pub mod dependency {
     }
 
     #[derive(Clone, Debug)]
-    pub enum Kind {
+    pub enum Kind<'meta> {
         /// Initially selected by user
         UserSelection,
-        // /// A dependency of the user selection, added because it needs a breaking version bump. It may also have changed.
-        // DependencyOfUserSelectionForBreakingReleaseSafety,
+        /// A dependency of the user selection, added because it needs a breaking version bump. It may also have changed.
+        DependencyOfUserSelectionForBreakingReleaseSafety(&'meta Package),
         /// A changed dependency of the user selected crate that thus needs publishing
         DependencyOfUserSelection,
     }
 
     #[derive(Clone, Debug)]
-    pub enum Mode {
+    pub enum Mode<'meta> {
         ToBePublished {
-            kind: Kind,
-            change_kind: crate::git::PackageChangeKind,
+            kind: Kind<'meta>,
+            change_kind: Option<crate::git::PackageChangeKind>,
             bump: crate::version::bump::Outcome,
         },
         Skipped {
-            kind: Kind,
+            kind: Kind<'meta>,
             reason: SkippedReason,
         },
     }
@@ -43,7 +45,7 @@ pub mod dependency {
 #[derive(Debug)]
 pub struct Dependency<'meta> {
     pub package: &'meta Package,
-    pub mode: dependency::Mode,
+    pub mode: dependency::Mode<'meta>,
 }
 
 pub fn dependencies(
@@ -80,7 +82,7 @@ pub fn dependencies(
                     package,
                     mode: dependency::Mode::ToBePublished {
                         kind: dependency::Kind::UserSelection,
-                        change_kind: user_package_change,
+                        change_kind: user_package_change.into(),
                         bump: version::bump_package(package, ctx, bump_when_needed)?,
                     },
                 });
@@ -136,7 +138,7 @@ fn depth_first_traversal<'meta>(
                     package: workspace_dependency,
                     mode: dependency::Mode::ToBePublished {
                         kind: dependency::Kind::DependencyOfUserSelection,
-                        change_kind: change,
+                        change_kind: change.into(),
                         bump: version::bump_package(workspace_dependency, ctx, bump_when_needed)?,
                     },
                 });
