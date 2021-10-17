@@ -93,6 +93,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
         allow_auto_publish_of_stable_crates,
         skip_dependencies,
         verbose,
+        isolate_dependencies_from_breaking_changes,
         ..
     } = options;
     let changed_crate_names_to_publish = if skip_dependencies {
@@ -102,8 +103,12 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
             .map(|name| package_by_name(&ctx.base.meta, name))
             .collect::<Result<Vec<_>, _>>()?
     } else {
-        let dependencies =
-            crate::traverse::dependencies(&ctx.base, allow_auto_publish_of_stable_crates, bump_when_needed)?;
+        let dependencies = crate::traverse::dependencies(
+            &ctx.base,
+            allow_auto_publish_of_stable_crates,
+            bump_when_needed,
+            isolate_dependencies_from_breaking_changes,
+        )?;
         present_dependencies(&dependencies, &ctx, verbose, dry_run)?;
         dependencies
             .into_iter()

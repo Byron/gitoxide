@@ -82,6 +82,7 @@ pub fn dependencies(
     ctx: &crate::Context,
     add_production_crates: bool,
     bump_when_needed: bool,
+    isolate_dependencies_from_breaking_changes: bool,
 ) -> anyhow::Result<Vec<Dependency<'_>>> {
     let mut seen = BTreeSet::new();
     let mut crates = Vec::new();
@@ -137,6 +138,12 @@ pub fn dependencies(
         }
     }
 
+    if isolate_dependencies_from_breaking_changes {
+        // TODO: before this, traverse forward through all dependencies from our crates with breaking changes
+        //       and propagate such breaking change, either lifting skipped crates to those with adjustment,
+        //       or by adding new crates.
+        //       If about to be published crates can reach these newly added crates, they must be made publishable too
+    }
     crates.extend(find_workspace_crates_depending_on_adjusted_crates(ctx, &crates));
     Ok(crates)
 }

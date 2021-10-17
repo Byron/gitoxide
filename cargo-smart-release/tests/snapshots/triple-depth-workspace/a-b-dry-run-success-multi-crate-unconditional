@@ -1,24 +1,25 @@
 [WARN ] Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already
-[INFO ] Dependent package 'a' wasn't tagged with a-v0.8.0 yet and thus needs a release
-[INFO ] Provided package 'b' wasn't tagged with b-v0.8.0 yet and thus needs a release
+[INFO ] WOULD auto-bump dependent package 'a' from 0.8.0 to 0.9.0
+[INFO ] WOULD minor-bump provided package 'b' from 0.8.0 to 0.9.0
+[INFO ] Manifest of dependent package 'c' will be adjusted as its dependencies see a version change
 [WARN ] The working tree has changes which will prevent a release with --execute unless --allow-dirty is also specified. The latter isn't recommended.
 [INFO ] Congratulations for the new release of 'a' 🎉
 [INFO ] Congratulations for the new release of 'b' 🎉
 [INFO ] WOULD modify existing changelog for 'a'.
 [INFO ] WOULD modify existing changelog for 'b'.
-[INFO ] Pending 'a' manifest version update: "0.9.0"
-[INFO ] Pending 'b' manifest version update: "0.9.0"
-[INFO ] Pending 'b' manifest dependencies update: 'a = "^0.9.0"' (from  "0.8.0" )
-[INFO ] Pending 'c' manifest version update: "8.1.0"
-[INFO ] Pending 'c' manifest dependencies update: 'b = "^0.9.0"' (from  "0.8.0" )
-[INFO ] WOULD persist changes to 3 manifests and 2 changelogs with: "Adjusting changelogs prior to release of a v0.9.0, b v0.9.0, safety bump c v8.1.0"
+[TRACE] Pending 'a' manifest version update: "0.9.0"
+[TRACE] Pending 'b' manifest version update: "0.9.0"
+[TRACE] Pending 'b' manifest dependencies update: 'a = "^0.9.0"' (from  "0.8.0" )
+[TRACE] Pending 'c' manifest version update: "8.1.0"
+[TRACE] Pending 'c' manifest dependencies update: 'b = "^0.9.0"' (from  "0.8.0" )
+[TRACE] WOULD persist changes to 3 manifests and 2 changelogs with: "Adjusting changelogs prior to release of a v0.9.0, b v0.9.0, safety bump c v8.1.0"
 [INFO ] Up to 2 changelogs would be previewed if the --execute is set and --no-changelog-preview is unset.
 [WARN ] WOULD ask for review after commit as the changelog entry is empty for crates: a, b
 [WARN ] To fix the changelog manually, run: cargo changelog --write a
 [WARN ] To fix the changelog manually, run: cargo changelog --write b
-[INFO ] WOULD run "git" "commit" "-am" "Adjusting changelogs prior to release of a v0.9.0, b v0.9.0, safety bump c v8.1.0"
+[TRACE] WOULD run "git" "commit" "-am" "Adjusting changelogs prior to release of a v0.9.0, b v0.9.0, safety bump c v8.1.0"
 [INFO ] WOULD prepare releases of a v0.9.0, b v0.9.0, bumping 1 crate for safety
-[INFO ] WOULD create tag object a-v0.9.0 with changelog message, first line is: '### Commit Statistics'
-[INFO ] WOULD create tag object b-v0.9.0 with changelog message, first line is: '### Commit Statistics'
-[INFO ] WOULD run "gh" "release" "create" "a-v0.9.0" "--title" "a v0.9.0" "--notes" "### Commit Stat…" [note truncated]
-[INFO ] WOULD run "gh" "release" "create" "b-v0.9.0" "--title" "b v0.9.0" "--notes" "### Commit Stat…" [note truncated]
+[TRACE] WOULD create tag object a-v0.9.0 with changelog message, first line is: '### Commit Statistics'
+[TRACE] WOULD create tag object b-v0.9.0 with changelog message, first line is: '### Commit Statistics'
+[TRACE] WOULD run "gh" "release" "create" "a-v0.9.0" "--title" "a v0.9.0" "--notes" "### Commit Statistics\n…" [note truncated]
+[TRACE] WOULD run "gh" "release" "create" "b-v0.9.0" "--title" "b v0.9.0" "--notes" "### Commit Statistics\n…" [note truncated]

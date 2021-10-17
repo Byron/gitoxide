@@ -25,10 +25,16 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let crates = if dependencies {
         let add_production_crates = true;
         let bump_only_when_needed = true;
-        crate::traverse::dependencies(&ctx, add_production_crates, bump_only_when_needed)?
-            .into_iter()
-            .filter_map(|d| d.mode.has_version_adjustment().then(|| d.package))
-            .collect()
+        let isolate_dependencies_from_breaking_changes = true;
+        crate::traverse::dependencies(
+            &ctx,
+            add_production_crates,
+            bump_only_when_needed,
+            isolate_dependencies_from_breaking_changes,
+        )?
+        .into_iter()
+        .filter_map(|d| d.mode.has_version_adjustment().then(|| d.package))
+        .collect()
     } else {
         ctx.crate_names
             .iter()

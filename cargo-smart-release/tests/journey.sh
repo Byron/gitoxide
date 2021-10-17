@@ -85,12 +85,6 @@ title "smart-release"
             WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate" \
             expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty -b minor
           }
-          (with '--no-multi-crate-release'
-            it "succeeds" && {
-              WITH_SNAPSHOT="$snapshot/a-dry-run-success" \
-              expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-multi-crate-release -b minor
-            }
-          )
         )
         (with 'implicit bump specification derived from commit history'
           it "succeeds" && {
@@ -154,23 +148,11 @@ title "smart-release"
           WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-unconditional" \
           expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-bump-on-demand -b minor
         }
-        (with '--no-multi-crate-release'
-          it "succeeds" && {
-            WITH_SNAPSHOT="$snapshot/a-dry-run-success-unconditional" \
-            expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --no-multi-crate-release --no-bump-on-demand -b minor
-          }
-        )
         (when 'releasing b as well'
           it "succeeds" && {
             WITH_SNAPSHOT="$snapshot/a-b-dry-run-success-multi-crate-unconditional" \
             expect_run $SUCCESSFULLY "$exe" smart-release b a --no-push --no-publish -v --no-bump-on-demand -b minor
           }
-          (with '--no-multi-crate-release'
-            it "succeeds" && {
-              WITH_SNAPSHOT="$snapshot/a-b-dry-run-success-unconditional" \
-              expect_run $SUCCESSFULLY "$exe" smart-release b a --no-push --no-publish -v --no-multi-crate-release --no-bump-on-demand -b minor
-            }
-          )
         )
       )
     )
