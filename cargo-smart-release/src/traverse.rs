@@ -19,11 +19,9 @@ pub mod dependency {
     }
 
     #[derive(Clone, Debug)]
-    pub enum Kind<'meta> {
+    pub enum Kind {
         /// Initially selected by user
         UserSelection,
-        /// A dependency of the user selection, added because it needs a breaking version bump. It may also have changed.
-        DependencyOfUserSelectionForBreakingReleaseSafety(&'meta Package),
         /// A changed dependency of the user selected crate that thus needs publishing
         DependencyOfUserSelection,
     }
@@ -31,12 +29,14 @@ pub mod dependency {
     #[derive(Clone, Debug)]
     pub enum Mode<'meta> {
         ToBePublished {
-            kind: Kind<'meta>,
+            kind: Kind,
             change_kind: Option<crate::git::PackageChangeKind>,
             bump: crate::version::bump::Outcome,
+            /// If `Some`, this package in its dependency list is breaking, and causes this one to be a breaking change, too
+            breaking_dependency: Option<&'meta Package>,
         },
         Skipped {
-            kind: Kind<'meta>,
+            kind: Kind,
             reason: SkippedReason,
         },
     }
@@ -84,6 +84,7 @@ pub fn dependencies(
                         kind: dependency::Kind::UserSelection,
                         change_kind: user_package_change.into(),
                         bump: version::bump_package(package, ctx, bump_when_needed)?,
+                        breaking_dependency: None,
                     },
                 });
                 seen.insert(&package.id);
@@ -140,6 +141,7 @@ fn depth_first_traversal<'meta>(
                         kind: dependency::Kind::DependencyOfUserSelection,
                         change_kind: change.into(),
                         bump: version::bump_package(workspace_dependency, ctx, bump_when_needed)?,
+                        breaking_dependency: None,
                     },
                 });
             } else {
