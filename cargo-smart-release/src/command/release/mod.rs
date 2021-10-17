@@ -111,7 +111,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     } else {
         let dependencies =
             crate::traverse::dependencies(&ctx.base, allow_auto_publish_of_stable_crates, bump_when_needed)?;
-        present_dependencies(&dependencies, &ctx, verbose, dry_run);
+        present_dependencies(&dependencies, &ctx, verbose, dry_run)?;
         dependencies
             .into_iter()
             .filter_map(|d| matches!(d.mode, dependency::Mode::ToBePublished { .. }).then(|| d.package))
@@ -168,7 +168,12 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn present_dependencies(deps: &[traverse::Dependency<'_>], ctx: &Context, verbose: bool, dry_run: bool) {
+fn present_dependencies(
+    deps: &[traverse::Dependency<'_>],
+    ctx: &Context,
+    verbose: bool,
+    dry_run: bool,
+) -> anyhow::Result<()> {
     use dependency::{Kind, SkippedReason};
     if verbose {
         for dep in deps {
@@ -242,36 +247,68 @@ fn present_dependencies(deps: &[traverse::Dependency<'_>], ctx: &Context, verbos
             );
         }
     }
+
+    let mut error = false;
     for dep in deps {
         match &dep.mode {
-            dependency::Mode::ToBePublished {
-                next_release_version,
-                kind,
-                ..
-            } => {
-                let bump_spec = match kind {
-                    dependency::Kind::UserSelection => ctx.base.bump,
-                    dependency::Kind::DependencyOfUserSelection => ctx.base.bump_dependencies,
-                };
-                if next_release_version > &dep.package.version {
-                    log::info!(
-                        "{} {}-bump '{}' from {} to {}",
-                        will(dry_run),
-                        bump_spec,
-                        dep.package.name,
-                        dep.package.version,
-                        next_release_version
-                    );
-                } else {
-                    log::info!(
-                        "'{}' v{} in manifest is sufficient for release",
-                        dep.package.name,
-                        dep.package.version,
-                    );
+            dependency::Mode::ToBePublished { bump, kind, .. } => match &bump.next_release {
+                Ok(next_release) => {
+                    let (bump_spec, kind) = match kind {
+                        dependency::Kind::UserSelection => (ctx.base.bump, "provided"),
+                        dependency::Kind::DependencyOfUserSelection => (ctx.base.bump_dependencies, "dependent"),
+                    };
+                    if next_release > &dep.package.version {
+                        log::info!(
+                            "{} {}-bump {} package '{}' from {} to {}{}{}",
+                            will(dry_run),
+                            bump_spec,
+                            kind,
+                            dep.package.name,
+                            dep.package.version,
+                            next_release,
+                            bump.latest_release
+                                .as_ref()
+                                .and_then(|latest_release| {
+                                    (dep.package.version != *latest_release)
+                                        .then(|| format!(", {} on crates.io", latest_release))
+                                })
+                                .unwrap_or_default(),
+                            (*next_release != bump.desired_release)
+                                .then(|| format!(", ignoring computed version {}", bump.desired_release))
+                                .unwrap_or_default()
+                        );
+                    } else {
+                        log::info!(
+                            "Manifest version of {} package '{}' at {} is sufficient{}, ignoring computed version {}",
+                            kind,
+                            dep.package.name,
+                            dep.package.version,
+                            bump.latest_release
+                                .as_ref()
+                                .map(|latest_release| format!(" to succeed latest released version {}", latest_release))
+                                .unwrap_or_else(|| ", creating a new release 🎉".into()),
+                            bump.desired_release
+                        );
+                    }
                 }
-            }
+                Err(version::bump::Error::LatestReleaseMoreRecentThanDesiredOne(latest_release)) => {
+                    log::warn!(
+                        "Latest published version of '{}' is {}, the new version is {}. Consider using --bump <level> or --bump-dependencies <level> or update the index with --update-crates-index.",
+                        dep.package.name,
+                        latest_release,
+                        bump.desired_release
+                    );
+                    error = true;
+                }
+            },
             dependency::Mode::Skipped { .. } => {}
         }
+    }
+
+    if error {
+        bail!("Aborting due to previous error(s)");
+    } else {
+        Ok(())
     }
 }
 

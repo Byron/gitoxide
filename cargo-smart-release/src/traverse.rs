@@ -31,9 +31,7 @@ pub mod dependency {
         ToBePublished {
             kind: Kind,
             change_kind: crate::git::PackageChangeKind,
-            /// The version suitable for the upcoming release. Maybe the same as in the current manifest as the latter already
-            /// is sufficient to fulfill our constraints.
-            next_release_version: semver::Version,
+            bump: crate::version::bump::Outcome,
         },
         Skipped {
             kind: Kind,
@@ -83,7 +81,7 @@ pub fn dependencies(
                     mode: dependency::Mode::ToBePublished {
                         kind: dependency::Kind::UserSelection,
                         change_kind: user_package_change,
-                        next_release_version: version::bump_package(package, ctx, bump_when_needed)?,
+                        bump: version::bump_package(package, ctx, bump_when_needed)?,
                     },
                 });
                 seen.insert(&package.id);
@@ -139,7 +137,7 @@ fn depth_first_traversal<'meta>(
                     mode: dependency::Mode::ToBePublished {
                         kind: dependency::Kind::DependencyOfUserSelection,
                         change_kind: change,
-                        next_release_version: version::bump_package(workspace_dependency, ctx, bump_when_needed)?,
+                        bump: version::bump_package(workspace_dependency, ctx, bump_when_needed)?,
                     },
                 });
             } else {
