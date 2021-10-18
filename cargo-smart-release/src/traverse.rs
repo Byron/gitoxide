@@ -2,6 +2,7 @@ use std::collections::BTreeSet;
 
 use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 
+use crate::utils::package_eq_dependency;
 use crate::{
     git,
     traverse::dependency::VersionAdjustment,
@@ -153,18 +154,38 @@ pub fn dependencies(
     if isolate_dependencies_from_breaking_changes {
         // TODO: before this, traverse forward through all dependencies from our crates with breaking changes
         //       and propagate such breaking change, either lifting skipped crates to those with adjustment,
-        //       or by adding new crates.
+        //       ~~or by adding new crates~~ (should never happen as we have skipped crates in dependency order).
         //       If about to be published crates can reach these newly added crates, they must be made publishable too
         let mut seen = BTreeSet::default();
         // skipped don't have version bumps, we don't have manifest updates yet
-        for publish_crate in crates
+        for (idx, starting_crate_for_backward_search) in crates
             .iter()
-            .filter(|c| matches!(c.mode, dependency::Mode::ToBePublished { .. }))
+            .enumerate()
+            .rev()
+            .filter(|(_, c)| matches!(c.mode, dependency::Mode::ToBePublished { .. }))
         {
-            if seen.contains(&&publish_crate.package.id) {
-                continue;
+            let mut dependencies = vec![(idx, starting_crate_for_backward_search)];
+            let mut dep_seen = BTreeSet::default();
+            while let Some((dep_idx, dep_crate)) = dependencies.pop() {
+                if dep_seen.contains(&dep_idx) || seen.contains(&dep_idx) {
+                    continue;
+                }
+                seen.insert(dep_idx);
+                dep_seen.insert(dep_idx);
+
+                let _dep_crates_with_version_bumps = dep_crate
+                    .package
+                    .dependencies
+                    .iter()
+                    .map(|dep| {
+                        crates.iter().enumerate().find_map(|(cidx, c)| {
+                            c.mode
+                                .version_adjustment()
+                                .and_then(|a| package_eq_dependency(c.package, dep).then(|| (cidx, c, a.bump())))
+                        })
+                    })
+                    .collect::<Vec<_>>();
             }
-            seen.insert(&publish_crate.package.id);
         }
     }
     crates.extend(find_workspace_crates_depending_on_adjusted_crates(ctx, &crates));
