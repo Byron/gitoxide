@@ -7,17 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-A maintenance release due to reset the entire crate graph to new minor releases.
+<csr-id-c5213d2b701ca71af5f3c987647e2a0c5c4d42dd/>
 
-<csr-id-c5213d2b701ca71af5f3c987647e2a0c5c4d42dd/> 
+A maintenance release due to reset the entire crate graph to new minor releases.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release over the course of 2 calendar days.
+ - 2 commits contributed to the release over the course of 2 calendar days.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
 
 ## v0.7.0 (2021-10-15)
 

@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 A maintenance release to properly dealing with previously breaking changes in `git-hash`.
 
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#222](https://github.com//Byron/gitoxide/issues/222)**
+    - Update changelogs prior to release ([`b3e2252`](https://github.com//Byron/gitoxide/commit/b3e2252f7461a003d9a4612da60ba931dd8c0bef))
+</details>
+
 ## v0.22.0 (2021-10-15)
 
 ### Dependency Upgrade (BREAKING)

@@ -13,9 +13,9 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release over the course of 2 calendar days.
+ - 2 commits contributed to the release over the course of 2 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#221](https://github.com//Byron/gitoxide/issues/221)
+ - 2 unique issues were worked on: [#221](https://github.com//Byron/gitoxide/issues/221), [#222](https://github.com//Byron/gitoxide/issues/222)
 
 ## v0.10.0 (2021-10-15)
 
