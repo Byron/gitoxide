@@ -5,7 +5,7 @@ use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 use crate::{
     git,
     traverse::dependency::VersionAdjustment,
-    utils::{is_pre_release_version, package_by_id, package_by_name, workspace_package_by_name},
+    utils::{is_pre_release_version, package_by_id, package_by_name, workspace_package_by_dependency},
     version, Context,
 };
 
@@ -37,10 +37,19 @@ pub mod dependency {
         },
         Breakage {
             bump: version::bump::Outcome,
+            /// Set if there is a change at all, which might not be the case for previously skipped crates.
             change: Option<git::PackageChangeKind>,
             /// The direct dependency causing the breakage because it's breaking itself
             direct_dependency: &'meta Package,
         },
+    }
+
+    impl<'meta> VersionAdjustment<'meta> {
+        pub fn bump(&self) -> &version::bump::Outcome {
+            match self {
+                VersionAdjustment::Breakage { bump, .. } | VersionAdjustment::Changed { bump, .. } => bump,
+            }
+        }
     }
 
     #[derive(Clone, Debug)]
@@ -58,15 +67,18 @@ pub mod dependency {
     }
 
     impl<'meta> Mode<'meta> {
+        pub fn version_adjustment(&self) -> Option<&VersionAdjustment<'meta>> {
+            match self {
+                Mode::ToBePublished { adjustment }
+                | Mode::Skipped {
+                    adjustment: Some(adjustment),
+                    ..
+                } => Some(adjustment),
+                _ => None,
+            }
+        }
         pub fn has_version_adjustment(&self) -> bool {
-            matches!(
-                self,
-                Mode::ToBePublished { .. }
-                    | Mode::Skipped {
-                        adjustment: Some(_),
-                        ..
-                    }
-            )
+            self.version_adjustment().is_some()
         }
     }
 }
@@ -143,31 +155,20 @@ pub fn dependencies(
         //       and propagate such breaking change, either lifting skipped crates to those with adjustment,
         //       or by adding new crates.
         //       If about to be published crates can reach these newly added crates, they must be made publishable too
+        let mut seen = BTreeSet::default();
+        // skipped don't have version bumps, we don't have manifest updates yet
+        for publish_crate in crates
+            .iter()
+            .filter(|c| matches!(c.mode, dependency::Mode::ToBePublished { .. }))
+        {
+            if seen.contains(&&publish_crate.package.id) {
+                continue;
+            }
+            seen.insert(&publish_crate.package.id);
+        }
     }
     crates.extend(find_workspace_crates_depending_on_adjusted_crates(ctx, &crates));
     Ok(crates)
-}
-
-fn find_workspace_crates_depending_on_adjusted_crates<'meta>(
-    ctx: &'meta Context,
-    crates: &[Dependency<'_>],
-) -> Vec<Dependency<'meta>> {
-    ctx.meta
-        .workspace_members
-        .iter()
-        .map(|id| package_by_id(&ctx.meta, id))
-        .filter(|wsp| crates.iter().all(|c| c.package.id != wsp.id))
-        .filter(|wsp| {
-            wsp.dependencies
-                .iter()
-                .any(|d| crates.iter().any(|c| c.package.name == d.name))
-        })
-        .map(|wsp| Dependency {
-            kind: dependency::Kind::DependencyOrDependentOfUserSelection,
-            package: wsp,
-            mode: dependency::Mode::ManifestNeedsUpdate,
-        })
-        .collect()
 }
 
 fn depth_first_traversal<'meta>(
@@ -180,7 +181,7 @@ fn depth_first_traversal<'meta>(
 ) -> anyhow::Result<Vec<Dependency<'meta>>> {
     let mut skipped = Vec::new();
     for dependency in root.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
-        let workspace_dependency = match workspace_package_by_name(&ctx.meta, &dependency.name) {
+        let workspace_dependency = match workspace_package_by_dependency(&ctx.meta, dependency) {
             Some(p) => p,
             None => continue,
         };
@@ -250,8 +251,30 @@ fn dependency_tree_has_link_to_existing_crate_names(
             package
                 .dependencies
                 .iter()
-                .filter_map(|dep| workspace_package_by_name(meta, &dep.name)),
+                .filter_map(|dep| workspace_package_by_dependency(meta, dep)),
         )
     }
     Ok(false)
+}
+
+fn find_workspace_crates_depending_on_adjusted_crates<'meta>(
+    ctx: &'meta Context,
+    crates: &[Dependency<'_>],
+) -> Vec<Dependency<'meta>> {
+    ctx.meta
+        .workspace_members
+        .iter()
+        .map(|id| package_by_id(&ctx.meta, id))
+        .filter(|wsp| crates.iter().all(|c| c.package.id != wsp.id))
+        .filter(|wsp| {
+            wsp.dependencies
+                .iter()
+                .any(|d| crates.iter().any(|c| c.package.name == d.name))
+        })
+        .map(|wsp| Dependency {
+            kind: dependency::Kind::DependencyOrDependentOfUserSelection,
+            package: wsp,
+            mode: dependency::Mode::ManifestNeedsUpdate,
+        })
+        .collect()
 }

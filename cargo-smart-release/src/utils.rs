@@ -49,10 +49,10 @@ pub fn package_eq_dependency(package: &Package, dependency: &Dependency) -> bool
     package.name == dependency.name
 }
 
-pub fn workspace_package_by_name<'a>(meta: &'a Metadata, crate_name: &str) -> Option<&'a Package> {
+pub fn workspace_package_by_dependency<'a>(meta: &'a Metadata, dep: &Dependency) -> Option<&'a Package> {
     meta.packages
         .iter()
-        .find(|p| p.name == crate_name)
+        .find(|p| p.name == dep.name)
         .filter(|p| meta.workspace_members.iter().any(|m| m == &p.id))
 }
 
