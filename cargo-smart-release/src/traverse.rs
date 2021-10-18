@@ -154,72 +154,77 @@ pub fn dependencies(
 
     if isolate_dependencies_from_breaking_changes {
         forward_propagate_breaking_changes_for_publishing(ctx, &mut crates)?;
-
-        // TODO: forward traversal from low-level crates upward if (similarly to what's done already in manifest) to find
-        //       crates that need a version adjustment, without publishing, to be added to the list
-        let mut non_publishing_crates_with_safety_bumps = Vec::new();
-        let mut backing = crates
-            .iter()
-            .filter(
-                |c| matches!(&c.mode, dependency::Mode::ToBePublished { adjustment } if adjustment.bump().is_breaking()),
-            )
-            .map(ToOwned::to_owned)
-            .collect::<Vec<_>>();
-        let workspace_packages: Vec<_> = ctx
-            .meta
-            .workspace_members
-            .iter()
-            .map(|wmid| package_by_id(&ctx.meta, wmid))
-            .filter(|p| p.publish.is_none()) // will publish, non-publishing ones need no safety bumps
-            .collect();
-        let mut set_to_expand_from = &backing;
-        let mut seen = BTreeSet::default();
-        loop {
-            let mut new_crates_this_round = Vec::<Dependency<'_>>::new();
-            for dependee in set_to_expand_from {
-                for dependant in workspace_packages.iter().filter(|p| {
-                    p.dependencies
-                        .iter()
-                        .any(|dep| package_eq_dependency(dependee.package, dep))
-                }) {
-                    if seen.contains(&&dependant.id) {
-                        continue;
-                    }
-                    seen.insert(&dependant.id);
-                    debug_assert!(
-                        !crates.iter().any(|c| c.package.id == dependant.id),
-                        "BUG: Found a crate for '{}' that shouldn't be in our set yet",
-                        dependant.name
-                    );
-                    let bump = breaking_version_bump(ctx, dependant)?;
-                    if bump.next_release_changes_manifest() {
-                        new_crates_this_round.push(Dependency {
-                            package: dependant,
-                            kind: dependency::Kind::DependencyOrDependentOfUserSelection,
-                            mode: dependency::Mode::Skipped {
-                                reason: dependency::SkippedReason::Unchanged,
-                                adjustment: Some(dependency::VersionAdjustment::Breakage {
-                                    bump,
-                                    change: None,
-                                    causing_dependency_names: vec![dependee.package.name.to_owned()],
-                                }),
-                            },
-                        });
-                    }
-                }
-            }
-
-            if new_crates_this_round.is_empty() {
-                break;
-            }
-            non_publishing_crates_with_safety_bumps.extend(new_crates_this_round.iter().cloned());
-            backing = new_crates_this_round;
-            set_to_expand_from = &backing;
-        }
-        crates.extend(non_publishing_crates_with_safety_bumps);
+        forward_propagate_breaking_changes_for_manifest_updates(&ctx, &mut crates)?;
     }
     crates.extend(find_workspace_crates_depending_on_adjusted_crates(ctx, &crates));
     Ok(crates)
+}
+
+fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
+    ctx: &'meta Context,
+    crates: &mut Vec<Dependency<'meta>>,
+) -> anyhow::Result<()> {
+    let mut non_publishing_crates_with_safety_bumps = Vec::new();
+    let mut backing = crates
+        .iter()
+        .filter(
+            |c| matches!(&c.mode, dependency::Mode::ToBePublished { adjustment } if adjustment.bump().is_breaking()),
+        )
+        .map(ToOwned::to_owned)
+        .collect::<Vec<_>>();
+    let workspace_packages: Vec<_> = ctx
+        .meta
+        .workspace_members
+        .iter()
+        .map(|wmid| package_by_id(&ctx.meta, wmid))
+        .filter(|p| p.publish.is_none()) // will publish, non-publishing ones need no safety bumps
+        .collect();
+    let mut set_to_expand_from = &backing;
+    let mut seen = BTreeSet::default();
+    loop {
+        let mut new_crates_this_round = Vec::<Dependency<'_>>::new();
+        for dependee in set_to_expand_from {
+            for dependant in workspace_packages.iter().filter(|p| {
+                p.dependencies
+                    .iter()
+                    .any(|dep| package_eq_dependency(dependee.package, dep))
+            }) {
+                if seen.contains(&&dependant.id) {
+                    continue;
+                }
+                seen.insert(&dependant.id);
+                debug_assert!(
+                    !crates.iter().any(|c| c.package.id == dependant.id),
+                    "BUG: Found a crate for '{}' that shouldn't be in our set yet",
+                    dependant.name
+                );
+                let bump = breaking_version_bump(ctx, dependant)?;
+                if bump.next_release_changes_manifest() {
+                    new_crates_this_round.push(Dependency {
+                        package: dependant,
+                        kind: dependency::Kind::DependencyOrDependentOfUserSelection,
+                        mode: dependency::Mode::Skipped {
+                            reason: dependency::SkippedReason::Unchanged,
+                            adjustment: Some(dependency::VersionAdjustment::Breakage {
+                                bump,
+                                change: None,
+                                causing_dependency_names: vec![dependee.package.name.to_owned()],
+                            }),
+                        },
+                    });
+                }
+            }
+        }
+
+        if new_crates_this_round.is_empty() {
+            break;
+        }
+        non_publishing_crates_with_safety_bumps.extend(new_crates_this_round.iter().cloned());
+        backing = new_crates_this_round;
+        set_to_expand_from = &backing;
+    }
+    crates.extend(non_publishing_crates_with_safety_bumps);
+    Ok(())
 }
 
 fn forward_propagate_breaking_changes_for_publishing(
