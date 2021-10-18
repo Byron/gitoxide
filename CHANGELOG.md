@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+This release pins beta versions of `clap` to avoid it to automatically fetch the latest one
+during installation.
+
+This is made possible due to `clap` itself pinning its dependency
+to the `clap-derive` crate.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#222](https://github.com//Byron/gitoxide/issues/222)**
+    - upgrade to clap 3 beta 5 ([`2ddc4ed`](https://github.com//Byron/gitoxide/commit/2ddc4eddda23c77b5891a11a3e7215702c63882b))
+</details>
+
 ## v0.9.0 (2021-10-15)
 
 A first usable version of `git-repository` to make using `gitoxide` from your applications so much easier. It serves as a one-stop shop for application developers without sacrificing performance by default while making common use-cases more convenient.

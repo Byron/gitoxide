@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release due to properly dealing with previously breaking changes in `git-hash`.
+
 ## v0.5.0 (2021-10-15)
 
 This is a maintenance release without functional changes.
@@ -13,7 +17,7 @@ This is a maintenance release without functional changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 1 calendar day.
+ - 4 commits contributed to the release over the course of 1 calendar day.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#198](https://github.com//Byron/gitoxide/issues/198)
 
@@ -27,6 +31,7 @@ This is a maintenance release without functional changes.
     - Maintenance release note to avoid being fully generated ([`56ef363`](https://github.com//Byron/gitoxide/commit/56ef363f0e7a8b9106765d96d0636e38b2bed550))
     - changelog for git-commitgraph ([`d981f1f`](https://github.com//Byron/gitoxide/commit/d981f1f18ecbc943202702ab25a31a371a4b294d))
  * **Uncategorized**
+    - Release git-commitgraph v0.5.0, gitoxide-core v0.11.0, gitoxide v0.9.0 ([`960eb0e`](https://github.com//Byron/gitoxide/commit/960eb0e5e5a7df117ed2ae2a8e2ec167b074c332))
     - Adjusting changelogs prior to release of git-hash v0.7.0, git-features v0.16.5, git-actor v0.5.3, git-validate v0.5.3, git-object v0.14.1, git-diff v0.10.0, git-tempfile v1.0.3, git-lock v1.0.1, git-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, git-packetline v0.11.0, git-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, git-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0, safety bump 3 crates ([`a474395`](https://github.com//Byron/gitoxide/commit/a47439590e36b1cb8b516b6053fd5cbfc42efed7))
 </details>
 

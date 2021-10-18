@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release to properly dealing with previously breaking changes in `git-hash`.
+
 ## v0.11.0 (2021-10-15)
 
 <csr-id-ac3b9efb7b90958274ce55800959d930f8641115/>
@@ -23,7 +27,7 @@ This is a maintenance release signalling breaking changes because some of the cr
 
 <csr-read-only-do-not-edit/>
 
- - 24 commits contributed to the release over the course of 34 calendar days.
+ - 25 commits contributed to the release over the course of 34 calendar days.
  - 12 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 5 unique issues were worked on: [#164](https://github.com//Byron/gitoxide/issues/164), [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200), [#205](https://github.com//Byron/gitoxide/issues/205), [#67](https://github.com//Byron/gitoxide/issues/67)
 
@@ -56,6 +60,7 @@ This is a maintenance release signalling breaking changes because some of the cr
     - try to create persistent Easy iterator, but can't make it Send… ([`54a64a5`](https://github.com//Byron/gitoxide/commit/54a64a588ff72515451a3d0343306ac4abe1cb35))
     - Add '--thin' flag to pack-create and pass it on ([`2664d73`](https://github.com//Byron/gitoxide/commit/2664d73f531a4b1f4bc784c1fe3a991711c86475))
  * **Uncategorized**
+    - Release git-commitgraph v0.5.0, gitoxide-core v0.11.0, gitoxide v0.9.0 ([`960eb0e`](https://github.com//Byron/gitoxide/commit/960eb0e5e5a7df117ed2ae2a8e2ec167b074c332))
     - Adjusting changelogs prior to release of git-hash v0.7.0, git-features v0.16.5, git-actor v0.5.3, git-validate v0.5.3, git-object v0.14.1, git-diff v0.10.0, git-tempfile v1.0.3, git-lock v1.0.1, git-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, git-packetline v0.11.0, git-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, git-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0, safety bump 3 crates ([`a474395`](https://github.com//Byron/gitoxide/commit/a47439590e36b1cb8b516b6053fd5cbfc42efed7))
     - make fmt, but now it picked up some parts that usually don't get altered… ([`01f7b72`](https://github.com//Byron/gitoxide/commit/01f7b729337bd2c99498321c479a9a13b1858e3e))
     - fix immediate dereference warning ([`0456312`](https://github.com//Byron/gitoxide/commit/0456312dddbd9ffd01e29c6705bb794cb1abb414))
