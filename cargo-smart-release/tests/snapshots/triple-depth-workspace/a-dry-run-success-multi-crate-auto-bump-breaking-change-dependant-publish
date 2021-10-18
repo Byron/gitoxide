@@ -1,7 +1,7 @@
 [WARN ] Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already
-[INFO ] WOULD auto-bump dependent package 'a' from 0.8.0 to 0.9.0
-[INFO ] WOULD auto-bump dependent package 'b' from 0.8.0 to 0.8.1
-[INFO ] WOULD auto-bump provided package 'c' from 8.0.0 to 8.0.1
+[INFO ] WOULD auto-bump dependent package 'a' from 0.8.0 to 0.9.0 for publishing
+[INFO ] Manifest version of dependent package 'b' at 0.8.0 is sufficient, creating a new release 🎉, ignoring computed version 0.8.1
+[INFO ] Manifest version of provided package 'c' at 8.0.0 is sufficient, creating a new release 🎉, ignoring computed version 8.0.1
 [INFO ] Auto-bumped 'a' minor version to 0.9.0 from 0.8.0 to signal breaking changes.
 [INFO ] Congratulations for the new release of 'a' 🎉
 [INFO ] Auto-bumped 'b' patch version to 0.8.1 from 0.8.0.

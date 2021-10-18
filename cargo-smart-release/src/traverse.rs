@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 
 use crate::utils::package_eq_dependency;
+use crate::version::BumpSpec;
 use crate::{
     git,
     traverse::dependency::VersionAdjustment,
@@ -11,8 +12,6 @@ use crate::{
 };
 
 pub mod dependency {
-    use cargo_metadata::Package;
-
     use crate::{git, version};
 
     /// Skipped crates are always dependent ones
@@ -31,7 +30,7 @@ pub mod dependency {
     }
 
     #[derive(Clone, Debug)]
-    pub enum VersionAdjustment<'meta> {
+    pub enum VersionAdjustment {
         Changed {
             change: git::PackageChangeKind,
             bump: version::Bump,
@@ -41,11 +40,11 @@ pub mod dependency {
             /// Set if there is a change at all, which might not be the case for previously skipped crates.
             change: Option<git::PackageChangeKind>,
             /// The direct dependency causing the breakage because it's breaking itself
-            causing_dependency: &'meta Package,
+            causing_dependency_name: String,
         },
     }
 
-    impl<'meta> VersionAdjustment<'meta> {
+    impl VersionAdjustment {
         pub fn bump(&self) -> &version::Bump {
             match self {
                 VersionAdjustment::Breakage { bump, .. } | VersionAdjustment::Changed { bump, .. } => bump,
@@ -54,20 +53,20 @@ pub mod dependency {
     }
 
     #[derive(Clone, Debug)]
-    pub enum Mode<'meta> {
+    pub enum Mode {
         ToBePublished {
-            adjustment: VersionAdjustment<'meta>,
+            adjustment: VersionAdjustment,
         },
         /// Won't be published but manifest might have to be fixed if a version bump is present.
         Skipped {
             reason: SkippedReason,
-            adjustment: Option<VersionAdjustment<'meta>>,
+            adjustment: Option<VersionAdjustment>,
         },
         /// One of our dependencies will see a version adjustment, which we must update in our manifest
         ManifestNeedsUpdate,
     }
 
-    impl<'meta> Mode<'meta> {
+    impl Mode {
         pub fn version_adjustment_bump(&self) -> Option<&version::Bump> {
             match self {
                 Mode::ToBePublished { adjustment }
@@ -90,7 +89,7 @@ pub mod dependency {
 pub struct Dependency<'meta> {
     pub package: &'meta Package,
     pub kind: dependency::Kind,
-    pub mode: dependency::Mode<'meta>,
+    pub mode: dependency::Mode,
 }
 
 pub fn dependencies(
@@ -174,8 +173,8 @@ pub fn dependencies(
             );
             seen.insert(idx);
         }
-        for _edit in edits {
-            todo!("apply edit");
+        for edit_for_publish in edits {
+            edit_for_publish.apply(&mut crates, ctx)?;
         }
 
         // TODO: forward traversal from low-level crates upward if (similarly to what's done already in manifest) to find
@@ -185,28 +184,77 @@ pub fn dependencies(
     Ok(crates)
 }
 
-struct EditForPublish<'a, 'meta> {
+struct EditForPublish {
     crates_idx: usize,
-    dependency: &'a Dependency<'meta>,
-    causing_dependency: &'meta Package,
+    causing_dependency_idx: usize,
 }
 
-impl<'a, 'meta> EditForPublish<'a, 'meta> {
-    fn from(idx: usize, dependency: &'a Dependency<'meta>, causing_dependency: &'meta Package) -> Self {
+impl EditForPublish {
+    fn from(idx: usize, causing_dependency_idx: usize) -> Self {
         EditForPublish {
             crates_idx: idx,
-            dependency,
-            causing_dependency,
+            causing_dependency_idx,
+        }
+    }
+
+    fn apply(self, crates: &mut [Dependency<'_>], ctx: &Context) -> anyhow::Result<()> {
+        let causing_dependency_name = crates[self.causing_dependency_idx].package.name.clone();
+        let dep_mut = &mut crates[self.crates_idx];
+        let breaking_bump = {
+            let breaking_spec = is_pre_release_version(&dep_mut.package.version)
+                .then(|| BumpSpec::Minor)
+                .unwrap_or(BumpSpec::Major);
+            version::bump_package_with_spec(dep_mut.package, breaking_spec, ctx, true)?
+        };
+        match &mut dep_mut.mode {
+            dependency::Mode::Skipped {
+                adjustment: maybe_adjustment,
+                ..
+            } => {
+                let adjustment = match maybe_adjustment.take() {
+                    Some(mut adjustment) => {
+                        make_breaking(&mut adjustment, breaking_bump, causing_dependency_name);
+                        adjustment
+                    }
+                    None => dependency::VersionAdjustment::Breakage {
+                        bump: breaking_bump,
+                        causing_dependency_name,
+                        change: None,
+                    },
+                };
+                dep_mut.mode = dependency::Mode::ToBePublished { adjustment };
+            }
+            dependency::Mode::ToBePublished { adjustment, .. } => {
+                make_breaking(adjustment, breaking_bump, causing_dependency_name);
+            }
+            dependency::Mode::ManifestNeedsUpdate => unreachable!("BUG: these shouldn't exist at this point"),
+        }
+        Ok(())
+    }
+}
+
+fn make_breaking(adjustment: &mut VersionAdjustment, breaking_bump: version::Bump, breaking_crate_name: String) {
+    match adjustment {
+        VersionAdjustment::Breakage { .. } => {
+            unreachable!("BUG: should never try to adjust a package for breaking changes twice")
+        }
+        VersionAdjustment::Changed { change, bump } => {
+            bump.next_release = breaking_bump.next_release;
+            *adjustment = VersionAdjustment::Breakage {
+                bump: bump.clone(),
+                change: Some(change.clone()),
+                causing_dependency_name: breaking_crate_name,
+            }
         }
     }
 }
 
-fn find_safety_bump_edits_backwards_from_crates_for_publish<'a, 'meta>(
-    crates: &'a [Dependency<'meta>],
-    start: (usize, &'a Dependency<'meta>),
+fn find_safety_bump_edits_backwards_from_crates_for_publish(
+    crates: &[Dependency<'_>],
+    start: (usize, &Dependency<'_>),
     seen: &mut BTreeSet<usize>,
-    edits: &mut Vec<EditForPublish<'a, 'meta>>,
-) -> Option<&'meta Package> {
+    edits: &mut Vec<EditForPublish>,
+) -> Option<usize> {
     let (current_idx, current) = start;
     for (dep_idx, dep) in current.package.dependencies.iter().filter_map(|dep| {
         crates
@@ -221,15 +269,15 @@ fn find_safety_bump_edits_backwards_from_crates_for_publish<'a, 'meta>(
 
         match dep.mode.version_adjustment_bump() {
             Some(dep_bump) if dep_bump.is_breaking() => {
-                edits.push(EditForPublish::from(current_idx, current, dep.package));
-                return Some(dep.package);
+                edits.push(EditForPublish::from(current_idx, dep_idx));
+                return Some(dep_idx);
             }
             _ => {
                 let root_cause_of_breakage =
                     find_safety_bump_edits_backwards_from_crates_for_publish(crates, (dep_idx, dep), seen, edits);
-                if let Some(breaking_package) = root_cause_of_breakage {
-                    edits.push(EditForPublish::from(current_idx, current, breaking_package));
-                    return breaking_package.into();
+                if let Some(breaking_package_idx) = root_cause_of_breakage {
+                    edits.push(EditForPublish::from(current_idx, breaking_package_idx));
+                    return breaking_package_idx.into();
                 }
             }
         }

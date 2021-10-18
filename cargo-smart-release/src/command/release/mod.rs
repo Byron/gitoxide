@@ -154,7 +154,7 @@ fn present_dependencies(
                 let (bump, breaking_dependency) = match adjustment {
                     VersionAdjustment::Breakage {
                         bump,
-                        causing_dependency: direct_dependency,
+                        causing_dependency_name: direct_dependency,
                         ..
                     } => (bump, Some(direct_dependency)),
                     VersionAdjustment::Changed { bump, .. } => (bump, None),
@@ -163,7 +163,7 @@ fn present_dependencies(
                     Ok(next_release) => {
                         if next_release > &dep.package.version {
                             log::info!(
-                                "{} {}-bump {} package '{}' from {} to {}{}{}{}",
+                                "{} {}-bump {} package '{}' from {} to {} for publishing{}{}{}",
                                 will(dry_run),
                                 bump_spec,
                                 kind,
@@ -181,7 +181,7 @@ fn present_dependencies(
                                     .then(|| format!(", ignoring computed version {}", bump.desired_release))
                                     .unwrap_or_default(),
                                 breaking_dependency
-                                    .map(|cause| format!(", for SAFETY due to breaking package '{}'", cause.name))
+                                    .map(|cause| format!(", for SAFETY due to breaking package '{}'", cause))
                                     .unwrap_or_default()
                             );
                         } else {
@@ -213,7 +213,7 @@ fn present_dependencies(
                 adjustment:
                     Some(VersionAdjustment::Breakage {
                         bump,
-                        causing_dependency: direct_dependency,
+                        causing_dependency_name: direct_dependency,
                         ..
                     }),
                 ..
@@ -225,7 +225,7 @@ fn present_dependencies(
                     bump.next_release
                         .as_ref()
                         .expect("next version always set for safety bumps"),
-                    direct_dependency.name
+                    direct_dependency
                 );
             }
             dependency::Mode::ManifestNeedsUpdate | dependency::Mode::Skipped { .. } => {}

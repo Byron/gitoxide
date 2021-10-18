@@ -84,9 +84,13 @@ impl Bump {
     }
 }
 
-pub(crate) fn bump_package(package: &Package, ctx: &Context, bump_when_needed: bool) -> anyhow::Result<Bump> {
+pub(crate) fn bump_package_with_spec(
+    package: &Package,
+    bump_spec: BumpSpec,
+    ctx: &Context,
+    bump_when_needed: bool,
+) -> anyhow::Result<Bump> {
     let mut v = package.version.clone();
-    let bump_spec = select_publishee_bump_spec(&package.name, ctx);
     use BumpSpec::*;
     let package_version_must_be_breaking = match bump_spec {
         Major | Minor | Patch => bump_major_minor_patch(&mut v, bump_spec),
@@ -173,6 +177,11 @@ pub(crate) fn bump_package(package: &Package, ctx: &Context, bump_when_needed: b
         desired_release,
         latest_release,
     })
+}
+
+pub(crate) fn bump_package(package: &Package, ctx: &Context, bump_when_needed: bool) -> anyhow::Result<Bump> {
+    let bump_spec = select_publishee_bump_spec(&package.name, ctx);
+    bump_package_with_spec(package, bump_spec, ctx, bump_when_needed)
 }
 
 pub(crate) fn bump(
