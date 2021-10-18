@@ -1,8 +1,7 @@
-use clap::{AppSettings, Clap};
+use clap::AppSettings;
 
-#[derive(Clap)]
+#[derive(clap::Parser)]
 #[clap(setting = AppSettings::SubcommandRequired)]
-#[clap(setting = AppSettings::ColoredHelp)]
 #[clap(setting = AppSettings::DisableHelpSubcommand)]
 #[clap(setting = AppSettings::DisableVersionFlag)]
 #[clap(bin_name = "cargo")]
@@ -14,9 +13,8 @@ pub struct Args {
     pub subcommands: SubCommands,
 }
 
-#[derive(Clap)]
+#[derive(clap::Parser)]
 pub enum SubCommands {
-    #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(name = "smart-release", version = clap::crate_version!())]
     /// Release workspace crates fearlessly.
     ///
@@ -162,7 +160,6 @@ pub enum SubCommands {
         #[clap(long, help_heading = Some("EXPERT"))]
         ignore_instability: bool,
     },
-    #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(name = "changelog", version = clap::crate_version!())]
     /// Generate changelogs from commit histories, non-destructively.
     ///

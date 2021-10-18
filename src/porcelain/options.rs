@@ -1,11 +1,10 @@
 use std::{ffi::OsString, path::PathBuf};
 
-use clap::{AppSettings, Clap};
+use clap::AppSettings;
 
-#[derive(Debug, Clap)]
+#[derive(Debug, clap::Parser)]
 #[clap(about = "The rusty git", version = clap::crate_version!())]
 #[clap(setting = AppSettings::SubcommandRequired)]
-#[clap(setting = AppSettings::ColoredHelp)]
 pub struct Args {
     /// Do not display verbose messages and progress information
     #[clap(long, short = 'q')]
@@ -25,11 +24,11 @@ pub struct Args {
     pub cmd: Subcommands,
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, clap::Parser)]
 pub enum Subcommands {
     /// Initialize the repository in the current directory.
     #[clap(visible_alias = "initialize")]
-    #[clap(setting = AppSettings::ColoredHelp, setting = AppSettings::DisableVersionFlag)]
+    #[clap(setting = AppSettings::DisableVersionFlag)]
     Init {
         /// The directory in which to initialize a new git repository.
         ///
@@ -43,12 +42,12 @@ pub enum Subcommands {
     Panic,
 }
 
-#[derive(Debug, Clap)]
-#[clap(setting = AppSettings::ColoredHelp, setting = AppSettings::DisableVersionFlag, setting = AppSettings::SubcommandRequired)]
+#[derive(Debug, clap::Parser)]
+#[clap(setting = AppSettings::DisableVersionFlag, setting = AppSettings::SubcommandRequired)]
 #[clap(visible_alias = "t")]
 pub enum ToolCommands {
     /// Find all repositories in a given directory.
-    #[clap(setting = AppSettings::ColoredHelp, setting = AppSettings::DisableVersionFlag)]
+    #[clap(setting = AppSettings::DisableVersionFlag)]
     Find {
         /// The directory in which to find all git repositories.
         ///
@@ -56,7 +55,7 @@ pub enum ToolCommands {
         root: Option<PathBuf>,
     },
     /// Move all repositories found in a directory into a structure matching their clone URLs.
-    #[clap(setting = AppSettings::ColoredHelp, setting = AppSettings::DisableVersionFlag)]
+    #[clap(setting = AppSettings::DisableVersionFlag)]
     Organize {
         #[clap(long)]
         /// The operation will be in dry-run mode unless this flag is set.
@@ -77,14 +76,13 @@ pub enum ToolCommands {
     EstimateHours(EstimateHours),
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, clap::Parser)]
 #[clap(
     about = "Estimate hours worked based on a commit history", 
     long_about = "See https://github.com/kimmobrunfeldt/git-hours#how-it-works for details",
     version = clap::crate_version!(),
     visible_alias = "h")
 ]
-#[clap(setting = clap::AppSettings::ColoredHelp)]
 pub struct EstimateHours {
     /// The directory containing a '.git/' folder.
     #[clap(parse(from_os_str))]

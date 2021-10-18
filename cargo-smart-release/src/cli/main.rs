@@ -1,5 +1,5 @@
 mod options;
-use clap::Clap;
+use clap::Parser;
 use options::{Args, SubCommands};
 
 use cargo_smart_release::command;

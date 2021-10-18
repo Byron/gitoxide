@@ -1,12 +1,11 @@
 use std::{ffi::OsString, path::PathBuf};
 
-use clap::{AppSettings, Clap};
+use clap::AppSettings;
 use gitoxide_core as core;
 
-#[derive(Debug, Clap)]
+#[derive(Debug, clap::Parser)]
 #[clap(name = "gix-plumbing", about = "The git underworld", version = clap::crate_version!())]
 #[clap(setting = AppSettings::SubcommandRequired)]
-#[clap(setting = AppSettings::ColoredHelp)]
 pub struct Args {
     #[clap(long, short = 't')]
     /// The amount of threads to use for some operations.
@@ -41,9 +40,8 @@ pub struct Args {
     pub cmd: Subcommands,
 }
 
-#[derive(Debug, Clap)]
+#[derive(Debug, clap::Parser)]
 pub enum Subcommands {
-    #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersionFlag)]
     PackCreate {
         #[clap(long, short = 'r')]
@@ -103,7 +101,6 @@ pub enum Subcommands {
         /// Otherwise the expansion mode is 'tree-traversal' by default.
         tips: Vec<OsString>,
     },
-    #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersionFlag)]
     #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     PackReceive {
@@ -137,7 +134,6 @@ pub enum Subcommands {
     ///
     /// This is the plumbing equivalent of `git ls-remote`.
     /// Supported URLs are documented here: <https://www.git-scm.com/docs/git-clone#_git_urls>
-    #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersionFlag)]
     #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     RemoteRefList {
@@ -150,7 +146,6 @@ pub enum Subcommands {
         /// See here for a list of supported URLs: <https://www.git-scm.com/docs/git-clone#_git_urls>
         url: String,
     },
-    #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersionFlag)]
     PackIndexFromData {
         /// Specify how to iterate the pack, defaults to 'verify'
@@ -181,7 +176,6 @@ pub enum Subcommands {
         directory: Option<PathBuf>,
     },
     /// Verify the integrity of a pack or index file
-    #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersionFlag)]
     PackExplode {
         #[clap(long)]
@@ -220,7 +214,6 @@ pub enum Subcommands {
         object_path: Option<PathBuf>,
     },
     /// Verify the integrity of a pack or index file
-    #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersionFlag)]
     PackVerify {
         /// output statistical information about the pack
@@ -256,7 +249,6 @@ pub enum Subcommands {
         path: PathBuf,
     },
     /// Verify the integrity of a commit graph
-    #[clap(setting = AppSettings::ColoredHelp)]
     #[clap(setting = AppSettings::DisableVersionFlag)]
     CommitGraphVerify {
         /// The path to '.git/objects/info/', '.git/objects/info/commit-graphs/', or '.git/objects/info/commit-graph' to validate.

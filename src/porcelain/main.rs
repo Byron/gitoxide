@@ -4,7 +4,7 @@ use std::sync::{
 };
 
 use anyhow::Result;
-use clap::Clap;
+use clap::Parser;
 use git_features::progress::DoOrDiscard;
 use gitoxide_core as core;
 
