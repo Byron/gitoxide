@@ -132,18 +132,20 @@ fn present_dependencies(
     dry_run: bool,
 ) -> anyhow::Result<()> {
     use dependency::Kind;
-    let skipped = deps
-        .iter()
-        .filter_map(|dep| {
-            matches!(&dep.mode, dependency::Mode::NotForPublishing { adjustment: None, .. })
-                .then(|| dep.package.name.as_str())
-        })
-        .collect::<Vec<_>>();
+    let skipped =
+        deps.iter()
+            .filter_map(|dep| {
+                matches!(&dep.mode, dependency::Mode::NotForPublishing { adjustment: None, reason }
+                                    if *reason != dependency::NoPublishReason::ManifestNeedsUpdateDueToDependencyChange
+            ).then(|| dep.package.name.as_str())
+            })
+            .collect::<Vec<_>>();
     if !skipped.is_empty() {
         log::info!(
-            "Skipped {} dependent crate{} as they didn't change since their last release: {}",
+            "Will not publish or alter {} dependent crate{} as {} unchanged since the last release: {}",
             skipped.len(),
             (skipped.len() != 1).then(|| "s").unwrap_or(""),
+            (skipped.len() != 1).then(|| "they are").unwrap_or("it is"),
             skipped.join(", ")
         );
     }

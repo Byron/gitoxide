@@ -1,6 +1,5 @@
 [WARN ] Consider running with --update-crates-index to assure bumping on demand uses the latest information
 [WARN ] Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already
-[INFO ] Skipped 1 dependent crate as they didn't change since their last release: b
 [INFO ] Manifest version of provided package 'a' at 0.8.0 is sufficient, creating a new release 🎉, ignoring computed version 0.8.1
 [INFO ] Manifest of 1 package WOULD be adjusted as its direct dependencies see a version change: b
 [INFO ] Auto-bumped 'a' patch version to 0.8.1 from 0.8.0 to signal new features due to 'feat:' in commit message.

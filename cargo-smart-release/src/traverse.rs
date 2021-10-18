@@ -15,7 +15,7 @@ pub mod dependency {
     use crate::{git, version};
 
     /// Skipped crates are always dependent ones
-    #[derive(Copy, Clone, Debug)]
+    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
     pub enum NoPublishReason {
         Unchanged,
         DeniedAutopublishOfProductionCrate,
