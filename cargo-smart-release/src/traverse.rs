@@ -2,6 +2,7 @@ use std::collections::BTreeSet;
 
 use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 
+use crate::traverse::dependency::ManifestAdjustment;
 use crate::utils::package_eq_dependency;
 use crate::version::{Bump, BumpSpec};
 use crate::{
@@ -15,14 +16,12 @@ pub mod dependency {
     use crate::{git, version};
 
     /// Skipped crates are always dependent ones
-    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    #[derive(Copy, Clone, Debug)]
     pub enum NoPublishReason {
         Unchanged,
         DeniedAutopublishOfProductionCrate,
         PublishDisabledInManifest,
         BreakingChangeCausesManifestUpdate,
-        /// One of our dependencies will see a version adjustment, which we must update in our manifest
-        ManifestNeedsUpdateDueToDependencyChange,
     }
 
     #[derive(Clone, Copy, Debug)]
@@ -56,6 +55,13 @@ pub mod dependency {
         }
     }
 
+    #[allow(clippy::large_enum_variant)]
+    #[derive(Clone, Debug)]
+    pub enum ManifestAdjustment {
+        DueToDependencyChange,
+        Version(VersionAdjustment),
+    }
+
     #[derive(Clone, Debug)]
     pub enum Mode {
         ToBePublished {
@@ -64,7 +70,7 @@ pub mod dependency {
         /// Won't be published but manifest might have to be fixed if a version bump is present.
         NotForPublishing {
             reason: NoPublishReason,
-            adjustment: Option<VersionAdjustment>,
+            adjustment: Option<ManifestAdjustment>,
         },
     }
 
@@ -73,7 +79,7 @@ pub mod dependency {
             match self {
                 Mode::ToBePublished { adjustment }
                 | Mode::NotForPublishing {
-                    adjustment: Some(adjustment),
+                    adjustment: Some(ManifestAdjustment::Version(adjustment)),
                     ..
                 } => Some(match adjustment {
                     VersionAdjustment::Breakage { bump, .. } | VersionAdjustment::Changed { bump, .. } => bump,
@@ -221,11 +227,11 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                         kind: dependency::Kind::DependencyOrDependentOfUserSelection,
                         mode: dependency::Mode::NotForPublishing {
                             reason: dependency::NoPublishReason::BreakingChangeCausesManifestUpdate,
-                            adjustment: Some(dependency::VersionAdjustment::Breakage {
+                            adjustment: Some(ManifestAdjustment::Version(dependency::VersionAdjustment::Breakage {
                                 bump,
                                 change: None,
                                 causing_dependency_names: vec![dependee.package.name.to_owned()],
-                            }),
+                            })),
                         },
                     });
                 }
@@ -301,7 +307,10 @@ impl EditForPublish {
                 ..
             } => {
                 let adjustment = match maybe_adjustment.take() {
-                    Some(mut adjustment) => {
+                    Some(ManifestAdjustment::DueToDependencyChange) => {
+                        unreachable!("BUG: code generating these runs later")
+                    }
+                    Some(ManifestAdjustment::Version(mut adjustment)) => {
                         make_breaking(&mut adjustment, breaking_bump, causing_dependency_names);
                         adjustment
                     }
@@ -494,8 +503,8 @@ fn find_workspace_crates_depending_on_adjusted_crates<'meta>(
             kind: dependency::Kind::DependencyOrDependentOfUserSelection,
             package: wsp,
             mode: dependency::Mode::NotForPublishing {
-                adjustment: None,
-                reason: dependency::NoPublishReason::ManifestNeedsUpdateDueToDependencyChange,
+                adjustment: ManifestAdjustment::DueToDependencyChange.into(),
+                reason: dependency::NoPublishReason::Unchanged,
             },
         })
         .collect()

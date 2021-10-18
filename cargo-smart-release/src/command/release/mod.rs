@@ -1,6 +1,7 @@
 use anyhow::bail;
 use cargo_metadata::{Metadata, Package};
 
+use crate::traverse::dependency::ManifestAdjustment;
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},
@@ -132,14 +133,13 @@ fn present_dependencies(
     dry_run: bool,
 ) -> anyhow::Result<()> {
     use dependency::Kind;
-    let skipped =
-        deps.iter()
-            .filter_map(|dep| {
-                matches!(&dep.mode, dependency::Mode::NotForPublishing { adjustment: None, reason }
-                                    if *reason != dependency::NoPublishReason::ManifestNeedsUpdateDueToDependencyChange
-            ).then(|| dep.package.name.as_str())
-            })
-            .collect::<Vec<_>>();
+    let skipped = deps
+        .iter()
+        .filter_map(|dep| {
+            matches!(&dep.mode, dependency::Mode::NotForPublishing { adjustment: None, .. })
+                .then(|| dep.package.name.as_str())
+        })
+        .collect::<Vec<_>>();
     if !skipped.is_empty() {
         log::info!(
             "Will not publish or alter {} dependent crate{} as {} unchanged since the last release: {}",
@@ -230,11 +230,11 @@ fn present_dependencies(
             .filter_map(|dep| match &dep.mode {
                 dependency::Mode::NotForPublishing {
                     adjustment:
-                        Some(VersionAdjustment::Breakage {
+                        Some(ManifestAdjustment::Version(VersionAdjustment::Breakage {
                             bump,
                             causing_dependency_names,
                             ..
-                        }),
+                        })),
                     ..
                 } => Some((dep, bump, causing_dependency_names)),
                 _ => None,
@@ -282,7 +282,7 @@ fn present_dependencies(
                 matches!(
                     d.mode,
                     dependency::Mode::NotForPublishing {
-                        reason: dependency::NoPublishReason::ManifestNeedsUpdateDueToDependencyChange,
+                        adjustment: Some(ManifestAdjustment::DueToDependencyChange),
                         ..
                     }
                 )
