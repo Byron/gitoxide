@@ -102,6 +102,12 @@ title "smart-release"
                 WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-breaking-change-no-bump-on-demand" \
                 expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --allow-fully-generated-changelogs --no-bump-on-demand
               }
+              (with "--no-auto-publish-of-stable-crates"
+                it "succeeds" && {
+                  WITH_SNAPSHOT="$snapshot/a-dry-run-success-multi-crate-auto-bump-breaking-change-no-bump-on-demand-no-publish-stable" \
+                  expect_run $SUCCESSFULLY "$exe" smart-release a --no-push --no-publish -v --allow-dirty --allow-fully-generated-changelogs --no-bump-on-demand --no-auto-publish-of-stable-crates
+                }
+              )
             )
             (when 'releasing "c" as well with unconditional version bumping'
               it "succeeds" && {

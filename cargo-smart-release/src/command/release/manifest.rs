@@ -1,3 +1,4 @@
+use std::collections::btree_map::Entry;
 use std::{borrow::Cow, collections::BTreeMap, io::Write, str::FromStr};
 
 use anyhow::bail;
@@ -159,23 +160,25 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         .filter(|c| c.mode.manifest_will_change())
         .map(|c| (c.package, c.mode.version_adjustment_bump().map(|b| b.next_release())))
     {
-        let mut lock = git_repository::lock::File::acquire_to_update_resource(
-            &package.manifest_path,
-            git_repository::lock::acquire::Fail::Immediately,
-            None,
-        )?;
+        let mut entry_store;
+        let lock = match locks_by_manifest_path.entry(&package.manifest_path) {
+            Entry::Occupied(entry) => {
+                entry_store = entry;
+                entry_store.get_mut()
+            }
+            Entry::Vacant(entry) => entry.insert(git_repository::lock::File::acquire_to_update_resource(
+                &package.manifest_path,
+                git_repository::lock::acquire::Fail::Immediately,
+                None,
+            )?),
+        };
         made_change |= set_version_and_update_package_dependency(
             package,
             possibly_new_version,
             &crates_with_version_change,
-            &mut lock,
+            lock,
             opts,
         )?;
-        let inserted = locks_by_manifest_path.insert(&package.manifest_path, lock);
-        assert!(
-            inserted.is_none(),
-            "BUG: impossible to create a lock for the same resource twice"
-        );
     }
 
     let would_stop_release = !(changelog_ids_with_statistical_segments_only.is_empty()

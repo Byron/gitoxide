@@ -3,15 +3,6 @@
 [INFO ] Manifest version of dependent package 'a' at 0.8.0 is sufficient, creating a new release 🎉, ignoring computed version 0.8.1
 [INFO ] Manifest version of dependent package 'b' at 0.8.0 is sufficient, creating a new release 🎉, ignoring computed version 0.8.1
 [INFO ] Manifest version of provided package 'c' at 8.0.0 is sufficient, creating a new release 🎉, ignoring computed version 8.0.1
-[INFO ] Auto-bumped 'a' patch version to 0.8.1 from 0.8.0.
-[INFO ] Using current version 0.8.0 of crate a instead of bumped one 0.8.1.
-[INFO ] Congratulations for the new release of 'a' 🎉
-[INFO ] Auto-bumped 'b' patch version to 0.8.1 from 0.8.0.
-[INFO ] Using current version 0.8.0 of crate b instead of bumped one 0.8.1.
-[INFO ] Congratulations for the new release of 'b' 🎉
-[INFO ] Auto-bumped 'c' patch version to 8.0.1 from 8.0.0.
-[INFO ] Using current version 8.0.0 of crate c instead of bumped one 8.0.1.
-[INFO ] Congratulations for the new release of 'c' 🎉
 [INFO ] WOULD modify existing changelog for 'a'.
 [INFO ] WOULD modify existing changelog for 'b'.
 [INFO ] WOULD create a new changelog for 'c'.
@@ -22,7 +13,6 @@
 [WARN ] To fix the changelog manually, run: cargo changelog --write b
 [WARN ] To fix the changelog manually, run: cargo changelog --write c
 [TRACE] WOULD run "git" "commit" "-am" "Adjusting changelogs prior to release of a v0.8.0, b v0.8.0, c v8.0.0"
-[INFO ] WOULD prepare releases of a v0.8.0, b v0.8.0, c v8.0.0
 [TRACE] WOULD create tag object a-v0.8.0 with changelog message, first line is: '### Commit Statistics'
 [TRACE] WOULD create tag object b-v0.8.0 with changelog message, first line is: '### Commit Statistics'
 [TRACE] WOULD create tag object c-v8.0.0 with changelog message, first line is: '### Commit Statistics'

@@ -125,7 +125,7 @@ pub struct Dependency<'meta> {
 
 pub fn dependencies(
     ctx: &crate::Context,
-    add_production_crates: bool,
+    allow_auto_publish_of_stable_crates: bool,
     bump_when_needed: bool,
     isolate_dependencies_from_breaking_changes: bool,
     traverse_graph: bool,
@@ -149,7 +149,7 @@ pub fn dependencies(
                 &mut seen,
                 &mut crates,
                 package,
-                add_production_crates,
+                allow_auto_publish_of_stable_crates,
                 bump_when_needed,
             )?;
             crates.extend(crates_from_graph);
@@ -194,8 +194,18 @@ pub fn dependencies(
     }
 
     if isolate_dependencies_from_breaking_changes {
-        forward_propagate_breaking_changes_for_publishing(ctx, &mut crates)?;
-        forward_propagate_breaking_changes_for_manifest_updates(ctx, &mut crates)?;
+        forward_propagate_breaking_changes_for_publishing(
+            ctx,
+            &mut crates,
+            bump_when_needed,
+            allow_auto_publish_of_stable_crates,
+        )?;
+        forward_propagate_breaking_changes_for_manifest_updates(
+            ctx,
+            &mut crates,
+            bump_when_needed,
+            allow_auto_publish_of_stable_crates,
+        )?;
     }
     crates.extend(find_workspace_crates_depending_on_adjusted_crates(ctx, &crates));
     Ok(crates)
@@ -204,6 +214,8 @@ pub fn dependencies(
 fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
     ctx: &'meta Context,
     crates: &mut Vec<Dependency<'meta>>,
+    bump_when_needed: bool,
+    allow_auto_publish_of_stable_crates: bool,
 ) -> anyhow::Result<()> {
     let mut non_publishing_crates_with_safety_bumps = Vec::new();
     let mut backing = crates
@@ -239,6 +251,10 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                         .then(|| c.mode.version_adjustment_bump())
                         .flatten()
                 });
+
+                // TODO: this can actually easily happen if a provided crate depends on a breaking change
+                //       but itself didn't change and thus won't be published. No other way but to deal with
+                //       upgrading existing crates here. This is why sometimes the crate exists but has no bump.
                 debug_assert!(
                     bump_of_crate_with_that_name
                         .map(|b| b.is_breaking() || b.latest_release.is_none())
@@ -246,20 +262,29 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                     "BUG: Found a crate for '{}' that shouldn't be in our set yet",
                     dependant.name
                 );
-                let bump = breaking_version_bump(ctx, dependant)?;
+                let bump = breaking_version_bump(ctx, dependant, bump_when_needed)?;
                 if bump.next_release_changes_manifest() && bump_of_crate_with_that_name.is_none() {
-                    new_crates_this_round.push(Dependency {
-                        package: dependant,
-                        kind: dependency::Kind::DependencyOrDependentOfUserSelection,
-                        mode: dependency::Mode::NotForPublishing {
-                            reason: dependency::NoPublishReason::BreakingChangeCausesManifestUpdate,
-                            adjustment: Some(ManifestAdjustment::Version(dependency::VersionAdjustment::Breakage {
-                                bump,
-                                change: None,
-                                causing_dependency_names: vec![dependee.package.name.to_owned()],
-                            })),
-                        },
-                    });
+                    if is_pre_release_version(&dependant.version) || allow_auto_publish_of_stable_crates {
+                        new_crates_this_round.push(Dependency {
+                            package: dependant,
+                            kind: dependency::Kind::DependencyOrDependentOfUserSelection,
+                            mode: dependency::Mode::NotForPublishing {
+                                reason: dependency::NoPublishReason::BreakingChangeCausesManifestUpdate,
+                                adjustment: Some(ManifestAdjustment::Version(
+                                    dependency::VersionAdjustment::Breakage {
+                                        bump,
+                                        change: None,
+                                        causing_dependency_names: vec![dependee.package.name.to_owned()],
+                                    },
+                                )),
+                            },
+                        });
+                    } else {
+                        log::trace!(
+                            "Ignored stable crate '{}' despite being eligible for safety bump and manifest change.",
+                            dependant.name
+                        );
+                    }
                 }
             }
         }
@@ -282,6 +307,8 @@ fn package_may_be_published(p: &Package) -> bool {
 fn forward_propagate_breaking_changes_for_publishing(
     ctx: &Context,
     mut crates: &mut Vec<Dependency<'_>>,
+    bump_when_needed: bool,
+    allow_auto_publish_of_stable_crates: bool,
 ) -> anyhow::Result<()> {
     let mut seen = BTreeSet::default();
     let mut edits = Vec::new();
@@ -301,7 +328,7 @@ fn forward_propagate_breaking_changes_for_publishing(
         seen.insert(idx);
     }
     for edit_for_publish in edits {
-        edit_for_publish.apply(&mut crates, ctx)?;
+        edit_for_publish.apply(&mut crates, ctx, bump_when_needed, allow_auto_publish_of_stable_crates)?;
     }
     Ok(())
 }
@@ -319,48 +346,61 @@ impl EditForPublish {
         }
     }
 
-    fn apply(self, crates: &mut [Dependency<'_>], ctx: &Context) -> anyhow::Result<()> {
+    fn apply(
+        self,
+        crates: &mut [Dependency<'_>],
+        ctx: &Context,
+        bump_when_needed: bool,
+        allow_auto_publish_of_stable_crates: bool,
+    ) -> anyhow::Result<()> {
         let causing_dependency_names = self
             .causing_dependency_indices
             .into_iter()
             .map(|idx| crates[idx].package.name.clone())
             .collect();
         let dep_mut = &mut crates[self.crates_idx];
-        let breaking_bump = breaking_version_bump(ctx, dep_mut.package)?;
-        match &mut dep_mut.mode {
-            dependency::Mode::NotForPublishing {
-                adjustment: maybe_adjustment,
-                ..
-            } => {
-                let adjustment = match maybe_adjustment.take() {
-                    Some(ManifestAdjustment::DueToDependencyChange) => {
-                        unreachable!("BUG: code generating these runs later")
-                    }
-                    Some(ManifestAdjustment::Version(mut adjustment)) => {
-                        make_breaking(&mut adjustment, breaking_bump, causing_dependency_names);
-                        adjustment
-                    }
-                    None => dependency::VersionAdjustment::Breakage {
-                        bump: breaking_bump,
-                        causing_dependency_names,
-                        change: None,
-                    },
-                };
-                dep_mut.mode = dependency::Mode::ToBePublished { adjustment };
+        if is_pre_release_version(&dep_mut.package.version) || allow_auto_publish_of_stable_crates {
+            let breaking_bump = breaking_version_bump(ctx, dep_mut.package, bump_when_needed)?;
+            match &mut dep_mut.mode {
+                dependency::Mode::NotForPublishing {
+                    adjustment: maybe_adjustment,
+                    ..
+                } => {
+                    let adjustment = match maybe_adjustment.take() {
+                        Some(ManifestAdjustment::DueToDependencyChange) => {
+                            unreachable!("BUG: code generating these runs later")
+                        }
+                        Some(ManifestAdjustment::Version(mut adjustment)) => {
+                            make_breaking(&mut adjustment, breaking_bump, causing_dependency_names);
+                            adjustment
+                        }
+                        None => dependency::VersionAdjustment::Breakage {
+                            bump: breaking_bump,
+                            causing_dependency_names,
+                            change: None,
+                        },
+                    };
+                    dep_mut.mode = dependency::Mode::ToBePublished { adjustment };
+                }
+                dependency::Mode::ToBePublished { adjustment, .. } => {
+                    make_breaking(adjustment, breaking_bump, causing_dependency_names);
+                }
             }
-            dependency::Mode::ToBePublished { adjustment, .. } => {
-                make_breaking(adjustment, breaking_bump, causing_dependency_names);
-            }
+        } else {
+            log::trace!(
+                "Ignored stable crate '{}' despite being eligible for safety bump and publishing.",
+                dep_mut.package.name
+            );
         }
         Ok(())
     }
 }
 
-fn breaking_version_bump(ctx: &Context, package: &Package) -> anyhow::Result<Bump> {
+fn breaking_version_bump(ctx: &Context, package: &Package, bump_when_needed: bool) -> anyhow::Result<Bump> {
     let breaking_spec = is_pre_release_version(&package.version)
         .then(|| BumpSpec::Minor)
         .unwrap_or(BumpSpec::Major);
-    version::bump_package_with_spec(package, breaking_spec, ctx, true)
+    version::bump_package_with_spec(package, breaking_spec, ctx, bump_when_needed)
 }
 
 fn make_breaking(adjustment: &mut VersionAdjustment, breaking_bump: version::Bump, breaking_crate_names: Vec<String>) {
@@ -430,7 +470,7 @@ fn depth_first_traversal<'meta>(
     seen: &mut BTreeSet<&'meta PackageId>,
     crates: &mut Vec<Dependency<'meta>>,
     root: &Package,
-    add_production_crates: bool,
+    allow_auto_publish_of_stable_crates: bool,
     bump_when_needed: bool,
 ) -> anyhow::Result<Vec<Dependency<'meta>>> {
     let mut skipped = Vec::new();
@@ -448,11 +488,11 @@ fn depth_first_traversal<'meta>(
             seen,
             crates,
             workspace_dependency,
-            add_production_crates,
+            allow_auto_publish_of_stable_crates,
             bump_when_needed,
         )?);
         if let Some(change) = git::change_since_last_release(workspace_dependency, ctx)? {
-            if is_pre_release_version(&workspace_dependency.version) || add_production_crates {
+            if is_pre_release_version(&workspace_dependency.version) || allow_auto_publish_of_stable_crates {
                 crates.push(Dependency {
                     package: workspace_dependency,
                     kind: dependency::Kind::DependencyOrDependentOfUserSelection,
