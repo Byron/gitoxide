@@ -40,7 +40,7 @@ pub mod dependency {
             /// Set if there is a change at all, which might not be the case for previously skipped crates.
             change: Option<git::PackageChangeKind>,
             /// The direct dependency causing the breakage because it's breaking itself
-            causing_dependency_name: String,
+            causing_dependency_names: Vec<String>,
         },
     }
 
@@ -159,6 +159,7 @@ pub fn dependencies(
         let mut seen = BTreeSet::default();
         let mut edits = Vec::new();
         // skipped don't have version bumps, we don't have manifest updates yet
+
         for (idx, starting_crate_for_backward_search) in crates
             .iter()
             .enumerate()
@@ -186,19 +187,23 @@ pub fn dependencies(
 
 struct EditForPublish {
     crates_idx: usize,
-    causing_dependency_idx: usize,
+    causing_dependency_indices: Vec<usize>,
 }
 
 impl EditForPublish {
-    fn from(idx: usize, causing_dependency_idx: usize) -> Self {
+    fn from(idx: usize, causing_dependency_indices: Vec<usize>) -> Self {
         EditForPublish {
             crates_idx: idx,
-            causing_dependency_idx,
+            causing_dependency_indices,
         }
     }
 
     fn apply(self, crates: &mut [Dependency<'_>], ctx: &Context) -> anyhow::Result<()> {
-        let causing_dependency_name = crates[self.causing_dependency_idx].package.name.clone();
+        let causing_dependency_names = self
+            .causing_dependency_indices
+            .into_iter()
+            .map(|idx| crates[idx].package.name.clone())
+            .collect();
         let dep_mut = &mut crates[self.crates_idx];
         let breaking_bump = {
             let breaking_spec = is_pre_release_version(&dep_mut.package.version)
@@ -213,19 +218,19 @@ impl EditForPublish {
             } => {
                 let adjustment = match maybe_adjustment.take() {
                     Some(mut adjustment) => {
-                        make_breaking(&mut adjustment, breaking_bump, causing_dependency_name);
+                        make_breaking(&mut adjustment, breaking_bump, causing_dependency_names);
                         adjustment
                     }
                     None => dependency::VersionAdjustment::Breakage {
                         bump: breaking_bump,
-                        causing_dependency_name,
+                        causing_dependency_names,
                         change: None,
                     },
                 };
                 dep_mut.mode = dependency::Mode::ToBePublished { adjustment };
             }
             dependency::Mode::ToBePublished { adjustment, .. } => {
-                make_breaking(adjustment, breaking_bump, causing_dependency_name);
+                make_breaking(adjustment, breaking_bump, causing_dependency_names);
             }
             dependency::Mode::ManifestNeedsUpdate => unreachable!("BUG: these shouldn't exist at this point"),
         }
@@ -233,7 +238,7 @@ impl EditForPublish {
     }
 }
 
-fn make_breaking(adjustment: &mut VersionAdjustment, breaking_bump: version::Bump, breaking_crate_name: String) {
+fn make_breaking(adjustment: &mut VersionAdjustment, breaking_bump: version::Bump, breaking_crate_names: Vec<String>) {
     match adjustment {
         VersionAdjustment::Breakage { .. } => {
             unreachable!("BUG: should never try to adjust a package for breaking changes twice")
@@ -243,7 +248,7 @@ fn make_breaking(adjustment: &mut VersionAdjustment, breaking_bump: version::Bum
             *adjustment = VersionAdjustment::Breakage {
                 bump: bump.clone(),
                 change: Some(change.clone()),
-                causing_dependency_name: breaking_crate_name,
+                causing_dependency_names: breaking_crate_names,
             }
         }
     }
@@ -254,8 +259,9 @@ fn find_safety_bump_edits_backwards_from_crates_for_publish(
     start: (usize, &Dependency<'_>),
     seen: &mut BTreeSet<usize>,
     edits: &mut Vec<EditForPublish>,
-) -> Option<usize> {
+) -> Option<Vec<usize>> {
     let (current_idx, current) = start;
+    let mut breaking_indices = Vec::new();
     for (dep_idx, dep) in current.package.dependencies.iter().filter_map(|dep| {
         crates
             .iter()
@@ -265,24 +271,33 @@ fn find_safety_bump_edits_backwards_from_crates_for_publish(
         if seen.contains(&dep_idx) {
             continue;
         }
-        seen.insert(dep_idx);
-
         match dep.mode.version_adjustment_bump() {
             Some(dep_bump) if dep_bump.is_breaking() => {
-                edits.push(EditForPublish::from(current_idx, dep_idx));
-                return Some(dep_idx);
+                if !edits.iter().any(|e| e.crates_idx == current_idx) {
+                    edits.push(EditForPublish::from(current_idx, vec![dep_idx]));
+                }
+                if !breaking_indices.contains(&dep_idx) {
+                    breaking_indices.push(dep_idx);
+                }
             }
             _ => {
-                let root_cause_of_breakage =
+                seen.insert(dep_idx);
+                let root_causes_of_breakage =
                     find_safety_bump_edits_backwards_from_crates_for_publish(crates, (dep_idx, dep), seen, edits);
-                if let Some(breaking_package_idx) = root_cause_of_breakage {
-                    edits.push(EditForPublish::from(current_idx, breaking_package_idx));
-                    return breaking_package_idx.into();
+                if let Some(breaking_package_indices) = root_causes_of_breakage {
+                    if !edits.iter().any(|e| e.crates_idx == current_idx) {
+                        edits.push(EditForPublish::from(current_idx, breaking_package_indices.clone()));
+                    }
+                    for idx in breaking_package_indices {
+                        if !breaking_indices.contains(&idx) {
+                            breaking_indices.push(idx);
+                        }
+                    }
                 }
             }
         }
     }
-    None
+    (!breaking_indices.is_empty()).then(|| breaking_indices)
 }
 
 fn depth_first_traversal<'meta>(

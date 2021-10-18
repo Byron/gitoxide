@@ -132,14 +132,16 @@ fn present_dependencies(
     dry_run: bool,
 ) -> anyhow::Result<()> {
     use dependency::Kind;
-    let num_skipped = deps
+    let skipped = deps
         .iter()
-        .filter(|dep| matches!(&dep.mode, dependency::Mode::Skipped { .. }))
-        .count();
-    if num_skipped != 0 {
+        .filter_map(|dep| matches!(&dep.mode, dependency::Mode::Skipped { .. }).then(|| dep.package.name.as_str()))
+        .collect::<Vec<_>>();
+    if !skipped.is_empty() {
         log::info!(
-            "Skipped {} dependent crates as they didn't change since their last release.",
-            num_skipped
+            "Skipped {} dependent crate{} as they didn't change since their last release: {}",
+            skipped.len(),
+            (skipped.len() != 1).then(|| "s").unwrap_or(""),
+            skipped.join(", ")
         );
     }
 
@@ -151,12 +153,12 @@ fn present_dependencies(
         };
         match &dep.mode {
             dependency::Mode::ToBePublished { adjustment } => {
-                let (bump, breaking_dependency) = match adjustment {
+                let (bump, breaking_dependencies) = match adjustment {
                     VersionAdjustment::Breakage {
                         bump,
-                        causing_dependency_name: direct_dependency,
+                        causing_dependency_names,
                         ..
-                    } => (bump, Some(direct_dependency)),
+                    } => (bump, Some(causing_dependency_names)),
                     VersionAdjustment::Changed { bump, .. } => (bump, None),
                 };
                 match &bump.next_release {
@@ -180,8 +182,12 @@ fn present_dependencies(
                                 (*next_release != bump.desired_release)
                                     .then(|| format!(", ignoring computed version {}", bump.desired_release))
                                     .unwrap_or_default(),
-                                breaking_dependency
-                                    .map(|cause| format!(", for SAFETY due to breaking package '{}'", cause))
+                                breaking_dependencies
+                                    .map(|causes| format!(
+                                        ", for SAFETY due to breaking package{} {}",
+                                        if causes.len() == 1 { "" } else { "s" },
+                                        causes.join(", ")
+                                    ))
                                     .unwrap_or_default()
                             );
                         } else {
@@ -213,19 +219,19 @@ fn present_dependencies(
                 adjustment:
                     Some(VersionAdjustment::Breakage {
                         bump,
-                        causing_dependency_name: direct_dependency,
+                        causing_dependency_names,
                         ..
                     }),
                 ..
             } => {
                 log::info!(
-                    "Adjusting manifest of {} package '{}' to {} for SAFETY due to breaking change in '{}'",
+                    "Adjusting manifest of {} package '{}' to {} for SAFETY due to breaking change in {}",
                     kind,
                     dep.package.name,
                     bump.next_release
                         .as_ref()
                         .expect("next version always set for safety bumps"),
-                    direct_dependency
+                    causing_dependency_names.join(", ")
                 );
             }
             dependency::Mode::ManifestNeedsUpdate | dependency::Mode::Skipped { .. } => {}
