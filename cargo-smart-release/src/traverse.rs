@@ -191,18 +191,21 @@ pub fn dependencies(
                         "BUG: Found a crate for '{}' that shouldn't be in our set yet",
                         dependant.name
                     );
-                    new_crates_this_round.push(Dependency {
-                        package: dependant,
-                        kind: dependency::Kind::DependencyOrDependentOfUserSelection,
-                        mode: dependency::Mode::Skipped {
-                            reason: dependency::SkippedReason::Unchanged,
-                            adjustment: Some(dependency::VersionAdjustment::Breakage {
-                                bump: breaking_version_bump(ctx, dependant)?,
-                                change: None,
-                                causing_dependency_names: vec![dependee.package.name.to_owned()],
-                            }),
-                        },
-                    });
+                    let bump = breaking_version_bump(ctx, dependant)?;
+                    if bump.next_release_changes_manifest() {
+                        new_crates_this_round.push(Dependency {
+                            package: dependant,
+                            kind: dependency::Kind::DependencyOrDependentOfUserSelection,
+                            mode: dependency::Mode::Skipped {
+                                reason: dependency::SkippedReason::Unchanged,
+                                adjustment: Some(dependency::VersionAdjustment::Breakage {
+                                    bump,
+                                    change: None,
+                                    causing_dependency_names: vec![dependee.package.name.to_owned()],
+                                }),
+                            },
+                        });
+                    }
                 }
             }
 

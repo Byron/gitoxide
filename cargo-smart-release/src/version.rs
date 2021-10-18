@@ -76,11 +76,15 @@ pub struct Bump {
 }
 
 impl Bump {
-    pub fn is_breaking(&self) -> bool {
-        rhs_is_breaking_bump_for_lhs(
-            &self.package_version,
-            self.next_release.as_ref().expect("only valid versions here"),
-        )
+    pub(crate) fn next_release(&self) -> &semver::Version {
+        self.next_release.as_ref().expect("only valid versions here")
+    }
+
+    pub(crate) fn next_release_changes_manifest(&self) -> bool {
+        self.next_release() > &self.package_version
+    }
+    pub(crate) fn is_breaking(&self) -> bool {
+        rhs_is_breaking_bump_for_lhs(&self.package_version, self.next_release())
     }
 }
 

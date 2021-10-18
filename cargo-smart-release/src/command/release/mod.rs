@@ -271,12 +271,13 @@ fn present_dependencies(
                     acc
                 },
             );
-        for (cause, deps_and_bumps) in affected_crates_by_cause.into_iter() {
+        for (cause, deps_and_bumps) in affected_crates_by_cause {
             log::info!(
-                "Due to breaking change in '{}' manifests of {} package{} adjustments: {}",
+                "Due to breaking change in '{}', manifests of {} package{} {} be adjusted: {}",
                 cause,
                 deps_and_bumps.len(),
                 (deps_and_bumps.len() != 1).then(|| "s").unwrap_or(""),
+                will(dry_run),
                 deps_and_bumps
                     .into_iter()
                     .map(|(dep_name, bump)| format!(
