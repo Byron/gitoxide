@@ -1,5 +1,6 @@
 use anyhow::bail;
 use cargo_metadata::{Metadata, Package};
+use std::collections::BTreeMap;
 
 use crate::{
     changelog,
@@ -217,25 +218,6 @@ fn present_dependencies(
                     }
                 };
             }
-            dependency::Mode::Skipped {
-                adjustment:
-                    Some(VersionAdjustment::Breakage {
-                        bump,
-                        causing_dependency_names,
-                        ..
-                    }),
-                ..
-            } => {
-                log::info!(
-                    "Adjusting manifest of package '{}' to {} from {} for SAFETY due to breaking change in {}",
-                    dep.package.name,
-                    bump.next_release
-                        .as_ref()
-                        .expect("next version always set for safety bumps"),
-                    bump.package_version,
-                    causing_dependency_names.join(", ")
-                );
-            }
             dependency::Mode::ManifestNeedsUpdateDueToDependencyChange | dependency::Mode::Skipped { .. } => {}
         }
     }
@@ -261,6 +243,48 @@ fn present_dependencies(
         );
     }
 
+    let affected_crates_by_cause = deps
+        .iter()
+        .filter_map(|dep| match &dep.mode {
+            dependency::Mode::Skipped {
+                adjustment:
+                    Some(VersionAdjustment::Breakage {
+                        bump,
+                        causing_dependency_names,
+                        ..
+                    }),
+                ..
+            } => Some((dep, bump, causing_dependency_names)),
+            _ => None,
+        })
+        .fold(BTreeMap::default(), |mut acc, (dep, bump, causing_names)| {
+            for name in causing_names {
+                acc.entry(name.as_str())
+                    .or_insert_with(Vec::new)
+                    .push((dep.package.name.as_str(), bump));
+            }
+            acc
+        });
+    for (cause, deps_and_bumps) in affected_crates_by_cause.into_iter() {
+        log::info!(
+            "Due to breaking change in '{}' manifests of {} package{} adjustments: {}",
+            cause,
+            deps_and_bumps.len(),
+            (deps_and_bumps.len() != 1).then(|| "s").unwrap_or(""),
+            deps_and_bumps
+                .into_iter()
+                .map(|(dep_name, bump)| format!(
+                    "'{}' {} ➡ {}",
+                    dep_name,
+                    bump.package_version,
+                    bump.next_release
+                        .as_ref()
+                        .expect("bailed earlier if there was an error")
+                ))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+    }
     if error {
         bail!("Aborting due to previous error(s)");
     } else {
