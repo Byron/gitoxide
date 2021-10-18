@@ -113,9 +113,6 @@ pub mod dependency {
                 _ => None,
             }
         }
-        pub fn has_version_adjustment(&self) -> bool {
-            self.version_adjustment_bump().is_some()
-        }
     }
 }
 

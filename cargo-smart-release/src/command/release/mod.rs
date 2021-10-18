@@ -1,7 +1,5 @@
 use anyhow::bail;
-use cargo_metadata::Metadata;
 
-use crate::utils::try_to_published_crate_and_new_version;
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},
@@ -10,7 +8,7 @@ use crate::{
         self, dependency,
         dependency::{ManifestAdjustment, VersionAdjustment},
     },
-    utils::{tag_name, will},
+    utils::{tag_name, try_to_published_crate_and_new_version, will},
     version,
     version::BumpSpec,
 };
@@ -90,7 +88,6 @@ pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependen
 }
 
 fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
-    let meta = &ctx.base.meta;
     let Options {
         bump_when_needed,
         dry_run,
@@ -114,7 +111,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
     assure_working_tree_is_unchanged(options)?;
 
     if !crates.is_empty() {
-        perform_multi_version_release(&ctx, options, meta, &crates)?;
+        perform_multi_version_release(&ctx, options, &crates)?;
     }
 
     Ok(())
@@ -321,13 +318,12 @@ fn assure_working_tree_is_unchanged(options: Options) -> anyhow::Result<()> {
 fn perform_multi_version_release(
     ctx: &Context,
     options: Options,
-    meta: &Metadata,
     crates: &[traverse::Dependency<'_>],
 ) -> anyhow::Result<()> {
     let manifest::Outcome {
         commit_id,
         section_by_package: release_section_by_publishee,
-    } = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(meta, crates, options, ctx)?;
+    } = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(crates, options, ctx)?;
 
     let mut tag_names = Vec::new();
     for (publishee, new_version) in crates.iter().filter_map(|c| try_to_published_crate_and_new_version(c)) {
