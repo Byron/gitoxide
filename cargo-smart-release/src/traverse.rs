@@ -153,13 +153,9 @@ pub fn dependencies(
     }
 
     if isolate_dependencies_from_breaking_changes {
-        // TODO: before this, traverse forward through all dependencies from our crates with breaking changes
-        //       and propagate such breaking change, either lifting skipped crates to those with adjustment,
-        //       If about to be published crates can reach these newly added crates, they must be made publishable too
         let mut seen = BTreeSet::default();
         let mut edits = Vec::new();
         // skipped don't have version bumps, we don't have manifest updates yet
-
         for (idx, starting_crate_for_backward_search) in crates
             .iter()
             .enumerate()

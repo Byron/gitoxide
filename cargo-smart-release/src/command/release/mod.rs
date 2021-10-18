@@ -134,7 +134,9 @@ fn present_dependencies(
     use dependency::Kind;
     let skipped = deps
         .iter()
-        .filter_map(|dep| matches!(&dep.mode, dependency::Mode::Skipped { .. }).then(|| dep.package.name.as_str()))
+        .filter_map(|dep| {
+            matches!(&dep.mode, dependency::Mode::Skipped { adjustment: None, .. }).then(|| dep.package.name.as_str())
+        })
         .collect::<Vec<_>>();
     if !skipped.is_empty() {
         log::info!(
@@ -247,11 +249,12 @@ fn present_dependencies(
             .then(|| "s")
             .unwrap_or_default();
         log::info!(
-            "Manifest{} of {} package{} {} be adjusted as its direct dependencies see a version change.",
+            "Manifest{} of {} package{} {} be adjusted as its direct dependencies see a version change: {}",
             plural_s,
             crate_names_for_manifest_updates.len(),
             plural_s,
-            will(dry_run)
+            will(dry_run),
+            crate_names_for_manifest_updates.join(", ")
         );
     }
 
