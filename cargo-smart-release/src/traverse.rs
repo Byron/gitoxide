@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 
 use crate::utils::package_eq_dependency;
+use crate::version::rhs_is_breaking_bump_for_lhs;
 use crate::{
     git,
     traverse::dependency::VersionAdjustment,
@@ -68,18 +69,20 @@ pub mod dependency {
     }
 
     impl<'meta> Mode<'meta> {
-        pub fn version_adjustment(&self) -> Option<&VersionAdjustment<'meta>> {
+        pub fn version_adjustment_bump(&self) -> Option<&version::bump::Outcome> {
             match self {
                 Mode::ToBePublished { adjustment }
                 | Mode::Skipped {
                     adjustment: Some(adjustment),
                     ..
-                } => Some(adjustment),
+                } => Some(match adjustment {
+                    VersionAdjustment::Breakage { bump, .. } | VersionAdjustment::Changed { bump, .. } => bump,
+                }),
                 _ => None,
             }
         }
         pub fn has_version_adjustment(&self) -> bool {
-            self.version_adjustment().is_some()
+            self.version_adjustment_bump().is_some()
         }
     }
 }
@@ -154,9 +157,9 @@ pub fn dependencies(
     if isolate_dependencies_from_breaking_changes {
         // TODO: before this, traverse forward through all dependencies from our crates with breaking changes
         //       and propagate such breaking change, either lifting skipped crates to those with adjustment,
-        //       ~~or by adding new crates~~ (should never happen as we have skipped crates in dependency order).
         //       If about to be published crates can reach these newly added crates, they must be made publishable too
         let mut seen = BTreeSet::default();
+        let mut edits = Vec::new();
         // skipped don't have version bumps, we don't have manifest updates yet
         for (idx, starting_crate_for_backward_search) in crates
             .iter()
@@ -164,32 +167,84 @@ pub fn dependencies(
             .rev()
             .filter(|(_, c)| matches!(c.mode, dependency::Mode::ToBePublished { .. }))
         {
-            let mut dependencies = vec![(idx, starting_crate_for_backward_search)];
-            let mut dep_seen = BTreeSet::default();
-            while let Some((dep_idx, dep_crate)) = dependencies.pop() {
-                if dep_seen.contains(&dep_idx) || seen.contains(&dep_idx) {
-                    continue;
-                }
-                seen.insert(dep_idx);
-                dep_seen.insert(dep_idx);
-
-                let _dep_crates_with_version_bumps = dep_crate
-                    .package
-                    .dependencies
-                    .iter()
-                    .map(|dep| {
-                        crates.iter().enumerate().find_map(|(cidx, c)| {
-                            c.mode
-                                .version_adjustment()
-                                .and_then(|a| package_eq_dependency(c.package, dep).then(|| (cidx, c, a.bump())))
-                        })
-                    })
-                    .collect::<Vec<_>>();
-            }
+            find_safety_bump_edits_backwards_from_crates_for_publish(
+                &crates,
+                (idx, starting_crate_for_backward_search),
+                &mut seen,
+                &mut edits,
+            );
+            seen.insert(idx);
         }
+        for _edit in edits {
+            todo!("apply edit");
+        }
+
+        // TODO: forward traversal from low-level crates upward if (similarly to what's done already in manifest) to find
+        //       crates that need a version adjustment, without publishing, to be added to the list
     }
     crates.extend(find_workspace_crates_depending_on_adjusted_crates(ctx, &crates));
     Ok(crates)
+}
+
+struct EditForPublish {
+    crates_idx: usize,
+    bump: Option<version::bump::Outcome>,
+}
+
+impl EditForPublish {
+    fn breaking_release(idx: usize, _existing: Option<&version::bump::Outcome>) -> Self {
+        EditForPublish {
+            crates_idx: idx,
+            bump: todo!("breaking change"),
+        }
+    }
+}
+
+fn find_safety_bump_edits_backwards_from_crates_for_publish(
+    crates: &[Dependency<'_>],
+    start: (usize, &Dependency<'_>),
+    seen: &mut BTreeSet<usize>,
+    edits: &mut Vec<EditForPublish>,
+) -> bool {
+    let (current_idx, current) = start;
+    for (dep_idx, dep) in current.package.dependencies.iter().filter_map(|dep| {
+        crates
+            .iter()
+            .enumerate()
+            .find(|(_, c)| package_eq_dependency(c.package, dep))
+    }) {
+        if seen.contains(&dep_idx) {
+            return false;
+        }
+        seen.insert(dep_idx);
+
+        match dep.mode.version_adjustment_bump() {
+            Some(dep_bump)
+                if rhs_is_breaking_bump_for_lhs(
+                    &dep.package.version,
+                    dep_bump.next_release.as_ref().expect("only valid versions here"),
+                ) =>
+            {
+                edits.push(EditForPublish::breaking_release(
+                    current_idx,
+                    current.mode.version_adjustment_bump(),
+                ));
+                return true;
+            }
+            _ => {
+                let has_breaking_in_dependencies =
+                    find_safety_bump_edits_backwards_from_crates_for_publish(crates, (dep_idx, dep), seen, edits);
+                if has_breaking_in_dependencies {
+                    edits.push(EditForPublish::breaking_release(
+                        current_idx,
+                        current.mode.version_adjustment_bump(),
+                    ));
+                    return true;
+                }
+            }
+        }
+    }
+    false
 }
 
 fn depth_first_traversal<'meta>(
