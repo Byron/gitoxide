@@ -135,7 +135,8 @@ fn present_dependencies(
     let skipped = deps
         .iter()
         .filter_map(|dep| {
-            matches!(&dep.mode, dependency::Mode::Skipped { adjustment: None, .. }).then(|| dep.package.name.as_str())
+            matches!(&dep.mode, dependency::Mode::NotForPublishing { adjustment: None, .. })
+                .then(|| dep.package.name.as_str())
         })
         .collect::<Vec<_>>();
     if !skipped.is_empty() {
@@ -217,7 +218,7 @@ fn present_dependencies(
                     }
                 };
             }
-            dependency::Mode::ManifestNeedsUpdateDueToDependencyChange | dependency::Mode::Skipped { .. } => {}
+            dependency::Mode::NotForPublishing { .. } => {}
         }
     }
 
@@ -225,7 +226,7 @@ fn present_dependencies(
         let affected_crates_by_cause = deps
             .iter()
             .filter_map(|dep| match &dep.mode {
-                dependency::Mode::Skipped {
+                dependency::Mode::NotForPublishing {
                     adjustment:
                         Some(VersionAdjustment::Breakage {
                             bump,
@@ -276,8 +277,14 @@ fn present_dependencies(
         let crate_names_for_manifest_updates = deps
             .iter()
             .filter_map(|d| {
-                matches!(d.mode, dependency::Mode::ManifestNeedsUpdateDueToDependencyChange)
-                    .then(|| d.package.name.as_str())
+                matches!(
+                    d.mode,
+                    dependency::Mode::NotForPublishing {
+                        reason: dependency::NoPublishReason::ManifestNeedsUpdateDueToDependencyChange,
+                        ..
+                    }
+                )
+                .then(|| d.package.name.as_str())
             })
             .collect::<Vec<_>>();
         if !crate_names_for_manifest_updates.is_empty() {

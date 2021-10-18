@@ -16,9 +16,13 @@ pub mod dependency {
 
     /// Skipped crates are always dependent ones
     #[derive(Copy, Clone, Debug)]
-    pub enum SkippedReason {
+    pub enum NoPublishReason {
         Unchanged,
         DeniedAutopublishOfProductionCrate,
+        PublishDisabledInManifest,
+        BreakingChangeCausesManifestUpdate,
+        /// One of our dependencies will see a version adjustment, which we must update in our manifest
+        ManifestNeedsUpdateDueToDependencyChange,
     }
 
     #[derive(Clone, Copy, Debug)]
@@ -58,19 +62,17 @@ pub mod dependency {
             adjustment: VersionAdjustment,
         },
         /// Won't be published but manifest might have to be fixed if a version bump is present.
-        Skipped {
-            reason: SkippedReason,
+        NotForPublishing {
+            reason: NoPublishReason,
             adjustment: Option<VersionAdjustment>,
         },
-        /// One of our dependencies will see a version adjustment, which we must update in our manifest
-        ManifestNeedsUpdateDueToDependencyChange,
     }
 
     impl Mode {
         pub fn version_adjustment_bump(&self) -> Option<&version::Bump> {
             match self {
                 Mode::ToBePublished { adjustment }
-                | Mode::Skipped {
+                | Mode::NotForPublishing {
                     adjustment: Some(adjustment),
                     ..
                 } => Some(match adjustment {
@@ -126,11 +128,18 @@ pub fn dependencies(
                 crates.push(Dependency {
                     package,
                     kind: dependency::Kind::UserSelection,
-                    mode: dependency::Mode::ToBePublished {
-                        adjustment: VersionAdjustment::Changed {
-                            change: user_package_change,
-                            bump: version::bump_package(package, ctx, bump_when_needed)?,
-                        },
+                    mode: if package_may_be_published(package) {
+                        dependency::Mode::ToBePublished {
+                            adjustment: VersionAdjustment::Changed {
+                                change: user_package_change,
+                                bump: version::bump_package(package, ctx, bump_when_needed)?,
+                            },
+                        }
+                    } else {
+                        dependency::Mode::NotForPublishing {
+                            reason: dependency::NoPublishReason::PublishDisabledInManifest,
+                            adjustment: None,
+                        }
                     },
                 });
                 seen.insert(&package.id);
@@ -141,8 +150,8 @@ pub fn dependencies(
                     crates.push(Dependency {
                         package,
                         kind: dependency::Kind::UserSelection,
-                        mode: dependency::Mode::Skipped {
-                            reason: dependency::SkippedReason::Unchanged,
+                        mode: dependency::Mode::NotForPublishing {
+                            reason: dependency::NoPublishReason::Unchanged,
                             adjustment: None,
                         },
                     });
@@ -154,7 +163,7 @@ pub fn dependencies(
 
     if isolate_dependencies_from_breaking_changes {
         forward_propagate_breaking_changes_for_publishing(ctx, &mut crates)?;
-        forward_propagate_breaking_changes_for_manifest_updates(&ctx, &mut crates)?;
+        forward_propagate_breaking_changes_for_manifest_updates(ctx, &mut crates)?;
     }
     crates.extend(find_workspace_crates_depending_on_adjusted_crates(ctx, &crates));
     Ok(crates)
@@ -177,7 +186,7 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
         .workspace_members
         .iter()
         .map(|wmid| package_by_id(&ctx.meta, wmid))
-        .filter(|p| p.publish.is_none()) // will publish, non-publishing ones need no safety bumps
+        .filter(|p| package_may_be_published(p)) // will publish, non-publishing ones need no safety bumps
         .collect();
     let mut set_to_expand_from = &backing;
     let mut seen = BTreeSet::default();
@@ -199,7 +208,9 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                         .flatten()
                 });
                 debug_assert!(
-                    bump_of_crate_with_that_name.map(|b| b.is_breaking()).unwrap_or(true),
+                    bump_of_crate_with_that_name
+                        .map(|b| b.is_breaking() || b.latest_release.is_none())
+                        .unwrap_or(true),
                     "BUG: Found a crate for '{}' that shouldn't be in our set yet",
                     dependant.name
                 );
@@ -208,8 +219,8 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                     new_crates_this_round.push(Dependency {
                         package: dependant,
                         kind: dependency::Kind::DependencyOrDependentOfUserSelection,
-                        mode: dependency::Mode::Skipped {
-                            reason: dependency::SkippedReason::Unchanged,
+                        mode: dependency::Mode::NotForPublishing {
+                            reason: dependency::NoPublishReason::BreakingChangeCausesManifestUpdate,
                             adjustment: Some(dependency::VersionAdjustment::Breakage {
                                 bump,
                                 change: None,
@@ -230,6 +241,10 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
     }
     crates.extend(non_publishing_crates_with_safety_bumps);
     Ok(())
+}
+
+fn package_may_be_published(p: &Package) -> bool {
+    p.publish.is_none()
 }
 
 fn forward_propagate_breaking_changes_for_publishing(
@@ -281,7 +296,7 @@ impl EditForPublish {
         let dep_mut = &mut crates[self.crates_idx];
         let breaking_bump = breaking_version_bump(ctx, dep_mut.package)?;
         match &mut dep_mut.mode {
-            dependency::Mode::Skipped {
+            dependency::Mode::NotForPublishing {
                 adjustment: maybe_adjustment,
                 ..
             } => {
@@ -300,9 +315,6 @@ impl EditForPublish {
             }
             dependency::Mode::ToBePublished { adjustment, .. } => {
                 make_breaking(adjustment, breaking_bump, causing_dependency_names);
-            }
-            dependency::Mode::ManifestNeedsUpdateDueToDependencyChange => {
-                unreachable!("BUG: these shouldn't exist at this point")
             }
         }
         Ok(())
@@ -420,8 +432,8 @@ fn depth_first_traversal<'meta>(
                 crates.push(Dependency {
                     package: workspace_dependency,
                     kind: dependency::Kind::DependencyOrDependentOfUserSelection,
-                    mode: dependency::Mode::Skipped {
-                        reason: dependency::SkippedReason::DeniedAutopublishOfProductionCrate,
+                    mode: dependency::Mode::NotForPublishing {
+                        reason: dependency::NoPublishReason::DeniedAutopublishOfProductionCrate,
                         adjustment: None,
                     },
                 });
@@ -430,8 +442,8 @@ fn depth_first_traversal<'meta>(
             skipped.push(Dependency {
                 package: workspace_dependency,
                 kind: dependency::Kind::DependencyOrDependentOfUserSelection,
-                mode: dependency::Mode::Skipped {
-                    reason: dependency::SkippedReason::Unchanged,
+                mode: dependency::Mode::NotForPublishing {
+                    reason: dependency::NoPublishReason::Unchanged,
                     adjustment: None,
                 },
             });
@@ -481,7 +493,10 @@ fn find_workspace_crates_depending_on_adjusted_crates<'meta>(
         .map(|wsp| Dependency {
             kind: dependency::Kind::DependencyOrDependentOfUserSelection,
             package: wsp,
-            mode: dependency::Mode::ManifestNeedsUpdateDueToDependencyChange,
+            mode: dependency::Mode::NotForPublishing {
+                adjustment: None,
+                reason: dependency::NoPublishReason::ManifestNeedsUpdateDueToDependencyChange,
+            },
         })
         .collect()
 }
