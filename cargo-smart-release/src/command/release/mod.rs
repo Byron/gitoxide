@@ -188,7 +188,7 @@ fn present_dependencies(
                                     .map(|causes| format!(
                                         ", for SAFETY due to breaking package{} {}",
                                         if causes.len() == 1 { "" } else { "s" },
-                                        causes.join(", ")
+                                        causes.iter().map(|n| format!("'{}'", n)).collect::<Vec<_>>().join(", ")
                                     ))
                                     .unwrap_or_default()
                             );
@@ -222,29 +222,6 @@ fn present_dependencies(
     }
 
     {
-        let crate_names_for_manifest_updates = deps
-            .iter()
-            .filter_map(|d| {
-                matches!(d.mode, dependency::Mode::ManifestNeedsUpdateDueToDependencyChange)
-                    .then(|| d.package.name.as_str())
-            })
-            .collect::<Vec<_>>();
-        if !crate_names_for_manifest_updates.is_empty() {
-            let plural_s = (crate_names_for_manifest_updates.len() > 1)
-                .then(|| "s")
-                .unwrap_or_default();
-            log::info!(
-                "Manifest{} of {} package{} {} be adjusted as its direct dependencies see a version change: {}",
-                plural_s,
-                crate_names_for_manifest_updates.len(),
-                plural_s,
-                will(dry_run),
-                crate_names_for_manifest_updates.join(", ")
-            );
-        }
-    }
-
-    {
         let affected_crates_by_cause = deps
             .iter()
             .filter_map(|dep| match &dep.mode {
@@ -272,12 +249,13 @@ fn present_dependencies(
                 },
             );
         for (cause, deps_and_bumps) in affected_crates_by_cause {
+            let plural_s = (deps_and_bumps.len() != 1).then(|| "s").unwrap_or("");
             log::info!(
-                "Due to breaking change in '{}', manifests of {} package{} {} be adjusted: {}",
-                cause,
-                deps_and_bumps.len(),
-                (deps_and_bumps.len() != 1).then(|| "s").unwrap_or(""),
+                "{} adjust {} manifest{} due to breaking change in '{}': {}",
                 will(dry_run),
+                deps_and_bumps.len(),
+                plural_s,
+                cause,
                 deps_and_bumps
                     .into_iter()
                     .map(|(dep_name, bump)| format!(
@@ -290,6 +268,29 @@ fn present_dependencies(
                     ))
                     .collect::<Vec<_>>()
                     .join(", ")
+            );
+        }
+    }
+
+    {
+        let crate_names_for_manifest_updates = deps
+            .iter()
+            .filter_map(|d| {
+                matches!(d.mode, dependency::Mode::ManifestNeedsUpdateDueToDependencyChange)
+                    .then(|| d.package.name.as_str())
+            })
+            .collect::<Vec<_>>();
+        if !crate_names_for_manifest_updates.is_empty() {
+            let plural_s = (crate_names_for_manifest_updates.len() > 1)
+                .then(|| "s")
+                .unwrap_or_default();
+            log::info!(
+                "Manifest{} of {} package{} {} be adjusted as its direct dependencies see a version change: {}",
+                plural_s,
+                crate_names_for_manifest_updates.len(),
+                plural_s,
+                will(dry_run),
+                crate_names_for_manifest_updates.join(", ")
             );
         }
     }

@@ -193,13 +193,18 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                     continue;
                 }
                 seen.insert(&dependant.id);
+                let bump_of_crate_with_that_name = crates.iter().find_map(|c| {
+                    (c.package.id == dependant.id)
+                        .then(|| c.mode.version_adjustment_bump())
+                        .flatten()
+                });
                 debug_assert!(
-                    !crates.iter().any(|c| c.package.id == dependant.id),
+                    bump_of_crate_with_that_name.map(|b| b.is_breaking()).unwrap_or(true),
                     "BUG: Found a crate for '{}' that shouldn't be in our set yet",
                     dependant.name
                 );
                 let bump = breaking_version_bump(ctx, dependant)?;
-                if bump.next_release_changes_manifest() {
+                if bump.next_release_changes_manifest() && bump_of_crate_with_that_name.is_none() {
                     new_crates_this_round.push(Dependency {
                         package: dependant,
                         kind: dependency::Kind::DependencyOrDependentOfUserSelection,
