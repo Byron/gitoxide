@@ -153,32 +153,40 @@ pub fn dependencies(
     }
 
     if isolate_dependencies_from_breaking_changes {
-        let mut seen = BTreeSet::default();
-        let mut edits = Vec::new();
-        // skipped don't have version bumps, we don't have manifest updates yet
-        for (idx, starting_crate_for_backward_search) in crates
-            .iter()
-            .enumerate()
-            .rev()
-            .filter(|(_, c)| matches!(c.mode, dependency::Mode::ToBePublished { .. }))
-        {
-            find_safety_bump_edits_backwards_from_crates_for_publish(
-                &crates,
-                (idx, starting_crate_for_backward_search),
-                &mut seen,
-                &mut edits,
-            );
-            seen.insert(idx);
-        }
-        for edit_for_publish in edits {
-            edit_for_publish.apply(&mut crates, ctx)?;
-        }
+        forward_propagate_breaking_changes_for_publishing(ctx, &mut crates)?;
 
         // TODO: forward traversal from low-level crates upward if (similarly to what's done already in manifest) to find
         //       crates that need a version adjustment, without publishing, to be added to the list
     }
     crates.extend(find_workspace_crates_depending_on_adjusted_crates(ctx, &crates));
     Ok(crates)
+}
+
+fn forward_propagate_breaking_changes_for_publishing(
+    ctx: &Context,
+    mut crates: &mut Vec<Dependency<'_>>,
+) -> anyhow::Result<()> {
+    let mut seen = BTreeSet::default();
+    let mut edits = Vec::new();
+    // skipped don't have version bumps, we don't have manifest updates yet
+    for (idx, starting_crate_for_backward_search) in crates
+        .iter()
+        .enumerate()
+        .rev()
+        .filter(|(_, c)| matches!(c.mode, dependency::Mode::ToBePublished { .. }))
+    {
+        find_safety_bump_edits_backwards_from_crates_for_publish(
+            crates,
+            (idx, starting_crate_for_backward_search),
+            &mut seen,
+            &mut edits,
+        );
+        seen.insert(idx);
+    }
+    for edit_for_publish in edits {
+        edit_for_publish.apply(&mut crates, ctx)?;
+    }
+    Ok(())
 }
 
 struct EditForPublish {
