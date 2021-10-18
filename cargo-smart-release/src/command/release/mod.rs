@@ -154,7 +154,7 @@ fn present_dependencies(
                 let (bump, breaking_dependency) = match adjustment {
                     VersionAdjustment::Breakage {
                         bump,
-                        direct_dependency,
+                        causing_dependency: direct_dependency,
                         ..
                     } => (bump, Some(direct_dependency)),
                     VersionAdjustment::Changed { bump, .. } => (bump, None),
@@ -213,7 +213,7 @@ fn present_dependencies(
                 adjustment:
                     Some(VersionAdjustment::Breakage {
                         bump,
-                        direct_dependency,
+                        causing_dependency: direct_dependency,
                         ..
                     }),
                 ..

@@ -65,15 +65,26 @@ pub mod bump {
     pub enum Error {
         LatestReleaseMoreRecentThanDesiredOne(semver::Version),
     }
-    #[derive(Clone, Debug)]
-    pub struct Outcome {
-        pub next_release: Result<semver::Version, Error>,
-        pub latest_release: Option<semver::Version>,
-        pub desired_release: semver::Version,
+}
+
+#[derive(Clone, Debug)]
+pub struct Bump {
+    pub next_release: Result<semver::Version, bump::Error>,
+    pub package_version: semver::Version,
+    pub latest_release: Option<semver::Version>,
+    pub desired_release: semver::Version,
+}
+
+impl Bump {
+    pub fn is_breaking(&self) -> bool {
+        rhs_is_breaking_bump_for_lhs(
+            &self.package_version,
+            self.next_release.as_ref().expect("only valid versions here"),
+        )
     }
 }
 
-pub(crate) fn bump_package(package: &Package, ctx: &Context, bump_when_needed: bool) -> anyhow::Result<bump::Outcome> {
+pub(crate) fn bump_package(package: &Package, ctx: &Context, bump_when_needed: bool) -> anyhow::Result<Bump> {
     let mut v = package.version.clone();
     let bump_spec = select_publishee_bump_spec(&package.name, ctx);
     use BumpSpec::*;
@@ -156,8 +167,9 @@ pub(crate) fn bump_package(package: &Package, ctx: &Context, bump_when_needed: b
             }),
         ),
     };
-    Ok(bump::Outcome {
+    Ok(Bump {
         next_release,
+        package_version: package.version.clone(),
         desired_release,
         latest_release,
     })

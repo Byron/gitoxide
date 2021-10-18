@@ -3,7 +3,6 @@ use std::collections::BTreeSet;
 use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 
 use crate::utils::package_eq_dependency;
-use crate::version::rhs_is_breaking_bump_for_lhs;
 use crate::{
     git,
     traverse::dependency::VersionAdjustment,
@@ -35,19 +34,19 @@ pub mod dependency {
     pub enum VersionAdjustment<'meta> {
         Changed {
             change: git::PackageChangeKind,
-            bump: version::bump::Outcome,
+            bump: version::Bump,
         },
         Breakage {
-            bump: version::bump::Outcome,
+            bump: version::Bump,
             /// Set if there is a change at all, which might not be the case for previously skipped crates.
             change: Option<git::PackageChangeKind>,
             /// The direct dependency causing the breakage because it's breaking itself
-            direct_dependency: &'meta Package,
+            causing_dependency: &'meta Package,
         },
     }
 
     impl<'meta> VersionAdjustment<'meta> {
-        pub fn bump(&self) -> &version::bump::Outcome {
+        pub fn bump(&self) -> &version::Bump {
             match self {
                 VersionAdjustment::Breakage { bump, .. } | VersionAdjustment::Changed { bump, .. } => bump,
             }
@@ -69,7 +68,7 @@ pub mod dependency {
     }
 
     impl<'meta> Mode<'meta> {
-        pub fn version_adjustment_bump(&self) -> Option<&version::bump::Outcome> {
+        pub fn version_adjustment_bump(&self) -> Option<&version::Bump> {
             match self {
                 Mode::ToBePublished { adjustment }
                 | Mode::Skipped {
@@ -186,26 +185,28 @@ pub fn dependencies(
     Ok(crates)
 }
 
-struct EditForPublish {
+struct EditForPublish<'a, 'meta> {
     crates_idx: usize,
-    bump: Option<version::bump::Outcome>,
+    dependency: &'a Dependency<'meta>,
+    causing_dependency: &'meta Package,
 }
 
-impl EditForPublish {
-    fn breaking_release(idx: usize, _existing: Option<&version::bump::Outcome>) -> Self {
+impl<'a, 'meta> EditForPublish<'a, 'meta> {
+    fn from(idx: usize, dependency: &'a Dependency<'meta>, causing_dependency: &'meta Package) -> Self {
         EditForPublish {
             crates_idx: idx,
-            bump: todo!("breaking change"),
+            dependency,
+            causing_dependency,
         }
     }
 }
 
-fn find_safety_bump_edits_backwards_from_crates_for_publish(
-    crates: &[Dependency<'_>],
-    start: (usize, &Dependency<'_>),
+fn find_safety_bump_edits_backwards_from_crates_for_publish<'a, 'meta>(
+    crates: &'a [Dependency<'meta>],
+    start: (usize, &'a Dependency<'meta>),
     seen: &mut BTreeSet<usize>,
-    edits: &mut Vec<EditForPublish>,
-) -> bool {
+    edits: &mut Vec<EditForPublish<'a, 'meta>>,
+) -> Option<&'meta Package> {
     let (current_idx, current) = start;
     for (dep_idx, dep) in current.package.dependencies.iter().filter_map(|dep| {
         crates
@@ -214,37 +215,26 @@ fn find_safety_bump_edits_backwards_from_crates_for_publish(
             .find(|(_, c)| package_eq_dependency(c.package, dep))
     }) {
         if seen.contains(&dep_idx) {
-            return false;
+            continue;
         }
         seen.insert(dep_idx);
 
         match dep.mode.version_adjustment_bump() {
-            Some(dep_bump)
-                if rhs_is_breaking_bump_for_lhs(
-                    &dep.package.version,
-                    dep_bump.next_release.as_ref().expect("only valid versions here"),
-                ) =>
-            {
-                edits.push(EditForPublish::breaking_release(
-                    current_idx,
-                    current.mode.version_adjustment_bump(),
-                ));
-                return true;
+            Some(dep_bump) if dep_bump.is_breaking() => {
+                edits.push(EditForPublish::from(current_idx, current, dep.package));
+                return Some(dep.package);
             }
             _ => {
-                let has_breaking_in_dependencies =
+                let root_cause_of_breakage =
                     find_safety_bump_edits_backwards_from_crates_for_publish(crates, (dep_idx, dep), seen, edits);
-                if has_breaking_in_dependencies {
-                    edits.push(EditForPublish::breaking_release(
-                        current_idx,
-                        current.mode.version_adjustment_bump(),
-                    ));
-                    return true;
+                if let Some(breaking_package) = root_cause_of_breakage {
+                    edits.push(EditForPublish::from(current_idx, current, breaking_package));
+                    return breaking_package.into();
                 }
             }
         }
     }
-    false
+    None
 }
 
 fn depth_first_traversal<'meta>(
