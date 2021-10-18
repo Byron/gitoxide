@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 
 use crate::utils::package_eq_dependency;
-use crate::version::BumpSpec;
+use crate::version::{Bump, BumpSpec};
 use crate::{
     git,
     traverse::dependency::VersionAdjustment,
@@ -63,7 +63,7 @@ pub mod dependency {
             adjustment: Option<VersionAdjustment>,
         },
         /// One of our dependencies will see a version adjustment, which we must update in our manifest
-        ManifestNeedsUpdate,
+        ManifestNeedsUpdateDueToDependencyChange,
     }
 
     impl Mode {
@@ -85,7 +85,7 @@ pub mod dependency {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Dependency<'meta> {
     pub package: &'meta Package,
     pub kind: dependency::Kind,
@@ -157,6 +157,63 @@ pub fn dependencies(
 
         // TODO: forward traversal from low-level crates upward if (similarly to what's done already in manifest) to find
         //       crates that need a version adjustment, without publishing, to be added to the list
+        let mut non_publishing_crates_with_safety_bumps = Vec::new();
+        let mut backing = crates
+            .iter()
+            .filter(
+                |c| matches!(&c.mode, dependency::Mode::ToBePublished { adjustment } if adjustment.bump().is_breaking()),
+            )
+            .map(ToOwned::to_owned)
+            .collect::<Vec<_>>();
+        let workspace_packages: Vec<_> = ctx
+            .meta
+            .workspace_members
+            .iter()
+            .map(|wmid| package_by_id(&ctx.meta, wmid))
+            .filter(|p| p.publish.is_none()) // will publish, non-publishing ones need no safety bumps
+            .collect();
+        let mut set_to_expand_from = &backing;
+        let mut seen = BTreeSet::default();
+        loop {
+            let mut new_crates_this_round = Vec::<Dependency<'_>>::new();
+            for dependee in set_to_expand_from {
+                for dependant in workspace_packages.iter().filter(|p| {
+                    p.dependencies
+                        .iter()
+                        .any(|dep| package_eq_dependency(dependee.package, dep))
+                }) {
+                    if seen.contains(&&dependant.id) {
+                        continue;
+                    }
+                    seen.insert(&dependant.id);
+                    debug_assert!(
+                        !crates.iter().any(|c| c.package.id == dependant.id),
+                        "BUG: Found a crate for '{}' that shouldn't be in our set yet",
+                        dependant.name
+                    );
+                    new_crates_this_round.push(Dependency {
+                        package: dependant,
+                        kind: dependency::Kind::DependencyOrDependentOfUserSelection,
+                        mode: dependency::Mode::Skipped {
+                            reason: dependency::SkippedReason::Unchanged,
+                            adjustment: Some(dependency::VersionAdjustment::Breakage {
+                                bump: breaking_version_bump(ctx, dependant)?,
+                                change: None,
+                                causing_dependency_names: vec![dependee.package.name.to_owned()],
+                            }),
+                        },
+                    });
+                }
+            }
+
+            if new_crates_this_round.is_empty() {
+                break;
+            }
+            non_publishing_crates_with_safety_bumps.extend(new_crates_this_round.iter().cloned());
+            backing = new_crates_this_round;
+            set_to_expand_from = &backing;
+        }
+        crates.extend(non_publishing_crates_with_safety_bumps);
     }
     crates.extend(find_workspace_crates_depending_on_adjusted_crates(ctx, &crates));
     Ok(crates)
@@ -209,12 +266,7 @@ impl EditForPublish {
             .map(|idx| crates[idx].package.name.clone())
             .collect();
         let dep_mut = &mut crates[self.crates_idx];
-        let breaking_bump = {
-            let breaking_spec = is_pre_release_version(&dep_mut.package.version)
-                .then(|| BumpSpec::Minor)
-                .unwrap_or(BumpSpec::Major);
-            version::bump_package_with_spec(dep_mut.package, breaking_spec, ctx, true)?
-        };
+        let breaking_bump = breaking_version_bump(ctx, dep_mut.package)?;
         match &mut dep_mut.mode {
             dependency::Mode::Skipped {
                 adjustment: maybe_adjustment,
@@ -236,10 +288,19 @@ impl EditForPublish {
             dependency::Mode::ToBePublished { adjustment, .. } => {
                 make_breaking(adjustment, breaking_bump, causing_dependency_names);
             }
-            dependency::Mode::ManifestNeedsUpdate => unreachable!("BUG: these shouldn't exist at this point"),
+            dependency::Mode::ManifestNeedsUpdateDueToDependencyChange => {
+                unreachable!("BUG: these shouldn't exist at this point")
+            }
         }
         Ok(())
     }
+}
+
+fn breaking_version_bump(ctx: &Context, package: &Package) -> anyhow::Result<Bump> {
+    let breaking_spec = is_pre_release_version(&package.version)
+        .then(|| BumpSpec::Minor)
+        .unwrap_or(BumpSpec::Major);
+    version::bump_package_with_spec(package, breaking_spec, ctx, true)
 }
 
 fn make_breaking(adjustment: &mut VersionAdjustment, breaking_bump: version::Bump, breaking_crate_names: Vec<String>) {
@@ -407,7 +468,7 @@ fn find_workspace_crates_depending_on_adjusted_crates<'meta>(
         .map(|wsp| Dependency {
             kind: dependency::Kind::DependencyOrDependentOfUserSelection,
             package: wsp,
-            mode: dependency::Mode::ManifestNeedsUpdate,
+            mode: dependency::Mode::ManifestNeedsUpdateDueToDependencyChange,
         })
         .collect()
 }

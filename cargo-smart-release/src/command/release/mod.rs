@@ -227,22 +227,25 @@ fn present_dependencies(
                 ..
             } => {
                 log::info!(
-                    "Adjusting manifest of {} package '{}' to {} for SAFETY due to breaking change in {}",
-                    kind,
+                    "Adjusting manifest of package '{}' to {} from {} for SAFETY due to breaking change in {}",
                     dep.package.name,
                     bump.next_release
                         .as_ref()
                         .expect("next version always set for safety bumps"),
+                    bump.package_version,
                     causing_dependency_names.join(", ")
                 );
             }
-            dependency::Mode::ManifestNeedsUpdate | dependency::Mode::Skipped { .. } => {}
+            dependency::Mode::ManifestNeedsUpdateDueToDependencyChange | dependency::Mode::Skipped { .. } => {}
         }
     }
 
     let crate_names_for_manifest_updates = deps
         .iter()
-        .filter_map(|d| matches!(d.mode, dependency::Mode::ManifestNeedsUpdate).then(|| d.package.name.as_str()))
+        .filter_map(|d| {
+            matches!(d.mode, dependency::Mode::ManifestNeedsUpdateDueToDependencyChange)
+                .then(|| d.package.name.as_str())
+        })
         .collect::<Vec<_>>();
     if !crate_names_for_manifest_updates.is_empty() {
         let plural_s = (crate_names_for_manifest_updates.len() > 1)
