@@ -70,7 +70,7 @@ fn main() -> anyhow::Result<()> {
                     changelog: !no_changelog,
                     skip_tag: no_tag,
                     skip_push: no_push,
-                    skip_dependencies: no_dependencies,
+                    dependencies: !no_dependencies,
                     dry_run_cargo_publish,
                     no_verify: dangerously_pass_no_verify,
                     allow_auto_publish_of_stable_crates: !no_auto_publish_of_stable_crates,

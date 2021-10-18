@@ -1,13 +1,16 @@
 use anyhow::bail;
-use cargo_metadata::{Metadata, Package};
+use cargo_metadata::Metadata;
 
-use crate::traverse::dependency::ManifestAdjustment;
+use crate::utils::try_to_published_crate_and_new_version;
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},
     command::release::Options,
-    traverse::{self, dependency, dependency::VersionAdjustment},
-    utils::{names_and_versions, package_by_name, tag_name, will},
+    traverse::{
+        self, dependency,
+        dependency::{ManifestAdjustment, VersionAdjustment},
+    },
+    utils::{tag_name, will},
     version,
     version::BumpSpec,
 };
@@ -92,35 +95,26 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
         bump_when_needed,
         dry_run,
         allow_auto_publish_of_stable_crates,
-        skip_dependencies,
+        dependencies: traverse_dependencies,
         verbose,
         isolate_dependencies_from_breaking_changes,
         ..
     } = options;
-    let changed_crate_names_to_publish = if skip_dependencies {
-        ctx.base
-            .crate_names
-            .iter()
-            .map(|name| package_by_name(&ctx.base.meta, name))
-            .collect::<Result<Vec<_>, _>>()?
-    } else {
-        let dependencies = crate::traverse::dependencies(
+    let crates = {
+        crate::traverse::dependencies(
             &ctx.base,
             allow_auto_publish_of_stable_crates,
             bump_when_needed,
             isolate_dependencies_from_breaking_changes,
-        )?;
-        present_dependencies(&dependencies, &ctx, verbose, dry_run)?;
-        dependencies
-            .into_iter()
-            .filter_map(|d| matches!(d.mode, dependency::Mode::ToBePublished { .. }).then(|| d.package))
-            .collect()
+            traverse_dependencies,
+        )
+        .and_then(|deps| present_dependencies(&deps, &ctx, verbose, dry_run).map(|_| deps))?
     };
 
     assure_working_tree_is_unchanged(options)?;
 
-    if !changed_crate_names_to_publish.is_empty() {
-        perform_multi_version_release(&ctx, options, meta, changed_crate_names_to_publish)?;
+    if !crates.is_empty() {
+        perform_multi_version_release(&ctx, options, meta, &crates)?;
     }
 
     Ok(())
@@ -328,56 +322,16 @@ fn perform_multi_version_release(
     ctx: &Context,
     options: Options,
     meta: &Metadata,
-    crates_to_publish_together: Vec<&Package>,
+    crates: &[traverse::Dependency<'_>],
 ) -> anyhow::Result<()> {
-    let mut crates_to_publish_together = crates_to_publish_together
-        .into_iter()
-        .map(|p| {
-            version::bump(
-                p,
-                version::select_publishee_bump_spec(&p.name, &ctx.base),
-                &ctx.base,
-                options.bump_when_needed,
-            )
-            .map(|v| (p, v))
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-
     let manifest::Outcome {
         commit_id,
         section_by_package: release_section_by_publishee,
-        safety_bumped_packages,
-    } = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(
-        meta,
-        &crates_to_publish_together,
-        options,
-        ctx,
-    )?;
+    } = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(meta, crates, options, ctx)?;
 
-    log::info!(
-        "{} prepare releases of {}{}",
-        will(options.dry_run),
-        names_and_versions(&crates_to_publish_together),
-        if safety_bumped_packages.is_empty() {
-            "".to_string()
-        } else {
-            format!(
-                ", bumping {} crate{} for safety",
-                safety_bumped_packages.len(),
-                if safety_bumped_packages.len() == 1 { "" } else { "s" }
-            )
-        }
-    );
-
-    crates_to_publish_together.reverse();
     let mut tag_names = Vec::new();
-    for (publishee, new_version) in crates_to_publish_together.iter().rev() {
-        let unpublished_crates: Vec<_> = crates_to_publish_together
-            .iter()
-            .map(|(p, _)| p.name.to_owned())
-            .collect();
-
-        cargo::publish_crate(publishee, &unpublished_crates, options)?;
+    for (publishee, new_version) in crates.iter().filter_map(|c| try_to_published_crate_and_new_version(c)) {
+        cargo::publish_crate(publishee, options)?;
         if let Some(tag_name) = git::create_version_tag(
             publishee,
             new_version,
@@ -393,7 +347,7 @@ fn perform_multi_version_release(
     }
     git::push_tags_and_head(tag_names.iter(), options)?;
     if options.allow_changelog_github_release {
-        for (publishee, new_version) in crates_to_publish_together.iter().rev() {
+        for (publishee, new_version) in crates.iter().filter_map(|c| try_to_published_crate_and_new_version(c)) {
             if let Some(message) = release_section_by_publishee
                 .get(&publishee.name.as_str())
                 .and_then(|s| section_to_string(s, WriteMode::GitHubRelease))

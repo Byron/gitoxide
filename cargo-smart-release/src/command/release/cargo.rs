@@ -8,7 +8,6 @@ use crate::utils::will;
 
 pub(in crate::command::release_impl) fn publish_crate(
     publishee: &Package,
-    other_publishee_names: &[String],
     Options {
         skip_publish,
         dry_run,
@@ -23,10 +22,6 @@ pub(in crate::command::release_impl) fn publish_crate(
         return Ok(());
     }
     let max_attempts = 3;
-    let must_not_verify = publishee
-        .dependencies
-        .iter()
-        .any(|dep| other_publishee_names.contains(&dep.name));
     let uses_cargo_dry_run = dry_run && dry_run_cargo_publish;
     let cargo_must_run = !dry_run || uses_cargo_dry_run;
     for attempt in 1..=max_attempts {
@@ -36,7 +31,7 @@ pub(in crate::command::release_impl) fn publish_crate(
         if allow_dirty {
             c.arg("--allow-dirty");
         }
-        if no_verify || must_not_verify {
+        if no_verify {
             c.arg("--no-verify");
         }
         if uses_cargo_dry_run {

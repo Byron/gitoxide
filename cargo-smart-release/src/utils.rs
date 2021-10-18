@@ -35,6 +35,17 @@ pub fn will(not_really: bool) -> &'static str {
     }
 }
 
+pub fn try_to_published_crate_and_new_version<'meta, 'a>(
+    c: &'a crate::traverse::Dependency<'meta>,
+) -> Option<(&'meta Package, &'a semver::Version)> {
+    match &c.mode {
+        crate::traverse::dependency::Mode::ToBePublished { adjustment } => {
+            Some((c.package, adjustment.bump().next_release()))
+        }
+        _ => None,
+    }
+}
+
 pub fn is_pre_release_version(semver: &Version) -> bool {
     semver.major == 0
 }
@@ -63,9 +74,9 @@ pub fn package_by_name<'a>(meta: &'a Metadata, name: &str) -> anyhow::Result<&'a
         .ok_or_else(|| anyhow!("workspace member '{}' must be a listed package", name))
 }
 
-pub fn names_and_versions(publishees: &[(&Package, semver::Version)]) -> String {
+pub fn names_and_versions<'a>(publishees: impl IntoIterator<Item = &'a (&'a Package, &'a semver::Version)>) -> String {
     publishees
-        .iter()
+        .into_iter()
         .map(|(p, nv)| format!("{} v{}", p.name, nv))
         .collect::<Vec<_>>()
         .join(", ")

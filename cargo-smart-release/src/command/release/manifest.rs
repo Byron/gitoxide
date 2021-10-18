@@ -5,6 +5,8 @@ use cargo_metadata::{camino::Utf8PathBuf, Metadata, Package};
 use semver::{Op, Version, VersionReq};
 
 use super::{cargo, git, Context, Oid, Options};
+use crate::traverse::Dependency;
+use crate::utils::try_to_published_crate_and_new_version;
 use crate::{
     changelog,
     changelog::write::Linkables,
@@ -15,12 +17,11 @@ use crate::{
 pub struct Outcome<'repo, 'meta> {
     pub commit_id: Option<Oid<'repo>>,
     pub section_by_package: BTreeMap<&'meta str, changelog::Section>,
-    pub safety_bumped_packages: Vec<(&'meta Package, semver::Version)>,
 }
 
 pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_and_handle_changelog<'repo, 'meta>(
     meta: &'meta Metadata,
-    publishees: &[(&'meta Package, semver::Version)],
+    crates: &[Dependency<'meta>],
     opts: Options,
     ctx: &'repo Context,
 ) -> anyhow::Result<Outcome<'repo, 'meta>> {
@@ -38,7 +39,11 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     let mut made_change = false;
     let next_commit_date = crate::utils::time_to_offset_date_time(crate::git::author()?.time);
     let mut release_section_by_publishee = BTreeMap::default();
-    for (publishee, new_version) in publishees {
+    let crates_and_versions_to_be_published: Vec<_> = crates
+        .iter()
+        .filter_map(|c| try_to_published_crate_and_new_version(c))
+        .collect();
+    for (publishee, new_version) in &crates_and_versions_to_be_published {
         let lock = git_repository::lock::File::acquire_to_update_resource(
             &publishee.manifest_path,
             git_repository::lock::acquire::Fail::Immediately,
@@ -85,13 +90,13 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                             new_version
                         );
                     }
-                    *name = changelog::Version::Semantic(new_version.clone());
+                    *name = changelog::Version::Semantic((*new_version).to_owned());
                     *date = Some(next_commit_date);
                     let recent_section = log.sections.remove(recent_idx);
                     match log
                         .sections
                         .iter_mut()
-                        .find(|s| matches!(s, changelog::Section::Release {name: changelog::Version::Semantic(v), ..} if v == new_version))
+                        .find(|s| matches!(s, changelog::Section::Release {name: changelog::Version::Semantic(v), ..} if v == *new_version))
                     {
                         Some(version_section) => {
                             version_section.merge(recent_section);
@@ -114,7 +119,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                     date,
                     ..
                 } => {
-                    if recent_version != new_version {
+                    if recent_version != *new_version {
                         anyhow::bail!(
                             "'{}' does not have an unreleased version, and most recent release is unexpected. Wanted {}, got {}.",
                             publishee.name,
@@ -147,49 +152,39 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         }
     }
 
-    let mut dependent_packages =
-        collect_directly_dependent_packages(meta, publishees, &mut locks_by_manifest_path, ctx, opts)?;
-    let publishees_and_bumped_dependent_packages = publishees
+    let crates_with_version_change: Vec<_> = crates
         .iter()
-        .map(|(p, v)| (*p, v.to_owned()))
-        .chain(
-            dependent_packages
-                .clone()
-                .into_iter()
-                .filter_map(|(p, v)| v.map(|v| (p, v))),
-        )
-        .collect::<Vec<_>>();
-    for (publishee, new_version) in publishees {
-        let mut lock = locks_by_manifest_path
-            .get_mut(&publishee.manifest_path)
-            .expect("lock available");
+        .filter_map(|c| c.mode.version_adjustment_bump().map(|b| (c.package, b.next_release())))
+        .collect();
+    for (package, possibly_new_version) in crates
+        .iter()
+        .filter(|c| c.mode.manifest_will_change())
+        .map(|c| (c.package, c.mode.version_adjustment_bump().map(|b| b.next_release())))
+    {
+        let mut lock = git_repository::lock::File::acquire_to_update_resource(
+            &package.manifest_path,
+            git_repository::lock::acquire::Fail::Immediately,
+            None,
+        )?;
         made_change |= set_version_and_update_package_dependency(
-            publishee,
-            Some(new_version),
-            &publishees_and_bumped_dependent_packages,
+            package,
+            possibly_new_version,
+            &crates_with_version_change,
             &mut lock,
             opts,
         )?;
-    }
-
-    for (dependant_on_publishee, possibly_new_version) in dependent_packages.iter_mut() {
-        let mut lock = locks_by_manifest_path
-            .get_mut(&dependant_on_publishee.manifest_path)
-            .expect("lock written once");
-        made_change |= set_version_and_update_package_dependency(
-            dependant_on_publishee,
-            possibly_new_version.as_ref(),
-            &publishees_and_bumped_dependent_packages,
-            &mut lock,
-            opts,
-        )?;
+        let inserted = locks_by_manifest_path.insert(&package.manifest_path, lock);
+        assert!(
+            inserted.is_none(),
+            "BUG: impossible to create a lock for the same resource twice"
+        );
     }
 
     let would_stop_release = !(changelog_ids_with_statistical_segments_only.is_empty()
         && changelog_ids_probably_lacking_user_edits.is_empty());
-    let safety_bumped_packages = dependent_packages
-        .into_iter()
-        .filter_map(|(p, v)| v.map(|v| (p, v)))
+    let safety_bumped_packages = crates
+        .iter()
+        .filter_map(|c| c.mode.safety_bump().map(|b| (c.package, b.next_release())))
         .collect::<Vec<_>>();
     let message = format!(
         "{} {}{}",
@@ -200,17 +195,17 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         } else {
             "Release"
         },
-        names_and_versions(publishees),
+        names_and_versions(&crates_and_versions_to_be_published),
         {
             if safety_bumped_packages.is_empty() {
                 Cow::from("")
             } else {
+                let names_and_versions = names_and_versions(&safety_bumped_packages);
                 match safety_bumped_packages.len() {
-                    1 => format!(", safety bump {}", names_and_versions(&safety_bumped_packages)).into(),
+                    1 => format!(", safety bump {}", names_and_versions).into(),
                     num_crates => format!(
                         ", safety bump {} crates\n\nSAFETY BUMP: {}",
-                        num_crates,
-                        names_and_versions(&safety_bumped_packages)
+                        num_crates, names_and_versions
                     )
                     .into(),
                 }
@@ -410,7 +405,6 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         Ok(Outcome {
             commit_id: res,
             section_by_package: release_section_by_publishee,
-            safety_bumped_packages,
         })
     }
 }
@@ -536,7 +530,7 @@ fn is_direct_dependency_of(publishees: &[(&Package, semver::Version)], package_t
 fn set_version_and_update_package_dependency(
     package_to_update: &Package,
     new_package_version: Option<&semver::Version>,
-    publishees: &[(&Package, semver::Version)],
+    crates: &[(&Package, &semver::Version)],
     mut out: impl std::io::Write,
     Options {
         conservative_pre_release_version_handling,
@@ -558,7 +552,7 @@ fn set_version_and_update_package_dependency(
         }
     }
     for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {
-        for (name_to_find, new_version) in publishees.iter().map(|(p, nv)| (&p.name, nv)) {
+        for (name_to_find, new_version) in crates.iter().map(|(p, nv)| (&p.name, nv)) {
             for name_to_find in package_to_update
                 .dependencies
                 .iter()

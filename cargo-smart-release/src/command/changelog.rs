@@ -5,7 +5,7 @@ use crate::{
     changelog::write::{Components, Linkables},
     command::changelog::Options,
     git,
-    utils::{package_by_name, will},
+    utils::will,
     version::BumpSpec,
     ChangeLog,
 };
@@ -22,7 +22,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let bump_spec = dependencies.then(|| BumpSpec::Auto).unwrap_or(BumpSpec::Keep);
     let force_history_segmentation = false;
     let ctx = crate::Context::new(crates, force_history_segmentation, bump_spec, bump_spec)?;
-    let crates = if dependencies {
+    let crates: Vec<_> = {
         let add_production_crates = true;
         let bump_only_when_needed = true;
         let isolate_dependencies_from_breaking_changes = true;
@@ -31,15 +31,11 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
             add_production_crates,
             bump_only_when_needed,
             isolate_dependencies_from_breaking_changes,
+            dependencies,
         )?
         .into_iter()
         .filter_map(|d| matches!(d.mode, crate::traverse::dependency::Mode::ToBePublished { .. }).then(|| d.package))
         .collect()
-    } else {
-        ctx.crate_names
-            .iter()
-            .map(|name| package_by_name(&ctx.meta, name))
-            .collect::<Result<Vec<_>, _>>()?
     };
     assure_working_tree_is_unchanged(opts)?;
     let history = match git::history::collect(&ctx.repo)? {

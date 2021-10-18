@@ -17,7 +17,7 @@ pub mod release {
         pub bump_when_needed: bool,
         pub verbose: bool,
         pub skip_push: bool,
-        pub skip_dependencies: bool,
+        pub dependencies: bool,
         pub isolate_dependencies_from_breaking_changes: bool,
         pub changelog: bool,
         pub preview: bool,

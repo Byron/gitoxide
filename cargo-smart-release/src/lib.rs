@@ -9,11 +9,11 @@ pub struct ChangeLog {
 
 pub mod changelog;
 pub mod command;
-pub mod commit;
+pub(crate) mod commit;
 
-pub mod bat;
+pub(crate) mod bat;
 mod context;
-pub mod git;
-pub mod traverse;
+pub(crate) mod git;
+pub(crate) mod traverse;
 mod utils;
 pub mod version;

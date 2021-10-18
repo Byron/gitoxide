@@ -2,14 +2,15 @@ use std::collections::BTreeSet;
 
 use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
 
-use crate::traverse::dependency::ManifestAdjustment;
-use crate::utils::package_eq_dependency;
-use crate::version::{Bump, BumpSpec};
 use crate::{
     git,
-    traverse::dependency::VersionAdjustment,
-    utils::{is_pre_release_version, package_by_id, package_by_name, workspace_package_by_dependency},
-    version, Context,
+    traverse::dependency::{ManifestAdjustment, VersionAdjustment},
+    utils::{
+        is_pre_release_version, package_by_id, package_by_name, package_eq_dependency, workspace_package_by_dependency,
+    },
+    version,
+    version::{Bump, BumpSpec},
+    Context,
 };
 
 pub mod dependency {
@@ -34,10 +35,12 @@ pub mod dependency {
 
     #[derive(Clone, Debug)]
     pub enum VersionAdjustment {
+        /// The crate changed and should see a version change
         Changed {
             change: git::PackageChangeKind,
             bump: version::Bump,
         },
+        /// One of the crates dependencies signalled breaking changes, and is published because of that.
         Breakage {
             bump: version::Bump,
             /// Set if there is a change at all, which might not be the case for previously skipped crates.
@@ -75,6 +78,29 @@ pub mod dependency {
     }
 
     impl Mode {
+        pub fn manifest_will_change(&self) -> bool {
+            matches!(
+                self,
+                Mode::ToBePublished { .. }
+                    | Mode::NotForPublishing {
+                        adjustment: Some(_),
+                        ..
+                    }
+            )
+        }
+        pub fn safety_bump(&self) -> Option<&version::Bump> {
+            match self {
+                Mode::ToBePublished { adjustment }
+                | Mode::NotForPublishing {
+                    adjustment: Some(ManifestAdjustment::Version(adjustment)),
+                    ..
+                } => match adjustment {
+                    VersionAdjustment::Breakage { bump, .. } => Some(bump),
+                    VersionAdjustment::Changed { .. } => None,
+                },
+                _ => None,
+            }
+        }
         pub fn version_adjustment_bump(&self) -> Option<&version::Bump> {
             match self {
                 Mode::ToBePublished { adjustment }
@@ -105,6 +131,7 @@ pub fn dependencies(
     add_production_crates: bool,
     bump_when_needed: bool,
     isolate_dependencies_from_breaking_changes: bool,
+    traverse_graph: bool,
 ) -> anyhow::Result<Vec<Dependency<'_>>> {
     let mut seen = BTreeSet::new();
     let mut crates = Vec::new();
@@ -119,15 +146,17 @@ pub fn dependencies(
             crates.clear();
         }
         let num_crates_for_publishing_without_dependencies = crates.len();
-        let current_skipped = depth_first_traversal(
-            ctx,
-            &mut seen,
-            &mut crates,
-            package,
-            add_production_crates,
-            bump_when_needed,
-        )?;
-        crates.extend(current_skipped);
+        if traverse_graph {
+            let crates_from_graph = depth_first_traversal(
+                ctx,
+                &mut seen,
+                &mut crates,
+                package,
+                add_production_crates,
+                bump_when_needed,
+            )?;
+            crates.extend(crates_from_graph);
+        }
 
         match git::change_since_last_release(package, ctx)? {
             Some(user_package_change) => {
