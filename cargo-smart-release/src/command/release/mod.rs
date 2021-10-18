@@ -1,6 +1,5 @@
 use anyhow::bail;
 use cargo_metadata::{Metadata, Package};
-use std::collections::BTreeMap;
 
 use crate::{
     changelog,
@@ -222,69 +221,78 @@ fn present_dependencies(
         }
     }
 
-    let crate_names_for_manifest_updates = deps
-        .iter()
-        .filter_map(|d| {
-            matches!(d.mode, dependency::Mode::ManifestNeedsUpdateDueToDependencyChange)
-                .then(|| d.package.name.as_str())
-        })
-        .collect::<Vec<_>>();
-    if !crate_names_for_manifest_updates.is_empty() {
-        let plural_s = (crate_names_for_manifest_updates.len() > 1)
-            .then(|| "s")
-            .unwrap_or_default();
-        log::info!(
-            "Manifest{} of {} package{} {} be adjusted as its direct dependencies see a version change: {}",
-            plural_s,
-            crate_names_for_manifest_updates.len(),
-            plural_s,
-            will(dry_run),
-            crate_names_for_manifest_updates.join(", ")
-        );
+    {
+        let crate_names_for_manifest_updates = deps
+            .iter()
+            .filter_map(|d| {
+                matches!(d.mode, dependency::Mode::ManifestNeedsUpdateDueToDependencyChange)
+                    .then(|| d.package.name.as_str())
+            })
+            .collect::<Vec<_>>();
+        if !crate_names_for_manifest_updates.is_empty() {
+            let plural_s = (crate_names_for_manifest_updates.len() > 1)
+                .then(|| "s")
+                .unwrap_or_default();
+            log::info!(
+                "Manifest{} of {} package{} {} be adjusted as its direct dependencies see a version change: {}",
+                plural_s,
+                crate_names_for_manifest_updates.len(),
+                plural_s,
+                will(dry_run),
+                crate_names_for_manifest_updates.join(", ")
+            );
+        }
     }
 
-    let affected_crates_by_cause = deps
-        .iter()
-        .filter_map(|dep| match &dep.mode {
-            dependency::Mode::Skipped {
-                adjustment:
-                    Some(VersionAdjustment::Breakage {
-                        bump,
-                        causing_dependency_names,
-                        ..
-                    }),
-                ..
-            } => Some((dep, bump, causing_dependency_names)),
-            _ => None,
-        })
-        .fold(BTreeMap::default(), |mut acc, (dep, bump, causing_names)| {
-            for name in causing_names {
-                acc.entry(name.as_str())
-                    .or_insert_with(Vec::new)
-                    .push((dep.package.name.as_str(), bump));
-            }
-            acc
-        });
-    for (cause, deps_and_bumps) in affected_crates_by_cause.into_iter() {
-        log::info!(
-            "Due to breaking change in '{}' manifests of {} package{} adjustments: {}",
-            cause,
-            deps_and_bumps.len(),
-            (deps_and_bumps.len() != 1).then(|| "s").unwrap_or(""),
-            deps_and_bumps
-                .into_iter()
-                .map(|(dep_name, bump)| format!(
-                    "'{}' {} ➡ {}",
-                    dep_name,
-                    bump.package_version,
-                    bump.next_release
-                        .as_ref()
-                        .expect("bailed earlier if there was an error")
-                ))
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
+    {
+        let affected_crates_by_cause = deps
+            .iter()
+            .filter_map(|dep| match &dep.mode {
+                dependency::Mode::Skipped {
+                    adjustment:
+                        Some(VersionAdjustment::Breakage {
+                            bump,
+                            causing_dependency_names,
+                            ..
+                        }),
+                    ..
+                } => Some((dep, bump, causing_dependency_names)),
+                _ => None,
+            })
+            .fold(
+                Vec::new(),
+                |mut acc: Vec<(&str, Vec<(&str, &version::Bump)>)>, (dep, bump, causing_names)| {
+                    for name in causing_names {
+                        match acc.iter_mut().find(|(k, _v)| k == name) {
+                            Some((_k, deps)) => deps.push((dep.package.name.as_str(), bump)),
+                            None => acc.push((name, vec![(dep.package.name.as_str(), bump)])),
+                        }
+                    }
+                    acc
+                },
+            );
+        for (cause, deps_and_bumps) in affected_crates_by_cause.into_iter() {
+            log::info!(
+                "Due to breaking change in '{}' manifests of {} package{} adjustments: {}",
+                cause,
+                deps_and_bumps.len(),
+                (deps_and_bumps.len() != 1).then(|| "s").unwrap_or(""),
+                deps_and_bumps
+                    .into_iter()
+                    .map(|(dep_name, bump)| format!(
+                        "'{}' {} ➡ {}",
+                        dep_name,
+                        bump.package_version,
+                        bump.next_release
+                            .as_ref()
+                            .expect("bailed earlier if there was an error")
+                    ))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+        }
     }
+
     if error {
         bail!("Aborting due to previous error(s)");
     } else {
