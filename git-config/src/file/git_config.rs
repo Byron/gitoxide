@@ -135,6 +135,32 @@ impl<'event> GitConfig<'event> {
         parse_from_path(path).map(Self::from)
     }
 
+    /// Constructs a `git-config` file from the provided paths.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if there was an IO error or if a file wasn't a valid
+    /// git-config file.
+    #[inline]
+    pub fn from_paths(paths: &[&Path]) -> Result<Self, ParserOrIoError<'static>> {
+        let mut config = Self::new();
+
+        for path in paths {
+            let mut other = Self::open(path)?;
+            for (section_id, section_header) in other.section_headers {
+                println!("section {:?} {:?}", section_id, section_header);
+
+                config.push_section(
+                    section_header.name.0.to_owned(),
+                    section_header.subsection_name.to_owned(),
+                    other.sections[&section_id].clone(),
+                );
+            }
+        }
+
+        Ok(config)
+    }
+
     /// Generates a config from the environment variables. This is neither
     /// zero-copy nor zero-alloc. See [`git-config`'s documentation] on
     /// environment variable for more information.
@@ -1500,6 +1526,60 @@ a"#,
 
         values.delete_all();
         assert!(values.get().is_err());
+    }
+}
+
+#[cfg(test)]
+mod from_paths {
+    use super::{Cow, GitConfig, ParserOrIoError, Path};
+    use std::fs;
+    use tempfile::tempdir;
+
+    #[test]
+    fn single_path() {
+        let dir = tempdir().unwrap();
+        let config_path = dir.path().join("config");
+        fs::write(config_path.as_path(), b"[core]\nboolean = true").expect("Unable to write config file");
+
+        let paths = vec![config_path.as_path()];
+        let config = GitConfig::from_paths(&paths).unwrap();
+
+        assert_eq!(
+            config.get_raw_value("core", None, "boolean"),
+            Ok(Cow::<[u8]>::Borrowed(b"true"))
+        );
+    }
+
+    #[test]
+    fn cascade() {
+        let dir = tempdir().unwrap();
+
+        let a_path = dir.path().join("a");
+        fs::write(a_path.as_path(), b"[core]\na = true").expect("Unable to write config file");
+
+        let b_path = dir.path().join("b");
+        fs::write(b_path.as_path(), b"[core]\nb = true").expect("Unable to write config file");
+
+        let c_path = dir.path().join("c");
+        fs::write(c_path.as_path(), b"[core]\nc = true").expect("Unable to write config file");
+
+        let paths = vec![a_path.as_path(), b_path.as_path(), c_path.as_path()];
+        let config = GitConfig::from_paths(&paths).unwrap();
+
+        assert_eq!(
+            config.get_raw_value("core", None, "a"),
+            Ok(Cow::<[u8]>::Borrowed(b"true"))
+        );
+
+        assert_eq!(
+            config.get_raw_value("core", None, "b"),
+            Ok(Cow::<[u8]>::Borrowed(b"true"))
+        );
+
+        assert_eq!(
+            config.get_raw_value("core", None, "c"),
+            Ok(Cow::<[u8]>::Borrowed(b"true"))
+        );
     }
 }
 
