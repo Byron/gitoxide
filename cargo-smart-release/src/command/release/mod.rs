@@ -118,29 +118,13 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
 }
 
 fn present_dependencies(
-    deps: &[traverse::Dependency<'_>],
+    crates: &[traverse::Dependency<'_>],
     ctx: &Context,
     _verbose: bool,
     dry_run: bool,
 ) -> anyhow::Result<()> {
     use dependency::Kind;
-    let skipped = deps
-        .iter()
-        .filter_map(|dep| {
-            matches!(&dep.mode, dependency::Mode::NotForPublishing { adjustment: None, .. })
-                .then(|| dep.package.name.as_str())
-        })
-        .collect::<Vec<_>>();
-    if !skipped.is_empty() {
-        log::info!(
-            "Will not publish or alter {} dependent crate{} as {} unchanged since the last release: {}",
-            skipped.len(),
-            (skipped.len() != 1).then(|| "s").unwrap_or(""),
-            (skipped.len() != 1).then(|| "they are").unwrap_or("it is"),
-            skipped.join(", ")
-        );
-    }
-    for (refused_crate, has_adjustment) in deps
+    let all_skipped: Vec<_> = crates
         .iter()
         .filter_map(|dep| match &dep.mode {
             dependency::Mode::NotForPublishing { adjustment, .. } => {
@@ -148,6 +132,9 @@ fn present_dependencies(
             }
             _ => None,
         })
+        .collect();
+    for (refused_crate, has_adjustment) in all_skipped
+        .iter()
         .filter(|(name, _)| ctx.base.crate_names.iter().any(|n| n == *name))
     {
         log::warn!(
@@ -158,9 +145,23 @@ fn present_dependencies(
                 .unwrap_or("as it didn't change")
         );
     }
+    let skipped = all_skipped.iter().map(|(name, _)| *name).collect::<Vec<_>>();
+    if !skipped.is_empty() {
+        log::info!(
+            "Will not publish or alter {} dependent crate{} as {} unchanged since the last release: {}",
+            skipped.len(),
+            (skipped.len() != 1).then(|| "s").unwrap_or(""),
+            (skipped.len() != 1).then(|| "they are").unwrap_or("it is"),
+            skipped.join(", ")
+        );
+    }
+
+    if all_skipped.len() == crates.len() {
+        bail!("There is no crate eligible for publishing.");
+    }
 
     let mut error = false;
-    for dep in deps {
+    for dep in crates {
         let (bump_spec, kind) = match dep.kind {
             Kind::UserSelection => (ctx.base.bump, "provided"),
             Kind::DependencyOrDependentOfUserSelection => (ctx.base.bump_dependencies, "dependent"),
@@ -234,7 +235,7 @@ fn present_dependencies(
     }
 
     {
-        let affected_crates_by_cause = deps
+        let affected_crates_by_cause = crates
             .iter()
             .filter_map(|dep| match &dep.mode {
                 dependency::Mode::NotForPublishing {
@@ -285,7 +286,7 @@ fn present_dependencies(
     }
 
     {
-        let crate_names_for_manifest_updates = deps
+        let crate_names_for_manifest_updates = crates
             .iter()
             .filter_map(|d| {
                 matches!(
