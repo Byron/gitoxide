@@ -1,4 +1,5 @@
 use anyhow::bail;
+use std::collections::BTreeMap;
 
 use crate::{
     changelog,
@@ -127,16 +128,16 @@ fn present_dependencies(
     let all_skipped: Vec<_> = crates
         .iter()
         .filter_map(|dep| match &dep.mode {
-            dependency::Mode::NotForPublishing { adjustment, .. } => {
-                Some((dep.package.name.as_str(), adjustment.is_some()))
+            dependency::Mode::NotForPublishing { reason, adjustment } => {
+                Some((dep.package.name.as_str(), adjustment.is_some(), *reason))
             }
             _ => None,
         })
         .collect();
     let mut num_refused = 0;
-    for (refused_crate, has_adjustment) in all_skipped
+    for (refused_crate, has_adjustment, _) in all_skipped
         .iter()
-        .filter(|(name, _)| ctx.base.crate_names.iter().any(|n| n == *name))
+        .filter(|(name, _, _)| ctx.base.crate_names.iter().any(|n| n == *name))
     {
         num_refused += 1;
         log::warn!(
@@ -159,15 +160,33 @@ fn present_dependencies(
 
     let skipped = all_skipped
         .iter()
-        .filter_map(|(name, has_adjustment)| (!has_adjustment).then(|| *name))
+        .filter_map(|(name, has_adjustment, reason)| (!has_adjustment).then(|| (*name, reason)))
         .collect::<Vec<_>>();
     if !skipped.is_empty() {
+        let skipped_len = skipped.len();
+        let mut crates_by_reason: Vec<_> = skipped
+            .into_iter()
+            .fold(BTreeMap::default(), |mut acc, (name, reason)| {
+                acc.entry(*reason).or_insert_with(Vec::new).push(name);
+                acc
+            })
+            .into_iter()
+            .collect();
+        crates_by_reason.sort_by_key(|(k, _)| *k);
+
         log::info!(
-            "Will not publish or alter {} dependent crate{} as {} unchanged since the last release: {}",
-            skipped.len(),
-            (skipped.len() != 1).then(|| "s").unwrap_or(""),
-            (skipped.len() != 1).then(|| "they are").unwrap_or("it is"),
-            skipped.join(", ")
+            "Will not publish or alter {} dependent crate{}: {}",
+            skipped_len,
+            (skipped_len != 1).then(|| "s").unwrap_or(""),
+            crates_by_reason
+                .into_iter()
+                .map(|(key, names)| format!(
+                    "{} = {}",
+                    key,
+                    names.iter().map(|n| format!("'{}'", n)).collect::<Vec<_>>().join(", ")
+                ))
+                .collect::<Vec<_>>()
+                .join(", ")
         );
     }
 

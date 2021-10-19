@@ -17,12 +17,23 @@ pub mod dependency {
     use crate::{git, version};
 
     /// Skipped crates are always dependent ones
-    #[derive(Copy, Clone, Debug)]
+    #[derive(Copy, Clone, Debug, PartialOrd, Ord, Eq, PartialEq)]
     pub enum NoPublishReason {
         Unchanged,
         DeniedAutopublishOfProductionCrate,
         PublishDisabledInManifest,
         BreakingChangeCausesManifestUpdate,
+    }
+
+    impl std::fmt::Display for NoPublishReason {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.write_str(match self {
+                NoPublishReason::PublishDisabledInManifest => "disabled",
+                NoPublishReason::DeniedAutopublishOfProductionCrate => "denied",
+                NoPublishReason::Unchanged => "unchanged",
+                NoPublishReason::BreakingChangeCausesManifestUpdate => "dep-breaking",
+            })
+        }
     }
 
     #[derive(Clone, Copy, Debug)]
