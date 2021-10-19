@@ -257,18 +257,21 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                     continue;
                 }
                 seen.insert(&dependant.id);
-                let bump_of_crate_with_that_name = crates.iter().find_map(|c| {
-                    (c.package.id == dependant.id)
-                        .then(|| c.mode.version_adjustment_bump())
-                        .flatten()
+                let crate_is_known_already = crates.iter().find_map(|c| {
+                    (c.package.id == dependant.id).then(|| c.mode.version_adjustment_bump().map(|b| b.is_breaking()))
                 });
 
-                // TODO: this can actually easily happen if a provided crate depends on a breaking change
-                //       but itself didn't change and thus won't be published. No other way but to deal with
-                //       upgrading existing crates here. This is why sometimes the crate exists but has no bump.
                 let bump = breaking_version_bump(ctx, dependant, bump_when_needed)?;
-                if bump.next_release_changes_manifest() && bump_of_crate_with_that_name.is_none() {
-                    if is_pre_release_version(&dependant.version) || allow_auto_publish_of_stable_crates {
+                if bump.next_release_changes_manifest() {
+                    if crate_is_known_already.is_some() {
+                        let is_breaking = crate_is_known_already.flatten().unwrap_or(false);
+                        if !is_breaking {
+                            log::debug!(
+                                "Wanted to mark '{}' for breaking manifest change, but its already known without breaking change.",
+                                dependant.name
+                            );
+                        }
+                    } else if is_pre_release_version(&dependant.version) || allow_auto_publish_of_stable_crates {
                         new_crates_this_round.push(Dependency {
                             package: dependant,
                             kind: dependency::Kind::DependencyOrDependentOfUserSelection,
