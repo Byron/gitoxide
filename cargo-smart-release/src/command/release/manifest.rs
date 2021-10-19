@@ -48,12 +48,12 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
 
     let crates_with_version_change: Vec<_> = crates
         .iter()
-        .filter_map(|c| c.mode.version_adjustment_bump().map(|b| (c.package, b.next_release())))
+        .filter_map(|c| c.mode.version_adjustment_bump().map(|b| (c.package, &b.next_release)))
         .collect();
     for (package, possibly_new_version) in crates
         .iter()
         .filter(|c| c.mode.manifest_will_change())
-        .map(|c| (c.package, c.mode.version_adjustment_bump().map(|b| b.next_release())))
+        .map(|c| (c.package, c.mode.version_adjustment_bump().map(|b| &b.next_release)))
     {
         let mut entry_store;
         let lock = match locks_by_manifest_path.entry(&package.manifest_path) {
@@ -80,7 +80,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         && changelog_ids_probably_lacking_user_edits.is_empty());
     let safety_bumped_packages = crates
         .iter()
-        .filter_map(|c| c.mode.safety_bump().map(|b| (c.package, b.next_release())))
+        .filter_map(|c| c.mode.safety_bump().map(|b| (c.package, &b.next_release)))
         .collect::<Vec<_>>();
     let commit_message = generate_commit_message(
         &crates_and_versions_to_be_published,

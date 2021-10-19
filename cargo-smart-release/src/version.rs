@@ -59,31 +59,20 @@ fn bump_major_minor_patch(v: &mut semver::Version, bump_spec: BumpSpec) -> bool 
     }
 }
 
-pub mod bump {
-    #[derive(Clone, Debug)]
-    pub enum Error {
-        LatestReleaseMoreRecentThanDesiredOne(semver::Version),
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct Bump {
-    pub next_release: Result<semver::Version, bump::Error>,
+    pub next_release: semver::Version,
     pub package_version: semver::Version,
     pub latest_release: Option<semver::Version>,
     pub desired_release: semver::Version,
 }
 
 impl Bump {
-    pub(crate) fn next_release(&self) -> &semver::Version {
-        self.next_release.as_ref().expect("only valid versions here")
-    }
-
     pub(crate) fn next_release_changes_manifest(&self) -> bool {
-        self.next_release() > &self.package_version
+        self.next_release > self.package_version
     }
     pub(crate) fn is_breaking(&self) -> bool {
-        rhs_is_breaking_bump_for_lhs(&self.package_version, self.next_release())
+        rhs_is_breaking_bump_for_lhs(&self.package_version, &self.next_release)
     }
 }
 
@@ -147,9 +136,7 @@ pub(crate) fn bump_package_with_spec(
             let latest_release = semver::Version::parse(published_crate.latest_version().version())
                 .expect("valid version in crate index");
             let next_release = if latest_release >= desired_release {
-                Err(bump::Error::LatestReleaseMoreRecentThanDesiredOne(
-                    latest_release.clone(),
-                ))
+                desired_release.clone()
             } else {
                 let mut next_release = desired_release.clone();
                 if bump_when_needed && package.version > latest_release && desired_release != package.version {
@@ -161,17 +148,17 @@ pub(crate) fn bump_package_with_spec(
                         next_release = package.version.clone();
                     };
                 }
-                Ok(next_release)
+                next_release
             };
             (Some(latest_release), next_release)
         }
         None => (
             None,
-            Ok(if bump_when_needed {
+            if bump_when_needed {
                 package.version.clone()
             } else {
                 desired_release.clone()
-            }),
+            },
         ),
     };
     Ok(Bump {
