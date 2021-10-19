@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 
 use anyhow::bail;
 
-use crate::utils::Program;
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},
@@ -11,7 +10,7 @@ use crate::{
         self, dependency,
         dependency::{ManifestAdjustment, VersionAdjustment},
     },
-    utils::{tag_name, try_to_published_crate_and_new_version, will},
+    utils::{tag_name, try_to_published_crate_and_new_version, will, Program},
     version,
     version::BumpSpec,
 };
@@ -391,8 +390,12 @@ fn perform_multi_version_release(
             false
         };
     let mut tag_names = Vec::new();
+    let mut publish_err = None;
     for (publishee, new_version) in crates.iter().filter_map(|c| try_to_published_crate_and_new_version(c)) {
-        cargo::publish_crate(publishee, options)?;
+        if let Err(err) = cargo::publish_crate(publishee, options) {
+            publish_err = Some(err);
+            break;
+        }
         if let Some(tag_name) = git::create_version_tag(
             publishee,
             new_version,
@@ -416,8 +419,11 @@ fn perform_multi_version_release(
             .map(|release_notes| github::create_release(publishee, new_version, &release_notes, options, &ctx.base))
             .transpose()?;
     }
-    git::push_tags_and_head(tag_names.iter(), options)?;
-    Ok(())
+    git::push_tags_and_head(&tag_names, options)?;
+    match publish_err {
+        Some(err) => Err(err),
+        None => Ok(()),
+    }
 }
 
 enum WriteMode {

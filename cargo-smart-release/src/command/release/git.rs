@@ -84,11 +84,11 @@ pub(in crate::command::release_impl) fn create_version_tag<'repo>(
 }
 
 // TODO: Use gitoxide here
-pub fn push_tags_and_head<'a>(
-    tag_names: impl IntoIterator<Item = &'a refs::FullName>,
+pub fn push_tags_and_head(
+    tag_names: &[refs::FullName],
     Options { dry_run, skip_push, .. }: Options,
 ) -> anyhow::Result<()> {
-    if skip_push {
+    if skip_push || tag_names.is_empty() {
         return Ok(());
     }
 

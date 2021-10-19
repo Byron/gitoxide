@@ -1,8 +1,7 @@
 use std::{convert::TryInto, process::Command};
 
 use anyhow::{anyhow, bail};
-use cargo_metadata::camino::Utf8Path;
-use cargo_metadata::Package;
+use cargo_metadata::{camino::Utf8Path, Package};
 use git_repository as git;
 use git_repository::{
     bstr::{BStr, ByteSlice},
