@@ -11,6 +11,10 @@ Releases will be more atomic and it will try hard to complete all pending operat
 of failure. Now GitHub releases will be created right after a publish succeeded, and tags will be pushed
 for all successful publishes.
 
+### New Features
+
+ - <csr-id-db3cb11c466fff57f3f272d7269dc95a636e1c1f/> Add `-d` short flag for `--allow-dirty` in `changelog`
+
 ### Bug Fixes
 
  - <csr-id-8c3ca9cf58c44af627fc9b3c4138891635b1c554/> Push all available tags even if an error occurred.
@@ -31,8 +35,8 @@ for all successful publishes.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
- - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 5 commits contributed to the release.
+ - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
 
 ### Commit Details
@@ -42,6 +46,7 @@ for all successful publishes.
 <details><summary>view details</summary>
 
  * **[#222](https://github.com//Byron/gitoxide/issues/222)**
+    - Add `-d` short flag for `--allow-dirty` in `changelog` ([`db3cb11`](https://github.com//Byron/gitoxide/commit/db3cb11c466fff57f3f272d7269dc95a636e1c1f))
     - adjust changelog ([`2db6d88`](https://github.com//Byron/gitoxide/commit/2db6d88f390d6577c8660b9da00f94a4a3943ebd))
     - push all available tags even if an error occurred ([`8c3ca9c`](https://github.com//Byron/gitoxide/commit/8c3ca9cf58c44af627fc9b3c4138891635b1c554))
     - create GitHub release right after publishing succeeds ([`b769c47`](https://github.com//Byron/gitoxide/commit/b769c47079a16042ef592a0199cb2d0f6afeeb5e))
