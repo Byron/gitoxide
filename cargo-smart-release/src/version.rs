@@ -101,7 +101,6 @@ pub(crate) fn bump_package_with_spec(
             );
             let unreleased = &segments[0];
             if unreleased.history.is_empty() {
-                log::trace!("{}: no changes since the last release. Version unchanged", package.name);
                 false
             } else if unreleased.history.iter().any(|item| item.message.breaking) {
                 let is_breaking = if is_pre_release(&v) {

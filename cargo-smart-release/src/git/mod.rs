@@ -1,6 +1,7 @@
 use std::{convert::TryInto, process::Command};
 
 use anyhow::{anyhow, bail};
+use cargo_metadata::camino::Utf8Path;
 use cargo_metadata::Package;
 use git_repository as git;
 use git_repository::{
@@ -36,7 +37,8 @@ pub fn change_since_last_release(package: &Package, ctx: &crate::Context) -> any
             let current_commit = c?;
             let released_target = tag_ref.peel_to_id_in_place()?;
 
-            match repo_relative_crate_dir {
+            // If it's a top-level crate, use the src-directory for now
+            match repo_relative_crate_dir.or_else(|| Some(Utf8Path::new("src"))) {
                 None => (current_commit != released_target).then(|| PackageChangeKind::ChangedOrNew),
                 Some(dir) => {
                     let components = dir.components().map(component_to_bytes);

@@ -210,12 +210,25 @@ fn present_dependencies(
                     .as_ref()
                     .and_then(|lr| (*lr >= bump.desired_release).then(|| lr))
                 {
-                    log::warn!(
-                        "Latest published version of '{}' is {}, the new version is {}. Consider using --bump <level> or --bump-dependencies <level> or update the index with --update-crates-index.",
-                        dep.package.name,
-                        latest_release,
-                        bump.desired_release
-                    );
+                    let bump_flag = match dep.kind {
+                        dependency::Kind::UserSelection => "--bump <level>",
+                        dependency::Kind::DependencyOrDependentOfUserSelection => "--bump-dependencies <level>",
+                    };
+                    if bump.desired_release == bump.package_version {
+                        log::warn!(
+                            "'{}' is unchanged. Consider using {} along with --no-bump-on-demand to force a version change.",
+                            dep.package.name,
+                            bump_flag
+                        );
+                    } else {
+                        log::warn!(
+                            "Latest published version of '{}' is {}, the new version is {}. Consider using {} or update the index with --update-crates-index.",
+                            dep.package.name,
+                            latest_release,
+                            bump.desired_release,
+                            bump_flag
+                        );
+                    }
                     error = true;
                 }
                 if bump.next_release > dep.package.version {
