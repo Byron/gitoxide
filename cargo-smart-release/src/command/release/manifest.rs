@@ -48,11 +48,10 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         changelog_ids_probably_lacking_user_edits,
         release_section_by_publishee,
         mut made_change,
-    } = if changelog {
-        gather_changelog_data(ctx, dry_run, generator_segments, &crates_and_versions_to_be_published)?
-    } else {
-        GatherOutcome::default()
-    };
+    } = changelog
+        .then(|| gather_changelog_data(ctx, &crates_and_versions_to_be_published, dry_run, generator_segments))
+        .transpose()?
+        .unwrap_or_default();
 
     let crates_with_version_change: Vec<_> = crates
         .iter()
@@ -90,93 +89,17 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         .iter()
         .filter_map(|c| c.mode.safety_bump().map(|b| (c.package, b.next_release())))
         .collect::<Vec<_>>();
-    let message = format!(
-        "{} {}{}",
-        if would_stop_release {
-            "Adjusting changelogs prior to release of"
-        } else if skip_publish {
-            "Bump"
-        } else {
-            "Release"
-        },
-        names_and_versions(&crates_and_versions_to_be_published),
-        {
-            if safety_bumped_packages.is_empty() {
-                Cow::from("")
-            } else {
-                let names_and_versions = names_and_versions(&safety_bumped_packages);
-                match safety_bumped_packages.len() {
-                    1 => format!(", safety bump {}", names_and_versions).into(),
-                    num_crates => format!(
-                        ", safety bump {} crates\n\nSAFETY BUMP: {}",
-                        num_crates, names_and_versions
-                    )
-                    .into(),
-                }
-            }
-        }
-    );
-
-    log::trace!(
-        "{} persist changes to {} manifests {}with: {:?}",
-        will(dry_run),
+    let commit_message = generate_commit_message(
+        &crates_and_versions_to_be_published,
+        &safety_bumped_packages,
+        skip_publish,
+        would_stop_release,
+        dry_run,
         locks_by_manifest_path.len(),
-        match (
-            pending_changelogs.len(),
-            pending_changelogs.iter().fold(0usize, |mut acc, (_, _, lock)| {
-                acc += if !lock.resource_path().is_file() { 1 } else { 0 };
-                acc
-            })
-        ) {
-            (0, _) => Cow::Borrowed(""),
-            (num_logs, num_new) => format!(
-                "and {} changelogs {}",
-                num_logs,
-                match num_new {
-                    0 => Cow::Borrowed(""),
-                    num_new => format!("({} new) ", num_new).into(),
-                }
-            )
-            .into(),
-        },
-        message
+        &pending_changelogs,
     );
 
-    if !pending_changelogs.is_empty() && preview && !dry_run {
-        let additional_info =
-            "use --no-changelog-preview to disable or Ctrl-C to abort, or the 'changelog' subcommand.";
-        let changelogs_with_changes = pending_changelogs
-            .iter()
-            .filter_map(|(_, has_changes, lock)| (*has_changes).then(|| lock))
-            .collect::<Vec<_>>();
-        log::info!(
-            "About to preview {} pending changelog(s), {}",
-            changelogs_with_changes.len(),
-            additional_info
-        );
-
-        let bat = crate::bat::Support::new();
-        for (idx, lock) in changelogs_with_changes.iter().enumerate() {
-            let additional_info = format!(
-                "PREVIEW {} / {}, {}{}",
-                idx + 1,
-                changelogs_with_changes.len(),
-                if opts.dry_run { "simplified, " } else { "" },
-                additional_info
-            );
-            bat.display_to_tty(
-                lock.lock_path(),
-                lock.resource_path().strip_prefix(&ctx.base.root.to_path_buf())?,
-                additional_info,
-            )?;
-        }
-    } else if !pending_changelogs.is_empty() && preview {
-        log::info!(
-            "Up to {} changelog{} would be previewed if the --execute is set and --no-changelog-preview is unset.",
-            pending_changelogs.len(),
-            if pending_changelogs.len() == 1 { "" } else { "s" }
-        );
-    }
+    preview_changelogs(ctx, &pending_changelogs, dry_run, preview)?;
 
     let bail_message_after_commit = if !dry_run {
         let mut packages_whose_changelogs_need_edits = None;
@@ -303,7 +226,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         None
     };
 
-    let res = git::commit_changes(message, dry_run, !made_change, &ctx.base)?;
+    let res = git::commit_changes(commit_message, dry_run, !made_change, &ctx.base)?;
     if let Some(bail_message) = bail_message_after_commit {
         bail!(bail_message);
     } else {
@@ -312,6 +235,113 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             section_by_package: release_section_by_publishee,
         })
     }
+}
+
+fn preview_changelogs(
+    ctx: &Context,
+    pending_changelogs: &[(&Package, bool, File)],
+    dry_run: bool,
+    preview: bool,
+) -> anyhow::Result<()> {
+    if !pending_changelogs.is_empty() && preview && !dry_run {
+        let additional_info =
+            "use --no-changelog-preview to disable or Ctrl-C to abort, or the 'changelog' subcommand.";
+        let changelogs_with_changes = pending_changelogs
+            .iter()
+            .filter_map(|(_, has_changes, lock)| (*has_changes).then(|| lock))
+            .collect::<Vec<_>>();
+        log::info!(
+            "About to preview {} pending changelog(s), {}",
+            changelogs_with_changes.len(),
+            additional_info
+        );
+
+        let bat = crate::bat::Support::new();
+        for (idx, lock) in changelogs_with_changes.iter().enumerate() {
+            let additional_info = format!(
+                "PREVIEW {} / {}, {}{}",
+                idx + 1,
+                changelogs_with_changes.len(),
+                if dry_run { "simplified, " } else { "" },
+                additional_info
+            );
+            bat.display_to_tty(
+                lock.lock_path(),
+                lock.resource_path().strip_prefix(&ctx.base.root.to_path_buf())?,
+                additional_info,
+            )?;
+        }
+    } else if !pending_changelogs.is_empty() && preview {
+        log::info!(
+            "Up to {} changelog{} would be previewed if the --execute is set and --no-changelog-preview is unset.",
+            pending_changelogs.len(),
+            if pending_changelogs.len() == 1 { "" } else { "s" }
+        );
+    }
+    Ok(())
+}
+
+fn generate_commit_message(
+    crates_and_versions_to_be_published: &[(&Package, &Version)],
+    safety_bumped_packages: &[(&Package, &Version)],
+    skip_publish: bool,
+    would_stop_release: bool,
+    dry_run: bool,
+    num_locks: usize,
+    pending_changelogs: &[(&Package, bool, File)],
+) -> String {
+    let message = format!(
+        "{} {}{}",
+        if would_stop_release {
+            "Adjusting changelogs prior to release of"
+        } else if skip_publish {
+            "Bump"
+        } else {
+            "Release"
+        },
+        names_and_versions(crates_and_versions_to_be_published),
+        {
+            if safety_bumped_packages.is_empty() {
+                Cow::from("")
+            } else {
+                let names_and_versions = names_and_versions(safety_bumped_packages);
+                match safety_bumped_packages.len() {
+                    1 => format!(", safety bump {}", names_and_versions).into(),
+                    num_crates => format!(
+                        ", safety bump {} crates\n\nSAFETY BUMP: {}",
+                        num_crates, names_and_versions
+                    )
+                    .into(),
+                }
+            }
+        }
+    );
+
+    log::trace!(
+        "{} persist changes to {} manifests {}with: {:?}",
+        will(dry_run),
+        num_locks,
+        match (
+            pending_changelogs.len(),
+            pending_changelogs.iter().fold(0usize, |mut acc, (_, _, lock)| {
+                acc += if !lock.resource_path().is_file() { 1 } else { 0 };
+                acc
+            })
+        ) {
+            (0, _) => Cow::Borrowed(""),
+            (num_logs, num_new) => format!(
+                "and {} changelogs {}",
+                num_logs,
+                match num_new {
+                    0 => Cow::Borrowed(""),
+                    num_new => format!("({} new) ", num_new).into(),
+                }
+            )
+            .into(),
+        },
+        message
+    );
+    message
 }
 
 #[derive(Default)]
@@ -327,9 +357,9 @@ pub struct GatherOutcome<'meta> {
 
 fn gather_changelog_data<'a, 'meta>(
     ctx: &Context,
+    crates_and_versions_to_be_published: &[(&'meta Package, &'a Version)],
     dry_run: bool,
     generator_segments: Selection,
-    crates_and_versions_to_be_published: &[(&'meta Package, &'a Version)],
 ) -> anyhow::Result<GatherOutcome<'meta>> {
     let mut out = GatherOutcome::default();
     let GatherOutcome {
