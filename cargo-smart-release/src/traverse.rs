@@ -155,7 +155,7 @@ pub fn dependencies(
         }
         let num_crates_for_publishing_without_dependencies = crates.len();
         if traverse_graph {
-            let crates_from_graph = depth_first_traversal(
+            depth_first_traversal(
                 ctx,
                 &mut seen,
                 &mut crates,
@@ -163,7 +163,6 @@ pub fn dependencies(
                 allow_auto_publish_of_stable_crates,
                 bump_when_needed,
             )?;
-            crates.extend(crates_from_graph);
         }
 
         match git::change_since_last_release(package, ctx)? {
@@ -487,59 +486,61 @@ fn depth_first_traversal<'meta>(
     root: &Package,
     allow_auto_publish_of_stable_crates: bool,
     bump_when_needed: bool,
-) -> anyhow::Result<Vec<Dependency<'meta>>> {
-    let mut skipped = Vec::new();
-    for dependency in root.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
-        let workspace_dependency = match workspace_package_by_dependency(&ctx.meta, dependency) {
-            Some(p) => p,
-            None => continue,
-        };
+) -> anyhow::Result<()> {
+    for workspace_dependency in root
+        .dependencies
+        .iter()
+        .filter(|d| d.kind == DependencyKind::Normal)
+        .filter_map(|d| workspace_package_by_dependency(&ctx.meta, d))
+    {
         if seen.contains(&&workspace_dependency.id) {
             continue;
         }
         seen.insert(&workspace_dependency.id);
-        skipped.extend(depth_first_traversal(
+        depth_first_traversal(
             ctx,
             seen,
             crates,
             workspace_dependency,
             allow_auto_publish_of_stable_crates,
             bump_when_needed,
-        )?);
-        if let Some(change) = git::change_since_last_release(workspace_dependency, ctx)? {
-            if is_pre_release_version(&workspace_dependency.version) || allow_auto_publish_of_stable_crates {
-                crates.push(Dependency {
-                    package: workspace_dependency,
-                    kind: dependency::Kind::DependencyOrDependentOfUserSelection,
-                    mode: dependency::Mode::ToBePublished {
-                        adjustment: VersionAdjustment::Changed {
-                            change,
-                            bump: version::bump_package(workspace_dependency, ctx, bump_when_needed)?,
+        )?;
+
+        crates.push(match git::change_since_last_release(workspace_dependency, ctx)? {
+            Some(change) => {
+                if is_pre_release_version(&workspace_dependency.version) || allow_auto_publish_of_stable_crates {
+                    Dependency {
+                        package: workspace_dependency,
+                        kind: dependency::Kind::DependencyOrDependentOfUserSelection,
+                        mode: dependency::Mode::ToBePublished {
+                            adjustment: VersionAdjustment::Changed {
+                                change,
+                                bump: version::bump_package(workspace_dependency, ctx, bump_when_needed)?,
+                            },
                         },
-                    },
-                });
-            } else {
-                crates.push(Dependency {
-                    package: workspace_dependency,
-                    kind: dependency::Kind::DependencyOrDependentOfUserSelection,
-                    mode: dependency::Mode::NotForPublishing {
-                        reason: dependency::NoPublishReason::DeniedAutopublishOfProductionCrate,
-                        adjustment: None,
-                    },
-                });
+                    }
+                } else {
+                    Dependency {
+                        package: workspace_dependency,
+                        kind: dependency::Kind::DependencyOrDependentOfUserSelection,
+                        mode: dependency::Mode::NotForPublishing {
+                            reason: dependency::NoPublishReason::DeniedAutopublishOfProductionCrate,
+                            adjustment: None,
+                        },
+                    }
+                }
             }
-        } else {
-            skipped.push(Dependency {
+            None => Dependency {
                 package: workspace_dependency,
                 kind: dependency::Kind::DependencyOrDependentOfUserSelection,
                 mode: dependency::Mode::NotForPublishing {
                     reason: dependency::NoPublishReason::Unchanged,
                     adjustment: None,
                 },
-            });
-        }
+            },
+        });
     }
-    Ok(skipped)
+    Ok(())
 }
 
 fn dependency_tree_has_link_to_existing_crate_names(
