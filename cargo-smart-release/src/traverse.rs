@@ -36,7 +36,7 @@ pub mod dependency {
         }
     }
 
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub enum Kind {
         /// Initially selected by user
         UserSelection,
@@ -271,18 +271,27 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                             );
                         }
                     } else if is_pre_release_version(&dependant.version) || allow_auto_publish_of_stable_crates {
+                        let kind = ctx
+                            .crate_names
+                            .contains(&dependant.name)
+                            .then(|| dependency::Kind::UserSelection)
+                            .unwrap_or(dependency::Kind::DependencyOrDependentOfUserSelection);
+                        let adjustment = dependency::VersionAdjustment::Breakage {
+                            bump,
+                            change: None,
+                            causing_dependency_names: vec![dependee.package.name.to_owned()],
+                        };
                         new_crates_this_round.push(Dependency {
                             package: dependant,
-                            kind: dependency::Kind::DependencyOrDependentOfUserSelection,
-                            mode: dependency::Mode::NotForPublishing {
-                                reason: dependency::NoPublishReason::BreakingChangeCausesManifestUpdate,
-                                adjustment: Some(ManifestAdjustment::Version(
-                                    dependency::VersionAdjustment::Breakage {
-                                        bump,
-                                        change: None,
-                                        causing_dependency_names: vec![dependee.package.name.to_owned()],
-                                    },
-                                )),
+                            kind,
+                            mode: match kind {
+                                dependency::Kind::UserSelection => dependency::Mode::ToBePublished { adjustment },
+                                dependency::Kind::DependencyOrDependentOfUserSelection => {
+                                    dependency::Mode::NotForPublishing {
+                                        reason: dependency::NoPublishReason::BreakingChangeCausesManifestUpdate,
+                                        adjustment: Some(ManifestAdjustment::Version(adjustment)),
+                                    }
+                                }
                             },
                         });
                     } else {
