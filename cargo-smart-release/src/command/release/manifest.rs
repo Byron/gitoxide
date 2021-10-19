@@ -2,10 +2,14 @@ use std::collections::btree_map::Entry;
 use std::{borrow::Cow, collections::BTreeMap, io::Write, str::FromStr};
 
 use anyhow::bail;
+use cargo_metadata::camino::Utf8PathBuf;
 use cargo_metadata::Package;
+use git_repository::lock::File;
 use semver::{Op, Version, VersionReq};
 
 use super::{cargo, git, Context, Oid, Options};
+use crate::changelog::section::segment::Selection;
+use crate::changelog::Section;
 use crate::{
     changelog,
     changelog::write::Linkables,
@@ -24,8 +28,6 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     opts: Options,
     ctx: &'repo Context,
 ) -> anyhow::Result<Outcome<'repo, 'meta>> {
-    let mut locks_by_manifest_path = BTreeMap::new();
-    let mut pending_changelogs = Vec::new();
     let Options {
         dry_run,
         skip_publish,
@@ -35,125 +37,22 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         generator_segments,
         ..
     } = opts;
-    let mut changelog_ids_with_statistical_segments_only = Vec::new();
-    let mut changelog_ids_probably_lacking_user_edits = Vec::new();
-    let mut made_change = false;
-    let next_commit_date = crate::utils::time_to_offset_date_time(crate::git::author()?.time);
-    let mut release_section_by_publishee = BTreeMap::default();
     let crates_and_versions_to_be_published: Vec<_> = crates
         .iter()
         .filter_map(|c| try_to_published_crate_and_new_version(c))
         .collect();
-    if changelog {
-        for (publishee, new_version) in &crates_and_versions_to_be_published {
-            let lock = git_repository::lock::File::acquire_to_update_resource(
-                &publishee.manifest_path,
-                git_repository::lock::acquire::Fail::Immediately,
-                None,
-            )?;
-            let previous = locks_by_manifest_path.insert(&publishee.manifest_path, lock);
-            assert!(previous.is_none(), "publishees are unique so insertion always happens");
-            if let Some(history) = ctx.base.history.as_ref() {
-                let changelog::init::Outcome {
-                    mut log,
-                    state: log_init_state,
-                    previous_content,
-                    mut lock,
-                } = ChangeLog::for_package_with_write_lock(publishee, history, &ctx.base, generator_segments)?;
-
-                log::info!(
-                    "{} {} changelog for '{}'.",
-                    will(dry_run),
-                    match log_init_state {
-                        changelog::init::State::Created => "create a new",
-                        changelog::init::State::Modified => "modify existing",
-                        changelog::init::State::Unchanged => "leave alone the",
-                    },
-                    publishee.name
-                );
-
-                let (recent_idx, recent_release_section_in_log) = log.most_recent_release_section_mut();
-                if !recent_release_section_in_log.is_essential() {
-                    changelog_ids_with_statistical_segments_only.push(pending_changelogs.len());
-                } else if recent_release_section_in_log.is_probably_lacking_user_edits() {
-                    changelog_ids_probably_lacking_user_edits.push(pending_changelogs.len());
-                }
-                match recent_release_section_in_log {
-                    changelog::Section::Release {
-                        name: name @ changelog::Version::Unreleased,
-                        date,
-                        ..
-                    } => {
-                        if !log_init_state.is_modified() {
-                            log::info!(
-                                "{}: {} only change headline from 'Unreleased' to '{}'",
-                                publishee.name,
-                                will(dry_run),
-                                new_version
-                            );
-                        }
-                        *name = changelog::Version::Semantic((*new_version).to_owned());
-                        *date = Some(next_commit_date);
-                        let recent_section = log.sections.remove(recent_idx);
-                        match log
-                        .sections
-                        .iter_mut()
-                        .find(|s| matches!(s, changelog::Section::Release {name: changelog::Version::Semantic(v), ..} if v == *new_version))
-                    {
-                        Some(version_section) => {
-                            version_section.merge(recent_section);
-                            let pop_if_changelog_id_is_last = |v: &mut Vec<usize>| {
-                                if v.last().filter(|&&idx| idx == pending_changelogs.len()).is_some() {
-                                    v.pop();
-                                }
-                            };
-                            if version_section.is_essential() {
-                                pop_if_changelog_id_is_last(&mut changelog_ids_with_statistical_segments_only);
-                            } else if !version_section.is_probably_lacking_user_edits() {
-                                pop_if_changelog_id_is_last(&mut changelog_ids_probably_lacking_user_edits);
-                            }
-                        }
-                        None => log.sections.insert(recent_idx, recent_section),
-                    }
-                    }
-                    changelog::Section::Release {
-                        name: changelog::Version::Semantic(recent_version),
-                        date,
-                        ..
-                    } => {
-                        if recent_version != *new_version {
-                            anyhow::bail!(
-                            "'{}' does not have an unreleased version, and most recent release is unexpected. Wanted {}, got {}.",
-                            publishee.name,
-                            new_version,
-                            recent_version
-                        );
-                        }
-                        *date = Some(next_commit_date);
-                    }
-                    changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
-                };
-                let mut write_buf = String::new();
-                log.write_to(
-                    &mut write_buf,
-                    if dry_run {
-                        &Linkables::AsText
-                    } else {
-                        &ctx.changelog_links
-                    },
-                    if dry_run {
-                        changelog::write::Components::SECTION_TITLE
-                    } else {
-                        changelog::write::Components::all()
-                    },
-                )?;
-                lock.with_mut(|file| file.write_all(write_buf.as_bytes()))?;
-                made_change |= previous_content.map(|previous| write_buf != previous).unwrap_or(true);
-                pending_changelogs.push((publishee, log_init_state.is_modified(), lock));
-                release_section_by_publishee.insert(publishee.name.as_str(), log.take_recent_release_section());
-            }
-        }
-    }
+    let GatherOutcome {
+        pending_changelogs,
+        mut locks_by_manifest_path,
+        changelog_ids_with_statistical_segments_only,
+        changelog_ids_probably_lacking_user_edits,
+        release_section_by_publishee,
+        mut made_change,
+    } = if changelog {
+        gather_changelog_data(ctx, dry_run, generator_segments, &crates_and_versions_to_be_published)?
+    } else {
+        GatherOutcome::default()
+    };
 
     let crates_with_version_change: Vec<_> = crates
         .iter()
@@ -413,6 +312,144 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
             section_by_package: release_section_by_publishee,
         })
     }
+}
+
+#[derive(Default)]
+pub struct GatherOutcome<'meta> {
+    pending_changelogs: Vec<(&'meta Package, bool, File)>,
+    locks_by_manifest_path: BTreeMap<&'meta Utf8PathBuf, File>,
+    /// Ids into `pending_changelogs`
+    changelog_ids_with_statistical_segments_only: Vec<usize>,
+    changelog_ids_probably_lacking_user_edits: Vec<usize>,
+    release_section_by_publishee: BTreeMap<&'meta str, Section>,
+    made_change: bool,
+}
+
+fn gather_changelog_data<'a, 'meta>(
+    ctx: &Context,
+    dry_run: bool,
+    generator_segments: Selection,
+    crates_and_versions_to_be_published: &[(&'meta Package, &'a Version)],
+) -> anyhow::Result<GatherOutcome<'meta>> {
+    let mut out = GatherOutcome::default();
+    let GatherOutcome {
+        pending_changelogs,
+        locks_by_manifest_path,
+        changelog_ids_with_statistical_segments_only,
+        changelog_ids_probably_lacking_user_edits,
+        release_section_by_publishee,
+        made_change,
+    } = &mut out;
+    let next_commit_date = crate::utils::time_to_offset_date_time(crate::git::author()?.time);
+    for (publishee, new_version) in crates_and_versions_to_be_published {
+        let lock = git_repository::lock::File::acquire_to_update_resource(
+            &publishee.manifest_path,
+            git_repository::lock::acquire::Fail::Immediately,
+            None,
+        )?;
+        let previous = locks_by_manifest_path.insert(&publishee.manifest_path, lock);
+        assert!(previous.is_none(), "publishees are unique so insertion always happens");
+        if let Some(history) = ctx.base.history.as_ref() {
+            let changelog::init::Outcome {
+                mut log,
+                state: log_init_state,
+                previous_content,
+                mut lock,
+            } = ChangeLog::for_package_with_write_lock(publishee, history, &ctx.base, generator_segments)?;
+
+            log::info!(
+                "{} {} changelog for '{}'.",
+                will(dry_run),
+                match log_init_state {
+                    changelog::init::State::Created => "create a new",
+                    changelog::init::State::Modified => "modify existing",
+                    changelog::init::State::Unchanged => "leave alone the",
+                },
+                publishee.name
+            );
+
+            let (recent_idx, recent_release_section_in_log) = log.most_recent_release_section_mut();
+            if !recent_release_section_in_log.is_essential() {
+                changelog_ids_with_statistical_segments_only.push(pending_changelogs.len());
+            } else if recent_release_section_in_log.is_probably_lacking_user_edits() {
+                changelog_ids_probably_lacking_user_edits.push(pending_changelogs.len());
+            }
+            match recent_release_section_in_log {
+                changelog::Section::Release {
+                    name: name @ changelog::Version::Unreleased,
+                    date,
+                    ..
+                } => {
+                    if !log_init_state.is_modified() {
+                        log::info!(
+                            "{}: {} only change headline from 'Unreleased' to '{}'",
+                            publishee.name,
+                            will(dry_run),
+                            new_version
+                        );
+                    }
+                    *name = changelog::Version::Semantic((*new_version).to_owned());
+                    *date = Some(next_commit_date);
+                    let recent_section = log.sections.remove(recent_idx);
+                    match log
+                        .sections
+                        .iter_mut()
+                        .find(|s| matches!(s, changelog::Section::Release {name: changelog::Version::Semantic(v), ..} if v == *new_version))
+                    {
+                        Some(version_section) => {
+                            version_section.merge(recent_section);
+                            let pop_if_changelog_id_is_last = |v: &mut Vec<usize>| {
+                                if v.last().filter(|&&idx| idx == pending_changelogs.len()).is_some() {
+                                    v.pop();
+                                }
+                            };
+                            if version_section.is_essential() {
+                                pop_if_changelog_id_is_last(changelog_ids_with_statistical_segments_only);
+                            } else if !version_section.is_probably_lacking_user_edits() {
+                                pop_if_changelog_id_is_last(changelog_ids_probably_lacking_user_edits);
+                            }
+                        }
+                        None => log.sections.insert(recent_idx, recent_section),
+                    }
+                }
+                changelog::Section::Release {
+                    name: changelog::Version::Semantic(recent_version),
+                    date,
+                    ..
+                } => {
+                    if recent_version != *new_version {
+                        anyhow::bail!(
+                            "'{}' does not have an unreleased version, and most recent release is unexpected. Wanted {}, got {}.",
+                            publishee.name,
+                            new_version,
+                            recent_version
+                        );
+                    }
+                    *date = Some(next_commit_date);
+                }
+                changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
+            };
+            let mut write_buf = String::new();
+            log.write_to(
+                &mut write_buf,
+                if dry_run {
+                    &Linkables::AsText
+                } else {
+                    &ctx.changelog_links
+                },
+                if dry_run {
+                    changelog::write::Components::SECTION_TITLE
+                } else {
+                    changelog::write::Components::all()
+                },
+            )?;
+            lock.with_mut(|file| file.write_all(write_buf.as_bytes()))?;
+            *made_change |= previous_content.map(|previous| write_buf != previous).unwrap_or(true);
+            pending_changelogs.push((publishee, log_init_state.is_modified(), lock));
+            release_section_by_publishee.insert(publishee.name.as_str(), log.take_recent_release_section());
+        }
+    }
+    Ok(out)
 }
 
 fn set_version_and_update_package_dependency(
