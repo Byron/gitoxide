@@ -155,7 +155,10 @@ fn present_dependencies(
         )
     }
 
-    let skipped = all_skipped.iter().map(|(name, _)| *name).collect::<Vec<_>>();
+    let skipped = all_skipped
+        .iter()
+        .filter_map(|(name, has_adjustment)| (!has_adjustment).then(|| *name))
+        .collect::<Vec<_>>();
     if !skipped.is_empty() {
         log::info!(
             "Will not publish or alter {} dependent crate{} as {} unchanged since the last release: {}",
