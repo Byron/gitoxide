@@ -1530,8 +1530,17 @@ a"#,
 #[cfg(test)]
 mod from_paths {
     use super::{Cow, GitConfig, ParserOrIoError, Path};
-    use std::fs;
+    use std::{fs, io};
     use tempfile::tempdir;
+
+    #[test]
+    fn file_not_found() {
+        let dir = tempdir().unwrap();
+        let config_path = dir.path().join("config");
+
+        let paths = vec![config_path.as_path()];
+        let error = GitConfig::from_paths(&paths).unwrap_err();
+    }
 
     #[test]
     fn single_path() {
