@@ -149,9 +149,11 @@ fn present_dependencies(
     }
 
     let no_requested_crate_will_publish = num_refused == ctx.base.crate_names.len();
+    let no_crate_being_published_message = "No provided crate is actually eligible for publishing.";
     if no_requested_crate_will_publish && !verbose {
         bail!(
-            "No provided crate is actually eligible for publishing. Use --verbose to see the release plan nonetheless."
+            "{} Use --verbose to see the release plan nonetheless.",
+            no_crate_being_published_message
         )
     }
 
@@ -277,7 +279,7 @@ fn present_dependencies(
         for (cause, deps_and_bumps) in affected_crates_by_cause {
             let plural_s = (deps_and_bumps.len() != 1).then(|| "s").unwrap_or("");
             log::info!(
-                "{} adjust {} manifest{} due to breaking change in '{}': {}",
+                "{} adjust {} manifest version{} due to breaking change in '{}': {}",
                 will(dry_run),
                 deps_and_bumps.len(),
                 plural_s,
@@ -317,11 +319,11 @@ fn present_dependencies(
                 .then(|| "s")
                 .unwrap_or_default();
             log::info!(
-                "Manifest{} of {} package{} {} be adjusted as its direct dependencies see a version change: {}",
+                "{} adjust version constraints in manifest{} of {} package{} as direct dependencies are changing: {}",
+                will(dry_run),
                 plural_s,
                 crate_names_for_manifest_updates.len(),
                 plural_s,
-                will(dry_run),
                 crate_names_for_manifest_updates.join(", ")
             );
         }
@@ -331,7 +333,7 @@ fn present_dependencies(
         bail!("Aborting due to previous error(s)");
     } else {
         if no_requested_crate_will_publish {
-            bail!("No provided crate is actually eligible for publishing.")
+            bail!(no_crate_being_published_message)
         }
         Ok(())
     }
