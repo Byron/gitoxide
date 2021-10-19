@@ -70,7 +70,9 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
             })
             .unwrap_or(Linkables::AsText)
     };
+    let mut num_crates = 0;
     for (idx, package) in crates.iter().enumerate() {
+        num_crates += 1;
         let (
             crate::changelog::init::Outcome {
                 log, mut lock, state, ..
@@ -111,6 +113,18 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
         if !dry_run {
             pending_changes.push(lock);
         }
+    }
+
+    if num_crates == 0 {
+        anyhow::bail!(
+            "The given crate{} {} didn't change and no changelog could be generated.",
+            (ctx.crate_names.len() != 1).then(|| "s").unwrap_or(""),
+            ctx.crate_names
+                .iter()
+                .map(|c| format!("'{}'", c))
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
     }
 
     let num_changes = pending_changes.len();
