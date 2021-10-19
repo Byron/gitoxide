@@ -140,6 +140,24 @@ fn present_dependencies(
             skipped.join(", ")
         );
     }
+    for (refused_crate, has_adjustment) in deps
+        .iter()
+        .filter_map(|dep| match &dep.mode {
+            dependency::Mode::NotForPublishing { adjustment, .. } => {
+                Some((dep.package.name.as_str(), adjustment.is_some()))
+            }
+            _ => None,
+        })
+        .filter(|(name, _)| ctx.base.crate_names.iter().any(|n| n == *name))
+    {
+        log::warn!(
+            "Refused to publish '{}' as {}.",
+            refused_crate,
+            has_adjustment
+                .then(|| "only a manifest change is needed")
+                .unwrap_or("as it didn't change")
+        );
+    }
 
     let mut error = false;
     for dep in deps {
