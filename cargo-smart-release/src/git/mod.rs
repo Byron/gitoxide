@@ -37,8 +37,11 @@ pub fn change_since_last_release(package: &Package, ctx: &crate::Context) -> any
             let current_commit = c?;
             let released_target = tag_ref.peel_to_id_in_place()?;
 
-            // If it's a top-level crate, use the src-directory for now
-            match repo_relative_crate_dir.or_else(|| Some(Utf8Path::new("src"))) {
+            match repo_relative_crate_dir
+                // If it's a top-level crate, use the src-directory for now
+                // KEEP THIS IN SYNC with git::create_ref_history()!
+                .or_else(|| (ctx.meta.workspace_members.len() != 1).then(|| Utf8Path::new("src")))
+            {
                 None => (current_commit != released_target).then(|| PackageChangeKind::ChangedOrNew),
                 Some(dir) => {
                     let components = dir.components().map(component_to_bytes);
