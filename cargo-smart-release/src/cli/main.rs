@@ -78,7 +78,7 @@ fn main() -> anyhow::Result<()> {
                     preview: !no_changelog_preview,
                     generator_segments: names_to_segment_selection(&changelog_without)?,
                     allow_fully_generated_changelogs,
-                    no_changelog_links,
+                    changelog_links: !no_changelog_links,
                     allow_changelog_github_release: !no_changelog_github_release,
                 },
                 crates,

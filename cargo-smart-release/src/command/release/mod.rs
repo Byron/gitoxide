@@ -62,13 +62,7 @@ pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependen
     } else {
         opts.changelog
     };
-    let ctx = Context::new(
-        crates,
-        bump,
-        bump_dependencies,
-        allow_changelog,
-        !opts.no_changelog_links,
-    )?;
+    let ctx = Context::new(crates, bump, bump_dependencies, allow_changelog, opts.changelog_links)?;
     if opts.update_crates_index {
         log::info!(
             "Updating crates-io index at '{}'",

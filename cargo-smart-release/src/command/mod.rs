@@ -23,7 +23,7 @@ pub mod release {
         pub preview: bool,
         pub generator_segments: segment::Selection,
         pub allow_fully_generated_changelogs: bool,
-        pub no_changelog_links: bool,
+        pub changelog_links: bool,
         pub allow_changelog_github_release: bool,
     }
 }
