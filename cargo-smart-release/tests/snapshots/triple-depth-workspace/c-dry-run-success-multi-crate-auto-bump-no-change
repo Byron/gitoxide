@@ -12,8 +12,8 @@
 [WARN ] To fix the changelog manually, run: cargo changelog --write c a
 [TRACE] WOULD run "git" "commit" "-am" "Adjusting changelogs prior to release of a v0.8.0, b v0.8.0, c v8.0.0"
 [TRACE] WOULD create tag object a-v0.8.0 with changelog message, first line is: '### Commit Statistics'
-[TRACE] WOULD create tag object b-v0.8.0 with changelog message, first line is: '### Commit Statistics'
-[TRACE] WOULD create tag object c-v8.0.0 with changelog message, first line is: '### Commit Statistics'
 [TRACE] WOULD run "gh" "release" "create" "a-v0.8.0" "--title" "a v0.8.0" "--notes" "### Commit Statistics\n…" [note truncated]
+[TRACE] WOULD create tag object b-v0.8.0 with changelog message, first line is: '### Commit Statistics'
 [TRACE] WOULD run "gh" "release" "create" "b-v0.8.0" "--title" "b v0.8.0" "--notes" "### Commit Statistics\n…" [note truncated]
+[TRACE] WOULD create tag object c-v8.0.0 with changelog message, first line is: '### Commit Statistics'
 [TRACE] WOULD run "gh" "release" "create" "c-v8.0.0" "--title" "c v8.0.0" "--notes" "### Commit Statistics\n…" [note truncated]

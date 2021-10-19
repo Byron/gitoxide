@@ -17,8 +17,8 @@
 [WARN ] This changelog is likely to be fully generated from commit history or contain lower-case git-conventional headlines: a
 [TRACE] WOULD run "git" "commit" "-am" "Adjusting changelogs prior to release of a v0.9.0, b v0.9.0, c v9.0.0, safety bump 2 crates\n\nSAFETY BUMP: b v0.9.0, c v9.0.0"
 [TRACE] WOULD create tag object a-v0.9.0 with changelog message, first line is: '### refactor (BREAKING)'
-[TRACE] WOULD create tag object b-v0.9.0 with changelog message, first line is: '### Commit Statistics'
-[TRACE] WOULD create tag object c-v9.0.0 with changelog message, first line is: '### Commit Statistics'
 [TRACE] WOULD run "gh" "release" "create" "a-v0.9.0" "--title" "a v0.9.0" "--notes" "### refactor (BREAKING…" [note truncated]
+[TRACE] WOULD create tag object b-v0.9.0 with changelog message, first line is: '### Commit Statistics'
 [TRACE] WOULD run "gh" "release" "create" "b-v0.9.0" "--title" "b v0.9.0" "--notes" "### Commit Statistics\n…" [note truncated]
+[TRACE] WOULD create tag object c-v9.0.0 with changelog message, first line is: '### Commit Statistics'
 [TRACE] WOULD run "gh" "release" "create" "c-v9.0.0" "--title" "c v9.0.0" "--notes" "### Commit Statistics\n…" [note truncated]
