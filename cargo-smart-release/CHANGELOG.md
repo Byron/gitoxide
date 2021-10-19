@@ -5,6 +5,162 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+<csr-id-07372dd045de88f283d35d8f3dcc4c079dce88e9/>
+
+A release with breaking changes as the dependency engine was reworked to handle even more cases
+and make future improvements easier.
+
+### New Features
+
+ - <csr-id-6d4edfa3b2d2c6700e0956716a575831b940cb50/> Respect `publish=false` in cargo manifest
+ - <csr-id-7648bf3c7554352bec8e1355f9b593d891b2b17f/> Perform safety bumps without forcing a publish.
+   
+   This is what's required to assure that future publishes of such
+   transitively dependent crates won't cause downstream breakage the next time the tool is run.
+ - <csr-id-b806a9c982da1e5ff42c268e430c67363f3a7918/> Inform about safety bumps more explicitly,
+   and generally greatly improve the way the course of action is described.
+
+### Bug Fixes
+
+ - <csr-id-501c1d102c0e5e4635120bb1aa857e97a2b537b4/> Dependency resolution.
+   
+   Previously the ordering of crates for release might not have been
+   correct due to this issue that is now fixed.
+   
+   We need depth-first traversals and previously it would extend skipped
+   dependencies, effectively putting them into their own ordering.
+   
+   Previously it would restore that ordering, but not anymore, causing
+   this bug that was entirely unnecessary.
+ - <csr-id-5e98e5559707cf308e2cd64494fe73a99f9e9c8e/> `--no-changelog` during smart-release is now actually working
+   
+   Previously the flag had no effect and changelogs would always be
+   generated, possibly stopping the release as at least one of them
+   needed manual work.
+ - <csr-id-dfc588b25ede3faa578eb8e131e73c857117a6df/> Pin version of clap to beta 5.
+   
+   This assures we don't get broken automatically in future.
+   Previously that wasn't possible as the dependency of `clap`,
+   `clap-derive` was also using a beta verion and wasn't constrained,
+   hence it would be updated and cause breaking changes with pinned
+   versions of consumers of `clap`.
+
+### Changed (BREAKING)
+
+<csr-id-2f87196217a6e685dc447b4af091842926aed6d0/>
+
+ - <csr-id-59302ae24db791988c22322c2c1ad72e2918f89a/> `changelog` subcommand inverts `--dependencies` to `--no-dependencies`
+ - Remove `--no-multi-crate-release` support entirely
+  
+   As the default is to do multi-crate releases and now having to deal
+   with single-create releases reduces maintenance burden.
+
+   The solution to this problem is to not specify version constraints in
+   dev-dependencies to workspace crates.
+
+   We also don't check for this anymore, which might be re-added
+   at some point if there is demand.This makes dependency resolution similar to cargo smart-release by default and is less surprising.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 71 commits contributed to the release over the course of 3 calendar days.
+ - 9 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 4 unique issues were worked on: [#198](https://github.com//Byron/gitoxide/issues/198), [#221](https://github.com//Byron/gitoxide/issues/221), [#222](https://github.com//Byron/gitoxide/issues/222), [#224](https://github.com//Byron/gitoxide/issues/224)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#198](https://github.com//Byron/gitoxide/issues/198)**
+    - Add yet another video ([`dc8f7ca`](https://github.com//Byron/gitoxide/commit/dc8f7ca20424e31ef5621cab2cc802f2d2b1686a))
+    - Update Asciinema link in readme ([`b56a31e`](https://github.com//Byron/gitoxide/commit/b56a31e69c625ca41c923c14e411da9ee71428e7))
+ * **[#221](https://github.com//Byron/gitoxide/issues/221)**
+    - Add tests which indicate the problem: safety-bump not applied to auto-publishes… ([`32e1f1a`](https://github.com//Byron/gitoxide/commit/32e1f1aa1d97b061e07878ae94f23ec99f56d64d))
+    - --no-changelog-preview isn't needed anymore in dry-run mode ([`1b6a4ad`](https://github.com//Byron/gitoxide/commit/1b6a4adecbb884ad973d5b1e2cbc420b163ad390))
+    - refactor ([`aff053f`](https://github.com//Byron/gitoxide/commit/aff053f0e2b1e3f5920d3db5a44292a0dc3ac708))
+    - Inform about safety bumps more explicitly ([`b806a9c`](https://github.com//Byron/gitoxide/commit/b806a9c982da1e5ff42c268e430c67363f3a7918))
+    - refactor ([`23073e8`](https://github.com//Byron/gitoxide/commit/23073e88c8d083d064cd5b79800c063a9fdc949f))
+ * **[#222](https://github.com//Byron/gitoxide/issues/222)**
+    - Respect user selection when re-adding crates for manifest change ([`72d16bf`](https://github.com//Byron/gitoxide/commit/72d16bf935bccf0faff9274156ce399a72540e73))
+    - dependency resolution ([`501c1d1`](https://github.com//Byron/gitoxide/commit/501c1d102c0e5e4635120bb1aa857e97a2b537b4))
+    - --no-changelog during smart-release is now actually working ([`5e98e55`](https://github.com//Byron/gitoxide/commit/5e98e5559707cf308e2cd64494fe73a99f9e9c8e))
+    - replace TODO with runtime logging ([`f457e65`](https://github.com//Byron/gitoxide/commit/f457e659623ea2e14ca6ab0678b22329ef7a7763))
+    - unify presentation even more ([`7c32409`](https://github.com//Byron/gitoxide/commit/7c32409e49b21a6b0e3017357e0fe1755faaa467))
+    - adjust expectations in smart-release journey tests ([`1f96a72`](https://github.com//Byron/gitoxide/commit/1f96a7215b78bfeb56074b1894bb6bbc8b598011))
+    - group skipped items by skipped reason ([`ba28746`](https://github.com//Byron/gitoxide/commit/ba287464731bb15785930183290cecdd9694e458))
+    - unify reporting style ([`99be2e1`](https://github.com//Byron/gitoxide/commit/99be2e16cba34a613d41fd2e46cf3576a511ee1c))
+    - fix reporting of skipped crates, consider adjustment ([`ac91016`](https://github.com//Byron/gitoxide/commit/ac91016841348476f1c1f32c2d1121359986e9f6))
+    - Abort if not a single provided crate would need publishing ([`478c4ea`](https://github.com//Byron/gitoxide/commit/478c4eaa3ff60f0c83933581a3d0170429a95381))
+    - improved reporting of skipped/refused crates; abort operation if there is nothing to publish ([`f9358f1`](https://github.com//Byron/gitoxide/commit/f9358f124726d69dc11e6103d649c5cab30c738b))
+    - better reporting of crates that where refused to be published ([`1d7142a`](https://github.com//Byron/gitoxide/commit/1d7142a861636f088694500855a1f7acbcdbeded))
+    - 'changelog' subcommand change --dependencies to --no-dependencies ([`59302ae`](https://github.com//Byron/gitoxide/commit/59302ae24db791988c22322c2c1ad72e2918f89a))
+    - Properly resolve breaking propagation through the graph ([`4f25236`](https://github.com//Byron/gitoxide/commit/4f252365147aae2f8a9f12a0ae6087adc0ed4644))
+    - multi-round discovery of breaking changes from published packages ([`dc93e1a`](https://github.com//Byron/gitoxide/commit/dc93e1a828c6cd97fcb64aa92293cb8f3899316a))
+    - Verify and partially fix journey tests ([`e53a7f6`](https://github.com//Byron/gitoxide/commit/e53a7f6b4d67da52ac7fee7706dfd067b67e0275))
+    - remove all now unused items ([`40f2da2`](https://github.com//Byron/gitoxide/commit/40f2da20395213b48d4a8517cf2b63513f901e93))
+    - use Dependency in manifest editor ([`d5c905a`](https://github.com//Byron/gitoxide/commit/d5c905ab4132626eb1af2a8e5410440f8fdc7a8f))
+    - upgrade to clap 3 beta 5 ([`2ddc4ed`](https://github.com//Byron/gitoxide/commit/2ddc4eddda23c77b5891a11a3e7215702c63882b))
+    - Show only changelogs that would be published ([`e20f498`](https://github.com//Byron/gitoxide/commit/e20f498b0d07d39a47b36a454c384068404119ad))
+    - refactor ([`244431f`](https://github.com//Byron/gitoxide/commit/244431fbb12de811feb8f53e0faaeb9d683aa834))
+    - Fix reporting of skipped crates ([`a305232`](https://github.com//Byron/gitoxide/commit/a305232bc1f027d65ef3d7dc7898931745cf652c))
+    - Respect publish=false in cargo manifest ([`6d4edfa`](https://github.com//Byron/gitoxide/commit/6d4edfa3b2d2c6700e0956716a575831b940cb50))
+    - more consistent reporting of what would be done ([`47ce4b0`](https://github.com//Byron/gitoxide/commit/47ce4b0a6a6545be6cd8b3928289478694a2f764))
+    - refactor ([`369fa93`](https://github.com//Byron/gitoxide/commit/369fa93a16ed9af3ea0b70c08c8426759bdc7d11))
+    - don't try to change crates that are already at the correct version ([`561aac3`](https://github.com//Byron/gitoxide/commit/561aac30a709974fb48fc02cb5d21828d7df1e54))
+    - keep ordering of causes for breaking changes when printing ([`f4a0970`](https://github.com//Byron/gitoxide/commit/f4a0970ba0d0a4175972c6f231eceba1ff1c33fb))
+    - better safety bumps to be more concise ([`7c8335a`](https://github.com//Byron/gitoxide/commit/7c8335a5f0b0168997f8a08d4da942e9d60e71d4))
+    - Perform safety bumps without forcing a publish ([`7648bf3`](https://github.com//Byron/gitoxide/commit/7648bf3c7554352bec8e1355f9b593d891b2b17f))
+    - refactor ([`ebec001`](https://github.com//Byron/gitoxide/commit/ebec001a2ca6f1faa17f27847ea274146506e9ce))
+    - inform about the crates seeing a mnifest update too; only show fully-skipped crates ([`7f2a927`](https://github.com//Byron/gitoxide/commit/7f2a927eb0d880c58f5b9eed59e3a9640adf5c95))
+    - fix:! breaking changes cause intermediate (otherwise skipped) crates to be published. ([`fb6b909`](https://github.com//Byron/gitoxide/commit/fb6b909e49d8428e53da6e2ce3c2f878025e00f7))
+    - reverse-bumping for safety works, including publishing :) ([`5e1713c`](https://github.com//Byron/gitoxide/commit/5e1713c4bf0772d23678a28ff281cc36a77b5991))
+    - track root-cause as well ([`7f8e720`](https://github.com//Byron/gitoxide/commit/7f8e720283416d101c0bbea545bbd504cc3f7204))
+    - sketch backwards search for lifting crates to be published ([`0b018c0`](https://github.com//Byron/gitoxide/commit/0b018c0decf2d45eb58a5eaf3704d62c46b0a72c))
+    - Realize that the search can't be 'flat' ([`13db698`](https://github.com//Byron/gitoxide/commit/13db6985159d24c3e6806a70120f17c81999803b))
+    - start sketching backward traversal… ([`de1d7f7`](https://github.com//Byron/gitoxide/commit/de1d7f7242ddc6d357dc165532f1336a239b472b))
+    - sumarize manifest updates rather than spelling out each one ([`8cf00e0`](https://github.com//Byron/gitoxide/commit/8cf00e06f1017fff1c328afe4a97428d56c1cca6))
+    - update test expectations and formulate 'the algorithm' ([`c0693ae`](https://github.com//Byron/gitoxide/commit/c0693aebb3bc4306124be7287a54c1c1f1a31a65))
+    - refactor ([`0bfb1b1`](https://github.com//Byron/gitoxide/commit/0bfb1b17ff7fc25aed1ad108fa407b56f35c7274))
+    - assure changelog picks up safety bumps as well ([`f2a497b`](https://github.com//Byron/gitoxide/commit/f2a497b3eebecd0ca94801ac656d4fc2852505f2))
+    - Collect crates for manifest updates ([`56ccdd2`](https://github.com//Byron/gitoxide/commit/56ccdd2195802a920fa084f85eae797e2cf17da7))
+    - Remove --no-multi-crate-release support entirely ([`07372dd`](https://github.com//Byron/gitoxide/commit/07372dd045de88f283d35d8f3dcc4c079dce88e9))
+    - remove performance measurements ([`37bacee`](https://github.com//Byron/gitoxide/commit/37bacee619fadf9dc1ff645a85c4e340cb84a569))
+    - refactor ([`ac85cdf`](https://github.com//Byron/gitoxide/commit/ac85cdfccd0545b7da6276f0df086b32a7a9dfc0))
+    - no newlines in gh traces ([`afd9b9e`](https://github.com//Byron/gitoxide/commit/afd9b9ebffa5db09b0ed69b29c878ccfd156a528))
+    - refactor ([`03c7dba`](https://github.com//Byron/gitoxide/commit/03c7dbabff14bd5dd150bd5174f53148d4ee0fec))
+    - Simplify use of 'verbose' flag by using log::trace! as well ([`4dc5f4b`](https://github.com//Byron/gitoxide/commit/4dc5f4b5e54a35f2794bb61ebc4c00758447bf75))
+    - refactor ([`e256949`](https://github.com//Byron/gitoxide/commit/e256949f4a679ff74bece435b302490998f1cc6e))
+    - refactor ([`e4ffa71`](https://github.com//Byron/gitoxide/commit/e4ffa71161d949cd134bc5289963ed7533607def))
+    - try to represent safety-bump versions ([`9f3001f`](https://github.com//Byron/gitoxide/commit/9f3001f3300b5ceb350b157f541a30bf54a51549))
+    - refactor ([`6f84e0b`](https://github.com//Byron/gitoxide/commit/6f84e0b6e7da2fce4ef7c4f43a6c5a67f4930e0d))
+    - Simple version bumping logic based on what currently exists, with printout ([`81e5785`](https://github.com//Byron/gitoxide/commit/81e5785fca30c6cb71c962132ddcd573ba950d72))
+    - fully data-driven presentation of dependency tracking results… ([`fd53e22`](https://github.com//Byron/gitoxide/commit/fd53e22a2f975010fd4ca6a95513339bc1102740))
+    - refactor ([`51a5d36`](https://github.com//Byron/gitoxide/commit/51a5d365f71bf44ab60ece4511d8dce1a77f5442))
+    - refactor ([`b8a5fc8`](https://github.com//Byron/gitoxide/commit/b8a5fc8bbe1dc58813c8c86cf0ad0dcdd5bff8ad))
+    - refactor ([`10aa1eb`](https://github.com//Byron/gitoxide/commit/10aa1eb344fdc42528717f240b2446be60da360b))
+    - refactor ([`cfec54d`](https://github.com//Byron/gitoxide/commit/cfec54d02d7df8fbc1c7cec5459ea267e7f3f236))
+    - Remove `--only` alias and invert `--no-dependencies` to `--dependencies` ([`2f87196`](https://github.com//Byron/gitoxide/commit/2f87196217a6e685dc447b4af091842926aed6d0))
+    - Keep track of skipped crate names for future use ([`f0a04c7`](https://github.com//Byron/gitoxide/commit/f0a04c7148729bf9c322692610c501b78c9557a9))
+ * **[#224](https://github.com//Byron/gitoxide/issues/224)**
+    - pin version of clap to beta 5 ([`dfc588b`](https://github.com//Byron/gitoxide/commit/dfc588b25ede3faa578eb8e131e73c857117a6df))
+ * **Uncategorized**
+    - thanks clippy ([`7496ba3`](https://github.com//Byron/gitoxide/commit/7496ba38ef815d4f4cb6b78bdead5226fb48f2b6))
+    - thanks clippy ([`b717323`](https://github.com//Byron/gitoxide/commit/b7173235ef4b118d96a0989f671424e06910ef46))
+    - thanks clippy ([`c4efd9d`](https://github.com//Byron/gitoxide/commit/c4efd9dc1be51049b38c0dd2a3263437ca51fee0))
+</details>
+
 ## v0.4.0 (2021-10-15)
 
 <csr-id-3c0a6389fe5ff981dadca20e8a4a4a0d2ef66e13/>
@@ -82,7 +238,7 @@ For more information, run `cargo changelog -h`.
 
 <csr-read-only-do-not-edit/>
 
- - 280 commits contributed to the release over the course of 36 calendar days.
+ - 281 commits contributed to the release over the course of 36 calendar days.
  - 19 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#192](https://github.com//Byron/gitoxide/issues/192), [#197](https://github.com//Byron/gitoxide/issues/197), [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200), [#213](https://github.com//Byron/gitoxide/issues/213), [#67](https://github.com//Byron/gitoxide/issues/67)
 
@@ -339,6 +495,7 @@ For more information, run `cargo changelog -h`.
  * **[#67](https://github.com//Byron/gitoxide/issues/67)**
     - split data::output::count::objects into files ([`8fe4612`](https://github.com//Byron/gitoxide/commit/8fe461281842b58aa11437445637c6e587bedd63))
  * **Uncategorized**
+    - Release git-hash v0.7.0, git-features v0.16.5, git-actor v0.5.3, git-config v0.1.7, git-validate v0.5.3, git-object v0.14.1, git-diff v0.10.0, git-tempfile v1.0.3, git-lock v1.0.1, git-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, git-packetline v0.11.0, git-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, git-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0 ([`59ffbd9`](https://github.com//Byron/gitoxide/commit/59ffbd9f15583c8248b7f48b3f55ec6faffe7cfe))
     - thanks clippy ([`2113d79`](https://github.com//Byron/gitoxide/commit/2113d7989b5e5dde5fc7594e1c63abef0bfba650))
     - thanks clippy ([`7c78dcf`](https://github.com//Byron/gitoxide/commit/7c78dcf468a2947e7b46103f275c27eb49b1547c))
     - thanks clippy ([`fc9da4c`](https://github.com//Byron/gitoxide/commit/fc9da4c3eef70bcc780224f42e0b78e477f3b199))

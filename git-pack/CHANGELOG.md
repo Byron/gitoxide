@@ -13,7 +13,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
 
@@ -24,6 +24,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
 <details><summary>view details</summary>
 
  * **[#222](https://github.com//Byron/gitoxide/issues/222)**
+    - stabilize changelogs ([`920e832`](https://github.com//Byron/gitoxide/commit/920e83219911df1c440d3fe42fd5ec3a295b0bb8))
     - Update changelogs prior to release ([`b3e2252`](https://github.com//Byron/gitoxide/commit/b3e2252f7461a003d9a4612da60ba931dd8c0bef))
 </details>
 
