@@ -1,18 +1,19 @@
-use std::collections::btree_map::Entry;
-use std::{borrow::Cow, collections::BTreeMap, io::Write, str::FromStr};
+use std::{
+    borrow::Cow,
+    collections::{btree_map::Entry, BTreeMap},
+    io::Write,
+    str::FromStr,
+};
 
 use anyhow::bail;
-use cargo_metadata::camino::Utf8PathBuf;
-use cargo_metadata::Package;
+use cargo_metadata::{camino::Utf8PathBuf, Package};
 use git_repository::lock::File;
 use semver::{Op, Version, VersionReq};
 
 use super::{cargo, git, Context, Oid, Options};
-use crate::changelog::section::segment::Selection;
-use crate::changelog::Section;
 use crate::{
     changelog,
-    changelog::write::Linkables,
+    changelog::{write::Linkables, Section},
     traverse::Dependency,
     utils::{names_and_versions, try_to_published_crate_and_new_version, will},
     version, ChangeLog,
@@ -28,15 +29,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     opts: Options,
     ctx: &'repo Context,
 ) -> anyhow::Result<Outcome<'repo, 'meta>> {
-    let Options {
-        dry_run,
-        skip_publish,
-        preview,
-        changelog,
-        allow_fully_generated_changelogs,
-        generator_segments,
-        ..
-    } = opts;
+    let Options { dry_run, changelog, .. } = opts;
     let crates_and_versions_to_be_published: Vec<_> = crates
         .iter()
         .filter_map(|c| try_to_published_crate_and_new_version(c))
@@ -49,7 +42,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         release_section_by_publishee,
         mut made_change,
     } = changelog
-        .then(|| gather_changelog_data(ctx, &crates_and_versions_to_be_published, dry_run, generator_segments))
+        .then(|| gather_changelog_data(ctx, &crates_and_versions_to_be_published, opts))
         .transpose()?
         .unwrap_or_default();
 
@@ -92,15 +85,47 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     let commit_message = generate_commit_message(
         &crates_and_versions_to_be_published,
         &safety_bumped_packages,
-        skip_publish,
         would_stop_release,
-        dry_run,
         locks_by_manifest_path.len(),
         &pending_changelogs,
+        opts,
     );
 
-    preview_changelogs(ctx, &pending_changelogs, dry_run, preview)?;
+    preview_changelogs(ctx, &pending_changelogs, opts)?;
 
+    let bail_message = commit_locks_and_generate_bail_message(
+        ctx,
+        pending_changelogs,
+        locks_by_manifest_path,
+        changelog_ids_with_statistical_segments_only,
+        changelog_ids_probably_lacking_user_edits,
+        opts,
+    )?;
+
+    let res = git::commit_changes(commit_message, dry_run, !made_change, &ctx.base)?;
+    if let Some(bail_message) = bail_message {
+        bail!(bail_message);
+    } else {
+        Ok(Outcome {
+            commit_id: res,
+            section_by_package: release_section_by_publishee,
+        })
+    }
+}
+
+fn commit_locks_and_generate_bail_message(
+    ctx: &Context,
+    pending_changelogs: Vec<(&Package, bool, File)>,
+    locks_by_manifest_path: BTreeMap<&Utf8PathBuf, File>,
+    changelog_ids_with_statistical_segments_only: Vec<usize>,
+    changelog_ids_probably_lacking_user_edits: Vec<usize>,
+    Options {
+        dry_run,
+        skip_publish,
+        allow_fully_generated_changelogs,
+        ..
+    }: Options,
+) -> anyhow::Result<Option<String>> {
     let bail_message_after_commit = if !dry_run {
         let mut packages_whose_changelogs_need_edits = None;
         let mut packages_which_might_be_fully_generated = None;
@@ -225,23 +250,13 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
         }
         None
     };
-
-    let res = git::commit_changes(commit_message, dry_run, !made_change, &ctx.base)?;
-    if let Some(bail_message) = bail_message_after_commit {
-        bail!(bail_message);
-    } else {
-        Ok(Outcome {
-            commit_id: res,
-            section_by_package: release_section_by_publishee,
-        })
-    }
+    Ok(bail_message_after_commit)
 }
 
 fn preview_changelogs(
     ctx: &Context,
     pending_changelogs: &[(&Package, bool, File)],
-    dry_run: bool,
-    preview: bool,
+    Options { dry_run, preview, .. }: Options,
 ) -> anyhow::Result<()> {
     if !pending_changelogs.is_empty() && preview && !dry_run {
         let additional_info =
@@ -284,11 +299,12 @@ fn preview_changelogs(
 fn generate_commit_message(
     crates_and_versions_to_be_published: &[(&Package, &Version)],
     safety_bumped_packages: &[(&Package, &Version)],
-    skip_publish: bool,
     would_stop_release: bool,
-    dry_run: bool,
     num_locks: usize,
     pending_changelogs: &[(&Package, bool, File)],
+    Options {
+        skip_publish, dry_run, ..
+    }: Options,
 ) -> String {
     let message = format!(
         "{} {}{}",
@@ -358,8 +374,11 @@ pub struct GatherOutcome<'meta> {
 fn gather_changelog_data<'a, 'meta>(
     ctx: &Context,
     crates_and_versions_to_be_published: &[(&'meta Package, &'a Version)],
-    dry_run: bool,
-    generator_segments: Selection,
+    Options {
+        dry_run,
+        generator_segments,
+        ..
+    }: Options,
 ) -> anyhow::Result<GatherOutcome<'meta>> {
     let mut out = GatherOutcome::default();
     let GatherOutcome {

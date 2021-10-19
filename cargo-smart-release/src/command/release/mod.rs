@@ -1,5 +1,6 @@
-use anyhow::bail;
 use std::collections::BTreeMap;
+
+use anyhow::bail;
 
 use crate::{
     changelog,

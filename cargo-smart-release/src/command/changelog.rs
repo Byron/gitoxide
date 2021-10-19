@@ -1,11 +1,11 @@
 use std::io::Write;
 
-use crate::traverse::dependency;
 use crate::{
     bat,
     changelog::write::{Components, Linkables},
     command::changelog::Options,
     git,
+    traverse::dependency,
     utils::will,
     version::BumpSpec,
     ChangeLog,
