@@ -19,11 +19,11 @@ for all successful publishes.
    successfully, just because one crate later in the publishing
    process fails.
  - <csr-id-b769c47079a16042ef592a0199cb2d0f6afeeb5e/> Create GitHub release right after publishing succeeds.
- 
+   
    This is more atomic and prevents loosing all github releases if one
    publish fails later on.
  - <csr-id-ae8570050a313457bb2fd6659e31f34fd29bc325/> `src/` dir of root packages is only used if there is multiple workspace members.
- 
+   
    Otherwise one part of the dependency resolver might have concluded that there are changes, while another part would not have.
    The outcome would have been the same, but the messaging around it would have been different unnecessarily.
 
@@ -31,7 +31,7 @@ for all successful publishes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
 
@@ -42,6 +42,7 @@ for all successful publishes.
 <details><summary>view details</summary>
 
  * **[#222](https://github.com//Byron/gitoxide/issues/222)**
+    - adjust changelog ([`2db6d88`](https://github.com//Byron/gitoxide/commit/2db6d88f390d6577c8660b9da00f94a4a3943ebd))
     - push all available tags even if an error occurred ([`8c3ca9c`](https://github.com//Byron/gitoxide/commit/8c3ca9cf58c44af627fc9b3c4138891635b1c554))
     - create GitHub release right after publishing succeeds ([`b769c47`](https://github.com//Byron/gitoxide/commit/b769c47079a16042ef592a0199cb2d0f6afeeb5e))
     - src/ dir of root packages is only used if there is multiple workspace members ([`ae85700`](https://github.com//Byron/gitoxide/commit/ae8570050a313457bb2fd6659e31f34fd29bc325))

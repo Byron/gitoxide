@@ -188,7 +188,7 @@ pub enum SubCommands {
         /// Allow changelog updates to take place on a dirty working tree when --write is set as well.
         ///
         /// For now this is not recommended as changelogs might be damaged beyond repair.
-        #[clap(long, help_heading = Some("EXPERT"))]
+        #[clap(long, short = 'd', help_heading = Some("EXPERT"))]
         allow_dirty: bool,
 
         /// If --write is not set, 'bat' will be used (if available) to print the new changelog to stdout as preview. Use this flag
