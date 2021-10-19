@@ -67,7 +67,7 @@ and make future improvements easier.
 
 <csr-read-only-do-not-edit/>
 
- - 78 commits contributed to the release over the course of 3 calendar days.
+ - 79 commits contributed to the release over the course of 3 calendar days.
  - 10 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#198](https://github.com//Byron/gitoxide/issues/198), [#221](https://github.com//Byron/gitoxide/issues/221), [#222](https://github.com//Byron/gitoxide/issues/222), [#224](https://github.com//Byron/gitoxide/issues/224)
 
@@ -163,6 +163,7 @@ and make future improvements easier.
  * **[#224](https://github.com//Byron/gitoxide/issues/224)**
     - pin version of clap to beta 5 ([`dfc588b`](https://github.com//Byron/gitoxide/commit/dfc588b25ede3faa578eb8e131e73c857117a6df))
  * **Uncategorized**
+    - Release git-hash v0.8.0, git-features v0.17.0, git-actor v0.6.0, git-object v0.15.0, git-diff v0.11.0, git-traverse v0.10.0, git-pack v0.13.0, git-odb v0.23.0, git-packetline v0.12.0, git-transport v0.13.0, git-protocol v0.12.0, git-ref v0.9.0, git-repository v0.11.0, git-commitgraph v0.6.0, gitoxide-core v0.12.0, gitoxide v0.10.0, cargo-smart-release v0.5.0, safety bump 16 crates ([`0e02953`](https://github.com//Byron/gitoxide/commit/0e029537a7f6242d02ccf7e63d8d92f5246e6c5e))
     - thanks clippy ([`7496ba3`](https://github.com//Byron/gitoxide/commit/7496ba38ef815d4f4cb6b78bdead5226fb48f2b6))
     - thanks clippy ([`b717323`](https://github.com//Byron/gitoxide/commit/b7173235ef4b118d96a0989f671424e06910ef46))
     - thanks clippy ([`c4efd9d`](https://github.com//Byron/gitoxide/commit/c4efd9dc1be51049b38c0dd2a3263437ca51fee0))
