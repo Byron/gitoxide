@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+Releases will be more atomic and it will try hard to complete all pending operations even in the light
+of failure. Now GitHub releases will be created right after a publish succeeded, and tags will be pushed
+for all successful publishes.
+
+### Bug Fixes
+
+ - <csr-id-8c3ca9cf58c44af627fc9b3c4138891635b1c554/> Push all available tags even if an error occurred.
+   
+   That way, tags don't remain unpushed despite having been created
+   successfully, just because one crate later in the publishing
+   process fails.
+ - <csr-id-b769c47079a16042ef592a0199cb2d0f6afeeb5e/> Create GitHub release right after publishing succeeds.
+ 
+   This is more atomic and prevents loosing all github releases if one
+   publish fails later on.
+ - <csr-id-ae8570050a313457bb2fd6659e31f34fd29bc325/> `src/` dir of root packages is only used if there is multiple workspace members.
+ 
+   Otherwise one part of the dependency resolver might have concluded that there are changes, while another part would not have.
+   The outcome would have been the same, but the messaging around it would have been different unnecessarily.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#222](https://github.com//Byron/gitoxide/issues/222)**
+    - push all available tags even if an error occurred ([`8c3ca9c`](https://github.com//Byron/gitoxide/commit/8c3ca9cf58c44af627fc9b3c4138891635b1c554))
+    - create GitHub release right after publishing succeeds ([`b769c47`](https://github.com//Byron/gitoxide/commit/b769c47079a16042ef592a0199cb2d0f6afeeb5e))
+    - src/ dir of root packages is only used if there is multiple workspace members ([`ae85700`](https://github.com//Byron/gitoxide/commit/ae8570050a313457bb2fd6659e31f34fd29bc325))
+</details>
+
 ## v0.5.1 (2021-10-19)
 
 This release contains an important bugfix which may have caused panics when the root-package didn't have changes.
@@ -40,7 +82,7 @@ This release contains an important bugfix which may have caused panics when the 
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release.
+ - 7 commits contributed to the release.
  - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
 
@@ -57,6 +99,8 @@ This release contains an important bugfix which may have caused panics when the 
     - `changelog` subcommand fails if there is nothing to do ([`ed8abfd`](https://github.com//Byron/gitoxide/commit/ed8abfdac40f5c8b17981b8a990572f6f07c8862))
     - panic due to unexpected internal state ([`ce68733`](https://github.com//Byron/gitoxide/commit/ce68733379a8ab4644c849ba1571bc7063962c64))
     - crude fix to avoid version related invariants to kick in during dependency resolution ([`3cdebf5`](https://github.com//Byron/gitoxide/commit/3cdebf5c34845ecef195ce762e344dbff7c1b035))
+ * **Uncategorized**
+    - Release cargo-smart-release v0.5.1 ([`31a1481`](https://github.com//Byron/gitoxide/commit/31a148153c4c9faa320de60af2a55cfb2131c797))
 </details>
 
 ## v0.5.0 (2021-10-19)
