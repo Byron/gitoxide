@@ -255,13 +255,6 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                 // TODO: this can actually easily happen if a provided crate depends on a breaking change
                 //       but itself didn't change and thus won't be published. No other way but to deal with
                 //       upgrading existing crates here. This is why sometimes the crate exists but has no bump.
-                debug_assert!(
-                    bump_of_crate_with_that_name
-                        .map(|b| b.is_breaking() || b.latest_release.is_none())
-                        .unwrap_or(true),
-                    "BUG: Found a crate for '{}' that shouldn't be in our set yet",
-                    dependant.name
-                );
                 let bump = breaking_version_bump(ctx, dependant, bump_when_needed)?;
                 if bump.next_release_changes_manifest() && bump_of_crate_with_that_name.is_none() {
                     if is_pre_release_version(&dependant.version) || allow_auto_publish_of_stable_crates {
@@ -310,25 +303,33 @@ fn forward_propagate_breaking_changes_for_publishing(
     bump_when_needed: bool,
     allow_auto_publish_of_stable_crates: bool,
 ) -> anyhow::Result<()> {
-    let mut seen = BTreeSet::default();
-    let mut edits = Vec::new();
-    // skipped don't have version bumps, we don't have manifest updates yet
-    for (idx, starting_crate_for_backward_search) in crates
-        .iter()
-        .enumerate()
-        .rev()
-        .filter(|(_, c)| matches!(c.mode, dependency::Mode::ToBePublished { .. }))
-    {
-        find_safety_bump_edits_backwards_from_crates_for_publish(
-            crates,
-            (idx, starting_crate_for_backward_search),
-            &mut seen,
-            &mut edits,
-        );
-        seen.insert(idx);
-    }
-    for edit_for_publish in edits {
-        edit_for_publish.apply(&mut crates, ctx, bump_when_needed, allow_auto_publish_of_stable_crates)?;
+    let mut seen_breaking = BTreeSet::default();
+    loop {
+        let mut edits_this_round = Vec::new();
+        let mut seen_this_round = BTreeSet::default();
+        // skipped don't have version bumps, we don't have manifest updates yet
+        for (idx, starting_crate_for_backward_search) in crates
+            .iter()
+            .enumerate()
+            .rev()
+            .filter(|(_, c)| matches!(c.mode, dependency::Mode::ToBePublished { .. }))
+        {
+            let breaking_indices = find_safety_bump_edits_backwards_from_crates_for_publish(
+                crates,
+                (idx, starting_crate_for_backward_search),
+                &seen_breaking,
+                &mut seen_this_round,
+                &mut edits_this_round,
+            );
+            seen_this_round.insert(idx);
+            seen_breaking.extend(breaking_indices);
+        }
+        if edits_this_round.is_empty() {
+            break;
+        }
+        for edit_for_publish in edits_this_round {
+            edit_for_publish.apply(&mut crates, ctx, bump_when_needed, allow_auto_publish_of_stable_crates)?;
+        }
     }
     Ok(())
 }
@@ -405,16 +406,14 @@ fn breaking_version_bump(ctx: &Context, package: &Package, bump_when_needed: boo
 
 fn make_breaking(adjustment: &mut VersionAdjustment, breaking_bump: version::Bump, breaking_crate_names: Vec<String>) {
     match adjustment {
-        VersionAdjustment::Breakage { .. } => {
-            unreachable!("BUG: should never try to adjust a package for breaking changes twice")
-        }
+        VersionAdjustment::Breakage { .. } => {}
         VersionAdjustment::Changed { change, bump } => {
             bump.next_release = breaking_bump.next_release;
             *adjustment = VersionAdjustment::Breakage {
                 bump: bump.clone(),
                 change: Some(change.clone()),
                 causing_dependency_names: breaking_crate_names,
-            }
+            };
         }
     }
 }
@@ -422,9 +421,10 @@ fn make_breaking(adjustment: &mut VersionAdjustment, breaking_bump: version::Bum
 fn find_safety_bump_edits_backwards_from_crates_for_publish(
     crates: &[Dependency<'_>],
     start: (usize, &Dependency<'_>),
+    seen_breaking: &BTreeSet<usize>,
     seen: &mut BTreeSet<usize>,
     edits: &mut Vec<EditForPublish>,
-) -> Option<Vec<usize>> {
+) -> Vec<usize> {
     let (current_idx, current) = start;
     let mut breaking_indices = Vec::new();
     for (dep_idx, dep) in current.package.dependencies.iter().filter_map(|dep| {
@@ -437,7 +437,7 @@ fn find_safety_bump_edits_backwards_from_crates_for_publish(
             continue;
         }
         match dep.mode.version_adjustment_bump() {
-            Some(dep_bump) if dep_bump.is_breaking() => {
+            Some(dep_bump) if dep_bump.is_breaking() && !seen_breaking.contains(&dep_idx) => {
                 if !edits.iter().any(|e| e.crates_idx == current_idx) {
                     edits.push(EditForPublish::from(current_idx, vec![dep_idx]));
                 }
@@ -447,9 +447,14 @@ fn find_safety_bump_edits_backwards_from_crates_for_publish(
             }
             _ => {
                 seen.insert(dep_idx);
-                let root_causes_of_breakage =
-                    find_safety_bump_edits_backwards_from_crates_for_publish(crates, (dep_idx, dep), seen, edits);
-                if let Some(breaking_package_indices) = root_causes_of_breakage {
+                let breaking_package_indices = find_safety_bump_edits_backwards_from_crates_for_publish(
+                    crates,
+                    (dep_idx, dep),
+                    seen_breaking,
+                    seen,
+                    edits,
+                );
+                if !breaking_package_indices.is_empty() {
                     if !edits.iter().any(|e| e.crates_idx == current_idx) {
                         edits.push(EditForPublish::from(current_idx, breaking_package_indices.clone()));
                     }
@@ -462,7 +467,7 @@ fn find_safety_bump_edits_backwards_from_crates_for_publish(
             }
         }
     }
-    (!breaking_indices.is_empty()).then(|| breaking_indices)
+    breaking_indices
 }
 
 fn depth_first_traversal<'meta>(
