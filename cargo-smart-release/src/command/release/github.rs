@@ -62,12 +62,9 @@ pub fn create_release(
     );
 
     cmd.arg(notes);
-    if !Program::named("gh").found {
-        log::warn!("To create github releases, please install the 'gh' program and try again");
-        return Ok(());
-    } else if !dry_run && !cmd.status()?.success() {
+    if !dry_run && !cmd.status()?.success() {
         log::warn!(
-            "'gh' tool execution failed - we will keep trying, and you may try to create the release with: {:?}",
+            "'gh' tool execution failed - considering this non-critical, and you may try to create the release with: {:?}",
             cmd
         );
     }

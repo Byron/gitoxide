@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 
 use anyhow::bail;
 
+use crate::utils::Program;
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},
@@ -382,6 +383,13 @@ fn perform_multi_version_release(
         section_by_package: release_section_by_publishee,
     } = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(crates, options, ctx)?;
 
+    let should_publish_to_github = options.allow_changelog_github_release
+        && if Program::named("gh").found {
+            true
+        } else {
+            log::warn!("To create github releases, please install the 'gh' program and try again");
+            false
+        };
     let mut tag_names = Vec::new();
     for (publishee, new_version) in crates.iter().filter_map(|c| try_to_published_crate_and_new_version(c)) {
         cargo::publish_crate(publishee, options)?;
@@ -396,19 +404,19 @@ fn perform_multi_version_release(
             options,
         )? {
             tag_names.push(tag_name);
-        };
+        }
+
+        should_publish_to_github
+            .then(|| {
+                release_section_by_publishee
+                    .get(&publishee.name.as_str())
+                    .and_then(|s| section_to_string(s, WriteMode::GitHubRelease))
+            })
+            .flatten()
+            .map(|release_notes| github::create_release(publishee, new_version, &release_notes, options, &ctx.base))
+            .transpose()?;
     }
     git::push_tags_and_head(tag_names.iter(), options)?;
-    if options.allow_changelog_github_release {
-        for (publishee, new_version) in crates.iter().filter_map(|c| try_to_published_crate_and_new_version(c)) {
-            if let Some(message) = release_section_by_publishee
-                .get(&publishee.name.as_str())
-                .and_then(|s| section_to_string(s, WriteMode::GitHubRelease))
-            {
-                github::create_release(publishee, new_version, &message, options, &ctx.base)?;
-            }
-        }
-    }
     Ok(())
 }
 
