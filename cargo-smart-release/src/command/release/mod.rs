@@ -228,16 +228,16 @@ fn present_dependencies(
                                             .then(|| format!(", {} on crates.io", latest_release))
                                     })
                                     .unwrap_or_default(),
-                                (*next_release != bump.desired_release)
-                                    .then(|| format!(", ignoring computed version {}", bump.desired_release))
-                                    .unwrap_or_default(),
                                 breaking_dependencies
                                     .map(|causes| format!(
                                         ", for SAFETY due to breaking package{} {}",
                                         if causes.len() == 1 { "" } else { "s" },
                                         causes.iter().map(|n| format!("'{}'", n)).collect::<Vec<_>>().join(", ")
                                     ))
-                                    .unwrap_or_default()
+                                    .unwrap_or_default(),
+                                (*next_release != bump.desired_release)
+                                    .then(|| format!(", ignoring computed version {}", bump.desired_release))
+                                    .unwrap_or_default(),
                             );
                         } else {
                             log::info!(
