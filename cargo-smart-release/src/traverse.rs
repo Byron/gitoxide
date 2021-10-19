@@ -303,10 +303,10 @@ fn forward_propagate_breaking_changes_for_publishing(
     bump_when_needed: bool,
     allow_auto_publish_of_stable_crates: bool,
 ) -> anyhow::Result<()> {
-    let mut seen_breaking = BTreeSet::default();
+    let mut previous_edits = Vec::new();
     loop {
-        let mut edits_this_round = Vec::new();
         let mut seen_this_round = BTreeSet::default();
+        let mut edits = Vec::new();
         // skipped don't have version bumps, we don't have manifest updates yet
         for (idx, starting_crate_for_backward_search) in crates
             .iter()
@@ -314,26 +314,28 @@ fn forward_propagate_breaking_changes_for_publishing(
             .rev()
             .filter(|(_, c)| matches!(c.mode, dependency::Mode::ToBePublished { .. }))
         {
-            let breaking_indices = find_safety_bump_edits_backwards_from_crates_for_publish(
+            find_safety_bump_edits_backwards_from_crates_for_publish(
                 crates,
                 (idx, starting_crate_for_backward_search),
-                &seen_breaking,
                 &mut seen_this_round,
-                &mut edits_this_round,
+                &mut edits,
             );
             seen_this_round.insert(idx);
-            seen_breaking.extend(breaking_indices);
         }
-        if edits_this_round.is_empty() {
+
+        if edits == previous_edits {
             break;
         }
-        for edit_for_publish in edits_this_round {
+
+        previous_edits = edits.clone();
+        for edit_for_publish in edits {
             edit_for_publish.apply(&mut crates, ctx, bump_when_needed, allow_auto_publish_of_stable_crates)?;
         }
     }
     Ok(())
 }
 
+#[derive(PartialEq, Eq, Clone)]
 struct EditForPublish {
     crates_idx: usize,
     causing_dependency_indices: Vec<usize>,
@@ -421,7 +423,6 @@ fn make_breaking(adjustment: &mut VersionAdjustment, breaking_bump: version::Bum
 fn find_safety_bump_edits_backwards_from_crates_for_publish(
     crates: &[Dependency<'_>],
     start: (usize, &Dependency<'_>),
-    seen_breaking: &BTreeSet<usize>,
     seen: &mut BTreeSet<usize>,
     edits: &mut Vec<EditForPublish>,
 ) -> Vec<usize> {
@@ -437,7 +438,7 @@ fn find_safety_bump_edits_backwards_from_crates_for_publish(
             continue;
         }
         match dep.mode.version_adjustment_bump() {
-            Some(dep_bump) if dep_bump.is_breaking() && !seen_breaking.contains(&dep_idx) => {
+            Some(dep_bump) if dep_bump.is_breaking() => {
                 if !edits.iter().any(|e| e.crates_idx == current_idx) {
                     edits.push(EditForPublish::from(current_idx, vec![dep_idx]));
                 }
@@ -447,13 +448,8 @@ fn find_safety_bump_edits_backwards_from_crates_for_publish(
             }
             _ => {
                 seen.insert(dep_idx);
-                let breaking_package_indices = find_safety_bump_edits_backwards_from_crates_for_publish(
-                    crates,
-                    (dep_idx, dep),
-                    seen_breaking,
-                    seen,
-                    edits,
-                );
+                let breaking_package_indices =
+                    find_safety_bump_edits_backwards_from_crates_for_publish(crates, (dep_idx, dep), seen, edits);
                 if !breaking_package_indices.is_empty() {
                     if !edits.iter().any(|e| e.crates_idx == current_idx) {
                         edits.push(EditForPublish::from(current_idx, breaking_package_indices.clone()));
