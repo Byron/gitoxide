@@ -342,7 +342,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-smart-release"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1012,7 +1012,7 @@ dependencies = [
 
 [[package]]
 name = "git-actor"
-version = "0.5.3"
+version = "0.6.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -1027,7 +1027,7 @@ dependencies = [
 
 [[package]]
 name = "git-commitgraph"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "bstr",
  "byteorder",
@@ -1065,7 +1065,7 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1077,7 +1077,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.16.5"
+version = "0.17.0"
 dependencies = [
  "bytes",
  "crc32fast",
@@ -1097,7 +1097,7 @@ dependencies = [
 
 [[package]]
 name = "git-hash"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "hex",
  "quick-error",
@@ -1120,7 +1120,7 @@ dependencies = [
 
 [[package]]
 name = "git-object"
-version = "0.14.1"
+version = "0.15.0"
 dependencies = [
  "bstr",
  "git-actor",
@@ -1137,7 +1137,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "btoi",
  "git-actor",
@@ -1153,7 +1153,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -1183,7 +1183,7 @@ dependencies = [
 
 [[package]]
 name = "git-packetline"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "async-std",
  "bstr",
@@ -1199,7 +1199,7 @@ dependencies = [
 
 [[package]]
 name = "git-protocol"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1220,7 +1220,7 @@ dependencies = [
 
 [[package]]
 name = "git-ref"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "filebuffer",
  "git-actor",
@@ -1241,7 +1241,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "clru",
@@ -1295,7 +1295,7 @@ dependencies = [
 
 [[package]]
 name = "git-transport"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1318,7 +1318,7 @@ dependencies = [
 
 [[package]]
 name = "git-traverse"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1368,7 +1368,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "argh",
@@ -1386,7 +1386,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide-core"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "anyhow",
  "async-io",

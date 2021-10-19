@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.5.0 (2021-10-19)
 
 <csr-id-07372dd045de88f283d35d8f3dcc4c079dce88e9/>
 
@@ -67,8 +67,8 @@ and make future improvements easier.
 
 <csr-read-only-do-not-edit/>
 
- - 71 commits contributed to the release over the course of 3 calendar days.
- - 9 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 78 commits contributed to the release over the course of 3 calendar days.
+ - 10 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#198](https://github.com//Byron/gitoxide/issues/198), [#221](https://github.com//Byron/gitoxide/issues/221), [#222](https://github.com//Byron/gitoxide/issues/222), [#224](https://github.com//Byron/gitoxide/issues/224)
 
 ### Thanks Clippy
@@ -93,6 +93,13 @@ and make future improvements easier.
     - Inform about safety bumps more explicitly ([`b806a9c`](https://github.com//Byron/gitoxide/commit/b806a9c982da1e5ff42c268e430c67363f3a7918))
     - refactor ([`23073e8`](https://github.com//Byron/gitoxide/commit/23073e88c8d083d064cd5b79800c063a9fdc949f))
  * **[#222](https://github.com//Byron/gitoxide/issues/222)**
+    - refactor ([`72bda30`](https://github.com//Byron/gitoxide/commit/72bda306c00642571cd22d909775b4b7cc2c85b6))
+    - refactor ([`c8c0dcd`](https://github.com//Byron/gitoxide/commit/c8c0dcd167556e7c45baf8eff34e4aeff8e28379))
+    - refactor ([`f7a8847`](https://github.com//Byron/gitoxide/commit/f7a8847c8afb5504cf9bfd779a6a99f7c996e05d))
+    - fix merging of dependency graphs for multiple crates ([`d332cdf`](https://github.com//Byron/gitoxide/commit/d332cdf9532add5e34c1ade16d4b775ba56171e5))
+    - Revert "FAIL: try to assure that breaking changes are always published in correct order" ([`f25e7c7`](https://github.com//Byron/gitoxide/commit/f25e7c706d340c02d851ce2b5fe06ef43a0ce95c))
+    - try to assure that breaking changes are always published in correct order ([`3519f9a`](https://github.com//Byron/gitoxide/commit/3519f9a1f4002232aec752dadf7d3737bd97ce3d))
+    - update changelogs prior to release ([`9a493d0`](https://github.com//Byron/gitoxide/commit/9a493d0651b0b6d71cf230dc510a658be7f8cb19))
     - Respect user selection when re-adding crates for manifest change ([`72d16bf`](https://github.com//Byron/gitoxide/commit/72d16bf935bccf0faff9274156ce399a72540e73))
     - dependency resolution ([`501c1d1`](https://github.com//Byron/gitoxide/commit/501c1d102c0e5e4635120bb1aa857e97a2b537b4))
     - --no-changelog during smart-release is now actually working ([`5e98e55`](https://github.com//Byron/gitoxide/commit/5e98e5559707cf308e2cd64494fe73a99f9e9c8e))

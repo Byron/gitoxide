@@ -5,9 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.6.0 (2021-10-19)
 
 A maintenance release due to properly dealing with previously breaking changes in `git-hash`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#222](https://github.com//Byron/gitoxide/issues/222)**
+    - update changelogs prior to release ([`9a493d0`](https://github.com//Byron/gitoxide/commit/9a493d0651b0b6d71cf230dc510a658be7f8cb19))
+</details>
 
 ## v0.5.3 (2021-10-15)
 
