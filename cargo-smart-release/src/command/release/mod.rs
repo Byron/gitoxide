@@ -120,7 +120,7 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
 fn present_dependencies(
     crates: &[traverse::Dependency<'_>],
     ctx: &Context,
-    _verbose: bool,
+    verbose: bool,
     dry_run: bool,
 ) -> anyhow::Result<()> {
     use dependency::Kind;
@@ -133,10 +133,12 @@ fn present_dependencies(
             _ => None,
         })
         .collect();
+    let mut num_refused = 0;
     for (refused_crate, has_adjustment) in all_skipped
         .iter()
         .filter(|(name, _)| ctx.base.crate_names.iter().any(|n| n == *name))
     {
+        num_refused += 1;
         log::warn!(
             "Refused to publish '{}' as {}.",
             refused_crate,
@@ -145,6 +147,14 @@ fn present_dependencies(
                 .unwrap_or("as it didn't change")
         );
     }
+
+    let no_requested_crate_will_publish = num_refused == ctx.base.crate_names.len();
+    if no_requested_crate_will_publish && !verbose {
+        bail!(
+            "No provided crate is actually eligible for publishing. Use --verbose to see the release plan nonetheless."
+        )
+    }
+
     let skipped = all_skipped.iter().map(|(name, _)| *name).collect::<Vec<_>>();
     if !skipped.is_empty() {
         log::info!(
@@ -317,6 +327,9 @@ fn present_dependencies(
     if error {
         bail!("Aborting due to previous error(s)");
     } else {
+        if no_requested_crate_will_publish {
+            bail!("No provided crate is actually eligible for publishing.")
+        }
         Ok(())
     }
 }
