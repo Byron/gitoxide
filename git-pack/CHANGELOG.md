@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release to properly dealing with previously breaking changes in `git-hash`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#222](https://github.com//Byron/gitoxide/issues/222)**
+    - Update changelogs prior to release ([`b3e2252`](https://github.com//Byron/gitoxide/commit/b3e2252f7461a003d9a4612da60ba931dd8c0bef))
+</details>
+
 ## v0.12.0 (2021-10-15)
 
 <csr-id-d8fe8141e80a9e9a433b5e1a072b850325c806c8/>
@@ -48,7 +70,7 @@ signalled a breaking change which is one of our dependencies.
 
 <csr-read-only-do-not-edit/>
 
- - 33 commits contributed to the release over the course of 32 calendar days.
+ - 34 commits contributed to the release over the course of 32 calendar days.
  - 10 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#164](https://github.com//Byron/gitoxide/issues/164), [#198](https://github.com//Byron/gitoxide/issues/198), [#67](https://github.com//Byron/gitoxide/issues/67)
 
@@ -91,6 +113,7 @@ signalled a breaking change which is one of our dependencies.
     - Count ref-deltas in thin packs as well ([`80c6994`](https://github.com//Byron/gitoxide/commit/80c6994149d19917c25e36e1bdf0dc8c9678365e))
     - Add '--thin' flag to pack-create and pass it on ([`2664d73`](https://github.com//Byron/gitoxide/commit/2664d73f531a4b1f4bc784c1fe3a991711c86475))
  * **Uncategorized**
+    - Release git-hash v0.7.0, git-features v0.16.5, git-actor v0.5.3, git-config v0.1.7, git-validate v0.5.3, git-object v0.14.1, git-diff v0.10.0, git-tempfile v1.0.3, git-lock v1.0.1, git-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, git-packetline v0.11.0, git-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, git-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0 ([`59ffbd9`](https://github.com//Byron/gitoxide/commit/59ffbd9f15583c8248b7f48b3f55ec6faffe7cfe))
     - Adjusting changelogs prior to release of git-hash v0.7.0, git-features v0.16.5, git-actor v0.5.3, git-validate v0.5.3, git-object v0.14.1, git-diff v0.10.0, git-tempfile v1.0.3, git-lock v1.0.1, git-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, git-packetline v0.11.0, git-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, git-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0, safety bump 3 crates ([`a474395`](https://github.com//Byron/gitoxide/commit/a47439590e36b1cb8b516b6053fd5cbfc42efed7))
     - make fmt, but now it picked up some parts that usually don't get altered… ([`01f7b72`](https://github.com//Byron/gitoxide/commit/01f7b729337bd2c99498321c479a9a13b1858e3e))
     - Update changelogs just for fun ([`21541b3`](https://github.com//Byron/gitoxide/commit/21541b3301de1e053fc0e84373be60d2162fbaae))

@@ -352,7 +352,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 })
                 .collect::<Vec<_>>()
         };
-        let fix_preamble = "To fix the changelog manually, run: cargo changelog --write";
+        let fix_preamble = "";
         if !changelog_ids_with_statistical_segments_only.is_empty() {
             let crate_names = crate_names(&changelog_ids_with_statistical_segments_only);
             let names_of_crates_that_would_need_review = crate_names.join(", ");
@@ -370,9 +370,10 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
                 },
                 names_of_crates_that_would_need_review
             );
-            for crate_name in crate_names {
-                log::warn!("{} {}", fix_preamble, crate_name);
-            }
+            log::warn!(
+                "To fix the changelog manually, run: cargo changelog --write {}",
+                ctx.base.crate_names.join(" ")
+            );
         }
         if !changelog_ids_probably_lacking_user_edits.is_empty() {
             let crate_names = crate_names(&changelog_ids_probably_lacking_user_edits);

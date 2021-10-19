@@ -1,4 +1,5 @@
 use anyhow::bail;
+use std::collections::BTreeMap;
 
 use crate::{
     changelog,
@@ -118,31 +119,83 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
 }
 
 fn present_dependencies(
-    deps: &[traverse::Dependency<'_>],
+    crates: &[traverse::Dependency<'_>],
     ctx: &Context,
-    _verbose: bool,
+    verbose: bool,
     dry_run: bool,
 ) -> anyhow::Result<()> {
     use dependency::Kind;
-    let skipped = deps
+    let all_skipped: Vec<_> = crates
         .iter()
-        .filter_map(|dep| {
-            matches!(&dep.mode, dependency::Mode::NotForPublishing { adjustment: None, .. })
-                .then(|| dep.package.name.as_str())
+        .filter_map(|dep| match &dep.mode {
+            dependency::Mode::NotForPublishing { reason, adjustment } => {
+                Some((dep.package.name.as_str(), adjustment.is_some(), *reason))
+            }
+            _ => None,
         })
-        .collect::<Vec<_>>();
-    if !skipped.is_empty() {
-        log::info!(
-            "Will not publish or alter {} dependent crate{} as {} unchanged since the last release: {}",
-            skipped.len(),
-            (skipped.len() != 1).then(|| "s").unwrap_or(""),
-            (skipped.len() != 1).then(|| "they are").unwrap_or("it is"),
-            skipped.join(", ")
+        .collect();
+    let mut num_refused = 0;
+    for (refused_crate, has_adjustment, _) in all_skipped
+        .iter()
+        .filter(|(name, _, _)| ctx.base.crate_names.iter().any(|n| n == *name))
+    {
+        num_refused += 1;
+        log::warn!(
+            "Refused to publish '{}' as {}.",
+            refused_crate,
+            has_adjustment
+                .then(|| "only a manifest change is needed")
+                .unwrap_or("as it didn't change")
         );
     }
 
+    let no_requested_crate_will_publish = num_refused == ctx.base.crate_names.len();
+    let no_crate_being_published_message = "No provided crate is actually eligible for publishing.";
+    if no_requested_crate_will_publish && !verbose {
+        bail!(
+            "{} Use --verbose to see the release plan nonetheless.",
+            no_crate_being_published_message
+        )
+    }
+
+    let skipped = all_skipped
+        .iter()
+        .filter_map(|(name, has_adjustment, reason)| (!has_adjustment).then(|| (*name, reason)))
+        .collect::<Vec<_>>();
+    if !skipped.is_empty() {
+        let skipped_len = skipped.len();
+        let mut crates_by_reason: Vec<_> = skipped
+            .into_iter()
+            .fold(BTreeMap::default(), |mut acc, (name, reason)| {
+                acc.entry(*reason).or_insert_with(Vec::new).push(name);
+                acc
+            })
+            .into_iter()
+            .collect();
+        crates_by_reason.sort_by_key(|(k, _)| *k);
+
+        log::info!(
+            "Will not publish or alter {} dependent crate{}: {}",
+            skipped_len,
+            (skipped_len != 1).then(|| "s").unwrap_or(""),
+            crates_by_reason
+                .into_iter()
+                .map(|(key, names)| format!(
+                    "{} = {}",
+                    key,
+                    names.iter().map(|n| format!("'{}'", n)).collect::<Vec<_>>().join(", ")
+                ))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+    }
+
+    if all_skipped.len() == crates.len() {
+        bail!("There is no crate eligible for publishing.");
+    }
+
     let mut error = false;
-    for dep in deps {
+    for dep in crates {
         let (bump_spec, kind) = match dep.kind {
             Kind::UserSelection => (ctx.base.bump, "provided"),
             Kind::DependencyOrDependentOfUserSelection => (ctx.base.bump_dependencies, "dependent"),
@@ -216,7 +269,7 @@ fn present_dependencies(
     }
 
     {
-        let affected_crates_by_cause = deps
+        let affected_crates_by_cause = crates
             .iter()
             .filter_map(|dep| match &dep.mode {
                 dependency::Mode::NotForPublishing {
@@ -245,7 +298,7 @@ fn present_dependencies(
         for (cause, deps_and_bumps) in affected_crates_by_cause {
             let plural_s = (deps_and_bumps.len() != 1).then(|| "s").unwrap_or("");
             log::info!(
-                "{} adjust {} manifest{} due to breaking change in '{}': {}",
+                "{} adjust {} manifest version{} due to breaking change in '{}': {}",
                 will(dry_run),
                 deps_and_bumps.len(),
                 plural_s,
@@ -267,7 +320,7 @@ fn present_dependencies(
     }
 
     {
-        let crate_names_for_manifest_updates = deps
+        let crate_names_for_manifest_updates = crates
             .iter()
             .filter_map(|d| {
                 matches!(
@@ -285,11 +338,11 @@ fn present_dependencies(
                 .then(|| "s")
                 .unwrap_or_default();
             log::info!(
-                "Manifest{} of {} package{} {} be adjusted as its direct dependencies see a version change: {}",
+                "{} adjust version constraints in manifest{} of {} package{} as direct dependencies are changing: {}",
+                will(dry_run),
                 plural_s,
                 crate_names_for_manifest_updates.len(),
                 plural_s,
-                will(dry_run),
                 crate_names_for_manifest_updates.join(", ")
             );
         }
@@ -298,6 +351,9 @@ fn present_dependencies(
     if error {
         bail!("Aborting due to previous error(s)");
     } else {
+        if no_requested_crate_will_publish {
+            bail!(no_crate_being_published_message)
+        }
         Ok(())
     }
 }

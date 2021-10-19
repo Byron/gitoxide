@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-just a patch
+A maintenance release to properly dealing with previously breaking changes in `git-hash`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release over the course of 2 calendar days.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#221](https://github.com//Byron/gitoxide/issues/221), [#222](https://github.com//Byron/gitoxide/issues/222)
 
 ## v0.10.0 (2021-10-15)
 
@@ -36,7 +44,6 @@ just a patch
    Even in my example that's not the case, so maybe we have to rename it.
  - <csr-id-0ebfeb614264ca06ab763189e55e6c016c9997af/> Make `git_url::Url` available under `git_repository::Url`
 
-
 ### BREAKING Changes
 
  - Use 'to_*' when converting `easy::Object` to specific object kind
@@ -64,7 +71,7 @@ just a patch
 
 <csr-read-only-do-not-edit/>
 
- - 93 commits contributed to the release over the course of 33 calendar days.
+ - 94 commits contributed to the release over the course of 33 calendar days.
  - 38 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#164](https://github.com//Byron/gitoxide/issues/164), [#198](https://github.com//Byron/gitoxide/issues/198), [#200](https://github.com//Byron/gitoxide/issues/200), [#67](https://github.com//Byron/gitoxide/issues/67)
 
@@ -153,6 +160,7 @@ just a patch
     - Use Easy in the one spot where it is possible… ([`6a97bfa`](https://github.com//Byron/gitoxide/commit/6a97bfabcec6597efe9282e6d5c9f0ac3ada61dc))
     - try to create persistent Easy iterator, but can't make it Send… ([`54a64a5`](https://github.com//Byron/gitoxide/commit/54a64a588ff72515451a3d0343306ac4abe1cb35))
  * **Uncategorized**
+    - Release git-hash v0.7.0, git-features v0.16.5, git-actor v0.5.3, git-config v0.1.7, git-validate v0.5.3, git-object v0.14.1, git-diff v0.10.0, git-tempfile v1.0.3, git-lock v1.0.1, git-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, git-packetline v0.11.0, git-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, git-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0 ([`59ffbd9`](https://github.com//Byron/gitoxide/commit/59ffbd9f15583c8248b7f48b3f55ec6faffe7cfe))
     - thanks clippy ([`bcc9871`](https://github.com//Byron/gitoxide/commit/bcc98715b1bfd9613079071da59309aa8a5ab27b))
     - Adjusting changelogs prior to release of git-hash v0.7.0, git-features v0.16.5, git-actor v0.5.3, git-validate v0.5.3, git-object v0.14.1, git-diff v0.10.0, git-tempfile v1.0.3, git-lock v1.0.1, git-traverse v0.9.0, git-pack v0.12.0, git-odb v0.22.0, git-packetline v0.11.0, git-url v0.3.4, git-transport v0.12.0, git-protocol v0.11.0, git-ref v0.8.0, git-repository v0.10.0, cargo-smart-release v0.4.0, safety bump 3 crates ([`a474395`](https://github.com//Byron/gitoxide/commit/a47439590e36b1cb8b516b6053fd5cbfc42efed7))
     - make fmt, but now it picked up some parts that usually don't get altered… ([`01f7b72`](https://github.com//Byron/gitoxide/commit/01f7b729337bd2c99498321c479a9a13b1858e3e))

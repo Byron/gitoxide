@@ -152,7 +152,7 @@ impl Section {
         Section::Release {
             name: version,
             date,
-            heading_level: 2,
+            heading_level: changelog::DEFAULT_HEADING_LEVEL,
             segments,
             removed_messages: Default::default(),
             unknown: Default::default(),
