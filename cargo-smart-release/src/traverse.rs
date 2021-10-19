@@ -566,9 +566,12 @@ fn find_workspace_crates_depending_on_adjusted_crates<'meta>(
         .map(|id| package_by_id(&ctx.meta, id))
         .filter(|wsp| crates.iter().all(|c| c.package.id != wsp.id))
         .filter(|wsp| {
-            wsp.dependencies
-                .iter()
-                .any(|d| crates.iter().any(|c| c.package.name == d.name))
+            wsp.dependencies.iter().any(|d| {
+                crates
+                    .iter()
+                    .filter(|c| c.mode.manifest_will_change())
+                    .any(|c| c.package.name == d.name)
+            })
         })
         .map(|wsp| Dependency {
             kind: dependency::Kind::DependencyOrDependentOfUserSelection,
