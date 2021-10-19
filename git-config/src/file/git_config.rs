@@ -146,7 +146,7 @@ impl<'event> GitConfig<'event> {
         let mut config = Self::new();
 
         for path in paths {
-            let mut other = Self::open(path)?;
+            let other = Self::open(path)?;
             for (section_id, section_header) in other.section_headers {
                 config.push_section(
                     section_header.name.0.to_owned(),
