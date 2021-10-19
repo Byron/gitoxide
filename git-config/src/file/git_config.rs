@@ -1560,7 +1560,7 @@ mod from_paths {
     }
 
     #[test]
-    fn cascade() {
+    fn multiple_paths() {
         let dir = tempdir().unwrap();
 
         let a_path = dir.path().join("a");
