@@ -149,6 +149,7 @@ pub fn dependencies(
             continue;
         }
         if dependency_tree_has_link_to_existing_crate_names(&ctx.meta, package, &crates)? {
+            dbg!(package.name.as_str());
             // redo all work which includes the previous tree. Could be more efficient but that would be more complicated.
             seen.clear();
             crates.clear();
@@ -211,6 +212,13 @@ pub fn dependencies(
             allow_auto_publish_of_stable_crates,
         )?;
         forward_propagate_breaking_changes_for_manifest_updates(
+            ctx,
+            &mut crates,
+            bump_when_needed,
+            allow_auto_publish_of_stable_crates,
+        )?;
+        // TODO: instead of this, solve it when dealing with dependencies
+        forward_propagate_breaking_changes_for_publishing(
             ctx,
             &mut crates,
             bump_when_needed,
@@ -463,6 +471,11 @@ fn find_safety_bump_edits_backwards_from_crates_for_publish(
             Some(dep_bump) if dep_bump.is_breaking() => {
                 if !edits.iter().any(|e| e.crates_idx == current_idx) {
                     edits.push(EditForPublish::from(current_idx, vec![dep_idx]));
+                }
+                if matches!(dep.mode, dependency::Mode::NotForPublishing { .. }) {
+                    if !edits.iter().any(|e| e.crates_idx == dep_idx) {
+                        edits.push(EditForPublish::from(dep_idx, vec![]));
+                    }
                 }
                 if !breaking_indices.contains(&dep_idx) {
                     breaking_indices.push(dep_idx);
