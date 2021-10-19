@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
+use cargo_metadata::{DependencyKind, Package, PackageId};
 
 use crate::{
     git,
@@ -144,21 +144,16 @@ pub fn dependencies(
     let mut seen = BTreeSet::new();
     let mut crates = Vec::new();
     for crate_name in &ctx.crate_names {
+        let mut crates_this_round = Vec::new();
         let package = package_by_name(&ctx.meta, crate_name)?;
         if seen.contains(&&package.id) {
             continue;
         }
-        if dependency_tree_has_link_to_existing_crate_names(&ctx.meta, package, &crates)? {
-            // redo all work which includes the previous tree. Could be more efficient but that would be more complicated.
-            seen.clear();
-            crates.clear();
-        }
-        let num_crates_for_publishing_without_dependencies = crates.len();
         if traverse_graph {
             depth_first_traversal(
                 ctx,
                 &mut seen,
-                &mut crates,
+                &mut crates_this_round,
                 package,
                 allow_auto_publish_of_stable_crates,
                 bump_when_needed,
@@ -167,7 +162,7 @@ pub fn dependencies(
 
         match git::change_since_last_release(package, ctx)? {
             Some(user_package_change) => {
-                crates.push(Dependency {
+                crates_this_round.push(Dependency {
                     package,
                     kind: dependency::Kind::UserSelection,
                     mode: if package_may_be_published(package) {
@@ -187,20 +182,17 @@ pub fn dependencies(
                 seen.insert(&package.id);
             }
             None => {
-                let found_no_dependencies = num_crates_for_publishing_without_dependencies == crates.len();
-                if found_no_dependencies {
-                    crates.push(Dependency {
-                        package,
-                        kind: dependency::Kind::UserSelection,
-                        mode: dependency::Mode::NotForPublishing {
-                            reason: dependency::NoPublishReason::Unchanged,
-                            adjustment: None,
-                        },
-                    });
-                    continue;
-                }
+                crates_this_round.push(Dependency {
+                    package,
+                    kind: dependency::Kind::UserSelection,
+                    mode: dependency::Mode::NotForPublishing {
+                        reason: dependency::NoPublishReason::Unchanged,
+                        adjustment: None,
+                    },
+                });
             }
         }
+        merge_crates(&mut crates, crates_this_round);
     }
 
     if isolate_dependencies_from_breaking_changes {
@@ -219,6 +211,18 @@ pub fn dependencies(
     }
     crates.extend(find_workspace_crates_depending_on_adjusted_crates(ctx, &crates));
     Ok(crates)
+}
+
+fn merge_crates<'meta>(dest: &mut Vec<Dependency<'meta>>, src: Vec<Dependency<'meta>>) {
+    if dest.is_empty() {
+        *dest = src;
+    } else {
+        for dep in src {
+            if !dest.iter().any(|dest| dest.package.id == dep.package.id) {
+                dest.push(dep);
+            }
+        }
+    }
 }
 
 fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
@@ -550,30 +554,6 @@ fn depth_first_traversal<'meta>(
         });
     }
     Ok(())
-}
-
-fn dependency_tree_has_link_to_existing_crate_names(
-    meta: &Metadata,
-    root: &Package,
-    existing: &[Dependency<'_>],
-) -> anyhow::Result<bool> {
-    let mut dependencies = vec![root];
-    let mut seen = BTreeSet::new();
-    while let Some(package) = dependencies.pop() {
-        if !seen.insert(&package.id) {
-            continue;
-        }
-        if existing.iter().any(|d| d.package.id == package.id) {
-            return Ok(true);
-        }
-        dependencies.extend(
-            package
-                .dependencies
-                .iter()
-                .filter_map(|dep| workspace_package_by_dependency(meta, dep)),
-        )
-    }
-    Ok(false)
 }
 
 fn find_workspace_crates_depending_on_adjusted_crates<'meta>(
