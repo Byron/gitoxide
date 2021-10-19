@@ -28,13 +28,20 @@ This release contains an important bugfix which may have caused panics when the 
    to determine changes of the top-level directory, and by making panics
    impossible while improving the messaging around this state should it
    still occur. The latter is rough, probably rare, but usable.
+ - <csr-id-6ee4f5d20c832a54ca5d841773d93f0927a16f25/> Correct the reporting of manifest changes.
+ 
+   Previously even unchanged crates would trigger workspace crates
+   to be recorded for manifest changes.
+   
+   Now only crates that are to receive manifest changes will be triggering
+   this.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 5 commits contributed to the release.
+ - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
 
 ### Commit Details
@@ -44,6 +51,8 @@ This release contains an important bugfix which may have caused panics when the 
 <details><summary>view details</summary>
 
  * **[#222](https://github.com//Byron/gitoxide/issues/222)**
+    - correct reporting of manifest changes ([`6ee4f5d`](https://github.com//Byron/gitoxide/commit/6ee4f5d20c832a54ca5d841773d93f0927a16f25))
+    - adjust changelog for smart-release release ([`210b09a`](https://github.com//Byron/gitoxide/commit/210b09ae63be853fb233547e8173e7176ca9a4d0))
     - `changelog` subcommand fails if there is nothing to do ([`ed8abfd`](https://github.com//Byron/gitoxide/commit/ed8abfdac40f5c8b17981b8a990572f6f07c8862))
     - panic due to unexpected internal state ([`ce68733`](https://github.com//Byron/gitoxide/commit/ce68733379a8ab4644c849ba1571bc7063962c64))
     - crude fix to avoid version related invariants to kick in during dependency resolution ([`3cdebf5`](https://github.com//Byron/gitoxide/commit/3cdebf5c34845ecef195ce762e344dbff7c1b035))
