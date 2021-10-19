@@ -177,8 +177,8 @@ pub enum SubCommands {
         ///
         /// This flag is useful if you plan to review and finalize changelogs before a a smart-release, where dependencies
         /// are taken into consideration by default, instead of handling them one at a time.
-        #[clap(long, help_heading = Some("CUSTOMIZATION"))]
-        dependencies: bool,
+        #[clap(long, visible_alias = "only", help_heading = Some("CUSTOMIZATION"))]
+        no_dependencies: bool,
 
         /// The name of the crates to generate a changelog for.
         ///

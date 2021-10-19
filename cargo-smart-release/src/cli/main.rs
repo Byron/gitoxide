@@ -10,7 +10,7 @@ fn main() -> anyhow::Result<()> {
         SubCommands::Changelog {
             write,
             crates,
-            dependencies,
+            no_dependencies,
             no_preview,
             no_links,
             without,
@@ -23,7 +23,7 @@ fn main() -> anyhow::Result<()> {
                     allow_dirty,
                     no_links,
                     preview: !no_preview,
-                    dependencies,
+                    dependencies: !no_dependencies,
                     generator_segments: names_to_segment_selection(&without)?,
                 },
                 crates,

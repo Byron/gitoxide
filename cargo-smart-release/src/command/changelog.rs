@@ -1,5 +1,6 @@
 use std::io::Write;
 
+use crate::traverse::dependency;
 use crate::{
     bat,
     changelog::write::{Components, Linkables},
@@ -21,7 +22,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     } = opts;
     let bump_spec = dependencies.then(|| BumpSpec::Auto).unwrap_or(BumpSpec::Keep);
     let force_history_segmentation = false;
-    let ctx = crate::Context::new(crates, force_history_segmentation, bump_spec, bump_spec)?;
+    let ctx = crate::Context::new(crates.clone(), force_history_segmentation, bump_spec, bump_spec)?;
     let crates: Vec<_> = {
         let add_production_crates = true;
         let bump_only_when_needed = true;
@@ -34,7 +35,21 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
             dependencies,
         )?
         .into_iter()
-        .filter_map(|d| matches!(d.mode, crate::traverse::dependency::Mode::ToBePublished { .. }).then(|| d.package))
+        .filter_map(|d| match d.mode {
+            dependency::Mode::ToBePublished { .. } => Some(d.package),
+            dependency::Mode::NotForPublishing { .. } => {
+                if crates.contains(&d.package.name) {
+                    log::info!(
+                        "Skipping '{}' as it won't be published.{}",
+                        d.package.name,
+                        (!dependencies)
+                            .then(|| " Try not to specify --no-dependencies/--only.")
+                            .unwrap_or("")
+                    );
+                }
+                None
+            }
+        })
         .collect()
     };
     assure_working_tree_is_unchanged(opts)?;

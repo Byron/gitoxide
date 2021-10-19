@@ -13,8 +13,7 @@
 [TRACE] WOULD persist changes to 3 manifests and 3 changelogs (1 new) with: "Adjusting changelogs prior to release of a v0.9.0, b v0.9.0, c v9.0.0, safety bump 2 crates\n\nSAFETY BUMP: b v0.9.0, c v9.0.0"
 [INFO ] Up to 3 changelogs would be previewed if the --execute is set and --no-changelog-preview is unset.
 [WARN ] WOULD ask for review after commit as the changelog entry is empty for crates: b, c
-[WARN ] To fix the changelog manually, run: cargo changelog --write b
-[WARN ] To fix the changelog manually, run: cargo changelog --write c
+[WARN ] To fix the changelog manually, run: cargo changelog --write c a
 [WARN ] This changelog is likely to be fully generated from commit history or contain lower-case git-conventional headlines: a
 [TRACE] WOULD run "git" "commit" "-am" "Adjusting changelogs prior to release of a v0.9.0, b v0.9.0, c v9.0.0, safety bump 2 crates\n\nSAFETY BUMP: b v0.9.0, c v9.0.0"
 [TRACE] WOULD create tag object a-v0.9.0 with changelog message, first line is: '### refactor (BREAKING)'
