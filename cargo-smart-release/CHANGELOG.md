@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.5.1 (2021-10-19)
 
 This release contains an important bugfix which may have caused panics when the root-package didn't have changes.
 
@@ -29,7 +29,7 @@ This release contains an important bugfix which may have caused panics when the 
    impossible while improving the messaging around this state should it
    still occur. The latter is rough, probably rare, but usable.
  - <csr-id-6ee4f5d20c832a54ca5d841773d93f0927a16f25/> Correct the reporting of manifest changes.
- 
+   
    Previously even unchanged crates would trigger workspace crates
    to be recorded for manifest changes.
    
@@ -40,7 +40,7 @@ This release contains an important bugfix which may have caused panics when the 
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release.
+ - 6 commits contributed to the release.
  - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
 
@@ -51,6 +51,7 @@ This release contains an important bugfix which may have caused panics when the 
 <details><summary>view details</summary>
 
  * **[#222](https://github.com//Byron/gitoxide/issues/222)**
+    - adjust changelog for release, now definitely ([`7133f5d`](https://github.com//Byron/gitoxide/commit/7133f5d7738e70b7bdf9ce033f3f9a0485dc844f))
     - correct reporting of manifest changes ([`6ee4f5d`](https://github.com//Byron/gitoxide/commit/6ee4f5d20c832a54ca5d841773d93f0927a16f25))
     - adjust changelog for smart-release release ([`210b09a`](https://github.com//Byron/gitoxide/commit/210b09ae63be853fb233547e8173e7176ca9a4d0))
     - `changelog` subcommand fails if there is nothing to do ([`ed8abfd`](https://github.com//Byron/gitoxide/commit/ed8abfdac40f5c8b17981b8a990572f6f07c8862))
