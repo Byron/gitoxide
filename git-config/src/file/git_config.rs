@@ -1546,6 +1546,8 @@ mod from_paths {
             config.get_raw_value("core", None, "boolean"),
             Ok(Cow::<[u8]>::Borrowed(b"true"))
         );
+
+        assert_eq!(config.len(), 1);
     }
 
     #[test]
@@ -1578,6 +1580,8 @@ mod from_paths {
             config.get_raw_value("core", None, "c"),
             Ok(Cow::<[u8]>::Borrowed(b"true"))
         );
+
+        assert_eq!(config.len(), 3);
     }
 }
 
