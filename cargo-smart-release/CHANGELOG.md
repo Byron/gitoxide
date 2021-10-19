@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+This release contains an important bugfix which may have caused panics when the root-package didn't have changes.
+
+### New Features
+
+ - <csr-id-ed8abfdac40f5c8b17981b8a990572f6f07c8862/> `changelog` subcommand fails if there is nothing to do
+
+### Bug Fixes
+
+ - <csr-id-ce68733379a8ab4644c849ba1571bc7063962c64/> Fix panic due to unexpected internal state.
+   
+   When there was no change in the src/ directory of the top-level crate,
+   the dependency resolution would not be able to auto-bump the version
+   as no change occurred, but another part would usually detect a change
+   as it wasn't confined to the top-level src/ directory.
+   
+   This could lead to a panic as an invariant wasn't upheld.
+   
+   This was fixed by letting both parts agree to use the src/ directory
+   to determine changes of the top-level directory, and by making panics
+   impossible while improving the messaging around this state should it
+   still occur. The latter is rough, probably rare, but usable.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#222](https://github.com//Byron/gitoxide/issues/222)**
+    - `changelog` subcommand fails if there is nothing to do ([`ed8abfd`](https://github.com//Byron/gitoxide/commit/ed8abfdac40f5c8b17981b8a990572f6f07c8862))
+    - panic due to unexpected internal state ([`ce68733`](https://github.com//Byron/gitoxide/commit/ce68733379a8ab4644c849ba1571bc7063962c64))
+    - crude fix to avoid version related invariants to kick in during dependency resolution ([`3cdebf5`](https://github.com//Byron/gitoxide/commit/3cdebf5c34845ecef195ce762e344dbff7c1b035))
+</details>
+
 ## v0.5.0 (2021-10-19)
 
 <csr-id-07372dd045de88f283d35d8f3dcc4c079dce88e9/>
@@ -67,7 +111,7 @@ and make future improvements easier.
 
 <csr-read-only-do-not-edit/>
 
- - 81 commits contributed to the release over the course of 3 calendar days.
+ - 82 commits contributed to the release over the course of 3 calendar days.
  - 10 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#198](https://github.com//Byron/gitoxide/issues/198), [#221](https://github.com//Byron/gitoxide/issues/221), [#222](https://github.com//Byron/gitoxide/issues/222), [#224](https://github.com//Byron/gitoxide/issues/224)
 
@@ -163,6 +207,7 @@ and make future improvements easier.
  * **[#224](https://github.com//Byron/gitoxide/issues/224)**
     - pin version of clap to beta 5 ([`dfc588b`](https://github.com//Byron/gitoxide/commit/dfc588b25ede3faa578eb8e131e73c857117a6df))
  * **Uncategorized**
+    - Release cargo-smart-release v0.5.0 ([`c03e8cb`](https://github.com//Byron/gitoxide/commit/c03e8cb31d61401450564bef9cd18d6638c681b7))
     - changelog update ([`7fcd02e`](https://github.com//Byron/gitoxide/commit/7fcd02e3baf49bc498a702ed87511d42f2e71f05))
     - Adjusting changelogs prior to release of cargo-smart-release v0.5.0 ([`11f55d3`](https://github.com//Byron/gitoxide/commit/11f55d36b2db19dc9e43c7fbed5d3fb4a8cdc9e1))
     - Release git-hash v0.8.0, git-features v0.17.0, git-actor v0.6.0, git-object v0.15.0, git-diff v0.11.0, git-traverse v0.10.0, git-pack v0.13.0, git-odb v0.23.0, git-packetline v0.12.0, git-transport v0.13.0, git-protocol v0.12.0, git-ref v0.9.0, git-repository v0.11.0, git-commitgraph v0.6.0, gitoxide-core v0.12.0, gitoxide v0.10.0, cargo-smart-release v0.5.0, safety bump 16 crates ([`0e02953`](https://github.com//Byron/gitoxide/commit/0e029537a7f6242d02ccf7e63d8d92f5246e6c5e))
