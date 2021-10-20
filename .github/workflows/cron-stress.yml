@@ -1,7 +1,8 @@
 name: Rust
 
 on:
-  schedule: '0 13,1 * * *'
+  schedule: 
+    - cron: '0 13,1 * * *'
 
 jobs:
   build-lint-test-benchmark:
