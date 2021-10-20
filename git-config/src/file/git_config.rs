@@ -1540,7 +1540,7 @@ mod from_paths {
 
         let paths = vec![config_path.as_path()];
         let error = GitConfig::from_paths(&paths).unwrap_err();
-        assert!(matches!(error, ParserOrIoError::Io(io_error)));
+        assert!(matches!(error, ParserOrIoError::Io(io_error) if io_error.kind() == io::ErrorKind::NotFound));
     }
 
     #[test]
