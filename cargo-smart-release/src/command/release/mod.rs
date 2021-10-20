@@ -390,12 +390,14 @@ fn perform_multi_version_release(
             false
         };
     let mut tag_names = Vec::new();
+    let mut successful_publishees_and_version = Vec::new();
     let mut publish_err = None;
     for (publishee, new_version) in crates.iter().filter_map(|c| try_to_published_crate_and_new_version(c)) {
         if let Err(err) = cargo::publish_crate(publishee, options) {
             publish_err = Some(err);
             break;
         }
+        successful_publishees_and_version.push((publishee, new_version));
         if let Some(tag_name) = git::create_version_tag(
             publishee,
             new_version,
@@ -408,18 +410,17 @@ fn perform_multi_version_release(
         )? {
             tag_names.push(tag_name);
         }
-
-        should_publish_to_github
-            .then(|| {
-                release_section_by_publishee
-                    .get(&publishee.name.as_str())
-                    .and_then(|s| section_to_string(s, WriteMode::GitHubRelease))
-            })
-            .flatten()
-            .map(|release_notes| github::create_release(publishee, new_version, &release_notes, options, &ctx.base))
-            .transpose()?;
     }
     git::push_tags_and_head(&tag_names, options)?;
+    if should_publish_to_github {
+        for (publishee, new_version) in successful_publishees_and_version {
+            release_section_by_publishee
+                .get(&publishee.name.as_str())
+                .and_then(|s| section_to_string(s, WriteMode::GitHubRelease))
+                .map(|release_notes| github::create_release(publishee, new_version, &release_notes, options, &ctx.base))
+                .transpose()?;
+        }
+    }
     match publish_err {
         Some(err) => Err(err),
         None => Ok(()),
