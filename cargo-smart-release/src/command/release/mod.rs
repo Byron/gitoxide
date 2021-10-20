@@ -101,19 +101,16 @@ fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
             isolate_dependencies_from_breaking_changes,
             traverse_dependencies,
         )
-        .and_then(|deps| present_dependencies(&deps, &ctx, verbose, dry_run).map(|_| deps))?
+        .and_then(|deps| present_and_validate_dependencies(&deps, &ctx, verbose, dry_run).map(|_| deps))?
     };
 
     assure_working_tree_is_unchanged(options)?;
-
-    if !crates.is_empty() {
-        perform_multi_version_release(&ctx, options, &crates)?;
-    }
+    perform_release(&ctx, options, &crates)?;
 
     Ok(())
 }
 
-fn present_dependencies(
+fn present_and_validate_dependencies(
     crates: &[traverse::Dependency<'_>],
     ctx: &Context,
     verbose: bool,
@@ -372,11 +369,7 @@ fn assure_working_tree_is_unchanged(options: Options) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn perform_multi_version_release(
-    ctx: &Context,
-    options: Options,
-    crates: &[traverse::Dependency<'_>],
-) -> anyhow::Result<()> {
+fn perform_release(ctx: &Context, options: Options, crates: &[traverse::Dependency<'_>]) -> anyhow::Result<()> {
     let manifest::Outcome {
         commit_id,
         section_by_package: release_section_by_publishee,
@@ -421,10 +414,8 @@ fn perform_multi_version_release(
                 .transpose()?;
         }
     }
-    match publish_err {
-        Some(err) => Err(err),
-        None => Ok(()),
-    }
+
+    publish_err.map(Err).unwrap_or(Ok(()))
 }
 
 enum WriteMode {
