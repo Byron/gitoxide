@@ -86,7 +86,12 @@ Here is what `cargo smart-release` does differently: "It tries really hard to do
 * changelog rewriting of user content will drop links if they are not of the 'inline' form
 * it's very young and probably tries to eat underwear
 * it needs a git repository to govern the workspace
-* When determining if something changed in top-level crates, only the `src/` directory is used. This value is hard-coded.
+
+### Changelogs
+
+* When determining if something changed in top-level crates, only the `src/` directory is used, unless there is only a single crate in the workspace. This value is hard-coded.
+* For change tracking, it will only obtain manifest values once to know where a crate lives, and
+  expects it to not be moved.
 
 ## Acknowledgements
 
