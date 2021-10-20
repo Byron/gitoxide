@@ -278,8 +278,9 @@ impl section::Segment {
                     }
                 }
                 if write_details_tags {
-                    writeln!(out, "{}\n", segment::Details::HTML_PREFIX_END)?;
+                    writeln!(out, "{}", segment::Details::HTML_PREFIX_END)?;
                 }
+                writeln!(out)?;
             }
             Segment::Statistics(section::Data::Generated(segment::CommitStatistics {
                 count,
