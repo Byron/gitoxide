@@ -52,13 +52,13 @@ impl RepositoryUrl {
         match &self.inner.host {
             Some(host) if host == "github.com" => match self.inner.scheme {
                 Scheme::Http | Scheme::Https | Scheme::Git => {
-                    format!("https://github.com/{}", self.inner.path.to_str_lossy()).into()
+                    format!("https://github.com{}", self.inner.path.to_str_lossy()).into()
                 }
                 Scheme::Ssh => self
                     .inner
                     .user
                     .as_ref()
-                    .map(|user| format!("https://github.com/{}/{}", user, self.inner.path.to_str_lossy())),
+                    .map(|user| format!("https://github.com{}/{}", user, self.inner.path.to_str_lossy())),
                 Scheme::Radicle | Scheme::File => None,
             },
             None | Some(_) => None,
