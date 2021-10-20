@@ -169,6 +169,10 @@ pub enum SubCommands {
         #[clap(long, short = 'w', help_heading = Some("MAJOR"))]
         write: bool,
 
+        /// Actually write the changelog to the respective files, similar to --write, for consistency with 'smart-release'
+        #[clap(long, short = 'e', help_heading = Some("MAJOR"))]
+        execute: bool,
+
         /// omits these kinds of generated changelog content, values are 'clippy', 'commit-statistics' and 'commit-details'
         #[clap(long, help_heading = Some("CUSTOMIZATION"))]
         without: Vec<String>,

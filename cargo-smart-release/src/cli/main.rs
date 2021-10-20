@@ -9,6 +9,7 @@ fn main() -> anyhow::Result<()> {
     match args.subcommands {
         SubCommands::Changelog {
             write,
+            execute,
             crates,
             no_dependencies,
             no_preview,
@@ -19,7 +20,7 @@ fn main() -> anyhow::Result<()> {
             init_logging(false);
             command::changelog(
                 command::changelog::Options {
-                    dry_run: !write,
+                    dry_run: !(write || execute),
                     allow_dirty,
                     no_links,
                     preview: !no_preview,
