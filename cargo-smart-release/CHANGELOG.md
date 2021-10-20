@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.5.6 (2021-10-20)
+
+### Bug Fixes
+
+ - <csr-id-ff2c07acea56eeed679dfbe59b5ab1d4baa45d42/> nicer previews thanks to added newline
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#228](https://github.com/Byron/gitoxide/issues/228)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#228](https://github.com/Byron/gitoxide/issues/228)**
+    - nicer previews thanks to added newline ([`ff2c07a`](https://github.com/Byron/gitoxide/commit/ff2c07acea56eeed679dfbe59b5ab1d4baa45d42))
+</details>
+
 ## 0.5.5 (2021-10-20)
 
 The `v` prefix is not enforced anymore and is handled depending on what's already present.
@@ -29,7 +53,7 @@ This helps to handle changelogs with slightly different styles as well.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
+ - 5 commits contributed to the release.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#228](https://github.com/Byron/gitoxide/issues/228)
 
@@ -44,6 +68,8 @@ This helps to handle changelogs with slightly different styles as well.
     - Flexible tag parsing allows to find any version tags ([`a1b12e6`](https://github.com/Byron/gitoxide/commit/a1b12e695c08e344becbfcddb6192e34c3cf8ae5))
     - Support for no prefixes in version headers ([`3613a95`](https://github.com/Byron/gitoxide/commit/3613a95d730d0aeef87d9c256f93bd528d4945bb))
     - Assume manifests cannot necessarily be read by `cargo_toml::Manifest` and fallback ([`9d0d1fd`](https://github.com/Byron/gitoxide/commit/9d0d1fd71196b129b229a7d9475fdd6b99e8675b))
+ * **Uncategorized**
+    - Release cargo-smart-release v0.5.5 ([`7df536e`](https://github.com/Byron/gitoxide/commit/7df536ee902a4e9a49daaad4c0f71f4ef05c8acc))
 </details>
 
 ## v0.5.4 (2021-10-20)
