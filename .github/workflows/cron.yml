@@ -1,4 +1,4 @@
-name: stress
+name: cron
 
 on:
   schedule: 
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-lint-test-benchmark:
+  stress:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
