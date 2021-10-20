@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
+use cargo_metadata::{DependencyKind, Package, PackageId};
 
 use crate::{
     git,
@@ -36,7 +36,7 @@ pub mod dependency {
         }
     }
 
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub enum Kind {
         /// Initially selected by user
         UserSelection,
@@ -144,31 +144,25 @@ pub fn dependencies(
     let mut seen = BTreeSet::new();
     let mut crates = Vec::new();
     for crate_name in &ctx.crate_names {
+        let mut crates_this_round = Vec::new();
         let package = package_by_name(&ctx.meta, crate_name)?;
         if seen.contains(&&package.id) {
             continue;
         }
-        if dependency_tree_has_link_to_existing_crate_names(&ctx.meta, package, &crates)? {
-            // redo all work which includes the previous tree. Could be more efficient but that would be more complicated.
-            seen.clear();
-            crates.clear();
-        }
-        let num_crates_for_publishing_without_dependencies = crates.len();
         if traverse_graph {
-            let crates_from_graph = depth_first_traversal(
+            depth_first_traversal(
                 ctx,
                 &mut seen,
-                &mut crates,
+                &mut crates_this_round,
                 package,
                 allow_auto_publish_of_stable_crates,
                 bump_when_needed,
             )?;
-            crates.extend(crates_from_graph);
         }
 
         match git::change_since_last_release(package, ctx)? {
             Some(user_package_change) => {
-                crates.push(Dependency {
+                crates_this_round.push(Dependency {
                     package,
                     kind: dependency::Kind::UserSelection,
                     mode: if package_may_be_published(package) {
@@ -188,20 +182,17 @@ pub fn dependencies(
                 seen.insert(&package.id);
             }
             None => {
-                let found_no_dependencies = num_crates_for_publishing_without_dependencies == crates.len();
-                if found_no_dependencies {
-                    crates.push(Dependency {
-                        package,
-                        kind: dependency::Kind::UserSelection,
-                        mode: dependency::Mode::NotForPublishing {
-                            reason: dependency::NoPublishReason::Unchanged,
-                            adjustment: None,
-                        },
-                    });
-                    continue;
-                }
+                crates_this_round.push(Dependency {
+                    package,
+                    kind: dependency::Kind::UserSelection,
+                    mode: dependency::Mode::NotForPublishing {
+                        reason: dependency::NoPublishReason::Unchanged,
+                        adjustment: None,
+                    },
+                });
             }
         }
+        merge_crates(&mut crates, crates_this_round);
     }
 
     if isolate_dependencies_from_breaking_changes {
@@ -220,6 +211,18 @@ pub fn dependencies(
     }
     crates.extend(find_workspace_crates_depending_on_adjusted_crates(ctx, &crates));
     Ok(crates)
+}
+
+fn merge_crates<'meta>(dest: &mut Vec<Dependency<'meta>>, src: Vec<Dependency<'meta>>) {
+    if dest.is_empty() {
+        *dest = src;
+    } else {
+        for dep in src {
+            if !dest.iter().any(|dest| dest.package.id == dep.package.id) {
+                dest.push(dep);
+            }
+        }
+    }
 }
 
 fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
@@ -257,30 +260,42 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                     continue;
                 }
                 seen.insert(&dependant.id);
-                let bump_of_crate_with_that_name = crates.iter().find_map(|c| {
-                    (c.package.id == dependant.id)
-                        .then(|| c.mode.version_adjustment_bump())
-                        .flatten()
+                let crate_is_known_already = crates.iter().find_map(|c| {
+                    (c.package.id == dependant.id).then(|| c.mode.version_adjustment_bump().map(|b| b.is_breaking()))
                 });
 
-                // TODO: this can actually easily happen if a provided crate depends on a breaking change
-                //       but itself didn't change and thus won't be published. No other way but to deal with
-                //       upgrading existing crates here. This is why sometimes the crate exists but has no bump.
                 let bump = breaking_version_bump(ctx, dependant, bump_when_needed)?;
-                if bump.next_release_changes_manifest() && bump_of_crate_with_that_name.is_none() {
-                    if is_pre_release_version(&dependant.version) || allow_auto_publish_of_stable_crates {
+                if bump.next_release_changes_manifest() {
+                    if crate_is_known_already.is_some() {
+                        let is_breaking = crate_is_known_already.flatten().unwrap_or(false);
+                        if !is_breaking {
+                            log::debug!(
+                                "Wanted to mark '{}' for breaking manifest change, but its already known without breaking change.",
+                                dependant.name
+                            );
+                        }
+                    } else if is_pre_release_version(&dependant.version) || allow_auto_publish_of_stable_crates {
+                        let kind = ctx
+                            .crate_names
+                            .contains(&dependant.name)
+                            .then(|| dependency::Kind::UserSelection)
+                            .unwrap_or(dependency::Kind::DependencyOrDependentOfUserSelection);
+                        let adjustment = dependency::VersionAdjustment::Breakage {
+                            bump,
+                            change: None,
+                            causing_dependency_names: vec![dependee.package.name.to_owned()],
+                        };
                         new_crates_this_round.push(Dependency {
                             package: dependant,
-                            kind: dependency::Kind::DependencyOrDependentOfUserSelection,
-                            mode: dependency::Mode::NotForPublishing {
-                                reason: dependency::NoPublishReason::BreakingChangeCausesManifestUpdate,
-                                adjustment: Some(ManifestAdjustment::Version(
-                                    dependency::VersionAdjustment::Breakage {
-                                        bump,
-                                        change: None,
-                                        causing_dependency_names: vec![dependee.package.name.to_owned()],
-                                    },
-                                )),
+                            kind,
+                            mode: match kind {
+                                dependency::Kind::UserSelection => dependency::Mode::ToBePublished { adjustment },
+                                dependency::Kind::DependencyOrDependentOfUserSelection => {
+                                    dependency::Mode::NotForPublishing {
+                                        reason: dependency::NoPublishReason::BreakingChangeCausesManifestUpdate,
+                                        adjustment: Some(ManifestAdjustment::Version(adjustment)),
+                                    }
+                                }
                             },
                         });
                     } else {
@@ -484,83 +499,61 @@ fn depth_first_traversal<'meta>(
     root: &Package,
     allow_auto_publish_of_stable_crates: bool,
     bump_when_needed: bool,
-) -> anyhow::Result<Vec<Dependency<'meta>>> {
-    let mut skipped = Vec::new();
-    for dependency in root.dependencies.iter().filter(|d| d.kind == DependencyKind::Normal) {
-        let workspace_dependency = match workspace_package_by_dependency(&ctx.meta, dependency) {
-            Some(p) => p,
-            None => continue,
-        };
+) -> anyhow::Result<()> {
+    for workspace_dependency in root
+        .dependencies
+        .iter()
+        .filter(|d| d.kind == DependencyKind::Normal)
+        .filter_map(|d| workspace_package_by_dependency(&ctx.meta, d))
+    {
         if seen.contains(&&workspace_dependency.id) {
             continue;
         }
         seen.insert(&workspace_dependency.id);
-        skipped.extend(depth_first_traversal(
+        depth_first_traversal(
             ctx,
             seen,
             crates,
             workspace_dependency,
             allow_auto_publish_of_stable_crates,
             bump_when_needed,
-        )?);
-        if let Some(change) = git::change_since_last_release(workspace_dependency, ctx)? {
-            if is_pre_release_version(&workspace_dependency.version) || allow_auto_publish_of_stable_crates {
-                crates.push(Dependency {
-                    package: workspace_dependency,
-                    kind: dependency::Kind::DependencyOrDependentOfUserSelection,
-                    mode: dependency::Mode::ToBePublished {
-                        adjustment: VersionAdjustment::Changed {
-                            change,
-                            bump: version::bump_package(workspace_dependency, ctx, bump_when_needed)?,
+        )?;
+
+        crates.push(match git::change_since_last_release(workspace_dependency, ctx)? {
+            Some(change) => {
+                if is_pre_release_version(&workspace_dependency.version) || allow_auto_publish_of_stable_crates {
+                    Dependency {
+                        package: workspace_dependency,
+                        kind: dependency::Kind::DependencyOrDependentOfUserSelection,
+                        mode: dependency::Mode::ToBePublished {
+                            adjustment: VersionAdjustment::Changed {
+                                change,
+                                bump: version::bump_package(workspace_dependency, ctx, bump_when_needed)?,
+                            },
                         },
-                    },
-                });
-            } else {
-                crates.push(Dependency {
-                    package: workspace_dependency,
-                    kind: dependency::Kind::DependencyOrDependentOfUserSelection,
-                    mode: dependency::Mode::NotForPublishing {
-                        reason: dependency::NoPublishReason::DeniedAutopublishOfProductionCrate,
-                        adjustment: None,
-                    },
-                });
+                    }
+                } else {
+                    Dependency {
+                        package: workspace_dependency,
+                        kind: dependency::Kind::DependencyOrDependentOfUserSelection,
+                        mode: dependency::Mode::NotForPublishing {
+                            reason: dependency::NoPublishReason::DeniedAutopublishOfProductionCrate,
+                            adjustment: None,
+                        },
+                    }
+                }
             }
-        } else {
-            skipped.push(Dependency {
+            None => Dependency {
                 package: workspace_dependency,
                 kind: dependency::Kind::DependencyOrDependentOfUserSelection,
                 mode: dependency::Mode::NotForPublishing {
                     reason: dependency::NoPublishReason::Unchanged,
                     adjustment: None,
                 },
-            });
-        }
+            },
+        });
     }
-    Ok(skipped)
-}
-
-fn dependency_tree_has_link_to_existing_crate_names(
-    meta: &Metadata,
-    root: &Package,
-    existing: &[Dependency<'_>],
-) -> anyhow::Result<bool> {
-    let mut dependencies = vec![root];
-    let mut seen = BTreeSet::new();
-    while let Some(package) = dependencies.pop() {
-        if !seen.insert(&package.id) {
-            continue;
-        }
-        if existing.iter().any(|d| d.package.id == package.id) {
-            return Ok(true);
-        }
-        dependencies.extend(
-            package
-                .dependencies
-                .iter()
-                .filter_map(|dep| workspace_package_by_dependency(meta, dep)),
-        )
-    }
-    Ok(false)
+    Ok(())
 }
 
 fn find_workspace_crates_depending_on_adjusted_crates<'meta>(
@@ -573,9 +566,12 @@ fn find_workspace_crates_depending_on_adjusted_crates<'meta>(
         .map(|id| package_by_id(&ctx.meta, id))
         .filter(|wsp| crates.iter().all(|c| c.package.id != wsp.id))
         .filter(|wsp| {
-            wsp.dependencies
-                .iter()
-                .any(|d| crates.iter().any(|c| c.package.name == d.name))
+            wsp.dependencies.iter().any(|d| {
+                crates
+                    .iter()
+                    .filter(|c| c.mode.manifest_will_change())
+                    .any(|c| c.package.name == d.name)
+            })
         })
         .map(|wsp| Dependency {
             kind: dependency::Kind::DependencyOrDependentOfUserSelection,

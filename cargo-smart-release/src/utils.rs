@@ -40,7 +40,7 @@ pub fn try_to_published_crate_and_new_version<'meta, 'a>(
 ) -> Option<(&'meta Package, &'a semver::Version)> {
     match &c.mode {
         crate::traverse::dependency::Mode::ToBePublished { adjustment } => {
-            Some((c.package, adjustment.bump().next_release()))
+            Some((c.package, &adjustment.bump().next_release))
         }
         _ => None,
     }

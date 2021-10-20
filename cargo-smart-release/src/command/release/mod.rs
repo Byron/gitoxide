@@ -1,5 +1,6 @@
-use anyhow::bail;
 use std::collections::BTreeMap;
+
+use anyhow::bail;
 
 use crate::{
     changelog,
@@ -9,7 +10,7 @@ use crate::{
         self, dependency,
         dependency::{ManifestAdjustment, VersionAdjustment},
     },
-    utils::{tag_name, try_to_published_crate_and_new_version, will},
+    utils::{tag_name, try_to_published_crate_and_new_version, will, Program},
     version,
     version::BumpSpec,
 };
@@ -62,13 +63,7 @@ pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependen
     } else {
         opts.changelog
     };
-    let ctx = Context::new(
-        crates,
-        bump,
-        bump_dependencies,
-        allow_changelog,
-        !opts.no_changelog_links,
-    )?;
+    let ctx = Context::new(crates, bump, bump_dependencies, allow_changelog, opts.changelog_links)?;
     if opts.update_crates_index {
         log::info!(
             "Updating crates-io index at '{}'",
@@ -210,58 +205,71 @@ fn present_dependencies(
                     } => (bump, Some(causing_dependency_names)),
                     VersionAdjustment::Changed { bump, .. } => (bump, None),
                 };
-                match &bump.next_release {
-                    Ok(next_release) => {
-                        if next_release > &dep.package.version {
-                            log::info!(
-                                "{} {}-bump {} package '{}' from {} to {} for publishing{}{}{}",
-                                will(dry_run),
-                                bump_spec,
-                                kind,
-                                dep.package.name,
-                                dep.package.version,
-                                next_release,
-                                bump.latest_release
-                                    .as_ref()
-                                    .and_then(|latest_release| {
-                                        (dep.package.version != *latest_release)
-                                            .then(|| format!(", {} on crates.io", latest_release))
-                                    })
-                                    .unwrap_or_default(),
-                                (*next_release != bump.desired_release)
-                                    .then(|| format!(", ignoring computed version {}", bump.desired_release))
-                                    .unwrap_or_default(),
-                                breaking_dependencies
-                                    .map(|causes| format!(
-                                        ", for SAFETY due to breaking package{} {}",
-                                        if causes.len() == 1 { "" } else { "s" },
-                                        causes.iter().map(|n| format!("'{}'", n)).collect::<Vec<_>>().join(", ")
-                                    ))
-                                    .unwrap_or_default()
-                            );
-                        } else {
-                            log::info!(
-                            "Manifest version of {} package '{}' at {} is sufficient{}, ignoring computed version {}",
-                            kind,
-                            dep.package.name,
-                            dep.package.version,
-                            bump.latest_release
-                                .as_ref()
-                                .map(|latest_release| format!(" to succeed latest released version {}", latest_release))
-                                .unwrap_or_else(|| ", creating a new release 🎉".into()),
-                            bump.desired_release
-                        );
-                        }
-                    }
-                    Err(version::bump::Error::LatestReleaseMoreRecentThanDesiredOne(latest_release)) => {
+                if let Some(latest_release) = bump
+                    .latest_release
+                    .as_ref()
+                    .and_then(|lr| (*lr >= bump.desired_release).then(|| lr))
+                {
+                    let bump_flag = match dep.kind {
+                        dependency::Kind::UserSelection => "--bump <level>",
+                        dependency::Kind::DependencyOrDependentOfUserSelection => "--bump-dependencies <level>",
+                    };
+                    if bump.desired_release == bump.package_version {
                         log::warn!(
-                        "Latest published version of '{}' is {}, the new version is {}. Consider using --bump <level> or --bump-dependencies <level> or update the index with --update-crates-index.",
+                            "'{}' is unchanged. Consider using {} along with --no-bump-on-demand to force a version change.",
+                            dep.package.name,
+                            bump_flag
+                        );
+                    } else {
+                        log::warn!(
+                            "Latest published version of '{}' is {}, the new version is {}. Consider using {} or update the index with --update-crates-index.",
+                            dep.package.name,
+                            latest_release,
+                            bump.desired_release,
+                            bump_flag
+                        );
+                    }
+                    error = true;
+                }
+                if bump.next_release > dep.package.version {
+                    log::info!(
+                        "{} {}-bump {} package '{}' from {} to {} for publishing{}{}{}",
+                        will(dry_run),
+                        bump_spec,
+                        kind,
                         dep.package.name,
-                        latest_release,
+                        dep.package.version,
+                        bump.next_release,
+                        bump.latest_release
+                            .as_ref()
+                            .and_then(|latest_release| {
+                                (dep.package.version != *latest_release)
+                                    .then(|| format!(", {} on crates.io", latest_release))
+                            })
+                            .unwrap_or_default(),
+                        breaking_dependencies
+                            .map(|causes| format!(
+                                ", for SAFETY due to breaking package{} {}",
+                                if causes.len() == 1 { "" } else { "s" },
+                                causes.iter().map(|n| format!("'{}'", n)).collect::<Vec<_>>().join(", ")
+                            ))
+                            .unwrap_or_default(),
+                        (bump.next_release != bump.desired_release)
+                            .then(|| format!(", ignoring computed version {}", bump.desired_release))
+                            .unwrap_or_default(),
+                    );
+                } else {
+                    log::info!(
+                        "Manifest version of {} package '{}' at {} is sufficient{}, ignoring computed version {}",
+                        kind,
+                        dep.package.name,
+                        dep.package.version,
+                        bump.latest_release
+                            .as_ref()
+                            .map(|latest_release| format!(" to succeed latest released version {}", latest_release))
+                            .unwrap_or_else(|| ", creating a new release 🎉".into()),
                         bump.desired_release
                     );
-                        error = true;
-                    }
                 };
             }
             dependency::Mode::NotForPublishing { .. } => {}
@@ -305,14 +313,7 @@ fn present_dependencies(
                 cause,
                 deps_and_bumps
                     .into_iter()
-                    .map(|(dep_name, bump)| format!(
-                        "'{}' {} ➡ {}",
-                        dep_name,
-                        bump.package_version,
-                        bump.next_release
-                            .as_ref()
-                            .expect("bailed earlier if there was an error")
-                    ))
+                    .map(|(dep_name, bump)| format!("'{}' {} ➡ {}", dep_name, bump.package_version, bump.next_release))
                     .collect::<Vec<_>>()
                     .join(", ")
             );
@@ -381,9 +382,22 @@ fn perform_multi_version_release(
         section_by_package: release_section_by_publishee,
     } = manifest::edit_version_and_fixup_dependent_crates_and_handle_changelog(crates, options, ctx)?;
 
+    let should_publish_to_github = options.allow_changelog_github_release
+        && if Program::named("gh").found {
+            true
+        } else {
+            log::warn!("To create github releases, please install the 'gh' program and try again");
+            false
+        };
     let mut tag_names = Vec::new();
+    let mut successful_publishees_and_version = Vec::new();
+    let mut publish_err = None;
     for (publishee, new_version) in crates.iter().filter_map(|c| try_to_published_crate_and_new_version(c)) {
-        cargo::publish_crate(publishee, options)?;
+        if let Err(err) = cargo::publish_crate(publishee, options) {
+            publish_err = Some(err);
+            break;
+        }
+        successful_publishees_and_version.push((publishee, new_version));
         if let Some(tag_name) = git::create_version_tag(
             publishee,
             new_version,
@@ -395,20 +409,22 @@ fn perform_multi_version_release(
             options,
         )? {
             tag_names.push(tag_name);
-        };
-    }
-    git::push_tags_and_head(tag_names.iter(), options)?;
-    if options.allow_changelog_github_release {
-        for (publishee, new_version) in crates.iter().filter_map(|c| try_to_published_crate_and_new_version(c)) {
-            if let Some(message) = release_section_by_publishee
-                .get(&publishee.name.as_str())
-                .and_then(|s| section_to_string(s, WriteMode::GitHubRelease))
-            {
-                github::create_release(publishee, new_version, &message, options, &ctx.base)?;
-            }
         }
     }
-    Ok(())
+    git::push_tags_and_head(&tag_names, options)?;
+    if should_publish_to_github {
+        for (publishee, new_version) in successful_publishees_and_version {
+            release_section_by_publishee
+                .get(&publishee.name.as_str())
+                .and_then(|s| section_to_string(s, WriteMode::GitHubRelease))
+                .map(|release_notes| github::create_release(publishee, new_version, &release_notes, options, &ctx.base))
+                .transpose()?;
+        }
+    }
+    match publish_err {
+        Some(err) => Err(err),
+        None => Ok(()),
+    }
 }
 
 enum WriteMode {

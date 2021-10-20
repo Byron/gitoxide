@@ -30,7 +30,7 @@ world
 
  - 100 commits contributed to the release over the course of 32 calendar days.
  - 20 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 3 unique issues were worked on: [#1](https://github.com//user/repo/issues/1), Uncategorized, [#42](https://github.com//user/repo/issues/42)
+ - 3 unique issues were worked on: [#1](https://github.com/user/repo/issues/1), Uncategorized, [#42](https://github.com/user/repo/issues/42)
 
 ##### Commit Details
 
@@ -38,12 +38,12 @@ world
 
 <details><summary>view details</summary>
 
- * **[#42](https://github.com//user/repo/issues/42)**
-    - Just the title ([`e69de29`](https://github.com//user/repo/commit/e69de29bb2d1d6434b8b29ae775ad8c2e48c5392))
-    - another title ([`e69de29`](https://github.com//user/repo/commit/e69de29bb2d1d6434b8b29ae775ad8c2e48c5391))
+ * **[#42](https://github.com/user/repo/issues/42)**
+    - Just the title ([`e69de29`](https://github.com/user/repo/commit/e69de29bb2d1d6434b8b29ae775ad8c2e48c5392))
+    - another title ([`e69de29`](https://github.com/user/repo/commit/e69de29bb2d1d6434b8b29ae775ad8c2e48c5391))
  * **Uncategorized**
-    - Just the title ([`e69de29`](https://github.com//user/repo/commit/e69de29bb2d1d6434b8b29ae775ad8c2e48c5391))
-    - title and body ([`e69de29`](https://github.com//user/repo/commit/e69de29bb2d1d6434b8b29ae775ad8c2e48c5392))
+    - Just the title ([`e69de29`](https://github.com/user/repo/commit/e69de29bb2d1d6434b8b29ae775ad8c2e48c5391))
+    - title and body ([`e69de29`](https://github.com/user/repo/commit/e69de29bb2d1d6434b8b29ae775ad8c2e48c5392))
 </details>
 
 

@@ -74,8 +74,9 @@ fn fill_in_root_crate_if_needed(crate_names: Vec<String>) -> anyhow::Result<Vec<
             .to_str()
             .expect("directory is UTF8 representable");
         let crate_name = if manifest.is_file() {
-            let manifest = cargo_toml::Manifest::from_path(manifest)?;
-            manifest.package.map_or(dir_name.to_owned(), |p| p.name)
+            cargo_toml::Manifest::from_path(manifest)
+                .map(|manifest| manifest.package.map_or(dir_name.to_owned(), |p| p.name))
+                .unwrap_or_else(|_| dir_name.to_owned())
         } else {
             dir_name.to_owned()
         };

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.8.0 (2021-10-19)
 
 <csr-id-c5213d2b701ca71af5f3c987647e2a0c5c4d42dd/>
 
@@ -15,7 +15,7 @@ A maintenance release due to reset the entire crate graph to new minor releases.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 2 calendar days.
+ - 4 commits contributed to the release over the course of 3 calendar days.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com//Byron/gitoxide/issues/222)
 
