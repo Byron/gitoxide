@@ -1561,7 +1561,7 @@ mod from_paths {
     }
 
     #[test]
-    fn multiple_paths() {
+    fn multiple_paths_single_value() {
         let dir = tempdir().unwrap();
 
         let a_path = dir.path().join("a");
@@ -1593,6 +1593,31 @@ mod from_paths {
 
         assert_eq!(config.len(), 3);
     }
+
+    #[test]
+    fn multiple_paths_multi_value() {
+        let dir = tempdir().unwrap();
+
+        let a_path = dir.path().join("a");
+        fs::write(a_path.as_path(), b"[core]\nkey = a").expect("Unable to write config file");
+
+        let b_path = dir.path().join("b");
+        fs::write(b_path.as_path(), b"[core]\nkey = b").expect("Unable to write config file");
+
+        let c_path = dir.path().join("c");
+        fs::write(c_path.as_path(), b"[core]\nkey = c").expect("Unable to write config file");
+
+        let paths = vec![a_path.as_path(), b_path.as_path(), c_path.as_path()];
+        let config = GitConfig::from_paths(&paths).unwrap();
+
+        assert_eq!(
+            config.get_raw_multi_value("core", None, "key").unwrap(),
+            vec![Cow::Borrowed(b"a"), Cow::Borrowed(b"b"), Cow::Borrowed(b"c")]
+        );
+
+        assert_eq!(config.len(), 3);
+    }
+
 }
 
 #[cfg(test)]
