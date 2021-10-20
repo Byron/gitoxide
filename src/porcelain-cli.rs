@@ -10,6 +10,7 @@ use anyhow::Result;
 
 #[cfg(all(not(feature = "lean-cli"), feature = "pretty-cli"))]
 fn main() -> Result<()> {
+    // faux change; do not merge.
     porcelain::main()
 }
 
