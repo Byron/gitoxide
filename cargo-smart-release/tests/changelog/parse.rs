@@ -36,6 +36,7 @@ fn all_unknown_in_section() {
                 removed_messages: vec![],
                 date: None,
                 heading_level: 3,
+                version_prefix: "".into(),
                 segments: vec![Segment::User {
                     markdown: "- hello ~~this is not understood~~\n* this isn't either\n\n".into()
                 }],
@@ -46,6 +47,7 @@ fn all_unknown_in_section() {
                 removed_messages: vec![],
                 date: None,
                 heading_level: 4,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 segments: vec![Segment::User {
                     markdown: "Some free text in a paragraph\nthat won't parse.\n".into()
                 }],
@@ -66,6 +68,7 @@ fn unknown_link_and_headling() {
             removed_messages: vec![],
             date: None,
             heading_level: 4,
+            version_prefix: "".into(),
             segments: vec![Segment::User {
                 markdown: "##### Special\n\nHello [there][194] period.\n".into()
             }],
@@ -90,6 +93,7 @@ fn known_and_unknown_sections_are_sorted() {
                 removed_messages: vec![],
                 date: None,
                 heading_level: 3,
+                version_prefix: "".into(),
                 unknown: "".into(),
                 segments: vec![Segment::User {
                     markdown: "TBD\n".into()
@@ -100,6 +104,7 @@ fn known_and_unknown_sections_are_sorted() {
                 removed_messages: vec![],
                 date: None,
                 heading_level: 3,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 unknown: "".into(),
                 segments: vec![
                     Segment::User {

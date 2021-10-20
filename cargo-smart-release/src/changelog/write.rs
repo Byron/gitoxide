@@ -11,11 +11,16 @@ use crate::{
     ChangeLog,
 };
 
-impl std::fmt::Display for changelog::Version {
+struct PrefixedVersion<'a> {
+    version_prefix: &'a str,
+    name: &'a changelog::Version,
+}
+
+impl<'a> std::fmt::Display for PrefixedVersion<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
+        match self.name {
             changelog::Version::Unreleased => f.write_str("Unreleased"),
-            changelog::Version::Semantic(v) => write!(f, "v{}", v),
+            changelog::Version::Semantic(v) => write!(f, "{}{}", self.version_prefix, v),
         }
     }
 }
@@ -105,12 +110,18 @@ impl Section {
                 name,
                 date,
                 heading_level,
+                version_prefix,
                 segments,
                 removed_messages,
                 unknown,
             } => {
                 if components.contains(Components::SECTION_TITLE) {
-                    write!(out, "{} {}", heading(*heading_level), name)?;
+                    write!(
+                        out,
+                        "{} {}",
+                        heading(*heading_level),
+                        PrefixedVersion { version_prefix, name }
+                    )?;
                     match date {
                         None => out.write_str("\n\n"),
                         Some(date) => writeln!(
@@ -136,7 +147,7 @@ impl Section {
                 if !unknown.is_empty() && components.contains(Components::HTML_TAGS) {
                     writeln!(out, "{}", Section::UNKNOWN_TAG_START)?;
                     out.write_str(unknown)?;
-                    writeln!(out, "{}", Section::UNKNOWN_TAG_END)?;
+                    writeln!(out, "{}\n", Section::UNKNOWN_TAG_END)?;
                 }
                 Ok(())
             }

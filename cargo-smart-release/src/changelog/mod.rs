@@ -27,6 +27,8 @@ pub enum Section {
         date: Option<time::OffsetDateTime>,
         /// the amount of # in front of the heading denoting the release name
         heading_level: usize,
+        /// What came right before the version
+        version_prefix: String,
         /// text of events of everything we couldn't parse
         unknown: String,
         /// Removed git conventional messages parsed back from html tags. These may live without a headline, to delete the headline.

@@ -16,6 +16,8 @@ use crate::{
 };
 
 impl Section {
+    pub const DEFAULT_PREFIX: &'static str = "v";
+
     pub fn from_history_segment(
         package: &Package,
         segment: &commit::history::Segment<'_>,
@@ -153,6 +155,7 @@ impl Section {
             name: version,
             date,
             heading_level: changelog::DEFAULT_HEADING_LEVEL,
+            version_prefix: Self::DEFAULT_PREFIX.to_owned(),
             segments,
             removed_messages: Default::default(),
             unknown: Default::default(),

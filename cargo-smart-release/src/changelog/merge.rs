@@ -24,12 +24,16 @@ impl ChangeLog {
 
         merge_generated_verbatim_section_if_there_is_only_releases_on_lhs(&mut sections_to_merge, sections);
 
-        let (first_release_pos, first_release_indentation) =
+        let (first_release_pos, first_release_indentation, first_version_prefix) =
             match sections.iter().enumerate().find_map(|(idx, s)| match s {
-                Section::Release { heading_level, .. } => Some((idx, heading_level)),
+                Section::Release {
+                    heading_level,
+                    version_prefix,
+                    ..
+                } => Some((idx, heading_level, version_prefix)),
                 _ => None,
             }) {
-                Some((idx, level)) => (idx, *level),
+                Some((idx, level, prefix)) => (idx, *level, prefix.to_owned()),
                 None => {
                     sections.extend(sections_to_merge);
                     return self;
@@ -44,8 +48,14 @@ impl ChangeLog {
                 Section::Release { ref name, .. } => match find_target_section(name, sections, first_release_pos) {
                     Insertion::MergeWith(pos) => sections[pos].merge(section_to_merge),
                     Insertion::At(pos) => {
-                        if let Section::Release { heading_level, .. } = &mut section_to_merge {
+                        if let Section::Release {
+                            heading_level,
+                            version_prefix,
+                            ..
+                        } = &mut section_to_merge
+                        {
                             *heading_level = first_release_indentation;
+                            *version_prefix = first_version_prefix.clone();
                         }
                         sections.insert(pos, section_to_merge);
                     }
@@ -66,26 +76,26 @@ impl Section {
             }
             (
                 Section::Release {
-                    date: lhs_date,
-                    segments: lhs_segments,
+                    date: dest_date,
+                    segments: dest_segments,
                     removed_messages,
                     ..
                 },
                 Section::Release {
-                    date: rhs_date,
-                    segments: rhs_segments,
-                    unknown: rhs_unknown,
+                    date: src_date,
+                    segments: src_segments,
+                    unknown: src_unknown,
                     ..
                 },
             ) => {
-                assert!(rhs_unknown.is_empty(), "shouldn't ever generate 'unknown' portions");
-                let has_no_read_only_segments = !lhs_segments.iter().any(|s| s.is_read_only());
+                assert!(src_unknown.is_empty(), "shouldn't ever generate 'unknown' portions");
+                let has_no_read_only_segments = !dest_segments.iter().any(|s| s.is_read_only());
                 let mode = if has_no_read_only_segments {
                     ReplaceMode::ReplaceAllOrAppend
                 } else {
                     ReplaceMode::ReplaceAllOrAppendIfPresentInLhs
                 };
-                for rhs_segment in rhs_segments {
+                for rhs_segment in src_segments {
                     match rhs_segment {
                         Segment::User { .. } => unreachable!("BUG: User segments are never auto-generated"),
                         Segment::Details(section::Data::Parsed)
@@ -94,20 +104,20 @@ impl Section {
                             unreachable!("BUG: Clippy, statistics, and details are set if generated, or not present")
                         }
                         Segment::Conventional(conventional) => {
-                            merge_conventional(removed_messages, lhs_segments, conventional)
+                            merge_conventional(removed_messages, dest_segments, conventional)
                         }
                         clippy @ Segment::Clippy(_) => {
-                            merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Clippy(_)), clippy, mode)
+                            merge_read_only_segment(dest_segments, |s| matches!(s, Segment::Clippy(_)), clippy, mode)
                         }
                         stats @ Segment::Statistics(_) => {
-                            merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Statistics(_)), stats, mode)
+                            merge_read_only_segment(dest_segments, |s| matches!(s, Segment::Statistics(_)), stats, mode)
                         }
                         details @ Segment::Details(_) => {
-                            merge_read_only_segment(lhs_segments, |s| matches!(s, Segment::Details(_)), details, mode)
+                            merge_read_only_segment(dest_segments, |s| matches!(s, Segment::Details(_)), details, mode)
                         }
                     }
                 }
-                *lhs_date = rhs_date;
+                *dest_date = src_date;
             }
         }
     }

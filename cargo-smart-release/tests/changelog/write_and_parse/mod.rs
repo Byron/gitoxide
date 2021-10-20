@@ -18,6 +18,7 @@ fn conventional_write_empty_messages() -> Result {
     let log = ChangeLog {
         sections: vec![Section::Release {
             heading_level: 4,
+            version_prefix: Section::DEFAULT_PREFIX.into(),
             date: Some(time::OffsetDateTime::from_unix_timestamp(0)?),
             name: changelog::Version::Semantic("1.0.2-beta.2".parse()?),
             removed_messages: vec![second_message],
@@ -92,11 +93,13 @@ fn all_section_types_round_trips_lossy() -> Result {
                 removed_messages: vec![],
                 date: None,
                 name: changelog::Version::Unreleased,
+                version_prefix: "".into(),
                 segments: Vec::new(),
                 unknown: "hello\nworld\n".into(),
             },
             Section::Release {
                 heading_level: 4,
+                version_prefix: "".into(),
                 removed_messages: vec![],
                 date: Some(time::OffsetDateTime::from_unix_timestamp(0)?),
                 name: changelog::Version::Semantic("1.0.2-beta.2".parse()?),

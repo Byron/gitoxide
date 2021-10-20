@@ -106,7 +106,15 @@ impl ChangeLog {
 }
 
 impl Section {
-    fn from_headline_and_body(Headline { level, version, date }: Headline, body: String) -> Self {
+    fn from_headline_and_body(
+        Headline {
+            level,
+            version_prefix,
+            version,
+            date,
+        }: Headline,
+        body: String,
+    ) -> Self {
         let mut events = pulldown_cmark::Parser::new_ext(&body, pulldown_cmark::Options::all())
             .into_offset_iter()
             .peekable();
@@ -215,6 +223,7 @@ impl Section {
                 Some(version) => changelog::Version::Semantic(version),
                 None => changelog::Version::Unreleased,
             },
+            version_prefix,
             date,
             removed_messages,
             heading_level: level,
@@ -443,6 +452,7 @@ fn skip_to_next_section_title(events: &mut Peekable<OffsetIter<'_>>, level: u32)
 
 struct Headline {
     level: usize,
+    version_prefix: String,
     version: Option<semver::Version>,
     date: Option<time::OffsetDateTime>,
 }
@@ -470,13 +480,13 @@ fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a 
                     hashes,
                     greedy_whitespace,
                     alt((
-                        preceded(
-                            tag("v"),
+                        tuple((
+                            opt(tag("v")),
                             map_res(take_till(|c: char| c.is_whitespace()), |v| {
                                 semver::Version::parse(v).map_err(|_| ()).map(Some)
                             }),
-                        ),
-                        map(tag_no_case("unreleased"), |_| None),
+                        )),
+                        map(tag_no_case("unreleased"), |_| (None, None)),
                     )),
                 ),
                 opt(preceded(
@@ -499,8 +509,9 @@ fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a 
             )),
             greedy_whitespace,
         ),
-        |((hashes, version), date)| Headline {
+        |((hashes, (prefix, version)), date)| Headline {
             level: hashes.len(),
+            version_prefix: prefix.map(ToOwned::to_owned).unwrap_or_else(String::new),
             version,
             date,
         },

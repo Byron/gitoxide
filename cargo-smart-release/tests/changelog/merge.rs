@@ -16,6 +16,7 @@ fn sections() {
             },
             Section::Release {
                 heading_level: 3,
+                version_prefix: "".into(),
                 removed_messages: vec![],
                 date: Some(
                     time::Date::from_calendar_date(2021, time::Month::September, 14)
@@ -33,6 +34,7 @@ fn sections() {
             },
             Section::Release {
                 heading_level: 3,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 removed_messages: vec![],
                 date: None,
                 name: changelog::Version::Semantic("0.9.0".parse().unwrap()),
@@ -51,6 +53,7 @@ fn sections() {
                 date: None,
                 removed_messages: vec![],
                 name: changelog::Version::Unreleased,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 heading_level: 2,
                 segments: vec![section::Segment::Clippy(section::Data::Generated(
                     section::segment::ThanksClippy { count: 4 },
@@ -62,6 +65,7 @@ fn sections() {
                 name: changelog::Version::Semantic("1.0.0".parse().unwrap()),
                 removed_messages: vec![],
                 heading_level: 2,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 segments: vec![section::Segment::Clippy(section::Data::Generated(
                     section::segment::ThanksClippy { count: 3 },
                 ))],
@@ -73,6 +77,7 @@ fn sections() {
                 unknown: String::new(),
                 removed_messages: vec![],
                 heading_level: 2,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 segments: vec![section::Segment::Clippy(section::Data::Generated(
                     section::segment::ThanksClippy { count: 2 },
                 ))],
@@ -83,6 +88,7 @@ fn sections() {
                 unknown: "undocumented".into(),
                 removed_messages: vec![],
                 heading_level: 2,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 segments: Vec::new(),
             },
         ],
@@ -101,6 +107,7 @@ fn sections() {
                     date: None,
                     name: changelog::Version::Unreleased,
                     heading_level: 3,
+                    version_prefix: "".into(),
                     removed_messages: vec![],
                     segments: vec![section::Segment::Clippy(section::Data::Generated(
                         section::segment::ThanksClippy { count: 4 }
@@ -110,6 +117,7 @@ fn sections() {
                 Section::Release {
                     heading_level: 3,
                     removed_messages: vec![],
+                    version_prefix: "".into(),
                     date: Some(
                         time::Date::from_calendar_date(2021, time::Month::September, 15)
                             .unwrap()
@@ -131,6 +139,7 @@ fn sections() {
                     name: changelog::Version::Semantic("0.9.0".parse().unwrap()),
                     unknown: String::new(),
                     heading_level: 3,
+                    version_prefix: Section::DEFAULT_PREFIX.into(),
                     removed_messages: vec![],
                     segments: vec![section::Segment::Clippy(section::Data::Generated(
                         section::segment::ThanksClippy { count: 2 }
@@ -141,6 +150,7 @@ fn sections() {
                     name: changelog::Version::Semantic("0.8.0".parse().unwrap()),
                     unknown: "undocumented".into(),
                     heading_level: 3,
+                    version_prefix: "".into(),
                     removed_messages: vec![],
                     segments: Vec::new(),
                 },
@@ -165,6 +175,7 @@ fn segments() {
                 name: changelog::Version::Semantic("0.7.0".parse().unwrap()),
                 unknown: "".into(),
                 heading_level: 3,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 removed_messages: vec![],
                 segments: vec![
                     section::Segment::Conventional(section::segment::Conventional {
@@ -189,12 +200,14 @@ fn segments() {
                 date: None,
                 name: changelog::Version::Unreleased,
                 heading_level: 3,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 removed_messages: vec![],
                 segments: vec![section::Segment::Clippy(section::Data::Parsed)], // only clippy still available
                 unknown: Default::default(),
             },
             Section::Release {
                 heading_level: 3,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 removed_messages: vec![],
                 date: Some(
                     time::Date::from_calendar_date(2021, time::Month::September, 15)
@@ -213,6 +226,7 @@ fn segments() {
                 name: changelog::Version::Semantic("0.8.0".parse().unwrap()),
                 unknown: "".into(),
                 heading_level: 3,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 removed_messages: vec![],
                 segments: vec![
                     section::Segment::Details(section::Data::Parsed),
@@ -265,12 +279,14 @@ fn segments() {
                 date: None,
                 name: changelog::Version::Unreleased,
                 heading_level: 3,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 removed_messages: vec![],
                 segments: segments.clone(),
                 unknown: Default::default(),
             },
             Section::Release {
                 heading_level: 3,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 removed_messages: vec![],
                 date: Some(
                     time::Date::from_calendar_date(2021, time::Month::September, 15)
@@ -287,6 +303,7 @@ fn segments() {
                 name: changelog::Version::Semantic("0.8.0".parse().unwrap()),
                 unknown: "".into(),
                 heading_level: 3,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 removed_messages: vec![],
                 segments: segments.clone(),
             },
@@ -295,6 +312,7 @@ fn segments() {
                 name: changelog::Version::Semantic("0.7.0".parse().unwrap()),
                 unknown: "".into(),
                 heading_level: 3,
+                version_prefix: Section::DEFAULT_PREFIX.into(),
                 removed_messages: vec![],
                 segments: {
                     let mut v = segments.clone();
@@ -318,6 +336,7 @@ fn segments() {
                     name: changelog::Version::Semantic("0.7.0".parse().unwrap()),
                     unknown: "".into(),
                     heading_level: 3,
+                    version_prefix: Section::DEFAULT_PREFIX.into(),
                     removed_messages: vec![],
                     segments: vec![
                         section::Segment::Conventional(section::segment::Conventional {
@@ -347,12 +366,14 @@ fn segments() {
                     date: None,
                     name: changelog::Version::Unreleased,
                     heading_level: 3,
+                    version_prefix: Section::DEFAULT_PREFIX.into(),
                     removed_messages: vec![],
                     segments: vec![clippy],
                     unknown: Default::default(),
                 },
                 Section::Release {
                     heading_level: 3,
+                    version_prefix: Section::DEFAULT_PREFIX.into(),
                     removed_messages: vec![],
                     date: Some(
                         time::Date::from_calendar_date(2021, time::Month::September, 15)
@@ -378,6 +399,7 @@ fn segments() {
                     name: changelog::Version::Semantic("0.8.0".parse().unwrap()),
                     unknown: "".into(),
                     heading_level: 3,
+                    version_prefix: Section::DEFAULT_PREFIX.into(),
                     removed_messages: vec![],
                     segments: vec![details, statistics],
                 },

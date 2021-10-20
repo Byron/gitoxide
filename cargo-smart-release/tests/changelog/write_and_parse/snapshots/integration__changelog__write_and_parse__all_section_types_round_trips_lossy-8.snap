@@ -3,7 +3,7 @@ source: cargo-smart-release/tests/changelog/write_and_parse/mod.rs
 expression: buf
 
 ---
-#### v1.0.2-beta.2 (1970-01-01)
+#### 1.0.2-beta.2 (1970-01-01)
 
 * hello world
 	this
