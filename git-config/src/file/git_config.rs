@@ -1617,7 +1617,6 @@ mod from_paths {
 
         assert_eq!(config.len(), 3);
     }
-
 }
 
 #[cfg(test)]
