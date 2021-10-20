@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.5.4 (2021-10-20)
+
+### Bug Fixes
+
+ - <csr-id-77f433e806e43c8d355b3e176ed740ba4de9777c/> create github release only after tags were created and pushed
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#227](https://github.com/Byron/gitoxide/issues/227)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#227](https://github.com/Byron/gitoxide/issues/227)**
+    - create github release only after tags were created and pushed ([`77f433e`](https://github.com/Byron/gitoxide/commit/77f433e806e43c8d355b3e176ed740ba4de9777c))
+</details>
+
 ## v0.5.3 (2021-10-20)
 
 ### Bug Fixes
@@ -16,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com/Byron/gitoxide/issues/222)
 
@@ -29,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#222](https://github.com/Byron/gitoxide/issues/222)**
     - fix smart-release journey test expecations ([`4b638ae`](https://github.com/Byron/gitoxide/commit/4b638ae72d070bb0d362f358f5eaad035db0e2ae))
  * **Uncategorized**
+    - Release cargo-smart-release v0.5.3 ([`0953239`](https://github.com/Byron/gitoxide/commit/0953239faebccfce05dc7fef3bf07c43340b3e7f))
     - strip `.git` suffix from repository paths when using it in urls ([`a3aaa3e`](https://github.com/Byron/gitoxide/commit/a3aaa3e0fa38085530bc20443de176306fc8d5d2))
     - remove extra '/' after https://github.com/ based URLs ([`53ee1a7`](https://github.com/Byron/gitoxide/commit/53ee1a751e5d79aa3e325a5fd3c3a211fc3d06a1))
 </details>
