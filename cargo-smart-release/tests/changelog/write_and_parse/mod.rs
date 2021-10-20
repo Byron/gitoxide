@@ -53,7 +53,7 @@ fn conventional_write_empty_messages() -> Result {
     for link_mode in &[
         changelog::write::Linkables::AsText,
         changelog::write::Linkables::AsLinks {
-            repository_url: git_repository::Url::try_from(b"https://github.com/user/repo".as_bytes())?.into(),
+            repository_url: git_repository::Url::try_from(b"https://github.com/user/repo.git".as_bytes())?.into(),
         },
     ] {
         let log = log.clone();

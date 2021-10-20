@@ -48,17 +48,22 @@ impl RepositoryUrl {
         self.inner.host.as_ref().map(|h| h == "github.com").unwrap_or(false)
     }
 
+    fn cleaned_path(&self) -> String {
+        let path = self.inner.path.to_str_lossy().into_owned();
+        path.strip_suffix(".git").map(ToOwned::to_owned).unwrap_or(path)
+    }
+
     pub fn github_https(&self) -> Option<String> {
         match &self.inner.host {
             Some(host) if host == "github.com" => match self.inner.scheme {
                 Scheme::Http | Scheme::Https | Scheme::Git => {
-                    format!("https://github.com{}", self.inner.path.to_str_lossy()).into()
+                    format!("https://github.com{}", self.cleaned_path()).into()
                 }
                 Scheme::Ssh => self
                     .inner
                     .user
                     .as_ref()
-                    .map(|user| format!("https://github.com{}/{}", user, self.inner.path.to_str_lossy())),
+                    .map(|user| format!("https://github.com{}/{}", user, self.cleaned_path())),
                 Scheme::Radicle | Scheme::File => None,
             },
             None | Some(_) => None,
