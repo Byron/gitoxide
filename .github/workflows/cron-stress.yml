@@ -3,6 +3,7 @@ name: stress
 on:
   schedule: 
     - cron: '0 13,1 * * *'
+  workflow_dispatch:
 
 jobs:
   build-lint-test-benchmark:
