@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+The `v` prefix is not enforced anymore and is handled depending on what's already present.
+
+This helps to handle changelogs with slightly different styles as well.
+
+### New Features
+
+ - <csr-id-3613a95d730d0aeef87d9c256f93bd528d4945bb/> Support for lack of prefixes in version headers.
+   
+   These are also inherited so once set by a single versioned release
+   section, fully generated sections will inherit their prefix from
+   that one.
+
+### Bug Fixes
+
+ - <csr-id-9d0d1fd71196b129b229a7d9475fdd6b99e8675b/> Assume manifests cannot necessarily be read by `cargo_toml::Manifest` and fallback.
+
+   This prevents errors to occur in some configurations when no crate is specified on the command-line.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#228](https://github.com/Byron/gitoxide/issues/228)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#228](https://github.com/Byron/gitoxide/issues/228)**
+    - Flexible tag parsing allows to find any version tags ([`a1b12e6`](https://github.com/Byron/gitoxide/commit/a1b12e695c08e344becbfcddb6192e34c3cf8ae5))
+    - Support for no prefixes in version headers ([`3613a95`](https://github.com/Byron/gitoxide/commit/3613a95d730d0aeef87d9c256f93bd528d4945bb))
+    - Assume manifests cannot necessarily be read by `cargo_toml::Manifest` and fallback ([`9d0d1fd`](https://github.com/Byron/gitoxide/commit/9d0d1fd71196b129b229a7d9475fdd6b99e8675b))
+</details>
+
 ## v0.5.4 (2021-10-20)
 
 ### Bug Fixes
@@ -15,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#227](https://github.com/Byron/gitoxide/issues/227)
 
@@ -27,6 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  * **[#227](https://github.com/Byron/gitoxide/issues/227)**
     - create github release only after tags were created and pushed ([`77f433e`](https://github.com/Byron/gitoxide/commit/77f433e806e43c8d355b3e176ed740ba4de9777c))
+ * **Uncategorized**
+    - Release cargo-smart-release v0.5.4 ([`447d689`](https://github.com/Byron/gitoxide/commit/447d689776a6eaebf00bbccb5f84e0906876d547))
 </details>
 
 ## v0.5.3 (2021-10-20)
