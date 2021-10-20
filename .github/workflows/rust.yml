@@ -7,8 +7,13 @@ on:
     branches: [ main ]
 
 jobs:
-  build-lint-test-benchmark:
-    runs-on: ubuntu-latest
+  test:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
     - uses: Swatinem/rust-cache@v1
@@ -16,12 +21,18 @@ jobs:
       run: cargo clippy --all
     - name: fmt
       run: cargo fmt --all -- --check
+    - name: Setup dependencies (ubuntu)
+      if: startsWith(matrix.os, 'ubuntu')
+      run:
+        sudo apt-get install tree
+    - name: Setup dependencies (macos)
+      if: startsWith(matrix.os, 'macos')
+      run:
+        brew install tree
     - name: test
       env:
         CI: true
-      run: |
-        sudo apt-get install tree
-        make tests
+      run: make tests
     - name: doc
       run: cargo doc
     - name: Check crate package size (feat. 'cargo diet')
