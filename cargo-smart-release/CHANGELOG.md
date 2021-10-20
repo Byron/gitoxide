@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.5.5 (2021-10-20)
 
 The `v` prefix is not enforced anymore and is handled depending on what's already present.
 
@@ -22,14 +22,14 @@ This helps to handle changelogs with slightly different styles as well.
 ### Bug Fixes
 
  - <csr-id-9d0d1fd71196b129b229a7d9475fdd6b99e8675b/> Assume manifests cannot necessarily be read by `cargo_toml::Manifest` and fallback.
-
+   
    This prevents errors to occur in some configurations when no crate is specified on the command-line.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#228](https://github.com/Byron/gitoxide/issues/228)
 
@@ -40,6 +40,7 @@ This helps to handle changelogs with slightly different styles as well.
 <details><summary>view details</summary>
 
  * **[#228](https://github.com/Byron/gitoxide/issues/228)**
+    - update changelog ([`435be34`](https://github.com/Byron/gitoxide/commit/435be349b5164ba52a91b70e90336a3cb2df7f33))
     - Flexible tag parsing allows to find any version tags ([`a1b12e6`](https://github.com/Byron/gitoxide/commit/a1b12e695c08e344becbfcddb6192e34c3cf8ae5))
     - Support for no prefixes in version headers ([`3613a95`](https://github.com/Byron/gitoxide/commit/3613a95d730d0aeef87d9c256f93bd528d4945bb))
     - Assume manifests cannot necessarily be read by `cargo_toml::Manifest` and fallback ([`9d0d1fd`](https://github.com/Byron/gitoxide/commit/9d0d1fd71196b129b229a7d9475fdd6b99e8675b))
