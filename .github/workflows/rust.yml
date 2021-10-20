@@ -24,8 +24,6 @@ jobs:
         make tests
     - name: doc
       run: cargo doc
-    - name: stress
-      run: make stress
     - name: Check crate package size (feat. 'cargo diet')
       run: |
         curl -LSfs https://raw.githubusercontent.com/the-lean-crate/cargo-diet/master/ci/install.sh | \
