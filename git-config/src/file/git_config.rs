@@ -136,6 +136,7 @@ impl<'event> GitConfig<'event> {
     }
 
     /// Constructs a `git-config` file from the provided paths in the order provided.
+    /// This is neither zero-copy nor zero-alloc.
     ///
     /// # Errors
     ///
