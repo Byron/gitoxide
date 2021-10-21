@@ -1,7 +1,7 @@
 use std::{convert::TryInto, process::Command};
 
 use anyhow::{anyhow, bail};
-use cargo_metadata::{camino::Utf8Path, Metadata, Package};
+use cargo_metadata::{camino::Utf8Path, Package};
 use git_repository as git;
 use git_repository::{
     bstr::{BStr, ByteSlice},
@@ -14,49 +14,13 @@ use crate::utils::{component_to_bytes, tag_name};
 
 pub mod history;
 
-pub struct ContextRef<'meta, 'a> {
-    pub meta: &'meta Metadata,
-    pub repo: &'a git::Easy,
-    pub root: &'a Utf8Path,
-}
-
-impl<'meta, 'a> From<&crate::Context> for ContextRef<'meta, 'a> {
-    fn from(v: &crate::Context) -> Self {
-        Self {
-            meta: &v.meta,
-            repo: &v.repo,
-            root: &v.root,
-        }
-    }
-}
-
-impl<'meta, 'a> ContextRef<'meta, 'a> {
-    pub(crate) fn repo_relative_path<'b>(&self, p: &'b Package) -> Option<&'b Utf8Path> {
-        let dir = p
-            .manifest_path
-            .parent()
-            .expect("parent of a file is always present")
-            .strip_prefix(&self.root)
-            .expect("workspace members are releative to the root directory");
-
-        if dir.as_os_str().is_empty() {
-            None
-        } else {
-            dir.into()
-        }
-    }
-}
-
 #[derive(Clone, Debug)]
 pub enum PackageChangeKind {
     Untagged { wanted_tag_name: String },
     ChangedOrNew,
 }
 
-pub fn change_since_last_release(
-    package: &Package,
-    ctx: &ContextRef<'_, '_>,
-) -> anyhow::Result<Option<PackageChangeKind>> {
+pub fn change_since_last_release(package: &Package, ctx: &crate::Context) -> anyhow::Result<Option<PackageChangeKind>> {
     let version_tag_name = tag_name(package, &package.version, &ctx.repo);
     let mut tag_ref = match ctx.repo.try_find_reference(&version_tag_name)? {
         None => {

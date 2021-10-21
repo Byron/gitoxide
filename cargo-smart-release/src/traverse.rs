@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use cargo_metadata::{DependencyKind, Metadata, Package, PackageId};
+use cargo_metadata::{DependencyKind, Package, PackageId};
 
 use crate::{
     git,
@@ -127,31 +127,6 @@ pub mod dependency {
     }
 }
 
-pub struct Options {
-    pub add_production_crates: bool,
-    pub bump_when_needed: bool,
-    pub isolate_dependencies_from_breaking_changes: bool,
-    pub traverse_graph: bool,
-}
-
-pub struct ContextRef<'meta, 'a> {
-    meta: &'meta Metadata,
-    crate_names: &'a [String],
-    git: crate::git::ContextRef<'meta, 'a>,
-    version: crate::version::ContextRef<'a>,
-}
-
-impl<'meta, 'a> From<&crate::Context> for ContextRef<'meta, 'a> {
-    fn from(v: &Context) -> Self {
-        Self {
-            meta: &v.meta,
-            crate_names: &v.crate_names,
-            git: v.into(),
-            version: v.into(),
-        }
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct Dependency<'meta> {
     pub package: &'meta Package,
@@ -159,15 +134,13 @@ pub struct Dependency<'meta> {
     pub mode: dependency::Mode,
 }
 
-pub fn dependencies<'meta>(
-    ctx: &ContextRef<'meta, '_>,
-    Options {
-        add_production_crates,
-        bump_when_needed,
-        isolate_dependencies_from_breaking_changes,
-        traverse_graph,
-    }: Options,
-) -> anyhow::Result<Vec<Dependency<'meta>>> {
+pub fn dependencies(
+    ctx: &crate::Context,
+    allow_auto_publish_of_stable_crates: bool,
+    bump_when_needed: bool,
+    isolate_dependencies_from_breaking_changes: bool,
+    traverse_graph: bool,
+) -> anyhow::Result<Vec<Dependency<'_>>> {
     let mut seen = BTreeSet::new();
     let mut crates = Vec::new();
     for crate_name in &ctx.crate_names {
@@ -182,12 +155,12 @@ pub fn dependencies<'meta>(
                 &mut seen,
                 &mut crates_this_round,
                 package,
-                add_production_crates,
+                allow_auto_publish_of_stable_crates,
                 bump_when_needed,
             )?;
         }
 
-        match git::change_since_last_release(package, &ctx.git)? {
+        match git::change_since_last_release(package, ctx)? {
             Some(user_package_change) => {
                 crates_this_round.push(Dependency {
                     package,
@@ -196,7 +169,7 @@ pub fn dependencies<'meta>(
                         dependency::Mode::ToBePublished {
                             adjustment: VersionAdjustment::Changed {
                                 change: user_package_change,
-                                bump: version::bump_package(package, &ctx.version, bump_when_needed)?,
+                                bump: version::bump_package(package, ctx, bump_when_needed)?,
                             },
                         }
                     } else {
@@ -223,12 +196,17 @@ pub fn dependencies<'meta>(
     }
 
     if isolate_dependencies_from_breaking_changes {
-        forward_propagate_breaking_changes_for_publishing(ctx, &mut crates, bump_when_needed, add_production_crates)?;
+        forward_propagate_breaking_changes_for_publishing(
+            ctx,
+            &mut crates,
+            bump_when_needed,
+            allow_auto_publish_of_stable_crates,
+        )?;
         forward_propagate_breaking_changes_for_manifest_updates(
             ctx,
             &mut crates,
             bump_when_needed,
-            add_production_crates,
+            allow_auto_publish_of_stable_crates,
         )?;
     }
     crates.extend(find_workspace_crates_depending_on_adjusted_crates(ctx, &crates));
@@ -248,7 +226,7 @@ fn merge_crates<'meta>(dest: &mut Vec<Dependency<'meta>>, src: Vec<Dependency<'m
 }
 
 fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
-    ctx: &ContextRef<'meta, '_>,
+    ctx: &'meta Context,
     crates: &mut Vec<Dependency<'meta>>,
     bump_when_needed: bool,
     allow_auto_publish_of_stable_crates: bool,
@@ -345,9 +323,9 @@ fn package_may_be_published(p: &Package) -> bool {
     p.publish.is_none()
 }
 
-fn forward_propagate_breaking_changes_for_publishing<'meta>(
-    ctx: &ContextRef<'meta, '_>,
-    mut crates: &mut Vec<Dependency<'meta>>,
+fn forward_propagate_breaking_changes_for_publishing(
+    ctx: &Context,
+    mut crates: &mut Vec<Dependency<'_>>,
     bump_when_needed: bool,
     allow_auto_publish_of_stable_crates: bool,
 ) -> anyhow::Result<()> {
@@ -400,7 +378,7 @@ impl EditForPublish {
     fn apply(
         self,
         crates: &mut [Dependency<'_>],
-        ctx: &ContextRef<'_, '_>,
+        ctx: &Context,
         bump_when_needed: bool,
         allow_auto_publish_of_stable_crates: bool,
     ) -> anyhow::Result<()> {
@@ -447,11 +425,11 @@ impl EditForPublish {
     }
 }
 
-fn breaking_version_bump(ctx: &ContextRef<'_, '_>, package: &Package, bump_when_needed: bool) -> anyhow::Result<Bump> {
+fn breaking_version_bump(ctx: &Context, package: &Package, bump_when_needed: bool) -> anyhow::Result<Bump> {
     let breaking_spec = is_pre_release_version(&package.version)
         .then(|| BumpSpec::Minor)
         .unwrap_or(BumpSpec::Major);
-    version::bump_package_with_spec(package, breaking_spec, &ctx.version, bump_when_needed)
+    version::bump_package_with_spec(package, breaking_spec, ctx, bump_when_needed)
 }
 
 fn make_breaking(adjustment: &mut VersionAdjustment, breaking_bump: version::Bump, breaking_crate_names: Vec<String>) {
@@ -515,7 +493,7 @@ fn find_safety_bump_edits_backwards_from_crates_for_publish(
 }
 
 fn depth_first_traversal<'meta>(
-    ctx: &ContextRef<'_, 'meta>,
+    ctx: &'meta crate::Context,
     seen: &mut BTreeSet<&'meta PackageId>,
     crates: &mut Vec<Dependency<'meta>>,
     root: &Package,
@@ -541,7 +519,7 @@ fn depth_first_traversal<'meta>(
             bump_when_needed,
         )?;
 
-        crates.push(match git::change_since_last_release(workspace_dependency, &ctx.git)? {
+        crates.push(match git::change_since_last_release(workspace_dependency, ctx)? {
             Some(change) => {
                 if is_pre_release_version(&workspace_dependency.version) || allow_auto_publish_of_stable_crates {
                     Dependency {
@@ -550,7 +528,7 @@ fn depth_first_traversal<'meta>(
                         mode: dependency::Mode::ToBePublished {
                             adjustment: VersionAdjustment::Changed {
                                 change,
-                                bump: version::bump_package(workspace_dependency, &ctx.version, bump_when_needed)?,
+                                bump: version::bump_package(workspace_dependency, ctx, bump_when_needed)?,
                             },
                         },
                     }
@@ -579,7 +557,7 @@ fn depth_first_traversal<'meta>(
 }
 
 fn find_workspace_crates_depending_on_adjusted_crates<'meta>(
-    ctx: &ContextRef<'meta, '_>,
+    ctx: &'meta Context,
     crates: &[Dependency<'_>],
 ) -> Vec<Dependency<'meta>> {
     ctx.meta

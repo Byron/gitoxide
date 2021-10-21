@@ -37,10 +37,10 @@ pub struct Outcome {
 }
 
 impl ChangeLog {
-    pub fn for_package_with_write_lock<'meta>(
-        package: &'meta Package,
+    pub fn for_package_with_write_lock<'a>(
+        package: &'a Package,
         history: &commit::History,
-        ctx: &crate::git::ContextRef<'meta, '_>,
+        ctx: &'a crate::Context,
         selection: segment::Selection,
     ) -> anyhow::Result<Outcome> {
         let mut generated = ChangeLog::from_history_segments(
@@ -85,12 +85,12 @@ impl ChangeLog {
         })
     }
 
-    pub fn for_crate_by_name_with_write_lock<'meta>(
-        package: &'meta Package,
+    pub fn for_crate_by_name_with_write_lock<'a>(
+        package: &'a Package,
         history: &commit::History,
-        ctx: &crate::git::ContextRef<'meta, '_>,
+        ctx: &'a crate::Context,
         selection: segment::Selection,
-    ) -> anyhow::Result<(Outcome, &'meta Package)> {
+    ) -> anyhow::Result<(Outcome, &'a Package)> {
         let out = Self::for_package_with_write_lock(package, history, ctx, selection)?;
         Ok((out, package))
     }
