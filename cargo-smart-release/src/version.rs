@@ -1,7 +1,28 @@
+use cargo_metadata::camino::Utf8Path;
 use cargo_metadata::Package;
 use semver::{Prerelease, Version};
 
-use crate::Context;
+pub struct ContextRef<'a> {
+    pub crate_names: &'a [String],
+    pub root: &'a Utf8Path,
+    pub crates_index: &'a crates_index::Index,
+    pub history: Option<&'a crate::commit::History>,
+    pub bump: BumpSpec,
+    pub bump_dependencies: BumpSpec,
+}
+
+impl<'a> From<&crate::Context> for ContextRef<'a> {
+    fn from(v: &crate::Context) -> Self {
+        Self {
+            crate_names: &v.crate_names,
+            root: &v.root,
+            crates_index: &v.crates_index,
+            history: v.history.as_ref(),
+            bump: v.bump,
+            bump_dependencies: v.bump_dependencies,
+        }
+    }
+}
 
 #[derive(Copy, Clone)]
 pub enum BumpSpec {
@@ -25,7 +46,7 @@ impl std::fmt::Display for BumpSpec {
 }
 
 #[allow(clippy::ptr_arg)]
-pub(crate) fn select_publishee_bump_spec(name: &String, ctx: &Context) -> BumpSpec {
+pub(crate) fn select_publishee_bump_spec(name: &String, ctx: &ContextRef<'_>) -> BumpSpec {
     if ctx.crate_names.contains(name) {
         ctx.bump
     } else {
@@ -79,7 +100,7 @@ impl Bump {
 pub(crate) fn bump_package_with_spec(
     package: &Package,
     bump_spec: BumpSpec,
-    ctx: &Context,
+    ctx: &ContextRef<'_>,
     bump_when_needed: bool,
 ) -> anyhow::Result<Bump> {
     let mut v = package.version.clone();
@@ -168,7 +189,7 @@ pub(crate) fn bump_package_with_spec(
     })
 }
 
-pub(crate) fn bump_package(package: &Package, ctx: &Context, bump_when_needed: bool) -> anyhow::Result<Bump> {
+pub(crate) fn bump_package(package: &Package, ctx: &ContextRef<'_>, bump_when_needed: bool) -> anyhow::Result<Bump> {
     let bump_spec = select_publishee_bump_spec(&package.name, ctx);
     bump_package_with_spec(package, bump_spec, ctx, bump_when_needed)
 }

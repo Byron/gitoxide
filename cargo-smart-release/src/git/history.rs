@@ -6,7 +6,8 @@ use std::{
 };
 
 use anyhow::bail;
-use cargo_metadata::Package;
+use cargo_metadata::camino::Utf8Path;
+use cargo_metadata::{Metadata, Package};
 use git_repository as git;
 use git_repository::{
     bstr::ByteSlice,
@@ -14,12 +15,12 @@ use git_repository::{
     prelude::{CacheAccessExt, ObjectAccessExt, ObjectIdExt, ReferenceAccessExt, ReferenceExt},
 };
 
+use crate::git::ContextRef;
 use crate::{
     commit,
     commit::history::{Item, Segment},
     git::strip_tag_path,
     utils::{component_to_bytes, is_tag_name, is_tag_version, tag_prefix},
-    Context,
 };
 
 pub enum SegmentScope {
@@ -99,7 +100,7 @@ pub fn collect(repo: &git::Easy) -> anyhow::Result<Option<commit::History>> {
 /// Return the head reference followed by all tags affecting `crate_name` as per our tag name rules, ordered by ancestry.
 pub fn crate_ref_segments<'h>(
     package: &Package,
-    ctx: &crate::Context,
+    ctx: &ContextRef<'_, '_>,
     history: &'h commit::History,
     scope: SegmentScope,
 ) -> anyhow::Result<Vec<commit::history::Segment<'h>>> {
@@ -206,7 +207,7 @@ enum Filter<'a> {
 }
 
 fn add_item_if_package_changed<'a>(
-    ctx: &Context,
+    ctx: &ContextRef<'_, '_>,
     segment: &mut Segment<'a>,
     filter: &Filter<'_>,
     item: &'a Item,
