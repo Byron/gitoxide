@@ -24,15 +24,14 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let force_history_segmentation = false;
     let ctx = crate::Context::new(crates.clone(), force_history_segmentation, bump_spec, bump_spec)?;
     let crates: Vec<_> = {
-        let add_production_crates = true;
-        let bump_only_when_needed = true;
-        let isolate_dependencies_from_breaking_changes = true;
         crate::traverse::dependencies(
             &ctx,
-            add_production_crates,
-            bump_only_when_needed,
-            isolate_dependencies_from_breaking_changes,
-            dependencies,
+            crate::traverse::Options {
+                allow_auto_publish_of_stable_crates: true,
+                bump_when_needed: true,
+                isolate_dependencies_from_breaking_changes: true,
+                traverse_graph: dependencies,
+            },
         )?
         .into_iter()
         .filter_map(|d| match d.mode {

@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 
 use anyhow::bail;
 
+use crate::traverse::Dependency;
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},
@@ -83,31 +84,54 @@ pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependen
     Ok(())
 }
 
-fn release_depth_first(ctx: Context, options: Options) -> anyhow::Result<()> {
-    let Options {
-        bump_when_needed,
-        dry_run,
-        allow_auto_publish_of_stable_crates,
-        dependencies: traverse_dependencies,
-        verbose,
-        isolate_dependencies_from_breaking_changes,
-        ..
-    } = options;
+impl From<Options> for crate::traverse::Options {
+    fn from(v: Options) -> Self {
+        Self {
+            allow_auto_publish_of_stable_crates: v.allow_auto_publish_of_stable_crates,
+            bump_when_needed: v.bump_when_needed,
+            isolate_dependencies_from_breaking_changes: v.isolate_dependencies_from_breaking_changes,
+            traverse_graph: v.dependencies,
+        }
+    }
+}
+
+fn release_depth_first(ctx: Context, opts: Options) -> anyhow::Result<()> {
     let crates = {
-        crate::traverse::dependencies(
-            &ctx.base,
-            allow_auto_publish_of_stable_crates,
-            bump_when_needed,
-            isolate_dependencies_from_breaking_changes,
-            traverse_dependencies,
-        )
-        .and_then(|deps| present_and_validate_dependencies(&deps, &ctx, verbose, dry_run).map(|_| deps))?
+        crate::traverse::dependencies(&ctx.base, opts.into())
+            .and_then(|crates| assure_crates_index_is_uptodate(crates, &ctx.base, opts.into()))
+            .and_then(|crates| {
+                present_and_validate_dependencies(&crates, &ctx, opts.verbose, opts.dry_run).map(|_| crates)
+            })?
     };
 
-    assure_working_tree_is_unchanged(options)?;
-    perform_release(&ctx, options, &crates)?;
+    assure_working_tree_is_unchanged(opts)?;
+    perform_release(&ctx, opts, &crates)?;
 
     Ok(())
+}
+
+fn assure_crates_index_is_uptodate<'meta>(
+    crates: Vec<Dependency<'meta>>,
+    ctx: &'meta crate::Context,
+    opts: crate::traverse::Options,
+) -> anyhow::Result<Vec<Dependency<'meta>>> {
+    if let Some(dep) = crates
+        .iter()
+        .filter_map(|d| d.mode.version_adjustment_bump().map(|b| (d, b)))
+        .find_map(|(d, b)| {
+            b.latest_release
+                .as_ref()
+                .and_then(|lr| (lr >= &b.desired_release).then(|| d))
+        })
+    {
+        let index = crates_index::Index::new_cargo_default();
+        if index.exists() {
+            log::warn!("Crate '{}' computed version not greater than the current package version. Updating crates index to assure correct results.", dep.package.name);
+            index.update()?;
+            return crate::traverse::dependencies(ctx, opts);
+        }
+    }
+    Ok(crates)
 }
 
 fn present_and_validate_dependencies(

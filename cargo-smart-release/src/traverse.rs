@@ -134,12 +134,21 @@ pub struct Dependency<'meta> {
     pub mode: dependency::Mode,
 }
 
+pub struct Options {
+    pub allow_auto_publish_of_stable_crates: bool,
+    pub bump_when_needed: bool,
+    pub isolate_dependencies_from_breaking_changes: bool,
+    pub traverse_graph: bool,
+}
+
 pub fn dependencies(
     ctx: &crate::Context,
-    allow_auto_publish_of_stable_crates: bool,
-    bump_when_needed: bool,
-    isolate_dependencies_from_breaking_changes: bool,
-    traverse_graph: bool,
+    Options {
+        allow_auto_publish_of_stable_crates,
+        bump_when_needed,
+        isolate_dependencies_from_breaking_changes,
+        traverse_graph,
+    }: Options,
 ) -> anyhow::Result<Vec<Dependency<'_>>> {
     let mut seen = BTreeSet::new();
     let mut crates = Vec::new();
