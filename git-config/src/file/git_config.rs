@@ -1529,7 +1529,7 @@ a"#,
 
 #[cfg(test)]
 mod from_paths {
-    use super::{Cow, GitConfig, ParserOrIoError, Path};
+    use super::{Cow, GitConfig, ParserOrIoError};
     use std::{fs, io};
     use tempfile::tempdir;
 
