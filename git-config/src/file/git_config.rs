@@ -135,12 +135,14 @@ impl<'event> GitConfig<'event> {
         parse_from_path(path).map(Self::from)
     }
 
-    /// Constructs a `git-config` file from the provided paths.
+    /// Constructs a `git-config` file from the provided paths in the order provided.
     ///
     /// # Errors
     ///
     /// Returns an error if there was an IO error or if a file wasn't a valid
     /// git-config file.
+    ///
+    /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-FILES
     #[inline]
     pub fn from_paths(paths: &[&Path]) -> Result<Self, ParserOrIoError<'static>> {
         let mut config = Self::new();
