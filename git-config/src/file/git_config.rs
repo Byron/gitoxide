@@ -1159,7 +1159,6 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
 
         #[allow(clippy::explicit_into_iter_loop)] // it's not really an iterator (yet), needs streaming iterator support
         for event in parser.into_iter() {
-            #[allow(clippy::unnested_or_patterns)] // TODO: remove once Rust 1.53 is available on CI
             match event {
                 Event::SectionHeader(header) => {
                     if let Some(prev_header) = prev_section_header.take() {
