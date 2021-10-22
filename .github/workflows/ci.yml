@@ -67,7 +67,7 @@ jobs:
           toolchain: stable
           override: true
       - name: Run cargo clippy
-        run: cargo clippy --all
+        run: cargo clippy --all --tests
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
       - name: Run cargo diet
