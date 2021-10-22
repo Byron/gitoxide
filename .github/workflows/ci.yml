@@ -13,6 +13,7 @@ jobs:
         os:
           - ubuntu-latest
           - macos-latest
+          - windows-latest
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -29,33 +30,6 @@ jobs:
       env:
         CI: true
       run: make tests
-
-  build-and-test-on-windows:
-    name: Windows
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: default
-          toolchain: stable
-          override: true
-      - uses: Swatinem/rust-cache@v1
-      - name: "Check default features build on windows"
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --all --bins --tests --examples
-      - name: "Test (crossterm)"
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all
-      - name: "Installation from crates.io"
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: gitoxide
 
   lint:
     runs-on: ubuntu-latest
