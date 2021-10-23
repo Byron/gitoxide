@@ -231,7 +231,7 @@ Provide a CLI to for the most basic user journey:
 * [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
   as well. What would an MVP look like? Maybe even something that could ship with gitoxide.
 * [ ] A truly awesome history rewriter which makes it easy to understand what happened while avoiding all pitfalls. Think BFG, but more awesome, if that's possible.
-* [ ] `git-tui` should learn a lot from [fossil-scm] regarding the presentation of data. Maybe [this](https://github.com/Lutetium-Vanadium/requestty/) can be used for prompts.
+* [ ] `git-tui` should learn a lot from [fossil-scm] regarding the presentation of data. Maybe [this](https://github.com/Lutetium-Vanadium/requestty/) can be used for prompts. Probably [magit] has a lot to offer, too.
 * [ ] Can markdown be used as database so issue-trackers along with meta-data could just be markdown files which are mostly human-editable? Could user interfaces
   be meta-data aware and just hide the meta-data chunks which are now editable in the GUI itself? Doing this would make conflicts easier to resolve than an `sqlite`
   database.
@@ -251,6 +251,7 @@ Provide a CLI to for the most basic user journey:
 
 [syncthing]: https://github.com/syncthing/syncthing
 [fossil-scm]: https://www.fossil-scm.org
+[magit]: https://magit.vc
 
 
 ## Shortcomings & Limitations
