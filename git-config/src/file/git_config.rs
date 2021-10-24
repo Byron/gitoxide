@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, VecDeque},
     convert::TryFrom,
     fmt::Display,
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use crate::{
@@ -160,6 +160,49 @@ impl<'event> GitConfig<'event> {
         }
 
         Ok(config)
+    }
+
+    /// Constructs a `git-config` from the default cascading sequence.
+    /// This is neither zero-alloc nor zero-copy.
+    ///
+    /// See https://git-scm.com/docs/git-config#FILES for details.
+    pub fn from_env_paths() -> Result<Self, ParserOrIoError<'static>> {
+        use std::env;
+
+        let mut paths = vec![];
+
+        if let Err(_) = env::var("GIT_CONFIG_NO_SYSTEM") {
+            if let Ok(git_config_system) = env::var("GIT_CONFIG_SYSTEM") {
+                paths.push(PathBuf::from(git_config_system))
+            } else {
+                // In git the fallback is set to a build time macro which defaults to /etc/gitconfig
+                paths.push(PathBuf::from("/etc/gitconfig"));
+            }
+        }
+
+        if let Ok(git_config_global) = env::var("GIT_CONFIG_GLOBAL") {
+            paths.push(PathBuf::from(git_config_global));
+        } else {
+            // Divergence from git-config(1)
+            // These two are supposed to share the same scope and override
+            // rather than append according to git-config(1) documentation.
+            if let Ok(xdg_config_home) = env::var("XDG_CONFIG_HOME") {
+                paths.push(PathBuf::from(xdg_config_home).join("git/config"));
+            } else if let Ok(home) = env::var("HOME") {
+                paths.push(PathBuf::from(home).join(".config/git/config"));
+            }
+
+            if let Ok(home) = env::var("HOME") {
+                paths.push(PathBuf::from(home).join(".gitconfig"));
+            }
+        }
+
+        if let Ok(git_dir) = env::var("GIT_DIR") {
+            paths.push(PathBuf::from(git_dir).join("config"));
+        }
+
+        let paths = paths.iter().map(PathBuf::as_path).collect::<Vec<&Path>>();
+        Self::from_paths(&paths)
     }
 
     /// Generates a config from the environment variables. This is neither
@@ -1622,6 +1665,9 @@ mod from_paths {
         assert_eq!(config.len(), 3);
     }
 }
+
+#[cfg(test)]
+pub mod from_env_paths {}
 
 #[cfg(test)]
 mod from_env {
