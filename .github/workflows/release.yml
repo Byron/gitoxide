@@ -37,12 +37,14 @@ jobs:
 
       - name: Create GitHub release
         id: release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ env.ARTIFACT_VERSION }}
-          release_name: ${{ env.ARTIFACT_VERSION }}
+          tag: ${{ env.ARTIFACT_VERSION }}
+          name: ${{ env.ARTIFACT_VERSION }}
+          allowUpdates: true
+          omitBody: true
+          omitPrereleaseDuringUpdate: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Save release upload URL to artifact
         run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
