@@ -1,4 +1,4 @@
-use std::{convert::TryInto, ops::DerefMut};
+use std::ops::DerefMut;
 
 use crate::easy;
 
@@ -52,25 +52,29 @@ pub trait CacheAccessExt: easy::Access + Sized {
         let pack_cache = git_pack::cache::Never;
         #[cfg(feature = "max-performance")]
         let pack_cache: easy::PackCache = {
+            use std::convert::TryInto;
             if std::env::var_os("GITOXIDE_DISABLE_PACK_CACHE").is_some() {
                 Box::new(git_pack::cache::Never)
-            } else if let Some(unit) = std::env::var("GITOXIDE_PACK_CACHE_MEMORY").ok().and_then(|v| {
-                byte_unit::Byte::from_str(&v)
-                    .map_err(|err| log::warn!("Failed to parse {:?} into byte unit for pack cache: {}", v, err))
-                    .ok()
-            }) {
-                unit.get_bytes()
-                    .try_into()
-                    .map(|bytes: usize| {
-                        Box::new(git_pack::cache::lru::MemoryCappedHashmap::new(bytes)) as easy::PackCache
-                    })
-                    .unwrap_or_else(|err| {
-                        log::warn!(
-                            "Parsed bytes value is not representable in usize. Defaulting to standard pack cache: {}",
+            } else if let Some(bytes) = std::env::var("GITOXIDE_PACK_CACHE_MEMORY")
+                .ok()
+                .and_then(|v| {
+                    byte_unit::Byte::from_str(&v)
+                        .map_err(|err| log::warn!("Failed to parse {:?} into byte unit for pack cache: {}", v, err))
+                        .ok()
+                })
+                .and_then(|unit| {
+                    unit.get_bytes()
+                        .try_into()
+                        .map_err(|err| {
+                            log::warn!(
+                            "Parsed bytes value is not representable as usize. Defaulting to standard pack cache: {}",
                             err
-                        );
-                        Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default())
-                    })
+                        )
+                        })
+                        .ok()
+                })
+            {
+                Box::new(git_pack::cache::lru::MemoryCappedHashmap::new(bytes))
             } else {
                 Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default())
             }
