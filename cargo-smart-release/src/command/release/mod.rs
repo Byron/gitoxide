@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 
 use anyhow::bail;
 
-use crate::traverse::Dependency;
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},
@@ -10,6 +9,7 @@ use crate::{
     traverse::{
         self, dependency,
         dependency::{ManifestAdjustment, VersionAdjustment},
+        Dependency,
     },
     utils::{tag_name, try_to_published_crate_and_new_version, will, Program},
     version,
