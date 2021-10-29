@@ -692,7 +692,7 @@ A maintenance release to properly dealing with previously breaking changes in `g
     - [git-repository] replaces git-features and git-protocol in gitoxide-core ([`081d20f`](https://github.com//Byron/gitoxide/commit/081d20f927f222daa69f2a1a492957fd3146bfc1))
     - [git-repository] used by gix-hours ([`24e0258`](https://github.com//Byron/gitoxide/commit/24e0258b9691b82df5c35a35111d19df56087cdc))
     - [git-repository] refactor ([`b5ebcfa`](https://github.com//Byron/gitoxide/commit/b5ebcfa278a0be85ea10893fd40a8b3e2e28efd5))
-    - [git-repository] now used by gixp-organize ([`aa91fad`](https://github.com//Byron/gitoxide/commit/aa91fad3cf237f6d6f9d588ed390baa6e55f6540))
+    - [git-repository] now used by gix-organize ([`aa91fad`](https://github.com//Byron/gitoxide/commit/aa91fad3cf237f6d6f9d588ed390baa6e55f6540))
     - [git-repository] make it easy to get maximum performance in apps using this crate ([`dc150a5`](https://github.com//Byron/gitoxide/commit/dc150a5913ac5db6211c5881873254bc8377aad2))
     - [git-repository] prevent other implementations of extension traits; refactor ([`e14df75`](https://github.com//Byron/gitoxide/commit/e14df75fa999508a1e3102add4829ba55ec3aa50))
     - [git-repository] finish 'diffing' program upgrade ([`7eea39a`](https://github.com//Byron/gitoxide/commit/7eea39a8d945f28b376698af9b1a0f67ffaa7e6f))

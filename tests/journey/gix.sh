@@ -1,186 +1,518 @@
 # Must be sourced into the main journey test
 set -eu
 
-if test "$kind" = "max"; then
-title "Porcelain ${kind}"
-(
-  (when "running a debug-only panic test"
-    snapshot="$snapshot/panic-behaviour"
-    (with "the --quiet option set"
-      it "fails as expected" && {
-        WITH_SNAPSHOT="$snapshot/expected-failure" \
-        expect_run_sh 101 "$exe -q panic"
-      }
-    )
+title plumbing "${kind}"
+snapshot="$snapshot/plumbing"
+title "git-tempfile crate"
+(when "testing 'git-tempfile'"
+  snapshot="$snapshot/git-tempfile"
+  cd git-tempfile
+  ABORTED=143
 
-    (with "NO --quiet option set"
-      it "fails as expected" && {
-        WITH_SNAPSHOT="$snapshot/expected-failure-in-thread" \
-        expect_run_sh 101 "$exe panic"
+  (when "running the example program to raise a signal with a tempfile present"
+    it "fails as the process aborts" && {
+      expect_run $ABORTED cargo run --example delete-tempfiles-on-sigterm
+    }
+    TEMPFILE="$(cargo run --example delete-tempfiles-on-sigterm 2>/dev/null || true)"
+    it "outputs a tempfile with an expected name" && {
+      expect_run $SUCCESSFULLY test "$TEMPFILE" = "tempfile.ext"
+    }
+    it "cleans up the tempfile '$TEMPFILE' it created" && {
+      expect_run $WITH_FAILURE test -e "$TEMPFILE"
+    }
+  )
+)
+
+title "git-tempfile crate"
+(when "testing 'git-repository'"
+  snapshot="$snapshot/git-repository"
+  cd git-repository
+  ABORTED=143
+
+  (when "running the example program to check order of signal handlers"
+    it "fails as the process aborts" && {
+      expect_run $ABORTED cargo run --example interrupt-handler-allows-graceful-shutdown
+    }
+    it "cleans up the tempfile it created" && {
+      expect_run $WITH_FAILURE test -e "example-file.tmp"
+    }
+  )
+)
+
+title "gix pack-receive"
+(when "running 'pack-receive'"
+  snapshot="$snapshot/pack-receive"
+  (small-repo-in-sandbox
+    if [[ "$kind" != 'small' ]]; then
+
+    if [[ "$kind" != 'async' ]]; then
+    (with "file:// protocol"
+      (with "version 1"
+        (with "NO output directory"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 .git
+          }
+        )
+        (with "output directory"
+          mkdir out
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 .git out/
+          }
+          it "creates an index and a pack in the output directory" && {
+            WITH_SNAPSHOT="$snapshot/ls-in-output-dir" \
+            expect_run $SUCCESSFULLY ls out/
+          }
+          (with "--write-refs set"
+            it "generates the correct output" && {
+              WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 --refs-directory out/all-refs .git out/
+            }
+            it "writes references into the refs folder of the output directory" && {
+              expect_snapshot "$snapshot/repo-refs" out/all-refs
+            }
+          )
+          rm -Rf out
+        )
+        if test "$kind" = "max"; then
+        (with "--format json"
+          it "generates the correct output in JSON format" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-no-output-json" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" --format json pack-receive --protocol 1 .git
+          }
+        )
+        fi
+      )
+      (with "version 2"
+        (with "NO output directory"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 2 .git
+          }
+        )
+        (with "output directory"
+          mkdir out/
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive .git out/
+          }
+          it "creates an index and a pack in the output directory" && {
+            WITH_SNAPSHOT="$snapshot/ls-in-output-dir" \
+            expect_run $SUCCESSFULLY ls out/
+          }
+          rm -Rf out
+        )
+        if test "$kind" = "max"; then
+        (with "--format json"
+          it "generates the correct output in JSON format" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-no-output-json" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" --format json pack-receive --protocol 2 .git
+          }
+        )
+        fi
+      )
+    )
+    fi
+    (with "git:// protocol"
+      launch-git-daemon
+      (with "version 1"
+        (with "NO output directory"
+          (with "no wanted refs"
+            it "generates the correct output" && {
+              WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 git://localhost/
+            }
+          )
+          (with "wanted refs"
+            it "generates the correct output" && {
+              WITH_SNAPSHOT="$snapshot/file-v-any-no-output-wanted-ref-p1" \
+              expect_run $WITH_FAILURE "$exe_plumbing" pack-receive -p 1 git://localhost/ -r =refs/heads/main
+            }
+          )
+        )
+        (with "output directory"
+          mkdir out
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 git://localhost/ out/
+          }
+        )
+      )
+      (with "version 2"
+        (with "NO output directory"
+          (with "NO wanted refs"
+            it "generates the correct output" && {
+              WITH_SNAPSHOT="$snapshot/file-v-any-no-output" \
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 2 git://localhost/
+            }
+          )
+          (with "wanted refs"
+            it "generates the correct output" && {
+              WITH_SNAPSHOT="$snapshot/file-v-any-no-output-single-ref" \
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 2 git://localhost/ -r refs/heads/main
+            }
+            (when "ref does not exist"
+              it "fails with a detailed error message including what the server said" && {
+                WITH_SNAPSHOT="$snapshot/file-v-any-no-output-non-existing-single-ref" \
+                expect_run $WITH_FAILURE "$exe_plumbing" pack-receive -p 2 git://localhost/ -r refs/heads/does-not-exist
+              }
+            )
+          )
+        )
+        (with "output directory"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-with-output" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive git://localhost/ out/
+          }
+        )
+      )
+    )
+    (on_ci
+      if test "$kind" = "max"; then
+      (with "https:// protocol"
+        (with "version 1"
+          it "works" && {
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 1 https://github.com/byron/gitoxide
+          }
+        )
+        (with "version 2"
+          it "works" && {
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-receive -p 2 https://github.com/byron/gitoxide
+          }
+        )
+      )
+      fi
+    )
+    elif [[ "$kind" = "small" ]]; then
+      it "fails as the CLI doesn't have networking in 'small' mode" && {
+        WITH_SNAPSHOT="$snapshot/pack-receive-no-networking-in-small-failure" \
+        expect_run $WITH_FAILURE "$exe_plumbing" pack-receive -p 1 .git
+      }
+    fi
+  )
+)
+
+title "gix remote-ref-list"
+(when "running 'remote-ref-list'"
+  snapshot="$snapshot/remote-ref-list"
+  (small-repo-in-sandbox
+    if [[ "$kind" != "small" ]]; then
+
+    if [[ "$kind" != "async" ]]; then
+    (with "file:// protocol"
+      (with "version 1"
+        it "generates the correct output" && {
+          WITH_SNAPSHOT="$snapshot/file-v-any" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 1 .git
+        }
+      )
+      (with "version 2"
+        it "generates the correct output" && {
+          WITH_SNAPSHOT="$snapshot/file-v-any" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list --protocol 2 "$PWD/.git"
+        }
+      )
+      if test "$kind" = "max"; then
+      (with "--format json"
+        it "generates the correct output in JSON format" && {
+          WITH_SNAPSHOT="$snapshot/file-v-any-json" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" --format json remote-ref-list .git
+        }
+      )
+      fi
+    )
+    fi
+
+    (with "git:// protocol"
+      launch-git-daemon
+      (with "version 1"
+        it "generates the correct output" && {
+          WITH_SNAPSHOT="$snapshot/file-v-any" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 1 git://localhost/
+        }
+      )
+      (with "version 2"
+        it "generates the correct output" && {
+          WITH_SNAPSHOT="$snapshot/file-v-any" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 2 git://localhost/
+        }
+      )
+    )
+    if [[ "$kind" == "small" ]]; then
+    (with "https:// protocol (in small builds)"
+      it "fails as http is not compiled in" && {
+        WITH_SNAPSHOT="$snapshot/fail-http-in-small" \
+        expect_run $WITH_FAILURE "$exe_plumbing" remote-ref-list -p 1 https://github.com/byron/gitoxide
       }
     )
-    (not_on_ci # due to different TTY settings, the output differs, it's OK for now
-      (with "progress option set"
-        it "fails as expected" && {
-          WITH_SNAPSHOT="$snapshot/expected-failure-in-thread-with-progress" \
-          expect_run_sh $WITH_FAILURE "$exe --progress panic"
+    fi
+    (on_ci
+      if [[ "$kind" = "max" ]]; then
+      (with "https:// protocol"
+        (with "version 1"
+          it "generates the correct output" && {
+            expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 1 https://github.com/byron/gitoxide
+          }
+        )
+        (with "version 2"
+          it "generates the correct output" && {
+            expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 2 https://github.com/byron/gitoxide
+          }
+        )
+      )
+      fi
+    )
+    else
+      it "fails as the CLI doesn't include networking in 'small' mode" && {
+        WITH_SNAPSHOT="$snapshot/remote-ref-list-no-networking-in-small-failure" \
+        expect_run $WITH_FAILURE "$exe_plumbing" remote-ref-list -p 1 .git
+      }
+    fi
+  )
+)
+
+title "gix pack-index-from-data"
+(when "running 'pack-index-from-data"
+  snapshot="$snapshot/pack-index-from-data"
+  PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
+  (with "a valid and complete pack file"
+    (with "NO output directory specified"
+      (with "pack file passed as file"
+        it "generates an index into a sink and outputs pack and index information" && {
+          WITH_SNAPSHOT="$snapshot/no-output-dir-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" pack-index-from-data -p "$PACK_FILE"
+        }
+      )
+      (with "pack file passed from stdin"
+        it "generates an index into a sink and outputs pack and index information" && {
+          WITH_SNAPSHOT="$snapshot/no-output-dir-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" pack-index-from-data < "$PACK_FILE"
+        }
+        if test "$kind" = "max"; then
+        (with "--format json"
+          it "generates the index into a sink and outputs information as JSON" && {
+            WITH_SNAPSHOT="$snapshot/no-output-dir-as-json-success" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" --format json pack-index-from-data < "$PACK_FILE"
+          }
+        )
+        fi
+      )
+    )
+    (sandbox
+      (with "with an output directory specified"
+        it "generates an index and outputs information" && {
+          WITH_SNAPSHOT="$snapshot/output-dir-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" pack-index-from-data -p "$PACK_FILE" "$PWD"
+        }
+        it "writes the index and pack into the directory (they have the same names, different suffixes)" && {
+          WITH_SNAPSHOT="$snapshot/output-dir-content" \
+          expect_run $SUCCESSFULLY ls
         }
       )
     )
   )
-  snapshot="$snapshot/porcelain"
-  (with_program tree
-    (when "using the 'tools' subcommand"
-      title "gix tools…"
-      (with "a repo with a tiny commit history"
-        (small-repo-in-sandbox
-          title "gix tools estimate-hours"
-          (when "running 'estimate-hours'"
-            snapshot="$snapshot/estimate-hours"
-            (with "no arguments"
-              it "succeeds and prints only a summary" && {
-                WITH_SNAPSHOT="$snapshot/no-args-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools estimate-hours 2>/dev/null"
-              }
-            )
-            (with "the show-pii argument"
-              it "succeeds and shows information identifying people before the summary" && {
-                WITH_SNAPSHOT="$snapshot/show-pii-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools estimate-hours --show-pii 2>/dev/null"
-              }
-            )
-            (with "the omit-unify-identities argument"
-              it "succeeds and doesn't show unified identities (in this case there is only one author anyway)" && {
-                WITH_SNAPSHOT="$snapshot/no-unify-identities-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools estimate-hours --omit-unify-identities 2>/dev/null"
-              }
-            )
-            (with "a branch name that doesn't exist"
-              it "fails and shows a decent enough error message" && {
-                WITH_SNAPSHOT="$snapshot/invalid-branch-name-failure" \
-                expect_run_sh $WITH_FAILURE "$exe -q tools estimate-hours . foobar"
-              }
-            )
-          )
-        )
+  (with "'restore' iteration mode"
+    (sandbox
+      cp "${PACK_FILE}" .
+      PACK_FILE="${PACK_FILE##*/}"
+      "$jtt" mess-in-the-middle "${PACK_FILE}"
+
+      it "generates an index and outputs information (instead of failing)" && {
+        WITH_SNAPSHOT="$snapshot/output-dir-restore-success" \
+        expect_run $SUCCESSFULLY "$exe_plumbing" pack-index-from-data -i restore -p "$PACK_FILE" "$PWD"
+      }
+
+      if test "$kind" = "max"; then
+      (with "--format json and the very same output directory"
+        it "generates the index, overwriting existing files, and outputs information as JSON" && {
+          WITH_SNAPSHOT="$snapshot/output-dir-restore-as-json-success" \
+          SNAPSHOT_FILTER=remove-paths \
+          expect_run $SUCCESSFULLY "$exe_plumbing" --format json pack-index-from-data -i restore $PWD < "$PACK_FILE"
+        }
       )
-      (with "a mix of repositories"
-        (sandbox
-          repo-with-remotes dir/one-origin origin https://example.com/one-origin
-          repo-with-remotes origin-and-fork origin https://example.com/origin-and-fork fork https://example.com/other/origin-and-fork
-          repo-with-remotes special-origin special-name https://example.com/special-origin
-          repo-with-remotes no-origin
-          repo-with-remotes a-non-bare-repo-with-extension.git origin https://example.com/a-repo-with-extension.git
-          snapshot="$snapshot/tools"
+      fi
+    )
+  )
+)
+title "gix pack-explode"
+(when "running 'pack-explode"
+  snapshot="$snapshot/pack-explode"
+  PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2"
+  (with "no objects directory specified"
+    it "explodes the pack successfully and with desired output" && {
+      WITH_SNAPSHOT="$snapshot/to-sink-success" \
+      expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode "${PACK_FILE}.idx"
+    }
 
-          title "gix tools find"
-          (when "running 'find'"
-            snapshot="$snapshot/find"
-            (with "no arguments"
-              it "succeeds and prints a list of repository work directories" && {
-                WITH_SNAPSHOT="$snapshot/no-args-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools find 2>/dev/null"
-              }
-            )
-          )
-          title "gix tools organize"
-          (when "running 'organize'"
-            snapshot="$snapshot/organize"
-            (with "no arguments"
-              it "succeeds and informs about the operations that it WOULD do" && {
-                WITH_SNAPSHOT="$snapshot/no-args-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools organize 2>/dev/null"
-              }
+    (when "using the --delete-pack flag"
+      (sandbox
+        (with "a valid pack"
+          cp "${PACK_FILE}".idx "${PACK_FILE}".pack .
+          PACK_FILE="${PACK_FILE##*/}"
+          it "explodes the pack successfully and deletes the original pack and index" && {
+            WITH_SNAPSHOT="$snapshot/to-sink-delete-pack-success" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode --check skip-file-checksum --delete-pack "${PACK_FILE}.pack"
+          }
+          it "removes the original files" && {
+            expect_run $WITH_FAILURE test -e "${PACK_FILE}".pack
+            expect_run $WITH_FAILURE test -e "${PACK_FILE}".idx
+          }
+        )
+        (with "a pack file that is invalid somewhere"
+          cp ${PACK_FILE}.idx ${PACK_FILE}.pack .
+          PACK_FILE="${PACK_FILE##*/}"
+          "$jtt" mess-in-the-middle "${PACK_FILE}".pack
 
-              it "does not change the directory structure at all" && {
-                WITH_SNAPSHOT="$snapshot/initial-directory-structure" \
-                expect_run $SUCCESSFULLY tree -L 2
-              }
-            )
-
-            (with "--execute"
-              it "succeeds" && {
-                WITH_SNAPSHOT="$snapshot/execute-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools organize --execute 2>/dev/null"
-              }
-
-              it "changes the directory structure" && {
-                WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
-                expect_run $SUCCESSFULLY tree -L 2
-              }
-            )
-
-            (with "--execute again"
-              it "succeeds" && {
-                WITH_SNAPSHOT="$snapshot/execute-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools organize --execute 2>/dev/null"
-              }
-
-              it "does not alter the directory structure as these are already in place" && {
-                WITH_SNAPSHOT="$snapshot/directory-structure-after-organize" \
-                expect_run $SUCCESSFULLY tree -L 2
-              }
-            )
-          )
-          (with "running with no further arguments"
-            it "succeeds and informs about possible operations" && {
-              WITH_SNAPSHOT="$snapshot/no-args-failure" \
-              expect_run_sh $WITH_CLAP_FAILURE "$exe t"
+          (with "and all safety checks"
+            it "does not explode the file at all" && {
+              WITH_SNAPSHOT="$snapshot/broken-delete-pack-to-sink-failure" \
+              expect_run $WITH_FAILURE "$exe_plumbing" pack-explode --sink-compress --check all --delete-pack "${PACK_FILE}.pack"
             }
+
+            it "did not touch index or pack file" && {
+              expect_exists "${PACK_FILE}".pack
+              expect_exists "${PACK_FILE}".idx
+            }
+          )
+
+          (with "and no safety checks at all (and an output directory)"
+            it "does explode the file" && {
+              WITH_SNAPSHOT="$snapshot/broken-delete-pack-to-sink-skip-checks-success" \
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode --verify --check skip-file-and-object-checksum-and-no-abort-on-decode \
+                                        --delete-pack "${PACK_FILE}.pack" .
+            }
+
+            it "removes the original files" && {
+              expect_run $WITH_FAILURE test -e "${PACK_FILE}".pack
+              expect_run $WITH_FAILURE test -e "${PACK_FILE}".idx
+            }
+
+            (with_program tree
+
+              if test "$kind" = "small"; then
+                suffix=miniz-oxide
+              else
+                suffix=zlib-ng
+              fi
+              it "creates all pack objects, but the broken ones" && {
+                WITH_SNAPSHOT="$snapshot/broken-with-objects-dir-skip-checks-success-tree-$suffix" \
+                expect_run $SUCCESSFULLY tree
+              }
+            )
           )
         )
       )
     )
   )
+  (with "a non-existing directory specified"
+    it "fails with a helpful error message" && {
+      WITH_SNAPSHOT="$snapshot/missing-objects-dir-fail" \
+      expect_run $WITH_FAILURE "$exe_plumbing" pack-explode -c skip-file-and-object-checksum "${PACK_FILE}.idx" does-not-exist
+    }
+  )
+  (with "an existing directory specified"
+    (sandbox
+      it "succeeds" && {
+        WITH_SNAPSHOT="$snapshot/with-objects-dir-success" \
+        expect_run $SUCCESSFULLY "$exe_plumbing" pack-explode -c skip-file-and-object-checksum-and-no-abort-on-decode \
+                                                 "${PACK_FILE}.pack" .
+      }
 
-  title "gix init"
-  (when "running 'init'"
-    snapshot="$snapshot/init"
-    (with "no argument"
-      (with "an empty directory"
-        (sandbox
-          it "succeeds" && {
-            WITH_SNAPSHOT="$snapshot/success" \
-            expect_run $SUCCESSFULLY "$exe" init
-          }
-
-          it "matches the output of baseline git init" && {
-            rm .git/config # this one is altered, ignore
-            expect_snapshot "$fixtures/baseline-init" .git
-          }
-
-          (when "trying to initialize the same directory again"
-            it "fails" && {
-              WITH_SNAPSHOT="$snapshot/fail" \
-              expect_run $WITH_FAILURE "$exe" init
-            }
-          )
-        )
-      )
-    )
-    (with "a single argument denoting the directory to initialize"
-      DIR=foo/bar
-      (with "a multi-element directory: $DIR"
-        (sandbox
-          it "succeeds" && {
-            WITH_SNAPSHOT="$snapshot/success-with-multi-element-directory" \
-            expect_run $SUCCESSFULLY "$exe" init $DIR
-          }
-
-          it "matches the output of baseline git init" && {
-            rm $DIR/.git/config # this one is altered, ignore
-            expect_snapshot "$fixtures/baseline-init" $DIR/.git
-          }
-
-          (when "trying to initialize the same directory again"
-            it "fails" && {
-              WITH_SNAPSHOT="$snapshot/fail-with-multi-element-directory" \
-              expect_run $WITH_FAILURE "$exe" init $DIR
-            }
-          )
-        )
+      (with_program tree
+        it "creates all pack objects" && {
+          WITH_SNAPSHOT="$snapshot/with-objects-dir-success-tree" \
+          expect_run $SUCCESSFULLY tree
+        }
       )
     )
   )
 )
-fi
+
+title "gix pack-verify"
+(when "running 'pack-verify"
+  snapshot="$snapshot/pack-verify"
+  (with "a valid pack file"
+    PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
+    it "verifies the pack successfully and with desired output" && {
+      WITH_SNAPSHOT="$snapshot/success" \
+      expect_run $SUCCESSFULLY "$exe_plumbing" pack-verify "$PACK_FILE"
+    }
+  )
+  (with "a valid pack INDEX file"
+    PACK_INDEX_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx"
+    (with "no statistics"
+      it "verifies the pack index successfully and with desired output" && {
+        WITH_SNAPSHOT="$snapshot/index-success" \
+        expect_run $SUCCESSFULLY "$exe_plumbing" pack-verify "$PACK_INDEX_FILE"
+      }
+    )
+    (with "statistics"
+      it "verifies the pack index successfully and with desired output" && {
+        WITH_SNAPSHOT="$snapshot/index-with-statistics-success" \
+        expect_run $SUCCESSFULLY "$exe_plumbing" pack-verify --statistics "$PACK_INDEX_FILE"
+      }
+
+      (with "and the less-memory algorithm"
+        it "verifies the pack index successfully and with desired output" && {
+          WITH_SNAPSHOT="$snapshot/index-with-statistics-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" pack-verify --algorithm less-memory --statistics "$PACK_INDEX_FILE"
+        }
+      )
+    )
+    (with "decode"
+      it "verifies the pack index successfully and with desired output, and decodes all objects" && {
+        WITH_SNAPSHOT="$snapshot/index-success" \
+        expect_run $SUCCESSFULLY "$exe_plumbing" pack-verify --algorithm less-memory --decode "$PACK_INDEX_FILE"
+      }
+    )
+    (with "re-encode"
+      it "verifies the pack index successfully and with desired output, and re-encodes all objects" && {
+        WITH_SNAPSHOT="$snapshot/index-success" \
+        expect_run $SUCCESSFULLY "$exe_plumbing" pack-verify --algorithm less-time --re-encode "$PACK_INDEX_FILE"
+      }
+    )
+    if test "$kind" = "max"; then
+    (with "statistics (JSON)"
+      it "verifies the pack index successfully and with desired output" && {
+        WITH_SNAPSHOT="$snapshot/index-with-statistics-json-success" \
+        expect_run $SUCCESSFULLY "$exe_plumbing" --format json --threads 1 pack-verify --statistics "$PACK_INDEX_FILE"
+      }
+    )
+    fi
+  )
+  (sandbox
+    (with "an INvalid pack INDEX file"
+      PACK_INDEX_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx"
+      cp $PACK_INDEX_FILE index.idx
+      echo $'\0' >> index.idx
+      it "fails to verify the pack index and with desired output" && {
+        WITH_SNAPSHOT="$snapshot/index-failure" \
+        expect_run $WITH_FAILURE "$exe_plumbing" pack-verify index.idx
+      }
+    )
+  )
+)
+title "gix commit-graph-verify"
+(when "running 'commit-graph-verify'"
+  snapshot="$snapshot/commit-graph-verify"
+  (small-repo-in-sandbox
+    (with "a valid and complete commit-graph file"
+      git commit-graph write --reachable
+      (with "statistics"
+        it "generates the correct output" && {
+          WITH_SNAPSHOT="$snapshot/statistics-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" commit-graph-verify -s .git/objects/info
+        }
+      )
+      if test "$kind" = "max"; then
+      (with "statistics --format json"
+        it "generates the correct output" && {
+          WITH_SNAPSHOT="$snapshot/statistics-json-success" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" --format json commit-graph-verify -s .git/objects/info
+        }
+      )
+      fi
+    )
+  )
+)

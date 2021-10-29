@@ -65,7 +65,7 @@ This is a maintenance release signalling breaking changes because some of the cr
     - set package cache via RepositoryAccessExt ([`66292fd`](https://github.com//Byron/gitoxide/commit/66292fd1076c2c9db4694c5ded09799a0be11a03))
     - prepare for configurable pack cache ([`7d2b6b6`](https://github.com//Byron/gitoxide/commit/7d2b6b66e09ff39727fccd68d190679b52d90126))
  * **[#200](https://github.com//Byron/gitoxide/issues/200)**
-    - feat: Add --reference/-r flag to gixp pack-receive ([`637d12c`](https://github.com//Byron/gitoxide/commit/637d12cf368e044f59ccde37c6365d9528d2c43f))
+    - feat: Add --reference/-r flag to gix pack-receive ([`637d12c`](https://github.com//Byron/gitoxide/commit/637d12cf368e044f59ccde37c6365d9528d2c43f))
  * **[#205](https://github.com//Byron/gitoxide/issues/205)**
     - '(null)' symref targets are turned into direct refs instead… ([`c77bd7a`](https://github.com//Byron/gitoxide/commit/c77bd7a01820110154f2c66cd954c1ccfff173c1))
     - fetch::Ref::Symbolic::target is now an option… ([`da68bfb`](https://github.com//Byron/gitoxide/commit/da68bfb8104ecf58e73e3f99d87f81c90712a2ca))
@@ -316,7 +316,7 @@ This is a maintenance release signalling breaking changes because some of the cr
     - [pack] refactor ([`18cabb8`](https://github.com//Byron/gitoxide/commit/18cabb8618ffc324412302bfda208948abffb61f))
     - [pack] Force single-threading (with toggle) for counting phase… ([`8d3ba0b`](https://github.com//Byron/gitoxide/commit/8d3ba0b863f82d4eed0d9ca1ddf439f6feaf5041))
     - [pack] also put counts in order for stable packs ([`f299160`](https://github.com//Byron/gitoxide/commit/f299160cafd00f0fea00a2402901570f5ddf27d5))
-    - [pack] gixp pack-create uses in-order adapter as well ([`365c582`](https://github.com//Byron/gitoxide/commit/365c58286b9e09c9a8b1b5d6ee3b76484a458ca7))
+    - [pack] gix pack-create uses in-order adapter as well ([`365c582`](https://github.com//Byron/gitoxide/commit/365c58286b9e09c9a8b1b5d6ee3b76484a458ca7))
     - [pack] refactor ([`cfdf802`](https://github.com//Byron/gitoxide/commit/cfdf8021ea1448ac4844b1f3bf252fefde2572fa))
     - [pack] print the pack file name even if there is no output directory ([`832fa29`](https://github.com//Byron/gitoxide/commit/832fa291595aaae7f7862d95bb1cbebcc34f2271))
     - [pack] refactor ([`9d9def3`](https://github.com//Byron/gitoxide/commit/9d9def30784a1b90f27c8181bfb0b0ba4ed4f1c8))
@@ -365,7 +365,7 @@ This is a maintenance release signalling breaking changes because some of the cr
     - refactor ([`2ba9f91`](https://github.com//Byron/gitoxide/commit/2ba9f915035a518bef3eb8b0ed1c9972c4a47cfa))
     - [git-repository] used by gix-hours ([`24e0258`](https://github.com//Byron/gitoxide/commit/24e0258b9691b82df5c35a35111d19df56087cdc))
     - [git-repository] refactor ([`b5ebcfa`](https://github.com//Byron/gitoxide/commit/b5ebcfa278a0be85ea10893fd40a8b3e2e28efd5))
-    - [git-repository] now used by gixp-organize ([`aa91fad`](https://github.com//Byron/gitoxide/commit/aa91fad3cf237f6d6f9d588ed390baa6e55f6540))
+    - [git-repository] now used by gix-organize ([`aa91fad`](https://github.com//Byron/gitoxide/commit/aa91fad3cf237f6d6f9d588ed390baa6e55f6540))
     - (cargo-release) version 0.4.0 ([`866f86f`](https://github.com//Byron/gitoxide/commit/866f86f59e66652968dcafc1a57912f9849cb21d))
     - [git-repository] towards git-repository as one stop shop ([`aea6cc5`](https://github.com//Byron/gitoxide/commit/aea6cc536f438050cc0e02223de7702cd7912e75))
     - [git-odb] much better docs; cleanup exposed API ([`3d5b229`](https://github.com//Byron/gitoxide/commit/3d5b229c2605060f2cac9695ff2479777deabdd0))

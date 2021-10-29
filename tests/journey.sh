@@ -25,4 +25,4 @@ WITH_CLAP_FAILURE=2
 set-static-git-environment
 
 source "$root/journey/gix.sh"
-source "$root/journey/gixp.sh"
+source "$root/journey/gix.sh"

@@ -1,0 +1,5 @@
+Error: Failed to explode the entire pack - some loose objects may have been created nonetheless
+
+Caused by:
+    0: The pack of this index file failed to verify its checksums
+    1: pack checksum mismatch: expected f1cd3cc7bc63a4a2b357a475a58ad49b40355470, got 337fe3b886fc5041a35313887d68feefeae52519

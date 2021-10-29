@@ -38,8 +38,8 @@ A first usable version of `git-repository` to make using `gitoxide` from your ap
 ### Feature list
 
 * `git-repository` as hub crate for application development with focus on usability without sacrificing any knob to tune performance.
-* opt-in `async` for `git-packetline`, `git-transport` and `git-protocol` for fully async git clients, along with the `light-async` feature toggle to build a `gixp pack-receive` with an async client instead of a blocking one.
-* Statistics for `gixp pack-create` with the `-s/--statistics` flag to have data indicating the cost of the operation. Currently it's doing a lot of work that has to be avoided in order to be useable in production and the numbers underline that. Future iterations will cause key metrics to go down.
+* opt-in `async` for `git-packetline`, `git-transport` and `git-protocol` for fully async git clients, along with the `light-async` feature toggle to build a `gix pack-receive` with an async client instead of a blocking one.
+* Statistics for `gix pack-create` with the `-s/--statistics` flag to have data indicating the cost of the operation. Currently it's doing a lot of work that has to be avoided in order to be useable in production and the numbers underline that. Future iterations will cause key metrics to go down.
 * Packs are now reproducible by default, which means that the same tip will always generate a pack with the same hash. This may be a desirable property for some kinds of packs, but not for others which is why it can be turned off for a considerable speed boost.
 * `git-tempfile` crate
 * `git-lock` crate
@@ -191,7 +191,7 @@ Maintenance release without any new features.
 
 ## v0.4.0 (2020-09-12)
 
-* add `remote-ref-list` and `pack-receive` subcommands to **gixp**
+* add `remote-ref-list` and `pack-receive` subcommands to **gix**
 
 ### CLI Breaking
 
@@ -283,7 +283,7 @@ Many small and possibly breaking changes are not mentioned here.
     - basic tests and CLI args for explode pack ([`f932256`](https://github.com//Byron/gitoxide/commit/f932256a62d6fc5d5558446de079fb666ddc27da))
     - rename verify-pack to pack-verify (keeping it more formal) ([`ec8c48a`](https://github.com//Byron/gitoxide/commit/ec8c48a8fcbcd748c9c764734d881b5f0217e1e4))
     - refactor ([`d3c00c8`](https://github.com//Byron/gitoxide/commit/d3c00c841ee1aeda6bb0534fe365db13c31f8d3c))
-    - Change bin names from 'gio' to 'gix' and 'gixp' ([`5e23137`](https://github.com//Byron/gitoxide/commit/5e231371432ad02c67b095448564b2aa6af76799))
+    - Change bin names from 'gio' to 'gix' and 'gix' ([`5e23137`](https://github.com//Byron/gitoxide/commit/5e231371432ad02c67b095448564b2aa6af76799))
     - Revert "Invert --statitics switch to become --no-statistics" ([`93a9b30`](https://github.com//Byron/gitoxide/commit/93a9b30069d9abc5742546ade90913026ac5774b))
     - Invert --statitics switch to become --no-statistics ([`aeb8778`](https://github.com//Byron/gitoxide/commit/aeb87789ecc5cf3fd0ac69d67c7d0785e4eb329c))
     - use faster algorithm by default ([`bb45c3d`](https://github.com//Byron/gitoxide/commit/bb45c3d8a2aabf87231981000240f0444abf6fc4))

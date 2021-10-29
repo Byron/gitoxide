@@ -81,7 +81,7 @@ Probably more like a toy at first merely for testing operation against various g
   * [ ] try initializing repo on output path - if so, use that to learn about pack location and place new pack there, allow Repo to create refs somehow.
     * _probably this is done using the repository itself, which steers the whole process and injects it's own delegates_.
   * [ ] otherwise create the scaffolding needed for a new repository, probably based on `init` implementation
-* **gixp receive-pack**
+* **gix receive-pack**
   * [ ] resolve thin pack with Bundle
 
 ### FSCK an entire repository
@@ -98,7 +98,7 @@ Probably more like a toy at first merely for testing operation against various g
 
 * [ ] Add journey test to cover case with non-bare repository. Try to only read `non-bare` git config files and see the journey test fail.
 
-### gixp cat
+### gix cat
 
 * A program to cat objects and pretty-print them, similar to git cat-file. Useful to get a feel for
   'locate(…)' performance and stress test it a little.

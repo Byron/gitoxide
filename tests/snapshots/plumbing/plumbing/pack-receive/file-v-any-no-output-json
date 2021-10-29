@@ -1,0 +1,45 @@
+{
+  "index": {
+    "index_kind": "V2",
+    "index_hash": "c787de2aafb897417ca8167baeb146eabd18bc5f",
+    "data_hash": "346574b7331dc3a1724da218d622c6e1b6c66a57",
+    "num_objects": 9
+  },
+  "pack_kind": "V2",
+  "index_path": null,
+  "data_path": null,
+  "refs": [
+    {
+      "Symbolic": {
+        "path": "HEAD",
+        "target": "refs/heads/main",
+        "object": "3f72b39ad1600e6dac63430c15e0d875e9d3f9d6"
+      }
+    },
+    {
+      "Direct": {
+        "path": "refs/heads/dev",
+        "object": "ee3c97678e89db4eab7420b04aef51758359f152"
+      }
+    },
+    {
+      "Direct": {
+        "path": "refs/heads/main",
+        "object": "3f72b39ad1600e6dac63430c15e0d875e9d3f9d6"
+      }
+    },
+    {
+      "Peeled": {
+        "path": "refs/tags/annotated",
+        "tag": "feae03400632392a7f38e5b2775f98a439f5eaf5",
+        "object": "ee3c97678e89db4eab7420b04aef51758359f152"
+      }
+    },
+    {
+      "Direct": {
+        "path": "refs/tags/unannotated",
+        "object": "efa596d621559707b2d221f10490959b2decbc6c"
+      }
+    }
+  ]
+}

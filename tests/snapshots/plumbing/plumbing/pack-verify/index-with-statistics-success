@@ -1,0 +1,31 @@
+objects per delta chain length
+	 0: 18
+	 1: 4
+	 2: 3
+	 3: 1
+	 4: 2
+	 5: 1
+	 6: 1
+	->: 30
+
+averages
+	delta chain length:            1;
+	decompressed entry [B]:        3456;
+	compressed entry [B]:          1725;
+	decompressed object size [B]:  9621;
+
+compression
+	compressed entries size       : 51.8 KB
+	decompressed entries size     : 103.7 KB
+	total object size             : 288.7 KB
+	pack size                     : 51.9 KB
+
+	num trees                     : 15
+	num blobs                     : 5
+	num commits                   : 10
+	num tags                      : 0
+
+	compression ratio             : 2.00
+	delta compression ratio       : 5.58
+	delta gain                    : 2.78
+	pack overhead                 : 0.235%

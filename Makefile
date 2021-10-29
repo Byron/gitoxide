@@ -171,17 +171,17 @@ jtt = target/debug/jtt
 journey-tests: always  ## run journey tests (max)
 	cargo build
 	cargo build --package git-testtools --bin jtt
-	./tests/journey.sh target/debug/gix target/debug/gixp $(jtt) max
+	./tests/journey.sh target/debug/gix target/debug/gix $(jtt) max
 
 journey-tests-small: always ## run journey tests (lean-cli)
 	cargo build --no-default-features --features small
 	cd tests/tools && cargo build
-	./tests/journey.sh target/debug/gix target/debug/gixp $(jtt) small
+	./tests/journey.sh target/debug/gix target/debug/gix $(jtt) small
 
 journey-tests-async: always ## run journey tests (light-async)
 	cargo build --no-default-features --features light-async
 	cd tests/tools && cargo build
-	./tests/journey.sh target/debug/gix target/debug/gixp $(jtt) async
+	./tests/journey.sh target/debug/gix target/debug/gix $(jtt) async
 
 journey-tests-smart-release:
 	cargo build --package cargo-smart-release
@@ -251,18 +251,18 @@ commit_graphs = \
 
 stress: ## Run various algorithms on big repositories
 	$(MAKE) -j3 $(linux_repo) $(rust_repo) release-lean
-	time ./target/release/gixp --verbose pack-verify --re-encode $(linux_repo)/objects/pack/*.idx
-	rm -Rf out; mkdir out && time ./target/release/gixp --verbose pack-index-from-data -p $(linux_repo)/objects/pack/*.pack out/
-	time ./target/release/gixp --verbose pack-verify out/*.idx
+	time ./target/release/gix --verbose pack-verify --re-encode $(linux_repo)/objects/pack/*.idx
+	rm -Rf out; mkdir out && time ./target/release/gix --verbose pack-index-from-data -p $(linux_repo)/objects/pack/*.pack out/
+	time ./target/release/gix --verbose pack-verify out/*.idx
 
-	time ./target/release/gixp --verbose pack-verify --statistics $(rust_repo)/objects/pack/*.idx
-	time ./target/release/gixp --verbose pack-verify --algorithm less-memory $(rust_repo)/objects/pack/*.idx
-	time ./target/release/gixp --verbose pack-verify --re-encode $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose pack-verify --statistics $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose pack-verify --algorithm less-memory $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose pack-verify --re-encode $(rust_repo)/objects/pack/*.idx
 	# We must ensure there is exactly one pack file for the pack-explode *.idx globs to work.
 	git repack -Ad
-	time ./target/release/gixp --verbose pack-explode .git/objects/pack/*.idx
+	time ./target/release/gix --verbose pack-explode .git/objects/pack/*.idx
 
-	rm -Rf delme; mkdir delme && time ./target/release/gixp --verbose pack-explode .git/objects/pack/*.idx delme/
+	rm -Rf delme; mkdir delme && time ./target/release/gix --verbose pack-explode .git/objects/pack/*.idx delme/
 
 	$(MAKE) stress-commitgraph
 	$(MAKE) bench-git-config
@@ -270,7 +270,7 @@ stress: ## Run various algorithms on big repositories
 .PHONY: stress-commitgraph
 stress-commitgraph: release-lean $(commit_graphs)
 	set -x; for path in $(wordlist 2, 999, $^); do \
-		time ./target/release/gixp --verbose commit-graph-verify $$path; \
+		time ./target/release/gix --verbose commit-graph-verify $$path; \
 	done
 
 .PHONY: bench-git-config

@@ -1,1 +1,0 @@
-Error: 'https' is not compiled in. Compile with the 'http-client-curl' cargo feature

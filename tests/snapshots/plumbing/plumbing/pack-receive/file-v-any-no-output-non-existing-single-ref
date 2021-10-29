@@ -1,0 +1,5 @@
+Error: The server response could not be parsed
+
+Caused by:
+    0: Upload pack reported an error
+    1: unknown ref refs/heads/does-not-exist
