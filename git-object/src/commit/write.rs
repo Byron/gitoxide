@@ -1,7 +1,5 @@
 use std::io;
 
-use bstr::ByteSlice;
-
 use crate::{encode, encode::NL, Commit, CommitRef, Kind};
 
 impl crate::WriteTo for Commit {
@@ -17,12 +15,7 @@ impl crate::WriteTo for Commit {
             encode::header_field(b"encoding", encoding, &mut out)?;
         }
         for (name, value) in &self.extra_headers {
-            let has_newline = value.find_byte(b'\n').is_some();
-            if has_newline {
-                encode::header_field_multi_line(name, value, &mut out)?;
-            } else {
-                encode::trusted_header_field(name, value, &mut out)?;
-            }
+            encode::header_field_multi_line(name, value, &mut out)?;
         }
         out.write_all(NL)?;
         out.write_all(&self.message)
@@ -46,12 +39,7 @@ impl<'a> crate::WriteTo for CommitRef<'a> {
             encode::header_field(b"encoding", encoding, &mut out)?;
         }
         for (name, value) in &self.extra_headers {
-            let has_newline = value.find_byte(b'\n').is_some();
-            if has_newline {
-                encode::header_field_multi_line(name, value, &mut out)?;
-            } else {
-                encode::trusted_header_field(name, value, &mut out)?;
-            }
+            encode::header_field_multi_line(name, value, &mut out)?;
         }
         out.write_all(NL)?;
         out.write_all(self.message)
