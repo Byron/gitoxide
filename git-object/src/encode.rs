@@ -22,19 +22,12 @@ impl From<Error> for io::Error {
 }
 
 pub fn header_field_multi_line(name: &[u8], value: &[u8], mut out: impl io::Write) -> io::Result<()> {
-    let mut lines = value.as_bstr().lines();
-    trusted_header_field(name, lines.next().expect("non-empty value"), &mut out)?;
+    let mut lines = value.as_bstr().split_str(b"\n");
+    trusted_header_field(name, lines.next().ok_or(Error::EmptyValue)?, &mut out)?;
     for line in lines {
         out.write_all(SPACE)?;
         out.write_all(line)?;
         out.write_all(NL)?;
-    }
-    // If the last line ended on a newline, we have to re-add it by force
-    if let Some(b) = value.last() {
-        if *b == b'\n' {
-            out.write_all(SPACE)?;
-            out.write_all(NL)?;
-        }
     }
     Ok(())
 }
