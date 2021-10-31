@@ -1,14 +1,26 @@
+use quick_error::quick_error;
+quick_error! {
+    /// Because the TryFrom implementations don't return proper errors
+    /// on failure
+    #[derive(Debug)]
+    enum Error {
+        TryFromError {}
+    }
+}
+
 macro_rules! round_trip {
     ($owned:ty, $borrowed:ty, $( $files:literal ), +) => {
         #[test]
         fn round_trip() -> Result<(), Box<dyn std::error::Error>> {
+            use std::convert::TryFrom;
+            use std::io::Write;
             use crate::fixture_bytes;
-            use git_object::{ObjectRef, Object};
+            use git_object::{ObjectRef, Object, WriteTo};
             use bstr::ByteSlice;
+
             for input in &[
                 $( $files ),*
             ] {
-                use git_object::WriteTo;
                 let input = fixture_bytes(input);
                 // Test the parse->borrowed->owned->write chain for an object kind
                 let mut output = Vec::new();
@@ -31,6 +43,17 @@ macro_rules! round_trip {
                 output.clear();
                 item.write_to(&mut output)?;
                 assert_eq!(output.as_bstr(), input.as_bstr());
+
+                // Test the loose serialisation -> parse chain for an object kind
+                let item = <$borrowed>::from_bytes(&input)?;
+                output.clear();
+                // serialise to a tagged loose object
+                let w = &mut output;
+                w.write_all(&item.loose_header())?;
+                item.write_to(w)?;
+                let parsed = ObjectRef::from_loose(&output)?;
+                let item2 = <$borrowed>::try_from(parsed).or(Err(super::Error::TryFromError))?;
+                assert_eq!(item2, item);
             }
             Ok(())
         }

@@ -1,4 +1,5 @@
-use std::io;
+//! Encoding utilities
+use std::io::{self, Write};
 
 use bstr::{BString, ByteSlice};
 use quick_error::quick_error;
@@ -15,13 +16,28 @@ quick_error! {
     }
 }
 
+macro_rules! check {
+    ($e: expr) => {
+        $e.expect("Writing to a Vec should never fail.")
+    };
+}
+/// Generates a loose header buffer
+pub fn loose_header(kind: crate::Kind, size: usize) -> smallvec::SmallVec<[u8; 28]> {
+    let mut v = smallvec::SmallVec::new();
+    check!(v.write_all(kind.as_bytes()));
+    check!(v.write_all(SPACE));
+    check!(itoa::write(&mut v, size));
+    check!(v.write_all(b"\0"));
+    v
+}
+
 impl From<Error> for io::Error {
     fn from(other: Error) -> io::Error {
         io::Error::new(io::ErrorKind::Other, other)
     }
 }
 
-pub fn header_field_multi_line(name: &[u8], value: &[u8], mut out: impl io::Write) -> io::Result<()> {
+pub(crate) fn header_field_multi_line(name: &[u8], value: &[u8], mut out: impl io::Write) -> io::Result<()> {
     let mut lines = value.as_bstr().split_str(b"\n");
     trusted_header_field(name, lines.next().ok_or(Error::EmptyValue)?, &mut out)?;
     for line in lines {
@@ -32,14 +48,14 @@ pub fn header_field_multi_line(name: &[u8], value: &[u8], mut out: impl io::Writ
     Ok(())
 }
 
-pub fn trusted_header_field(name: &[u8], value: &[u8], mut out: impl io::Write) -> io::Result<()> {
+pub(crate) fn trusted_header_field(name: &[u8], value: &[u8], mut out: impl io::Write) -> io::Result<()> {
     out.write_all(name)?;
     out.write_all(SPACE)?;
     out.write_all(value)?;
     out.write_all(NL)
 }
 
-pub fn trusted_header_signature(
+pub(crate) fn trusted_header_signature(
     name: &[u8],
     value: &git_actor::SignatureRef<'_>,
     mut out: impl io::Write,
@@ -50,14 +66,14 @@ pub fn trusted_header_signature(
     out.write_all(NL)
 }
 
-pub fn trusted_header_id(name: &[u8], value: &git_hash::ObjectId, mut out: impl io::Write) -> io::Result<()> {
+pub(crate) fn trusted_header_id(name: &[u8], value: &git_hash::ObjectId, mut out: impl io::Write) -> io::Result<()> {
     out.write_all(name)?;
-    out.write_all(&SPACE[..])?;
+    out.write_all(SPACE)?;
     value.write_hex_to(&mut out)?;
-    out.write_all(&NL[..])
+    out.write_all(NL)
 }
 
-pub fn header_field(name: &[u8], value: &[u8], out: impl io::Write) -> io::Result<()> {
+pub(crate) fn header_field(name: &[u8], value: &[u8], out: impl io::Write) -> io::Result<()> {
     if value.is_empty() {
         return Err(Error::EmptyValue.into());
     }

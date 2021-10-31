@@ -41,8 +41,10 @@ impl crate::write::Write for Sink {
         mut from: impl io::Read,
         hash: git_hash::Kind,
     ) -> Result<git_hash::ObjectId, Self::Error> {
+        let mut size = size.try_into().expect("object size to fit into usize");
         use git_features::hash::Sha1;
         let mut buf = [0u8; 8096];
+        let header = git_object::encode::loose_header(kind, size);
 
         let possibly_compress = |buf: &[u8]| -> io::Result<()> {
             if let Some(compressor) = self.compressor.as_ref() {
@@ -53,11 +55,9 @@ impl crate::write::Write for Sink {
         match hash {
             git_hash::Kind::Sha1 => {
                 let mut hasher = Sha1::default();
-                let header_len = git_pack::loose::object::header::encode(kind, size, &mut buf[..])?;
-                hasher.update(&buf[..header_len]);
-                possibly_compress(&buf[..header_len])?;
+                hasher.update(&header);
+                possibly_compress(&header)?;
 
-                let mut size: usize = size.try_into().expect("object size to fit into usize");
                 while size != 0 {
                     let bytes = size.min(buf.len());
                     from.read_exact(&mut buf[..bytes])?;

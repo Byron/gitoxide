@@ -9,6 +9,20 @@ pub trait WriteTo {
 
     /// Returns the type of this object.
     fn kind(&self) -> Kind;
+
+    /// Returns the size of this object's representation (the amount
+    /// of data which would be written by [`write_to`](Self::write_to)).
+    ///
+    /// [`size`](Self::size)'s value has no bearing on the validity of
+    /// the object, as such it's possible for [`size`](Self::size) to
+    /// return a sensible value but [`write_to`](Self::write_to) to
+    /// fail because the object was not actually valid in some way.
+    fn size(&self) -> usize;
+
+    /// Returns a loose object header based on the object's data
+    fn loose_header(&self) -> smallvec::SmallVec<[u8; 28]> {
+        crate::encode::loose_header(self.kind(), self.size())
+    }
 }
 
 impl<T> WriteTo for &T
@@ -17,6 +31,10 @@ where
 {
     fn write_to(&self, out: impl Write) -> std::io::Result<()> {
         <T as WriteTo>::write_to(self, out)
+    }
+
+    fn size(&self) -> usize {
+        <T as WriteTo>::size(self)
     }
 
     fn kind(&self) -> Kind {

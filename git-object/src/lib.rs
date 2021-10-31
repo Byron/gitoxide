@@ -23,7 +23,7 @@ mod blob;
 mod traits;
 pub use traits::WriteTo;
 
-mod encode;
+pub mod encode;
 pub(crate) mod parse;
 
 ///
@@ -228,79 +228,122 @@ impl Tree {
 }
 
 ///
-#[cfg(feature = "verbose-object-parsing-errors")]
 pub mod decode {
-    use crate::bstr::{BString, ByteSlice};
+    #[cfg(feature = "verbose-object-parsing-errors")]
+    mod _decode {
+        use crate::bstr::{BString, ByteSlice};
 
-    /// The type to be used for parse errors.
-    pub type ParseError<'a> = nom::error::VerboseError<&'a [u8]>;
-    /// The owned type to be used for parse errors.
-    pub type ParseErrorOwned = nom::error::VerboseError<BString>;
+        /// The type to be used for parse errors.
+        pub type ParseError<'a> = nom::error::VerboseError<&'a [u8]>;
+        /// The owned type to be used for parse errors.
+        pub type ParseErrorOwned = nom::error::VerboseError<BString>;
 
-    /// A type to indicate errors during parsing and to abstract away details related to `nom`.
-    #[derive(Debug, Clone)]
-    pub struct Error {
-        /// The actual error
-        pub inner: ParseErrorOwned,
-    }
+        /// A type to indicate errors during parsing and to abstract away details related to `nom`.
+        #[derive(Debug, Clone)]
+        pub struct Error {
+            /// The actual error
+            pub inner: ParseErrorOwned,
+        }
 
-    impl<'a> From<nom::Err<ParseError<'a>>> for Error {
-        fn from(v: nom::Err<ParseError<'a>>) -> Self {
-            Error {
-                inner: match v {
-                    nom::Err::Error(err) | nom::Err::Failure(err) => nom::error::VerboseError {
-                        errors: err
-                            .errors
-                            .into_iter()
-                            .map(|(i, v)| (i.as_bstr().to_owned(), v))
-                            .collect(),
+        impl<'a> From<nom::Err<ParseError<'a>>> for Error {
+            fn from(v: nom::Err<ParseError<'a>>) -> Self {
+                Error {
+                    inner: match v {
+                        nom::Err::Error(err) | nom::Err::Failure(err) => nom::error::VerboseError {
+                            errors: err
+                                .errors
+                                .into_iter()
+                                .map(|(i, v)| (i.as_bstr().to_owned(), v))
+                                .collect(),
+                        },
+                        nom::Err::Incomplete(_) => unreachable!("we don't have streaming parsers"),
                     },
-                    nom::Err::Incomplete(_) => unreachable!("we don't have streaming parsers"),
-                },
+                }
+            }
+        }
+
+        impl std::fmt::Display for Error {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                self.inner.fmt(f)
             }
         }
     }
 
-    impl std::fmt::Display for Error {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            self.inner.fmt(f)
+    ///
+    #[cfg(not(feature = "verbose-object-parsing-errors"))]
+    mod _decode {
+        /// The type to be used for parse errors, discards everything and is zero size
+        pub type ParseError<'a> = ();
+        /// The owned type to be used for parse errors, discards everything and is zero size
+        pub type ParseErrorOwned = ();
+
+        /// A type to indicate errors during parsing and to abstract away details related to `nom`.
+        #[derive(Debug, Clone)]
+        pub struct Error {
+            /// The actual error
+            pub inner: ParseErrorOwned,
         }
-    }
 
-    impl std::error::Error for Error {}
-}
+        impl<'a> From<nom::Err<ParseError<'a>>> for Error {
+            fn from(v: nom::Err<ParseError<'a>>) -> Self {
+                Error {
+                    inner: match v {
+                        nom::Err::Error(err) | nom::Err::Failure(err) => err,
+                        nom::Err::Incomplete(_) => unreachable!("we don't have streaming parsers"),
+                    },
+                }
+            }
+        }
 
-///
-#[cfg(not(feature = "verbose-object-parsing-errors"))]
-pub mod decode {
-    /// The type to be used for parse errors, discards everything and is zero size
-    pub type ParseError<'a> = ();
-    /// The owned type to be used for parse errors, discards everything and is zero size
-    pub type ParseErrorOwned = ();
-
-    /// A type to indicate errors during parsing and to abstract away details related to `nom`.
-    #[derive(Debug, Clone)]
-    pub struct Error {
-        /// The actual error
-        pub inner: ParseErrorOwned,
-    }
-
-    impl<'a> From<nom::Err<ParseError<'a>>> for Error {
-        fn from(v: nom::Err<ParseError<'a>>) -> Self {
-            Error {
-                inner: match v {
-                    nom::Err::Error(err) | nom::Err::Failure(err) => err,
-                    nom::Err::Incomplete(_) => unreachable!("we don't have streaming parsers"),
-                },
+        impl std::fmt::Display for Error {
+            fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                Ok(())
             }
         }
     }
+    pub use _decode::{Error, ParseError, ParseErrorOwned};
+    impl std::error::Error for Error {}
 
-    impl std::fmt::Display for Error {
-        fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            Ok(())
+    use quick_error::quick_error;
+    quick_error! {
+        /// Returned by [`loose_header()`]
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        pub enum LooseHeaderDecodeError {
+            ParseIntegerError(
+                source: btoi::ParseIntegerError,
+                message: &'static str,
+                number: Vec<u8>
+            ) {
+                display("{}: {:?}", message, std::str::from_utf8(number))
+            }
+            InvalidHeader(s: &'static str) {
+                display("{}", s)
+            }
+            ObjectHeader(err: super::kind::Error) { from() }
         }
     }
 
-    impl std::error::Error for Error {}
+    use bstr::ByteSlice;
+    /// Decode a loose object header, being `<kind> <size>\0`, returns
+    /// ([`kind`](super::Kind), `size`, `consumed bytes`).
+    ///
+    /// `size` is the uncompressed size of the payload in bytes.
+    pub fn loose_header(input: &[u8]) -> Result<(super::Kind, usize, usize), LooseHeaderDecodeError> {
+        use LooseHeaderDecodeError::*;
+        let kind_end = input.find_byte(0x20).ok_or(InvalidHeader("Expected '<type> <size>'"))?;
+        let kind = super::Kind::from_bytes(&input[..kind_end])?;
+        let size_end = input
+            .find_byte(0x0)
+            .ok_or(InvalidHeader("Did not find 0 byte in header"))?;
+        let size_bytes = &input[kind_end + 1..size_end];
+        let size = btoi::btoi(size_bytes).map_err(|source| {
+            ParseIntegerError(
+                source,
+                "Object size in header could not be parsed",
+                size_bytes.to_owned(),
+            )
+        })?;
+        Ok((kind, size, size_end + 1))
+    }
 }

@@ -20,6 +20,16 @@ mod write {
             }
         }
 
+        fn size(&self) -> usize {
+            use crate::ObjectRef::*;
+            match self {
+                Tree(v) => v.size(),
+                Blob(v) => v.size(),
+                Commit(v) => v.size(),
+                Tag(v) => v.size(),
+            }
+        }
+
         fn kind(&self) -> Kind {
             self.kind()
         }
@@ -35,6 +45,16 @@ mod write {
                 Blob(v) => v.write_to(out),
                 Commit(v) => v.write_to(out),
                 Tag(v) => v.write_to(out),
+            }
+        }
+
+        fn size(&self) -> usize {
+            use crate::Object::*;
+            match self {
+                Tree(v) => v.size(),
+                Blob(v) => v.size(),
+                Commit(v) => v.size(),
+                Tag(v) => v.size(),
             }
         }
 
@@ -142,9 +162,26 @@ impl Object {
     }
 }
 
+use crate::decode::{loose_header, Error as DecodeError, LooseHeaderDecodeError};
 use crate::{BlobRef, CommitRef, Kind, ObjectRef, TagRef, TreeRef};
+use quick_error::quick_error;
+
+quick_error! {
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    pub enum LooseDecodeError {
+        InvalidHeader(err: LooseHeaderDecodeError) { from() }
+        InvalidContent(err: DecodeError) { from() }
+    }
+}
 
 impl<'a> ObjectRef<'a> {
+    /// Deserialize an object from a loose serialisation
+    pub fn from_loose(data: &'a [u8]) -> Result<ObjectRef<'a>, LooseDecodeError> {
+        let (kind, size, offset) = loose_header(data)?;
+        Ok(Self::from_bytes(kind, &data[offset..offset + size])?)
+    }
+
     /// Deserialize an object of `kind` from the given `data`.
     pub fn from_bytes(kind: Kind, data: &'a [u8]) -> Result<ObjectRef<'a>, crate::decode::Error> {
         Ok(match kind {

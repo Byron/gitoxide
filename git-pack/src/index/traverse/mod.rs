@@ -159,7 +159,6 @@ impl index::File {
         cache: &mut C,
         buf: &mut Vec<u8>,
         progress: &mut P,
-        header_buf: &mut [u8; 64],
         index_entry: &crate::index::Entry,
         processor: &mut impl FnMut(git_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
     ) -> Result<crate::data::decode_entry::Outcome, Error<E>>
@@ -194,7 +193,6 @@ impl index::File {
             object_kind,
             buf,
             progress,
-            header_buf,
             index_entry,
             || pack.entry_crc32(index_entry.pack_offset, entry_len),
             processor,
@@ -209,7 +207,6 @@ fn process_entry<P, E>(
     object_kind: git_object::Kind,
     decompressed: &[u8],
     progress: &mut P,
-    header_buf: &mut [u8; 64],
     index_entry: &crate::index::Entry,
     pack_entry_crc32: impl FnOnce() -> u32,
     processor: &mut impl FnMut(git_object::Kind, &[u8], &index::Entry, &mut P) -> Result<(), E>,
@@ -219,11 +216,8 @@ where
     E: std::error::Error + Send + Sync + 'static,
 {
     if check.object_checksum() {
-        let header_size =
-            crate::loose::object::header::encode(object_kind, decompressed.len() as u64, &mut header_buf[..])
-                .expect("header buffer to be big enough");
         let mut hasher = git_features::hash::Sha1::default();
-        hasher.update(&header_buf[..header_size]);
+        hasher.update(&git_object::encode::loose_header(object_kind, decompressed.len()));
         hasher.update(decompressed);
 
         let actual_oid = git_hash::ObjectId::new_sha1(hasher.digest());

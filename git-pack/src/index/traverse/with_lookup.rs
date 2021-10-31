@@ -126,7 +126,6 @@ impl index::File {
                             ))),
                         );
                         let mut stats = Vec::with_capacity(entries.len());
-                        let mut header_buf = [0u8; 64];
                         for index_entry in entries.iter() {
                             let result = self.decode_and_process_entry(
                                 check,
@@ -134,7 +133,6 @@ impl index::File {
                                 cache,
                                 buf,
                                 progress,
-                                &mut header_buf,
                                 index_entry,
                                 processor,
                             );
