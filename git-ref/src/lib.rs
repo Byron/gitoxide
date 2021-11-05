@@ -18,9 +18,11 @@
 //!   * supersedes all of the above to allow handling hundreds of thousands of references.
 #![forbid(unsafe_code)]
 #![deny(missing_docs, rust_2018_idioms)]
+
 use git_hash::{oid, ObjectId};
 pub use git_object::bstr;
 use git_object::bstr::{BStr, BString};
+use std::borrow::Cow;
 
 mod store;
 pub use store::{file, packed};
@@ -55,8 +57,8 @@ pub struct FullName(pub(crate) BString);
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct FullNameRef<'a>(&'a BStr);
 /// A validated complete and fully qualified reference name, safe to use for all operations.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub struct PartialNameRef<'a>(&'a BStr);
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub struct PartialNameRef<'a>(Cow<'a, BStr>);
 
 /// A _validated_ prefix for references to act as a namespace.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

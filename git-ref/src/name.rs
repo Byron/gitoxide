@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use git_object::bstr::{BStr, ByteSlice};
+use git_object::bstr::{BStr, BString, ByteSlice};
 
 use crate::{FullNameRef, PartialNameRef};
 
@@ -26,13 +26,13 @@ impl<'a> FullNameRef<'a> {
 impl<'a> PartialNameRef<'a> {
     /// Convert this name into the relative path possibly identifying the reference location.
     /// Note that it may be only a partial path though.
-    pub fn to_partial_path(self) -> Cow<'a, Path> {
+    pub fn to_partial_path(&'a self) -> Cow<'a, Path> {
         self.0.to_path().expect("UTF-8 conversion always succeeds").into()
     }
 
     /// Provide the name as binary string which is known to be a valid partial ref name.
-    pub fn as_bstr(&self) -> &'a BStr {
-        self.0
+    pub fn as_bstr(&'a self) -> &'a BStr {
+        self.0.as_ref()
     }
 }
 
@@ -48,7 +48,7 @@ impl<'a> TryFrom<FullNameRef<'a>> for PartialNameRef<'a> {
     type Error = Infallible;
 
     fn try_from(v: FullNameRef<'a>) -> Result<Self, Self::Error> {
-        Ok(PartialNameRef(v.0))
+        Ok(PartialNameRef(v.0.into()))
     }
 }
 
@@ -56,7 +56,7 @@ impl<'a> TryFrom<&'a BStr> for PartialNameRef<'a> {
     type Error = Error;
 
     fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
-        Ok(PartialNameRef(git_validate::reference::name_partial(v)?))
+        Ok(PartialNameRef(git_validate::reference::name_partial(v)?.into()))
     }
 }
 
@@ -74,7 +74,7 @@ impl<'a> TryFrom<&'a str> for PartialNameRef<'a> {
 
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(PartialNameRef(git_validate::reference::name_partial(v)?))
+        Ok(PartialNameRef(git_validate::reference::name_partial(v)?.into()))
     }
 }
 
@@ -92,6 +92,24 @@ impl<'a> TryFrom<&'a String> for PartialNameRef<'a> {
 
     fn try_from(v: &'a String) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(PartialNameRef(git_validate::reference::name_partial(v)?))
+        Ok(PartialNameRef(git_validate::reference::name_partial(v)?.into()))
+    }
+}
+
+impl TryFrom<String> for PartialNameRef<'static> {
+    type Error = Error;
+
+    fn try_from(v: String) -> Result<Self, Self::Error> {
+        git_validate::reference::name_partial(v.as_bytes().as_bstr())?;
+        Ok(PartialNameRef(BString::from(v).into()))
+    }
+}
+
+impl TryFrom<BString> for PartialNameRef<'static> {
+    type Error = Error;
+
+    fn try_from(v: BString) -> Result<Self, Self::Error> {
+        git_validate::reference::name_partial(v.as_ref())?;
+        Ok(PartialNameRef(v.into()))
     }
 }

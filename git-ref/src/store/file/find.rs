@@ -125,7 +125,7 @@ impl file::Store {
                             None => relative_path,
                             Some(namespace) => namespace.to_owned().into_namespaced_prefix(relative_path),
                         });
-                        let full_name = PartialNameRef((*full_name).as_bstr());
+                        let full_name = PartialNameRef((*full_name).as_bstr().into());
                         if let Some(packed_ref) = packed.try_find(full_name)? {
                             let mut res: Reference = packed_ref.into();
                             if let Some(namespace) = &self.namespace {

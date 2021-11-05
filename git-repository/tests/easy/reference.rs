@@ -35,6 +35,14 @@ mod find {
             fn to_partial_name(&self) -> String {
                 format!("{}/{}", self.remote, self.branch)
             }
+            fn to_partial_name_from_string(&self) -> git_ref::PartialNameRef<'static> {
+                self.to_partial_name().try_into().expect("cannot fail")
+            }
+            fn to_partial_name_from_bstring(&self) -> git_ref::PartialNameRef<'static> {
+                git_object::bstr::BString::from(self.to_partial_name())
+                    .try_into()
+                    .expect("cannot fail")
+            }
             fn to_full_name(&self) -> git_ref::FullName {
                 format!("{}/{}", self.remote, self.branch)
                     .try_into()
@@ -46,6 +54,9 @@ mod find {
             branch: "main",
         };
         repo.find_reference(&name.to_partial_name())?;
+        repo.find_reference(name.to_partial_name())?;
+        repo.find_reference(name.to_partial_name_from_string())?;
+        repo.find_reference(name.to_partial_name_from_bstring())?;
         repo.find_reference(name.to_full_name().to_partial())?;
 
         Ok(())

@@ -15,7 +15,7 @@ impl packed::Buffer {
         let name = name.try_into()?;
         for inbetween in &["", "tags", "heads", "remotes"] {
             let (name, was_absolute) = if name.0.starts_with_str(b"refs/") {
-                (Cow::Borrowed(name.0), true)
+                (Cow::Borrowed(name.0.as_ref()), true)
             } else {
                 let mut full_name: BString = format!(
                     "refs/{}",
@@ -26,7 +26,7 @@ impl packed::Buffer {
                     }
                 )
                 .into();
-                full_name.extend_from_slice(name.0);
+                full_name.extend_from_slice(name.0.as_ref());
                 (Cow::Owned(full_name), false)
             };
             match self.binary_search_by(name.as_ref()) {
