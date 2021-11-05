@@ -35,12 +35,18 @@ mod find {
             fn to_partial_name(&self) -> String {
                 format!("{}/{}", self.remote, self.branch)
             }
+            fn to_full_name(&self) -> git_ref::FullName {
+                format!("{}/{}", self.remote, self.branch)
+                    .try_into()
+                    .expect("always valid")
+            }
         }
         let name = CustomName {
             remote: "origin",
             branch: "main",
         };
         repo.find_reference(&name.to_partial_name())?;
+        repo.find_reference(name.to_full_name().to_partial())?;
 
         Ok(())
     }
