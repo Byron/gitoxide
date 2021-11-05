@@ -49,6 +49,15 @@ mod find {
                     .expect("always valid")
             }
         }
+
+        impl<'a> TryFrom<&'a CustomName> for refs::PartialNameRef<'static> {
+            type Error = refs::name::Error;
+
+            fn try_from(value: &'a CustomName) -> Result<Self, Self::Error> {
+                refs::PartialNameRef::try_from(value.to_partial_name())
+            }
+        }
+
         let name = CustomName {
             remote: "origin",
             branch: "main",
@@ -58,6 +67,7 @@ mod find {
         repo.find_reference(name.to_partial_name_from_string())?;
         repo.find_reference(name.to_partial_name_from_bstring())?;
         repo.find_reference(name.to_full_name().to_partial())?;
+        repo.find_reference(&name)?;
 
         Ok(())
     }
