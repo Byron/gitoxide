@@ -1,5 +1,5 @@
 mod find {
-    use std::convert::{TryFrom, TryInto};
+    use std::convert::TryInto;
 
     use git_ref as refs;
     use git_repository::prelude::ReferenceAccessExt;
@@ -7,69 +7,6 @@ mod find {
 
     fn repo() -> crate::Result<git_repository::Easy> {
         crate::repo("make_references_repo.sh").map(Into::into)
-    }
-
-    /// Gain an understanding how uses might want to call this function, and see what happens
-    #[test]
-    fn possible_inputs() -> crate::Result {
-        let repo = repo()?;
-        repo.find_reference("dt1")?;
-        repo.find_reference(&String::from("dt1"))?; // Owned Strings don't have an impl for PartialName
-
-        struct CustomType(String);
-        impl<'a> TryFrom<&'a CustomType> for refs::PartialNameRef<'a> {
-            type Error = refs::name::Error;
-
-            fn try_from(value: &'a CustomType) -> Result<Self, Self::Error> {
-                refs::PartialNameRef::try_from(&value.0)
-            }
-        }
-        repo.find_reference(&CustomType("dt1".into()))?;
-
-        struct CustomName {
-            remote: &'static str,
-            branch: &'static str,
-        }
-
-        impl CustomName {
-            fn to_partial_name(&self) -> String {
-                format!("{}/{}", self.remote, self.branch)
-            }
-            fn to_partial_name_from_string(&self) -> git_ref::PartialNameRef<'static> {
-                self.to_partial_name().try_into().expect("cannot fail")
-            }
-            fn to_partial_name_from_bstring(&self) -> git_ref::PartialNameRef<'static> {
-                git_object::bstr::BString::from(self.to_partial_name())
-                    .try_into()
-                    .expect("cannot fail")
-            }
-            fn to_full_name(&self) -> git_ref::FullName {
-                format!("{}/{}", self.remote, self.branch)
-                    .try_into()
-                    .expect("always valid")
-            }
-        }
-
-        impl<'a> TryFrom<&'a CustomName> for refs::PartialNameRef<'static> {
-            type Error = refs::name::Error;
-
-            fn try_from(value: &'a CustomName) -> Result<Self, Self::Error> {
-                refs::PartialNameRef::try_from(value.to_partial_name())
-            }
-        }
-
-        let name = CustomName {
-            remote: "origin",
-            branch: "main",
-        };
-        repo.find_reference(&name.to_partial_name())?;
-        repo.find_reference(name.to_partial_name())?;
-        repo.find_reference(name.to_partial_name_from_string())?;
-        repo.find_reference(name.to_partial_name_from_bstring())?;
-        repo.find_reference(name.to_full_name().to_partial())?;
-        repo.find_reference(&name)?;
-
-        Ok(())
     }
 
     #[test]
