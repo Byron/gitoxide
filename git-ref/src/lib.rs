@@ -19,10 +19,11 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs, rust_2018_idioms)]
 
+use std::borrow::Cow;
+
 use git_hash::{oid, ObjectId};
 pub use git_object::bstr;
 use git_object::bstr::{BStr, BString};
-use std::borrow::Cow;
 
 mod store;
 pub use store::{file, packed};

@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use git_object::bstr::{BStr, BString, ByteSlice};
+use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
 use crate::{FullNameRef, PartialNameRef};
 
@@ -33,6 +33,20 @@ impl<'a> PartialNameRef<'a> {
     /// Provide the name as binary string which is known to be a valid partial ref name.
     pub fn as_bstr(&'a self) -> &'a BStr {
         self.0.as_ref()
+    }
+}
+
+impl PartialNameRef<'static> {
+    /// Append the `component` to ourselves and validate the newly created partial path.
+    ///
+    /// Note that this method is meant to have an owned starting point as this is considered
+    /// the typical usecase.
+    pub fn join(self, component: impl AsRef<[u8]>) -> Result<Self, crate::name::Error> {
+        let mut b = self.0.into_owned();
+        b.push_byte(b'/');
+        b.extend(component.as_ref());
+        git_validate::reference::name_partial(b.as_ref())?;
+        Ok(PartialNameRef(b.into()))
     }
 }
 
