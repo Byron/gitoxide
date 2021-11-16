@@ -2,7 +2,7 @@
 name = "gitoxide-core"
 description = "The library implementating all capabilities of the gitoxide CLI"
 repository = "https://github.com/Byron/gitoxide"
-version = "0.12.0"
+version = "0.13.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
 edition = "2018"
@@ -27,10 +27,10 @@ estimate-hours = ["itertools", "rayon", "fs-err"]
 
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
-git-repository = { version ="^0.11.0", path = "../git-repository", default-features = false, features = ["local", "unstable"]} # TODO: eventually 'unstable' shouldn't be needed anymore
-git-pack-for-configuration-only = { package = "git-pack", version ="^0.13.0", path = "../git-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
+git-repository = { version ="^0.12.0", path = "../git-repository", default-features = false, features = ["local", "unstable"]} # TODO: eventually 'unstable' shouldn't be needed anymore
+git-pack-for-configuration-only = { package = "git-pack", version ="^0.14.0", path = "../git-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
 git-commitgraph = { version ="^0.6.0", path = "../git-commitgraph" }
-git-config = { version = "^0.1.0", path = "../git-config" }
+git-config = { version ="^0.1.8", path = "../git-config" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 anyhow = "1.0.42"
 quick-error = "2.0.0"

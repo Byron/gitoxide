@@ -351,7 +351,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-smart-release"
-version = "0.5.6"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1050,7 +1050,7 @@ dependencies = [
 
 [[package]]
 name = "git-config"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "criterion",
  "dirs",
@@ -1075,7 +1075,7 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
-version = "0.11.0"
+version = "0.11.1"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1130,7 +1130,7 @@ dependencies = [
 
 [[package]]
 name = "git-object"
-version = "0.15.0"
+version = "0.15.1"
 dependencies = [
  "bstr",
  "git-actor",
@@ -1147,7 +1147,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.23.0"
+version = "0.24.0"
 dependencies = [
  "btoi",
  "git-actor",
@@ -1163,7 +1163,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -1193,7 +1193,7 @@ dependencies = [
 
 [[package]]
 name = "git-packetline"
-version = "0.12.0"
+version = "0.12.1"
 dependencies = [
  "async-std",
  "bstr",
@@ -1209,7 +1209,7 @@ dependencies = [
 
 [[package]]
 name = "git-protocol"
-version = "0.12.0"
+version = "0.12.1"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1230,7 +1230,7 @@ dependencies = [
 
 [[package]]
 name = "git-ref"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "filebuffer",
  "git-actor",
@@ -1251,7 +1251,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "anyhow",
  "byte-unit",
@@ -1307,7 +1307,7 @@ dependencies = [
 
 [[package]]
 name = "git-transport"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1330,7 +1330,7 @@ dependencies = [
 
 [[package]]
 name = "git-traverse"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1380,7 +1380,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "argh",
@@ -1398,7 +1398,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide-core"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "anyhow",
  "async-io",
