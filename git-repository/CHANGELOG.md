@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.12.0 (2021-11-16)
 
 ### New Features
 
@@ -19,9 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 20 calendar days.
+ - 11 commits contributed to the release over the course of 20 calendar days.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 3 unique issues were worked on: [#241](https://github.com/Byron/gitoxide/issues/241), [#247](https://github.com/Byron/gitoxide/issues/247), [#251](https://github.com/Byron/gitoxide/issues/251)
+ - 4 unique issues were worked on: [#241](https://github.com/Byron/gitoxide/issues/241), [#247](https://github.com/Byron/gitoxide/issues/247), [#251](https://github.com/Byron/gitoxide/issues/251), [#254](https://github.com/Byron/gitoxide/issues/254)
 
 ### Commit Details
 
@@ -40,7 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Allow `PartialNameRef` to be created from owned items ([`b7aab9e`](https://github.com/Byron/gitoxide/commit/b7aab9efd42975e8f2dcb5c97e51495996175702))
     - Add full-name workaround as example ([`06893cf`](https://github.com/Byron/gitoxide/commit/06893cf49f98b0da4878c8d808544b6ec309f24e))
     - add tests to verify common inputs would work for try_find_reference(…) ([`d986d09`](https://github.com/Byron/gitoxide/commit/d986d09cd9a4cb8e3a1444d781237f4a0ce550a1))
+ * **[#254](https://github.com/Byron/gitoxide/issues/254)**
+    - Adjust changelogs prior to git-pack release ([`6776a3f`](https://github.com/Byron/gitoxide/commit/6776a3ff9fa5a283da06c9ec5723d13023a0b267))
  * **Uncategorized**
+    - Adjusting changelogs prior to release of git-config v0.1.8, git-object v0.15.1, git-diff v0.11.1, git-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, git-packetline v0.12.1, git-transport v0.13.1, git-protocol v0.12.1, git-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0, safety bump 5 crates ([`39b40c8`](https://github.com/Byron/gitoxide/commit/39b40c8c3691029cc146b893fa0d8d25d56d0819))
     - Merge branch 'header-field-multi-improve' of https://github.com/xmo-odoo/gitoxide into xmo-odoo-header-field-multi-improve ([`d88e377`](https://github.com/Byron/gitoxide/commit/d88e377c21e566bf86c274d5e87eff06100698b9))
 </details>
 

@@ -13,7 +13,7 @@ A maintenance release triggered by changes to git-pack and changelog rewrites.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 25 calendar days.
+ - 4 commits contributed to the release over the course of 25 calendar days.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#254](https://github.com/Byron/gitoxide/issues/254)
 
@@ -26,6 +26,8 @@ A maintenance release triggered by changes to git-pack and changelog rewrites.
  * **[#254](https://github.com/Byron/gitoxide/issues/254)**
     - Adjust changelogs prior to git-pack release ([`6776a3f`](https://github.com/Byron/gitoxide/commit/6776a3ff9fa5a283da06c9ec5723d13023a0b267))
  * **Uncategorized**
+    - better changelog descriptions. ([`f69b2d6`](https://github.com/Byron/gitoxide/commit/f69b2d627099639bc144fd94fde678d84a10d6f7))
+    - Adjusting changelogs prior to release of git-config v0.1.8, git-object v0.15.1, git-diff v0.11.1, git-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, git-packetline v0.12.1, git-transport v0.13.1, git-protocol v0.12.1, git-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0, safety bump 5 crates ([`39b40c8`](https://github.com/Byron/gitoxide/commit/39b40c8c3691029cc146b893fa0d8d25d56d0819))
     - Fix false positive clippy warning. ([`9b8363b`](https://github.com/Byron/gitoxide/commit/9b8363bbf559223a424c2544610b4520bbd37aeb))
 </details>
 

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.9.1 (2021-11-16)
 
 ### New Features
 
@@ -16,9 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 11 calendar days.
+ - 5 commits contributed to the release over the course of 11 calendar days.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#251](https://github.com/Byron/gitoxide/issues/251)
+ - 2 unique issues were worked on: [#251](https://github.com/Byron/gitoxide/issues/251), [#254](https://github.com/Byron/gitoxide/issues/254)
 
 ### Commit Details
 
@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - PartialNameRef<'static>::join() for building paths on the fly ([`c0fc4f6`](https://github.com/Byron/gitoxide/commit/c0fc4f6f1b42c117275be85e1c2e6893b58007ba))
     - refactor ([`244a646`](https://github.com/Byron/gitoxide/commit/244a646370dcc4e35478825922b86fe59646d86c))
     - Allow `PartialNameRef` to be created from owned items ([`b7aab9e`](https://github.com/Byron/gitoxide/commit/b7aab9efd42975e8f2dcb5c97e51495996175702))
+ * **[#254](https://github.com/Byron/gitoxide/issues/254)**
+    - Adjust changelogs prior to git-pack release ([`6776a3f`](https://github.com/Byron/gitoxide/commit/6776a3ff9fa5a283da06c9ec5723d13023a0b267))
+ * **Uncategorized**
+    - Adjusting changelogs prior to release of git-config v0.1.8, git-object v0.15.1, git-diff v0.11.1, git-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, git-packetline v0.12.1, git-transport v0.13.1, git-protocol v0.12.1, git-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0, safety bump 5 crates ([`39b40c8`](https://github.com/Byron/gitoxide/commit/39b40c8c3691029cc146b893fa0d8d25d56d0819))
 </details>
 
 ## v0.9.0 (2021-10-19)

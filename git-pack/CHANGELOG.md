@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.14.0 (2021-11-16)
 
 <csr-id-e8b091943f0c9a26317da0003f7fcdf5a56ef21a/>
 
@@ -29,7 +29,7 @@ An important bugfix to prevent assertion failures when writing thin packs.
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 18 calendar days.
+ - 7 commits contributed to the release over the course of 18 calendar days.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#247](https://github.com/Byron/gitoxide/issues/247), [#254](https://github.com/Byron/gitoxide/issues/254)
 
@@ -42,9 +42,11 @@ An important bugfix to prevent assertion failures when writing thin packs.
  * **[#247](https://github.com/Byron/gitoxide/issues/247)**
     - Rename gix->ein and gixp->gix ([`e8b0919`](https://github.com/Byron/gitoxide/commit/e8b091943f0c9a26317da0003f7fcdf5a56ef21a))
  * **[#254](https://github.com/Byron/gitoxide/issues/254)**
+    - Adjust changelogs prior to git-pack release ([`6776a3f`](https://github.com/Byron/gitoxide/commit/6776a3ff9fa5a283da06c9ec5723d13023a0b267))
     - minor refactor ([`227c8b1`](https://github.com/Byron/gitoxide/commit/227c8b1859a6cbf96d48fd8564e575ef7e201db1))
     - Adjust size-hints of resolving entries iterator and use the upper bound in delta tree ([`20b3994`](https://github.com/Byron/gitoxide/commit/20b3994206aa5bc5e35cbbc9c8f8f99187077f79))
  * **Uncategorized**
+    - Adjusting changelogs prior to release of git-config v0.1.8, git-object v0.15.1, git-diff v0.11.1, git-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, git-packetline v0.12.1, git-transport v0.13.1, git-protocol v0.12.1, git-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0, safety bump 5 crates ([`39b40c8`](https://github.com/Byron/gitoxide/commit/39b40c8c3691029cc146b893fa0d8d25d56d0819))
     - Adjust changelogs prior to git-pack release ([`ac8015d`](https://github.com/Byron/gitoxide/commit/ac8015de710142c2bedd0e4188e872e0cf1ceccc))
     - Merge branch 'header-field-multi-improve' of https://github.com/xmo-odoo/gitoxide into xmo-odoo-header-field-multi-improve ([`d88e377`](https://github.com/Byron/gitoxide/commit/d88e377c21e566bf86c274d5e87eff06100698b9))
 </details>

@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.6.0 (2021-11-16)
+
+### New Features
+
+ - <csr-id-aafb0550222aab97b52c8d716c506709b6720d3f/> auto-update crates-index if there is an indication
+   There is the possibility of false-positives triggering such an update
+   if manifests are edited by hand, which is not the common case.
+   
+   If it is, please let us know.
+ - <csr-id-a4a53765952729d4ad59d8adcd3ce66c4c71589f/> 'changelog' understands '-e/--execute' as well.
+   This makes writing changelogs before release easier as the command-line
+   has to change less.
+
+### Bug Fixes
+
+ - <csr-id-57a50a68313cee4c63b1c32f3dedb2837bb751fc/> Don't let dev-dependencies participate in traversal unless they have a version specified.
+   This prevents safety bumps due to breaking changes in dev dependencies,
+   which are generally ignored if there is no version specified.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 10 commits contributed to the release over the course of 26 calendar days.
+ - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 unique issues were worked on: [#228](https://github.com/Byron/gitoxide/issues/228), [#234](https://github.com/Byron/gitoxide/issues/234), [#241](https://github.com/Byron/gitoxide/issues/241)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#228](https://github.com/Byron/gitoxide/issues/228)**
+    - 'changelog' understands '-e/--execute' as well. ([`a4a5376`](https://github.com/Byron/gitoxide/commit/a4a53765952729d4ad59d8adcd3ce66c4c71589f))
+ * **[#234](https://github.com/Byron/gitoxide/issues/234)**
+    - auto-update crates-index if there is an indication ([`aafb055`](https://github.com/Byron/gitoxide/commit/aafb0550222aab97b52c8d716c506709b6720d3f))
+    - Revert "FAIL: try to auto-udpate crates index with lifetime crazyness" ([`0df3b8f`](https://github.com/Byron/gitoxide/commit/0df3b8f1da1946c7ad57ba2f4d67fc5a1b9cc0d1))
+    - try to auto-udpate crates index with lifetime crazyness ([`82075e8`](https://github.com/Byron/gitoxide/commit/82075e8a101adb2fda0c11e6567e2148d2e66b8f))
+ * **[#241](https://github.com/Byron/gitoxide/issues/241)**
+    - Improve usability of the pack-cache environment variable ([`47d8162`](https://github.com/Byron/gitoxide/commit/47d81629a0bfa2eccf75cbe081de55d80d0abd59))
+ * **Uncategorized**
+    - Adjusting changelogs prior to release of git-config v0.1.8, git-object v0.15.1, git-diff v0.11.1, git-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, git-packetline v0.12.1, git-transport v0.13.1, git-protocol v0.12.1, git-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0, safety bump 5 crates ([`39b40c8`](https://github.com/Byron/gitoxide/commit/39b40c8c3691029cc146b893fa0d8d25d56d0819))
+    - Don't let dev-dependencies participate in traversal unless they have a version specified. ([`57a50a6`](https://github.com/Byron/gitoxide/commit/57a50a68313cee4c63b1c32f3dedb2837bb751fc))
+    - Note about smart-release being (too) eager to release ([`7954527`](https://github.com/Byron/gitoxide/commit/7954527ecc190b6e91229871c67f3b80d22ada6d))
+    - refactor ([`6a1e74c`](https://github.com/Byron/gitoxide/commit/6a1e74c04a9769a7651bf065917e533f87652620))
+    - Write down a few more 'cargo changelog' shortcomings ([`a5f2597`](https://github.com/Byron/gitoxide/commit/a5f2597002ba50255083e7a01a97e63a09766bb3))
+</details>
+
 ## 0.5.6 (2021-10-20)
 
 ### Bug Fixes
@@ -15,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#228](https://github.com/Byron/gitoxide/issues/228)
 
@@ -27,6 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  * **[#228](https://github.com/Byron/gitoxide/issues/228)**
     - nicer previews thanks to added newline ([`ff2c07a`](https://github.com/Byron/gitoxide/commit/ff2c07acea56eeed679dfbe59b5ab1d4baa45d42))
+ * **Uncategorized**
+    - Release cargo-smart-release v0.5.6 ([`0375ba7`](https://github.com/Byron/gitoxide/commit/0375ba7bf324d3a1470dfd5abb46907a7fb795ce))
 </details>
 
 ## 0.5.5 (2021-10-20)
