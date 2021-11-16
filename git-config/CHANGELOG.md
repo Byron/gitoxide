@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.1.8 (2021-11-16)
 
+A maintenance release triggered by changes to git-pack and changelog rewrites.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
