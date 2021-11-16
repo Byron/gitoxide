@@ -1,2 +1,2 @@
-[build]
-rustflags = "--cfg unsound_local_offset"
+# [build]
+# rustflags = "--cfg unsound_local_offset"
