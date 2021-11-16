@@ -8,9 +8,10 @@ use std::{
 use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Package};
 use git_repository::lock::File;
-use semver::{Op, Version, VersionReq};
+use semver::{Version, VersionReq};
 
 use super::{cargo, git, Context, Oid, Options};
+use crate::utils::version_req_unset_or_default;
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},
@@ -545,11 +546,7 @@ fn set_version_and_update_package_dependency(
                         && version::is_pre_release(new_version) // setting the lower bound unnecessarily can be harmful
                         && !version::rhs_is_breaking_bump_for_lhs(&req_as_version(&version_req), new_version); // don't claim to be conservative if this is necessary anyway
                     if !version_req.matches(new_version) || force_update {
-                        let supported_op = Op::Caret;
-                        if version_req.comparators.is_empty()
-                            || (version_req.comparators.len() > 1)
-                            || version_req.comparators.last().expect("exists").op != supported_op
-                        {
+                        if !version_req_unset_or_default(&version_req) {
                             bail!(
                                 "{} has it's {} dependency set to a version requirement with comparator {} - cannot currently handle that.",
                                 package_to_update.name,

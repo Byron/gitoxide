@@ -6,7 +6,8 @@ use crate::{
     git,
     traverse::dependency::{ManifestAdjustment, VersionAdjustment},
     utils::{
-        is_pre_release_version, package_by_id, package_by_name, package_eq_dependency, workspace_package_by_dependency,
+        is_pre_release_version, package_by_id, package_by_name, package_eq_dependency_ignore_dev_without_version,
+        workspace_package_by_dependency,
     },
     version,
     version::{Bump, BumpSpec},
@@ -263,7 +264,7 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
             for dependant in workspace_packages.iter().filter(|p| {
                 p.dependencies
                     .iter()
-                    .any(|dep| package_eq_dependency(dependee.package, dep))
+                    .any(|dep| package_eq_dependency_ignore_dev_without_version(dependee.package, dep))
             }) {
                 if seen.contains(&&dependant.id) {
                     continue;
@@ -467,7 +468,7 @@ fn find_safety_bump_edits_backwards_from_crates_for_publish(
         crates
             .iter()
             .enumerate()
-            .find(|(_, c)| package_eq_dependency(c.package, dep))
+            .find(|(_, c)| package_eq_dependency_ignore_dev_without_version(c.package, dep))
     }) {
         if seen.contains(&dep_idx) {
             continue;
@@ -579,7 +580,7 @@ fn find_workspace_crates_depending_on_adjusted_crates<'meta>(
                 crates
                     .iter()
                     .filter(|c| c.mode.manifest_will_change())
-                    .any(|c| c.package.name == d.name)
+                    .any(|c| package_eq_dependency_ignore_dev_without_version(c.package, d))
             })
         })
         .map(|wsp| Dependency {

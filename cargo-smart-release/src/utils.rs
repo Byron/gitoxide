@@ -3,11 +3,11 @@ use std::process::Stdio;
 use anyhow::anyhow;
 use cargo_metadata::{
     camino::{Utf8Component, Utf8Path},
-    Dependency, Metadata, Package, PackageId,
+    Dependency, DependencyKind, Metadata, Package, PackageId,
 };
 use git_repository as git;
 use git_repository::bstr::{BStr, ByteSlice};
-use semver::Version;
+use semver::{Version, VersionReq};
 use time::OffsetDateTime;
 
 pub struct Program {
@@ -56,8 +56,16 @@ pub fn is_top_level_package(manifest_path: &Utf8Path, shared: &git::Easy) -> boo
         .map_or(false, |p| p.components().count() == 1)
 }
 
-pub fn package_eq_dependency(package: &Package, dependency: &Dependency) -> bool {
-    package.name == dependency.name
+pub fn version_req_unset_or_default(req: &VersionReq) -> bool {
+    req.comparators
+        .last()
+        .map(|comp| comp.op == semver::Op::Caret)
+        .unwrap_or(true)
+}
+
+pub fn package_eq_dependency_ignore_dev_without_version(package: &Package, dependency: &Dependency) -> bool {
+    (dependency.kind != DependencyKind::Development || !version_req_unset_or_default(&dependency.req))
+        && package.name == dependency.name
 }
 
 pub fn workspace_package_by_dependency<'a>(meta: &'a Metadata, dep: &Dependency) -> Option<&'a Package> {
