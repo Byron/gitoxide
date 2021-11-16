@@ -78,7 +78,7 @@ impl crate::index::File {
         let mut bytes_to_process = 0u64;
         let mut last_seen_trailer = None;
         let mut last_base_index = None;
-        let anticipated_num_objects = entries.size_hint().0;
+        let anticipated_num_objects = entries.size_hint().1.unwrap_or_else(|| entries.size_hint().0);
         let mut tree = Tree::with_capacity(anticipated_num_objects)?;
         let indexing_start = std::time::Instant::now();
 

@@ -94,7 +94,7 @@ where
         }
         .map_err(input::Error::from)?;
 
-        // Decompress object to learn it's compressed bytes
+        // Decompress object to learn its compressed bytes
         let mut decompressor = self
             .decompressor
             .take()

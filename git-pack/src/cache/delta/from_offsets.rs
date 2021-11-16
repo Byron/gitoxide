@@ -38,7 +38,7 @@ impl<T> Tree<T> {
     /// * `progress` is used to track progress when creating the tree.
     /// * `resolve_in_pack_id(git_hash::oid) -> Option<PackOffset>` takes an object ID and tries to resolve it to an object within this pack if
     /// possible. Failing to do so aborts the operation, and this function is not expected to be called in usual packs. It's a theoretical
-    /// possibility though.
+    /// possibility though as old packs might have referred to their objects using the 20 bytes hash, instead of their encoded offset from the base.
     ///
     /// Note that the sort order is ascending. The given pack file path must match the provided offsets.
     pub fn from_offsets_in_pack(

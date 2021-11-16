@@ -186,7 +186,8 @@ where
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        self.inner.size_hint()
+        let (min, max) = self.inner.size_hint();
+        max.map(|max| (min, Some(max * 2))).unwrap_or_else(|| (min * 2, None))
     }
 }
 

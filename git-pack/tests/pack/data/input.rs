@@ -55,7 +55,9 @@ mod lookup_ref_delta_objects {
         }
     }
 
-    fn into_results_iter(entries: Vec<input::Entry>) -> impl Iterator<Item = Result<input::Entry, input::Error>> {
+    fn into_results_iter(
+        entries: Vec<input::Entry>,
+    ) -> impl ExactSizeIterator<Item = Result<input::Entry, input::Error>> {
         entries.into_iter().map(Ok)
     }
 
@@ -86,7 +88,9 @@ mod lookup_ref_delta_objects {
         let input = compute_offsets(vec![first.clone(), second, third_entry, fourth_entry, fifth]);
 
         let mut calls = 0;
-        let actual = LookupRefDeltaObjectsIter::new(into_results_iter(input), |_oid, buf| {
+        let input_entries = into_results_iter(input);
+        let actual_size = input_entries.size_hint();
+        let iter = LookupRefDeltaObjectsIter::new(input_entries, |_oid, buf| {
             calls += 1;
             buf.resize(inserted_data.len(), 0);
             buf.copy_from_slice(inserted_data);
@@ -95,9 +99,10 @@ mod lookup_ref_delta_objects {
                 data: buf.as_slice(),
                 pack_location: None,
             })
-        })
-        .collect::<Result<Vec<_>, _>>()
-        .unwrap();
+        });
+        assert_eq!(iter.size_hint(), (actual_size.0, actual_size.1.map(|s| s * 2)),
+                  "size hints are estimated and the upper bound reflects the worst-case scenario for the amount of possible objects");
+        let actual = iter.collect::<Result<Vec<_>, _>>().unwrap();
 
         assert_eq!(calls, 2, "there is only two objects to insert");
         assert_eq!(actual.len(), 7, "two object was inserted");
