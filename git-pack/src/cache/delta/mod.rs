@@ -60,7 +60,7 @@ impl<T> Tree<T> {
         })
     }
 
-    fn assert_is_incrementing(&mut self, offset: u64) -> Result<(), Error> {
+    fn assert_is_incrementing_and_update_next_offset(&mut self, offset: u64) -> Result<(), Error> {
         if self.items.is_empty() {
             return Ok(());
         }
@@ -84,7 +84,7 @@ impl<T> Tree<T> {
     /// Add a new root node, one that only has children but is not a child itself, at the given pack `offset` and associate
     /// custom `data` with it.
     pub fn add_root(&mut self, offset: u64, data: T) -> Result<(), Error> {
-        self.assert_is_incrementing(offset)?;
+        self.assert_is_incrementing_and_update_next_offset(offset)?;
         self.last_index = 0;
         self.items.push_front(Item {
             offset,
@@ -98,17 +98,18 @@ impl<T> Tree<T> {
 
     /// Add a child of the item at `base_offset` which itself resides at pack `offset` and associate custom `data` with it.
     pub fn add_child(&mut self, base_offset: u64, offset: u64, data: T) -> Result<(), Error> {
-        self.assert_is_incrementing(offset)?;
+        self.assert_is_incrementing_and_update_next_offset(offset)?;
         let (roots, children) = self.items.as_mut_slices();
         assert_eq!(
             roots.len(),
             self.roots,
             "item deque has been resized, maybe we added more nodes than we declared in the constructor?"
         );
+        let next_child_index = children.len();
         if let Ok(i) = children.binary_search_by_key(&base_offset, |i| i.offset) {
-            children[i].children.push(children.len());
+            children[i].children.push(next_child_index);
         } else if let Ok(i) = roots.binary_search_by(|i| base_offset.cmp(&i.offset)) {
-            roots[i].children.push(children.len());
+            roots[i].children.push(next_child_index);
         } else {
             return Err(Error::InvariantBasesBeforeDeltasNeedThem {
                 delta_pack_offset: offset,
