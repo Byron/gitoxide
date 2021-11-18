@@ -8,6 +8,10 @@ impl<'a> crate::WriteTo for BlobRef<'a> {
         out.write_all(self.data)
     }
 
+    fn size(&self) -> usize {
+        self.data.len()
+    }
+
     fn kind(&self) -> Kind {
         Kind::Blob
     }
@@ -17,6 +21,10 @@ impl crate::WriteTo for Blob {
     /// Write the blobs data to `out` verbatim.
     fn write_to(&self, out: impl io::Write) -> io::Result<()> {
         self.to_ref().write_to(out)
+    }
+
+    fn size(&self) -> usize {
+        self.to_ref().size()
     }
 
     fn kind(&self) -> Kind {

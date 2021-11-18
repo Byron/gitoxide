@@ -1,6 +1,7 @@
-use std::{fs, io, io::Write, path::PathBuf};
+use std::{convert::TryInto, fs, io, io::Write, path::PathBuf};
 
 use git_features::{hash, zlib::stream::deflate};
+use git_object::WriteTo;
 use tempfile::NamedTempFile;
 
 use super::Store;
@@ -28,6 +29,22 @@ pub enum Error {
 impl crate::write::Write for Store {
     type Error = Error;
 
+    fn write(&self, object: impl WriteTo, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {
+        let mut to = self.dest(hash)?;
+        to.write_all(&object.loose_header()).map_err(|err| Error::Io {
+            source: err,
+            message: "write header to tempfile in",
+            path: self.path.to_owned(),
+        })?;
+        object.write_to(&mut to).map_err(|err| Error::Io {
+            source: err,
+            message: "stream all data into tempfile in",
+            path: self.path.to_owned(),
+        })?;
+        to.flush()?;
+        self.finalize_object(to)
+    }
+
     /// Write the given buffer in `from` to disk in one syscall at best.
     ///
     /// This will cost at least 4 IO operations.
@@ -37,18 +54,21 @@ impl crate::write::Write for Store {
         from: &[u8],
         hash: git_hash::Kind,
     ) -> Result<git_hash::ObjectId, Self::Error> {
-        match hash {
-            git_hash::Kind::Sha1 => {
-                let mut to = self.write_header(kind, from.len() as u64, hash)?;
-                to.write_all(from).map_err(|err| Error::Io {
-                    source: err,
-                    message: "stream all data into tempfile in",
-                    path: self.path.to_owned(),
-                })?;
-                to.flush()?;
-                self.finalize_object(to)
-            }
-        }
+        let mut to = self.dest(hash)?;
+        to.write_all(&git_object::encode::loose_header(kind, from.len()))
+            .map_err(|err| Error::Io {
+                source: err,
+                message: "write header to tempfile in",
+                path: self.path.to_owned(),
+            })?;
+
+        to.write_all(from).map_err(|err| Error::Io {
+            source: err,
+            message: "stream all data into tempfile in",
+            path: self.path.to_owned(),
+        })?;
+        to.flush()?;
+        self.finalize_object(to)
     }
 
     /// Write the given stream in `from` to disk with at least one syscall.
@@ -61,45 +81,39 @@ impl crate::write::Write for Store {
         mut from: impl io::Read,
         hash: git_hash::Kind,
     ) -> Result<git_hash::ObjectId, Self::Error> {
-        match hash {
-            git_hash::Kind::Sha1 => {
-                let mut to = self.write_header(kind, size, hash)?;
-                io::copy(&mut from, &mut to).map_err(|err| Error::Io {
-                    source: err,
-                    message: "stream all data into tempfile in",
-                    path: self.path.to_owned(),
-                })?;
-                to.flush()?;
-                self.finalize_object(to)
-            }
-        }
+        let mut to = self.dest(hash)?;
+        to.write_all(&git_object::encode::loose_header(
+            kind,
+            size.try_into().expect("object size to fit into usize"),
+        ))
+        .map_err(|err| Error::Io {
+            source: err,
+            message: "write header to tempfile in",
+            path: self.path.to_owned(),
+        })?;
+
+        io::copy(&mut from, &mut to).map_err(|err| Error::Io {
+            source: err,
+            message: "stream all data into tempfile in",
+            path: self.path.to_owned(),
+        })?;
+        to.flush()?;
+        self.finalize_object(to)
     }
 }
 
 type CompressedTempfile = deflate::Write<NamedTempFile>;
 
 impl Store {
-    fn write_header(
-        &self,
-        kind: git_object::Kind,
-        size: u64,
-        hash: git_hash::Kind,
-    ) -> Result<hash::Write<CompressedTempfile>, Error> {
-        let mut to = hash::Write::new(
+    fn dest(&self, hash: git_hash::Kind) -> Result<hash::Write<CompressedTempfile>, Error> {
+        Ok(hash::Write::new(
             deflate::Write::new(NamedTempFile::new_in(&self.path).map_err(|err| Error::Io {
                 source: err,
                 message: "create named temp file in",
                 path: self.path.to_owned(),
             })?),
             hash,
-        );
-
-        git_pack::loose::object::header::encode(kind, size, &mut to).map_err(|err| Error::Io {
-            source: err,
-            message: "write header to tempfile in",
-            path: self.path.to_owned(),
-        })?;
-        Ok(to)
+        ))
     }
 
     fn finalize_object(

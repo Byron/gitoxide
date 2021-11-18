@@ -3,10 +3,7 @@ use std::{convert::TryInto, io, sync::atomic::AtomicBool};
 pub use error::Error;
 use git_features::progress::{self, Progress};
 
-use crate::{
-    cache::delta::{traverse::Context, Tree},
-    loose,
-};
+use crate::cache::delta::{traverse::Context, Tree};
 
 mod encode;
 mod error;
@@ -225,11 +222,10 @@ fn modify_base(
     hash: git_hash::Kind,
 ) {
     fn compute_hash(kind: git_object::Kind, bytes: &[u8], hash_kind: git_hash::Kind) -> git_hash::ObjectId {
-        let mut write = git_features::hash::Write::new(io::sink(), hash_kind);
-        loose::object::header::encode(kind, bytes.len() as u64, &mut write)
-            .expect("write to sink and hash cannot fail");
-        write.hash.update(bytes);
-        git_hash::ObjectId::from(write.hash.digest())
+        let mut hasher = git_features::hash::hasher(hash_kind);
+        hasher.update(&git_object::encode::loose_header(kind, bytes.len()));
+        hasher.update(bytes);
+        git_hash::ObjectId::from(hasher.digest())
     }
 
     let object_kind = pack_entry.header.as_kind().expect("base object as source of iteration");

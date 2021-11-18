@@ -1,3 +1,4 @@
+use bstr::ByteSlice;
 use std::io;
 
 use crate::{encode, encode::NL, Commit, CommitRef, Kind};
@@ -19,6 +20,38 @@ impl crate::WriteTo for Commit {
         }
         out.write_all(NL)?;
         out.write_all(&self.message)
+    }
+
+    fn size(&self) -> usize {
+        let hashsize = self.tree.kind().len_in_hex();
+        b"tree".len()
+            + 1
+            + hashsize
+            + 1
+            + self.parents.iter().count() * (b"parent".len() + 1 + hashsize + 1)
+            + b"author".len()
+            + 1
+            + self.author.size()
+            + 1
+            + b"committer".len()
+            + 1
+            + self.committer.size()
+            + 1
+            + self
+                .encoding
+                .as_ref()
+                .map(|e| b"encoding".len() + 1 + e.len() + 1)
+                .unwrap_or(0)
+            + self
+                .extra_headers
+                .iter()
+                .map(|(name, value)| {
+                    // each header *value* is preceded by a space and followed by a newline
+                    name.len() + value.split_str("\n").map(|s| s.len() + 2).sum::<usize>()
+                })
+                .sum::<usize>()
+            + 1
+            + self.message.len()
     }
 
     fn kind(&self) -> Kind {
@@ -43,6 +76,38 @@ impl<'a> crate::WriteTo for CommitRef<'a> {
         }
         out.write_all(NL)?;
         out.write_all(self.message)
+    }
+
+    fn size(&self) -> usize {
+        let hashsize = self.tree().kind().len_in_hex();
+        b"tree".len()
+            + 1
+            + hashsize
+            + 1
+            + self.parents.iter().count() * (b"parent".len() + 1 + hashsize + 1)
+            + b"author".len()
+            + 1
+            + self.author.size()
+            + 1
+            + b"committer".len()
+            + 1
+            + self.committer.size()
+            + 1
+            + self
+                .encoding
+                .as_ref()
+                .map(|e| b"encoding".len() + 1 + e.len() + 1)
+                .unwrap_or(0)
+            + self
+                .extra_headers
+                .iter()
+                .map(|(name, value)| {
+                    // each header *value* is preceded by a space and followed by a newline
+                    name.len() + value.split_str("\n").map(|s| s.len() + 2).sum::<usize>()
+                })
+                .sum::<usize>()
+            + 1
+            + self.message.len()
     }
 
     fn kind(&self) -> Kind {

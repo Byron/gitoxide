@@ -78,14 +78,14 @@ impl index::File {
                     thread_limit,
                     &should_interrupt,
                     pack.pack_end() as u64,
-                    || (new_processor(), [0u8; 64]),
+                    || new_processor(),
                     |data,
                      progress,
                      Context {
                          entry: pack_entry,
                          entry_end,
                          decompressed: bytes,
-                         state: (ref mut processor, ref mut header_buf),
+                         state: ref mut processor,
                          level,
                      }| {
                         let object_kind = pack_entry.header.as_kind().expect("non-delta object");
@@ -99,7 +99,6 @@ impl index::File {
                             object_kind,
                             bytes,
                             progress,
-                            header_buf,
                             &data.index_entry,
                             || {
                                 // TODO: Fix this - we overwrite the header of 'data' which also changes the computed entry size,

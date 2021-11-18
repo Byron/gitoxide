@@ -35,6 +35,3 @@ pub mod data;
 mod find_traits;
 ///
 pub mod index;
-
-///
-pub mod loose;

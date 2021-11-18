@@ -97,6 +97,10 @@ mod write {
         pub fn write_to(&self, out: impl io::Write) -> io::Result<()> {
             self.to_ref().write_to(out)
         }
+        /// Computes the number of bytes necessary to serialize this signature
+        pub fn size(&self) -> usize {
+            self.to_ref().size()
+        }
     }
 
     impl<'a> SignatureRef<'a> {
@@ -104,11 +108,14 @@ mod write {
         pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
             out.write_all(validated_token(self.name)?)?;
             out.write_all(SPACE)?;
-            out.write_all(&b"<"[..])?;
+            out.write_all(b"<")?;
             out.write_all(validated_token(self.email)?)?;
-            out.write_all(&b"> "[..])?;
-            self.time.write_to(out)?;
-            Ok(())
+            out.write_all(b"> ")?;
+            self.time.write_to(out)
+        }
+        /// Computes the number of bytes necessary to serialize this signature
+        pub fn size(&self) -> usize {
+            self.name.len() + self.email.len() + self.time.size() + 4
         }
     }
 
