@@ -1,7 +1,6 @@
 use std::{fs, io::Read, path::PathBuf};
 
 use git_features::zlib;
-use git_object::decode;
 use git_pack::data;
 
 use crate::store::loose::{sha1_path, Store, HEADER_READ_UNCOMPRESSED_BYTES};
@@ -16,7 +15,7 @@ pub enum Error {
         path: PathBuf,
     },
     #[error(transparent)]
-    Decode(#[from] decode::LooseHeaderDecodeError),
+    Decode(#[from] git_object::decode::LooseHeaderDecodeError),
     #[error("Could not {action} data at '{path}'")]
     Io {
         source: std::io::Error,
@@ -104,7 +103,7 @@ impl Store {
 
         let decompressed_start = bytes_read;
         let (kind, size, header_size) =
-            decode::loose_header(&buf[decompressed_start..decompressed_start + consumed_out])?;
+            git_object::decode::loose_header(&buf[decompressed_start..decompressed_start + consumed_out])?;
 
         if status == zlib::Status::StreamEnd {
             let decompressed_body_bytes_sans_header =

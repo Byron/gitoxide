@@ -48,29 +48,20 @@ impl crate::WriteTo for Tag {
     }
 
     fn size(&self) -> usize {
-        b"object".len()
-            + 1
-            + self.target.kind().len_in_hex()
-            + 1
-            + b"type".len()
-            + 1
-            + self.target_kind.as_bytes().len()
-            + 1
-            + b"tag".len()
-            + 1
-            + self.name.len()
-            + 1
+        b"object".len() + 1 /* space */ + self.target.kind().len_in_hex() + 1 /* nl */
+            + b"type".len() + 1 /* space */ + self.target_kind.as_bytes().len() + 1 /* nl */
+            + b"tag".len() + 1 /* space */ + self.name.len() + 1 /* nl */
             + self
                 .tagger
                 .as_ref()
-                .map(|t| b"tagger".len() + 1 + t.size() + 1)
+                .map(|t| b"tagger".len() + 1 /* space */ + t.size() + 1 /* nl */)
                 .unwrap_or(0)
             + if self.message.is_empty() {
                 0
             } else {
-                self.message.len() + 1
+                1 /* nl */ + self.message.len()
             }
-            + self.pgp_signature.as_ref().map(|m| m.len() + 1).unwrap_or(0)
+            + self.pgp_signature.as_ref().map(|m| 1 /* nl */ + m.len() ).unwrap_or(0)
     }
 
     fn kind(&self) -> Kind {
@@ -99,29 +90,20 @@ impl<'a> crate::WriteTo for TagRef<'a> {
     }
 
     fn size(&self) -> usize {
-        b"object".len()
-            + 1
-            + self.target().kind().len_in_hex()
-            + 1
-            + b"type".len()
-            + 1
-            + self.target_kind.as_bytes().len()
-            + 1
-            + b"tag".len()
-            + 1
-            + self.name.len()
-            + 1
+        b"object".len() + 1 /* space */ + self.target().kind().len_in_hex() + 1 /* nl */
+            + b"type".len() + 1 /* space */ + self.target_kind.as_bytes().len() + 1 /* nl */
+            + b"tag".len() + 1 /* space */ + self.name.len() + 1 /* nl */
             + self
                 .tagger
                 .as_ref()
-                .map(|t| b"tagger".len() + 1 + t.size() + 1)
+                .map(|t| b"tagger".len() + 1 /* space */ + t.size() + 1 /* nl */)
                 .unwrap_or(0)
             + if self.message.is_empty() {
                 0
             } else {
-                self.message.len() + 1
+                1 /* nl */ + self.message.len()
             }
-            + self.pgp_signature.as_ref().map(|m| m.len() + 1).unwrap_or(0)
+            + self.pgp_signature.as_ref().map(|m| 1 /* nl */ + m.len()).unwrap_or(0)
     }
 
     fn kind(&self) -> Kind {

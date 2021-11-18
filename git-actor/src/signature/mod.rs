@@ -115,7 +115,7 @@ mod write {
         }
         /// Computes the number of bytes necessary to serialize this signature
         pub fn size(&self) -> usize {
-            self.name.len() + self.email.len() + self.time.size() + 4
+            self.name.len() + 2 /* space <*/ + self.email.len() +  2 /* > space */ + self.time.size()
         }
     }
 

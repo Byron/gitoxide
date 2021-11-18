@@ -42,7 +42,8 @@ impl Time {
     }
     /// Computes the number of bytes necessary to render this time
     pub fn size(&self) -> usize {
-        // TODO: this is not year 2038 safe...
+        // TODO: this is not year 2038 safe…but we also can't parse larger numbers (or represent them) anyway. It's a trap nonetheless
+        //       that can be fixed by increasing the size to usize.
         (if self.time >= 1_000_000_000 {
             10
         } else if self.time >= 100_000_000 {
@@ -63,8 +64,6 @@ impl Time {
             2
         } else {
             1
-        }) + 2
-            + 2
-            + 2
+        }) + 2 /*space + sign*/ + 2 /*hours*/ + 2 /*minutes*/
     }
 }
