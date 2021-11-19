@@ -173,4 +173,57 @@ echo c56a8e7aa92c86c41a923bc760d2dc39e8a31cf7  | git cat-file --batch | tail +2 
 
 Thus one has to post-process the file by reducing its size by one using `truncate -s -1 fixture`, **removing the newline byte**.
 
+# Discovery: data consistency and resource usage of packed objects
+
+## Summary
+
+Concurrent writes to packs observable by applications pose a challenge to the current implementation and we need to find ways around that.
+
+## Motivation
+
+Use this document to shed light on the entire problem space surrounding data consistency and resource usage of packed objects to aid in finding solutions
+that are best for various use cases without committing to high costs in one case or another.
+
+## Status Quo
+
+`gitoxide`s implementation as of 2021-11-19 is known to be unsuitable in the presence of concurrent writes to packs due to its inability to automatically respond
+to changed packs on disk if objects cannot be found on the first attempt. Other implementations like `git2` and canonical `git` handle this by using 
+thread-safe interior mutability at the cost of scalability.
+
+`gitoxide`s implementation may be insufficient in that regard, but it shows how read-only data allows to scale across core as well as the CPU architecture allows.
+
+The usage of system resources like file handles is simple but potentially wasteful as all packs are memory-mapped in full immediately. Lazy and partial memory-mapping 
+of packs is used in other implementations. Laziness allows for more efficiency and partial mapping allows to handle big packs on 32 bit systems.
+
+Failure to acquire a memory map due to limits in the amount of open file handles results in an error when initializing the pack database in the `gitoxide`s implementation.
+To my knowledge, this is handled similarly in other implementations. All implementations assume there is unlimited memory, but the effect of running out of memory is only 
+known to me in case of `gitoxide` which will panic.
+
+## Values
+
+- We value _highly_ to scale object access performance with cores.
+- We value _more_ to offer a choice of trade-offs than to aim for a one-size-fits-all solution, unless the latter has no shortcomings.
+
+### Out of scope
+
+- We don't seek to handle out of memory situations differently than panicking. This might change if `gitoxide` should fly to Mars or land in the linux kernel though.
+- We do not want to enable 32 bit applications to handle pack files greater than 4GB and leave this field entirely to the other implementations.
+
+## Existing technical solutions
+
+| **Problem**                                               | **Solution**                                                             | **Benefits**                                                         | **shortcomings**                                                            | **Example Implementation**           |
+|-----------------------------------------------------------|--------------------------------------------------------------------------|----------------------------------------------------------------------|-----------------------------------------------------------------------------|--------------------------------------|
+| 1. initialization                                         | 1. map all packs at once                                                 | read-only possible; same latency for all objects                     | worst case init delay, highest resource usage, some packs may never be read | gitoxide                             |
+|                                                           | 2. map packs later on object access miss                                 | nearly no init delay,  no unnecessary work, resource usage as needed | needs mutability;  first access of some objects may be slow                 | libgit2, git                         |
+| 2. file limit hit                                         | 1. fail                                                                  | read-only possible                                                   |                                                                             | gitoxide                             |
+|                                                           | 2. free resources and retry, then possibly fail                          | higher reliability                                                   | needs mutability                                                            | libgit2 (only on self-imposed limit) |
+| 3. file handle reduction/avoid hitting file limit         | 1. do not exceed internal handle count                                   | some control over file handles                                       | the entire application needs to respect count                               | libgit2 (only within pack database)  |
+|                                                           | 2. process-wide pooling of memory maps                                   | perfect control over                                                 |                                                                             |                                      |
+| 4. object miss                                            | 1. fail                                                                  |                                                                      |                                                                             | gitoxide                             |
+|                                                           | 2. lazy-load more packs, retry,    refresh known packs, retry, then fail |                                                                      |                                                                             | libgit2                              |
+| 5. race when creating/altering more than a pack at a time | 1. ignore                                                                |                                                                      |                                                                             | all of them (I think)                |
+
+## Approach
+
+We will look at typical access patterns holistically based on various use-cases and decide which existing technical solution would fit best.
 
