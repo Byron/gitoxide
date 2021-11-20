@@ -185,19 +185,28 @@ related to any resource that changes often, most prominently refs.
 Use this document to shed light on the entire problem space surrounding data consistency and resource usage of packed objects to aid in finding solutions
 that are best for various use cases without committing to high costs in one case or another.
 
-## Status Quo
+## Git as database
+
+Databases are well understood and there is common semantics they typically adhere to. The following is an exploration of the various kinds of databases that make up a git
+repository along with some of their interplay.
 
 ### Object Databases
 
 In repositories there may be millions to 10th of millions of objects like commits, blobs, trees and tags, and accessing them quickly is relevant to many of git's features. 
 
+#### Loose object database
+
+Each object is stored in a single file on disk, partitions by the first byte of its content hash. All implementations handle it similarly.
+
 #### Packed object database
 
-As packs and the object database is inherently append-only, i.e. objects are never *[0] deleted, allowing concurrent readers to observe a consistent state even in presence
-of writers. Writers create new pack files and may remove them after adding all changes successfully.
+Packs are single files containing one or more objects. Delta-compression allows them to be very size-efficient, e.g. 90x compression for the linux kernel.
+
+Packs and the object database is inherently append-only, i.e. objects are never *[0] deleted, allowing concurrent readers to observe a consistent state even in presence
+of writers. Writers create new pack files and may remove them after adding all changes successfully, without the need for locking.
 
 `gitoxide`s implementation as of 2021-11-19 is known to be unsuitable in the presence of concurrent writes to packs due to its inability to automatically respond
-to changed packs on disk if objects cannot be found on the first attempt. Other implementations like `git2` and canonical `git` handle this by using 
+to changed packs on disk if objects cannot be found on the first attempt. Other implementations like `libgit2` and canonical `git` handle this by using 
 thread-safe interior mutability at the cost of scalability.
 
 `gitoxide`s implementation may be insufficient in that regard, but it shows how read-only data allows to scale across core as well as the CPU architecture allows.
@@ -212,10 +221,6 @@ known to me in case of `gitoxide` which will panic.
 
 [0] deletion is possible but doesn't happen instantly, instead requiring time to pass and calls to git-maintenance and for them to be unreachable, i.e. not used in the
     entire repository.
-
-#### Loose object database
-
-Each object is stored in a single file on disk, partitions by the first byte of its content hash. All implementations handle it similarly.
 
 ### Reference databases
 
@@ -271,7 +276,7 @@ Races exist do not exist for writers, but do exist for readers as they may obser
 
 Semantically, `gitoxide`s implementation of this database is equivalent to the one of `git`.
 
-### Ref-table database
+#### Ref-table database
 
 Even though `gitoxide` doesn't have an implementation yet it's useful to understand its semantics as a possible path forward.
 
@@ -282,6 +287,16 @@ All changes like updates, additions or deletions are fully transactional, but th
 (mono-)repositories as file based locking mechanisms aren't fair and waiting strategies with exponential backoff may cause some writers to wait forever.
 
 Due to the lack of experience with this database details around resource consumption in terms of file handles can't be provided at this time.
+
+### Configuration
+
+`git` employs cascaded configuration files to affect processes running on the repository. Their effect can vary widely, and so can their use in applications handling repositories.
+
+`gitoxide`s implementation currently uses only the repository git configuration file when initializing a repository to correctly determine whether or not it is _bare.
+It does not expose git configuration at this time and doesn't use git configuration when repository initialization is complete.
+
+We have no reason to believe that other implementations use git configuration beyond first initialization either or do anything to assure it remains up to date in memory
+after reading it.
 
 ## Understanding changes to repositories
 
@@ -301,6 +316,8 @@ in an in-between state.
 
 ## Existing technical problems and their solutions
 
+Solutions aren't always mutually exclusive despite the form of presentation suggesting it.
+
 | **Problem**                                                   | **Solution**                                                               | **Benefits**                                                         | **shortcomings**                                                                                                                             | **Example Implementation**           |
 |---------------------------------------------------------------|----------------------------------------------------------------------------|----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------|
 | **1. initialization**                                         | 1. map all packs at once                                                   | read-only possible; same latency for all objects                     | worst case init delay, highest resource usage, some packs may never be read                                                                  | gitoxide                             |
@@ -309,10 +326,12 @@ in an in-between state.
 |                                                               | 2. free resources and retry, then possibly fail                            | higher reliability                                                   | needs mutability                                                                                                                             | libgit2 (only on self-imposed limit) |
 | **3. file handle reduction/avoid hitting file limit**         | 1. do not exceed internal handle count                                     | some control over file handles                                       | the entire application needs to respect count, needs sync with actual OS imposed limit, no sharing across multiple in-process pack databases | libgit2 (only within pack database)  |
 |                                                               | 2. process-wide pooling of memory maps                                     | share packs across multiple repositories instances                   | pack databases aren't self-contained anymore                                                                                                 |                                      |
+|                                                               | 3. Multi-pack index files                                                  | A single index can be used N packs, saving N-1 packs for N>1 packs   |                                                                                                                                              |                                      |
 | **4. object miss**                                            | 1. fail                                                                    | fast if object misses are expected                                   | incorrect or a burden in user code if miss is due to changed packs                                                                           | gitoxide                             |
 |                                                               | 2. lazy-load more packs, retry,      refresh known packs, retry, then fail | always correct even in the light of writers                          | can cause huge amount of extra work if object misses are expected; does not handle problem 5.                                                | libgit2                              |
 | ~~5. race when creating/altering more than a pack at a time~~ | 1. ignore                                                                  |                                                                      | a chance for occasional object misses                                                                                                        | all of them                          |
 |                                                               | 2. retry more than one time                                                | greatly reduced likelyhood of object misses                          |                                                                                                                                              |                                      |
+
 ### Amendum problem 5.
 
 Refreshing packs if an object is missed is the current way of handling writes to the pack database. As outlined in
@@ -340,3 +359,7 @@ The known **solution** is to switch to the `ref-table` implementation.
   so that deletions are done separately from updates to allow usage of the most suitable locking strategies.
 - When adding/updating references, prefer to fail immediately as the chance for the same change being made concurrently is low, and failure 
   would occur after waiting for the lock due to constraint mismatch.
+
+### Git configuration
+
+- some application types might never use it, which is why it should be controllable how and what is loaded (when we actually implement it).
