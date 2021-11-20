@@ -317,7 +317,7 @@ Solutions aren't always mutually exclusive despite the form of presentation sugg
 
 | **Database**      | **Problem**                                                                                                                                  | **Solution**                                                                                                                                                                                              | **Benefits**                                                                                                                  | **shortcomings**                                                                                                                                                                                                                                     | **Example Implementation**                                                  |
 |-------------------|----------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| **pack**          | **1. initialization**                                                                                                                        | 1. map all packs at once                                                                                                                                                                                  | read-only possible; same latency for all objects                                                                              | worst case init delay, highest resource usage, some packs may never be read                                                                                                                                                                          | gitoxide                                                                    |
+| **pack**          | **1. initialization**                                                                                                                        | 1. map all packs at once                                                                                                                                                                                  | read-only possible; same latency for all objects                                                                              | worst case init delay, highest resource usage, some packs may never be read, some applications might run out of system resources early even though they would not have needed all packs.                                                             | gitoxide                                                                    |
 |                   |                                                                                                                                              | 2. map packs later on object access miss                                                                                                                                                                  | nearly no init delay,  no unnecessary work, resource usage as needed                                                          | needs mutability;  first access of some objects may be slow                                                                                                                                                                                          | libgit2, git                                                                |
 | **pack**          | **2. file limit hit**                                                                                                                        | 1. fail                                                                                                                                                                                                   | read-only possible                                                                                                            |                                                                                                                                                                                                                                                      | gitoxide                                                                    |
 |                   |                                                                                                                                              | 2. free resources and retry, then possibly fail                                                                                                                                                           | higher reliability                                                                                                            | needs mutability                                                                                                                                                                                                                                     | libgit2 (only on self-imposed limit)                                        |
@@ -356,11 +356,11 @@ to assure a consistent state.
 **Adding objects to the database**
 
 1. add objects
-  * this is safe as these objects aren't reachable yet.
-  * object databases are append, only, so no existing state is ever affected.
+   * this is safe as these objects aren't reachable yet.
+   * object databases are append, only, so no existing state is ever affected.
 2. adjust reference(s)
-  * point related references to the entry-points of the newly added objects (typically commits or tags)
-  * now the new objects can be discovered
+   * point related references to the entry-points of the newly added objects (typically commits or tags)
+   * now the new objects can be discovered
 
 **Multiple writers** will run into conflicts with each other if the references they are handling overlap.
 **Readers** will see the object graph from a snapshot of a set of references.
@@ -411,7 +411,7 @@ for applications that don't need it, like CLIs.
 
 #### Loose References
 
-Writing loose references isn't actually atomic, so readers may observe some refs in an old and some in a new state. This isn't always a breaking issue like it is
+Writing loose references isn't actually atomic, so readers may observe some references in an old and some in a new state. This isn't always a breaking issue like it is
 the case for packs, the progam can still operate and is likely to produce correct (enough) outcomes.
 
 Mitigations are possible with careful programming on the API user's side or by using the `ref-table` database instead.
@@ -428,6 +428,26 @@ a process is paramount.
 
 We will look at typical access patterns holistically based on various use-cases, look at the problems they would run into and pick their preferred solution that optimizes
 for efficiency/performance/reduction of waste.
+
+### Multi-threaded CLI tool operating on filtered partial repository clone
+
+The tool displays the reference graph, shows differences and creates 'blame' like views on files. As it's operated by the user, other writers are unlikely
+to happen while it is running.
+
+Scaling near perfectly with added CPU cores and great performance even in the biggest mono-repos are its hallmark.
+
+As the program is is written with missing objects being the default, it gracefully handles and expects such cases. While running in TUI mode, it offers a manual 
+refresh to the user in case they fetched or pulled in the meantime, to refresh the screen and update its object database to make all newly added objects available.
+
+**Problems and Solutions**
+
+The program only deals with _1) initialization_ and _4) object misses_, where the latter are expected and handled gracefully. 1) is handled with solution 1., spending time to make
+all packs available to get the best and most consistent multi-threaded object access performance.
+
+**Drawbacks**
+
+The program could benefit of using 1.2 instead of 1.1 which could cause exhaustion of file handles despite the user having no interest in evaluating all available objects,
+but ideally that is possible without loosing performance during multi-threading.
 
 ## Learnings
 
