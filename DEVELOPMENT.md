@@ -189,7 +189,7 @@ that are best for various use cases without committing to high costs in one case
 
 ### Object Databases
 
-In repositories there may be millions of objects and accessing them quickly is relevant to many of git's features. 
+In repositories there may be millions to 10th of millions of objects like commits, blobs, trees and tags, and accessing them quickly is relevant to many of git's features. 
 
 #### Packed object database
 
@@ -217,9 +217,16 @@ known to me in case of `gitoxide` which will panic.
 
 Each object is stored in a single file on disk, partitions by the first byte of its content hash. All implementations handle it similarly.
 
-### Loose reference database
+### Reference databases
 
-References, i.e. pointers to objects or other references, are stored one at a time in files, one reference at a time or multiple ones in a single well known file, `packed-refs`. 
+References are pointers to objects or other references and are crucial to `git` as they form the entry points in all git operations. If objects aren't reachable by starting
+graph traversal at a reference (or its historical reflog information) it is effectively lost forever, i.e. unreachable.
+
+They may be just a couple to hundreds of thousands of references in a repository which are changed right after new objects are added to the object database.
+
+#### Loose reference database
+
+References are stored one at a time in files, one reference at a time or multiple ones in a single well known file, `packed-refs`. 
 `packed-refs` is updated during maintenance to keep keep direct references only.
 
 Multiple references can change at the same time, but multiple changes aren't atomic as changes are made a file at a time. All implementations may observe intermediate states
@@ -244,12 +251,14 @@ a choking point.
 32kB, theoretically configurable but currently hardcoded based on the default in `git`. 
 Other implementations maintain one per repository instance (libgit2) or one per process (git).
 
+Even the biggest transactions will only additionally open one loose reference file at a time, and close it right after use.
+
 
 | **Operation**   | **read loose file**                 | **locks**             | **costs**                                                                                                                                                                                                                                                                        | **read packed-refs**                                                        | **concurrency granularity**     | **Limit/Bottleneck**                         |
 |-----------------|-------------------------------------|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|---------------------------------|----------------------------------------------|
-| **Add/Update**  | only if comparing to previous value | loose ref             | .lock file per reference; write new value; move into place; create intermediate directories as needed; delete empty directories in the way as needed; read packed-refs                                                                                                           | only if comparing to previous value and loose reference file isn't present. | per reference                   | disk-IO                                      |
+| **Add/Update**  | only if comparing to previous value | loose ref             | .lock file per reference; write new value; move into place; create intermediate directories as needed; delete empty directories in the way as needed; read packed-refs; possibly append to reflog                                                                                | only if comparing to previous value and loose reference file isn't present. | per reference                   | disk-IO                                      |
 | **Read**        | always                              |                       | read loose file; read packed-refs                                                                                                                                                                                                                                                | if loose file didn't exist                                                  | n/a                             | disk-IO                                      |
-| **Delete**      | only if assserting previous value   | loose ref; packed-ref | .lock file per reference; delete loose file; delete lock file; .lock for packed-refs, rewrite packed-refs.lock; move packed-refs.lock into place                                                                                                                                 | always                                                                      | per reference (and packed-refs) | disk-IO (and CPU if packed-refs is involved) |
+| **Delete**      | only if assserting previous value   | loose ref; packed-ref | .lock file per reference; delete loose file; delete lock file; .lock for packed-refs, rewrite packed-refs.lock; move packed-refs.lock into place; possibly delete reflog per ref                                                                                                 | always                                                                      | per reference (and packed-refs) | disk-IO (and CPU if packed-refs is involved) |
 | **maintenance** | always all (or by filter)           | loose ref; packed-ref | .lock file per reference, read loose reference; .lock for packed-refs; read entire packed-refs; insert loose reference values; write entire altered packed-refs into packed-refs.lock; move packed-refs.lock into place; delete existing loose references and delete their .lock | always                                                                      | per reference and packed-refs   | disk-IO and CPU                              |
 
 Failures to add/update/delete may occur if the constraint isn't met. It's possible to wait in the presence of a lock file instead of failing immediately, 
@@ -264,8 +273,15 @@ Semantically, `gitoxide`s implementation of this database is equivalent to the o
 
 ### Ref-table database
 
-**TBD**
+Even though `gitoxide` doesn't have an implementation yet it's useful to understand its semantics as a possible path forward.
 
+As a major difference to the _loose reference database_ it doesn't operate on user editable files but uses a binary format optimized for read performance and consistency, allowing
+readers to always have a consistent view. There can be any amount of readers.
+
+All changes like updates, additions or deletions are fully transactional, but there can only be one writer at a time. This has the potential for contention in busy
+(mono-)repositories as file based locking mechanisms aren't fair and waiting strategies with exponential backoff may cause some writers to wait forever.
+
+Due to the lack of experience with this database details around resource consumption in terms of file handles can't be provided at this time.
 
 ## Understanding changes to repositories
 
@@ -320,6 +336,7 @@ The known **solution** is to switch to the `ref-table` implementation.
 
 ### Loose references database
 
-- When deleting (with or without value constraint), wait for locks instead of failing to workaround `packed-refs` as chocking point.
+- When deleting (with or without value constraint), wait for locks instead of failing to workaround `packed-refs` as chocking point. It's certainly worth it to split transactions
+  so that deletions are done separately from updates to allow usage of the most suitable locking strategies.
 - When adding/updating references, prefer to fail immediately as the chance for the same change being made concurrently is low, and failure 
   would occur after waiting for the lock due to constraint mismatch.
