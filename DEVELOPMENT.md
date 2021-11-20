@@ -173,7 +173,7 @@ echo c56a8e7aa92c86c41a923bc760d2dc39e8a31cf7  | git cat-file --batch | tail +2 
 
 Thus one has to post-process the file by reducing its size by one using `truncate -s -1 fixture`, **removing the newline byte**.
 
-# Discovery: data consistency and resource usage of packed objects
+# Discovery: data consistency and resource usage
 
 ## Summary
 
@@ -298,13 +298,24 @@ It does not expose git configuration at this time and doesn't use git configurat
 We have no reason to believe that other implementations use git configuration beyond first initialization either or do anything to assure it remains up to date in memory
 after reading it.
 
+### Index
+
+The `index` is a single file for the purpose acting as a staging area for building and manipulating upcoming commits.
+
+It is created and updated when checking out files into the working tree, and is used to keep track of working tree states while no commit object
+was created yet, i.e. during `git add …`.
+
+`gitoxide` neither implements it nor it is used in concurrent environments, which is why we exclude it from this discovery.
+
 ## Understanding changes to repositories
 
-A change to any file in a git repository has the potential to affect the process operating on it. Related changes to multiple files are never atomic, and can be observed
+A change to any file in a git repository has the potential to affect the process operating on it. For the sake of practicality and from experience, we focus exclusively
+on changes to the object database and the reference database along with typical interactions.
+
+Related changes to multiple files are never atomic, and can be observed
 in an in-between state.
 
 **TBD**
-
 
 ## Values
 
@@ -314,23 +325,30 @@ in an in-between state.
 - We don't value the handling of out of memory situations differently than panicking. This might change if `gitoxide` should fly to Mars or land in the linux kernel though.
 - We don't value enabling 32 bit applications to deal with pack files greater than 4GB and leave this field entirely to the other implementations.
 
-## Existing technical problems and their solutions
+## Known technical problems and their solutions
 
 Solutions aren't always mutually exclusive despite the form of presentation suggesting it.
 
-| **Problem**                                                   | **Solution**                                                               | **Benefits**                                                         | **shortcomings**                                                                                                                             | **Example Implementation**           |
-|---------------------------------------------------------------|----------------------------------------------------------------------------|----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------|
-| **1. initialization**                                         | 1. map all packs at once                                                   | read-only possible; same latency for all objects                     | worst case init delay, highest resource usage, some packs may never be read                                                                  | gitoxide                             |
-|                                                               | 2. map packs later on object access miss                                   | nearly no init delay,  no unnecessary work, resource usage as needed | needs mutability;  first access of some objects may be slow                                                                                  | libgit2, git                         |
-| **2. file limit hit**                                         | 1. fail                                                                    | read-only possible                                                   |                                                                                                                                              | gitoxide                             |
-|                                                               | 2. free resources and retry, then possibly fail                            | higher reliability                                                   | needs mutability                                                                                                                             | libgit2 (only on self-imposed limit) |
-| **3. file handle reduction/avoid hitting file limit**         | 1. do not exceed internal handle count                                     | some control over file handles                                       | the entire application needs to respect count, needs sync with actual OS imposed limit, no sharing across multiple in-process pack databases | libgit2 (only within pack database)  |
-|                                                               | 2. process-wide pooling of memory maps                                     | share packs across multiple repositories instances                   | pack databases aren't self-contained anymore                                                                                                 |                                      |
-|                                                               | 3. Multi-pack index files                                                  | A single index can be used N packs, saving N-1 packs for N>1 packs   |                                                                                                                                              |                                      |
-| **4. object miss**                                            | 1. fail                                                                    | fast if object misses are expected                                   | incorrect or a burden in user code if miss is due to changed packs                                                                           | gitoxide                             |
-|                                                               | 2. lazy-load more packs, retry,      refresh known packs, retry, then fail | always correct even in the light of writers                          | can cause huge amount of extra work if object misses are expected; does not handle problem 5.                                                | libgit2                              |
-| ~~5. race when creating/altering more than a pack at a time~~ | 1. ignore                                                                  |                                                                      | a chance for occasional object misses                                                                                                        | all of them                          |
-|                                                               | 2. retry more than one time                                                | greatly reduced likelyhood of object misses                          |                                                                                                                                              |                                      |
+| **Database**      | **Problem**                                                                            | **Solution**                                                               | **Benefits**                                                                                                                  | **shortcomings**                                                                                                                                                  | **Example Implementation**           |
+|-------------------|----------------------------------------------------------------------------------------|----------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------|
+| **pack**          | **1. initialization**                                                                  | 1. map all packs at once                                                   | read-only possible; same latency for all objects                                                                              | worst case init delay, highest resource usage, some packs may never be read                                                                                       | gitoxide                             |
+|                   |                                                                                        | 2. map packs later on object access miss                                   | nearly no init delay,  no unnecessary work, resource usage as needed                                                          | needs mutability;  first access of some objects may be slow                                                                                                       | libgit2, git                         |
+| **pack**          | **2. file limit hit**                                                                  | 1. fail                                                                    | read-only possible                                                                                                            |                                                                                                                                                                   | gitoxide                             |
+|                   |                                                                                        | 2. free resources and retry, then possibly fail                            | higher reliability                                                                                                            | needs mutability                                                                                                                                                  | libgit2 (only on self-imposed limit) |
+| **pack**          | **3. file handle reduction/avoid hitting file limit**                                  | 1. do not exceed internal handle count                                     | some control over file handles                                                                                                | the entire application needs to respect count, needs sync with actual OS imposed limit,  no sharing across multiple in-process pack databases                     | libgit2 (only within pack database)  |
+|                   |                                                                                        | 2. process-wide pooling of memory maps                                     | share packs across multiple repositories instances                                                                            | pack databases aren't self-contained anymore                                                                                                                      |                                      |
+|                   |                                                                                        | 3. map whole packs at once     (instead of non-overlapping parts of them)  | Only consume one file handle per pack (as opposed to one per region)                                                          | cannot handle packs larger than 4GB on 32bit systems                                                                                                              | gitoxide                             |
+|                   |                                                                                        | 4. Multi-pack index files                                                  | A single index can be used N packs, saving N-1 packs for N>1 packs                                                            |                                                                                                                                                                   |                                      |
+| **pack**          | **4. object miss**                                                                     | 1. fail                                                                    | fast if object misses are expected                                                                                            | incorrect or a burden in user code if miss is due to changed packs                                                                                                | gitoxide                             |
+|                   |                                                                                        | 2. lazy-load more packs, retry,      refresh known packs, retry, then fail | always correct even in the light of writers                                                                                   | can cause huge amount of extra work if object misses are expected; does not handle problem 5.                                                                     | libgit2                              |
+| **pack**          | ~~5. race when creating/altering more than a pack at a time~~                          | 1. ignore                                                                  |                                                                                                                               | a chance for occasional object misses                                                                                                                             | all of them                          |
+|                   |                                                                                        | 2. retry more than one time                                                | greatly reduced likelyhood of object misses                                                                                   |                                                                                                                                                                   |                                      |
+| **pack**          | **6.too many (small) packs (i.e. due to pack-receive)      reduce lookup performance** | 1. explode pack into loose objects (and deal with them separately)         | can run in parallel (but is typically bound by max IOP/s)                                                                     | might take a while if many objects are contained in the pack due to file IOP/s; needs recompresssion and looses delta compression; risk of too many small objects |                                      |
+|                   |                                                                                        | 2. combine multiple packs into one                                         | keep all benefits of packs; very fast if pack-to-pack copy is used; can run in parallel (but is typically bound by max IOP/s) | combining with big packs takes has to write a lot of data; can be costly if pack delta compression is used                                                        |                                      |
+| **loose refs**    | **7. readers observe in-between states of transactions**                               | 1. switch to ref-table database                                            |                                                                                                                               | switches to shortcomings of ref-table                                                                                                                             |                                      |
+| **ref-table**     | **8. contention of writers around unfair lock**                                        | 1. implement process-internal queuing mechanism                            | minimal cost and high throughput with  minimal, in-process synchronization                                                    | doesn't help with contention caused by multiple processes                                                                                                         |                                      |
+|                   |                                                                                        | 2. use ref-table partitions                                                | works for in-process and multi-process case, even though it might be slower than queues.                                      | I can't find information about it anymore                                                                                                                         |                                      |
+| **loose objects** | **9. too many loose objects reduce overall performance**                               | 1. use packs                                                               |                                                                                                                               | needs scheduled or otherwise managed maintenance, and winning strategies depend on the size and business of the repository                                        |                                      |
 
 ### Amendum problem 5.
 
@@ -339,17 +357,9 @@ how [geometric repacking works](https://github.blog/2021-04-29-scaling-monorepo-
 happen that multiple packs are changed which isn't atomic. However, since this will be done in an additive fashion, first adding the new packs based on existing packs
 and loose objects, and then removing the packs and loose objects they replace, there is no race happening as all objects stay reachable at all times.
 
-## Approach
+## Use-Cases
 
-We will look at typical access patterns holistically based on various use-cases and decide which existing technical solution would fit best.
-
-## Problems and solutions
-
-### Loose references database has inconsistent reads
-
-When updating multiple references in a single transaction, writers may observe an intermediate states with some refs pointing to the previous value, some pointing to the new.
-
-The known **solution** is to switch to the `ref-table` implementation.
+We will look at typical access patterns holistically based on various use-cases, look at the problems they would run into and pick their preferred solution.
 
 ## Learnings
 
