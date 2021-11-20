@@ -177,7 +177,8 @@ Thus one has to post-process the file by reducing its size by one using `truncat
 
 ## Summary
 
-Concurrent writes to packs observable by applications pose a challenge to the current implementation and we need to find ways around that.
+Concurrent writes to packs observable by applications pose a challenge to the current implementation and we need to find ways around that. There may be other limitations
+related to any resource that changes often, most prominently refs.
 
 ## Motivation
 
@@ -185,6 +186,15 @@ Use this document to shed light on the entire problem space surrounding data con
 that are best for various use cases without committing to high costs in one case or another.
 
 ## Status Quo
+
+### Object Databases
+
+In repositories there may be millions of objects and accessing them quickly is relevant to many of git's features. 
+
+#### Packed object database
+
+As packs and the object database is inherently append-only, i.e. objects are never *[0] deleted, allowing concurrent readers to observe a consistent state even in presence
+of writers. Writers create new pack files and may remove them after adding all changes successfully.
 
 `gitoxide`s implementation as of 2021-11-19 is known to be unsuitable in the presence of concurrent writes to packs due to its inability to automatically respond
 to changed packs on disk if objects cannot be found on the first attempt. Other implementations like `git2` and canonical `git` handle this by using 
@@ -198,6 +208,72 @@ of packs is used in other implementations. Laziness allows for more efficiency a
 Failure to acquire a memory map due to limits in the amount of open file handles results in an error when initializing the pack database in the `gitoxide`s implementation.
 To my knowledge, this is handled similarly in other implementations. All implementations assume there is unlimited memory, but the effect of running out of memory is only 
 known to me in case of `gitoxide` which will panic.
+
+
+[0] deletion is possible but doesn't happen instantly, instead requiring time to pass and calls to git-maintenance and for them to be unreachable, i.e. not used in the
+    entire repository.
+
+#### Loose object database
+
+Each object is stored in a single file on disk, partitions by the first byte of its content hash. All implementations handle it similarly.
+
+### Loose reference database
+
+References, i.e. pointers to objects or other references, are stored one at a time in files, one reference at a time or multiple ones in a single well known file, `packed-refs`. 
+`packed-refs` is updated during maintenance to keep keep direct references only.
+
+Multiple references can change at the same time, but multiple changes aren't atomic as changes are made a file at a time. All implementations may observe intermediate states
+where some but not all references are updated.
+
+`packed-refs` may change during maintenance or upon deletion of references. All implementations cache the `packed-refs` file but check for a stale cache (i.e. see if file on disk
+changed in the mean time) before each use of the cached data.
+
+The database read, i.e. accessing individual reference values or iterating references, 
+performance is heavily limited by disk-IO when accessing loose files. Handling og `packed-refs` is speedy even in the presence of hundreds of thousands 
+of references due to optimizations performed in all implementations.
+
+The reference update/add performance is parallel per reference as long as the set of writers don't overlap in references to change, but bound by disk-IO, 
+due to writes happening one file at a time. `packed-refs` is not changed, but typically read to validate write constraints that help with atomicity,
+i.e. only change a value if it matches the previously observed one.
+
+Deletions are slow and a worst-case scenario as not only the loose reference(s) will be deleted but potentially the `packed-refs` file updated if 
+it contained the (possibly only) copy/ies. An update implies rewriting `packed-refs` file entirely. During that time it is locked, blocking or failing other writers, forming
+a choking point.
+
+`gitoxide`s implementation keeps one `packed-refs` cache handle to the underlying repository, which costs a file handle for a memory map if the `packed-refs` file is larger than
+32kB, theoretically configurable but currently hardcoded based on the default in `git`. 
+Other implementations maintain one per repository instance (libgit2) or one per process (git).
+
+
+| **Operation**   | **read loose file**                 | **locks**             | **costs**                                                                                                                                                                                                                                                                        | **read packed-refs**                                                        | **concurrency granularity**     | **Limit/Bottleneck**                         |
+|-----------------|-------------------------------------|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|---------------------------------|----------------------------------------------|
+| **Add/Update**  | only if comparing to previous value | loose ref             | .lock file per reference; write new value; move into place; create intermediate directories as needed; delete empty directories in the way as needed; read packed-refs                                                                                                           | only if comparing to previous value and loose reference file isn't present. | per reference                   | disk-IO                                      |
+| **Read**        | always                              |                       | read loose file; read packed-refs                                                                                                                                                                                                                                                | if loose file didn't exist                                                  | n/a                             | disk-IO                                      |
+| **Delete**      | only if assserting previous value   | loose ref; packed-ref | .lock file per reference; delete loose file; delete lock file; .lock for packed-refs, rewrite packed-refs.lock; move packed-refs.lock into place                                                                                                                                 | always                                                                      | per reference (and packed-refs) | disk-IO (and CPU if packed-refs is involved) |
+| **maintenance** | always all (or by filter)           | loose ref; packed-ref | .lock file per reference, read loose reference; .lock for packed-refs; read entire packed-refs; insert loose reference values; write entire altered packed-refs into packed-refs.lock; move packed-refs.lock into place; delete existing loose references and delete their .lock | always                                                                      | per reference and packed-refs   | disk-IO and CPU                              |
+
+Failures to add/update/delete may occur if the constraint isn't met. It's possible to wait in the presence of a lock file instead of failing immediately, 
+which is beneficial if there is no value constraint. 
+Typically value constraints will be used for safety though, so waiting for a lock to be acquired usually results in failure right after as a change
+caused by a value mismatch. However, in the presence of deletions, it is always useful to wait for locks as after deletion, the previous value can't be checked anymore
+causing the operation to succeed.
+
+Races exist do not exist for writers, but do exist for readers as they may observe intermediate states of transactions involving multiple updates.
+
+Semantically, `gitoxide`s implementation of this database is equivalent to the one of `git`.
+
+### Ref-table database
+
+**TBD**
+
+
+## Understanding changes to repositories
+
+A change to any file in a git repository has the potential to affect the process operating on it. Related changes to multiple files are never atomic, and can be observed
+in an in-between state.
+
+**TBD**
+
 
 ## Values
 
@@ -228,11 +304,22 @@ how [geometric repacking works](https://github.blog/2021-04-29-scaling-monorepo-
 happen that multiple packs are changed which isn't atomic. However, since this will be done in an additive fashion, first adding the new packs based on existing packs
 and loose objects, and then removing the packs and loose objects they replace, there is no race happening as all objects stay reachable at all times.
 
-## Understanding changes to repositories
-
-A change to any file in a git repository has the potential to affect the process operating on it. TBD
-
 ## Approach
 
 We will look at typical access patterns holistically based on various use-cases and decide which existing technical solution would fit best.
 
+## Problems and solutions
+
+### Loose references database has inconsistent reads
+
+When updating multiple references in a single transaction, writers may observe an intermediate states with some refs pointing to the previous value, some pointing to the new.
+
+The known **solution** is to switch to the `ref-table` implementation.
+
+## Learnings
+
+### Loose references database
+
+- When deleting (with or without value constraint), wait for locks instead of failing to workaround `packed-refs` as chocking point.
+- When adding/updating references, prefer to fail immediately as the chance for the same change being made concurrently is low, and failure 
+  would occur after waiting for the lock due to constraint mismatch.
