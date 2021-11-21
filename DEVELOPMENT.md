@@ -603,3 +603,22 @@ Please note that these are based on the following value system:
      best ported to the loose ref database as well. That way, there would be one API governing both, unifying sharing on the `repo()`.
    - Ref databases could have methods like `find_in_namespace()' along with the current ones, whereas the current ones delegate to the ones with namespace which may be `None`,
      to accommodate for the fact that most won't use namespaces.
+
+2. **Parameterize some sort of Policy into linked::ODB/compound::ODB**
+   - First off, this needs an experiment to try it out quickly.
+   - **thoughts**
+      - Depending on the actual implementation of `Policy`, `Repository/Easy` will or will not be thread-safe. This excludes using a `Box<…>` there as it has different
+        trait bounds (once with and once without `Send + Sync`. I would like to avoid more feature toggles in `git-repository`, but could live with it.
+      - `Repository` would end up with type parameters if feature toggles aren't used, which could be compensated for with typedefs for the few known policies. However, this
+         would also lead in a type-explosion for `Easy` and may force it to have a type parameter too.
+      - To keep the `Repository` free of type parameters we could boil policies down to typical policies, like Eager, Lazy, LazyThreadSafe, PooledLazy, PooledLazyThreadSafe, 
+        all with different tradeoffs. On that level, maybe 3 to 5 feature toggles would work, but who likes feature toggles especially if they aren't additive?
+      - `contains(oid)` is not actually exposed in any trait and not used much in `git` either, even though it is optimized for by loading pack data only on demand. We, however,
+         use `git_pack::Bundle` as smallest unit, which is a mapped index _and_ data file, thus forcing more work to be done in some cases. There is only one multi-pack index 
+         per repository, but that would force all packs to be loaded if it was implemented similarly, but that shows that Bundle's probably aren't the right abstraction or
+         have to make their pack data optional. If that happens, we definitely need some sort of policy to make this work. Definitely put `contains(oid)` into the `Find` trait
+         or a separate trait to enforce us dealing with this and keep multi-pack indices in mind.
+      - Some operations rely on pack-ids and or indices into a vector to find a pack, and this must either be stable or stable for long enough especially in the presence 
+        of refreshes.
+      - Can we be sure that there won't be another type parameter in `Repository` for the refs database? If yes, we basically say that `ref-table` will work read-only or 
+        hides its interior mutability behind RwLocks. It's probably going to be the latter as it should be fast enough, but it's sad there is inevitably some loss :/.
