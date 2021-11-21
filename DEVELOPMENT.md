@@ -607,25 +607,45 @@ Please note that these are based on the following value system:
 2. **Parameterize some sort of Policy into linked::ODB/compound::ODB**
    - First off, this needs an experiment to try it out quickly.
    - **initial thoughts**
-      - Depending on the actual implementation of `Policy`, `Repository/Easy` will or will not be thread-safe. This excludes using a `Box<…>` there as it has different
+      - ✔️ Depending on the actual implementation of `Policy`, `Repository/Easy` will or will not be thread-safe. This excludes using a `Box<…>` there as it has different
         trait bounds (once with and once without `Send + Sync`. I would like to avoid more feature toggles in `git-repository`, but could live with it.
-      - `Repository` would end up with type parameters if feature toggles aren't used, which could be compensated for with typedefs for the few known policies. However, this
-         would also lead in a type-explosion for `Easy` and may force it to have a type parameter too.
-      - To keep the `Repository` free of type parameters we could boil policies down to typical policies, like Eager, Lazy, LazyThreadSafe, PooledLazy, PooledLazyThreadSafe, 
+         - `Repository` would end up with type parameters if feature toggles aren't used, which could be compensated for with typedefs for the few known policies. However, this
+            would also lead in a type-explosion for `Easy` and may force it to have a type parameter too.
+      - ❌ To keep the `Repository` free of type parameters we could boil policies down to typical policies, like Eager, Lazy, LazyThreadSafe, PooledLazy, PooledLazyThreadSafe, 
         all with different tradeoffs. On that level, maybe 3 to 5 feature toggles would work, but who likes feature toggles especially if they aren't additive?
-      - `contains(oid)` is not actually exposed in any trait and not used much in `git` either, even though it is optimized for by loading pack data only on demand. We, however,
+      - ✔️ `contains(oid)` is not actually exposed in any trait and not used much in `git` either, even though it is optimized for by loading pack data only on demand. We, however,
          use `git_pack::Bundle` as smallest unit, which is a mapped index _and_ data file, thus forcing more work to be done in some cases. There is only one multi-pack index 
          per repository, but that would force all packs to be loaded if it was implemented similarly, but that shows that Bundle's probably aren't the right abstraction or
          have to make their pack data optional. If that happens, we definitely need some sort of policy to make this work. Definitely put `contains(oid)` into the `Find` trait
          or a separate trait to enforce us dealing with this and keep multi-pack indices in mind.
-      - Some operations rely on pack-ids and or indices into a vector to find a pack, and this must either be stable or stable for long enough especially in the presence 
+      - ✔️ Some operations rely on pack-ids and or indices into a vector to find a pack, and this must either be stable or stable for long enough especially in the presence 
         of refreshes.
-      - Can we be sure that there won't be another type parameter in `Repository` for the refs database? If yes, we basically say that `ref-table` will work read-only or 
+         - Make sure pack-ids are always incrementing, which is how it's currently implemented, too (more or less, it always restarts from 0 which should be fine but why risk it).
+      - ✔️ Can we be sure that there won't be another type parameter in `Repository` for the refs database? If yes, we basically say that `ref-table` will work read-only or 
         hides its interior mutability behind RwLocks. It's probably going to be the latter as it should be fast enough, but it's sad there is inevitably some loss :/.
-      - There is also the idea of 'views' which provide an owned set of bundles to iterate over so that pack access doesn't have to go through a lock most of the time
+         - Technically it has a similar problem as the pack database, except that it's not append only which tips the scale towards interior mutability or `find(…)`
+           implementations that are `&mut self`. However, that would exclude sharing of the ref-db, which probably is acceptable given that its usually just used to kick off
+           multi-threaded computations. We don't even want to it hide its mutability as it's probably a catastrophe if multiple threads tried to read from it. So it would have
+           to be behind a good old RWLock and maybe that's something we can live with for the Multi-RefDB that works for either loose refs or ref-table. A single lock to 
+           make the ref-table version sync. Unknown how that would relate to supporting parallel writing some time, but let's just say that _we don't think that another type
+           parameter will be necessary for this one_, ever. It might even be an option to have one per `Easy::state` if it's reasonably fast, so yes, let's not bother with that now.
+      - ❓ There is also the idea of 'views' which provide an owned set of bundles to iterate over so that pack access doesn't have to go through a lock most of the time
         unless there is the need for a refresh. This means bundles are not owned by the compound::Store anymore, but rather their container is.
         - There should be a way to gradually build up that container, so that one says: get next pack while we look for an object, otherwise the first refresh would
           map all files right away. Ideally it's index by index for `contains()` and index + data of a bundle at a time for `find()`.
         - This also means that if `contains()` is even a possibility, that on each call one will have to refresh the `view`. This might mean we want to split out that functionality
           into their own traits and rather hand people an object which is created after the `view` was configured - i.e. after calls to `contains()` one has to set the
           view to also contain packs. Ideally that happens on demand though… right now indices and packs are quite coupled so maybe this has to go away.
+        - If there are views, these really should be per-thread because only then we can turn RwLocks/Mutexes into RefCells for mutation of the internal view, which is then
+          also specific to the access pattern of the actual reader _and_ will be discarded when done (as opposed to a shared view in the Repository which lives much longer).
+          Or in other words, `Policy` implementation could optionally be thread-safe, whereas the acutal object repo is not, but the policy could be shared then if behind `Borrow`.
+   - **in the clear**
+      - `Repository`  and `Easy…` are parameterized over the `pack::Policy`
+         - There should be type-defs for typical setups
+      - Algorithmically, object access starts out with `Indices`, loading one at a time, and once the right pack is found, the pack data is loaded (if needed) to possibly extract
+        object data.
+          - `pack::Bundle` won't be used within the ODB anymore as it doesn't allow such separation and won't work well with multi pack indices.
+          - a `Policy` could implement the building blocks needed by that algorithm.
+          - The `Policy` should go through `Deref` to 
+      - Having `views` would complicate the generics tremendously and it's probably enough to handle the containment without generics entirely. Maybe there could be an optional
+        code path that's only really useful for eagerly loaded policies that can provide vectors of things (i.e. their internal storage).
