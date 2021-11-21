@@ -333,11 +333,13 @@ Solutions aren't always mutually exclusive despite the form of presentation sugg
 |                   |                                                                                                                                              | 2. retry more than one time                                                                                                                                                                                 | greatly reduced likelyhood of object misses                                                                                   |                                                                                                                                                                                                                                                      |                                                                             |
 | **pack**          | **6.too many (small) packs (i.e. due to pack-receive)      reduce lookup performance**                                                       | 1. explode pack into loose objects (and deal with them separately)                                                                                                                                          | can run in parallel (but is typically bound by max IOP/s)                                                                     | might take a while if many objects are contained in the pack due to file IOP/s; needs recompresssion and looses delta compression; risk of too many small objects                                                                                    |                                                                             |
 |                   |                                                                                                                                              | 2. combine multiple packs into one                                                                                                                                                                          | keep all benefits of packs; very fast if pack-to-pack copy is used; can run in parallel (but is typically bound by max IOP/s) | combining with big packs takes has to write a lot of data; can be costly if pack delta compression is used                                                                                                                                           |                                                                             |
+|                   |                                                                                                                                              | 3. Just-in-time maintenance after writes                                                                                                                                                                    | tuned to run just at the right time to run just as much as needed                                                             | an implementation isn't trivial as there must only be one maintenance operation per repository at a time, so some queue should be made available to not skip maintenance just because one is running already.                                        |                                                                             |
 | **loose refs**    | **7. readers of multiple references observe in-between states of transactions      which change a subset more than one of these references** | 1. switch to ref-table database                                                                                                                                                                             |                                                                                                                               | switches to shortcomings of ref-table                                                                                                                                                                                                                |                                                                             |
 |                   |                                                                                                                                              | 2. repeat reference resolution until it's stable twice in a row                                                                                                                                             | works without ref-table                                                                                                       | cost for reference resolution at least doubles if more than one reference is needed; burden on API user                                                                                                                                              |                                                                             |
 | **ref-table**     | **8. contention of writers around unfair lock**                                                                                              | 1. implement process-internal queuing mechanism                                                                                                                                                             | minimal cost and high throughput with  minimal, in-process synchronization                                                    | doesn't help with contention caused by multiple processes                                                                                                                                                                                            |                                                                             |
 |                   |                                                                                                                                              | 2. use ref-table partitions                                                                                                                                                                                 | works for in-process and multi-process case, even though it might be slower than queues.                                      | I can't find information about it anymore                                                                                                                                                                                                            |                                                                             |
 | **loose objects** | **9. too many loose objects reduce overall performance**                                                                                     | 1. use packs                                                                                                                                                                                                |                                                                                                                               | needs scheduled or otherwise managed maintenance, and winning strategies depend on the size and business of the repository                                                                                                                           |                                                                             |
+|                   |                                                                                                                                              | 2. Just-in-time maintenance after writes                                                                                                                                                                    | tuned to run just at the right time to run just as much as needed                                                             | an implementation isn't trivial as there must only be one maintenance operation per repository at a time, so some queue should be made available to not skip maintenance just because one is running already.                                        |                                                                             |
 | **all**           | **10. disk full/write failure**                                                                                                              | 1. write temporary files first, with robust auto-removal,     move into place when completed; partial transactions are robustly rolled back    or stray files aren't discoverable or are valid on their own |                                                                                                                               |                                                                                                                                                                                                                                                      | gitoxide; git (not libgit2, it leaves partial packs on receive for example) |
 | **loose refs**    | **11. namespace is stored in database instance, so different `Easy` handles share it**                                                       | 1. Have one loose ref database per state (optionally)                                                                                                                                                       |                                                                                                                               | A default must be chosen and either one might be surprising to some, i.e. shared namespace as preference depends on the use case entirely, but seems like an unsafe default.                                                                         |                                                                             |
 
@@ -486,7 +488,7 @@ and reachability bitmaps and repacks existing packs geometrically. Every 24h it 
 * **6.1 & 6.2** pack database - reduced object lookup performance/too many small packs - explode small packs to loose objects & keep packs with more than 10.000 objects
   - The trick is to strike the balance to keeping the amount of small packs low and to try not to have too many loose objects due to file system performance limitations with
     directories containing a lot of files. Within the maintenance window, 
-* **7.1 or 7.2** loose reference db - readers of multiple references observe in-between states of transactions […] → switch to ref-table or read references at least twice
+* **7.1 or 7.2** loose reference database - readers of multiple references observe in-between states of transactions […] → switch to ref-table or read references at least twice
   - With about 3 ref writes per second ref-table should not suffer from lock-contention, and should over better overall performance.
   - Otherwise, _7.2_ seems doable as well even though using the loose ref database definitely is a nightmare for reference deletions.
 * **8** ref-table - contention of writers around unfair lock - deal-breaking contention would be unexpected
@@ -508,14 +510,15 @@ and reachability bitmaps and repacks existing packs geometrically. Every 24h it 
 
 * running `git-maintenance` every 5 minutes during off-hours seems like overkill and it seems better to a built-in repacking scheduler that is based on actual load.
  
-### Self-hosted git server with front-end and zero-conf
+### Self-hosted git server with front-end and zero-conf and auto-maintenance
 
 This server is typically used by teams and runs within the intranet. Teams love it because it's easy to setup and usually 'just works' thanks to a local sqlite database
-and a directory to store repositories in.
+and a directory to store repositories in. Some teams have it running for 10 years without issues.
 
 It provides a front-end which displays repository data and allows team-members to create issues and comment on each others merge requests, among other things. This browser
 application uses websockets to keep a connection to the server through which data can be retrieved using a simple request-response protocol. After some time of inactivity 
-it automatically disconnects, but is automatically revived if the browser tab is activated again.
+it automatically disconnects, but is automatically revived if the browser tab is activated again. There is prominent warnings if the disk space is low along with suggestions
+for a fix.
 
 The implementation prides itself for showing each commit message affecting the files currently displayed without caching them in the database due to its clever use of
 multithreading, offloading segments of the history to all threads available for processing, sending the results back as they come in and stopping the processing once all
@@ -525,9 +528,43 @@ branch changed compared to the previous time it checked.
 
 Clients can push and fetch to the server via SSH and HTTP(S) transports. The SSH transport is implemented with a helper program that ultimately
 calls `git receive-pack` and `git upload-pack`. When HTTP(S) is used, the serve program handles the connection itself, using one thread per connection and 
-opens up a new `Repository` for each of them. Multi-threading is used to build packs when sending or resolve them when receiving.
+opens up a new `Repository` for each of them. Multi-threading is used to build packs when sending or resolve them when receiving. After writing a pack the server
+will schedule a background maintenance process to keep repositories fast and small.
 
 The default favors speed and using all available cores, but savvy users can run it with `--threads 1`  to only ever use a single thread for processing.
+
+**Problems and Solutions**
+
+* **1.2** pack database - map packs later on object access miss
+  - The server generally creates one `Repository` instance per connection which won't know the objects to access in advance. Minimizing initialization times is paramount.
+  - The code is willing to differentiate between single- and multi-threaded mode when both are sufficiently different, but otherwise uses multi-threading compatible types
+    even if using only one thread. As it doesn't expect to use too many cores at once this seems acceptable.
+* **2.1** pack database - file limit hit  → fail
+  - Since `Repository` instances aren't shared across connection, there is no way to free files. The system relies heavily on lazy-loading of pack data to not use system
+    resources only when needed.
+  - Update the `ulimit` if there is not enough available handles for peak operations.
+* **3.2 & 3.3**  pack database - file handle reduction/avoid hitting file limit → process wide memory map pooling & mapping entire packs/indices at once
+  - Note that 3.2 is very interesting as a way to deduplicate memory maps of multiple connections to the same repository. It should be fine to do without such optimization though
+    and just increase the limit for file handles.
+* **4.2** pack database - object miss  → lazy-load next pack, retry, repeat until there is no more pack to load
+  - client code doesn't want to know about internal optimizations and thus prefers lazy-loading. It's notable that none-existing objects will force loading all packs that way,
+    but that isn't expected on a server that definitely holds the entire object database.
+* **6.1 & 6.2 & 6.3** pack database - reduced object lookup performance/too many small packs - explode small packs to loose objects & keep packs with more than 10.000 objects & just-in-time maintenance
+  - Even in low-traffic servers its important to maintain them to avoid running into unavailability. 
+* **7.1** loose reference database - readers of multiple references observe in-between states of transactions […] → switch to ref-table
+  - concurrency issues are less likely on a low-traffic server with people mostly pushing a single branch at a time. However, switching to ref-table solves a potential
+    issue that should be chosen if there is no other reason to use a loose reference database
+* **8** ref-table - contention of writers around unfair lock - n/a
+  - not an issue as there isn't enough traffic here
+* **9.2** loose object database - too many loose objects reduce overall performance - just-in-time maintenance
+* **10** - disk full - display early warnings in the front-end to every user to get it fixed
+  - This solution is implemented on application side (and not in `gitoxide`), it's intersting enough to mention though for systems that operate themselves.
+  - One could also imagine that it tries to spend the nights aggressively compression repositories, some low-hanging fruits there.
+* **10** - write failure - fail connection
+  - write failures aren't specifically handled but result in typical Rust error behaviour probably alongside error reporting on the respective channels of the git-transport sideband.
+  - `gitoxide` is made to cleanup on failure and leave nothing behind that could accumulate.
+* **11** - loose ref database - namespace isn't per connection
+  - Needs fixing in `gitoxide`.
 
 ## Learnings
 
