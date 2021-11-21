@@ -568,15 +568,9 @@ The default favors speed and using all available cores, but savvy users can run 
 
 ## Learnings
 
-### Server Applications
-
-- There is an off-chance that on busy repositories interactions that change multiple references with a single push are observable in fetches, clones with part of the refs
-  pointing to the old value, and a part pointing to the new one. Despite unlikely it might be that these refs are only valid together so such fetch would observe an invalid
-  state. Using a ref-table is the only known mitigation.
-
 ### Loose references database
 
-- When deleting (with or without value constraint), wait for locks instead of failing to workaround `packed-refs` as chocking point. It's certainly worth it to split transactions
+- When deleting (with or without value constraint), wait for locks instead of failing to workaround `packed-refs` as choking point. It's certainly worth it to split transactions
   so that deletions are done separately from updates to allow usage of the most suitable locking strategies.
 - When adding/updating references, prefer to fail immediately as the chance for the same change being made concurrently is low, and failure 
   would occur after waiting for the lock due to constraint mismatch.
@@ -629,25 +623,32 @@ Please note that these are based on the following value system:
            to be behind a good old RWLock and maybe that's something we can live with for the Multi-RefDB that works for either loose refs or ref-table. A single lock to 
            make the ref-table version sync. Unknown how that would relate to supporting parallel writing some time, but let's just say that _we don't think that another type
            parameter will be necessary for this one_, ever. It might even be an option to have one per `Easy::state` if it's reasonably fast, so yes, let's not bother with that now.
+         - The ref-table DB could probably must be `&mut` for finding references and then be placed behind an Rc<RefCell> or Arc<Mutex> respectively. The `Repository` will just be 
+           share storage container and maybe there will be a better name for it.
       - ✔️ There is also the idea of 'views' which provide an owned set of bundles to iterate over so that pack access doesn't have to go through a lock most of the time
         unless there is the need for a refresh. This means bundles are not owned by the compound::Store anymore, but rather their container is.
         - There should be a way to gradually build up that container, so that one says: get next pack while we look for an object, otherwise the first refresh would
           map all files right away. Ideally it's index by index for `contains()` and index + data of a bundle at a time for `find()`.
-        - This also means that if `contains()` is even a possibility, that on each call one will have to refresh the `view`. This might mean we want to split out that functionality
+        - ❌ This also means that if `contains()` is even a possibility, that on each call one will have to refresh the `view`. This might mean we want to split out that functionality
           into their own traits and rather hand people an object which is created after the `view` was configured - i.e. after calls to `contains()` one has to set the
           view to also contain packs. Ideally that happens on demand though… right now indices and packs are quite coupled so maybe this has to go away.
         - If there are views, these really should be per-thread because only then we can turn RwLocks/Mutexes into RefCells for mutation of the internal view, which is then
           also specific to the access pattern of the actual reader _and_ will be discarded when done (as opposed to a shared view in the Repository which lives much longer).
           Or in other words, `Policy` implementation could optionally be thread-safe, whereas the actual object repo is not, but the policy could be shared then if behind `Borrow`.
           Doing this would also mean that the Repository doesn't even have a repository anymore, but just a `pack::Policy`.
+      - It's still unclear how to best control repeated refreshes in presence of the possibility of blobs missing due to `--filter=blob`. Maybe this is the moment where one would
+        access the policy directly to turn off refreshes for the duration of the operation.
    - **in the clear**
-      - Algorithmically, object access starts out with `Indices`, loading one at a time, and once the right pack is found, the pack data is loaded (if needed) to possibly extract
-        object data.
+      - Algorithmically, object access starts out with `Indices`, fetching more until the object is contained within, then the corresponding the pack data is loaded (if needed) 
+        to possibly extract object data.
+          - The result of a contains check would have to be a pack id to allow looking it up in the own cache and then ask it to be loaded/returned by the `Policy`, along with
+            maybe the indices required to fetch it from the pack, maybe just a `bundle::Location` of sorts. It could also be a struct to encode the pack-id and the index within it.
           - `pack::Bundle` won't be used within the ODB anymore as it doesn't allow such separation and won't work well with multi pack indices.
           - a `Policy` could implement the building blocks needed by that algorithm.
           - The `Policy` should go through `Deref` to allow for different ways of internal shared ownership of actual indices, but that would also mean multiple implementations
-            would either duplicate code or forward to even more generic implementations.
+         would either duplicate code or forward to even more generic implementations.
           - `Policy` might need to be implemented for `&T` and `Box|Rc|Arc<T>` where `T: Policy` as well, let's see.
+          - Of course, the `Policy` must be object safe
       - `Views` work if they are placed in the state and are thread-local for that reason, with interior mutability. A `view` will just be the linked odb implementation itself.
           - It should contain a borrowed `Policy` which is owned in the shared `Repository`. The latter should contains a list of paths to object databases (i.e. alternates) to 
             allow seeing all multi-pack indices and indices like it is one repository.
@@ -655,3 +656,6 @@ Please note that these are based on the following value system:
           - each of these repository types has their own `Easy` types.
           - _Difficulties_: Some `Platform` types store `repo: Access::RepoRef` and use `repo.deref().odb`, but that now only has a `Policy` from which a new `State` should be created
             or they store the State right away… .
+      - The default `Policy` should be the least surprising, hence incur mapping costs over time and automatically refresh itself if needed.
+      - Make sure auto-refresh can be turned off on policy level to allow users to probe for objects despite `--filter=blob` or similar without slowing down to a crawl due to
+        a refresh each time an object is missing.
