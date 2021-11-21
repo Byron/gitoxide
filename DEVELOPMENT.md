@@ -452,7 +452,7 @@ but ideally that is possible without loosing performance during multi-threading.
 
 ### Professional git-hosting mono-repo server with git-maintenance tasks and just-in-time replication
 
-A single server process handles all reads and writes concurrently and receives and sends using the git protocol using an async TCP/IO framework.
+A single server process handles all reads and writes concurrently and receives and sends using the git protocol using an async TCP/IO framework over a custom transport.
 All operations calling into `gitoxide` are unblocked using a thread pool. There is only one repository with a reference namespace for each client repository of which it
 contains 50.000, each averaging 5000 objects and 5 references for a total of 250.000.000 objects and 250.000 references. As many of these repositories have PNG files and
 binaries checked in, they average to about 25MB of storage space for a total of 1.25TB.
@@ -510,7 +510,24 @@ and reachability bitmaps and repacks existing packs geometrically. Every 24h it 
  
 ### Self-hosted git server with front-end and zero-conf
 
-**TBD**
+This server is typically used by teams and runs within the intranet. Teams love it because it's easy to setup and usually 'just works' thanks to a local sqlite database
+and a directory to store repositories in.
+
+It provides a front-end which displays repository data and allows team-members to create issues and comment on each others merge requests, among other things. This browser
+application uses websockets to keep a connection to the server through which data can be retrieved using a simple request-response protocol. After some time of inactivity 
+it automatically disconnects, but is automatically revived if the browser tab is activated again.
+
+The implementation prides itself for showing each commit message affecting the files currently displayed without caching them in the database due to its clever use of
+multithreading, offloading segments of the history to all threads available for processing, sending the results back as they come in and stopping the processing once all
+files and directories are annotated. It uses a single `Repository` instance per thread which changes as the client browses to different repositories, and expects all
+objects to exists even in presence of pushes happening in the meantime. It checks for the latter by regularly polling if the commit of the current 
+branch changed compared to the previous time it checked.
+
+Clients can push and fetch to the server via SSH and HTTP(S) transports. The SSH transport is implemented with a helper program that ultimately
+calls `git receive-pack` and `git upload-pack`. When HTTP(S) is used, the serve program handles the connection itself, using one thread per connection and 
+opens up a new `Repository` for each of them. Multi-threading is used to build packs when sending or resolve them when receiving.
+
+The default favors speed and using all available cores, but savvy users can run it with `--threads 1`  to only ever use a single thread for processing.
 
 ## Learnings
 
