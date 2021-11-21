@@ -71,6 +71,8 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     }
 
     /// Set the reference namespace to the given value, like `"foo"` or `"foo/bar"`.
+    ///
+    /// Note that this value is shared across all `Easy…` instances as the value is stored in the shared `Repository`.
     fn set_namespace<'a, Name, E>(
         &mut self,
         namespace: Name,

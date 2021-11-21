@@ -339,6 +339,7 @@ Solutions aren't always mutually exclusive despite the form of presentation sugg
 |                   |                                                                                                                                              | 2. use ref-table partitions                                                                                                                                                                                 | works for in-process and multi-process case, even though it might be slower than queues.                                      | I can't find information about it anymore                                                                                                                                                                                                            |                                                                             |
 | **loose objects** | **9. too many loose objects reduce overall performance**                                                                                     | 1. use packs                                                                                                                                                                                                |                                                                                                                               | needs scheduled or otherwise managed maintenance, and winning strategies depend on the size and business of the repository                                                                                                                           |                                                                             |
 | **all**           | **10. disk full/write failure**                                                                                                              | 1. write temporary files first, with robust auto-removal,     move into place when completed; partial transactions are robustly rolled back    or stray files aren't discoverable or are valid on their own |                                                                                                                               |                                                                                                                                                                                                                                                      | gitoxide; git (not libgit2, it leaves partial packs on receive for example) |
+| **loose refs**    | **11. namespace is stored in database instance, so different `Easy` handles share it**                                                       | 1. Have one loose ref database per state (optionally)                                                                                                                                                       |                                                                                                                               | A default must be chosen and either one might be surprising to some, i.e. shared namespace as preference depends on the use case entirely, but seems like an unsafe default.                                                                         |                                                                             |
 
 ### Amendum problem 5.
 
@@ -499,6 +500,9 @@ and reachability bitmaps and repacks existing packs geometrically. Every 24h it 
 * **10** - write failure - fail connection
   - write failures aren't specifically handled but result in typical Rust error behaviour probably alongside error reporting on the respective channels of the git-transport sideband.
   - `gitoxide` is made to cleanup on failure and leave nothing behind that could accumulate.
+* **11** - loose ref database - namespace isn't per connection
+  - This needs fixing in `gitoxide` to probably be unshared by default. Namespaces are most useful on the server, which would use an `EasyArcExclusive` per connection.
+    Sharing ref namespaces would be surprising and wrong.
  
 **Drawbacks**
 
@@ -537,4 +541,11 @@ Please note that these are based on the following value system:
 - We don't value the handling of out of memory situations differently than panicking. This might change if `gitoxide` should fly to Mars or land in the linux kernel though.
 - We don't value enabling 32 bit applications to deal with pack files greater than 4GB and leave this field entirely to the other implementations.
 
-**TBD**
+1. **per `Easy…`  ref namespace**
+   - As loose ref databases are cheap, one should live on each state by default, and if these namespaces were cloned with the `Easy…` it would be straightforward to propagate
+     this configuration.
+   - There is still the open question how this should work when `ref-table` appears on the scene and its multi-file database that can most certainly benefit from shared memory maps
+     similarly to pack databases, thus sharing it on the `repo()`. Maybe it would not contain the namespace but pass it as a parameter every time, which for consistency would be
+     best ported to the loose ref database as well. That way, there would be one API governing both, unifying sharing on the `repo()`.
+   - Ref databases could have methods like `find_in_namespace()' along with the current ones, whereas the current ones delegate to the ones with namespace which may be `None`,
+     to accommodate for the fact that most won't use namespaces.
