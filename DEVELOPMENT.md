@@ -629,7 +629,7 @@ Please note that these are based on the following value system:
            to be behind a good old RWLock and maybe that's something we can live with for the Multi-RefDB that works for either loose refs or ref-table. A single lock to 
            make the ref-table version sync. Unknown how that would relate to supporting parallel writing some time, but let's just say that _we don't think that another type
            parameter will be necessary for this one_, ever. It might even be an option to have one per `Easy::state` if it's reasonably fast, so yes, let's not bother with that now.
-      - ❓ There is also the idea of 'views' which provide an owned set of bundles to iterate over so that pack access doesn't have to go through a lock most of the time
+      - ✔️ There is also the idea of 'views' which provide an owned set of bundles to iterate over so that pack access doesn't have to go through a lock most of the time
         unless there is the need for a refresh. This means bundles are not owned by the compound::Store anymore, but rather their container is.
         - There should be a way to gradually build up that container, so that one says: get next pack while we look for an object, otherwise the first refresh would
           map all files right away. Ideally it's index by index for `contains()` and index + data of a bundle at a time for `find()`.
@@ -641,13 +641,17 @@ Please note that these are based on the following value system:
           Or in other words, `Policy` implementation could optionally be thread-safe, whereas the actual object repo is not, but the policy could be shared then if behind `Borrow`.
           Doing this would also mean that the Repository doesn't even have a repository anymore, but just a `pack::Policy`.
    - **in the clear**
-      - `Repository`  and `Easy…` are parameterized over the `pack::Policy`
-         - There should be type-defs for typical setups
       - Algorithmically, object access starts out with `Indices`, loading one at a time, and once the right pack is found, the pack data is loaded (if needed) to possibly extract
         object data.
           - `pack::Bundle` won't be used within the ODB anymore as it doesn't allow such separation and won't work well with multi pack indices.
           - a `Policy` could implement the building blocks needed by that algorithm.
           - The `Policy` should go through `Deref` to allow for different ways of internal shared ownership of actual indices, but that would also mean multiple implementations
             would either duplicate code or forward to even more generic implementations.
-      - Having `views` would complicate the generics tremendously and it's probably enough to handle the containment without generics entirely. Maybe there could be an optional
-        code path that's only really useful for eagerly loaded policies that can provide vectors of things (i.e. their internal storage).
+          - `Policy` might need to be implemented for `&T` and `Box|Rc|Arc<T>` where `T: Policy` as well, let's see.
+      - `Views` work if they are placed in the state and are thread-local for that reason, with interior mutability. A `view` will just be the linked odb implementation itself.
+          - It should contain a borrowed `Policy` which is owned in the shared `Repository`. The latter should contains a list of paths to object databases (i.e. alternates) to 
+            allow seeing all multi-pack indices and indices like it is one repository.
+      - `Repository`  turns into `RepositoryLocal` with a `Rc<dyn Policy>` that isn't `Sync` and adds a `Repository` type that does the same but with `Arc<dyn Policy + Sync + 'static>`.
+          - each of these repository types has their own `Easy` types.
+          - _Difficulties_: Some `Platform` types store `repo: Access::RepoRef` and use `repo.deref().odb`, but that now only has a `Policy` from which a new `State` should be created
+            or they store the State right away… .
