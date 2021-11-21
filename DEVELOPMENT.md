@@ -606,7 +606,7 @@ Please note that these are based on the following value system:
 
 2. **Parameterize some sort of Policy into linked::ODB/compound::ODB**
    - First off, this needs an experiment to try it out quickly.
-   - **thoughts**
+   - **initial thoughts**
       - Depending on the actual implementation of `Policy`, `Repository/Easy` will or will not be thread-safe. This excludes using a `Box<…>` there as it has different
         trait bounds (once with and once without `Send + Sync`. I would like to avoid more feature toggles in `git-repository`, but could live with it.
       - `Repository` would end up with type parameters if feature toggles aren't used, which could be compensated for with typedefs for the few known policies. However, this
@@ -622,3 +622,10 @@ Please note that these are based on the following value system:
         of refreshes.
       - Can we be sure that there won't be another type parameter in `Repository` for the refs database? If yes, we basically say that `ref-table` will work read-only or 
         hides its interior mutability behind RwLocks. It's probably going to be the latter as it should be fast enough, but it's sad there is inevitably some loss :/.
+      - There is also the idea of 'views' which provide an owned set of bundles to iterate over so that pack access doesn't have to go through a lock most of the time
+        unless there is the need for a refresh. This means bundles are not owned by the compound::Store anymore, but rather their container is.
+        - There should be a way to gradually build up that container, so that one says: get next pack while we look for an object, otherwise the first refresh would
+          map all files right away. Ideally it's index by index for `contains()` and index + data of a bundle at a time for `find()`.
+        - This also means that if `contains()` is even a possibility, that on each call one will have to refresh the `view`. This might mean we want to split out that functionality
+          into their own traits and rather hand people an object which is created after the `view` was configured - i.e. after calls to `contains()` one has to set the
+          view to also contain packs. Ideally that happens on demand though… right now indices and packs are quite coupled so maybe this has to go away.
