@@ -638,7 +638,8 @@ Please note that these are based on the following value system:
           view to also contain packs. Ideally that happens on demand though… right now indices and packs are quite coupled so maybe this has to go away.
         - If there are views, these really should be per-thread because only then we can turn RwLocks/Mutexes into RefCells for mutation of the internal view, which is then
           also specific to the access pattern of the actual reader _and_ will be discarded when done (as opposed to a shared view in the Repository which lives much longer).
-          Or in other words, `Policy` implementation could optionally be thread-safe, whereas the acutal object repo is not, but the policy could be shared then if behind `Borrow`.
+          Or in other words, `Policy` implementation could optionally be thread-safe, whereas the actual object repo is not, but the policy could be shared then if behind `Borrow`.
+          Doing this would also mean that the Repository doesn't even have a repository anymore, but just a `pack::Policy`.
    - **in the clear**
       - `Repository`  and `Easy…` are parameterized over the `pack::Policy`
          - There should be type-defs for typical setups
@@ -646,6 +647,7 @@ Please note that these are based on the following value system:
         object data.
           - `pack::Bundle` won't be used within the ODB anymore as it doesn't allow such separation and won't work well with multi pack indices.
           - a `Policy` could implement the building blocks needed by that algorithm.
-          - The `Policy` should go through `Deref` to 
+          - The `Policy` should go through `Deref` to allow for different ways of internal shared ownership of actual indices, but that would also mean multiple implementations
+            would either duplicate code or forward to even more generic implementations.
       - Having `views` would complicate the generics tremendously and it's probably enough to handle the containment without generics entirely. Maybe there could be an optional
         code path that's only really useful for eagerly loaded policies that can provide vectors of things (i.e. their internal storage).
