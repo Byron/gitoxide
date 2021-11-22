@@ -5,6 +5,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["thread-safe"]
+thread-safe = []
+
 [dependencies]
 git-pack = { path = "../../git-pack", version = "*" }
 parking_lot = { version = "0.11.0", default-features = false }

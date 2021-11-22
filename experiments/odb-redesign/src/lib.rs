@@ -1,80 +1,141 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused_variables)]
 
-use std::cell::RefCell;
-use std::ops::Deref;
-use std::rc::Rc;
-use std::sync::Arc;
+mod features {
+    pub mod threaded {
+        use std::sync::Arc;
 
-pub mod policy {
-    pub struct IndexMarker(u32);
+        #[cfg(feature = "thread-safe")]
+        #[macro_export]
+        macro_rules! marker_traits {
+            ($target:ident, $trait:tt) => {
+                pub trait $target: $trait + Send + Sync {}
+            };
+        }
 
-    pub mod next_indices {
-        use crate::policy::IndexMarker;
+        pub type OwnShared<T> = Arc<T>;
+        pub type Mutable<T> = parking_lot::Mutex<T>;
 
-        pub enum Outcome<IndexRef> {
-            Next {
-                indices: Vec<IndexRef>, // should probably be small vec to get around most allocations
-                mark: IndexMarker,      // use to show where you left off next time you call
-            },
-            /// No new indices to look at, caller should stop give up
-            NoMoreIndices,
+        pub fn into_shared<T>(v: T) -> OwnShared<T> {
+            Arc::new(v)
+        }
+        pub fn with_interior_mutability<T>(v: T) -> Mutable<T> {
+            parking_lot::Mutex::new(v)
         }
     }
-}
 
-trait Policy {
-    type PackData: Deref<Target = git_pack::data::File>;
-    type PackIndex: Deref<Target = git_pack::index::File>;
+    pub(crate) mod local {
+        use std::cell::RefCell;
+        use std::rc::Rc;
 
-    fn next_indices(&mut self) -> std::io::Result<policy::next_indices::Outcome<Self::PackIndex>>;
-}
+        pub type OwnShared<T> = Rc<T>;
+        pub type Mutable<T> = RefCell<T>;
 
-struct EagerLocal {}
+        #[cfg(not(feature = "thread-safe"))]
+        #[macro_export]
+        macro_rules! marker_traits {
+            ($target:ident, $trait:ty) => {
+                type $target = dyn ($trait);
+            };
+        }
 
-mod thread_safe {
-    use std::sync::Arc;
-
-    pub(crate) trait ThreadSafe: Send + Sync {}
-
-    pub fn into_shared<T>(v: T) -> Arc<T> {
-        Arc::new(v)
+        pub fn into_shared<T>(v: T) -> Rc<T> {
+            Rc::new(v)
+        }
+        pub fn with_interior_mutability<T>(v: T) -> Mutable<T> {
+            RefCell::new(v)
+        }
     }
-    pub fn add_interior_mutability<T>(v: T) -> parking_lot::Mutex<T> {
-        parking_lot::Mutex::new(v)
+
+    #[cfg(not(feature = "thread-safe"))]
+    pub use local::*;
+    #[cfg(feature = "thread-safe")]
+    pub use threaded::*;
+}
+
+mod odb {
+    use crate::features;
+    use std::ops::Deref;
+
+    pub mod pack {
+        pub struct IndexMarker(u32);
+
+        pub mod next_indices {
+            use crate::odb::pack::IndexMarker;
+
+            pub enum Outcome<IndexRef> {
+                Next {
+                    indices: Vec<IndexRef>, // should probably be small vec to get around most allocations
+                    mark: IndexMarker,      // use to show where you left off next time you call
+                },
+                /// No new indices to look at, caller should stop give up
+                NoMoreIndices,
+            }
+        }
     }
-}
 
-mod thread_local {
-    use std::rc::Rc;
+    pub trait Policy {
+        type PackData: Deref<Target = git_pack::data::File>;
+        type PackIndex: Deref<Target = git_pack::index::File>;
 
-    trait ThreadSafe: Send + Sync {}
-
-    pub fn into_shared<T>(v: T) -> Rc<T> {
-        Rc::new(v)
+        fn next_indices(&mut self) -> std::io::Result<pack::next_indices::Outcome<Self::PackIndex>>;
     }
-    pub fn add_interior_mutability<T>(v: T) -> parking_lot::Mutex<T> {
-        parking_lot::Mutex::new(v)
+
+    #[derive(Default)]
+    pub struct EagerLocal {
+        bundles: features::local::Mutable<Vec<features::local::OwnShared<git_pack::Bundle>>>,
     }
+
+    impl Policy for EagerLocal {
+        type PackData = features::local::OwnShared<git_pack::data::File>;
+        type PackIndex = features::local::OwnShared<git_pack::index::File>;
+
+        fn next_indices(&mut self) -> std::io::Result<crate::odb::pack::next_indices::Outcome<Self::PackIndex>> {
+            todo!()
+        }
+    }
+
+    fn try_setup() {
+        let policy = EagerLocal::default();
+        // let policy = Box::new(EagerLocal::default())
+        //     as Box<
+        //         dyn DynPolicy<
+        //             PackIndex = features::OwnShared<git_pack::data::File>,
+        //             PackData = features::OwnShared<git_pack::data::File>,
+        //         >,
+        //     >;
+    }
+
+    crate::marker_traits!(DynPolicy, Policy);
 }
 
-type DynRcPolicy = dyn Policy<PackIndex = Rc<git_pack::data::File>, PackData = Rc<git_pack::data::File>>;
-type DynArcPolicy =
-    dyn Policy<PackIndex = Arc<git_pack::data::File>, PackData = Arc<git_pack::data::File>> + thread_safe::ThreadSafe;
+mod repository {
+    // type DynPolicy = dyn Policy<
+    //         PackIndex = threading::OwnShared<git_pack::data::File>,
+    //         PackData = threading::OwnShared<git_pack::data::File>,
+    //     > + Send
+    //     + Sync;
 
-/// Formerly RepositoryLocal
-struct SharedLocal {
-    pack_policy: Rc<RefCell<dyn Policy<PackIndex = Rc<git_pack::data::File>, PackData = Rc<git_pack::data::File>>>>,
-}
+    use crate::{features, odb};
+    // We probably don't need to use a macro like that as we have a feature toggle in Repository, or do we?
+    // We need it, as otherwise there is no way to instantiate the correct version of the policy, or is there?
+    // Should that be delegated to the caller, but if so that would lock them in to a choice and need custom code
+    // depending on a feature toggle that they should only switch on or off.
+    // crate::marker_traits!(DynPolicy, Policy);
 
-/// Formerly Repository
-struct Shared {
-    pack_policy: Arc<parking_lot::Mutex<DynArcPolicy>>,
-}
+    struct Repository {
+        pack_policy: features::OwnShared<
+            dyn odb::DynPolicy<
+                PackIndex = features::OwnShared<git_pack::data::File>,
+                PackData = features::OwnShared<git_pack::data::File>,
+            >,
+        >,
+    }
 
-/// Using generics here would mean we need policy to handle its mutability itself, pushing it down might be easiest if generics
-/// should be a thing.
-/// Without generics, there would be a thread-safe and thread-local version of everything.
-/// Maybe this should be solved with a feature toggle instead? Aka thread-safe or not?
-struct SharedGeneric<PackPolicy: Policy> {
-    pack_policy: PackPolicy,
+    // /// Using generics here would mean we need policy to handle its mutability itself, pushing it down might be easiest if generics
+    // /// should be a thing.
+    // /// Without generics, there would be a thread-safe and thread-local version of everything.
+    // /// Maybe this should be solved with a feature toggle instead? Aka thread-safe or not?
+    // struct RepositoryGeneric<PackPolicy: Policy> {
+    //     pack_policy: PackPolicy,
+    // }
 }

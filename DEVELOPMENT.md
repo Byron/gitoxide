@@ -659,3 +659,6 @@ Please note that these are based on the following value system:
       - The default `Policy` should be the least surprising, hence incur mapping costs over time and automatically refresh itself if needed.
       - Make sure auto-refresh can be turned off on policy level to allow users to probe for objects despite `--filter=blob` or similar without slowing down to a crawl due to
         a refresh each time an object is missing.
+      - The way this is going, `Deref` can panic in single-threaded applications only if recursion is used. Thread-safe versions of this will hang 
+        unless a reentrant mutex is used. Since we don't call ourselves recursively (i.e. during `find_object(…)`, this won't be an issue. It should also be impossible in single-threaded
+        mode even with multiple `Easy` instances.
