@@ -7,26 +7,20 @@ mod features {
         pub type OwnShared<T> = Arc<T>;
         pub type Mutable<T> = parking_lot::Mutex<T>;
 
-        pub fn into_shared<T>(v: T) -> OwnShared<T> {
-            Arc::new(v)
-        }
-        pub fn with_interior_mutability<T>(v: T) -> Mutable<T> {
-            parking_lot::Mutex::new(v)
+        pub fn get_mut<T>(v: &Mutable<T>) -> parking_lot::MutexGuard<'_, T> {
+            v.lock()
         }
     }
 
     mod local {
-        use std::cell::RefCell;
+        use std::cell::{RefCell, RefMut};
         use std::rc::Rc;
 
         pub type OwnShared<T> = Rc<T>;
         pub type Mutable<T> = RefCell<T>;
 
-        pub fn into_shared<T>(v: T) -> Rc<T> {
-            Rc::new(v)
-        }
-        pub fn with_interior_mutability<T>(v: T) -> Mutable<T> {
-            RefCell::new(v)
+        pub fn get_mut<T>(v: &Mutable<T>) -> RefMut<'_, T> {
+            v.borrow_mut()
         }
     }
 
@@ -38,9 +32,10 @@ mod features {
 
 mod odb {
     use crate::features;
-    use std::borrow::BorrowMut;
+    use crate::features::get_mut;
+    use std::io;
     use std::ops::Deref;
-    use std::path::PathBuf;
+    use std::path::Path;
 
     pub mod pack {
         pub struct IndexMarker(u32);
@@ -64,28 +59,25 @@ mod odb {
         type PackIndex: Deref<Target = git_pack::index::File>;
 
         fn next_indices(
-            &mut self,
+            &self,
+            objects_directory: &Path,
             marker: Option<pack::IndexMarker>,
         ) -> std::io::Result<pack::next_indices::Outcome<Self::PackIndex>>;
     }
 
+    #[derive(Default)]
     pub struct Eager {
-        db_paths: Vec<PathBuf>,
-        bundles: features::Mutable<Vec<features::OwnShared<git_pack::Bundle>>>,
+        state: features::Mutable<eager::State>,
     }
 
-    #[derive(Debug, thiserror::Error)]
-    pub enum Error {
-        #[error(transparent)]
-        AlternateResolve(#[from] git_odb::alternate::Error),
-    }
+    mod eager {
+        use crate::features;
+        use std::path::PathBuf;
 
-    impl Eager {
-        pub fn at(objects_directory: impl Into<PathBuf>) -> Result<Self, Error> {
-            Ok(Eager {
-                db_paths: git_odb::alternate::resolve(objects_directory)?,
-                bundles: features::Mutable::new(Vec::new()),
-            })
+        #[derive(Default)]
+        pub struct State {
+            pub(crate) db_paths: Vec<PathBuf>,
+            pub(crate) bundles: Vec<features::OwnShared<git_pack::Bundle>>,
         }
     }
 
@@ -94,16 +86,35 @@ mod odb {
         type PackIndex = features::OwnShared<git_pack::index::File>;
 
         fn next_indices(
-            &mut self,
+            &self,
+            objects_directory: &Path,
             marker: Option<pack::IndexMarker>,
         ) -> std::io::Result<crate::odb::pack::next_indices::Outcome<Self::PackIndex>> {
-            let bundles = self.bundles.borrow_mut();
+            let mut state = get_mut(&self.state);
+            if state.db_paths.is_empty() {
+                state.db_paths.extend(
+                    git_odb::alternate::resolve(objects_directory)
+                        .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
+                );
+            } else {
+                debug_assert_eq!(
+                    Some(objects_directory),
+                    state.db_paths.get(0).map(|p| p.as_path()),
+                    "Eager policy can't be shared across different repositories"
+                );
+            }
+
+            // if bundles.is_empty()
+            // match marker {
+            //     Some(marker) if marker == bundles.len() => todo!()
+            // }
+            // git_odb::alternate::resolve(objects_directory)
             todo!()
         }
     }
 
     fn try_setup() -> anyhow::Result<()> {
-        let policy = Eager::at(".git/objects")?;
+        let policy = Eager::default();
         // let policy = Box::new(EagerLocal::default())
         //     as Box<
         //         dyn DynPolicy<

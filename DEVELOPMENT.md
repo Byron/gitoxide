@@ -661,3 +661,4 @@ Please note that these are based on the following value system:
         unless a reentrant mutex is used. Since we don't call ourselves recursively (i.e. during `find_object(…)`, this won't be an issue. It should also be impossible in single-threaded
         mode even with multiple `Easy` instances.
       - memory map pooling across repositories can work if the odb informs about the entry-point path when asking for more indices to check
+      - It's OK to use a feature toggle to switch between Rc<RefCel> and Arc<Mutex>
