@@ -647,8 +647,6 @@ Please note that these are based on the following value system:
           - a `Policy` could implement the building blocks needed by that algorithm.
           - The `Policy` should go through `Deref` to allow for different ways of internal shared ownership of actual indices, but that would also mean multiple implementations
          would either duplicate code or forward to even more generic implementations.
-          - `Policy` might need to be implemented for `&T` and `Box|Rc|Arc<T>` where `T: Policy` as well, let's see.
-          - Of course, the `Policy` must be object safe
       - `Views` work if they are placed in the state and are thread-local for that reason, with interior mutability. A `view` will just be the linked odb implementation itself.
           - It should contain a borrowed `Policy` which is owned in the shared `Repository`. The latter should contains a list of paths to object databases (i.e. alternates) to 
             allow seeing all multi-pack indices and indices like it is one repository.
@@ -662,3 +660,4 @@ Please note that these are based on the following value system:
       - The way this is going, `Deref` can panic in single-threaded applications only if recursion is used. Thread-safe versions of this will hang 
         unless a reentrant mutex is used. Since we don't call ourselves recursively (i.e. during `find_object(…)`, this won't be an issue. It should also be impossible in single-threaded
         mode even with multiple `Easy` instances.
+      - memory map pooling across repositories can work if the odb informs about the entry-point path when asking for more indices to check

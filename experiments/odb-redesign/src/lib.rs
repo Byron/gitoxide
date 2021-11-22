@@ -4,14 +4,6 @@ mod features {
     mod threaded {
         use std::sync::Arc;
 
-        #[cfg(feature = "thread-safe")]
-        #[macro_export]
-        macro_rules! marker_traits {
-            ($target:ident, $trait:tt) => {
-                pub trait $target: $trait + Send + Sync {}
-            };
-        }
-
         pub type OwnShared<T> = Arc<T>;
         pub type Mutable<T> = parking_lot::Mutex<T>;
 
@@ -29,14 +21,6 @@ mod features {
 
         pub type OwnShared<T> = Rc<T>;
         pub type Mutable<T> = RefCell<T>;
-
-        #[cfg(not(feature = "thread-safe"))]
-        #[macro_export]
-        macro_rules! marker_traits {
-            ($target:ident, $trait:tt) => {
-                pub trait $target: $trait {}
-            };
-        }
 
         pub fn into_shared<T>(v: T) -> Rc<T> {
             Rc::new(v)
@@ -129,38 +113,23 @@ mod odb {
         //     >;
         Ok(())
     }
-
-    crate::marker_traits!(DynPolicy, Policy);
 }
 
 mod repository {
-    // type DynPolicy = dyn Policy<
-    //         PackIndex = threading::OwnShared<git_pack::data::File>,
-    //         PackData = threading::OwnShared<git_pack::data::File>,
-    //     > + Send
-    //     + Sync;
+    use crate::odb;
 
-    use crate::{features, odb};
-    // We probably don't need to use a macro like that as we have a feature toggle in Repository, or do we?
-    // We need it, as otherwise there is no way to instantiate the correct version of the policy, or is there?
-    // Should that be delegated to the caller, but if so that would lock them in to a choice and need custom code
-    // depending on a feature toggle that they should only switch on or off.
-    // crate::marker_traits!(DynPolicy, Policy);
+    pub mod raw {
+        use crate::odb;
 
-    struct Repository {
-        pack_policy: features::OwnShared<
-            dyn odb::DynPolicy<
-                PackIndex = features::OwnShared<git_pack::data::File>,
-                PackData = features::OwnShared<git_pack::data::File>,
-            >,
-        >,
+        /// Using generics here would mean we need policy to handle its mutability itself, pushing it down might be easiest if generics
+        /// should be a thing.
+        /// Without generics, there would be a thread-safe and thread-local version of everything.
+        /// Maybe this should be solved with a feature toggle instead? Aka thread-safe or not?
+        pub struct RepositoryGeneric<PackPolicy: odb::Policy> {
+            pack_policy: PackPolicy,
+        }
     }
 
-    // /// Using generics here would mean we need policy to handle its mutability itself, pushing it down might be easiest if generics
-    // /// should be a thing.
-    // /// Without generics, there would be a thread-safe and thread-local version of everything.
-    // /// Maybe this should be solved with a feature toggle instead? Aka thread-safe or not?
-    // struct RepositoryGeneric<PackPolicy: Policy> {
-    //     pack_policy: PackPolicy,
-    // }
+    /// Exposed type top-level repository to hide generic complexity, with one-size-fits-most default
+    type Repository = raw::RepositoryGeneric<odb::Eager>;
 }
