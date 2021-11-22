@@ -1839,6 +1839,10 @@ dependencies = [
 [[package]]
 name = "odb-redesign"
 version = "0.1.0"
+dependencies = [
+ "git-pack",
+ "parking_lot",
+]
 
 [[package]]
 name = "once_cell"
