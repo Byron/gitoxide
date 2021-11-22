@@ -568,7 +568,7 @@ The default favors speed and using all available cores, but savvy users can run 
 
 ## Learnings
 
-### Loose references database
+### Loose refer*ences database
 
 - When deleting (with or without value constraint), wait for locks instead of failing to workaround `packed-refs` as choking point. It's certainly worth it to split transactions
   so that deletions are done separately from updates to allow usage of the most suitable locking strategies.
@@ -584,7 +584,7 @@ The default favors speed and using all available cores, but savvy users can run 
 Please note that these are based on the following value system:
 
 - We value _highly_ to scale object access performance with cores.
-- We value _more_ to offer a choice of trade-offs than to aim for a one-size-fits-all solution, unless the latter has no shortcomings.
+- We value _more_ to offer a choice of trade-offs than to aim for a one-size-fits-all solution, unless the latter has no shortcomings.*
 
 - We don't value the handling of out of memory situations differently than panicking. This might change if `gitoxide` should fly to Mars or land in the linux kernel though.
 - We don't value enabling 32 bit applications to deal with pack files greater than 4GB and leave this field entirely to the other implementations.

@@ -33,20 +33,46 @@ mod features {
 mod odb {
     use crate::features;
     use crate::features::get_mut;
+    use crate::odb::policy::{load_indices, PackIndexMarker};
     use std::io;
     use std::ops::Deref;
     use std::path::Path;
 
-    pub mod pack {
-        pub struct IndexMarker(u32);
+    pub mod policy {
+        /// A way to indicate which pack indices we have seen already
+        pub struct PackIndexMarker {
+            /// The generation the marker belongs to, is incremented on each refresh and possibly only if there is an actual change
+            pub generation: u8,
+            /// The amount of pack indices available
+            pub pack_index_count: usize,
+        }
 
-        pub mod next_indices {
-            use crate::odb::pack::IndexMarker;
+        /// Define how packs will be refreshed when all indices are loaded
+        pub enum RefreshMode {
+            AfterAllIndicesLoaded,
+            /// Use this if you expect a lot of missing objects that shouldn't trigger refreshes
+            Never,
+        }
+
+        pub mod load_indices {
+            use crate::odb::policy::{PackIndexMarker, RefreshMode};
+            use std::path::Path;
+
+            pub struct Options<'a> {
+                pub objects_directory: &'a Path,
+                pub mode: RefreshMode,
+            }
 
             pub enum Outcome<IndexRef> {
-                Next {
+                /// Replace your set with the given one
+                Replace {
+                    indices: Vec<IndexRef>,
+                    mark: PackIndexMarker,
+                },
+                /// Extend with the given indices and keep searching
+                Extend {
                     indices: Vec<IndexRef>, // should probably be small vec to get around most allocations
-                    mark: IndexMarker,      // use to show where you left off next time you call
+                    mark: PackIndexMarker,  // use to show where you left off next time you call
                 },
                 /// No new indices to look at, caller should stop give up
                 NoMoreIndices,
@@ -58,11 +84,11 @@ mod odb {
         type PackData: Deref<Target = git_pack::data::File>;
         type PackIndex: Deref<Target = git_pack::index::File>;
 
-        fn next_indices(
+        fn load_next_indices(
             &self,
-            objects_directory: &Path,
-            marker: Option<pack::IndexMarker>,
-        ) -> std::io::Result<pack::next_indices::Outcome<Self::PackIndex>>;
+            options: policy::load_indices::Options<'_>,
+            marker: Option<policy::PackIndexMarker>,
+        ) -> std::io::Result<policy::load_indices::Outcome<Self::PackIndex>>;
     }
 
     #[derive(Default)]
@@ -77,7 +103,8 @@ mod odb {
         #[derive(Default)]
         pub struct State {
             pub(crate) db_paths: Vec<PathBuf>,
-            pub(crate) bundles: Vec<features::OwnShared<git_pack::Bundle>>,
+            pub(crate) indices: Vec<features::OwnShared<git_pack::index::File>>,
+            pub(crate) generation: u8,
         }
     }
 
@@ -85,17 +112,17 @@ mod odb {
         type PackData = features::OwnShared<git_pack::data::File>;
         type PackIndex = features::OwnShared<git_pack::index::File>;
 
-        fn next_indices(
+        fn load_next_indices(
             &self,
-            objects_directory: &Path,
-            marker: Option<pack::IndexMarker>,
-        ) -> std::io::Result<crate::odb::pack::next_indices::Outcome<Self::PackIndex>> {
+            policy::load_indices::Options {
+                objects_directory,
+                mode,
+            }: policy::load_indices::Options<'_>,
+            marker: Option<policy::PackIndexMarker>,
+        ) -> std::io::Result<crate::odb::policy::load_indices::Outcome<Self::PackIndex>> {
             let mut state = get_mut(&self.state);
             if state.db_paths.is_empty() {
-                state.db_paths.extend(
-                    git_odb::alternate::resolve(objects_directory)
-                        .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
-                );
+                return Self::refresh(&mut state, objects_directory);
             } else {
                 debug_assert_eq!(
                     Some(objects_directory),
@@ -104,11 +131,59 @@ mod odb {
                 );
             }
 
-            // if bundles.is_empty()
-            // match marker {
-            //     Some(marker) if marker == bundles.len() => todo!()
-            // }
-            // git_odb::alternate::resolve(objects_directory)
+            Ok(match marker {
+                Some(marker) => {
+                    if marker.generation != state.generation {
+                        load_indices::Outcome::Replace {
+                            indices: state.indices.clone(),
+                            mark: PackIndexMarker {
+                                generation: state.generation,
+                                pack_index_count: state.indices.len(),
+                            },
+                        }
+                    } else {
+                        if marker.pack_index_count == state.indices.len() {
+                            match mode {
+                                policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
+                                policy::RefreshMode::AfterAllIndicesLoaded => {
+                                    return Self::refresh(&mut state, objects_directory)
+                                }
+                            }
+                        } else {
+                            load_indices::Outcome::Replace {
+                                indices: state.indices[marker.pack_index_count..].to_vec(),
+                                mark: PackIndexMarker {
+                                    generation: state.generation,
+                                    pack_index_count: state.indices.len(),
+                                },
+                            }
+                        }
+                    }
+                }
+                None => load_indices::Outcome::Replace {
+                    indices: state.indices.clone(),
+                    mark: PackIndexMarker {
+                        generation: state.generation,
+                        pack_index_count: state.indices.len(),
+                    },
+                },
+            })
+        }
+    }
+
+    impl Eager {
+        fn refresh(
+            eager::State {
+                db_paths,
+                indices: bundles,
+                generation,
+            }: &mut eager::State,
+            objects_directory: &Path,
+        ) -> io::Result<policy::load_indices::Outcome<features::OwnShared<git_pack::index::File>>> {
+            db_paths.extend(
+                git_odb::alternate::resolve(objects_directory)
+                    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
+            );
             todo!()
         }
     }
