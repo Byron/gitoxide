@@ -638,6 +638,21 @@ Please note that these are based on the following value system:
           Doing this would also mean that the Repository doesn't even have a repository anymore, but just a `pack::Policy`.
       - It's still unclear how to best control repeated refreshes in presence of the possibility of blobs missing due to `--filter=blob`. Maybe this is the moment where one would
         access the policy directly to turn off refreshes for the duration of the operation.
+      - `Views` work if they are placed in the state and are thread-local for that reason, with interior mutability. A `view` will just be the linked odb implementation itself.
+         - It should contain a borrowed `Policy` which is owned in the shared `Repository`. The latter should contains a list of paths to object databases (i.e. alternates) to
+           allow seeing all multi-pack indices and indices like it is one repository.
+      - `Repository`  turns into `RepositoryLocal` with a `Rc<dyn Policy>` that isn't `Sync` and adds a `Repository` type that does the same but with `Arc<dyn Policy + Sync + 'static>`.
+         - each of these repository types has their own `Easy` types.
+         - _Difficulties_: Some `Platform` types store `repo: Access::RepoRef` and use `repo.deref().odb`, but that now only has a `Policy` from which a new `State` should be created
+           or they store the State right away… .
+      - The default `Policy` should be the least surprising, hence incur mapping costs over time and automatically refresh itself if needed.
+      - Make sure auto-refresh can be turned off on policy level to allow users to probe for objects despite `--filter=blob` or similar without slowing down to a crawl due to
+        a refresh each time an object is missing.
+      - The way this is going, `Deref` can panic in single-threaded applications only if recursion is used. Thread-safe versions of this will hang
+        unless a reentrant mutex is used. Since we don't call ourselves recursively (i.e. during `find_object(…)`, this won't be an issue. It should also be impossible in single-threaded
+        mode even with multiple `Easy` instances.
+      - memory map pooling across repositories can work if the odb informs about the entry-point path when asking for more indices to check
+      - It's OK to use a feature toggle to switch between Rc<RefCel> and Arc<Mutex>
    - **in the clear**
       - Algorithmically, object access starts out with `Indices`, fetching more until the object is contained within, then the corresponding the pack data is loaded (if needed) 
         to possibly extract object data.
@@ -647,18 +662,5 @@ Please note that these are based on the following value system:
           - a `Policy` could implement the building blocks needed by that algorithm.
           - The `Policy` should go through `Deref` to allow for different ways of internal shared ownership of actual indices, but that would also mean multiple implementations
          would either duplicate code or forward to even more generic implementations.
-      - `Views` work if they are placed in the state and are thread-local for that reason, with interior mutability. A `view` will just be the linked odb implementation itself.
-          - It should contain a borrowed `Policy` which is owned in the shared `Repository`. The latter should contains a list of paths to object databases (i.e. alternates) to 
-            allow seeing all multi-pack indices and indices like it is one repository.
-      - `Repository`  turns into `RepositoryLocal` with a `Rc<dyn Policy>` that isn't `Sync` and adds a `Repository` type that does the same but with `Arc<dyn Policy + Sync + 'static>`.
-          - each of these repository types has their own `Easy` types.
-          - _Difficulties_: Some `Platform` types store `repo: Access::RepoRef` and use `repo.deref().odb`, but that now only has a `Policy` from which a new `State` should be created
-            or they store the State right away… .
-      - The default `Policy` should be the least surprising, hence incur mapping costs over time and automatically refresh itself if needed.
-      - Make sure auto-refresh can be turned off on policy level to allow users to probe for objects despite `--filter=blob` or similar without slowing down to a crawl due to
-        a refresh each time an object is missing.
-      - The way this is going, `Deref` can panic in single-threaded applications only if recursion is used. Thread-safe versions of this will hang 
-        unless a reentrant mutex is used. Since we don't call ourselves recursively (i.e. during `find_object(…)`, this won't be an issue. It should also be impossible in single-threaded
-        mode even with multiple `Easy` instances.
-      - memory map pooling across repositories can work if the odb informs about the entry-point path when asking for more indices to check
-      - It's OK to use a feature toggle to switch between Rc<RefCel> and Arc<Mutex>
+      - It looks like building a configurable 'can-do-it-call' store is more like it and would use compile-time types to avoid generics entirely. This could live in the Repository
+        as before.
