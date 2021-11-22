@@ -1,7 +1,7 @@
 #![allow(dead_code, unused_variables)]
 
 mod features {
-    pub mod threaded {
+    mod threaded {
         use std::sync::Arc;
 
         #[cfg(feature = "thread-safe")]
@@ -23,7 +23,7 @@ mod features {
         }
     }
 
-    pub(crate) mod local {
+    mod local {
         use std::cell::RefCell;
         use std::rc::Rc;
 
@@ -33,8 +33,8 @@ mod features {
         #[cfg(not(feature = "thread-safe"))]
         #[macro_export]
         macro_rules! marker_traits {
-            ($target:ident, $trait:ty) => {
-                type $target = dyn ($trait);
+            ($target:ident, $trait:tt) => {
+                pub trait $target: $trait {}
             };
         }
 
@@ -54,7 +54,9 @@ mod features {
 
 mod odb {
     use crate::features;
+    use std::borrow::BorrowMut;
     use std::ops::Deref;
+    use std::path::PathBuf;
 
     pub mod pack {
         pub struct IndexMarker(u32);
@@ -77,25 +79,47 @@ mod odb {
         type PackData: Deref<Target = git_pack::data::File>;
         type PackIndex: Deref<Target = git_pack::index::File>;
 
-        fn next_indices(&mut self) -> std::io::Result<pack::next_indices::Outcome<Self::PackIndex>>;
+        fn next_indices(
+            &mut self,
+            marker: Option<pack::IndexMarker>,
+        ) -> std::io::Result<pack::next_indices::Outcome<Self::PackIndex>>;
     }
 
-    #[derive(Default)]
-    pub struct EagerLocal {
-        bundles: features::local::Mutable<Vec<features::local::OwnShared<git_pack::Bundle>>>,
+    pub struct Eager {
+        db_paths: Vec<PathBuf>,
+        bundles: features::Mutable<Vec<features::OwnShared<git_pack::Bundle>>>,
     }
 
-    impl Policy for EagerLocal {
-        type PackData = features::local::OwnShared<git_pack::data::File>;
-        type PackIndex = features::local::OwnShared<git_pack::index::File>;
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        AlternateResolve(#[from] git_odb::alternate::Error),
+    }
 
-        fn next_indices(&mut self) -> std::io::Result<crate::odb::pack::next_indices::Outcome<Self::PackIndex>> {
+    impl Eager {
+        pub fn at(objects_directory: impl Into<PathBuf>) -> Result<Self, Error> {
+            Ok(Eager {
+                db_paths: git_odb::alternate::resolve(objects_directory)?,
+                bundles: features::Mutable::new(Vec::new()),
+            })
+        }
+    }
+
+    impl Policy for Eager {
+        type PackData = features::OwnShared<git_pack::data::File>;
+        type PackIndex = features::OwnShared<git_pack::index::File>;
+
+        fn next_indices(
+            &mut self,
+            marker: Option<pack::IndexMarker>,
+        ) -> std::io::Result<crate::odb::pack::next_indices::Outcome<Self::PackIndex>> {
+            let bundles = self.bundles.borrow_mut();
             todo!()
         }
     }
 
-    fn try_setup() {
-        let policy = EagerLocal::default();
+    fn try_setup() -> anyhow::Result<()> {
+        let policy = Eager::at(".git/objects")?;
         // let policy = Box::new(EagerLocal::default())
         //     as Box<
         //         dyn DynPolicy<
@@ -103,6 +127,7 @@ mod odb {
         //             PackData = features::OwnShared<git_pack::data::File>,
         //         >,
         //     >;
+        Ok(())
     }
 
     crate::marker_traits!(DynPolicy, Policy);
