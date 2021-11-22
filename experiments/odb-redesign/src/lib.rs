@@ -31,8 +31,35 @@ trait Policy {
 
 struct EagerLocal {}
 
+mod thread_safe {
+    use std::sync::Arc;
+
+    pub(crate) trait ThreadSafe: Send + Sync {}
+
+    pub fn into_shared<T>(v: T) -> Arc<T> {
+        Arc::new(v)
+    }
+    pub fn add_interior_mutability<T>(v: T) -> parking_lot::Mutex<T> {
+        parking_lot::Mutex::new(v)
+    }
+}
+
+mod thread_local {
+    use std::rc::Rc;
+
+    trait ThreadSafe: Send + Sync {}
+
+    pub fn into_shared<T>(v: T) -> Rc<T> {
+        Rc::new(v)
+    }
+    pub fn add_interior_mutability<T>(v: T) -> parking_lot::Mutex<T> {
+        parking_lot::Mutex::new(v)
+    }
+}
+
 type DynRcPolicy = dyn Policy<PackIndex = Rc<git_pack::data::File>, PackData = Rc<git_pack::data::File>>;
-type DynArcPolicy = dyn Policy<PackIndex = Arc<git_pack::data::File>, PackData = Arc<git_pack::data::File>>;
+type DynArcPolicy =
+    dyn Policy<PackIndex = Arc<git_pack::data::File>, PackData = Arc<git_pack::data::File>> + thread_safe::ThreadSafe;
 
 /// Formerly RepositoryLocal
 struct SharedLocal {
