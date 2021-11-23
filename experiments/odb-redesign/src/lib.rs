@@ -55,7 +55,33 @@ mod odb {
     pub mod policy {
 
         use crate::features;
+        use crate::odb::policy;
         use std::path::PathBuf;
+
+        mod index_file {
+            pub enum State {
+                Index { id: usize, file: git_pack::index::File },
+                MultipackIndex { id: usize },
+            }
+        }
+
+        pub(crate) struct IndexForObjectInPack {
+            /// The internal identifier of the pack itself
+            pack_id: u32,
+            /// The index of the object within the pack
+            object_index: u32,
+            /// The id of the corresponding index file, in case of a multi-pack index
+            /// This could probably be packed into a u64 with a bitmap, but probably not useful.
+            multipack_index_id: Option<u32>,
+        }
+
+        pub(crate) struct IndexFile {
+            inner: index_file::State,
+        }
+
+        impl IndexFile {
+            // TODO: typical access, like by Oid, yielding a pack id and object index for this pack
+        }
 
         /// Unloading here means to drop the shared reference to the mapped pack data file.
         ///
@@ -80,7 +106,7 @@ mod odb {
         #[derive(Default)]
         pub(crate) struct State {
             pub(crate) db_paths: Vec<PathBuf>,
-            pub(crate) indices: Vec<features::OwnShared<git_pack::index::File>>,
+            pub(crate) loaded_indices: Vec<features::OwnShared<policy::IndexFile>>,
             pub(crate) generation: u8,
             pub(crate) allow_unload: bool,
         }
@@ -149,14 +175,14 @@ mod odb {
     }
 
     impl Policy {
-        pub fn load_next_indices(
+        pub(crate) fn load_next_indices(
             &self,
             load_indices::Options {
                 objects_directory,
                 mode,
             }: load_indices::Options<'_>,
             marker: Option<policy::PackIndexMarker>,
-        ) -> std::io::Result<load_indices::Outcome<features::OwnShared<git_pack::index::File>>> {
+        ) -> std::io::Result<load_indices::Outcome<features::OwnShared<policy::IndexFile>>> {
             let state = get_ref(&self.state);
             if state.db_paths.is_empty() {
                 let mut state = upgrade_ref_to_mut(state);
@@ -173,14 +199,14 @@ mod odb {
                 Some(marker) => {
                     if marker.generation != state.generation {
                         load_indices::Outcome::Replace {
-                            indices: state.indices.clone(),
+                            indices: state.loaded_indices.clone(),
                             mark: PackIndexMarker {
                                 generation: state.generation,
-                                pack_index_sequence: state.indices.len(),
+                                pack_index_sequence: state.loaded_indices.len(),
                             },
                         }
                     } else {
-                        if marker.pack_index_sequence == state.indices.len() {
+                        if marker.pack_index_sequence == state.loaded_indices.len() {
                             match mode {
                                 policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
                                 policy::RefreshMode::AfterAllIndicesLoaded => {
@@ -190,20 +216,20 @@ mod odb {
                             }
                         } else {
                             load_indices::Outcome::Extend {
-                                indices: state.indices[marker.pack_index_sequence..].to_vec(),
+                                indices: state.loaded_indices[marker.pack_index_sequence..].to_vec(),
                                 mark: PackIndexMarker {
                                     generation: state.generation,
-                                    pack_index_sequence: state.indices.len(),
+                                    pack_index_sequence: state.loaded_indices.len(),
                                 },
                             }
                         }
                     }
                 }
                 None => load_indices::Outcome::Replace {
-                    indices: state.indices.clone(),
+                    indices: state.loaded_indices.clone(),
                     mark: PackIndexMarker {
                         generation: state.generation,
-                        pack_index_sequence: state.indices.len(),
+                        pack_index_sequence: state.loaded_indices.len(),
                     },
                 },
             })
@@ -215,11 +241,11 @@ mod odb {
             policy::State {
                 db_paths,
                 allow_unload: _,
-                indices: bundles,
+                loaded_indices: bundles,
                 generation,
             }: &mut policy::State,
             objects_directory: &Path,
-        ) -> io::Result<policy::load_indices::Outcome<features::OwnShared<git_pack::index::File>>> {
+        ) -> io::Result<policy::load_indices::Outcome<features::OwnShared<policy::IndexFile>>> {
             db_paths.extend(
                 git_odb::alternate::resolve(objects_directory)
                     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
@@ -243,6 +269,8 @@ mod odb {
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl DecodeEntry,
         ) -> Result<Option<Object<'a>>, Self::Error> {
+            // TODO: if the generation changes, we need to clear the pack-cache as it depends on pack-ids.
+            //       Can we simplify this so it's more obvious what generation does?
             todo!()
         }
 

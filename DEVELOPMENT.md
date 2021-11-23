@@ -597,6 +597,10 @@ Please note that these are based on the following value system:
      best ported to the loose ref database as well. That way, there would be one API governing both, unifying sharing on the `repo()`.
    - Ref databases could have methods like `find_in_namespace()' along with the current ones, whereas the current ones delegate to the ones with namespace which may be `None`,
      to accommodate for the fact that most won't use namespaces.
+   - Use this opportunity to implement a general `Store` for later use with ref-table, and for immediate use in the `Easy` state. The packed-buffer along with the stat logic
+     should definitely be placed in there, too, I think, as technically without a maintained packed buffer the whole loose ref DB is quite useless AND the `Store` API won't be
+     equivalent between different implementations. AKA, hide implementation details which the packed ref buffer is. This would also give it its own Buffer for logs, but that's
+     quite alright, after all these are quite separate from object buffers.
 
 2. **Parameterize some sort of Policy into linked::ODB/compound::ODB**
    - First off, this needs an experiment to try it out quickly.
