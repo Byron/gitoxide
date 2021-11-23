@@ -5,10 +5,16 @@ mod features {
         use std::sync::Arc;
 
         pub type OwnShared<T> = Arc<T>;
-        pub type Mutable<T> = parking_lot::Mutex<T>;
+        pub type MutableOnDemand<T> = parking_lot::RwLock<T>;
 
-        pub fn get_mut<T>(v: &Mutable<T>) -> parking_lot::MutexGuard<'_, T> {
-            v.lock()
+        pub fn get_ref<T>(v: &MutableOnDemand<T>) -> parking_lot::RwLockUpgradableReadGuard<'_, T> {
+            v.upgradable_read()
+        }
+
+        pub fn upgrade_ref_to_mut<T>(
+            v: parking_lot::RwLockUpgradableReadGuard<'_, T>,
+        ) -> parking_lot::RwLockWriteGuard<'_, T> {
+            parking_lot::RwLockUpgradableReadGuard::upgrade(v)
         }
     }
 
@@ -32,7 +38,7 @@ mod features {
 
 mod odb {
     use crate::features;
-    use crate::features::get_mut;
+    use crate::features::{get_ref, upgrade_ref_to_mut};
     use crate::odb::policy::{load_indices, PackIndexMarker};
     use git_odb::data::Object;
     use git_odb::pack::bundle::Location;
@@ -40,25 +46,18 @@ mod odb {
     use git_odb::pack::find::Entry;
     use git_odb::pack::Bundle;
     use std::io;
-    use std::ops::DerefMut;
     use std::path::{Path, PathBuf};
 
     pub mod policy {
 
-        pub(crate) enum State {
-            Eager(eager::State),
-        }
+        use crate::features;
+        use std::path::PathBuf;
 
-        pub(crate) mod eager {
-            use crate::features;
-            use std::path::PathBuf;
-
-            #[derive(Default)]
-            pub struct State {
-                pub(crate) db_paths: Vec<PathBuf>,
-                pub(crate) indices: Vec<features::OwnShared<git_pack::index::File>>,
-                pub(crate) generation: u8,
-            }
+        #[derive(Default)]
+        pub(crate) struct State {
+            pub(crate) db_paths: Vec<PathBuf>,
+            pub(crate) indices: Vec<features::OwnShared<git_pack::index::File>>,
+            pub(crate) generation: u8,
         }
 
         /// A way to indicate which pack indices we have seen already
@@ -73,8 +72,11 @@ mod odb {
 
         /// Define how packs will be refreshed when all indices are loaded
         pub enum RefreshMode {
-            /// Check for new or changed pack indices when the last known index is loaded.
-            AfterAllIndicesLoaded,
+            /// Check for new or changed pack indices (and pack data files) when the last known index is loaded.
+            /// If allow unloading pack data files is true, we will start fresh and previous packs (by their ids) might be lost
+            /// forever causing problems retrieving data.
+            /// If it the flag is false, pack files will never be unloaded when they aren't available on disk anymore.
+            AfterAllIndicesLoaded { allow_unloading_pack_data: bool },
             /// Use this if you expect a lot of missing objects that shouldn't trigger refreshes even after all packs are loaded.
             /// This comes at the risk of not learning that the packs have changed in the mean time.
             Never,
@@ -107,13 +109,13 @@ mod odb {
     }
 
     pub struct Policy {
-        state: features::Mutable<policy::State>,
+        state: features::MutableOnDemand<policy::State>,
     }
 
     impl Policy {
         fn eager() -> Self {
             Policy {
-                state: features::Mutable::new(policy::State::Eager(policy::eager::State::default())),
+                state: features::MutableOnDemand::new(policy::State::default()),
             }
         }
     }
@@ -127,68 +129,68 @@ mod odb {
             }: load_indices::Options<'_>,
             marker: Option<policy::PackIndexMarker>,
         ) -> std::io::Result<load_indices::Outcome<features::OwnShared<git_pack::index::File>>> {
-            let mut state = get_mut(&self.state);
-            match state.deref_mut() {
-                policy::State::Eager(state) => {
-                    if state.db_paths.is_empty() {
-                        return Self::refresh(state, objects_directory);
-                    } else {
-                        debug_assert_eq!(
-                            Some(objects_directory),
-                            state.db_paths.get(0).map(|p| p.as_path()),
-                            "Eager policy can't be shared across different repositories"
-                        );
-                    }
+            let state = get_ref(&self.state);
+            if state.db_paths.is_empty() {
+                let mut state = upgrade_ref_to_mut(state);
+                return Self::refresh(&mut state, objects_directory);
+            } else {
+                debug_assert_eq!(
+                    Some(objects_directory),
+                    state.db_paths.get(0).map(|p| p.as_path()),
+                    "Eager policy can't be shared across different repositories"
+                );
+            }
 
-                    Ok(match marker {
-                        Some(marker) => {
-                            if marker.generation != state.generation {
-                                load_indices::Outcome::Replace {
-                                    indices: state.indices.clone(),
-                                    mark: PackIndexMarker {
-                                        generation: state.generation,
-                                        pack_index_sequence: state.indices.len(),
-                                    },
-                                }
-                            } else {
-                                if marker.pack_index_sequence == state.indices.len() {
-                                    match mode {
-                                        policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
-                                        policy::RefreshMode::AfterAllIndicesLoaded => {
-                                            return Self::refresh(state, objects_directory)
-                                        }
-                                    }
-                                } else {
-                                    load_indices::Outcome::Extend {
-                                        indices: state.indices[marker.pack_index_sequence..].to_vec(),
-                                        mark: PackIndexMarker {
-                                            generation: state.generation,
-                                            pack_index_sequence: state.indices.len(),
-                                        },
-                                    }
-                                }
-                            }
-                        }
-                        None => load_indices::Outcome::Replace {
+            Ok(match marker {
+                Some(marker) => {
+                    if marker.generation != state.generation {
+                        load_indices::Outcome::Replace {
                             indices: state.indices.clone(),
                             mark: PackIndexMarker {
                                 generation: state.generation,
                                 pack_index_sequence: state.indices.len(),
                             },
-                        },
-                    })
+                        }
+                    } else {
+                        if marker.pack_index_sequence == state.indices.len() {
+                            match mode {
+                                policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
+                                policy::RefreshMode::AfterAllIndicesLoaded {
+                                    allow_unloading_pack_data: _,
+                                } => {
+                                    let mut state = upgrade_ref_to_mut(state);
+                                    return Self::refresh(&mut state, objects_directory);
+                                }
+                            }
+                        } else {
+                            load_indices::Outcome::Extend {
+                                indices: state.indices[marker.pack_index_sequence..].to_vec(),
+                                mark: PackIndexMarker {
+                                    generation: state.generation,
+                                    pack_index_sequence: state.indices.len(),
+                                },
+                            }
+                        }
+                    }
                 }
-            }
+                None => load_indices::Outcome::Replace {
+                    indices: state.indices.clone(),
+                    mark: PackIndexMarker {
+                        generation: state.generation,
+                        pack_index_sequence: state.indices.len(),
+                    },
+                },
+            })
         }
 
         /// If there is only additive changes, there is no need for a new `generation` actually, which helps
         /// callers to retain stability.
         fn refresh(
-            policy::eager::State {
+            policy::State {
                 db_paths,
                 indices: bundles,
                 generation,
-            }: &mut policy::eager::State,
+            }: &mut policy::State,
             objects_directory: &Path,
         ) -> io::Result<policy::load_indices::Outcome<features::OwnShared<git_pack::index::File>>> {
             db_paths.extend(
@@ -265,7 +267,7 @@ mod refs {
 
         pub(crate) enum StoreSelection {
             Loose(LooseStore),
-            RefTable(features::Mutable<RefTable>),
+            RefTable(features::MutableOnDemand<RefTable>),
         }
     }
 
