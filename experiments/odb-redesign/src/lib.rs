@@ -23,10 +23,14 @@ mod features {
         use std::rc::Rc;
 
         pub type OwnShared<T> = Rc<T>;
-        pub type Mutable<T> = RefCell<T>;
+        pub type MutableOnDemand<T> = RefCell<T>;
 
-        pub fn get_mut<T>(v: &Mutable<T>) -> RefMut<'_, T> {
+        pub fn get_ref<T>(v: &RefCell<T>) -> RefMut<'_, T> {
             v.borrow_mut()
+        }
+
+        pub fn upgrade_ref_to_mut<T>(v: RefMut<'_, T>) -> RefMut<'_, T> {
+            v
         }
     }
 
