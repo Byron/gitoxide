@@ -63,16 +63,20 @@ mod odb {
 
         /// A way to indicate which pack indices we have seen already
         pub struct PackIndexMarker {
-            /// The generation the marker belongs to, is incremented on each refresh and possibly only if there is an actual change
+            /// The generation the marker belongs to, is incremented to indicate that there were changes that caused the removal of a
+            /// pack and require the caller to rebuild their cache to free resources.
             pub generation: u8,
-            /// The amount of pack indices available
-            pub pack_index_count: usize,
+            /// An ever increasing number within a generation indicating the number of loaded pack indices. It's reset with
+            /// each new generation.
+            pub pack_index_sequence: usize,
         }
 
         /// Define how packs will be refreshed when all indices are loaded
         pub enum RefreshMode {
+            /// Check for new or changed pack indices when the last known index is loaded.
             AfterAllIndicesLoaded,
-            /// Use this if you expect a lot of missing objects that shouldn't trigger refreshes
+            /// Use this if you expect a lot of missing objects that shouldn't trigger refreshes even after all packs are loaded.
+            /// This comes at the risk of not learning that the packs have changed in the mean time.
             Never,
         }
 
@@ -143,11 +147,11 @@ mod odb {
                                     indices: state.indices.clone(),
                                     mark: PackIndexMarker {
                                         generation: state.generation,
-                                        pack_index_count: state.indices.len(),
+                                        pack_index_sequence: state.indices.len(),
                                     },
                                 }
                             } else {
-                                if marker.pack_index_count == state.indices.len() {
+                                if marker.pack_index_sequence == state.indices.len() {
                                     match mode {
                                         policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
                                         policy::RefreshMode::AfterAllIndicesLoaded => {
@@ -155,11 +159,11 @@ mod odb {
                                         }
                                     }
                                 } else {
-                                    load_indices::Outcome::Replace {
-                                        indices: state.indices[marker.pack_index_count..].to_vec(),
+                                    load_indices::Outcome::Extend {
+                                        indices: state.indices[marker.pack_index_sequence..].to_vec(),
                                         mark: PackIndexMarker {
                                             generation: state.generation,
-                                            pack_index_count: state.indices.len(),
+                                            pack_index_sequence: state.indices.len(),
                                         },
                                     }
                                 }
@@ -169,7 +173,7 @@ mod odb {
                             indices: state.indices.clone(),
                             mark: PackIndexMarker {
                                 generation: state.generation,
-                                pack_index_count: state.indices.len(),
+                                pack_index_sequence: state.indices.len(),
                             },
                         },
                     })
