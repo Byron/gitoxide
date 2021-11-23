@@ -22,8 +22,8 @@ pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl Fn
 pub fn in_parallel<I, S, O, R>(
     input: impl Iterator<Item = I> + Send,
     thread_limit: Option<usize>,
-    new_thread_state: impl Fn(usize) -> S + Send + Sync,
-    consume: impl Fn(I, &mut S) -> O + Send + Sync,
+    new_thread_state: impl Fn(usize) -> S + Send + Clone,
+    consume: impl Fn(I, &mut S) -> O + Send + Clone,
     mut reducer: R,
 ) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
 where
@@ -32,8 +32,6 @@ where
     O: Send,
 {
     let num_threads = num_threads(thread_limit);
-    let new_thread_state = &new_thread_state;
-    let consume = &consume;
     crossbeam_utils::thread::scope(move |s| {
         let receive_result = {
             let (send_input, receive_input) = crossbeam_channel::bounded::<I>(num_threads);
@@ -42,6 +40,8 @@ where
                 s.spawn({
                     let send_result = send_result.clone();
                     let receive_input = receive_input.clone();
+                    let new_thread_state = new_thread_state.clone();
+                    let consume = consume.clone();
                     move |_| {
                         let mut state = new_thread_state(thread_id);
                         for item in receive_input {

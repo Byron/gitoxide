@@ -683,3 +683,9 @@ Please note that these are based on the following value system:
           a single-threaded version).
         - Maybe… after some benchmarks, we can entirely drop the single-threaded version if it's not significantly faster on a single thread (without thread primiives) than the
           same with multi-threading (but a single-thread).
+      - Servers would be split into readers and writers, where…
+        - …readers share a common pool and thus all maps, with lazy loading and refresh (but their pack-ids change due to that, and packs might disappear)
+        - …writers when…
+          - …cloning use an eagerly loaded Repository just for that particular clone for stable pack ids
+          - …fetches use a lazy-loaded Repository with refresh disabled, and full retries if the pack they were referring to goes away. Maybe there can be a policy for that to keep
+            pack ids stable despite refresh, which would also solve clones which could then lazy-load.

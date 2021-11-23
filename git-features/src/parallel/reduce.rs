@@ -138,11 +138,9 @@ mod stepped {
 
     impl<InputIter, ConsumeFn, Reduce, I, O, S> Stepwise<InputIter, ConsumeFn, S, Reduce>
     where
-        InputIter: Iterator<Item = I> + Send,
-        ConsumeFn: Fn(I, &mut S) -> O + Send + Sync,
+        InputIter: Iterator<Item = I>,
+        ConsumeFn: Fn(I, &mut S) -> O,
         Reduce: super::Reduce<Input = O>,
-        I: Send,
-        O: Send,
     {
         /// Instantiate a new iterator.
         /// For a description of parameters, see [`in_parallel()`][crate::parallel::in_parallel()].
@@ -154,7 +152,7 @@ mod stepped {
             reducer: Reduce,
         ) -> Self
         where
-            ThreadStateFn: Fn(usize) -> S + Send + Sync,
+            ThreadStateFn: Fn(usize) -> S,
         {
             Stepwise {
                 input,
@@ -175,11 +173,9 @@ mod stepped {
 
     impl<InputIter, ConsumeFn, ThreadState, Reduce, I, O> Iterator for Stepwise<InputIter, ConsumeFn, ThreadState, Reduce>
     where
-        InputIter: Iterator<Item = I> + Send,
-        ConsumeFn: Fn(I, &mut ThreadState) -> O + Send + Sync,
+        InputIter: Iterator<Item = I>,
+        ConsumeFn: Fn(I, &mut ThreadState) -> O,
         Reduce: super::Reduce<Input = O>,
-        I: Send,
-        O: Send,
     {
         type Item = Result<Reduce::FeedProduce, Reduce::Error>;
 
@@ -192,11 +188,9 @@ mod stepped {
 
     impl<InputIter, ConsumeFn, R, I, O, S> super::Finalize for Stepwise<InputIter, ConsumeFn, S, R>
     where
-        InputIter: Iterator<Item = I> + Send,
-        ConsumeFn: Fn(I, &mut S) -> O + Send + Sync,
+        InputIter: Iterator<Item = I>,
+        ConsumeFn: Fn(I, &mut S) -> O,
         R: super::Reduce<Input = O>,
-        I: Send,
-        O: Send,
     {
         type Reduce = R;
 
