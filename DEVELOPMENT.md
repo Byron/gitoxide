@@ -601,9 +601,9 @@ Please note that these are based on the following value system:
 2. **Parameterize some sort of Policy into linked::ODB/compound::ODB**
    - First off, this needs an experiment to try it out quickly.
    - **initial thoughts**
-      - ✔️ Depending on the actual implementation of `Policy`, `Repository/Easy` will or will not be thread-safe. This excludes using a `Box<…>` there as it has different
+      - ❌ Depending on the actual implementation of `Policy`, `Repository/Easy` will or will not be thread-safe. This excludes using a `Box<…>` there as it has different
         trait bounds (once with and once without `Send + Sync`. I would like to avoid more feature toggles in `git-repository`, but could live with it.
-         - `Repository` would end up with type parameters if feature toggles aren't used, which could be compensated for with typedefs for the few known policies. However, this
+         - ✔️ `Repository` would end up with type parameters if feature toggles aren't used, which could be compensated for with typedefs for the few known policies. However, this
             would also lead in a type-explosion for `Easy` and may force it to have a type parameter too.
       - ❌ To keep the `Repository` free of type parameters we could boil policies down to typical policies, like Eager, Lazy, LazyThreadSafe, PooledLazy, PooledLazyThreadSafe, 
         all with different tradeoffs. On that level, maybe 3 to 5 feature toggles would work, but who likes feature toggles especially if they aren't additive?
@@ -671,8 +671,11 @@ Please note that these are based on the following value system:
             object database due to lots of additional file handles needed, or alternatively an algorithm which fails if a refresh would be needed but instead retries if an object wasn't found,
             for example when a pack can't be (lazy) loaded as it was removed during maintenance. In other words, those creating packs definitely have to deal with failure specifically and
             probably just retry
-      - Also it seems that the existing implementation has merrit, but should probably be altered to be a single store (without policy) instead also to fix latent issues around
+      - Also it seems that the existing implementation has merit, but should probably be altered to be a single store (without policy) instead also to fix latent issues around
         addressing packs in alternate repositories.
+          - The current store is Sync, and can easily be passed around behind an `Arc`, which is actually how it works currently as well even though the `Arc` is on the `Repository`
+            instead.
+          - Shared-ownership `Policy` based stores would work just like it, but each one has its own thread-local interior mutable cache.
       - The new ODB implementation and the previous one are pretty incompatible because the old one is Sync, but the new one is designed not to be (i.e.) use thread-local storage.
         Existing implementations need to adjust their trait bounds and operate differently to accommodate. Counting objects and packing would be a good benchmark though, even though
         the latter doesn't even scale that well due to the required dashmap to check for existing objects. In other words, currently there seems to be no actual benchmark for parallel

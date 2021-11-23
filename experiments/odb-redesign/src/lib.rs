@@ -243,6 +243,42 @@ mod odb {
     }
 }
 
+mod refs {
+    use crate::features;
+    use std::path::PathBuf;
+
+    pub struct LooseStore {
+        path: PathBuf,
+        reflog_mode: u32,
+        // namespace absent
+    }
+
+    pub struct RefTable {
+        path: PathBuf,
+        reflog_mode: u32,
+        // lot's of caching things, no namespace, needs mutability when doing anything (let's not hide it at all)
+    }
+
+    mod inner {
+        use crate::features;
+        use crate::refs::{LooseStore, RefTable};
+
+        pub(crate) enum StoreSelection {
+            Loose(LooseStore),
+            RefTable(features::Mutable<RefTable>),
+        }
+    }
+
+    #[derive(Clone)]
+    struct Store {
+        inner: features::OwnShared<inner::StoreSelection>,
+        namespace: u32,
+    }
+
+    // impl common interface but check how all this works with iterators, there is some implementation around that already
+    // and maybe this should just be its own State like thing… bet its own Easy so to say.
+}
+
 mod repository {
     use crate::odb;
 
