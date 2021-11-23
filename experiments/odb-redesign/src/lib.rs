@@ -34,11 +34,33 @@ mod odb {
     use crate::features;
     use crate::features::get_mut;
     use crate::odb::policy::{load_indices, PackIndexMarker};
+    use git_odb::data::Object;
+    use git_odb::pack::bundle::Location;
+    use git_odb::pack::cache::DecodeEntry;
+    use git_odb::pack::find::Entry;
+    use git_odb::pack::Bundle;
     use std::io;
-    use std::ops::Deref;
-    use std::path::Path;
+    use std::ops::DerefMut;
+    use std::path::{Path, PathBuf};
 
     pub mod policy {
+
+        pub(crate) enum State {
+            Eager(eager::State),
+        }
+
+        pub(crate) mod eager {
+            use crate::features;
+            use std::path::PathBuf;
+
+            #[derive(Default)]
+            pub struct State {
+                pub(crate) db_paths: Vec<PathBuf>,
+                pub(crate) indices: Vec<features::OwnShared<git_pack::index::File>>,
+                pub(crate) generation: u8,
+            }
+        }
+
         /// A way to indicate which pack indices we have seen already
         pub struct PackIndexMarker {
             /// The generation the marker belongs to, is incremented on each refresh and possibly only if there is an actual change
@@ -80,104 +102,89 @@ mod odb {
         }
     }
 
-    pub trait Policy {
-        type PackData: Deref<Target = git_pack::data::File>;
-        type PackIndex: Deref<Target = git_pack::index::File>;
-
-        fn load_next_indices(
-            &self,
-            options: policy::load_indices::Options<'_>,
-            marker: Option<policy::PackIndexMarker>,
-        ) -> std::io::Result<policy::load_indices::Outcome<Self::PackIndex>>;
+    pub struct Policy {
+        state: features::Mutable<policy::State>,
     }
 
-    #[derive(Default)]
-    pub struct Eager {
-        state: features::Mutable<eager::State>,
-    }
-
-    mod eager {
-        use crate::features;
-        use std::path::PathBuf;
-
-        #[derive(Default)]
-        pub struct State {
-            pub(crate) db_paths: Vec<PathBuf>,
-            pub(crate) indices: Vec<features::OwnShared<git_pack::index::File>>,
-            pub(crate) generation: u8,
+    impl Policy {
+        fn eager() -> Self {
+            Policy {
+                state: features::Mutable::new(policy::State::Eager(policy::eager::State::default())),
+            }
         }
     }
 
-    impl Policy for Eager {
-        type PackData = features::OwnShared<git_pack::data::File>;
-        type PackIndex = features::OwnShared<git_pack::index::File>;
-
-        fn load_next_indices(
+    impl Policy {
+        pub fn load_next_indices(
             &self,
-            policy::load_indices::Options {
+            load_indices::Options {
                 objects_directory,
                 mode,
-            }: policy::load_indices::Options<'_>,
+            }: load_indices::Options<'_>,
             marker: Option<policy::PackIndexMarker>,
-        ) -> std::io::Result<crate::odb::policy::load_indices::Outcome<Self::PackIndex>> {
+        ) -> std::io::Result<load_indices::Outcome<features::OwnShared<git_pack::index::File>>> {
             let mut state = get_mut(&self.state);
-            if state.db_paths.is_empty() {
-                return Self::refresh(&mut state, objects_directory);
-            } else {
-                debug_assert_eq!(
-                    Some(objects_directory),
-                    state.db_paths.get(0).map(|p| p.as_path()),
-                    "Eager policy can't be shared across different repositories"
-                );
-            }
+            match state.deref_mut() {
+                policy::State::Eager(state) => {
+                    if state.db_paths.is_empty() {
+                        return Self::refresh(state, objects_directory);
+                    } else {
+                        debug_assert_eq!(
+                            Some(objects_directory),
+                            state.db_paths.get(0).map(|p| p.as_path()),
+                            "Eager policy can't be shared across different repositories"
+                        );
+                    }
 
-            Ok(match marker {
-                Some(marker) => {
-                    if marker.generation != state.generation {
-                        load_indices::Outcome::Replace {
+                    Ok(match marker {
+                        Some(marker) => {
+                            if marker.generation != state.generation {
+                                load_indices::Outcome::Replace {
+                                    indices: state.indices.clone(),
+                                    mark: PackIndexMarker {
+                                        generation: state.generation,
+                                        pack_index_count: state.indices.len(),
+                                    },
+                                }
+                            } else {
+                                if marker.pack_index_count == state.indices.len() {
+                                    match mode {
+                                        policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
+                                        policy::RefreshMode::AfterAllIndicesLoaded => {
+                                            return Self::refresh(state, objects_directory)
+                                        }
+                                    }
+                                } else {
+                                    load_indices::Outcome::Replace {
+                                        indices: state.indices[marker.pack_index_count..].to_vec(),
+                                        mark: PackIndexMarker {
+                                            generation: state.generation,
+                                            pack_index_count: state.indices.len(),
+                                        },
+                                    }
+                                }
+                            }
+                        }
+                        None => load_indices::Outcome::Replace {
                             indices: state.indices.clone(),
                             mark: PackIndexMarker {
                                 generation: state.generation,
                                 pack_index_count: state.indices.len(),
                             },
-                        }
-                    } else {
-                        if marker.pack_index_count == state.indices.len() {
-                            match mode {
-                                policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
-                                policy::RefreshMode::AfterAllIndicesLoaded => {
-                                    return Self::refresh(&mut state, objects_directory)
-                                }
-                            }
-                        } else {
-                            load_indices::Outcome::Replace {
-                                indices: state.indices[marker.pack_index_count..].to_vec(),
-                                mark: PackIndexMarker {
-                                    generation: state.generation,
-                                    pack_index_count: state.indices.len(),
-                                },
-                            }
-                        }
-                    }
+                        },
+                    })
                 }
-                None => load_indices::Outcome::Replace {
-                    indices: state.indices.clone(),
-                    mark: PackIndexMarker {
-                        generation: state.generation,
-                        pack_index_count: state.indices.len(),
-                    },
-                },
-            })
+            }
         }
-    }
 
-    impl Eager {
+        /// If there is only additive changes, there is no need for a new `generation` actually, which helps
+        /// callers to retain stability.
         fn refresh(
-            eager::State {
+            policy::eager::State {
                 db_paths,
                 indices: bundles,
                 generation,
-            }: &mut eager::State,
+            }: &mut policy::eager::State,
             objects_directory: &Path,
         ) -> io::Result<policy::load_indices::Outcome<features::OwnShared<git_pack::index::File>>> {
             db_paths.extend(
@@ -188,8 +195,39 @@ mod odb {
         }
     }
 
+    /// The store shares a policy and
+    pub struct PolicyStore {
+        policy: features::OwnShared<Policy>,
+        objects_directory: PathBuf,
+    }
+
+    impl git_odb::Find for PolicyStore {
+        type Error = git_odb::compound::find::Error;
+
+        fn try_find<'a>(
+            &self,
+            id: impl AsRef<git_hash::oid>,
+            buffer: &'a mut Vec<u8>,
+            pack_cache: &mut impl DecodeEntry,
+        ) -> Result<Option<Object<'a>>, Self::Error> {
+            todo!()
+        }
+
+        fn location_by_oid(&self, id: impl AsRef<git_hash::oid>, buf: &mut Vec<u8>) -> Option<Location> {
+            todo!()
+        }
+
+        fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&Bundle> {
+            todo!()
+        }
+
+        fn entry_by_location(&self, location: &Location) -> Option<Entry<'_>> {
+            todo!()
+        }
+    }
+
     fn try_setup() -> anyhow::Result<()> {
-        let policy = Eager::default();
+        let policy = Policy::eager();
         // let policy = Box::new(EagerLocal::default())
         //     as Box<
         //         dyn DynPolicy<
@@ -204,18 +242,19 @@ mod odb {
 mod repository {
     use crate::odb;
 
-    pub mod raw {
-        use crate::odb;
+    mod raw {
+        use git_pack::Find;
 
-        /// Using generics here would mean we need policy to handle its mutability itself, pushing it down might be easiest if generics
-        /// should be a thing.
-        /// Without generics, there would be a thread-safe and thread-local version of everything.
-        /// Maybe this should be solved with a feature toggle instead? Aka thread-safe or not?
-        pub struct RepositoryGeneric<PackPolicy: odb::Policy> {
-            pack_policy: PackPolicy,
+        pub struct Repository<Odb>
+        where
+            Odb: Find, // + Contains + Refresh/Reset maybe?
+        {
+            odb: Odb,
         }
     }
 
-    /// Exposed type top-level repository to hide generic complexity, with one-size-fits-most default
-    type Repository = raw::RepositoryGeneric<odb::Eager>;
+    /// Maybe we will end up providing a generic version as there still seems to be benefits in having a read-only Store implementation.
+    pub struct Repository {
+        odb: odb::PolicyStore,
+    }
 }

@@ -664,3 +664,12 @@ Please note that these are based on the following value system:
          would either duplicate code or forward to even more generic implementations.
       - It looks like building a configurable 'can-do-it-call' store is more like it and would use compile-time types to avoid generics entirely. This could live in the Repository
         as before.
+          - Having it in a shared-ownership configurable `Policy` is probably the way to go as it would allow sharing mappings across repositories while implementing ways of handling
+            them.
+          - when building packs, it's vital that the pack indices stay stable and don't go through a refresh (which isn't observable for the one finding objects). Thus it's vital
+            that packs are built with their own object database that is configured to not refresh packs or better even, eager policy without refresh. The latter requires a well-maintained
+            object database due to lots of additional file handles needed, or alternatively an algorithm which fails if a refresh would be needed but instead retries if an object wasn't found,
+            for example when a pack can't be (lazy) loaded as it was removed during maintenance. In other words, those creating packs definitely have to deal with failure specifically and
+            probably just retry
+      - Also it seems that the existing implementation has merrit, but should probably be altered to be a single store (without policy) instead also to fix latent issues around
+        addressing packs in alternate repositories.

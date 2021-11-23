@@ -1841,6 +1841,7 @@ name = "odb-redesign"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "git-hash",
  "git-odb",
  "git-pack",
  "parking_lot",
