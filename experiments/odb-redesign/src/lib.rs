@@ -285,6 +285,10 @@ mod repository {
     mod raw {
         use git_pack::Find;
 
+        /// Let's avoid generics and rather switch the actual implementation with a feature toggle or just for testing.
+        /// After all, there is no use for keeping multiple implementations around just for a minor gain and a lot of added complexity.
+        /// Definitely run the existing experiments which are exercising the parallel code-paths perfectly and could be adjusted
+        /// to also try the access through easy.
         pub struct Repository<Odb>
         where
             Odb: Find, // + Contains + Refresh/Reset maybe?
