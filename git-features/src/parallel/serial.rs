@@ -2,7 +2,7 @@ use crate::parallel::Reduce;
 
 /// Runs `left` and then `right`, one after another, returning their output when both are done.
 #[cfg(not(feature = "parallel"))]
-pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
+pub fn join<O1, O2>(left: impl FnOnce() -> O1, right: impl FnOnce() -> O2) -> (O1, O2) {
     (left(), right())
 }
 
@@ -17,16 +17,14 @@ pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl Fn
 ///
 /// **This serial version performing all calculations on the current thread.**
 pub fn in_parallel<I, S, O, R>(
-    input: impl Iterator<Item = I> + Send,
+    input: impl Iterator<Item = I>,
     _thread_limit: Option<usize>,
-    new_thread_state: impl Fn(usize) -> S + Send + Sync,
-    consume: impl Fn(I, &mut S) -> O + Send + Sync,
+    new_thread_state: impl Fn(usize) -> S,
+    consume: impl Fn(I, &mut S) -> O,
     mut reducer: R,
 ) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
 where
     R: Reduce<Input = O>,
-    I: Send,
-    O: Send,
 {
     let mut state = new_thread_state(0);
     for item in input {

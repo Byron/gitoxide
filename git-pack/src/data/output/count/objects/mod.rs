@@ -121,9 +121,9 @@ pub fn objects_unthreaded<Find, IterErr, Oid>(
     input_object_expansion: ObjectExpansion,
 ) -> Result<find::existing::Error<Find::Error>, IterErr>
 where
-    Find: crate::Find + Send + Sync,
-    Oid: Into<ObjectId> + Send,
-    IterErr: std::error::Error + Send,
+    Find: crate::Find,
+    Oid: Into<ObjectId>,
+    IterErr: std::error::Error,
 {
     let seen_objs = RefCell::new(HashSet::<ObjectId, cache::object::State>::default());
 
@@ -175,9 +175,9 @@ mod expand {
         allow_pack_lookups: bool,
     ) -> super::Result<find::existing::Error<Find::Error>, IterErr>
     where
-        Find: crate::Find + Send + Sync,
-        Oid: Into<ObjectId> + Send,
-        IterErr: std::error::Error + Send,
+        Find: crate::Find,
+        Oid: Into<ObjectId>,
+        IterErr: std::error::Error,
     {
         use ObjectExpansion::*;
 

@@ -673,3 +673,13 @@ Please note that these are based on the following value system:
             probably just retry
       - Also it seems that the existing implementation has merrit, but should probably be altered to be a single store (without policy) instead also to fix latent issues around
         addressing packs in alternate repositories.
+      - The new ODB implementation and the previous one are pretty incompatible because the old one is Sync, but the new one is designed not to be (i.e.) use thread-local storage.
+        Existing implementations need to adjust their trait bounds and operate differently to accommodate. Counting objects and packing would be a good benchmark though, even though
+        the latter doesn't even scale that well due to the required dashmap to check for existing objects. In other words, currently there seems to be no actual benchmark for parallel
+        usage.
+        - In single-threaded operation the trait-bounds would prevent creation of packs unless they are adjusted as well, leading to `git-pack` requiring its own feature toggle
+          which we really try hard to avoid, but probably can be placed on application level, which has to use that to setup git-features accordingly, making it bearable. This
+          means though that we need to implement single-threaded and multi-threaded versions of everything important, like pack generation based on the count (which already has
+          a single-threaded version).
+        - Maybe… after some benchmarks, we can entirely drop the single-threaded version if it's not significantly faster on a single thread (without thread primiives) than the
+          same with multi-threading (but a single-thread).

@@ -42,7 +42,7 @@ use crate::data::{output, output::ChunkId};
 pub fn iter_from_counts<Find, Cache>(
     mut counts: Vec<output::Count>,
     db: Find,
-    make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
+    make_cache: impl Fn() -> Cache + Send + Sync + 'static,
     mut progress: impl Progress,
     Options {
         version,
@@ -54,7 +54,7 @@ pub fn iter_from_counts<Find, Cache>(
 ) -> impl Iterator<Item = Result<(ChunkId, Vec<output::Entry>), Error<Find::Error>>>
        + parallel::reduce::Finalize<Reduce = reduce::Statistics<Error<Find::Error>>>
 where
-    Find: crate::Find + Clone + Send + Sync + 'static,
+    Find: crate::Find + Send + Sync + 'static,
     <Find as crate::Find>::Error: Send,
     Cache: crate::cache::DecodeEntry,
 {
