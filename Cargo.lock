@@ -1833,6 +1833,7 @@ dependencies = [
  "anyhow",
  "git-repository",
  "git2",
+ "parking_lot",
  "rayon",
 ]
 

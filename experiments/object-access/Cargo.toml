@@ -12,3 +12,4 @@ anyhow = "1"
 git-repository = { version ="^0.12.0", path = "../../git-repository", features = ["unstable"] }
 git2 = "0.13"
 rayon = "1.5.0"
+parking_lot = { version = "0.11.0", default-features = false }
