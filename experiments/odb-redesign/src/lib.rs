@@ -53,11 +53,32 @@ mod odb {
         use crate::features;
         use std::path::PathBuf;
 
+        /// Unloading here means to drop the shared reference to the mapped pack data file.
+        ///
+        /// Indices are always handled like that if their file on disk disappears.
+        pub enum PackDataUnloadMode {
+            /// Keep pack data always available in loaded memory maps even if the underlying data file (and usually index) are gone.
+            /// This means algorithms that keep track of packs like pack-generators will always be able to resolve the data they reference.
+            /// This also means, however, that one might run out of system resources some time, which means the coordinator of such users
+            /// needs to check resource usage vs amount of uses and replace this instance with a new policy to eventually have the memory
+            /// mapped packs drop (as references to them disappear once consumers disappear)
+            Never,
+            /// Forget/drop the mapped pack data file when its file on disk disappeared.
+            WhenDiskFileIsMissing,
+        }
+
+        impl Default for PackDataUnloadMode {
+            fn default() -> Self {
+                PackDataUnloadMode::WhenDiskFileIsMissing
+            }
+        }
+
         #[derive(Default)]
         pub(crate) struct State {
             pub(crate) db_paths: Vec<PathBuf>,
             pub(crate) indices: Vec<features::OwnShared<git_pack::index::File>>,
             pub(crate) generation: u8,
+            pub(crate) allow_unload: bool,
         }
 
         /// A way to indicate which pack indices we have seen already
@@ -73,10 +94,9 @@ mod odb {
         /// Define how packs will be refreshed when all indices are loaded
         pub enum RefreshMode {
             /// Check for new or changed pack indices (and pack data files) when the last known index is loaded.
-            /// If allow unloading pack data files is true, we will start fresh and previous packs (by their ids) might be lost
-            /// forever causing problems retrieving data.
-            /// If it the flag is false, pack files will never be unloaded when they aren't available on disk anymore.
-            AfterAllIndicesLoaded { allow_unloading_pack_data: bool },
+            /// Note that this might not yield stable pack data or index ids unless the Policy is set to never actually unload indices.
+            /// The caller cannot know though.
+            AfterAllIndicesLoaded,
             /// Use this if you expect a lot of missing objects that shouldn't trigger refreshes even after all packs are loaded.
             /// This comes at the risk of not learning that the packs have changed in the mean time.
             Never,
@@ -108,14 +128,18 @@ mod odb {
         }
     }
 
+    #[derive(Default)]
     pub struct Policy {
         state: features::MutableOnDemand<policy::State>,
     }
 
     impl Policy {
-        fn eager() -> Self {
+        fn new(unload_mode: policy::PackDataUnloadMode) -> Self {
             Policy {
-                state: features::MutableOnDemand::new(policy::State::default()),
+                state: features::MutableOnDemand::new(policy::State {
+                    allow_unload: matches!(unload_mode, policy::PackDataUnloadMode::WhenDiskFileIsMissing),
+                    ..policy::State::default()
+                }),
             }
         }
     }
@@ -155,9 +179,7 @@ mod odb {
                         if marker.pack_index_sequence == state.indices.len() {
                             match mode {
                                 policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
-                                policy::RefreshMode::AfterAllIndicesLoaded {
-                                    allow_unloading_pack_data: _,
-                                } => {
+                                policy::RefreshMode::AfterAllIndicesLoaded => {
                                     let mut state = upgrade_ref_to_mut(state);
                                     return Self::refresh(&mut state, objects_directory);
                                 }
@@ -188,6 +210,7 @@ mod odb {
         fn refresh(
             policy::State {
                 db_paths,
+                allow_unload: _,
                 indices: bundles,
                 generation,
             }: &mut policy::State,
@@ -202,12 +225,12 @@ mod odb {
     }
 
     /// The store shares a policy and
-    pub struct PolicyStore {
+    pub struct Store {
         policy: features::OwnShared<Policy>,
         objects_directory: PathBuf,
     }
 
-    impl git_odb::Find for PolicyStore {
+    impl git_odb::Find for Store {
         type Error = git_odb::compound::find::Error;
 
         fn try_find<'a>(
@@ -233,14 +256,7 @@ mod odb {
     }
 
     fn try_setup() -> anyhow::Result<()> {
-        let policy = Policy::eager();
-        // let policy = Box::new(EagerLocal::default())
-        //     as Box<
-        //         dyn DynPolicy<
-        //             PackIndex = features::OwnShared<git_pack::data::File>,
-        //             PackData = features::OwnShared<git_pack::data::File>,
-        //         >,
-        //     >;
+        let policy = Policy::default();
         Ok(())
     }
 }
@@ -301,6 +317,6 @@ mod repository {
 
     /// Maybe we will end up providing a generic version as there still seems to be benefits in having a read-only Store implementation.
     pub struct Repository {
-        odb: odb::PolicyStore,
+        odb: odb::Store,
     }
 }
