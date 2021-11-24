@@ -71,6 +71,7 @@ pub struct File {
     ///
     /// Note that `path` might not be canonicalized, thus different hashes might actually refer to the same pack on disk. This will
     /// only lead to less efficient cache usage.
+    /// TODO: remove this intrinsic id as it will henceforth be handled separately by the object store
     pub id: u32,
     version: Version,
     num_objects: u32,

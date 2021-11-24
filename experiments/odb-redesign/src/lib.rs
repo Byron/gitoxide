@@ -56,31 +56,42 @@ mod odb {
 
         use crate::features;
         use crate::odb::policy;
+        use git_hash::oid;
         use std::path::PathBuf;
 
         mod index_file {
             pub enum State {
-                Index { id: usize, file: git_pack::index::File },
+                Index { id: u32, file: git_pack::index::File },
                 MultipackIndex { id: usize },
             }
         }
 
         pub(crate) struct IndexForObjectInPack {
-            /// The internal identifier of the pack itself
-            pack_id: u32,
+            /// The internal identifier of the pack itself, which either is referred to by an index or a multi-pack index.
+            pack_id: PackId,
             /// The index of the object within the pack
-            object_index: u32,
-            /// The id of the corresponding index file, in case of a multi-pack index
-            /// This could probably be packed into a u64 with a bitmap, but probably not useful.
-            multipack_index_id: Option<u32>,
+            object_index_in_pack: u32,
         }
 
+        /// A way to load and refer to a pack uniquely.
+        pub struct PackId(u32);
+
         pub(crate) struct IndexFile {
-            inner: index_file::State,
+            state: index_file::State,
         }
 
         impl IndexFile {
-            // TODO: typical access, like by Oid, yielding a pack id and object index for this pack
+            fn lookup(&self, object_id: &oid) -> Option<IndexForObjectInPack> {
+                match &self.state {
+                    index_file::State::Index { id, file } => {
+                        file.lookup(object_id).map(|object_index_in_pack| IndexForObjectInPack {
+                            pack_id: PackId(*id),
+                            object_index_in_pack,
+                        })
+                    }
+                    index_file::State::MultipackIndex { .. } => todo!("required with multi-pack index"),
+                }
+            }
         }
 
         /// Unloading here means to drop the shared reference to the mapped pack data file.
@@ -175,6 +186,9 @@ mod odb {
     }
 
     impl Policy {
+        pub(crate) fn load_pack(id: policy::PackId) -> std::io::Result<features::OwnShared<git_pack::data::File>> {
+            todo!("find in our own cache or load it, which needs a way to find their path by id")
+        }
         pub(crate) fn load_next_indices(
             &self,
             load_indices::Options {
@@ -278,6 +292,7 @@ mod odb {
             todo!()
         }
 
+        // TODO: turn this into a pack-id
         fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&Bundle> {
             todo!()
         }
