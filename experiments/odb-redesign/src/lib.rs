@@ -61,8 +61,15 @@ mod odb {
 
         mod index_file {
             pub enum State {
-                Index { id: u32, file: git_pack::index::File },
-                MultipackIndex { id: usize },
+                Index {
+                    /// The identifier for the index, matching its location in a lookup table for the paths to the files so that it can
+                    /// be used to load pack data files on the fly.
+                    id: u32,
+                    file: git_pack::index::File,
+                },
+                MultipackIndex {
+                    id: usize,
+                },
             }
         }
 
@@ -73,8 +80,11 @@ mod odb {
             object_index_in_pack: u32,
         }
 
-        /// A way to load and refer to a pack uniquely.
-        pub struct PackId(u32);
+        /// A way to load and refer to a pack uniquely, namespaced by their indexing mechanism, aka multi-pack or not.
+        pub struct PackId {
+            id: u32,
+            in_multi_pack: bool,
+        }
 
         pub(crate) struct IndexFile {
             state: index_file::State,
@@ -85,27 +95,16 @@ mod odb {
                 match &self.state {
                     index_file::State::Index { id, file } => {
                         file.lookup(object_id).map(|object_index_in_pack| IndexForObjectInPack {
-                            pack_id: PackId(*id),
+                            pack_id: PackId {
+                                id: *id,
+                                in_multi_pack: false,
+                            },
                             object_index_in_pack,
                         })
                     }
                     index_file::State::MultipackIndex { .. } => todo!("required with multi-pack index"),
                 }
             }
-        }
-
-        /// Unloading here means to drop the shared reference to the mapped pack data file.
-        ///
-        /// Indices are always handled like that if their file on disk disappears.
-        pub enum PackDataUnloadMode {
-            /// Keep pack data always available in loaded memory maps even if the underlying data file (and usually index) are gone.
-            /// This means algorithms that keep track of packs like pack-generators will always be able to resolve the data they reference.
-            /// This also means, however, that one might run out of system resources some time, which means the coordinator of such users
-            /// needs to check resource usage vs amount of uses and replace this instance with a new policy to eventually have the memory
-            /// mapped packs drop (as references to them disappear once consumers disappear)
-            Never,
-            /// Forget/drop the mapped pack data file when its file on disk disappeared.
-            WhenDiskFileIsMissing,
         }
 
         impl Default for PackDataUnloadMode {
@@ -117,7 +116,7 @@ mod odb {
         #[derive(Default)]
         pub(crate) struct State {
             pub(crate) db_paths: Vec<PathBuf>,
-            pub(crate) loaded_indices: Vec<features::OwnShared<policy::IndexFile>>,
+            pub(crate) loaded_indices: Vec<Option<features::OwnShared<policy::IndexFile>>>,
             pub(crate) generation: u8,
             pub(crate) allow_unload: bool,
         }
@@ -126,25 +125,44 @@ mod odb {
         pub struct PackIndexMarker {
             /// The generation the marker belongs to, is incremented to indicate that there were changes that caused the removal of a
             /// pack and require the caller to rebuild their cache to free resources.
-            pub generation: u8,
+            pub(crate) generation: u8,
             /// An ever increasing number within a generation indicating the number of loaded pack indices. It's reset with
             /// each new generation.
-            pub pack_index_sequence: usize,
+            pub(crate) pack_index_sequence: usize,
         }
 
-        /// Define how packs will be refreshed when all indices are loaded
+        /// Define how packs will be refreshed when all indices are loaded, which is useful if a lot of objects are missing.
         pub enum RefreshMode {
             /// Check for new or changed pack indices (and pack data files) when the last known index is loaded.
-            /// Note that this might not yield stable pack data or index ids unless the Policy is set to never actually unload indices.
-            /// The caller cannot know though.
+            /// During runtime we will keep pack indices stable by never reusing them, however, there is the option for
+            /// clearing internal cashes which is likely to change pack ids and it will trigger unloading of packs as they are missing on disk.
             AfterAllIndicesLoaded,
             /// Use this if you expect a lot of missing objects that shouldn't trigger refreshes even after all packs are loaded.
             /// This comes at the risk of not learning that the packs have changed in the mean time.
             Never,
         }
 
+        /// Unloading here means to drop the shared reference to the mapped pack data file.
+        ///
+        /// Indices are always handled like that if their file on disk disappears as objects usually never disappear unless they are unreachable,
+        /// meaning that new indices always contain the old objects in some way.
+        pub enum PackDataUnloadMode {
+            /// Keep pack data always available in loaded memory maps even if the underlying data file (and usually index) are gone.
+            /// This means algorithms that keep track of packs like pack-generators will always be able to resolve the data they reference.
+            /// This also means, however, that one might run out of system resources some time, which means the coordinator of such users
+            /// needs to check resource usage vs amount of uses and replace this instance with a new policy to eventually have the memory
+            /// mapped packs drop (as references to them disappear once consumers disappear).
+            /// We will also not ask Store handles to remove their pack data references.
+            /// We will never rebuild our internal data structures to keep pack ids unique indefinitely (i.e. won't reuse a pack id with a different pack).
+            Never,
+            /// Forget/drop the mapped pack data file when its file on disk disappeared and store handles to remove their pack data references
+            /// for them to be able to go out of scope.
+            /// We are allowed to rebuild our internal data structures to save on memory but invalidate all previous pack ids.
+            WhenDiskFileIsMissing,
+        }
+
         pub mod load_indices {
-            use crate::odb::policy::{PackIndexMarker, RefreshMode};
+            use crate::odb::policy::{PackId, PackIndexMarker, RefreshMode};
             use std::path::Path;
 
             pub struct Options<'a> {
@@ -153,15 +171,16 @@ mod odb {
             }
 
             pub enum Outcome<IndexRef> {
-                /// Replace your set with the given one
+                /// Replace your set with the given one and drop all packs data handles.
                 Replace {
                     indices: Vec<IndexRef>,
                     mark: PackIndexMarker,
                 },
-                /// Extend with the given indices and keep searching
+                /// Extend with the given indices and keep searching.
                 Extend {
-                    indices: Vec<IndexRef>, // should probably be small vec to get around most allocations
-                    mark: PackIndexMarker,  // use to show where you left off next time you call
+                    indices: Vec<IndexRef>,  // should probably be small vec to get around most allocations
+                    drop_packs: Vec<PackId>, // which packs to forget about because they were removed from disk.
+                    mark: PackIndexMarker,   // use to show where you left off next time you call
                 },
                 /// No new indices to look at, caller should stop give up
                 NoMoreIndices,
@@ -213,7 +232,12 @@ mod odb {
                 Some(marker) => {
                     if marker.generation != state.generation {
                         load_indices::Outcome::Replace {
-                            indices: state.loaded_indices.clone(),
+                            indices: state
+                                .loaded_indices
+                                .iter()
+                                .filter_map(Option::as_ref)
+                                .cloned()
+                                .collect(),
                             mark: PackIndexMarker {
                                 generation: state.generation,
                                 pack_index_sequence: state.loaded_indices.len(),
@@ -230,7 +254,12 @@ mod odb {
                             }
                         } else {
                             load_indices::Outcome::Extend {
-                                indices: state.loaded_indices[marker.pack_index_sequence..].to_vec(),
+                                indices: state.loaded_indices[marker.pack_index_sequence..]
+                                    .iter()
+                                    .filter_map(Option::as_ref)
+                                    .cloned()
+                                    .collect(),
+                                drop_packs: Vec::new(),
                                 mark: PackIndexMarker {
                                     generation: state.generation,
                                     pack_index_sequence: state.loaded_indices.len(),
@@ -240,7 +269,12 @@ mod odb {
                     }
                 }
                 None => load_indices::Outcome::Replace {
-                    indices: state.loaded_indices.clone(),
+                    indices: state
+                        .loaded_indices
+                        .iter()
+                        .filter_map(Option::as_ref)
+                        .cloned()
+                        .collect(),
                     mark: PackIndexMarker {
                         generation: state.generation,
                         pack_index_sequence: state.loaded_indices.len(),
