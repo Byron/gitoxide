@@ -61,15 +61,8 @@ mod odb {
 
         mod index_file {
             pub enum State {
-                Index {
-                    /// The identifier for the index, matching its location in a lookup table for the paths to the files so that it can
-                    /// be used to load pack data files on the fly.
-                    id: u32,
-                    file: git_pack::index::File,
-                },
-                MultipackIndex {
-                    id: usize,
-                },
+                Single(git_pack::index::File),
+                Multi(()),
             }
         }
 
@@ -80,29 +73,33 @@ mod odb {
             object_index_in_pack: u32,
         }
 
+        /// An id to refer to an index file or a multipack index file
+        pub struct IndexId(u32);
+
         /// A way to load and refer to a pack uniquely, namespaced by their indexing mechanism, aka multi-pack or not.
         pub struct PackId {
             id: u32,
-            in_multi_pack: bool,
+            multipack_index: Option<IndexId>,
         }
 
         pub(crate) struct IndexFile {
             state: index_file::State,
+            id: IndexId,
         }
 
         impl IndexFile {
             fn lookup(&self, object_id: &oid) -> Option<IndexForObjectInPack> {
                 match &self.state {
-                    index_file::State::Index { id, file } => {
+                    index_file::State::Single(file) => {
                         file.lookup(object_id).map(|object_index_in_pack| IndexForObjectInPack {
                             pack_id: PackId {
-                                id: *id,
-                                in_multi_pack: false,
+                                id: self.id.0,
+                                multipack_index: None,
                             },
                             object_index_in_pack,
                         })
                     }
-                    index_file::State::MultipackIndex { .. } => todo!("required with multi-pack index"),
+                    index_file::State::Multi(()) => todo!("required with multi-pack index"),
                 }
             }
         }
@@ -117,6 +114,7 @@ mod odb {
         pub(crate) struct State {
             pub(crate) db_paths: Vec<PathBuf>,
             pub(crate) loaded_indices: Vec<Option<features::OwnShared<policy::IndexFile>>>,
+            pub(crate) multi_index: Option<features::OwnShared<policy::IndexFile>>,
             pub(crate) generation: u8,
             pub(crate) allow_unload: bool,
         }
@@ -147,7 +145,8 @@ mod odb {
         /// Indices are always handled like that if their file on disk disappears as objects usually never disappear unless they are unreachable,
         /// meaning that new indices always contain the old objects in some way.
         pub enum PackDataUnloadMode {
-            /// Keep pack data always available in loaded memory maps even if the underlying data file (and usually index) are gone.
+            /// Keep pack data (and multi-pack index-to-pack lookup tables) always available in loaded memory maps even
+            /// if the underlying data file (and usually index) are gone.
             /// This means algorithms that keep track of packs like pack-generators will always be able to resolve the data they reference.
             /// This also means, however, that one might run out of system resources some time, which means the coordinator of such users
             /// needs to check resource usage vs amount of uses and replace this instance with a new policy to eventually have the memory
@@ -289,6 +288,7 @@ mod odb {
             policy::State {
                 db_paths,
                 allow_unload: _,
+                multi_index: _,
                 loaded_indices: bundles,
                 generation,
             }: &mut policy::State,
