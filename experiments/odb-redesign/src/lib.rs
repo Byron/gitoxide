@@ -135,7 +135,8 @@ mod odb {
         type PackDataFiles = Vec<Option<features::OwnShared<OnDiskFile<git_pack::data::File>>>>;
 
         pub(crate) type HandleId = u32;
-        pub(crate) enum HandleMode {
+        /// These are not to be created by anyone except for the State
+        pub(crate) enum HandleModeToken {
             /// Pack-ids may change which may cause lookups by pack-id (without an oid available) to fail.
             Unstable,
             Stable,
@@ -169,9 +170,10 @@ mod odb {
             /// Generations are incremented whenever we decide to clear out our vectors if they are too big and contains too many empty slots.
             /// If we are not allowed to unload files, the generation will never be changed.
             pub(crate) generation: u8,
-            pub(crate) next_handle_id: HandleId,
-            pub(crate) handles: BTreeMap<HandleId, HandleMode>,
             pub(crate) objects_directory: PathBuf,
+
+            pub(crate) num_handles_stable: usize,
+            pub(crate) num_handles_unstable: usize,
         }
 
         /// A way to indicate which pack indices we have seen already
@@ -256,11 +258,11 @@ mod odb {
 
         /// Allow actually finding things
         pub fn to_handle(self: &features::OwnShared<Self>) -> Handle {
-            let next = self.register_handle();
+            let mode = self.register_handle();
             Handle {
                 store: self.clone(),
-                refresh_mode: policy::RefreshMode::AfterAllIndicesLoaded, // todo: remove this
-                id: next,
+                refresh_mode: policy::RefreshMode::AfterAllIndicesLoaded,
+                mode: mode.into(),
             }
         }
 
@@ -270,7 +272,7 @@ mod odb {
         pub fn state_snapshot(&self) -> policy::StateInformation {
             let state = get_ref(&self.state);
             policy::StateInformation {
-                num_handles: state.handles.len(),
+                num_handles: state.num_handles_unstable + state.num_handles_stable,
                 open_packs: state.loaded_packs.iter().filter(|p| p.is_some()).count()
                     + state
                         .loaded_packs_by_multi_index
@@ -282,26 +284,31 @@ mod odb {
         }
     }
 
+    /// Handle interaction
     impl Store {
-        pub(crate) fn register_handle(&self) -> policy::HandleId {
+        pub(crate) fn register_handle(&self) -> policy::HandleModeToken {
             let mut state = get_mut(&self.state);
-            let next = state.next_handle_id;
-            state.next_handle_id = state.next_handle_id.wrapping_add(1);
-            state.handles.insert(next, policy::HandleMode::Unstable);
-            next
+            state.num_handles_unstable += 1;
+            policy::HandleModeToken::Unstable
         }
-        pub(crate) fn remove_handle(&self, id: &policy::HandleId) {
+        pub(crate) fn remove_handle(&self, mode: policy::HandleModeToken) {
             let mut state = get_mut(&self.state);
-            state.handles.remove(id);
+            match mode {
+                policy::HandleModeToken::Stable => state.num_handles_stable -= 1,
+                policy::HandleModeToken::Unstable => state.num_handles_unstable -= 1,
+            }
         }
-        pub(crate) fn upgrade_handle(&self, id: &policy::HandleId) {
-            let mut state = get_mut(&self.state);
-            *state
-                .handles
-                .get_mut(&id)
-                .expect("BUG: handles must be made known on creation") = policy::HandleMode::Stable;
+        pub(crate) fn upgrade_handle(&self, mode: policy::HandleModeToken) -> policy::HandleModeToken {
+            if let policy::HandleModeToken::Unstable = mode {
+                let mut state = get_mut(&self.state);
+                state.num_handles_unstable -= 1;
+                state.num_handles_stable += 1;
+            }
+            policy::HandleModeToken::Stable
         }
+    }
 
+    impl Store {
         /// If Ok(None) is returned, the pack-id was stale and referred to an unloaded pack or a pack which couldn't be
         /// loaded as its file didn't exist on disk anymore.
         /// If the oid is known, just load indices again to continue
@@ -403,10 +410,7 @@ mod odb {
         /// If there is no handle with stable pack ids requirements, unload them.
         /// This property also relates to us pruning our internal state/doing internal maintenance which affects ids, too.
         fn may_unload_packs(state: &policy::State) -> bool {
-            state
-                .handles
-                .values()
-                .all(|m| matches!(m, policy::HandleMode::Unstable))
+            state.num_handles_stable == 0
         }
     }
 
@@ -414,15 +418,15 @@ mod odb {
     pub struct Handle {
         store: features::OwnShared<Store>,
         refresh_mode: policy::RefreshMode,
-        id: policy::HandleId,
+        mode: Option<policy::HandleModeToken>,
     }
 
     impl Handle {
         /// Call once if pack ids are stored and later used for lookup, meaning they should always remain mapped and not be unloaded
         /// even if they disappear from disk.
         /// This must be called if there is a chance that git maintenance is happening while a pack is created.
-        pub fn prevent_pack_unload(&self) {
-            self.store.upgrade_handle(&self.id);
+        pub fn prevent_pack_unload(&mut self) {
+            self.mode = self.mode.take().map(|mode| self.store.upgrade_handle(mode));
         }
     }
 
@@ -431,14 +435,14 @@ mod odb {
             Handle {
                 store: self.store.clone(),
                 refresh_mode: self.refresh_mode,
-                id: self.store.register_handle(),
+                mode: self.store.register_handle().into(),
             }
         }
     }
 
     impl Drop for Handle {
         fn drop(&mut self) {
-            self.store.remove_handle(&self.id)
+            self.mode.take().map(|mode| self.store.remove_handle(mode));
         }
     }
 
