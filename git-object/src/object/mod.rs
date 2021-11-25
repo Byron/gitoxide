@@ -162,9 +162,12 @@ impl Object {
     }
 }
 
-use crate::decode::{loose_header, Error as DecodeError, LooseHeaderDecodeError};
-use crate::{BlobRef, CommitRef, Kind, ObjectRef, TagRef, TreeRef};
 use quick_error::quick_error;
+
+use crate::{
+    decode::{loose_header, Error as DecodeError, LooseHeaderDecodeError},
+    BlobRef, CommitRef, Kind, ObjectRef, TagRef, TreeRef,
+};
 
 quick_error! {
     #[derive(Debug)]

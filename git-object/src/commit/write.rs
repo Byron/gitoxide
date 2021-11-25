@@ -1,5 +1,6 @@
-use bstr::ByteSlice;
 use std::io;
+
+use bstr::ByteSlice;
 
 use crate::{encode, encode::NL, Commit, CommitRef, Kind};
 

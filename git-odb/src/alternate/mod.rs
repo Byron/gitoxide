@@ -40,7 +40,7 @@ pub enum Error {
 }
 
 /// Given an objects directory, try to resolve alternate object directories possibly located in the
-/// `./info/alternates` file.
+/// `./info/alternates` file into canonical paths.
 /// If no alternate object database was resolved, the resulting `Vec` is empty (it is not an error
 /// if there are no alternates).
 /// It is an error once a repository is seen again as it would lead to a cycle.

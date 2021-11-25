@@ -1,4 +1,4 @@
-#![allow(dead_code, unused_variables)]
+#![allow(dead_code, unused_variables, unreachable_code)]
 
 mod features {
     mod threaded {
@@ -27,8 +27,10 @@ mod features {
     }
 
     mod local {
-        use std::cell::{Ref, RefCell, RefMut};
-        use std::rc::Rc;
+        use std::{
+            cell::{Ref, RefCell, RefMut},
+            rc::Rc,
+        };
 
         pub type OwnShared<T> = Rc<T>;
         pub type MutableOnDemand<T> = RefCell<T>;
@@ -57,28 +59,38 @@ mod features {
 }
 
 mod odb {
-    use crate::features;
-    use crate::features::{get_mut, get_ref, get_ref_upgradeable, upgrade_ref_to_mut};
-    use crate::odb::policy::{load_indices, PackIndexMarker};
-    use git_odb::data::Object;
-    use git_odb::pack::bundle::Location;
-    use git_odb::pack::cache::DecodeEntry;
-    use git_odb::pack::find::Entry;
-    use git_odb::pack::Bundle;
     use std::path::PathBuf;
 
+    use git_odb::{
+        data::Object,
+        pack::{bundle::Location, cache::DecodeEntry, find::Entry, Bundle},
+    };
+
+    use crate::{
+        features,
+        features::{get_mut, get_ref, get_ref_upgradeable, upgrade_ref_to_mut},
+        odb::policy::{load_indices, PackIndexMarker},
+    };
+
     pub mod policy {
-        use crate::features;
-        use crate::odb::policy;
+        use std::{io, path::PathBuf};
+
         use git_hash::oid;
-        use std::collections::BTreeMap;
-        use std::io;
-        use std::path::PathBuf;
+
+        use crate::features;
 
         mod index_file {
+            use crate::{features, odb::policy};
+
             pub enum SingleOrMulti {
-                Single(git_pack::index::File),
-                Multi(()),
+                Single {
+                    index: features::OwnShared<git_pack::index::File>,
+                    data: Option<features::OwnShared<git_pack::data::File>>,
+                },
+                Multi {
+                    index: features::OwnShared<policy::MultiIndex>,
+                    data: Vec<Option<features::OwnShared<git_pack::data::File>>>,
+                },
             }
         }
 
@@ -90,13 +102,14 @@ mod odb {
         }
 
         /// An id to refer to an index file or a multipack index file
-        pub struct IndexId(u32);
+        pub type IndexId = usize;
 
         /// A way to load and refer to a pack uniquely, namespaced by their indexing mechanism, aka multi-pack or not.
         pub struct PackId {
-            /// Note that if `multipack_index = None`, this id is corresponding to the index id.
-            /// If it is a multipack index, `id` is the id / offset of the pack in the `multipack_index`.
-            pub(crate) index: u32,
+            /// Note that if `multipack_index = None`, this index is corresponding to the index id.
+            /// So a pack is always identified by its corresponding index.
+            /// If it is a multipack index, this is the id / offset of the pack in the `multipack_index`.
+            pub(crate) index: IndexId,
             pub(crate) multipack_index: Option<IndexId>,
         }
 
@@ -106,18 +119,34 @@ mod odb {
         }
 
         impl IndexLookup {
-            fn lookup(&self, object_id: &oid) -> Option<IndexForObjectInPack> {
-                match &self.file {
-                    index_file::SingleOrMulti::Single(file) => {
-                        file.lookup(object_id).map(|object_index_in_pack| IndexForObjectInPack {
-                            pack_id: PackId {
-                                index: self.id.0,
-                                multipack_index: None,
-                            },
-                            object_index_in_pack,
+            /// See if the oid is contained in this index, and return its full id for lookup possibly alongside its data file if already
+            /// loaded.
+            /// If it is not loaded, ask it to be loaded and put it into the returned mutable option for safe-keeping.
+            fn lookup(
+                &mut self,
+                object_id: &oid,
+            ) -> Option<(
+                IndexForObjectInPack,
+                &mut Option<features::OwnShared<git_pack::data::File>>,
+            )> {
+                match &mut self.file {
+                    index_file::SingleOrMulti::Single { index, data } => {
+                        index.lookup(object_id).map(|object_index_in_pack| {
+                            (
+                                IndexForObjectInPack {
+                                    pack_id: PackId {
+                                        index: self.id,
+                                        multipack_index: None,
+                                    },
+                                    object_index_in_pack,
+                                },
+                                data,
+                            )
                         })
                     }
-                    index_file::SingleOrMulti::Multi(()) => todo!("required with multi-pack index"),
+                    index_file::SingleOrMulti::Multi { index, data } => {
+                        todo!("find respective pack and return it as &mut Option<>")
+                    }
                 }
             }
         }
@@ -144,10 +173,17 @@ mod odb {
             pub fn is_loaded(&self) -> bool {
                 matches!(self.state, OnDiskFileState::Loaded(_) | OnDiskFileState::Garbage(_))
             }
+
+            pub fn loaded(&self) -> Option<&T> {
+                use OnDiskFileState::*;
+                match &self.state {
+                    Loaded(v) | Garbage(v) => Some(v),
+                    Unloaded | Missing => None,
+                }
+            }
         }
 
-        type PackDataFiles = Vec<Option<features::OwnShared<OnDiskFile<git_pack::data::File>>>>;
-
+        pub(crate) type MultiIndex = ();
         pub(crate) type HandleId = u32;
         /// These are not to be created by anyone except for the State
         pub(crate) enum HandleModeToken {
@@ -157,15 +193,14 @@ mod odb {
         }
 
         pub(crate) struct IndexFileBundle {
-            index: OnDiskFile<git_pack::index::File>,
+            index: OnDiskFile<features::OwnShared<git_pack::index::File>>,
             path: PathBuf,
-            data: OnDiskFile<git_pack::data::File>,
+            data: OnDiskFile<features::OwnShared<git_pack::data::File>>,
         }
 
         pub(crate) struct MultiIndexFileBundle {
-            multi_index: OnDiskFile<git_pack::index::File>, // TODO: turn that into multi-index file when available
-            path: PathBuf,
-            data: Vec<OnDiskFile<git_pack::data::File>>,
+            multi_index: OnDiskFile<features::OwnShared<MultiIndex>>,
+            data: Vec<OnDiskFile<features::OwnShared<git_pack::data::File>>>,
         }
 
         pub(crate) enum IndexAndPacks {
@@ -178,14 +213,10 @@ mod odb {
         pub(crate) struct State {
             /// The root level directory from which we resolve alternates files.
             pub(crate) objects_directory: PathBuf,
+            /// All of our database paths, including `objects_directory` as entrypoint
             pub(crate) db_paths: Vec<PathBuf>,
             pub(crate) files: Vec<IndexAndPacks>,
-            pub(crate) loaded_indices: Vec<Option<features::OwnShared<policy::IndexLookup>>>,
-            pub(crate) loaded_packs: PackDataFiles,
-            /// Each change in the multi-pack index creates a new index entry here and typically drops all knowledge about its removed packs.
-            /// We do this because there can be old pack ids around that refer to the old (now deleted) multi-pack index along with a possibly
-            /// now invalid (or ambiguous) local pack id, i.e. pack A was meant, but now that's pack B because the multi-index has changed.
-            pub(crate) loaded_packs_by_multi_index: BTreeMap<IndexId, PackDataFiles>,
+
             /// Generations are incremented whenever we decide to clear out our vectors if they are too big and contains too many empty slots.
             /// If we are not allowed to unload files, the generation will never be changed.
             pub(crate) generation: u8,
@@ -227,8 +258,10 @@ mod odb {
 
             /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
             pub(crate) fn refresh(&mut self) -> io::Result<load_indices::Outcome> {
-                self.db_paths = git_odb::alternate::resolve(&self.objects_directory)
+                let mut db_paths = git_odb::alternate::resolve(&self.objects_directory)
                     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+                // These are in addition to our objects directory
+                db_paths.insert(0, self.objects_directory.clone());
                 todo!()
             }
 
@@ -236,6 +269,29 @@ mod odb {
             /// This property also relates to us pruning our internal state/doing internal maintenance which affects ids, too.
             pub(crate) fn may_unload_packs(&mut self) -> bool {
                 self.num_handles_stable == 0
+            }
+
+            pub(crate) fn collect_replace_outcome(&self) -> load_indices::Outcome {
+                let indices = self.files.iter().enumerate().filter_map(|(id, file)| {
+                    let lookup = match file {
+                        IndexAndPacks::Index(bundle) => index_file::SingleOrMulti::Single {
+                            index: bundle.index.loaded()?.clone(),
+                            data: bundle.data.loaded().cloned(),
+                        },
+                        IndexAndPacks::MultiIndex(multi) => index_file::SingleOrMulti::Multi {
+                            index: multi.multi_index.loaded()?.clone(),
+                            data: multi.data.iter().map(|f| f.loaded().cloned()).collect(),
+                        },
+                    };
+                    IndexLookup { file: lookup, id }.into()
+                });
+                load_indices::Outcome::Replace {
+                    indices: todo!(),
+                    mark: PackIndexMarker {
+                        generation: self.generation,
+                        pack_index_sequence: self.files.len(),
+                    },
+                }
             }
         }
 
@@ -261,24 +317,25 @@ mod odb {
         }
 
         pub mod load_indices {
-            use crate::features;
-            use crate::odb::policy;
-            use crate::odb::policy::{IndexId, PackId, PackIndexMarker};
+            use crate::odb::{
+                policy,
+                policy::{IndexId, PackId, PackIndexMarker},
+            };
 
             pub(crate) enum Outcome {
                 /// Drop all data and fully replace it with `indices`.
                 /// This happens if we have witnessed a generational change invalidating all of our ids and causing currently loaded
                 /// indices and maps to be dropped.
                 Replace {
-                    indices: Vec<features::OwnShared<policy::IndexLookup>>, // should probably be small vec to get around most allocations
-                    mark: PackIndexMarker, // use to show where the caller left off last time
+                    indices: Vec<policy::IndexLookup>, // should probably be small vec to get around most allocations
+                    mark: PackIndexMarker,             // use to show where the caller left off last time
                 },
                 /// Extend with the given indices and keep searching, while dropping invalidated/unloaded ids.
                 Extend {
                     drop_packs: Vec<PackId>,    // which packs to forget about because they were removed from disk.
                     drop_indices: Vec<IndexId>, // which packs to forget about because they were removed from disk.
-                    indices: Vec<features::OwnShared<policy::IndexLookup>>, // should probably be small vec to get around most allocations
-                    mark: PackIndexMarker, // use to show where the caller left off last time
+                    indices: Vec<policy::IndexLookup>, // should probably be small vec to get around most allocations
+                    mark: PackIndexMarker,      // use to show where the caller left off last time
                 },
                 /// No new indices to look at, caller should give up
                 NoMoreIndices,
@@ -394,20 +451,9 @@ mod odb {
             Ok(match marker {
                 Some(marker) => {
                     if marker.generation != state.generation {
-                        load_indices::Outcome::Replace {
-                            indices: state
-                                .loaded_indices
-                                .iter()
-                                .filter_map(Option::as_ref)
-                                .cloned()
-                                .collect(),
-                            mark: PackIndexMarker {
-                                generation: state.generation,
-                                pack_index_sequence: state.loaded_indices.len(),
-                            },
-                        }
+                        state.collect_replace_outcome()
                     } else {
-                        if marker.pack_index_sequence == state.loaded_indices.len() {
+                        if marker.pack_index_sequence == state.files.len() {
                             match refresh_mode {
                                 policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
                                 policy::RefreshMode::AfterAllIndicesLoaded => {
@@ -416,33 +462,18 @@ mod odb {
                             }
                         } else {
                             load_indices::Outcome::Extend {
-                                indices: state.loaded_indices[marker.pack_index_sequence..]
-                                    .iter()
-                                    .filter_map(Option::as_ref)
-                                    .cloned()
-                                    .collect(),
+                                indices: todo!("state.files[marker.pack_index_sequence..]"),
                                 drop_packs: Vec::new(),
                                 drop_indices: Vec::new(),
                                 mark: PackIndexMarker {
                                     generation: state.generation,
-                                    pack_index_sequence: state.loaded_indices.len(),
+                                    pack_index_sequence: state.files.len(),
                                 },
                             }
                         }
                     }
                 }
-                None => load_indices::Outcome::Replace {
-                    indices: state
-                        .loaded_indices
-                        .iter()
-                        .filter_map(Option::as_ref)
-                        .cloned()
-                        .collect(),
-                    mark: PackIndexMarker {
-                        generation: state.generation,
-                        pack_index_sequence: state.loaded_indices.len(),
-                    },
-                },
+                None => state.collect_replace_outcome(),
             })
         }
     }
@@ -514,8 +545,9 @@ mod odb {
 }
 
 mod refs {
-    use crate::features;
     use std::path::{Path, PathBuf};
+
+    use crate::features;
 
     pub struct LooseStore {
         path: PathBuf,
@@ -530,8 +562,10 @@ mod refs {
     }
 
     mod inner {
-        use crate::features;
-        use crate::refs::{LooseStore, RefTable};
+        use crate::{
+            features,
+            refs::{LooseStore, RefTable},
+        };
 
         pub(crate) enum StoreSelection {
             Loose(LooseStore),

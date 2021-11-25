@@ -1,5 +1,4 @@
-use std::sync::Arc;
-use std::{path::Path, time::Instant};
+use std::{path::Path, sync::Arc, time::Instant};
 
 use anyhow::anyhow;
 use git_repository::{hash::ObjectId, odb, prelude::*, Repository};
