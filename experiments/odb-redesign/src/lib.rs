@@ -100,12 +100,12 @@ mod odb {
             pub(crate) multipack_index: Option<IndexId>,
         }
 
-        pub(crate) struct IndexFile {
+        pub(crate) struct IndexLookup {
             file: index_file::SingleOrMulti,
             pub id: IndexId,
         }
 
-        impl IndexFile {
+        impl IndexLookup {
             fn lookup(&self, object_id: &oid) -> Option<IndexForObjectInPack> {
                 match &self.file {
                     index_file::SingleOrMulti::Single(file) => {
@@ -122,17 +122,17 @@ mod odb {
             }
         }
 
-        pub(crate) enum PackDataFile {
+        pub(crate) enum OnDiskFile<T> {
             /// The file is on disk and can be loaded from there.
             Unloaded(PathBuf),
-            Loaded(git_pack::data::File),
+            Loaded(PathBuf, T),
             /// The file was loaded, but appeared to be missing on disk after reconciling our state with what's on disk.
             /// As there were handles that required pack-id stability we had to keep the pack.
-            Garbage(git_pack::data::File),
+            Garbage(PathBuf, T),
             /// File is missing on disk and could not be loaded when we tried or turned missing after reconciling our state.
             Missing,
         }
-        type PackDataFiles = Vec<Option<features::OwnShared<PackDataFile>>>;
+        type PackDataFiles = Vec<Option<features::OwnShared<OnDiskFile<git_pack::data::File>>>>;
 
         pub(crate) type HandleId = u32;
         pub(crate) enum HandleMode {
@@ -141,10 +141,26 @@ mod odb {
             Stable,
         }
 
+        pub(crate) struct IndexFileBundle {
+            index: OnDiskFile<git_pack::index::File>,
+            data: OnDiskFile<git_pack::data::File>,
+        }
+
+        pub(crate) struct MultiIndexFileBundle {
+            multi_index: OnDiskFile<git_pack::index::File>, // TODO: turn that into multi-index file when available
+            data: Vec<OnDiskFile<git_pack::data::File>>,
+        }
+
+        pub(crate) enum IndexAndPacks {
+            Index(IndexFileBundle),
+            MultiIndex(MultiIndexFileBundle),
+        }
+
         #[derive(Default)]
         pub(crate) struct State {
             pub(crate) db_paths: Vec<PathBuf>,
-            pub(crate) loaded_indices: Vec<Option<features::OwnShared<policy::IndexFile>>>,
+            pub(crate) files: Vec<Option<IndexAndPacks>>,
+            pub(crate) loaded_indices: Vec<Option<features::OwnShared<policy::IndexLookup>>>,
             pub(crate) loaded_packs: PackDataFiles,
             /// Each change in the multi-pack index creates a new index entry here and typically drops all knowledge about its removed packs.
             /// We do this because there can be old pack ids around that refer to the old (now deleted) multi-pack index along with a possibly
@@ -189,14 +205,14 @@ mod odb {
                 /// This happens if we have witnessed a generational change invalidating all of our ids and causing currently loaded
                 /// indices and maps to be dropped.
                 Replace {
-                    indices: Vec<features::OwnShared<policy::IndexFile>>, // should probably be small vec to get around most allocations
+                    indices: Vec<features::OwnShared<policy::IndexLookup>>, // should probably be small vec to get around most allocations
                     mark: PackIndexMarker, // use to show where the caller left off last time
                 },
                 /// Extend with the given indices and keep searching, while dropping invalidated/unloaded ids.
                 Extend {
                     drop_packs: Vec<PackId>,    // which packs to forget about because they were removed from disk.
                     drop_indices: Vec<IndexId>, // which packs to forget about because they were removed from disk.
-                    indices: Vec<features::OwnShared<policy::IndexFile>>, // should probably be small vec to get around most allocations
+                    indices: Vec<features::OwnShared<policy::IndexLookup>>, // should probably be small vec to get around most allocations
                     mark: PackIndexMarker, // use to show where the caller left off last time
                 },
                 /// No new indices to look at, caller should give up
