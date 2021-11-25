@@ -183,6 +183,8 @@ mod odb {
                 }
             }
 
+            /// We do it like this as we first have to check for a loaded interior in read-only mode, and then upgrade
+            /// when we know that loading is necessary. This also works around borrow check, which is a nice coincidence.
             pub fn do_load(&mut self, load: impl FnOnce(&Path) -> io::Result<T>) -> io::Result<Option<&T>> {
                 use OnDiskFileState::*;
                 match &mut self.state {
@@ -468,22 +470,25 @@ mod odb {
                                         policy::IndexAndPacks::Index(bundle) => Ok(bundle
                                             .data
                                             .do_load(|path| {
-                                                Ok(features::OwnShared::new(git_pack::data::File::at(path).map_err(
+                                                git_pack::data::File::at(path).map(features::OwnShared::new).map_err(
                                                     |err| match err {
                                                         git_odb::data::header::decode::Error::Io { source, .. } => {
                                                             source
                                                         }
                                                         other => std::io::Error::new(std::io::ErrorKind::Other, other),
                                                     },
-                                                )?))
+                                                )
                                             })?
                                             .cloned()),
                                         _ => unreachable!(),
                                     }
                                 }
                             },
+                            // This can also happen if they use an old index into our new and refreshed data which might have a multi-index
+                            // here.
                             policy::IndexAndPacks::MultiIndex(_) => Ok(None),
                         },
+                        // This can happen if we condense our data, returning None tells the caller to refresh their indices
                         None => Ok(None),
                     }
                 }
