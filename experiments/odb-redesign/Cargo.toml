@@ -13,6 +13,7 @@ thread-safe = []
 git-pack = { path = "../../git-pack", version = "*" }
 git-odb = { path = "../../git-odb", version = "*" }
 git-hash = { path = "../../git-hash", version ="^0.8.0" }
+git-ref = { path = "../../git-ref", version ="^0.9.1" }
 parking_lot = { version = "0.11.0", default-features = false }
 thiserror = "1.0.30"
 anyhow = "1.0.47"

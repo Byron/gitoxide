@@ -68,7 +68,7 @@ mod odb {
 
         pub(crate) struct IndexForObjectInPack {
             /// The internal identifier of the pack itself, which either is referred to by an index or a multi-pack index.
-            pack_id: PackId,
+            pub(crate) pack_id: PackId,
             /// The index of the object within the pack
             object_index_in_pack: u32,
         }
@@ -201,23 +201,22 @@ mod odb {
         }
     }
 
-    #[derive(Default)]
-    pub struct Policy {
+    pub struct Store {
         state: features::MutableOnDemand<policy::State>,
     }
 
-    impl Policy {
-        fn new(unload_mode: policy::PackDataUnloadMode) -> Self {
-            Policy {
+    impl Store {
+        pub fn new(unload_mode: policy::PackDataUnloadMode) -> features::OwnShared<Self> {
+            features::OwnShared::new(Store {
                 state: features::MutableOnDemand::new(policy::State {
                     allow_unload: matches!(unload_mode, policy::PackDataUnloadMode::WhenDiskFileIsMissing),
                     ..policy::State::default()
                 }),
-            }
+            })
         }
     }
 
-    impl Policy {
+    impl Store {
         /// If Ok(None) is returned, the pack-id was stale and referred to an unloaded pack.
         /// If pack-ids are kept long enough for this to happen or things are racy, the store policy must be changed to never unload packs
         /// along with regular cleanup to not run out of handles while getting some reuse, or if the oid is known, just refresh indices
@@ -332,13 +331,14 @@ mod odb {
         }
     }
 
-    /// The store shares a policy and
-    pub struct Store {
-        policy: features::OwnShared<Policy>,
+    /// The store shares a policy and keeps a couple of thread-local configuration
+    pub struct Handle {
+        store: features::OwnShared<Store>,
         objects_directory: PathBuf,
+        refresh_mode: policy::RefreshMode,
     }
 
-    impl git_odb::Find for Store {
+    impl git_odb::Find for Handle {
         type Error = git_odb::compound::find::Error;
 
         fn try_find<'a>(
@@ -367,14 +367,14 @@ mod odb {
     }
 
     fn try_setup() -> anyhow::Result<()> {
-        let policy = Policy::default();
+        let policy = Store::new(policy::PackDataUnloadMode::Never);
         Ok(())
     }
 }
 
 mod refs {
     use crate::features;
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
 
     pub struct LooseStore {
         path: PathBuf,
@@ -398,10 +398,41 @@ mod refs {
         }
     }
 
+    pub struct Store {
+        inner: inner::StoreSelection,
+        packed_refs: features::MutableOnDemand<Option<git_ref::packed::Buffer>>,
+        // And of course some more information to track if packed buffer is fresh
+    }
+
+    impl Store {
+        pub fn new(path: impl AsRef<Path>) -> features::OwnShared<Self> {
+            features::OwnShared::new(Store {
+                inner: inner::StoreSelection::Loose(LooseStore {
+                    path: path.as_ref().to_owned(),
+                    reflog_mode: 0,
+                }),
+                packed_refs: features::MutableOnDemand::new(None),
+            })
+        }
+        pub fn to_handle(self: &features::OwnShared<Self>) -> Handle {
+            Handle {
+                store: self.clone(),
+                namespace: None,
+            }
+        }
+
+        pub fn to_namespaced_handle(self: &features::OwnShared<Self>, namespace: git_ref::Namespace) -> Handle {
+            Handle {
+                store: self.clone(),
+                namespace: namespace.into(),
+            }
+        }
+    }
+
     #[derive(Clone)]
-    struct Store {
-        inner: features::OwnShared<inner::StoreSelection>,
-        namespace: u32,
+    pub struct Handle {
+        store: features::OwnShared<Store>,
+        namespace: Option<git_ref::Namespace>,
     }
 
     // impl common interface but check how all this works with iterators, there is some implementation around that already
@@ -409,7 +440,7 @@ mod refs {
 }
 
 mod repository {
-    use crate::odb;
+    use crate::{features, odb, refs};
 
     mod raw {
         use git_pack::Find;
@@ -427,7 +458,27 @@ mod repository {
     }
 
     /// Maybe we will end up providing a generic version as there still seems to be benefits in having a read-only Store implementation.
+    /// MUST BE `Sync`
+    #[derive(Clone)]
     pub struct Repository {
-        odb: odb::Store,
+        odb: features::OwnShared<odb::Store>,
+        refs: features::OwnShared<refs::Store>,
+    }
+
+    #[cfg(test)]
+    #[cfg(feature = "thread-safe")]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn is_sync_and_send() {
+            fn spawn<T: Send + Sync>(_v: T) {}
+            let repository = Repository {
+                odb: odb::Store::new(odb::policy::PackDataUnloadMode::WhenDiskFileIsMissing),
+                refs: refs::Store::new("./foo"),
+            };
+            spawn(&repository);
+            spawn(repository);
+        }
     }
 }

@@ -1845,6 +1845,7 @@ dependencies = [
  "git-hash",
  "git-odb",
  "git-pack",
+ "git-ref",
  "parking_lot",
  "thiserror",
 ]

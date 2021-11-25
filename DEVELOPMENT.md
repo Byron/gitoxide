@@ -696,3 +696,4 @@ Please note that these are based on the following value system:
           - …cloning use an eagerly loaded Repository just for that particular clone for stable pack ids
           - …fetches use a lazy-loaded Repository with refresh disabled, and full retries if the pack they were referring to goes away. Maybe there can be a policy for that to keep
             pack ids stable despite refresh, which would also solve clones which could then lazy-load.
+      - `Repository` must remain `Sync`.     
