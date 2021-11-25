@@ -58,7 +58,7 @@ mod features {
 
 mod odb {
     use crate::features;
-    use crate::features::{get_mut, get_ref_upgradeable, upgrade_ref_to_mut};
+    use crate::features::{get_mut, get_ref, get_ref_upgradeable, upgrade_ref_to_mut};
     use crate::odb::policy::{load_indices, PackIndexMarker};
     use git_odb::data::Object;
     use git_odb::pack::bundle::Location;
@@ -219,6 +219,13 @@ mod odb {
                 NoMoreIndices,
             }
         }
+
+        /// A snapshot about resource usage.
+        pub struct StateInformation {
+            pub num_handles: usize,
+            pub open_indices: usize,
+            pub open_packs: usize,
+        }
     }
 
     /// Note that each store is strictly per repository, and that we don't implement any kind of limit of file handles.
@@ -254,6 +261,23 @@ mod odb {
                 store: self.clone(),
                 refresh_mode: policy::RefreshMode::AfterAllIndicesLoaded, // todo: remove this
                 id: next,
+            }
+        }
+
+        /// Get a snapshot of the current amount of handles and open packs and indices.
+        /// If there are no handles, we are only consuming resources, which might indicate that this instance should be
+        /// discarded.
+        pub fn state_snapshot(&self) -> policy::StateInformation {
+            let state = get_ref(&self.state);
+            policy::StateInformation {
+                num_handles: state.handles.len(),
+                open_packs: state.loaded_packs.iter().filter(|p| p.is_some()).count()
+                    + state
+                        .loaded_packs_by_multi_index
+                        .values()
+                        .map(|packs| packs.iter().filter(|p| p.is_some()).count())
+                        .sum::<usize>(),
+                open_indices: state.loaded_indices.iter().filter(|i| i.is_some()).count(),
             }
         }
     }
