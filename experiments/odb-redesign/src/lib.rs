@@ -183,23 +183,26 @@ mod odb {
                 }
             }
 
-            pub fn load_if_needed(&mut self, load: impl FnOnce(&Path) -> io::Result<T>) -> io::Result<Option<&T>> {
+            pub fn do_load(&mut self, load: impl FnOnce(&Path) -> io::Result<T>) -> io::Result<Option<&T>> {
                 use OnDiskFileState::*;
-                Ok(match &mut self.state {
-                    Loaded(v) | Garbage(v) => Some(v),
-                    Missing => None,
+                match &mut self.state {
+                    Loaded(_) | Garbage(_) => unreachable!("BUG: check before calling this"),
+                    Missing => Ok(None),
                     Unloaded => match load(&self.path) {
                         Ok(v) => {
-                            // self.state = OnDiskFileState::Loaded(v);
-                            todo!()
+                            self.state = OnDiskFileState::Loaded(v);
+                            match &self.state {
+                                Loaded(v) => Ok(Some(v)),
+                                _ => unreachable!(),
+                            }
                         }
                         Err(err) if err.kind() == io::ErrorKind::NotFound => {
-                            // self.state = OnDiskFileState::Missing;
-                            None
+                            self.state = OnDiskFileState::Missing;
+                            Ok(None)
                         }
-                        Err(err) => return Err(err),
+                        Err(err) => Err(err),
                     },
-                })
+                }
             }
         }
 
@@ -464,7 +467,7 @@ mod odb {
                                     match f {
                                         policy::IndexAndPacks::Index(bundle) => Ok(bundle
                                             .data
-                                            .load_if_needed(|path| {
+                                            .do_load(|path| {
                                                 Ok(features::OwnShared::new(git_pack::data::File::at(path).map_err(
                                                     |err| match err {
                                                         git_odb::data::header::decode::Error::Io { source, .. } => {
