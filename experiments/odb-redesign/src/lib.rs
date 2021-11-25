@@ -122,13 +122,17 @@ mod odb {
             }
         }
 
-        impl Default for PackDataUnloadMode {
-            fn default() -> Self {
-                PackDataUnloadMode::WhenDiskFileIsMissing
-            }
+        pub(crate) enum PackDataFile {
+            /// The file is on disk and can be loaded from there.
+            Unloaded(PathBuf),
+            Loaded(git_pack::data::File),
+            /// The file was loaded, but appeared to be missing on disk after reconciling our state with what's on disk.
+            /// As there were handles that required pack-id stability we had to keep the pack.
+            Garbage(git_pack::data::File),
+            /// File is missing on disk and could not be loaded when we tried or turned missing after reconciling our state.
+            Missing,
         }
-
-        type PackDataFiles = Vec<Option<features::OwnShared<git_pack::data::File>>>;
+        type PackDataFiles = Vec<Option<features::OwnShared<PackDataFile>>>;
 
         pub(crate) type HandleId = u32;
         pub(crate) enum HandleMode {
@@ -173,26 +177,6 @@ mod odb {
             /// Use this if you expect a lot of missing objects that shouldn't trigger refreshes even after all packs are loaded.
             /// This comes at the risk of not learning that the packs have changed in the mean time.
             Never,
-        }
-
-        /// Unloading here means to drop the shared reference to the mapped pack data file.
-        ///
-        /// Indices are always handled like that if their file on disk disappears as objects usually never disappear unless they are unreachable,
-        /// meaning that new indices always contain the old objects in some way.
-        pub enum PackDataUnloadMode {
-            /// Keep pack data (and multi-pack index-to-pack lookup tables) always available in loaded memory maps even
-            /// if the underlying data file (and usually index) are gone.
-            /// This means algorithms that keep track of packs like pack-generators will always be able to resolve the data they reference.
-            /// This also means, however, that one might run out of system resources some time, which means the coordinator of such users
-            /// needs to check resource usage vs amount of uses and replace this instance with a new policy to eventually have the memory
-            /// mapped packs drop (as references to them disappear once consumers disappear).
-            /// We will also not ask Store handles to remove their pack data references.
-            /// We will never rebuild our internal data structures to keep pack ids unique indefinitely (i.e. won't reuse a pack id with a different pack).
-            Never,
-            /// Forget/drop the mapped pack data file when its file on disk disappeared and store handles to remove their pack data references
-            /// for them to be able to go out of scope.
-            /// We are allowed to rebuild our internal data structures to save on memory but invalidate all previous pack ids.
-            WhenDiskFileIsMissing,
         }
 
         pub mod load_indices {
@@ -302,10 +286,11 @@ mod odb {
                 .expect("BUG: handles must be made known on creation") = policy::HandleMode::Stable;
         }
 
-        /// If Ok(None) is returned, the pack-id was stale and referred to an unloaded pack.
-        /// If the oid is known, just refresh indices
+        /// If Ok(None) is returned, the pack-id was stale and referred to an unloaded pack or a pack which couldn't be
+        /// loaded as its file didn't exist on disk anymore.
+        /// If the oid is known, just load indices again to continue
+        /// (objects rarely ever removed so should be present, maybe in another pack though),
         /// and redo the entire lookup for a valid pack id whose pack can probably be loaded next time.
-        /// Otherwise one should use or upgrade the handle to enforce stable indices.
         pub(crate) fn load_pack(
             &self,
             id: policy::PackId,
@@ -314,6 +299,7 @@ mod odb {
                 None => {
                     let state = get_ref_upgradeable(&self.state);
                     // state.loaded_packs.get(id.index).map(|p| p.clone()).flatten()
+                    // If there file on disk wasn't found, reconcile the on-disk state with our state right away and try again.
                     todo!()
                 }
                 Some(multipack_id) => todo!("load from given multipack which needs additional lookup"),
