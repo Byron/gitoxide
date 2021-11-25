@@ -39,7 +39,7 @@ pub type Result<E1, E2> = std::result::Result<(Vec<output::Count>, Outcome), Err
 ///   * more configuration
 pub fn objects<Find, Iter, IterErr, Oid, PackCache, ObjectCache>(
     db: Find,
-    make_caches: impl Fn() -> (PackCache, ObjectCache) + Send + Sync,
+    make_caches: impl Fn() -> (PackCache, ObjectCache) + Send + Clone,
     objects_ids: Iter,
     progress: impl Progress,
     should_interrupt: &AtomicBool,
@@ -50,7 +50,7 @@ pub fn objects<Find, Iter, IterErr, Oid, PackCache, ObjectCache>(
     }: Options,
 ) -> Result<find::existing::Error<Find::Error>, IterErr>
 where
-    Find: crate::Find + Send + Sync,
+    Find: crate::Find + Send + Clone,
     <Find as crate::Find>::Error: Send,
     Iter: Iterator<Item = std::result::Result<Oid, IterErr>> + Send,
     Oid: Into<ObjectId> + Send,
@@ -121,9 +121,9 @@ pub fn objects_unthreaded<Find, IterErr, Oid>(
     input_object_expansion: ObjectExpansion,
 ) -> Result<find::existing::Error<Find::Error>, IterErr>
 where
-    Find: crate::Find + Send + Sync,
-    Oid: Into<ObjectId> + Send,
-    IterErr: std::error::Error + Send,
+    Find: crate::Find,
+    Oid: Into<ObjectId>,
+    IterErr: std::error::Error,
 {
     let seen_objs = RefCell::new(HashSet::<ObjectId, cache::object::State>::default());
 
@@ -175,9 +175,9 @@ mod expand {
         allow_pack_lookups: bool,
     ) -> super::Result<find::existing::Error<Find::Error>, IterErr>
     where
-        Find: crate::Find + Send + Sync,
-        Oid: Into<ObjectId> + Send,
-        IterErr: std::error::Error + Send,
+        Find: crate::Find,
+        Oid: Into<ObjectId>,
+        IterErr: std::error::Error,
     {
         use ObjectExpansion::*;
 

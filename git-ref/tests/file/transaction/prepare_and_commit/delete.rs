@@ -1,16 +1,17 @@
+use std::convert::TryInto;
+
+use git_lock::acquire::Fail;
+use git_ref::{
+    file::ReferenceExt,
+    transaction::{Change, PreviousValue, RefEdit, RefLog},
+    Reference, Target,
+};
+use git_testtools::hex_to_id;
+
 use crate::file::{
     store_writable,
     transaction::prepare_and_commit::{committer, empty_store},
 };
-use git_lock::acquire::Fail;
-use git_ref::file::ReferenceExt;
-use git_ref::transaction::PreviousValue;
-use git_ref::{
-    transaction::{Change, RefEdit, RefLog},
-    Reference, Target,
-};
-use git_testtools::hex_to_id;
-use std::convert::TryInto;
 
 #[test]
 fn delete_a_ref_which_is_gone_succeeds() -> crate::Result {

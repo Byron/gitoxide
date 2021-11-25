@@ -1,23 +1,22 @@
+use std::convert::TryInto;
+
+use git_hash::ObjectId;
+use git_lock::acquire::Fail;
+use git_object::bstr::{BString, ByteSlice};
+use git_ref::{
+    file::{
+        transaction::{self, PackedRefs},
+        ReferenceExt, WriteReflog,
+    },
+    transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
+    Target,
+};
+use git_testtools::hex_to_id;
+
 use crate::file::{
     store_with_packed_refs, store_writable,
     transaction::prepare_and_commit::{committer, empty_store, log_line, reflog_lines},
 };
-use git_hash::ObjectId;
-use git_lock::acquire::Fail;
-use git_object::bstr::BString;
-use git_object::bstr::ByteSlice;
-use git_ref::file::ReferenceExt;
-use git_ref::transaction::PreviousValue;
-use git_ref::{
-    file::{
-        transaction::{self, PackedRefs},
-        WriteReflog,
-    },
-    transaction::{Change, LogChange, RefEdit, RefLog},
-    Target,
-};
-use git_testtools::hex_to_id;
-use std::convert::TryInto;
 
 #[test]
 fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_can_potentially_recover() -> crate::Result

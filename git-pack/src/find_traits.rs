@@ -4,7 +4,7 @@ use crate::{data, find};
 ///
 /// ## Notes
 ///
-/// Locate effectively needs [generic associated types][issue] to allow a trait for the returned object type.
+/// Find effectively needs [generic associated types][issue] to allow a trait for the returned object type.
 /// Until then, we will have to make due with explicit types and give them the potentially added features we want.
 ///
 /// [issue]: https://github.com/rust-lang/rust/issues/44265

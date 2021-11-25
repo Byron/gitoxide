@@ -11,12 +11,11 @@ use git_repository::lock::File;
 use semver::{Version, VersionReq};
 
 use super::{cargo, git, Context, Oid, Options};
-use crate::utils::version_req_unset_or_default;
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},
     traverse::Dependency,
-    utils::{names_and_versions, try_to_published_crate_and_new_version, will},
+    utils::{names_and_versions, try_to_published_crate_and_new_version, version_req_unset_or_default, will},
     version, ChangeLog,
 };
 

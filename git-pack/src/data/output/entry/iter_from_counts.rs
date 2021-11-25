@@ -54,7 +54,7 @@ pub fn iter_from_counts<Find, Cache>(
 ) -> impl Iterator<Item = Result<(ChunkId, Vec<output::Entry>), Error<Find::Error>>>
        + parallel::reduce::Finalize<Reduce = reduce::Statistics<Error<Find::Error>>>
 where
-    Find: crate::Find + Clone + Send + Sync + 'static,
+    Find: crate::Find + Send + Clone + 'static,
     <Find as crate::Find>::Error: Send,
     Cache: crate::cache::DecodeEntry,
 {
@@ -78,7 +78,7 @@ where
             {
                 let progress = Arc::clone(&progress);
                 let counts = &counts;
-                let db = &db;
+                let db = db.clone();
                 move |chunk_range, buf| {
                     let chunk = {
                         let c = &counts[chunk_range];

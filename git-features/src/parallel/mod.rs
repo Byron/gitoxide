@@ -133,8 +133,8 @@ pub fn in_parallel_if<I, S, O, R>(
     condition: impl FnOnce() -> bool,
     input: impl Iterator<Item = I> + Send,
     thread_limit: Option<usize>,
-    new_thread_state: impl Fn(usize) -> S + Send + Sync,
-    consume: impl Fn(I, &mut S) -> O + Send + Sync,
+    new_thread_state: impl Fn(usize) -> S + Send + Clone,
+    consume: impl Fn(I, &mut S) -> O + Send + Clone,
     reducer: R,
 ) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
 where
