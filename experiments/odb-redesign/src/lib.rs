@@ -251,6 +251,12 @@ mod odb {
         }
 
         impl State {
+            pub(crate) fn marker(&self) -> PackIndexMarker {
+                PackIndexMarker {
+                    generation: self.generation,
+                    pack_index_sequence: self.files.len(),
+                }
+            }
             pub(crate) fn snapshot(&self) -> StateInformation {
                 let mut open_packs = 0;
                 let mut open_indices = 0;
@@ -325,6 +331,7 @@ mod odb {
         }
 
         /// A way to indicate which pack indices we have seen already
+        #[derive(Copy, Clone)]
         pub struct PackIndexMarker {
             /// The generation the `pack_index_sequence` belongs to. Indices of different generations are completely incompatible.
             pub(crate) generation: u8,
@@ -452,17 +459,19 @@ mod odb {
         /// If the oid is known, just load indices again to continue
         /// (objects rarely ever removed so should be present, maybe in another pack though),
         /// and redo the entire lookup for a valid pack id whose pack can probably be loaded next time.
+        /// The caller has to check the generation of the returned pack and compare it with their last generation,
+        /// reloading the indices and retrying if it doesn't match.
         pub(crate) fn load_pack(
             &self,
             id: policy::PackId,
-        ) -> std::io::Result<Option<features::OwnShared<git_pack::data::File>>> {
+        ) -> std::io::Result<Option<(PackIndexMarker, features::OwnShared<git_pack::data::File>)>> {
             match id.multipack_index {
                 None => {
                     let state = get_ref_upgradeable(&self.state);
                     match state.files.get(id.index) {
                         Some(f) => match f {
                             policy::IndexAndPacks::Index(bundle) => match bundle.data.loaded() {
-                                Some(pack) => Ok(Some(pack.clone())),
+                                Some(pack) => Ok(Some((state.marker(), pack.clone()))),
                                 None => {
                                     let mut state = upgrade_ref_to_mut(state);
                                     let f = &mut state.files[id.index];
@@ -479,7 +488,8 @@ mod odb {
                                                     },
                                                 )
                                             })?
-                                            .cloned()),
+                                            .cloned()
+                                            .map(|f| (state.marker(), f))),
                                         _ => unreachable!(),
                                     }
                                 }
@@ -521,10 +531,7 @@ mod odb {
                             load_indices::Outcome::Extend {
                                 indices: todo!("state.files[marker.pack_index_sequence..]"),
                                 drop_indices: Vec::new(),
-                                mark: PackIndexMarker {
-                                    generation: state.generation,
-                                    pack_index_sequence: state.files.len(),
-                                },
+                                mark: state.marker(),
                             }
                         }
                     }
