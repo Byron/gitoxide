@@ -65,7 +65,6 @@ mod odb {
     use git_odb::pack::cache::DecodeEntry;
     use git_odb::pack::find::Entry;
     use git_odb::pack::Bundle;
-    use std::io;
     use std::path::PathBuf;
 
     pub mod policy {
@@ -73,6 +72,7 @@ mod odb {
         use crate::odb::policy;
         use git_hash::oid;
         use std::collections::BTreeMap;
+        use std::io;
         use std::path::PathBuf;
 
         mod index_file {
@@ -149,18 +149,23 @@ mod odb {
 
         pub(crate) struct MultiIndexFileBundle {
             multi_index: OnDiskFile<git_pack::index::File>, // TODO: turn that into multi-index file when available
+            /// The parent repository owning us. This path could be derived from our own file path, but this seems more controlled
+            objects_directory: PathBuf,
             data: Vec<OnDiskFile<git_pack::data::File>>,
         }
 
         pub(crate) enum IndexAndPacks {
             Index(IndexFileBundle),
+            /// Note that there can only be one multi-pack file per repository, but thanks to git alternates, there can be multiple overall.
             MultiIndex(MultiIndexFileBundle),
         }
 
         #[derive(Default)]
         pub(crate) struct State {
+            /// The root level directory from which we resolve alternates files.
+            pub(crate) objects_directory: PathBuf,
             pub(crate) db_paths: Vec<PathBuf>,
-            pub(crate) files: Vec<Option<IndexAndPacks>>,
+            pub(crate) files: Vec<IndexAndPacks>,
             pub(crate) loaded_indices: Vec<Option<features::OwnShared<policy::IndexLookup>>>,
             pub(crate) loaded_packs: PackDataFiles,
             /// Each change in the multi-pack index creates a new index entry here and typically drops all knowledge about its removed packs.
@@ -170,10 +175,38 @@ mod odb {
             /// Generations are incremented whenever we decide to clear out our vectors if they are too big and contains too many empty slots.
             /// If we are not allowed to unload files, the generation will never be changed.
             pub(crate) generation: u8,
-            pub(crate) objects_directory: PathBuf,
 
             pub(crate) num_handles_stable: usize,
             pub(crate) num_handles_unstable: usize,
+        }
+
+        impl State {
+            pub(crate) fn snapshot(&self) -> StateInformation {
+                // state.files.iter().map(|f| match f {IndexAndPacks::});
+                StateInformation {
+                    num_handles: self.num_handles_unstable + self.num_handles_stable,
+                    open_packs: self.loaded_packs.iter().filter(|p| p.is_some()).count()
+                        + self
+                            .loaded_packs_by_multi_index
+                            .values()
+                            .map(|packs| packs.iter().filter(|p| p.is_some()).count())
+                            .sum::<usize>(),
+                    open_indices: self.loaded_indices.iter().filter(|i| i.is_some()).count(),
+                }
+            }
+
+            /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
+            pub(crate) fn refresh(&mut self) -> io::Result<load_indices::Outcome> {
+                self.db_paths = git_odb::alternate::resolve(&self.objects_directory)
+                    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+                todo!()
+            }
+
+            /// If there is no handle with stable pack ids requirements, unload them.
+            /// This property also relates to us pruning our internal state/doing internal maintenance which affects ids, too.
+            pub(crate) fn may_unload_packs(&mut self) -> bool {
+                self.num_handles_stable == 0
+            }
         }
 
         /// A way to indicate which pack indices we have seen already
@@ -270,17 +303,7 @@ mod odb {
         /// If there are no handles, we are only consuming resources, which might indicate that this instance should be
         /// discarded.
         pub fn state_snapshot(&self) -> policy::StateInformation {
-            let state = get_ref(&self.state);
-            policy::StateInformation {
-                num_handles: state.num_handles_unstable + state.num_handles_stable,
-                open_packs: state.loaded_packs.iter().filter(|p| p.is_some()).count()
-                    + state
-                        .loaded_packs_by_multi_index
-                        .values()
-                        .map(|packs| packs.iter().filter(|p| p.is_some()).count())
-                        .sum::<usize>(),
-                open_indices: state.loaded_indices.iter().filter(|i| i.is_some()).count(),
-            }
+            get_ref(&self.state).snapshot()
         }
     }
 
@@ -335,8 +358,7 @@ mod odb {
         ) -> std::io::Result<load_indices::Outcome> {
             let state = get_ref_upgradeable(&self.state);
             if state.db_paths.is_empty() {
-                let mut state = upgrade_ref_to_mut(state);
-                return Self::refresh(&mut state);
+                return upgrade_ref_to_mut(state).refresh();
             }
 
             Ok(match marker {
@@ -359,8 +381,7 @@ mod odb {
                             match refresh_mode {
                                 policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
                                 policy::RefreshMode::AfterAllIndicesLoaded => {
-                                    let mut state = upgrade_ref_to_mut(state);
-                                    return Self::refresh(&mut state);
+                                    return upgrade_ref_to_mut(state).refresh()
                                 }
                             }
                         } else {
@@ -393,24 +414,6 @@ mod odb {
                     },
                 },
             })
-        }
-    }
-
-    /// Utilities
-    impl Store {
-        /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
-        fn refresh(state: &mut policy::State) -> io::Result<policy::load_indices::Outcome> {
-            state.db_paths.extend(
-                git_odb::alternate::resolve(&state.objects_directory)
-                    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
-            );
-            todo!()
-        }
-
-        /// If there is no handle with stable pack ids requirements, unload them.
-        /// This property also relates to us pruning our internal state/doing internal maintenance which affects ids, too.
-        fn may_unload_packs(state: &policy::State) -> bool {
-            state.num_handles_stable == 0
         }
     }
 
