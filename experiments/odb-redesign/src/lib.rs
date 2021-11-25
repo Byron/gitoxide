@@ -122,16 +122,30 @@ mod odb {
             }
         }
 
-        pub(crate) enum OnDiskFile<T> {
+        pub(crate) struct OnDiskFile<T> {
+            /// The last known path of the file
+            path: PathBuf,
+            state: OnDiskFileState<T>,
+        }
+
+        pub(crate) enum OnDiskFileState<T> {
             /// The file is on disk and can be loaded from there.
-            Unloaded(PathBuf),
-            Loaded(PathBuf, T),
+            Unloaded,
+            Loaded(T),
             /// The file was loaded, but appeared to be missing on disk after reconciling our state with what's on disk.
             /// As there were handles that required pack-id stability we had to keep the pack.
-            Garbage(PathBuf, T),
+            Garbage(T),
             /// File is missing on disk and could not be loaded when we tried or turned missing after reconciling our state.
             Missing,
         }
+
+        impl<T> OnDiskFile<T> {
+            /// Return true if we hold a memory map of the file already.
+            pub fn is_loaded(&self) -> bool {
+                matches!(self.state, OnDiskFileState::Loaded(_) | OnDiskFileState::Garbage(_))
+            }
+        }
+
         type PackDataFiles = Vec<Option<features::OwnShared<OnDiskFile<git_pack::data::File>>>>;
 
         pub(crate) type HandleId = u32;
@@ -144,13 +158,13 @@ mod odb {
 
         pub(crate) struct IndexFileBundle {
             index: OnDiskFile<git_pack::index::File>,
+            path: PathBuf,
             data: OnDiskFile<git_pack::data::File>,
         }
 
         pub(crate) struct MultiIndexFileBundle {
             multi_index: OnDiskFile<git_pack::index::File>, // TODO: turn that into multi-index file when available
-            /// The parent repository owning us. This path could be derived from our own file path, but this seems more controlled
-            objects_directory: PathBuf,
+            path: PathBuf,
             data: Vec<OnDiskFile<git_pack::data::File>>,
         }
 
@@ -182,16 +196,32 @@ mod odb {
 
         impl State {
             pub(crate) fn snapshot(&self) -> StateInformation {
-                // state.files.iter().map(|f| match f {IndexAndPacks::});
+                let mut open_packs = 0;
+                let mut open_indices = 0;
+
+                for f in &self.files {
+                    match f {
+                        IndexAndPacks::Index(bundle) => {
+                            if bundle.index.is_loaded() {
+                                open_indices += 1;
+                            }
+                            if bundle.index.is_loaded() {
+                                open_packs += 1;
+                            }
+                        }
+                        IndexAndPacks::MultiIndex(multi) => {
+                            if multi.multi_index.is_loaded() {
+                                open_indices += 1;
+                            }
+                            open_packs += multi.data.iter().filter(|f| f.is_loaded()).count();
+                        }
+                    }
+                }
+
                 StateInformation {
                     num_handles: self.num_handles_unstable + self.num_handles_stable,
-                    open_packs: self.loaded_packs.iter().filter(|p| p.is_some()).count()
-                        + self
-                            .loaded_packs_by_multi_index
-                            .values()
-                            .map(|packs| packs.iter().filter(|p| p.is_some()).count())
-                            .sum::<usize>(),
-                    open_indices: self.loaded_indices.iter().filter(|i| i.is_some()).count(),
+                    open_packs,
+                    open_indices,
                 }
             }
 
