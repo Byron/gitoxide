@@ -7,8 +7,16 @@ mod features {
         pub type OwnShared<T> = Arc<T>;
         pub type MutableOnDemand<T> = parking_lot::RwLock<T>;
 
-        pub fn get_ref<T>(v: &MutableOnDemand<T>) -> parking_lot::RwLockUpgradableReadGuard<'_, T> {
+        pub fn get_ref_upgradeable<T>(v: &MutableOnDemand<T>) -> parking_lot::RwLockUpgradableReadGuard<'_, T> {
             v.upgradable_read()
+        }
+
+        pub fn get_ref<T>(v: &MutableOnDemand<T>) -> parking_lot::RwLockReadGuard<'_, T> {
+            v.read()
+        }
+
+        pub fn get_mut<T>(v: &MutableOnDemand<T>) -> parking_lot::RwLockWriteGuard<'_, T> {
+            v.write()
         }
 
         pub fn upgrade_ref_to_mut<T>(
@@ -19,14 +27,22 @@ mod features {
     }
 
     mod local {
-        use std::cell::{RefCell, RefMut};
+        use std::cell::{Ref, RefCell, RefMut};
         use std::rc::Rc;
 
         pub type OwnShared<T> = Rc<T>;
         pub type MutableOnDemand<T> = RefCell<T>;
 
-        pub fn get_ref<T>(v: &RefCell<T>) -> RefMut<'_, T> {
+        pub fn get_ref_upgradeable<T>(v: &RefCell<T>) -> RefMut<'_, T> {
             v.borrow_mut()
+        }
+
+        pub fn get_mut<T>(v: &RefCell<T>) -> RefMut<'_, T> {
+            v.borrow_mut()
+        }
+
+        pub fn get_ref<T>(v: &RefCell<T>) -> Ref<'_, T> {
+            v.borrow()
         }
 
         pub fn upgrade_ref_to_mut<T>(v: RefMut<'_, T>) -> RefMut<'_, T> {
@@ -42,7 +58,7 @@ mod features {
 
 mod odb {
     use crate::features;
-    use crate::features::{get_ref, upgrade_ref_to_mut};
+    use crate::features::{get_mut, get_ref_upgradeable, upgrade_ref_to_mut};
     use crate::odb::policy::{load_indices, PackIndexMarker};
     use git_odb::data::Object;
     use git_odb::pack::bundle::Location;
@@ -50,7 +66,7 @@ mod odb {
     use git_odb::pack::find::Entry;
     use git_odb::pack::Bundle;
     use std::io;
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
     pub mod policy {
         use crate::features;
@@ -114,6 +130,13 @@ mod odb {
 
         type PackDataFiles = Vec<Option<features::OwnShared<git_pack::data::File>>>;
 
+        pub(crate) type HandleId = u32;
+        pub(crate) enum HandleMode {
+            /// Pack-ids may change which may cause lookups by pack-id (without an oid available) to fail.
+            Unstable,
+            Stable,
+        }
+
         #[derive(Default)]
         pub(crate) struct State {
             pub(crate) db_paths: Vec<PathBuf>,
@@ -126,7 +149,9 @@ mod odb {
             /// Generations are incremented whenever we decide to clear out our vectors if they are too big and contains too many empty slots.
             /// If we are not allowed to unload files, the generation will never be changed.
             pub(crate) generation: u8,
-            pub(crate) allow_unload: bool,
+            pub(crate) next_handle_id: HandleId,
+            pub(crate) handles: BTreeMap<HandleId, HandleMode>,
+            pub(crate) objects_directory: PathBuf,
         }
 
         /// A way to indicate which pack indices we have seen already
@@ -139,6 +164,7 @@ mod odb {
         }
 
         /// Define how packs will be refreshed when all indices are loaded, which is useful if a lot of objects are missing.
+        #[derive(Clone, Copy)]
         pub enum RefreshMode {
             /// Check for new or changed pack indices (and pack data files) when the last known index is loaded.
             /// During runtime we will keep pack indices stable by never reusing them, however, there is the option for
@@ -172,13 +198,7 @@ mod odb {
         pub mod load_indices {
             use crate::features;
             use crate::odb::policy;
-            use crate::odb::policy::{IndexId, PackId, PackIndexMarker, RefreshMode};
-            use std::path::Path;
-
-            pub(crate) struct Options<'a> {
-                pub objects_directory: &'a Path,
-                pub refresh_mode: RefreshMode,
-            }
+            use crate::odb::policy::{IndexId, PackId, PackIndexMarker};
 
             pub(crate) enum Outcome {
                 /// Drop all data and fully replace it with `indices`.
@@ -201,33 +221,74 @@ mod odb {
         }
     }
 
+    /// Note that each store is strictly per repository, and that we don't implement any kind of limit of file handles.
+    /// The reason for the latter is that it's close to impossible to enforce correctly without heuristics that are probably
+    /// better done on the server if there is an indication.
+    ///
+    /// There is, however, a way to obtain the current amount of open files held by this instance and it's possible to trigger them
+    /// to be closed. Alternatively, it's safe to replace this instance with a new one which starts fresh.
+    ///
+    /// Note that it's possible to let go of loaded files here as well, even though that would be based on a setting allowed file handles
+    /// which would be managed elsewhere.
+    ///
+    /// For maintenance, I think it would be best create an instance when a connection comes in, share it across connections to the same
+    /// repository, and remove it as the last connection to it is dropped.
     pub struct Store {
         state: features::MutableOnDemand<policy::State>,
     }
 
     impl Store {
-        pub fn new(unload_mode: policy::PackDataUnloadMode) -> features::OwnShared<Self> {
+        pub fn at(objects_directory: impl Into<PathBuf>) -> features::OwnShared<Self> {
             features::OwnShared::new(Store {
                 state: features::MutableOnDemand::new(policy::State {
-                    allow_unload: matches!(unload_mode, policy::PackDataUnloadMode::WhenDiskFileIsMissing),
+                    objects_directory: objects_directory.into(),
                     ..policy::State::default()
                 }),
             })
         }
+
+        /// Allow actually finding things
+        pub fn to_handle(self: &features::OwnShared<Self>) -> Handle {
+            let next = self.register_handle();
+            Handle {
+                store: self.clone(),
+                refresh_mode: policy::RefreshMode::AfterAllIndicesLoaded, // todo: remove this
+                id: next,
+            }
+        }
     }
 
     impl Store {
+        pub(crate) fn register_handle(&self) -> policy::HandleId {
+            let mut state = get_mut(&self.state);
+            let next = state.next_handle_id;
+            state.next_handle_id = state.next_handle_id.wrapping_add(1);
+            state.handles.insert(next, policy::HandleMode::Unstable);
+            next
+        }
+        pub(crate) fn remove_handle(&self, id: &policy::HandleId) {
+            let mut state = get_mut(&self.state);
+            state.handles.remove(id);
+        }
+        pub(crate) fn upgrade_handle(&self, id: &policy::HandleId) {
+            let mut state = get_mut(&self.state);
+            *state
+                .handles
+                .get_mut(&id)
+                .expect("BUG: handles must be made known on creation") = policy::HandleMode::Stable;
+        }
+
         /// If Ok(None) is returned, the pack-id was stale and referred to an unloaded pack.
-        /// If pack-ids are kept long enough for this to happen or things are racy, the store policy must be changed to never unload packs
-        /// along with regular cleanup to not run out of handles while getting some reuse, or if the oid is known, just refresh indices
+        /// If the oid is known, just refresh indices
         /// and redo the entire lookup for a valid pack id whose pack can probably be loaded next time.
+        /// Otherwise one should use or upgrade the handle to enforce stable indices.
         pub(crate) fn load_pack(
             &self,
             id: policy::PackId,
         ) -> std::io::Result<Option<features::OwnShared<git_pack::data::File>>> {
             match id.multipack_index {
                 None => {
-                    let state = get_ref(&self.state);
+                    let state = get_ref_upgradeable(&self.state);
                     // state.loaded_packs.get(id.index).map(|p| p.clone()).flatten()
                     todo!()
                 }
@@ -236,22 +297,13 @@ mod odb {
         }
         pub(crate) fn load_next_indices(
             &self,
-            load_indices::Options {
-                objects_directory,
-                refresh_mode,
-            }: load_indices::Options<'_>,
+            refresh_mode: policy::RefreshMode,
             marker: Option<policy::PackIndexMarker>,
         ) -> std::io::Result<load_indices::Outcome> {
-            let state = get_ref(&self.state);
+            let state = get_ref_upgradeable(&self.state);
             if state.db_paths.is_empty() {
                 let mut state = upgrade_ref_to_mut(state);
-                return Self::refresh(&mut state, objects_directory);
-            } else {
-                debug_assert_eq!(
-                    Some(objects_directory),
-                    state.db_paths.get(0).map(|p| p.as_path()),
-                    "Eager policy can't be shared across different repositories"
-                );
+                return Self::refresh(&mut state);
             }
 
             Ok(match marker {
@@ -275,7 +327,7 @@ mod odb {
                                 policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
                                 policy::RefreshMode::AfterAllIndicesLoaded => {
                                     let mut state = upgrade_ref_to_mut(state);
-                                    return Self::refresh(&mut state, objects_directory);
+                                    return Self::refresh(&mut state);
                                 }
                             }
                         } else {
@@ -309,33 +361,59 @@ mod odb {
                 },
             })
         }
+    }
 
-        /// If there is only additive changes, there is no need for a new `generation` actually, which helps
-        /// callers to retain stability.
-        fn refresh(
-            policy::State {
-                db_paths,
-                allow_unload: _,
-                loaded_indices: bundles,
-                loaded_packs: _,
-                loaded_packs_by_multi_index: _,
-                generation,
-            }: &mut policy::State,
-            objects_directory: &Path,
-        ) -> io::Result<policy::load_indices::Outcome> {
-            db_paths.extend(
-                git_odb::alternate::resolve(objects_directory)
+    /// Utilities
+    impl Store {
+        /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
+        fn refresh(state: &mut policy::State) -> io::Result<policy::load_indices::Outcome> {
+            state.db_paths.extend(
+                git_odb::alternate::resolve(&state.objects_directory)
                     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?,
             );
             todo!()
+        }
+
+        /// If there is no handle with stable pack ids requirements, unload them.
+        /// This property also relates to us pruning our internal state/doing internal maintenance which affects ids, too.
+        fn may_unload_packs(state: &policy::State) -> bool {
+            state
+                .handles
+                .values()
+                .all(|m| matches!(m, policy::HandleMode::Unstable))
         }
     }
 
     /// The store shares a policy and keeps a couple of thread-local configuration
     pub struct Handle {
         store: features::OwnShared<Store>,
-        objects_directory: PathBuf,
         refresh_mode: policy::RefreshMode,
+        id: policy::HandleId,
+    }
+
+    impl Handle {
+        /// Call once if pack ids are stored and later used for lookup, meaning they should always remain mapped and not be unloaded
+        /// even if they disappear from disk.
+        /// This must be called if there is a chance that git maintenance is happening while a pack is created.
+        pub fn prevent_pack_unload(&self) {
+            self.store.upgrade_handle(&self.id);
+        }
+    }
+
+    impl Clone for Handle {
+        fn clone(&self) -> Self {
+            Handle {
+                store: self.store.clone(),
+                refresh_mode: self.refresh_mode,
+                id: self.store.register_handle(),
+            }
+        }
+    }
+
+    impl Drop for Handle {
+        fn drop(&mut self) {
+            self.store.remove_handle(&self.id)
+        }
     }
 
     impl git_odb::Find for Handle {
@@ -367,7 +445,7 @@ mod odb {
     }
 
     fn try_setup() -> anyhow::Result<()> {
-        let policy = Store::new(policy::PackDataUnloadMode::Never);
+        let policy = Store::at("foo");
         Ok(())
     }
 }
@@ -474,7 +552,7 @@ mod repository {
         fn is_sync_and_send() {
             fn spawn<T: Send + Sync>(_v: T) {}
             let repository = Repository {
-                odb: odb::Store::new(odb::policy::PackDataUnloadMode::WhenDiskFileIsMissing),
+                odb: odb::Store::at("./foo/objects"),
                 refs: refs::Store::new("./foo"),
             };
             spawn(&repository);
