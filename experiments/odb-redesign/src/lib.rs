@@ -163,7 +163,8 @@ mod odb {
             Unloaded,
             Loaded(T),
             /// The file was loaded, but appeared to be missing on disk after reconciling our state with what's on disk.
-            /// As there were handles that required pack-id stability we had to keep the pack.
+            /// As there were handles that required pack-id stability we had to keep the item to allow finding it on later
+            /// lookups.
             Garbage(T),
             /// File is missing on disk and could not be loaded when we tried or turned missing after reconciling our state.
             Missing,
@@ -322,16 +323,12 @@ mod odb {
                 });
                 load_indices::Outcome::Replace {
                     indices: todo!(),
-                    mark: PackIndexMarker {
-                        generation: self.generation,
-                        pack_index_sequence: self.files.len(),
-                    },
+                    mark: self.marker(),
                 }
             }
         }
 
         /// A way to indicate which pack indices we have seen already
-        #[derive(Copy, Clone)]
         pub struct PackIndexMarker {
             /// The generation the `pack_index_sequence` belongs to. Indices of different generations are completely incompatible.
             pub(crate) generation: u8,
@@ -459,19 +456,21 @@ mod odb {
         /// If the oid is known, just load indices again to continue
         /// (objects rarely ever removed so should be present, maybe in another pack though),
         /// and redo the entire lookup for a valid pack id whose pack can probably be loaded next time.
-        /// The caller has to check the generation of the returned pack and compare it with their last generation,
-        /// reloading the indices and retrying if it doesn't match.
         pub(crate) fn load_pack(
             &self,
             id: policy::PackId,
-        ) -> std::io::Result<Option<(PackIndexMarker, features::OwnShared<git_pack::data::File>)>> {
+            marker: PackIndexMarker,
+        ) -> std::io::Result<Option<features::OwnShared<git_pack::data::File>>> {
+            let state = get_ref_upgradeable(&self.state);
+            if state.generation != marker.generation {
+                return Ok(None);
+            }
             match id.multipack_index {
                 None => {
-                    let state = get_ref_upgradeable(&self.state);
                     match state.files.get(id.index) {
                         Some(f) => match f {
                             policy::IndexAndPacks::Index(bundle) => match bundle.data.loaded() {
-                                Some(pack) => Ok(Some((state.marker(), pack.clone()))),
+                                Some(pack) => Ok(Some(pack.clone())),
                                 None => {
                                     let mut state = upgrade_ref_to_mut(state);
                                     let f = &mut state.files[id.index];
@@ -488,8 +487,7 @@ mod odb {
                                                     },
                                                 )
                                             })?
-                                            .cloned()
-                                            .map(|f| (state.marker(), f))),
+                                            .cloned()),
                                         _ => unreachable!(),
                                     }
                                 }
