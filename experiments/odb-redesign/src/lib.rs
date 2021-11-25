@@ -73,6 +73,7 @@ mod odb {
     };
 
     pub mod policy {
+        use std::path::Path;
         use std::{io, path::PathBuf};
 
         use git_hash::oid;
@@ -181,6 +182,25 @@ mod odb {
                     Unloaded | Missing => None,
                 }
             }
+
+            pub fn load_if_needed(&mut self, load: impl FnOnce(&Path) -> io::Result<T>) -> io::Result<Option<&T>> {
+                use OnDiskFileState::*;
+                Ok(match &mut self.state {
+                    Loaded(v) | Garbage(v) => Some(v),
+                    Missing => None,
+                    Unloaded => match load(&self.path) {
+                        Ok(v) => {
+                            // self.state = OnDiskFileState::Loaded(v);
+                            todo!()
+                        }
+                        Err(err) if err.kind() == io::ErrorKind::NotFound => {
+                            // self.state = OnDiskFileState::Missing;
+                            None
+                        }
+                        Err(err) => return Err(err),
+                    },
+                })
+            }
         }
 
         pub(crate) type MultiIndex = ();
@@ -193,14 +213,14 @@ mod odb {
         }
 
         pub(crate) struct IndexFileBundle {
-            index: OnDiskFile<features::OwnShared<git_pack::index::File>>,
-            path: PathBuf,
-            data: OnDiskFile<features::OwnShared<git_pack::data::File>>,
+            pub index: OnDiskFile<features::OwnShared<git_pack::index::File>>,
+            pub path: PathBuf,
+            pub data: OnDiskFile<features::OwnShared<git_pack::data::File>>,
         }
 
         pub(crate) struct MultiIndexFileBundle {
-            multi_index: OnDiskFile<features::OwnShared<MultiIndex>>,
-            data: Vec<OnDiskFile<features::OwnShared<git_pack::data::File>>>,
+            pub multi_index: OnDiskFile<features::OwnShared<MultiIndex>>,
+            pub data: Vec<OnDiskFile<features::OwnShared<git_pack::data::File>>>,
         }
 
         pub(crate) enum IndexAndPacks {
@@ -257,6 +277,10 @@ mod odb {
             }
 
             /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
+            ///
+            /// Note that updates to multi-pack indices always cause the old index to be invalidated (Missing) and transferred
+            /// into the new MultiPack index (reusing previous maps as good as possible), effectively treating them as new index entirely.
+            /// That way, extension still work as before such that old indices may be pruned, and changes/new ones are always appended.
             pub(crate) fn refresh(&mut self) -> io::Result<load_indices::Outcome> {
                 let mut db_paths = git_odb::alternate::resolve(&self.objects_directory)
                     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
@@ -319,7 +343,7 @@ mod odb {
         pub mod load_indices {
             use crate::odb::{
                 policy,
-                policy::{IndexId, PackId, PackIndexMarker},
+                policy::{IndexId, PackIndexMarker},
             };
 
             pub(crate) enum Outcome {
@@ -332,8 +356,7 @@ mod odb {
                 },
                 /// Extend with the given indices and keep searching, while dropping invalidated/unloaded ids.
                 Extend {
-                    drop_packs: Vec<PackId>,    // which packs to forget about because they were removed from disk.
-                    drop_indices: Vec<IndexId>, // which packs to forget about because they were removed from disk.
+                    drop_indices: Vec<IndexId>, // which packs to forget about (along their packs) because they were removed from disk.
                     indices: Vec<policy::IndexLookup>, // should probably be small vec to get around most allocations
                     mark: PackIndexMarker,      // use to show where the caller left off last time
                 },
@@ -431,9 +454,35 @@ mod odb {
             match id.multipack_index {
                 None => {
                     let state = get_ref_upgradeable(&self.state);
-                    // state.loaded_packs.get(id.index).map(|p| p.clone()).flatten()
-                    // If there file on disk wasn't found, reconcile the on-disk state with our state right away and try again.
-                    todo!()
+                    match state.files.get(id.index) {
+                        Some(f) => match f {
+                            policy::IndexAndPacks::Index(bundle) => match bundle.data.loaded() {
+                                Some(pack) => Ok(Some(pack.clone())),
+                                None => {
+                                    let mut state = upgrade_ref_to_mut(state);
+                                    let f = &mut state.files[id.index];
+                                    match f {
+                                        policy::IndexAndPacks::Index(bundle) => Ok(bundle
+                                            .data
+                                            .load_if_needed(|path| {
+                                                Ok(features::OwnShared::new(git_pack::data::File::at(path).map_err(
+                                                    |err| match err {
+                                                        git_odb::data::header::decode::Error::Io { source, .. } => {
+                                                            source
+                                                        }
+                                                        other => std::io::Error::new(std::io::ErrorKind::Other, other),
+                                                    },
+                                                )?))
+                                            })?
+                                            .cloned()),
+                                        _ => unreachable!(),
+                                    }
+                                }
+                            },
+                            policy::IndexAndPacks::MultiIndex(_) => Ok(None),
+                        },
+                        None => Ok(None),
+                    }
                 }
                 Some(multipack_id) => todo!("load from given multipack which needs additional lookup"),
             }
@@ -463,7 +512,6 @@ mod odb {
                         } else {
                             load_indices::Outcome::Extend {
                                 indices: todo!("state.files[marker.pack_index_sequence..]"),
-                                drop_packs: Vec::new(),
                                 drop_indices: Vec::new(),
                                 mark: PackIndexMarker {
                                     generation: state.generation,
