@@ -165,7 +165,7 @@ impl<'event> GitConfig<'event> {
     /// Constructs a `git-config` from the default cascading sequence.
     /// This is neither zero-alloc nor zero-copy.
     ///
-    /// See https://git-scm.com/docs/git-config#FILES for details.
+    /// See <https://git-scm.com/docs/git-config#FILES> for details.
     pub fn from_env_paths() -> Result<Self, ParserOrIoError<'static>> {
         use std::env;
 
