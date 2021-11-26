@@ -103,6 +103,10 @@ impl<'repo> easy::Access for EasyShared<'repo> {
     fn state(&self) -> &easy::State {
         &self.state
     }
+
+    fn state_mut(&mut self) -> &mut easy::State {
+        &mut self.state
+    }
 }
 
 impl easy::Access for Easy {
@@ -121,6 +125,10 @@ impl easy::Access for Easy {
     fn state(&self) -> &easy::State {
         &self.state
     }
+
+    fn state_mut(&mut self) -> &mut easy::State {
+        &mut self.state
+    }
 }
 
 impl easy::Access for EasyArc {
@@ -136,6 +144,10 @@ impl easy::Access for EasyArc {
     fn state(&self) -> &easy::State {
         &self.state
     }
+
+    fn state_mut(&mut self) -> &mut easy::State {
+        &mut self.state
+    }
 }
 
 impl easy::Access for EasyArcExclusive {
@@ -150,5 +162,9 @@ impl easy::Access for EasyArcExclusive {
     }
     fn state(&self) -> &easy::State {
         &self.state
+    }
+
+    fn state_mut(&mut self) -> &mut easy::State {
+        &mut self.state
     }
 }

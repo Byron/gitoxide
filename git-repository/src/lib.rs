@@ -154,6 +154,9 @@ pub mod path;
 mod repository;
 pub use repository::{discover, init, open};
 
+/// The standard type for a store to handle git references.
+pub type RefStore = git_ref::file::Store;
+
 /// A repository path which either points to a work tree or the `.git` repository itself.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Path {
@@ -173,7 +176,7 @@ pub enum Path {
 /// Namely, this is an object database, a reference database to point to objects.
 pub struct Repository {
     /// A store for references to point at objects
-    pub refs: git_ref::file::Store,
+    pub refs: RefStore,
     /// A store for objects that contain data
     #[cfg(feature = "unstable")]
     pub odb: git_odb::linked::Store,

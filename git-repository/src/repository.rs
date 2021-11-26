@@ -101,7 +101,7 @@ pub mod open {
 
             Ok(crate::Repository {
                 odb: git_odb::linked::Store::at(git_dir.join("objects"))?,
-                refs: git_ref::file::Store::at(
+                refs: crate::RefStore::at(
                     git_dir,
                     if worktree_dir.is_none() {
                         git_ref::file::WriteReflog::Disable

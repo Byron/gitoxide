@@ -1,9 +1,5 @@
 //!
-use std::{
-    cell::Ref,
-    ops::{Deref, DerefMut},
-    path::Path,
-};
+use std::{cell::Ref, ops::DerefMut, path::Path};
 
 use git_odb::Find;
 use git_ref::file::ReferenceExt;
@@ -16,7 +12,6 @@ pub struct Platform<'r, A>
 where
     A: easy::Access + Sized,
 {
-    pub(crate) repo: A::RepoRef,
     pub(crate) packed_refs: Ref<'r, easy::reference::packed::ModifieablePackedRefsBuffer>,
     pub(crate) access: &'r A,
 }
@@ -38,9 +33,8 @@ where
     /// Even broken or otherwise unparsible or inaccessible references are returned and have to be handled by the caller on a
     /// case by case basis.
     pub fn all(&self) -> Result<Iter<'_, A>, init::Error> {
-        let repo = self.repo.deref();
         Ok(Iter {
-            inner: repo.refs.iter(self.packed_refs.buffer.as_ref())?,
+            inner: self.access.state().refs.iter(self.packed_refs.buffer.as_ref())?,
             packed_refs: self.packed_refs.buffer.as_ref(),
             peel: false,
             access: self.access,
@@ -51,9 +45,12 @@ where
     ///
     /// These are of the form `refs/heads` or `refs/remotes/origin`, and must not contain relative paths components like `.` or `..`.
     pub fn prefixed(&self, prefix: impl AsRef<Path>) -> Result<Iter<'_, A>, init::Error> {
-        let repo = self.repo.deref();
         Ok(Iter {
-            inner: repo.refs.iter_prefixed(self.packed_refs.buffer.as_ref(), prefix)?,
+            inner: self
+                .access
+                .state()
+                .refs
+                .iter_prefixed(self.packed_refs.buffer.as_ref(), prefix)?,
             packed_refs: self.packed_refs.buffer.as_ref(),
             peel: false,
             access: self.access,
@@ -90,7 +87,7 @@ where
                         let repo = self.access.repo()?;
                         let state = self.access.state();
                         let mut pack_cache = state.try_borrow_mut_pack_cache()?;
-                        r.peel_to_id_in_place(&repo.refs, self.packed_refs, |oid, buf| {
+                        r.peel_to_id_in_place(&state.refs, self.packed_refs, |oid, buf| {
                             repo.odb
                                 .try_find(oid, buf, pack_cache.deref_mut())
                                 .map(|po| po.map(|o| (o.kind, o.data)))

@@ -14,7 +14,7 @@ mod set_namespace {
             15,
             "there are plenty of references in the default namespace"
         );
-        assert!(repo.namespace()?.is_none(), "no namespace is set initially");
+        assert!(repo.namespace().is_none(), "no namespace is set initially");
         assert!(repo.set_namespace("foo")?.is_none(), "there is no previous namespace");
 
         assert_eq!(
@@ -67,9 +67,9 @@ mod set_namespace {
             "namespaces are transparent"
         );
 
-        let previous_ns = repo.clear_namespace()?.expect("namespace set");
+        let previous_ns = repo.clear_namespace().expect("namespace set");
         assert_eq!(previous_ns.as_bstr(), "refs/namespaces/foo/");
-        assert!(repo.clear_namespace()?.is_none(), "it doesn't invent namespaces");
+        assert!(repo.clear_namespace().is_none(), "it doesn't invent namespaces");
 
         assert_eq!(
             repo.references()?.all()?.count(),

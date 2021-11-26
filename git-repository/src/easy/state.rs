@@ -1,8 +1,6 @@
 //!
 use std::cell::{Ref, RefCell, RefMut};
 
-use git_ref::file;
-
 use crate::{easy, easy::borrow, Repository};
 
 impl Clone for easy::State {
@@ -12,8 +10,8 @@ impl Clone for easy::State {
 }
 
 // TODO: Expand this as needed as more higher-level stores exist (i.e. odb)
-impl From<git_ref::file::Store> for easy::State {
-    fn from(refs: git_ref::file::Store) -> Self {
+impl From<crate::RefStore> for easy::State {
+    fn from(refs: crate::RefStore) -> Self {
         easy::State {
             packed_refs: RefCell::new(Default::default()),
             #[cfg(not(feature = "max-performance"))]
@@ -36,10 +34,9 @@ impl From<&Repository> for easy::State {
 impl easy::State {
     pub(crate) fn assure_packed_refs_uptodate(
         &self,
-        file: &file::Store,
     ) -> Result<Ref<'_, easy::reference::packed::ModifieablePackedRefsBuffer>, easy::reference::packed::Error> {
         let mut packed_refs = self.packed_refs.try_borrow_mut()?;
-        packed_refs.assure_packed_refs_uptodate(file)?;
+        packed_refs.assure_packed_refs_uptodate(&self.refs)?;
         drop(packed_refs);
         Ok(self.packed_refs.try_borrow()?)
     }

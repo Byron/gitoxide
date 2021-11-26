@@ -14,7 +14,7 @@ pub mod iter;
 mod errors;
 use std::{borrow::Borrow, cell::RefMut, marker::PhantomData};
 
-pub use errors::{edit, find, namespace, peel};
+pub use errors::{edit, find, peel};
 
 use crate::ext::ObjectIdExt;
 
@@ -78,8 +78,8 @@ where
         let state = self.access.state();
         let mut pack_cache = state.try_borrow_mut_pack_cache()?;
         let oid = self.inner.peel_to_id_in_place(
-            &repo.refs,
-            state.assure_packed_refs_uptodate(&repo.refs)?.buffer.as_ref(),
+            &state.refs,
+            state.assure_packed_refs_uptodate()?.buffer.as_ref(),
             |oid, buf| {
                 repo.odb
                     .try_find(oid, buf, pack_cache.deref_mut())

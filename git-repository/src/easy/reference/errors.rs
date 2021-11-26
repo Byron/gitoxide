@@ -1,22 +1,4 @@
 ///
-pub mod namespace {
-    ///
-    pub mod set {
-        use crate::easy;
-
-        /// The error returned by [ReferenceAccessExt::set_namespace(…)][easy::ext::ReferenceAccessExt::set_namespace()].
-        #[derive(Debug, thiserror::Error)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            #[error(transparent)]
-            BorrowRepoMut(#[from] easy::borrow::repo::Error),
-            #[error(transparent)]
-            NameValidation(#[from] git_validate::refname::Error),
-        }
-    }
-}
-
-///
 pub mod edit {
     use crate::easy;
 
