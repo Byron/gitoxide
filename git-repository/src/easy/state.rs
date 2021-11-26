@@ -3,16 +3,17 @@ use std::cell::{Ref, RefCell, RefMut};
 
 use git_ref::file;
 
-use crate::{easy, easy::borrow};
+use crate::{easy, easy::borrow, Repository};
 
 impl Clone for easy::State {
     fn clone(&self) -> Self {
-        easy::State { ..Default::default() }
+        self.refs.clone().into()
     }
 }
 
-impl Default for easy::State {
-    fn default() -> Self {
+// TODO: Expand this as needed as more higher-level stores exist (i.e. odb)
+impl From<git_ref::file::Store> for easy::State {
+    fn from(refs: git_ref::file::Store) -> Self {
         easy::State {
             packed_refs: RefCell::new(Default::default()),
             #[cfg(not(feature = "max-performance"))]
@@ -21,7 +22,14 @@ impl Default for easy::State {
             pack_cache: RefCell::new(Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default())),
             object_cache: RefCell::new(None),
             buf: RefCell::new(vec![]),
+            refs,
         }
+    }
+}
+
+impl From<&Repository> for easy::State {
+    fn from(repo: &Repository) -> Self {
+        repo.refs.clone().into()
     }
 }
 

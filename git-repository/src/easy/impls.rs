@@ -6,9 +6,10 @@ use crate::{easy, Easy, EasyArc, EasyArcExclusive, EasyShared, Repository};
 
 impl From<Repository> for Easy {
     fn from(repo: Repository) -> Self {
+        let state = easy::State::from(&repo);
         Easy {
             repo: Rc::new(repo),
-            state: Default::default(),
+            state,
         }
     }
 }
@@ -31,18 +32,20 @@ impl TryFrom<EasyArc> for Repository {
 
 impl From<Repository> for EasyArc {
     fn from(repo: Repository) -> Self {
+        let state = easy::State::from(&repo);
         EasyArc {
             repo: Arc::new(repo),
-            state: Default::default(),
+            state,
         }
     }
 }
 
 impl From<Repository> for EasyArcExclusive {
     fn from(repo: Repository) -> Self {
+        let state = easy::State::from(&repo);
         EasyArcExclusive {
             repo: Arc::new(parking_lot::RwLock::new(repo)),
-            state: Default::default(),
+            state,
         }
     }
 }
@@ -66,7 +69,7 @@ impl Repository {
     pub fn to_easy(&self) -> EasyShared<'_> {
         EasyShared {
             repo: self,
-            state: Default::default(),
+            state: self.into(),
         }
     }
     /// Transform this instance into an [`Easy`], offering shared immutable access to the repository, for the current thread.
