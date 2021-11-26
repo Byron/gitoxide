@@ -517,20 +517,16 @@ mod odb {
                 Some(marker) => {
                     if marker.generation != state.generation {
                         state.collect_replace_outcome()
+                    } else if marker.pack_index_sequence == state.files.len() {
+                        match refresh_mode {
+                            policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
+                            policy::RefreshMode::AfterAllIndicesLoaded => return upgrade_ref_to_mut(state).refresh(),
+                        }
                     } else {
-                        if marker.pack_index_sequence == state.files.len() {
-                            match refresh_mode {
-                                policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
-                                policy::RefreshMode::AfterAllIndicesLoaded => {
-                                    return upgrade_ref_to_mut(state).refresh()
-                                }
-                            }
-                        } else {
-                            load_indices::Outcome::Extend {
-                                indices: todo!("state.files[marker.pack_index_sequence..]"),
-                                drop_indices: Vec::new(),
-                                mark: state.marker(),
-                            }
+                        load_indices::Outcome::Extend {
+                            indices: todo!("state.files[marker.pack_index_sequence..]"),
+                            drop_indices: Vec::new(),
+                            mark: state.marker(),
                         }
                     }
                 }
@@ -567,7 +563,9 @@ mod odb {
 
     impl Drop for Handle {
         fn drop(&mut self) {
-            self.mode.take().map(|mode| self.store.remove_handle(mode));
+            if let Some(mode) = self.mode.take() {
+                self.store.remove_handle(mode)
+            }
         }
     }
 

@@ -171,7 +171,7 @@ impl<'event> GitConfig<'event> {
 
         let mut paths = vec![];
 
-        if let Err(_) = env::var("GIT_CONFIG_NO_SYSTEM") {
+        if env::var("GIT_CONFIG_NO_SYSTEM").is_err() {
             if let Ok(git_config_system) = env::var("GIT_CONFIG_SYSTEM") {
                 paths.push(PathBuf::from(git_config_system))
             } else {
