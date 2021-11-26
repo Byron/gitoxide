@@ -19,6 +19,7 @@ pub mod io;
 pub mod parallel;
 #[cfg(feature = "progress")]
 pub mod progress;
+pub mod threading;
 ///
 #[cfg(feature = "zlib")]
 pub mod zlib;

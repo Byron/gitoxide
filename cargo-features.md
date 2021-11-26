@@ -106,6 +106,9 @@ All feature toggles are additive.
     * Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
       where it makes sense.
     * As caches are likely to be used and instantiated per thread, more memory will be used on top of the costs for threads.
+* **threading**
+    * If set, the `threading` module will contain thread-safe primitives for shared ownership and mutation, otherwise these will be their single threaded counterparts.
+    * This way, single-threaded applications don't have to pay for threaded primitives.
 * **crc32**
     * provide a proven and fast `crc32` implementation.
 * **io-pipe**
