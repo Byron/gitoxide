@@ -59,7 +59,9 @@ pub mod transaction {
 
 pub(crate) mod modifiable {
     use crate::file;
-    use git_features::threading::{get_ref_upgradeable, upgrade_ref_to_mut};
+    use git_features::threading::{
+        downgrade_mut_to_ref, get_ref_upgradeable, map_ref, map_upgradable_ref, upgrade_ref_to_mut, MappedRefGuard,
+    };
     use std::time::SystemTime;
 
     #[derive(Debug, Default)]
@@ -69,39 +71,54 @@ pub(crate) mod modifiable {
     }
 
     impl file::Store {
-        pub(crate) fn assure_packed_refs_uptodate(&self) -> Result<(), crate::packed::buffer::open::Error> {
+        pub(crate) fn assure_packed_refs_uptodate(
+            &self,
+        ) -> Result<MappedRefGuard<'_, Option<crate::packed::Buffer>>, crate::packed::buffer::open::Error> {
             let packed_refs_modified_time = || self.packed_refs_path().metadata().and_then(|m| m.modified()).ok();
             let state = get_ref_upgradeable(&self.packed);
-            if state.buffer.is_none() {
-                let mut state = upgrade_ref_to_mut(state);
+            let ro_buffer_guard = if state.buffer.is_none() {
+                let mut state = upgrade_ref_to_mut(state, &self.packed);
                 state.buffer = self.packed_buffer()?;
                 if state.buffer.is_some() {
                     state.modified = packed_refs_modified_time();
                 }
+                let state = downgrade_mut_to_ref(state, &self.packed);
+                map_ref(state, |state| &state.buffer)
             } else {
                 let recent_modification = packed_refs_modified_time();
                 match (&state.modified, recent_modification) {
-                    (None, None) => {}
+                    (None, None) => map_upgradable_ref(state, |state| &state.buffer),
                     (Some(_), None) => {
-                        let mut state = upgrade_ref_to_mut(state);
+                        let mut state = upgrade_ref_to_mut(state, &self.packed);
                         state.buffer = None;
-                        state.modified = None
+                        state.modified = None;
+
+                        let state = downgrade_mut_to_ref(state, &self.packed);
+                        map_ref(state, |state| &state.buffer)
                     }
                     (Some(cached_time), Some(modified_time)) => {
                         if *cached_time < modified_time {
-                            let mut state = upgrade_ref_to_mut(state);
+                            let mut state = upgrade_ref_to_mut(state, &self.packed);
                             state.buffer = self.packed_buffer()?;
                             state.modified = Some(modified_time);
+
+                            let state = downgrade_mut_to_ref(state, &self.packed);
+                            map_ref(state, |state| &state.buffer)
+                        } else {
+                            map_upgradable_ref(state, |state| &state.buffer)
                         }
                     }
                     (None, Some(modified_time)) => {
-                        let mut state = upgrade_ref_to_mut(state);
+                        let mut state = upgrade_ref_to_mut(state, &self.packed);
                         state.buffer = self.packed_buffer()?;
                         state.modified = Some(modified_time);
+
+                        let state = downgrade_mut_to_ref(state, &self.packed);
+                        map_ref(state, |state| &state.buffer)
                     }
                 }
-            }
-            Ok(())
+            };
+            Ok(ro_buffer_guard)
         }
     }
 }
