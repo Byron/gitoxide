@@ -60,71 +60,8 @@ impl crate::Store {
     }
 }
 
-mod find {
-    use crate::{store, PartialNameRef, Reference};
-    use std::convert::TryInto;
-
-    mod error {
-        use quick_error::quick_error;
-        use std::convert::Infallible;
-
-        quick_error! {
-            /// The error returned by [crate::Store::find()].
-            #[derive(Debug)]
-            #[allow(missing_docs)]
-            pub enum Error {
-                Loose(err: crate::file::find::Error) {
-                    display("An error occurred while finding a reference in the loose file database")
-                    from()
-                    source(err)
-                }
-            }
-        }
-
-        impl From<Infallible> for Error {
-            fn from(_: Infallible) -> Self {
-                unreachable!("this impl is needed to allow passing a known valid partial path as parameter")
-            }
-        }
-    }
-    pub use error::Error;
-
-    impl store::Handle {
-        /// TODO: actually implement this with handling of the packed buffer.
-        pub fn try_find<'a, Name, E>(&self, _partial: Name) -> Result<Option<Reference>, Error>
-        where
-            Name: TryInto<PartialNameRef<'a>, Error = E>,
-            Error: From<E>,
-        {
-            todo!()
-        }
-    }
-
-    mod existing {
-        mod error {
-            use std::path::PathBuf;
-
-            use quick_error::quick_error;
-
-            quick_error! {
-                /// The error returned by [file::Store::find_existing()][crate::file::Store::find_existing()].
-                #[derive(Debug)]
-                #[allow(missing_docs)]
-                pub enum Error {
-                    LooseFind(err: crate::file::find::Error) {
-                        display("An error occurred while finding a reference in the loose file database")
-                        from()
-                        source(err)
-                    }
-                    NotFound(name: PathBuf) {
-                        display("The ref partially named '{}' could not be found", name.display())
-                    }
-                }
-            }
-        }
-        pub use error::Error;
-    }
-}
+///
+pub mod find;
 
 mod iter {
     // impl store::Handle {

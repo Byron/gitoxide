@@ -5,13 +5,12 @@ pub fn store_at(name: &str) -> crate::Result<git_ref::Store> {
     Ok(git_ref::Store::try_from(path.join(".git"))?)
 }
 
-pub fn store_with_packed_refs() -> crate::Result<git_ref::Store> {
-    store_at("make_packed_ref_repository.sh")
-}
-
 #[test]
 #[cfg(feature = "internal-testing-git-features-parallel")]
 fn is_send_and_sync() {
+    pub fn store_with_packed_refs() -> crate::Result<git_ref::Store> {
+        store_at("make_packed_ref_repository.sh")
+    }
     fn assert_type<T: Send + Sync>(_t: T) {}
     let store = store_with_packed_refs().unwrap();
     assert_type(&store);
@@ -33,6 +32,7 @@ mod loose {
     //         Ok(())
     //     }
     // }
+
     // mod iter {
     //     use crate::store::store_at;
     //     use git_ref::bstr::ByteSlice;

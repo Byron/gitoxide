@@ -93,6 +93,8 @@ pub mod store {
     #[path = "general/handle/mod.rs"]
     mod handle;
 
+    pub use handle::find;
+
     ///
     #[path = "general/packed.rs"]
     mod packed;

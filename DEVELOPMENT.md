@@ -79,6 +79,8 @@
     thread-safe and none-threadsafe versions at compile time.
       - The preferred way of using it is to start out as upgradable reader, and upgrading to write if needed, keeping contention to a minimum.
   - If _shared ownership_ is involved, one always needs _interior mutability_, but may still decide to use an API that requires `&mut self` if locally stored caches are involved.
+  - Types that are not thread-local must be `Sync`, but only if the `git-features/parallel` is enabled due to the usage of `git_features::threading::…` primitives which won't
+    be thread-safe without the feature.
 * **when to use shared ownership**
   - Use `git_features::threading::OwnShared` particularly when shared resources supposed to be used by thread-local handles. Going through a wrapper for shared ownership is fast
     and won't be the bottleneck, as it's only about 16% slower than going through a shared reference on a single core.
