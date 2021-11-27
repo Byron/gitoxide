@@ -71,6 +71,17 @@
 * **symbolic links do not exist** as far as we are concerned
   * in older, probably linux only, git versions symbolic links were used for symbolic references for example. This required special handling
     in some places. We don't implement that and assume more modern repositories.
+* **when to use interior mutability**
+  - in **plumbing**, do not use it at all but instead provide the mutable part (like caches, buffers) as arguments, pushing their handling entirely to the caller.
+  - Set on top an optional abstraction that manages the above for you using **interior mutability only if part of the mutable state has to be returned as borrow**
+    or if otherwise it wouldn't be possible to borrowcheck. Or in other words: start without interior mutability and try to do it the standard way, but switch when needed.
+  - When using primitives to support interior mutability, use the provided ones and utility functions in `git_features::threading::*` exclusively to allow switching between
+    thread-safe and none-threadsafe versions at compile time.
+      - The preferred way of using it is to start out as upgradable reader, and upgrading to write if needed, keeping contention to a minimum.
+  - If _shared ownership_ is involved, one always needs _interior mutability_, but may still decide to use an API that requires `&mut self` if locally stored caches are involved.
+* **when to use shared ownership**
+  - Use `git_features::threading::OwnShared` particularly when shared resources supposed to be used by thread-local handles. Going through a wrapper for shared ownership is fast
+    and won't be the bottleneck, as it's only about 16% slower than going through a shared reference on a single core.
     
 ## Sha256
 
