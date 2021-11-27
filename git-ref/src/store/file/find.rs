@@ -44,7 +44,8 @@ impl file::Store {
         Error: From<E>,
     {
         let path = partial.try_into()?;
-        self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed)
+        let packed = self.assure_packed_refs_uptodate()?;
+        self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed.as_ref())
     }
 
     /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
@@ -57,7 +58,8 @@ impl file::Store {
         Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
     {
-        self.try_find(partial, None)
+        let path = partial.try_into()?;
+        self.find_one_with_verified_input(path.to_partial_path().as_ref(), None)
             .map(|r| r.map(|r| r.try_into().expect("only loose refs are found without pack")))
     }
 
@@ -205,7 +207,10 @@ pub mod existing {
             let path = partial
                 .try_into()
                 .map_err(|err| Error::Find(find::Error::RefnameValidation(err.into())))?;
-            match self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed) {
+            let packed = self
+                .assure_packed_refs_uptodate()
+                .map_err(|err| find::Error::PackedOpen(err))?;
+            match self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed.as_ref()) {
                 Ok(Some(r)) => Ok(r),
                 Ok(None) => Err(Error::NotFound(path.to_partial_path().into_owned())),
                 Err(err) => Err(err.into()),
@@ -276,6 +281,11 @@ mod error {
             }
             PackedRef(err: packed::find::Error) {
                 display("A packed ref lookup failed")
+                from()
+                source(err)
+            }
+            PackedOpen(err: packed::buffer::open::Error) {
+                display("Could not open the packed refs buffer when trying to find references.")
                 from()
                 source(err)
             }
