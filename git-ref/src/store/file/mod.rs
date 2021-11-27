@@ -1,19 +1,34 @@
+use git_features::threading::{MutableOnDemand, OwnShared};
 use std::path::PathBuf;
 
 /// A store for reference which uses plain files.
 ///
 /// Each ref is represented as a single file on disk in a folder structure that follows the relative path
 /// used to identify [references][crate::Reference].
-#[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone)]
+#[derive(Debug, Clone)]
 pub struct Store {
     /// The location at which loose references can be found as per conventions of a typical git repository.
     ///
     /// Typical base paths are `.git` repository folders.
-    pub base: PathBuf,
+    base: PathBuf,
     /// The way to handle reflog edits
     pub write_reflog: WriteReflog,
     /// The namespace to use for edits and reads
     pub namespace: Option<Namespace>,
+    /// A buffer with interior mutability.
+    packed: OwnShared<MutableOnDemand<packed::modifiable::State>>,
+}
+
+mod access {
+    use crate::file;
+    use std::path::Path;
+
+    impl file::Store {
+        /// Return the root at which all references are loaded.
+        pub fn base(&self) -> &Path {
+            &self.base
+        }
+    }
 }
 
 /// A transaction on a file store

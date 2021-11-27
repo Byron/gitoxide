@@ -56,3 +56,52 @@ pub mod transaction {
         }
     }
 }
+
+pub(crate) mod modifiable {
+    use crate::file;
+    use git_features::threading::{get_ref_upgradeable, upgrade_ref_to_mut};
+    use std::time::SystemTime;
+
+    #[derive(Debug, Default)]
+    pub(crate) struct State {
+        buffer: Option<crate::packed::Buffer>,
+        modified: Option<SystemTime>,
+    }
+
+    impl file::Store {
+        pub(crate) fn assure_packed_refs_uptodate(&self) -> Result<(), crate::packed::buffer::open::Error> {
+            let packed_refs_modified_time = || self.packed_refs_path().metadata().and_then(|m| m.modified()).ok();
+            let state = get_ref_upgradeable(&self.packed);
+            if state.buffer.is_none() {
+                let mut state = upgrade_ref_to_mut(state);
+                state.buffer = self.packed_buffer()?;
+                if state.buffer.is_some() {
+                    state.modified = packed_refs_modified_time();
+                }
+            } else {
+                let recent_modification = packed_refs_modified_time();
+                match (&state.modified, recent_modification) {
+                    (None, None) => {}
+                    (Some(_), None) => {
+                        let mut state = upgrade_ref_to_mut(state);
+                        state.buffer = None;
+                        state.modified = None
+                    }
+                    (Some(cached_time), Some(modified_time)) => {
+                        if *cached_time < modified_time {
+                            let mut state = upgrade_ref_to_mut(state);
+                            state.buffer = self.packed_buffer()?;
+                            state.modified = Some(modified_time);
+                        }
+                    }
+                    (None, Some(modified_time)) => {
+                        let mut state = upgrade_ref_to_mut(state);
+                        state.buffer = self.packed_buffer()?;
+                        state.modified = Some(modified_time);
+                    }
+                }
+            }
+            Ok(())
+        }
+    }
+}

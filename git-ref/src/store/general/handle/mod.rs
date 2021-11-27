@@ -1,31 +1,8 @@
 use crate::{store, Namespace};
-use git_features::threading::OwnShared;
 
 #[derive(Clone)]
 pub(crate) enum State {
-    Loose {
-        store: crate::file::Store,
-        packed_buffer: OwnShared<store::packed::ModifiableBuffer>,
-    },
-}
-
-impl From<(&store::State, Option<Namespace>)> for State {
-    fn from(s: (&store::State, Option<Namespace>)) -> Self {
-        match s.0 {
-            store::State::Loose {
-                path,
-                reflog_mode,
-                packed_buffer,
-            } => store::handle::State::Loose {
-                store: {
-                    let mut store = crate::file::Store::at(path, *reflog_mode);
-                    store.namespace = s.1;
-                    store
-                },
-                packed_buffer: packed_buffer.clone(),
-            },
-        }
-    }
+    Loose { store: crate::file::Store },
 }
 
 impl crate::Store {
@@ -43,17 +20,12 @@ impl crate::Store {
     fn new_handle_inner(state: &store::State, namespace: Option<Namespace>) -> store::Handle {
         store::Handle {
             state: match state {
-                store::State::Loose {
-                    path,
-                    reflog_mode,
-                    packed_buffer,
-                } => store::handle::State::Loose {
+                store::State::Loose { store } => store::handle::State::Loose {
                     store: {
-                        let mut store = crate::file::Store::at(path, *reflog_mode);
+                        let mut store = store.clone();
                         store.namespace = namespace;
                         store
                     },
-                    packed_buffer: packed_buffer.clone(),
                 },
             },
         }

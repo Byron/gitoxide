@@ -42,11 +42,7 @@ impl store::Handle {
     {
         let _name = partial.try_into()?;
         match &self.state {
-            handle::State::Loose {
-                store: _,
-                packed_buffer: _,
-                ..
-            } => {
+            handle::State::Loose { store: _, .. } => {
                 todo!()
             }
         }

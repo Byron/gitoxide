@@ -52,9 +52,6 @@ pub mod peel;
 
 ///
 pub mod store {
-    use git_features::threading::OwnShared;
-    use std::path::PathBuf;
-
     /// The way a file store handles the reflog
     #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
     pub enum WriteReflog {
@@ -79,11 +76,7 @@ pub mod store {
     }
 
     pub(crate) enum State {
-        Loose {
-            path: PathBuf,
-            reflog_mode: WriteReflog,
-            packed_buffer: OwnShared<packed::ModifiableBuffer>,
-        },
+        Loose { store: file::Store },
     }
 
     #[path = "general/mod.rs"]
@@ -93,11 +86,8 @@ pub mod store {
     #[path = "general/handle/mod.rs"]
     mod handle;
 
+    use crate::file;
     pub use handle::find;
-
-    ///
-    #[path = "general/packed.rs"]
-    mod packed;
 }
 
 /// The git reference store.

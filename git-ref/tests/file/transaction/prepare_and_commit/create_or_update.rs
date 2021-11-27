@@ -659,7 +659,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
         store.packed_buffer()?.is_none(),
         "there should be no packed refs to start out with"
     );
-    let odb = git_odb::compound::Store::at(store.base.join("objects"))?;
+    let odb = git_odb::compound::Store::at(store.base().join("objects"))?;
     let edits = store
         .transaction()
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(

@@ -205,7 +205,7 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
 /// Based on https://github.com/git/git/blob/master/refs/files-backend.c#L514:L515
 fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() -> crate::Result {
     let (_keep, store) = empty_store()?;
-    std::fs::write(store.base.join("HEAD"), &b"broken")?;
+    std::fs::write(store.base().join("HEAD"), &b"broken")?;
     assert!(store.try_find_loose("HEAD").is_err(), "the ref is truly broken");
 
     let res = store.transaction().prepare(
@@ -269,7 +269,7 @@ fn non_existing_can_be_deleted_with_the_may_exist_match_constraint() -> crate::R
 /// Based on https://github.com/git/git/blob/master/refs/files-backend.c#L514:L515
 fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Result {
     let (_keep, store) = empty_store()?;
-    std::fs::write(store.base.join("HEAD"), &b"broken")?;
+    std::fs::write(store.base().join("HEAD"), &b"broken")?;
     assert!(store.try_find_loose("HEAD").is_err(), "the ref is truly broken");
 
     let edits = store

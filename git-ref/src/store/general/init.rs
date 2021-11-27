@@ -19,8 +19,8 @@ mod error {
     }
 }
 
+use crate::file;
 pub use error::Error;
-use git_features::threading::OwnShared;
 
 impl crate::Store {
     /// Create a new store at the given location, typically the `.git/` directory.
@@ -30,9 +30,7 @@ impl crate::Store {
         std::fs::read_dir(&git_dir)?;
         Ok(crate::Store {
             state: crate::store::State::Loose {
-                path: git_dir,
-                reflog_mode,
-                packed_buffer: OwnShared::new(crate::store::packed::ModifiableBuffer::default()),
+                store: file::Store::at(git_dir, reflog_mode),
             },
         })
     }

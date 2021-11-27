@@ -37,6 +37,7 @@ mod init {
                 base: git_dir.into(),
                 write_reflog,
                 namespace: None,
+                packed: Default::default(),
             }
         }
     }
