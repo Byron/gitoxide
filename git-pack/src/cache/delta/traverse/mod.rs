@@ -3,7 +3,7 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-use git_features::threading::{get_mut, MutableOnDemand, OwnShared};
+use git_features::threading::{lock, Mutable, OwnShared};
 use git_features::{
     parallel,
     parallel::in_parallel_if,
@@ -74,12 +74,12 @@ where
     ///
     /// _Note_ that this method consumed the Tree to assure safe parallel traversal with mutation support.
     #[allow(clippy::too_many_arguments)]
-    pub fn traverse<F, P, MBFN, S, E>(
+    pub fn traverse<F, P1, P2, MBFN, S, E>(
         mut self,
         should_run_in_parallel: impl FnOnce() -> bool,
         resolve: F,
-        object_progress: P,
-        size_progress: P,
+        object_progress: P1,
+        size_progress: P2,
         thread_limit: Option<usize>,
         should_interrupt: &AtomicBool,
         pack_entries_end: u64,
@@ -88,13 +88,14 @@ where
     ) -> Result<VecDeque<Item<T>>, Error>
     where
         F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Clone,
-        P: Progress + Send + Sync,
-        MBFN: Fn(&mut T, &mut <P as Progress>::SubProgress, Context<'_, S>) -> Result<(), E> + Send + Clone,
+        P1: Progress,
+        P2: Progress,
+        MBFN: Fn(&mut T, &mut <P1 as Progress>::SubProgress, Context<'_, S>) -> Result<(), E> + Send + Clone,
         E: std::error::Error + Send + Sync + 'static,
     {
         self.set_pack_entries_end(pack_entries_end);
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
-        let object_progress = OwnShared::new(MutableOnDemand::new(object_progress));
+        let object_progress = OwnShared::new(Mutable::new(object_progress));
 
         let num_objects = self.items.len();
         in_parallel_if(
@@ -106,7 +107,7 @@ where
                 move |thread_index| {
                     (
                         Vec::<u8>::with_capacity(4096),
-                        get_mut(&object_progress).add_child(format!("thread {}", thread_index)),
+                        lock(&object_progress).add_child(format!("thread {}", thread_index)),
                         new_thread_state(),
                         resolve.clone(),
                         inspect_object.clone(),
@@ -120,25 +121,26 @@ where
     }
 }
 
-struct Reducer<'a, P> {
+struct Reducer<'a, P1, P2> {
     item_count: usize,
-    progress: OwnShared<MutableOnDemand<P>>,
+    progress: OwnShared<Mutable<P1>>,
     start: std::time::Instant,
-    size_progress: P,
+    size_progress: P2,
     should_interrupt: &'a AtomicBool,
 }
 
-impl<'a, P> Reducer<'a, P>
+impl<'a, P1, P2> Reducer<'a, P1, P2>
 where
-    P: Progress,
+    P1: Progress,
+    P2: Progress,
 {
     pub fn new(
         num_objects: usize,
-        progress: OwnShared<MutableOnDemand<P>>,
-        mut size_progress: P,
+        progress: OwnShared<Mutable<P1>>,
+        mut size_progress: P2,
         should_interrupt: &'a AtomicBool,
     ) -> Self {
-        get_mut(&progress).init(Some(num_objects), progress::count("objects"));
+        lock(&progress).init(Some(num_objects), progress::count("objects"));
         size_progress.init(None, progress::bytes());
         Reducer {
             item_count: 0,
@@ -150,9 +152,10 @@ where
     }
 }
 
-impl<'a, P> parallel::Reduce for Reducer<'a, P>
+impl<'a, P1, P2> parallel::Reduce for Reducer<'a, P1, P2>
 where
-    P: Progress,
+    P1: Progress,
+    P2: Progress,
 {
     type Input = Result<(usize, u64), Error>;
     type FeedProduce = ();
@@ -163,7 +166,7 @@ where
         let (num_objects, decompressed_size) = input?;
         self.item_count += num_objects;
         self.size_progress.inc_by(decompressed_size as usize);
-        get_mut(&self.progress).set(self.item_count);
+        lock(&self.progress).set(self.item_count);
         if self.should_interrupt.load(Ordering::SeqCst) {
             return Err(Error::Interrupted);
         }
@@ -171,7 +174,7 @@ where
     }
 
     fn finalize(mut self) -> Result<Self::Output, Self::Error> {
-        get_mut(&self.progress).show_throughput(self.start);
+        lock(&self.progress).show_throughput(self.start);
         self.size_progress.show_throughput(self.start);
         Ok(())
     }

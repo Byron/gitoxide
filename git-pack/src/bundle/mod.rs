@@ -51,7 +51,6 @@ mod verify {
         >
         where
             P: Progress,
-            <P as Progress>::SubProgress: Sync,
             C: crate::cache::DecodeEntry,
         {
             self.index.verify_integrity(

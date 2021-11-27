@@ -90,7 +90,6 @@ impl index::File {
     ) -> Result<(git_hash::ObjectId, Outcome, Option<P>), Error<E>>
     where
         P: Progress,
-        <P as Progress>::SubProgress: Sync,
         C: crate::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
         Processor: FnMut(

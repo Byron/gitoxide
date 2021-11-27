@@ -15,7 +15,7 @@ pub(crate) fn deltas<T, F, P, MBFN, S, E>(
     (bytes_buf, ref mut progress, state, resolve, modify_base): &mut (Vec<u8>, P, S, F, MBFN),
 ) -> Result<(usize, u64), Error>
 where
-    F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Clone,
+    F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()>,
     P: Progress,
     MBFN: Fn(&mut T, &mut P, Context<'_, S>) -> Result<(), E>,
     T: Default,

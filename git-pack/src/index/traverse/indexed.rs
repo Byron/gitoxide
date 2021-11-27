@@ -31,7 +31,6 @@ impl index::File {
     ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
     where
         P: Progress,
-        <P as Progress>::SubProgress: Sync,
         Processor: FnMut(
             git_object::Kind,
             &[u8],

@@ -69,6 +69,7 @@ mod file {
             }
         }
 
+        #[cfg(feature = "internal-testing-git-features-parallel")]
         mod any {
             use std::{fs, io, sync::atomic::AtomicBool};
 

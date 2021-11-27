@@ -104,9 +104,9 @@ impl<const SIZE: usize> pack::cache::DecodeEntry for EitherCache<SIZE> {
     }
 }
 
-pub fn pack_or_pack_index<W1, W2, P>(
+pub fn pack_or_pack_index<W1, W2>(
     path: impl AsRef<Path>,
-    progress: Option<P>,
+    progress: Option<impl Progress>,
     Context {
         mut out,
         mut err,
@@ -120,8 +120,6 @@ pub fn pack_or_pack_index<W1, W2, P>(
 where
     W1: io::Write,
     W2: io::Write,
-    P: Progress + Sync,
-    <P as Progress>::SubProgress: Sync,
 {
     let path = path.as_ref();
     let ext = path.extension().and_then(|ext| ext.to_str()).ok_or_else(|| {

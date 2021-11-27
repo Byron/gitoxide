@@ -36,7 +36,7 @@ mod options {
         }
     }
 }
-use git_features::threading::{get_mut, MutableOnDemand, OwnShared};
+use git_features::threading::{lock, Mutable, OwnShared};
 use std::sync::atomic::Ordering;
 
 pub use options::Options;
@@ -63,7 +63,6 @@ impl index::File {
         P: Progress,
         C: crate::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
-        <P as Progress>::SubProgress: Send + Sync,
         Processor: FnMut(
             git_object::Kind,
             &[u8],
@@ -98,7 +97,7 @@ impl index::File {
                     parallel::optimize_chunk_size_and_thread_limit(1000, Some(index_entries.len()), thread_limit, None);
                 let there_are_enough_entries_to_process = || index_entries.len() > chunk_size * available_cores;
                 let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
-                let reduce_progress = OwnShared::new(MutableOnDemand::new({
+                let reduce_progress = OwnShared::new(Mutable::new({
                     let mut p = progress.add_child("Traversing");
                     p.init(Some(self.num_objects() as usize), progress::count("objects"));
                     p
@@ -110,7 +109,7 @@ impl index::File {
                             new_cache(),
                             new_processor(),
                             Vec::with_capacity(2048), // decode buffer
-                            get_mut(&reduce_progress).add_child(format!("thread {}", index)), // per thread progress
+                            lock(&reduce_progress).add_child(format!("thread {}", index)), // per thread progress
                         )
                     }
                 };

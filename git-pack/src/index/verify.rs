@@ -133,7 +133,6 @@ impl index::File {
     >
     where
         P: Progress,
-        <P as Progress>::SubProgress: Sync,
         C: crate::cache::DecodeEntry,
     {
         let mut root = progress::DoOrDiscard::from(progress);

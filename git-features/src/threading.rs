@@ -10,6 +10,8 @@ mod _impl {
     pub type OwnShared<T> = Arc<T>;
     /// A synchronization primitive which can start read-only and transition to support mutation.
     pub type MutableOnDemand<T> = parking_lot::RwLock<T>;
+    /// A synchronization primitive which provides read-write access right away.
+    pub type Mutable<T> = parking_lot::Mutex<T>;
 
     /// Get an upgradable shared reference through a [`MutableOnDemand`] for read-only access.
     ///
@@ -26,6 +28,11 @@ mod _impl {
     /// Get a mutable reference through a [`MutableOnDemand`] for read-write access.
     pub fn get_mut<T>(v: &MutableOnDemand<T>) -> parking_lot::RwLockWriteGuard<'_, T> {
         v.write()
+    }
+
+    /// Get a mutable reference through a [`Mutable`] for read-write access.
+    pub fn lock<T>(v: &Mutable<T>) -> parking_lot::MutexGuard<'_, T> {
+        v.lock()
     }
 
     /// Upgrade a handle previously obtained with [`get_ref_upgradeable()`] to support mutation.
@@ -47,6 +54,8 @@ mod _impl {
     pub type OwnShared<T> = Rc<T>;
     /// A synchronization primitive which can start read-only and transition to support mutation.
     pub type MutableOnDemand<T> = RefCell<T>;
+    /// A synchronization primitive which provides read-write access right away.
+    pub type Mutable<T> = RefCell<T>;
 
     /// Get an upgradable shared reference through a [`MutableOnDemand`] for read-only access.
     ///
@@ -60,6 +69,10 @@ mod _impl {
         v.borrow_mut()
     }
 
+    /// Get a mutable reference through a [`Mutable`] for read-write access.
+    pub fn lock<T>(v: &Mutable<T>) -> RefMut<'_, T> {
+        v.borrow_mut()
+    }
     /// Get a mutable reference through a [`MutableOnDemand`] for read-write access.
     pub fn get_ref<T>(v: &RefCell<T>) -> Ref<'_, T> {
         v.borrow()

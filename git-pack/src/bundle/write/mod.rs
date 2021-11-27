@@ -46,9 +46,7 @@ impl crate::Bundle {
         options: Options,
     ) -> Result<Outcome, Error>
     where
-        P: Progress + Sync,
-        <P as Progress>::SubProgress: Sync,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
+        P: Progress,
     {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(None, progress::bytes());
@@ -136,20 +134,15 @@ impl crate::Bundle {
     /// As it sends portions of the input to a thread it requires the 'static lifetime for the interrupt flags. This can only
     /// be satisfied by a static AtomicBool which is only suitable for programs that only run one of these operations at a time
     /// or don't mind that all of them abort when the flag is set.
-    pub fn write_to_directory_eagerly<P>(
+    pub fn write_to_directory_eagerly(
         pack: impl io::Read + Send + 'static,
         pack_size: Option<u64>,
         directory: Option<impl AsRef<Path>>,
-        mut progress: P,
+        mut progress: impl Progress,
         should_interrupt: &'static AtomicBool,
         thin_pack_base_object_lookup_fn: Option<ThinPackLookupFnSend>,
         options: Options,
-    ) -> Result<Outcome, Error>
-    where
-        P: Progress + Sync,
-        <P as Progress>::SubProgress: Sync,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
-    {
+    ) -> Result<Outcome, Error> {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
         let pack = progress::Read {
@@ -222,9 +215,9 @@ impl crate::Bundle {
         })
     }
 
-    fn inner_write<P>(
+    fn inner_write(
         directory: Option<impl AsRef<Path>>,
-        mut progress: P,
+        mut progress: impl Progress,
         Options {
             thread_limit,
             iteration_mode: _,
@@ -233,12 +226,7 @@ impl crate::Bundle {
         data_file: Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>,
         pack_entries_iter: impl Iterator<Item = Result<data::input::Entry, data::input::Error>>,
         should_interrupt: &AtomicBool,
-    ) -> Result<(crate::index::write::Outcome, Option<PathBuf>, Option<PathBuf>), Error>
-    where
-        P: Progress + Sync,
-        <P as Progress>::SubProgress: Sync,
-        <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
-    {
+    ) -> Result<(crate::index::write::Outcome, Option<PathBuf>, Option<PathBuf>), Error> {
         let indexing_progress = progress.add_child("create index file");
         Ok(match directory {
             Some(directory) => {

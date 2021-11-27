@@ -318,19 +318,14 @@ fn write_raw_refs(refs: &[Ref], directory: PathBuf) -> std::io::Result<()> {
     Ok(())
 }
 
-fn receive_pack_blocking<W: io::Write, P>(
+fn receive_pack_blocking<W: io::Write>(
     mut directory: Option<PathBuf>,
     mut refs_directory: Option<PathBuf>,
     ctx: &mut Context<W>,
     input: impl io::BufRead,
-    progress: P,
+    progress: impl Progress,
     refs: &[Ref],
-) -> io::Result<()>
-where
-    P: Progress + Sync,
-    <P as Progress>::SubProgress: Sync,
-    <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
-{
+) -> io::Result<()> {
     let options = pack::bundle::write::Options {
         thread_limit: ctx.thread_limit,
         index_kind: pack::index::Version::V2,
