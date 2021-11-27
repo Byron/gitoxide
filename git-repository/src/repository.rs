@@ -157,7 +157,7 @@ mod location {
         ///
         /// Synonymous to [`path()`][Repository::path()].
         pub fn git_dir(&self) -> &std::path::Path {
-            &self.refs.base()
+            self.refs.base()
         }
 
         /// Return the path to the working directory if this is not a bare repository.

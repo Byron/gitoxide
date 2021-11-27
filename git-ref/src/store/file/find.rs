@@ -200,9 +200,7 @@ pub mod existing {
             Name: TryInto<PartialNameRef<'a>, Error = E>,
             crate::name::Error: From<E>,
         {
-            let packed = self
-                .assure_packed_refs_uptodate()
-                .map_err(|err| find::Error::PackedOpen(err))?;
+            let packed = self.assure_packed_refs_uptodate().map_err(find::Error::PackedOpen)?;
             self.find_existing_inner(partial, packed.as_ref())
         }
 
