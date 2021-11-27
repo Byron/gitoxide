@@ -194,7 +194,10 @@ impl<'s> Transaction<'s> {
             .pre_process(
                 |name| {
                     let symbolic_refs_are_never_packed = None;
-                    store.find(name, symbolic_refs_are_never_packed).map(|r| r.target).ok()
+                    store
+                        .find_existing_inner(name, symbolic_refs_are_never_packed)
+                        .map(|r| r.target)
+                        .ok()
                 },
                 |idx, update| Edit {
                     update,

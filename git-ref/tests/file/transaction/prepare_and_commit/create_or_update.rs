@@ -713,7 +713,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
 #[test]
 fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() -> crate::Result {
     let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
-    let branch = store.find("newer-as-loose", None)?;
+    let branch = store.find("newer-as-loose")?;
     let packed = store.packed_buffer()?.expect("packed-refs");
     assert_ne!(
         packed.find("newer-as-loose")?.target(),
@@ -766,7 +766,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
     );
     assert_eq!(
         packed.find("newer-as-loose")?.target(),
-        store.find("newer-as-loose", None)?.target.into_id(),
+        store.find("newer-as-loose")?.target.into_id(),
         "the packed ref is now up to date and the loose ref definitely still exists"
     );
     Ok(())

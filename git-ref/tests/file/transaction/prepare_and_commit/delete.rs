@@ -373,7 +373,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
 fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_refs() -> crate::Result {
     let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
     let packed = store.packed_buffer()?.expect("packed-refs");
-    let branch = store.find("newer-as-loose", Some(&packed))?;
+    let branch = store.find("newer-as-loose")?;
     let branch_id = branch.target.as_id().map(ToOwned::to_owned).expect("peeled");
     assert_ne!(
         packed.find("newer-as-loose")?.target(),
@@ -402,9 +402,7 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
         "only one edit even though technically two places were changed"
     );
     assert!(
-        store
-            .try_find("newer-as-loose", store.packed_buffer()?.as_ref())?
-            .is_none(),
+        store.try_find("newer-as-loose",)?.is_none(),
         "reference is deleted everywhere"
     );
     Ok(())
@@ -443,7 +441,7 @@ fn all_contained_references_deletes_the_packed_ref_file_too() -> crate::Result {
         assert!(packed.is_none(), "it won't make up packed refs");
         for edit in edits {
             assert!(
-                store.try_find(edit.name.to_partial(), packed.as_ref())?.is_none(),
+                store.try_find(edit.name.to_partial())?.is_none(),
                 "delete ref cannot be found"
             );
         }

@@ -28,7 +28,7 @@ fn main() -> anyhow::Result<()> {
         let packed = repo.refs.packed_buffer()?;
         let commit_id = repo
             .refs
-            .find(&name, packed.as_ref())?
+            .find(&name)?
             .peel_to_id_in_place(&repo.refs, packed.as_ref(), peel::none)?
             .to_owned();
         (repo, commit_id)

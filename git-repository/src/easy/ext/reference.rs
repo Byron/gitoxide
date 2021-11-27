@@ -227,10 +227,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         git_ref::file::find::Error: From<E>,
     {
         let state = self.state();
-        match state
-            .refs
-            .try_find(name, state.assure_packed_refs_uptodate()?.buffer.as_ref())
-        {
+        match state.refs.try_find(name) {
             Ok(r) => match r {
                 Some(r) => Ok(Some(Reference::from_ref(r, self))),
                 None => Ok(None),

@@ -54,27 +54,21 @@ mod with_namespace {
             ["refs/namespaces/bar/refs/remotes/origin/multi-link-target3"]
         );
         for fullname in namespaced_refs {
-            let reference = store.find(fullname.as_bstr(), packed.as_ref())?;
+            let reference = store.find(fullname.as_bstr())?;
             assert_eq!(
                 reference.name, fullname,
                 "it finds namespaced items by fully qualified name"
             );
             assert_eq!(
                 store
-                    .find(
-                        fullname.as_bstr().splitn_str(2, b"/").nth(1).expect("name").as_bstr(),
-                        packed.as_ref()
-                    )?
+                    .find(fullname.as_bstr().splitn_str(2, b"/").nth(1).expect("name").as_bstr(),)?
                     .name,
                 fullname,
                 "it will find namespaced items just by their shortened (but not shortest) name"
             );
             assert!(
                 store
-                    .try_find(
-                        reference.name_without_namespace(&ns_two).expect("namespaced"),
-                        packed.as_ref()
-                    )?
+                    .try_find(reference.name_without_namespace(&ns_two).expect("namespaced"),)?
                     .is_none(),
                 "it won't find namespaced items by their full name without namespace"
             );
@@ -155,22 +149,19 @@ mod with_namespace {
 
         for fullname in ref_names {
             assert_eq!(
-                ns_store.find(fullname.as_bstr(), packed.as_ref())?.name,
+                ns_store.find(fullname.as_bstr(),)?.name,
                 fullname,
                 "it finds namespaced items by fully qualified name, excluding namespace"
             );
             assert!(
                 ns_store
-                    .try_find(fullname.clone().prefix_namespace(&ns_two).to_partial(), packed.as_ref())?
+                    .try_find(fullname.clone().prefix_namespace(&ns_two).to_partial())?
                     .is_none(),
                 "it won't find namespaced items by their store-relative name with namespace"
             );
             assert_eq!(
                 ns_store
-                    .find(
-                        fullname.as_bstr().splitn_str(2, b"/").nth(1).expect("name").as_bstr(),
-                        packed.as_ref()
-                    )?
+                    .find(fullname.as_bstr().splitn_str(2, b"/").nth(1).expect("name").as_bstr(),)?
                     .name,
                 fullname,
                 "it finds partial names within the namespace"

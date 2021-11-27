@@ -7,8 +7,7 @@ mod reflog {
         #[test]
         fn iter() -> crate::Result {
             let store = file::store_with_packed_refs()?;
-            let packed = store.packed_buffer()?;
-            let r = store.find("main", packed.as_ref())?;
+            let r = store.find("main")?;
             let mut buf = Vec::new();
             assert_eq!(r.log_iter(&store, &mut buf)?.expect("log exists").count(), 1);
             assert!(r.log_exists(&store), "it exists if its readable");
@@ -18,8 +17,7 @@ mod reflog {
         #[test]
         fn iter_rev() -> crate::Result {
             let store = file::store_with_packed_refs()?;
-            let packed = store.packed_buffer()?;
-            let r = store.find("main", packed.as_ref())?;
+            let r = store.find("main")?;
             let mut buf = [0u8; 256];
             assert_eq!(r.log_iter_rev(&store, &mut buf)?.expect("log exists").count(), 1);
             Ok(())
@@ -89,7 +87,7 @@ mod peel {
         assert_eq!(head.peel_to_id_in_place(&store, packed.as_ref(), peel::none)?, expected);
         assert_eq!(head.target.as_id().map(ToOwned::to_owned), Some(expected));
 
-        let mut head = store.find("dt1", packed.as_ref())?;
+        let mut head = store.find("dt1")?;
         assert_eq!(head.peel_to_id_in_place(&store, packed.as_ref(), peel::none)?, expected);
         assert_eq!(head.target.into_id(), expected);
         Ok(())
@@ -100,7 +98,7 @@ mod peel {
         let store = store_with_packed_refs()?;
         let packed = store.packed_buffer()?;
 
-        let head = store.find("dt1", packed.as_ref())?;
+        let head = store.find("dt1")?;
         assert_eq!(
             head.target.as_id().map(ToOwned::to_owned),
             Some(hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3"))

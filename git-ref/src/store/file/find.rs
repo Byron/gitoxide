@@ -34,11 +34,7 @@ impl file::Store {
     /// * The lookup algorithm follows the one in [the git documentation][git-lookup-docs].
     ///
     /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
-    pub fn try_find<'a, Name, E>(
-        &self,
-        partial: Name,
-        packed: Option<&packed::Buffer>,
-    ) -> Result<Option<Reference>, Error>
+    pub fn try_find<'a, Name, E>(&self, partial: Name) -> Result<Option<Reference>, Error>
     where
         Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
@@ -199,22 +195,15 @@ pub mod existing {
 
     impl file::Store {
         /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
-        pub fn find<'a, Name, E>(&self, partial: Name, packed: Option<&packed::Buffer>) -> Result<Reference, Error>
+        pub fn find<'a, Name, E>(&self, partial: Name) -> Result<Reference, Error>
         where
             Name: TryInto<PartialNameRef<'a>, Error = E>,
             crate::name::Error: From<E>,
         {
-            let path = partial
-                .try_into()
-                .map_err(|err| Error::Find(find::Error::RefnameValidation(err.into())))?;
             let packed = self
                 .assure_packed_refs_uptodate()
                 .map_err(|err| find::Error::PackedOpen(err))?;
-            match self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed.as_ref()) {
-                Ok(Some(r)) => Ok(r),
-                Ok(None) => Err(Error::NotFound(path.to_partial_path().into_owned())),
-                Err(err) => Err(err.into()),
-            }
+            self.find_existing_inner(partial, packed.as_ref())
         }
 
         /// Similar to [`file::Store::find()`] won't handle packed-refs.
@@ -223,8 +212,28 @@ pub mod existing {
             Name: TryInto<PartialNameRef<'a>, Error = E>,
             crate::name::Error: From<E>,
         {
-            self.find(partial, None)
+            self.find_existing_inner(partial, None)
                 .map(|r| r.try_into().expect("always loose without packed"))
+        }
+
+        /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
+        pub(crate) fn find_existing_inner<'a, Name, E>(
+            &self,
+            partial: Name,
+            packed: Option<&packed::Buffer>,
+        ) -> Result<Reference, Error>
+        where
+            Name: TryInto<PartialNameRef<'a>, Error = E>,
+            crate::name::Error: From<E>,
+        {
+            let path = partial
+                .try_into()
+                .map_err(|err| Error::Find(find::Error::RefnameValidation(err.into())))?;
+            match self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed) {
+                Ok(Some(r)) => Ok(r),
+                Ok(None) => Err(Error::NotFound(path.to_partial_path().into_owned())),
+                Err(err) => Err(err.into()),
+            }
         }
     }
 
