@@ -85,7 +85,8 @@ mod file {
                     for compressed in &[input::EntryDataMode::Crc32, input::EntryDataMode::KeepAndCrc32] {
                         for (index_path, data_path) in V2_PACKS_AND_INDICES {
                             let resolve = {
-                                let buf = FileBuffer::open(fixture_path(data_path))?;
+                                let buf =
+                                    git_features::threading::OwnShared::new(FileBuffer::open(fixture_path(data_path))?);
                                 move |entry: EntryRange, out: &mut Vec<u8>| {
                                     buf.get(entry.start as usize..entry.end as usize)
                                         .map(|slice| out.copy_from_slice(slice))
@@ -106,7 +107,7 @@ mod file {
                 resolve: F,
             ) -> Result<(), Box<dyn std::error::Error>>
             where
-                F: Fn(pack::data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Sync,
+                F: Fn(pack::data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Clone,
             {
                 let pack_iter = pack::data::input::BytesToEntriesIter::new_from_header(
                     io::BufReader::new(fs::File::open(fixture_path(data_path))?),
@@ -119,7 +120,7 @@ mod file {
                 let num_objects = pack_iter.len() as u32;
                 let outcome = pack::index::File::write_data_iter_to_stream(
                     desired_kind,
-                    || Ok(resolve),
+                    move || Ok(resolve),
                     pack_iter,
                     None,
                     progress::Discard,

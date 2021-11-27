@@ -129,6 +129,7 @@ fn num_threads(thread_limit: Option<usize>) -> usize {
 /// Run [`in_parallel()`] only if the given `condition()` returns true when eagerly evaluated.
 ///
 /// For parameters, see the documentation of [`in_parallel()`]
+#[cfg(feature = "parallel")]
 pub fn in_parallel_if<I, S, O, R>(
     condition: impl FnOnce() -> bool,
     input: impl Iterator<Item = I> + Send,
@@ -147,6 +148,28 @@ where
     } else {
         serial::in_parallel(input, thread_limit, new_thread_state, consume, reducer)
     }
+}
+
+/// Run [`in_parallel()`] only if the given `condition()` returns true when eagerly evaluated.
+///
+/// For parameters, see the documentation of [`in_parallel()`]
+///
+/// Note that the non-parallel version is equivalent to [`in_parallel()`].
+#[cfg(not(feature = "parallel"))]
+pub fn in_parallel_if<I, S, O, R>(
+    _condition: impl FnOnce() -> bool,
+    input: impl Iterator<Item = I>,
+    thread_limit: Option<usize>,
+    new_thread_state: impl Fn(usize) -> S,
+    consume: impl Fn(I, &mut S) -> O,
+    reducer: R,
+) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
+where
+    R: Reduce<Input = O>,
+    I: Send,
+    O: Send,
+{
+    serial::in_parallel(input, thread_limit, new_thread_state, consume, reducer)
 }
 
 ///

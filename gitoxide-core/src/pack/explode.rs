@@ -154,11 +154,11 @@ pub struct Context {
     pub should_interrupt: Arc<AtomicBool>,
 }
 
-pub fn pack_or_pack_index(
+pub fn pack_or_pack_index<P>(
     pack_path: impl AsRef<Path>,
     object_path: Option<impl AsRef<Path>>,
     check: SafetyCheck,
-    progress: Option<impl Progress>,
+    progress: Option<P>,
     Context {
         thread_limit,
         delete_pack,
@@ -166,7 +166,11 @@ pub fn pack_or_pack_index(
         verify,
         should_interrupt,
     }: Context,
-) -> Result<()> {
+) -> Result<()>
+where
+    P: Progress + Sync,
+    <P as Progress>::SubProgress: Sync,
+{
     use anyhow::Context;
 
     let path = pack_path.as_ref();

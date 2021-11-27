@@ -122,7 +122,7 @@ impl index::File {
             &crate::data::File,
             Mode,
             index::traverse::Algorithm,
-            impl Fn() -> C + Send + Sync,
+            impl Fn() -> C + Send + Clone,
         )>,
         thread_limit: Option<usize>,
         progress: Option<P>,
@@ -133,6 +133,7 @@ impl index::File {
     >
     where
         P: Progress,
+        <P as Progress>::SubProgress: Sync,
         C: crate::cache::DecodeEntry,
     {
         let mut root = progress::DoOrDiscard::from(progress);

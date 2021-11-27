@@ -2,7 +2,7 @@
 //!
 //! That way, single-threaded applications will not have to use thread-safe primitives, and simply do not specify the 'threading' feature.
 
-#[cfg(feature = "threading")]
+#[cfg(feature = "parallel")]
 mod _impl {
     use std::sync::Arc;
 
@@ -36,7 +36,7 @@ mod _impl {
     }
 }
 
-#[cfg(not(feature = "threading"))]
+#[cfg(not(feature = "parallel"))]
 mod _impl {
     use std::{
         cell::{Ref, RefCell, RefMut},

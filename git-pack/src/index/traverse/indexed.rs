@@ -24,13 +24,14 @@ impl index::File {
         &self,
         check: SafetyCheck,
         thread_limit: Option<usize>,
-        new_processor: impl Fn() -> Processor + Send + Sync,
+        new_processor: impl Fn() -> Processor + Send + Clone,
         mut progress: P,
         pack: &crate::data::File,
         should_interrupt: Arc<AtomicBool>,
     ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
     where
         P: Progress,
+        <P as Progress>::SubProgress: Sync,
         Processor: FnMut(
             git_object::Kind,
             &[u8],
@@ -78,7 +79,7 @@ impl index::File {
                     thread_limit,
                     &should_interrupt,
                     pack.pack_end() as u64,
-                    || new_processor(),
+                    move || new_processor(),
                     |data,
                      progress,
                      Context {

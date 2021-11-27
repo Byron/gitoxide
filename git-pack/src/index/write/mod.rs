@@ -55,18 +55,20 @@ impl crate::index::File {
     /// provides all bytes belonging to a pack entry writing them to the given mutable output `Vec`.
     /// It should return `None` if the entry cannot be resolved from the pack that produced the `entries` iterator, causing
     /// the write operation to fail.
-    pub fn write_data_iter_to_stream<F, F2>(
+    pub fn write_data_iter_to_stream<F, F2, P>(
         kind: crate::index::Version,
         make_resolver: F,
         entries: impl Iterator<Item = Result<crate::data::input::Entry, crate::data::input::Error>>,
         thread_limit: Option<usize>,
-        mut root_progress: impl Progress,
+        mut root_progress: P,
         out: impl io::Write,
         should_interrupt: &AtomicBool,
     ) -> Result<Outcome, Error>
     where
         F: FnOnce() -> io::Result<F2>,
-        F2: for<'r> Fn(crate::data::EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Sync,
+        P: Progress + Sync,
+        <P as Progress>::SubProgress: Sync,
+        F2: for<'r> Fn(crate::data::EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Clone,
     {
         if kind != crate::index::Version::default() {
             return Err(Error::Unsupported(kind));

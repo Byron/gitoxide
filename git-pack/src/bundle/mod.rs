@@ -41,7 +41,7 @@ mod verify {
             &self,
             verify_mode: crate::index::verify::Mode,
             traversal: crate::index::traverse::Algorithm,
-            make_pack_lookup_cache: impl Fn() -> C + Send + Sync,
+            make_pack_lookup_cache: impl Fn() -> C + Send + Clone,
             thread_limit: Option<usize>,
             progress: Option<P>,
             should_interrupt: Arc<AtomicBool>,
@@ -51,6 +51,7 @@ mod verify {
         >
         where
             P: Progress,
+            <P as Progress>::SubProgress: Sync,
             C: crate::cache::DecodeEntry,
         {
             self.index.verify_integrity(

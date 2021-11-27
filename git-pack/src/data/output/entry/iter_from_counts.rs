@@ -42,7 +42,7 @@ use crate::data::{output, output::ChunkId};
 pub fn iter_from_counts<Find, Cache>(
     mut counts: Vec<output::Count>,
     db: Find,
-    make_cache: impl Fn() -> Cache + Send + Clone + Sync + 'static,
+    make_cache: impl Fn() -> Cache + Send + Clone + 'static,
     mut progress: impl Progress,
     Options {
         version,

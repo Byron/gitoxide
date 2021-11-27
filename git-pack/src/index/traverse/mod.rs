@@ -79,8 +79,8 @@ impl index::File {
         &self,
         pack: &crate::data::File,
         progress: Option<P>,
-        new_processor: impl Fn() -> Processor + Send + Sync,
-        new_cache: impl Fn() -> C + Send + Sync,
+        new_processor: impl Fn() -> Processor + Send + Clone,
+        new_cache: impl Fn() -> C + Send + Clone,
         Options {
             algorithm,
             thread_limit,
@@ -90,6 +90,7 @@ impl index::File {
     ) -> Result<(git_hash::ObjectId, Outcome, Option<P>), Error<E>>
     where
         P: Progress,
+        <P as Progress>::SubProgress: Sync,
         C: crate::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
         Processor: FnMut(

@@ -41,7 +41,7 @@ gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
 gitoxide-core-blocking-client = ["gitoxide-core/blocking-client"]
 gitoxide-core-async-client = ["gitoxide-core/async-client", "futures-lite"]
 http-client-curl = ["git-transport-for-configuration-only/http-client-curl"]
-fast = ["git-features/threading", "git-features/parallel", "git-features/fast-sha1", "git-features/zlib-ng-compat"]
+fast = ["git-features/parallel", "git-features/fast-sha1", "git-features/zlib-ng-compat"]
 
 pretty-cli = ["clap",
     "gitoxide-core/serde1",

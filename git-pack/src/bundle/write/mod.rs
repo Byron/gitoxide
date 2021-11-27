@@ -37,14 +37,19 @@ impl crate::Bundle {
     /// * the resulting pack may be empty, that is, contains zero objects in some situations. This is a valid reply by a server and should
     ///   be accounted for.
     ///   - Empty packs always have the same name and not handling this case will result in at most one superfluous pack.
-    pub fn write_to_directory(
+    pub fn write_to_directory<P>(
         pack: impl io::BufRead,
         directory: Option<impl AsRef<Path>>,
-        mut progress: impl Progress,
+        mut progress: P,
         should_interrupt: &AtomicBool,
         thin_pack_base_object_lookup_fn: Option<ThinPackLookupFn>,
         options: Options,
-    ) -> Result<Outcome, Error> {
+    ) -> Result<Outcome, Error>
+    where
+        P: Progress + Sync,
+        <P as Progress>::SubProgress: Sync,
+        <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
+    {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(None, progress::bytes());
         let pack = progress::Read {
@@ -131,15 +136,20 @@ impl crate::Bundle {
     /// As it sends portions of the input to a thread it requires the 'static lifetime for the interrupt flags. This can only
     /// be satisfied by a static AtomicBool which is only suitable for programs that only run one of these operations at a time
     /// or don't mind that all of them abort when the flag is set.
-    pub fn write_to_directory_eagerly(
+    pub fn write_to_directory_eagerly<P>(
         pack: impl io::Read + Send + 'static,
         pack_size: Option<u64>,
         directory: Option<impl AsRef<Path>>,
-        mut progress: impl Progress,
+        mut progress: P,
         should_interrupt: &'static AtomicBool,
         thin_pack_base_object_lookup_fn: Option<ThinPackLookupFnSend>,
         options: Options,
-    ) -> Result<Outcome, Error> {
+    ) -> Result<Outcome, Error>
+    where
+        P: Progress + Sync,
+        <P as Progress>::SubProgress: Sync,
+        <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
+    {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
         let pack = progress::Read {
@@ -212,9 +222,9 @@ impl crate::Bundle {
         })
     }
 
-    fn inner_write(
+    fn inner_write<P>(
         directory: Option<impl AsRef<Path>>,
-        mut progress: impl Progress,
+        mut progress: P,
         Options {
             thread_limit,
             iteration_mode: _,
@@ -223,7 +233,12 @@ impl crate::Bundle {
         data_file: Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>,
         pack_entries_iter: impl Iterator<Item = Result<data::input::Entry, data::input::Error>>,
         should_interrupt: &AtomicBool,
-    ) -> Result<(crate::index::write::Outcome, Option<PathBuf>, Option<PathBuf>), Error> {
+    ) -> Result<(crate::index::write::Outcome, Option<PathBuf>, Option<PathBuf>), Error>
+    where
+        P: Progress + Sync,
+        <P as Progress>::SubProgress: Sync,
+        <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
+    {
         let indexing_progress = progress.add_child("create index file");
         Ok(match directory {
             Some(directory) => {
@@ -280,8 +295,8 @@ impl crate::Bundle {
 
 fn new_pack_file_resolver(
     data_file: Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>,
-) -> io::Result<impl Fn(data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Sync> {
-    let mapped_file = FileBuffer::open(data_file.lock().with_mut(|f| f.path().to_owned())?)?;
+) -> io::Result<impl Fn(data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Clone> {
+    let mapped_file = Arc::new(FileBuffer::open(data_file.lock().with_mut(|f| f.path().to_owned())?)?);
     let pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
         mapped_file
             .get(range.start as usize..range.end as usize)

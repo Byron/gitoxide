@@ -1,6 +1,7 @@
 use std::{ffi::OsString, path::PathBuf};
 
 use clap::AppSettings;
+
 use gitoxide_core as core;
 
 #[derive(Debug, clap::Parser)]

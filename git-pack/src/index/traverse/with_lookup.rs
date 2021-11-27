@@ -36,6 +36,7 @@ mod options {
         }
     }
 }
+use git_features::threading::{get_mut, MutableOnDemand, OwnShared};
 use std::sync::atomic::Ordering;
 
 pub use options::Options;
@@ -48,8 +49,8 @@ impl index::File {
     /// For more details, see the documentation on the [`traverse()`][index::File::traverse()] method.
     pub fn traverse_with_lookup<P, C, Processor, E>(
         &self,
-        new_processor: impl Fn() -> Processor + Send + Sync,
-        new_cache: impl Fn() -> C + Send + Sync,
+        new_processor: impl Fn() -> Processor + Send + Clone,
+        new_cache: impl Fn() -> C + Send + Clone,
         mut progress: P,
         pack: &crate::data::File,
         Options {
@@ -62,6 +63,7 @@ impl index::File {
         P: Progress,
         C: crate::cache::DecodeEntry,
         E: std::error::Error + Send + Sync + 'static,
+        <P as Progress>::SubProgress: Send + Sync,
         Processor: FnMut(
             git_object::Kind,
             &[u8],
@@ -96,18 +98,21 @@ impl index::File {
                     parallel::optimize_chunk_size_and_thread_limit(1000, Some(index_entries.len()), thread_limit, None);
                 let there_are_enough_entries_to_process = || index_entries.len() > chunk_size * available_cores;
                 let input_chunks = index_entries.chunks(chunk_size.max(chunk_size));
-                let reduce_progress = parking_lot::Mutex::new({
+                let reduce_progress = OwnShared::new(MutableOnDemand::new({
                     let mut p = progress.add_child("Traversing");
                     p.init(Some(self.num_objects() as usize), progress::count("objects"));
                     p
-                });
-                let state_per_thread = |index| {
-                    (
-                        new_cache(),
-                        new_processor(),
-                        Vec::with_capacity(2048), // decode buffer
-                        reduce_progress.lock().add_child(format!("thread {}", index)), // per thread progress
-                    )
+                }));
+                let state_per_thread = {
+                    let reduce_progress = reduce_progress.clone();
+                    move |index| {
+                        (
+                            new_cache(),
+                            new_processor(),
+                            Vec::with_capacity(2048), // decode buffer
+                            get_mut(&reduce_progress).add_child(format!("thread {}", index)), // per thread progress
+                        )
+                    }
                 };
 
                 in_parallel_if(
@@ -148,7 +153,7 @@ impl index::File {
                         }
                         Ok(stats)
                     },
-                    Reducer::from_progress(&reduce_progress, pack.data_len(), check, &should_interrupt),
+                    Reducer::from_progress(reduce_progress, pack.data_len(), check, &should_interrupt),
                 )
             },
         );

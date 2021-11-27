@@ -74,12 +74,17 @@ pub enum PathOrRead {
     Read(Box<dyn std::io::Read + Send + 'static>),
 }
 
-pub fn from_pack(
+pub fn from_pack<P>(
     pack: PathOrRead,
     directory: Option<PathBuf>,
-    progress: impl Progress,
+    progress: P,
     ctx: Context<'static, impl io::Write>,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<()>
+where
+    P: Progress + Sync,
+    <P as Progress>::SubProgress: Sync,
+    <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
+{
     use anyhow::Context;
     let options = pack::bundle::write::Options {
         thread_limit: ctx.thread_limit,
