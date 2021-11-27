@@ -30,27 +30,6 @@ use git_object::bstr::{BStr, BString};
 mod store_impl;
 pub use store_impl::{file, packed};
 
-///
-pub mod store {
-    /// The way a file store handles the reflog
-    #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
-    pub enum WriteReflog {
-        /// Write a ref log for ref edits according to the standard rules.
-        Normal,
-        /// Never write a ref log.
-        Disable,
-    }
-
-    impl Default for WriteReflog {
-        fn default() -> Self {
-            WriteReflog::Normal
-        }
-    }
-
-    #[path = "general/mod.rs"]
-    mod general;
-}
-
 mod fullname;
 ///
 pub mod name;
@@ -71,6 +50,44 @@ pub mod log;
 
 ///
 pub mod peel;
+
+///
+pub mod store {
+    use crate::Namespace;
+    use git_features::threading::OwnShared;
+
+    /// The way a file store handles the reflog
+    #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
+    pub enum WriteReflog {
+        /// Write a ref log for ref edits according to the standard rules.
+        Normal,
+        /// Never write a ref log.
+        Disable,
+    }
+
+    impl Default for WriteReflog {
+        fn default() -> Self {
+            WriteReflog::Normal
+        }
+    }
+
+    /// A thread-local handle for interacting with a [`Store`][crate::Store] to find and iterate references.
+    #[derive(Clone)]
+    pub struct Handle {
+        /// A way to access shared state with the requirement that interior mutability doesn't leak or is incorporated into error types
+        /// if it could. The latter can't happen if references to said internal aren't ever returned.
+        store: OwnShared<crate::Store>,
+        /// The namespace within which all operations will be performed.
+        pub namespace: Option<Namespace>,
+    }
+
+    #[path = "general/mod.rs"]
+    mod general;
+
+    ///
+    #[path = "general/handle.rs"]
+    pub mod handle;
+}
 
 /// The git reference store.
 pub struct Store {
