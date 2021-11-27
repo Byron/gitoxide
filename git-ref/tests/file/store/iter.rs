@@ -423,7 +423,7 @@ fn overlay_partial_prefix_iter() -> crate::Result {
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
-        .iter_prefixed(store.packed_buffer()?.as_ref(), "refs/heads/m")?
+        .iter_prefixed(store.packed_buffer()?.as_ref(), "refs/heads/m")? // 'm' is partial
         .map(|r| r.map(|r| (r.name.as_bstr().to_owned(), r.target)))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");

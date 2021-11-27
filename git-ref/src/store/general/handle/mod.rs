@@ -31,3 +31,9 @@ impl crate::Store {
         }
     }
 }
+
+mod iter {
+    // impl store::Handle {
+    //     pub fn iter<'p, 's>(&'s self, packed: Option<&'p packed::Buffer>) -> std::io::Result<LooseThenPacked<'p, 's>> {
+    // }
+}

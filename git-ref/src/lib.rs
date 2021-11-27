@@ -90,7 +90,7 @@ pub mod store {
     pub(crate) mod general;
 
     ///
-    #[path = "general/handle.rs"]
+    #[path = "general/handle/mod.rs"]
     pub mod handle;
 
     ///
