@@ -1,4 +1,4 @@
-use crate::store::{
+use crate::store_impl::{
     file,
     file::{log, loose, loose::Reference},
 };

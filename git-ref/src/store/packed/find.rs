@@ -2,7 +2,7 @@ use std::{borrow::Cow, convert::TryInto};
 
 use git_object::bstr::{BStr, BString, ByteSlice};
 
-use crate::{store::packed, PartialNameRef};
+use crate::{store_impl::packed, PartialNameRef};
 
 /// packed-refs specific functionality
 impl packed::Buffer {
@@ -66,7 +66,7 @@ impl packed::Buffer {
 
     /// Perform a binary search where `Ok(pos)` is the beginning of the line that matches `name` perfectly and `Err(pos)`
     /// is the beginning of the line at which `name` could be inserted to still be in sort order.
-    pub(in crate::store::packed) fn binary_search_by(&self, full_name: &BStr) -> Result<usize, (bool, usize)> {
+    pub(in crate::store_impl::packed) fn binary_search_by(&self, full_name: &BStr) -> Result<usize, (bool, usize)> {
         let a = self.as_ref();
         let search_start_of_record = |ofs: usize| {
             a[..ofs]

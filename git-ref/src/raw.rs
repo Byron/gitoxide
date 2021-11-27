@@ -18,7 +18,7 @@ mod convert {
 
     use crate::{
         raw::Reference,
-        store::{file::loose, packed},
+        store_impl::{file::loose, packed},
         Target,
     };
 

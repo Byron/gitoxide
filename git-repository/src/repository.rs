@@ -104,9 +104,9 @@ pub mod open {
                 refs: crate::RefStore::at(
                     git_dir,
                     if worktree_dir.is_none() {
-                        git_ref::file::WriteReflog::Disable
+                        git_ref::store::WriteReflog::Disable
                     } else {
-                        git_ref::file::WriteReflog::Normal
+                        git_ref::store::WriteReflog::Normal
                     },
                 ),
                 work_tree: worktree_dir,

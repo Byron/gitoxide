@@ -5,7 +5,7 @@ use git_hash::ObjectId;
 use crate::{
     peel,
     raw::Reference,
-    store::{
+    store_impl::{
         file,
         file::{log, loose::reference::logiter::must_be_io_err},
         packed,

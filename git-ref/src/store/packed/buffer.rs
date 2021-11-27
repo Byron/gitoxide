@@ -1,4 +1,4 @@
-use crate::store::packed;
+use crate::store_impl::packed;
 
 impl AsRef<[u8]> for packed::Buffer {
     fn as_ref(&self) -> &[u8] {
@@ -21,7 +21,7 @@ pub mod open {
 
     use filebuffer::FileBuffer;
 
-    use crate::store::packed;
+    use crate::store_impl::packed;
 
     /// Initialization
     impl packed::Buffer {

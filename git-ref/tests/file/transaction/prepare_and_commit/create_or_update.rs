@@ -6,8 +6,9 @@ use git_object::bstr::{BString, ByteSlice};
 use git_ref::{
     file::{
         transaction::{self, PackedRefs},
-        ReferenceExt, WriteReflog,
+        ReferenceExt,
     },
+    store::WriteReflog,
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target,
 };

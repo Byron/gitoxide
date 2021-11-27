@@ -1,7 +1,7 @@
 use std::io::Write;
 
 use crate::{
-    store::{file::transaction::FindObjectFn, packed, packed::Edit},
+    store_impl::{file::transaction::FindObjectFn, packed, packed::Edit},
     transaction::{Change, RefEdit},
     Target,
 };
@@ -266,7 +266,7 @@ pub mod prepare {
 pub mod commit {
     use quick_error::quick_error;
 
-    use crate::store::packed;
+    use crate::store_impl::packed;
 
     quick_error! {
         /// The error used in [`Transaction::commit(…)`][super::packed::Transaction::commit()].

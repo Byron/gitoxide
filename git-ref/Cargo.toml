@@ -14,7 +14,7 @@ test = true
 
 [features]
 serde1 = ["serde", "git-hash/serde1", "git-actor/serde1", "git-object/serde1"]
-internal-testing-git-features-parallel = ["git-features/parallel"] # test sorted parallel loose file traversal
+internal-testing-git-features-parallel = ["git-features/parallel", "git-features/threading"] # test sorted parallel loose file traversal
 
 [[test]]
 name = "refs-parallel-fs-traversal"

@@ -1,10 +1,10 @@
 use git_object::bstr::ByteSlice;
 
-use crate::store::file::{log, log::iter::decode::LineNumber};
+use crate::store_impl::file::{log, log::iter::decode::LineNumber};
 
 ///
 pub mod decode {
-    use crate::store::file::log;
+    use crate::store_impl::file::log;
 
     /// The error returned by items in the [forward][super::forward()] and [reverse][super::reverse()] iterators
     #[derive(Debug)]

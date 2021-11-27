@@ -27,7 +27,7 @@ pub mod reference;
 mod init {
     use std::path::PathBuf;
 
-    use crate::store::file;
+    use crate::store_impl::file;
 
     impl file::Store {
         /// Create a new instance at the given `git_dir`, which commonly is a standard git repository with a

@@ -1,6 +1,6 @@
 use crate::{
     packed,
-    store::{
+    store_impl::{
         file,
         file::{
             loose,
@@ -342,7 +342,7 @@ mod error {
     use quick_error::quick_error;
 
     use crate::{
-        store::{file, packed},
+        store_impl::{file, packed},
         Target,
     };
 

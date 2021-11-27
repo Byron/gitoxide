@@ -6,7 +6,7 @@ mod reference {
 
     use super::Result;
     use crate::{
-        store::{packed, packed::decode},
+        store_impl::{packed, packed::decode},
         FullNameRef,
     };
 
@@ -50,7 +50,7 @@ mod header {
     use git_testtools::to_bstr_err;
 
     use super::Result;
-    use crate::store::packed::{
+    use crate::store_impl::packed::{
         decode,
         decode::{Header, Peeled},
     };

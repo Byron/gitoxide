@@ -1,7 +1,7 @@
 use std::{convert::TryInto, io::Read, path::PathBuf};
 
 use crate::{
-    store::{file, file::log},
+    store_impl::{file, file::log},
     FullNameRef,
 };
 
@@ -92,7 +92,7 @@ pub mod create_or_update {
     use git_hash::{oid, ObjectId};
     use git_object::bstr::BStr;
 
-    use crate::store::{file, file::WriteReflog};
+    use crate::store_impl::{file, file::WriteReflog};
 
     impl file::Store {
         pub(crate) fn reflog_create_or_append(
@@ -195,12 +195,12 @@ pub mod create_or_update {
         }
 
         /// Returns the base and a full path (including the base) to the reflog for a ref of the given `full_name`
-        pub(in crate::store::file::loose::reflog) fn reflog_path_inner(&self, full_name: &Path) -> PathBuf {
+        pub(in crate::store_impl::file::loose::reflog) fn reflog_path_inner(&self, full_name: &Path) -> PathBuf {
             self.reflog_root().join(full_name)
         }
 
         /// Returns the base paths for all reflogs
-        pub(in crate::store::file) fn reflog_root(&self) -> PathBuf {
+        pub(in crate::store_impl::file) fn reflog_root(&self) -> PathBuf {
             self.base.join("logs")
         }
     }

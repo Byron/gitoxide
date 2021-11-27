@@ -1,6 +1,6 @@
 use git_hash::ObjectId;
 
-use crate::{log::Line, store::file::log::LineRef};
+use crate::{log::Line, store_impl::file::log::LineRef};
 
 impl<'a> LineRef<'a> {
     /// Convert this instance into its mutable counterpart

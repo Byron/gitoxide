@@ -1,6 +1,6 @@
 use git_object::bstr::{BString, ByteSlice};
 
-use crate::store::{packed, packed::decode};
+use crate::store_impl::{packed, packed::decode};
 
 /// packed-refs specific functionality
 impl packed::Buffer {
@@ -71,7 +71,10 @@ impl<'a> packed::Iter<'a> {
     /// Returns an iterators whose references will only match the given prefix.
     ///
     /// It assumes that the underlying `packed` buffer is indeed sorted
-    pub(in crate::store::packed) fn new_with_prefix(packed: &'a [u8], prefix: Option<BString>) -> Result<Self, Error> {
+    pub(in crate::store_impl::packed) fn new_with_prefix(
+        packed: &'a [u8],
+        prefix: Option<BString>,
+    ) -> Result<Self, Error> {
         if packed.is_empty() {
             Ok(packed::Iter {
                 cursor: packed,

@@ -5,4 +5,5 @@ mod fullname;
 mod namespace;
 mod packed;
 mod reference;
+mod store;
 mod transaction;

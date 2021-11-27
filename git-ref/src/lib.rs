@@ -20,13 +20,36 @@
 #![deny(missing_docs, rust_2018_idioms)]
 
 use std::borrow::Cow;
+use std::path::PathBuf;
 
 use git_hash::{oid, ObjectId};
 pub use git_object::bstr;
 use git_object::bstr::{BStr, BString};
 
-mod store;
-pub use store::{file, packed};
+#[path = "store/mod.rs"]
+mod store_impl;
+pub use store_impl::{file, packed};
+
+///
+pub mod store {
+    /// The way a file store handles the reflog
+    #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
+    pub enum WriteReflog {
+        /// Write a ref log for ref edits according to the standard rules.
+        Normal,
+        /// Never write a ref log.
+        Disable,
+    }
+
+    impl Default for WriteReflog {
+        fn default() -> Self {
+            WriteReflog::Normal
+        }
+    }
+
+    #[path = "general/mod.rs"]
+    mod general;
+}
 
 mod fullname;
 ///
@@ -48,6 +71,12 @@ pub mod log;
 
 ///
 pub mod peel;
+
+/// The git reference store.
+pub struct Store {
+    _path: PathBuf,
+    _reflog_mode: store::WriteReflog,
+}
 
 /// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
 /// of a symbolic reference

@@ -304,7 +304,10 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Res
 
 #[test]
 fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Result {
-    for reflog_writemode in &[git_ref::file::WriteReflog::Normal, git_ref::file::WriteReflog::Disable] {
+    for reflog_writemode in &[
+        git_ref::store::WriteReflog::Normal,
+        git_ref::store::WriteReflog::Disable,
+    ] {
         let (_keep, mut store) = store_writable("make_repo_for_reflog.sh")?;
         store.write_reflog = *reflog_writemode;
         assert!(store.find_loose("HEAD")?.log_exists(&store));

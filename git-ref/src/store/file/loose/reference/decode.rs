@@ -12,7 +12,7 @@ use quick_error::quick_error;
 
 use crate::{
     parse::{hex_hash, newline},
-    store::file::loose::Reference,
+    store_impl::file::loose::Reference,
     FullName, Target,
 };
 

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::store::{file, packed};
+use crate::store_impl::{file, packed};
 
 impl file::Store {
     /// Return a packed transaction ready to receive updates. Use this to create or update `packed-refs`.
@@ -36,7 +36,7 @@ impl file::Store {
 pub mod transaction {
     use quick_error::quick_error;
 
-    use crate::store::packed;
+    use crate::store_impl::packed;
 
     quick_error! {
         /// The error returned by [`file::Store::packed_transaction`][crate::file::Store::packed_transaction()].

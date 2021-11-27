@@ -1,20 +1,5 @@
 use std::path::PathBuf;
 
-/// The way a file store handles the reflog
-#[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
-pub enum WriteReflog {
-    /// Write a ref log for ref edits according to the standard rules.
-    Normal,
-    /// Never write a ref log.
-    Disable,
-}
-
-impl Default for WriteReflog {
-    fn default() -> Self {
-        WriteReflog::Normal
-    }
-}
-
 /// A store for reference which uses plain files.
 ///
 /// Each ref is represented as a single file on disk in a folder structure that follows the relative path
@@ -34,12 +19,12 @@ pub struct Store {
 /// A transaction on a file store
 pub struct Transaction<'s> {
     store: &'s Store,
-    packed_transaction: Option<crate::store::packed::Transaction>,
+    packed_transaction: Option<crate::store_impl::packed::Transaction>,
     updates: Option<Vec<transaction::Edit>>,
     packed_refs: transaction::PackedRefs,
 }
 
-pub(in crate::store::file) fn path_to_name(path: impl Into<PathBuf>) -> git_object::bstr::BString {
+pub(in crate::store_impl::file) fn path_to_name(path: impl Into<PathBuf>) -> git_object::bstr::BString {
     use os_str_bytes::OsStringBytes;
     let path = path.into().into_raw_vec();
     #[cfg(windows)]
@@ -82,4 +67,5 @@ pub mod packed;
 mod raw_ext;
 pub use raw_ext::ReferenceExt;
 
+use crate::store::WriteReflog;
 use crate::Namespace;

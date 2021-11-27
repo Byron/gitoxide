@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     file::{loose, path_to_name},
-    store::{file, packed},
+    store_impl::{file, packed},
     FullName, Namespace, Reference,
 };
 
@@ -196,7 +196,7 @@ mod error {
     use git_object::bstr::BString;
     use quick_error::quick_error;
 
-    use crate::store::file;
+    use crate::store_impl::file;
 
     quick_error! {
         /// The error returned by the [`LooseThenPacked`][super::LooseThenPacked] iterator.

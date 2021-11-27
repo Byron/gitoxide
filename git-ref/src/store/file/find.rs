@@ -9,7 +9,7 @@ use git_object::bstr::ByteSlice;
 
 use crate::{
     file,
-    store::{
+    store_impl::{
         file::{loose, path_to_name},
         packed,
     },
@@ -191,7 +191,7 @@ pub mod existing {
 
     use crate::{
         file::{self},
-        store::{
+        store_impl::{
             file::{find, loose},
             packed,
         },
@@ -231,7 +231,7 @@ pub mod existing {
 
         use quick_error::quick_error;
 
-        use crate::store::file::find;
+        use crate::store_impl::file::find;
 
         quick_error! {
             /// The error returned by [file::Store::find_existing()][crate::file::Store::find_existing()].
@@ -256,7 +256,7 @@ mod error {
 
     use quick_error::quick_error;
 
-    use crate::{file, store::packed};
+    use crate::{file, store_impl::packed};
 
     quick_error! {
         /// The error returned by [file::Store::find()].

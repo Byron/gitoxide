@@ -2,7 +2,7 @@ use git_hash::ObjectId;
 use git_object::bstr::BString;
 
 use crate::{
-    store::{file, file::Transaction},
+    store_impl::{file, file::Transaction},
     transaction::RefEdit,
 };
 
@@ -33,7 +33,7 @@ impl Default for PackedRefs {
 }
 
 #[derive(Debug)]
-pub(in crate::store::file) struct Edit {
+pub(in crate::store_impl::file) struct Edit {
     update: RefEdit,
     lock: Option<git_lock::Marker>,
     /// Set if this update is coming from a symbolic reference and used to make it appear like it is the one that is handled,

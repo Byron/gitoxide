@@ -1,5 +1,5 @@
 use crate::{
-    store::file::{transaction::PackedRefs, Transaction},
+    store_impl::file::{transaction::PackedRefs, Transaction},
     transaction::{Change, LogChange, RefEdit, RefLog},
     Target,
 };
@@ -155,7 +155,7 @@ mod error {
     use git_object::bstr::BString;
     use quick_error::quick_error;
 
-    use crate::store::{file, packed};
+    use crate::store_impl::{file, packed};
 
     quick_error! {
         /// The error returned by various [`Transaction`][super::Transaction] methods.

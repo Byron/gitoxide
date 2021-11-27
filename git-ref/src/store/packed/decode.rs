@@ -11,7 +11,7 @@ use nom::{
 
 use crate::{
     parse::{hex_hash, newline},
-    store::packed,
+    store_impl::packed,
 };
 
 #[derive(Debug, PartialEq, Eq)]
