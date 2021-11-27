@@ -7,6 +7,7 @@ pub fn store_at(name: &str) -> crate::Result<OwnShared<git_ref::Store>> {
 }
 
 #[test]
+#[cfg(feature = "internal-testing-git-features-parallel")]
 fn is_send_and_sync() {
     fn assert_type<T: Send + Sync>(_t: T) {}
     let store = store_at("make_packed_ref_repository.sh").unwrap();

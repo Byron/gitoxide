@@ -20,7 +20,6 @@
 #![deny(missing_docs, rust_2018_idioms)]
 
 use std::borrow::Cow;
-use std::path::PathBuf;
 
 use git_hash::{oid, ObjectId};
 pub use git_object::bstr;
@@ -53,8 +52,8 @@ pub mod peel;
 
 ///
 pub mod store {
-    use crate::Namespace;
     use git_features::threading::OwnShared;
+    use std::path::PathBuf;
 
     /// The way a file store handles the reflog
     #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
@@ -76,23 +75,32 @@ pub mod store {
     pub struct Handle {
         /// A way to access shared state with the requirement that interior mutability doesn't leak or is incorporated into error types
         /// if it could. The latter can't happen if references to said internal aren't ever returned.
-        store: OwnShared<crate::Store>,
-        /// The namespace within which all operations will be performed.
-        pub namespace: Option<Namespace>,
+        state: handle::State,
+    }
+
+    pub(crate) enum State {
+        Loose {
+            path: PathBuf,
+            reflog_mode: WriteReflog,
+            packed_buffer: OwnShared<packed::ModifiableBuffer>,
+        },
     }
 
     #[path = "general/mod.rs"]
-    mod general;
+    pub(crate) mod general;
 
     ///
     #[path = "general/handle.rs"]
     pub mod handle;
+
+    ///
+    #[path = "general/packed.rs"]
+    mod packed;
 }
 
 /// The git reference store.
 pub struct Store {
-    _path: PathBuf,
-    _reflog_mode: store::WriteReflog,
+    state: store::State,
 }
 
 /// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
