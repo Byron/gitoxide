@@ -91,7 +91,7 @@ pub mod store {
 
     ///
     #[path = "general/handle/mod.rs"]
-    pub mod handle;
+    mod handle;
 
     ///
     #[path = "general/packed.rs"]
