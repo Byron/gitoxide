@@ -1,22 +1,27 @@
 use git_ref::file;
 
-fn store() -> crate::Result<file::Store> {
+// TODO: when ready, add a new test entry point with a feature toggle to switch this to `git_ref::Store`.
+//       That way all tests can run against the new general store to validate its truly working.
+//       The same can be done when RefTable is available, and its corresponding tests.
+pub type Store = file::Store;
+
+fn store() -> crate::Result<Store> {
     store_at("make_ref_repository.sh")
 }
 
-pub fn store_with_packed_refs() -> crate::Result<file::Store> {
+pub fn store_with_packed_refs() -> crate::Result<Store> {
     store_at("make_packed_ref_repository.sh")
 }
 
-pub fn store_at(name: &str) -> crate::Result<file::Store> {
+pub fn store_at(name: &str) -> crate::Result<Store> {
     let path = git_testtools::scripted_fixture_repo_read_only(name)?;
-    Ok(file::Store::from(path.join(".git")))
+    Ok(Store::at(path.join(".git"), git_ref::store::WriteReflog::Normal))
 }
 
-fn store_writable(name: &str) -> crate::Result<(git_testtools::tempfile::TempDir, file::Store)> {
+fn store_writable(name: &str) -> crate::Result<(git_testtools::tempfile::TempDir, Store)> {
     let dir = git_testtools::scripted_fixture_repo_writable(name)?;
     let git_dir = dir.path().join(".git");
-    Ok((dir, file::Store::from(git_dir)))
+    Ok((dir, Store::at(git_dir, git_ref::store::WriteReflog::Normal)))
 }
 
 mod log;

@@ -1,5 +1,5 @@
-fn store() -> crate::Result<git_ref::file::Store> {
-    Ok(git_ref::file::Store::at(
+fn store() -> crate::Result<crate::file::Store> {
+    Ok(crate::file::Store::at(
         git_testtools::scripted_fixture_repo_read_only("make_repo_for_reflog.sh")?.join(".git"),
         git_ref::store::WriteReflog::Disable,
     ))

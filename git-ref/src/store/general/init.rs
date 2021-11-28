@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, path::PathBuf};
+use std::path::PathBuf;
 
 use crate::store::WriteReflog;
 
@@ -30,17 +30,9 @@ impl crate::Store {
         let git_dir = git_dir.into();
         std::fs::read_dir(&git_dir)?;
         Ok(crate::Store {
-            state: crate::store::State::Loose {
+            inner: crate::store::State::Loose {
                 store: file::Store::at(git_dir, reflog_mode),
             },
         })
-    }
-}
-
-impl TryFrom<PathBuf> for crate::Store {
-    type Error = Error;
-
-    fn try_from(value: PathBuf) -> Result<Self, Self::Error> {
-        crate::Store::at(value, WriteReflog::Normal)
     }
 }

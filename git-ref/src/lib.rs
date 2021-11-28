@@ -92,8 +92,9 @@ pub mod store {
 }
 
 /// The git reference store.
+/// TODO: Figure out if handles are needed at all, which depends on the ref-table implementation.
 pub struct Store {
-    state: store::State,
+    inner: store::State,
 }
 
 /// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target

@@ -1,8 +1,9 @@
-use std::convert::TryFrom;
-
 pub fn store_at(name: &str) -> crate::Result<git_ref::Store> {
     let path = git_testtools::scripted_fixture_repo_read_only(name)?;
-    Ok(git_ref::Store::try_from(path.join(".git"))?)
+    Ok(git_ref::Store::at(
+        path.join(".git"),
+        git_ref::store::WriteReflog::Normal,
+    )?)
 }
 
 #[test]
