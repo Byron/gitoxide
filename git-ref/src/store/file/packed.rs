@@ -10,7 +10,10 @@ impl file::Store {
         lock_mode: git_lock::acquire::Fail,
     ) -> Result<packed::Transaction, transaction::Error> {
         let lock = git_lock::File::acquire_to_update_resource(self.packed_refs_path(), lock_mode, None)?;
-        Ok(match self.packed_buffer()? {
+        // We 'steal' the possibly existing packed buffer which may safe time if it's already there and fresh.
+        // If nothing else is happening, nobody will get to see the soon stale buffer either, but if so, they will pay
+        // for reloading it. That seems preferred over always loading up a new one.
+        Ok(match self.assure_packed_refs_uptodate_and_take()? {
             Some(packed) => packed::Transaction::new_from_pack_and_lock(packed, lock),
             None => packed::Transaction::new_empty(lock),
         })
@@ -60,7 +63,8 @@ pub mod transaction {
 pub(crate) mod modifiable {
     use crate::file;
     use git_features::threading::{
-        downgrade_mut_to_ref, get_ref_upgradeable, map_ref, map_upgradable_ref, upgrade_ref_to_mut, MappedRefGuard,
+        downgrade_mut_to_ref, get_mut, get_ref_upgradeable, map_ref, map_upgradable_ref, upgrade_ref_to_mut,
+        MappedRefGuard,
     };
     use std::time::SystemTime;
 
@@ -71,6 +75,39 @@ pub(crate) mod modifiable {
     }
 
     impl file::Store {
+        pub(crate) fn assure_packed_refs_uptodate_and_take(
+            &self,
+        ) -> Result<Option<crate::packed::Buffer>, crate::packed::buffer::open::Error> {
+            let packed_refs_modified_time = || self.packed_refs_path().metadata().and_then(|m| m.modified()).ok();
+            let mut state = get_mut(&self.packed);
+            if state.buffer.is_none() {
+                state.buffer = self.packed_buffer()?;
+                if state.buffer.is_some() {
+                    state.modified = packed_refs_modified_time();
+                }
+            } else {
+                let recent_modification = packed_refs_modified_time();
+                match (&state.modified, recent_modification) {
+                    (None, None) => {}
+                    (Some(_), None) => {
+                        state.buffer = None;
+                        state.modified = None;
+                    }
+                    (Some(cached_time), Some(modified_time)) => {
+                        if *cached_time < modified_time {
+                            state.buffer = self.packed_buffer()?;
+                            state.modified = Some(modified_time);
+                        }
+                    }
+                    (None, Some(modified_time)) => {
+                        state.buffer = self.packed_buffer()?;
+                        state.modified = Some(modified_time);
+                    }
+                }
+            };
+            Ok(state.buffer.take())
+        }
+
         pub(crate) fn assure_packed_refs_uptodate(
             &self,
         ) -> Result<MappedRefGuard<'_, Option<crate::packed::Buffer>>, crate::packed::buffer::open::Error> {
