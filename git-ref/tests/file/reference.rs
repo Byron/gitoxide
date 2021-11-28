@@ -61,15 +61,12 @@ mod peel {
         let r = store.find_loose("HEAD")?;
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
-        let nr = Reference::from(r)
-            .follow(&store, None)
-            .expect("exists")
-            .expect("no failure");
+        let nr = Reference::from(r).follow(&store).expect("exists").expect("no failure");
         assert!(
             matches!(nr.target.to_ref(), git_ref::TargetRef::Peeled(_)),
             "iteration peels a single level"
         );
-        assert!(nr.follow(&store, None).is_none(), "end of iteration");
+        assert!(nr.follow(&store).is_none(), "end of iteration");
         assert_eq!(
             nr.target.to_ref(),
             git_ref::TargetRef::Peeled(&hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
@@ -82,13 +79,12 @@ mod peel {
     fn peel_with_packed_involvement() -> crate::Result {
         let store = store_with_packed_refs()?;
         let mut head: Reference = store.find_loose("HEAD")?.into();
-        let packed = store.packed_buffer()?;
         let expected = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-        assert_eq!(head.peel_to_id_in_place(&store, packed.as_ref(), peel::none)?, expected);
+        assert_eq!(head.peel_to_id_in_place(&store, peel::none)?, expected);
         assert_eq!(head.target.as_id().map(ToOwned::to_owned), Some(expected));
 
         let mut head = store.find("dt1")?;
-        assert_eq!(head.peel_to_id_in_place(&store, packed.as_ref(), peel::none)?, expected);
+        assert_eq!(head.peel_to_id_in_place(&store, peel::none)?, expected);
         assert_eq!(head.target.into_id(), expected);
         Ok(())
     }
@@ -96,7 +92,6 @@ mod peel {
     #[test]
     fn peel_one_level_with_pack() -> crate::Result {
         let store = store_with_packed_refs()?;
-        let packed = store.packed_buffer()?;
 
         let head = store.find("dt1")?;
         assert_eq!(
@@ -109,16 +104,14 @@ mod peel {
             "its peeled, but does have another step to peel to"
         );
 
-        let peeled = head
-            .follow(&store, packed.as_ref())
-            .expect("a peeled ref for the object")?;
+        let peeled = head.follow(&store).expect("a peeled ref for the object")?;
         assert_eq!(
             peeled.target.as_id().map(ToOwned::to_owned),
             Some(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
             "packed refs are always peeled (at least the ones we choose to read)"
         );
         assert_eq!(peeled.kind(), git_ref::Kind::Peeled, "it's terminally peeled now");
-        assert!(peeled.follow(&store, packed.as_ref()).is_none());
+        assert!(peeled.follow(&store).is_none());
         Ok(())
     }
 
@@ -129,12 +122,12 @@ mod peel {
         assert_eq!(r.kind(), git_ref::Kind::Symbolic, "there is something to peel");
 
         let commit = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-        assert_eq!(r.peel_to_id_in_place(&store, None, peel::none)?, commit);
+        assert_eq!(r.peel_to_id_in_place(&store, peel::none)?, commit);
         assert_eq!(r.name.as_bstr(), "refs/remotes/origin/multi-link-target3");
 
         let mut r: Reference = store.find_loose("dt1")?.into();
         assert_eq!(
-            r.peel_to_id_in_place(&store, None, peel::none)?,
+            r.peel_to_id_in_place(&store, peel::none)?,
             hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3"),
             "points to a tag object without actual object lookup"
         );
@@ -142,7 +135,7 @@ mod peel {
         let odb = git_odb::linked::Store::at(store.base().join("objects"))?;
         let mut r: Reference = store.find_loose("dt1")?.into();
         assert_eq!(
-            r.peel_to_id_in_place(&store, None, |oid, buf| {
+            r.peel_to_id_in_place(&store, |oid, buf| {
                 odb.try_find(oid, buf, &mut git_odb::pack::cache::Never)
                     .map(|obj| obj.map(|obj| (obj.kind, obj.data)))
             })?,
@@ -161,7 +154,7 @@ mod peel {
         assert_eq!(r.name.as_bstr(), "refs/loop-a");
 
         assert!(matches!(
-            r.peel_to_id_in_place(&store, None, peel::none).unwrap_err(),
+            r.peel_to_id_in_place(&store, peel::none).unwrap_err(),
             git_ref::peel::to_id::Error::Cycle { .. }
         ));
         assert_eq!(r.name.as_bstr(), "refs/loop-a", "the ref is not changed on error");

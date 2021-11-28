@@ -8,7 +8,6 @@ use crate::{
     store_impl::{
         file,
         file::{log, loose::reference::logiter::must_be_io_err},
-        packed,
     },
     Target,
 };
@@ -46,11 +45,7 @@ pub trait ReferenceExt: Sealed {
     /// possibly providing access to `packed` references for lookup if it contains the referent.
     ///
     /// Returns `None` if this is not a symbolic reference, hence the leaf of the chain.
-    fn follow(
-        &self,
-        store: &file::Store,
-        packed: Option<&packed::Buffer>,
-    ) -> Option<Result<Reference, file::find::existing::Error>>;
+    fn follow(&self, store: &file::Store) -> Option<Result<Reference, file::find::existing::Error>>;
 }
 
 impl ReferenceExt for Reference {
@@ -90,10 +85,7 @@ impl ReferenceExt for Reference {
                 if self.target.kind() == crate::Kind::Symbolic {
                     let mut seen = BTreeSet::new();
                     let cursor = &mut *self;
-                    let packed = store
-                        .assure_packed_refs_uptodate()
-                        .map_err(|err| file::find::existing::Error::Find(file::find::Error::PackedOpen(err)))?;
-                    while let Some(next) = cursor.follow(store, packed.as_ref()) {
+                    while let Some(next) = cursor.follow(store) {
                         let next = next?;
                         if seen.contains(&next.name) {
                             return Err(peel::to_id::Error::Cycle(store.base.join(cursor.name.to_path())));
@@ -136,11 +128,7 @@ impl ReferenceExt for Reference {
         }
     }
 
-    fn follow(
-        &self,
-        store: &file::Store,
-        packed: Option<&packed::Buffer>,
-    ) -> Option<Result<Reference, file::find::existing::Error>> {
+    fn follow(&self, store: &file::Store) -> Option<Result<Reference, file::find::existing::Error>> {
         match self.peeled {
             Some(peeled) => Some(Ok(Reference {
                 name: self.name.clone(),
@@ -151,7 +139,14 @@ impl ReferenceExt for Reference {
                 Target::Peeled(_) => None,
                 Target::Symbolic(full_name) => {
                     let path = full_name.to_path();
-                    match store.find_one_with_verified_input(path.as_ref(), packed) {
+                    let packed = match store
+                        .assure_packed_refs_uptodate()
+                        .map_err(|err| file::find::existing::Error::Find(file::find::Error::PackedOpen(err)))
+                    {
+                        Ok(packed) => packed,
+                        Err(err) => return Some(Err(err)),
+                    };
+                    match store.find_one_with_verified_input(path.as_ref(), packed.as_ref()) {
                         Ok(Some(next)) => Some(Ok(next)),
                         Ok(None) => Some(Err(file::find::existing::Error::NotFound(path.into_owned()))),
                         Err(err) => Some(Err(file::find::existing::Error::Find(err))),
