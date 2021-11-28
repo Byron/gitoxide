@@ -41,13 +41,4 @@ mod init {
             }
         }
     }
-
-    impl<P> From<P> for file::Store
-    where
-        P: Into<PathBuf>,
-    {
-        fn from(path: P) -> Self {
-            file::Store::at(path, Default::default())
-        }
-    }
 }

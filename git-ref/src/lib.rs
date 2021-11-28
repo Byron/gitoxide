@@ -61,12 +61,6 @@ pub mod store {
         Disable,
     }
 
-    impl Default for WriteReflog {
-        fn default() -> Self {
-            WriteReflog::Normal
-        }
-    }
-
     /// A thread-local handle for interacting with a [`Store`][crate::Store] to find and iterate references.
     #[derive(Clone)]
     pub struct Handle {
