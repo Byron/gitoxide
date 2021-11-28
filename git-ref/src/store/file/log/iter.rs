@@ -77,9 +77,12 @@ impl<'a> Iterator for Forward<'a> {
 /// A platform to store a buffer to hold ref log lines for iteration.
 #[must_use = "Iterators should be obtained from this platform"]
 pub struct Platform<'a, 's> {
-    pub(crate) store: &'s file::Store,
-    pub(crate) name: FullNameRef<'a>,
-    pub(crate) buf: Vec<u8>,
+    /// The store containing the reflogs
+    pub store: &'s file::Store,
+    /// The full name of the reference whose reflog to retrieve.
+    pub name: FullNameRef<'a>,
+    /// A reusable buffer for storing log lines read from disk.
+    pub buf: Vec<u8>,
 }
 
 impl<'a, 's> Platform<'a, 's> {

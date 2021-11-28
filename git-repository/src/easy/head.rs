@@ -79,34 +79,22 @@ where
 
 ///
 pub mod log {
-    use std::marker::PhantomData;
+    use git_ref::FullNameRef;
+    use std::convert::TryFrom;
 
-    use crate::{
-        easy,
-        easy::{ext::ReferenceAccessExt, Head},
-    };
-
-    /// The error returned by [Head::logs()].
-    #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error(transparent)]
-        BorrowState(#[from] easy::borrow::state::Error),
-        #[error(transparent)]
-        FindExistingReference(#[from] easy::reference::find::existing::Error),
-    }
+    use crate::{easy, easy::Head};
 
     impl<'repo, A> Head<'repo, A>
     where
         A: easy::Access + Sized,
     {
         /// Return a platform for obtaining iterators on the reference log associated with the `HEAD` reference.
-        pub fn logs(&self) -> Result<easy::reference::Logs<'repo, A, easy::Reference<'repo, A>>, Error> {
-            Ok(easy::reference::Logs {
-                reference: self.access.find_reference("HEAD")?,
-                buf: self.access.state().try_borrow_mut_buf()?,
-                _phantom: PhantomData::default(),
-            })
+        pub fn log_iter(&self) -> git_ref::file::log::iter::Platform<'static, '_> {
+            git_ref::file::log::iter::Platform {
+                store: &self.access.state().refs,
+                name: FullNameRef::try_from("HEAD").expect("HEAD is always valid"),
+                buf: Vec::new(),
+            }
         }
     }
 }

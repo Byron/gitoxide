@@ -136,8 +136,8 @@ mod commit {
         let head = repo.head()?.into_referent();
         assert_eq!(head.name().as_bstr(), "refs/heads/main", "'main' is the default name");
         assert_eq!(
-            head.logs()?
-                .iter_rev()?
+            head.log_iter()
+                .rev()?
                 .expect("log present")
                 .next()
                 .expect("one line")?
@@ -179,8 +179,8 @@ mod commit {
 
         let head_log_entries: Vec<_> = repo
             .head()?
-            .logs()?
-            .iter_rev()?
+            .log_iter()
+            .rev()?
             .expect("log present")
             .map(Result::unwrap)
             .map(|l| l.message)
@@ -212,8 +212,8 @@ mod commit {
         let current_commit = branch.peel_to_id_in_place()?;
         assert_eq!(current_commit, second_commit_id, "the commit was set");
 
-        let mut log = branch.logs()?;
-        let mut log_iter = log.iter_rev()?.expect("log present");
+        let mut log = branch.log_iter();
+        let mut log_iter = log.rev()?.expect("log present");
         assert_eq!(
             log_iter.next().expect("one line")?.message,
             "commit: committing into a new branch creates it"

@@ -12,7 +12,6 @@ use crate::{
 pub mod iter;
 
 mod errors;
-use std::{borrow::Borrow, cell::RefMut, marker::PhantomData};
 
 pub use errors::{edit, find, peel};
 
@@ -36,17 +35,6 @@ impl<'repo, A> Reference<'repo, A> {
     pub fn detach(self) -> git_ref::Reference {
         self.inner
     }
-}
-
-/// A platform to obtain iterators over reference logs.
-#[must_use = "Iterators should be obtained from this log platform"]
-pub struct Logs<'repo, A: 'repo, R>
-where
-    R: Borrow<Reference<'repo, A>>,
-{
-    pub(crate) reference: R,
-    pub(crate) buf: RefMut<'repo, Vec<u8>>,
-    pub(crate) _phantom: PhantomData<A>,
 }
 
 impl<'repo, A> Reference<'repo, A>
