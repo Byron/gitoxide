@@ -33,8 +33,8 @@ impl file::Store {
     /// Return a possibly cached packed buffer with shared ownership. At retrieval it will assure it's up to date, but
     /// after that it can be considered a snapshot as it cannot change anymore.
     ///
-    /// Use this to make successive calls to [`file::Store::try_find_packed()`] or obtain iterators in a way that assures
-    /// the packed-refs content won't change.
+    /// Use this to make successive calls to [`file::Store::try_find_packed()`]
+    /// or obtain iterators using [`file::Store::iter_packed()`] in a way that assures the packed-refs content won't change.
     pub fn cached_packed_buffer(&self) -> Result<Option<OwnShared<packed::Buffer>>, packed::buffer::open::Error> {
         self.assure_packed_refs_uptodate()
     }

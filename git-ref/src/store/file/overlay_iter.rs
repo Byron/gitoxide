@@ -119,11 +119,42 @@ impl<'s> Platform<'s> {
     ///
     /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themeselves.
     pub fn all(&self) -> std::io::Result<LooseThenPacked<'_, '_>> {
-        match self.store.namespace.as_ref() {
-            Some(namespace) => self.iter_prefixed_unvalidated(namespace.to_path(), (None, None)),
+        self.store.iter_packed(self.packed.as_deref())
+    }
+
+    /// As [`iter(…)`][file::Store::iter()], but filters by `prefix`, i.e. "refs/heads".
+    ///
+    /// Please note that "refs/heads` or "refs\\heads" is equivalent to "refs/heads/"
+    pub fn prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<LooseThenPacked<'_, '_>> {
+        self.store.iter_prefixed_packed(prefix, self.packed.as_deref())
+    }
+}
+
+impl file::Store {
+    /// Return a platform to obtain iterator over all references, or prefixed ones, loose or packed, sorted by their name.
+    ///
+    /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themselves.
+    pub fn iter(&self) -> Result<Platform<'_>, packed::buffer::open::Error> {
+        Ok(Platform {
+            store: self,
+            packed: self.assure_packed_refs_uptodate()?,
+        })
+    }
+}
+
+impl file::Store {
+    /// Return an iterator over all references, loose or `packed`, sorted by their name.
+    ///
+    /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themeselves.
+    pub fn iter_packed<'s, 'p>(
+        &'s self,
+        packed: Option<&'p packed::Buffer>,
+    ) -> std::io::Result<LooseThenPacked<'p, 's>> {
+        match self.namespace.as_ref() {
+            Some(namespace) => self.iter_prefixed_unvalidated(namespace.to_path(), (None, None), packed),
             None => Ok(LooseThenPacked {
-                base: &self.store.base,
-                packed: match self.packed.as_deref() {
+                base: &self.base,
+                packed: match packed {
                     Some(packed) => Some(
                         packed
                             .iter()
@@ -132,12 +163,8 @@ impl<'s> Platform<'s> {
                     ),
                     None => None,
                 },
-                loose: loose::iter::SortedLoosePaths::at_root_with_names(
-                    self.store.refs_dir(),
-                    self.store.base.to_owned(),
-                    None,
-                )
-                .peekable(),
+                loose: loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.to_owned(), None)
+                    .peekable(),
                 buf: Vec::new(),
                 namespace: None,
             }),
@@ -147,29 +174,34 @@ impl<'s> Platform<'s> {
     /// As [`iter(…)`][file::Store::iter()], but filters by `prefix`, i.e. "refs/heads".
     ///
     /// Please note that "refs/heads` or "refs\\heads" is equivalent to "refs/heads/"
-    pub fn prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<LooseThenPacked<'_, '_>> {
-        match self.store.namespace.as_ref() {
+    pub fn iter_prefixed_packed<'s, 'p>(
+        &'s self,
+        prefix: impl AsRef<Path>,
+        packed: Option<&'p packed::Buffer>,
+    ) -> std::io::Result<LooseThenPacked<'p, 's>> {
+        match self.namespace.as_ref() {
             None => {
-                let (root, remainder) = self.store.validate_prefix(&self.store.base, prefix.as_ref())?;
-                self.iter_prefixed_unvalidated(prefix, (root.into(), remainder))
+                let (root, remainder) = self.validate_prefix(&self.base, prefix.as_ref())?;
+                self.iter_prefixed_unvalidated(prefix, (root.into(), remainder), packed)
             }
             Some(namespace) => {
                 let prefix = namespace.to_owned().into_namespaced_prefix(prefix);
-                let (root, remainder) = self.store.validate_prefix(&self.store.base, &prefix)?;
-                self.iter_prefixed_unvalidated(prefix, (root.into(), remainder))
+                let (root, remainder) = self.validate_prefix(&self.base, &prefix)?;
+                self.iter_prefixed_unvalidated(prefix, (root.into(), remainder), packed)
             }
         }
     }
 
-    fn iter_prefixed_unvalidated(
-        &self,
+    fn iter_prefixed_unvalidated<'s, 'p>(
+        &'s self,
         prefix: impl AsRef<Path>,
         loose_root_and_filename_prefix: (Option<PathBuf>, Option<OsString>),
-    ) -> std::io::Result<LooseThenPacked<'_, '_>> {
+        packed: Option<&'p packed::Buffer>,
+    ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         let packed_prefix = path_to_name(prefix.as_ref());
         Ok(LooseThenPacked {
-            base: &self.store.base,
-            packed: match self.packed.as_deref() {
+            base: &self.base,
+            packed: match packed {
                 Some(packed) => Some(
                     packed
                         .iter_prefixed(packed_prefix)
@@ -181,25 +213,13 @@ impl<'s> Platform<'s> {
             loose: loose::iter::SortedLoosePaths::at_root_with_names(
                 loose_root_and_filename_prefix
                     .0
-                    .unwrap_or_else(|| self.store.base.join(prefix)),
-                self.store.base.to_owned(),
+                    .unwrap_or_else(|| self.base.join(prefix)),
+                self.base.to_owned(),
                 loose_root_and_filename_prefix.1,
             )
             .peekable(),
             buf: Vec::new(),
-            namespace: self.store.namespace.as_ref(),
-        })
-    }
-}
-
-impl file::Store {
-    /// Return a platform to obtain iterator over all references, or prefixed ones, loose or `packed`, sorted by their name.
-    ///
-    /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themeselves.
-    pub fn iter(&self) -> Result<Platform<'_>, packed::buffer::open::Error> {
-        Ok(Platform {
-            store: self,
-            packed: self.assure_packed_refs_uptodate()?,
+            namespace: self.namespace.as_ref(),
         })
     }
 }
