@@ -63,20 +63,27 @@ pub mod transaction {
 pub(crate) mod modifiable {
     use std::time::SystemTime;
 
-    use git_features::threading::{get_ref_upgradeable, upgrade_ref_to_mut, OwnShared};
+    use git_features::threading::{get_mut, get_ref_upgradeable, upgrade_ref_to_mut, OwnShared};
 
-    use crate::file;
+    use crate::{file, packed};
 
     #[derive(Debug, Default)]
     pub(crate) struct State {
-        buffer: Option<OwnShared<crate::packed::Buffer>>,
+        buffer: Option<OwnShared<packed::Buffer>>,
         modified: Option<SystemTime>,
     }
 
     impl file::Store {
+        /// Always reload the internally cached packed buffer from disk. This can be necessary if the caller knows something changed
+        /// but fears the change is not picked up due to lack of precision in fstat mtime calls.
+        pub(crate) fn force_refresh_packed_buffer(&self) -> Result<(), packed::buffer::open::Error> {
+            let mut state = get_mut(&self.packed);
+            state.buffer = self.packed_buffer()?.map(OwnShared::new);
+            Ok(())
+        }
         pub(crate) fn assure_packed_refs_uptodate(
             &self,
-        ) -> Result<Option<OwnShared<crate::packed::Buffer>>, crate::packed::buffer::open::Error> {
+        ) -> Result<Option<OwnShared<packed::Buffer>>, packed::buffer::open::Error> {
             let packed_refs_modified_time = || self.packed_refs_path().metadata().and_then(|m| m.modified()).ok();
             let state = get_ref_upgradeable(&self.packed);
             let buffer = if state.buffer.is_none() {
@@ -103,6 +110,8 @@ pub(crate) mod modifiable {
                             state.modified = Some(modified_time);
                             state.buffer.clone()
                         } else {
+                            // Note that this relies on sub-section precision or else is a race when the packed file was just changed.
+                            // It's nothing we can know though, so… up to the caller unfortunately.
                             state.buffer.clone()
                         }
                     }

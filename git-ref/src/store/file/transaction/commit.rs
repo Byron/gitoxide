@@ -124,6 +124,9 @@ impl<'s> Transaction<'s> {
 
         if let Some(t) = self.packed_transaction {
             t.commit().map_err(Error::PackedTransactionCommit)?;
+            // Always refresh ourselves right away to avoid races. We ignore errors as there may be many reasons this fails, and it's not
+            // critical to be done here. In other words, the pack may be refreshed at a later time and then it might work.
+            self.store.force_refresh_packed_buffer().ok();
         }
 
         for change in updates.iter_mut() {
