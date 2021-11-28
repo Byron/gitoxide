@@ -47,11 +47,10 @@ where
     P: Progress,
 {
     let repo = git_repository::discover(working_dir)?;
-    let packed = repo.refs.packed_buffer()?;
     let commit_id = repo
         .refs
         .find(refname.to_string_lossy().as_ref())?
-        .peel_to_id_in_place(&repo.refs, packed.as_ref(), |oid, buf| {
+        .peel_to_id_in_place(&repo.refs, |oid, buf| {
             repo.odb
                 .try_find(oid, buf, &mut pack::cache::Never)
                 .map(|obj| obj.map(|obj| (obj.kind, obj.data)))
