@@ -82,7 +82,7 @@ mod existing {
     use crate::{store, PartialNameRef, Reference};
 
     impl store::Handle {
-        /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
+        /// Similar to [`crate::file::Store::find()`] but a non-existing ref is treated as error.
         pub fn find<'a, Name, E>(&self, _partial: Name) -> Result<Reference, Error>
         where
             Name: TryInto<PartialNameRef<'a>, Error = E>,

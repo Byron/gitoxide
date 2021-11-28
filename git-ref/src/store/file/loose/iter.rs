@@ -146,7 +146,7 @@ impl file::Store {
     ///
     /// There is no namespace support in loose file iterators. It can be emulated using `loose_iter_prefixed(…)`.
     ///
-    /// See [`Store::packed()`][file::Store::packed_buffer()] for interacting with packed references.
+    /// See [`Store::packed()`][file::Store::open_packed_buffer()] for interacting with packed references.
     pub fn loose_iter(&self) -> std::io::Result<Loose> {
         let refs = self.refs_dir();
         if !refs.is_dir() {

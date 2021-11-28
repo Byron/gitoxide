@@ -1,3 +1,4 @@
+use git_features::threading::OwnShared;
 use std::path::PathBuf;
 
 use crate::store_impl::{file, packed};
@@ -27,6 +28,15 @@ impl file::Store {
             Err(packed::buffer::open::Error::Io(err)) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
             Err(err) => Err(err),
         }
+    }
+
+    /// Return a possibly cached packed buffer with shared ownership. At retrieval it will assure it's up to date, but
+    /// after that it can be considered a snapshot as it cannot change anymore.
+    ///
+    /// Use this to make successive calls to [`file::Store::try_find_packed()`] or obtain iterators in a way that assures
+    /// the packed-refs content won't change.
+    pub fn cached_packed_buffer(&self) -> Result<Option<OwnShared<packed::Buffer>>, packed::buffer::open::Error> {
+        self.assure_packed_refs_uptodate()
     }
 
     /// Return the path at which packed-refs would usually be stored
