@@ -720,8 +720,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
         branch.target.as_id().expect("peeled"),
         "the packed ref is outdated"
     );
-    let mut buf = Vec::new();
-    let previous_reflog_entries = branch.log_iter(&store, &mut buf)?.expect("log").count();
+    let previous_reflog_entries = branch.log_iter(&store).all()?.expect("log").count();
     let previous_packed_refs = packed.iter()?.filter_map(Result::ok).count();
 
     let edits = store.loose_iter()?.map(|r| r.expect("valid ref")).map(|r| RefEdit {
@@ -753,7 +752,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
         "the amount of loose refs didn't change and having symbolic ones isn't a problem"
     );
     assert_eq!(
-        branch.log_iter(&store, &mut buf)?.expect("log").count(),
+        branch.log_iter(&store).all()?.expect("log").count(),
         previous_reflog_entries,
         "reflog isn't adjusted as there is no change"
     );

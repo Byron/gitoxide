@@ -75,6 +75,7 @@ impl<'a> Iterator for Forward<'a> {
 }
 
 /// A platform to store a buffer to hold ref log lines for iteration.
+#[must_use = "Iterators should be obtained from this platform"]
 pub struct Platform<'a, 's> {
     pub(crate) store: &'s file::Store,
     pub(crate) name: FullNameRef<'a>,
@@ -84,8 +85,8 @@ pub struct Platform<'a, 's> {
 impl<'a, 's> Platform<'a, 's> {
     /// Return a forward iterator over all log-lines, most recent to oldest.
     pub fn rev(&mut self) -> std::io::Result<Option<log::iter::Reverse<'_, std::fs::File>>> {
-        self.buf.resize(512, 0);
         self.buf.clear();
+        self.buf.resize(512, 0);
         self.store
             .reflog_iter_rev(self.name, &mut self.buf)
             .map_err(must_be_io_err)

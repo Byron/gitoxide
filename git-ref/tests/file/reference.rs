@@ -8,8 +8,7 @@ mod reflog {
         fn iter() -> crate::Result {
             let store = file::store_with_packed_refs()?;
             let r = store.find("main")?;
-            let mut buf = Vec::new();
-            assert_eq!(r.log_iter(&store, &mut buf)?.expect("log exists").count(), 1);
+            assert_eq!(r.log_iter(&store).all()?.expect("log exists").count(), 1);
             assert!(r.log_exists(&store), "it exists if its readable");
             Ok(())
         }
@@ -18,8 +17,7 @@ mod reflog {
         fn iter_rev() -> crate::Result {
             let store = file::store_with_packed_refs()?;
             let r = store.find("main")?;
-            let mut buf = [0u8; 256];
-            assert_eq!(r.log_iter_rev(&store, &mut buf)?.expect("log exists").count(), 1);
+            assert_eq!(r.log_iter(&store).rev()?.expect("log exists").count(), 1);
             Ok(())
         }
     }

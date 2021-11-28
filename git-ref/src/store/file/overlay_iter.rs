@@ -24,6 +24,7 @@ pub struct LooseThenPacked<'p, 's> {
 }
 
 /// An intermediate structure to hold shared state alive long enough for iteration to happen.
+#[must_use = "Iterators should be obtained from this platform"]
 pub struct Platform<'s> {
     store: &'s file::Store,
     packed: Option<OwnShared<packed::Buffer>>,
