@@ -59,10 +59,10 @@ impl file::Store {
             .map(|r| r.map(|r| r.try_into().expect("only loose refs are found without pack")))
     }
 
-    pub(crate) fn find_one_with_verified_input<'p>(
+    pub(crate) fn find_one_with_verified_input(
         &self,
         relative_path: &Path,
-        packed: Option<&'p packed::Buffer>,
+        packed: Option<&packed::Buffer>,
     ) -> Result<Option<Reference>, Error> {
         let is_all_uppercase = relative_path
             .to_string_lossy()
