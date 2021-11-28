@@ -32,6 +32,8 @@ impl file::Store {
     /// ### Note
     ///
     /// * The lookup algorithm follows the one in [the git documentation][git-lookup-docs].
+    /// * The packed buffer is checked for modifications each time the method is called. See [`file::Store::try_find_packed()`]
+    ///   for a version with more control.
     ///
     /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
     pub fn try_find<'a, Name, E>(&self, partial: Name) -> Result<Option<Reference>, Error>
@@ -57,6 +59,20 @@ impl file::Store {
         let path = partial.try_into()?;
         self.find_one_with_verified_input(path.to_partial_path().as_ref(), None)
             .map(|r| r.map(|r| r.try_into().expect("only loose refs are found without pack")))
+    }
+
+    /// Similar to [`file::Store::find()`], but allows to pass a snapshotted packed buffer instead.
+    pub fn try_find_packed<'a, Name, E>(
+        &self,
+        partial: Name,
+        packed: Option<&packed::Buffer>,
+    ) -> Result<Option<Reference>, Error>
+    where
+        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Error: From<E>,
+    {
+        let path = partial.try_into()?;
+        self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed)
     }
 
     pub(crate) fn find_one_with_verified_input(
