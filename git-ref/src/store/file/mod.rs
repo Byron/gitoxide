@@ -1,5 +1,6 @@
-use git_features::threading::{MutableOnDemand, OwnShared};
 use std::path::PathBuf;
+
+use git_features::threading::{MutableOnDemand, OwnShared};
 
 /// A store for reference which uses plain files.
 ///
@@ -22,8 +23,9 @@ pub struct Store {
 }
 
 mod access {
-    use crate::file;
     use std::path::Path;
+
+    use crate::file;
 
     impl file::Store {
         /// Return the root at which all references are loaded.
@@ -84,5 +86,4 @@ pub mod packed;
 mod raw_ext;
 pub use raw_ext::ReferenceExt;
 
-use crate::store::WriteReflog;
-use crate::Namespace;
+use crate::{store::WriteReflog, Namespace};

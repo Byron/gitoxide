@@ -3,8 +3,11 @@ use std::{
     time::Instant,
 };
 
-use git_features::threading::{lock, Mutable, OwnShared};
-use git_features::{parallel, progress::Progress};
+use git_features::{
+    parallel,
+    progress::Progress,
+    threading::{lock, Mutable, OwnShared},
+};
 
 use crate::{data, index::traverse};
 

@@ -1,6 +1,6 @@
+use std::{convert::TryFrom, path::PathBuf};
+
 use crate::store::WriteReflog;
-use std::convert::TryFrom;
-use std::path::PathBuf;
 
 mod error {
     use quick_error::quick_error;
@@ -19,8 +19,9 @@ mod error {
     }
 }
 
-use crate::file;
 pub use error::Error;
+
+use crate::file;
 
 impl crate::Store {
     /// Create a new store at the given location, typically the `.git/` directory.

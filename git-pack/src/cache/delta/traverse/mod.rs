@@ -3,11 +3,11 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-use git_features::threading::{lock, Mutable, OwnShared};
 use git_features::{
     parallel,
     parallel::in_parallel_if,
     progress::{self, Progress},
+    threading::{lock, Mutable, OwnShared},
 };
 
 use crate::{

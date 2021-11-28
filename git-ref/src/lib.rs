@@ -86,8 +86,9 @@ pub mod store {
     #[path = "general/handle/mod.rs"]
     mod handle;
 
-    use crate::file;
     pub use handle::find;
+
+    use crate::file;
 }
 
 /// The git reference store.

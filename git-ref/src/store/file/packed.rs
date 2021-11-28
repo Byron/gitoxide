@@ -61,9 +61,11 @@ pub mod transaction {
 }
 
 pub(crate) mod modifiable {
-    use crate::file;
-    use git_features::threading::{get_ref_upgradeable, upgrade_ref_to_mut, OwnShared};
     use std::time::SystemTime;
+
+    use git_features::threading::{get_ref_upgradeable, upgrade_ref_to_mut, OwnShared};
+
+    use crate::file;
 
     #[derive(Debug, Default)]
     pub(crate) struct State {

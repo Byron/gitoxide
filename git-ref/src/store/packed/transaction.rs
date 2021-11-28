@@ -1,5 +1,6 @@
-use git_features::threading::OwnShared;
 use std::io::Write;
+
+use git_features::threading::OwnShared;
 
 use crate::{
     store_impl::{file::transaction::FindObjectFn, packed, packed::Edit},

@@ -36,9 +36,9 @@ mod options {
         }
     }
 }
-use git_features::threading::{lock, Mutable, OwnShared};
 use std::sync::atomic::Ordering;
 
+use git_features::threading::{lock, Mutable, OwnShared};
 pub use options::Options;
 
 /// Verify and validate the content of the index file

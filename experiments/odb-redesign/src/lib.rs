@@ -73,8 +73,10 @@ mod odb {
     };
 
     pub mod policy {
-        use std::path::Path;
-        use std::{io, path::PathBuf};
+        use std::{
+            io,
+            path::{Path, PathBuf},
+        };
 
         use git_hash::oid;
 

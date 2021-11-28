@@ -1,9 +1,11 @@
-use crate::{store, PartialNameRef, Reference};
 use std::convert::TryInto;
 
+use crate::{store, PartialNameRef, Reference};
+
 mod error {
-    use quick_error::quick_error;
     use std::convert::Infallible;
+
+    use quick_error::quick_error;
 
     quick_error! {
         /// The error returned by [crate::Store::find()].
@@ -30,8 +32,9 @@ mod error {
     }
 }
 
-use crate::store::handle;
 pub use error::Error;
+
+use crate::store::handle;
 
 impl store::Handle {
     /// TODO: actually implement this with handling of the packed buffer.
@@ -72,9 +75,11 @@ mod existing {
         }
     }
 
-    use crate::{store, PartialNameRef, Reference};
-    pub use error::Error;
     use std::convert::TryInto;
+
+    pub use error::Error;
+
+    use crate::{store, PartialNameRef, Reference};
 
     impl store::Handle {
         /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
