@@ -13,7 +13,6 @@ impl Clone for easy::State {
 impl From<crate::RefStore> for easy::State {
     fn from(refs: crate::RefStore) -> Self {
         easy::State {
-            packed_refs: RefCell::new(Default::default()),
             #[cfg(not(feature = "max-performance"))]
             pack_cache: RefCell::new(git_pack::cache::Never),
             #[cfg(feature = "max-performance")]
@@ -32,15 +31,6 @@ impl From<&Repository> for easy::State {
 }
 
 impl easy::State {
-    pub(crate) fn assure_packed_refs_uptodate(
-        &self,
-    ) -> Result<Ref<'_, easy::reference::packed::ModifieablePackedRefsBuffer>, easy::reference::packed::Error> {
-        let mut packed_refs = self.packed_refs.try_borrow_mut()?;
-        packed_refs.assure_packed_refs_uptodate(&self.refs)?;
-        drop(packed_refs);
-        Ok(self.packed_refs.try_borrow()?)
-    }
-
     #[inline]
     pub(crate) fn try_borrow_mut_pack_cache(&self) -> borrow::state::Result<RefMut<'_, easy::PackCache>> {
         self.pack_cache.try_borrow_mut().map_err(Into::into)

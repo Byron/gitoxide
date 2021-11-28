@@ -113,7 +113,6 @@ type PackCache = Box<dyn git_pack::cache::DecodeEntry + Send + 'static>;
 pub struct State {
     /// As the packed-buffer may hold onto a memory map, so ideally this State is freed after use instead of keeping it around
     /// for too long. At least `packed_refs` is lazily initialized.
-    packed_refs: RefCell<reference::packed::ModifieablePackedRefsBuffer>,
     refs: crate::RefStore,
     pack_cache: RefCell<PackCache>,
     object_cache: RefCell<Option<object::cache::MemoryCappedHashmap>>,

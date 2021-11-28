@@ -1,5 +1,5 @@
 //!
-use std::{cell::Ref, ops::DerefMut, path::Path};
+use std::{ops::DerefMut, path::Path};
 
 use git_odb::Find;
 use git_ref::file::ReferenceExt;
@@ -12,7 +12,7 @@ pub struct Platform<'r, A>
 where
     A: easy::Access + Sized,
 {
-    pub(crate) packed_refs: Ref<'r, easy::reference::packed::ModifieablePackedRefsBuffer>,
+    pub(crate) platform: git_ref::file::iter::Platform<'r>,
     pub(crate) access: &'r A,
 }
 
@@ -33,7 +33,7 @@ where
     /// case by case basis.
     pub fn all(&self) -> Result<Iter<'_, A>, init::Error> {
         Ok(Iter {
-            inner: self.access.state().refs.iter(self.packed_refs.buffer.as_ref())?,
+            inner: self.platform.all()?,
             peel: false,
             access: self.access,
         })
@@ -44,11 +44,7 @@ where
     /// These are of the form `refs/heads` or `refs/remotes/origin`, and must not contain relative paths components like `.` or `..`.
     pub fn prefixed(&self, prefix: impl AsRef<Path>) -> Result<Iter<'_, A>, init::Error> {
         Ok(Iter {
-            inner: self
-                .access
-                .state()
-                .refs
-                .iter_prefixed(self.packed_refs.buffer.as_ref(), prefix)?,
+            inner: self.platform.prefixed(prefix)?,
             peel: false,
             access: self.access,
         })
@@ -125,15 +121,6 @@ mod error {
         BorrowState(#[from] easy::borrow::state::Error),
         #[error("BUG: The repository could not be borrowed")]
         BorrowRepo(#[from] easy::borrow::repo::Error),
-    }
-
-    impl From<easy::reference::packed::Error> for Error {
-        fn from(err: easy::reference::packed::Error) -> Self {
-            match err {
-                easy::reference::packed::Error::PackedRefsOpen(err) => Error::PackedRefsOpen(err),
-                easy::reference::packed::Error::BorrowState(err) => Error::BorrowState(err),
-            }
-        }
     }
 }
 pub use error::Error;

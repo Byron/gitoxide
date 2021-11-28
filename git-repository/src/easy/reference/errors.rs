@@ -36,15 +36,6 @@ pub mod peel {
         #[error("BUG: The repository could not be borrowed")]
         BorrowRepo(#[from] easy::borrow::repo::Error),
     }
-
-    impl From<easy::reference::packed::Error> for Error {
-        fn from(err: easy::reference::packed::Error) -> Self {
-            match err {
-                easy::reference::packed::Error::PackedRefsOpen(err) => Error::PackedRefsOpen(err),
-                easy::reference::packed::Error::BorrowState(err) => Error::BorrowState(err),
-            }
-        }
-    }
 }
 
 ///
@@ -78,14 +69,5 @@ pub mod find {
         BorrowState(#[from] easy::borrow::state::Error),
         #[error("BUG: The repository could not be borrowed")]
         BorrowRepo(#[from] easy::borrow::repo::Error),
-    }
-
-    impl From<easy::reference::packed::Error> for Error {
-        fn from(err: easy::reference::packed::Error) -> Self {
-            match err {
-                easy::reference::packed::Error::PackedRefsOpen(err) => Error::PackedRefsOpen(err),
-                easy::reference::packed::Error::BorrowState(err) => Error::BorrowState(err),
-            }
-        }
     }
 }

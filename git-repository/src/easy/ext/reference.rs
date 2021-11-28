@@ -209,10 +209,8 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     /// Common kinds of iteration are [all][easy::reference::iter::Platform::all()] or [prefixed][easy::reference::iter::Platform::prefixed()]
     /// references.
     fn references(&self) -> Result<easy::reference::iter::Platform<'_, Self>, easy::reference::iter::Error> {
-        let state = self.state();
-        let packed_refs = state.assure_packed_refs_uptodate()?;
         Ok(easy::reference::iter::Platform {
-            packed_refs,
+            platform: self.state().refs.iter()?,
             access: self,
         })
     }

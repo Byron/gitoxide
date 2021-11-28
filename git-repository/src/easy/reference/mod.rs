@@ -19,7 +19,6 @@ pub use errors::{edit, find, peel};
 use crate::ext::ObjectIdExt;
 
 pub mod logs;
-pub(crate) mod packed;
 
 /// Access
 impl<'repo, A> Reference<'repo, A> {
