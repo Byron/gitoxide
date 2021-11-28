@@ -17,7 +17,8 @@ mod with_namespace {
 
         let ns_two = git_ref::namespace::expand("bar")?;
         let namespaced_refs = store
-            .iter_prefixed(packed.as_ref(), ns_two.to_path())?
+            .iter()?
+            .prefixed(ns_two.to_path())?
             .map(Result::unwrap)
             .map(|r: git_ref::Reference| r.name)
             .collect::<Vec<_>>();
@@ -77,7 +78,8 @@ mod with_namespace {
         let ns_one = git_ref::namespace::expand("foo")?;
         assert_eq!(
             store
-                .iter_prefixed(packed.as_ref(), ns_one.to_path())?
+                .iter()?
+                .prefixed(ns_one.to_path())?
                 .map(Result::unwrap)
                 .map(|r: git_ref::Reference| (
                     r.name.as_bstr().to_owned(),
@@ -102,7 +104,8 @@ mod with_namespace {
 
         assert_eq!(
             store
-                .iter(packed.as_ref())?
+                .iter()?
+                .all()?
                 .map(Result::unwrap)
                 .filter_map(
                     |r: git_ref::Reference| if r.name.as_bstr().starts_with_str("refs/namespaces") {
@@ -141,7 +144,8 @@ mod with_namespace {
             "refs/tags/multi-link-target2",
         ];
         let ref_names = ns_store
-            .iter(packed.as_ref())?
+            .iter()?
+            .all()?
             .map(Result::unwrap)
             .map(|r: git_ref::Reference| r.name)
             .collect::<Vec<_>>();
@@ -193,7 +197,8 @@ mod with_namespace {
 
         assert_eq!(
             ns_store
-                .iter(packed.as_ref())?
+                .iter()?
+                .all()?
                 .map(Result::unwrap)
                 .map(|r: git_ref::Reference| r.name.into_inner())
                 .collect::<Vec<_>>(),
@@ -348,7 +353,8 @@ fn overlay_iter() -> crate::Result {
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
-        .iter(store.packed_buffer()?.as_ref())?
+        .iter()?
+        .all()?
         .map(|r| r.map(|r| (r.name.as_bstr().to_owned(), r.target)))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
@@ -380,7 +386,7 @@ fn overlay_iter_with_prefix_wont_allow_absolute_paths() -> crate::Result {
     #[cfg(windows)]
     let abs_path = "c:\\hello";
 
-    match store.iter_prefixed(store.packed_buffer()?.as_ref(), abs_path) {
+    match store.iter()?.prefixed(abs_path) {
         Ok(_) => unreachable!("absolute paths aren't allowed"),
         Err(err) => assert_eq!(err.to_string(), "prefix must be a relative path, like 'refs/heads'"),
     }
@@ -393,7 +399,8 @@ fn overlay_prefixed_iter() -> crate::Result {
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
-        .iter_prefixed(store.packed_buffer()?.as_ref(), "refs/heads")?
+        .iter()?
+        .prefixed("refs/heads")?
         .map(|r| r.map(|r| (r.name.as_bstr().to_owned(), r.target)))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
@@ -414,7 +421,8 @@ fn overlay_partial_prefix_iter() -> crate::Result {
 
     let store = store_at("make_packed_ref_repository_for_overlay.sh")?;
     let ref_names = store
-        .iter_prefixed(store.packed_buffer()?.as_ref(), "refs/heads/m")? // 'm' is partial
+        .iter()?
+        .prefixed("refs/heads/m")? // 'm' is partial
         .map(|r| r.map(|r| (r.name.as_bstr().to_owned(), r.target)))
         .collect::<Result<Vec<_>, _>>()?;
     let c1 = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");

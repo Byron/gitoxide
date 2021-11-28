@@ -60,7 +60,7 @@ mod overlay_iter;
 pub mod iter {
     pub use super::{
         loose::iter::{loose, Loose},
-        overlay_iter::LooseThenPacked,
+        overlay_iter::{LooseThenPacked, Platform},
     };
 
     ///
