@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use filebuffer::FileBuffer;
+use git_features::threading::OwnShared;
 use git_hash::ObjectId;
 use git_object::bstr::{BStr, BString};
 
@@ -33,7 +34,7 @@ struct Edit {
 
 /// A transaction for editing packed references
 pub(crate) struct Transaction {
-    buffer: Option<Buffer>,
+    buffer: Option<OwnShared<Buffer>>,
     edits: Option<Vec<Edit>>,
     lock: Option<git_lock::File>,
     #[allow(dead_code)] // It just has to be kept alive, hence no reads

@@ -146,7 +146,7 @@ impl ReferenceExt for Reference {
                         Ok(packed) => packed,
                         Err(err) => return Some(Err(err)),
                     };
-                    match store.find_one_with_verified_input(path.as_ref(), packed.as_ref()) {
+                    match store.find_one_with_verified_input(path.as_ref(), packed.as_deref()) {
                         Ok(Some(next)) => Some(Ok(next)),
                         Ok(None) => Some(Err(file::find::existing::Error::NotFound(path.into_owned()))),
                         Err(err) => Some(Err(file::find::existing::Error::Find(err))),

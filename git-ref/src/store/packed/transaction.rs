@@ -1,3 +1,4 @@
+use git_features::threading::OwnShared;
 use std::io::Write;
 
 use crate::{
@@ -10,20 +11,9 @@ pub(crate) const HEADER_LINE: &[u8] = b"# pack-refs with: peeled fully-peeled so
 
 /// Access and instantiation
 impl packed::Transaction {
-    /// Create an entirely new packfile using the given `lock` representing the resource to write.
-    /// Note that it's up to the caller to assure a race cannot occur.
-    pub(crate) fn new_empty(lock: git_lock::File) -> Self {
+    pub(crate) fn new_from_pack_and_lock(buffer: Option<OwnShared<packed::Buffer>>, lock: git_lock::File) -> Self {
         packed::Transaction {
-            buffer: None,
-            edits: None,
-            lock: Some(lock),
-            closed_lock: None,
-        }
-    }
-
-    pub(crate) fn new_from_pack_and_lock(buffer: packed::Buffer, lock: git_lock::File) -> Self {
-        packed::Transaction {
-            buffer: Some(buffer),
+            buffer,
             edits: None,
             lock: Some(lock),
             closed_lock: None,
@@ -35,7 +25,7 @@ impl packed::Transaction {
 impl packed::Transaction {
     /// Returns our packed buffer
     pub fn buffer(&self) -> Option<&packed::Buffer> {
-        self.buffer.as_ref()
+        self.buffer.as_deref()
     }
 }
 
@@ -228,7 +218,7 @@ fn write_edit(file: &mut git_lock::File, edit: &Edit, lines_written: &mut i32) -
 impl packed::Buffer {
     /// Convert this buffer to be used as the basis for a transaction.
     pub(crate) fn into_transaction(
-        self,
+        self: OwnShared<Self>,
         lock_mode: git_lock::acquire::Fail,
     ) -> Result<packed::Transaction, git_lock::acquire::Error> {
         let lock = git_lock::File::acquire_to_update_resource(&self.path, lock_mode, None)?;

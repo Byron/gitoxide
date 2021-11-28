@@ -270,7 +270,7 @@ impl<'s> Transaction<'s> {
                     // A packed transaction is optional - we only have deletions that can't be made if
                     // no packed-ref file exists anyway
                     self.store
-                        .assure_packed_refs_uptodate_and_take()?
+                        .assure_packed_refs_uptodate()?
                         .map(|p| {
                             p.into_transaction(lock_fail_mode)
                                 .map_err(Error::PackedTransactionAcquire)

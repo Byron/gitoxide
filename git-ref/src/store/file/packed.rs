@@ -13,10 +13,10 @@ impl file::Store {
         // We 'steal' the possibly existing packed buffer which may safe time if it's already there and fresh.
         // If nothing else is happening, nobody will get to see the soon stale buffer either, but if so, they will pay
         // for reloading it. That seems preferred over always loading up a new one.
-        Ok(match self.assure_packed_refs_uptodate_and_take()? {
-            Some(packed) => packed::Transaction::new_from_pack_and_lock(packed, lock),
-            None => packed::Transaction::new_empty(lock),
-        })
+        Ok(packed::Transaction::new_from_pack_and_lock(
+            self.assure_packed_refs_uptodate()?,
+            lock,
+        ))
     }
 
     /// Return a buffer for the packed file
@@ -62,100 +62,57 @@ pub mod transaction {
 
 pub(crate) mod modifiable {
     use crate::file;
-    use git_features::threading::{
-        downgrade_mut_to_ref, get_mut, get_ref_upgradeable, map_ref, map_upgradable_ref, upgrade_ref_to_mut,
-        MappedRefGuard,
-    };
+    use git_features::threading::{get_ref_upgradeable, upgrade_ref_to_mut, OwnShared};
     use std::time::SystemTime;
 
     #[derive(Debug, Default)]
     pub(crate) struct State {
-        buffer: Option<crate::packed::Buffer>,
+        buffer: Option<OwnShared<crate::packed::Buffer>>,
         modified: Option<SystemTime>,
     }
 
     impl file::Store {
-        pub(crate) fn assure_packed_refs_uptodate_and_take(
-            &self,
-        ) -> Result<Option<crate::packed::Buffer>, crate::packed::buffer::open::Error> {
-            let packed_refs_modified_time = || self.packed_refs_path().metadata().and_then(|m| m.modified()).ok();
-            let mut state = get_mut(&self.packed);
-            if state.buffer.is_none() {
-                state.buffer = self.packed_buffer()?;
-                if state.buffer.is_some() {
-                    state.modified = packed_refs_modified_time();
-                }
-            } else {
-                let recent_modification = packed_refs_modified_time();
-                match (&state.modified, recent_modification) {
-                    (None, None) => {}
-                    (Some(_), None) => {
-                        state.buffer = None;
-                        state.modified = None;
-                    }
-                    (Some(cached_time), Some(modified_time)) => {
-                        if *cached_time < modified_time {
-                            state.buffer = self.packed_buffer()?;
-                            state.modified = Some(modified_time);
-                        }
-                    }
-                    (None, Some(modified_time)) => {
-                        state.buffer = self.packed_buffer()?;
-                        state.modified = Some(modified_time);
-                    }
-                }
-            };
-            Ok(state.buffer.take())
-        }
-
         pub(crate) fn assure_packed_refs_uptodate(
             &self,
-        ) -> Result<MappedRefGuard<'_, Option<crate::packed::Buffer>>, crate::packed::buffer::open::Error> {
+        ) -> Result<Option<OwnShared<crate::packed::Buffer>>, crate::packed::buffer::open::Error> {
             let packed_refs_modified_time = || self.packed_refs_path().metadata().and_then(|m| m.modified()).ok();
             let state = get_ref_upgradeable(&self.packed);
-            let ro_buffer_guard = if state.buffer.is_none() {
+            let buffer = if state.buffer.is_none() {
                 let mut state = upgrade_ref_to_mut(state, &self.packed);
-                state.buffer = self.packed_buffer()?;
+                state.buffer = self.packed_buffer()?.map(OwnShared::new);
                 if state.buffer.is_some() {
                     state.modified = packed_refs_modified_time();
                 }
-                let state = downgrade_mut_to_ref(state, &self.packed);
-                map_ref(state, |state| &state.buffer)
+                state.buffer.clone()
             } else {
                 let recent_modification = packed_refs_modified_time();
                 match (&state.modified, recent_modification) {
-                    (None, None) => map_upgradable_ref(state, |state| &state.buffer),
+                    (None, None) => state.buffer.clone(),
                     (Some(_), None) => {
                         let mut state = upgrade_ref_to_mut(state, &self.packed);
                         state.buffer = None;
                         state.modified = None;
-
-                        let state = downgrade_mut_to_ref(state, &self.packed);
-                        map_ref(state, |state| &state.buffer)
+                        state.buffer.clone()
                     }
                     (Some(cached_time), Some(modified_time)) => {
                         if *cached_time < modified_time {
                             let mut state = upgrade_ref_to_mut(state, &self.packed);
-                            state.buffer = self.packed_buffer()?;
+                            state.buffer = self.packed_buffer()?.map(OwnShared::new);
                             state.modified = Some(modified_time);
-
-                            let state = downgrade_mut_to_ref(state, &self.packed);
-                            map_ref(state, |state| &state.buffer)
+                            state.buffer.clone()
                         } else {
-                            map_upgradable_ref(state, |state| &state.buffer)
+                            state.buffer.clone()
                         }
                     }
                     (None, Some(modified_time)) => {
                         let mut state = upgrade_ref_to_mut(state, &self.packed);
-                        state.buffer = self.packed_buffer()?;
+                        state.buffer = self.packed_buffer()?.map(OwnShared::new);
                         state.modified = Some(modified_time);
-
-                        let state = downgrade_mut_to_ref(state, &self.packed);
-                        map_ref(state, |state| &state.buffer)
+                        state.buffer.clone()
                     }
                 }
             };
-            Ok(ro_buffer_guard)
+            Ok(buffer)
         }
     }
 }

@@ -41,7 +41,7 @@ impl file::Store {
     {
         let path = partial.try_into()?;
         let packed = self.assure_packed_refs_uptodate()?;
-        self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed.as_ref())
+        self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed.as_deref())
     }
 
     /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
@@ -201,7 +201,7 @@ pub mod existing {
             crate::name::Error: From<E>,
         {
             let packed = self.assure_packed_refs_uptodate().map_err(find::Error::PackedOpen)?;
-            self.find_existing_inner(partial, packed.as_ref())
+            self.find_existing_inner(partial, packed.as_deref())
         }
 
         /// Similar to [`file::Store::find()`] won't handle packed-refs.
