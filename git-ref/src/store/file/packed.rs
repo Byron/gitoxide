@@ -19,10 +19,10 @@ impl file::Store {
         ))
     }
 
-    /// Return a buffer for the packed file
-    pub fn packed_buffer(&self) -> Result<Option<packed::Buffer>, packed::buffer::open::Error> {
-        let need_more_than_these_bytes_to_use_mmap = 32 * 1024;
-        match packed::Buffer::open(self.packed_refs_path(), need_more_than_these_bytes_to_use_mmap) {
+    /// Try to open a new packed buffer. It's not an error if it doesn't exist, but yields `Ok(None)`.
+    pub fn open_packed_buffer(&self) -> Result<Option<packed::Buffer>, packed::buffer::open::Error> {
+        let need_more_than_this_many_bytes_to_use_mmap = 32 * 1024;
+        match packed::Buffer::open(self.packed_refs_path(), need_more_than_this_many_bytes_to_use_mmap) {
             Ok(buf) => Ok(Some(buf)),
             Err(packed::buffer::open::Error::Io(err)) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
             Err(err) => Err(err),
@@ -78,7 +78,7 @@ pub(crate) mod modifiable {
         /// but fears the change is not picked up due to lack of precision in fstat mtime calls.
         pub(crate) fn force_refresh_packed_buffer(&self) -> Result<(), packed::buffer::open::Error> {
             let mut state = get_mut(&self.packed);
-            state.buffer = self.packed_buffer()?.map(OwnShared::new);
+            state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
             Ok(())
         }
         pub(crate) fn assure_packed_refs_uptodate(
@@ -88,7 +88,7 @@ pub(crate) mod modifiable {
             let state = get_ref_upgradeable(&self.packed);
             let buffer = if state.buffer.is_none() {
                 let mut state = upgrade_ref_to_mut(state, &self.packed);
-                state.buffer = self.packed_buffer()?.map(OwnShared::new);
+                state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
                 if state.buffer.is_some() {
                     state.modified = packed_refs_modified_time();
                 }
@@ -106,7 +106,7 @@ pub(crate) mod modifiable {
                     (Some(cached_time), Some(modified_time)) => {
                         if *cached_time < modified_time {
                             let mut state = upgrade_ref_to_mut(state, &self.packed);
-                            state.buffer = self.packed_buffer()?.map(OwnShared::new);
+                            state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
                             state.modified = Some(modified_time);
                             state.buffer.clone()
                         } else {
@@ -117,7 +117,7 @@ pub(crate) mod modifiable {
                     }
                     (None, Some(modified_time)) => {
                         let mut state = upgrade_ref_to_mut(state, &self.packed);
-                        state.buffer = self.packed_buffer()?.map(OwnShared::new);
+                        state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
                         state.modified = Some(modified_time);
                         state.buffer.clone()
                     }

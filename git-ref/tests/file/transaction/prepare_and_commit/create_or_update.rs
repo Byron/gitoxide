@@ -633,7 +633,7 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
 
     assert_eq!(edits.len(), 1, "only one edit was performed in the loose refs store");
 
-    let packed = store.packed_buffer().unwrap().expect("packed refs is available");
+    let packed = store.open_packed_buffer().unwrap().expect("packed refs is available");
     assert_eq!(
         packed.find("main")?.target(),
         old_id,
@@ -656,7 +656,7 @@ fn packed_refs_creation_with_tag_loop_are_not_handled_and_cannot_exist_due_to_ob
 fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs() -> crate::Result {
     let (_keep, store) = store_writable("make_ref_repository.sh")?;
     assert!(
-        store.packed_buffer()?.is_none(),
+        store.open_packed_buffer()?.is_none(),
         "there should be no packed refs to start out with"
     );
     let odb = git_odb::compound::Store::at(store.base().join("objects"))?;
@@ -714,7 +714,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
 fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() -> crate::Result {
     let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
     let branch = store.find("newer-as-loose")?;
-    let packed = store.packed_buffer()?.expect("packed-refs");
+    let packed = store.open_packed_buffer()?.expect("packed-refs");
     assert_ne!(
         packed.find("newer-as-loose")?.target(),
         branch.target.as_id().expect("peeled"),
@@ -757,7 +757,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
         "reflog isn't adjusted as there is no change"
     );
 
-    let packed = store.packed_buffer()?.expect("packed-refs");
+    let packed = store.open_packed_buffer()?.expect("packed-refs");
     assert_eq!(
         packed.iter()?.filter_map(Result::ok).count(),
         previous_packed_refs,

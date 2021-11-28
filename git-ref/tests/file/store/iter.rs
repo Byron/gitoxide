@@ -13,7 +13,7 @@ mod with_namespace {
     #[test]
     fn iteration_can_trivially_use_namespaces_as_prefixes() -> crate::Result {
         let store = store_at("make_namespaced_packed_ref_repository.sh")?;
-        let packed = store.packed_buffer()?;
+        let packed = store.open_packed_buffer()?;
 
         let ns_two = git_ref::namespace::expand("bar")?;
         let namespaced_refs = store
@@ -135,7 +135,7 @@ mod with_namespace {
             s.namespace = ns_two.clone().into();
             s
         };
-        let packed = ns_store.packed_buffer()?;
+        let packed = ns_store.open_packed_buffer()?;
 
         let expected_refs = vec![
             "refs/heads/multi-link-target1",
@@ -212,7 +212,7 @@ mod with_namespace {
 fn no_packed_available_thus_no_iteration_possible() -> crate::Result {
     let store_without_packed = store()?;
     assert!(
-        store_without_packed.packed_buffer()?.is_none(),
+        store_without_packed.open_packed_buffer()?.is_none(),
         "there is no packed refs in this store"
     );
     Ok(())
@@ -221,7 +221,7 @@ fn no_packed_available_thus_no_iteration_possible() -> crate::Result {
 #[test]
 fn packed_file_iter() -> crate::Result {
     let store = store_with_packed_refs()?;
-    assert_eq!(store.packed_buffer()?.expect("pack available").iter()?.count(), 8);
+    assert_eq!(store.open_packed_buffer()?.expect("pack available").iter()?.count(), 8);
     Ok(())
 }
 

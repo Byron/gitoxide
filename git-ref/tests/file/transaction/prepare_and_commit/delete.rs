@@ -311,7 +311,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
         let (_keep, mut store) = store_writable("make_repo_for_reflog.sh")?;
         store.write_reflog = *reflog_writemode;
         assert!(store.find_loose("HEAD")?.log_exists(&store));
-        assert!(store.packed_buffer()?.is_none(), "there is no pack");
+        assert!(store.open_packed_buffer()?.is_none(), "there is no pack");
 
         let edits = store
             .transaction()
@@ -329,7 +329,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
             .commit(&committer())?;
         assert_eq!(edits.len(), 1);
         assert!(!store.find_loose("HEAD")?.log_exists(&store), "log was deleted");
-        assert!(store.packed_buffer()?.is_none(), "there still is no pack");
+        assert!(store.open_packed_buffer()?.is_none(), "there still is no pack");
     }
     Ok(())
 }
@@ -343,7 +343,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
         "no loose main available, it's packed"
     );
     assert!(
-        store.packed_buffer()?.expect("packed").try_find("main")?.is_some(),
+        store.open_packed_buffer()?.expect("packed").try_find("main")?.is_some(),
         "packed main is available"
     );
 
@@ -364,7 +364,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
         .commit(&committer())?;
 
     assert_eq!(edits.len(), 1, "an edit was performed in the packed refs store");
-    let packed = store.packed_buffer()?.expect("packed ref present");
+    let packed = store.open_packed_buffer()?.expect("packed ref present");
     assert!(packed.try_find("main")?.is_none(), "no main present after deletion");
     Ok(())
 }
@@ -372,7 +372,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
 #[test]
 fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_refs() -> crate::Result {
     let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
-    let packed = store.packed_buffer()?.expect("packed-refs");
+    let packed = store.open_packed_buffer()?.expect("packed-refs");
     let branch = store.find("newer-as-loose")?;
     let branch_id = branch.target.as_id().map(ToOwned::to_owned).expect("peeled");
     assert_ne!(
@@ -416,7 +416,7 @@ fn all_contained_references_deletes_the_packed_ref_file_too() -> crate::Result {
         let edits = store
             .transaction()
             .prepare(
-                store.packed_buffer()?.expect("packed-refs").iter()?.map(|r| {
+                store.open_packed_buffer()?.expect("packed-refs").iter()?.map(|r| {
                     let r = r.expect("valid ref");
                     RefEdit {
                         change: Change::Delete {
@@ -437,7 +437,7 @@ fn all_contained_references_deletes_the_packed_ref_file_too() -> crate::Result {
 
         assert!(!store.packed_refs_path().is_file(), "packed-refs was entirely removed");
 
-        let packed = store.packed_buffer()?;
+        let packed = store.open_packed_buffer()?;
         assert!(packed.is_none(), "it won't make up packed refs");
         for edit in edits {
             assert!(
