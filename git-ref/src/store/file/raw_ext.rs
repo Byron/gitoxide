@@ -17,6 +17,9 @@ impl Sealed for crate::Reference {}
 
 /// A trait to extend [Reference][crate::Reference] with functionality requiring a [file::Store].
 pub trait ReferenceExt: Sealed {
+    /// A step towards obtaining forward or reverse iterators on reference logs.
+    fn log_iter_platform<'a, 's>(&'a self, store: &'s file::Store) -> log::iter::Platform<'a, 's>;
+
     /// Obtain a reverse iterator over logs of this reference. See [crate::file::loose::Reference::log_iter_rev()] for details.
     fn log_iter_rev<'b>(
         &self,
@@ -49,6 +52,14 @@ pub trait ReferenceExt: Sealed {
 }
 
 impl ReferenceExt for Reference {
+    fn log_iter_platform<'a, 's>(&'a self, store: &'s file::Store) -> log::iter::Platform<'a, 's> {
+        log::iter::Platform {
+            store,
+            name: self.name.to_ref(),
+            buf: Vec::new(),
+        }
+    }
+
     fn log_iter_rev<'b>(
         &self,
         store: &file::Store,
