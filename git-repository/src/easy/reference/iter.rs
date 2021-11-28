@@ -19,7 +19,6 @@ where
 /// An iterator over references, with or without filter.
 pub struct Iter<'r, A> {
     inner: git_ref::file::iter::LooseThenPacked<'r, 'r>,
-    packed_refs: Option<&'r git_ref::packed::Buffer>,
     peel: bool,
     access: &'r A,
 }
@@ -35,7 +34,6 @@ where
     pub fn all(&self) -> Result<Iter<'_, A>, init::Error> {
         Ok(Iter {
             inner: self.access.state().refs.iter(self.packed_refs.buffer.as_ref())?,
-            packed_refs: self.packed_refs.buffer.as_ref(),
             peel: false,
             access: self.access,
         })
@@ -51,7 +49,6 @@ where
                 .state()
                 .refs
                 .iter_prefixed(self.packed_refs.buffer.as_ref(), prefix)?,
-            packed_refs: self.packed_refs.buffer.as_ref(),
             peel: false,
             access: self.access,
         })
@@ -87,7 +84,7 @@ where
                         let repo = self.access.repo()?;
                         let state = self.access.state();
                         let mut pack_cache = state.try_borrow_mut_pack_cache()?;
-                        r.peel_to_id_in_place(&state.refs, self.packed_refs, |oid, buf| {
+                        r.peel_to_id_in_place(&state.refs, |oid, buf| {
                             repo.odb
                                 .try_find(oid, buf, pack_cache.deref_mut())
                                 .map(|po| po.map(|o| (o.kind, o.data)))

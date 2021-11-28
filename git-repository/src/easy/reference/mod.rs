@@ -77,15 +77,11 @@ where
         let repo = self.access.repo()?;
         let state = self.access.state();
         let mut pack_cache = state.try_borrow_mut_pack_cache()?;
-        let oid = self.inner.peel_to_id_in_place(
-            &state.refs,
-            state.assure_packed_refs_uptodate()?.buffer.as_ref(),
-            |oid, buf| {
-                repo.odb
-                    .try_find(oid, buf, pack_cache.deref_mut())
-                    .map(|po| po.map(|o| (o.kind, o.data)))
-            },
-        )?;
+        let oid = self.inner.peel_to_id_in_place(&state.refs, |oid, buf| {
+            repo.odb
+                .try_find(oid, buf, pack_cache.deref_mut())
+                .map(|po| po.map(|o| (o.kind, o.data)))
+        })?;
         Ok(Oid::from_id(oid, self.access))
     }
 
