@@ -15,7 +15,7 @@ pub struct Store {
     pub write_reflog: WriteReflog,
     /// The namespace to use for edits and reads
     pub namespace: Option<Namespace>,
-    /// A buffer with interior mutability.
+    /// A buffer with interior mutability, it's updated only in one spot, which is prior to reading it based on file stamps.
     packed: OwnShared<MutableOnDemand<packed::modifiable::State>>,
 }
 

@@ -39,7 +39,6 @@ pub trait ReferenceExt: Sealed {
     fn peel_to_id_in_place<E: std::error::Error + Send + Sync + 'static>(
         &mut self,
         store: &file::Store,
-        packed: Option<&packed::Buffer>,
         find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
     ) -> Result<ObjectId, peel::to_id::Error>;
 
@@ -80,7 +79,6 @@ impl ReferenceExt for Reference {
     fn peel_to_id_in_place<E: std::error::Error + Send + Sync + 'static>(
         &mut self,
         store: &file::Store,
-        packed: Option<&packed::Buffer>,
         mut find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
     ) -> Result<ObjectId, peel::to_id::Error> {
         match self.peeled {
@@ -92,7 +90,10 @@ impl ReferenceExt for Reference {
                 if self.target.kind() == crate::Kind::Symbolic {
                     let mut seen = BTreeSet::new();
                     let cursor = &mut *self;
-                    while let Some(next) = cursor.follow(store, packed) {
+                    let packed = store
+                        .assure_packed_refs_uptodate()
+                        .map_err(|err| file::find::existing::Error::Find(file::find::Error::PackedOpen(err)))?;
+                    while let Some(next) = cursor.follow(store, packed.as_ref()) {
                         let next = next?;
                         if seen.contains(&next.name) {
                             return Err(peel::to_id::Error::Cycle(store.base.join(cursor.name.to_path())));
