@@ -35,7 +35,7 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::Kind, Error> {
     let dot_git = git_dir.as_ref();
 
     {
-        let refs = crate::RefStore::at(&dot_git, Default::default());
+        let refs = crate::RefStore::at(&dot_git, git_ref::store::WriteReflog::Normal);
         let head = refs.find_loose("HEAD")?;
         if head.name.as_bstr() != "HEAD" {
             return Err(Error::MisplacedHead {
