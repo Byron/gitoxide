@@ -127,9 +127,13 @@ pub fn parse_possibly_prefixed_tag_version(package_name: Option<&str>, tag_name:
 }
 
 pub fn parse_tag_version(name: &BStr) -> Option<Version> {
-    name.find_byteset(b"0123456789")
-        .and_then(|pos| name[pos..].to_str().ok())
-        .and_then(|v| Version::parse(v).ok())
+    let version = name
+        .strip_prefix(b"vers")
+        .or_else(|| name.strip_prefix(b"v"))
+        .unwrap_or_else(|| name.as_bytes())
+        .to_str()
+        .ok()?;
+    Version::parse(version).ok()
 }
 
 pub fn is_tag_name(package_name: &str, tag_name: &git::bstr::BStr) -> bool {
@@ -259,13 +263,22 @@ mod tests {
             fn funky() {
                 assert!(!is_tag_version(b"vHi.Ho.yada-anythingreally".as_bstr()));
             }
+
+            #[test]
+            fn prefixed() {
+                assert!(!is_tag_version(b"cargo-v1.0.0".as_bstr()));
+            }
         }
         mod matches {
             use git_repository::bstr::ByteSlice;
 
             #[test]
+            fn no_prefix() {
+                assert!(is_tag_version(b"0.0.1".as_bstr()));
+            }
+
+            #[test]
             fn custom_prefix() {
-                assert!(is_tag_version(b"x0.0.1".as_bstr()));
                 assert!(is_tag_version(b"vers0.0.1".as_bstr()));
             }
 
