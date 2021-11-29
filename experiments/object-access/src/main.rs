@@ -46,6 +46,26 @@ fn main() -> anyhow::Result<()> {
     }
 
     let start = Instant::now();
+    let bytes = do_gitoxide_in_parallel(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide (uncached, warmup): confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let bytes = do_gitoxide_in_parallel(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide (uncached): confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
     let bytes = do_gitoxide_in_parallel_through_arc(
         &hashes,
         &repo.odb.dbs[0].loose.path,
@@ -66,7 +86,7 @@ fn main() -> anyhow::Result<()> {
         let bytes = do_link_git_in_parallel(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
         let elapsed = start.elapsed();
         println!(
-            "parallel radicle-link-git (uncached, Arc): confirmed {} bytes in {:?} ({:0.0} objects/s)",
+            "parallel radicle-link-git (uncached): confirmed {} bytes in {:?} ({:0.0} objects/s)",
             bytes,
             elapsed,
             objs_per_sec(elapsed)
@@ -114,16 +134,6 @@ fn main() -> anyhow::Result<()> {
     println!(
         "parallel gitoxide (Arc, Lock): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
         hashes.len(),
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
-    let start = Instant::now();
-    let bytes = do_gitoxide_in_parallel(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
-    let elapsed = start.elapsed();
-    println!(
-        "parallel gitoxide (uncached): confirmed {} bytes in {:?} ({:0.0} objects/s)",
-        bytes,
         elapsed,
         objs_per_sec(elapsed)
     );
