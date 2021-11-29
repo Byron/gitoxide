@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use git_hash::ObjectId;
 
 use crate::{
-    peel,
+    packed, peel,
     raw::Reference,
     store_impl::{file, file::log},
     Target,
@@ -27,11 +27,28 @@ pub trait ReferenceExt: Sealed {
         find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
     ) -> Result<ObjectId, peel::to_id::Error>;
 
+    /// For details, see [Reference::peel_to_id_in_place()], with support for a known stable packed buffer.
+    fn peel_to_id_in_place_packed<E: std::error::Error + Send + Sync + 'static>(
+        &mut self,
+        store: &file::Store,
+        find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
+        packed: Option<&packed::Buffer>,
+    ) -> Result<ObjectId, peel::to_id::Error>;
+
+    /// Follow this symbolic reference one level and return the ref it refers to.
+    ///
+    /// Returns `None` if this is not a symbolic reference, hence the leaf of the chain.
+    fn follow(&self, store: &file::Store) -> Option<Result<Reference, file::find::existing::Error>>;
+
     /// Follow this symbolic reference one level and return the ref it refers to,
     /// possibly providing access to `packed` references for lookup if it contains the referent.
     ///
     /// Returns `None` if this is not a symbolic reference, hence the leaf of the chain.
-    fn follow(&self, store: &file::Store) -> Option<Result<Reference, file::find::existing::Error>>;
+    fn follow_packed(
+        &self,
+        store: &file::Store,
+        packed: Option<&packed::Buffer>,
+    ) -> Option<Result<Reference, file::find::existing::Error>>;
 }
 
 impl ReferenceExt for Reference {
@@ -52,7 +69,19 @@ impl ReferenceExt for Reference {
     fn peel_to_id_in_place<E: std::error::Error + Send + Sync + 'static>(
         &mut self,
         store: &file::Store,
+        find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
+    ) -> Result<ObjectId, peel::to_id::Error> {
+        let packed = store.assure_packed_refs_uptodate().map_err(|err| {
+            peel::to_id::Error::Follow(file::find::existing::Error::Find(file::find::Error::PackedOpen(err)))
+        })?;
+        self.peel_to_id_in_place_packed(store, find, packed.as_deref())
+    }
+
+    fn peel_to_id_in_place_packed<E: std::error::Error + Send + Sync + 'static>(
+        &mut self,
+        store: &file::Store,
         mut find: impl FnMut(git_hash::ObjectId, &mut Vec<u8>) -> Result<Option<(git_object::Kind, &[u8])>, E>,
+        packed: Option<&packed::Buffer>,
     ) -> Result<ObjectId, peel::to_id::Error> {
         match self.peeled {
             Some(peeled) => {
@@ -63,7 +92,7 @@ impl ReferenceExt for Reference {
                 if self.target.kind() == crate::Kind::Symbolic {
                     let mut seen = BTreeSet::new();
                     let cursor = &mut *self;
-                    while let Some(next) = cursor.follow(store) {
+                    while let Some(next) = cursor.follow_packed(store, packed) {
                         let next = next?;
                         if seen.contains(&next.name) {
                             return Err(peel::to_id::Error::Cycle(store.base.join(cursor.name.to_path())));
@@ -107,6 +136,21 @@ impl ReferenceExt for Reference {
     }
 
     fn follow(&self, store: &file::Store) -> Option<Result<Reference, file::find::existing::Error>> {
+        let packed = match store
+            .assure_packed_refs_uptodate()
+            .map_err(|err| file::find::existing::Error::Find(file::find::Error::PackedOpen(err)))
+        {
+            Ok(packed) => packed,
+            Err(err) => return Some(Err(err)),
+        };
+        self.follow_packed(store, packed.as_deref())
+    }
+
+    fn follow_packed(
+        &self,
+        store: &file::Store,
+        packed: Option<&packed::Buffer>,
+    ) -> Option<Result<Reference, file::find::existing::Error>> {
         match self.peeled {
             Some(peeled) => Some(Ok(Reference {
                 name: self.name.clone(),
@@ -115,21 +159,13 @@ impl ReferenceExt for Reference {
             })),
             None => match &self.target {
                 Target::Peeled(_) => None,
-                Target::Symbolic(full_name) => {
-                    let path = full_name.to_path();
-                    let packed = match store
-                        .assure_packed_refs_uptodate()
-                        .map_err(|err| file::find::existing::Error::Find(file::find::Error::PackedOpen(err)))
-                    {
-                        Ok(packed) => packed,
-                        Err(err) => return Some(Err(err)),
-                    };
-                    match store.find_one_with_verified_input(path.as_ref(), packed.as_deref()) {
-                        Ok(Some(next)) => Some(Ok(next)),
-                        Ok(None) => Some(Err(file::find::existing::Error::NotFound(path.into_owned()))),
-                        Err(err) => Some(Err(file::find::existing::Error::Find(err))),
-                    }
-                }
+                Target::Symbolic(full_name) => match store.try_find_packed(full_name.to_partial(), packed) {
+                    Ok(Some(next)) => Some(Ok(next)),
+                    Ok(None) => Some(Err(file::find::existing::Error::NotFound(
+                        full_name.to_path().into_owned(),
+                    ))),
+                    Err(err) => Some(Err(file::find::existing::Error::Find(err))),
+                },
             },
         }
     }
