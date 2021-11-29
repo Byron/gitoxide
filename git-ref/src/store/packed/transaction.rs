@@ -140,7 +140,7 @@ impl packed::Transaction {
                 (Some(Ok(_)), None) => {
                     let pref = refs_sorted.next().expect("next").expect("no err");
                     num_written_lines += 1;
-                    write_packed_ref(&mut file, pref)?;
+                    file.with_mut(|out| write_packed_ref(out, pref))?;
                 }
                 (Some(Ok(pref)), Some(edit)) => {
                     use std::cmp::Ordering::*;
@@ -148,22 +148,22 @@ impl packed::Transaction {
                         Less => {
                             let pref = refs_sorted.next().expect("next").expect("valid");
                             num_written_lines += 1;
-                            write_packed_ref(&mut file, pref)?;
+                            file.with_mut(|out| write_packed_ref(out, pref))?;
                         }
                         Greater => {
                             let edit = peekable_sorted_edits.next().expect("next");
-                            write_edit(&mut file, edit, &mut num_written_lines)?;
+                            file.with_mut(|out| write_edit(out, edit, &mut num_written_lines))?;
                         }
                         Equal => {
                             let _pref = refs_sorted.next().expect("next").expect("valid");
                             let edit = peekable_sorted_edits.next().expect("next");
-                            write_edit(&mut file, edit, &mut num_written_lines)?;
+                            file.with_mut(|out| write_edit(out, edit, &mut num_written_lines))?;
                         }
                     }
                 }
                 (None, Some(_)) => {
                     let edit = peekable_sorted_edits.next().expect("next");
-                    write_edit(&mut file, edit, &mut num_written_lines)?;
+                    file.with_mut(|out| write_edit(out, edit, &mut num_written_lines))?;
                 }
             }
         }
@@ -178,34 +178,29 @@ impl packed::Transaction {
     }
 }
 
-fn write_packed_ref(file: &mut git_lock::File, pref: packed::Reference<'_>) -> std::io::Result<()> {
-    file.with_mut(|out| {
-        write!(out, "{} ", pref.target)?;
-        out.write_all(pref.name.as_bstr())?;
-        out.write_all(b"\n")?;
-        if let Some(object) = pref.object {
-            writeln!(out, "^{}", object)?;
-        }
-        Ok(())
-    })
+fn write_packed_ref(mut out: impl std::io::Write, pref: packed::Reference<'_>) -> std::io::Result<()> {
+    write!(out, "{} ", pref.target)?;
+    out.write_all(pref.name.as_bstr())?;
+    out.write_all(b"\n")?;
+    if let Some(object) = pref.object {
+        writeln!(out, "^{}", object)?;
+    }
+    Ok(())
 }
 
-fn write_edit(file: &mut git_lock::File, edit: &Edit, lines_written: &mut i32) -> std::io::Result<()> {
+fn write_edit(mut out: impl std::io::Write, edit: &Edit, lines_written: &mut i32) -> std::io::Result<()> {
     match edit.inner.change {
         Change::Delete { .. } => {}
         Change::Update {
             new: Target::Peeled(target_oid),
             ..
         } => {
-            file.with_mut(|out| {
-                write!(out, "{} ", target_oid)?;
-                out.write_all(edit.inner.name.as_bstr())?;
-                out.write_all(b"\n")?;
-                if let Some(object) = edit.peeled {
-                    writeln!(out, "^{}", object)?;
-                }
-                Ok(())
-            })?;
+            write!(out, "{} ", target_oid)?;
+            out.write_all(edit.inner.name.as_bstr())?;
+            out.write_all(b"\n")?;
+            if let Some(object) = edit.peeled {
+                writeln!(out, "^{}", object)?;
+            }
             *lines_written += 1;
         }
         Change::Update {
