@@ -13,13 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    Previously we would be too generious when accepting version tags, now
    we accept the prefixes 'v' and 'vers' and no prefix at all.
  - <csr-id-6eae7f1119e2a7928286f233fc397b92274bb0ab/> don't panic if there is a version requirement without version
+ - <csr-id-b12b76c93db43044d6976ae218c11a8f3f3cd81d/> don't claim missing user edits if there are some
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 11 calendar days.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 6 commits contributed to the release over the course of 11 calendar days.
+ - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#259](https://github.com/Byron/gitoxide/issues/259), [#262](https://github.com/Byron/gitoxide/issues/262)
 
 ### Commit Details
@@ -31,9 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#259](https://github.com/Byron/gitoxide/issues/259)**
     - btree/hashmap free lookup of packs in store, keeping things more bundled ([`a88981b`](https://github.com/Byron/gitoxide/commit/a88981b6f38b86624588f0c8ff200d17f38d0263))
  * **[#262](https://github.com/Byron/gitoxide/issues/262)**
+    - don't claim missing user edits if there are some ([`b12b76c`](https://github.com/Byron/gitoxide/commit/b12b76c93db43044d6976ae218c11a8f3f3cd81d))
     - don't mistake prefixed tags for versions ([`f4421d8`](https://github.com/Byron/gitoxide/commit/f4421d83d022a56e47f534a8c676bcb9cb3d230d))
     - don't panic if there is a version requirement without version ([`6eae7f1`](https://github.com/Byron/gitoxide/commit/6eae7f1119e2a7928286f233fc397b92274bb0ab))
  * **Uncategorized**
+    - Release git-features v0.18.0, git-actor v0.7.0, git-config v0.1.9, git-object v0.16.0, git-diff v0.12.0, git-traverse v0.11.0, git-pack v0.15.0, git-odb v0.25.0, git-packetline v0.12.2, git-transport v0.14.0, git-protocol v0.13.0, git-ref v0.10.0, git-repository v0.13.0, cargo-smart-release v0.7.0, safety bump 12 crates ([`acd3737`](https://github.com/Byron/gitoxide/commit/acd37371dcd92ebac3d1f039224d02f2b4e9fa0b))
     - Merge branch 'git-loose-objects' of https://github.com/xmo-odoo/gitoxide into xmo-odoo-git-loose-objects ([`ee737cd`](https://github.com/Byron/gitoxide/commit/ee737cd237ad70bf9f2c5e0d3e4557909e495bca))
 </details>
 
