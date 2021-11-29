@@ -207,7 +207,7 @@ pub mod existing {
     };
 
     impl file::Store {
-        /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
+        /// Similar to [`file::Store::try_find()`] but a non-existing ref is treated as error.
         pub fn find<'a, Name, E>(&self, partial: Name) -> Result<Reference, Error>
         where
             Name: TryInto<PartialNameRef<'a>, Error = E>,
@@ -215,6 +215,19 @@ pub mod existing {
         {
             let packed = self.assure_packed_refs_uptodate().map_err(find::Error::PackedOpen)?;
             self.find_existing_inner(partial, packed.as_deref())
+        }
+
+        /// Similar to [`file::Store::find()`], but supports a stable packed buffer.
+        pub fn find_packed<'a, Name, E>(
+            &self,
+            partial: Name,
+            packed: Option<&packed::Buffer>,
+        ) -> Result<Reference, Error>
+        where
+            Name: TryInto<PartialNameRef<'a>, Error = E>,
+            crate::name::Error: From<E>,
+        {
+            self.find_existing_inner(partial, packed)
         }
 
         /// Similar to [`file::Store::find()`] won't handle packed-refs.
