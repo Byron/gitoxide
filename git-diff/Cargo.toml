@@ -1,6 +1,6 @@
 [package]
 name = "git-diff"
-version = "0.11.1"
+version = "0.12.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "Calculate differences between various git objects"
@@ -15,7 +15,7 @@ doctest = false
 
 [dependencies]
 git-hash = { version ="^0.8.0", path = "../git-hash" }
-git-object = { version ="^0.15.1", path = "../git-object" }
+git-object = { version ="^0.16.0", path = "../git-object" }
 quick-error = "2.0.0"
 
 [dev-dependencies]

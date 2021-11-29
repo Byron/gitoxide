@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.0 (2021-11-29)
+
+### Bug Fixes
+
+ - <csr-id-f4421d83d022a56e47f534a8c676bcb9cb3d230d/> don't mistake prefixed tags for versions
+   Previously we would be too generious when accepting version tags, now
+   we accept the prefixes 'v' and 'vers' and no prefix at all.
+ - <csr-id-6eae7f1119e2a7928286f233fc397b92274bb0ab/> don't panic if there is a version requirement without version
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release over the course of 11 calendar days.
+ - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#259](https://github.com/Byron/gitoxide/issues/259), [#262](https://github.com/Byron/gitoxide/issues/262)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#259](https://github.com/Byron/gitoxide/issues/259)**
+    - btree/hashmap free lookup of packs in store, keeping things more bundled ([`a88981b`](https://github.com/Byron/gitoxide/commit/a88981b6f38b86624588f0c8ff200d17f38d0263))
+ * **[#262](https://github.com/Byron/gitoxide/issues/262)**
+    - don't mistake prefixed tags for versions ([`f4421d8`](https://github.com/Byron/gitoxide/commit/f4421d83d022a56e47f534a8c676bcb9cb3d230d))
+    - don't panic if there is a version requirement without version ([`6eae7f1`](https://github.com/Byron/gitoxide/commit/6eae7f1119e2a7928286f233fc397b92274bb0ab))
+ * **Uncategorized**
+    - Merge branch 'git-loose-objects' of https://github.com/xmo-odoo/gitoxide into xmo-odoo-git-loose-objects ([`ee737cd`](https://github.com/Byron/gitoxide/commit/ee737cd237ad70bf9f2c5e0d3e4557909e495bca))
+</details>
+
 ## 0.6.0 (2021-11-16)
 
 ### New Features
@@ -28,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release over the course of 26 calendar days.
+ - 12 commits contributed to the release over the course of 26 calendar days.
  - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#228](https://github.com/Byron/gitoxide/issues/228), [#234](https://github.com/Byron/gitoxide/issues/234), [#241](https://github.com/Byron/gitoxide/issues/241)
 
@@ -47,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#241](https://github.com/Byron/gitoxide/issues/241)**
     - Improve usability of the pack-cache environment variable ([`47d8162`](https://github.com/Byron/gitoxide/commit/47d81629a0bfa2eccf75cbe081de55d80d0abd59))
  * **Uncategorized**
+    - Release git-repository v0.12.0, cargo-smart-release v0.6.0 ([`831a777`](https://github.com/Byron/gitoxide/commit/831a777487452a6f51a7bc0a9f9ca34b0fd778ed))
     - Release git-config v0.1.8, git-object v0.15.1, git-diff v0.11.1, git-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, git-packetline v0.12.1, git-transport v0.13.1, git-protocol v0.12.1, git-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0 ([`f606fa9`](https://github.com/Byron/gitoxide/commit/f606fa9a0ca338534252df8921cd5e9d3875bf94))
     - Adjusting changelogs prior to release of git-config v0.1.8, git-object v0.15.1, git-diff v0.11.1, git-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, git-packetline v0.12.1, git-transport v0.13.1, git-protocol v0.12.1, git-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0, safety bump 5 crates ([`39b40c8`](https://github.com/Byron/gitoxide/commit/39b40c8c3691029cc146b893fa0d8d25d56d0819))
     - Don't let dev-dependencies participate in traversal unless they have a version specified. ([`57a50a6`](https://github.com/Byron/gitoxide/commit/57a50a68313cee4c63b1c32f3dedb2837bb751fc))

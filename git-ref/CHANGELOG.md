@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.10.0 (2021-11-29)
 
 With this release, `file::Store` is easier to use due to thread-safe handling of an internal and shared
 packed-buffer instance. An API for passing it as parameter like before is still present, allowing to use
@@ -72,7 +72,7 @@ a 'frozen' version of the packed buffer for any amount of operations.
 
 <csr-read-only-do-not-edit/>
 
- - 32 commits contributed to the release over the course of 11 calendar days.
+ - 33 commits contributed to the release over the course of 11 calendar days.
  - 13 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#259](https://github.com/Byron/gitoxide/issues/259), [#263](https://github.com/Byron/gitoxide/issues/263)
 
@@ -121,6 +121,7 @@ a 'frozen' version of the packed buffer for any amount of operations.
     - sketch a store handle ([`fc6480b`](https://github.com/Byron/gitoxide/commit/fc6480ba1323cf3c606a1cded100ba3ea3e983e0))
     - move `git_ref::file::WriteRefLog` to `git_ref::store::WriteRefLog` ([`9524732`](https://github.com/Byron/gitoxide/commit/95247322a8191edfa7fac9c5aa72b40239f3aa88))
  * **Uncategorized**
+    - Adjust changelogs prior to release ([`ec38950`](https://github.com/Byron/gitoxide/commit/ec3895005d141abe79764eaff7c0f04153e38d73))
     - thanks clippy ([`a74f27c`](https://github.com/Byron/gitoxide/commit/a74f27c042bdf0c1e30a1767b56032e32cbc81a9))
     - Merge branch 'git-loose-objects' of https://github.com/xmo-odoo/gitoxide into xmo-odoo-git-loose-objects ([`ee737cd`](https://github.com/Byron/gitoxide/commit/ee737cd237ad70bf9f2c5e0d3e4557909e495bca))
 </details>

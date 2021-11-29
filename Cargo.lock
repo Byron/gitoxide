@@ -351,7 +351,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-smart-release"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1021,7 +1021,7 @@ dependencies = [
 
 [[package]]
 name = "git-actor"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -1036,7 +1036,7 @@ dependencies = [
 
 [[package]]
 name = "git-commitgraph"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "bstr",
  "byteorder",
@@ -1050,7 +1050,7 @@ dependencies = [
 
 [[package]]
 name = "git-config"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "criterion",
  "dirs",
@@ -1075,7 +1075,7 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
-version = "0.11.1"
+version = "0.12.0"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1087,7 +1087,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "bytes",
  "crc32fast",
@@ -1131,7 +1131,7 @@ dependencies = [
 
 [[package]]
 name = "git-object"
-version = "0.15.1"
+version = "0.16.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -1150,7 +1150,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.24.0"
+version = "0.25.0"
 dependencies = [
  "btoi",
  "git-actor",
@@ -1166,7 +1166,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -1196,7 +1196,7 @@ dependencies = [
 
 [[package]]
 name = "git-packetline"
-version = "0.12.1"
+version = "0.12.2"
 dependencies = [
  "async-std",
  "bstr",
@@ -1212,7 +1212,7 @@ dependencies = [
 
 [[package]]
 name = "git-protocol"
-version = "0.12.1"
+version = "0.13.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1233,7 +1233,7 @@ dependencies = [
 
 [[package]]
 name = "git-ref"
-version = "0.9.1"
+version = "0.10.0"
 dependencies = [
  "filebuffer",
  "git-actor",
@@ -1254,7 +1254,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "anyhow",
  "byte-unit",
@@ -1310,7 +1310,7 @@ dependencies = [
 
 [[package]]
 name = "git-transport"
-version = "0.13.1"
+version = "0.14.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1333,7 +1333,7 @@ dependencies = [
 
 [[package]]
 name = "git-traverse"
-version = "0.10.1"
+version = "0.11.0"
 dependencies = [
  "git-hash",
  "git-object",

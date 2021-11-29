@@ -1,6 +1,6 @@
 [package]
 name = "git-transport"
-version = "0.13.1"
+version = "0.14.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dedicated to implementing the git transport layer"
@@ -36,9 +36,9 @@ required-features = ["async-client"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-git-features = { version ="^0.17.0", path = "../git-features" }
+git-features = { version ="^0.18.0", path = "../git-features" }
 git-url = { version ="^0.3.4", path = "../git-url" }
-git-packetline = { version ="^0.12.1", path = "../git-packetline" }
+git-packetline = { version ="^0.12.2", path = "../git-packetline" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 quick-error = "2.0.0"
