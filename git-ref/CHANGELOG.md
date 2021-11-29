@@ -5,6 +5,126 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+With this release, `file::Store` is easier to use due to thread-safe handling of an internal and shared
+packed-buffer instance. An API for passing it as parameter like before is still present, allowing to use
+a 'frozen' version of the packed buffer for any amount of operations.
+
+### New Features
+
+ - <csr-id-6a17416557112a6464e548c5de1c46e563b3a187/> Add `file::Store::iter_(prefixed_)packed()`.
+   
+   These methods allow using an own packed buffer, usually obtained through
+   `cached_packed_buffer()`.
+ - <csr-id-9eb3a31d1f9f519e153e8df3fc3faaff278aed85/> add `file::Store::cached_packed_buffer()` for packed refs snapshots
+ - <csr-id-b030884447284daf0f2251f574c0ddf9993b2792/> add file::Store::try_find_packed(…, packed_buffer)
+   That way, abstractions can still be built that have other ways of
+   managing the packed-refs buffer, allowing it to stay more persistent.
+
+### Changed (BREAKING)
+
+ - <csr-id-b431fb0fb58b5e2e8aadbbd6aead55c0e42bd67b/> rename `file::Store::packed_buffer()` to `…::open_packed_buffer()`
+   This makes much clearer what it actually does, as previously it might
+   have been a stored packed buffer as well.
+ - <csr-id-80f3d504eeb669f16c5621fac06f6c763ce84e47/> file::Store::from(PathBuf) removed
+   At this low level, it's important to be clear about RefLogs and rather
+   force the caller to specify the ref-log mode. Technically it depends
+   on a few factors, `git-repository` deals with them, but certainly
+   shouldn't default to anything without being clear.
+ - <csr-id-bfb32aee4e64fd6b1f18c830623cc3fddd059874/> Reference log line access
+   `Reference::log_iter(…)` now is a platform instead of a forward iterator,
+   which requires a call to `.all()` to return the forward iterator like
+   previously.
+   
+   `Reference::log_iter_rev(…)` was removed in favor of
+   `Reference::log_iter(…).rev()`.
+ - <csr-id-5d498a33236391d8e456f267b1bf6af24de66f11/> file::Store::iter() is now a platform, with `.all()` and `.prefixed(…)` respectively
+   This way, it's possible to keep shared ownership of the packed buffer
+   while allowing the exact same iterator machinery to work as before.
+ - <csr-id-4641499abe00acf6eef0ab6d6bf261b0a27795f8/> file::ReferenceExt::follow(…) now without packed refs parameter
+ - <csr-id-55940eb8316d83ac1376c57ba25b3115d62f2012/> `file::ReferenceExt::peel_to_id_in_place(…)` now without packed-refs buffer
+   It is instead read from the internally synchronized buffer, shared
+   across all instances.
+ - <csr-id-15d429bb50602363292453606902bdce5042d9a5/> file::Store::(try_)find(…, packed) was removed
+   The packed buffer is now handled internally while loading it on demand.
+   When compiled with `git-features/parallel` the `file::Store` remains
+   send and sync.
+   
+   The packed refs buffer is shared across clones and it's recommended
+   to clone one `file::Store` instance per thread, each of which can
+   use its own namespace.
+ - <csr-id-95247322a8191edfa7fac9c5aa72b40239f3aa88/> move `git_ref::file::WriteRefLog` to `git_ref::store::WriteRefLog`
+
+### other (BREAKING)
+
+ - <csr-id-951c050ecbb70c9de216603e55c7cfbc89a067e3/> Reference::logs() -> Reference::log_iter()
+   The latter now returns a standard Platform to iterate over all
+   reflog entries from oldest to newest or vice versa.
+
+### refactor (BREAKING)
+
+ - <csr-id-0e1875363fea09452789d7a90fc6860a7996d6d3/> `file::Store::base` is now `file::Store::base()` and read-only
+   That way, file databases can't be repositioned anymore, it's recommended
+   to recreate it if that's desired.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 32 commits contributed to the release over the course of 11 calendar days.
+ - 13 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#259](https://github.com/Byron/gitoxide/issues/259), [#263](https://github.com/Byron/gitoxide/issues/263)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#259](https://github.com/Byron/gitoxide/issues/259)**
+    - btree/hashmap free lookup of packs in store, keeping things more bundled ([`a88981b`](https://github.com/Byron/gitoxide/commit/a88981b6f38b86624588f0c8ff200d17f38d0263))
+ * **[#263](https://github.com/Byron/gitoxide/issues/263)**
+    - Add `file::Store::iter_(prefixed_)packed()` ([`6a17416`](https://github.com/Byron/gitoxide/commit/6a17416557112a6464e548c5de1c46e563b3a187))
+    - add `file::Store::cached_packed_buffer()` for packed refs snapshots ([`9eb3a31`](https://github.com/Byron/gitoxide/commit/9eb3a31d1f9f519e153e8df3fc3faaff278aed85))
+    - rename `file::Store::packed_buffer()` to `…::open_packed_buffer()` ([`b431fb0`](https://github.com/Byron/gitoxide/commit/b431fb0fb58b5e2e8aadbbd6aead55c0e42bd67b))
+    - add file::Store::try_find_packed(…, packed_buffer) ([`b030884`](https://github.com/Byron/gitoxide/commit/b030884447284daf0f2251f574c0ddf9993b2792))
+    - file::Store::from(PathBuf) removed ([`80f3d50`](https://github.com/Byron/gitoxide/commit/80f3d504eeb669f16c5621fac06f6c763ce84e47))
+    - Put general Store on hold - ref-table is needed to know how to go about it ([`bfa417b`](https://github.com/Byron/gitoxide/commit/bfa417baa79fb7ba3c1b5f559ef5b12278dbc839))
+    - Don't even think about setting up test duplication for the general store ([`72a6464`](https://github.com/Byron/gitoxide/commit/72a6464ed8bf869704615bc5f4f98b604f2d8001))
+    - Reference::logs() -> Reference::log_iter() ([`951c050`](https://github.com/Byron/gitoxide/commit/951c050ecbb70c9de216603e55c7cfbc89a067e3))
+    - Reference log line access ([`bfb32ae`](https://github.com/Byron/gitoxide/commit/bfb32aee4e64fd6b1f18c830623cc3fddd059874))
+    - Add platform for log iteration to hold byte buffers ([`1cd2362`](https://github.com/Byron/gitoxide/commit/1cd23621f9d5a7ad22b0216aec9866cf3786b007))
+    - Assure the packed buffer is reloaded after a modification ([`f5570ff`](https://github.com/Byron/gitoxide/commit/f5570ff0e0d134144e86e3b06f426e2827469a88))
+    - fmt ([`fbeddeb`](https://github.com/Byron/gitoxide/commit/fbeddebcab999f4898f768a3184906091f8ce0b8))
+    - file::Store::iter() is now a platform, with `.all()` and `.prefixed(…)` respectively ([`5d498a3`](https://github.com/Byron/gitoxide/commit/5d498a33236391d8e456f267b1bf6af24de66f11))
+    - refactor ([`5fc3817`](https://github.com/Byron/gitoxide/commit/5fc381718693256562474d2b6bf551e4eb366293))
+    - refactor packed buffer sharing to allow for sharing snapshots ([`00c2545`](https://github.com/Byron/gitoxide/commit/00c254525d4e028a16cb70028be1311432d006fc))
+    - Let file transactions reuse the cached packed buffer ([`a9096b9`](https://github.com/Byron/gitoxide/commit/a9096b9e6b09ef5394b71a58cba3bc2b72a66a8b))
+    - file::ReferenceExt::follow(…) now without packed refs parameter ([`4641499`](https://github.com/Byron/gitoxide/commit/4641499abe00acf6eef0ab6d6bf261b0a27795f8))
+    - `file::ReferenceExt::peel_to_id_in_place(…)` now without packed-refs buffer ([`55940eb`](https://github.com/Byron/gitoxide/commit/55940eb8316d83ac1376c57ba25b3115d62f2012))
+    - file::Store::(try_)find(…, packed) was removed ([`15d429b`](https://github.com/Byron/gitoxide/commit/15d429bb50602363292453606902bdce5042d9a5))
+    - Load packed buffer with interior mutability ([`ae2eef1`](https://github.com/Byron/gitoxide/commit/ae2eef11152b6c16dd08cb244b78b582e6351ec7))
+    - Make it possible to return read guards with packed buffers ([`f5c3c8f`](https://github.com/Byron/gitoxide/commit/f5c3c8f7309bf53b9e53f786e75931d701a8585c))
+    - `file::Store::base` is now `file::Store::base()` and read-only ([`0e18753`](https://github.com/Byron/gitoxide/commit/0e1875363fea09452789d7a90fc6860a7996d6d3))
+    - refactor, realize why having a packed-buffer with the loose db is valuable ([`a76f041`](https://github.com/Byron/gitoxide/commit/a76f04166f652ebb3304b396f5dadf302270854d))
+    - A mad attempt to use thread-local everywhere and avoid Sync… ([`0af5077`](https://github.com/Byron/gitoxide/commit/0af5077e1f028c1c69bbdc098bb567e486282c37))
+    - Try implementing find_reference to realize that this extra abstraction is overkill ([`82ea1b8`](https://github.com/Byron/gitoxide/commit/82ea1b822ac658efecb0f74643fb5d62a8269e89))
+    - Look into iteration, but realize that it's harder than finding refs ([`fc753a8`](https://github.com/Byron/gitoxide/commit/fc753a8503592752d95db2aecaa33dc3615aa1fd))
+    - Sketch of State is seen in store handle and store itself ([`f87f852`](https://github.com/Byron/gitoxide/commit/f87f85261f661c337b0f1638e1eabeca6957381c))
+    - sketch a store handle ([`fc6480b`](https://github.com/Byron/gitoxide/commit/fc6480ba1323cf3c606a1cded100ba3ea3e983e0))
+    - move `git_ref::file::WriteRefLog` to `git_ref::store::WriteRefLog` ([`9524732`](https://github.com/Byron/gitoxide/commit/95247322a8191edfa7fac9c5aa72b40239f3aa88))
+ * **Uncategorized**
+    - thanks clippy ([`a74f27c`](https://github.com/Byron/gitoxide/commit/a74f27c042bdf0c1e30a1767b56032e32cbc81a9))
+    - Merge branch 'git-loose-objects' of https://github.com/xmo-odoo/gitoxide into xmo-odoo-git-loose-objects ([`ee737cd`](https://github.com/Byron/gitoxide/commit/ee737cd237ad70bf9f2c5e0d3e4557909e495bca))
+</details>
+
 ## 0.9.1 (2021-11-16)
 
 ### New Features
@@ -16,7 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 11 calendar days.
+ - 6 commits contributed to the release over the course of 11 calendar days.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#251](https://github.com/Byron/gitoxide/issues/251), [#254](https://github.com/Byron/gitoxide/issues/254)
 
@@ -33,6 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#254](https://github.com/Byron/gitoxide/issues/254)**
     - Adjust changelogs prior to git-pack release ([`6776a3f`](https://github.com/Byron/gitoxide/commit/6776a3ff9fa5a283da06c9ec5723d13023a0b267))
  * **Uncategorized**
+    - Release git-config v0.1.8, git-object v0.15.1, git-diff v0.11.1, git-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, git-packetline v0.12.1, git-transport v0.13.1, git-protocol v0.12.1, git-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0 ([`f606fa9`](https://github.com/Byron/gitoxide/commit/f606fa9a0ca338534252df8921cd5e9d3875bf94))
     - Adjusting changelogs prior to release of git-config v0.1.8, git-object v0.15.1, git-diff v0.11.1, git-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, git-packetline v0.12.1, git-transport v0.13.1, git-protocol v0.12.1, git-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0, safety bump 5 crates ([`39b40c8`](https://github.com/Byron/gitoxide/commit/39b40c8c3691029cc146b893fa0d8d25d56d0819))
 </details>
 

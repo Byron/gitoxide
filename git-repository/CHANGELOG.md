@@ -5,6 +5,86 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+With changes to `git-ref`, what follows is all the adjustments made to simplify the `git-repository` implementation.
+
+### Changed (BREAKING)
+
+ - <csr-id-5d498a33236391d8e456f267b1bf6af24de66f11/> file::Store::iter() is now a platform, with `.all()` and `.prefixed(…)` respectively
+   This way, it's possible to keep shared ownership of the packed buffer
+   while allowing the exact same iterator machinery to work as before.
+ - <csr-id-15d429bb50602363292453606902bdce5042d9a5/> file::Store::(try_)find(…, packed) was removed
+   The packed buffer is now handled internally while loading it on demand.
+   When compiled with `git-features/parallel` the `file::Store` remains
+   send and sync.
+   
+   The packed refs buffer is shared across clones and it's recommended
+   to clone one `file::Store` instance per thread, each of which can
+   use its own namespace.
+ - <csr-id-95247322a8191edfa7fac9c5aa72b40239f3aa88/> move `git_ref::file::WriteRefLog` to `git_ref::store::WriteRefLog`
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-fc8e85cd71d4f16bc8daad0b790d875045faefff/> ref namespaces are now thread-local
+   Previously these were shared in the shared Repo instance, which makes
+   threaded applications impossible to remain deterministic across multiple
+   connections.
+   
+   Now they are local to the thread, which allowed some methods to remove
+   their Result<> as they cannot fail anymore, the reason for this being
+   a breaking change.
+
+### other (BREAKING)
+
+ - <csr-id-951c050ecbb70c9de216603e55c7cfbc89a067e3/> Reference::logs() -> Reference::log_iter()
+   The latter now returns a standard Platform to iterate over all
+   reflog entries from oldest to newest or vice versa.
+
+### refactor (BREAKING)
+
+ - <csr-id-0e1875363fea09452789d7a90fc6860a7996d6d3/> `file::Store::base` is now `file::Store::base()` and read-only
+   That way, file databases can't be repositioned anymore, it's recommended
+   to recreate it if that's desired.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release over the course of 11 calendar days.
+ - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#259](https://github.com/Byron/gitoxide/issues/259), [#263](https://github.com/Byron/gitoxide/issues/263)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#259](https://github.com/Byron/gitoxide/issues/259)**
+    - Describe and propose fix for ref namespace-sharing issue ([`55773b8`](https://github.com/Byron/gitoxide/commit/55773b87feb246927a7421a822c45d9e101e985e))
+ * **[#263](https://github.com/Byron/gitoxide/issues/263)**
+    - Adjust to changes in git-ref ([`1e32855`](https://github.com/Byron/gitoxide/commit/1e3285572a640683660936297e5f072d827b3ded))
+    - Reference::logs() -> Reference::log_iter() ([`951c050`](https://github.com/Byron/gitoxide/commit/951c050ecbb70c9de216603e55c7cfbc89a067e3))
+    - Adapt to new iteration Platform in git-ref ([`b5a749e`](https://github.com/Byron/gitoxide/commit/b5a749e1e26e4490d94f1cbd6901596d90f3cf47))
+    - file::Store::iter() is now a platform, with `.all()` and `.prefixed(…)` respectively ([`5d498a3`](https://github.com/Byron/gitoxide/commit/5d498a33236391d8e456f267b1bf6af24de66f11))
+    - Adjustments to match new signature of peel_to_ids_in_place ([`f87a11f`](https://github.com/Byron/gitoxide/commit/f87a11fef632dd2442393c4655ada11f1d480332))
+    - file::Store::(try_)find(…, packed) was removed ([`15d429b`](https://github.com/Byron/gitoxide/commit/15d429bb50602363292453606902bdce5042d9a5))
+    - `file::Store::base` is now `file::Store::base()` and read-only ([`0e18753`](https://github.com/Byron/gitoxide/commit/0e1875363fea09452789d7a90fc6860a7996d6d3))
+    - move `git_ref::file::WriteRefLog` to `git_ref::store::WriteRefLog` ([`9524732`](https://github.com/Byron/gitoxide/commit/95247322a8191edfa7fac9c5aa72b40239f3aa88))
+    - ref namespaces are now thread-local ([`fc8e85c`](https://github.com/Byron/gitoxide/commit/fc8e85cd71d4f16bc8daad0b790d875045faefff))
+    - Add cheap and sync loose ref DB directly to state ([`38c8146`](https://github.com/Byron/gitoxide/commit/38c81462b94d225861fd237bd0c2ce0c558664c4))
+ * **Uncategorized**
+    - thanks clippy ([`a74f27c`](https://github.com/Byron/gitoxide/commit/a74f27c042bdf0c1e30a1767b56032e32cbc81a9))
+    - Merge branch 'git-loose-objects' of https://github.com/xmo-odoo/gitoxide into xmo-odoo-git-loose-objects ([`ee737cd`](https://github.com/Byron/gitoxide/commit/ee737cd237ad70bf9f2c5e0d3e4557909e495bca))
+</details>
+
 ## 0.12.0 (2021-11-16)
 
 ### New Features
@@ -19,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 20 calendar days.
+ - 13 commits contributed to the release over the course of 20 calendar days.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#241](https://github.com/Byron/gitoxide/issues/241), [#247](https://github.com/Byron/gitoxide/issues/247), [#251](https://github.com/Byron/gitoxide/issues/251), [#254](https://github.com/Byron/gitoxide/issues/254)
 
@@ -43,6 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#254](https://github.com/Byron/gitoxide/issues/254)**
     - Adjust changelogs prior to git-pack release ([`6776a3f`](https://github.com/Byron/gitoxide/commit/6776a3ff9fa5a283da06c9ec5723d13023a0b267))
  * **Uncategorized**
+    - Release git-repository v0.12.0, cargo-smart-release v0.6.0 ([`831a777`](https://github.com/Byron/gitoxide/commit/831a777487452a6f51a7bc0a9f9ca34b0fd778ed))
     - Release git-config v0.1.8, git-object v0.15.1, git-diff v0.11.1, git-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, git-packetline v0.12.1, git-transport v0.13.1, git-protocol v0.12.1, git-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0 ([`f606fa9`](https://github.com/Byron/gitoxide/commit/f606fa9a0ca338534252df8921cd5e9d3875bf94))
     - Adjusting changelogs prior to release of git-config v0.1.8, git-object v0.15.1, git-diff v0.11.1, git-traverse v0.10.1, git-pack v0.14.0, git-odb v0.24.0, git-packetline v0.12.1, git-transport v0.13.1, git-protocol v0.12.1, git-ref v0.9.1, git-repository v0.12.0, cargo-smart-release v0.6.0, safety bump 5 crates ([`39b40c8`](https://github.com/Byron/gitoxide/commit/39b40c8c3691029cc146b893fa0d8d25d56d0819))
     - Merge branch 'header-field-multi-improve' of https://github.com/xmo-odoo/gitoxide into xmo-odoo-header-field-multi-improve ([`d88e377`](https://github.com/Byron/gitoxide/commit/d88e377c21e566bf86c274d5e87eff06100698b9))
