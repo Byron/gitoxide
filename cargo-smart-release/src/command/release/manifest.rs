@@ -418,11 +418,6 @@ fn gather_changelog_data<'a, 'meta>(
             );
 
             let (recent_idx, recent_release_section_in_log) = log.most_recent_release_section_mut();
-            if !recent_release_section_in_log.is_essential() {
-                changelog_ids_with_statistical_segments_only.push(pending_changelogs.len());
-            } else if recent_release_section_in_log.is_probably_lacking_user_edits() {
-                changelog_ids_probably_lacking_user_edits.push(pending_changelogs.len());
-            }
             match recent_release_section_in_log {
                 changelog::Section::Release {
                     name: name @ changelog::Version::Unreleased,
@@ -447,16 +442,6 @@ fn gather_changelog_data<'a, 'meta>(
                     {
                         Some(version_section) => {
                             version_section.merge(recent_section);
-                            let pop_if_changelog_id_is_last = |v: &mut Vec<usize>| {
-                                if v.last().filter(|&&idx| idx == pending_changelogs.len()).is_some() {
-                                    v.pop();
-                                }
-                            };
-                            if version_section.is_essential() {
-                                pop_if_changelog_id_is_last(changelog_ids_with_statistical_segments_only);
-                            } else if !version_section.is_probably_lacking_user_edits() {
-                                pop_if_changelog_id_is_last(changelog_ids_probably_lacking_user_edits);
-                            }
                         }
                         None => log.sections.insert(recent_idx, recent_section),
                     }
@@ -478,6 +463,14 @@ fn gather_changelog_data<'a, 'meta>(
                 }
                 changelog::Section::Verbatim { .. } => unreachable!("BUG: checked in prior function"),
             };
+            {
+                let (_, recent_release_section_in_log) = log.most_recent_release_section_mut();
+                if !recent_release_section_in_log.is_essential() {
+                    changelog_ids_with_statistical_segments_only.push(pending_changelogs.len());
+                } else if recent_release_section_in_log.is_probably_lacking_user_edits() {
+                    changelog_ids_probably_lacking_user_edits.push(pending_changelogs.len());
+                }
+            }
             let mut write_buf = String::new();
             log.write_to(
                 &mut write_buf,
