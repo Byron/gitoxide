@@ -1,7 +1,7 @@
 use std::{path::Path, sync::Arc, time::Instant};
 
 use anyhow::anyhow;
-use git_repository::{hash::ObjectId, odb, prelude::*, Repository};
+use git_repository::{hash::ObjectId, odb, Repository};
 
 const GITOXIDE_STATIC_CACHE_SIZE: usize = 64;
 const GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES: usize = 60_000_000;
@@ -32,6 +32,19 @@ fn main() -> anyhow::Result<()> {
         objs_per_sec(elapsed)
     );
 
+    #[cfg(feature = "radicle-nightly")]
+    {
+        let start = Instant::now();
+        do_link_git_in_parallel(&hashes, &repo, || odb::pack::cache::Never, AccessMode::ObjectExists)?;
+        let elapsed = start.elapsed();
+        println!(
+            "parallel radicle-link-git : confirmed {} objects exists in {:?} ({:0.0} objects/s)",
+            hashes.len(),
+            elapsed,
+            objs_per_sec(elapsed)
+        );
+    }
+
     let start = Instant::now();
     let bytes = do_gitoxide_in_parallel_through_arc(
         &hashes,
@@ -46,6 +59,19 @@ fn main() -> anyhow::Result<()> {
         elapsed,
         objs_per_sec(elapsed)
     );
+
+    #[cfg(feature = "radicle-nightly")]
+    {
+        let start = Instant::now();
+        let bytes = do_link_git_in_parallel(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
+        let elapsed = start.elapsed();
+        println!(
+            "parallel radicle-link-git (uncached, Arc): confirmed {} bytes in {:?} ({:0.0} objects/s)",
+            bytes,
+            elapsed,
+            objs_per_sec(elapsed)
+        );
+    }
 
     let start = Instant::now();
     do_gitoxide_in_parallel_through_arc(
@@ -230,6 +256,7 @@ fn do_gitoxide<C>(hashes: &[ObjectId], repo: &Repository, new_cache: impl FnOnce
 where
     C: odb::pack::cache::DecodeEntry,
 {
+    use git_repository::prelude::FindExt;
     let mut buf = Vec::new();
     let mut bytes = 0u64;
     let mut cache = new_cache();
@@ -254,6 +281,7 @@ fn do_gitoxide_in_parallel<C>(
 where
     C: odb::pack::cache::DecodeEntry,
 {
+    use git_repository::prelude::FindExt;
     use rayon::prelude::*;
     let bytes = std::sync::atomic::AtomicU64::default();
     hashes.par_iter().try_for_each_init::<_, _, _, anyhow::Result<_>>(
@@ -275,6 +303,46 @@ where
     Ok(bytes.load(std::sync::atomic::Ordering::Acquire))
 }
 
+/// A fully sync implementation but with interior mutability
+#[cfg(feature = "radicle-nightly")]
+fn do_link_git_in_parallel<C>(
+    hashes: &[ObjectId],
+    repo: &Repository,
+    new_cache: impl Fn() -> C + Sync + Send,
+    mode: AccessMode,
+) -> anyhow::Result<u64>
+where
+    C: odb::pack::cache::DecodeEntry,
+{
+    use rayon::prelude::*;
+    use std::iter::FromIterator;
+    let bytes = std::sync::atomic::AtomicU64::default();
+    let repo = link_git::odb::Odb {
+        loose: link_git::odb::backend::Loose::at(repo.objects_dir()),
+        packed: link_git::odb::backend::Packed {
+            index: link_git::odb::index::Shared::from_iter(link_git::odb::index::discover(repo.git_dir())?),
+            data: link_git::odb::window::Large::default(),
+        },
+    };
+    hashes.par_iter().try_for_each_init::<_, _, _, anyhow::Result<_>>(
+        || (Vec::new(), new_cache()),
+        |(buf, cache), hash| {
+            match mode {
+                AccessMode::ObjectData => {
+                    let obj = repo.find(hash, buf, cache)?.expect("exists");
+                    bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
+                }
+                AccessMode::ObjectExists => {
+                    assert!(repo.contains(hash), "each traversed object exists");
+                }
+            }
+            Ok(())
+        },
+    )?;
+
+    Ok(bytes.load(std::sync::atomic::Ordering::Acquire))
+}
+
 fn do_gitoxide_in_parallel_through_arc<C>(
     hashes: &[ObjectId],
     repo: &Path,
@@ -284,6 +352,7 @@ fn do_gitoxide_in_parallel_through_arc<C>(
 where
     C: odb::pack::cache::DecodeEntry,
 {
+    use git_repository::prelude::FindExt;
     let bytes = std::sync::atomic::AtomicU64::default();
     let odb = Arc::new(git_repository::odb::linked::Store::at(repo)?);
 
@@ -319,6 +388,7 @@ fn do_gitoxide_in_parallel_through_arc_rw_lock<C>(
 where
     C: odb::pack::cache::DecodeEntry,
 {
+    use git_repository::prelude::FindExt;
     let bytes = std::sync::atomic::AtomicU64::default();
     let odb = Arc::new(parking_lot::RwLock::new(git_repository::odb::linked::Store::at(repo)?));
 

@@ -7,9 +7,13 @@ publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+radicle-nightly = ["link-git"]
+
 [dependencies]
 anyhow = "1"
-git-repository = { version ="^0.13.0", path = "../../git-repository", features = ["unstable"] }
+git-repository = { version ="^0.13.0", features = ["unstable"] }
 git2 = "0.13"
+link-git = { git = "https://github.com/Byron/radicle-link.git", rev = "6c9ad7aeadcf2b04f87cc01c9825c472c3ba0911", optional = true }
 rayon = "1.5.0"
 parking_lot = { version = "0.11.0", default-features = false }
