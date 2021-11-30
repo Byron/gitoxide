@@ -9,9 +9,11 @@ use crate::{
     store::{compound, linked},
 };
 
-impl linked::Store {
+impl crate::Find for linked::Store {
+    type Error = compound::find::Error;
+
     /// Return true if the given object `id` is contained in the store.
-    pub fn contains(&self, id: impl AsRef<oid>) -> bool {
+    fn contains(&self, id: impl AsRef<oid>) -> bool {
         let id = id.as_ref();
         for db in self.dbs.iter() {
             if db.internal_find_packed(id).is_some() || db.loose.contains(id) {
@@ -20,10 +22,6 @@ impl linked::Store {
         }
         false
     }
-}
-
-impl crate::Find for linked::Store {
-    type Error = compound::find::Error;
 
     fn try_find<'a>(
         &self,
@@ -106,6 +104,10 @@ impl crate::Find for linked::Store {
 
 impl crate::Find for &linked::Store {
     type Error = compound::find::Error;
+
+    fn contains(&self, id: impl AsRef<oid>) -> bool {
+        (*self).contains(id)
+    }
 
     fn try_find<'a>(
         &self,

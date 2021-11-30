@@ -12,6 +12,9 @@ pub trait Find {
     /// The error returned by [`try_find()`][Find::try_find()]
     type Error: std::error::Error + 'static;
 
+    /// Returns true if the object exists in the database.
+    fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool;
+
     /// Find an object matching `id` in the database while placing its raw, undecoded data into `buffer`.
     /// A `pack_cache` can be used to speed up subsequent lookups, set it to [`crate::cache::Never`] if the
     /// workload isn't suitable for caching.
@@ -28,7 +31,7 @@ pub trait Find {
     /// Find the packs location where an object with `id` can be found in the database, or `None` if there is no pack
     /// holding the object.
     ///
-    /// _Note_ that the object database may have no notion of packs and thus always returns `None`.
+    /// _Note_ that this is always None if the object isn't packed.
     fn location_by_oid(&self, id: impl AsRef<git_hash::oid>, buf: &mut Vec<u8>) -> Option<crate::bundle::Location>;
 
     /// Find the bundle matching `pack_id`, or `None` if there is no such pack.
@@ -149,6 +152,10 @@ mod find_impls {
     {
         type Error = T::Error;
 
+        fn contains(&self, id: impl AsRef<oid>) -> bool {
+            self.deref().contains(id)
+        }
+
         fn try_find<'a>(
             &self,
             id: impl AsRef<oid>,
@@ -176,6 +183,10 @@ mod find_impls {
         T: super::Find,
     {
         type Error = T::Error;
+
+        fn contains(&self, id: impl AsRef<oid>) -> bool {
+            self.deref().contains(id)
+        }
 
         fn try_find<'a>(
             &self,
