@@ -23,5 +23,5 @@ pub use store::{compound, linked, loose, sink, Sink};
 
 pub mod alternate;
 
-mod write;
-pub use write::Write;
+mod traits;
+pub use traits::Write;

@@ -26,7 +26,7 @@ pub enum Error {
     },
 }
 
-impl crate::write::Write for Store {
+impl crate::traits::Write for Store {
     type Error = Error;
 
     fn write(&self, object: impl WriteTo, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {

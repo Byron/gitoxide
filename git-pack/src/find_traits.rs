@@ -25,7 +25,7 @@ pub trait Find {
         &self,
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
-        pack_cache: &mut impl crate::cache::DecodeEntry,
+        pack_cache: &mut impl crate::cache::DecodeEntry, // TODO: remove this one once as soon as it's clear we have thread-local handles
     ) -> Result<Option<data::Object<'a>>, Self::Error>;
 
     /// Find the packs location where an object with `id` can be found in the database, or `None` if there is no pack
