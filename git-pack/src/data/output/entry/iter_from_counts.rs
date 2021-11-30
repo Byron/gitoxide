@@ -34,7 +34,6 @@ use crate::data::{output, output::ChunkId};
 ///
 /// ### Disadvantages
 ///
-/// * **does not yet support thin packs** as we don't have a way to determine which objects are supposed to be thin.
 /// * ~~currently there is no way to easily write the pack index, even though the state here is uniquely positioned to do
 ///   so with minimal overhead (especially compared to `gix index-from-pack`)~~ Probably works now by chaining Iterators
 ///  or keeping enough state to write a pack and then generate an index with recorded data.

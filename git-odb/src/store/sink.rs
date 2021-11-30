@@ -31,7 +31,7 @@ pub fn sink() -> Sink {
     Sink { compressor: None }
 }
 
-impl crate::write::Write for Sink {
+impl crate::traits::Write for Sink {
     type Error = io::Error;
 
     fn write_stream(

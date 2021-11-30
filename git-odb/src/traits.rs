@@ -35,3 +35,29 @@ pub trait Write {
         hash: git_hash::Kind,
     ) -> Result<git_hash::ObjectId, Self::Error>;
 }
+
+/// Describe how object can be located in an object store.
+///
+/// ## Notes
+///
+/// Find effectively needs [generic associated types][issue] to allow a trait for the returned object type.
+/// Until then, we will have to make due with explicit types and give them the potentially added features we want.
+///
+/// [issue]: https://github.com/rust-lang/rust/issues/44265
+pub trait Find {
+    /// The error returned by [`try_find()`][Find::try_find()]
+    type Error: std::error::Error + 'static;
+
+    /// Returns true if the object exists in the database.
+    fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool;
+
+    /// Find an object matching `id` in the database while placing its raw, undecoded data into `buffer`.
+    ///
+    /// Returns `Some` object if it was present in the database, or the error that occurred during lookup or object
+    /// retrieval.
+    fn try_find<'a>(
+        &self,
+        id: impl AsRef<git_hash::oid>,
+        buffer: &'a mut Vec<u8>,
+    ) -> Result<Option<git_object::Data<'a>>, Self::Error>;
+}
