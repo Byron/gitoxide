@@ -19,6 +19,7 @@ verbose-object-parsing-errors = ["nom/std"]
 all-features = true
 
 [dependencies]
+git-features = { version ="^0.18.0", path = "../git-features", features = ["rustsha1"] }
 git-hash = { version ="^0.8.0", path = "../git-hash" }
 git-validate = { version ="^0.5.3", path = "../git-validate" }
 git-actor = { version ="^0.7.0", path = "../git-actor" }

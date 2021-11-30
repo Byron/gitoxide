@@ -1341,6 +1341,7 @@ dependencies = [
  "bstr",
  "btoi",
  "git-actor 0.7.0",
+ "git-features 0.18.0",
  "git-hash 0.8.0",
  "git-testtools",
  "git-validate 0.5.3",
