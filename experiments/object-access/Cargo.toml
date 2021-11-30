@@ -14,6 +14,6 @@ radicle-nightly = ["link-git"]
 anyhow = "1"
 git-repository = { version ="^0.13.0", features = ["unstable"] }
 git2 = "0.13"
-link-git = { git = "https://github.com/Byron/radicle-link.git", rev = "6c9ad7aeadcf2b04f87cc01c9825c472c3ba0911", optional = true }
+link-git = { git = "https://github.com/radicle-dev/radicle-link", rev = "b1c4971ba78d562d617a7620c5ec9409571fbbd0", optional = true }
 rayon = "1.5.0"
 parking_lot = { version = "0.11.0", default-features = false }

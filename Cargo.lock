@@ -1089,6 +1089,19 @@ dependencies = [
 
 [[package]]
 name = "git-actor"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09c4ab49d848cf4221daa5f80bd9969009ce5c1fb090acfec4e1ce3267fb488b"
+dependencies = [
+ "bstr",
+ "btoi",
+ "itoa",
+ "nom",
+ "quick-error",
+]
+
+[[package]]
+name = "git-actor"
 version = "0.7.0"
 dependencies = [
  "bstr",
@@ -1168,6 +1181,17 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d4e019a3029f25c7c17aa5fefd113b5852f7d7796403c57a5ea54735700b2e3"
+dependencies = [
+ "git-hash 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-object 0.15.1",
+ "quick-error",
+]
+
+[[package]]
+name = "git-diff"
 version = "0.12.0"
 dependencies = [
  "git-hash 0.8.0",
@@ -1187,6 +1211,25 @@ dependencies = [
  "git-hash 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-object 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "quick-error",
+]
+
+[[package]]
+name = "git-features"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "39932de8e019bab9a827e408ad7f96cebb65d4cdc25849ebfe4c70545d46f81f"
+dependencies = [
+ "crc32fast",
+ "crossbeam-channel",
+ "crossbeam-utils",
+ "flate2",
+ "git-hash 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jwalk",
+ "num_cpus",
+ "prodash",
+ "quick-error",
+ "sha1",
+ "walkdir",
 ]
 
 [[package]]
@@ -1277,6 +1320,22 @@ dependencies = [
 
 [[package]]
 name = "git-object"
+version = "0.15.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60af270db623e4af0968a07c39300c521a11fdb27d94928afbb91784d52411ec"
+dependencies = [
+ "bstr",
+ "git-actor 0.6.0",
+ "git-hash 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-validate 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hex",
+ "nom",
+ "quick-error",
+ "smallvec",
+]
+
+[[package]]
+name = "git-object"
 version = "0.16.0"
 dependencies = [
  "bstr",
@@ -1314,6 +1373,21 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "607118e92c496fb7c3458ff1afd2593665f4626e5cb9c8c0d39595fbf08da90e"
+dependencies = [
+ "btoi",
+ "git-features 0.17.0",
+ "git-hash 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-object 0.15.1",
+ "git-pack 0.13.0",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "git-odb"
 version = "0.25.0"
 dependencies = [
  "btoi",
@@ -1341,6 +1415,31 @@ dependencies = [
  "git-pack 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile",
  "thiserror",
+]
+
+[[package]]
+name = "git-pack"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e8aa7eded672fda783b1e248a5db9cc9d9bfc5b3acc1efdf3f28a8bf3789d380"
+dependencies = [
+ "btoi",
+ "byteorder",
+ "bytesize",
+ "clru",
+ "dashmap",
+ "filebuffer",
+ "git-diff 0.11.1",
+ "git-features 0.17.0",
+ "git-hash 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-object 0.15.1",
+ "git-tempfile 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-traverse 0.10.1",
+ "itoa",
+ "parking_lot",
+ "smallvec",
+ "thiserror",
+ "uluru",
 ]
 
 [[package]]
@@ -1430,6 +1529,25 @@ dependencies = [
 
 [[package]]
 name = "git-protocol"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e48b559bd03df1bee77c16b06cdeb5592b412e4035a3492e646f3c87114c4f4e"
+dependencies = [
+ "async-trait",
+ "bstr",
+ "btoi",
+ "futures-io",
+ "futures-lite",
+ "git-features 0.17.0",
+ "git-hash 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-transport 0.13.1",
+ "maybe-async",
+ "nom",
+ "quick-error",
+]
+
+[[package]]
+name = "git-protocol"
 version = "0.13.0"
 dependencies = [
  "async-std",
@@ -1450,21 +1568,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-protocol"
-version = "0.13.0"
+name = "git-ref"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "825154ac3732728d5ba9fbd249290c4d09c92865efd664a6b30921e96d4381e2"
+checksum = "6f86152528fbcc6f1ce78b7b4fb18dd0258183bd2de690b25ed422b56bd63117"
 dependencies = [
- "async-trait",
- "bstr",
- "btoi",
- "futures-io",
- "futures-lite",
- "git-features 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "filebuffer",
+ "git-actor 0.6.0",
+ "git-features 0.17.0",
  "git-hash 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-transport 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "maybe-async",
+ "git-lock 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-object 0.15.1",
+ "git-tempfile 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-validate 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "nom",
+ "os_str_bytes 3.1.0",
  "quick-error",
 ]
 
@@ -1608,6 +1726,24 @@ dependencies = [
 
 [[package]]
 name = "git-transport"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d2c0d09673a172071670aa2db9a04ab459c2dbf9130ba3ad549a92520ef2473"
+dependencies = [
+ "async-trait",
+ "bstr",
+ "futures-io",
+ "futures-lite",
+ "git-features 0.17.0",
+ "git-packetline 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-url 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pin-project-lite",
+ "quick-error",
+ "thiserror",
+]
+
+[[package]]
+name = "git-transport"
 version = "0.14.0"
 dependencies = [
  "async-std",
@@ -1630,21 +1766,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-transport"
-version = "0.14.0"
+name = "git-traverse"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d549996399b263d3eceb7a2f6f59e78ae85ed150eb9c16187bf4df89f5544331"
+checksum = "3aa135b6cf4525deeb70dde2420ce886780dc2ef24a871cebe25291b9f26088a"
 dependencies = [
- "async-trait",
- "bstr",
- "futures-io",
- "futures-lite",
- "git-features 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-packetline 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-url 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "pin-project-lite",
+ "git-hash 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-object 0.15.1",
  "quick-error",
- "thiserror",
 ]
 
 [[package]]
@@ -2025,7 +2154,7 @@ dependencies = [
 [[package]]
 name = "link-git"
 version = "0.1.0"
-source = "git+https://github.com/Byron/radicle-link.git?rev=6c9ad7aeadcf2b04f87cc01c9825c472c3ba0911#6c9ad7aeadcf2b04f87cc01c9825c472c3ba0911"
+source = "git+https://github.com/radicle-dev/radicle-link?rev=b1c4971ba78d562d617a7620c5ec9409571fbbd0#b1c4971ba78d562d617a7620c5ec9409571fbbd0"
 dependencies = [
  "arc-swap",
  "async-process",
@@ -2034,17 +2163,17 @@ dependencies = [
  "bstr",
  "futures-lite",
  "futures-util",
- "git-actor 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-features 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-actor 0.6.0",
+ "git-features 0.17.0",
  "git-hash 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-lock 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-object 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-odb 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-pack 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-object 0.15.1",
+ "git-odb 0.23.0",
+ "git-pack 0.13.0",
  "git-packetline 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-protocol 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-ref 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "git-traverse 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-protocol 0.12.1",
+ "git-ref 0.9.1",
+ "git-traverse 0.10.1",
  "im",
  "once_cell",
  "parking_lot",
