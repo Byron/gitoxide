@@ -1,8 +1,6 @@
 //! Contains a borrowed Object bound to a buffer holding its decompressed data.
 
-use crate::{BlobRef, CommitRef, CommitRefIter, Kind, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
-
-use crate::Data;
+use crate::{BlobRef, CommitRef, CommitRefIter, Data, Kind, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
 
 impl<'a> Data<'a> {
     /// Constructs a new data object from `kind` and `data`.

@@ -196,23 +196,28 @@ mod expand {
             }
 
             let id = id.map(|oid| oid.into()).map_err(Error::InputIteration)?;
-            let obj = db.find(id, buf1, cache)?;
+            let (obj, location) = db.find(id, buf1, cache)?;
             stats.input_objects += 1;
             match input_object_expansion {
                 TreeAdditionsComparedToAncestor => {
                     use git_object::Kind::*;
                     let mut obj = obj;
+                    let mut location = location;
                     let mut id = id.to_owned();
 
                     loop {
-                        push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress, stats, false);
+                        push_obj_count_unique(&mut out, seen_objs, &id, location, progress, stats, false);
                         match obj.kind {
                             Tree | Blob => break,
                             Tag => {
                                 id = TagRefIter::from_bytes(obj.data)
                                     .target_id()
                                     .expect("every tag has a target");
-                                obj = db.find(id, buf1, cache)?;
+                                let tmp = db.find(id, buf1, cache)?;
+
+                                obj = tmp.0;
+                                location = tmp.1;
+
                                 stats.expanded_objects += 1;
                                 continue;
                             }
@@ -230,8 +235,10 @@ mod expand {
                                             Err(err) => return Err(Error::CommitDecode(err)),
                                         }
                                     }
-                                    let obj = db.find(tree_id, buf1, cache)?;
-                                    push_obj_count_unique(&mut out, seen_objs, &tree_id, &obj, progress, stats, true);
+                                    let (obj, location) = db.find(tree_id, buf1, cache)?;
+                                    push_obj_count_unique(
+                                        &mut out, seen_objs, &tree_id, location, progress, stats, true,
+                                    );
                                     git_object::TreeRefIter::from_bytes(obj.data)
                                 };
 
@@ -243,10 +250,10 @@ mod expand {
                                         |oid, buf| {
                                             stats.decoded_objects += 1;
                                             match db.find(oid, buf, cache).ok() {
-                                                Some(obj) => {
+                                                Some((obj, location)) => {
                                                     progress.inc();
                                                     stats.expanded_objects += 1;
-                                                    out.push(output::Count::from_data(oid, &obj));
+                                                    out.push(output::Count::from_data(oid, location));
                                                     obj.try_into_tree_iter()
                                                 }
                                                 None => None,
@@ -259,28 +266,22 @@ mod expand {
                                 } else {
                                     for commit_id in &parent_commit_ids {
                                         let parent_tree_id = {
-                                            let parent_commit_obj = db.find(commit_id, buf2, cache)?;
+                                            let (parent_commit_obj, location) = db.find(commit_id, buf2, cache)?;
 
                                             push_obj_count_unique(
-                                                &mut out,
-                                                seen_objs,
-                                                commit_id,
-                                                &parent_commit_obj,
-                                                progress,
-                                                stats,
-                                                true,
+                                                &mut out, seen_objs, commit_id, location, progress, stats, true,
                                             );
                                             CommitRefIter::from_bytes(parent_commit_obj.data)
                                                 .tree_id()
                                                 .expect("every commit has a tree")
                                         };
                                         let parent_tree = {
-                                            let parent_tree_obj = db.find(parent_tree_id, buf2, cache)?;
+                                            let (parent_tree_obj, location) = db.find(parent_tree_id, buf2, cache)?;
                                             push_obj_count_unique(
                                                 &mut out,
                                                 seen_objs,
                                                 &parent_tree_id,
-                                                &parent_tree_obj,
+                                                location,
                                                 progress,
                                                 stats,
                                                 true,
@@ -324,22 +325,22 @@ mod expand {
                 TreeContents => {
                     use git_object::Kind::*;
                     let mut id = id;
-                    let mut obj = obj;
+                    let mut obj = (obj, location);
                     loop {
-                        push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress, stats, false);
-                        match obj.kind {
+                        push_obj_count_unique(&mut out, seen_objs, &id, obj.1.clone(), progress, stats, false);
+                        match obj.0.kind {
                             Tree => {
                                 traverse_delegate.clear();
                                 git_traverse::tree::breadthfirst(
-                                    git_object::TreeRefIter::from_bytes(obj.data),
+                                    git_object::TreeRefIter::from_bytes(obj.0.data),
                                     &mut tree_traversal_state,
                                     |oid, buf| {
                                         stats.decoded_objects += 1;
                                         match db.find(oid, buf, cache).ok() {
-                                            Some(obj) => {
+                                            Some((obj, location)) => {
                                                 progress.inc();
                                                 stats.expanded_objects += 1;
-                                                out.push(output::Count::from_data(oid, &obj));
+                                                out.push(output::Count::from_data(oid, location));
                                                 obj.try_into_tree_iter()
                                             }
                                             None => None,
@@ -354,7 +355,7 @@ mod expand {
                                 break;
                             }
                             Commit => {
-                                id = CommitRefIter::from_bytes(obj.data)
+                                id = CommitRefIter::from_bytes(obj.0.data)
                                     .tree_id()
                                     .expect("every commit has a tree");
                                 stats.expanded_objects += 1;
@@ -363,7 +364,7 @@ mod expand {
                             }
                             Blob => break,
                             Tag => {
-                                id = TagRefIter::from_bytes(obj.data)
+                                id = TagRefIter::from_bytes(obj.0.data)
                                     .target_id()
                                     .expect("every tag has a target");
                                 stats.expanded_objects += 1;
@@ -373,7 +374,7 @@ mod expand {
                         }
                     }
                 }
-                AsIs => push_obj_count_unique(&mut out, seen_objs, &id, &obj, progress, stats, false),
+                AsIs => push_obj_count_unique(&mut out, seen_objs, &id, location, progress, stats, false),
             }
         }
         Ok((out, outcome))
@@ -384,7 +385,7 @@ mod expand {
         out: &mut Vec<output::Count>,
         all_seen: &impl util::InsertImmutable<ObjectId>,
         id: &oid,
-        obj: &crate::data::Object<'_>,
+        location: Option<crate::bundle::Location>,
         progress: &mut impl Progress,
         statistics: &mut Outcome,
         count_expanded: bool,
@@ -396,7 +397,7 @@ mod expand {
             if count_expanded {
                 statistics.expanded_objects += 1;
             }
-            out.push(output::Count::from_data(id, obj));
+            out.push(output::Count::from_data(id, location));
         }
     }
 

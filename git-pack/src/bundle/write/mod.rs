@@ -17,9 +17,9 @@ mod types;
 use types::{LockWriter, PassThrough};
 pub use types::{Options, Outcome};
 
-type ThinPackLookupFn = Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>>>;
+type ThinPackLookupFn = Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>>>;
 type ThinPackLookupFnSend =
-    Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>> + Send + 'static>;
+    Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>> + Send + 'static>;
 
 impl crate::Bundle {
     /// Given a `pack` data stream, write it along with a generated index into the `directory` if `Some` or discard all output if `None`.

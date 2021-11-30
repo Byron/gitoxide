@@ -1,5 +1,6 @@
-use git_features::threading::OwnShared;
 use std::path::PathBuf;
+
+use git_features::threading::OwnShared;
 
 use crate::store_impl::{file, packed};
 

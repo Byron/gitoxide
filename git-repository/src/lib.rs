@@ -143,7 +143,10 @@ mod ext;
 ///
 pub mod prelude {
     pub use git_features::parallel::reduce::Finalize;
-    pub use git_odb::{Find, FindExt, Write};
+    pub use git_odb::{
+        pack::{Find, FindExt},
+        Write,
+    };
 
     pub use crate::{easy::ext::*, ext::*};
 }

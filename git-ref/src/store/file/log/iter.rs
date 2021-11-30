@@ -1,8 +1,11 @@
-use crate::file::loose::reference::logiter::must_be_io_err;
-use crate::{file, FullNameRef};
 use git_object::bstr::ByteSlice;
 
-use crate::store_impl::file::{log, log::iter::decode::LineNumber};
+use crate::{
+    file,
+    file::loose::reference::logiter::must_be_io_err,
+    store_impl::file::{log, log::iter::decode::LineNumber},
+    FullNameRef,
+};
 
 ///
 pub mod decode {

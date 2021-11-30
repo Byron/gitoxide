@@ -20,6 +20,8 @@ fn refresh() {
 }
 
 mod iter {
+    use git_pack::Find;
+
     use crate::odb::store::linked::db;
 
     #[test]
@@ -46,7 +48,8 @@ mod iter {
 }
 
 mod locate {
-    use git_odb::{linked::Store, pack, Find};
+    use git_odb::{linked::Store, pack};
+    use git_pack::Find;
 
     use crate::{hex_to_id, odb::store::linked::db};
 

@@ -71,7 +71,7 @@ where
 pub mod ancestors {
     use std::ops::{Deref, DerefMut};
 
-    use git_odb::Find;
+    use git_odb::pack::Find;
 
     use crate::{
         easy,
@@ -110,7 +110,7 @@ pub mod ancestors {
                         let mut object_cache = state.try_borrow_mut_object_cache().ok()?;
                         if let Some(c) = object_cache.deref_mut() {
                             if let Some(kind) = c.get(&oid.to_owned(), buf) {
-                                return git_pack::data::Object::new(kind, buf).try_into_commit_iter();
+                                return git_object::Data::new(kind, buf).try_into_commit_iter();
                             }
                         }
                         match self
@@ -127,7 +127,7 @@ pub mod ancestors {
                             )
                             .ok()
                             .flatten()
-                            .and_then(|obj| obj.try_into_commit_iter())
+                            .and_then(|(obj, _location)| obj.try_into_commit_iter())
                         {
                             Some(_) => {
                                 if let Some(c) = object_cache.deref_mut() {

@@ -10,7 +10,7 @@ use git_repository::{
     easy::object,
     hash,
     hash::ObjectId,
-    odb,
+    objs, odb,
     odb::{loose, pack, Write},
     progress, Progress,
 };
@@ -88,7 +88,7 @@ quick_error! {
             display("Failed to write {} object {}", kind, id)
             source(&**err)
         }
-        Verify(err: pack::data::object::verify::Error) {
+        Verify(err: objs::data::verify::Error) {
             display("Object didn't verify after right after writing it")
             source(err)
             from()

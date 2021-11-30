@@ -3,7 +3,7 @@ mod changes {
         use git_diff::tree::{recorder, recorder::Change::*};
         use git_hash::{oid, ObjectId};
         use git_object::{bstr::ByteSlice, tree::EntryMode, TreeRefIter};
-        use git_odb::{linked, pack, Find};
+        use git_odb::{linked, pack, pack::Find};
 
         use crate::hex_to_id;
 
@@ -26,6 +26,7 @@ mod changes {
             let tree_id = db
                 .try_find(commit, buf, &mut pack::cache::Never)?
                 .ok_or_else(|| format!("start commit {:?} to be present", commit))?
+                .0
                 .decode()?
                 .into_commit()
                 .expect("id is actually a commit")
@@ -34,6 +35,7 @@ mod changes {
             Ok(db
                 .try_find(tree_id, buf, &mut pack::cache::Never)?
                 .expect("main tree present")
+                .0
                 .try_into_tree_iter()
                 .expect("id to be a tree"))
         }
@@ -53,7 +55,7 @@ mod changes {
                     db.try_find(oid, buf, &mut pack::cache::Never)
                         .ok()
                         .flatten()
-                        .and_then(|obj| obj.try_into_tree_iter())
+                        .and_then(|obj| obj.0.try_into_tree_iter())
                 },
                 &mut recorder,
             )?;
@@ -66,6 +68,7 @@ mod changes {
                 let commit = db
                     .try_find(commit_id, &mut buf, &mut pack::cache::Never)?
                     .ok_or_else(|| format!("start commit {:?} to be present", commit_id))?
+                    .0
                     .decode()?
                     .into_commit()
                     .expect("id is actually a commit");
@@ -78,17 +81,18 @@ mod changes {
             let current_tree = db
                 .try_find(main_tree_id, &mut buf, &mut pack::cache::Never)?
                 .expect("main tree present")
+                .0
                 .try_into_tree_iter()
                 .expect("id to be a tree");
             let mut buf2 = Vec::new();
             let previous_tree: Option<_> = {
                 parent_commit_id
                     .and_then(|id| db.try_find(id, &mut buf2, &mut pack::cache::Never).ok().flatten())
-                    .and_then(|c| c.decode().ok())
+                    .and_then(|(c, _l)| c.decode().ok())
                     .and_then(|c| c.into_commit())
                     .map(|c| c.tree())
                     .and_then(|tree| db.try_find(tree, &mut buf2, &mut pack::cache::Never).ok().flatten())
-                    .and_then(|tree| tree.try_into_tree_iter())
+                    .and_then(|(tree, _)| tree.try_into_tree_iter())
             };
 
             let mut recorder = git_diff::tree::Recorder::default();
@@ -99,7 +103,7 @@ mod changes {
                     db.try_find(oid, buf, &mut pack::cache::Never)
                         .ok()
                         .flatten()
-                        .and_then(|obj| obj.try_into_tree_iter())
+                        .and_then(|(obj, _)| obj.try_into_tree_iter())
                 },
                 &mut recorder,
             )?;
@@ -133,7 +137,7 @@ mod changes {
                 db.try_find(oid, buf, &mut pack::cache::Never)
                     .ok()
                     .flatten()
-                    .and_then(|o| o.try_into_commit_iter())
+                    .and_then(|t| t.0.try_into_commit_iter())
             })
             .collect::<Vec<_>>()
             .into_iter()

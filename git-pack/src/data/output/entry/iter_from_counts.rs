@@ -221,7 +221,7 @@ where
                                     entry
                                 }
                                 None => match db.try_find(count.id, buf, cache).map_err(Error::FindExisting)? {
-                                    Some(obj) => {
+                                    Some((obj, _location)) => {
                                         stats.decoded_and_recompressed_objects += 1;
                                         output::Entry::from_data(count, &obj)
                                     }
@@ -233,7 +233,7 @@ where
                             }
                         }
                         None => match db.try_find(count.id, buf, cache).map_err(Error::FindExisting)? {
-                            Some(obj) => {
+                            Some((obj, _location)) => {
                                 stats.decoded_and_recompressed_objects += 1;
                                 output::Entry::from_data(count, &obj)
                             }

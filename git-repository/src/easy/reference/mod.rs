@@ -1,7 +1,7 @@
 //!
 use std::ops::DerefMut;
 
-use git_odb::Find;
+use git_odb::pack::Find;
 use git_ref::file::ReferenceExt;
 
 use crate::{
@@ -67,7 +67,7 @@ where
         let oid = self.inner.peel_to_id_in_place(&state.refs, |oid, buf| {
             repo.odb
                 .try_find(oid, buf, pack_cache.deref_mut())
-                .map(|po| po.map(|o| (o.kind, o.data)))
+                .map(|po| po.map(|(o, _l)| (o.kind, o.data)))
         })?;
         Ok(Oid::from_id(oid, self.access))
     }

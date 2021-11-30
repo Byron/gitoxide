@@ -422,8 +422,9 @@ fn do_link_git_in_parallel<C>(
 where
     C: odb::pack::cache::DecodeEntry,
 {
-    use rayon::prelude::*;
     use std::iter::FromIterator;
+
+    use rayon::prelude::*;
     let bytes = std::sync::atomic::AtomicU64::default();
     let repo = link_git::odb::Odb {
         loose: link_git::odb::backend::Loose::at(repo.objects_dir()),

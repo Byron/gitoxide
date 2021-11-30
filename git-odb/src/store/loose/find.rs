@@ -1,7 +1,6 @@
 use std::{fs, io::Read, path::PathBuf};
 
 use git_features::zlib;
-use git_pack::data;
 
 use crate::store::loose::{sha1_path, Store, HEADER_READ_UNCOMPRESSED_BYTES};
 
@@ -42,7 +41,7 @@ impl Store {
         &self,
         id: impl AsRef<git_hash::oid>,
         out: &'a mut Vec<u8>,
-    ) -> Result<Option<data::Object<'a>>, Error> {
+    ) -> Result<Option<git_object::Data<'a>>, Error> {
         match self.find_inner(id.as_ref(), out) {
             Ok(obj) => Ok(Some(obj)),
             Err(err) => match err {
@@ -66,7 +65,7 @@ impl Store {
         }
     }
 
-    fn find_inner<'a>(&self, id: &git_hash::oid, buf: &'a mut Vec<u8>) -> Result<data::Object<'a>, Error> {
+    fn find_inner<'a>(&self, id: &git_hash::oid, buf: &'a mut Vec<u8>) -> Result<git_object::Data<'a>, Error> {
         let path = sha1_path(id, self.path.clone());
 
         let mut inflate = zlib::Inflate::default();
@@ -137,10 +136,6 @@ impl Store {
             buf.copy_within(decompressed_start + header_size.., 0);
         }
         buf.resize(size, 0);
-        Ok(git_pack::data::Object {
-            kind,
-            data: buf,
-            pack_location: None,
-        })
+        Ok(git_object::Data { kind, data: buf })
     }
 }

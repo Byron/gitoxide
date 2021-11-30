@@ -16,17 +16,6 @@ pub struct Entry {
     pub data_offset: u64,
 }
 
-/// A borrowed object using a borrowed slice as backing buffer.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct Object<'a> {
-    /// kind of object
-    pub kind: git_object::Kind,
-    /// decoded, decompressed data, owned by a backing store.
-    pub data: &'a [u8],
-    /// If `Some`, this object is from a pack whose pack location can be used to look up pack related information
-    pub pack_location: Option<crate::bundle::Location>,
-}
-
 mod file;
 pub use file::{decode_entry, verify, ResolvedBase};
 ///
@@ -34,8 +23,6 @@ pub mod header;
 
 ///
 pub mod entry;
-
-pub mod object;
 
 ///
 pub mod input;

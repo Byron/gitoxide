@@ -1,6 +1,6 @@
 use std::convert::Infallible;
 
-use git_odb::data::output::InOrderIter;
+use git_odb::pack::data::output::InOrderIter;
 
 #[test]
 fn in_order_stays_in_order() {

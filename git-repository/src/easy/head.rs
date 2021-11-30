@@ -79,8 +79,9 @@ where
 
 ///
 pub mod log {
-    use git_ref::FullNameRef;
     use std::convert::TryFrom;
+
+    use git_ref::FullNameRef;
 
     use crate::{easy, easy::Head};
 
