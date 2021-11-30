@@ -59,6 +59,7 @@ mod features {
 }
 
 mod odb {
+    use git_hash::oid;
     use std::path::PathBuf;
 
     use git_odb::{
@@ -573,6 +574,10 @@ mod odb {
 
     impl git_odb::Find for Handle {
         type Error = git_odb::compound::find::Error;
+
+        fn contains(&self, id: impl AsRef<oid>) -> bool {
+            todo!()
+        }
 
         fn try_find<'a>(
             &self,
