@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **[#250](https://github.com/Byron/gitoxide/issues/250)**
-    - Address FIXME related to git_pack::data::Object ([`96386fd`](https://github.com/Byron/gitoxide/commit/96386fd1379b32ce2333baf34f81133cb9817364))
+    - Address FIXME related to git_object::Data ([`96386fd`](https://github.com/Byron/gitoxide/commit/96386fd1379b32ce2333baf34f81133cb9817364))
     - move loose header manipulation from git-pack to git-object ([`598698b`](https://github.com/Byron/gitoxide/commit/598698b88c194bc0e6ef69539f9fa7246ebfab70))
  * **[#259](https://github.com/Byron/gitoxide/issues/259)**
     - sketch a little more how packs could be accessed ([`3fce8f2`](https://github.com/Byron/gitoxide/commit/3fce8f2b35ec6c2076f66fdde16a5f99a68326ac))

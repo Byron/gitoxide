@@ -1,5 +1,3 @@
-use git_pack::data;
-
 use crate::{
     pack,
     store::{compound, loose},
@@ -30,11 +28,11 @@ impl compound::Store {
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<Option<data::Object<'a>>, Error> {
+    ) -> Result<Option<git_object::Data<'a>>, Error> {
         let id = id.as_ref();
         for bundle in &self.bundles {
             if let Some(idx) = find_pack_index(bundle, id) {
-                let object = bundle.get_object_by_index(idx, buffer, pack_cache)?;
+                let (object, _location) = bundle.get_object_by_index(idx, buffer, pack_cache)?;
                 return Ok(Some(object));
             }
         }
@@ -68,7 +66,7 @@ impl compound::Store {
         object_index: u32,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<data::Object<'a>, pack::data::decode_entry::Error> {
+    ) -> Result<(git_object::Data<'a>, pack::bundle::Location), pack::data::decode_entry::Error> {
         self.bundles[pack_index].get_object_by_index(object_index, buffer, pack_cache)
     }
 }

@@ -12,6 +12,7 @@ thread-safe = []
 [dependencies]
 git-pack = { path = "../../git-pack", version = "*" }
 git-odb = { path = "../../git-odb", version = "*" }
+git-object = { path = "../../git-object", version = "*" }
 git-hash = { path = "../../git-hash", version ="^0.8.0" }
 git-ref = { path = "../../git-ref", version ="^0.10.0"}
 parking_lot = { version = "0.11.0", default-features = false }

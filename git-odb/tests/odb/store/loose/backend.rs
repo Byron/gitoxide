@@ -25,7 +25,7 @@ fn iter() {
     oids.sort();
     assert_eq!(oids, object_ids())
 }
-pub fn locate_oid(id: git_hash::ObjectId, buf: &mut Vec<u8>) -> git_pack::data::Object<'_> {
+pub fn locate_oid(id: git_hash::ObjectId, buf: &mut Vec<u8>) -> git_object::Data<'_> {
     ldb().try_find(id, buf).expect("read success").expect("id present")
 }
 
@@ -71,7 +71,7 @@ mod locate {
         },
     };
 
-    fn locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> git_pack::data::Object<'a> {
+    fn locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> git_object::Data<'a> {
         locate_oid(hex_to_id(hex), buf)
     }
 
@@ -173,7 +173,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         Ok(())
     }
 
-    fn try_locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> Option<git_pack::data::Object<'a>> {
+    fn try_locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> Option<git_object::Data<'a>> {
         ldb().try_find(hex_to_id(hex), buf).ok().flatten()
     }
 

@@ -5,12 +5,13 @@ mod locate {
 
     use crate::{fixture_path, hex_to_id, pack::SMALL_PACK_INDEX};
 
-    fn locate<'a>(hex_id: &str, out: &'a mut Vec<u8>) -> git_pack::data::Object<'a> {
+    fn locate<'a>(hex_id: &str, out: &'a mut Vec<u8>) -> git_object::Data<'a> {
         let bundle = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX)).expect("pack and idx");
         bundle
             .find(hex_to_id(hex_id), out, &mut pack::cache::Never)
             .expect("read success")
             .expect("id present")
+            .0
     }
 
     mod locate_and_verify {
@@ -27,7 +28,7 @@ mod locate {
 
                 let mut buf = Vec::new();
                 for entry in bundle.index.iter() {
-                    let obj = bundle
+                    let (obj, _location) = bundle
                         .find(entry.oid, &mut buf, &mut pack::cache::Never)?
                         .expect("id present");
                     obj.verify_checksum(entry.oid)?;

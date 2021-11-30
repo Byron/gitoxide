@@ -1,7 +1,7 @@
 use std::{convert::TryInto, ops::DerefMut};
 
 use git_hash::{oid, ObjectId};
-use git_odb::{Find, FindExt};
+use git_odb::pack::{Find, FindExt};
 use git_pack::cache::Object;
 use git_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
@@ -47,6 +47,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
                 .repo()?
                 .odb
                 .find(&id, &mut buf, state.try_borrow_mut_pack_cache()?.deref_mut())?
+                .0
                 .kind;
 
             if let Some(c) = object_cache.deref_mut() {
@@ -81,7 +82,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
             .odb
             .try_find(&id, &mut buf, state.try_borrow_mut_pack_cache()?.deref_mut())?
         {
-            Some(obj) => {
+            Some((obj, _location)) => {
                 let kind = obj.kind;
                 drop(obj);
                 if let Some(c) = object_cache.deref_mut() {

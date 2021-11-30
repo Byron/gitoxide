@@ -1,5 +1,3 @@
-use crate::data;
-
 impl crate::Bundle {
     /// Find an object with the given [`ObjectId`][git_hash::ObjectId] and place its data into `out`.
     ///
@@ -12,7 +10,7 @@ impl crate::Bundle {
         id: impl AsRef<git_hash::oid>,
         out: &'a mut Vec<u8>,
         cache: &mut impl crate::cache::DecodeEntry,
-    ) -> Result<Option<data::Object<'a>>, crate::data::decode_entry::Error> {
+    ) -> Result<Option<(git_object::Data<'a>, crate::bundle::Location)>, crate::data::decode_entry::Error> {
         let idx = match self.index.lookup(id) {
             Some(idx) => idx,
             None => return Ok(None),
@@ -31,7 +29,7 @@ impl crate::Bundle {
         idx: u32,
         out: &'a mut Vec<u8>,
         cache: &mut impl crate::cache::DecodeEntry,
-    ) -> Result<data::Object<'a>, crate::data::decode_entry::Error> {
+    ) -> Result<(git_object::Data<'a>, crate::bundle::Location), crate::data::decode_entry::Error> {
         let ofs = self.index.pack_offset_at_index(idx);
         let pack_entry = self.pack.entry(ofs);
         let header_size = pack_entry.header_size();
@@ -46,15 +44,19 @@ impl crate::Bundle {
                 },
                 cache,
             )
-            .map(move |r| crate::data::Object {
-                kind: r.kind,
-                data: out.as_slice(),
-                pack_location: Some(crate::bundle::Location {
-                    pack_id: self.pack.id,
-                    pack_offset: ofs,
-                    index_file_id: idx,
-                    entry_size: r.compressed_size + header_size,
-                }),
+            .map(move |r| {
+                (
+                    git_object::Data {
+                        kind: r.kind,
+                        data: out.as_slice(),
+                    },
+                    crate::bundle::Location {
+                        pack_id: self.pack.id,
+                        pack_offset: ofs,
+                        index_file_id: idx,
+                        entry_size: r.compressed_size + header_size,
+                    },
+                )
             })
     }
 }

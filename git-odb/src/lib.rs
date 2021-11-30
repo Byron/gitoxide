@@ -16,12 +16,13 @@
 //! * [`linked::Store`]
 //!   * A database containing various [`compound::Stores`][compound::Store] as gathered from `alternates` files.
 pub use git_pack as pack;
-pub use pack::{data, Find, FindExt};
 
 mod store;
 pub use store::{compound, linked, loose, sink, Sink};
 
 pub mod alternate;
 
+///
+pub mod find;
 mod traits;
-pub use traits::Write;
+pub use traits::{Find, FindExt, Write};

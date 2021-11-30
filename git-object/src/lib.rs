@@ -19,7 +19,8 @@ pub mod tag;
 pub mod tree;
 
 mod blob;
-mod data;
+///
+pub mod data;
 
 mod traits;
 pub use traits::WriteTo;

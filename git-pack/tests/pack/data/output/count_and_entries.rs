@@ -239,7 +239,11 @@ fn traversals() -> crate::Result {
         let head = hex_to_id("dfcb5e39ac6eb30179808bbab721e8a28ce1b52e");
         let mut commits = commit::Ancestors::new(Some(head), commit::ancestors::State::default(), {
             let db = Arc::clone(&db);
-            move |oid, buf| db.find_commit_iter(oid, buf, &mut pack::cache::Never).ok()
+            move |oid, buf| {
+                db.find_commit_iter(oid, buf, &mut pack::cache::Never)
+                    .ok()
+                    .map(|(o, _)| o)
+            }
         })
         .map(Result::unwrap)
         .collect::<Vec<_>>();
@@ -270,7 +274,7 @@ fn traversals() -> crate::Result {
         )?;
         let actual_count = counts.iter().fold(ObjectCount::default(), |mut c, e| {
             let mut buf = Vec::new();
-            if let Some(obj) = db.find(e.id, &mut buf, &mut pack::cache::Never).ok() {
+            if let Some((obj, _location)) = db.find(e.id, &mut buf, &mut pack::cache::Never).ok() {
                 c.add(obj.kind);
             }
             c
@@ -374,7 +378,7 @@ fn write_and_verify(
             progress::Discard,
             &should_interrupt,
             Some(Box::new(move |oid, buf| {
-                db.find(oid, buf, &mut git_pack::cache::Never).ok()
+                db.find(oid, buf, &mut git_pack::cache::Never).ok().map(|(o, l)| o)
             })),
             pack::bundle::write::Options::default(),
         )?

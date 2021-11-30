@@ -1,7 +1,7 @@
 //!
 use std::{ops::DerefMut, path::Path};
 
-use git_odb::Find;
+use git_odb::pack::Find;
 use git_ref::file::ReferenceExt;
 
 use crate::easy;
@@ -83,7 +83,7 @@ where
                         r.peel_to_id_in_place(&state.refs, |oid, buf| {
                             repo.odb
                                 .try_find(oid, buf, pack_cache.deref_mut())
-                                .map(|po| po.map(|o| (o.kind, o.data)))
+                                .map(|po| po.map(|(o, _l)| (o.kind, o.data)))
                         })
                         .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
                         .map(|_| r)

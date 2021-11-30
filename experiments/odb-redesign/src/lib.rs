@@ -62,10 +62,7 @@ mod odb {
     use git_hash::oid;
     use std::path::PathBuf;
 
-    use git_odb::{
-        data::Object,
-        pack::{bundle::Location, cache::DecodeEntry, find::Entry, Bundle},
-    };
+    use git_odb::pack::{bundle::Location, cache::DecodeEntry, find::Entry, Bundle};
 
     use crate::{
         features,
@@ -483,9 +480,10 @@ mod odb {
                                             .do_load(|path| {
                                                 git_pack::data::File::at(path).map(features::OwnShared::new).map_err(
                                                     |err| match err {
-                                                        git_odb::data::header::decode::Error::Io { source, .. } => {
-                                                            source
-                                                        }
+                                                        git_odb::pack::data::header::decode::Error::Io {
+                                                            source,
+                                                            ..
+                                                        } => source,
                                                         other => std::io::Error::new(std::io::ErrorKind::Other, other),
                                                     },
                                                 )
@@ -572,7 +570,7 @@ mod odb {
         }
     }
 
-    impl git_odb::Find for Handle {
+    impl git_odb::pack::Find for Handle {
         type Error = git_odb::compound::find::Error;
 
         fn contains(&self, id: impl AsRef<oid>) -> bool {
@@ -584,7 +582,7 @@ mod odb {
             id: impl AsRef<git_hash::oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl DecodeEntry,
-        ) -> Result<Option<Object<'a>>, Self::Error> {
+        ) -> Result<Option<(git_object::Data<'a>, Option<git_pack::bundle::Location>)>, Self::Error> {
             // TODO: if the generation changes, we need to clear the pack-cache as it depends on pack-ids.
             //       Can we simplify this so it's more obvious what generation does?
             todo!()

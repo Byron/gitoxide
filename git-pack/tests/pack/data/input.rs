@@ -27,10 +27,9 @@ mod lookup_ref_delta_objects {
     }
 
     fn entry(header: Header, data: &'static [u8]) -> input::Entry {
-        let obj = data::Object {
+        let obj = git_object::Data {
             kind: header.as_kind().unwrap_or(git_object::Kind::Blob),
             data,
-            pack_location: None,
         };
         let mut entry = input::Entry::from_data_obj(&obj, 0).expect("valid object");
         entry.header = header;
@@ -94,10 +93,9 @@ mod lookup_ref_delta_objects {
             calls += 1;
             buf.resize(inserted_data.len(), 0);
             buf.copy_from_slice(inserted_data);
-            Some(data::Object {
+            Some(git_object::Data {
                 kind: git_object::Kind::Blob,
                 data: buf.as_slice(),
-                pack_location: None,
             })
         });
         assert_eq!(iter.size_hint(), (actual_size.0, actual_size.1.map(|s| s * 2)),

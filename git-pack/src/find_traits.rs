@@ -1,4 +1,4 @@
-use crate::{data, find};
+use crate::find;
 
 /// Describe how object can be located in an object store with built-in facilities to supports packs specifically.
 ///
@@ -26,7 +26,7 @@ pub trait Find {
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl crate::cache::DecodeEntry, // TODO: remove this one once as soon as it's clear we have thread-local handles
-    ) -> Result<Option<data::Object<'a>>, Self::Error>;
+    ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error>;
 
     /// Find the packs location where an object with `id` can be found in the database, or `None` if there is no pack
     /// holding the object.
@@ -42,7 +42,7 @@ pub trait Find {
     /// Return the [`find::Entry`] for `location` if it is backed by a pack.
     ///
     /// Note that this is only in the interest of avoiding duplicate work during pack generation.
-    /// Pack locations can be obtained from a [`data::Object`].
+    /// Pack locations can be obtained from a [`git_object::Data`].
     ///
     /// # Notes
     ///
@@ -54,7 +54,7 @@ pub trait Find {
 mod ext {
     use git_object::{BlobRef, CommitRef, CommitRefIter, Kind, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
 
-    use crate::{data, find};
+    use crate::find;
 
     macro_rules! make_obj_lookup {
         ($method:ident, $object_variant:path, $object_kind:path, $object_type:ty) => {
@@ -65,16 +65,20 @@ mod ext {
                 id: impl AsRef<git_hash::oid>,
                 buffer: &'a mut Vec<u8>,
                 pack_cache: &mut impl crate::cache::DecodeEntry,
-            ) -> Result<$object_type, find::existing_object::Error<Self::Error>> {
+            ) -> Result<($object_type, Option<crate::bundle::Location>), find::existing_object::Error<Self::Error>> {
                 let id = id.as_ref();
                 self.try_find(id, buffer, pack_cache)
                     .map_err(find::existing_object::Error::Find)?
                     .ok_or_else(|| find::existing_object::Error::NotFound {
                         oid: id.as_ref().to_owned(),
                     })
-                    .and_then(|o| o.decode().map_err(find::existing_object::Error::Decode))
-                    .and_then(|o| match o {
-                        $object_variant(o) => return Ok(o),
+                    .and_then(|(o, l)| {
+                        o.decode()
+                            .map_err(find::existing_object::Error::Decode)
+                            .map(|o| (o, l))
+                    })
+                    .and_then(|(o, l)| match o {
+                        $object_variant(o) => return Ok((o, l)),
                         _other => Err(find::existing_object::Error::ObjectKind {
                             expected: $object_kind,
                         }),
@@ -92,18 +96,19 @@ mod ext {
                 id: impl AsRef<git_hash::oid>,
                 buffer: &'a mut Vec<u8>,
                 pack_cache: &mut impl crate::cache::DecodeEntry,
-            ) -> Result<$object_type, find::existing_iter::Error<Self::Error>> {
+            ) -> Result<($object_type, Option<crate::bundle::Location>), find::existing_iter::Error<Self::Error>> {
                 let id = id.as_ref();
                 self.try_find(id, buffer, pack_cache)
                     .map_err(find::existing_iter::Error::Find)?
                     .ok_or_else(|| find::existing_iter::Error::NotFound {
                         oid: id.as_ref().to_owned(),
                     })
-                    .and_then(|o| {
+                    .and_then(|(o, l)| {
                         o.$into_iter()
                             .ok_or_else(|| find::existing_iter::Error::ObjectKind {
                                 expected: $object_kind,
                             })
+                            .map(|i| (i, l))
                     })
             }
         };
@@ -117,7 +122,8 @@ mod ext {
             id: impl AsRef<git_hash::oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<data::Object<'a>, find::existing::Error<Self::Error>> {
+        ) -> Result<(git_object::Data<'a>, Option<crate::bundle::Location>), find::existing::Error<Self::Error>>
+        {
             let id = id.as_ref();
             self.try_find(id, buffer, pack_cache)
                 .map_err(find::existing::Error::Find)?
@@ -144,7 +150,7 @@ mod find_impls {
 
     use git_hash::oid;
 
-    use crate::{bundle::Location, data::Object, find, Bundle};
+    use crate::{bundle::Location, find, Bundle};
 
     impl<T> super::Find for std::sync::Arc<T>
     where
@@ -161,7 +167,7 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<Object<'a>>, Self::Error> {
+        ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
             self.deref().try_find(id, buffer, pack_cache)
         }
 
@@ -193,7 +199,7 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<Object<'a>>, Self::Error> {
+        ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
             self.deref().try_find(id, buffer, pack_cache)
         }
 

@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 use git_hash::oid;
-use git_pack::{data::Object, find::Entry};
+use git_pack::find::Entry;
 
 use crate::{
     pack,
@@ -9,7 +9,7 @@ use crate::{
     store::{compound, linked},
 };
 
-impl crate::Find for linked::Store {
+impl crate::pack::Find for linked::Store {
     type Error = compound::find::Error;
 
     /// Return true if the given object `id` is contained in the store.
@@ -28,7 +28,7 @@ impl crate::Find for linked::Store {
         id: impl AsRef<oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<Option<Object<'a>>, Self::Error> {
+    ) -> Result<Option<(git_object::Data<'a>, Option<pack::bundle::Location>)>, Self::Error> {
         let id = id.as_ref();
         for db in self.dbs.iter() {
             match db.internal_find_packed(id) {
@@ -38,12 +38,16 @@ impl crate::Find for linked::Store {
                 }) => {
                     return db
                         .internal_get_packed_object_by_index(pack_id, entry_index, buffer, pack_cache)
-                        .map(Some)
-                        .map_err(Into::into)
+                        .map(|(obj, location)| Some((obj, Some(location))))
+                        .map_err(Into::into);
                 }
                 None => {
                     if db.loose.contains(id) {
-                        return db.loose.try_find(id, buffer).map_err(Into::into);
+                        return db
+                            .loose
+                            .try_find(id, buffer)
+                            .map(|o| o.map(|o| (o, None)))
+                            .map_err(Into::into);
                     }
                 }
             }
@@ -102,7 +106,7 @@ impl crate::Find for linked::Store {
     }
 }
 
-impl crate::Find for &linked::Store {
+impl crate::pack::Find for &linked::Store {
     type Error = compound::find::Error;
 
     fn contains(&self, id: impl AsRef<oid>) -> bool {
@@ -114,7 +118,7 @@ impl crate::Find for &linked::Store {
         id: impl AsRef<oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<Option<Object<'a>>, Self::Error> {
+    ) -> Result<Option<(git_object::Data<'a>, Option<pack::bundle::Location>)>, Self::Error> {
         (*self).try_find(id, buffer, pack_cache)
     }
 

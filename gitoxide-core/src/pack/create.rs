@@ -7,7 +7,8 @@ use git_repository::{
     hash::ObjectId,
     interrupt,
     objs::bstr::ByteVec,
-    odb::{pack, pack::cache::DecodeEntry, FindExt},
+    odb::pack::FindExt,
+    odb::{pack, pack::cache::DecodeEntry},
     prelude::{Finalize, ReferenceAccessExt},
     progress, traverse, Progress,
 };
@@ -142,7 +143,11 @@ where
             let iter = Box::new(
                 traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), {
                     let db = Arc::clone(&odb);
-                    move |oid, buf| db.find_commit_iter(oid, buf, &mut pack::cache::Never).ok()
+                    move |oid, buf| {
+                        db.find_commit_iter(oid, buf, &mut pack::cache::Never)
+                            .ok()
+                            .map(|(o, _l)| o)
+                    }
                 })
                 .map(|res| res.map_err(Into::into))
                 .inspect(move |_| progress.inc()),

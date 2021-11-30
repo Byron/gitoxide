@@ -2,7 +2,7 @@ use std::convert::TryInto;
 
 use git_hash::ObjectId;
 
-use crate::data::{self, entry::Header, input};
+use crate::data::{entry::Header, input};
 
 /// An iterator to resolve thin packs on the fly.
 pub struct LookupRefDeltaObjectsIter<I, LFn> {
@@ -24,7 +24,7 @@ pub struct LookupRefDeltaObjectsIter<I, LFn> {
 impl<I, LFn> LookupRefDeltaObjectsIter<I, LFn>
 where
     I: Iterator<Item = Result<input::Entry, input::Error>>,
-    LFn: for<'a> FnMut(ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>>,
+    LFn: for<'a> FnMut(ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>>,
 {
     /// Create a new instance wrapping `iter` and using `lookup` as function to retrieve objects that will serve as bases
     /// for ref deltas seen while traversing `iter`.
@@ -82,7 +82,7 @@ where
 impl<I, LFn> Iterator for LookupRefDeltaObjectsIter<I, LFn>
 where
     I: Iterator<Item = Result<input::Entry, input::Error>>,
-    LFn: for<'a> FnMut(ObjectId, &'a mut Vec<u8>) -> Option<data::Object<'a>>,
+    LFn: for<'a> FnMut(ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>>,
 {
     type Item = Result<input::Entry, input::Error>;
 

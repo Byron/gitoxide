@@ -36,7 +36,11 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let all_commits = commit_id
-        .ancestors(|oid, buf| db.find_commit_iter(oid, buf, &mut odb::pack::cache::Never).ok())
+        .ancestors(|oid, buf| {
+            db.find_commit_iter(oid, buf, &mut odb::pack::cache::Never)
+                .ok()
+                .map(|(o, _l)| o)
+        })
         .collect::<Result<Vec<_>, _>>()?;
     let elapsed = start.elapsed();
     println!(
@@ -145,7 +149,7 @@ where
     C: odb::pack::cache::DecodeEntry,
 {
     let mut cache = new_cache();
-    let ancestors = tip.ancestors(|oid, buf| db.find_commit_iter(oid, buf, &mut cache).ok());
+    let ancestors = tip.ancestors(|oid, buf| db.find_commit_iter(oid, buf, &mut cache).ok().map(|(o, _l)| o));
     let mut commits = 0;
     for commit_id in ancestors {
         let _ = commit_id?;
@@ -208,13 +212,17 @@ where
             for commit in commits {
                 let tree_id = db
                     .try_find(commit, &mut buf, &mut cache)?
-                    .and_then(|o| o.try_into_commit_iter().and_then(|mut c| c.tree_id()))
+                    .and_then(|(o, _l)| o.try_into_commit_iter().and_then(|mut c| c.tree_id()))
                     .expect("commit as starting point");
 
                 let mut count = Count { entries: 0, seen };
-                db.find_tree_iter(tree_id, &mut buf2, &mut cache)?.traverse(
+                db.find_tree_iter(tree_id, &mut buf2, &mut cache)?.0.traverse(
                     &mut state,
-                    |oid, buf| db.find(oid, buf, &mut cache).ok().and_then(|o| o.try_into_tree_iter()),
+                    |oid, buf| {
+                        db.find(oid, buf, &mut cache)
+                            .ok()
+                            .and_then(|(o, _l)| o.try_into_tree_iter())
+                    },
                     &mut count,
                 )?;
                 entries += count.entries as u64;
@@ -271,12 +279,13 @@ where
                     |(count, buf, buf2, cache, state), commit| {
                         let tid = db
                             .find_commit_iter(commit, buf, cache)?
+                            .0
                             .tree_id()
                             .expect("commit as starting point");
                         count.entries = 0;
-                        db.find_tree_iter(tid, buf2, cache)?.traverse(
+                        db.find_tree_iter(tid, buf2, cache)?.0.traverse(
                             state,
-                            |oid, buf| db.find_tree_iter(oid, buf, cache).ok(),
+                            |oid, buf| db.find_tree_iter(oid, buf, cache).ok().map(|(o, _l)| o),
                             count,
                         )?;
                         entries.fetch_add(count.entries as u64, std::sync::atomic::Ordering::Relaxed);

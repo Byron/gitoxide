@@ -38,7 +38,11 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let all_commits = commit_id
-        .ancestors(|oid, buf| db.find_commit_iter(oid, buf, &mut odb::pack::cache::Never).ok())
+        .ancestors(|oid, buf| {
+            db.find_commit_iter(oid, buf, &mut odb::pack::cache::Never)
+                .ok()
+                .map(|(o, _l)| o)
+        })
         .collect::<Result<Vec<_>, _>>()?;
     let num_diffs = all_commits.len();
     let elapsed = start.elapsed();
@@ -64,17 +68,17 @@ fn main() -> anyhow::Result<()> {
         obj_cache: &mut memory_lru::MemoryLruCache<ObjectId, ObjectInfo>,
         db: &odb::linked::Store,
         pack_cache: &mut impl odb::pack::cache::DecodeEntry,
-    ) -> Option<odb::data::Object<'b>> {
+    ) -> Option<git_repository::objs::Data<'b>> {
         let oid = oid.to_owned();
         match obj_cache.get(&oid) {
             Some(ObjectInfo { kind, data }) => {
                 buf.resize(data.len(), 0);
                 buf.copy_from_slice(data);
-                Some(odb::data::Object::new(*kind, buf))
+                Some(git_repository::objs::Data::new(*kind, buf))
             }
             None => {
                 let obj = db.find(oid, buf, pack_cache).ok();
-                if let Some(ref obj) = obj {
+                if let Some((obj, _location)) = &obj {
                     obj_cache.insert(
                         oid,
                         ObjectInfo {
@@ -83,7 +87,7 @@ fn main() -> anyhow::Result<()> {
                         },
                     );
                 }
-                obj
+                obj.map(|(o, _l)| o)
             }
         }
     }
@@ -201,7 +205,7 @@ fn do_libgit2_treediff(commits: &[ObjectId], repo_dir: &std::path::Path, mode: C
 fn do_gitoxide_tree_diff<C, L>(commits: &[ObjectId], make_find: C, mode: Computation) -> anyhow::Result<usize>
 where
     C: Fn() -> L + Sync,
-    L: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<odb::data::Object<'b>>,
+    L: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<git_repository::objs::Data<'b>>,
 {
     let changes: usize = match mode {
         Computation::MultiThreaded => {
@@ -252,14 +256,14 @@ where
 
     fn find_tree_iter<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> Option<TreeRefIter<'b>>
     where
-        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<odb::data::Object<'a>>,
+        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_repository::objs::Data<'a>>,
     {
         find(id, buf).and_then(|o| o.try_into_tree_iter())
     }
 
     fn tree_iter_by_commit<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> TreeRefIter<'b>
     where
-        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<odb::data::Object<'a>>,
+        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_repository::objs::Data<'a>>,
     {
         let tid = find(id, buf)
             .expect("commit present")

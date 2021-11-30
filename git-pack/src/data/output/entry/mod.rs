@@ -123,7 +123,7 @@ impl output::Entry {
     }
 
     /// Create a new instance from the given `oid` and its corresponding git `obj`ect data.
-    pub fn from_data(count: &output::Count, obj: &data::Object<'_>) -> Result<Self, Error> {
+    pub fn from_data(count: &output::Count, obj: &git_object::Data<'_>) -> Result<Self, Error> {
         Ok(output::Entry {
             id: count.id.to_owned(),
             kind: Kind::Base(obj.kind),
