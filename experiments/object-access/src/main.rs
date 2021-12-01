@@ -71,6 +71,38 @@ fn main() -> anyhow::Result<()> {
         &repo.odb.dbs[0].loose.path,
         odb::pack::cache::Never::default,
         AccessMode::ObjectData,
+        LockMode::ReadThenWrite,
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide (uncached, Arc, RwLock + Write): confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    do_gitoxide_in_parallel_through_arc_rw_lock(
+        &hashes,
+        &repo.odb.dbs[0].loose.path,
+        odb::pack::cache::Never::default,
+        AccessMode::ObjectExists,
+        LockMode::ReadThenWrite,
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide (Arc, RwLock + Write): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
+        hashes.len(),
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let bytes = do_gitoxide_in_parallel_through_arc_rw_lock(
+        &hashes,
+        &repo.odb.dbs[0].loose.path,
+        odb::pack::cache::Never::default,
+        AccessMode::ObjectData,
         LockMode::UpgradableRead,
     )?;
     let elapsed = start.elapsed();
@@ -457,6 +489,7 @@ where
 
 enum LockMode {
     Read,
+    ReadThenWrite,
     UpgradableRead,
     UpgradableReadAndWrite,
 }
@@ -487,6 +520,11 @@ where
                             let obj = odb.read().find(hash, buf, cache)?;
                             bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
                         }
+                        LockMode::ReadThenWrite => {
+                            let obj = odb.read().find(hash, buf, cache)?;
+                            drop(odb.write());
+                            bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
+                        }
                         LockMode::UpgradableRead => {
                             let obj = odb.upgradable_read().find(hash, buf, cache)?;
                             bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
@@ -499,6 +537,10 @@ where
                     },
                     AccessMode::ObjectExists => match lock {
                         LockMode::Read => assert!(odb.read().contains(hash), "each traversed object exists"),
+                        LockMode::ReadThenWrite => {
+                            assert!(odb.read().contains(hash), "each traversed object exists");
+                            drop(odb.write());
+                        }
                         LockMode::UpgradableRead => {
                             assert!(odb.upgradable_read().contains(hash), "each traversed object exists")
                         }
