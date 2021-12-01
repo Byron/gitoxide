@@ -114,10 +114,11 @@ fn main() -> anyhow::Result<()> {
         &repo.odb.dbs[0].loose.path,
         odb::pack::cache::Never::default,
         AccessMode::ObjectData,
+        LockMode::Read,
     )?;
     let elapsed = start.elapsed();
     println!(
-        "parallel gitoxide (uncached, Arc, Lock): confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        "parallel gitoxide (uncached, Arc, RwLock): confirmed {} bytes in {:?} ({:0.0} objects/s)",
         bytes,
         elapsed,
         objs_per_sec(elapsed)
@@ -129,10 +130,43 @@ fn main() -> anyhow::Result<()> {
         &repo.odb.dbs[0].loose.path,
         odb::pack::cache::Never::default,
         AccessMode::ObjectExists,
+        LockMode::Read,
     )?;
     let elapsed = start.elapsed();
     println!(
-        "parallel gitoxide (Arc, Lock): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
+        "parallel gitoxide (Arc, RwLock): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
+        hashes.len(),
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let bytes = do_gitoxide_in_parallel_through_arc_rw_lock(
+        &hashes,
+        &repo.odb.dbs[0].loose.path,
+        odb::pack::cache::Never::default,
+        AccessMode::ObjectData,
+        LockMode::UpgradableRead,
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide (uncached, Arc, UpgradableRwLock): confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    do_gitoxide_in_parallel_through_arc_rw_lock(
+        &hashes,
+        &repo.odb.dbs[0].loose.path,
+        odb::pack::cache::Never::default,
+        AccessMode::ObjectExists,
+        LockMode::UpgradableRead,
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide (Arc, UpgradableRwLock): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
         hashes.len(),
         elapsed,
         objs_per_sec(elapsed)
@@ -389,11 +423,17 @@ where
     Ok(bytes.load(std::sync::atomic::Ordering::Acquire))
 }
 
+enum LockMode {
+    Read,
+    UpgradableRead,
+}
+
 fn do_gitoxide_in_parallel_through_arc_rw_lock<C>(
     hashes: &[ObjectId],
     repo: &Path,
     new_cache: impl Fn() -> C + Send + Clone,
     mode: AccessMode,
+    lock: LockMode,
 ) -> anyhow::Result<u64>
 where
     C: odb::pack::cache::DecodeEntry,
@@ -409,13 +449,22 @@ where
         |hashes, (buf, cache, odb)| {
             for hash in hashes {
                 match mode {
-                    AccessMode::ObjectData => {
-                        let obj = odb.read().find(hash, buf, cache)?;
-                        bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
-                    }
-                    AccessMode::ObjectExists => {
-                        assert!(odb.read().contains(hash), "each traversed object exists");
-                    }
+                    AccessMode::ObjectData => match lock {
+                        LockMode::Read => {
+                            let obj = odb.read().find(hash, buf, cache)?;
+                            bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
+                        }
+                        LockMode::UpgradableRead => {
+                            let obj = odb.upgradable_read().find(hash, buf, cache)?;
+                            bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
+                        }
+                    },
+                    AccessMode::ObjectExists => match lock {
+                        LockMode::Read => assert!(odb.read().contains(hash), "each traversed object exists"),
+                        LockMode::UpgradableRead => {
+                            assert!(odb.upgradable_read().contains(hash), "each traversed object exists")
+                        }
+                    },
                 }
             }
             Ok(())
