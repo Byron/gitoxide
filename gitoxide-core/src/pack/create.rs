@@ -7,10 +7,7 @@ use git_repository::{
     hash::ObjectId,
     interrupt,
     objs::bstr::ByteVec,
-    odb::{
-        pack,
-        pack::{cache::DecodeEntry, FindExt},
-    },
+    odb::{pack, pack::FindExt},
     prelude::{Finalize, ReferenceAccessExt},
     progress, traverse, Progress,
 };
@@ -110,7 +107,7 @@ pub fn create<W>(
         thin,
         thread_limit,
         statistics,
-        pack_cache_size_in_bytes,
+        pack_cache_size_in_bytes: _,
         object_cache_size_in_bytes,
         mut out,
     }: Context<W>,
@@ -145,7 +142,7 @@ where
             let iter = Box::new(
                 traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), {
                     let db = Arc::clone(&odb);
-                    move |oid, buf| db.find_commit_iter(oid, buf, &mut pack::cache::Never).ok().map(|t| t.0)
+                    move |oid, buf| db.find_commit_iter(oid, buf).ok().map(|t| t.0)
                 })
                 .map(|res| res.map_err(Into::into))
                 .inspect(move |_| progress.inc()),
@@ -181,7 +178,7 @@ where
             Some(1)
         };
         let (_, _, thread_count) = git::parallel::optimize_chunk_size_and_thread_limit(50, None, thread_limit, None);
-        let make_caches = move || {
+        let make_object_cache = move || {
             let per_thread_object_cache_size = object_cache_size_in_bytes / thread_count;
             let object_cache: Box<dyn pack::cache::Object> = if per_thread_object_cache_size < 10_000 {
                 Box::new(pack::cache::object::Never) as Box<dyn pack::cache::Object>
@@ -190,20 +187,21 @@ where
                     per_thread_object_cache_size,
                 ))
             };
-            let per_thread_object_pack_size = pack_cache_size_in_bytes / thread_count;
-            let pack_cache: Box<dyn DecodeEntry> = if per_thread_object_pack_size < 10_000 {
-                Box::new(pack::cache::Never) as Box<dyn DecodeEntry>
-            } else {
-                Box::new(pack::cache::lru::MemoryCappedHashmap::new(per_thread_object_pack_size))
-            };
-            (pack_cache, object_cache)
+            // TODO: bring this cache configuration back to where it belongs.
+            // let per_thread_object_pack_size = pack_cache_size_in_bytes / thread_count;
+            // let pack_cache: Box<dyn DecodeEntry> = if per_thread_object_pack_size < 10_000 {
+            //     Box::new(pack::cache::Never) as Box<dyn DecodeEntry>
+            // } else {
+            //     Box::new(pack::cache::lru::MemoryCappedHashmap::new(per_thread_object_pack_size))
+            // };
+            object_cache
         };
         let progress = progress::ThroughputOnDrop::new(progress);
         let input_object_expansion = expansion.into();
         let (mut counts, count_stats) = if may_use_multiple_threads {
             pack::data::output::count::objects(
                 Arc::clone(&odb),
-                make_caches,
+                make_object_cache,
                 input,
                 progress,
                 &interrupt::IS_INTERRUPTED,
@@ -214,10 +212,10 @@ where
                 },
             )?
         } else {
-            let mut caches = make_caches();
+            let mut object_cache = make_object_cache();
             pack::data::output::count::objects_unthreaded(
                 Arc::clone(&odb),
-                (&mut caches.0, &mut caches.1),
+                &mut object_cache,
                 input,
                 progress,
                 &interrupt::IS_INTERRUPTED,
@@ -236,7 +234,6 @@ where
         pack::data::output::InOrderIter::from(pack::data::output::entry::iter_from_counts(
             counts,
             Arc::clone(&odb),
-            || pack::cache::Never,
             progress,
             pack::data::output::entry::iter_from_counts::Options {
                 thread_limit,

@@ -1,6 +1,6 @@
 mod ancestor {
     use git_hash::{oid, ObjectId};
-    use git_odb::{linked::Store, pack, pack::FindExt};
+    use git_odb::{linked::Store, pack::FindExt};
     use git_traverse::commit;
 
     use crate::hex_to_id;
@@ -19,7 +19,7 @@ mod ancestor {
         commit::Ancestors::filtered(
             tips,
             commit::ancestors::State::default(),
-            move |oid, buf| db.find_commit_iter(oid, buf, &mut pack::cache::Never).ok().map(|t| t.0),
+            move |oid, buf| db.find_commit_iter(oid, buf).ok().map(|t| t.0),
             predicate,
         )
     }
@@ -45,7 +45,7 @@ mod ancestor {
     ) -> impl Iterator<Item = Result<ObjectId, commit::ancestors::Error>> {
         let db = db().expect("db instantiation works as its definitely valid");
         commit::Ancestors::new(tips, commit::ancestors::State::default(), move |oid, buf| {
-            db.find_commit_iter(oid, buf, &mut pack::cache::Never).ok().map(|t| t.0)
+            db.find_commit_iter(oid, buf).ok().map(|t| t.0)
         })
         .mode(mode)
     }

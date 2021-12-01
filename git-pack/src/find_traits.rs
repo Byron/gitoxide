@@ -25,7 +25,6 @@ pub trait Find {
         &self,
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
-        pack_cache: &mut impl crate::cache::DecodeEntry, // TODO: remove this one once as soon as it's clear we have thread-local handles
     ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error>;
 
     /// Find the packs location where an object with `id` can be found in the database, or `None` if there is no pack
@@ -64,10 +63,9 @@ mod ext {
                 &self,
                 id: impl AsRef<git_hash::oid>,
                 buffer: &'a mut Vec<u8>,
-                pack_cache: &mut impl crate::cache::DecodeEntry,
             ) -> Result<($object_type, Option<crate::bundle::Location>), find::existing_object::Error<Self::Error>> {
                 let id = id.as_ref();
-                self.try_find(id, buffer, pack_cache)
+                self.try_find(id, buffer)
                     .map_err(find::existing_object::Error::Find)?
                     .ok_or_else(|| find::existing_object::Error::NotFound {
                         oid: id.as_ref().to_owned(),
@@ -95,10 +93,9 @@ mod ext {
                 &self,
                 id: impl AsRef<git_hash::oid>,
                 buffer: &'a mut Vec<u8>,
-                pack_cache: &mut impl crate::cache::DecodeEntry,
             ) -> Result<($object_type, Option<crate::bundle::Location>), find::existing_iter::Error<Self::Error>> {
                 let id = id.as_ref();
-                self.try_find(id, buffer, pack_cache)
+                self.try_find(id, buffer)
                     .map_err(find::existing_iter::Error::Find)?
                     .ok_or_else(|| find::existing_iter::Error::NotFound {
                         oid: id.as_ref().to_owned(),
@@ -121,11 +118,10 @@ mod ext {
             &self,
             id: impl AsRef<git_hash::oid>,
             buffer: &'a mut Vec<u8>,
-            pack_cache: &mut impl crate::cache::DecodeEntry,
         ) -> Result<(git_object::Data<'a>, Option<crate::bundle::Location>), find::existing::Error<Self::Error>>
         {
             let id = id.as_ref();
-            self.try_find(id, buffer, pack_cache)
+            self.try_find(id, buffer)
                 .map_err(find::existing::Error::Find)?
                 .ok_or_else(|| find::existing::Error::NotFound {
                     oid: id.as_ref().to_owned(),
@@ -166,9 +162,8 @@ mod find_impls {
             &self,
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
-            pack_cache: &mut impl crate::cache::DecodeEntry,
         ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
-            self.deref().try_find(id, buffer, pack_cache)
+            self.deref().try_find(id, buffer)
         }
 
         fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
@@ -198,9 +193,8 @@ mod find_impls {
             &self,
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
-            pack_cache: &mut impl crate::cache::DecodeEntry,
         ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
-            self.deref().try_find(id, buffer, pack_cache)
+            self.deref().try_find(id, buffer)
         }
 
         fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {

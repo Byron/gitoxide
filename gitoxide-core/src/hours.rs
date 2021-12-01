@@ -9,9 +9,7 @@ use std::{
 };
 
 use anyhow::{anyhow, bail};
-use git_repository::{
-    actor, bstr::BString, interrupt, objs, odb, odb::pack, prelude::*, progress, refs::file::ReferenceExt, Progress,
-};
+use git_repository::{actor, bstr::BString, interrupt, objs, prelude::*, progress, refs::file::ReferenceExt, Progress};
 use itertools::Itertools;
 use rayon::prelude::*;
 
@@ -52,7 +50,7 @@ where
         .find(refname.to_string_lossy().as_ref())?
         .peel_to_id_in_place(&repo.refs, |oid, buf| {
             repo.odb
-                .try_find(oid, buf, &mut pack::cache::Never)
+                .try_find(oid, buf)
                 .map(|obj| obj.map(|(obj, _location)| (obj.kind, obj.data)))
         })?
         .to_owned();
@@ -61,12 +59,11 @@ where
         let start = Instant::now();
         let mut progress = progress.add_child("Traverse commit graph");
         progress.init(None, progress::count("commits"));
-        let mut pack_cache = odb::pack::cache::Never;
         let mut commits: Vec<Vec<u8>> = Vec::new();
         for c in interrupt::Iter::new(
             commit_id.ancestors(|oid, buf| {
                 progress.inc();
-                repo.odb.find(oid, buf, &mut pack_cache).ok().map(|(o, _l)| {
+                repo.odb.find(oid, buf).ok().map(|(o, _l)| {
                     commits.push(o.data.to_owned());
                     objs::CommitRefIter::from_bytes(o.data)
                 })

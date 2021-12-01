@@ -36,11 +36,7 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let all_commits = commit_id
-        .ancestors(|oid, buf| {
-            db.find_commit_iter(oid, buf, &mut odb::pack::cache::Never)
-                .ok()
-                .map(|t| t.0)
-        })
+        .ancestors(|oid, buf| db.find_commit_iter(oid, buf).ok().map(|t| t.0))
         .collect::<Result<Vec<_>, _>>()?;
     let elapsed = start.elapsed();
     println!(
@@ -143,13 +139,13 @@ fn main() -> anyhow::Result<()> {
 fn do_gitoxide_commit_graph_traversal<C>(
     tip: ObjectId,
     db: &odb::linked::Store,
-    new_cache: impl FnOnce() -> C,
+    // TODO: make use of the cache
+    _new_cache: impl FnOnce() -> C,
 ) -> anyhow::Result<usize>
 where
     C: odb::pack::cache::DecodeEntry,
 {
-    let mut cache = new_cache();
-    let ancestors = tip.ancestors(|oid, buf| db.find_commit_iter(oid, buf, &mut cache).ok().map(|t| t.0));
+    let ancestors = tip.ancestors(|oid, buf| db.find_commit_iter(oid, buf).ok().map(|t| t.0));
     let mut commits = 0;
     for commit_id in ancestors {
         let _ = commit_id?;
@@ -167,7 +163,7 @@ enum Computation {
 fn do_gitoxide_tree_dag_traversal<C>(
     commits: &[ObjectId],
     db: &odb::linked::Store,
-    new_cache: impl Fn() -> C + Sync + Send,
+    _new_cache: impl Fn() -> C + Sync + Send, // TODO: use this cache again
     mode: Computation,
 ) -> anyhow::Result<(usize, u64)>
 where
@@ -202,7 +198,6 @@ where
                 }
             }
 
-            let mut cache = new_cache();
             let mut buf = Vec::new();
             let mut buf2 = Vec::new();
             let mut state = tree::breadthfirst::State::default();
@@ -211,18 +206,14 @@ where
 
             for commit in commits {
                 let tree_id = db
-                    .try_find(commit, &mut buf, &mut cache)?
+                    .try_find(commit, &mut buf)?
                     .and_then(|(o, _l)| o.try_into_commit_iter().and_then(|mut c| c.tree_id()))
                     .expect("commit as starting point");
 
                 let mut count = Count { entries: 0, seen };
-                db.find_tree_iter(tree_id, &mut buf2, &mut cache)?.0.traverse(
+                db.find_tree_iter(tree_id, &mut buf2)?.0.traverse(
                     &mut state,
-                    |oid, buf| {
-                        db.find(oid, buf, &mut cache)
-                            .ok()
-                            .and_then(|(o, _l)| o.try_into_tree_iter())
-                    },
+                    |oid, buf| db.find(oid, buf).ok().and_then(|(o, _l)| o.try_into_tree_iter()),
                     &mut count,
                 )?;
                 entries += count.entries as u64;
@@ -264,28 +255,26 @@ where
                 .into_par_iter()
                 .try_for_each_init::<_, _, _, anyhow::Result<_>>(
                     {
-                        let new_cache = &new_cache;
                         let seen = &seen;
                         move || {
                             (
                                 Count { entries: 0, seen },
                                 Vec::<u8>::new(),
                                 Vec::<u8>::new(),
-                                new_cache(),
                                 tree::breadthfirst::State::default(),
                             )
                         }
                     },
-                    |(count, buf, buf2, cache, state), commit| {
+                    |(count, buf, buf2, state), commit| {
                         let tid = db
-                            .find_commit_iter(commit, buf, cache)?
+                            .find_commit_iter(commit, buf)?
                             .0
                             .tree_id()
                             .expect("commit as starting point");
                         count.entries = 0;
-                        db.find_tree_iter(tid, buf2, cache)?.0.traverse(
+                        db.find_tree_iter(tid, buf2)?.0.traverse(
                             state,
-                            |oid, buf| db.find_tree_iter(oid, buf, cache).ok().map(|t| t.0),
+                            |oid, buf| db.find_tree_iter(oid, buf).ok().map(|t| t.0),
                             count,
                         )?;
                         entries.fetch_add(count.entries as u64, std::sync::atomic::Ordering::Relaxed);

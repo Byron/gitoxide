@@ -62,7 +62,7 @@ mod odb {
     use std::path::PathBuf;
 
     use git_hash::oid;
-    use git_odb::pack::{bundle::Location, cache::DecodeEntry, find::Entry, Bundle};
+    use git_odb::pack::{bundle::Location, find::Entry, Bundle};
 
     use crate::{
         features,
@@ -581,7 +581,6 @@ mod odb {
             &self,
             id: impl AsRef<git_hash::oid>,
             buffer: &'a mut Vec<u8>,
-            pack_cache: &mut impl DecodeEntry,
         ) -> Result<Option<(git_object::Data<'a>, Option<git_pack::bundle::Location>)>, Self::Error> {
             // TODO: if the generation changes, we need to clear the pack-cache as it depends on pack-ids.
             //       Can we simplify this so it's more obvious what generation does? They must remain stable no matter what

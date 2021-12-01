@@ -117,14 +117,7 @@ pub mod ancestors {
                             .repo
                             .deref()
                             .odb
-                            .try_find(
-                                oid,
-                                buf,
-                                state
-                                    .try_borrow_mut_pack_cache()
-                                    .expect("BUG: pack cache is already borrowed")
-                                    .deref_mut(),
-                            )
+                            .try_find(oid, buf)
                             .ok()
                             .flatten()
                             .and_then(|(obj, _location)| obj.try_into_commit_iter())

@@ -27,7 +27,6 @@ impl crate::pack::Find for linked::Store {
         &self,
         id: impl AsRef<oid>,
         buffer: &'a mut Vec<u8>,
-        pack_cache: &mut impl pack::cache::DecodeEntry,
     ) -> Result<Option<(git_object::Data<'a>, Option<pack::bundle::Location>)>, Self::Error> {
         let id = id.as_ref();
         for db in self.dbs.iter() {
@@ -37,7 +36,7 @@ impl crate::pack::Find for linked::Store {
                     entry_index,
                 }) => {
                     return db
-                        .internal_get_packed_object_by_index(pack_id, entry_index, buffer, pack_cache)
+                        .internal_get_packed_object_by_index(pack_id, entry_index, buffer, &mut git_pack::cache::Never)
                         .map(|(obj, location)| Some((obj, Some(location))))
                         .map_err(Into::into);
                 }
@@ -117,9 +116,8 @@ impl crate::pack::Find for &linked::Store {
         &self,
         id: impl AsRef<oid>,
         buffer: &'a mut Vec<u8>,
-        pack_cache: &mut impl pack::cache::DecodeEntry,
     ) -> Result<Option<(git_object::Data<'a>, Option<pack::bundle::Location>)>, Self::Error> {
-        (*self).try_find(id, buffer, pack_cache)
+        (*self).try_find(id, buffer)
     }
 
     fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {

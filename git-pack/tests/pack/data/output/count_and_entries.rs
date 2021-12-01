@@ -239,7 +239,7 @@ fn traversals() -> crate::Result {
         let head = hex_to_id("dfcb5e39ac6eb30179808bbab721e8a28ce1b52e");
         let mut commits = commit::Ancestors::new(Some(head), commit::ancestors::State::default(), {
             let db = Arc::clone(&db);
-            move |oid, buf| db.find_commit_iter(oid, buf, &mut pack::cache::Never).ok().map(|t| t.0)
+            move |oid, buf| db.find_commit_iter(oid, buf).ok().map(|t| t.0)
         })
         .map(Result::unwrap)
         .collect::<Vec<_>>();
@@ -250,7 +250,7 @@ fn traversals() -> crate::Result {
         let deterministic_count_needs_single_thread = Some(1);
         let (counts, stats) = output::count::objects(
             db.clone(),
-            || (pack::cache::Never, pack::cache::object::Never),
+            || pack::cache::object::Never,
             commits
                 .into_iter()
                 .chain(std::iter::once(hex_to_id(if take.is_some() {
@@ -270,7 +270,7 @@ fn traversals() -> crate::Result {
         )?;
         let actual_count = counts.iter().fold(ObjectCount::default(), |mut c, e| {
             let mut buf = Vec::new();
-            if let Some((obj, _location)) = db.find(e.id, &mut buf, &mut pack::cache::Never).ok() {
+            if let Some((obj, _location)) = db.find(e.id, &mut buf).ok() {
                 c.add(obj.kind);
             }
             c
@@ -285,7 +285,6 @@ fn traversals() -> crate::Result {
         let mut entries_iter = output::entry::iter_from_counts(
             counts,
             db.clone(),
-            || pack::cache::Never,
             progress::Discard,
             output::entry::iter_from_counts::Options {
                 allow_thin_pack,
@@ -373,9 +372,7 @@ fn write_and_verify(
             Some(tmp_dir.path()),
             progress::Discard,
             &should_interrupt,
-            Some(Box::new(move |oid, buf| {
-                db.find(oid, buf, &mut git_pack::cache::Never).ok().map(|t| t.0)
-            })),
+            Some(Box::new(move |oid, buf| db.find(oid, buf).ok().map(|t| t.0))),
             pack::bundle::write::Options::default(),
         )?
         .data_path

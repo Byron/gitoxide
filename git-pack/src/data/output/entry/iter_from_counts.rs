@@ -22,11 +22,6 @@ use crate::data::{output, output::ChunkId};
 ///
 /// ## Discussion
 ///
-/// ### Caches
-///
-/// `make_cache` is only suitable for speeding up cache access of blobs as these are not looked up during counting anymore - it only
-/// sees trees as only these are needed for traversal/object counting.
-///
 /// ### Advantages
 ///
 /// * Begins writing immediately and supports back-pressure.
@@ -38,10 +33,9 @@ use crate::data::{output, output::ChunkId};
 ///   so with minimal overhead (especially compared to `gix index-from-pack`)~~ Probably works now by chaining Iterators
 ///  or keeping enough state to write a pack and then generate an index with recorded data.
 ///
-pub fn iter_from_counts<Find, Cache>(
+pub fn iter_from_counts<Find>(
     mut counts: Vec<output::Count>,
     db: Find,
-    make_cache: impl Fn() -> Cache + Send + Clone + 'static,
     mut progress: impl Progress,
     Options {
         version,
@@ -55,7 +49,6 @@ pub fn iter_from_counts<Find, Cache>(
 where
     Find: crate::Find + Send + Clone + 'static,
     <Find as crate::Find>::Error: Send,
-    Cache: crate::cache::DecodeEntry,
 {
     assert!(
         matches!(version, crate::data::Version::V2),
@@ -152,15 +145,14 @@ where
             let progress = Arc::clone(&progress);
             move |n| {
                 (
-                    Vec::new(),   // object data buffer
-                    make_cache(), // cache to speed up pack operations
+                    Vec::new(), // object data buffer
                     progress.lock().add_child(format!("thread {}", n)),
                 )
             }
         },
         {
             let counts = Arc::clone(&counts);
-            move |(chunk_id, chunk_range): (ChunkId, std::ops::Range<usize>), (buf, cache, progress)| {
+            move |(chunk_id, chunk_range): (ChunkId, std::ops::Range<usize>), (buf, progress)| {
                 let mut out = Vec::new();
                 let chunk = &counts[chunk_range];
                 let mut stats = Outcome::default();
@@ -220,7 +212,7 @@ where
                                     stats.objects_copied_from_pack += 1;
                                     entry
                                 }
-                                None => match db.try_find(count.id, buf, cache).map_err(Error::FindExisting)? {
+                                None => match db.try_find(count.id, buf).map_err(Error::FindExisting)? {
                                     Some((obj, _location)) => {
                                         stats.decoded_and_recompressed_objects += 1;
                                         output::Entry::from_data(count, &obj)
@@ -232,7 +224,7 @@ where
                                 },
                             }
                         }
-                        None => match db.try_find(count.id, buf, cache).map_err(Error::FindExisting)? {
+                        None => match db.try_find(count.id, buf).map_err(Error::FindExisting)? {
                             Some((obj, _location)) => {
                                 stats.decoded_and_recompressed_objects += 1;
                                 output::Entry::from_data(count, &obj)

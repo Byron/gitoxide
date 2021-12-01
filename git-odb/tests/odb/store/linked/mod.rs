@@ -48,7 +48,7 @@ mod iter {
 }
 
 mod locate {
-    use git_odb::{linked::Store, pack};
+    use git_odb::linked::Store;
     use git_pack::Find;
 
     use crate::{hex_to_id, odb::store::linked::db};
@@ -56,7 +56,7 @@ mod locate {
     fn can_locate(db: &Store, hex_id: &str) {
         let mut buf = vec![];
         assert!(db
-            .try_find(hex_to_id(hex_id), &mut buf, &mut pack::cache::Never)
+            .try_find(hex_to_id(hex_id), &mut buf)
             .expect("no read error")
             .is_some());
     }

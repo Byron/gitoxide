@@ -134,7 +134,7 @@ mod peel {
         let mut r: Reference = store.find_loose("dt1")?.into();
         assert_eq!(
             r.peel_to_id_in_place(&store, |oid, buf| {
-                odb.try_find(oid, buf, &mut git_odb::pack::cache::Never)
+                odb.try_find(oid, buf)
                     .map(|obj| obj.map(|(obj, _)| (obj.kind, obj.data)))
             })?,
             commit,

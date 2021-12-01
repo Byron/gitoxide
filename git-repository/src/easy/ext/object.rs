@@ -43,12 +43,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
                     return ObjectRef::from_current_buf(id, kind, self).map_err(Into::into);
                 }
             }
-            let kind = self
-                .repo()?
-                .odb
-                .find(&id, &mut buf, state.try_borrow_mut_pack_cache()?.deref_mut())?
-                .0
-                .kind;
+            let kind = self.repo()?.odb.find(&id, &mut buf)?.0.kind;
 
             if let Some(c) = object_cache.deref_mut() {
                 c.put(id, kind, &buf);
@@ -77,11 +72,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
                 return Ok(Some(ObjectRef::from_current_buf(id, kind, self)?));
             }
         }
-        match self
-            .repo()?
-            .odb
-            .try_find(&id, &mut buf, state.try_borrow_mut_pack_cache()?.deref_mut())?
-        {
+        match self.repo()?.odb.try_find(&id, &mut buf)? {
             Some((obj, _location)) => {
                 let kind = obj.kind;
                 drop(obj);

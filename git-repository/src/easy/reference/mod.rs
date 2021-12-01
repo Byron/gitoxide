@@ -1,5 +1,4 @@
 //!
-use std::ops::DerefMut;
 
 use git_odb::pack::Find;
 use git_ref::file::ReferenceExt;
@@ -63,11 +62,8 @@ where
     pub fn peel_to_id_in_place(&mut self) -> Result<Oid<'repo, A>, peel::Error> {
         let repo = self.access.repo()?;
         let state = self.access.state();
-        let mut pack_cache = state.try_borrow_mut_pack_cache()?;
         let oid = self.inner.peel_to_id_in_place(&state.refs, |oid, buf| {
-            repo.odb
-                .try_find(oid, buf, pack_cache.deref_mut())
-                .map(|po| po.map(|(o, _l)| (o.kind, o.data)))
+            repo.odb.try_find(oid, buf).map(|po| po.map(|(o, _l)| (o.kind, o.data)))
         })?;
         Ok(Oid::from_id(oid, self.access))
     }

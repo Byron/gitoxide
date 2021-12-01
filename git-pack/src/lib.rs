@@ -13,8 +13,6 @@
 //! When traversing all objects in a pack, a _delta tree acceleration structure_ can be built from pack data or an index
 //! in order to decompress packs in parallel and without any waste.
 
-pub use find_traits::{Find, FindExt};
-
 ///
 pub mod bundle;
 /// A bundle of pack data and the corresponding pack index
@@ -32,6 +30,9 @@ pub mod find;
 pub mod cache;
 ///
 pub mod data;
+
 mod find_traits;
+pub use find_traits::{Find, FindExt};
+
 ///
 pub mod index;

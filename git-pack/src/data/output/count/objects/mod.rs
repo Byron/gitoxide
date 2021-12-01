@@ -27,7 +27,7 @@ pub type Result<E1, E2> = std::result::Result<(Vec<output::Count>, Outcome), Err
 /// A [`Count`][output::Count] object maintains enough state to greatly accelerate future access of packed objects.
 ///
 /// * `db` - the object store to use for accessing objects.
-/// * `make_cache` - a function to create thread-local pack caches
+/// * `make_object_cache` - a function to create thread-local object cache
 /// * `objects_ids`
 ///   * A list of objects ids to add to the pack. Duplication checks are performed so no object is ever added to a pack twice.
 ///   * Objects may be expanded based on the provided [`options`][Options]
@@ -37,9 +37,9 @@ pub type Result<E1, E2> = std::result::Result<(Vec<output::Count>, Outcome), Err
 ///  * A flag that is set to true if the operation should stop
 /// * `options`
 ///   * more configuration
-pub fn objects<Find, Iter, IterErr, Oid, PackCache, ObjectCache>(
+pub fn objects<Find, Iter, IterErr, Oid, ObjectCache>(
     db: Find,
-    make_caches: impl Fn() -> (PackCache, ObjectCache) + Send + Clone,
+    make_object_cache: impl Fn() -> ObjectCache + Send + Clone,
     objects_ids: Iter,
     progress: impl Progress,
     should_interrupt: &AtomicBool,
@@ -55,7 +55,6 @@ where
     Iter: Iterator<Item = std::result::Result<Oid, IterErr>> + Send,
     Oid: Into<ObjectId> + Send,
     IterErr: std::error::Error + Send,
-    PackCache: crate::cache::DecodeEntry,
     ObjectCache: crate::cache::Object,
 {
     let lower_bound = objects_ids.size_hint().0;
@@ -79,9 +78,9 @@ where
             let progress = Arc::clone(&progress);
             move |n| {
                 (
-                    Vec::new(),    // object data buffer
-                    Vec::new(),    // object data buffer 2 to hold two objects at a time
-                    make_caches(), // cache to speed up pack and tree traveral operations
+                    Vec::new(),          // object data buffer
+                    Vec::new(),          // object data buffer 2 to hold two objects at a time
+                    make_object_cache(), // cache to speed up pack and tree traveral operations
                     {
                         let mut p = progress.lock().add_child(format!("thread {}", n));
                         p.init(None, git_features::progress::count("objects"));
@@ -91,7 +90,7 @@ where
             }
         },
         {
-            move |oids: Vec<std::result::Result<Oid, IterErr>>, (buf1, buf2, (pack_cache, object_cache), progress)| {
+            move |oids: Vec<std::result::Result<Oid, IterErr>>, (buf1, buf2, object_cache, progress)| {
                 expand::this(
                     &db,
                     input_object_expansion,
@@ -99,7 +98,6 @@ where
                     oids,
                     buf1,
                     buf2,
-                    pack_cache,
                     object_cache,
                     progress,
                     should_interrupt,
@@ -114,7 +112,7 @@ where
 /// Like [`objects()`] but using a single thread only to mostly save on the otherwise required overhead.
 pub fn objects_unthreaded<Find, IterErr, Oid>(
     db: Find,
-    (pack_cache, obj_cache): (&mut impl crate::cache::DecodeEntry, &mut impl crate::cache::Object),
+    obj_cache: &mut impl crate::cache::Object,
     object_ids: impl Iterator<Item = std::result::Result<Oid, IterErr>>,
     mut progress: impl Progress,
     should_interrupt: &AtomicBool,
@@ -135,7 +133,6 @@ where
         object_ids,
         &mut buf1,
         &mut buf2,
-        pack_cache,
         obj_cache,
         &mut progress,
         should_interrupt,
@@ -168,7 +165,6 @@ mod expand {
         oids: impl IntoIterator<Item = std::result::Result<Oid, IterErr>>,
         buf1: &mut Vec<u8>,
         buf2: &mut Vec<u8>,
-        cache: &mut impl crate::cache::DecodeEntry,
         obj_cache: &mut impl crate::cache::Object,
         progress: &mut impl Progress,
         should_interrupt: &AtomicBool,
@@ -196,7 +192,7 @@ mod expand {
             }
 
             let id = id.map(|oid| oid.into()).map_err(Error::InputIteration)?;
-            let (obj, location) = db.find(id, buf1, cache)?;
+            let (obj, location) = db.find(id, buf1)?;
             stats.input_objects += 1;
             match input_object_expansion {
                 TreeAdditionsComparedToAncestor => {
@@ -213,7 +209,7 @@ mod expand {
                                 id = TagRefIter::from_bytes(obj.data)
                                     .target_id()
                                     .expect("every tag has a target");
-                                let tmp = db.find(id, buf1, cache)?;
+                                let tmp = db.find(id, buf1)?;
 
                                 obj = tmp.0;
                                 location = tmp.1;
@@ -235,7 +231,7 @@ mod expand {
                                             Err(err) => return Err(Error::CommitDecode(err)),
                                         }
                                     }
-                                    let (obj, location) = db.find(tree_id, buf1, cache)?;
+                                    let (obj, location) = db.find(tree_id, buf1)?;
                                     push_obj_count_unique(
                                         &mut out, seen_objs, &tree_id, location, progress, stats, true,
                                     );
@@ -249,7 +245,7 @@ mod expand {
                                         &mut tree_traversal_state,
                                         |oid, buf| {
                                             stats.decoded_objects += 1;
-                                            match db.find(oid, buf, cache).ok() {
+                                            match db.find(oid, buf).ok() {
                                                 Some((obj, location)) => {
                                                     progress.inc();
                                                     stats.expanded_objects += 1;
@@ -266,7 +262,7 @@ mod expand {
                                 } else {
                                     for commit_id in &parent_commit_ids {
                                         let parent_tree_id = {
-                                            let (parent_commit_obj, location) = db.find(commit_id, buf2, cache)?;
+                                            let (parent_commit_obj, location) = db.find(commit_id, buf2)?;
 
                                             push_obj_count_unique(
                                                 &mut out, seen_objs, commit_id, location, progress, stats, true,
@@ -276,7 +272,7 @@ mod expand {
                                                 .expect("every commit has a tree")
                                         };
                                         let parent_tree = {
-                                            let (parent_tree_obj, location) = db.find(parent_tree_id, buf2, cache)?;
+                                            let (parent_tree_obj, location) = db.find(parent_tree_id, buf2)?;
                                             push_obj_count_unique(
                                                 &mut out,
                                                 seen_objs,
@@ -299,7 +295,7 @@ mod expand {
                                                     let id = oid.to_owned();
                                                     match obj_cache.get(&id, buf) {
                                                         Some(_kind) => git_object::TreeRefIter::from_bytes(buf).into(),
-                                                        None => match db.find_tree_iter(oid, buf, cache).ok() {
+                                                        None => match db.find_tree_iter(oid, buf).ok() {
                                                             Some(_) => {
                                                                 obj_cache.put(id, git_object::Kind::Tree, buf);
                                                                 git_object::TreeRefIter::from_bytes(buf).into()
@@ -336,7 +332,7 @@ mod expand {
                                     &mut tree_traversal_state,
                                     |oid, buf| {
                                         stats.decoded_objects += 1;
-                                        match db.find(oid, buf, cache).ok() {
+                                        match db.find(oid, buf).ok() {
                                             Some((obj, location)) => {
                                                 progress.inc();
                                                 stats.expanded_objects += 1;
@@ -359,7 +355,7 @@ mod expand {
                                     .tree_id()
                                     .expect("every commit has a tree");
                                 stats.expanded_objects += 1;
-                                obj = db.find(id, buf1, cache)?;
+                                obj = db.find(id, buf1)?;
                                 continue;
                             }
                             Blob => break,
@@ -368,7 +364,7 @@ mod expand {
                                     .target_id()
                                     .expect("every tag has a target");
                                 stats.expanded_objects += 1;
-                                obj = db.find(id, buf1, cache)?;
+                                obj = db.find(id, buf1)?;
                                 continue;
                             }
                         }
