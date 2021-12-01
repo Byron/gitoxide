@@ -213,9 +213,9 @@ mod odb {
         pub(crate) type HandleId = u32;
         /// These are not to be created by anyone except for the State
         pub(crate) enum HandleModeToken {
-            /// Pack-ids may change which may cause lookups by pack-id (without an oid available) to fail.
-            Unstable,
-            Stable,
+            DeletedPacksAreInaccessible,
+            /// This mode signals that we should not unload packs even after they went missing.
+            KeepDeletedPacksAvailable,
         }
 
         pub(crate) struct IndexFileBundle {
@@ -431,22 +431,22 @@ mod odb {
         pub(crate) fn register_handle(&self) -> policy::HandleModeToken {
             let mut state = get_mut(&self.state);
             state.num_handles_unstable += 1;
-            policy::HandleModeToken::Unstable
+            policy::HandleModeToken::DeletedPacksAreInaccessible
         }
         pub(crate) fn remove_handle(&self, mode: policy::HandleModeToken) {
             let mut state = get_mut(&self.state);
             match mode {
-                policy::HandleModeToken::Stable => state.num_handles_stable -= 1,
-                policy::HandleModeToken::Unstable => state.num_handles_unstable -= 1,
+                policy::HandleModeToken::KeepDeletedPacksAvailable => state.num_handles_stable -= 1,
+                policy::HandleModeToken::DeletedPacksAreInaccessible => state.num_handles_unstable -= 1,
             }
         }
         pub(crate) fn upgrade_handle(&self, mode: policy::HandleModeToken) -> policy::HandleModeToken {
-            if let policy::HandleModeToken::Unstable = mode {
+            if let policy::HandleModeToken::DeletedPacksAreInaccessible = mode {
                 let mut state = get_mut(&self.state);
                 state.num_handles_unstable -= 1;
                 state.num_handles_stable += 1;
             }
-            policy::HandleModeToken::Stable
+            policy::HandleModeToken::KeepDeletedPacksAvailable
         }
     }
 
@@ -584,7 +584,8 @@ mod odb {
             pack_cache: &mut impl DecodeEntry,
         ) -> Result<Option<(git_object::Data<'a>, Option<git_pack::bundle::Location>)>, Self::Error> {
             // TODO: if the generation changes, we need to clear the pack-cache as it depends on pack-ids.
-            //       Can we simplify this so it's more obvious what generation does?
+            //       Can we simplify this so it's more obvious what generation does? They must remain stable no matter what
+            //       as pack-caches also depend on them and we don't know about these.
             todo!()
         }
 

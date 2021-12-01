@@ -630,7 +630,8 @@ Please note that these are based on the following value system:
          have to make their pack data optional. If that happens, we definitely need some sort of policy to make this work. Definitely put `contains(oid)` into the `Find` trait
          or a separate trait to enforce us dealing with this and keep multi-pack indices in mind.
       - ✔️ Some operations rely on pack-ids and or indices into a vector to find a pack, and this must either be stable or stable for long enough especially in the presence 
-        of refreshes.
+        of refreshes. Keep pack-ids stable by matching them with their pack hashes. We still have to assure they won't be unloaded even after deletion on disk if somebody still
+        refers to them.
          - Make sure pack-ids are always incrementing, which is how it's currently implemented, too (more or less, it always restarts from 0 which should be fine but why risk it).
       - ✔️ Can we be sure that there won't be another type parameter in `Repository` for the refs database? If yes, we basically say that `ref-table` will work read-only or 
         hides its interior mutability behind RwLocks. It's probably going to be the latter as it should be fast enough, but it's sad there is inevitably some loss :/.
