@@ -25,7 +25,9 @@ impl compound::Store {
     ///
     /// Only loose and packed objects will be considered. See the [linked Db][crate::store::linked::Store] for a database with
     /// support for _git alternates_, i.e. linking to other repositories.
-    pub fn at(objects_directory: impl Into<PathBuf>) -> Result<compound::Store, Error> {
+    ///
+    /// `pack_id_offset` is used to allow multiple compound databases to be used for lookups without their pack-ids clashing.
+    pub fn at(objects_directory: impl Into<PathBuf>, pack_id_offset: u32) -> Result<compound::Store, Error> {
         let loose_objects = objects_directory.into();
         if !loose_objects.is_dir() {
             return Err(Error::Inaccessible(loose_objects));
@@ -44,7 +46,7 @@ impl compound::Store {
                                 (
                                     {
                                         // don't rely on crc32 for producing non-clashing ids. It's the kind of bug we don't want
-                                        b.pack.id = idx as u32;
+                                        b.pack.id = idx as u32 + pack_id_offset;
                                         b
                                     },
                                     mod_time,

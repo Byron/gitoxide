@@ -20,9 +20,15 @@ impl linked::Store {
     ///
     /// _git alternate_ files will be traversed to build a chain of [`compound::Store`] instances.
     pub fn at(objects_directory: impl Into<PathBuf>) -> Result<Self, Error> {
-        let mut dbs = vec![compound::Store::at(objects_directory.into())?];
+        let mut dbs = vec![compound::Store::at(objects_directory.into(), 0)?];
+
+        let compute_ofs = |db: &compound::Store| db.bundles.iter().map(|p| p.pack.id).max().map(|ofs| ofs + 1);
+        let mut ofs = compute_ofs(&dbs[0]).unwrap_or(0);
+
         for object_path in alternate::resolve(dbs[0].loose.path.clone())?.into_iter() {
-            dbs.push(compound::Store::at(object_path)?);
+            let store = compound::Store::at(object_path, ofs)?;
+            ofs = compute_ofs(&store).unwrap_or(ofs);
+            dbs.push(store);
         }
         assert!(
             !dbs.is_empty(),

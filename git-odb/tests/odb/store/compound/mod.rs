@@ -3,7 +3,7 @@ use git_odb::compound::Store;
 use crate::fixture_path;
 
 fn db() -> Store {
-    Store::at(fixture_path("objects")).expect("valid object path")
+    Store::at(fixture_path("objects"), 0).expect("valid object path")
 }
 
 mod init {

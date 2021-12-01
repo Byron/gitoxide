@@ -56,9 +56,8 @@ pub struct File {
     path: std::path::PathBuf,
     /// A hash to represent the `path` field when used with cache lookup, or a way to identify this pack by its location on disk.
     ///
-    /// Note that `path` might not be canonicalized, thus different hashes might actually refer to the same pack on disk. This will
-    /// only lead to less efficient cache usage.
-    /// TODO: remove this intrinsic id as it will henceforth be handled separately by the object store
+    /// These must be unique per pack and must be stable, that is they don't change if the pack doesn't change.
+    /// If the same id is assigned (or reassigned) to different packs, pack creation or cache access will fail in hard-to-debug ways.
     pub id: u32,
     version: Version,
     num_objects: u32,
