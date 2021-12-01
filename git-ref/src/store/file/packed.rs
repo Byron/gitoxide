@@ -73,7 +73,7 @@ pub mod transaction {
 pub(crate) mod modifiable {
     use std::time::SystemTime;
 
-    use git_features::threading::{get_mut, get_ref_upgradeable, upgrade_ref_to_mut, OwnShared};
+    use git_features::threading::{get_mut, get_ref, OwnShared};
 
     use crate::{file, packed};
 
@@ -95,9 +95,10 @@ pub(crate) mod modifiable {
             &self,
         ) -> Result<Option<OwnShared<packed::Buffer>>, packed::buffer::open::Error> {
             let packed_refs_modified_time = || self.packed_refs_path().metadata().and_then(|m| m.modified()).ok();
-            let state = get_ref_upgradeable(&self.packed);
+            let state = get_ref(&self.packed);
             let buffer = if state.buffer.is_none() {
-                let mut state = upgrade_ref_to_mut(state, &self.packed);
+                drop(state);
+                let mut state = get_mut(&self.packed);
                 state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
                 if state.buffer.is_some() {
                     state.modified = packed_refs_modified_time();
@@ -108,14 +109,16 @@ pub(crate) mod modifiable {
                 match (&state.modified, recent_modification) {
                     (None, None) => state.buffer.clone(),
                     (Some(_), None) => {
-                        let mut state = upgrade_ref_to_mut(state, &self.packed);
+                        drop(state);
+                        let mut state = get_mut(&self.packed);
                         state.buffer = None;
                         state.modified = None;
                         state.buffer.clone()
                     }
                     (Some(cached_time), Some(modified_time)) => {
                         if *cached_time < modified_time {
-                            let mut state = upgrade_ref_to_mut(state, &self.packed);
+                            drop(state);
+                            let mut state = get_mut(&self.packed);
                             state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
                             state.modified = Some(modified_time);
                             state.buffer.clone()
@@ -126,7 +129,8 @@ pub(crate) mod modifiable {
                         }
                     }
                     (None, Some(modified_time)) => {
-                        let mut state = upgrade_ref_to_mut(state, &self.packed);
+                        drop(state);
+                        let mut state = get_mut(&self.packed);
                         state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
                         state.modified = Some(modified_time);
                         state.buffer.clone()
