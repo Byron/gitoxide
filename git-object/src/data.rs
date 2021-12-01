@@ -7,7 +7,7 @@ impl<'a> Data<'a> {
     pub fn new(kind: Kind, data: &'a [u8]) -> Data<'a> {
         Data { kind, data }
     }
-    /// Decodes the data in the backing slice into a [`git_object::ObjectRef`], allowing to access all of its data
+    /// Decodes the data in the backing slice into a [`ObjectRef`], allowing to access all of its data
     /// conveniently. The cost of parsing an object is negligible.
     ///
     /// **Note** that [mutable, decoded objects][crate::Object] can be created from [`Data`]

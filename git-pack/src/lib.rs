@@ -7,7 +7,7 @@
 //! and make accessing objects within a pack feasible.
 //!
 //! A [Bundle] conveniently combines a data pack alongside its index to allow [finding][Find] objects or verifying the pack.
-//! Objects returned by `.find(…)` are [objects][data::Object] which know their pack location in order to speed up
+//! Objects returned by `.find(…)` are [objects][git_object::Data] which know their pack location in order to speed up
 //! various common operations like creating new packs from existing ones.
 //!
 //! When traversing all objects in a pack, a _delta tree acceleration structure_ can be built from pack data or an index
