@@ -14,6 +14,8 @@ pub enum Error {
     #[error(transparent)]
     Pack(#[from] pack::bundle::init::Error),
     #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
     Alternate(#[from] Box<crate::alternate::Error>),
 }
 
@@ -30,29 +32,30 @@ impl compound::Store {
         }
         let packs = match std::fs::read_dir(loose_objects.join("pack")) {
             Ok(entries) => {
-                let mut packs_and_sizes = entries
+                let mut packs_and_modification_time = entries
                     .filter_map(Result::ok)
                     .filter_map(|e| e.metadata().map(|md| (e.path(), md)).ok())
                     .filter(|(_, md)| md.file_type().is_file())
                     .filter(|(p, _)| p.extension().unwrap_or_default() == "idx")
-                    // TODO: make this configurable, git for instance sorts by modification date
-                    //       https://github.com/libgit2/libgit2/blob/main/src/odb_pack.c#L41-L158
                     .enumerate()
                     .map(|(idx, (p, md))| {
-                        pack::Bundle::at(p).map(|mut b| {
-                            (
-                                {
-                                    // don't rely on crc32 for producing non-clashing ids. It's the kind of bug we don't want
-                                    b.pack.id = idx as u32;
-                                    b
-                                },
-                                md.len(),
-                            )
+                        pack::Bundle::at(p).map_err(Error::from).and_then(|mut b| {
+                            md.modified().map_err(Into::into).map(|mod_time| {
+                                (
+                                    {
+                                        // don't rely on crc32 for producing non-clashing ids. It's the kind of bug we don't want
+                                        b.pack.id = idx as u32;
+                                        b
+                                    },
+                                    mod_time,
+                                )
+                            })
                         })
                     })
                     .collect::<Result<Vec<_>, _>>()?;
-                packs_and_sizes.sort_by_key(|e| e.1);
-                packs_and_sizes.into_iter().rev().map(|(b, _)| b).collect()
+                // Like libgit2, sort by modification date, newest first
+                packs_and_modification_time.sort_by(|l, r| l.1.cmp(&r.1).reverse());
+                packs_and_modification_time.into_iter().rev().map(|(b, _)| b).collect()
             }
             Err(_) => Vec::new(),
         };
