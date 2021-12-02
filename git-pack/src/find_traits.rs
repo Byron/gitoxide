@@ -50,6 +50,41 @@ pub trait Find {
     fn entry_by_location(&self, location: &crate::bundle::Location) -> Option<find::Entry<'_>>;
 }
 
+mod _impls {
+    use git_hash::oid;
+
+    impl<T> crate::Find for &T
+    where
+        T: crate::Find,
+    {
+        type Error = T::Error;
+
+        fn contains(&self, id: impl AsRef<oid>) -> bool {
+            (*self).contains(id)
+        }
+
+        fn try_find<'a>(
+            &self,
+            id: impl AsRef<oid>,
+            buffer: &'a mut Vec<u8>,
+        ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
+            (*self).try_find(id, buffer)
+        }
+
+        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<crate::bundle::Location> {
+            (*self).location_by_oid(id, buf)
+        }
+
+        fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&crate::Bundle> {
+            (*self).bundle_by_pack_id(pack_id)
+        }
+
+        fn entry_by_location(&self, location: &crate::bundle::Location) -> Option<crate::find::Entry<'_>> {
+            (*self).entry_by_location(location)
+        }
+    }
+}
+
 mod ext {
     use git_object::{BlobRef, CommitRef, CommitRefIter, Kind, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
 
