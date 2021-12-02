@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, option::Option::None, sync::Arc};
+use std::{ops::Deref, option::Option::None, sync::Arc};
 
 use git_hash::ObjectId;
 
@@ -28,14 +28,13 @@ pub struct AllObjects<Db> {
 
 impl<Db> AllObjects<Db>
 where
-    Db: Borrow<linked::Store>,
+    Db: Deref<Target = linked::Store>,
 {
     /// Create a new iterator from a linked database
     pub fn new(db: Db) -> Self {
         let db_index = 0;
         let db_state = {
             let db = &db
-                .borrow()
                 .dbs
                 .get(db_index)
                 .expect("at least one db or no linked::Store at all");
@@ -51,12 +50,12 @@ where
 
 impl<Db> Iterator for AllObjects<Db>
 where
-    Db: Borrow<linked::Store>,
+    Db: Deref<Target = linked::Store>,
 {
     type Item = Result<ObjectId, loose::iter::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let db = self.db.borrow();
+        let db = &self.db;
         if self.db_index == db.dbs.len() {
             return None;
         }
@@ -97,7 +96,7 @@ where
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let packed_objects = self.db.borrow().dbs.iter().fold(0usize, |dbc, db| {
+        let packed_objects = self.db.dbs.iter().fold(0usize, |dbc, db| {
             dbc.saturating_add(
                 db.bundles
                     .iter()
