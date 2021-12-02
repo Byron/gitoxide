@@ -1,3 +1,4 @@
+use crate::linked;
 use crate::linked::store::Handle;
 use git_features::threading::OwnShared;
 
@@ -17,6 +18,26 @@ impl<S> Handle<S> {
         self.new_object_cache = OwnShared::new(create);
         self.object_cache = (self.new_object_cache)();
         self
+    }
+}
+
+impl<'a> From<&'a linked::Store> for Handle<&'a linked::Store> {
+    fn from(store: &'a linked::Store) -> Self {
+        let new_pack_cache = OwnShared::new(|| -> Box<PackCache> { Box::new(git_pack::cache::Never) });
+        let new_object_cache = OwnShared::new(|| -> Box<ObjectCache> { Box::new(git_pack::cache::object::Never) });
+        Self {
+            store,
+            pack_cache: new_pack_cache(),
+            new_pack_cache,
+            object_cache: new_object_cache(),
+            new_object_cache,
+        }
+    }
+}
+
+impl linked::Store {
+    pub fn to_handle(&self) -> Handle<&Self> {
+        self.into()
     }
 }
 
