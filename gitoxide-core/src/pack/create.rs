@@ -171,12 +171,16 @@ where
     let counts = {
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
-        let may_use_multiple_threads = nondeterministic_count || matches!(expansion, ObjectExpansion::None);
+        let may_use_multiple_threads = (nondeterministic_count || matches!(expansion, ObjectExpansion::None))
+            && !matches!(expansion, ObjectExpansion::TreeDiff);
         let thread_limit = if may_use_multiple_threads {
             thread_limit
         } else {
             Some(1)
         };
+        if nondeterministic_count && !may_use_multiple_threads {
+            progress.fail("Cannot use multi-threaded counting in tree-diff object expansion mode as it may yield way too many objects.");
+        }
         let (_, _, thread_count) = git::parallel::optimize_chunk_size_and_thread_limit(50, None, thread_limit, None);
         let make_object_cache = move || {
             let per_thread_object_cache_size = object_cache_size_in_bytes / thread_count;
