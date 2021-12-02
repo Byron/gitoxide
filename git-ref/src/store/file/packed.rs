@@ -94,47 +94,51 @@ pub(crate) mod modifiable {
         pub(crate) fn assure_packed_refs_uptodate(
             &self,
         ) -> Result<Option<OwnShared<packed::Buffer>>, packed::buffer::open::Error> {
-            let packed_refs_modified_time = || self.packed_refs_path().metadata().and_then(|m| m.modified()).ok();
+            let packed_refs_path = self.packed_refs_path();
+            let packed_refs_modified_time = || packed_refs_path.metadata().and_then(|m| m.modified()).ok();
             let state = get_ref(&self.packed);
-            let buffer = if state.buffer.is_none() {
-                drop(state);
-                let mut state = get_mut(&self.packed);
-                state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
-                if state.buffer.is_some() {
-                    state.modified = packed_refs_modified_time();
-                }
-                state.buffer.clone()
-            } else {
-                let recent_modification = packed_refs_modified_time();
-                match (&state.modified, recent_modification) {
-                    (None, None) => state.buffer.clone(),
-                    (Some(_), None) => {
-                        drop(state);
-                        let mut state = get_mut(&self.packed);
+            let recent_modification = packed_refs_modified_time();
+            let buffer = match (&state.modified, recent_modification) {
+                (None, None) => state.buffer.clone(),
+                (Some(_), None) => {
+                    drop(state);
+                    let mut state = get_mut(&self.packed);
+                    // Still in the same situation? If so, drop the loaded buffer
+                    if let (Some(_), None) = (state.modified, packed_refs_modified_time()) {
                         state.buffer = None;
                         state.modified = None;
-                        state.buffer.clone()
                     }
-                    (Some(cached_time), Some(modified_time)) => {
-                        if *cached_time < modified_time {
-                            drop(state);
-                            let mut state = get_mut(&self.packed);
-                            state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
-                            state.modified = Some(modified_time);
-                            state.buffer.clone()
-                        } else {
-                            // Note that this relies on sub-section precision or else is a race when the packed file was just changed.
-                            // It's nothing we can know though, so… up to the caller unfortunately.
-                            state.buffer.clone()
-                        }
-                    }
-                    (None, Some(modified_time)) => {
+                    state.buffer.clone()
+                }
+                (Some(cached_time), Some(modified_time)) => {
+                    if *cached_time < modified_time {
                         drop(state);
                         let mut state = get_mut(&self.packed);
-                        state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
-                        state.modified = Some(modified_time);
+                        // in the common case, we check again and do what we do only if we are
+                        // still in the same situation, writers pile up.
+                        match (state.modified, packed_refs_modified_time()) {
+                            (Some(cached_time), Some(modified_time)) if cached_time < modified_time => {
+                                state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
+                                state.modified = Some(modified_time);
+                            }
+                            _ => {}
+                        }
+                        state.buffer.clone()
+                    } else {
+                        // Note that this relies on sub-section precision or else is a race when the packed file was just changed.
+                        // It's nothing we can know though, so… up to the caller unfortunately.
                         state.buffer.clone()
                     }
+                }
+                (None, Some(_modified_time)) => {
+                    drop(state);
+                    let mut state = get_mut(&self.packed);
+                    // Still in the same situation? If so, load the buffer.
+                    if let (None, Some(modified_time)) = (state.modified, packed_refs_modified_time()) {
+                        state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
+                        state.modified = Some(modified_time);
+                    }
+                    state.buffer.clone()
                 }
             };
             Ok(buffer)
