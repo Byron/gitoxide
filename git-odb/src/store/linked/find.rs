@@ -10,6 +10,40 @@ use crate::{
     store::{compound, linked},
 };
 
+impl linked::Store {
+    fn try_find<'a>(
+        &self,
+        id: impl AsRef<oid>,
+        buffer: &'a mut Vec<u8>,
+        pack_cache: &mut impl git_pack::cache::DecodeEntry,
+    ) -> Result<Option<(git_object::Data<'a>, Option<pack::bundle::Location>)>, compound::find::Error> {
+        let id = id.as_ref();
+        for db in self.dbs.iter() {
+            match db.internal_find_packed(id) {
+                Some(compound::find::PackLocation {
+                    bundle_index: pack_id,
+                    entry_index,
+                }) => {
+                    return db
+                        .internal_get_packed_object_by_index(pack_id, entry_index, buffer, pack_cache)
+                        .map(|(obj, location)| Some((obj, Some(location))))
+                        .map_err(Into::into);
+                }
+                None => {
+                    if db.loose.contains(id) {
+                        return db
+                            .loose
+                            .try_find(id, buffer)
+                            .map(|o| o.map(|o| (o, None)))
+                            .map_err(Into::into);
+                    }
+                }
+            }
+        }
+        Ok(None)
+    }
+}
+
 impl crate::pack::Find for linked::Store {
     type Error = compound::find::Error;
 
@@ -29,30 +63,7 @@ impl crate::pack::Find for linked::Store {
         id: impl AsRef<oid>,
         buffer: &'a mut Vec<u8>,
     ) -> Result<Option<(git_object::Data<'a>, Option<pack::bundle::Location>)>, Self::Error> {
-        let id = id.as_ref();
-        for db in self.dbs.iter() {
-            match db.internal_find_packed(id) {
-                Some(compound::find::PackLocation {
-                    bundle_index: pack_id,
-                    entry_index,
-                }) => {
-                    return db
-                        .internal_get_packed_object_by_index(pack_id, entry_index, buffer, &mut git_pack::cache::Never)
-                        .map(|(obj, location)| Some((obj, Some(location))))
-                        .map_err(Into::into);
-                }
-                None => {
-                    if db.loose.contains(id) {
-                        return db
-                            .loose
-                            .try_find(id, buffer)
-                            .map(|o| o.map(|o| (o, None)))
-                            .map_err(Into::into);
-                    }
-                }
-            }
-        }
-        Ok(None)
+        Self::try_find(self, id, buffer, &mut git_pack::cache::Never)
     }
 
     fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<pack::bundle::Location> {
