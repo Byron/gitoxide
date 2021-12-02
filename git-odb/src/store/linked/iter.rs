@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use std::{ops::Deref, option::Option::None, sync::Arc};
 
 use git_hash::ObjectId;
@@ -120,5 +121,10 @@ impl linked::Store {
     /// Useful in conjunction with `'static threads`.
     pub fn arc_iter(self: &Arc<linked::Store>) -> AllObjects<Arc<linked::Store>> {
         AllObjects::new(Arc::clone(self))
+    }
+
+    /// Like [`iter()`][linked::Store::iter()] but works with this instance living in an [`Rc`]
+    pub fn rc_iter(self: &Rc<linked::Store>) -> AllObjects<Rc<linked::Store>> {
+        AllObjects::new(Rc::clone(self))
     }
 }

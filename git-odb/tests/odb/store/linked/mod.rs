@@ -31,6 +31,12 @@ mod iter {
     }
 
     #[test]
+    fn rc_iter() {
+        let db = std::rc::Rc::new(db());
+        let _ = db.rc_iter();
+    }
+
+    #[test]
     fn a_bunch_of_loose_and_packed_objects() -> crate::Result {
         let db = db();
         let iter = db.iter();
