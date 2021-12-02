@@ -21,8 +21,11 @@ impl<S> Handle<S> {
     }
 }
 
-impl<'a> From<&'a linked::Store> for Handle<&'a linked::Store> {
-    fn from(store: &'a linked::Store) -> Self {
+impl<S> From<S> for Handle<S>
+where
+    S: git_pack::Find,
+{
+    fn from(store: S) -> Self {
         let new_pack_cache = OwnShared::new(|| -> Box<PackCache> { Box::new(git_pack::cache::Never) });
         let new_object_cache = OwnShared::new(|| -> Box<ObjectCache> { Box::new(git_pack::cache::object::Never) });
         Self {

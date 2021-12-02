@@ -577,10 +577,11 @@ mod odb {
             todo!()
         }
 
-        fn try_find<'a>(
+        fn try_find_cached<'a>(
             &self,
             id: impl AsRef<git_hash::oid>,
             buffer: &'a mut Vec<u8>,
+            pack_cache: &mut impl git_pack::cache::DecodeEntry,
         ) -> Result<Option<(git_object::Data<'a>, Option<git_pack::bundle::Location>)>, Self::Error> {
             // TODO: if the generation changes, we need to clear the pack-cache as it depends on pack-ids.
             //       Can we simplify this so it's more obvious what generation does? They must remain stable no matter what

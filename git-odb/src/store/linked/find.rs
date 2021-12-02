@@ -10,13 +10,26 @@ use crate::{
     store::{compound, linked},
 };
 
-impl linked::Store {
-    fn try_find<'a>(
+impl crate::pack::Find for linked::Store {
+    type Error = compound::find::Error;
+
+    /// Return true if the given object `id` is contained in the store.
+    fn contains(&self, id: impl AsRef<oid>) -> bool {
+        let id = id.as_ref();
+        for db in self.dbs.iter() {
+            if db.internal_find_packed(id).is_some() || db.loose.contains(id) {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn try_find_cached<'a>(
         &self,
         id: impl AsRef<oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl git_pack::cache::DecodeEntry,
-    ) -> Result<Option<(git_object::Data<'a>, Option<pack::bundle::Location>)>, compound::find::Error> {
+    ) -> Result<Option<(git_object::Data<'a>, Option<pack::bundle::Location>)>, Self::Error> {
         let id = id.as_ref();
         for db in self.dbs.iter() {
             match db.internal_find_packed(id) {
@@ -41,29 +54,6 @@ impl linked::Store {
             }
         }
         Ok(None)
-    }
-}
-
-impl crate::pack::Find for linked::Store {
-    type Error = compound::find::Error;
-
-    /// Return true if the given object `id` is contained in the store.
-    fn contains(&self, id: impl AsRef<oid>) -> bool {
-        let id = id.as_ref();
-        for db in self.dbs.iter() {
-            if db.internal_find_packed(id).is_some() || db.loose.contains(id) {
-                return true;
-            }
-        }
-        false
-    }
-
-    fn try_find<'a>(
-        &self,
-        id: impl AsRef<oid>,
-        buffer: &'a mut Vec<u8>,
-    ) -> Result<Option<(git_object::Data<'a>, Option<pack::bundle::Location>)>, Self::Error> {
-        Self::try_find(self, id, buffer, &mut git_pack::cache::Never)
     }
 
     fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<pack::bundle::Location> {

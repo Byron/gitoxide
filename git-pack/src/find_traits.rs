@@ -25,6 +25,21 @@ pub trait Find {
         &self,
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
+    ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
+        self.try_find_cached(id, buffer, &mut crate::cache::Never)
+    }
+
+    /// Like [`Find::try_find()`], but with support for controlling the pack cache.
+    /// A `pack_cache` can be used to speed up subsequent lookups, set it to [`crate::cache::Never`] if the
+    /// workload isn't suitable for caching.
+    ///
+    /// Returns `Some` object if it was present in the database, or the error that occurred during lookup or object
+    /// retrieval.
+    fn try_find_cached<'a>(
+        &self,
+        id: impl AsRef<git_hash::oid>,
+        buffer: &'a mut Vec<u8>,
+        pack_cache: &mut impl crate::cache::DecodeEntry,
     ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error>;
 
     /// Find the packs location where an object with `id` can be found in the database, or `None` if there is no pack
@@ -63,12 +78,13 @@ mod _impls {
             (*self).contains(id)
         }
 
-        fn try_find<'a>(
+        fn try_find_cached<'a>(
             &self,
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
+            pack_cache: &mut impl crate::cache::DecodeEntry,
         ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
-            (*self).try_find(id, buffer)
+            (*self).try_find_cached(id, buffer, pack_cache)
         }
 
         fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<crate::bundle::Location> {
@@ -193,12 +209,13 @@ mod find_impls {
             self.deref().contains(id)
         }
 
-        fn try_find<'a>(
+        fn try_find_cached<'a>(
             &self,
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
+            pack_cache: &mut impl crate::cache::DecodeEntry,
         ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
-            self.deref().try_find(id, buffer)
+            self.deref().try_find_cached(id, buffer, pack_cache)
         }
 
         fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
@@ -224,12 +241,13 @@ mod find_impls {
             self.deref().contains(id)
         }
 
-        fn try_find<'a>(
+        fn try_find_cached<'a>(
             &self,
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
+            pack_cache: &mut impl crate::cache::DecodeEntry,
         ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
-            self.deref().try_find(id, buffer)
+            self.deref().try_find_cached(id, buffer, pack_cache)
         }
 
         fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
