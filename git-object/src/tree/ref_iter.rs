@@ -32,12 +32,6 @@ impl<'a> TreeRefIter<'a> {
     }
 }
 
-impl<'a> Default for TreeRefIter<'a> {
-    fn default() -> Self {
-        TreeRefIter { data: &[] }
-    }
-}
-
 impl<'a> Iterator for TreeRefIter<'a> {
     type Item = Result<EntryRef<'a>, crate::decode::Error>;
 

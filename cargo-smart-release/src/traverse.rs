@@ -335,7 +335,7 @@ fn package_may_be_published(p: &Package) -> bool {
 
 fn forward_propagate_breaking_changes_for_publishing(
     ctx: &Context,
-    mut crates: &mut Vec<Dependency<'_>>,
+    crates: &mut Vec<Dependency<'_>>,
     bump_when_needed: bool,
     allow_auto_publish_of_stable_crates: bool,
 ) -> anyhow::Result<()> {
@@ -365,7 +365,7 @@ fn forward_propagate_breaking_changes_for_publishing(
 
         previous_edits = edits.clone();
         for edit_for_publish in edits {
-            edit_for_publish.apply(&mut crates, ctx, bump_when_needed, allow_auto_publish_of_stable_crates)?;
+            edit_for_publish.apply(crates, ctx, bump_when_needed, allow_auto_publish_of_stable_crates)?;
         }
     }
     Ok(())

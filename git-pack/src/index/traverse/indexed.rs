@@ -78,7 +78,7 @@ impl index::File {
                     thread_limit,
                     &should_interrupt,
                     pack.pack_end() as u64,
-                    move || new_processor(),
+                    new_processor,
                     |data,
                      progress,
                      Context {

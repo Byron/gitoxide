@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::{store, Namespace};
 
 #[derive(Clone)]

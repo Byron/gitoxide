@@ -120,10 +120,10 @@ fn num_threads(_thread_limit: Option<usize>) -> usize {
 /// Only available with the `parallel` feature toggle set.
 #[cfg(feature = "parallel")]
 fn num_threads(thread_limit: Option<usize>) -> usize {
-    let logical_cores = || num_cpus::get();
+    let logical_cores = num_cpus::get();
     thread_limit
-        .map(|l| if l == 0 { logical_cores() } else { l })
-        .unwrap_or_else(logical_cores)
+        .map(|l| if l == 0 { logical_cores } else { l })
+        .unwrap_or(logical_cores)
 }
 
 /// Run [`in_parallel()`] only if the given `condition()` returns true when eagerly evaluated.

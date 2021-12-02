@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::VecDeque;
 
 use git_hash::ObjectId;
 use git_object::{
@@ -37,8 +37,6 @@ pub enum Change {
 /// A [Visit][visit::Visit] implementation to record every observed change and keep track of the changed paths.
 #[derive(Clone, Debug, Default)]
 pub struct Recorder {
-    path_count: usize,
-    path_map: BTreeMap<usize, BString>,
     path_deque: VecDeque<BString>,
     path: BString,
     /// The observed changes.

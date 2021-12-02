@@ -32,7 +32,7 @@ pub(in crate::command::release_impl) fn edit_version_and_fixup_dependent_crates_
     let Options { dry_run, changelog, .. } = opts;
     let crates_and_versions_to_be_published: Vec<_> = crates
         .iter()
-        .filter_map(|c| try_to_published_crate_and_new_version(c))
+        .filter_map(try_to_published_crate_and_new_version)
         .collect();
     let GatherOutcome {
         pending_changelogs,

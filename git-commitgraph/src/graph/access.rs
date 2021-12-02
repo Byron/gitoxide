@@ -75,7 +75,7 @@ impl Graph {
                 None => {
                     return LookupByPositionResult {
                         file,
-                        file_index,
+                        _file_index: file_index,
                         pos: file::Position(remaining),
                     }
                 }
@@ -95,6 +95,6 @@ struct LookupByIdResult<'a> {
 #[derive(Clone)]
 struct LookupByPositionResult<'a> {
     pub file: &'a File,
-    pub file_index: usize,
+    pub _file_index: usize,
     pub pos: file::Position,
 }

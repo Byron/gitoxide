@@ -42,7 +42,7 @@ impl<'a> RemoteProgress<'a> {
             match current {
                 Some(current) => format!(
                     "{}: {}",
-                    current.splitn(2, ':').next().expect("token"),
+                    current.split_once(':').map_or(&*current, |x| x.0),
                     action.as_bstr()
                 ),
                 None => action.as_bstr().to_string(),

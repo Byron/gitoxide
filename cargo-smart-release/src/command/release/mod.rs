@@ -409,7 +409,7 @@ fn perform_release(ctx: &Context, options: Options, crates: &[traverse::Dependen
     let mut tag_names = Vec::new();
     let mut successful_publishees_and_version = Vec::new();
     let mut publish_err = None;
-    for (publishee, new_version) in crates.iter().filter_map(|c| try_to_published_crate_and_new_version(c)) {
+    for (publishee, new_version) in crates.iter().filter_map(try_to_published_crate_and_new_version) {
         if let Err(err) = cargo::publish_crate(publishee, options) {
             publish_err = Some(err);
             break;

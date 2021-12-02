@@ -90,7 +90,7 @@ impl<W: AsyncWrite + Unpin> AsyncWrite for LineWriter<'_, W> {
                         if n == 0 {
                             return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
                         }
-                        let (_, rest) = std::mem::replace(buf, &[]).split_at(n);
+                        let (_, rest) = std::mem::take(buf).split_at(n);
                         *buf = rest;
                     }
                     *this.state = State::WriteData(0)
@@ -117,7 +117,7 @@ impl<W: AsyncWrite + Unpin> AsyncWrite for LineWriter<'_, W> {
                         if n == 0 {
                             return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
                         }
-                        let (_, rest) = std::mem::replace(buf, &[]).split_at(n);
+                        let (_, rest) = std::mem::take(buf).split_at(n);
                         *buf = rest;
                     }
                     *this.state = State::Idle;

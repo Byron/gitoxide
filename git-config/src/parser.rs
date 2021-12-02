@@ -1150,8 +1150,8 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
         let header = match memchr::memrchr(b'.', name.as_bytes()) {
             Some(index) => ParsedSectionHeader {
                 name: SectionHeaderName(Cow::Borrowed(&name[..index])),
-                separator: name.get(index..=index).map(|slice| Cow::Borrowed(slice)),
-                subsection_name: name.get(index + 1..).map(|slice| Cow::Borrowed(slice)),
+                separator: name.get(index..=index).map(Cow::Borrowed),
+                subsection_name: name.get(index + 1..).map(Cow::Borrowed),
             },
             None => ParsedSectionHeader {
                 name: SectionHeaderName(Cow::Borrowed(name)),

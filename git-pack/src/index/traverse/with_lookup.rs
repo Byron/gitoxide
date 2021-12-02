@@ -14,7 +14,7 @@ mod options {
     use crate::index::traverse::SafetyCheck;
 
     /// Traversal options for [`traverse()`][crate::index::File::traverse_with_lookup()]
-    #[derive(Debug, Clone)]
+    #[derive(Default, Debug, Clone)]
     pub struct Options {
         /// If `Some`, only use the given amount of threads. Otherwise, the amount of threads to use will be selected based on
         /// the amount of available logical cores.
@@ -24,16 +24,6 @@ mod options {
         /// A flag to indicate whether the algorithm should be interrupted. Will be checked occasionally allow stopping a running
         /// computation.
         pub should_interrupt: Arc<AtomicBool>,
-    }
-
-    impl Default for Options {
-        fn default() -> Self {
-            Self {
-                thread_limit: Default::default(),
-                check: Default::default(),
-                should_interrupt: Default::default(),
-            }
-        }
     }
 }
 use std::sync::atomic::Ordering;

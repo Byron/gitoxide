@@ -330,7 +330,7 @@ fn parse_conventional_to_next_section_title(
 fn parse_id_fallback_to_user_message(
     markdown: &str,
     events: &mut Peekable<OffsetIter<'_>>,
-    mut conventional: &mut Conventional,
+    conventional: &mut Conventional,
     item_range: Range<usize>,
     tag: CowStr<'_>,
 ) {
@@ -376,7 +376,7 @@ fn parse_id_fallback_to_user_message(
                     });
             }
         }
-        None => make_user_message_and_consume_item(markdown, events, &mut conventional, item_range),
+        None => make_user_message_and_consume_item(markdown, events, conventional, item_range),
     };
 }
 
