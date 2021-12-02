@@ -1,6 +1,7 @@
 use std::convert::TryInto;
 
 use git_hash::oid;
+use git_object::Data;
 use git_pack::find::Entry;
 
 use crate::{
@@ -102,6 +103,18 @@ impl crate::pack::Find for linked::Store {
                     version: bundle.pack.version(),
                 })
             })
+    }
+}
+
+impl crate::Find for linked::Store {
+    type Error = compound::find::Error;
+
+    fn contains(&self, id: impl AsRef<oid>) -> bool {
+        pack::Find::contains(self, id)
+    }
+
+    fn try_find<'a>(&self, id: impl AsRef<oid>, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, Self::Error> {
+        pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))
     }
 }
 

@@ -62,6 +62,26 @@ pub trait Find {
     ) -> Result<Option<git_object::Data<'a>>, Self::Error>;
 }
 
+mod _impls {
+    use git_hash::oid;
+    use git_object::Data;
+
+    impl<T> crate::Find for &T
+    where
+        T: crate::Find,
+    {
+        type Error = T::Error;
+
+        fn contains(&self, id: impl AsRef<oid>) -> bool {
+            (*self).contains(id)
+        }
+
+        fn try_find<'a>(&self, id: impl AsRef<oid>, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, Self::Error> {
+            (*self).try_find(id, buffer)
+        }
+    }
+}
+
 mod ext {
     use git_object::{BlobRef, CommitRef, CommitRefIter, Kind, ObjectRef, TagRef, TagRefIter, TreeRef, TreeRefIter};
 
