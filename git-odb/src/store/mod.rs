@@ -13,8 +13,8 @@ use git_features::threading::OwnShared;
 /// Note that this type is only `Send` if `git-features/parallel` is toggled on.
 pub struct Handle<S> {
     store: S,
-    new_pack_cache: OwnShared<handle::NewPackCacheFn>,
-    new_object_cache: OwnShared<handle::NewObjectCacheFn>,
-    pack_cache: Box<handle::PackCache>,
-    object_cache: Box<handle::ObjectCache>,
+    new_pack_cache: Option<OwnShared<handle::NewPackCacheFn>>,
+    new_object_cache: Option<OwnShared<handle::NewObjectCacheFn>>,
+    pack_cache: Option<Box<handle::PackCache>>,
+    object_cache: Option<Box<handle::ObjectCache>>,
 }

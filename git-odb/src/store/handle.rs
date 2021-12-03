@@ -11,13 +11,13 @@ pub type NewObjectCacheFn = dyn Fn() -> Box<ObjectCache> + 'static;
 
 impl<S> Handle<S> {
     pub fn with_pack_cache(mut self, create: impl Fn() -> Box<PackCache> + 'static) -> Self {
-        self.new_pack_cache = OwnShared::new(create);
-        self.pack_cache = (self.new_pack_cache)();
+        self.pack_cache = Some(create());
+        self.new_pack_cache = Some(OwnShared::new(create));
         self
     }
     pub fn with_object_cache(mut self, create: impl Fn() -> Box<ObjectCache> + 'static) -> Self {
-        self.new_object_cache = OwnShared::new(create);
-        self.object_cache = (self.new_object_cache)();
+        self.object_cache = Some(create());
+        self.new_object_cache = Some(OwnShared::new(create));
         self
     }
 }
@@ -27,14 +27,12 @@ where
     S: git_pack::Find,
 {
     fn from(store: S) -> Self {
-        let new_pack_cache = OwnShared::new(|| -> Box<PackCache> { Box::new(git_pack::cache::Never) });
-        let new_object_cache = OwnShared::new(|| -> Box<ObjectCache> { Box::new(git_pack::cache::object::Never) });
         Self {
             store,
-            pack_cache: new_pack_cache(),
-            new_pack_cache,
-            object_cache: new_object_cache(),
-            new_object_cache,
+            pack_cache: None,
+            new_pack_cache: None,
+            object_cache: None,
+            new_object_cache: None,
         }
     }
 }
@@ -45,8 +43,8 @@ impl<S: Clone> Clone for Handle<S> {
             store: self.store.clone(),
             new_pack_cache: self.new_pack_cache.clone(),
             new_object_cache: self.new_object_cache.clone(),
-            pack_cache: (self.new_pack_cache)(),
-            object_cache: (self.new_object_cache)(),
+            pack_cache: self.new_pack_cache.as_ref().map(|create| create()),
+            object_cache: self.new_object_cache.as_ref().map(|create| create()),
         }
     }
 }
