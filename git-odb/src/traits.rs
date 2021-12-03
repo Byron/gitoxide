@@ -65,6 +65,9 @@ pub trait Find {
 mod _impls {
     use git_hash::oid;
     use git_object::Data;
+    use std::ops::Deref;
+    use std::rc::Rc;
+    use std::sync::Arc;
 
     impl<T> crate::Find for &T
     where
@@ -78,6 +81,36 @@ mod _impls {
 
         fn try_find<'a>(&self, id: impl AsRef<oid>, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, Self::Error> {
             (*self).try_find(id, buffer)
+        }
+    }
+
+    impl<T> crate::Find for Rc<T>
+    where
+        T: crate::Find,
+    {
+        type Error = T::Error;
+
+        fn contains(&self, id: impl AsRef<oid>) -> bool {
+            self.deref().contains(id)
+        }
+
+        fn try_find<'a>(&self, id: impl AsRef<oid>, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, Self::Error> {
+            self.deref().try_find(id, buffer)
+        }
+    }
+
+    impl<T> crate::Find for Arc<T>
+    where
+        T: crate::Find,
+    {
+        type Error = T::Error;
+
+        fn contains(&self, id: impl AsRef<oid>) -> bool {
+            self.deref().contains(id)
+        }
+
+        fn try_find<'a>(&self, id: impl AsRef<oid>, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, Self::Error> {
+            self.deref().try_find(id, buffer)
         }
     }
 }
