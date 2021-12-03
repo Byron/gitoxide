@@ -6,7 +6,6 @@ use git_pack::find::Entry;
 
 use crate::{
     pack,
-    pack::Bundle,
     store::{compound, linked},
 };
 
@@ -84,10 +83,12 @@ impl crate::pack::Find for linked::Store {
         None
     }
 
-    fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&Bundle> {
-        self.dbs
-            .iter()
-            .find_map(|db| db.bundles.iter().find(|b| b.pack.id == pack_id))
+    fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
+        self.dbs.iter().find_map(|db| {
+            db.bundles
+                .iter()
+                .find_map(|b| (b.pack.id == pack_id).then(|| b.index.iter()))
+        })
     }
 
     fn entry_by_location(&self, location: &pack::bundle::Location) -> Option<Entry<'_>> {

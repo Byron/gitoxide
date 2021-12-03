@@ -48,15 +48,13 @@ pub trait Find {
     /// _Note_ that this is always None if the object isn't packed.
     fn location_by_oid(&self, id: impl AsRef<git_hash::oid>, buf: &mut Vec<u8>) -> Option<crate::bundle::Location>;
 
-    /// Find the bundle matching `pack_id`, or `None` if there is no such pack.
-    ///
-    /// _Note_ that the object database may have no notion of packs and thus always returns `None`.
-    fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&crate::Bundle>;
+    /// Find the index matching `pack_id`, or `None` if there is no such pack.
+    fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>>;
 
     /// Return the [`find::Entry`] for `location` if it is backed by a pack.
     ///
     /// Note that this is only in the interest of avoiding duplicate work during pack generation.
-    /// Pack locations can be obtained from a [`git_object::Data`].
+    /// Pack locations can be obtained from [`Find::try_find()`].
     ///
     /// # Notes
     ///
@@ -91,8 +89,8 @@ mod _impls {
             (*self).location_by_oid(id, buf)
         }
 
-        fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&crate::Bundle> {
-            (*self).bundle_by_pack_id(pack_id)
+        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>> {
+            (*self).index_iter_by_pack_id(pack_id)
         }
 
         fn entry_by_location(&self, location: &crate::bundle::Location) -> Option<crate::find::Entry<'_>> {
@@ -197,7 +195,7 @@ mod find_impls {
 
     use git_hash::oid;
 
-    use crate::{bundle::Location, find, Bundle};
+    use crate::{bundle::Location, find};
 
     impl<T> super::Find for std::sync::Arc<T>
     where
@@ -222,8 +220,8 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&Bundle> {
-            self.deref().bundle_by_pack_id(pack_id)
+        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>> {
+            self.deref().index_iter_by_pack_id(pack_id)
         }
 
         fn entry_by_location(&self, object: &crate::bundle::Location) -> Option<find::Entry<'_>> {
@@ -254,8 +252,8 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&Bundle> {
-            self.deref().bundle_by_pack_id(pack_id)
+        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>> {
+            self.deref().index_iter_by_pack_id(pack_id)
         }
 
         fn entry_by_location(&self, location: &crate::bundle::Location) -> Option<find::Entry<'_>> {

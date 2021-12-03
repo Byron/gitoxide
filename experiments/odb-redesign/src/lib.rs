@@ -62,7 +62,7 @@ mod odb {
     use std::path::PathBuf;
 
     use git_hash::oid;
-    use git_odb::pack::{bundle::Location, find::Entry, Bundle};
+    use git_odb::pack::{bundle::Location, find::Entry};
 
     use crate::{
         features,
@@ -594,7 +594,7 @@ mod odb {
         }
 
         // TODO: turn this into a pack-id
-        fn bundle_by_pack_id(&self, pack_id: u32) -> Option<&Bundle> {
+        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
             todo!()
         }
 
