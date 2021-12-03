@@ -114,6 +114,7 @@ use std::{path::PathBuf, rc::Rc, sync::Arc};
 pub use git_actor as actor;
 #[cfg(all(feature = "unstable", feature = "git-diff"))]
 pub use git_diff as diff;
+use git_features::threading::OwnShared;
 #[cfg(feature = "unstable")]
 pub use git_features::{parallel, progress, progress::Progress};
 pub use git_hash as hash;
@@ -159,6 +160,8 @@ pub use repository::{discover, init, open};
 
 /// The standard type for a store to handle git references.
 pub type RefStore = git_ref::file::Store;
+/// A handle for finding objects in an object database, abstracting away caches for thread-local use.
+pub type OdbHandle = git_odb::Handle<OwnShared<git_odb::linked::Store>>;
 
 /// A repository path which either points to a work tree or the `.git` repository itself.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -182,9 +185,9 @@ pub struct Repository {
     pub refs: RefStore,
     /// A store for objects that contain data
     #[cfg(feature = "unstable")]
-    pub odb: git_odb::linked::Store,
+    pub odb: OwnShared<git_odb::linked::Store>,
     #[cfg(not(feature = "unstable"))]
-    pub(crate) odb: git_odb::linked::Store,
+    pub(crate) odb: OwnShared<git_odb::linked::Store>,
     /// The path to the worktree at which to find checked out files
     pub work_tree: Option<PathBuf>,
     pub(crate) hash_kind: git_hash::Kind,

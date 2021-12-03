@@ -32,6 +32,7 @@ pub mod open {
     use std::{borrow::Cow, path::PathBuf};
 
     use git_config::values::{Boolean, Integer};
+    use git_features::threading::OwnShared;
 
     use crate::Repository;
 
@@ -100,7 +101,7 @@ pub mod open {
             };
 
             Ok(crate::Repository {
-                odb: git_odb::linked::Store::at(git_dir.join("objects"))?,
+                odb: OwnShared::new(git_odb::linked::Store::at(git_dir.join("objects"))?),
                 refs: crate::RefStore::at(
                     git_dir,
                     if worktree_dir.is_none() {
