@@ -34,7 +34,7 @@ fn main() -> anyhow::Result<()> {
         .find(&name)?
         .peel_to_id_in_place(&repo.refs, peel::none)?
         .to_owned();
-    let db = &repo.odb;
+    let db = &repo.objects;
 
     let start = Instant::now();
     let all_commits = commit_id

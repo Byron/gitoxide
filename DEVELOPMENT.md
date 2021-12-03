@@ -711,3 +711,6 @@ Please note that these are based on the following value system:
           - …fetches use a lazy-loaded Repository with refresh disabled, and full retries if the pack they were referring to goes away. Maybe there can be a policy for that to keep
             pack ids stable despite refresh, which would also solve clones which could then lazy-load.
       - `Repository` must remain `Sync`.     
+      - The new general/policy store must always be sync, and can't use the OwnShared, etc, abstractions. Being able to build programs for single threads only is a feature we keep
+        though, but we don't for this store as it must always be possible to use multi-threading as some algorithms might never be ported to single-threaded versions.
+         - this is only for one reason: it's impossible to get rid of or make dynamic the Send + Sync trait bounds.

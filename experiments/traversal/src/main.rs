@@ -32,7 +32,7 @@ fn main() -> anyhow::Result<()> {
             .to_owned();
         (repo, commit_id)
     };
-    let db = &repo.odb;
+    let db = &repo.objects;
 
     let start = Instant::now();
     let all_commits = commit_id

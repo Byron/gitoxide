@@ -9,7 +9,9 @@ use git_repository::{
     objs::bstr::ByteVec,
     odb::{pack, pack::FindExt},
     prelude::{Finalize, ReferenceAccessExt},
-    progress, traverse, Progress,
+    progress,
+    threading::OwnShared,
+    traverse, Progress,
 };
 
 use crate::OutputFormat;
@@ -139,7 +141,10 @@ where
                     })
                 })
                 .collect::<Result<Vec<_>, _>>()?;
-            let odb = Arc::new(git::Repository::try_from(repo)?.odb);
+            let odb = Arc::new(match OwnShared::try_unwrap(git::Repository::try_from(repo)?.objects) {
+                Ok(odb) => odb,
+                Err(_) => unreachable!(),
+            });
             let iter = Box::new(
                 traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), {
                     let db = Arc::clone(&odb);
@@ -163,7 +168,13 @@ where
                     })
                     .inspect(move |_| progress.inc()),
             );
-            (Arc::new(repo.odb), iter)
+            (
+                Arc::new(match OwnShared::try_unwrap(repo.objects) {
+                    Ok(odb) => odb,
+                    Err(_) => unreachable!(),
+                }),
+                iter,
+            )
         }
     };
 
