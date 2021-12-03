@@ -5,18 +5,18 @@ use std::cell::RefCell;
 use std::sync::Arc;
 
 pub type PackCache = dyn git_pack::cache::DecodeEntry + Send + 'static;
-pub type NewPackCacheFn = dyn Fn() -> Box<PackCache> + Send + 'static;
+pub type NewPackCacheFn = dyn Fn() -> Box<PackCache> + Send + Sync + 'static;
 
 pub type ObjectCache = dyn git_pack::cache::Object + Send + 'static;
-pub type NewObjectCacheFn = dyn Fn() -> Box<ObjectCache> + Send + 'static;
+pub type NewObjectCacheFn = dyn Fn() -> Box<ObjectCache> + Send + Sync + 'static;
 
 impl<S> Handle<S> {
-    pub fn with_pack_cache(mut self, create: impl Fn() -> Box<PackCache> + Send + 'static) -> Self {
+    pub fn with_pack_cache(mut self, create: impl Fn() -> Box<PackCache> + Send + Sync + 'static) -> Self {
         self.pack_cache = Some(RefCell::new(create()));
         self.new_pack_cache = Some(Arc::new(create));
         self
     }
-    pub fn with_object_cache(mut self, create: impl Fn() -> Box<ObjectCache> + Send + 'static) -> Self {
+    pub fn with_object_cache(mut self, create: impl Fn() -> Box<ObjectCache> + Send + Sync + 'static) -> Self {
         self.object_cache = Some(RefCell::new(create()));
         self.new_object_cache = Some(Arc::new(create));
         self

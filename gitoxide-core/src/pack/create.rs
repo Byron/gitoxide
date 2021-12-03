@@ -197,7 +197,7 @@ where
         let input_object_expansion = expansion.into();
         let (mut counts, count_stats) = if may_use_multiple_threads {
             pack::data::output::count::objects(
-                odb.to_handle_arc().with_pack_cache(|| {
+                odb.to_handle_arc().with_pack_cache(move || {
                     let per_thread_object_pack_size = pack_cache_size_in_bytes / thread_count;
                     if per_thread_object_pack_size < 10_000 {
                         Box::new(pack::cache::Never)
