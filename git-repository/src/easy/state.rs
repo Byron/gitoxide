@@ -1,17 +1,16 @@
 //!
 use std::cell::{Ref, RefCell, RefMut};
 
-use crate::{easy, easy::borrow, Repository};
+use crate::{easy, easy::borrow};
 
 impl Clone for easy::State {
     fn clone(&self) -> Self {
-        self.refs.clone().into()
+        easy::State::from_refs_and_objects(self.refs.clone(), self.objects.clone())
     }
 }
 
-// TODO: Expand this as needed as more higher-level stores exist (i.e. odb)
-impl From<crate::RefStore> for easy::State {
-    fn from(refs: crate::RefStore) -> Self {
+impl easy::State {
+    pub(crate) fn from_refs_and_objects(refs: crate::RefStore, objects: crate::OdbHandle) -> Self {
         easy::State {
             #[cfg(not(feature = "max-performance"))]
             pack_cache: RefCell::new(git_pack::cache::Never),
@@ -19,14 +18,15 @@ impl From<crate::RefStore> for easy::State {
             pack_cache: RefCell::new(Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default())),
             object_cache: RefCell::new(None),
             buf: RefCell::new(vec![]),
+            objects,
             refs,
         }
     }
 }
 
-impl From<&Repository> for easy::State {
-    fn from(repo: &Repository) -> Self {
-        repo.refs.clone().into()
+impl From<&crate::Repository> for easy::State {
+    fn from(repo: &crate::Repository) -> Self {
+        easy::State::from_refs_and_objects(repo.refs.clone(), repo.odb.to_handle_shared())
     }
 }
 
