@@ -30,11 +30,12 @@ pub enum SegmentScope {
 }
 
 pub fn collect(repo: &git::Easy) -> anyhow::Result<Option<commit::History>> {
-    let prev = repo.object_cache_size(64 * 1024)?;
+    let mut repo = repo.clone();
+    repo.object_cache_size(64 * 1024);
     let reference = match repo.head()?.peeled()?.kind {
         head::Kind::Detached { .. } => bail!("Refusing to operate on a detached head."),
         head::Kind::Unborn { .. } => return Ok(None),
-        head::Kind::Symbolic(r) => r.attach(repo),
+        head::Kind::Symbolic(r) => r.attach(&repo),
     };
 
     let mut items = Vec::new();
@@ -55,7 +56,7 @@ pub fn collect(repo: &git::Easy) -> anyhow::Result<Option<commit::History>> {
             (
                 message,
                 tree_id,
-                parent_commit_id.map(|id| id.attach(repo).object().expect("present").to_commit().tree()),
+                parent_commit_id.map(|id| id.attach(&repo).object().expect("present").to_commit().tree()),
                 commit_time,
             )
         };
@@ -82,7 +83,7 @@ pub fn collect(repo: &git::Easy) -> anyhow::Result<Option<commit::History>> {
             parent_tree_id,
         });
     }
-    repo.object_cache_size(prev)?;
+    // repo.object_cache_size(prev)?;
     items.sort_by(|lhs, rhs| {
         (lhs.commit_time.time as i64 + lhs.commit_time.offset as i64)
             .cmp(&(rhs.commit_time.time as i64 + rhs.commit_time.offset as i64))
@@ -235,7 +236,8 @@ fn add_item_if_package_changed<'a>(
             };
         }
         Filter::Slow(ref components) => {
-            let prev = ctx.repo.object_cache_size(1024 * 1024)?;
+            let mut repo = ctx.repo.clone();
+            repo.object_cache_size(1024 * 1024);
             let current_data = RefCell::new(item.tree_id);
             let current = git::easy::TreeRef::from_id_and_data(
                 item.id,
@@ -264,7 +266,6 @@ fn add_item_if_package_changed<'a>(
                 (Some(_), None) => history.push(item),
                 (None, Some(_)) | (None, None) => {}
             };
-            ctx.repo.object_cache_size(prev)?;
         }
     };
     Ok(())

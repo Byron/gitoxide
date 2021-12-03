@@ -21,6 +21,22 @@ impl<S> Handle<S> {
         self.new_object_cache = Some(Arc::new(create));
         self
     }
+    pub fn set_pack_cache(&mut self, create: impl Fn() -> Box<PackCache> + Send + Sync + 'static) {
+        self.pack_cache = Some(RefCell::new(create()));
+        self.new_pack_cache = Some(Arc::new(create));
+    }
+    pub fn set_object_cache(&mut self, create: impl Fn() -> Box<ObjectCache> + Send + Sync + 'static) {
+        self.object_cache = Some(RefCell::new(create()));
+        self.new_object_cache = Some(Arc::new(create));
+    }
+    pub fn without_pack_cache(&mut self) {
+        self.pack_cache = None;
+        self.new_pack_cache = None;
+    }
+    pub fn without_object_cache(&mut self) {
+        self.object_cache = None;
+        self.new_object_cache = None;
+    }
 }
 
 impl<S> From<S> for Handle<S>
@@ -57,6 +73,21 @@ mod find_impl {
     use git_object::Data;
     use git_pack::cache::Object;
     use std::ops::DerefMut;
+
+    impl<S> crate::Find for Handle<S>
+    where
+        S: crate::pack::Find,
+    {
+        type Error = S::Error;
+
+        fn contains(&self, id: impl AsRef<oid>) -> bool {
+            self.store.contains(id)
+        }
+
+        fn try_find<'a>(&self, id: impl AsRef<oid>, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, Self::Error> {
+            git_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))
+        }
+    }
 
     impl<S> crate::pack::Find for Handle<S>
     where

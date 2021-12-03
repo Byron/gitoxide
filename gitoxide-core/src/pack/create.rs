@@ -199,12 +199,12 @@ where
         {
             let per_thread_object_pack_size = pack_cache_size_in_bytes / thread_count;
             if per_thread_object_pack_size >= 10_000 {
-                handle = handle.with_pack_cache(move || {
+                handle.set_pack_cache(move || {
                     Box::new(pack::cache::lru::MemoryCappedHashmap::new(per_thread_object_pack_size))
                 });
             }
             if matches!(expansion, ObjectExpansion::TreeDiff) {
-                handle = handle.with_object_cache(move || {
+                handle.set_object_cache(move || {
                     let per_thread_object_cache_size = object_cache_size_in_bytes / thread_count;
                     Box::new(pack::cache::object::MemoryCappedHashmap::new(
                         per_thread_object_cache_size,

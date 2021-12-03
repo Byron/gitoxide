@@ -28,7 +28,7 @@ impl Context {
     ) -> anyhow::Result<Self> {
         let meta = cargo_metadata::MetadataCommand::new().exec()?;
         let root = meta.workspace_root.clone();
-        let repo = git::discover(&root)?.into_easy().apply_environment()?;
+        let repo = git::discover(&root)?.into_easy().apply_environment();
         let crates_index = Index::new_cargo_default();
         let history = (force_history_segmentation
             || matches!(bump, BumpSpec::Auto)

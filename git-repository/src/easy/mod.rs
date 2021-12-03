@@ -28,7 +28,6 @@ pub mod borrow;
 pub mod commit;
 pub mod head;
 pub mod object;
-pub mod odb;
 pub mod oid;
 pub mod reference;
 pub mod state;
@@ -99,11 +98,6 @@ pub struct Reference<'r, A> {
     pub inner: git_ref::Reference,
     pub(crate) access: &'r A,
 }
-
-#[cfg(not(feature = "max-performance"))]
-type PackCache = git_pack::cache::Never;
-#[cfg(feature = "max-performance")]
-type PackCache = Box<dyn git_pack::cache::DecodeEntry + Send + 'static>;
 
 /// State for use in `Easy*` to provide mutable parts of a repository such as caches and buffers.
 ///

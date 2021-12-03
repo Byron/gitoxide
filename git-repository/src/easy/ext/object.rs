@@ -65,6 +65,7 @@ pub trait ObjectAccessExt: easy::Access + Sized {
     fn write_object(&self, object: impl git_object::WriteTo) -> Result<Oid<'_, Self>, object::write::Error> {
         use git_odb::Write;
 
+        // TODO: implement Write on handle and copy hash_kind onto the State for local access.
         let repo = self.repo()?;
         repo.objects
             .write(object, repo.hash_kind)

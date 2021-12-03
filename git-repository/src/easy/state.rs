@@ -14,9 +14,12 @@ impl easy::State {
         easy::State {
             buf: RefCell::new(vec![]),
             objects: {
-                if cfg!(feature = "max-performance") {
+                #[cfg(feature = "max-performance")]
+                {
                     objects.with_pack_cache(|| Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default()))
-                } else {
+                }
+                #[cfg(not(feature = "max-performance"))]
+                {
                     objects
                 }
             },

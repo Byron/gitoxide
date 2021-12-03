@@ -34,9 +34,11 @@ pub trait CacheAccessExt: easy::Access + Sized {
     fn apply_environment(mut self) -> Self {
         self.state_mut().objects.set_pack_cache(|| {
             #[cfg(not(feature = "max-performance"))]
-            let pack_cache = git_pack::cache::Never;
+            {
+                Box::new(git_pack::cache::Never)
+            }
             #[cfg(feature = "max-performance")]
-            let pack_cache: easy::PackCache = {
+            {
                 use std::convert::TryInto;
                 if std::env::var_os("GITOXIDE_DISABLE_PACK_CACHE").is_some() {
                     Box::new(git_pack::cache::Never)
@@ -63,8 +65,7 @@ pub trait CacheAccessExt: easy::Access + Sized {
                 } else {
                     Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default())
                 }
-            };
-            pack_cache
+            }
         });
         self
     }
