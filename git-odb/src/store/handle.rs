@@ -75,7 +75,7 @@ mod find_impl {
         ) -> Result<Option<(Data<'a>, Option<Location>)>, Self::Error> {
             match self.pack_cache.as_ref().map(|rc| rc.borrow_mut()) {
                 Some(mut pack_cache) => self.try_find_cached(id, buffer, pack_cache.deref_mut()),
-                None => self.store.try_find(id, buffer),
+                None => self.try_find_cached(id, buffer, &mut git_pack::cache::Never),
             }
         }
 
