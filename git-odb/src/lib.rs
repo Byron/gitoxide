@@ -18,7 +18,7 @@
 pub use git_pack as pack;
 
 mod store;
-pub use store::{compound, linked, loose, sink, Sink};
+pub use store::{compound, handle, linked, loose, sink, Handle, Sink};
 
 pub mod alternate;
 

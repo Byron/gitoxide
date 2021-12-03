@@ -1,5 +1,6 @@
-use crate::linked;
-use crate::linked::store::Handle;
+#![allow(missing_docs, dead_code, unreachable_code)]
+
+use crate::Handle;
 use git_features::threading::OwnShared;
 
 pub type PackCache = dyn git_pack::cache::DecodeEntry + Send + 'static;
@@ -35,12 +36,6 @@ where
             object_cache: new_object_cache(),
             new_object_cache,
         }
-    }
-}
-
-impl linked::Store {
-    pub fn to_handle(&self) -> Handle<&Self> {
-        self.into()
     }
 }
 

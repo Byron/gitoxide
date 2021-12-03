@@ -10,25 +10,9 @@ pub struct Store {
 }
 
 ///
-pub mod store {
-    #![allow(missing_docs, dead_code, unreachable_code)]
-
-    use git_features::threading::OwnShared;
-
-    /// Note that this type is only `Send` if `git-features/parallel` is toggled on.
-    pub struct Handle<S> {
-        store: S,
-        new_pack_cache: OwnShared<handle::NewPackCacheFn>,
-        new_object_cache: OwnShared<handle::NewObjectCacheFn>,
-        pack_cache: Box<handle::PackCache>,
-        object_cache: Box<handle::ObjectCache>,
-    }
-
-    pub mod handle;
-}
-
-///
 pub mod init;
+
+mod handle;
 
 mod find;
 
