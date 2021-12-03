@@ -107,7 +107,7 @@ pub fn create<W>(
         thin,
         thread_limit,
         statistics,
-        pack_cache_size_in_bytes: _,
+        pack_cache_size_in_bytes,
         object_cache_size_in_bytes,
         mut out,
     }: Context<W>,
@@ -191,20 +191,20 @@ where
                     per_thread_object_cache_size,
                 ))
             };
-            // TODO: bring this cache configuration back to where it belongs.
-            // let per_thread_object_pack_size = pack_cache_size_in_bytes / thread_count;
-            // let pack_cache: Box<dyn DecodeEntry> = if per_thread_object_pack_size < 10_000 {
-            //     Box::new(pack::cache::Never) as Box<dyn DecodeEntry>
-            // } else {
-            //     Box::new(pack::cache::lru::MemoryCappedHashmap::new(per_thread_object_pack_size))
-            // };
             object_cache
         };
         let progress = progress::ThroughputOnDrop::new(progress);
         let input_object_expansion = expansion.into();
         let (mut counts, count_stats) = if may_use_multiple_threads {
             pack::data::output::count::objects(
-                Arc::clone(&odb),
+                odb.to_handle_arc().with_pack_cache(|| {
+                    let per_thread_object_pack_size = pack_cache_size_in_bytes / thread_count;
+                    if per_thread_object_pack_size < 10_000 {
+                        Box::new(pack::cache::Never)
+                    } else {
+                        Box::new(pack::cache::lru::MemoryCappedHashmap::new(per_thread_object_pack_size))
+                    }
+                }),
                 make_object_cache,
                 input,
                 progress,
