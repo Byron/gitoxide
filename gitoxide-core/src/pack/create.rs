@@ -90,6 +90,7 @@ pub struct Context<W> {
     /// Note that caches also incur a cost and poorly used caches may reduce overall performance.
     ///
     /// This is a total, shared among all threads if `thread_limit` permits.
+    /// Only used when known to be effective, namely when `expansion == ObjectExpansion::TreeDiff`.
     pub object_cache_size_in_bytes: usize,
     /// The output stream for use of additional information
     pub out: W,
@@ -182,30 +183,28 @@ where
             progress.fail("Cannot use multi-threaded counting in tree-diff object expansion mode as it may yield way too many objects.");
         }
         let (_, _, thread_count) = git::parallel::optimize_chunk_size_and_thread_limit(50, None, thread_limit, None);
-        let make_object_cache = move || {
-            let per_thread_object_cache_size = object_cache_size_in_bytes / thread_count;
-            let object_cache: Box<dyn pack::cache::Object> = if per_thread_object_cache_size < 10_000 {
-                Box::new(pack::cache::object::Never) as Box<dyn pack::cache::Object>
-            } else {
-                Box::new(pack::cache::object::MemoryCappedHashmap::new(
-                    per_thread_object_cache_size,
-                ))
-            };
-            object_cache
-        };
         let progress = progress::ThroughputOnDrop::new(progress);
+        let mut handle = odb.to_handle_arc();
+        {
+            let per_thread_object_pack_size = pack_cache_size_in_bytes / thread_count;
+            if per_thread_object_pack_size >= 10_000 {
+                handle = handle.with_pack_cache(move || {
+                    Box::new(pack::cache::lru::MemoryCappedHashmap::new(per_thread_object_pack_size))
+                });
+            }
+            if matches!(expansion, ObjectExpansion::TreeDiff) {
+                handle = handle.with_object_cache(move || {
+                    let per_thread_object_cache_size = object_cache_size_in_bytes / thread_count;
+                    Box::new(pack::cache::object::MemoryCappedHashmap::new(
+                        per_thread_object_cache_size,
+                    ))
+                });
+            }
+        }
         let input_object_expansion = expansion.into();
         let (mut counts, count_stats) = if may_use_multiple_threads {
             pack::data::output::count::objects(
-                odb.to_handle_arc().with_pack_cache(move || {
-                    let per_thread_object_pack_size = pack_cache_size_in_bytes / thread_count;
-                    if per_thread_object_pack_size < 10_000 {
-                        Box::new(pack::cache::Never)
-                    } else {
-                        Box::new(pack::cache::lru::MemoryCappedHashmap::new(per_thread_object_pack_size))
-                    }
-                }),
-                make_object_cache,
+                handle,
                 input,
                 progress,
                 &interrupt::IS_INTERRUPTED,
@@ -216,10 +215,8 @@ where
                 },
             )?
         } else {
-            let mut object_cache = make_object_cache();
             pack::data::output::count::objects_unthreaded(
-                Arc::clone(&odb),
-                &mut object_cache,
+                handle,
                 input,
                 progress,
                 &interrupt::IS_INTERRUPTED,
