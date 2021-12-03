@@ -55,6 +55,7 @@ mod find_impl {
     use crate::Handle;
     use git_hash::oid;
     use git_object::Data;
+    use git_pack::cache::Object;
     use std::ops::DerefMut;
 
     impl<S> crate::pack::Find for Handle<S>
@@ -84,8 +85,18 @@ mod find_impl {
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl git_pack::cache::DecodeEntry,
         ) -> Result<Option<(Data<'a>, Option<git_pack::bundle::Location>)>, Self::Error> {
-            // TODO: use object cache
-            self.store.try_find_cached(id, buffer, pack_cache)
+            if let Some(mut obj_cache) = self.object_cache.as_ref().map(|rc| rc.borrow_mut()) {
+                if let Some(kind) = obj_cache.get(&id.as_ref().to_owned(), buffer) {
+                    return Ok(Some((Data::new(kind, buffer), None)));
+                }
+            }
+            let possibly_obj = self.store.try_find_cached(id.as_ref(), buffer, pack_cache)?;
+            if let (Some(mut obj_cache), Some((obj, _location))) =
+                (self.object_cache.as_ref().map(|rc| rc.borrow_mut()), &possibly_obj)
+            {
+                obj_cache.put(id.as_ref().to_owned(), obj.kind, obj.data);
+            }
+            Ok(possibly_obj)
         }
 
         fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<git_pack::bundle::Location> {
