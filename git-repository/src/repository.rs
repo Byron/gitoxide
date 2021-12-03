@@ -101,7 +101,7 @@ pub mod open {
             };
 
             Ok(crate::Repository {
-                odb: OwnShared::new(git_odb::linked::Store::at(git_dir.join("objects"))?),
+                objects: OwnShared::new(git_odb::linked::Store::at(git_dir.join("objects"))?),
                 refs: crate::RefStore::at(
                     git_dir,
                     if worktree_dir.is_none() {
@@ -168,7 +168,7 @@ mod location {
 
         /// Return the path to the directory containing all objects.
         pub fn objects_dir(&self) -> &std::path::Path {
-            &self.odb.dbs[0].loose.path
+            &self.objects.dbs[0].loose.path
         }
     }
 }

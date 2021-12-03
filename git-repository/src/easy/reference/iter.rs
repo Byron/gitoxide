@@ -80,7 +80,9 @@ where
                         let repo = self.access.repo()?;
                         let state = self.access.state();
                         r.peel_to_id_in_place(&state.refs, |oid, buf| {
-                            repo.odb.try_find(oid, buf).map(|po| po.map(|(o, _l)| (o.kind, o.data)))
+                            repo.objects
+                                .try_find(oid, buf)
+                                .map(|po| po.map(|(o, _l)| (o.kind, o.data)))
                         })
                         .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
                         .map(|_| r)

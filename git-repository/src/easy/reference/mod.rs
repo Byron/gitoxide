@@ -63,7 +63,9 @@ where
         let repo = self.access.repo()?;
         let state = self.access.state();
         let oid = self.inner.peel_to_id_in_place(&state.refs, |oid, buf| {
-            repo.odb.try_find(oid, buf).map(|po| po.map(|(o, _l)| (o.kind, o.data)))
+            repo.objects
+                .try_find(oid, buf)
+                .map(|po| po.map(|(o, _l)| (o.kind, o.data)))
         })?;
         Ok(Oid::from_id(oid, self.access))
     }

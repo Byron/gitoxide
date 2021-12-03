@@ -116,7 +116,7 @@ pub mod ancestors {
                         match self
                             .repo
                             .deref()
-                            .odb
+                            .objects
                             .try_find(oid, buf)
                             .ok()
                             .flatten()

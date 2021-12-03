@@ -26,7 +26,7 @@ impl easy::State {
 
 impl From<&crate::Repository> for easy::State {
     fn from(repo: &crate::Repository) -> Self {
-        easy::State::from_refs_and_objects(repo.refs.clone(), repo.odb.to_handle_shared())
+        easy::State::from_refs_and_objects(repo.refs.clone(), repo.objects.to_handle_shared())
     }
 }
 
