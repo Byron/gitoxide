@@ -1,8 +1,7 @@
-use std::{convert::TryInto, ops::DerefMut};
+use std::convert::TryInto;
 
 use git_hash::{oid, ObjectId};
-use git_odb::pack::{Find, FindExt};
-use git_pack::cache::Object;
+use git_odb::{Find, FindExt};
 use git_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
     FullName,
@@ -32,24 +31,10 @@ pub trait ObjectAccessExt: easy::Access + Sized {
     /// In order to get the kind of the object, is must be fully decoded from storage if it is packed with deltas.
     /// Loose object could be partially decoded, even though that's not implemented.
     fn find_object(&self, id: impl Into<ObjectId>) -> Result<ObjectRef<'_, Self>, object::find::existing::Error> {
-        let state = self.state();
         let id = id.into();
-        let kind = {
-            let mut buf = self.state().try_borrow_mut_buf()?;
-            let mut object_cache = state.try_borrow_mut_object_cache()?;
-            if let Some(c) = object_cache.deref_mut() {
-                if let Some(kind) = c.get(&id, &mut buf) {
-                    drop(buf);
-                    return ObjectRef::from_current_buf(id, kind, self).map_err(Into::into);
-                }
-            }
-            let kind = self.repo()?.objects.find(&id, &mut buf)?.0.kind;
-
-            if let Some(c) = object_cache.deref_mut() {
-                c.put(id, kind, &buf);
-            }
-            kind
-        };
+        let mut buf = self.state().try_borrow_mut_buf()?;
+        let kind = self.state().objects.find(&id, &mut buf)?.kind;
+        drop(buf);
         ObjectRef::from_current_buf(id, kind, self).map_err(Into::into)
     }
 
@@ -64,21 +49,11 @@ pub trait ObjectAccessExt: easy::Access + Sized {
         let state = self.state();
         let id = id.into();
 
-        let mut object_cache = state.try_borrow_mut_object_cache()?;
         let mut buf = state.try_borrow_mut_buf()?;
-        if let Some(c) = object_cache.deref_mut() {
-            if let Some(kind) = c.get(&id, &mut buf) {
-                drop(buf);
-                return Ok(Some(ObjectRef::from_current_buf(id, kind, self)?));
-            }
-        }
-        match self.repo()?.objects.try_find(&id, &mut buf)? {
-            Some((obj, _location)) => {
+        match self.state().objects.try_find(&id, &mut buf)? {
+            Some(obj) => {
                 let kind = obj.kind;
                 drop(obj);
-                if let Some(c) = object_cache.deref_mut() {
-                    c.put(id, kind, &buf);
-                }
                 drop(buf);
                 Ok(Some(ObjectRef::from_current_buf(id, kind, self)?))
             }

@@ -20,16 +20,11 @@ mod find {
 
     #[test]
     fn find_and_try_find_with_and_without_object_cache() -> crate::Result {
-        let repo = crate::basic_repo()?;
+        let mut repo = crate::basic_repo()?;
         for round in 1..=2 {
             match round {
-                1 => assert!(
-                    repo.object_cache_size(None)?.is_none(),
-                    "default is to have no object cache"
-                ),
-                2 => {
-                    repo.object_cache_size(128 * 1024)?;
-                }
+                1 => repo.object_cache_size(None),
+                2 => repo.object_cache_size(128 * 1024),
                 _ => unreachable!("BUG"),
             }
             for commit_id in repo.head()?.peeled()?.id().expect("born").ancestors()?.all() {
@@ -43,14 +38,6 @@ mod find {
                     );
                 }
                 assert_eq!(commit.try_object()?.expect("exists").kind, git_object::Kind::Commit,);
-            }
-
-            if round == 2 {
-                assert_eq!(
-                    repo.object_cache_size(None)?,
-                    Some(128 * 1024),
-                    "it returns the previous cache"
-                );
             }
         }
         Ok(())

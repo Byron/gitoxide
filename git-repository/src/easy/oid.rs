@@ -62,16 +62,13 @@ pub struct Ancestors<'repo, A>
 where
     A: easy::Access + Sized,
 {
-    repo: A::RepoRef,
     access: &'repo A,
     tips: Box<dyn Iterator<Item = ObjectId>>,
 }
 
 ///
 pub mod ancestors {
-    use std::ops::{Deref, DerefMut};
-
-    use git_odb::pack::Find;
+    use git_odb::Find;
 
     use crate::{
         easy,
@@ -84,9 +81,7 @@ pub mod ancestors {
     {
         /// Obtain a platform for traversing ancestors of this commit.
         pub fn ancestors(&self) -> Result<Ancestors<'repo, A>, Error> {
-            let repo = self.access.repo()?;
             Ok(Ancestors {
-                repo,
                 access: self.access,
                 tips: Box::new(Some(self.inner).into_iter()),
             })
@@ -106,30 +101,13 @@ pub mod ancestors {
                     tips,
                     git_traverse::commit::ancestors::State::default(),
                     move |oid, buf| {
-                        let state = self.access.state();
-                        let mut object_cache = state.try_borrow_mut_object_cache().ok()?;
-                        if let Some(c) = object_cache.deref_mut() {
-                            if let Some(kind) = c.get(&oid.to_owned(), buf) {
-                                return git_object::Data::new(kind, buf).try_into_commit_iter();
-                            }
-                        }
-                        match self
-                            .repo
-                            .deref()
+                        self.access
+                            .state()
                             .objects
                             .try_find(oid, buf)
                             .ok()
                             .flatten()
-                            .and_then(|(obj, _location)| obj.try_into_commit_iter())
-                        {
-                            Some(_) => {
-                                if let Some(c) = object_cache.deref_mut() {
-                                    c.put(oid.to_owned(), git_object::Kind::Commit, buf);
-                                }
-                                Some(git_object::CommitRefIter::from_bytes(buf))
-                            }
-                            None => None,
-                        }
+                            .and_then(|obj| obj.try_into_commit_iter())
                     },
                 )),
             }
@@ -170,7 +148,6 @@ pub mod ancestors {
         }
     }
     pub use error::Error;
-    use git_pack::cache::Object;
 
     use crate::ext::ObjectIdExt;
 }

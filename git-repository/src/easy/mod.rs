@@ -111,12 +111,10 @@ type PackCache = Box<dyn git_pack::cache::DecodeEntry + Send + 'static>;
 /// and explicitly. This is to have the fastest-possible default configuration available by default, but allow
 /// those who experiment with workloads to get speed boosts of 2x or more.
 pub struct State {
-    /// As the packed-buffer may hold onto a memory map, so ideally this State is freed after use instead of keeping it around
-    /// for too long. At least `packed_refs` is lazily initialized though.
-    refs: crate::RefStore,
-    objects: crate::OdbHandle,
-    pack_cache: RefCell<PackCache>,
-    object_cache: RefCell<Option<object::cache::MemoryCappedHashmap>>,
+    /// A ref store with shared ownership (or the equivalent of it).
+    pub refs: crate::RefStore,
+    /// A way to access objects.
+    pub objects: crate::OdbHandle,
     buf: RefCell<Vec<u8>>,
 }
 

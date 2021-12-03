@@ -38,7 +38,7 @@ pub mod find {
     pub mod existing {
         use crate::easy;
 
-        pub(crate) type OdbError = git_pack::find::existing::Error<git_odb::compound::find::Error>;
+        pub(crate) type OdbError = git_odb::find::existing::Error<git_odb::compound::find::Error>;
 
         /// The error returned by [`ObjectAccessExt::find_object()`][easy::ext::ObjectAccessExt::find_object()].
         #[derive(Debug, thiserror::Error)]
