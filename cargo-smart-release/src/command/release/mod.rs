@@ -416,7 +416,7 @@ fn perform_release(ctx: &Context, options: Options, crates: &[traverse::Dependen
         if let Some(tag_name) = git::create_version_tag(
             publishee,
             new_version,
-            commit_id.clone(),
+            commit_id,
             release_section_by_publishee
                 .get(&publishee.name.as_str())
                 .and_then(|s| section_to_string(s, WriteMode::Tag)),

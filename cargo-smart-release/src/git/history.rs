@@ -40,7 +40,7 @@ pub fn collect(handle: &git::easy::Handle) -> anyhow::Result<Option<commit::Hist
 
     let mut items = Vec::new();
     let mut data_by_tree_id = HashMap::default();
-    for commit_id in reference.id().ancestors()?.all() {
+    for commit_id in reference.id().ancestors().all() {
         let commit_id = commit_id?;
         let (message, tree_id, parent_tree_id, commit_time) = {
             let (message, tree_id, commit_time, parent_commit_id) = {
