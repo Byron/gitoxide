@@ -63,11 +63,87 @@ pub trait Find {
 }
 
 mod _impls {
-    use git_hash::oid;
-    use git_object::Data;
+    use git_hash::{oid, ObjectId};
+    use git_object::{Data, Kind, WriteTo};
+    use std::io::Read;
     use std::ops::Deref;
     use std::rc::Rc;
     use std::sync::Arc;
+
+    impl<T> crate::Write for &T
+    where
+        T: crate::Write,
+    {
+        type Error = T::Error;
+
+        fn write(&self, object: impl WriteTo, hash: git_hash::Kind) -> Result<ObjectId, Self::Error> {
+            (*self).write(object, hash)
+        }
+
+        fn write_buf(&self, object: Kind, from: &[u8], hash: git_hash::Kind) -> Result<ObjectId, Self::Error> {
+            (*self).write_buf(object, from, hash)
+        }
+
+        fn write_stream(
+            &self,
+            kind: Kind,
+            size: u64,
+            from: impl Read,
+            hash: git_hash::Kind,
+        ) -> Result<ObjectId, Self::Error> {
+            (*self).write_stream(kind, size, from, hash)
+        }
+    }
+
+    impl<T> crate::Write for Arc<T>
+    where
+        T: crate::Write,
+    {
+        type Error = T::Error;
+
+        fn write(&self, object: impl WriteTo, hash: git_hash::Kind) -> Result<ObjectId, Self::Error> {
+            self.deref().write(object, hash)
+        }
+
+        fn write_buf(&self, object: Kind, from: &[u8], hash: git_hash::Kind) -> Result<ObjectId, Self::Error> {
+            self.deref().write_buf(object, from, hash)
+        }
+
+        fn write_stream(
+            &self,
+            kind: Kind,
+            size: u64,
+            from: impl Read,
+            hash: git_hash::Kind,
+        ) -> Result<ObjectId, Self::Error> {
+            self.deref().write_stream(kind, size, from, hash)
+        }
+    }
+
+    impl<T> crate::Write for Rc<T>
+    where
+        T: crate::Write,
+    {
+        type Error = T::Error;
+
+        fn write(&self, object: impl WriteTo, hash: git_hash::Kind) -> Result<ObjectId, Self::Error> {
+            self.deref().write(object, hash)
+        }
+
+        fn write_buf(&self, object: Kind, from: &[u8], hash: git_hash::Kind) -> Result<ObjectId, Self::Error> {
+            self.deref().write_buf(object, from, hash)
+        }
+
+        fn write_stream(
+            &self,
+            kind: Kind,
+            size: u64,
+            from: impl Read,
+            hash: git_hash::Kind,
+        ) -> Result<ObjectId, Self::Error> {
+            self.deref().write_stream(kind, size, from, hash)
+        }
+    }
 
     impl<T> crate::Find for &T
     where

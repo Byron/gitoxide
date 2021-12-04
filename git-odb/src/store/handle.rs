@@ -66,13 +66,31 @@ impl<S: Clone> Clone for Handle<S> {
     }
 }
 
-mod find_impl {
+mod impls {
     use crate::pack::bundle::Location;
     use crate::Handle;
-    use git_hash::oid;
-    use git_object::Data;
+    use git_hash::{oid, ObjectId};
+    use git_object::{Data, Kind};
     use git_pack::cache::Object;
+    use std::io::Read;
     use std::ops::DerefMut;
+
+    impl<S> crate::Write for Handle<S>
+    where
+        S: crate::Write,
+    {
+        type Error = S::Error;
+
+        fn write_stream(
+            &self,
+            kind: Kind,
+            size: u64,
+            from: impl Read,
+            hash: git_hash::Kind,
+        ) -> Result<ObjectId, Self::Error> {
+            self.store.write_stream(kind, size, from, hash)
+        }
+    }
 
     impl<S> crate::Find for Handle<S>
     where
