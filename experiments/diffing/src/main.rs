@@ -4,7 +4,6 @@ use anyhow::anyhow;
 use diff::tree::visit::{Action, Change};
 use git_repository::{
     diff,
-    easy::object,
     hash::{oid, ObjectId},
     objs::{bstr::BStr, TreeRefIter},
     odb,
@@ -38,7 +37,7 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let all_commits = commit_id
-        .ancestors(|oid, buf| db.find_commit_iter(oid, buf).ok().map(|t| t.0))
+        .ancestors(|oid, buf| db.find_commit_iter(oid, buf).ok())
         .collect::<Result<Vec<_>, _>>()?;
     let num_diffs = all_commits.len();
     let elapsed = start.elapsed();
@@ -49,53 +48,15 @@ fn main() -> anyhow::Result<()> {
         all_commits.len() as f32 / elapsed.as_secs_f32()
     );
 
-    struct ObjectInfo {
-        kind: object::Kind,
-        data: Vec<u8>,
-    }
-    impl memory_lru::ResidentSize for ObjectInfo {
-        fn resident_size(&self) -> usize {
-            self.data.len()
-        }
-    }
-    fn find_with_lru_object_cache<'b>(
-        oid: &oid,
-        buf: &'b mut Vec<u8>,
-        obj_cache: &mut memory_lru::MemoryLruCache<ObjectId, ObjectInfo>,
-        db: &odb::linked::Store,
-    ) -> Option<git_repository::objs::Data<'b>> {
-        let oid = oid.to_owned();
-        match obj_cache.get(&oid) {
-            Some(ObjectInfo { kind, data }) => {
-                buf.resize(data.len(), 0);
-                buf.copy_from_slice(data);
-                Some(git_repository::objs::Data::new(*kind, buf))
-            }
-            None => {
-                let obj = db.find(oid, buf).ok();
-                if let Some((obj, _location)) = &obj {
-                    obj_cache.insert(
-                        oid,
-                        ObjectInfo {
-                            kind: obj.kind,
-                            data: obj.data.to_owned(),
-                        },
-                    );
-                }
-                obj.map(|t| t.0)
-            }
-        }
-    }
-
     let start = Instant::now();
     let num_deltas = do_gitoxide_tree_diff(
         &all_commits,
         || {
-            // TODO: configure the ODB to actually use it
-            let _pack_cache = odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size());
-            let db = &db;
-            let mut obj_cache = memory_lru::MemoryLruCache::new(cache_size());
-            move |oid, buf: &mut Vec<u8>| find_with_lru_object_cache(oid, buf, &mut obj_cache, db)
+            let handle = db
+                .to_handle()
+                .with_pack_cache(|| Box::new(odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size())))
+                .with_object_cache(|| Box::new(odb::pack::cache::object::MemoryCappedHashmap::new(cache_size())));
+            move |oid, buf: &mut Vec<u8>| handle.find(oid, buf).ok()
         },
         Computation::MultiThreaded,
     )?;
@@ -115,11 +76,11 @@ fn main() -> anyhow::Result<()> {
     let num_deltas = do_gitoxide_tree_diff(
         &all_commits,
         || {
-            // TODO: configure the ODB to actually use it
-            let mut _pack_cache = odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size());
-            let db = &db;
-            let mut obj_cache = memory_lru::MemoryLruCache::new(cache_size());
-            move |oid, buf: &mut Vec<u8>| find_with_lru_object_cache(oid, buf, &mut obj_cache, db)
+            let handle = db
+                .to_handle()
+                .with_pack_cache(|| Box::new(odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size())))
+                .with_object_cache(|| Box::new(odb::pack::cache::object::MemoryCappedHashmap::new(cache_size())));
+            move |oid, buf: &mut Vec<u8>| handle.find(oid, buf).ok()
         },
         Computation::SingleThreaded,
     )?;

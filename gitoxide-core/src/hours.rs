@@ -51,7 +51,7 @@ where
         .peel_to_id_in_place(&repo.refs, |oid, buf| {
             repo.objects
                 .try_find(oid, buf)
-                .map(|obj| obj.map(|(obj, _location)| (obj.kind, obj.data)))
+                .map(|obj| obj.map(|obj| (obj.kind, obj.data)))
         })?
         .to_owned();
 
@@ -63,7 +63,7 @@ where
         for c in interrupt::Iter::new(
             commit_id.ancestors(|oid, buf| {
                 progress.inc();
-                repo.objects.find(oid, buf).ok().map(|(o, _l)| {
+                repo.objects.find(oid, buf).ok().map(|o| {
                     commits.push(o.data.to_owned());
                     objs::CommitRefIter::from_bytes(o.data)
                 })
