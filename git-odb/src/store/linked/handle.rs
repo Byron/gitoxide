@@ -1,8 +1,10 @@
 #![allow(missing_docs)]
 
-use crate::{linked, Handle};
-use git_features::threading::OwnShared;
 use std::sync::Arc;
+
+use git_features::threading::OwnShared;
+
+use crate::{linked, Handle};
 
 impl linked::Store {
     pub fn to_handle(&self) -> Handle<&Self> {

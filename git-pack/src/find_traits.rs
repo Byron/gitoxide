@@ -155,8 +155,7 @@ mod ext {
 pub use ext::FindExt;
 
 mod find_impls {
-    use std::ops::Deref;
-    use std::rc::Rc;
+    use std::{ops::Deref, rc::Rc};
 
     use git_hash::oid;
 

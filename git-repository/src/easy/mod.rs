@@ -1,5 +1,4 @@
-use std::cell::RefCell;
-use std::path::PathBuf;
+use std::{cell::RefCell, path::PathBuf};
 
 use git_hash::ObjectId;
 

@@ -1,6 +1,6 @@
+use std::{cell::RefCell, sync::Arc};
+
 pub use sink::{sink, Sink};
-use std::cell::RefCell;
-use std::sync::Arc;
 
 pub mod compound;
 pub mod handle;

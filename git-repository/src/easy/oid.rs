@@ -61,10 +61,10 @@ pub struct Ancestors<'repo> {
 pub mod ancestors {
     use git_odb::Find;
 
-    use crate::ext::ObjectIdExt;
     use crate::{
         easy,
         easy::{oid::Ancestors, Oid},
+        ext::ObjectIdExt,
     };
 
     impl<'repo> Oid<'repo> {
@@ -115,9 +115,9 @@ pub mod ancestors {
 }
 
 mod impls {
+    use std::{cmp::Ordering, hash::Hasher};
+
     use git_hash::{oid, ObjectId};
-    use std::cmp::Ordering;
-    use std::hash::Hasher;
 
     use crate::easy::{Object, ObjectRef, Oid};
     // Eq, Hash, Ord, PartialOrd,

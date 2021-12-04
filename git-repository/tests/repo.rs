@@ -1,5 +1,4 @@
-use git_repository::easy::Handle;
-use git_repository::Repository;
+use git_repository::{easy::Handle, Repository};
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 

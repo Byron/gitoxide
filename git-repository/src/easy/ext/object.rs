@@ -7,10 +7,10 @@ use git_ref::{
     FullName,
 };
 
-use crate::ext::ObjectIdExt;
 use crate::{
     easy,
     easy::{commit, object, tag, ObjectRef, Oid, Reference},
+    ext::ObjectIdExt,
 };
 
 /// Methods related to object creation.

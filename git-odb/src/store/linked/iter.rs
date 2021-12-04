@@ -1,5 +1,4 @@
-use std::rc::Rc;
-use std::{ops::Deref, option::Option::None, sync::Arc};
+use std::{ops::Deref, option::Option::None, rc::Rc, sync::Arc};
 
 use git_hash::ObjectId;
 

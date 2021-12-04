@@ -1,5 +1,6 @@
-use crate::fixture_path;
 use git_odb::linked;
+
+use crate::fixture_path;
 
 fn linked_db() -> linked::Store {
     linked::Store::at(fixture_path("objects")).expect("valid object path")

@@ -2,8 +2,7 @@ use std::{convert::TryInto, process::Command};
 
 use anyhow::bail;
 use cargo_metadata::Package;
-use git_repository::easy::Oid;
-use git_repository::{bstr::ByteSlice, refs, refs::transaction::PreviousValue};
+use git_repository::{bstr::ByteSlice, easy::Oid, refs, refs::transaction::PreviousValue};
 
 use super::{tag_name, Options};
 use crate::utils::will;

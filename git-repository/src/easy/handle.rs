@@ -1,6 +1,8 @@
 //!
-use std::cell::{Ref, RefCell, RefMut};
-use std::path::{Path, PathBuf};
+use std::{
+    cell::{Ref, RefCell, RefMut},
+    path::{Path, PathBuf},
+};
 
 use crate::{easy, easy::borrow};
 

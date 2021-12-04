@@ -1,8 +1,8 @@
 #![allow(missing_docs, dead_code, unreachable_code)]
 
+use std::{cell::RefCell, sync::Arc};
+
 use crate::Handle;
-use std::cell::RefCell;
-use std::sync::Arc;
 
 pub type PackCache = dyn git_pack::cache::DecodeEntry + Send + 'static;
 pub type NewPackCacheFn = dyn Fn() -> Box<PackCache> + Send + Sync + 'static;
@@ -67,13 +67,13 @@ impl<S: Clone> Clone for Handle<S> {
 }
 
 mod impls {
-    use crate::pack::bundle::Location;
-    use crate::Handle;
+    use std::{io::Read, ops::DerefMut};
+
     use git_hash::{oid, ObjectId};
     use git_object::{Data, Kind};
     use git_pack::cache::Object;
-    use std::io::Read;
-    use std::ops::DerefMut;
+
+    use crate::{pack::bundle::Location, Handle};
 
     impl<S> crate::Write for Handle<S>
     where

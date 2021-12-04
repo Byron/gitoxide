@@ -63,12 +63,10 @@ pub trait Find {
 }
 
 mod _impls {
+    use std::{io::Read, ops::Deref, rc::Rc, sync::Arc};
+
     use git_hash::{oid, ObjectId};
     use git_object::{Data, Kind, WriteTo};
-    use std::io::Read;
-    use std::ops::Deref;
-    use std::rc::Rc;
-    use std::sync::Arc;
 
     impl<T> crate::Write for &T
     where
