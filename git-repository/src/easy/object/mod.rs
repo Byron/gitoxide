@@ -20,39 +20,33 @@ mod tree;
 
 impl Object {
     /// Infuse this owned object with an [`easy::Access`].
-    pub fn attach<A>(self, access: &A) -> easy::borrow::state::Result<ObjectRef<'_, A>>
-    where
-        A: easy::Access + Sized,
-    {
-        *access.state().try_borrow_mut_buf()? = self.data;
+    pub fn attach(self, handle: &easy::Handle) -> easy::borrow::state::Result<ObjectRef<'_>> {
+        *handle.try_borrow_mut_buf()? = self.data;
         Ok(ObjectRef {
             id: self.id,
             kind: self.kind,
-            data: Ref::map(access.state().try_borrow_buf()?, |v| v.as_slice()),
-            access,
+            data: Ref::map(handle.try_borrow_buf()?, |v| v.as_slice()),
+            handle,
         })
     }
 }
 
-impl<'repo, A> ObjectRef<'repo, A>
-where
-    A: easy::Access + Sized,
-{
+impl<'repo> ObjectRef<'repo> {
     pub(crate) fn from_current_buf(
         id: impl Into<ObjectId>,
         kind: Kind,
-        access: &'repo A,
+        handle: &'repo easy::Handle,
     ) -> easy::borrow::state::Result<Self> {
         Ok(ObjectRef {
             id: id.into(),
             kind,
-            data: Ref::map(access.state().try_borrow_buf()?, |v| v.as_slice()),
-            access,
+            data: Ref::map(handle.try_borrow_buf()?, |v| v.as_slice()),
+            handle,
         })
     }
 
     /// Transform this object into a tree, or panic if it is none.
-    pub fn into_tree(self) -> TreeRef<'repo, A> {
+    pub fn into_tree(self) -> TreeRef<'repo> {
         match self.try_into() {
             Ok(tree) => tree,
             Err(this) => panic!("Tried to use {} as tree, but was {}", this.id, this.kind),
@@ -60,12 +54,12 @@ where
     }
 
     /// Transform this object into a tree, or return it as part of the `Err` if it is no tree.
-    pub fn try_into_tree(self) -> Result<TreeRef<'repo, A>, Self> {
+    pub fn try_into_tree(self) -> Result<TreeRef<'repo>, Self> {
         self.try_into()
     }
 }
 
-impl<'repo, A> ObjectRef<'repo, A> {
+impl<'repo> ObjectRef<'repo> {
     /// Create an owned instance of this object, copying our data in the process.
     pub fn to_owned(&self) -> Object {
         Object {
@@ -92,10 +86,7 @@ impl<'repo, A> ObjectRef<'repo, A> {
     }
 }
 
-impl<'repo, A> ObjectRef<'repo, A>
-where
-    A: easy::Access + Sized,
-{
+impl<'repo> ObjectRef<'repo> {
     /// Obtain a fully parsed commit whose fields reference our data buffer,
     ///
     /// # Panic

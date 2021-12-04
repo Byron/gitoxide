@@ -11,24 +11,24 @@ use git_ref::{
 use crate::{
     bstr::BString,
     easy,
-    easy::{ext::RepositoryAccessExt, reference, Reference},
+    easy::{reference, Reference},
     ext::ReferenceExt,
 };
 
 const DEFAULT_LOCK_MODE: git_lock::acquire::Fail = git_lock::acquire::Fail::Immediately;
 
 /// Obtain and alter references comfortably
-pub trait ReferenceAccessExt: easy::Access + Sized {
+impl easy::Handle {
     /// Create a lightweight tag with given `name` (and without `refs/tags/` prefix) pointing to the given `target`, and return it as reference.
     ///
     /// It will be created with `constraint` which is most commonly to [only create it][PreviousValue::MustNotExist]
     /// or to [force overwriting a possibly existing tag](PreviousValue::Any).
-    fn tag_reference(
+    pub fn tag_reference(
         &self,
         name: impl AsRef<str>,
         target: impl Into<ObjectId>,
         constraint: PreviousValue,
-    ) -> Result<Reference<'_, Self>, reference::edit::Error> {
+    ) -> Result<Reference<'_>, reference::edit::Error> {
         let id = target.into();
         let mut edits = self.edit_reference(
             RefEdit {
@@ -51,26 +51,26 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
                 target: id.into(),
                 peeled: None,
             },
-            access: self,
+            handle: self,
         })
     }
 
     /// Returns the currently set namespace for references, or `None` if it is not set.
     ///
     /// Namespaces allow to partition references, and is configured per `Easy`.
-    fn namespace(&self) -> Option<&git_ref::Namespace> {
-        self.state().refs.namespace.as_ref()
+    pub fn namespace(&self) -> Option<&git_ref::Namespace> {
+        self.refs.namespace.as_ref()
     }
 
     /// Remove the currently set reference namespace and return it, affecting only this `Easy`.
-    fn clear_namespace(&mut self) -> Option<git_ref::Namespace> {
-        self.state_mut().refs.namespace.take()
+    pub fn clear_namespace(&mut self) -> Option<git_ref::Namespace> {
+        self.refs.namespace.take()
     }
 
     /// Set the reference namespace to the given value, like `"foo"` or `"foo/bar"`.
     ///
     /// Note that this value is shared across all `Easy…` instances as the value is stored in the shared `Repository`.
-    fn set_namespace<'a, Name, E>(
+    pub fn set_namespace<'a, Name, E>(
         &mut self,
         namespace: Name,
     ) -> Result<Option<git_ref::Namespace>, git_validate::refname::Error>
@@ -79,7 +79,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         git_validate::refname::Error: From<E>,
     {
         let namespace = git_ref::namespace::expand(namespace)?;
-        Ok(self.state_mut().refs.namespace.replace(namespace))
+        Ok(self.refs.namespace.replace(namespace))
     }
 
     // TODO: more tests or usage
@@ -87,13 +87,13 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     /// during creation and writing `log_message` into the reflog. Note that a ref-log will be written even if `log_message` is empty.
     ///
     /// The newly created Reference is returned.
-    fn reference<Name, E>(
+    pub fn reference<Name, E>(
         &self,
         name: Name,
         target: impl Into<ObjectId>,
         constraint: PreviousValue,
         log_message: impl Into<BString>,
-    ) -> Result<Reference<'_, Self>, reference::edit::Error>
+    ) -> Result<Reference<'_>, reference::edit::Error>
     where
         Name: TryInto<FullName, Error = E>,
         reference::edit::Error: From<E>,
@@ -135,7 +135,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     ///
     /// One or more `RefEdit`s  are returned - symbolic reference splits can cause more edits to be performed. All edits have the previous
     /// reference values set to the ones encountered at rest after acquiring the respective reference's lock.
-    fn edit_reference(
+    pub fn edit_reference(
         &self,
         edit: RefEdit,
         lock_mode: lock::acquire::Fail,
@@ -149,7 +149,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     ///
     /// Returns all reference edits, which might be more than where provided due the splitting of symbolic references, and
     /// whose previous (_old_) values are the ones seen on in storage after the reference was locked.
-    fn edit_references(
+    pub fn edit_references(
         &self,
         edits: impl IntoIterator<Item = RefEdit>,
         lock_mode: lock::acquire::Fail,
@@ -163,8 +163,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
                 &committer_storage
             }
         };
-        self.state()
-            .refs
+        self.refs
             .transaction()
             .prepare(edits, lock_mode)?
             .commit(committer)
@@ -174,7 +173,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     /// Return the repository head, an abstraction to help dealing with the `HEAD` reference.
     ///
     /// The `HEAD` reference can be in various states, for more information, the documentation of [`Head`][easy::Head].
-    fn head(&self) -> Result<easy::Head<'_, Self>, reference::find::existing::Error> {
+    pub fn head(&self) -> Result<easy::Head<'_>, reference::find::existing::Error> {
         let head = self.find_reference("HEAD")?;
         Ok(match head.inner.target {
             Target::Symbolic(branch) => match self.find_reference(branch.to_partial()) {
@@ -195,7 +194,7 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     ///
     /// Consider [`try_find_reference(…)`][ReferenceAccessExt::try_find_reference()] if the reference might not exist
     /// without that being considered an error.
-    fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_, Self>, reference::find::existing::Error>
+    pub fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_>, reference::find::existing::Error>
     where
         Name: TryInto<PartialNameRef<'a>, Error = E>,
         git_ref::file::find::Error: From<E>,
@@ -208,10 +207,10 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     ///
     /// Common kinds of iteration are [all][easy::reference::iter::Platform::all()] or [prefixed][easy::reference::iter::Platform::prefixed()]
     /// references.
-    fn references(&self) -> Result<easy::reference::iter::Platform<'_, Self>, easy::reference::iter::Error> {
+    pub fn references(&self) -> Result<easy::reference::iter::Platform<'_>, easy::reference::iter::Error> {
         Ok(easy::reference::iter::Platform {
-            platform: self.state().refs.iter()?,
-            access: self,
+            platform: self.refs.iter()?,
+            handle: self,
         })
     }
 
@@ -219,12 +218,12 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
     ///
     /// Otherwise return `None` if the reference wasn't found.
     /// If the reference is expected to exist, use [`find_reference()`][ReferenceAccessExt::find_reference()].
-    fn try_find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_, Self>>, reference::find::Error>
+    pub fn try_find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_>>, reference::find::Error>
     where
         Name: TryInto<PartialNameRef<'a>, Error = E>,
         git_ref::file::find::Error: From<E>,
     {
-        let state = self.state();
+        let state = self;
         match state.refs.try_find(name) {
             Ok(r) => match r {
                 Some(r) => Ok(Some(Reference::from_ref(r, self))),
@@ -234,5 +233,3 @@ pub trait ReferenceAccessExt: easy::Access + Sized {
         }
     }
 }
-
-impl<A> ReferenceAccessExt for A where A: easy::Access + Sized {}

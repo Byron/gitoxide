@@ -2,10 +2,9 @@ mod find {
     use std::convert::TryInto;
 
     use git_ref as refs;
-    use git_repository::prelude::ReferenceAccessExt;
     use git_testtools::hex_to_id;
 
-    fn repo() -> crate::Result<git_repository::Easy> {
+    fn repo() -> crate::Result<git_repository::easy::Handle> {
         crate::repo("make_references_repo.sh").map(Into::into)
     }
 

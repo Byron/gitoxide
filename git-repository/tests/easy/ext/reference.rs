@@ -1,9 +1,9 @@
 mod set_namespace {
     use git_repository as git;
-    use git_repository::{prelude::ReferenceAccessExt, refs::transaction::PreviousValue};
+    use git_repository::refs::transaction::PreviousValue;
 
-    fn easy_repo_rw() -> crate::Result<(git::EasyArcExclusive, tempfile::TempDir)> {
-        crate::repo_rw("make_references_repo.sh").map(|(r, d)| (r.into_easy_arc_exclusive(), d))
+    fn easy_repo_rw() -> crate::Result<(git::easy::Handle, tempfile::TempDir)> {
+        crate::repo_rw("make_references_repo.sh").map(|(r, d)| (r.to_easy(), d))
     }
 
     #[test]
@@ -82,11 +82,10 @@ mod set_namespace {
 
 mod iter_references {
     use git_repository as git;
-    use git_repository::prelude::ReferenceAccessExt;
     use git_testtools::hex_to_id;
 
-    fn repo() -> crate::Result<git::Easy> {
-        crate::repo("make_references_repo.sh").map(|r| r.into_easy())
+    fn repo() -> crate::Result<git::easy::Handle> {
+        crate::repo("make_references_repo.sh").map(|r| r.to_easy())
     }
 
     #[test]
@@ -189,7 +188,6 @@ mod head {
 
     use git_ref::transaction::PreviousValue;
     use git_repository as git;
-    use git_repository::prelude::ReferenceAccessExt;
     use git_testtools::hex_to_id;
 
     #[test]

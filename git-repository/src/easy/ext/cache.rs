@@ -1,7 +1,7 @@
 use crate::easy;
 
 /// Configure how caches are used to speed up various git repository operations
-pub trait CacheAccessExt: easy::Access + Sized {
+impl easy::Handle {
     /// Sets the amount of space used at most for caching most recently accessed fully decoded objects, to `Some(bytes)`,
     /// or `None` to deactivate it entirely.
     ///
@@ -10,14 +10,13 @@ pub trait CacheAccessExt: easy::Access + Sized {
     /// The cache is configured to grow gradually.
     ///
     /// Note that a cache on application level should be considered as well as the best object access is not doing one.
-    fn object_cache_size(&mut self, bytes: impl Into<Option<usize>>) {
+    pub fn object_cache_size(&mut self, bytes: impl Into<Option<usize>>) {
         let bytes = bytes.into();
         match bytes {
             Some(bytes) => self
-                .state_mut()
                 .objects
                 .set_object_cache(move || Box::new(easy::object::cache::MemoryCappedHashmap::new(bytes))),
-            None => self.state_mut().objects.without_object_cache(),
+            None => self.objects.without_object_cache(),
         }
     }
 
@@ -31,8 +30,8 @@ pub trait CacheAccessExt: easy::Access + Sized {
     /// the cache efficiency is low. Use `GITOXIDE_PACK_CACHE_MEMORY=512MB` to use up to 512MB of RAM for the pack delta base
     /// cache. If none of these are set, the default cache is fast enough to nearly never cause a (marginal) slow-down while providing
     /// some gains most of the time. Note that the value given is _per-thread_.
-    fn apply_environment(mut self) -> Self {
-        self.state_mut().objects.set_pack_cache(|| {
+    pub fn apply_environment(mut self) -> Self {
+        self.objects.set_pack_cache(|| {
             #[cfg(not(feature = "max-performance"))]
             {
                 Box::new(git_pack::cache::Never)
@@ -70,5 +69,3 @@ pub trait CacheAccessExt: easy::Access + Sized {
         self
     }
 }
-
-impl<A> CacheAccessExt for A where A: easy::Access + Sized {}

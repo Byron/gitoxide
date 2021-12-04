@@ -5,21 +5,18 @@ use git_hash::{oid, ObjectId};
 
 use crate::{
     easy,
-    easy::{ext::ObjectAccessExt, object::find, ObjectRef, Oid},
+    easy::{object::find, ObjectRef, Oid},
 };
 
 /// An [object id][ObjectId] infused with `Easy`.
-impl<'repo, A> Oid<'repo, A>
-where
-    A: easy::Access + Sized,
-{
+impl<'repo> Oid<'repo> {
     /// Find the [`ObjectRef`] associated with this object id, and consider it an error if it doesn't exist.
     ///
     /// # Note
     ///
     /// There can only be one `ObjectRef` per `Easy`. To increase that limit, clone the `Easy`.
-    pub fn object(&self) -> Result<ObjectRef<'repo, A>, find::existing::Error> {
-        self.access.find_object(self.inner)
+    pub fn object(&self) -> Result<ObjectRef<'repo>, find::existing::Error> {
+        self.handle.find_object(self.inner)
     }
 
     /// Try to find the [`ObjectRef`] associated with this object id, and return `None` if it's not available locally.
@@ -27,12 +24,12 @@ where
     /// # Note
     ///
     /// There can only be one `ObjectRef` per `Easy`. To increase that limit, clone the `Easy`.
-    pub fn try_object(&self) -> Result<Option<ObjectRef<'repo, A>>, find::Error> {
-        self.access.try_find_object(self.inner)
+    pub fn try_object(&self) -> Result<Option<ObjectRef<'repo>>, find::Error> {
+        self.handle.try_find_object(self.inner)
     }
 }
 
-impl<'repo, A> Deref for Oid<'repo, A> {
+impl<'repo> Deref for Oid<'repo> {
     type Target = oid;
 
     fn deref(&self) -> &Self::Target {
@@ -40,14 +37,11 @@ impl<'repo, A> Deref for Oid<'repo, A> {
     }
 }
 
-impl<'repo, A> Oid<'repo, A>
-where
-    A: easy::Access + Sized,
-{
-    pub(crate) fn from_id(id: impl Into<ObjectId>, access: &'repo A) -> Self {
+impl<'repo> Oid<'repo> {
+    pub(crate) fn from_id(id: impl Into<ObjectId>, handle: &'repo easy::Handle) -> Self {
         Oid {
             inner: id.into(),
-            access,
+            handle,
         }
     }
 
@@ -58,11 +52,8 @@ where
 }
 
 /// A platform to traverse commit ancestors, also referred to as commit history.
-pub struct Ancestors<'repo, A>
-where
-    A: easy::Access + Sized,
-{
-    access: &'repo A,
+pub struct Ancestors<'repo> {
+    handle: &'repo easy::Handle,
     tips: Box<dyn Iterator<Item = ObjectId>>,
 }
 
@@ -75,34 +66,27 @@ pub mod ancestors {
         easy::{oid::Ancestors, Oid},
     };
 
-    impl<'repo, A> Oid<'repo, A>
-    where
-        A: easy::Access + Sized,
-    {
+    impl<'repo> Oid<'repo> {
         /// Obtain a platform for traversing ancestors of this commit.
-        pub fn ancestors(&self) -> Result<Ancestors<'repo, A>, Error> {
+        pub fn ancestors(&self) -> Result<Ancestors<'repo>, Error> {
             Ok(Ancestors {
-                access: self.access,
+                handle: self.handle,
                 tips: Box::new(Some(self.inner).into_iter()),
             })
         }
     }
 
-    impl<'repo, A> Ancestors<'repo, A>
-    where
-        A: easy::Access + Sized,
-    {
+    impl<'repo> Ancestors<'repo> {
         /// Return an iterator to traverse all commits in the history of the commit the parent [Oid] is pointing to.
-        pub fn all(&mut self) -> Iter<'_, 'repo, A> {
+        pub fn all(&mut self) -> Iter<'_, 'repo> {
             let tips = std::mem::replace(&mut self.tips, Box::new(None.into_iter()));
             Iter {
-                access: self.access,
+                handle: self.handle,
                 inner: Box::new(git_traverse::commit::Ancestors::new(
                     tips,
                     git_traverse::commit::ancestors::State::default(),
                     move |oid, buf| {
-                        self.access
-                            .state()
+                        self.handle
                             .objects
                             .try_find(oid, buf)
                             .ok()
@@ -115,22 +99,16 @@ pub mod ancestors {
     }
 
     /// The iterator returned by [`Ancestors::all()`].
-    pub struct Iter<'a, 'repo, A>
-    where
-        A: easy::Access + Sized,
-    {
-        access: &'repo A,
+    pub struct Iter<'a, 'repo> {
+        handle: &'repo easy::Handle,
         inner: Box<dyn Iterator<Item = Result<git_hash::ObjectId, git_traverse::commit::ancestors::Error>> + 'a>,
     }
 
-    impl<'a, 'repo, A> Iterator for Iter<'a, 'repo, A>
-    where
-        A: easy::Access + Sized,
-    {
-        type Item = Result<Oid<'repo, A>, git_traverse::commit::ancestors::Error>;
+    impl<'a, 'repo> Iterator for Iter<'a, 'repo> {
+        type Item = Result<Oid<'repo>, git_traverse::commit::ancestors::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
-            self.inner.next().map(|res| res.map(|oid| oid.attach(self.access)))
+            self.inner.next().map(|res| res.map(|oid| oid.attach(self.handle)))
         }
     }
 
@@ -154,53 +132,68 @@ pub mod ancestors {
 
 mod impls {
     use git_hash::{oid, ObjectId};
+    use std::cmp::Ordering;
+    use std::hash::Hasher;
 
     use crate::easy::{Object, ObjectRef, Oid};
+    // Eq, Hash, Ord, PartialOrd,
 
-    impl<'repo, A, B> PartialEq<Oid<'repo, A>> for Oid<'repo, B> {
-        fn eq(&self, other: &Oid<'repo, A>) -> bool {
+    impl<'a> std::hash::Hash for Oid<'a> {
+        fn hash<H: Hasher>(&self, state: &mut H) {
+            self.inner.hash(state)
+        }
+    }
+
+    impl<'a> PartialOrd<Oid<'a>> for Oid<'a> {
+        fn partial_cmp(&self, other: &Oid<'a>) -> Option<Ordering> {
+            self.inner.partial_cmp(&other.inner)
+        }
+    }
+
+    impl<'repo> PartialEq<Oid<'repo>> for Oid<'repo> {
+        fn eq(&self, other: &Oid<'repo>) -> bool {
             self.inner == other.inner
         }
     }
 
-    impl<'repo, A> PartialEq<ObjectId> for Oid<'repo, A> {
+    impl<'repo> PartialEq<ObjectId> for Oid<'repo> {
         fn eq(&self, other: &ObjectId) -> bool {
             &self.inner == other
         }
     }
 
-    impl<'repo, A> PartialEq<oid> for Oid<'repo, A> {
+    impl<'repo> PartialEq<oid> for Oid<'repo> {
         fn eq(&self, other: &oid) -> bool {
             self.inner == other
         }
     }
 
-    impl<'repo, A, B> PartialEq<ObjectRef<'repo, A>> for Oid<'repo, B> {
-        fn eq(&self, other: &ObjectRef<'repo, A>) -> bool {
+    impl<'repo> PartialEq<ObjectRef<'repo>> for Oid<'repo> {
+        fn eq(&self, other: &ObjectRef<'repo>) -> bool {
             self.inner == other.id
         }
     }
 
-    impl<'repo, A> PartialEq<Object> for Oid<'repo, A> {
+    impl<'repo> PartialEq<Object> for Oid<'repo> {
         fn eq(&self, other: &Object) -> bool {
             self.inner == other.id
         }
     }
 
-    impl<'repo, A> std::fmt::Debug for Oid<'repo, A> {
+    impl<'repo> std::fmt::Debug for Oid<'repo> {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             self.inner.fmt(f)
         }
     }
 
-    impl<'repo, A> AsRef<oid> for Oid<'repo, A> {
+    impl<'repo> AsRef<oid> for Oid<'repo> {
         fn as_ref(&self) -> &oid {
             &self.inner
         }
     }
 
-    impl<'repo, A> From<Oid<'repo, A>> for ObjectId {
-        fn from(v: Oid<'repo, A>) -> Self {
+    impl<'repo> From<Oid<'repo>> for ObjectId {
+        fn from(v: Oid<'repo>) -> Self {
             v.inner
         }
     }
@@ -213,7 +206,7 @@ mod tests {
     #[test]
     fn size_of_oid() {
         assert_eq!(
-            std::mem::size_of::<Oid<'_, crate::Easy>>(),
+            std::mem::size_of::<Oid<'_>>(),
             32,
             "size of oid shouldn't change without notice"
         )

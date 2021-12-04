@@ -1,6 +1,4 @@
 mod ancestors {
-    use git_repository::prelude::ReferenceAccessExt;
-
     #[test]
     fn all() -> crate::Result {
         let repo = crate::basic_repo()?;

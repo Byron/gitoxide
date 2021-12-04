@@ -31,12 +31,12 @@ pub enum Kind {
 
 impl Kind {
     /// Attach this instance with an [access][easy::Access] reference to produce a [`Head`].
-    pub fn attach<A>(self, access: &A) -> Head<'_, A> {
-        Head { kind: self, access }
+    pub fn attach(self, handle: &easy::Handle) -> Head<'_> {
+        Head { kind: self, handle }
     }
 }
 
-impl<'repo, A> Head<'repo, A> {
+impl<'repo> Head<'repo> {
     /// Returns the full reference name of this head if it is not detached, or `None` otherwise.
     pub fn referent_name(&self) -> Option<FullNameRef<'_>> {
         Some(match &self.kind {
@@ -51,27 +51,24 @@ impl<'repo, A> Head<'repo, A> {
     }
 }
 
-impl<'repo, A> Head<'repo, A>
-where
-    A: easy::Access + Sized,
-{
+impl<'repo> Head<'repo> {
     // TODO: tests
     /// Returns the id the head points to, which isn't possible on unborn heads.
-    pub fn id(&self) -> Option<easy::Oid<'repo, A>> {
+    pub fn id(&self) -> Option<easy::Oid<'repo>> {
         match &self.kind {
-            Kind::Symbolic(r) => r.target.as_id().map(|oid| oid.to_owned().attach(self.access)),
+            Kind::Symbolic(r) => r.target.as_id().map(|oid| oid.to_owned().attach(self.handle)),
             Kind::Detached { peeled, target } => (*peeled)
                 .unwrap_or_else(|| target.to_owned())
-                .attach(self.access)
+                .attach(self.handle)
                 .into(),
             Kind::Unborn(_) => None,
         }
     }
 
     /// Force transforming this instance into the symbolic reference that it points to, or panic if it is unborn or detached.
-    pub fn into_referent(self) -> easy::Reference<'repo, A> {
+    pub fn into_referent(self) -> easy::Reference<'repo> {
         match self.kind {
-            Kind::Symbolic(r) => r.attach(self.access),
+            Kind::Symbolic(r) => r.attach(self.handle),
             _ => panic!("BUG: Expected head to be a born symbolic reference"),
         }
     }
@@ -83,16 +80,13 @@ pub mod log {
 
     use git_ref::FullNameRef;
 
-    use crate::{easy, easy::Head};
+    use crate::easy::Head;
 
-    impl<'repo, A> Head<'repo, A>
-    where
-        A: easy::Access + Sized,
-    {
+    impl<'repo> Head<'repo> {
         /// Return a platform for obtaining iterators on the reference log associated with the `HEAD` reference.
         pub fn log_iter(&self) -> git_ref::file::log::iter::Platform<'static, '_> {
             git_ref::file::log::iter::Platform {
-                store: &self.access.state().refs,
+                store: &self.handle.refs,
                 name: FullNameRef::try_from("HEAD").expect("HEAD is always valid"),
                 buf: Vec::new(),
             }
@@ -104,7 +98,7 @@ pub mod log {
 pub mod peel {
     use crate::{
         easy,
-        easy::{head::Kind, Access, Head},
+        easy::{head::Kind, Head},
         ext::{ObjectIdExt, ReferenceExt},
     };
 
@@ -123,10 +117,7 @@ pub mod peel {
     }
     pub use error::Error;
 
-    impl<'repo, A> Head<'repo, A>
-    where
-        A: Access + Sized,
-    {
+    impl<'repo> Head<'repo> {
         // TODO: tests
         /// Peel this instance to make obtaining its final target id possible, while returning an error on unborn heads.
         pub fn peeled(mut self) -> Result<Self, Error> {
@@ -139,15 +130,15 @@ pub mod peel {
         /// more object to follow, and return that object id.
         ///
         /// Returns `None` if the head is unborn.
-        pub fn peel_to_id_in_place(&mut self) -> Option<Result<easy::Oid<'repo, A>, Error>> {
+        pub fn peel_to_id_in_place(&mut self) -> Option<Result<easy::Oid<'repo>, Error>> {
             Some(match &mut self.kind {
                 Kind::Unborn(_name) => return None,
                 Kind::Detached {
                     peeled: Some(peeled), ..
-                } => Ok((*peeled).attach(self.access)),
+                } => Ok((*peeled).attach(self.handle)),
                 Kind::Detached { peeled: None, target } => {
                     match target
-                        .attach(self.access)
+                        .attach(self.handle)
                         .object()
                         .map_err(Into::into)
                         .and_then(|obj| obj.peel_tags_to_end().map_err(Into::into))
@@ -158,13 +149,13 @@ pub mod peel {
                                 peeled: Some(peeled),
                                 target: *target,
                             };
-                            Ok(peeled.attach(self.access))
+                            Ok(peeled.attach(self.handle))
                         }
                         Err(err) => Err(err),
                     }
                 }
                 Kind::Symbolic(r) => {
-                    let mut nr = r.clone().attach(self.access);
+                    let mut nr = r.clone().attach(self.handle);
                     let peeled = nr.peel_to_id_in_place().map_err(Into::into);
                     *r = nr.detach();
                     peeled
@@ -174,19 +165,19 @@ pub mod peel {
 
         /// Consume this instance and transform it into the final object that it points to, or `None` if the `HEAD`
         /// reference is yet to be born.
-        pub fn into_fully_peeled_id(self) -> Option<Result<easy::Oid<'repo, A>, Error>> {
+        pub fn into_fully_peeled_id(self) -> Option<Result<easy::Oid<'repo>, Error>> {
             Some(match self.kind {
                 Kind::Unborn(_name) => return None,
                 Kind::Detached {
                     peeled: Some(peeled), ..
-                } => Ok(peeled.attach(self.access)),
+                } => Ok(peeled.attach(self.handle)),
                 Kind::Detached { peeled: None, target } => target
-                    .attach(self.access)
+                    .attach(self.handle)
                     .object()
                     .map_err(Into::into)
                     .and_then(|obj| obj.peel_tags_to_end().map_err(Into::into))
-                    .map(|obj| obj.id.attach(self.access)),
-                Kind::Symbolic(r) => r.attach(self.access).peel_to_id_in_place().map_err(Into::into),
+                    .map(|obj| obj.id.attach(self.handle)),
+                Kind::Symbolic(r) => r.attach(self.handle).peel_to_id_in_place().map_err(Into::into),
             })
         }
     }

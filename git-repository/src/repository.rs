@@ -1,5 +1,5 @@
 mod access {
-    use crate::{Kind, Repository};
+    use crate::{easy, Kind, Repository};
 
     impl Repository {
         /// Return the kind of repository, either bare or one with a work tree.
@@ -8,6 +8,11 @@ mod access {
                 Some(_) => Kind::WorkTree,
                 None => Kind::Bare,
             }
+        }
+
+        /// Add thread-local state to an easy-to-use handle for the most convenient API.
+        pub fn to_easy(&self) -> easy::Handle {
+            self.into()
         }
     }
 }

@@ -19,7 +19,7 @@ use crate::ext::ObjectIdExt;
 pub mod logs;
 
 /// Access
-impl<'repo, A> Reference<'repo, A> {
+impl<'repo> Reference<'repo> {
     /// Return the target to which this reference points to.
     pub fn target(&self) -> git_ref::TargetRef<'_> {
         self.inner.target.to_ref()
@@ -36,22 +36,19 @@ impl<'repo, A> Reference<'repo, A> {
     }
 }
 
-impl<'repo, A> Reference<'repo, A>
-where
-    A: easy::Access + Sized,
-{
-    pub(crate) fn from_ref(reference: git_ref::Reference, access: &'repo A) -> Self {
+impl<'repo> Reference<'repo> {
+    pub(crate) fn from_ref(reference: git_ref::Reference, handle: &'repo easy::Handle) -> Self {
         Reference {
             inner: reference,
-            access,
+            handle,
         }
     }
 
     /// Returns the attached id we point to, or panic if this is a symbolic ref.
-    pub fn id(&self) -> easy::Oid<'repo, A> {
+    pub fn id(&self) -> easy::Oid<'repo> {
         match self.inner.target {
             git_ref::Target::Symbolic(_) => panic!("BUG: tries to obtain object id from symbolic target"),
-            git_ref::Target::Peeled(oid) => oid.to_owned().attach(self.access),
+            git_ref::Target::Peeled(oid) => oid.to_owned().attach(self.handle),
         }
     }
 
@@ -59,19 +56,19 @@ where
     /// to the end of the chain, and return it.
     ///
     /// This is useful to learn where this reference is ulitmately pointing to.
-    pub fn peel_to_id_in_place(&mut self) -> Result<Oid<'repo, A>, peel::Error> {
-        let state = self.access.state();
-        let oid = self.inner.peel_to_id_in_place(&state.refs, |oid, buf| {
-            state
+    pub fn peel_to_id_in_place(&mut self) -> Result<Oid<'repo>, peel::Error> {
+        let handle = &self.handle;
+        let oid = self.inner.peel_to_id_in_place(&handle.refs, |oid, buf| {
+            handle
                 .objects
                 .try_find(oid, buf)
                 .map(|po| po.map(|(o, _l)| (o.kind, o.data)))
         })?;
-        Ok(Oid::from_id(oid, self.access))
+        Ok(Oid::from_id(oid, handle))
     }
 
     /// Similar to [`peel_to_id_in_place()`][Reference::peel_to_id_in_place()], but consumes this instance.
-    pub fn into_fully_peeled_id(mut self) -> Result<Oid<'repo, A>, peel::Error> {
+    pub fn into_fully_peeled_id(mut self) -> Result<Oid<'repo>, peel::Error> {
         self.peel_to_id_in_place()
     }
 }

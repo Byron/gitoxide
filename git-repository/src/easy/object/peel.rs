@@ -1,12 +1,8 @@
 //!
-use crate::{
-    easy,
-    easy::{
-        ext::ObjectAccessExt,
-        object,
-        object::{peel, Kind},
-        ObjectRef,
-    },
+use crate::easy::{
+    object,
+    object::{peel, Kind},
+    ObjectRef,
 };
 
 ///
@@ -31,10 +27,7 @@ pub mod to_kind {
     pub use error::Error;
 }
 
-impl<'repo, A> ObjectRef<'repo, A>
-where
-    A: easy::Access + Sized,
-{
+impl<'repo> ObjectRef<'repo> {
     // TODO: tests
     /// Follow tags to their target and commits to trees until the given `kind` of object is encountered.
     ///
@@ -52,13 +45,13 @@ where
                         .expect("commit")
                         .tree_id()
                         .expect("valid commit");
-                    let access = self.access;
+                    let access = self.handle;
                     drop(self);
                     self = access.find_object(tree_id)?;
                 }
                 Kind::Tag => {
                     let target_id = self.to_tag_iter().target_id().expect("valid tag");
-                    let access = self.access;
+                    let access = self.handle;
                     drop(self);
                     self = access.find_object(target_id)?;
                 }
@@ -83,7 +76,7 @@ where
                 Kind::Commit | Kind::Tree | Kind::Blob => break Ok(self),
                 Kind::Tag => {
                     let target_id = self.to_tag_iter().target_id().expect("valid tag");
-                    let access = self.access;
+                    let access = self.handle;
                     drop(self);
                     self = access.find_object(target_id)?;
                 }

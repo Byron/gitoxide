@@ -106,7 +106,7 @@
 //!
 #![deny(missing_docs, unsafe_code, rust_2018_idioms)]
 
-use std::{path::PathBuf, rc::Rc, sync::Arc};
+use std::path::PathBuf;
 
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
@@ -148,7 +148,7 @@ pub mod prelude {
         Write,
     };
 
-    pub use crate::{easy::ext::*, ext::*};
+    pub use crate::ext::*;
 }
 
 ///
@@ -176,11 +176,8 @@ pub enum Path {
 /// A instance with access to everything a git repository entails, best imagined as container for _most_ for system resources required
 /// to interact with a `git` repository which are loaded in once the instance is created.
 ///
-/// These resources are meant to be shareable across threads and used by most using an `Easy*` type has a handle carrying additional
-/// in-memory data to accelerate data access or hold volatile data. Depending on context, `EasyShared` gets the fastest read-only
-/// access to the repository, whereas `Easy` has to go through an `Rc` and `EasyArcExclusive` through an `Arc<RwLock>`.
-///
-/// Namely, this is an object database, a reference database to point to objects.
+/// The main difference to the [`Handle`] is that this type is `Sync`, and thus can be referenced into a threaded context for creation
+/// of thread-local handles.
 pub struct Repository {
     /// A store for references to point at objects
     pub refs: RefStore,
@@ -196,69 +193,6 @@ pub struct Repository {
     //       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
     //       packs are refreshed. This would be `git_config::fs::Config` when ready.
     // pub(crate) config: git_config::file::GitConfig<'static>,
-}
-
-/// A handle to a `Repository` for use when the repository needs to be shared, providing state for one `ObjectRef` at a time, , created with [`Repository::into_easy()`].
-///
-/// For use in one-off single-threaded commands that don't have to deal with the changes they potentially incur.
-/// TODO: There should be an `EasyExclusive` using `Rc<RefCell<…>>` but that needs GATs.
-#[derive(Clone)]
-pub struct Easy {
-    /// The repository
-    pub repo: Rc<Repository>,
-    /// The state with interior mutability
-    pub state: easy::Handle,
-}
-
-/// A handle to a repository for use when the repository needs to be shared using an actual reference, providing state for one `ObjectRef` at a time, created with [`Repository::to_easy()`]
-///
-/// For use in one-off commands that don't have to deal with the changes they potentially incur.
-#[derive(Clone)]
-pub struct EasyShared<'a> {
-    /// The repository
-    pub repo: &'a Repository,
-    /// The state with interior mutability
-    pub state: easy::Handle,
-}
-
-/// A handle to a `Repository` for sharing across threads, with each thread having one or more caches,
-/// created with [`Repository::into_easy_arc()`]
-///
-/// For use in one-off commands in threaded applications that don't have to deal with the changes they potentially incur.
-#[derive(Clone)]
-pub struct EasyArc {
-    /// The repository
-    pub repo: Arc<Repository>,
-    /// The state with interior mutability
-    pub state: easy::Handle,
-}
-
-/// A handle to a optionally mutable `Repository` for use in long-running applications that eventually need to update the `Repository`
-/// to adapt to changes they triggered or that were caused by other processes.
-///
-/// Using it incurs costs as each `Repository` access has to go through an indirection and involve an _eventually fair_ `RwLock`.
-/// However, it's vital to precisely updating the `Repository` instance as opposed to creating a new one while serving other requests
-/// on an old instance, which potentially duplicates the resource costs.
-///
-/// ### Limitation
-///
-/// * **It can take a long time to get a mutable `repo`….**
-///    - Imagine a typical server operation where a pack is sent to a client. As it's a fresh clone it takes 5 minutes.
-///      Right after the clone began somebody initiates a push. Everything goes well and as a new pack was created the server
-///      wants to tell the object database to update its packs, making the new one available. To do that, it needs mutable access to the
-///      repository instance, and obtaining it will take until the end of the ongoing clone as the latter has acquired read-access to
-///      the same repository instance. This is most certainly undesirable.
-///   - Workarounds would be to
-///       - acquire the read-lock each time the clone operation wants to access an object
-///       - set a flag that triggers the server to create a new `Repository` instance next time a connection comes in which is subsequently
-///         shared across additional connections.
-///       - Create a new `Repository` per connection.
-#[derive(Clone)]
-pub struct EasyArcExclusive {
-    /// The repository
-    pub repo: Arc<parking_lot::RwLock<Repository>>,
-    /// The state with interior mutability
-    pub state: easy::Handle,
 }
 
 pub mod easy;

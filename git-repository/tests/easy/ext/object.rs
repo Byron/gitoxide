@@ -1,10 +1,8 @@
 mod write_object {
-    use git_repository::prelude::{ObjectAccessExt, RepositoryAccessExt};
-
     #[test]
     fn empty_tree() -> crate::Result {
         let tmp = tempfile::tempdir()?;
-        let repo = git_repository::init_bare(&tmp)?.into_easy();
+        let repo = git_repository::init_bare(&tmp)?.to_easy();
         let oid = repo.write_object(&git_repository::objs::TreeRef::empty())?;
         assert_eq!(
             oid,
@@ -16,7 +14,6 @@ mod write_object {
 }
 
 mod find {
-    use git_repository::prelude::{CacheAccessExt, ReferenceAccessExt};
 
     #[test]
     fn find_and_try_find_with_and_without_object_cache() -> crate::Result {
@@ -45,8 +42,6 @@ mod find {
 }
 
 mod tag {
-    use git_repository::prelude::{ObjectAccessExt, ReferenceAccessExt, RepositoryAccessExt};
-
     #[test]
     fn simple() -> crate::Result {
         let (repo, _keep) = crate::easy_repo_rw("make_basic_repo.sh")?;
@@ -75,12 +70,11 @@ mod tag {
 
 mod commit {
     use git_repository as git;
-    use git_repository::prelude::{ObjectAccessExt, ReferenceAccessExt};
     use git_testtools::hex_to_id;
     #[test]
     fn parent_in_initial_commit_causes_failure() {
         let tmp = tempfile::tempdir().unwrap();
-        let repo = git::init(&tmp).unwrap().into_easy();
+        let repo = git::init(&tmp).unwrap().to_easy();
         let empty_tree_id = repo.write_object(&git::objs::Tree::empty()).unwrap().detach();
         let author = git::actor::Signature::empty();
         let err = repo
@@ -103,7 +97,7 @@ mod commit {
     #[test]
     fn single_line_initial_commit_empty_tree_ref_nonexisting() -> crate::Result {
         let tmp = tempfile::tempdir()?;
-        let repo = git::init(&tmp)?.into_easy();
+        let repo = git::init(&tmp)?.to_easy();
         let empty_tree_id = repo.write_object(&git::objs::Tree::empty())?;
         let author = git::actor::Signature::empty();
         let commit_id = repo.commit(
