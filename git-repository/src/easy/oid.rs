@@ -61,6 +61,7 @@ pub struct Ancestors<'repo> {
 pub mod ancestors {
     use git_odb::Find;
 
+    use crate::ext::ObjectIdExt;
     use crate::{
         easy,
         easy::{oid::Ancestors, Oid},
@@ -68,11 +69,11 @@ pub mod ancestors {
 
     impl<'repo> Oid<'repo> {
         /// Obtain a platform for traversing ancestors of this commit.
-        pub fn ancestors(&self) -> Result<Ancestors<'repo>, Error> {
-            Ok(Ancestors {
+        pub fn ancestors(&self) -> Ancestors<'repo> {
+            Ancestors {
                 handle: self.handle,
                 tips: Box::new(Some(self.inner).into_iter()),
-            })
+            }
         }
     }
 
@@ -111,23 +112,6 @@ pub mod ancestors {
             self.inner.next().map(|res| res.map(|oid| oid.attach(self.handle)))
         }
     }
-
-    mod error {
-        use crate::easy;
-
-        /// The error returned by [`Oid::ancestors()`][super::Oid::ancestors()].
-        #[derive(Debug, thiserror::Error)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            #[error(transparent)]
-            BorrowRepo(#[from] easy::borrow::repo::Error),
-            #[error(transparent)]
-            BorrowBufMut(#[from] easy::borrow::state::Error),
-        }
-    }
-    pub use error::Error;
-
-    use crate::ext::ObjectIdExt;
 }
 
 mod impls {

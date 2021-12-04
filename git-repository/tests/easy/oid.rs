@@ -6,7 +6,7 @@ mod ancestors {
             repo.head()?
                 .into_fully_peeled_id()
                 .expect("born")?
-                .ancestors()?
+                .ancestors()
                 .all()
                 .count(),
             2,

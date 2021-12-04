@@ -159,7 +159,7 @@ impl easy::Handle {
         let committer = match log_committer {
             Some(c) => c,
             None => {
-                committer_storage = self.committer()?;
+                committer_storage = self.committer();
                 &committer_storage
             }
         };

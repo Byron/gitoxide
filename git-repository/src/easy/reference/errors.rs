@@ -1,7 +1,5 @@
 ///
 pub mod edit {
-    use crate::easy;
-
     /// The error returned by [ReferenceAccessExt::edit_references(…)][easy::ext::ReferenceAccessExt::edit_references()], and others
     /// which ultimately create a reference.
     #[derive(Debug, thiserror::Error)]
@@ -13,8 +11,6 @@ pub mod edit {
         FileTransactionCommit(#[from] git_ref::file::transaction::commit::Error),
         #[error(transparent)]
         NameValidation(#[from] git_validate::reference::name::Error),
-        #[error("BUG: The repository could not be borrowed")]
-        BorrowRepo(#[from] easy::borrow::repo::Error),
     }
 }
 

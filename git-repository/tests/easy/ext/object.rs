@@ -24,7 +24,7 @@ mod find {
                 2 => repo.object_cache_size(128 * 1024),
                 _ => unreachable!("BUG"),
             }
-            for commit_id in repo.head()?.peeled()?.id().expect("born").ancestors()?.all() {
+            for commit_id in repo.head()?.peeled()?.id().expect("born").ancestors().all() {
                 let commit = commit_id?;
                 assert_eq!(commit.object()?.kind, git_object::Kind::Commit);
                 if round == 2 {
@@ -51,7 +51,7 @@ mod tag {
             "v1.0.0",
             &current_head_id,
             git_object::Kind::Commit,
-            Some(&repo.committer()?.to_ref()),
+            Some(&repo.committer().to_ref()),
             message,
             git_ref::transaction::PreviousValue::MustNotExist,
         )?;
@@ -62,7 +62,7 @@ mod tag {
         assert_eq!(tag.name, "v1.0.0");
         assert_eq!(current_head_id, tag.target(), "the tag points to the commit");
         assert_eq!(tag.target_kind, git_object::Kind::Commit);
-        assert_eq!(*tag.tagger.as_ref().expect("tagger"), repo.committer()?.to_ref());
+        assert_eq!(*tag.tagger.as_ref().expect("tagger"), repo.committer().to_ref());
         assert_eq!(tag.message, message);
         Ok(())
     }

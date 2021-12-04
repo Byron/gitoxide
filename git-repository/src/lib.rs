@@ -195,6 +195,7 @@ pub struct Repository {
     // pub(crate) config: git_config::file::GitConfig<'static>,
 }
 
+///
 pub mod easy;
 
 ///

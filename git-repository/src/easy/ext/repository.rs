@@ -9,9 +9,9 @@ impl easy::Handle {
     /// * …the GIT_(AUTHOR|COMMITTER)_(NAME|EMAIL|DATE) environment variables…
     ///
     /// …and in that order.
-    pub fn committer(&self) -> easy::borrow::repo::Result<git_actor::Signature> {
+    pub fn committer(&self) -> git_actor::Signature {
         // TODO: actually do the work, probably that should be cached and be refreshable
-        Ok(git_actor::Signature::empty())
+        git_actor::Signature::empty()
     }
 
     /// The kind of hash the repository is configured to use.
