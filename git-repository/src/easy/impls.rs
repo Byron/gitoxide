@@ -6,7 +6,7 @@ use crate::{easy, Easy, EasyArc, EasyArcExclusive, EasyShared, Repository};
 
 impl From<Repository> for Easy {
     fn from(repo: Repository) -> Self {
-        let state = easy::State::from(&repo);
+        let state = easy::Handle::from(&repo);
         Easy {
             repo: Rc::new(repo),
             state,
@@ -32,7 +32,7 @@ impl TryFrom<EasyArc> for Repository {
 
 impl From<Repository> for EasyArc {
     fn from(repo: Repository) -> Self {
-        let state = easy::State::from(&repo);
+        let state = easy::Handle::from(&repo);
         EasyArc {
             repo: Arc::new(repo),
             state,
@@ -42,7 +42,7 @@ impl From<Repository> for EasyArc {
 
 impl From<Repository> for EasyArcExclusive {
     fn from(repo: Repository) -> Self {
-        let state = easy::State::from(&repo);
+        let state = easy::Handle::from(&repo);
         EasyArcExclusive {
             repo: Arc::new(parking_lot::RwLock::new(repo)),
             state,
@@ -100,11 +100,11 @@ impl<'repo> easy::Access for EasyShared<'repo> {
         Err(easy::borrow::repo::Error)
     }
 
-    fn state(&self) -> &easy::State {
+    fn state(&self) -> &easy::Handle {
         &self.state
     }
 
-    fn state_mut(&mut self) -> &mut easy::State {
+    fn state_mut(&mut self) -> &mut easy::Handle {
         &mut self.state
     }
 }
@@ -122,11 +122,11 @@ impl easy::Access for Easy {
         Err(easy::borrow::repo::Error)
     }
 
-    fn state(&self) -> &easy::State {
+    fn state(&self) -> &easy::Handle {
         &self.state
     }
 
-    fn state_mut(&mut self) -> &mut easy::State {
+    fn state_mut(&mut self) -> &mut easy::Handle {
         &mut self.state
     }
 }
@@ -141,11 +141,11 @@ impl easy::Access for EasyArc {
     fn repo_mut(&self) -> Result<Self::RepoRefMut, easy::borrow::repo::Error> {
         Err(easy::borrow::repo::Error)
     }
-    fn state(&self) -> &easy::State {
+    fn state(&self) -> &easy::Handle {
         &self.state
     }
 
-    fn state_mut(&mut self) -> &mut easy::State {
+    fn state_mut(&mut self) -> &mut easy::Handle {
         &mut self.state
     }
 }
@@ -160,11 +160,11 @@ impl easy::Access for EasyArcExclusive {
     fn repo_mut(&self) -> Result<Self::RepoRefMut, easy::borrow::repo::Error> {
         Ok(self.repo.write_arc())
     }
-    fn state(&self) -> &easy::State {
+    fn state(&self) -> &easy::Handle {
         &self.state
     }
 
-    fn state_mut(&mut self) -> &mut easy::State {
+    fn state_mut(&mut self) -> &mut easy::Handle {
         &mut self.state
     }
 }

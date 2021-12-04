@@ -26,11 +26,11 @@ pub(crate) mod ext;
 
 pub mod borrow;
 pub mod commit;
+pub mod handle;
 pub mod head;
 pub mod object;
 pub mod oid;
 pub mod reference;
-pub mod state;
 pub mod tag;
 
 /// The head reference, as created from looking at `.git/HEAD`, able to represent all of its possible states.
@@ -104,7 +104,7 @@ pub struct Reference<'r, A> {
 /// Note that it clones itself so that it is empty, requiring the user to configure each clone separately, specifically
 /// and explicitly. This is to have the fastest-possible default configuration available by default, but allow
 /// those who experiment with workloads to get speed boosts of 2x or more.
-pub struct State {
+pub struct Handle {
     /// A ref store with shared ownership (or the equivalent of it).
     pub refs: crate::RefStore,
     /// A way to access objects.
@@ -143,8 +143,8 @@ pub trait Access {
     fn repo_mut(&self) -> borrow::repo::Result<Self::RepoRefMut>;
 
     /// Return a shared borrow of the repository state.
-    fn state(&self) -> &State;
+    fn state(&self) -> &Handle;
 
     /// Return a shared borrow of the repository state.
-    fn state_mut(&mut self) -> &mut State;
+    fn state_mut(&mut self) -> &mut Handle;
 }

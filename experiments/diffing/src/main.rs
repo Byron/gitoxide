@@ -58,7 +58,7 @@ fn main() -> anyhow::Result<()> {
             self.data.len()
         }
     }
-    fn find_with_lru_mem_cache<'b>(
+    fn find_with_lru_object_cache<'b>(
         oid: &oid,
         buf: &'b mut Vec<u8>,
         obj_cache: &mut memory_lru::MemoryLruCache<ObjectId, ObjectInfo>,
@@ -95,7 +95,7 @@ fn main() -> anyhow::Result<()> {
             let _pack_cache = odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size());
             let db = &db;
             let mut obj_cache = memory_lru::MemoryLruCache::new(cache_size());
-            move |oid, buf: &mut Vec<u8>| find_with_lru_mem_cache(oid, buf, &mut obj_cache, db)
+            move |oid, buf: &mut Vec<u8>| find_with_lru_object_cache(oid, buf, &mut obj_cache, db)
         },
         Computation::MultiThreaded,
     )?;
@@ -119,7 +119,7 @@ fn main() -> anyhow::Result<()> {
             let mut _pack_cache = odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size());
             let db = &db;
             let mut obj_cache = memory_lru::MemoryLruCache::new(cache_size());
-            move |oid, buf: &mut Vec<u8>| find_with_lru_mem_cache(oid, buf, &mut obj_cache, db)
+            move |oid, buf: &mut Vec<u8>| find_with_lru_object_cache(oid, buf, &mut obj_cache, db)
         },
         Computation::SingleThreaded,
     )?;

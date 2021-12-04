@@ -207,7 +207,7 @@ pub struct Easy {
     /// The repository
     pub repo: Rc<Repository>,
     /// The state with interior mutability
-    pub state: easy::State,
+    pub state: easy::Handle,
 }
 
 /// A handle to a repository for use when the repository needs to be shared using an actual reference, providing state for one `ObjectRef` at a time, created with [`Repository::to_easy()`]
@@ -218,7 +218,7 @@ pub struct EasyShared<'a> {
     /// The repository
     pub repo: &'a Repository,
     /// The state with interior mutability
-    pub state: easy::State,
+    pub state: easy::Handle,
 }
 
 /// A handle to a `Repository` for sharing across threads, with each thread having one or more caches,
@@ -230,7 +230,7 @@ pub struct EasyArc {
     /// The repository
     pub repo: Arc<Repository>,
     /// The state with interior mutability
-    pub state: easy::State,
+    pub state: easy::Handle,
 }
 
 /// A handle to a optionally mutable `Repository` for use in long-running applications that eventually need to update the `Repository`
@@ -258,7 +258,7 @@ pub struct EasyArcExclusive {
     /// The repository
     pub repo: Arc<parking_lot::RwLock<Repository>>,
     /// The state with interior mutability
-    pub state: easy::State,
+    pub state: easy::Handle,
 }
 
 pub mod easy;
