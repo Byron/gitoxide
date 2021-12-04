@@ -19,7 +19,7 @@ pub mod peel;
 mod tree;
 
 impl Object {
-    /// Infuse this owned object with an [`easy::Access`].
+    /// Infuse this owned object with an [`easy::Handle`].
     pub fn attach(self, handle: &easy::Handle) -> easy::borrow::state::Result<ObjectRef<'_>> {
         *handle.try_borrow_mut_buf()? = self.data;
         Ok(ObjectRef {

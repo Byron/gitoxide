@@ -1,6 +1,6 @@
 ///
 pub mod edit {
-    /// The error returned by [ReferenceAccessExt::edit_references(…)][easy::ext::ReferenceAccessExt::edit_references()], and others
+    /// The error returned by [edit_references(…)][crate::easy::Handle::edit_references()], and others
     /// which ultimately create a reference.
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
@@ -40,7 +40,7 @@ pub mod find {
     pub mod existing {
         use crate::easy;
 
-        /// The error returned by [ReferenceAccessExt::find_reference(…)][easy::ext::ReferenceAccessExt::find_reference()], and others.
+        /// The error returned by [find_reference(…)][easy::Handle::find_reference()], and others.
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
@@ -51,7 +51,7 @@ pub mod find {
         }
     }
 
-    /// The error returned by [ReferenceAccessExt::try_find_reference(…)][easy::ext::ReferenceAccessExt::try_find_reference()].
+    /// The error returned by [try_find_reference(…)][easy::Handle::try_find_reference()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

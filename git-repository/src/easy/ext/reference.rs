@@ -192,7 +192,7 @@ impl easy::Handle {
     /// Find the reference with the given partial or full `name`, like `main`, `HEAD`, `heads/branch` or `origin/other`,
     /// or return an error if it wasn't found.
     ///
-    /// Consider [`try_find_reference(…)`][ReferenceAccessExt::try_find_reference()] if the reference might not exist
+    /// Consider [`try_find_reference(…)`][easy::Handle::try_find_reference()] if the reference might not exist
     /// without that being considered an error.
     pub fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_>, reference::find::existing::Error>
     where
@@ -217,7 +217,7 @@ impl easy::Handle {
     /// Try to find the reference named `name`, like `main`, `heads/branch`, `HEAD` or `origin/other`, and return it.
     ///
     /// Otherwise return `None` if the reference wasn't found.
-    /// If the reference is expected to exist, use [`find_reference()`][ReferenceAccessExt::find_reference()].
+    /// If the reference is expected to exist, use [`find_reference()`][easy::Handle::find_reference()].
     pub fn try_find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_>>, reference::find::Error>
     where
         Name: TryInto<PartialNameRef<'a>, Error = E>,

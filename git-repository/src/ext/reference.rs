@@ -6,7 +6,7 @@ impl Sealed for git_ref::Reference {}
 
 /// Extensions for [references][git_ref::Reference].
 pub trait ReferenceExt {
-    /// Attach [`easy::Access`] to the given reference. It can be detached later with [`detach()]`.
+    /// Attach [`easy::Handle`] to the given reference. It can be detached later with [`detach()]`.
     fn attach(self, handle: &easy::Handle) -> easy::Reference<'_>;
 }
 

@@ -101,7 +101,7 @@ pub mod init {
 mod error {
     use crate::easy;
 
-    /// The error returned by [ReferenceAccessExt::references()][easy::ext::ReferenceAccessExt::references()].
+    /// The error returned by [references()][easy::Handle::references()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

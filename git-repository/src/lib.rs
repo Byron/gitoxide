@@ -13,11 +13,11 @@
 //!
 //! ## Easy-Mode
 //!
-//! Most extensions to existing objects provide an `obj_with_extension.easy(&repo).an_easier_version_of_a_method()` or `easy(&repo)`
-//! method to hide all complex arguments and sacrifice some performance for a lot of convenience.
+//! Most extensions to existing objects provide an `obj_with_extension.attach(&repo).an_easier_version_of_a_method()` or `repo.to_easy()`
+//! method to hide all complex arguments and trade a little control for a lot of convenience.
 //!
-//! When starting out, use `easy(…)` and migrate to the more detailed method signatures to squeeze out the last inkling of performance
-//! if it really does make a difference.
+//! When starting out, use [`easy::Handle`] and migrate to the more detailed method signatures to
+//! squeeze out the last inkling of performance if it really does make a difference.
 //!
 //! ## Object-Access Performance
 //!
@@ -28,20 +28,19 @@
 //! On miss, the object is looked up and if ia pack is hit, there is a small fixed-size cache for delta-base objects.
 //!
 //! In scenarios where the same objects are accessed multiple times, an object cache can be useful and is to be configured specifically
-//! using the [`object_cache_size(…)`][prelude::CacheAccessExt::object_cache_size()] method.
+//! using the [`object_cache_size(…)`][easy::Handle::object_cache_size()] method.
 //!
 //! Use the `cache-efficiency-debug` cargo feature to learn how efficient the cache actually is - it's easy to end up with lowered
 //! performance if the cache is not hit in 50% of the time.
 //!
 //! Environment variables can also be used for configuration if the application is calling
-//! [`apply_environment()`][prelude::CacheAccessExt::apply_environment()] on their `Easy*` accordingly.
+//! [`apply_environment()`][easy::Handle::apply_environment()] on their `Easy*` accordingly.
 //!
 //! ### Shortcomings & Limitations
 //!
-//! - Only one `easy::Object` or derivatives can be held in memory at a time, _per `Easy*`_.
-//! - Changes made to the configuration, packs, and alternates aren't picked up automatically if they aren't
-//!   made through the underlying `Repository` instance. Run one of the [`refresh*()`][prelude::RepositoryAccessExt] to trigger
-//!   an update. Also note that this is only a consideration for long-running processes.
+//! - Only a single `easy::Object` or derivatives can be held in memory at a time, _per `Easy*`_.
+//! - Changes made to the configuration, packs, and alternates aren't picked up automatically, but the current object store
+//!   needs a manual refresh.
 //!
 //! ### Design Sketch
 //!
@@ -176,7 +175,7 @@ pub enum Path {
 /// A instance with access to everything a git repository entails, best imagined as container for _most_ for system resources required
 /// to interact with a `git` repository which are loaded in once the instance is created.
 ///
-/// The main difference to the [`Handle`] is that this type is `Sync`, and thus can be referenced into a threaded context for creation
+/// The main difference to the [`easy::Handle`] is that this type is `Sync`, and thus can be referenced into a threaded context for creation
 /// of thread-local handles.
 pub struct Repository {
     /// A store for references to point at objects

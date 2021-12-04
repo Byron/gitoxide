@@ -2,7 +2,7 @@
 mod error {
     use crate::easy;
 
-    /// The error returned by [`ObjectAccessExt::commit(…)`][easy::ext::ObjectAccessExt::commit()].
+    /// The error returned by [`commit(…)`][easy::Handle::commit()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

@@ -22,7 +22,7 @@ pub mod find {
 
     pub(crate) type OdbError = git_odb::compound::find::Error;
 
-    /// The error returned by [`ObjectAccessExt::try_find_object()`][easy::ext::ObjectAccessExt::try_find_object()].
+    /// The error returned by [`try_find_object()`][easy::Handle::try_find_object()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -38,7 +38,7 @@ pub mod find {
 
         pub(crate) type OdbError = git_odb::find::existing::Error<git_odb::compound::find::Error>;
 
-        /// The error returned by [`ObjectAccessExt::find_object()`][easy::ext::ObjectAccessExt::find_object()].
+        /// The error returned by [`find_object()`][easy::Handle::find_object()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {

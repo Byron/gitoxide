@@ -30,7 +30,7 @@ pub enum Kind {
 }
 
 impl Kind {
-    /// Attach this instance with an [access][easy::Access] reference to produce a [`Head`].
+    /// Attach this instance with an [access][easy::Handle] reference to produce a [`Head`].
     pub fn attach(self, handle: &easy::Handle) -> Head<'_> {
         Head { kind: self, handle }
     }

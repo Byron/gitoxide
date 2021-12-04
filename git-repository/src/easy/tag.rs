@@ -2,7 +2,7 @@
 mod error {
     use crate::easy;
 
-    /// The error returned by [`ObjectAccessExt::tag(…)`][easy::ext::ObjectAccessExt::tag()].
+    /// The error returned by [`tag(…)`][easy::Handle::tag()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

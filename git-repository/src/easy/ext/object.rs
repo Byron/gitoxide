@@ -18,13 +18,13 @@ impl easy::Handle {
     /// Find the object with `id` in the object database or return an error if it could not be found.
     ///
     /// There are various legitimate reasons for an object to not be present, which is why
-    /// [`try_find_object(…)`][ObjectAccessExt::try_find_object()] might be preferable instead.
+    /// [`try_find_object(…)`][easy::Handle::try_find_object()] might be preferable instead.
     ///
     /// # Important
     ///
     /// As a shared buffer is written to back the object data, the returned `ObjectRef` will prevent other
     /// `find_object()` operations from succeeding while alive.
-    /// To bypass this limit, clone this `easy::Access` instance.
+    /// To bypass this limit, clone this `easy::Handle` instance.
     ///
     /// # Performance Note
     ///
@@ -44,7 +44,7 @@ impl easy::Handle {
     ///
     /// As a shared buffer is written to back the object data, the returned `ObjectRef` will prevent other
     /// `try_find_object()` operations from succeeding while alive.
-    /// To bypass this limit, clone this `easy::Access` instance.
+    /// To bypass this limit, clone this `easy::Handle` instance.
     pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<ObjectRef<'_>>, object::find::Error> {
         let state = self;
         let id = id.into();
