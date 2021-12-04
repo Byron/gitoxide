@@ -60,10 +60,10 @@ where
     ///
     /// This is useful to learn where this reference is ulitmately pointing to.
     pub fn peel_to_id_in_place(&mut self) -> Result<Oid<'repo, A>, peel::Error> {
-        let repo = self.access.repo()?;
         let state = self.access.state();
         let oid = self.inner.peel_to_id_in_place(&state.refs, |oid, buf| {
-            repo.objects
+            state
+                .objects
                 .try_find(oid, buf)
                 .map(|po| po.map(|(o, _l)| (o.kind, o.data)))
         })?;

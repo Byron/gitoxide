@@ -33,8 +33,6 @@ pub mod peel {
         PackedRefsOpen(#[from] git_ref::packed::buffer::open::Error),
         #[error("BUG: Part of interior state could not be borrowed.")]
         BorrowState(#[from] easy::borrow::state::Error),
-        #[error("BUG: The repository could not be borrowed")]
-        BorrowRepo(#[from] easy::borrow::repo::Error),
     }
 }
 
@@ -67,7 +65,5 @@ pub mod find {
         PackedRefsOpen(#[from] git_ref::packed::buffer::open::Error),
         #[error("BUG: Part of interior state could not be borrowed.")]
         BorrowState(#[from] easy::borrow::state::Error),
-        #[error("BUG: The repository could not be borrowed")]
-        BorrowRepo(#[from] easy::borrow::repo::Error),
     }
 }

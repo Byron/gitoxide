@@ -15,8 +15,8 @@ pub trait RepositoryAccessExt: easy::Access + Sized {
     }
 
     /// The kind of hash the repository is configured to use.
-    fn hash_kind(&self) -> easy::borrow::repo::Result<git_hash::Kind> {
-        self.repo().map(|r| r.hash_kind)
+    fn hash_kind(&self) -> git_hash::Kind {
+        self.state().hash_kind
     }
 }
 

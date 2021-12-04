@@ -77,10 +77,10 @@ where
             res.map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
                 .and_then(|mut r| {
                     if self.peel {
-                        let repo = self.access.repo()?;
                         let state = self.access.state();
                         r.peel_to_id_in_place(&state.refs, |oid, buf| {
-                            repo.objects
+                            state
+                                .objects
                                 .try_find(oid, buf)
                                 .map(|po| po.map(|(o, _l)| (o.kind, o.data)))
                         })
@@ -118,8 +118,6 @@ mod error {
         PackedRefsOpen(#[from] git_ref::packed::buffer::open::Error),
         #[error("BUG: Part of interior state could not be borrowed.")]
         BorrowState(#[from] easy::borrow::state::Error),
-        #[error("BUG: The repository could not be borrowed")]
-        BorrowRepo(#[from] easy::borrow::repo::Error),
     }
 }
 pub use error::Error;
