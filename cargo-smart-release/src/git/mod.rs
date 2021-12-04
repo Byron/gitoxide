@@ -6,7 +6,6 @@ use git_repository as git;
 use git_repository::{
     bstr::{BStr, ByteSlice},
     easy::object,
-    prelude::ReferenceAccessExt,
     refs::FullNameRef,
 };
 

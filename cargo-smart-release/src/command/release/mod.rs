@@ -21,8 +21,6 @@ mod git;
 mod github;
 mod manifest;
 
-type Oid<'repo> = git_repository::easy::Oid<'repo, git_repository::Easy>;
-
 pub(crate) struct Context {
     base: crate::Context,
     changelog_links: Linkables,

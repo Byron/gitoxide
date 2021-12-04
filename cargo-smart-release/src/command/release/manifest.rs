@@ -7,10 +7,11 @@ use std::{
 
 use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Package};
+use git_repository::easy::Oid;
 use git_repository::lock::File;
 use semver::{Version, VersionReq};
 
-use super::{cargo, git, Context, Oid, Options};
+use super::{cargo, git, Context, Options};
 use crate::{
     changelog,
     changelog::{write::Linkables, Section},

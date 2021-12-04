@@ -98,7 +98,7 @@ impl ChangeLog {
     pub fn from_history_segments(
         package: &Package,
         segments: &[commit::history::Segment<'_>],
-        repo: &git::Easy,
+        repo: &git::easy::Handle,
         selection: segment::Selection,
     ) -> Self {
         ChangeLog {

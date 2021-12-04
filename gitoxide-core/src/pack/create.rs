@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, ffi::OsStr, io, path::Path, str::FromStr, sync::Arc, time::Instant};
+use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc, time::Instant};
 
 use anyhow::anyhow;
 use git_repository as git;
@@ -8,7 +8,7 @@ use git_repository::{
     interrupt,
     objs::bstr::ByteVec,
     odb::{pack, pack::FindExt},
-    prelude::{Finalize, ReferenceAccessExt},
+    prelude::Finalize,
     progress,
     threading::OwnShared,
     traverse, Progress,
@@ -130,18 +130,19 @@ where
             use git::bstr::ByteSlice;
             use os_str_bytes::OsStrBytes;
             let mut progress = progress.add_child("traversing");
-            let repo = repo.into_easy();
+            let handle = repo.to_easy();
             progress.init(None, progress::count("commits"));
             let tips = tips
                 .map(|tip| {
                     ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else(|_| {
-                        repo.find_reference(tip.as_ref().to_raw_bytes().as_bstr())
+                        handle
+                            .find_reference(tip.as_ref().to_raw_bytes().as_bstr())
                             .map_err(anyhow::Error::from)
                             .and_then(|r| r.into_fully_peeled_id().map(|oid| oid.detach()).map_err(Into::into))
                     })
                 })
                 .collect::<Result<Vec<_>, _>>()?;
-            let odb = Arc::new(match OwnShared::try_unwrap(git::Repository::try_from(repo)?.objects) {
+            let odb = Arc::new(match OwnShared::try_unwrap(repo.objects) {
                 Ok(odb) => odb,
                 Err(_) => unreachable!(),
             });

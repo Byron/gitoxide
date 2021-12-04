@@ -11,7 +11,7 @@ use git_repository as git;
 use git_repository::{
     bstr::ByteSlice,
     easy::head,
-    prelude::{CacheAccessExt, ObjectAccessExt, ObjectIdExt, ReferenceAccessExt, ReferenceExt},
+    prelude::{ObjectIdExt, ReferenceExt},
 };
 
 use crate::{
@@ -29,8 +29,8 @@ pub enum SegmentScope {
     EntireHistory,
 }
 
-pub fn collect(repo: &git::Easy) -> anyhow::Result<Option<commit::History>> {
-    let mut repo = repo.clone();
+pub fn collect(handle: &git::easy::Handle) -> anyhow::Result<Option<commit::History>> {
+    let mut repo = handle.clone();
     repo.object_cache_size(64 * 1024);
     let reference = match repo.head()?.peeled()?.kind {
         head::Kind::Detached { .. } => bail!("Refusing to operate on a detached head."),

@@ -21,14 +21,14 @@ impl Section {
     pub fn from_history_segment(
         package: &Package,
         segment: &commit::history::Segment<'_>,
-        repo: &git::Easy,
+        handle: &git::easy::Handle,
         selection: section::segment::Selection,
     ) -> Self {
         let time = segment
             .head
             .peeled
             .expect("all refs here are peeled")
-            .attach(repo)
+            .attach(handle)
             .object()
             .expect("object exists")
             .to_commit()
@@ -139,7 +139,8 @@ impl Section {
 
         let version = crate::git::try_strip_tag_path(segment.head.name.to_ref())
             .map(|tag_name| {
-                let package_name = (!is_top_level_package(&package.manifest_path, repo)).then(|| package.name.as_str());
+                let package_name =
+                    (!is_top_level_package(&package.manifest_path, handle)).then(|| package.name.as_str());
                 changelog::Version::Semantic(
                     utils::parse_possibly_prefixed_tag_version(package_name, tag_name)
                         .expect("here we always have a valid version as it passed a filter when creating it"),
