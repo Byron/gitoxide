@@ -109,6 +109,8 @@ pub struct State {
     pub refs: crate::RefStore,
     /// A way to access objects.
     pub objects: crate::OdbHandle,
+    /// The kind of hash that is used or should be used for object ids
+    hash_kind: git_hash::Kind,
     buf: RefCell<Vec<u8>>,
 }
 

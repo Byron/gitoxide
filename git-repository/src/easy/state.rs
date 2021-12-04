@@ -5,14 +5,19 @@ use crate::{easy, easy::borrow};
 
 impl Clone for easy::State {
     fn clone(&self) -> Self {
-        easy::State::from_refs_and_objects(self.refs.clone(), self.objects.clone())
+        easy::State::from_refs_and_objects(self.refs.clone(), self.objects.clone(), self.hash_kind)
     }
 }
 
 impl easy::State {
-    pub(crate) fn from_refs_and_objects(refs: crate::RefStore, objects: crate::OdbHandle) -> Self {
+    pub(crate) fn from_refs_and_objects(
+        refs: crate::RefStore,
+        objects: crate::OdbHandle,
+        hash_kind: git_hash::Kind,
+    ) -> Self {
         easy::State {
             buf: RefCell::new(vec![]),
+            hash_kind,
             objects: {
                 #[cfg(feature = "max-performance")]
                 {
@@ -30,7 +35,7 @@ impl easy::State {
 
 impl From<&crate::Repository> for easy::State {
     fn from(repo: &crate::Repository) -> Self {
-        easy::State::from_refs_and_objects(repo.refs.clone(), repo.objects.to_handle_shared())
+        easy::State::from_refs_and_objects(repo.refs.clone(), repo.objects.to_handle_shared(), repo.hash_kind)
     }
 }
 

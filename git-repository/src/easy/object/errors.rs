@@ -30,8 +30,6 @@ pub mod find {
         Find(#[from] OdbError),
         #[error("BUG: Part of interior state could not be borrowed.")]
         BorrowState(#[from] easy::borrow::state::Error),
-        #[error("BUG: The repository could not be borrowed")]
-        BorrowRepo(#[from] easy::borrow::repo::Error),
     }
 
     ///
@@ -48,23 +46,12 @@ pub mod find {
             FindExisting(#[from] OdbError),
             #[error("BUG: Part of interior state could not be borrowed.")]
             BorrowState(#[from] easy::borrow::state::Error),
-            #[error("BUG: The repository could not be borrowed")]
-            BorrowRepo(#[from] easy::borrow::repo::Error),
         }
     }
 }
 
 ///
 pub mod write {
-    use crate::easy;
-
-    /// The error returned by [`ObjectAccessExt::write_object()`][easy::ext::ObjectAccessExt::write_object()].
-    #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error(transparent)]
-        OdbWrite(#[from] git_odb::loose::write::Error),
-        #[error("BUG: The repository could not be borrowed")]
-        BorrowRepo(#[from] easy::borrow::repo::Error),
-    }
+    /// An error to indicate writing to the loose object store failed.
+    pub type Error = git_odb::loose::write::Error;
 }
