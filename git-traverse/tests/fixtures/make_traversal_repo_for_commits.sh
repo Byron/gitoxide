@@ -3,6 +3,7 @@ set -eu -o pipefail
 
 git init -q
 git config commit.gpgsign false
+git config merge.ff false
 
 git checkout -q -b main
 git commit -q --allow-empty -m c1

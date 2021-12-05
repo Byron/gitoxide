@@ -74,7 +74,7 @@ pub fn scripted_fixture_repo_read_only_with_args(
             crc_digest.finalize()
         })
         .to_owned();
-    let script_result_directory = fixture_path(Path::new("generated").join(format!("{}", script_identity)));
+    let script_result_directory = fixture_path(Path::new("generated-do-not-edit").join(format!("{}", script_identity)));
     if !script_result_directory.is_dir() {
         std::fs::create_dir_all(&script_result_directory)?;
         let script_absolute_path = std::env::current_dir()?.join(script_path);
