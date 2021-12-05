@@ -85,7 +85,7 @@ pub mod pretty {
                     enum Event<T> {
                         UiDone,
                         ComputationFailed,
-                        ComputationDone(Result<T>),
+                        ComputationDone(Result<T>, Vec<u8>),
                     }
                     use crate::shared::{self, STANDARD_RANGE};
                     let (tx, rx) = std::sync::mpsc::sync_channel::<Event<T>>(1);
@@ -103,11 +103,12 @@ pub mod pretty {
                     // LIMITATION: This will hang if the thread panics as no message is send and the renderer thread will wait forever.
                     // `catch_unwind` can't be used as a parking lot mutex is not unwind safe, coming from prodash.
                     let join_handle = std::thread::spawn(move || {
+                        let mut out = Vec::<u8>::new();
                         let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                            run(Some(sub_progress), &mut stdout(), &mut stderr())
+                            run(Some(sub_progress), &mut out, &mut stderr())
                         }));
                         match res {
-                            Ok(res) => tx.send(Event::ComputationDone(res)).ok(),
+                            Ok(res) => tx.send(Event::ComputationDone(res, out)).ok(),
                             Err(err) => {
                                 tx.send(Event::ComputationFailed).ok();
                                 std::panic::resume_unwind(err)
@@ -120,9 +121,10 @@ pub mod pretty {
                             drop(join_handle);
                             Err(anyhow::anyhow!("Operation cancelled by user"))
                         }
-                        Event::ComputationDone(res) => {
+                        Event::ComputationDone(res, out) => {
                             ui_handle.shutdown_and_wait();
                             join_handle.join().ok();
+                            std::io::Write::write_all(&mut stdout(), &out)?;
                             res
                         }
                         Event::ComputationFailed => match join_handle.join() {
