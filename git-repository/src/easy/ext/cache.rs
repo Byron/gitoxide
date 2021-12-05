@@ -16,7 +16,7 @@ impl easy::Handle {
             Some(bytes) => self
                 .objects
                 .set_object_cache(move || Box::new(easy::object::cache::MemoryCappedHashmap::new(bytes))),
-            None => self.objects.without_object_cache(),
+            None => self.objects.unset_object_cache(),
         }
     }
 

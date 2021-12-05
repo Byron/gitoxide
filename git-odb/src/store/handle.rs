@@ -1,39 +1,53 @@
-#![allow(missing_docs, dead_code, unreachable_code)]
-
 use std::{cell::RefCell, sync::Arc};
 
 use crate::Handle;
 
+/// A type to store pack caches in boxes.
 pub type PackCache = dyn git_pack::cache::DecodeEntry + Send + 'static;
+/// A constructor for boxed pack caches.
 pub type NewPackCacheFn = dyn Fn() -> Box<PackCache> + Send + Sync + 'static;
 
+/// A type to store object caches in boxes.
 pub type ObjectCache = dyn git_pack::cache::Object + Send + 'static;
+/// A constructor for boxed object caches.
 pub type NewObjectCacheFn = dyn Fn() -> Box<ObjectCache> + Send + Sync + 'static;
 
 impl<S> Handle<S> {
+    /// Use this methods directly after creating a new instance to add a constructor for pack caches.
+    ///
+    /// These are used to speed up decoding objects which are located in packs, reducing long delta chains by storing
+    /// their intermediate results.
     pub fn with_pack_cache(mut self, create: impl Fn() -> Box<PackCache> + Send + Sync + 'static) -> Self {
         self.pack_cache = Some(RefCell::new(create()));
         self.new_pack_cache = Some(Arc::new(create));
         self
     }
+    /// Use this methods directly after creating a new instance to add a constructor for object caches.
+    ///
+    /// Only use this kind of cache if the same objects are repeatedly accessed for great speedups, usually during diffing of
+    /// trees.
     pub fn with_object_cache(mut self, create: impl Fn() -> Box<ObjectCache> + Send + Sync + 'static) -> Self {
         self.object_cache = Some(RefCell::new(create()));
         self.new_object_cache = Some(Arc::new(create));
         self
     }
+    /// Set the pack cache constructor on this instance.
     pub fn set_pack_cache(&mut self, create: impl Fn() -> Box<PackCache> + Send + Sync + 'static) {
         self.pack_cache = Some(RefCell::new(create()));
         self.new_pack_cache = Some(Arc::new(create));
     }
+    /// Set the object cache constructor on this instance.
     pub fn set_object_cache(&mut self, create: impl Fn() -> Box<ObjectCache> + Send + Sync + 'static) {
         self.object_cache = Some(RefCell::new(create()));
         self.new_object_cache = Some(Arc::new(create));
     }
-    pub fn without_pack_cache(&mut self) {
+    /// Remove the current pack cache as well as its constructor from this instance.
+    pub fn unset_pack_cache(&mut self) {
         self.pack_cache = None;
         self.new_pack_cache = None;
     }
-    pub fn without_object_cache(&mut self) {
+    /// Remove the current object cache as well as its constructor from this instance.
+    pub fn unset_object_cache(&mut self) {
         self.object_cache = None;
         self.new_object_cache = None;
     }
