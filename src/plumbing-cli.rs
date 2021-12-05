@@ -8,7 +8,7 @@ use anyhow::Result;
 
 #[cfg(feature = "pretty-cli")]
 fn main() -> Result<()> {
-    plumbing::pretty::main()
+    plumbing::main()
 }
 
 #[cfg(not(feature = "pretty-cli"))]
