@@ -37,17 +37,17 @@ The top-level command-line interface.
 
 There are **convenience features**, which combine common choices of the above into one name
 
-* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm* + *http* + *gitoxide-core-organize* + *client-networking*
+* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm* + *http* + *gitoxide-core-tools* + *client-networking*
     * _default_, for unix and windows
-* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion* + *http* + *gitoxide-core-organize* + *client-networking*
+* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion* + *http* + *gitoxide-core-tools* + *client-networking*
     * for unix only, faster compile times, a little smaller
-* **lean** = *lean-cli* + *fast* + *prodash-render-line-crossterm* + *gitoxide-core-organize* + *client-networking*
+* **lean** = *lean-cli* + *fast* + *prodash-render-line-crossterm* + *gitoxide-core-tools* + *client-networking*
     * for unix and windows, significantly smaller than _max_, but without `--progress` terminal user interface.
-* **lean-termion** = *lean-cli* + *fast* + *prodash-render-line-termion* + *gitoxide-core-organize* + *client-networking*
+* **lean-termion** = *lean-cli* + *fast* + *prodash-render-line-termion* + *gitoxide-core-tools* + *client-networking*
     * for unix only, faster compile times, a little smaller
-* **light** = *lean-cli* + *fast* + *gitoxide-core-organize* + *client-networking*
+* **light** = *lean-cli* + *fast* + *gitoxide-core-tools* + *client-networking*
     * crossplatform by nature as this comes with simplified log based progress
-* **light-async** = *lean-cli* + *fast* + *gitoxide-core-organize* + *client-async-networking*
+* **light-async** = *lean-cli* + *fast* + *gitoxide-core-tools* + *client-async-networking*
    * Due to async client-networking not being implemented for most transports, this one supports only the 'git' transport. It uses, however, a fully asynchronous
      networking implementation which can serve a real-world example on how to implement custom async transports.
 * **small** = *lean-cli*
