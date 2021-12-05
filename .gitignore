@@ -8,3 +8,4 @@ target/
 /tests/fixtures/repos
 
 **/generated/
+.idea
