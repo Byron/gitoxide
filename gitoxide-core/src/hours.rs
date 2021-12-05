@@ -45,11 +45,13 @@ where
     P: Progress,
 {
     let repo = git_repository::discover(working_dir)?;
+    let handle = repo.to_easy().apply_environment();
     let commit_id = repo
         .refs
         .find(refname.to_string_lossy().as_ref())?
         .peel_to_id_in_place(&repo.refs, |oid, buf| {
-            repo.objects
+            handle
+                .objects
                 .try_find(oid, buf)
                 .map(|obj| obj.map(|obj| (obj.kind, obj.data)))
         })?
@@ -60,16 +62,17 @@ where
         let mut progress = progress.add_child("Traverse commit graph");
         progress.init(None, progress::count("commits"));
         let mut commits: Vec<Vec<u8>> = Vec::new();
-        for c in interrupt::Iter::new(
+        let commit_iter = interrupt::Iter::new(
             commit_id.ancestors(|oid, buf| {
                 progress.inc();
-                repo.objects.find(oid, buf).ok().map(|o| {
+                handle.objects.find(oid, buf).ok().map(|o| {
                     commits.push(o.data.to_owned());
                     objs::CommitRefIter::from_bytes(o.data)
                 })
             }),
             || anyhow!("Cancelled by user"),
-        ) {
+        );
+        for c in commit_iter {
             c??;
         }
         progress.show_throughput(start);
