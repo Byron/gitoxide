@@ -39,27 +39,18 @@ impl LogCreator {
     }
 }
 
-#[cfg(not(feature = "prodash-render-line"))]
+#[cfg(not(any(feature = "prodash-render-tui", feature = "prodash-render-line")))]
 fn progress_tree() -> LogCreator {
     LogCreator
 }
 
-#[cfg(all(feature = "lean-cli", not(feature = "pretty-cli")))]
-pub mod lean {
+#[cfg(feature = "gitoxide-core-async-client")]
+pub mod async_util {
     use crate::shared::ProgressRange;
 
     #[cfg(not(feature = "prodash-render-line"))]
-    #[allow(unused)]
-    pub fn prepare(
-        verbose: bool,
-        name: &str,
-        _: impl Into<Option<ProgressRange>>,
-    ) -> ((), Option<prodash::progress::Log>) {
-        super::init_env_logger(verbose);
-        ((), Some(prodash::progress::Log::new(name, Some(1))))
-    }
+    compile_error!("BUG: Need at least a line renderer in async mode");
 
-    #[cfg(feature = "prodash-render-line")]
     pub fn prepare(
         verbose: bool,
         name: &str,

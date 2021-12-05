@@ -95,7 +95,33 @@ pub fn main() -> Result<()> {
                 },
             )
         }
-        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
+        #[cfg(feature = "gitoxide-core-async-client")]
+        Subcommands::PackReceive {
+            protocol,
+            url,
+            directory,
+            refs,
+            refs_directory,
+        } => {
+            let (_handle, progress) =
+                crate::shared::async_util::prepare(verbose, "pack-receive", core::pack::receive::PROGRESS_RANGE);
+            let fut = core::pack::receive(
+                protocol,
+                &url,
+                directory,
+                refs_directory,
+                refs.into_iter().map(|s| s.into()).collect(),
+                git_features::progress::DoOrDiscard::from(progress),
+                core::pack::receive::Context {
+                    thread_limit,
+                    format,
+                    out: std::io::stdout(),
+                    should_interrupt,
+                },
+            );
+            return futures_lite::future::block_on(fut);
+        }
+        #[cfg(feature = "gitoxide-core-blocking-client")]
         Subcommands::PackReceive {
             protocol,
             url,
@@ -125,7 +151,26 @@ pub fn main() -> Result<()> {
                 )
             },
         ),
-        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
+        #[cfg(feature = "gitoxide-core-async-client")]
+        Subcommands::RemoteRefList { protocol, url } => {
+            let (_handle, progress) = crate::shared::async_util::prepare(
+                verbose,
+                "remote-ref-list",
+                Some(core::remote::refs::PROGRESS_RANGE),
+            );
+            let fut = core::remote::refs::list(
+                protocol,
+                &url,
+                git_features::progress::DoOrDiscard::from(progress),
+                core::remote::refs::Context {
+                    thread_limit,
+                    format,
+                    out: std::io::stdout(),
+                },
+            );
+            return futures_lite::future::block_on(fut);
+        }
+        #[cfg(feature = "gitoxide-core-blocking-client")]
         Subcommands::RemoteRefList { protocol, url } => prepare_and_run(
             "remote-ref-list",
             verbose,

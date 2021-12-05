@@ -187,7 +187,7 @@ title "gix pack-receive"
     elif [[ "$kind" = "small" ]]; then
       it "fails as the CLI doesn't have networking in 'small' mode" && {
         WITH_SNAPSHOT="$snapshot/pack-receive-no-networking-in-small-failure" \
-        expect_run $WITH_FAILURE "$exe_plumbing" pack-receive -p 1 .git
+        expect_run 2 "$exe_plumbing" pack-receive -p 1 .git
       }
     fi
   )
@@ -266,7 +266,7 @@ title "gix remote-ref-list"
     else
       it "fails as the CLI doesn't include networking in 'small' mode" && {
         WITH_SNAPSHOT="$snapshot/remote-ref-list-no-networking-in-small-failure" \
-        expect_run $WITH_FAILURE "$exe_plumbing" remote-ref-list -p 1 .git
+        expect_run 2 "$exe_plumbing" remote-ref-list -p 1 .git
       }
     fi
   )

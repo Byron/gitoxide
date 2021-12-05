@@ -57,7 +57,7 @@ audit: ## run various auditing tools to assure we are legal and safe
 
 doc: ## Run cargo doc on all crates
 	cargo doc
-	cargo doc --features=max,lean,light,small
+	cargo doc --features=max,lean,small
 
 clippy: ## Run cargo clippy on all crates
 	cargo clippy --all --tests
