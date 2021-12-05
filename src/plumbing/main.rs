@@ -15,6 +15,32 @@ use gitoxide_core::pack::verify;
 use crate::plumbing::options::{Args, Subcommands};
 use crate::shared::pretty::prepare_and_run;
 
+#[cfg(feature = "gitoxide-core-async-client")]
+pub mod async_util {
+    use crate::shared::ProgressRange;
+
+    #[cfg(not(feature = "prodash-render-line"))]
+    compile_error!("BUG: Need at least a line renderer in async mode");
+
+    pub fn prepare(
+        verbose: bool,
+        name: &str,
+        range: impl Into<Option<ProgressRange>>,
+    ) -> (Option<prodash::render::line::JoinHandle>, Option<prodash::tree::Item>) {
+        use crate::shared::{self, STANDARD_RANGE};
+        crate::shared::init_env_logger(false);
+
+        if verbose {
+            let progress = crate::shared::progress_tree();
+            let sub_progress = progress.add_child(name);
+            let ui_handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE));
+            (Some(ui_handle), Some(sub_progress))
+        } else {
+            (None, None)
+        }
+    }
+}
+
 pub fn main() -> Result<()> {
     let args: Args = Args::parse();
     let thread_limit = args.threads;
@@ -101,8 +127,7 @@ pub fn main() -> Result<()> {
             refs,
             refs_directory,
         } => {
-            let (_handle, progress) =
-                crate::shared::async_util::prepare(verbose, "pack-receive", core::pack::receive::PROGRESS_RANGE);
+            let (_handle, progress) = async_util::prepare(verbose, "pack-receive", core::pack::receive::PROGRESS_RANGE);
             let fut = core::pack::receive(
                 protocol,
                 &url,
@@ -151,11 +176,8 @@ pub fn main() -> Result<()> {
         ),
         #[cfg(feature = "gitoxide-core-async-client")]
         Subcommands::RemoteRefList { protocol, url } => {
-            let (_handle, progress) = crate::shared::async_util::prepare(
-                verbose,
-                "remote-ref-list",
-                Some(core::remote::refs::PROGRESS_RANGE),
-            );
+            let (_handle, progress) =
+                async_util::prepare(verbose, "remote-ref-list", Some(core::remote::refs::PROGRESS_RANGE));
             let fut = core::remote::refs::list(
                 protocol,
                 &url,

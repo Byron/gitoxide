@@ -21,7 +21,7 @@ pub fn init_env_logger(verbose: bool) {
 }
 
 #[cfg(feature = "prodash-render-line")]
-fn progress_tree() -> prodash::Tree {
+pub fn progress_tree() -> prodash::Tree {
     prodash::TreeOptions {
         message_buffer_capacity: 200,
         ..Default::default()
@@ -42,32 +42,6 @@ impl LogCreator {
 #[cfg(not(any(feature = "prodash-render-tui", feature = "prodash-render-line")))]
 fn progress_tree() -> LogCreator {
     LogCreator
-}
-
-#[cfg(feature = "gitoxide-core-async-client")]
-pub mod async_util {
-    use crate::shared::ProgressRange;
-
-    #[cfg(not(feature = "prodash-render-line"))]
-    compile_error!("BUG: Need at least a line renderer in async mode");
-
-    pub fn prepare(
-        verbose: bool,
-        name: &str,
-        range: impl Into<Option<ProgressRange>>,
-    ) -> (Option<prodash::render::line::JoinHandle>, Option<prodash::tree::Item>) {
-        use crate::shared::{self, STANDARD_RANGE};
-        super::init_env_logger(false);
-
-        if verbose {
-            let progress = crate::shared::progress_tree();
-            let sub_progress = progress.add_child(name);
-            let ui_handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE));
-            (Some(ui_handle), Some(sub_progress))
-        } else {
-            (None, None)
-        }
-    }
 }
 
 #[cfg(feature = "pretty-cli")]
