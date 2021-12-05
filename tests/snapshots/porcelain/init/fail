@@ -1,0 +1,4 @@
+Error: Repository initialization failed
+
+Caused by:
+    Refusing to initialize the existing '.git' directory

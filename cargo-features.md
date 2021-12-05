@@ -45,7 +45,7 @@ There are **convenience features**, which combine common choices of the above in
    * Due to async client-networking not being implemented for most transports, this one supports only the 'git' transport. It uses, however, a fully asynchronous
      networking implementation which can serve a real-world example on how to implement custom async transports.
 * **small**
-    * As small as it can possibly be, no threading, no fast sha1, log based progress only, no cleanup of temporary files on interrupt, rust based zlib implementation.
+    * As small as it can possibly be, no threading, no fast sha1, log based progress only, rust based zlib implementation.
     * no networking, local operations only.
 
 ### gitoxide-core

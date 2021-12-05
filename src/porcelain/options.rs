@@ -35,6 +35,7 @@ pub enum Subcommands {
         /// Defaults to the current working directory.
         directory: Option<PathBuf>,
     },
+    #[cfg(feature = "gitoxide-core-tools")]
     /// A selection of useful tools
     #[clap(subcommand)]
     Tools(ToolCommands),
@@ -42,6 +43,7 @@ pub enum Subcommands {
     Panic,
 }
 
+#[cfg(feature = "gitoxide-core-tools")]
 #[derive(Debug, clap::Parser)]
 #[clap(setting = AppSettings::DisableVersionFlag, setting = AppSettings::SubcommandRequired)]
 #[clap(visible_alias = "t")]

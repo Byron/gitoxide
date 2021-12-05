@@ -5,13 +5,9 @@ use std::sync::{
 
 use anyhow::Result;
 use clap::Parser;
-use git_features::progress::DoOrDiscard;
 use gitoxide_core as core;
 
-use crate::{
-    porcelain::options::{Args, EstimateHours, Subcommands, ToolCommands},
-    shared::pretty::prepare_and_run,
-};
+use crate::{porcelain::options::Args, porcelain::options::Subcommands, shared::pretty::prepare_and_run};
 
 pub fn main() -> Result<()> {
     let args: Args = Args::parse();
@@ -35,8 +31,9 @@ pub fn main() -> Result<()> {
             move |_progress, _out, _err| panic!("something went very wrong"),
         ),
         Subcommands::Init { directory } => core::repository::init(directory).map(|_| ()),
+        #[cfg(feature = "gitoxide-core-tools")]
         Subcommands::Tools(tool) => match tool {
-            ToolCommands::EstimateHours(EstimateHours {
+            crate::porcelain::options::ToolCommands::EstimateHours(crate::porcelain::options::EstimateHours {
                 working_dir,
                 refname,
                 show_pii,
@@ -53,7 +50,7 @@ pub fn main() -> Result<()> {
                         hours::estimate(
                             &working_dir,
                             &refname,
-                            DoOrDiscard::from(progress),
+                            git_features::progress::DoOrDiscard::from(progress),
                             hours::Context {
                                 show_pii,
                                 omit_unify_identities,
@@ -63,7 +60,7 @@ pub fn main() -> Result<()> {
                     },
                 )
             }
-            ToolCommands::Find { root } => {
+            crate::porcelain::options::ToolCommands::Find { root } => {
                 use gitoxide_core::organize;
                 prepare_and_run(
                     "find",
@@ -75,12 +72,12 @@ pub fn main() -> Result<()> {
                         organize::discover(
                             root.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
                             out,
-                            DoOrDiscard::from(progress),
+                            git_features::progress::DoOrDiscard::from(progress),
                         )
                     },
                 )
             }
-            ToolCommands::Organize {
+            crate::porcelain::options::ToolCommands::Organize {
                 destination_directory,
                 execute,
                 repository_source,
@@ -101,7 +98,7 @@ pub fn main() -> Result<()> {
                             },
                             repository_source.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
                             destination_directory.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
-                            DoOrDiscard::from(progress),
+                            git_features::progress::DoOrDiscard::from(progress),
                         )
                     },
                 )

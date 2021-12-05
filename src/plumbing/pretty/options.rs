@@ -18,12 +18,14 @@ pub struct Args {
     pub verbose: bool,
 
     /// Bring up a terminal user interface displaying progress visually
+    #[cfg(feature = "prodash-render-tui")]
     #[clap(long, conflicts_with("verbose"))]
     pub progress: bool,
 
     /// The progress TUI will stay up even though the work is already completed.
     ///
     /// Use this to be able to read progress messages or additional information visible in the TUI log pane.
+    #[cfg(feature = "prodash-render-tui")]
     #[clap(long, conflicts_with("verbose"), requires("progress"))]
     pub progress_keep_open: bool,
 

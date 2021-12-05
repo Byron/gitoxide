@@ -1,0 +1,5 @@
+./a-non-bare-repo-with-extension.git
+./dir/one-origin
+./no-origin
+./origin-and-fork
+./special-origin

@@ -62,7 +62,7 @@ doc: ## Run cargo doc on all crates
 clippy: ## Run cargo clippy on all crates
 	cargo clippy --all --tests
 	cargo clippy --all --no-default-features --features small
-	cargo clippy --all --no-default-features --features light-async --tests
+	cargo clippy --all --no-default-features --features lean-async --tests
 
 check: ## Build all code in suitable configurations
 	cargo check --all
@@ -156,17 +156,17 @@ jtt = target/debug/jtt
 journey-tests: always  ## run journey tests (max)
 	cargo build
 	cargo build --package git-testtools --bin jtt
-	./tests/journey.sh target/debug/gix target/debug/gix $(jtt) max
+	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) max
 
 journey-tests-small: always ## run journey tests (lean-cli)
 	cargo build --no-default-features --features small
 	cd tests/tools && cargo build
-	./tests/journey.sh target/debug/gix target/debug/gix $(jtt) small
+	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) small
 
-journey-tests-async: always ## run journey tests (light-async)
-	cargo build --no-default-features --features light-async
+journey-tests-async: always ## run journey tests (lean-async)
+	cargo build --no-default-features --features lean-async
 	cd tests/tools && cargo build
-	./tests/journey.sh target/debug/gix target/debug/gix $(jtt) async
+	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) async
 
 journey-tests-smart-release:
 	cargo build --package cargo-smart-release

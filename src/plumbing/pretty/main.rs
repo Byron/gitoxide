@@ -18,14 +18,25 @@ use crate::{
 };
 
 pub fn main() -> Result<()> {
-    let Args {
-        threads: thread_limit,
-        verbose,
-        progress,
-        progress_keep_open,
-        format,
-        cmd,
-    } = Args::parse();
+    let args: Args = Args::parse();
+    let thread_limit = args.threads;
+    let verbose = args.verbose;
+    let format = args.format;
+    let cmd = args.cmd;
+
+    let progress;
+    let progress_keep_open;
+    #[cfg(feature = "prodash-render-tui")]
+    {
+        progress = args.progress;
+        progress_keep_open = args.progress_keep_open;
+    }
+    #[cfg(not(feature = "prodash-render-tui"))]
+    {
+        progress = false;
+        progress_keep_open = false;
+    }
+
     let should_interrupt = Arc::new(AtomicBool::new(false));
     git_repository::interrupt::init_handler({
         let should_interrupt = Arc::clone(&should_interrupt);

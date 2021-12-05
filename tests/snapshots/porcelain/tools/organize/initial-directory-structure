@@ -1,0 +1,13 @@
+.
+├── a-non-bare-repo-with-extension.git
+│   └── a
+├── dir
+│   └── one-origin
+├── no-origin
+│   └── a
+├── origin-and-fork
+│   └── a
+└── special-origin
+    └── a
+
+6 directories, 4 files

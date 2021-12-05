@@ -27,12 +27,16 @@ doctest = false
 [features]
 default = ["max"]
 
-max = ["fast", "pretty-cli", "prodash/render-tui-crossterm", "prodash-render-line-crossterm", "prodash/render-line-autoconfigure", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
+max = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client",
+       "prodash-render-line", "prodash-render-tui",
+       "prodash/render-line-autoconfigure" ]
 
-lean = ["fast", "pretty-cli", "prodash-render-line-crossterm", "prodash/progress-tree", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client"]
-lean-async = ["fast", "pretty-cli", "prodash-render-line-crossterm", "prodash/progress-tree", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-async-client"]
+lean = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client",
+        "prodash-render-line" ]
+lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-async-client",
+              "prodash-render-line"]
 
-small = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend"]
+small = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash/progress-log", "atty"]
 
 gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
 gitoxide-core-blocking-client = ["gitoxide-core/blocking-client"]
@@ -45,17 +49,14 @@ pretty-cli = ["clap",
     "prodash/progress-tree",
     "prodash/progress-tree-log",
     "prodash/local-time",
-    "prodash-render-tui",
-    "prodash-render-line",
     "gitoxide-core/local-time-support",
-    "env_logger",
-    "futures-lite"]
+    "env_logger" ]
 
 prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-crossterm", "atty", "crosstermion"]
 
 # internal
-prodash-render-tui = ["prodash/render-tui"]
-prodash-render-line = ["prodash/render-line"]
+prodash-render-tui = ["prodash/render-tui", "prodash/render-tui-crossterm", "prodash/progress-tree", "futures-lite"]
+prodash-render-line = ["prodash/render-line", "prodash-render-line-crossterm", "prodash/progress-tree"]
 cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
 
 [dependencies]

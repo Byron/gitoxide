@@ -97,7 +97,7 @@ pub mod refs {
                             #[cfg(feature = "serde1")]
                             OutputFormat::Json => serde_json::to_writer_pretty(
                                 ctx.out,
-                                &delegate.refs.into_iter().map(JsonRef::from).collect::<Vec<_>>(),
+                                &delegate.refs.into_iter().map(super::JsonRef::from).collect::<Vec<_>>(),
                             )?,
                         }
                         Ok(())
