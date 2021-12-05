@@ -7,5 +7,4 @@ target/
 # repositories used for local testing
 /tests/fixtures/repos
 
-**/generated/
-.idea
+**/generated-do-not-edit/
