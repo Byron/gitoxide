@@ -23,7 +23,7 @@ The top-level command-line interface.
         * Use `argh` to produce a usable binary with decent documentation that is smallest in size, usually 300kb less than `pretty-cli`.
         * If `pretty-cli` is enabled as well, `lean-cli` will take precedence, and you pay for building unnecessary dependencies.
         * provides a line renderer for lean but pretty progress
-* **prodash-render-line-crossterm** or **prodash-render-line-termion** _(mutually exclusive)_
+* **prodash-render-line-crossterm** 
     * The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
       that appears after a short duration.
 * **gitoxide-core-tools**
@@ -37,20 +37,14 @@ The top-level command-line interface.
 
 There are **convenience features**, which combine common choices of the above into one name
 
-* **max** = *pretty-cli* + *fast* + *prodash-render-tui-crossterm* + *http* + *gitoxide-core-tools* + *client-networking*
+* **max** = *fast* + *prodash-render-tui-crossterm* + *prodash-render-line-crossterm* + *http* + *gitoxide-core-tools* + *client-networking*
     * _default_, for unix and windows
-* **max-termion** = *pretty-cli* + *fast* + *prodash-render-tui-termion* + *http* + *gitoxide-core-tools* + *client-networking*
-    * for unix only, faster compile times, a little smaller
-* **lean** = *lean-cli* + *fast* + *prodash-render-line-crossterm* + *gitoxide-core-tools* + *client-networking*
-    * for unix and windows, significantly smaller than _max_, but without `--progress` terminal user interface.
-* **lean-termion** = *lean-cli* + *fast* + *prodash-render-line-termion* + *gitoxide-core-tools* + *client-networking*
-    * for unix only, faster compile times, a little smaller
-* **light** = *lean-cli* + *fast* + *gitoxide-core-tools* + *client-networking*
-    * crossplatform by nature as this comes with simplified log based progress
-* **light-async** = *lean-cli* + *fast* + *gitoxide-core-tools* + *client-async-networking*
+* **lean** = *fast* + *prodash-render-line-crossterm* + *gitoxide-core-tools* + *client-networking*
+    * cross-platform by nature as this comes with simplified log based progress
+* **lean-async** = *fast* + *prodash-render-line-crossterm* + *gitoxide-core-tools* + *client-async-networking*
    * Due to async client-networking not being implemented for most transports, this one supports only the 'git' transport. It uses, however, a fully asynchronous
      networking implementation which can serve a real-world example on how to implement custom async transports.
-* **small** = *lean-cli*
+* **small**
     * As small as it can possibly be, no threading, no fast sha1, log based progress only, no cleanup of temporary files on interrupt, rust based zlib implementation.
     * no networking, local operations only.
 

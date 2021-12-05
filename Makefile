@@ -22,14 +22,8 @@ release-all: release release-lean release-small ## all release builds
 release: always ## the default build, big but pretty (builds in ~2min 35s)
 	cargo build --release
 
-release-unix: always ## the default build, big but pretty, unix only (builds in ~2min 35s)
-	cargo build --release --no-default-features --features max-termion
-
 release-lean: always ## lean and fast, with line renderer (builds in ~1min 30s)
 	cargo build --release --no-default-features --features lean
-
-release-light: always ## lean and fast, log only (builds in ~1min 14s)
-	cargo build --release --no-default-features --features light
 
 release-small: always ## minimal dependencies, at cost of performance (builds in ~46s)
 	cargo build --release --no-default-features --features small
@@ -39,14 +33,8 @@ release-small: always ## minimal dependencies, at cost of performance (builds in
 debug: always ## the default build, big but pretty
 	cargo build
 
-debug-unix: always ## the default build, big but pretty, unix only
-	cargo build --no-default-features --features max-termion
-
 debug-lean: always ## lean and fast, with line renderer
 	cargo build --no-default-features --features lean
-
-debug-light: always ## lean and fast
-	cargo build --no-default-features --features light
 
 debug-small: always ## minimal dependencies, at cost of performance
 	cargo build --no-default-features --features small
@@ -79,13 +67,10 @@ clippy: ## Run cargo clippy on all crates
 check: ## Build all code in suitable configurations
 	cargo check --all
 	cargo check --no-default-features --features small
-	cargo check --no-default-features --features light
-	cargo check --no-default-features --features light-async
-	if cargo check --features light-async 2>/dev/null; then false; else true; fi
+	if cargo check --features lean-async 2>/dev/null; then false; else true; fi
 	cargo check --no-default-features --features lean
-	cargo check --no-default-features --features lean-termion
+	cargo check --no-default-features --features lean-async
 	cargo check --no-default-features --features max
-	cargo check --no-default-features --features max-termion
 	cd git-actor && cargo check \
 				 && cargo check --features local-time-support
 	cd gitoxide-core && cargo check \
