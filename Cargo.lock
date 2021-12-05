@@ -847,6 +847,7 @@ name = "diffing"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "git-features 0.18.0",
  "git-repository 0.13.0",
  "git2",
  "memory-lru",

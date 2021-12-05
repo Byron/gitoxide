@@ -83,7 +83,28 @@ fn main() -> anyhow::Result<()> {
         || {
             let handle = db
                 .to_handle()
-                .with_pack_cache(|| Box::new(odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size())))
+                .with_object_cache(|| Box::new(odb::pack::cache::object::MemoryCappedHashmap::new(cache_size())));
+            move |oid, buf: &mut Vec<u8>| handle.find(oid, buf).ok()
+        },
+        Computation::MultiThreaded,
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "gitoxide-deltas PARALLEL (cache = memory-LRU -> {:.0}MB ): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
+        cache_size() as f32 / (1024 * 1024) as f32,
+        num_deltas,
+        num_diffs,
+        elapsed,
+        num_deltas as f32 / elapsed.as_secs_f32(),
+        num_diffs as f32 / elapsed.as_secs_f32()
+    );
+
+    let start = Instant::now();
+    let num_deltas = do_gitoxide_tree_diff(
+        &all_commits,
+        || {
+            let handle = db
+                .to_handle()
                 .with_object_cache(|| Box::new(odb::pack::cache::object::MemoryCappedHashmap::new(cache_size())));
             move |oid, buf: &mut Vec<u8>| handle.find(oid, buf).ok()
         },
@@ -91,8 +112,7 @@ fn main() -> anyhow::Result<()> {
     )?;
     let elapsed = start.elapsed();
     println!(
-        "gitoxide-deltas (cache = memory-LRU -> {:.0}MB | pack -> {:.0}MB): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
-        cache_size() as f32 / (1024 * 1024) as f32,
+        "gitoxide-deltas (cache = memory-LRU -> {:.0}MB): collect {} tree deltas of {} trees-diffs in {:?} ({:0.0} deltas/s, {:0.0} tree-diffs/s)",
         cache_size() as f32 / (1024 * 1024) as f32,
         num_deltas,
         num_diffs,
