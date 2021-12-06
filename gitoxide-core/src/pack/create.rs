@@ -142,6 +142,7 @@ where
                     })
                 })
                 .collect::<Result<Vec<_>, _>>()?;
+            drop(handle);
             let odb = Arc::new(match OwnShared::try_unwrap(repo.objects) {
                 Ok(odb) => odb,
                 Err(_) => unreachable!(),
