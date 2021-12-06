@@ -4,9 +4,11 @@ pub struct Ancestors<Find, Predicate, StateMut> {
     predicate: Predicate,
     state: StateMut,
     mode: Parents,
+    sorting: Sorting,
 }
 
 /// Specify how to handle commit parents during traversal.
+#[derive(Copy, Clone)]
 pub enum Parents {
     /// Traverse all parents, useful for traversing the entire ancestry.
     All,
@@ -17,6 +19,22 @@ pub enum Parents {
 impl Default for Parents {
     fn default() -> Self {
         Parents::All
+    }
+}
+
+/// Specify how to sort commits during traversal.
+#[derive(Copy, Clone)]
+pub enum Sorting {
+    /// Default order, sort commit looking up the first reachable parent
+    GraphOrder,
+    /// Order commit looking up the most recent parent, since only parents are looked up
+    /// this ordering is partial
+    ByCommitterDate,
+}
+
+impl Default for Sorting {
+    fn default() -> Self {
+        Sorting::GraphOrder
     }
 }
 
@@ -31,7 +49,7 @@ pub mod ancestors {
     use git_object::CommitRefIter;
     use quick_error::quick_error;
 
-    use crate::commit::{Ancestors, Parents};
+    use crate::commit::{Ancestors, Parents, Sorting};
 
     quick_error! {
         /// The error is part of the item returned by the [Ancestors] iterator.
@@ -55,6 +73,8 @@ pub mod ancestors {
         next: VecDeque<ObjectId>,
         buf: Vec<u8>,
         seen: BTreeSet<ObjectId>,
+        parents_with_date: Vec<(ObjectId, u32)>,
+        parents_buf: Vec<u8>,
     }
 
     impl State {
@@ -69,6 +89,12 @@ pub mod ancestors {
         /// Change our commit parent handling mode to the given one.
         pub fn mode(mut self, mode: Parents) -> Self {
             self.mode = mode;
+            self
+        }
+
+        /// Set the sorting method, either topological or by author date
+        pub fn sorting(mut self, sorting: Sorting) -> Self {
+            self.sorting = sorting;
             self
         }
     }
@@ -138,6 +164,7 @@ pub mod ancestors {
                 predicate,
                 state,
                 mode: Default::default(),
+                sorting: Default::default(),
             }
         }
     }
@@ -151,6 +178,80 @@ pub mod ancestors {
         type Item = Result<ObjectId, Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
+            match self.sorting {
+                Sorting::GraphOrder => self.graph_sort_next(),
+                Sorting::ByCommitterDate => self.next_by_commit_date(),
+            }
+        }
+    }
+
+    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
+    where
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<CommitRefIter<'a>>,
+        Predicate: FnMut(&oid) -> bool,
+        StateMut: BorrowMut<State>,
+    {
+        fn next_by_commit_date(&mut self) -> Option<Result<ObjectId, Error>> {
+            let state = self.state.borrow_mut();
+            state.parents_with_date.clear();
+            state.parents_buf.clear();
+            let res = state.next.pop_front();
+
+            if let Some(oid) = res {
+                match (self.find)(&oid, &mut state.buf) {
+                    Some(mut commit_iter) => {
+                        if let Some(Err(decode_tree_err)) = commit_iter.next() {
+                            return Some(Err(decode_tree_err.into()));
+                        }
+
+                        for token in commit_iter {
+                            match token {
+                                Ok(git_object::commit::ref_iter::Token::Parent { id }) => {
+                                    let parent = (self.find)(id.as_ref(), &mut state.parents_buf);
+
+                                    let parent_committer_date = parent
+                                        .and_then(|mut parent| parent.committer().map(|committer| committer.time));
+
+                                    if let Some(parent_committer_date) = parent_committer_date {
+                                        state.parents_with_date.push((id, parent_committer_date.time));
+                                    }
+
+                                    if matches!(self.mode, Parents::First) {
+                                        break;
+                                    }
+                                }
+                                Ok(_unused_token) => break,
+                                Err(err) => return Some(Err(err.into())),
+                            }
+                        }
+                    }
+                    None => return Some(Err(Error::NotFound { oid })),
+                }
+            }
+
+            state
+                .parents_with_date
+                .sort_by(|(_, time), (_, other_time)| time.cmp(&other_time).reverse());
+            for parent in &state.parents_with_date {
+                let id = parent.0;
+                let was_inserted = state.seen.insert(id);
+
+                if was_inserted && (self.predicate)(&id) {
+                    state.next.push_back(id);
+                }
+            }
+
+            res.map(Ok)
+        }
+    }
+
+    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
+    where
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<CommitRefIter<'a>>,
+        Predicate: FnMut(&oid) -> bool,
+        StateMut: BorrowMut<State>,
+    {
+        fn graph_sort_next(&mut self) -> Option<Result<ObjectId, Error>> {
             let state = self.state.borrow_mut();
             let res = state.next.pop_front();
             if let Some(oid) = res {

@@ -65,6 +65,15 @@ impl<'a> CommitRefIter<'a> {
                 _ => None,
             })
     }
+
+    /// Returns the committer signature if there is no decoding error.
+    /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not.
+    pub fn committer(&mut self) -> Option<git_actor::SignatureRef<'_>> {
+        self.find_map(|t| match t {
+            Ok(Token::Committer { signature }) => Some(signature),
+            _ => None,
+        })
+    }
 }
 
 impl<'a> CommitRefIter<'a> {
