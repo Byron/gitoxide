@@ -185,8 +185,7 @@ where
     let counts = {
         let mut progress = progress.add_child("counting");
         progress.init(None, progress::count("objects"));
-        let may_use_multiple_threads = (nondeterministic_count || matches!(expansion, ObjectExpansion::None))
-            && !matches!(expansion, ObjectExpansion::TreeDiff);
+        let may_use_multiple_threads = nondeterministic_count || matches!(expansion, ObjectExpansion::None);
         let thread_limit = if may_use_multiple_threads {
             thread_limit
         } else {

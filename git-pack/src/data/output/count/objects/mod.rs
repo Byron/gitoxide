@@ -86,17 +86,18 @@ where
             }
         },
         {
+            let seen_objs = &seen_objs;
             move |oids: Vec<std::result::Result<Oid, IterErr>>, (buf1, buf2, progress)| {
                 expand::this(
                     &db,
                     input_object_expansion,
-                    &seen_objs,
+                    seen_objs,
                     oids,
                     buf1,
                     buf2,
                     progress,
                     should_interrupt,
-                    true,
+                    true, /*allow pack lookups*/
                 )
             }
         },
@@ -129,7 +130,7 @@ where
         &mut buf2,
         &mut progress,
         should_interrupt,
-        false,
+        false, /*allow pack lookups*/
     )
 }
 
