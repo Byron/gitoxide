@@ -30,52 +30,54 @@ impl easy::Handle {
     /// the cache efficiency is low. Use `GITOXIDE_PACK_CACHE_MEMORY=512MB` to use up to 512MB of RAM for the pack delta base
     /// cache. If none of these are set, the default cache is fast enough to nearly never cause a (marginal) slow-down while providing
     /// some gains most of the time. Note that the value given is _per-thread_.
+    ///
+    /// Use the `GITOXIDE_OBJECT_CACHE_MEMORY=16mb` to set the given amount of memory to store full objects, on a per-thread basis.
     pub fn apply_environment(self) -> Self {
         // We have no cache types available without this flag currently. Maybe this should change at some point.
         #[cfg(not(feature = "max-performance"))]
         return self;
         #[cfg(feature = "max-performance")]
         {
-            let new_pack_cache = {
-                let pack_cache_disabled = std::env::var_os("GITOXIDE_DISABLE_PACK_CACHE").is_some();
-                let bytes = (!pack_cache_disabled)
-                    .then(|| {
-                        std::env::var("GITOXIDE_PACK_CACHE_MEMORY")
-                            .ok()
-                            .and_then(|v| {
-                                byte_unit::Byte::from_str(&v)
-                                    .map_err(|err| {
-                                        log::warn!("Failed to parse {:?} into byte unit for pack cache: {}", v, err)
-                                    })
-                                    .ok()
-                            })
-                            .and_then(|unit| {
-                                use std::convert::TryInto;
-                                unit.get_bytes()
-                                    .try_into()
-                                    .map_err(|err| {
-                                        log::warn!(
-                            "Parsed bytes value is not representable as usize. Defaulting to standard pack cache: {}",
-                            err
-                        )
-                                    })
-                                    .ok()
-                            })
-                    })
-                    .flatten();
-                move || -> Box<git_odb::handle::PackCache> {
-                    if pack_cache_disabled {
-                        Box::new(git_pack::cache::Never)
-                    } else if let Some(bytes) = bytes {
-                        Box::new(git_pack::cache::lru::MemoryCappedHashmap::new(bytes))
-                    } else {
-                        Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default())
-                    }
-                }
-            };
+            let pack_cache_disabled = std::env::var_os("GITOXIDE_DISABLE_PACK_CACHE").is_some();
             let mut this = self;
-            this.objects.set_pack_cache(new_pack_cache);
+            if !pack_cache_disabled {
+                let bytes = parse_bytes_from_var("GITOXIDE_PACK_CACHE_MEMORY");
+                let new_pack_cache = move || -> Box<git_odb::handle::PackCache> {
+                    match bytes {
+                        Some(bytes) => Box::new(git_pack::cache::lru::MemoryCappedHashmap::new(bytes)),
+                        None => Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default()),
+                    }
+                };
+                this.objects.set_pack_cache(new_pack_cache);
+            }
+            if let Some(bytes) = parse_bytes_from_var("GITOXIDE_OBJECT_CACHE_MEMORY") {
+                this.objects
+                    .set_object_cache(move || Box::new(git_pack::cache::object::MemoryCappedHashmap::new(bytes)));
+            }
             this
         }
     }
+}
+
+#[cfg(feature = "max-performance")]
+fn parse_bytes_from_var(name: &str) -> Option<usize> {
+    std::env::var(name)
+        .ok()
+        .and_then(|v| {
+            byte_unit::Byte::from_str(&v)
+                .map_err(|err| log::warn!("Failed to parse {:?} into byte unit for pack cache: {}", v, err))
+                .ok()
+        })
+        .and_then(|unit| {
+            use std::convert::TryInto;
+            unit.get_bytes()
+                .try_into()
+                .map_err(|err| {
+                    log::warn!(
+                        "Parsed bytes value is not representable as usize. Defaulting to standard pack cache: {}",
+                        err
+                    )
+                })
+                .ok()
+        })
 }
