@@ -36,8 +36,7 @@ where
     type Error = E;
 
     fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
-        let (counts, mut stats) = item?;
-        stats.total_objects = counts.len();
+        let (counts, stats) = item?;
         self.total.aggregate(stats);
         self.progress.lock().inc_by(counts.len());
         self.counts.extend(counts);

@@ -355,6 +355,7 @@ mod expand {
                 AsIs => push_obj_count_unique(&mut out, seen_objs, &id, location, progress, stats, false),
             }
         }
+        outcome.total_objects = out.len();
         Ok((out, outcome))
     }
 
