@@ -194,7 +194,6 @@ pub mod ancestors {
         fn next_by_commit_date(&mut self) -> Option<Result<ObjectId, Error>> {
             let state = self.state.borrow_mut();
             state.parents_with_date.clear();
-            state.parents_buf.clear();
             let res = state.next.pop_front();
 
             if let Some(oid) = res {

@@ -220,4 +220,19 @@ mod ancestor {
         .with_sorting(commit::Sorting::ByCommitterDate)
         .check()
     }
+
+    #[test]
+    fn committer_date_sorted_commits_parents_only() -> crate::Result {
+        TraversalAssertion::new(
+            "make_traversal_repo_for_commits_with_dates.sh",
+            &["288e509293165cb5630d08f4185bdf2445bf6170"],
+            &[
+                "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7",
+                "134385f6d781b7e97062102c6a483440bfda2a03",
+            ],
+        )
+        .with_sorting(commit::Sorting::ByCommitterDate)
+        .with_mode(commit::Parents::First)
+        .check()
+    }
 }
