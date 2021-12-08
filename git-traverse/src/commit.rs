@@ -25,16 +25,17 @@ impl Default for Parents {
 /// Specify how to sort commits during traversal.
 #[derive(Copy, Clone)]
 pub enum Sorting {
-    /// Default order, sort commit looking up the first reachable parent
-    GraphOrder,
-    /// Order commit looking up the most recent parent, since only parents are looked up
-    /// this ordering is partial
+    /// Commits are sorted as they are mentioned in the commit graph.
+    Topological,
+    /// Order commit looking up the commit date of the most recent parents.
+    ///
+    /// Note that since only parents are looked up this ordering is partial.
     ByCommitterDate,
 }
 
 impl Default for Sorting {
     fn default() -> Self {
-        Sorting::GraphOrder
+        Sorting::Topological
     }
 }
 
@@ -178,9 +179,13 @@ pub mod ancestors {
         type Item = Result<ObjectId, Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
-            match self.sorting {
-                Sorting::GraphOrder => self.graph_sort_next(),
-                Sorting::ByCommitterDate => self.next_by_commit_date(),
+            if matches!(self.parents, Parents::First) {
+                self.next_by_topology()
+            } else {
+                match self.sorting {
+                    Sorting::Topological => self.next_by_topology(),
+                    Sorting::ByCommitterDate => self.next_by_commit_date(),
+                }
             }
         }
     }
@@ -250,7 +255,7 @@ pub mod ancestors {
         Predicate: FnMut(&oid) -> bool,
         StateMut: BorrowMut<State>,
     {
-        fn graph_sort_next(&mut self) -> Option<Result<ObjectId, Error>> {
+        fn next_by_topology(&mut self) -> Option<Result<ObjectId, Error>> {
             let state = self.state.borrow_mut();
             let res = state.next.pop_front();
             if let Some(oid) = res {
