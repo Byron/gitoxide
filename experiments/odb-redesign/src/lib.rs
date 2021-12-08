@@ -2,35 +2,34 @@
 
 mod odb {
     use std::path::PathBuf;
+    use std::sync::Arc;
 
     use git_hash::oid;
     use git_odb::pack::{bundle::Location, find::Entry};
 
     use crate::odb::policy::{load_indices, PackIndexMarker};
-    use features::{get_mut, get_ref};
-    use git_features::threading as features;
 
     pub mod policy {
+        use std::sync::Arc;
         use std::{
             io,
             path::{Path, PathBuf},
         };
 
-        use git_features::threading as features;
         use git_hash::oid;
 
         mod index_file {
             use crate::odb::policy;
-            use git_features::threading as features;
+            use std::sync::Arc;
 
             pub enum SingleOrMulti {
                 Single {
-                    index: features::OwnShared<git_pack::index::File>,
-                    data: Option<features::OwnShared<git_pack::data::File>>,
+                    index: Arc<git_pack::index::File>,
+                    data: Option<Arc<git_pack::data::File>>,
                 },
                 Multi {
-                    index: features::OwnShared<policy::MultiIndex>,
-                    data: Vec<Option<features::OwnShared<git_pack::data::File>>>,
+                    index: Arc<policy::MultiIndex>,
+                    data: Vec<Option<Arc<git_pack::data::File>>>,
                 },
             }
         }
@@ -66,10 +65,7 @@ mod odb {
             fn lookup(
                 &mut self,
                 object_id: &oid,
-            ) -> Option<(
-                IndexForObjectInPack,
-                &mut Option<features::OwnShared<git_pack::data::File>>,
-            )> {
+            ) -> Option<(IndexForObjectInPack, &mut Option<Arc<git_pack::data::File>>)> {
                 match &mut self.file {
                     index_file::SingleOrMulti::Single { index, data } => {
                         index.lookup(object_id).map(|object_index_in_pack| {
@@ -159,14 +155,14 @@ mod odb {
         }
 
         pub(crate) struct IndexFileBundle {
-            pub index: OnDiskFile<features::OwnShared<git_pack::index::File>>,
+            pub index: OnDiskFile<Arc<git_pack::index::File>>,
             pub path: PathBuf,
-            pub data: OnDiskFile<features::OwnShared<git_pack::data::File>>,
+            pub data: OnDiskFile<Arc<git_pack::data::File>>,
         }
 
         pub(crate) struct MultiIndexFileBundle {
-            pub multi_index: OnDiskFile<features::OwnShared<MultiIndex>>,
-            pub data: Vec<OnDiskFile<features::OwnShared<git_pack::data::File>>>,
+            pub multi_index: OnDiskFile<Arc<MultiIndex>>,
+            pub data: Vec<OnDiskFile<Arc<git_pack::data::File>>>,
         }
 
         pub(crate) enum IndexAndPacks {
@@ -339,13 +335,13 @@ mod odb {
     /// For maintenance, I think it would be best create an instance when a connection comes in, share it across connections to the same
     /// repository, and remove it as the last connection to it is dropped.
     pub struct Store {
-        state: features::MutableOnDemand<policy::State>,
+        state: parking_lot::RwLock<policy::State>,
     }
 
     impl Store {
-        pub fn at(objects_directory: impl Into<PathBuf>) -> features::OwnShared<Self> {
-            features::OwnShared::new(Store {
-                state: features::MutableOnDemand::new(policy::State {
+        pub fn at(objects_directory: impl Into<PathBuf>) -> Arc<Self> {
+            Arc::new(Store {
+                state: parking_lot::RwLock::new(policy::State {
                     objects_directory: objects_directory.into(),
                     ..policy::State::default()
                 }),
@@ -353,7 +349,7 @@ mod odb {
         }
 
         /// Allow actually finding things
-        pub fn to_handle(self: &features::OwnShared<Self>) -> Handle {
+        pub fn to_handle(self: &Arc<Self>) -> Handle {
             let mode = self.register_handle();
             Handle {
                 store: self.clone(),
@@ -366,19 +362,19 @@ mod odb {
         /// If there are no handles, we are only consuming resources, which might indicate that this instance should be
         /// discarded.
         pub fn state_metrics(&self) -> policy::StateInformation {
-            get_ref(&self.state).metrics()
+            self.state.read().metrics()
         }
     }
 
     /// Handle interaction
     impl Store {
         pub(crate) fn register_handle(&self) -> policy::HandleModeToken {
-            let mut state = get_mut(&self.state);
+            let mut state = self.state.write();
             state.num_handles_unstable += 1;
             policy::HandleModeToken::DeletedPacksAreInaccessible
         }
         pub(crate) fn remove_handle(&self, mode: policy::HandleModeToken) {
-            let mut state = get_mut(&self.state);
+            let mut state = self.state.write();
             match mode {
                 policy::HandleModeToken::KeepDeletedPacksAvailable => state.num_handles_stable -= 1,
                 policy::HandleModeToken::DeletedPacksAreInaccessible => state.num_handles_unstable -= 1,
@@ -386,7 +382,7 @@ mod odb {
         }
         pub(crate) fn upgrade_handle(&self, mode: policy::HandleModeToken) -> policy::HandleModeToken {
             if let policy::HandleModeToken::DeletedPacksAreInaccessible = mode {
-                let mut state = get_mut(&self.state);
+                let mut state = self.state.write();
                 state.num_handles_unstable -= 1;
                 state.num_handles_stable += 1;
             }
@@ -404,8 +400,8 @@ mod odb {
             &self,
             id: policy::PackId,
             marker: PackIndexMarker,
-        ) -> std::io::Result<Option<features::OwnShared<git_pack::data::File>>> {
-            let state = get_ref(&self.state);
+        ) -> std::io::Result<Option<Arc<git_pack::data::File>>> {
+            let state = self.state.read();
             if state.generation != marker.generation {
                 return Ok(None);
             }
@@ -417,21 +413,18 @@ mod odb {
                                 Some(pack) => Ok(Some(pack.clone())),
                                 None => {
                                     drop(state);
-                                    let mut state = get_mut(&self.state);
+                                    let mut state = self.state.write();
                                     let f = &mut state.files[id.index];
                                     match f {
                                         policy::IndexAndPacks::Index(bundle) => Ok(bundle
                                             .data
                                             .do_load(|path| {
-                                                git_pack::data::File::at(path).map(features::OwnShared::new).map_err(
-                                                    |err| match err {
-                                                        git_odb::pack::data::header::decode::Error::Io {
-                                                            source,
-                                                            ..
-                                                        } => source,
-                                                        other => std::io::Error::new(std::io::ErrorKind::Other, other),
-                                                    },
-                                                )
+                                                git_pack::data::File::at(path).map(Arc::new).map_err(|err| match err {
+                                                    git_odb::pack::data::header::decode::Error::Io {
+                                                        source, ..
+                                                    } => source,
+                                                    other => std::io::Error::new(std::io::ErrorKind::Other, other),
+                                                })
                                             })?
                                             .cloned()),
                                         _ => unreachable!(),
@@ -454,10 +447,10 @@ mod odb {
             refresh_mode: policy::RefreshMode,
             marker: Option<policy::PackIndexMarker>,
         ) -> std::io::Result<load_indices::Outcome> {
-            let state = get_ref(&self.state);
+            let state = self.state.read();
             if state.db_paths.is_empty() {
                 drop(state);
-                return get_mut(&self.state).refresh();
+                return self.state.write().refresh();
             }
 
             Ok(match marker {
@@ -467,7 +460,7 @@ mod odb {
                     } else if marker.pack_index_sequence == state.files.len() {
                         match refresh_mode {
                             policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
-                            policy::RefreshMode::AfterAllIndicesLoaded => return get_mut(&self.state).refresh(),
+                            policy::RefreshMode::AfterAllIndicesLoaded => return self.state.write().refresh(),
                         }
                     } else {
                         load_indices::Outcome::Extend {
@@ -484,7 +477,7 @@ mod odb {
 
     /// The store shares a policy and keeps a couple of thread-local configuration
     pub struct Handle {
-        store: features::OwnShared<Store>,
+        store: Arc<Store>,
         refresh_mode: policy::RefreshMode,
         mode: Option<policy::HandleModeToken>,
     }
@@ -557,8 +550,7 @@ mod odb {
 
 mod refs {
     use std::path::{Path, PathBuf};
-
-    use git_features::threading as features;
+    use std::sync::Arc;
 
     pub struct LooseStore {
         path: PathBuf,
@@ -574,38 +566,37 @@ mod refs {
 
     mod inner {
         use crate::refs::{LooseStore, RefTable};
-        use git_features::threading as features;
 
         pub(crate) enum StoreSelection {
             Loose(LooseStore),
-            RefTable(features::MutableOnDemand<RefTable>),
+            RefTable(parking_lot::RwLock<RefTable>),
         }
     }
 
     pub struct Store {
         inner: inner::StoreSelection,
-        packed_refs: features::MutableOnDemand<Option<git_ref::packed::Buffer>>,
+        packed_refs: parking_lot::RwLock<Option<git_ref::packed::Buffer>>,
         // And of course some more information to track if packed buffer is fresh
     }
 
     impl Store {
-        pub fn new(path: impl AsRef<Path>) -> features::OwnShared<Self> {
-            features::OwnShared::new(Store {
+        pub fn new(path: impl AsRef<Path>) -> Arc<Self> {
+            Arc::new(Store {
                 inner: inner::StoreSelection::Loose(LooseStore {
                     path: path.as_ref().to_owned(),
                     reflog_mode: 0,
                 }),
-                packed_refs: features::MutableOnDemand::new(None),
+                packed_refs: parking_lot::RwLock::new(None),
             })
         }
-        pub fn to_handle(self: &features::OwnShared<Self>) -> Handle {
+        pub fn to_handle(self: &Arc<Self>) -> Handle {
             Handle {
                 store: self.clone(),
                 namespace: None,
             }
         }
 
-        pub fn to_namespaced_handle(self: &features::OwnShared<Self>, namespace: git_ref::Namespace) -> Handle {
+        pub fn to_namespaced_handle(self: &Arc<Self>, namespace: git_ref::Namespace) -> Handle {
             Handle {
                 store: self.clone(),
                 namespace: namespace.into(),
@@ -615,7 +606,7 @@ mod refs {
 
     #[derive(Clone)]
     pub struct Handle {
-        store: features::OwnShared<Store>,
+        store: Arc<Store>,
         namespace: Option<git_ref::Namespace>,
     }
 
@@ -625,7 +616,7 @@ mod refs {
 
 mod repository {
     use crate::{odb, refs};
-    use git_features::threading as features;
+    use std::sync::Arc;
 
     mod raw {
         use git_pack::Find;
@@ -646,8 +637,8 @@ mod repository {
     /// MUST BE `Sync`
     #[derive(Clone)]
     pub struct Repository {
-        odb: features::OwnShared<odb::Store>,
-        refs: features::OwnShared<refs::Store>,
+        odb: Arc<odb::Store>,
+        refs: Arc<refs::Store>,
     }
 
     #[cfg(test)]
