@@ -40,7 +40,12 @@ pub fn collect(handle: &git::easy::Handle) -> anyhow::Result<Option<commit::Hist
 
     let mut items = Vec::new();
     let mut data_by_tree_id = HashMap::default();
-    for commit_id in reference.id().ancestors().all() {
+    for commit_id in reference
+        .id()
+        .ancestors()
+        .sorting(git::traverse::commit::Sorting::ByCommitterDate)
+        .all()
+    {
         let commit_id = commit_id?;
         let (message, tree_id, parent_tree_id, commit_time) = {
             let (message, tree_id, commit_time, parent_commit_id) = {
@@ -83,12 +88,6 @@ pub fn collect(handle: &git::easy::Handle) -> anyhow::Result<Option<commit::Hist
             parent_tree_id,
         });
     }
-    // repo.object_cache_size(prev)?;
-    items.sort_by(|lhs, rhs| {
-        (lhs.commit_time.time as i64 + lhs.commit_time.offset as i64)
-            .cmp(&(rhs.commit_time.time as i64 + rhs.commit_time.offset as i64))
-            .reverse()
-    });
 
     Ok(Some(commit::History {
         head: reference.detach(),
