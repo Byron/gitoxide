@@ -3,7 +3,7 @@ pub struct Ancestors<Find, Predicate, StateMut> {
     find: Find,
     predicate: Predicate,
     state: StateMut,
-    mode: Parents,
+    parents: Parents,
     sorting: Sorting,
 }
 
@@ -87,8 +87,8 @@ pub mod ancestors {
 
     impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut> {
         /// Change our commit parent handling mode to the given one.
-        pub fn mode(mut self, mode: Parents) -> Self {
-            self.mode = mode;
+        pub fn parents(mut self, mode: Parents) -> Self {
+            self.parents = mode;
             self
         }
 
@@ -163,7 +163,7 @@ pub mod ancestors {
                 find,
                 predicate,
                 state,
-                mode: Default::default(),
+                parents: Default::default(),
                 sorting: Default::default(),
             }
         }
@@ -215,7 +215,7 @@ pub mod ancestors {
                                         state.parents_with_date.push((id, parent_committer_date.time));
                                     }
 
-                                    if matches!(self.mode, Parents::First) {
+                                    if matches!(self.parents, Parents::First) {
                                         break;
                                     }
                                 }
@@ -266,7 +266,7 @@ pub mod ancestors {
                                     if was_inserted && (self.predicate)(&id) {
                                         state.next.push_back(id);
                                     }
-                                    if matches!(self.mode, Parents::First) {
+                                    if matches!(self.parents, Parents::First) {
                                         break;
                                     }
                                 }

@@ -23,7 +23,7 @@ mod ancestor {
             }
         }
 
-        fn with_mode(&mut self, mode: commit::Parents) -> &mut Self {
+        fn with_parents(&mut self, mode: commit::Parents) -> &mut Self {
             self.mode = mode;
             self
         }
@@ -56,7 +56,7 @@ mod ancestor {
                 predicate,
             )
             .sorting(self.sorting)
-            .mode(self.mode)
+            .parents(self.mode)
             .collect();
 
             assert_eq!(oids?, expected);
@@ -70,7 +70,7 @@ mod ancestor {
                     store.find_commit_iter(oid, buf).ok().map(|t| t.0)
                 })
                 .sorting(self.sorting)
-                .mode(self.mode)
+                .parents(self.mode)
                 .collect();
             assert_eq!(oids?, expected);
             Ok(())
@@ -122,7 +122,7 @@ mod ancestor {
                 "134385f6d781b7e97062102c6a483440bfda2a03",
             ],
         )
-        .with_mode(commit::Parents::First)
+        .with_parents(commit::Parents::First)
         .check()
     }
 
@@ -232,7 +232,7 @@ mod ancestor {
             ],
         )
         .with_sorting(commit::Sorting::ByCommitterDate)
-        .with_mode(commit::Parents::First)
+        .with_parents(commit::Parents::First)
         .check()
     }
 }
