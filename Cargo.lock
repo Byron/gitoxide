@@ -2330,6 +2330,7 @@ name = "odb-redesign"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "git-features 0.18.0",
  "git-hash 0.8.0",
  "git-object 0.16.0",
  "git-odb 0.25.0",

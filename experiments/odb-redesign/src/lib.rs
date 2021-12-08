@@ -1,74 +1,14 @@
 #![allow(dead_code, unused_variables, unreachable_code)]
 
-mod features {
-    mod threaded {
-        use std::sync::Arc;
-
-        pub type OwnShared<T> = Arc<T>;
-        pub type MutableOnDemand<T> = parking_lot::RwLock<T>;
-
-        pub fn get_ref_upgradeable<T>(v: &MutableOnDemand<T>) -> parking_lot::RwLockUpgradableReadGuard<'_, T> {
-            v.upgradable_read()
-        }
-
-        pub fn get_ref<T>(v: &MutableOnDemand<T>) -> parking_lot::RwLockReadGuard<'_, T> {
-            v.read()
-        }
-
-        pub fn get_mut<T>(v: &MutableOnDemand<T>) -> parking_lot::RwLockWriteGuard<'_, T> {
-            v.write()
-        }
-
-        pub fn upgrade_ref_to_mut<T>(
-            v: parking_lot::RwLockUpgradableReadGuard<'_, T>,
-        ) -> parking_lot::RwLockWriteGuard<'_, T> {
-            parking_lot::RwLockUpgradableReadGuard::upgrade(v)
-        }
-    }
-
-    mod local {
-        use std::{
-            cell::{Ref, RefCell, RefMut},
-            rc::Rc,
-        };
-
-        pub type OwnShared<T> = Rc<T>;
-        pub type MutableOnDemand<T> = RefCell<T>;
-
-        pub fn get_ref_upgradeable<T>(v: &RefCell<T>) -> RefMut<'_, T> {
-            v.borrow_mut()
-        }
-
-        pub fn get_mut<T>(v: &RefCell<T>) -> RefMut<'_, T> {
-            v.borrow_mut()
-        }
-
-        pub fn get_ref<T>(v: &RefCell<T>) -> Ref<'_, T> {
-            v.borrow()
-        }
-
-        pub fn upgrade_ref_to_mut<T>(v: RefMut<'_, T>) -> RefMut<'_, T> {
-            v
-        }
-    }
-
-    #[cfg(not(feature = "thread-safe"))]
-    pub use local::*;
-    #[cfg(feature = "thread-safe")]
-    pub use threaded::*;
-}
-
 mod odb {
     use std::path::PathBuf;
 
     use git_hash::oid;
     use git_odb::pack::{bundle::Location, find::Entry};
 
-    use crate::{
-        features,
-        features::{get_mut, get_ref, get_ref_upgradeable, upgrade_ref_to_mut},
-        odb::policy::{load_indices, PackIndexMarker},
-    };
+    use crate::odb::policy::{load_indices, PackIndexMarker};
+    use features::{get_mut, get_ref, get_ref_upgradeable, upgrade_ref_to_mut};
+    use git_features::threading as features;
 
     pub mod policy {
         use std::{
@@ -76,12 +16,12 @@ mod odb {
             path::{Path, PathBuf},
         };
 
+        use git_features::threading as features;
         use git_hash::oid;
 
-        use crate::features;
-
         mod index_file {
-            use crate::{features, odb::policy};
+            use crate::odb::policy;
+            use git_features::threading as features;
 
             pub enum SingleOrMulti {
                 Single {
@@ -242,6 +182,8 @@ mod odb {
             /// All of our database paths, including `objects_directory` as entrypoint
             pub(crate) db_paths: Vec<PathBuf>,
             pub(crate) files: Vec<IndexAndPacks>,
+            /// The next index to load if there is the need, also useful as marker value.
+            pub(crate) next_to_load: usize,
 
             /// Generations are incremented whenever we decide to clear out our vectors if they are too big and contains too many empty slots.
             /// If we are not allowed to unload files, the generation will never be changed.
@@ -258,7 +200,7 @@ mod odb {
                     pack_index_sequence: self.files.len(),
                 }
             }
-            pub(crate) fn snapshot(&self) -> StateInformation {
+            pub(crate) fn metrics(&self) -> StateInformation {
                 let mut open_packs = 0;
                 let mut open_indices = 0;
 
@@ -355,6 +297,8 @@ mod odb {
                 policy::{IndexId, PackIndexMarker},
             };
 
+            /// TODO: turn this into a copy-on-write data structure that we just return as whole, with enough information to know
+            /// which indices are new so the caller doesn't have to check all new indices.
             pub(crate) enum Outcome {
                 /// Drop all data and fully replace it with `indices`.
                 /// This happens if we have witnessed a generational change invalidating all of our ids and causing currently loaded
@@ -421,8 +365,8 @@ mod odb {
         /// Get a snapshot of the current amount of handles and open packs and indices.
         /// If there are no handles, we are only consuming resources, which might indicate that this instance should be
         /// discarded.
-        pub fn state_snapshot(&self) -> policy::StateInformation {
-            get_ref(&self.state).snapshot()
+        pub fn state_metrics(&self) -> policy::StateInformation {
+            get_ref(&self.state).metrics()
         }
     }
 
@@ -472,7 +416,7 @@ mod odb {
                             policy::IndexAndPacks::Index(bundle) => match bundle.data.loaded() {
                                 Some(pack) => Ok(Some(pack.clone())),
                                 None => {
-                                    let mut state = upgrade_ref_to_mut(state);
+                                    let mut state = upgrade_ref_to_mut(state, &self.state);
                                     let f = &mut state.files[id.index];
                                     match f {
                                         policy::IndexAndPacks::Index(bundle) => Ok(bundle
@@ -511,7 +455,7 @@ mod odb {
         ) -> std::io::Result<load_indices::Outcome> {
             let state = get_ref_upgradeable(&self.state);
             if state.db_paths.is_empty() {
-                return upgrade_ref_to_mut(state).refresh();
+                return upgrade_ref_to_mut(state, &self.state).refresh();
             }
 
             Ok(match marker {
@@ -521,7 +465,9 @@ mod odb {
                     } else if marker.pack_index_sequence == state.files.len() {
                         match refresh_mode {
                             policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
-                            policy::RefreshMode::AfterAllIndicesLoaded => return upgrade_ref_to_mut(state).refresh(),
+                            policy::RefreshMode::AfterAllIndicesLoaded => {
+                                return upgrade_ref_to_mut(state, &self.state).refresh()
+                            }
                         }
                     } else {
                         load_indices::Outcome::Extend {
@@ -612,7 +558,7 @@ mod odb {
 mod refs {
     use std::path::{Path, PathBuf};
 
-    use crate::features;
+    use git_features::threading as features;
 
     pub struct LooseStore {
         path: PathBuf,
@@ -627,10 +573,8 @@ mod refs {
     }
 
     mod inner {
-        use crate::{
-            features,
-            refs::{LooseStore, RefTable},
-        };
+        use crate::refs::{LooseStore, RefTable};
+        use git_features::threading as features;
 
         pub(crate) enum StoreSelection {
             Loose(LooseStore),
@@ -680,7 +624,8 @@ mod refs {
 }
 
 mod repository {
-    use crate::{features, odb, refs};
+    use crate::{odb, refs};
+    use git_features::threading as features;
 
     mod raw {
         use git_pack::Find;
