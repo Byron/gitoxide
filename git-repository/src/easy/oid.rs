@@ -55,6 +55,8 @@ impl<'repo> Oid<'repo> {
 pub struct Ancestors<'repo> {
     handle: &'repo easy::Handle,
     tips: Box<dyn Iterator<Item = ObjectId>>,
+    sorting: git_traverse::commit::Sorting,
+    parents: git_traverse::commit::Parents,
 }
 
 ///
@@ -73,28 +75,48 @@ pub mod ancestors {
             Ancestors {
                 handle: self.handle,
                 tips: Box::new(Some(self.inner).into_iter()),
+                sorting: Default::default(),
+                parents: Default::default(),
             }
         }
     }
 
     impl<'repo> Ancestors<'repo> {
+        /// Set the sort mode for commits to the given value. The default is to order by topology.
+        pub fn sorting(mut self, sorting: git_traverse::commit::Sorting) -> Self {
+            self.sorting = sorting;
+            self
+        }
+
+        /// Only traverse the first parent of the commit graph.
+        pub fn first_parent_only(mut self) -> Self {
+            self.parents = git_traverse::commit::Parents::First;
+            self
+        }
+
         /// Return an iterator to traverse all commits in the history of the commit the parent [Oid] is pointing to.
         pub fn all(&mut self) -> Iter<'_, 'repo> {
             let tips = std::mem::replace(&mut self.tips, Box::new(None.into_iter()));
+            let parents = self.parents;
+            let sorting = self.sorting;
             Iter {
                 handle: self.handle,
-                inner: Box::new(git_traverse::commit::Ancestors::new(
-                    tips,
-                    git_traverse::commit::ancestors::State::default(),
-                    move |oid, buf| {
-                        self.handle
-                            .objects
-                            .try_find(oid, buf)
-                            .ok()
-                            .flatten()
-                            .and_then(|obj| obj.try_into_commit_iter())
-                    },
-                )),
+                inner: Box::new(
+                    git_traverse::commit::Ancestors::new(
+                        tips,
+                        git_traverse::commit::ancestors::State::default(),
+                        move |oid, buf| {
+                            self.handle
+                                .objects
+                                .try_find(oid, buf)
+                                .ok()
+                                .flatten()
+                                .and_then(|obj| obj.try_into_commit_iter())
+                        },
+                    )
+                    .sorting(sorting)
+                    .parents(parents),
+                ),
             }
         }
     }
