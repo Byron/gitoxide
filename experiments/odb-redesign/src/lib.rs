@@ -7,7 +7,7 @@ mod odb {
     use git_odb::pack::{bundle::Location, find::Entry};
 
     use crate::odb::policy::{load_indices, PackIndexMarker};
-    use features::{get_mut, get_ref, get_ref_upgradeable, upgrade_ref_to_mut};
+    use features::{get_mut, get_ref};
     use git_features::threading as features;
 
     pub mod policy {
@@ -405,7 +405,7 @@ mod odb {
             id: policy::PackId,
             marker: PackIndexMarker,
         ) -> std::io::Result<Option<features::OwnShared<git_pack::data::File>>> {
-            let state = get_ref_upgradeable(&self.state);
+            let state = get_ref(&self.state);
             if state.generation != marker.generation {
                 return Ok(None);
             }
@@ -416,7 +416,8 @@ mod odb {
                             policy::IndexAndPacks::Index(bundle) => match bundle.data.loaded() {
                                 Some(pack) => Ok(Some(pack.clone())),
                                 None => {
-                                    let mut state = upgrade_ref_to_mut(state, &self.state);
+                                    drop(state);
+                                    let mut state = get_mut(&self.state);
                                     let f = &mut state.files[id.index];
                                     match f {
                                         policy::IndexAndPacks::Index(bundle) => Ok(bundle
@@ -453,9 +454,10 @@ mod odb {
             refresh_mode: policy::RefreshMode,
             marker: Option<policy::PackIndexMarker>,
         ) -> std::io::Result<load_indices::Outcome> {
-            let state = get_ref_upgradeable(&self.state);
+            let state = get_ref(&self.state);
             if state.db_paths.is_empty() {
-                return upgrade_ref_to_mut(state, &self.state).refresh();
+                drop(state);
+                return get_mut(&self.state).refresh();
             }
 
             Ok(match marker {
@@ -465,9 +467,7 @@ mod odb {
                     } else if marker.pack_index_sequence == state.files.len() {
                         match refresh_mode {
                             policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
-                            policy::RefreshMode::AfterAllIndicesLoaded => {
-                                return upgrade_ref_to_mut(state, &self.state).refresh()
-                            }
+                            policy::RefreshMode::AfterAllIndicesLoaded => return get_mut(&self.state).refresh(),
                         }
                     } else {
                         load_indices::Outcome::Extend {
