@@ -235,7 +235,7 @@ pub mod ancestors {
 
             state
                 .parents_with_date
-                .sort_by(|(_, time), (_, other_time)| time.cmp(&other_time).reverse());
+                .sort_by(|(_, time), (_, other_time)| time.cmp(other_time).reverse());
             for parent in &state.parents_with_date {
                 let id = parent.0;
                 let was_inserted = state.seen.insert(id);
