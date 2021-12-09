@@ -1,7 +1,9 @@
 #![allow(dead_code, unused_variables, unreachable_code)]
 
 mod odb {
+    use arc_swap::ArcSwap;
     use std::path::PathBuf;
+    use std::sync::atomic::{AtomicU8, AtomicUsize};
     use std::sync::Arc;
 
     use git_hash::oid;
@@ -88,13 +90,15 @@ mod odb {
             }
         }
 
-        pub(crate) struct OnDiskFile<T> {
+        #[derive(Clone)]
+        pub(crate) struct OnDiskFile<T: Clone> {
             /// The last known path of the file
-            path: PathBuf,
+            path: Arc<PathBuf>,
             state: OnDiskFileState<T>,
         }
 
-        pub(crate) enum OnDiskFileState<T> {
+        #[derive(Clone)]
+        pub(crate) enum OnDiskFileState<T: Clone> {
             /// The file is on disk and can be loaded from there.
             Unloaded,
             Loaded(T),
@@ -106,7 +110,7 @@ mod odb {
             Missing,
         }
 
-        impl<T> OnDiskFile<T> {
+        impl<T: Clone> OnDiskFile<T> {
             /// Return true if we hold a memory map of the file already.
             pub fn is_loaded(&self) -> bool {
                 matches!(self.state, OnDiskFileState::Loaded(_) | OnDiskFileState::Garbage(_))
@@ -154,17 +158,19 @@ mod odb {
             KeepDeletedPacksAvailable,
         }
 
+        #[derive(Clone)]
         pub(crate) struct IndexFileBundle {
             pub index: OnDiskFile<Arc<git_pack::index::File>>,
-            pub path: PathBuf,
             pub data: OnDiskFile<Arc<git_pack::data::File>>,
         }
 
+        #[derive(Clone)]
         pub(crate) struct MultiIndexFileBundle {
             pub multi_index: OnDiskFile<Arc<MultiIndex>>,
             pub data: Vec<OnDiskFile<Arc<git_pack::data::File>>>,
         }
 
+        #[derive(Clone)]
         pub(crate) enum IndexAndPacks {
             Index(IndexFileBundle),
             /// Note that there can only be one multi-pack file per repository, but thanks to git alternates, there can be multiple overall.
@@ -332,11 +338,29 @@ mod odb {
     /// repository, and remove it as the last connection to it is dropped.
     pub struct Store {
         state: parking_lot::RwLock<policy::State>,
+
+        /// The below state is read-only unless the `state` lock is held.
+        pub(crate) files: ArcSwap<Vec<policy::IndexAndPacks>>,
+        /// The next index we should load, also useful as marker value.
+        pub(crate) next_index_to_load: AtomicUsize,
+
+        /// Generations are incremented whenever we decide to clear out our vectors if they are too big and contains too many empty slots.
+        /// If we are not allowed to unload files, the generation will never be changed.
+        pub(crate) generation: AtomicU8,
+        /// The amount of handles that would prevent us from unloading packs or indices
+        pub(crate) num_handles_stable: AtomicUsize,
+        /// The amount of handles that don't affect our ability to compact our internal data structures.
+        pub(crate) num_handles_unstable: AtomicUsize,
     }
 
     impl Store {
         pub fn at(objects_directory: impl Into<PathBuf>) -> Arc<Self> {
             Arc::new(Store {
+                files: ArcSwap::new(Arc::new(Vec::new())),
+                next_index_to_load: Default::default(),
+                generation: Default::default(),
+                num_handles_stable: Default::default(),
+                num_handles_unstable: Default::default(),
                 state: parking_lot::RwLock::new(policy::State {
                     objects_directory: objects_directory.into(),
                     ..policy::State::default()
