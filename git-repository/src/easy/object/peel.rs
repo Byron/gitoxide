@@ -11,7 +11,7 @@ pub mod to_kind {
 
         use crate::easy::object;
 
-        /// The error returned by [`Object::peel_to_kind()`][crate::easy::ObjectRef::peel_to_kind()].
+        /// The error returned by [`Object::peel_to_kind()`][crate::easy::Object::peel_to_kind()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
@@ -68,7 +68,7 @@ impl<'repo> Object<'repo> {
     // TODO: tests
     /// Follow all tag object targets until a commit, tree or blob is reached.
     ///
-    /// Note that this method is different from [`peel_to_kind(…)`][ObjectRef::peel_to_kind()] as it won't
+    /// Note that this method is different from [`peel_to_kind(…)`][Object::peel_to_kind()] as it won't
     /// peel commits to their tree, but handles tags only.
     pub fn peel_tags_to_end(mut self) -> Result<Self, object::find::existing::OdbError> {
         loop {

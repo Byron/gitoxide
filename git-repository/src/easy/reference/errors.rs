@@ -16,8 +16,8 @@ pub mod edit {
 
 ///
 pub mod peel {
-    /// The error returned by [Reference::peel_to_id_in_place(…)][easy::Reference::peel_to_id_in_place()] and
-    /// [Reference::into_fully_peeled_id(…)][easy::Reference::into_fully_peeled_id()].
+    /// The error returned by [Reference::peel_to_id_in_place(…)][crate::easy::Reference::peel_to_id_in_place()] and
+    /// [Reference::into_fully_peeled_id(…)][crate::easy::Reference::into_fully_peeled_id()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -45,7 +45,7 @@ pub mod find {
         }
     }
 
-    /// The error returned by [try_find_reference(…)][easy::Handle::try_find_reference()].
+    /// The error returned by [try_find_reference(…)][crate::easy::Handle::try_find_reference()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

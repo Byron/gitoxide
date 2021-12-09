@@ -103,7 +103,7 @@ impl<'repo> Object<'repo> {
             })
     }
 
-    /// Obtain a an iterator over commit tokens like in [`to_commit_iter()`][ObjectRef::try_to_commit_iter()].
+    /// Obtain a an iterator over commit tokens like in [`to_commit_iter()`][Object::try_to_commit_iter()].
     ///
     /// # Panic
     ///

@@ -10,7 +10,7 @@ use crate::{
 
 /// An [object id][ObjectId] infused with `Easy`.
 impl<'repo> Oid<'repo> {
-    /// Find the [`ObjectRef`] associated with this object id, and consider it an error if it doesn't exist.
+    /// Find the [`Object`] associated with this object id, and consider it an error if it doesn't exist.
     ///
     /// # Note
     ///
@@ -19,7 +19,7 @@ impl<'repo> Oid<'repo> {
         self.handle.find_object(self.inner)
     }
 
-    /// Try to find the [`ObjectRef`] associated with this object id, and return `None` if it's not available locally.
+    /// Try to find the [`Object`] associated with this object id, and return `None` if it's not available locally.
     ///
     /// # Note
     ///

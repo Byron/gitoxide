@@ -56,7 +56,7 @@ impl<'a> Drop for Object<'a> {
 
 /// A decoded tree object with access to its owning repository.
 ///
-/// Please note that the limitations described in [ObjectRef] apply here as well.
+/// Please note that the limitations described in [Object] apply here as well.
 pub struct Tree<'repo> {
     /// The id of the tree
     pub id: ObjectId,
