@@ -250,9 +250,8 @@ mod odb {
             }
 
             pub(crate) fn collect_replace_outcome(&self) -> load_indices::Outcome {
-                let indices = self
-                    .index
-                    .load()
+                let guard = self.index.load();
+                let indices = guard
                     .slot_indices
                     .iter()
                     .map(|idx| (*idx, &self.files[*idx]))
@@ -271,6 +270,7 @@ mod odb {
                     });
                 load_indices::Outcome::Replace {
                     indices: todo!(),
+                    loose_dbs: Arc::clone(&guard.loose_dbs),
                     mark: self.marker(),
                 }
             }
@@ -283,6 +283,9 @@ mod odb {
             pub(crate) slot_indices: Vec<usize>,
             /// An indicator of where this copy of slot indices belongs to.
             pub(crate) marker: AtomicSlotIndexMarker,
+            /// A list of loose object databases as resolved by their alternates file in the `object_directory`. The first entry is this objects
+            /// directory loose file database. All other entries are the loose stores of alternates.
+            pub(crate) loose_dbs: Arc<Vec<git_odb::loose::Store>>,
         }
 
         impl From<&AtomicSlotIndexMarker> for SlotIndexMarker {
@@ -329,6 +332,7 @@ mod odb {
 
         pub mod load_indices {
             use crate::odb::{store, store::SlotIndexMarker};
+            use std::sync::Arc;
 
             /// TODO: turn this into a copy-on-write data structure that we just return as whole, with enough information to know
             /// which indices are new so the caller doesn't have to check all new indices.
@@ -337,13 +341,9 @@ mod odb {
                 /// This happens if we have witnessed a generational change invalidating all of our ids and causing currently loaded
                 /// indices and maps to be dropped.
                 Replace {
-                    indices: Vec<store::IndexLookup>, // should probably be small vec to get around most allocations
-                    mark: SlotIndexMarker,            // use to show where the caller left off last time
-                },
-                /// Extend with the given indices and keep searching, while dropping invalidated/unloaded ids.
-                Extend {
-                    indices: Vec<store::IndexLookup>, // should probably be small vec to get around most allocations
-                    mark: SlotIndexMarker,            // use to show where the caller left off last time
+                    indices: Vec<store::IndexLookup>, // should probably be SmallVec to get around most allocations
+                    loose_dbs: Arc<Vec<git_odb::loose::Store>>,
+                    mark: SlotIndexMarker, // use to show where the caller left off last time
                 },
                 /// No new indices to look at, caller should give up
                 NoMoreIndices,
@@ -382,10 +382,6 @@ mod odb {
         /// It's read often and changed rarely.
         pub(crate) files: Vec<store::MutableIndexAndPack>,
 
-        /// A list of loose object databases as resolved by their alternates file in the `object_directory`. The first entry is this objects
-        /// directory loose file database. All other entries are the loose stores of alternates.
-        pub(crate) loose_dbs: ArcSwap<Vec<git_odb::loose::Store>>,
-
         /// The amount of handles that would prevent us from unloading packs or indices
         pub(crate) num_handles_stable: AtomicUsize,
         /// The amount of handles that don't affect our ability to compact our internal data structures.
@@ -395,17 +391,15 @@ mod odb {
     impl Store {
         pub fn at(objects_directory: impl Into<PathBuf>) -> Arc<Self> {
             Arc::new(Store {
+                state: parking_lot::Mutex::new(store::State {
+                    objects_directory: objects_directory.into(),
+                }),
+
                 files: vec![], // TODO: initialize with a sane number of slots, probably based on the contents of the packs directory.
-                loose_dbs: ArcSwap::new(Arc::new(vec![])),
+                index: ArcSwap::new(Arc::new(SlotMapIndex::default())),
 
                 num_handles_stable: Default::default(),
                 num_handles_unstable: Default::default(),
-
-                state: parking_lot::Mutex::new(store::State {
-                    objects_directory: objects_directory.into(),
-                    ..store::State::default()
-                }),
-                index: ArcSwap::new(Arc::new(SlotMapIndex::default())),
             })
         }
 
@@ -501,13 +495,13 @@ mod odb {
             refresh_mode: store::RefreshMode,
             marker: Option<store::SlotIndexMarker>,
         ) -> std::io::Result<load_indices::Outcome> {
-            if self.loose_dbs.load().is_empty() {
+            let index = self.index.load();
+            if index.loose_dbs.is_empty() {
                 // TODO: figure out what kind of refreshes we need. This one loads in the initial slot map, but I think this cost is paid
                 //       in full during instantiation.
                 return self.refresh();
             }
 
-            let index = self.index.load();
             Ok(match marker {
                 Some(marker) => {
                     if marker.generation != index.marker.generation {
@@ -518,10 +512,7 @@ mod odb {
                             store::RefreshMode::AfterAllIndicesLoaded => return self.refresh(),
                         }
                     } else {
-                        load_indices::Outcome::Extend {
-                            indices: todo!("state.files[marker.pack_index_sequence..]"),
-                            mark: self.marker(),
-                        }
+                        self.collect_replace_outcome()
                     }
                 }
                 None => self.collect_replace_outcome(),
