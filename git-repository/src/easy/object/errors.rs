@@ -17,36 +17,11 @@ pub mod conversion {
 
 ///
 pub mod find {
-
-    use crate::easy;
-
     pub(crate) type OdbError = git_odb::compound::find::Error;
-
-    /// The error returned by [`try_find_object()`][easy::Handle::try_find_object()].
-    #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error(transparent)]
-        Find(#[from] OdbError),
-        #[error("BUG: Part of interior state could not be borrowed.")]
-        BorrowState(#[from] easy::borrow::state::Error),
-    }
 
     ///
     pub mod existing {
-        use crate::easy;
-
         pub(crate) type OdbError = git_odb::find::existing::Error<git_odb::compound::find::Error>;
-
-        /// The error returned by [`find_object()`][easy::Handle::find_object()].
-        #[derive(Debug, thiserror::Error)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            #[error(transparent)]
-            FindExisting(#[from] OdbError),
-            #[error("BUG: Part of interior state could not be borrowed.")]
-            BorrowState(#[from] easy::borrow::state::Error),
-        }
     }
 }
 

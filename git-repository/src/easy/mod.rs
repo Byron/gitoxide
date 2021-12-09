@@ -44,8 +44,14 @@ pub struct Object<'repo> {
     /// The kind of the object
     pub kind: git_object::Kind,
     /// The fully decoded object data
-    pub data: std::cell::Ref<'repo, [u8]>,
+    pub data: Vec<u8>,
     handle: &'repo easy::Handle,
+}
+
+impl<'a> Drop for Object<'a> {
+    fn drop(&mut self) {
+        self.handle.reuse_buffer(&mut self.data);
+    }
 }
 
 /// A decoded tree object with access to its owning repository.
@@ -55,8 +61,14 @@ pub struct Tree<'repo> {
     /// The id of the tree
     pub id: ObjectId,
     /// The fully decoded tree data
-    pub data: std::cell::Ref<'repo, [u8]>,
+    pub data: Vec<u8>,
     handle: &'repo easy::Handle,
+}
+
+impl<'a> Drop for Tree<'a> {
+    fn drop(&mut self) {
+        self.handle.reuse_buffer(&mut self.data);
+    }
 }
 
 /// A detached, self-contained object, without access to its source repository.
@@ -94,5 +106,6 @@ pub struct Handle {
     work_tree: Option<PathBuf>,
     /// The kind of hash that is used or should be used for object ids
     hash_kind: git_hash::Kind,
-    buf: RefCell<Vec<u8>>,
+    /// A free-list of re-usable object backing buffers
+    bufs: RefCell<Vec<Vec<u8>>>,
 }

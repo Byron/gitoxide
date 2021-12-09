@@ -30,12 +30,11 @@ impl easy::Handle {
     ///
     /// In order to get the kind of the object, is must be fully decoded from storage if it is packed with deltas.
     /// Loose object could be partially decoded, even though that's not implemented.
-    pub fn find_object(&self, id: impl Into<ObjectId>) -> Result<Object<'_>, object::find::existing::Error> {
+    pub fn find_object(&self, id: impl Into<ObjectId>) -> Result<Object<'_>, object::find::existing::OdbError> {
         let id = id.into();
-        let mut buf = self.try_borrow_mut_buf()?;
+        let mut buf = self.free_buf();
         let kind = self.objects.find(&id, &mut buf)?.kind;
-        drop(buf);
-        Object::from_current_buf(id, kind, self).map_err(Into::into)
+        Ok(Object::from_data(id, kind, buf, self))
     }
 
     /// Try to find the object with `id` or return `None` it it wasn't found.
@@ -45,17 +44,16 @@ impl easy::Handle {
     /// As a shared buffer is written to back the object data, the returned `ObjectRef` will prevent other
     /// `try_find_object()` operations from succeeding while alive.
     /// To bypass this limit, clone this `easy::Handle` instance.
-    pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::Error> {
+    pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::OdbError> {
         let state = self;
         let id = id.into();
 
-        let mut buf = state.try_borrow_mut_buf()?;
+        let mut buf = state.free_buf();
         match self.objects.try_find(&id, &mut buf)? {
             Some(obj) => {
                 let kind = obj.kind;
                 drop(obj);
-                drop(buf);
-                Ok(Some(Object::from_current_buf(id, kind, self)?))
+                Ok(Some(Object::from_data(id, kind, buf, self)))
             }
             None => Ok(None),
         }

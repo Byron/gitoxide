@@ -15,7 +15,7 @@ impl<'repo> Oid<'repo> {
     /// # Note
     ///
     /// There can only be one `ObjectRef` per `Easy`. To increase that limit, clone the `Easy`.
-    pub fn object(&self) -> Result<Object<'repo>, find::existing::Error> {
+    pub fn object(&self) -> Result<Object<'repo>, find::existing::OdbError> {
         self.handle.find_object(self.inner)
     }
 
@@ -24,7 +24,7 @@ impl<'repo> Oid<'repo> {
     /// # Note
     ///
     /// There can only be one `ObjectRef` per `Easy`. To increase that limit, clone the `Easy`.
-    pub fn try_object(&self) -> Result<Option<Object<'repo>>, find::Error> {
+    pub fn try_object(&self) -> Result<Option<Object<'repo>>, find::OdbError> {
         self.handle.try_find_object(self.inner)
     }
 }

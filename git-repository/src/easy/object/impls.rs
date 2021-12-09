@@ -30,11 +30,15 @@ impl<'repo> TryFrom<Object<'repo>> for Tree<'repo> {
     type Error = Object<'repo>;
 
     fn try_from(value: Object<'repo>) -> Result<Self, Self::Error> {
+        let handle = value.handle;
         match value.kind {
             object::Kind::Tree => Ok(Tree {
                 id: value.id,
-                data: value.data,
-                handle: value.handle,
+                handle,
+                data: {
+                    drop(value);
+                    handle.free_buf()
+                },
             }),
             _ => Err(value),
         }

@@ -1,5 +1,4 @@
 use std::{
-    cell::RefCell,
     collections::{BTreeMap, HashMap},
     iter::FromIterator,
     path::PathBuf,
@@ -237,23 +236,11 @@ fn add_item_if_package_changed<'a>(
         Filter::Slow(ref components) => {
             let mut repo = ctx.repo.clone();
             repo.object_cache_size(1024 * 1024);
-            let current_data = RefCell::new(item.tree_id);
-            let current = git::easy::Tree::from_id_and_data(
-                item.id,
-                std::cell::Ref::map(current_data.borrow(), |v| v.as_slice()),
-                &ctx.repo,
-            )
-            .lookup_path(components.iter().copied())?;
+            let current = git::easy::Tree::from_data(item.id, data_by_tree_id[&item.tree_id].to_owned(), &ctx.repo)
+                .lookup_path(components.iter().copied())?;
             let parent = match item.parent_tree_id {
-                Some(tree_id) => {
-                    let parent_data = RefCell::new(data_by_tree_id[&tree_id].to_owned());
-                    git::easy::Tree::from_id_and_data(
-                        tree_id,
-                        std::cell::Ref::map(parent_data.borrow(), |v| v.as_slice()),
-                        &ctx.repo,
-                    )
-                    .lookup_path(components.iter().copied())?
-                }
+                Some(tree_id) => git::easy::Tree::from_data(tree_id, data_by_tree_id[&tree_id].to_owned(), &ctx.repo)
+                    .lookup_path(components.iter().copied())?,
                 None => None,
             };
             match (current, parent) {

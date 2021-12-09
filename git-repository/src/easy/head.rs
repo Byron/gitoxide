@@ -110,7 +110,7 @@ pub mod peel {
         #[allow(missing_docs)]
         pub enum Error {
             #[error(transparent)]
-            FindExistingObject(#[from] object::find::existing::Error),
+            FindExistingObject(#[from] object::find::existing::OdbError),
             #[error(transparent)]
             PeelReference(#[from] reference::peel::Error),
         }

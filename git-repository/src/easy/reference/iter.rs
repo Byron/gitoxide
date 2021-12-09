@@ -97,18 +97,5 @@ pub mod init {
     }
 }
 
-///
-mod error {
-    use crate::easy;
-
-    /// The error returned by [references()][easy::Handle::references()].
-    #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error(transparent)]
-        PackedRefsOpen(#[from] git_ref::packed::buffer::open::Error),
-        #[error("BUG: Part of interior state could not be borrowed.")]
-        BorrowState(#[from] easy::borrow::state::Error),
-    }
-}
-pub use error::Error;
+/// The error returned by [references()][easy::Handle::references()].
+pub type Error = git_ref::packed::buffer::open::Error;

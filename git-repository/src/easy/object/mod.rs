@@ -1,5 +1,5 @@
 //!
-use std::{cell::Ref, convert::TryInto};
+use std::convert::TryInto;
 
 use git_hash::ObjectId;
 pub use git_object::Kind;
@@ -20,29 +20,24 @@ mod tree;
 
 impl OwnedObject {
     /// Infuse this owned object with an [`easy::Handle`].
-    pub fn attach(self, handle: &easy::Handle) -> easy::borrow::state::Result<Object<'_>> {
-        *handle.try_borrow_mut_buf()? = self.data;
-        Ok(Object {
+    pub fn attach(self, handle: &easy::Handle) -> Object<'_> {
+        Object {
             id: self.id,
             kind: self.kind,
-            data: Ref::map(handle.try_borrow_buf()?, |v| v.as_slice()),
+            data: self.data,
             handle,
-        })
+        }
     }
 }
 
 impl<'repo> Object<'repo> {
-    pub(crate) fn from_current_buf(
-        id: impl Into<ObjectId>,
-        kind: Kind,
-        handle: &'repo easy::Handle,
-    ) -> easy::borrow::state::Result<Self> {
-        Ok(Object {
+    pub(crate) fn from_data(id: impl Into<ObjectId>, kind: Kind, data: Vec<u8>, handle: &'repo easy::Handle) -> Self {
+        Object {
             id: id.into(),
             kind,
-            data: Ref::map(handle.try_borrow_buf()?, |v| v.as_slice()),
+            data,
             handle,
-        })
+        }
     }
 
     /// Transform this object into a tree, or panic if it is none.

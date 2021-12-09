@@ -8,11 +8,7 @@ use crate::{
 
 impl<'repo> Tree<'repo> {
     /// Obtain a tree instance by handing in all components that it is made up of.
-    pub fn from_id_and_data(
-        id: impl Into<ObjectId>,
-        data: std::cell::Ref<'repo, [u8]>,
-        handle: &'repo easy::Handle,
-    ) -> Self {
+    pub fn from_data(id: impl Into<ObjectId>, data: Vec<u8>, handle: &'repo easy::Handle) -> Self {
         Tree {
             id: id.into(),
             data,
@@ -28,7 +24,7 @@ impl<'repo> Tree<'repo> {
     /// Searching tree entries is currently done in sequence, which allows to the search to be allocation free. It would be possible
     /// to re-use a vector and use a binary search instead, which might be able to improve performance over all.
     /// However, a benchmark should be created first to have some data and see which trade-off to choose here.
-    pub fn lookup_path<I, P>(mut self, path: I) -> Result<Option<git_object::tree::Entry>, find::existing::Error>
+    pub fn lookup_path<I, P>(mut self, path: I) -> Result<Option<git_object::tree::Entry>, find::existing::OdbError>
     where
         I: IntoIterator<Item = P>,
         P: PartialEq<BStr>,

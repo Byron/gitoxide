@@ -1,10 +1,10 @@
 //!
 use std::{
-    cell::{Ref, RefCell, RefMut},
+    cell::RefCell,
     path::{Path, PathBuf},
 };
 
-use crate::{easy, easy::borrow};
+use crate::easy;
 
 impl Clone for easy::Handle {
     fn clone(&self) -> Self {
@@ -33,7 +33,7 @@ impl easy::Handle {
         work_tree: Option<PathBuf>,
     ) -> Self {
         easy::Handle {
-            buf: RefCell::new(vec![]),
+            bufs: RefCell::new(Vec::with_capacity(4)),
             hash_kind,
             work_tree,
             objects: {
@@ -70,12 +70,12 @@ impl From<crate::Repository> for easy::Handle {
 
 impl easy::Handle {
     #[inline]
-    pub(crate) fn try_borrow_mut_buf(&self) -> borrow::state::Result<RefMut<'_, Vec<u8>>> {
-        self.buf.try_borrow_mut().map_err(Into::into)
+    pub(crate) fn free_buf(&self) -> Vec<u8> {
+        self.bufs.borrow_mut().pop().unwrap_or_default()
     }
 
     #[inline]
-    pub(crate) fn try_borrow_buf(&self) -> borrow::state::Result<Ref<'_, Vec<u8>>> {
-        self.buf.try_borrow().map_err(Into::into)
+    pub(crate) fn reuse_buffer(&self, data: &mut Vec<u8>) {
+        self.bufs.borrow_mut().push(std::mem::take(data));
     }
 }

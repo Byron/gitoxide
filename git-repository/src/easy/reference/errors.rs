@@ -16,8 +16,6 @@ pub mod edit {
 
 ///
 pub mod peel {
-    use crate::easy;
-
     /// The error returned by [Reference::peel_to_id_in_place(…)][easy::Reference::peel_to_id_in_place()] and
     /// [Reference::into_fully_peeled_id(…)][easy::Reference::into_fully_peeled_id()].
     #[derive(Debug, thiserror::Error)]
@@ -27,15 +25,11 @@ pub mod peel {
         ToId(#[from] git_ref::peel::to_id::Error),
         #[error(transparent)]
         PackedRefsOpen(#[from] git_ref::packed::buffer::open::Error),
-        #[error("BUG: Part of interior state could not be borrowed.")]
-        BorrowState(#[from] easy::borrow::state::Error),
     }
 }
 
 ///
 pub mod find {
-    use crate::easy;
-
     ///
     pub mod existing {
         use crate::easy;
@@ -59,7 +53,5 @@ pub mod find {
         Find(#[from] git_ref::file::find::Error),
         #[error(transparent)]
         PackedRefsOpen(#[from] git_ref::packed::buffer::open::Error),
-        #[error("BUG: Part of interior state could not be borrowed.")]
-        BorrowState(#[from] easy::borrow::state::Error),
     }
 }
