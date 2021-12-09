@@ -3,7 +3,7 @@
 mod odb {
     use arc_swap::ArcSwap;
     use std::path::PathBuf;
-    use std::sync::atomic::{AtomicU8, AtomicUsize};
+    use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
     use std::sync::Arc;
 
     use git_hash::oid;
@@ -12,12 +12,14 @@ mod odb {
     use crate::odb::policy::{load_indices, PackIndexMarker};
 
     pub mod policy {
+        use std::sync::atomic::Ordering;
         use std::sync::Arc;
         use std::{
             io,
             path::{Path, PathBuf},
         };
 
+        use crate::odb::Store;
         use git_hash::oid;
 
         mod index_file {
@@ -183,30 +185,22 @@ mod odb {
             pub(crate) objects_directory: PathBuf,
             /// All of our database paths, including `objects_directory` as entrypoint
             pub(crate) db_paths: Vec<PathBuf>,
-            pub(crate) files: Vec<IndexAndPacks>,
-            /// The next index to load if there is the need, also useful as marker value.
-            pub(crate) next_to_load: usize,
-
-            /// Generations are incremented whenever we decide to clear out our vectors if they are too big and contains too many empty slots.
-            /// If we are not allowed to unload files, the generation will never be changed.
-            pub(crate) generation: u8,
-
-            pub(crate) num_handles_stable: usize,
-            pub(crate) num_handles_unstable: usize,
         }
 
-        impl State {
+        impl Store {
             pub(crate) fn marker(&self) -> PackIndexMarker {
                 PackIndexMarker {
-                    generation: self.generation,
-                    pack_index_sequence: self.files.len(),
+                    generation: self.generation.load(Ordering::SeqCst),
+                    pack_index_sequence: self.files.load().len(),
                 }
             }
+
+            /// A best-effort evaluation of metrics, as it counts values that are not synchronized with each other.
             pub(crate) fn metrics(&self) -> Metrics {
                 let mut open_packs = 0;
                 let mut open_indices = 0;
 
-                for f in &self.files {
+                for f in &**self.files.load() {
                     match f {
                         IndexAndPacks::Index(bundle) => {
                             if bundle.index.is_loaded() {
@@ -226,7 +220,8 @@ mod odb {
                 }
 
                 Metrics {
-                    num_handles: self.num_handles_unstable + self.num_handles_stable,
+                    num_handles: self.num_handles_unstable.load(Ordering::SeqCst)
+                        + self.num_handles_stable.load(Ordering::SeqCst),
                     open_packs,
                     open_indices,
                 }
@@ -237,22 +232,23 @@ mod odb {
             /// Note that updates to multi-pack indices always cause the old index to be invalidated (Missing) and transferred
             /// into the new MultiPack index (reusing previous maps as good as possible), effectively treating them as new index entirely.
             /// That way, extension still work as before such that old indices may be pruned, and changes/new ones are always appended.
-            pub(crate) fn refresh(&mut self) -> io::Result<load_indices::Outcome> {
-                let mut db_paths = git_odb::alternate::resolve(&self.objects_directory)
+            pub(crate) fn refresh(&self) -> io::Result<load_indices::Outcome> {
+                let state = self.state.write();
+                let mut db_paths = git_odb::alternate::resolve(&state.objects_directory)
                     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
                 // These are in addition to our objects directory
-                db_paths.insert(0, self.objects_directory.clone());
+                db_paths.insert(0, state.objects_directory.clone());
                 todo!()
             }
 
             /// If there is no handle with stable pack ids requirements, unload them.
             /// This property also relates to us pruning our internal state/doing internal maintenance which affects ids, too.
             pub(crate) fn may_unload_packs(&mut self) -> bool {
-                self.num_handles_stable == 0
+                self.num_handles_stable.load(Ordering::SeqCst) == 0
             }
 
             pub(crate) fn collect_replace_outcome(&self) -> load_indices::Outcome {
-                let indices = self.files.iter().enumerate().filter_map(|(id, file)| {
+                let indices = self.files.load().iter().enumerate().filter_map(|(id, file)| {
                     let lookup = match file {
                         IndexAndPacks::Index(bundle) => index_file::SingleOrMulti::Single {
                             index: bundle.index.loaded()?.clone(),
@@ -377,34 +373,28 @@ mod odb {
                 mode: mode.into(),
             }
         }
-
-        /// Get a snapshot of the current amount of handles and open packs and indices.
-        /// If there are no handles, we are only consuming resources, which might indicate that this instance should be
-        /// discarded.
-        pub fn state_metrics(&self) -> policy::Metrics {
-            self.state.read().metrics()
-        }
     }
 
     /// Handle interaction
     impl Store {
         pub(crate) fn register_handle(&self) -> policy::HandleModeToken {
-            let mut state = self.state.write();
-            state.num_handles_unstable += 1;
+            self.num_handles_unstable.fetch_add(1, Ordering::Relaxed);
             policy::HandleModeToken::DeletedPacksAreInaccessible
         }
         pub(crate) fn remove_handle(&self, mode: policy::HandleModeToken) {
-            let mut state = self.state.write();
             match mode {
-                policy::HandleModeToken::KeepDeletedPacksAvailable => state.num_handles_stable -= 1,
-                policy::HandleModeToken::DeletedPacksAreInaccessible => state.num_handles_unstable -= 1,
-            }
+                policy::HandleModeToken::KeepDeletedPacksAvailable => {
+                    self.num_handles_stable.fetch_sub(1, Ordering::SeqCst)
+                }
+                policy::HandleModeToken::DeletedPacksAreInaccessible => {
+                    self.num_handles_unstable.fetch_sub(1, Ordering::Relaxed)
+                }
+            };
         }
         pub(crate) fn upgrade_handle(&self, mode: policy::HandleModeToken) -> policy::HandleModeToken {
             if let policy::HandleModeToken::DeletedPacksAreInaccessible = mode {
-                let mut state = self.state.write();
-                state.num_handles_unstable -= 1;
-                state.num_handles_stable += 1;
+                self.num_handles_stable.fetch_add(1, Ordering::SeqCst);
+                self.num_handles_unstable.fetch_sub(1, Ordering::SeqCst);
             }
             policy::HandleModeToken::KeepDeletedPacksAvailable
         }
@@ -422,33 +412,35 @@ mod odb {
             marker: PackIndexMarker,
         ) -> std::io::Result<Option<Arc<git_pack::data::File>>> {
             let state = self.state.read();
-            if state.generation != marker.generation {
+            if self.generation.load(Ordering::SeqCst) != marker.generation {
                 return Ok(None);
             }
+            let files = self.files.load();
             match id.multipack_index {
                 None => {
-                    match state.files.get(id.index) {
+                    match files.get(id.index) {
                         Some(f) => match f {
                             policy::IndexAndPacks::Index(bundle) => match bundle.data.loaded() {
                                 Some(pack) => Ok(Some(pack.clone())),
                                 None => {
                                     drop(state);
-                                    let mut state = self.state.write();
-                                    let f = &mut state.files[id.index];
-                                    match f {
-                                        policy::IndexAndPacks::Index(bundle) => Ok(bundle
-                                            .data
-                                            .do_load(|path| {
-                                                git_pack::data::File::at(path).map(Arc::new).map_err(|err| match err {
-                                                    git_odb::pack::data::header::decode::Error::Io {
-                                                        source, ..
-                                                    } => source,
-                                                    other => std::io::Error::new(std::io::ErrorKind::Other, other),
-                                                })
-                                            })?
-                                            .cloned()),
-                                        _ => unreachable!(),
-                                    }
+                                    let state = self.state.write();
+                                    // let f = &mut files[id.index];
+                                    // match f {
+                                    //     policy::IndexAndPacks::Index(bundle) => Ok(bundle
+                                    //         .data
+                                    //         .do_load(|path| {
+                                    //             git_pack::data::File::at(path).map(Arc::new).map_err(|err| match err {
+                                    //                 git_odb::pack::data::header::decode::Error::Io {
+                                    //                     source, ..
+                                    //                 } => source,
+                                    //                 other => std::io::Error::new(std::io::ErrorKind::Other, other),
+                                    //             })
+                                    //         })?
+                                    //         .cloned()),
+                                    //     _ => unreachable!(),
+                                    // }
+                                    todo!()
                                 }
                             },
                             // This can also happen if they use an old index into our new and refreshed data which might have a multi-index
@@ -470,26 +462,26 @@ mod odb {
             let state = self.state.read();
             if state.db_paths.is_empty() {
                 drop(state);
-                return self.state.write().refresh();
+                return self.refresh();
             }
 
             Ok(match marker {
                 Some(marker) => {
-                    if marker.generation != state.generation {
-                        state.collect_replace_outcome()
-                    } else if marker.pack_index_sequence == state.files.len() {
+                    if marker.generation != self.generation.load(Ordering::SeqCst) {
+                        self.collect_replace_outcome()
+                    } else if marker.pack_index_sequence == self.files.load().len() {
                         match refresh_mode {
                             policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
-                            policy::RefreshMode::AfterAllIndicesLoaded => return self.state.write().refresh(),
+                            policy::RefreshMode::AfterAllIndicesLoaded => return self.refresh(),
                         }
                     } else {
                         load_indices::Outcome::Extend {
                             indices: todo!("state.files[marker.pack_index_sequence..]"),
-                            mark: state.marker(),
+                            mark: self.marker(),
                         }
                     }
                 }
-                None => state.collect_replace_outcome(),
+                None => self.collect_replace_outcome(),
             })
         }
     }
