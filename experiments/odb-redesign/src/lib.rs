@@ -180,7 +180,7 @@ mod odb {
             MultiIndex(MultiIndexFileBundle),
         }
 
-        pub(crate) struct MutableIndexAndPacks {
+        pub(crate) struct MutableIndexAndPack {
             pub(crate) files: ArcSwap<IndexAndPacks>,
             pub(crate) write: parking_lot::Mutex<()>,
         }
@@ -189,8 +189,6 @@ mod odb {
         pub(crate) struct State {
             /// The root level directory from which we resolve alternates files.
             pub(crate) objects_directory: PathBuf,
-            /// All of our database paths, including `objects_directory` as entrypoint
-            pub(crate) db_paths: Vec<PathBuf>,
         }
 
         impl Store {
@@ -364,11 +362,9 @@ mod odb {
     /// The reason for the latter is that it's close to impossible to enforce correctly without heuristics that are probably
     /// better done on the server if there is an indication.
     ///
-    /// There is, however, a way to obtain the current amount of open files held by this instance and it's possible to trigger them
-    /// to be closed. Alternatively, it's safe to replace this instance with a new one which starts fresh.
-    ///
-    /// Note that it's possible to let go of loaded files here as well, even though that would be based on a setting allowed file handles
-    /// which would be managed elsewhere.
+    /// File handles are released only once all handles to the store are gone. It's possible that some handles remain open as 'garbage'
+    /// as they were held while there was a handle which prevented collection. It's best to close these by opening a new store occasionally
+    /// based on the metrics it provides.
     ///
     /// For maintenance, I think it would be best create an instance when a connection comes in, share it across connections to the same
     /// repository, and remove it as the last connection to it is dropped.
@@ -384,7 +380,11 @@ mod odb {
         /// This allows multiple file to be loaded concurrently if there is multiple handles requesting to load packs or additional indices.
         /// The map is static and cannot typically change.
         /// It's read often and changed rarely.
-        pub(crate) files: Vec<store::MutableIndexAndPacks>,
+        pub(crate) files: Vec<store::MutableIndexAndPack>,
+
+        /// A list of loose object databases as resolved by their alternates file in the `object_directory`. The first entry is this objects
+        /// directory loose file database. All other entries are the loose stores of alternates.
+        pub(crate) loose_dbs: ArcSwap<Vec<git_odb::loose::Store>>,
 
         /// The amount of handles that would prevent us from unloading packs or indices
         pub(crate) num_handles_stable: AtomicUsize,
@@ -396,6 +396,7 @@ mod odb {
         pub fn at(objects_directory: impl Into<PathBuf>) -> Arc<Self> {
             Arc::new(Store {
                 files: vec![], // TODO: initialize with a sane number of slots, probably based on the contents of the packs directory.
+                loose_dbs: ArcSwap::new(Arc::new(vec![])),
 
                 num_handles_stable: Default::default(),
                 num_handles_unstable: Default::default(),
@@ -500,13 +501,13 @@ mod odb {
             refresh_mode: store::RefreshMode,
             marker: Option<store::SlotIndexMarker>,
         ) -> std::io::Result<load_indices::Outcome> {
-            let index = self.index.load();
-            if index.slot_indices.is_empty() {
+            if self.loose_dbs.load().is_empty() {
                 // TODO: figure out what kind of refreshes we need. This one loads in the initial slot map, but I think this cost is paid
                 //       in full during instantiation.
                 return self.refresh();
             }
 
+            let index = self.index.load();
             Ok(match marker {
                 Some(marker) => {
                     if marker.generation != index.marker.generation {
