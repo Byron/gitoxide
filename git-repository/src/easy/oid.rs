@@ -5,7 +5,7 @@ use git_hash::{oid, ObjectId};
 
 use crate::{
     easy,
-    easy::{object::find, ObjectRef, Oid},
+    easy::{object::find, Object, Oid},
 };
 
 /// An [object id][ObjectId] infused with `Easy`.
@@ -15,7 +15,7 @@ impl<'repo> Oid<'repo> {
     /// # Note
     ///
     /// There can only be one `ObjectRef` per `Easy`. To increase that limit, clone the `Easy`.
-    pub fn object(&self) -> Result<ObjectRef<'repo>, find::existing::Error> {
+    pub fn object(&self) -> Result<Object<'repo>, find::existing::Error> {
         self.handle.find_object(self.inner)
     }
 
@@ -24,7 +24,7 @@ impl<'repo> Oid<'repo> {
     /// # Note
     ///
     /// There can only be one `ObjectRef` per `Easy`. To increase that limit, clone the `Easy`.
-    pub fn try_object(&self) -> Result<Option<ObjectRef<'repo>>, find::Error> {
+    pub fn try_object(&self) -> Result<Option<Object<'repo>>, find::Error> {
         self.handle.try_find_object(self.inner)
     }
 }
@@ -141,7 +141,7 @@ mod impls {
 
     use git_hash::{oid, ObjectId};
 
-    use crate::easy::{Object, ObjectRef, Oid};
+    use crate::easy::{Object, Oid, OwnedObject};
     // Eq, Hash, Ord, PartialOrd,
 
     impl<'a> std::hash::Hash for Oid<'a> {
@@ -174,14 +174,14 @@ mod impls {
         }
     }
 
-    impl<'repo> PartialEq<ObjectRef<'repo>> for Oid<'repo> {
-        fn eq(&self, other: &ObjectRef<'repo>) -> bool {
+    impl<'repo> PartialEq<Object<'repo>> for Oid<'repo> {
+        fn eq(&self, other: &Object<'repo>) -> bool {
             self.inner == other.id
         }
     }
 
-    impl<'repo> PartialEq<Object> for Oid<'repo> {
-        fn eq(&self, other: &Object) -> bool {
+    impl<'repo> PartialEq<OwnedObject> for Oid<'repo> {
+        fn eq(&self, other: &OwnedObject) -> bool {
             self.inner == other.id
         }
     }

@@ -2,7 +2,7 @@
 use crate::easy::{
     object,
     object::{peel, Kind},
-    ObjectRef,
+    Object,
 };
 
 ///
@@ -27,7 +27,7 @@ pub mod to_kind {
     pub use error::Error;
 }
 
-impl<'repo> ObjectRef<'repo> {
+impl<'repo> Object<'repo> {
     // TODO: tests
     /// Follow tags to their target and commits to trees until the given `kind` of object is encountered.
     ///

@@ -9,7 +9,7 @@ use git_ref::{
 
 use crate::{
     easy,
-    easy::{commit, object, tag, ObjectRef, Oid, Reference},
+    easy::{commit, object, tag, Object, Oid, Reference},
     ext::ObjectIdExt,
 };
 
@@ -30,12 +30,12 @@ impl easy::Handle {
     ///
     /// In order to get the kind of the object, is must be fully decoded from storage if it is packed with deltas.
     /// Loose object could be partially decoded, even though that's not implemented.
-    pub fn find_object(&self, id: impl Into<ObjectId>) -> Result<ObjectRef<'_>, object::find::existing::Error> {
+    pub fn find_object(&self, id: impl Into<ObjectId>) -> Result<Object<'_>, object::find::existing::Error> {
         let id = id.into();
         let mut buf = self.try_borrow_mut_buf()?;
         let kind = self.objects.find(&id, &mut buf)?.kind;
         drop(buf);
-        ObjectRef::from_current_buf(id, kind, self).map_err(Into::into)
+        Object::from_current_buf(id, kind, self).map_err(Into::into)
     }
 
     /// Try to find the object with `id` or return `None` it it wasn't found.
@@ -45,7 +45,7 @@ impl easy::Handle {
     /// As a shared buffer is written to back the object data, the returned `ObjectRef` will prevent other
     /// `try_find_object()` operations from succeeding while alive.
     /// To bypass this limit, clone this `easy::Handle` instance.
-    pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<ObjectRef<'_>>, object::find::Error> {
+    pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::Error> {
         let state = self;
         let id = id.into();
 
@@ -55,7 +55,7 @@ impl easy::Handle {
                 let kind = obj.kind;
                 drop(obj);
                 drop(buf);
-                Ok(Some(ObjectRef::from_current_buf(id, kind, self)?))
+                Ok(Some(Object::from_current_buf(id, kind, self)?))
             }
             None => Ok(None),
         }

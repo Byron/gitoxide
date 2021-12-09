@@ -6,7 +6,7 @@ pub use git_object::Kind;
 
 use crate::{
     easy,
-    easy::{Object, ObjectRef, TreeRef},
+    easy::{Object, OwnedObject, Tree},
 };
 
 mod errors;
@@ -18,11 +18,11 @@ mod impls;
 pub mod peel;
 mod tree;
 
-impl Object {
+impl OwnedObject {
     /// Infuse this owned object with an [`easy::Handle`].
-    pub fn attach(self, handle: &easy::Handle) -> easy::borrow::state::Result<ObjectRef<'_>> {
+    pub fn attach(self, handle: &easy::Handle) -> easy::borrow::state::Result<Object<'_>> {
         *handle.try_borrow_mut_buf()? = self.data;
-        Ok(ObjectRef {
+        Ok(Object {
             id: self.id,
             kind: self.kind,
             data: Ref::map(handle.try_borrow_buf()?, |v| v.as_slice()),
@@ -31,13 +31,13 @@ impl Object {
     }
 }
 
-impl<'repo> ObjectRef<'repo> {
+impl<'repo> Object<'repo> {
     pub(crate) fn from_current_buf(
         id: impl Into<ObjectId>,
         kind: Kind,
         handle: &'repo easy::Handle,
     ) -> easy::borrow::state::Result<Self> {
-        Ok(ObjectRef {
+        Ok(Object {
             id: id.into(),
             kind,
             data: Ref::map(handle.try_borrow_buf()?, |v| v.as_slice()),
@@ -46,7 +46,7 @@ impl<'repo> ObjectRef<'repo> {
     }
 
     /// Transform this object into a tree, or panic if it is none.
-    pub fn into_tree(self) -> TreeRef<'repo> {
+    pub fn into_tree(self) -> Tree<'repo> {
         match self.try_into() {
             Ok(tree) => tree,
             Err(this) => panic!("Tried to use {} as tree, but was {}", this.id, this.kind),
@@ -54,15 +54,15 @@ impl<'repo> ObjectRef<'repo> {
     }
 
     /// Transform this object into a tree, or return it as part of the `Err` if it is no tree.
-    pub fn try_into_tree(self) -> Result<TreeRef<'repo>, Self> {
+    pub fn try_into_tree(self) -> Result<Tree<'repo>, Self> {
         self.try_into()
     }
 }
 
-impl<'repo> ObjectRef<'repo> {
+impl<'repo> Object<'repo> {
     /// Create an owned instance of this object, copying our data in the process.
-    pub fn to_owned(&self) -> Object {
-        Object {
+    pub fn to_owned(&self) -> OwnedObject {
+        OwnedObject {
             id: self.id,
             kind: self.kind,
             data: self.data.to_owned(),
@@ -70,8 +70,8 @@ impl<'repo> ObjectRef<'repo> {
     }
 
     /// Turn this instance into an owned one, copying our data in the process.
-    pub fn into_owned(self) -> Object {
-        Object {
+    pub fn into_owned(self) -> OwnedObject {
+        OwnedObject {
             id: self.id,
             kind: self.kind,
             data: self.data.to_owned(),
@@ -81,12 +81,12 @@ impl<'repo> ObjectRef<'repo> {
     /// Sever the connection to `Easy` and turn this instance into a standalone object.
     ///
     /// Note that the data buffer will be copied in the process.
-    pub fn detach(self) -> Object {
+    pub fn detach(self) -> OwnedObject {
         self.into()
     }
 }
 
-impl<'repo> ObjectRef<'repo> {
+impl<'repo> Object<'repo> {
     /// Obtain a fully parsed commit whose fields reference our data buffer,
     ///
     /// # Panic

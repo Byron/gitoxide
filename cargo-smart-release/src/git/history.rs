@@ -238,7 +238,7 @@ fn add_item_if_package_changed<'a>(
             let mut repo = ctx.repo.clone();
             repo.object_cache_size(1024 * 1024);
             let current_data = RefCell::new(item.tree_id);
-            let current = git::easy::TreeRef::from_id_and_data(
+            let current = git::easy::Tree::from_id_and_data(
                 item.id,
                 std::cell::Ref::map(current_data.borrow(), |v| v.as_slice()),
                 &ctx.repo,
@@ -247,7 +247,7 @@ fn add_item_if_package_changed<'a>(
             let parent = match item.parent_tree_id {
                 Some(tree_id) => {
                     let parent_data = RefCell::new(data_by_tree_id[&tree_id].to_owned());
-                    git::easy::TreeRef::from_id_and_data(
+                    git::easy::Tree::from_id_and_data(
                         tree_id,
                         std::cell::Ref::map(parent_data.borrow(), |v| v.as_slice()),
                         &ctx.repo,

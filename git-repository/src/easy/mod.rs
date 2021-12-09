@@ -38,7 +38,7 @@ pub struct Oid<'r> {
 ///
 /// Note that it holds a reference to a buffer of it's associated repository handle, so there
 /// can only be one at a time, per handle.
-pub struct ObjectRef<'repo> {
+pub struct Object<'repo> {
     /// The id of the object
     pub id: ObjectId,
     /// The kind of the object
@@ -51,7 +51,7 @@ pub struct ObjectRef<'repo> {
 /// A decoded tree object with access to its owning repository.
 ///
 /// Please note that the limitations described in [ObjectRef] apply here as well.
-pub struct TreeRef<'repo> {
+pub struct Tree<'repo> {
     /// The id of the tree
     pub id: ObjectId,
     /// The fully decoded tree data
@@ -63,7 +63,7 @@ pub struct TreeRef<'repo> {
 ///
 /// Use it if an `ObjectRef` should be sent over thread boundaries or stored in collections.
 #[derive(Clone)]
-pub struct Object {
+pub struct OwnedObject {
     /// The id of the object
     pub id: ObjectId,
     /// The kind of the object

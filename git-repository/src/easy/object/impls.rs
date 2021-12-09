@@ -1,37 +1,37 @@
 use std::convert::TryFrom;
 
-use crate::easy::{object, Object, ObjectRef, TreeRef};
+use crate::easy::{object, Object, OwnedObject, Tree};
 
-impl<'repo> std::fmt::Debug for ObjectRef<'repo> {
+impl<'repo> std::fmt::Debug for Object<'repo> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Debug::fmt(&self.id, f)
     }
 }
 
-impl<'repo> From<ObjectRef<'repo>> for Object {
-    fn from(r: ObjectRef<'repo>) -> Self {
+impl<'repo> From<Object<'repo>> for OwnedObject {
+    fn from(r: Object<'repo>) -> Self {
         r.into_owned()
     }
 }
 
-impl<'repo> AsRef<[u8]> for ObjectRef<'repo> {
+impl<'repo> AsRef<[u8]> for Object<'repo> {
     fn as_ref(&self) -> &[u8] {
         &self.data
     }
 }
 
-impl AsRef<[u8]> for Object {
+impl AsRef<[u8]> for OwnedObject {
     fn as_ref(&self) -> &[u8] {
         &self.data
     }
 }
 
-impl<'repo> TryFrom<ObjectRef<'repo>> for TreeRef<'repo> {
-    type Error = ObjectRef<'repo>;
+impl<'repo> TryFrom<Object<'repo>> for Tree<'repo> {
+    type Error = Object<'repo>;
 
-    fn try_from(value: ObjectRef<'repo>) -> Result<Self, Self::Error> {
+    fn try_from(value: Object<'repo>) -> Result<Self, Self::Error> {
         match value.kind {
-            object::Kind::Tree => Ok(TreeRef {
+            object::Kind::Tree => Ok(Tree {
                 id: value.id,
                 data: value.data,
                 handle: value.handle,
