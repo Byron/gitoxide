@@ -6,7 +6,7 @@ pub use git_object::Kind;
 
 use crate::{
     easy,
-    easy::{Object, OwnedObject, Tree},
+    easy::{DetachedObject, Object, Tree},
 };
 
 mod errors;
@@ -18,7 +18,7 @@ mod impls;
 pub mod peel;
 mod tree;
 
-impl OwnedObject {
+impl DetachedObject {
     /// Infuse this owned object with an [`easy::Handle`].
     pub fn attach(self, handle: &easy::Handle) -> Object<'_> {
         Object {
@@ -56,8 +56,8 @@ impl<'repo> Object<'repo> {
 
 impl<'repo> Object<'repo> {
     /// Create an owned instance of this object, copying our data in the process.
-    pub fn to_owned(&self) -> OwnedObject {
-        OwnedObject {
+    pub fn to_owned(&self) -> DetachedObject {
+        DetachedObject {
             id: self.id,
             kind: self.kind,
             data: self.data.to_owned(),
@@ -65,8 +65,8 @@ impl<'repo> Object<'repo> {
     }
 
     /// Turn this instance into an owned one, copying our data in the process.
-    pub fn into_owned(self) -> OwnedObject {
-        OwnedObject {
+    pub fn into_owned(self) -> DetachedObject {
+        DetachedObject {
             id: self.id,
             kind: self.kind,
             data: self.data.to_owned(),
@@ -76,7 +76,7 @@ impl<'repo> Object<'repo> {
     /// Sever the connection to `Easy` and turn this instance into a standalone object.
     ///
     /// Note that the data buffer will be copied in the process.
-    pub fn detach(self) -> OwnedObject {
+    pub fn detach(self) -> DetachedObject {
         self.into()
     }
 }

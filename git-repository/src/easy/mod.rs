@@ -75,7 +75,7 @@ impl<'a> Drop for Tree<'a> {
 ///
 /// Use it if an `ObjectRef` should be sent over thread boundaries or stored in collections.
 #[derive(Clone)]
-pub struct OwnedObject {
+pub struct DetachedObject {
     /// The id of the object
     pub id: ObjectId,
     /// The kind of the object

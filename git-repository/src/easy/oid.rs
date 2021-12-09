@@ -141,7 +141,7 @@ mod impls {
 
     use git_hash::{oid, ObjectId};
 
-    use crate::easy::{Object, Oid, OwnedObject};
+    use crate::easy::{DetachedObject, Object, Oid};
     // Eq, Hash, Ord, PartialOrd,
 
     impl<'a> std::hash::Hash for Oid<'a> {
@@ -180,8 +180,8 @@ mod impls {
         }
     }
 
-    impl<'repo> PartialEq<OwnedObject> for Oid<'repo> {
-        fn eq(&self, other: &OwnedObject) -> bool {
+    impl<'repo> PartialEq<DetachedObject> for Oid<'repo> {
+        fn eq(&self, other: &DetachedObject) -> bool {
             self.inner == other.id
         }
     }

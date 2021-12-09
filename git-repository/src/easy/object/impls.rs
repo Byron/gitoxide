@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use crate::easy::{object, Object, OwnedObject, Tree};
+use crate::easy::{object, DetachedObject, Object, Tree};
 
 impl<'repo> std::fmt::Debug for Object<'repo> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -8,7 +8,7 @@ impl<'repo> std::fmt::Debug for Object<'repo> {
     }
 }
 
-impl<'repo> From<Object<'repo>> for OwnedObject {
+impl<'repo> From<Object<'repo>> for DetachedObject {
     fn from(r: Object<'repo>) -> Self {
         r.into_owned()
     }
@@ -20,7 +20,7 @@ impl<'repo> AsRef<[u8]> for Object<'repo> {
     }
 }
 
-impl AsRef<[u8]> for OwnedObject {
+impl AsRef<[u8]> for DetachedObject {
     fn as_ref(&self) -> &[u8] {
         &self.data
     }
