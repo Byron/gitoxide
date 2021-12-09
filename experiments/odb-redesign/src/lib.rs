@@ -55,7 +55,7 @@ mod odb {
 
         pub(crate) struct IndexLookup {
             file: index_file::SingleOrMulti,
-            pub id: IndexId,
+            id: IndexId,
         }
 
         impl IndexLookup {
@@ -196,7 +196,7 @@ mod odb {
                     pack_index_sequence: self.files.len(),
                 }
             }
-            pub(crate) fn metrics(&self) -> StateInformation {
+            pub(crate) fn metrics(&self) -> Metrics {
                 let mut open_packs = 0;
                 let mut open_indices = 0;
 
@@ -219,7 +219,7 @@ mod odb {
                     }
                 }
 
-                StateInformation {
+                Metrics {
                     num_handles: self.num_handles_unstable + self.num_handles_stable,
                     open_packs,
                     open_indices,
@@ -288,10 +288,7 @@ mod odb {
         }
 
         pub mod load_indices {
-            use crate::odb::{
-                policy,
-                policy::{IndexId, PackIndexMarker},
-            };
+            use crate::odb::{policy, policy::PackIndexMarker};
 
             /// TODO: turn this into a copy-on-write data structure that we just return as whole, with enough information to know
             /// which indices are new so the caller doesn't have to check all new indices.
@@ -305,9 +302,8 @@ mod odb {
                 },
                 /// Extend with the given indices and keep searching, while dropping invalidated/unloaded ids.
                 Extend {
-                    drop_indices: Vec<IndexId>, // which packs to forget about (along their packs) because they were removed from disk.
                     indices: Vec<policy::IndexLookup>, // should probably be small vec to get around most allocations
-                    mark: PackIndexMarker,      // use to show where the caller left off last time
+                    mark: PackIndexMarker,             // use to show where the caller left off last time
                 },
                 /// No new indices to look at, caller should give up
                 NoMoreIndices,
@@ -315,7 +311,7 @@ mod odb {
         }
 
         /// A snapshot about resource usage.
-        pub struct StateInformation {
+        pub struct Metrics {
             pub num_handles: usize,
             pub open_indices: usize,
             pub open_packs: usize,
@@ -361,7 +357,7 @@ mod odb {
         /// Get a snapshot of the current amount of handles and open packs and indices.
         /// If there are no handles, we are only consuming resources, which might indicate that this instance should be
         /// discarded.
-        pub fn state_metrics(&self) -> policy::StateInformation {
+        pub fn state_metrics(&self) -> policy::Metrics {
             self.state.read().metrics()
         }
     }
@@ -465,7 +461,6 @@ mod odb {
                     } else {
                         load_indices::Outcome::Extend {
                             indices: todo!("state.files[marker.pack_index_sequence..]"),
-                            drop_indices: Vec::new(),
                             mark: state.marker(),
                         }
                     }
