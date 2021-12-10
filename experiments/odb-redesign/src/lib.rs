@@ -566,7 +566,7 @@ mod odb {
             id: impl AsRef<git_hash::oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl git_pack::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<git_pack::bundle::Location>)>, Self::Error> {
+        ) -> Result<Option<(git_object::Data<'a>, Option<git_pack::data::entry::Location>)>, Self::Error> {
             // TODO: if the generation changes, we need to clear the pack-cache as it depends on pack-ids.
             //       Can we simplify this so it's more obvious what generation does? They must remain stable no matter what
             //       as pack-caches also depend on them and we don't know about these.

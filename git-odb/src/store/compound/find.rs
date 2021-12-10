@@ -66,7 +66,7 @@ impl compound::Store {
         object_index: u32,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl pack::cache::DecodeEntry,
-    ) -> Result<(git_object::Data<'a>, pack::bundle::Location), pack::data::decode_entry::Error> {
+    ) -> Result<(git_object::Data<'a>, pack::data::entry::Location), pack::data::decode_entry::Error> {
         self.bundles[pack_index].get_object_by_index(object_index, buffer, pack_cache)
     }
 }

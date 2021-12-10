@@ -28,7 +28,7 @@ impl crate::pack::Find for linked::Store {
         id: impl AsRef<oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl git_pack::cache::DecodeEntry,
-    ) -> Result<Option<(git_object::Data<'a>, Option<pack::bundle::Location>)>, Self::Error> {
+    ) -> Result<Option<(git_object::Data<'a>, Option<pack::data::entry::Location>)>, Self::Error> {
         let id = id.as_ref();
         for db in self.dbs.iter() {
             match db.internal_find_packed(id) {
@@ -55,7 +55,7 @@ impl crate::pack::Find for linked::Store {
         Ok(None)
     }
 
-    fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<pack::bundle::Location> {
+    fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<pack::data::entry::Location> {
         let id = id.as_ref();
         for db in self.dbs.iter() {
             if let Some(compound::find::PackLocation {
@@ -72,7 +72,7 @@ impl crate::pack::Find for linked::Store {
                     .pack
                     .decompress_entry(&entry, buf)
                     .ok()
-                    .map(|entry_size_past_header| pack::bundle::Location {
+                    .map(|entry_size_past_header| pack::data::entry::Location {
                         pack_id: bundle.pack.id,
                         pack_offset,
                         index_file_id: entry_index,
@@ -91,7 +91,7 @@ impl crate::pack::Find for linked::Store {
         })
     }
 
-    fn entry_by_location(&self, location: &pack::bundle::Location) -> Option<Entry<'_>> {
+    fn entry_by_location(&self, location: &pack::data::entry::Location) -> Option<Entry<'_>> {
         self.dbs
             .iter()
             .find_map(|db| db.bundles.iter().find(|p| p.pack.id == location.pack_id))

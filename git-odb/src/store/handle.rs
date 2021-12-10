@@ -87,7 +87,7 @@ mod impls {
     use git_object::{Data, Kind};
     use git_pack::cache::Object;
 
-    use crate::{pack::bundle::Location, Handle};
+    use crate::{pack::data::entry::Location, Handle};
 
     impl<S> crate::Write for Handle<S>
     where
@@ -147,7 +147,7 @@ mod impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl git_pack::cache::DecodeEntry,
-        ) -> Result<Option<(Data<'a>, Option<git_pack::bundle::Location>)>, Self::Error> {
+        ) -> Result<Option<(Data<'a>, Option<git_pack::data::entry::Location>)>, Self::Error> {
             if let Some(mut obj_cache) = self.object_cache.as_ref().map(|rc| rc.borrow_mut()) {
                 if let Some(kind) = obj_cache.get(&id.as_ref().to_owned(), buffer) {
                     return Ok(Some((Data::new(kind, buffer), None)));
@@ -162,7 +162,7 @@ mod impls {
             Ok(possibly_obj)
         }
 
-        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<git_pack::bundle::Location> {
+        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<git_pack::data::entry::Location> {
             self.store.location_by_oid(id, buf)
         }
 
