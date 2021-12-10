@@ -566,10 +566,7 @@ mod odb {
             id: impl AsRef<git_hash::oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl git_pack::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<git_pack::data::entry::Location>)>, Self::Error> {
-            // TODO: if the generation changes, we need to clear the pack-cache as it depends on pack-ids.
-            //       Can we simplify this so it's more obvious what generation does? They must remain stable no matter what
-            //       as pack-caches also depend on them and we don't know about these.
+        ) -> Result<Option<(git_object::Data<'a>, Option<Location>)>, Self::Error> {
             todo!()
         }
 
@@ -577,11 +574,14 @@ mod odb {
             todo!()
         }
 
-        // TODO: turn this into a pack-id
+        /// This requires a one-time mapping/find operation to find the actual pack. That's OK here.
         fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
             todo!()
         }
 
+        /// This operation can be more expensive unless the handle has a local mapping between u32 pack id and the PackId that shows the actual
+        /// index. There is no other way to quickly get from actual pack id to where it's stored in our slot-map, and possibly which multi-index
+        /// it belongs to.
         fn entry_by_location(&self, location: &Location) -> Option<Entry<'_>> {
             todo!()
         }
