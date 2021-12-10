@@ -3,6 +3,7 @@ use std::{cell::RefCell, sync::Arc};
 pub use sink::{sink, Sink};
 
 pub mod compound;
+pub mod general;
 ///
 pub mod handle;
 pub mod linked;
@@ -17,7 +18,7 @@ pub mod sink;
 pub struct Handle<S> {
     store: S,
     // TODO: have single-threaded code-paths also for pack-creation (entries from counts) so that we can use OwnShared here
-    // instead of Arc. However, it's probbaly not that important as these aren't called often.
+    //       instead of Arc. However, it's probably not that important as these aren't called often.
     new_pack_cache: Option<Arc<handle::NewPackCacheFn>>,
     new_object_cache: Option<Arc<handle::NewObjectCacheFn>>,
     pack_cache: Option<RefCell<Box<handle::PackCache>>>,

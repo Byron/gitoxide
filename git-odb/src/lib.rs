@@ -15,12 +15,16 @@
 //!   * This is the database closely resembling the object database in a git repository, and probably what most people would want to use.
 //! * [`linked::Store`]
 //!   * A database containing various [`compound::Stores`][compound::Store] as gathered from `alternates` files.
+use git_features::threading::OwnShared;
 pub use git_pack as pack;
 
 mod store;
-pub use store::{compound, handle, linked, loose, sink, Handle, Sink};
+pub use store::{compound, general, handle, linked, loose, sink, Handle, Sink};
 
 pub mod alternate;
+
+/// The default store which provides all features, ideally soon the only store implemented here.
+pub type Store = general::Store<OwnShared<general::State>>;
 
 ///
 pub mod find;
