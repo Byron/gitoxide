@@ -58,8 +58,6 @@ pub mod existing_iter {
 pub struct Entry<'a> {
     /// The pack-data encoded bytes of the pack data entry as present in the pack file, including the header followed by compressed data.
     pub data: &'a [u8],
-    /// The crc32 hash over the entirety of `data`, or None if the pack file format doesn't support it yet.
-    pub crc32: Option<u32>,
     /// The version of the pack file containing `data`
     pub version: crate::data::Version,
 }

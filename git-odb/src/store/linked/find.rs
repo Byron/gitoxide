@@ -75,7 +75,6 @@ impl crate::pack::Find for linked::Store {
                     .map(|entry_size_past_header| pack::data::entry::Location {
                         pack_id: bundle.pack.id,
                         pack_offset,
-                        index_file_id: entry_index,
                         entry_size: entry.header_size() + entry_size_past_header,
                     });
             }
@@ -97,10 +96,8 @@ impl crate::pack::Find for linked::Store {
             .find_map(|db| db.bundles.iter().find(|p| p.pack.id == location.pack_id))
             .map(|b| (b, location))
             .and_then(|(bundle, l)| {
-                let crc32 = bundle.index.crc32_at_index(l.index_file_id);
                 bundle.pack.entry_slice(l.entry_range(l.pack_offset)).map(|data| Entry {
                     data,
-                    crc32,
                     version: bundle.pack.version(),
                 })
             })

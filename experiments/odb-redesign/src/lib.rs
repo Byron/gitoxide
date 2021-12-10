@@ -7,7 +7,7 @@ mod odb {
     use std::sync::Arc;
 
     use git_hash::oid;
-    use git_odb::pack::{bundle::Location, find::Entry};
+    use git_odb::pack::{data::entry::Location, find::Entry};
 
     use crate::odb::store::{load_indices, SlotIndexMarker, SlotMapIndex};
 

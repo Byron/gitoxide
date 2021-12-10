@@ -1,6 +1,5 @@
 use std::io::Write;
 
-use git_features::hash;
 use git_hash::ObjectId;
 
 use crate::{data, data::output, find};
@@ -38,8 +37,6 @@ pub enum Kind {
 pub enum Error {
     #[error("{0}")]
     ZlibDeflate(#[from] std::io::Error),
-    #[error("Entry expected to have hash {expected}, but it had {actual}")]
-    PackToPackCopyCrc32Mismatch { actual: u32, expected: u32 },
 }
 
 impl output::Entry {
@@ -77,12 +74,7 @@ impl output::Entry {
 
         let pack_offset_must_be_zero = 0;
         let pack_entry = crate::data::Entry::from_bytes(entry.data, pack_offset_must_be_zero);
-        if let Some(expected) = entry.crc32 {
-            let actual = hash::crc32(entry.data);
-            if actual != expected {
-                return Some(Err(Error::PackToPackCopyCrc32Mismatch { actual, expected }));
-            }
-        }
+
         use crate::data::entry::Header::*;
         match pack_entry.header {
             Commit => Some(output::entry::Kind::Base(git_object::Kind::Commit)),
