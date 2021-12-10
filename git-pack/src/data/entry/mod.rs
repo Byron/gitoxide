@@ -11,6 +11,27 @@ const _TYPE_EXT2: u8 = 5;
 const OFS_DELTA: u8 = 6;
 const REF_DELTA: u8 = 7;
 
+/// A way to uniquely identify the location of an entry within a pack bundle
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Location {
+    /// The id of the pack containing the object //TODO: this should  probably at least by a typedef or even an opaque type
+    pub pack_id: u32,
+    /// The index at which the object can be found in the index file corresponding to the `pack_id`.
+    pub index_file_id: u32,
+    /// The size of the entry of disk so that the range of bytes of the entry is `pack_offset..pack_offset + entry_size`.
+    pub entry_size: usize,
+    /// The start of the entry in the pack identified by `pack_id`.
+    pub pack_offset: u64,
+}
+
+impl Location {
+    /// Compute a range suitable for lookup in pack data using the [`entry_slice()`][crate::data::File::entry_slice()] method.
+    pub fn entry_range(&self, pack_offset: u64) -> crate::data::EntryRange {
+        pack_offset..pack_offset + self.entry_size as u64
+    }
+}
+
 /// Access
 impl Entry {
     /// Compute the pack offset to the base entry of the object represented by this entry.

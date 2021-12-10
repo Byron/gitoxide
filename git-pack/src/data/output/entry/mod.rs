@@ -54,6 +54,9 @@ impl output::Entry {
     }
 
     /// Returns true if this object doesn't really exist but still has to be handled responsibly
+    ///
+    /// Note that this is true for tree entries that are commits/git submodules, or for objects which aren't present in our local clone
+    /// due to shallow clones.
     pub fn is_invalid(&self) -> bool {
         self.id.is_null()
     }
