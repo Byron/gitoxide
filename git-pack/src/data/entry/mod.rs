@@ -15,9 +15,10 @@ const REF_DELTA: u8 = 7;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Location {
-    /// The id of the pack containing the object //TODO: this should  probably at least by a typedef or even an opaque type
+    /// The id of the pack containing the object. It's unique within its frame of reference which is he owning object database.
     pub pack_id: u32,
     /// The index at which the object can be found in the index file corresponding to the `pack_id`.
+    /// In case of multi-pack indices this flag is unused as MIDX doesn't store CRC32 at all.
     pub index_file_id: u32,
     /// The size of the entry of disk so that the range of bytes of the entry is `pack_offset..pack_offset + entry_size`.
     pub entry_size: usize,

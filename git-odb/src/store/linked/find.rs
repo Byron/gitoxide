@@ -98,8 +98,7 @@ impl crate::pack::Find for linked::Store {
             .map(|b| (b, location))
             .and_then(|(bundle, l)| {
                 let crc32 = bundle.index.crc32_at_index(l.index_file_id);
-                let pack_offset = bundle.index.pack_offset_at_index(l.index_file_id);
-                bundle.pack.entry_slice(l.entry_range(pack_offset)).map(|data| Entry {
+                bundle.pack.entry_slice(l.entry_range(l.pack_offset)).map(|data| Entry {
                     data,
                     crc32,
                     version: bundle.pack.version(),

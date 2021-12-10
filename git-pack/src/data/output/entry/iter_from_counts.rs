@@ -356,7 +356,7 @@ mod types {
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub enum Mode {
         /// Copy base objects and deltas from packs, while non-packed objects will be treated as base objects
-        /// (i.e. without trying to delta compress them). This is a fast way of obtaining a back while benefitting
+        /// (i.e. without trying to delta compress them). This is a fast way of obtaining a back while benefiting
         /// from existing pack compression and spending the smallest possible time on compressing unpacked objects at
         /// the cost of bandwidth.
         PackCopyAndBaseObjects,
