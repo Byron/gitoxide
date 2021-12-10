@@ -17,14 +17,22 @@
 //!   * A database containing various [`compound::Stores`][compound::Store] as gathered from `alternates` files.
 use git_features::threading::OwnShared;
 pub use git_pack as pack;
+use std::path::PathBuf;
 
 mod store;
-pub use store::{compound, general, handle, linked, loose, sink, Handle, Sink};
+pub use store::{compound, general, handle, linked, loose, sink, Cache, Sink};
 
 pub mod alternate;
 
-/// The default store which provides all features, ideally soon the only store implemented here.
-pub type Store = general::Store<OwnShared<general::State>>;
+/// A thread-local handle to access any object.
+pub type Handle = Cache<general::Handle<OwnShared<general::Store>>>;
+
+/// Create a new cached odb handle.
+pub fn at(objects_dir: impl Into<PathBuf>) -> std::io::Result<Handle> {
+    Ok(Cache::from(
+        OwnShared::new(general::Store::at(objects_dir)?).to_handle(),
+    ))
+}
 
 ///
 pub mod find;

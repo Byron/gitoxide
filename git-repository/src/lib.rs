@@ -157,7 +157,7 @@ pub use repository::{discover, init, open};
 /// The standard type for a store to handle git references.
 pub type RefStore = git_ref::file::Store;
 /// A handle for finding objects in an object database, abstracting away caches for thread-local use.
-pub type OdbHandle = git_odb::Handle<OwnShared<git_odb::linked::Store>>;
+pub type OdbHandle = git_odb::Cache<OwnShared<git_odb::linked::Store>>;
 
 /// A repository path which either points to a work tree or the `.git` repository itself.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]

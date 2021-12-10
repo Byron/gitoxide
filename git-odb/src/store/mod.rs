@@ -15,7 +15,7 @@ pub mod sink;
 /// A way to access objects along with pre-configured thread-local caches for packed base objects as well as objects themselves.
 ///
 /// By default, no cache will be used.
-pub struct Handle<S> {
+pub struct Cache<S> {
     store: S,
     // TODO: have single-threaded code-paths also for pack-creation (entries from counts) so that we can use OwnShared here
     //       instead of Arc. However, it's probably not that important as these aren't called often.

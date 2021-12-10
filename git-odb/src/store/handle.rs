@@ -1,6 +1,6 @@
 use std::{cell::RefCell, sync::Arc};
 
-use crate::Handle;
+use crate::Cache;
 
 /// A type to store pack caches in boxes.
 pub type PackCache = dyn git_pack::cache::DecodeEntry + Send + 'static;
@@ -12,7 +12,7 @@ pub type ObjectCache = dyn git_pack::cache::Object + Send + 'static;
 /// A constructor for boxed object caches.
 pub type NewObjectCacheFn = dyn Fn() -> Box<ObjectCache> + Send + Sync + 'static;
 
-impl<S> Handle<S> {
+impl<S> Cache<S> {
     /// Use this methods directly after creating a new instance to add a constructor for pack caches.
     ///
     /// These are used to speed up decoding objects which are located in packs, reducing long delta chains by storing
@@ -53,7 +53,7 @@ impl<S> Handle<S> {
     }
 }
 
-impl<S> From<S> for Handle<S>
+impl<S> From<S> for Cache<S>
 where
     S: git_pack::Find,
 {
@@ -68,9 +68,9 @@ where
     }
 }
 
-impl<S: Clone> Clone for Handle<S> {
+impl<S: Clone> Clone for Cache<S> {
     fn clone(&self) -> Self {
-        Handle {
+        Cache {
             store: self.store.clone(),
             new_pack_cache: self.new_pack_cache.clone(),
             new_object_cache: self.new_object_cache.clone(),
@@ -87,9 +87,9 @@ mod impls {
     use git_object::{Data, Kind};
     use git_pack::cache::Object;
 
-    use crate::{pack::data::entry::Location, Handle};
+    use crate::{pack::data::entry::Location, Cache};
 
-    impl<S> crate::Write for Handle<S>
+    impl<S> crate::Write for Cache<S>
     where
         S: crate::Write,
     {
@@ -106,7 +106,7 @@ mod impls {
         }
     }
 
-    impl<S> crate::Find for Handle<S>
+    impl<S> crate::Find for Cache<S>
     where
         S: crate::pack::Find,
     {
@@ -121,7 +121,7 @@ mod impls {
         }
     }
 
-    impl<S> crate::pack::Find for Handle<S>
+    impl<S> crate::pack::Find for Cache<S>
     where
         S: crate::pack::Find,
     {
