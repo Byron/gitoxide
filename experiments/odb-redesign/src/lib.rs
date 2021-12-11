@@ -13,6 +13,7 @@ mod odb {
 
     pub mod store {
         use arc_swap::ArcSwap;
+        use std::ops::Deref;
         use std::sync::atomic::{AtomicUsize, Ordering};
         use std::sync::Arc;
         use std::{
@@ -193,7 +194,7 @@ mod odb {
 
         impl Store {
             pub(crate) fn marker(&self) -> SlotIndexMarker {
-                (&self.index.load().marker).into()
+                (self.index.load().deref()).into()
             }
 
             /// A best-effort evaluation of metrics, as it counts values that are not synchronized with each other.
@@ -281,30 +282,31 @@ mod odb {
         pub struct SlotMapIndex {
             /// The index into the slot map at which we expect an index or pack file. Neither of these might be loaded yet.
             pub(crate) slot_indices: Vec<usize>,
-            /// An indicator of where this copy of slot indices belongs to.
-            pub(crate) marker: AtomicSlotIndexMarker,
+            /// A static value that doesn't ever change for a particular clone of this index.
+            pub(crate) generation: u8,
+            /// The number of indices loaded thus far when the index of the slot map was last examined, which can change as new indices are loaded
+            /// in parallel.
+            pub(crate) loaded_until_index: Arc<AtomicUsize>,
             /// A list of loose object databases as resolved by their alternates file in the `object_directory`. The first entry is this objects
             /// directory loose file database. All other entries are the loose stores of alternates.
             pub(crate) loose_dbs: Arc<Vec<git_odb::loose::Store>>,
         }
 
-        impl From<&AtomicSlotIndexMarker> for SlotIndexMarker {
-            fn from(v: &AtomicSlotIndexMarker) -> Self {
-                SlotIndexMarker {
-                    generation: v.generation,
-                    loaded_until_index: v.loaded_until_index.load(Ordering::SeqCst),
-                }
+        impl SlotMapIndex {
+            pub(crate) fn state_id(self: &Arc<SlotMapIndex>) -> usize {
+                Arc::as_ptr(&self.loose_dbs) as usize ^ Arc::as_ptr(self) as usize
             }
         }
 
-        /// A way to indicate which pack indices we have seen already. This type is meant as a snapshot for the internally used `AtomicIndexMarker`.
-        #[derive(Default)]
-        pub struct AtomicSlotIndexMarker {
-            /// A static value that doesn't ever change for a particular clone of this index.
-            pub(crate) generation: u8,
-            /// The number of indices loaded thus far when the index of the slot map was last examined, which can change as new indices are loaded
-            /// in parallel.
-            pub(crate) loaded_until_index: AtomicUsize,
+        /// Note that this is a snapshot of SlotMapIndex, even though some internal values are shared, it's for sharing to callers, not among
+        /// versions of the SlotMapIndex
+        impl From<&Arc<SlotMapIndex>> for SlotIndexMarker {
+            fn from(v: &Arc<SlotMapIndex>) -> Self {
+                SlotIndexMarker {
+                    generation: v.generation,
+                    state_id: v.state_id(),
+                }
+            }
         }
 
         /// A way to indicate which pack indices we have seen already. This type is meant as a snapshot for the internally used `AtomicIndexMarker`.
@@ -314,8 +316,9 @@ mod odb {
             /// This value changes once the internal representation is compacted, something that may happen only if there is no handle
             /// requiring stable pack indices.
             pub(crate) generation: u8,
-            /// The number of indices loaded thus far when the index of the slot map was last examined.
-            pub(crate) loaded_until_index: usize,
+            /// A unique id identifying the index state as well as all loose databases we have last observed.
+            /// If it changes in any way, the value is different.
+            pub(crate) state_id: usize,
         }
 
         /// Define how packs will be refreshed when all indices are loaded, which is useful if a lot of objects are missing.
@@ -453,7 +456,7 @@ mod odb {
             marker: SlotIndexMarker,
         ) -> std::io::Result<Option<Arc<git_pack::data::File>>> {
             let index = self.index.load();
-            if index.marker.generation != marker.generation {
+            if index.generation != marker.generation {
                 return Ok(None);
             }
             match id.multipack_index {
@@ -504,9 +507,9 @@ mod odb {
 
             Ok(match marker {
                 Some(marker) => {
-                    if marker.generation != index.marker.generation {
+                    if marker.generation != index.generation {
                         self.collect_replace_outcome()
-                    } else if marker.loaded_until_index == index.marker.loaded_until_index.load(Ordering::SeqCst) {
+                    } else if marker.state_id == index.state_id() {
                         match refresh_mode {
                             store::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
                             store::RefreshMode::AfterAllIndicesLoaded => return self.refresh(),
