@@ -286,15 +286,23 @@ mod odb {
             pub(crate) generation: u8,
             /// The number of indices loaded thus far when the index of the slot map was last examined, which can change as new indices are loaded
             /// in parallel.
-            pub(crate) loaded_until_index: Arc<AtomicUsize>,
+            /// Shared across SlotMapIndex instances of the same generation.
+            pub(crate) next_index_to_load: Arc<AtomicUsize>,
+            /// Incremented by one up to `slot_indices.len()` once index was actually loaded. If a load failed, there will be no increment.
+            /// Shared across SlotMapIndex instances of the same generation.
+            pub(crate) loaded_indices: Arc<AtomicUsize>,
             /// A list of loose object databases as resolved by their alternates file in the `object_directory`. The first entry is this objects
             /// directory loose file database. All other entries are the loose stores of alternates.
+            /// It's in an Arc to be shared to Handles, but not to be shared across SlotMapIndices
             pub(crate) loose_dbs: Arc<Vec<git_odb::loose::Store>>,
         }
 
         impl SlotMapIndex {
             pub(crate) fn state_id(self: &Arc<SlotMapIndex>) -> usize {
-                Arc::as_ptr(&self.loose_dbs) as usize ^ Arc::as_ptr(self) as usize
+                // We let the loaded indices take part despite not being part of our own snapshot.
+                // This is to account for indices being loaded in parallel without actually changing the snapshot itself.
+                (Arc::as_ptr(&self.loose_dbs) as usize ^ Arc::as_ptr(self) as usize)
+                    * (self.loaded_indices.load(Ordering::SeqCst) + 1)
             }
         }
 
