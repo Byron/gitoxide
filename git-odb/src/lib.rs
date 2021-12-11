@@ -29,9 +29,8 @@ pub type Handle = Cache<general::Handle<OwnShared<general::Store>>>;
 
 /// Create a new cached odb handle.
 pub fn at(objects_dir: impl Into<PathBuf>) -> std::io::Result<Handle> {
-    Ok(Cache::from(
-        OwnShared::new(general::Store::at(objects_dir)?).to_handle(),
-    ))
+    let handle = OwnShared::new(general::Store::at(objects_dir)?).to_handle();
+    Ok(Cache::from(handle))
 }
 
 ///

@@ -65,7 +65,7 @@ mod find {
     }
 }
 
-mod store {
+mod init {
     use git_features::threading::OwnShared;
     use std::path::PathBuf;
     use std::sync::atomic::AtomicUsize;
@@ -89,6 +89,90 @@ mod store {
 
         pub fn to_handle(self: &OwnShared<Self>) -> super::Handle<OwnShared<super::Store>> {
             super::Handle { state: self.clone() }
+        }
+    }
+}
+
+mod store {
+    /// An id to refer to an index file or a multipack index file
+    pub type IndexId = usize;
+
+    /// A way to load and refer to a pack uniquely, namespaced by their indexing mechanism, aka multi-pack or not.
+    pub struct PackId {
+        /// Note that if `multipack_index = None`, this index is corresponding to the index id.
+        /// So a pack is always identified by its corresponding index.
+        /// If it is a multipack index, this is the id / offset of the pack in the `multipack_index`.
+        pub(crate) index: IndexId,
+        pub(crate) multipack_index: Option<IndexId>,
+    }
+}
+
+mod handle {
+    use crate::general::store;
+    use std::sync::Arc;
+
+    mod multi_index {
+        // TODO: replace this one with an actual implementation of a multi-pack index.
+        pub type File = ();
+    }
+
+    pub enum SingleOrMultiIndex {
+        Single {
+            index: Arc<git_pack::index::File>,
+            data: Option<Arc<git_pack::data::File>>,
+        },
+        Multi {
+            index: Arc<multi_index::File>,
+            data: Vec<Option<Arc<git_pack::data::File>>>,
+        },
+    }
+
+    pub struct IndexLookup {
+        file: SingleOrMultiIndex,
+        id: store::IndexId,
+    }
+
+    pub struct IndexForObjectInPack {
+        /// The internal identifier of the pack itself, which either is referred to by an index or a multi-pack index.
+        pack_id: store::PackId,
+        /// The index of the object within the pack
+        object_index_in_pack: u32,
+    }
+
+    mod index_lookup {
+        use crate::general::{handle, store};
+        use git_hash::oid;
+        use std::sync::Arc;
+
+        impl handle::IndexLookup {
+            /// See if the oid is contained in this index, and return its full id for lookup possibly alongside its data file if already
+            /// loaded.
+            /// If it is not loaded, ask it to be loaded and put it into the returned mutable option for safe-keeping.
+            fn lookup(
+                &mut self,
+                object_id: &oid,
+            ) -> Option<(handle::IndexForObjectInPack, &mut Option<Arc<git_pack::data::File>>)> {
+                let id = self.id;
+                match &mut self.file {
+                    handle::SingleOrMultiIndex::Single { index, data } => {
+                        index.lookup(object_id).map(|object_index_in_pack| {
+                            (
+                                handle::IndexForObjectInPack {
+                                    pack_id: store::PackId {
+                                        index: id,
+                                        multipack_index: None,
+                                    },
+                                    object_index_in_pack,
+                                },
+                                data,
+                            )
+                        })
+                    }
+                    handle::SingleOrMultiIndex::Multi { index, data } => {
+                        todo!("find respective pack and return it as &mut Option<>")
+                    }
+                }
+            }
         }
     }
 }
