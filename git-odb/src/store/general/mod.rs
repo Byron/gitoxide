@@ -22,6 +22,12 @@ pub struct Store {
     /// A list of indices keeping track of which slots are filled with data. These are usually, but not always, consecutive.
     pub(crate) index: ArcSwap<store::SlotMapIndex>,
 
+    /// The below state acts like a slot-map with each slot is mutable when the write lock is held, but readable independently of it.
+    /// This allows multiple file to be loaded concurrently if there is multiple handles requesting to load packs or additional indices.
+    /// The map is static and cannot typically change.
+    /// It's read often and changed rarely.
+    pub(crate) files: Vec<store::MutableIndexAndPack>,
+
     /// The amount of handles that would prevent us from unloading packs or indices
     pub(crate) num_handles_stable: AtomicUsize,
     /// The amount of handles that don't affect our ability to compact our internal data structures or unload packs or indices.
@@ -70,9 +76,11 @@ mod find {
 }
 
 mod init {
-    use crate::general::store::SlotMapIndex;
+    use crate::general::store;
+    use crate::general::store::{MutableIndexAndPack, SlotMapIndex};
     use arc_swap::ArcSwap;
     use git_features::threading::OwnShared;
+    use std::iter::FromIterator;
     use std::path::PathBuf;
     use std::sync::atomic::AtomicUsize;
     use std::sync::Arc;
@@ -88,6 +96,7 @@ mod init {
             }
             Ok(super::Store {
                 path: parking_lot::Mutex::new(objects_dir),
+                files: Vec::from_iter(std::iter::repeat_with(MutableIndexAndPack::default).take(256)), // TODO: figure this out from the amount of files currently present
                 index: ArcSwap::new(Arc::new(SlotMapIndex::default())),
                 num_handles_stable: Default::default(),
                 num_handles_unstable: Default::default(),
@@ -101,6 +110,8 @@ mod init {
 }
 
 mod store {
+    use arc_swap::ArcSwap;
+    use std::path::{Path, PathBuf};
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Arc;
 
@@ -115,10 +126,10 @@ mod store {
         /// The generation the `loaded_until_index` belongs to. Indices of different generations are completely incompatible.
         /// This value changes once the internal representation is compacted, something that may happen only if there is no handle
         /// requiring stable pack indices.
-        generation: u8,
+        pub(crate) generation: u8,
         /// A unique id identifying the index state as well as all loose databases we have last observed.
         /// If it changes in any way, the value is different.
-        state_id: StateId,
+        pub(crate) state_id: StateId,
     }
 
     /// A way to load and refer to a pack uniquely, namespaced by their indexing mechanism, aka multi-pack or not.
@@ -157,6 +168,10 @@ mod store {
             (Arc::as_ptr(&self.loose_dbs) as usize ^ Arc::as_ptr(self) as usize)
                 * (self.loaded_indices.load(Ordering::SeqCst) + 1)
         }
+
+        pub(crate) fn marker(self: &Arc<SlotMapIndex>) -> SlotIndexMarker {
+            self.into()
+        }
     }
 
     /// Note that this is a snapshot of SlotMapIndex, even though some internal values are shared, it's for sharing to callers, not among
@@ -169,13 +184,97 @@ mod store {
             }
         }
     }
+
+    #[derive(Clone)]
+    pub(crate) struct OnDiskFile<T: Clone> {
+        /// The last known path of the file
+        path: Arc<PathBuf>,
+        state: OnDiskFileState<T>,
+    }
+
+    #[derive(Clone)]
+    pub(crate) enum OnDiskFileState<T: Clone> {
+        /// The file is on disk and can be loaded from there.
+        Unloaded,
+        Loaded(T),
+        /// The file was loaded, but appeared to be missing on disk after reconciling our state with what's on disk.
+        /// As there were handles that required pack-id stability we had to keep the item to allow finding it on later
+        /// lookups.
+        Garbage(T),
+        /// File is missing on disk and could not be loaded when we tried or turned missing after reconciling our state.
+        Missing,
+    }
+
+    impl<T: Clone> OnDiskFile<T> {
+        /// Return true if we hold a memory map of the file already.
+        pub fn is_loaded(&self) -> bool {
+            matches!(self.state, OnDiskFileState::Loaded(_) | OnDiskFileState::Garbage(_))
+        }
+
+        pub fn loaded(&self) -> Option<&T> {
+            use OnDiskFileState::*;
+            match &self.state {
+                Loaded(v) | Garbage(v) => Some(v),
+                Unloaded | Missing => None,
+            }
+        }
+
+        /// We do it like this as we first have to check for a loaded interior in read-only mode, and then upgrade
+        /// when we know that loading is necessary. This also works around borrow check, which is a nice coincidence.
+        pub fn do_load(&mut self, load: impl FnOnce(&Path) -> std::io::Result<T>) -> std::io::Result<Option<&T>> {
+            use OnDiskFileState::*;
+            match &mut self.state {
+                Loaded(_) | Garbage(_) => unreachable!("BUG: check before calling this"),
+                Missing => Ok(None),
+                Unloaded => match load(&self.path) {
+                    Ok(v) => {
+                        self.state = OnDiskFileState::Loaded(v);
+                        match &self.state {
+                            Loaded(v) => Ok(Some(v)),
+                            _ => unreachable!(),
+                        }
+                    }
+                    Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+                        self.state = OnDiskFileState::Missing;
+                        Ok(None)
+                    }
+                    Err(err) => Err(err),
+                },
+            }
+        }
+    }
+
+    #[derive(Clone)]
+    pub(crate) struct IndexFileBundle {
+        pub index: OnDiskFile<Arc<git_pack::index::File>>,
+        pub data: OnDiskFile<Arc<git_pack::data::File>>,
+    }
+
+    #[derive(Clone)]
+    pub(crate) struct MultiIndexFileBundle {
+        pub multi_index: OnDiskFile<Arc<super::handle::multi_index::File>>,
+        pub data: Vec<OnDiskFile<Arc<git_pack::data::File>>>,
+    }
+
+    #[derive(Clone)]
+    pub(crate) enum IndexAndPacks {
+        Index(IndexFileBundle),
+        /// Note that there can only be one multi-pack file per repository, but thanks to git alternates, there can be multiple overall.
+        MultiIndex(MultiIndexFileBundle),
+    }
+
+    #[derive(Default)]
+    pub(crate) struct MutableIndexAndPack {
+        pub(crate) files: ArcSwap<Option<IndexAndPacks>>,
+        pub(crate) write: parking_lot::Mutex<()>,
+    }
 }
 
 pub mod handle {
     use crate::general::store;
     use std::sync::Arc;
 
-    mod multi_index {
+    pub(crate) mod multi_index {
         // TODO: replace this one with an actual implementation of a multi-pack index.
         pub type File = ();
     }
@@ -192,8 +291,8 @@ pub mod handle {
     }
 
     pub struct IndexLookup {
-        file: SingleOrMultiIndex,
-        id: store::IndexId,
+        pub(crate) file: SingleOrMultiIndex,
+        pub(crate) id: store::IndexId,
     }
 
     pub struct IndexForObjectInPack {
@@ -279,41 +378,68 @@ pub mod load_indices {
             marker: Option<store::SlotIndexMarker>,
         ) -> std::io::Result<Outcome> {
             let index = self.index.load();
+            let state_id = index.state_id();
             if index.loose_dbs.is_empty() {
                 // TODO: figure out what kind of refreshes we need. This one loads in the initial slot map, but I think this cost is paid
                 //       in full during instantiation.
-                return self.consolidate_with_disk_state(index.state_id());
+                return self.consolidate_with_disk_state(state_id);
             }
-            //
-            // Ok(match marker {
-            //     Some(marker) => {
-            //         if marker.generation != index.generation {
-            //             self.collect_replace_outcome()
-            //         } else if marker.state_id == index.state_id() {
-            //             match refresh_mode {
-            //                 store::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
-            //                 store::RefreshMode::AfterAllIndicesLoaded => return self.refresh(),
-            //             }
-            //         } else {
-            //             self.collect_replace_outcome()
-            //         }
-            //     }
-            //     None => self.collect_replace_outcome(),
-            // })
-            todo!()
+
+            Ok(match marker {
+                Some(marker) => {
+                    if marker.generation != index.generation {
+                        self.collect_replace_outcome()
+                    } else if marker.state_id == state_id {
+                        match refresh_mode {
+                            RefreshMode::Never => Outcome::NoMoreIndices,
+                            RefreshMode::AfterAllIndicesLoaded => return self.consolidate_with_disk_state(state_id),
+                        }
+                    } else {
+                        self.collect_replace_outcome()
+                    }
+                }
+                None => self.collect_replace_outcome(),
+            })
         }
 
         /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
         fn consolidate_with_disk_state(&self, seen: StateId) -> std::io::Result<Outcome> {
             let objects_directory = self.path.lock();
             if seen != self.index.load().state_id() {
-                return todo!();
+                todo!("return …")
             }
             let mut db_paths = crate::alternate::resolve(&*objects_directory)
                 .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
             // These are in addition to our objects directory
             db_paths.insert(0, objects_directory.clone());
             todo!()
+        }
+
+        fn collect_replace_outcome(&self) -> Outcome {
+            let index = self.index.load();
+            let indices = index
+                .slot_indices
+                .iter()
+                .map(|idx| (*idx, &self.files[*idx]))
+                .filter_map(|(id, file)| {
+                    let lookup = match (&**file.files.load()).as_ref()? {
+                        store::IndexAndPacks::Index(bundle) => handle::SingleOrMultiIndex::Single {
+                            index: bundle.index.loaded()?.clone(),
+                            data: bundle.data.loaded().cloned(),
+                        },
+                        store::IndexAndPacks::MultiIndex(multi) => handle::SingleOrMultiIndex::Multi {
+                            index: multi.multi_index.loaded()?.clone(),
+                            data: multi.data.iter().map(|f| f.loaded().cloned()).collect(),
+                        },
+                    };
+                    handle::IndexLookup { file: lookup, id }.into()
+                })
+                .collect();
+            Outcome::Replace {
+                indices,
+                loose_dbs: Arc::clone(&index.loose_dbs),
+                marker: index.marker(),
+            }
         }
     }
 }
