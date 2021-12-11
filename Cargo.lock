@@ -1357,6 +1357,7 @@ dependencies = [
 name = "git-odb"
 version = "0.25.0"
 dependencies = [
+ "arc-swap",
  "btoi",
  "git-actor 0.7.0",
  "git-features 0.18.0",

@@ -345,8 +345,6 @@ mod odb {
             use crate::odb::{store, store::SlotIndexMarker};
             use std::sync::Arc;
 
-            /// TODO: turn this into a copy-on-write data structure that we just return as whole, with enough information to know
-            /// which indices are new so the caller doesn't have to check all new indices.
             pub(crate) enum Outcome {
                 /// Drop all data and fully replace it with `indices`.
                 /// This happens if we have witnessed a generational change invalidating all of our ids and causing currently loaded
