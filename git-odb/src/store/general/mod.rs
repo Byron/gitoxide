@@ -108,6 +108,7 @@ mod init {
 
 mod store {
     use arc_swap::ArcSwap;
+    use git_features::hash;
     use std::ops::BitXor;
     use std::path::{Path, PathBuf};
     use std::sync::atomic::{AtomicUsize, Ordering};
@@ -115,7 +116,7 @@ mod store {
 
     /// An id to refer to an index file or a multipack index file
     pub type IndexId = usize;
-    pub(crate) type StateId = usize;
+    pub(crate) type StateId = u32;
 
     /// A way to indicate which pack indices we have seen already and which of them are loaded, along with an idea
     /// of whether stored `PackId`s are still usable.
@@ -163,23 +164,15 @@ mod store {
         pub(crate) fn state_id(self: &Arc<SlotMapIndex>) -> StateId {
             // We let the loaded indices take part despite not being part of our own snapshot.
             // This is to account for indices being loaded in parallel without actually changing the snapshot itself.
-            (Arc::as_ptr(&self.loose_dbs) as usize)
-                .bitxor(Arc::as_ptr(self) as usize)
-                .wrapping_mul(self.loaded_indices.load(Ordering::SeqCst) + 1)
+            let mut hash = hash::crc32(&(Arc::as_ptr(&self.loose_dbs) as usize).to_be_bytes());
+            hash = hash::crc32_update(hash, &(Arc::as_ptr(self) as usize).to_be_bytes());
+            hash::crc32_update(hash, &self.loaded_indices.load(Ordering::SeqCst).to_be_bytes())
         }
 
         pub(crate) fn marker(self: &Arc<SlotMapIndex>) -> SlotIndexMarker {
-            self.into()
-        }
-    }
-
-    /// Note that this is a snapshot of SlotMapIndex, even though some internal values are shared, it's for sharing to callers, not among
-    /// versions of the SlotMapIndex
-    impl From<&Arc<SlotMapIndex>> for SlotIndexMarker {
-        fn from(v: &Arc<SlotMapIndex>) -> Self {
             SlotIndexMarker {
-                generation: v.generation,
-                state_id: v.state_id(),
+                generation: self.generation,
+                state_id: self.state_id(),
             }
         }
     }
