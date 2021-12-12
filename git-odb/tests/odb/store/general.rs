@@ -10,7 +10,7 @@ fn db() -> git_odb::Handle {
 #[test]
 #[ignore]
 fn basics() {
-    let handle = db();
+    let mut handle = db();
 
     fn can_locate(db: &git_odb::Handle, hex_id: &str) {
         let id = hex_to_id(hex_id);
@@ -18,18 +18,83 @@ fn basics() {
         assert!(db.contains(id));
         assert!(db.find(id, &mut buf).is_ok());
     }
+    assert_eq!(
+        handle.inner.store().metrics(),
+        git_odb::general::store::Metrics {
+            num_handles: 1,
+            num_refreshes: 0,
+            open_indices: 0,
+            known_indices: 0,
+            open_packs: 0,
+            known_packs: 0,
+            unused_slots: 256
+        },
+        "nothing happened yet, the store is totally lazy"
+    );
 
-    // Loose
-    can_locate(&handle, "37d4e6c5c48ba0d245164c4e10d5f41140cab980");
-
-    // Loose
+    // pack (in sort order inherent to the store)
     can_locate(&handle, "501b297447a8255d3533c6858bb692575cdefaa0"); // pack 11fd
     can_locate(&handle, "4dac9989f96bc5b5b1263b582c08f0c5f0b58542"); // pack a2bf
     can_locate(&handle, "dd25c539efbb0ab018caa4cda2d133285634e9b5"); // pack c043
+
+    let mut all_loaded = git_odb::general::store::Metrics {
+        num_handles: 1,
+        num_refreshes: 1,
+        open_indices: 3,
+        known_indices: 3,
+        open_packs: 3,
+        known_packs: 3,
+        unused_slots: 253,
+    };
+    assert_eq!(
+        handle.inner.store().metrics(),
+        all_loaded,
+        "all packs and indices are loaded"
+    );
+
+    // Loose
+    can_locate(&handle, "37d4e6c5c48ba0d245164c4e10d5f41140cab980");
 
     assert!(matches!(
         handle.inner.refresh_mode,
         git_odb::RefreshMode::AfterAllIndicesLoaded
     ));
     assert!(!handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+
+    all_loaded.num_refreshes += 1;
+    assert_eq!(
+        handle.inner.store().metrics(),
+        all_loaded,
+        "it tried to refresh once to see if the missing object is there then"
+    );
+
+    handle.inner.refresh_mode = git_odb::RefreshMode::Never;
+    let previous_refresh_count = all_loaded.num_refreshes;
+    assert!(!handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assert_eq!(
+        handle.inner.store().metrics().num_refreshes,
+        previous_refresh_count,
+        "it didn't try to refresh the on-disk state after failing to find the object."
+    );
+}
+
+#[test]
+#[ignore]
+fn missing_objects_triggers_everything_is_loaded() {
+    let handle = db();
+    assert!(!handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+
+    assert_eq!(
+        handle.inner.store().metrics(),
+        git_odb::general::store::Metrics {
+            num_handles: 1,
+            num_refreshes: 2,
+            open_indices: 3,
+            known_indices: 3,
+            open_packs: 3,
+            known_packs: 3,
+            unused_slots: 253
+        },
+        "first refresh triggered by on-disk check, second refresh triggered to see if something changed."
+    );
 }

@@ -34,6 +34,9 @@ pub struct Store {
     pub(crate) num_handles_stable: AtomicUsize,
     /// The amount of handles that don't affect our ability to compact our internal data structures or unload packs or indices.
     pub(crate) num_handles_unstable: AtomicUsize,
+
+    /// The amount of times we re-read the disk state to consolidate our in-memory representation.
+    pub(crate) num_disk_state_consolidation: AtomicUsize,
 }
 
 mod find {
@@ -51,7 +54,7 @@ mod find {
         type Error = crate::compound::find::Error;
 
         fn contains(&self, id: impl AsRef<oid>) -> bool {
-            todo!()
+            todo!("contains")
         }
 
         fn try_find_cached<'a>(
@@ -60,19 +63,19 @@ mod find {
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl DecodeEntry,
         ) -> Result<Option<(Data<'a>, Option<Location>)>, Self::Error> {
-            todo!()
+            todo!("try find cached")
         }
 
         fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
-            todo!()
+            todo!("location by oid")
         }
 
         fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = Entry> + '_>> {
-            todo!()
+            todo!("index iter by pack id")
         }
 
         fn entry_by_location(&self, location: &Location) -> Option<git_pack::find::Entry<'_>> {
-            todo!()
+            todo!("entry by location")
         }
     }
 }
@@ -103,12 +106,13 @@ mod init {
                 index: ArcSwap::new(Arc::new(SlotMapIndex::default())),
                 num_handles_stable: Default::default(),
                 num_handles_unstable: Default::default(),
+                num_disk_state_consolidation: Default::default(),
             })
         }
     }
 }
 
-mod store {
+pub mod store {
     use arc_swap::ArcSwap;
     use git_features::hash;
     use std::ops::BitXor;
@@ -147,19 +151,21 @@ mod store {
     pub struct SlotMapIndex {
         /// The index into the slot map at which we expect an index or pack file. Neither of these might be loaded yet.
         pub(crate) slot_indices: Vec<usize>,
+        /// A list of loose object databases as resolved by their alternates file in the `object_directory`. The first entry is this objects
+        /// directory loose file database. All other entries are the loose stores of alternates.
+        /// It's in an Arc to be shared to Handles, but not to be shared across SlotMapIndices
+        pub(crate) loose_dbs: Arc<Vec<crate::loose::Store>>,
+
         /// A static value that doesn't ever change for a particular clone of this index.
         pub(crate) generation: u8,
         /// The number of indices loaded thus far when the index of the slot map was last examined, which can change as new indices are loaded
         /// in parallel.
         /// Shared across SlotMapIndex instances of the same generation.
         pub(crate) next_index_to_load: Arc<AtomicUsize>,
-        /// Incremented by one up to `slot_indices.len()` once index was actually loaded. If a load failed, there will be no increment.
+        /// Incremented by one up to `slot_indices.len()` once an attempt to load an index completed.
+        /// If a load failed, there will also be an increment.
         /// Shared across SlotMapIndex instances of the same generation.
         pub(crate) loaded_indices: Arc<AtomicUsize>,
-        /// A list of loose object databases as resolved by their alternates file in the `object_directory`. The first entry is this objects
-        /// directory loose file database. All other entries are the loose stores of alternates.
-        /// It's in an Arc to be shared to Handles, but not to be shared across SlotMapIndices
-        pub(crate) loose_dbs: Arc<Vec<crate::loose::Store>>,
     }
 
     impl SlotMapIndex {
@@ -261,6 +267,18 @@ mod store {
     pub(crate) struct MutableIndexAndPack {
         pub(crate) files: ArcSwap<Option<IndexAndPacks>>,
         pub(crate) write: parking_lot::Mutex<()>,
+    }
+
+    /// A snapshot about resource usage.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct Metrics {
+        pub num_handles: usize,
+        pub num_refreshes: usize,
+        pub open_indices: usize,
+        pub known_indices: usize,
+        pub open_packs: usize,
+        pub known_packs: usize,
+        pub unused_slots: usize,
     }
 }
 
@@ -392,6 +410,10 @@ pub mod handle {
         pub fn prevent_pack_unload(&mut self) {
             self.token = self.token.take().map(|token| self.store.upgrade_handle(token));
         }
+
+        pub fn store(&self) -> &S::Target {
+            &*self.store
+        }
     }
 
     impl<S> Drop for super::Handle<S>
@@ -437,6 +459,14 @@ pub mod load_indices {
             loose_dbs: Arc<Vec<crate::loose::Store>>,
             marker: store::SlotIndexMarker, // use to show where the caller left off last time
         },
+        /// Despite all values being full copies, indices are still compatible to what was before. This also means
+        /// the caller can continue searching the added indices and loose-dbs.
+        /// Besides that, the full internal state can be replaced as with `Replace`.
+        ReplaceStable {
+            indices: Vec<handle::IndexLookup>, // should probably be SmallVec to get around most allocations
+            loose_dbs: Arc<Vec<crate::loose::Store>>,
+            marker: store::SlotIndexMarker, // use to show where the caller left off last time
+        },
         /// No new indices to look at, caller should give up
         NoMoreIndices,
     }
@@ -458,17 +488,20 @@ pub mod load_indices {
             Ok(match marker {
                 Some(marker) => {
                     if marker.generation != index.generation {
-                        self.collect_replace_outcome()
+                        self.collect_replace_outcome(false /*stable*/)
                     } else if marker.state_id == state_id {
+                        // Nothing changed in the mean time, try to load another index…
+
+                        // …and if that didn't yield anything new consider refreshing our disk state.
                         match refresh_mode {
                             RefreshMode::Never => Outcome::NoMoreIndices,
                             RefreshMode::AfterAllIndicesLoaded => return self.consolidate_with_disk_state(state_id),
                         }
                     } else {
-                        self.collect_replace_outcome()
+                        self.collect_replace_outcome(true /*stable*/)
                     }
                 }
-                None => self.collect_replace_outcome(),
+                None => self.collect_replace_outcome(false /*stable*/),
             })
         }
 
@@ -478,6 +511,7 @@ pub mod load_indices {
             if seen != self.index.load().state_id() {
                 todo!("return …")
             }
+            self.num_disk_state_consolidation.fetch_add(1, Ordering::Relaxed);
             let mut db_paths = crate::alternate::resolve(&*objects_directory)
                 .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
             // These are in addition to our objects directory
@@ -494,7 +528,7 @@ pub mod load_indices {
             self.num_handles_stable.load(Ordering::SeqCst) == 0
         }
 
-        fn collect_replace_outcome(&self) -> Outcome {
+        fn collect_replace_outcome(&self, is_stable: bool) -> Outcome {
             let index = self.index.load();
             let indices = index
                 .slot_indices
@@ -514,10 +548,74 @@ pub mod load_indices {
                     handle::IndexLookup { file: lookup, id }.into()
                 })
                 .collect();
-            Outcome::Replace {
-                indices,
-                loose_dbs: Arc::clone(&index.loose_dbs),
-                marker: index.marker(),
+
+            if is_stable {
+                Outcome::ReplaceStable {
+                    indices,
+                    loose_dbs: Arc::clone(&index.loose_dbs),
+                    marker: index.marker(),
+                }
+            } else {
+                Outcome::Replace {
+                    indices,
+                    loose_dbs: Arc::clone(&index.loose_dbs),
+                    marker: index.marker(),
+                }
+            }
+        }
+    }
+}
+
+mod metrics {
+    use crate::general::store;
+    use crate::general::store::IndexAndPacks;
+    use std::sync::atomic::Ordering;
+
+    impl super::Store {
+        pub fn metrics(&self) -> store::Metrics {
+            let mut open_packs = 0;
+            let mut open_indices = 0;
+            let mut known_packs = 0;
+            let mut known_indices = 0;
+            let mut unused_slots = 0;
+
+            for f in self.index.load().slot_indices.iter().map(|idx| &self.files[*idx]) {
+                match &**f.files.load() {
+                    Some(IndexAndPacks::Index(bundle)) => {
+                        if bundle.index.is_loaded() {
+                            open_indices += 1;
+                        }
+                        known_indices += 1;
+                        if bundle.data.is_loaded() {
+                            open_packs += 1;
+                        }
+                        known_packs += 1;
+                    }
+                    Some(IndexAndPacks::MultiIndex(multi)) => {
+                        if multi.multi_index.is_loaded() {
+                            open_indices += 1;
+                        }
+                        known_indices += 1;
+                        for pack in multi.data.iter() {
+                            if pack.is_loaded() {
+                                open_packs += 1;
+                            }
+                            known_packs += 1;
+                        }
+                    }
+                    None => unused_slots += 1,
+                }
+            }
+
+            store::Metrics {
+                num_handles: self.num_handles_unstable.load(Ordering::Relaxed)
+                    + self.num_handles_stable.load(Ordering::Relaxed),
+                num_refreshes: self.num_disk_state_consolidation.load(Ordering::Relaxed),
+                open_packs,
+                open_indices,
+                known_indices,
+                known_packs,
+                unused_slots,
             }
         }
     }
