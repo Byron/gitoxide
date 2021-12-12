@@ -7,12 +7,12 @@ use std::sync::atomic::AtomicUsize;
 
 /// This effectively acts like a handle but exists to be usable from the actual `crate::Handle` implementation which adds caches on top.
 /// Each store is quickly cloned and contains thread-local state for shared packs.
-#[derive(Clone)]
 pub struct Handle<S>
 where
     S: Deref<Target = Store> + Clone,
 {
-    state: S,
+    pub(crate) store: S,
+    pub(crate) token: Option<handle::Mode>,
 }
 
 pub struct Store {
@@ -81,6 +81,7 @@ mod init {
     use arc_swap::ArcSwap;
     use git_features::threading::OwnShared;
     use std::iter::FromIterator;
+    use std::ops::Deref;
     use std::path::PathBuf;
     use std::sync::atomic::AtomicUsize;
     use std::sync::Arc;
@@ -102,10 +103,6 @@ mod init {
                 num_handles_unstable: Default::default(),
             })
         }
-
-        pub fn to_handle(self: &OwnShared<Self>) -> super::Handle<OwnShared<super::Store>> {
-            super::Handle { state: self.clone() }
-        }
     }
 }
 
@@ -121,7 +118,7 @@ mod store {
 
     /// A way to indicate which pack indices we have seen already and which of them are loaded, along with an idea
     /// of whether stored `PackId`s are still usable.
-    #[derive(Clone, Default)]
+    #[derive(Default)]
     pub struct SlotIndexMarker {
         /// The generation the `loaded_until_index` belongs to. Indices of different generations are completely incompatible.
         /// This value changes once the internal representation is compacted, something that may happen only if there is no handle
@@ -272,6 +269,9 @@ mod store {
 
 pub mod handle {
     use crate::general::store;
+    use git_features::threading::OwnShared;
+    use std::ops::Deref;
+    use std::sync::atomic::Ordering;
     use std::sync::Arc;
 
     pub(crate) mod multi_index {
@@ -335,6 +335,83 @@ pub mod handle {
                         todo!("find respective pack and return it as &mut Option<>")
                     }
                 }
+            }
+        }
+    }
+
+    pub(crate) enum Mode {
+        DeletedPacksAreInaccessible,
+        /// This mode signals that we should not unload packs even after they went missing.
+        KeepDeletedPacksAvailable,
+    }
+
+    /// Handle registration
+    impl super::Store {
+        pub(crate) fn register_handle(&self) -> Mode {
+            self.num_handles_unstable.fetch_add(1, Ordering::Relaxed);
+            Mode::DeletedPacksAreInaccessible
+        }
+        pub(crate) fn remove_handle(&self, mode: Mode) {
+            match mode {
+                Mode::KeepDeletedPacksAvailable => {
+                    let _ = self.path.lock();
+                    self.num_handles_stable.fetch_sub(1, Ordering::SeqCst)
+                }
+                Mode::DeletedPacksAreInaccessible => self.num_handles_unstable.fetch_sub(1, Ordering::Relaxed),
+            };
+        }
+        pub(crate) fn upgrade_handle(&self, mode: Mode) -> Mode {
+            if let Mode::DeletedPacksAreInaccessible = mode {
+                let _ = self.path.lock();
+                self.num_handles_stable.fetch_add(1, Ordering::SeqCst);
+                self.num_handles_unstable.fetch_sub(1, Ordering::SeqCst);
+            }
+            Mode::KeepDeletedPacksAvailable
+        }
+    }
+
+    /// Handle creation
+    impl super::Store {
+        pub fn to_handle(self: &OwnShared<Self>) -> super::Handle<OwnShared<super::Store>> {
+            let token = self.register_handle();
+            super::Handle {
+                store: self.clone(),
+                token: Some(token),
+            }
+        }
+    }
+
+    impl<S> super::Handle<S>
+    where
+        S: Deref<Target = super::Store> + Clone,
+    {
+        /// Call once if pack ids are stored and later used for lookup, meaning they should always remain mapped and not be unloaded
+        /// even if they disappear from disk.
+        /// This must be called if there is a chance that git maintenance is happening while a pack is created.
+        pub fn prevent_pack_unload(&mut self) {
+            self.token = self.token.take().map(|token| self.store.upgrade_handle(token));
+        }
+    }
+
+    impl<S> Drop for super::Handle<S>
+    where
+        S: Deref<Target = super::Store> + Clone,
+    {
+        fn drop(&mut self) {
+            if let Some(token) = self.token.take() {
+                self.store.remove_handle(token)
+            }
+        }
+    }
+
+    impl<S> Clone for super::Handle<S>
+    where
+        S: Deref<Target = super::Store> + Clone,
+    {
+        fn clone(&self) -> Self {
+            super::Handle {
+                store: self.store.clone(),
+                token: self.store.register_handle().into(),
             }
         }
     }
