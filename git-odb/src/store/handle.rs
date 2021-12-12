@@ -59,7 +59,7 @@ where
 {
     fn from(store: S) -> Self {
         Self {
-            store,
+            inner: store,
             pack_cache: None,
             new_pack_cache: None,
             object_cache: None,
@@ -71,7 +71,7 @@ where
 impl<S: Clone> Clone for Cache<S> {
     fn clone(&self) -> Self {
         Cache {
-            store: self.store.clone(),
+            inner: self.inner.clone(),
             new_pack_cache: self.new_pack_cache.clone(),
             new_object_cache: self.new_object_cache.clone(),
             pack_cache: self.new_pack_cache.as_ref().map(|create| RefCell::new(create())),
@@ -102,7 +102,7 @@ mod impls {
             from: impl Read,
             hash: git_hash::Kind,
         ) -> Result<ObjectId, Self::Error> {
-            self.store.write_stream(kind, size, from, hash)
+            self.inner.write_stream(kind, size, from, hash)
         }
     }
 
@@ -113,7 +113,7 @@ mod impls {
         type Error = S::Error;
 
         fn contains(&self, id: impl AsRef<oid>) -> bool {
-            self.store.contains(id)
+            self.inner.contains(id)
         }
 
         fn try_find<'a>(&self, id: impl AsRef<oid>, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, Self::Error> {
@@ -128,7 +128,7 @@ mod impls {
         type Error = S::Error;
 
         fn contains(&self, id: impl AsRef<oid>) -> bool {
-            self.store.contains(id)
+            self.inner.contains(id)
         }
 
         fn try_find<'a>(
@@ -153,7 +153,7 @@ mod impls {
                     return Ok(Some((Data::new(kind, buffer), None)));
                 }
             }
-            let possibly_obj = self.store.try_find_cached(id.as_ref(), buffer, pack_cache)?;
+            let possibly_obj = self.inner.try_find_cached(id.as_ref(), buffer, pack_cache)?;
             if let (Some(mut obj_cache), Some((obj, _location))) =
                 (self.object_cache.as_ref().map(|rc| rc.borrow_mut()), &possibly_obj)
             {
@@ -163,15 +163,15 @@ mod impls {
         }
 
         fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<git_pack::data::entry::Location> {
-            self.store.location_by_oid(id, buf)
+            self.inner.location_by_oid(id, buf)
         }
 
         fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
-            self.store.index_iter_by_pack_id(pack_id)
+            self.inner.index_iter_by_pack_id(pack_id)
         }
 
         fn entry_by_location(&self, location: &Location) -> Option<git_pack::find::Entry<'_>> {
-            self.store.entry_by_location(location)
+            self.inner.entry_by_location(location)
         }
     }
 }

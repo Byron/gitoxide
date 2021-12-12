@@ -20,7 +20,7 @@ pub use git_pack as pack;
 use std::path::PathBuf;
 
 mod store;
-pub use store::{compound, general, handle, linked, loose, sink, Cache, Sink};
+pub use store::{compound, general, handle, linked, loose, sink, Cache, RefreshMode, Sink};
 
 pub mod alternate;
 
@@ -29,7 +29,7 @@ pub type Handle = Cache<general::Handle<OwnShared<general::Store>>>;
 
 /// Create a new cached odb handle.
 pub fn at(objects_dir: impl Into<PathBuf>) -> std::io::Result<Handle> {
-    let handle = OwnShared::new(general::Store::at(objects_dir)?).to_handle();
+    let handle = OwnShared::new(general::Store::at(objects_dir)?).to_handle(RefreshMode::AfterAllIndicesLoaded);
     Ok(Cache::from(handle))
 }
 
