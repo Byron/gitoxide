@@ -108,6 +108,7 @@ mod init {
 
 mod store {
     use arc_swap::ArcSwap;
+    use std::ops::BitXor;
     use std::path::{Path, PathBuf};
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Arc;
@@ -162,8 +163,9 @@ mod store {
         pub(crate) fn state_id(self: &Arc<SlotMapIndex>) -> StateId {
             // We let the loaded indices take part despite not being part of our own snapshot.
             // This is to account for indices being loaded in parallel without actually changing the snapshot itself.
-            (Arc::as_ptr(&self.loose_dbs) as usize ^ Arc::as_ptr(self) as usize)
-                * (self.loaded_indices.load(Ordering::SeqCst) + 1)
+            (Arc::as_ptr(&self.loose_dbs) as usize)
+                .bitxor(Arc::as_ptr(self) as usize)
+                .wrapping_mul(self.loaded_indices.load(Ordering::SeqCst) + 1)
         }
 
         pub(crate) fn marker(self: &Arc<SlotMapIndex>) -> SlotIndexMarker {
@@ -419,6 +421,7 @@ pub mod handle {
 
 pub mod load_indices {
     use crate::general::{handle, store};
+    use std::path::PathBuf;
 
     /// Define how packs will be refreshed when all indices are loaded, which is useful if a lot of objects are missing.
     #[derive(Clone, Copy)]
@@ -433,6 +436,7 @@ pub mod load_indices {
     }
 
     use crate::general::store::StateId;
+    use std::sync::atomic::Ordering;
     use std::sync::Arc;
 
     pub(crate) enum Outcome {
@@ -490,6 +494,15 @@ pub mod load_indices {
             // These are in addition to our objects directory
             db_paths.insert(0, objects_directory.clone());
             todo!()
+        }
+
+        /// If there is no handle with stable pack ids requirements, unload them.
+        /// This property also relates to us pruning our internal state/doing internal maintenance which affects ids, too.
+        ///
+        /// Note that this must be called with a lock to the relevant state held to assure these values don't change while
+        /// we are working.
+        fn may_unload_packs(&mut self, guard: &parking_lot::MutexGuard<'_, PathBuf>) -> bool {
+            self.num_handles_stable.load(Ordering::SeqCst) == 0
         }
 
         fn collect_replace_outcome(&self) -> Outcome {
