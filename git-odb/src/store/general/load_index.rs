@@ -1,3 +1,7 @@
+use arc_swap::access::Access;
+use std::collections::BTreeMap;
+use std::ffi::OsStr;
+use std::path::Path;
 use std::{
     path::PathBuf,
     sync::{atomic::Ordering, Arc},
@@ -46,6 +50,7 @@ mod error {
     }
 }
 
+use crate::general::store::{IndexAndPacks, MultiIndexFileBundle, MutableIndexAndPack, OnDiskFile, OnDiskFileState};
 pub use error::Error;
 
 impl super::Store {
@@ -105,7 +110,7 @@ impl super::Store {
         let needs_stable_indices = self.maintain_stable_indices(&objects_directory);
 
         self.num_disk_state_consolidation.fetch_add(1, Ordering::Relaxed);
-        let mut db_paths: Vec<_> = std::iter::once(objects_directory.clone())
+        let db_paths: Vec<_> = std::iter::once(objects_directory.clone())
             .chain(crate::alternate::resolve(&*objects_directory)?)
             .collect();
 
@@ -122,9 +127,102 @@ impl super::Store {
             Arc::clone(&index.loose_dbs)
         };
 
-        // These are in addition to our objects directory
-        db_paths.insert(0, objects_directory.clone());
+        // Outside of this method we will never assign new slot indices.
+        let mut indices_by_modification_time = Vec::with_capacity(index.slot_indices.len());
+        for db_path in db_paths {
+            let packs = db_path.join("pack");
+            let entries = match std::fs::read_dir(&packs) {
+                Ok(e) => e,
+                Err(err) if err.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(err) => return Err(err.into()),
+            };
+            indices_by_modification_time.extend(
+                entries
+                    .filter_map(Result::ok)
+                    .filter_map(|e| e.metadata().map(|md| (e.path(), md)).ok())
+                    .filter(|(_, md)| md.file_type().is_file())
+                    .filter(|(p, _)| {
+                        let ext = p.extension();
+                        ext == Some(OsStr::new("idx"))
+                            || (ext.is_none() && p.file_name() == Some(OsStr::new("multi-pack-index")))
+                    })
+                    .map(|(p, md)| md.modified().map_err(Error::from).map(|mod_time| (p, mod_time)))
+                    .collect::<Result<Vec<_>, _>>()?,
+            );
+        }
+        // Like libgit2, sort by modification date, newest first, to serve as good starting point.
+        // Git itself doesn't change the order which may safe time, and relies on a LRU sorting on lookup later.
+        // We can do that to in the handle.
+        indices_by_modification_time.sort_by(|l, r| l.1.cmp(&r.1).reverse());
+        let mut idx_by_index_path: BTreeMap<_, _> = index
+            .slot_indices
+            .iter()
+            .filter_map(|&idx| {
+                let f = &self.files[idx];
+                Option::as_ref(&f.files.load()).map(|f| (f.index_path().to_owned(), idx))
+            })
+            .collect();
+
+        let mut existing_slot_map_indices = Vec::new(); // these indices into the slot map still exist there/didn't change
+        let mut index_paths_to_add = was_uninitialized
+            .then(|| Vec::with_capacity(indices_by_modification_time.len()))
+            .unwrap_or_default();
+        for index_path in indices_by_modification_time.into_iter().map(|(p, _mtime)| p) {
+            match idx_by_index_path.remove(&index_path) {
+                Some(slot_idx) => {
+                    let f = &self.files[slot_idx];
+                    Self::assure_slot_for_path(&objects_directory, f, index_path, false /*allow init*/)?;
+                    existing_slot_map_indices.push(slot_idx);
+                }
+                None => index_paths_to_add.push(index_path),
+            }
+        }
+
+        let (min_slot_index, max_slot_index) = (index.slot_indices.iter().min(), index.slot_indices.iter().max());
+
+        // deleted items - remove their slots AFTER we have set the new index if we may alter indices, otherwise we only declare them garbage.
+        // removing slots may cause pack loading to fail, and they will then reload their indices.
+        for (index_path, slot_idx) in idx_by_index_path {}
+
         todo!("consolidate")
+    }
+
+    fn assure_slot_for_path(
+        lock: &parking_lot::MutexGuard<'_, PathBuf>,
+        f: &MutableIndexAndPack,
+        index_path: PathBuf,
+        may_init: bool,
+    ) -> Result<(), Error> {
+        match Option::as_ref(&f.files.load()) {
+            Some(files) => {
+                assert_eq!(
+                    files.index_path(),
+                    index_path,
+                    "Parallel writers cannot change the file the slot points to."
+                );
+            }
+            None => {
+                if may_init {
+                    let _lock = f.write.lock();
+                    let mut files = f.files.load_full();
+                    let files_mut = Arc::make_mut(&mut files);
+                    assert!(
+                        files_mut.is_none(),
+                        "BUG: There must be no race between us checking and obtaining a lock."
+                    );
+                    *files_mut = if index_path.extension() == Some(OsStr::new("idx")) {
+                        IndexAndPacks::new_single(index_path)
+                    } else {
+                        IndexAndPacks::new_multi(index_path)
+                    }
+                    .into();
+                    f.files.store(files);
+                } else {
+                    unreachable!("BUG: a slot can never be deleted if we have it recorded in the index WHILE changing said index. There shouldn't be a race")
+                }
+            }
+        }
+        Ok(())
     }
 
     /// Stability means that indices returned by this API will remain valid.

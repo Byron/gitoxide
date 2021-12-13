@@ -7,6 +7,7 @@ use std::{
     },
 };
 
+use crate::general::handle::SingleOrMultiIndex::Single;
 use arc_swap::ArcSwap;
 use git_features::hash;
 
@@ -155,6 +156,41 @@ pub(crate) enum IndexAndPacks {
     Index(IndexFileBundle),
     /// Note that there can only be one multi-pack file per repository, but thanks to git alternates, there can be multiple overall.
     MultiIndex(MultiIndexFileBundle),
+}
+
+impl IndexAndPacks {
+    pub(crate) fn index_path(&self) -> &Path {
+        match self {
+            IndexAndPacks::Index(index) => &index.index.path,
+            IndexAndPacks::MultiIndex(index) => &index.multi_index.path,
+        }
+    }
+
+    pub(crate) fn new_multi(index_path: PathBuf) -> Self {
+        Self::MultiIndex(MultiIndexFileBundle {
+            multi_index: OnDiskFile {
+                path: Arc::new(index_path),
+                state: OnDiskFileState::Unloaded,
+            },
+            data: todo!(
+                "figure we actually have to map it here or find a way to learn about the data files in advance."
+            ),
+        })
+    }
+
+    pub(crate) fn new_single(index_path: PathBuf) -> Self {
+        let data_path = index_path.with_extension("pack");
+        Self::Index(IndexFileBundle {
+            index: OnDiskFile {
+                path: Arc::new(index_path),
+                state: OnDiskFileState::Unloaded,
+            },
+            data: OnDiskFile {
+                path: Arc::new(data_path),
+                state: OnDiskFileState::Unloaded,
+            },
+        })
+    }
 }
 
 #[derive(Default)]
