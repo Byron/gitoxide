@@ -9,7 +9,28 @@ fn db() -> git_odb::Handle {
 
 #[test]
 #[ignore]
-fn basics() {
+fn contains() {
+    let mut handle = db();
+
+    assert!(handle.contains(hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980")));
+    assert_eq!(
+        handle.inner.store().metrics(),
+        git_odb::general::store::Metrics {
+            num_handles: 1,
+            num_refreshes: 1,
+            open_indices: 0,
+            known_indices: 3,
+            open_packs: 0,
+            known_packs: 3,
+            unused_slots: 61
+        },
+        "it only refreshed the file list, yielding the loose db to find this object, but no pack was opened yet"
+    );
+}
+
+#[test]
+#[ignore]
+fn lookup() {
     let mut handle = db();
 
     fn can_locate(db: &git_odb::Handle, hex_id: &str) {
@@ -27,7 +48,7 @@ fn basics() {
             known_indices: 0,
             open_packs: 0,
             known_packs: 0,
-            unused_slots: 256
+            unused_slots: 64,
         },
         "nothing happened yet, the store is totally lazy"
     );
@@ -44,7 +65,7 @@ fn basics() {
         known_indices: 3,
         open_packs: 3,
         known_packs: 3,
-        unused_slots: 253,
+        unused_slots: 61,
     };
     assert_eq!(
         handle.inner.store().metrics(),
@@ -93,7 +114,7 @@ fn missing_objects_triggers_everything_is_loaded() {
             known_indices: 3,
             open_packs: 3,
             known_packs: 3,
-            unused_slots: 253
+            unused_slots: 61
         },
         "first refresh triggered by on-disk check, second refresh triggered to see if something changed."
     );

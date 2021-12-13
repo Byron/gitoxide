@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::{
     ops::Deref,
     sync::{atomic::Ordering, Arc},
@@ -43,10 +44,20 @@ pub(crate) mod index_lookup {
     use crate::general::{handle, store};
 
     impl handle::IndexLookup {
+        /// Return true if the given object id exists in this index
+        pub(crate) fn contains(&self, object_id: &oid) -> bool {
+            match &self.file {
+                handle::SingleOrMultiIndex::Single { index, .. } => index.lookup(object_id).is_some(),
+                handle::SingleOrMultiIndex::Multi { .. } => {
+                    todo!("find respective pack and return it as &mut Option<>")
+                }
+            }
+        }
+
         /// See if the oid is contained in this index, and return its full id for lookup possibly alongside its data file if already
         /// loaded.
         /// If it is not loaded, ask it to be loaded and put it into the returned mutable option for safe-keeping.
-        fn lookup(
+        pub(crate) fn lookup(
             &mut self,
             object_id: &oid,
         ) -> Option<(handle::IndexForObjectInPack, &mut Option<Arc<git_pack::data::File>>)> {
@@ -116,7 +127,7 @@ impl super::Store {
             store: self.clone(),
             refresh_mode,
             token: Some(token),
-            snapshot: self.collect_snapshot(),
+            snapshot: RefCell::new(self.collect_snapshot()),
         }
     }
 }
@@ -157,7 +168,7 @@ where
             store: self.store.clone(),
             refresh_mode: self.refresh_mode,
             token: self.store.register_handle().into(),
-            snapshot: self.store.collect_snapshot(),
+            snapshot: RefCell::new(self.store.collect_snapshot()),
         }
     }
 }

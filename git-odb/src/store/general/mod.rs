@@ -1,5 +1,6 @@
 #![allow(missing_docs, unused, dead_code)]
 
+use std::cell::RefCell;
 use std::{ops::Deref, path::PathBuf, sync::atomic::AtomicUsize};
 
 use arc_swap::ArcSwap;
@@ -14,7 +15,7 @@ where
     pub refresh_mode: crate::RefreshMode,
 
     pub(crate) token: Option<handle::Mode>,
-    snapshot: load_indices::Snapshot,
+    snapshot: RefCell<load_indices::Snapshot>,
 }
 
 pub struct Store {

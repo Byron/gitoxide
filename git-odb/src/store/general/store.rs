@@ -43,7 +43,7 @@ pub struct SlotMapIndex {
     pub(crate) slot_indices: Vec<usize>,
     /// A list of loose object databases as resolved by their alternates file in the `object_directory`. The first entry is this objects
     /// directory loose file database. All other entries are the loose stores of alternates.
-    /// It's in an Arc to be shared to Handles, but not to be shared across SlotMapIndices
+    /// It's in an Arc to be shared to Handles, but not to be shared across SlotMapIndices.
     pub(crate) loose_dbs: Arc<Vec<crate::loose::Store>>,
 
     /// A static value that doesn't ever change for a particular clone of this index.
@@ -62,8 +62,7 @@ impl SlotMapIndex {
     pub(crate) fn state_id(self: &Arc<SlotMapIndex>) -> StateId {
         // We let the loaded indices take part despite not being part of our own snapshot.
         // This is to account for indices being loaded in parallel without actually changing the snapshot itself.
-        let mut hash = hash::crc32(&(Arc::as_ptr(&self.loose_dbs) as usize).to_be_bytes());
-        hash = hash::crc32_update(hash, &(Arc::as_ptr(self) as usize).to_be_bytes());
+        let mut hash = hash::crc32(&(Arc::as_ptr(self) as usize).to_be_bytes());
         hash::crc32_update(hash, &self.loaded_indices.load(Ordering::SeqCst).to_be_bytes())
     }
 

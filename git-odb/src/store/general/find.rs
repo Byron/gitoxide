@@ -10,8 +10,42 @@ where
 {
     type Error = crate::compound::find::Error;
 
+    // TODO: probably make this method fallible, but that would mean its own error type.
     fn contains(&self, id: impl AsRef<oid>) -> bool {
-        todo!("contains")
+        let mut last_seen_index = None;
+        let mut last_seen_ldb = None;
+
+        loop {
+            let id = id.as_ref();
+            let snapshot = self.snapshot.borrow();
+            for (idx, index) in snapshot.indices[last_seen_index.unwrap_or_default()..]
+                .iter()
+                .enumerate()
+            {
+                if index.contains(id) {
+                    return true;
+                }
+                last_seen_index = Some(idx);
+            }
+
+            for (idx, lodb) in snapshot.loose_dbs[last_seen_ldb.unwrap_or_default()..]
+                .iter()
+                .enumerate()
+            {
+                if lodb.contains(id) {
+                    return true;
+                }
+                last_seen_ldb = Some(idx);
+            }
+
+            match self.store.load_next_indices(self.refresh_mode, &snapshot.marker) {
+                Ok(Some(outcome)) => {
+                    todo!("deal with outcome")
+                }
+                Ok(None) => return false, // nothing more to load, or our refresh mode doesn't allow disk refreshes
+                Err(_) => return false, // something went wrong, nothing we can handle here with this trait. TODO: Maybe that should change?
+            }
+        }
     }
 
     fn try_find_cached<'a>(
