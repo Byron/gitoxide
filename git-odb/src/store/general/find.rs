@@ -38,7 +38,7 @@ where
                 last_seen_ldb = Some(idx);
             }
 
-            match self.store.load_next_indices(self.refresh_mode, &snapshot.marker) {
+            match self.store.load_one_index(self.refresh_mode, &snapshot.marker) {
                 Ok(Some(outcome)) => {
                     todo!("deal with outcome")
                 }

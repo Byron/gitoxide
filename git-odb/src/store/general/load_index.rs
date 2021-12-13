@@ -29,14 +29,33 @@ pub(crate) struct Snapshot {
     pub(crate) marker: store::SlotIndexMarker,
 }
 
+mod error {
+    use crate::pack;
+    use std::path::PathBuf;
+
+    /// Returned by [`compound::Store::at()`]
+    #[derive(thiserror::Error, Debug)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The objects directory at '{0}' is not an accessible directory")]
+        Inaccessible(PathBuf),
+        #[error(transparent)]
+        Io(#[from] std::io::Error),
+        #[error(transparent)]
+        Alternate(#[from] crate::alternate::Error),
+    }
+}
+
+pub use error::Error;
+
 impl super::Store {
     /// If `None` is returned, there is new indices and the caller should give up. This is a possibility even if it's allowed to refresh
     /// as here might be no change to pick up.
-    pub(crate) fn load_next_indices(
+    pub(crate) fn load_one_index(
         &self,
         refresh_mode: RefreshMode,
         marker: &store::SlotIndexMarker,
-    ) -> std::io::Result<Option<Outcome>> {
+    ) -> Result<Option<Outcome>, Error> {
         let index = self.index.load();
         let state_id = index.state_id();
         if !index.is_initialized() {
@@ -65,7 +84,7 @@ impl super::Store {
     }
 
     /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
-    fn consolidate_with_disk_state(&self) -> std::io::Result<Option<Outcome>> {
+    fn consolidate_with_disk_state(&self) -> Result<Option<Outcome>, Error> {
         let index = self.index.load();
         let index_state = Arc::as_ptr(&index) as usize;
         let previous_generation = index.generation;
@@ -82,12 +101,27 @@ impl super::Store {
             ));
         }
 
-        let was_uninitialized = index.is_initialized();
+        let was_uninitialized = !index.is_initialized();
         let needs_stable_indices = self.maintain_stable_indices(&objects_directory);
 
         self.num_disk_state_consolidation.fetch_add(1, Ordering::Relaxed);
-        let mut db_paths = crate::alternate::resolve(&*objects_directory)
-            .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+        let mut db_paths: Vec<_> = std::iter::once(objects_directory.clone())
+            .chain(crate::alternate::resolve(&*objects_directory)?)
+            .collect();
+
+        // turn db paths into loose object databases. Reuse what's there, but only if it is in the right order.
+        let loose_dbs = if was_uninitialized
+            || db_paths.len() != index.loose_dbs.len()
+            || db_paths
+                .iter()
+                .zip(index.loose_dbs.iter().map(|ldb| &ldb.path))
+                .any(|(lhs, rhs)| lhs != rhs)
+        {
+            Arc::new(db_paths.iter().map(|p| crate::loose::Store::at(p)).collect::<Vec<_>>())
+        } else {
+            Arc::clone(&index.loose_dbs)
+        };
+
         // These are in addition to our objects directory
         db_paths.insert(0, objects_directory.clone());
         todo!("consolidate")

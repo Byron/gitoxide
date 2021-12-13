@@ -15,7 +15,7 @@ where
     pub refresh_mode: crate::RefreshMode,
 
     pub(crate) token: Option<handle::Mode>,
-    snapshot: RefCell<load_indices::Snapshot>,
+    snapshot: RefCell<load_index::Snapshot>,
 }
 
 pub struct Store {
@@ -48,6 +48,6 @@ pub mod store;
 
 pub mod handle;
 
-pub mod load_indices;
+pub mod load_index;
 
 mod metrics;

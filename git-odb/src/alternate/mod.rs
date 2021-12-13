@@ -18,8 +18,6 @@
 //! Based on the [canonical implementation](https://github.com/git/git/blob/master/sha1-file.c#L598:L609).
 use std::{fs, io, path::PathBuf};
 
-use crate::store::compound;
-
 ///
 pub mod parse;
 #[allow(missing_docs)]
@@ -33,8 +31,6 @@ pub enum Error {
     Io(#[from] io::Error),
     #[error(transparent)]
     Parse(#[from] parse::Error),
-    #[error(transparent)]
-    Init(#[from] compound::init::Error),
     #[error("Alternates form a cycle: {} -> {}", .0.iter().map(|p| format!("'{}'", p.display())).collect::<Vec<_>>().join(" -> "), .0.first().expect("more than one directories").display())]
     Cycle(Vec<PathBuf>),
 }
