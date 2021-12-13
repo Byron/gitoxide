@@ -432,7 +432,7 @@ mod odb {
         pub(crate) fn remove_handle(&self, mode: store::HandleModeToken) {
             match mode {
                 store::HandleModeToken::KeepDeletedPacksAvailable => {
-                    let _ = self.state.lock();
+                    let _lock = self.state.lock();
                     self.num_handles_stable.fetch_sub(1, Ordering::SeqCst)
                 }
                 store::HandleModeToken::DeletedPacksAreInaccessible => {
@@ -442,7 +442,7 @@ mod odb {
         }
         pub(crate) fn upgrade_handle(&self, mode: store::HandleModeToken) -> store::HandleModeToken {
             if let store::HandleModeToken::DeletedPacksAreInaccessible = mode {
-                let _ = self.state.lock();
+                let _lock = self.state.lock();
                 self.num_handles_stable.fetch_add(1, Ordering::SeqCst);
                 self.num_handles_unstable.fetch_sub(1, Ordering::SeqCst);
             }

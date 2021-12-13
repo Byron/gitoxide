@@ -128,7 +128,7 @@ async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
     assert!(delegate.refs.is_empty(), "no refs are fetched");
     assert_eq!(
         transport.into_inner().1.as_bstr(),
-        b"0044git-upload-pack does/not/matter\0\0version=2\0value-only\0key=value\00000".as_bstr()
+        b"0044git-upload-pack does/not/matter\x00\x00version=2\x00value-only\x00key=value\x000000".as_bstr()
     );
     match err {
         fetch::Error::Io(err) => {

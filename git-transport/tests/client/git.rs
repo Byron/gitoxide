@@ -134,7 +134,7 @@ async fn handshake_v1_and_request() -> crate::Result {
 
     assert_eq!(
         out.as_slice().as_bstr(),
-        b"002egit-upload-pack /foo.git\0host=example.org\00000000ahello\n\
+        b"002egit-upload-pack /foo.git\x00host=example.org\x000000000ahello\n\
     000aworld\n\
     0009done\n"
             .as_bstr(),
@@ -338,7 +338,7 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
 
     assert_eq!(
         out.as_slice().as_bstr(),
-        b"0039git-upload-pack /bar.git\0host=example.org\0\0version=2\00014command=ls-refs
+        b"0039git-upload-pack /bar.git\x00host=example.org\x00\x00version=2\x000014command=ls-refs
 0015agent=git/2.28.0
 0017object-format=sha1
 00010009peel

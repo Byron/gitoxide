@@ -61,7 +61,7 @@ async fn ls_remote() -> crate::Result {
     );
     assert_eq!(
         transport.into_inner().1.as_bstr(),
-        b"003agit-upload-pack does/not/matter\0\0value-only\0key=value\00000".as_bstr(),
+        b"003agit-upload-pack does/not/matter\x00\x00value-only\x00key=value\x000000".as_bstr(),
         "we dont have to send anything in V1, except for the final flush byte to indicate we are done"
     );
     Ok(())

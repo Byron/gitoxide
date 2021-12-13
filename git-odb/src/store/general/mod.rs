@@ -369,7 +369,7 @@ pub mod handle {
         pub(crate) fn remove_handle(&self, mode: Mode) {
             match mode {
                 Mode::KeepDeletedPacksAvailable => {
-                    let _ = self.path.lock();
+                    let _lock = self.path.lock();
                     self.num_handles_stable.fetch_sub(1, Ordering::SeqCst)
                 }
                 Mode::DeletedPacksAreInaccessible => self.num_handles_unstable.fetch_sub(1, Ordering::Relaxed),
@@ -377,7 +377,7 @@ pub mod handle {
         }
         pub(crate) fn upgrade_handle(&self, mode: Mode) -> Mode {
             if let Mode::DeletedPacksAreInaccessible = mode {
-                let _ = self.path.lock();
+                let _lock = self.path.lock();
                 self.num_handles_stable.fetch_add(1, Ordering::SeqCst);
                 self.num_handles_unstable.fetch_sub(1, Ordering::SeqCst);
             }
