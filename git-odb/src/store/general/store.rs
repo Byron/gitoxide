@@ -106,6 +106,11 @@ impl<T: Clone> OnDiskFile<T> {
         matches!(self.state, OnDiskFileState::Loaded(_) | OnDiskFileState::Garbage(_))
     }
 
+    /// Return true if we are to be collected as garbage
+    pub fn is_garbage(&self) -> bool {
+        matches!(self.state, OnDiskFileState::Garbage(_) | OnDiskFileState::Missing)
+    }
+
     pub fn loaded(&self) -> Option<&T> {
         use OnDiskFileState::*;
         match &self.state {
@@ -163,6 +168,15 @@ impl IndexAndPacks {
         match self {
             IndexAndPacks::Index(index) => &index.index.path,
             IndexAndPacks::MultiIndex(index) => &index.multi_index.path,
+        }
+    }
+
+    pub(crate) fn is_garbage(&self) -> bool {
+        match self {
+            Self::Index(bundle) => bundle.index.is_garbage() || bundle.data.is_garbage(),
+            Self::MultiIndex(bundle) => {
+                bundle.multi_index.is_garbage() || bundle.data.iter().any(|odf| odf.is_garbage())
+            }
         }
     }
 
