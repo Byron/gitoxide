@@ -71,6 +71,23 @@ impl<'a> Drop for Tree<'a> {
     }
 }
 
+/// A decoded commit object with access to its owning repository.
+///
+/// Please note that the limitations described in [Object] apply here as well.
+pub struct Commit<'repo> {
+    /// The id of the commit
+    pub id: ObjectId,
+    /// The fully decoded commit data
+    pub data: Vec<u8>,
+    handle: &'repo easy::Handle,
+}
+
+impl<'a> Drop for Commit<'a> {
+    fn drop(&mut self) {
+        self.handle.reuse_buffer(&mut self.data);
+    }
+}
+
 /// A detached, self-contained object, without access to its source repository.
 ///
 /// Use it if an `ObjectRef` should be sent over thread boundaries or stored in collections.

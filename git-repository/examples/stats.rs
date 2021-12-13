@@ -23,13 +23,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let last_commit_id = &commit_ids[0];
     println!("Most recent commit message");
 
-    let object_ref = last_commit_id.object()?;
-    let handle2 = handle.clone();
-    let commit = object_ref.to_commit();
-    println!("{}", commit.message);
+    let object = last_commit_id.object()?;
+    let commit = object.into_commit();
+    println!("{}", commit.message_raw()?);
 
-    let tree_ref = handle2.find_object(commit.tree())?.into_tree();
-    let root = git::objs::TreeRefIter::from_bytes(&tree_ref.data);
+    let tree = commit.tree()?;
+    let root = git::objs::TreeRefIter::from_bytes(&tree.data);
 
     let mut delegate = visit::Tree::new(handle.clone());
     let mut state = git_traverse::tree::breadthfirst::State::default();
