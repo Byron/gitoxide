@@ -12,8 +12,10 @@ use clap::Parser;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
-use crate::plumbing::options::{Args, Subcommands};
-use crate::shared::pretty::prepare_and_run;
+use crate::{
+    plumbing::options::{Args, Subcommands},
+    shared::pretty::prepare_and_run,
+};
 
 #[cfg(feature = "gitoxide-core-async-client")]
 pub mod async_util {

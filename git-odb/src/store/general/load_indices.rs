@@ -1,48 +1,48 @@
-use crate::general::{handle, store};
-use std::path::PathBuf;
+use std::{
+    path::PathBuf,
+    sync::{atomic::Ordering, Arc},
+};
 
-use crate::general::store::StateId;
-use crate::RefreshMode;
-use std::sync::atomic::Ordering;
-use std::sync::Arc;
+use crate::{
+    general::{handle, store, store::StateId},
+    RefreshMode,
+};
 
 pub(crate) enum Outcome {
     /// Drop all data and fully replace it with `indices`.
     /// This happens if we have witnessed a generational change invalidating all of our ids and causing currently loaded
     /// indices and maps to be dropped.
-    Replace {
-        indices: Vec<handle::IndexLookup>, // should probably be SmallVec to get around most allocations
-        loose_dbs: Arc<Vec<crate::loose::Store>>,
-        marker: store::SlotIndexMarker, // use to show where the caller left off last time
-    },
+    Replace(Snapshot),
     /// Despite all values being full copies, indices are still compatible to what was before. This also means
     /// the caller can continue searching the added indices and loose-dbs.
     /// Or in other words, new indices were only added to the known list, and what was seen before is known not to have changed.
     /// Besides that, the full internal state can be replaced as with `Replace`.
-    ReplaceStable {
-        indices: Vec<handle::IndexLookup>, // should probably be SmallVec to get around most allocations
-        loose_dbs: Arc<Vec<crate::loose::Store>>,
-        marker: store::SlotIndexMarker, // use to show where the caller left off last time
-    },
-    /// No new indices to look at, caller should give up
-    NoMoreIndices,
+    ReplaceStable(Snapshot),
+}
+
+pub(crate) struct Snapshot {
+    indices: Vec<handle::IndexLookup>, // should probably be SmallVec to get around most allocations
+    loose_dbs: Arc<Vec<crate::loose::Store>>,
+    marker: store::SlotIndexMarker, // use to show where the caller left off last time
 }
 
 impl super::Store {
+    /// If `None` is returned, there is new indices and the caller should give up. This is a possibility even if it's allowed to refresh
+    /// as here might be no change to pick up.
     pub(crate) fn load_next_indices(
         &self,
         refresh_mode: RefreshMode,
         marker: Option<store::SlotIndexMarker>,
-    ) -> std::io::Result<Outcome> {
+    ) -> std::io::Result<Option<Outcome>> {
         let index = self.index.load();
         let state_id = index.state_id();
-        if index.loose_dbs.is_empty() {
+        if !index.is_initialized() {
             // TODO: figure out what kind of refreshes we need. This one loads in the initial slot map, but I think this cost is paid
             //       in full during instantiation.
             return self.consolidate_with_disk_state(state_id);
         }
 
-        Ok(match marker {
+        Ok(Some(match marker {
             Some(marker) => {
                 if marker.generation != index.generation {
                     self.collect_replace_outcome(false /*stable*/)
@@ -51,7 +51,7 @@ impl super::Store {
 
                     // …and if that didn't yield anything new consider refreshing our disk state.
                     match refresh_mode {
-                        RefreshMode::Never => Outcome::NoMoreIndices,
+                        RefreshMode::Never => return Ok(None),
                         RefreshMode::AfterAllIndicesLoaded => return self.consolidate_with_disk_state(state_id),
                     }
                 } else {
@@ -59,11 +59,11 @@ impl super::Store {
                 }
             }
             None => self.collect_replace_outcome(false /*stable*/),
-        })
+        }))
     }
 
     /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
-    fn consolidate_with_disk_state(&self, seen: StateId) -> std::io::Result<Outcome> {
+    fn consolidate_with_disk_state(&self, seen: StateId) -> std::io::Result<Option<Outcome>> {
         let objects_directory = self.path.lock();
         if seen != self.index.load().state_id() {
             todo!("return …")
@@ -85,7 +85,7 @@ impl super::Store {
         self.num_handles_stable.load(Ordering::SeqCst) == 0
     }
 
-    fn collect_replace_outcome(&self, is_stable: bool) -> Outcome {
+    pub(crate) fn collect_snapshot(&self) -> Snapshot {
         let index = self.index.load();
         let indices = index
             .slot_indices
@@ -106,18 +106,19 @@ impl super::Store {
             })
             .collect();
 
+        Snapshot {
+            indices,
+            loose_dbs: Arc::clone(&index.loose_dbs),
+            marker: index.marker(),
+        }
+    }
+
+    fn collect_replace_outcome(&self, is_stable: bool) -> Outcome {
+        let snapshot = self.collect_snapshot();
         if is_stable {
-            Outcome::ReplaceStable {
-                indices,
-                loose_dbs: Arc::clone(&index.loose_dbs),
-                marker: index.marker(),
-            }
+            Outcome::ReplaceStable(snapshot)
         } else {
-            Outcome::Replace {
-                indices,
-                loose_dbs: Arc::clone(&index.loose_dbs),
-                marker: index.marker(),
-            }
+            Outcome::Replace(snapshot)
         }
     }
 }

@@ -1,9 +1,8 @@
 #![allow(missing_docs, unused, dead_code)]
 
+use std::{ops::Deref, path::PathBuf, sync::atomic::AtomicUsize};
+
 use arc_swap::ArcSwap;
-use std::ops::Deref;
-use std::path::PathBuf;
-use std::sync::atomic::AtomicUsize;
 
 /// This effectively acts like a handle but exists to be usable from the actual `crate::Handle` implementation which adds caches on top.
 /// Each store is quickly cloned and contains thread-local state for shared packs.
@@ -15,6 +14,7 @@ where
     pub refresh_mode: crate::RefreshMode,
 
     pub(crate) token: Option<handle::Mode>,
+    snapshot: load_indices::Snapshot,
 }
 
 pub struct Store {

@@ -1,6 +1,6 @@
-use crate::general::store;
-use crate::general::store::IndexAndPacks;
 use std::sync::atomic::Ordering;
+
+use crate::general::{store, store::IndexAndPacks};
 
 impl super::Store {
     pub fn metrics(&self) -> store::Metrics {

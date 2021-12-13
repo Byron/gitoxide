@@ -1,12 +1,17 @@
-use crate::general::store;
-use crate::general::store::{MutableIndexAndPack, SlotMapIndex};
+use std::{
+    iter::FromIterator,
+    ops::Deref,
+    path::PathBuf,
+    sync::{atomic::AtomicUsize, Arc},
+};
+
 use arc_swap::ArcSwap;
 use git_features::threading::OwnShared;
-use std::iter::FromIterator;
-use std::ops::Deref;
-use std::path::PathBuf;
-use std::sync::atomic::AtomicUsize;
-use std::sync::Arc;
+
+use crate::general::{
+    store,
+    store::{MutableIndexAndPack, SlotMapIndex},
+};
 
 impl super::Store {
     pub fn at(objects_dir: impl Into<PathBuf>) -> std::io::Result<Self> {

@@ -1,32 +1,40 @@
 #![allow(dead_code, unused_variables, unreachable_code)]
 
 mod odb {
-    use arc_swap::ArcSwap;
-    use std::path::PathBuf;
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    use std::sync::Arc;
+    use std::{
+        path::PathBuf,
+        sync::{
+            atomic::{AtomicUsize, Ordering},
+            Arc,
+        },
+    };
 
+    use arc_swap::ArcSwap;
     use git_hash::oid;
     use git_odb::pack::{data::entry::Location, find::Entry};
 
     use crate::odb::store::{load_indices, SlotIndexMarker, SlotMapIndex};
 
     pub mod store {
-        use arc_swap::ArcSwap;
-        use std::ops::Deref;
-        use std::sync::atomic::{AtomicUsize, Ordering};
-        use std::sync::Arc;
         use std::{
             io,
+            ops::Deref,
             path::{Path, PathBuf},
+            sync::{
+                atomic::{AtomicUsize, Ordering},
+                Arc,
+            },
         };
 
-        use crate::odb::Store;
+        use arc_swap::ArcSwap;
         use git_hash::oid;
 
+        use crate::odb::Store;
+
         mod index_file {
-            use crate::odb::store;
             use std::sync::Arc;
+
+            use crate::odb::store;
 
             pub enum SingleOrMulti {
                 Single {
@@ -342,8 +350,9 @@ mod odb {
         }
 
         pub mod load_indices {
-            use crate::odb::{store, store::SlotIndexMarker};
             use std::sync::Arc;
+
+            use crate::odb::{store, store::SlotIndexMarker};
 
             pub(crate) enum Outcome {
                 /// Drop all data and fully replace it with `indices`.
@@ -603,8 +612,10 @@ mod odb {
 }
 
 mod refs {
-    use std::path::{Path, PathBuf};
-    use std::sync::Arc;
+    use std::{
+        path::{Path, PathBuf},
+        sync::Arc,
+    };
 
     pub struct LooseStore {
         path: PathBuf,
@@ -669,8 +680,9 @@ mod refs {
 }
 
 mod repository {
-    use crate::{odb, refs};
     use std::sync::Arc;
+
+    use crate::{odb, refs};
 
     mod raw {
         use git_pack::Find;

@@ -140,8 +140,9 @@ pub mod pretty {
             }
             #[cfg(feature = "prodash-render-tui")]
             (true, true) | (false, true) => {
-                use crate::shared;
                 use std::io::Write;
+
+                use crate::shared;
 
                 enum Event<T> {
                     UiDone,

@@ -1,8 +1,9 @@
 mod ancestor {
-    use crate::hex_to_id;
     use git_hash::{oid, ObjectId};
     use git_odb::{linked::Store, pack::FindExt};
     use git_traverse::commit;
+
+    use crate::hex_to_id;
 
     struct TraversalAssertion<'a> {
         init_script: &'a str,

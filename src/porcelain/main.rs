@@ -7,7 +7,10 @@ use anyhow::Result;
 use clap::Parser;
 use gitoxide_core as core;
 
-use crate::{porcelain::options::Args, porcelain::options::Subcommands, shared::pretty::prepare_and_run};
+use crate::{
+    porcelain::options::{Args, Subcommands},
+    shared::pretty::prepare_and_run,
+};
 
 pub fn main() -> Result<()> {
     let args: Args = Args::parse();

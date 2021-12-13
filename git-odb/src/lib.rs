@@ -15,9 +15,10 @@
 //!   * This is the database closely resembling the object database in a git repository, and probably what most people would want to use.
 //! * [`linked::Store`]
 //!   * A database containing various [`compound::Stores`][compound::Store] as gathered from `alternates` files.
+use std::path::PathBuf;
+
 use git_features::threading::OwnShared;
 pub use git_pack as pack;
-use std::path::PathBuf;
 
 mod store;
 pub use store::{compound, general, handle, linked, loose, sink, Cache, RefreshMode, Sink};

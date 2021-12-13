@@ -1,9 +1,14 @@
+use std::{
+    ops::BitXor,
+    path::{Path, PathBuf},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+};
+
 use arc_swap::ArcSwap;
 use git_features::hash;
-use std::ops::BitXor;
-use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
 
 /// An id to refer to an index file or a multipack index file
 pub type IndexId = usize;
@@ -67,6 +72,11 @@ impl SlotMapIndex {
             generation: self.generation,
             state_id: self.state_id(),
         }
+    }
+
+    /// Returns true if we already know at least one loose object db, a sign of being initialized
+    pub(crate) fn is_initialized(&self) -> bool {
+        !self.loose_dbs.is_empty()
     }
 }
 

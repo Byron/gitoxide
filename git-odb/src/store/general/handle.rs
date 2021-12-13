@@ -1,8 +1,11 @@
-use crate::general::store;
+use std::{
+    ops::Deref,
+    sync::{atomic::Ordering, Arc},
+};
+
 use git_features::threading::OwnShared;
-use std::ops::Deref;
-use std::sync::atomic::Ordering;
-use std::sync::Arc;
+
+use crate::general::store;
 
 pub(crate) mod multi_index {
     // TODO: replace this one with an actual implementation of a multi-pack index.
@@ -33,9 +36,11 @@ pub struct IndexForObjectInPack {
 }
 
 pub(crate) mod index_lookup {
-    use crate::general::{handle, store};
-    use git_hash::oid;
     use std::sync::Arc;
+
+    use git_hash::oid;
+
+    use crate::general::{handle, store};
 
     impl handle::IndexLookup {
         /// See if the oid is contained in this index, and return its full id for lookup possibly alongside its data file if already
@@ -111,6 +116,7 @@ impl super::Store {
             store: self.clone(),
             refresh_mode,
             token: Some(token),
+            snapshot: self.collect_snapshot(),
         }
     }
 }
@@ -151,6 +157,7 @@ where
             store: self.store.clone(),
             refresh_mode: self.refresh_mode,
             token: self.store.register_handle().into(),
+            snapshot: self.store.collect_snapshot(),
         }
     }
 }

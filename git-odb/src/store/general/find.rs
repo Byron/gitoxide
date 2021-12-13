@@ -1,9 +1,8 @@
+use std::ops::Deref;
+
 use git_hash::oid;
 use git_object::Data;
-use git_pack::cache::DecodeEntry;
-use git_pack::data::entry::Location;
-use git_pack::index::Entry;
-use std::ops::Deref;
+use git_pack::{cache::DecodeEntry, data::entry::Location, index::Entry};
 
 impl<S> crate::pack::Find for super::Handle<S>
 where
