@@ -30,7 +30,8 @@ pub type Handle = Cache<general::Handle<OwnShared<general::Store>>>;
 
 /// Create a new cached odb handle.
 pub fn at(objects_dir: impl Into<PathBuf>) -> std::io::Result<Handle> {
-    let handle = OwnShared::new(general::Store::at(objects_dir)?).to_handle(RefreshMode::AfterAllIndicesLoaded);
+    let handle =
+        OwnShared::new(general::Store::at_opts(objects_dir, 64)?).to_handle(RefreshMode::AfterAllIndicesLoaded);
     Ok(Cache::from(handle))
 }
 

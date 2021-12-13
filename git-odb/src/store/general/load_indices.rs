@@ -21,9 +21,12 @@ pub(crate) enum Outcome {
 }
 
 pub(crate) struct Snapshot {
-    indices: Vec<handle::IndexLookup>, // should probably be SmallVec to get around most allocations
+    /// Indices ready for object lookup or contains checks, ordered usually by modification data, recent ones first.
+    indices: Vec<handle::IndexLookup>,
+    /// A set of loose objects dbs to search once packed objects weren't found.
     loose_dbs: Arc<Vec<crate::loose::Store>>,
-    marker: store::SlotIndexMarker, // use to show where the caller left off last time
+    /// remember what this state represents and to compare to other states.
+    marker: store::SlotIndexMarker,
 }
 
 impl super::Store {
