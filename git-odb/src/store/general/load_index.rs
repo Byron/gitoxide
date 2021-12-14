@@ -294,10 +294,7 @@ impl super::Store {
         );
 
         let generation = if needs_generation_change {
-            index
-                .generation
-                .checked_add(1)
-                .ok_or_else(|| Error::GenerationOverflow)?
+            index.generation.checked_add(1).ok_or(Error::GenerationOverflow)?
         } else {
             index.generation
         };
@@ -359,7 +356,7 @@ impl super::Store {
                     // it finally succeeds. Alternatively, the object will be reported unobtainable, but at least it won't return
                     // some other object.
                     let next_generation = current_generation + 1;
-                    Self::set_slot_to_index(&objects_directory, slot, index_path, mtime, next_generation);
+                    Self::set_slot_to_index(objects_directory, slot, index_path, mtime, next_generation);
                     Some(false)
                 } else {
                     // A valid slot, taken by another file, keep looking
@@ -369,7 +366,7 @@ impl super::Store {
             None => {
                 // an entirely unused (or deleted) slot, free to take.
                 Self::assure_slot_matches_index(
-                    &objects_directory,
+                    objects_directory,
                     slot,
                     index_path,
                     mtime,
@@ -382,6 +379,7 @@ impl super::Store {
     }
 
     // returns Some<dest slot was empty> if the copy could happen because dest-slot was actually free or disposable , and Some(true) if it was empty
+    #[allow(clippy::too_many_arguments)]
     fn try_copy_multi_pack_index(
         &self,
         lock: &parking_lot::MutexGuard<'_, PathBuf>,
