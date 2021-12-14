@@ -1,4 +1,5 @@
 use std::ffi::OsStr;
+use std::sync::atomic::AtomicU32;
 use std::time::SystemTime;
 use std::{
     ops::BitXor,
@@ -16,6 +17,8 @@ use git_features::hash;
 /// An id to refer to an index file or a multipack index file
 pub type IndexId = usize;
 pub(crate) type StateId = u32;
+pub(crate) type Generation = u32;
+pub(crate) type AtomicGeneration = AtomicU32;
 
 /// A way to indicate which pack indices we have seen already and which of them are loaded, along with an idea
 /// of whether stored `PackId`s are still usable.
@@ -24,7 +27,7 @@ pub struct SlotIndexMarker {
     /// The generation the `loaded_until_index` belongs to. Indices of different generations are completely incompatible.
     /// This value changes once the internal representation is compacted, something that may happen only if there is no handle
     /// requiring stable pack indices.
-    pub(crate) generation: u8,
+    pub(crate) generation: Generation,
     /// A unique id identifying the index state as well as all loose databases we have last observed.
     /// If it changes in any way, the value is different.
     pub(crate) state_id: StateId,
@@ -50,7 +53,7 @@ pub struct SlotMapIndex {
     pub(crate) loose_dbs: Arc<Vec<crate::loose::Store>>,
 
     /// A static value that doesn't ever change for a particular clone of this index.
-    pub(crate) generation: u8,
+    pub(crate) generation: Generation,
     /// The number of indices loaded thus far when the index of the slot map was last examined, which can change as new indices are loaded
     /// in parallel.
     /// Shared across SlotMapIndex instances of the same generation.
@@ -257,6 +260,10 @@ impl IndexAndPacks {
 pub(crate) struct MutableIndexAndPack {
     pub(crate) files: ArcSwap<Option<IndexAndPacks>>,
     pub(crate) write: parking_lot::Mutex<()>,
+    /// The generation required at least to read this slot. If these mismatch, the caller is likely referring to a now changed slot
+    /// that has different content under the same id.
+    /// Must only be changed when the write lock is held.
+    pub(crate) generation: AtomicGeneration,
 }
 
 /// A snapshot about resource usage.

@@ -57,7 +57,9 @@ mod error {
     }
 }
 
-use crate::general::store::{IndexAndPacks, MultiIndexFileBundle, MutableIndexAndPack, OnDiskFile, OnDiskFileState};
+use crate::general::store::{
+    Generation, IndexAndPacks, MultiIndexFileBundle, MutableIndexAndPack, OnDiskFile, OnDiskFileState,
+};
 pub use error::Error;
 
 impl super::Store {
@@ -71,8 +73,6 @@ impl super::Store {
         let index = self.index.load();
         let state_id = index.state_id();
         if !index.is_initialized() {
-            // TODO: figure out what kind of refreshes we need. This one loads in the initial slot map, but I think this cost is paid
-            //       in full during instantiation.
             return self.consolidate_with_disk_state();
         }
 
@@ -82,6 +82,7 @@ impl super::Store {
             } else if marker.state_id == index.state_id() {
                 // always compare to the latest state
                 // Nothing changed in the mean time, try to load another index…
+                // TODO: load another index file
 
                 // …and if that didn't yield anything new consider refreshing our disk state.
                 match refresh_mode {
@@ -191,6 +192,7 @@ impl super::Store {
                             slot,
                             index_path,
                             mtime,
+                            index.generation,
                             false, /*allow init*/
                         );
                         new_slot_map_indices.push(slot_idx);
@@ -233,18 +235,12 @@ impl super::Store {
                             slot,
                             index_path.clone(), // TODO: once this settles, consider to return this path if it does nothing or refactor the whole thing.
                             mtime,
+                            index.generation,
                             needs_stable_indices,
                         ) {
                             slot_indices_to_remove.push(move_from_slot_idx);
                             new_slot_map_indices.push(slot_index);
                             // To avoid handling out the wrong pack (due to reassigned pack ids), declare this a new generation.
-                            // TODO: this is actually racy as we have just changed potential garbage (which is returned if asked)
-                            //       with something else. There shouldn't be a long-lasting handle that just now happens to ask for
-                            //       this particular indices pack, but it's possible.
-                            //       This slot being garbage in the first place already means we delayed its actual removal/overwriting
-                            //       so it shouldn't be an issue, but… it could.
-                            //       note that garbage being present in the first place means that there was someone asking for stable indices,
-                            //       and otherwise we would have removed the slot which is safe to do as it retriggers a complete index update.
                             if !dest_was_empty {
                                 needs_generation_change = true;
                             }
@@ -257,15 +253,11 @@ impl super::Store {
                             slot,
                             index_path.clone(),
                             mtime,
+                            index.generation,
                             needs_stable_indices,
                         ) {
                             new_slot_map_indices.push(slot_index);
                             if !dest_was_empty {
-                                // TODO: see not about raciness above. It applies here as well, even though there is a chance that it will
-                                //       never show as we usually delete slots only after setting the new index, or dispose of them
-                                //       if indices must remain stable.
-                                //       Only while they are disposable is there an option for a race, which could happen if there are
-                                //       new connections received that write new packs while maintenance merges packs into one.
                                 needs_generation_change = true;
                             }
                             break 'increment_slot_index;
@@ -294,6 +286,7 @@ impl super::Store {
         slot: &MutableIndexAndPack,
         index_path: PathBuf,
         mtime: SystemTime,
+        current_generation: Generation,
         needs_stable_indices: bool,
     ) -> Option<bool> {
         match &**slot.files.load() {
@@ -308,7 +301,13 @@ impl super::Store {
                     "BUG: an index of the same path must have been handled already"
                 );
                 if !needs_stable_indices && bundle.is_disposable() {
-                    Self::set_slot_to_index(&objects_directory, slot, index_path, mtime);
+                    // Need to declare this to be the future to avoid anything in that slot to be returned to people who
+                    // last saw the old state. They will then try to get a new index which by that time, might be happening
+                    // in time so they get the latest one. If not, they will probably get into the same situation again until
+                    // it finally succeeds. Alternatively, the object will be reported unobtainable, but at least it won't return
+                    // some other object.
+                    let next_generation = current_generation + 1;
+                    Self::set_slot_to_index(&objects_directory, slot, index_path, mtime, next_generation);
                     Some(false)
                 } else {
                     // A valid slot, taken by another file, keep looking
@@ -317,7 +316,14 @@ impl super::Store {
             }
             None => {
                 // an entirely unused (or deleted) slot, free to take.
-                Self::assure_slot_matches_index(&objects_directory, slot, index_path, mtime, true /*may init*/);
+                Self::assure_slot_matches_index(
+                    &objects_directory,
+                    slot,
+                    index_path,
+                    mtime,
+                    current_generation,
+                    true, /*may init*/
+                );
                 Some(true)
             }
         }
@@ -331,6 +337,7 @@ impl super::Store {
         dest_slot: &MutableIndexAndPack,
         index_path: PathBuf,
         mtime: SystemTime,
+        current_generation: Generation,
         needs_stable_indices: bool,
     ) -> Option<bool> {
         match &**dest_slot.files.load() {
@@ -351,6 +358,7 @@ impl super::Store {
         slot: &MutableIndexAndPack,
         index_path: PathBuf,
         mtime: SystemTime,
+        current_generation: Generation,
     ) {
         let _lock = slot.write.lock();
         let mut files = slot.files.load_full();
@@ -359,11 +367,13 @@ impl super::Store {
         slot.files.store(files);
     }
 
+    /// Returns Some(true) if the slot was empty, or Some(false) if it was collected
     fn assure_slot_matches_index(
         lock: &parking_lot::MutexGuard<'_, PathBuf>,
         slot: &MutableIndexAndPack,
         index_path: PathBuf,
         mtime: SystemTime,
+        current_generation: Generation,
         may_init: bool,
     ) {
         match Option::as_ref(&slot.files.load()) {
@@ -384,6 +394,8 @@ impl super::Store {
                         .as_mut()
                         .expect("BUG: cannot change from something to nothing, would be race")
                         .put_back();
+                    // Safety: can't race as we hold the lock.
+                    slot.generation.store(current_generation, Ordering::SeqCst);
                     slot.files.store(files);
                 }
             }
@@ -397,6 +409,8 @@ impl super::Store {
                         "BUG: There must be no race between us checking and obtaining a lock."
                     );
                     *files_mut = IndexAndPacks::new_by_index_path(index_path, mtime).into();
+                    // Safety: can't race as we hold the lock.
+                    slot.generation.store(current_generation, Ordering::SeqCst);
                     slot.files.store(files);
                 } else {
                     unreachable!("BUG: a slot can never be deleted if we have it recorded in the index WHILE changing said index. There shouldn't be a race")
