@@ -21,7 +21,13 @@ pub(crate) enum Outcome {
     /// the caller can continue searching the added indices and loose-dbs.
     /// Or in other words, new indices were only added to the known list, and what was seen before is known not to have changed.
     /// Besides that, the full internal state can be replaced as with `Replace`.
-    ReplaceStable(Snapshot),
+    ReplaceStable {
+        snapshot: Snapshot,
+        /// The index into Snapshot::indices from which to continue the search, avoiding to unnecessarily search through unchanged
+        /// indices again. The new indices are <all existing ones> - <removed ones> + <added ones>
+        /// The index _can_ be past the end of the indices vector, which indicates that no new indices were added.
+        continue_at_index: usize,
+    },
 }
 
 pub(crate) struct Snapshot {
@@ -48,6 +54,8 @@ mod error {
         Io(#[from] std::io::Error),
         #[error(transparent)]
         Alternate(#[from] crate::alternate::Error),
+        #[error("The slotmap turned out to be too small with {} entries, would need {} more", .current, .needed)]
+        InsufficientSlots { current: usize, needed: usize },
     }
 }
 
@@ -162,7 +170,7 @@ impl super::Store {
             })
             .collect();
 
-        let mut slot_map_indices = Vec::new(); // these indices into the slot map still exist there/didn't change
+        let mut new_slot_map_indices = Vec::new(); // these indices into the slot map still exist there/didn't change
         let mut index_paths_to_add = was_uninitialized
             .then(|| VecDeque::with_capacity(indices_by_modification_time.len()))
             .unwrap_or_default();
@@ -170,60 +178,89 @@ impl super::Store {
             match idx_by_index_path.remove(&index_path) {
                 Some(slot_idx) => {
                     let slot = &self.files[slot_idx];
-                    Self::assure_slot_for_path(&objects_directory, slot, index_path, false /*allow init*/)?;
-                    slot_map_indices.push(slot_idx);
+                    Self::assure_slot_matches_index(&objects_directory, slot, index_path, false /*allow init*/);
+                    new_slot_map_indices.push(slot_idx);
                 }
                 None => index_paths_to_add.push_back(index_path),
             }
         }
-
+        let continue_at_index = new_slot_map_indices.len();
         let needs_stable_indices = self.maintain_stable_indices(&objects_directory);
+
         let mut next_possibly_free_index = index
             .slot_indices
             .iter()
             .max()
             .map(|idx| (idx + 1) % self.files.len())
             .unwrap_or(0);
+        let mut num_indices_checked = 0;
+        let mut needs_generation_change = false;
         while let Some(index_path) = index_paths_to_add.pop_front() {
-            let slot = &self.files[next_possibly_free_index];
-            next_possibly_free_index += 1;
-            if next_possibly_free_index == self.files.len() {
-                break;
-            }
-            // This isn't racy as it's only us who can change the Option::Some/None state of a slot.
-            match &**slot.files.load() {
-                Some(bundle) => {
-                    if bundle.index_path() != index_path {
-                        if !needs_stable_indices && bundle.is_garbage() {
-                            todo!("")
+            'increment_slots: loop {
+                if num_indices_checked == self.files.len() {
+                    return Err(Error::InsufficientSlots {
+                        current: self.files.len(),
+                        needed: index_paths_to_add.len() + 1,
+                        /*the one currently popped off*/
+                    });
+                }
+                let slot_index = next_possibly_free_index;
+                let slot = &self.files[slot_index];
+                next_possibly_free_index = (next_possibly_free_index + 1) % self.files.len();
+                num_indices_checked += 1;
+                // This isn't racy as it's only us who can change the Option::Some/None state of a slot.
+                match &**slot.files.load() {
+                    Some(bundle) => {
+                        assert_ne!(
+                            bundle.index_path(),
+                            index_path,
+                            "BUG: we cannot coincidentally find another file of the same name"
+                        );
+                        if !needs_stable_indices && bundle.is_disposable() {
+                            Self::set_slot_to_index(&objects_directory, slot, index_path);
+                            new_slot_map_indices.push(slot_index);
+                            // To avoid handling out the wrong pack (due to reassigned pack ids), declare this a new generation.
+                            needs_generation_change = true;
                         } else {
-                            // A valid slot, taken by another file
+                            // A valid slot, taken by another file, keep looking
                             continue;
                         }
                     }
-                    unreachable!("BUG: we cannot coincidentally find another file of the same name")
-                }
-                None => {
-                    Self::assure_slot_for_path(&objects_directory, slot, index_path.clone(), true /*may init*/)?;
+                    None => {
+                        Self::assure_slot_matches_index(&objects_directory, slot, index_path, true /*may init*/);
+                        new_slot_map_indices.push(slot_index);
+                        break 'increment_slots;
+                    }
                 }
             }
         }
+        assert_eq!(
+            index_paths_to_add.len(),
+            0,
+            "By this time we have assigned all new files to slots"
+        );
 
         // deleted items - remove their slots AFTER we have set the new index if we may alter indices, otherwise we only declare them garbage.
         // removing slots may cause pack loading to fail, and they will then reload their indices.
         for (index_path, slot_idx) in idx_by_index_path {}
 
-        // if index_paths_to_add
-
         todo!("consolidate")
     }
 
-    fn assure_slot_for_path(
+    fn set_slot_to_index(lock: &parking_lot::MutexGuard<'_, PathBuf>, slot: &MutableIndexAndPack, index_path: PathBuf) {
+        let _lock = slot.write.lock();
+        let mut files = slot.files.load_full();
+        let files_mut = Arc::make_mut(&mut files);
+        *files_mut = Some(IndexAndPacks::new_by_index_path(index_path));
+        slot.files.store(files);
+    }
+
+    fn assure_slot_matches_index(
         lock: &parking_lot::MutexGuard<'_, PathBuf>,
         slot: &MutableIndexAndPack,
         index_path: PathBuf,
         may_init: bool,
-    ) -> Result<(), Error> {
+    ) {
         match Option::as_ref(&slot.files.load()) {
             Some(bundle) => {
                 assert_eq!(
@@ -231,9 +268,19 @@ impl super::Store {
                     index_path,
                     "Parallel writers cannot change the file the slot points to."
                 );
-                // TODO: put it into the correct mode, it's now available for sure so should not be missing or garbage.
-                // The latter can happen if files are removed and put back for some reason, but we should definitely
-                // have them in a decent state now that we know/think they are there.
+                if bundle.is_disposable() {
+                    // put it into the correct mode, it's now available for sure so should not be missing or garbage.
+                    // The latter can happen if files are removed and put back for some reason, but we should definitely
+                    // have them in a decent state now that we know/think they are there.
+                    let _lock = slot.write.lock();
+                    let mut files = slot.files.load_full();
+                    let files_mut = Arc::make_mut(&mut files);
+                    files_mut
+                        .as_mut()
+                        .expect("BUG: cannot change from something to nothing, would be race")
+                        .put_back();
+                    slot.files.store(files);
+                }
             }
             None => {
                 if may_init {
@@ -244,19 +291,13 @@ impl super::Store {
                         files_mut.is_none(),
                         "BUG: There must be no race between us checking and obtaining a lock."
                     );
-                    *files_mut = if index_path.extension() == Some(OsStr::new("idx")) {
-                        IndexAndPacks::new_single(index_path)
-                    } else {
-                        IndexAndPacks::new_multi(index_path)
-                    }
-                    .into();
+                    *files_mut = IndexAndPacks::new_by_index_path(index_path).into();
                     slot.files.store(files);
                 } else {
                     unreachable!("BUG: a slot can never be deleted if we have it recorded in the index WHILE changing said index. There shouldn't be a race")
                 }
             }
         }
-        Ok(())
     }
 
     /// Stability means that indices returned by this API will remain valid.

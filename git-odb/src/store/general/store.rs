@@ -1,3 +1,4 @@
+use std::ffi::OsStr;
 use std::{
     ops::BitXor,
     path::{Path, PathBuf},
@@ -107,7 +108,7 @@ impl<T: Clone> OnDiskFile<T> {
     }
 
     /// Return true if we are to be collected as garbage
-    pub fn is_garbage(&self) -> bool {
+    pub fn is_disposable(&self) -> bool {
         matches!(self.state, OnDiskFileState::Garbage(_) | OnDiskFileState::Missing)
     }
 
@@ -116,6 +117,14 @@ impl<T: Clone> OnDiskFile<T> {
         match &self.state {
             Loaded(v) | Garbage(v) => Some(v),
             Unloaded | Missing => None,
+        }
+    }
+
+    pub fn put_back(&mut self) {
+        match std::mem::replace(&mut self.state, OnDiskFileState::Missing) {
+            OnDiskFileState::Garbage(v) => self.state = OnDiskFileState::Loaded(v),
+            OnDiskFileState::Missing => self.state = OnDiskFileState::Unloaded,
+            other @ (OnDiskFileState::Loaded(_) | OnDiskFileState::Unloaded) => self.state = other,
         }
     }
 
@@ -171,28 +180,40 @@ impl IndexAndPacks {
         }
     }
 
-    pub(crate) fn is_garbage(&self) -> bool {
+    /// If we are garbaged, put ourselve into the loaded state. Otherwise put ourselves back to unloaded.
+    pub(crate) fn put_back(&mut self) {
         match self {
-            Self::Index(bundle) => bundle.index.is_garbage() || bundle.data.is_garbage(),
-            Self::MultiIndex(bundle) => {
-                bundle.multi_index.is_garbage() || bundle.data.iter().any(|odf| odf.is_garbage())
+            IndexAndPacks::Index(bundle) => {
+                bundle.index.put_back();
+                bundle.data.put_back();
+            }
+            IndexAndPacks::MultiIndex(bundle) => {
+                bundle.multi_index.put_back();
+                for data in &mut bundle.data {
+                    data.put_back();
+                }
             }
         }
     }
 
-    pub(crate) fn new_multi(index_path: PathBuf) -> Self {
-        Self::MultiIndex(MultiIndexFileBundle {
-            multi_index: OnDiskFile {
-                path: Arc::new(index_path),
-                state: OnDiskFileState::Unloaded,
-            },
-            data: todo!(
-                "figure we actually have to map it here or find a way to learn about the data files in advance."
-            ),
-        })
+    pub(crate) fn is_disposable(&self) -> bool {
+        match self {
+            Self::Index(bundle) => bundle.index.is_disposable() || bundle.data.is_disposable(),
+            Self::MultiIndex(bundle) => {
+                bundle.multi_index.is_disposable() || bundle.data.iter().any(|odf| odf.is_disposable())
+            }
+        }
     }
 
-    pub(crate) fn new_single(index_path: PathBuf) -> Self {
+    pub(crate) fn new_by_index_path(index_path: PathBuf) -> Self {
+        if index_path.extension() == Some(OsStr::new("idx")) {
+            IndexAndPacks::new_single(index_path)
+        } else {
+            IndexAndPacks::new_multi(index_path)
+        }
+    }
+
+    fn new_single(index_path: PathBuf) -> Self {
         let data_path = index_path.with_extension("pack");
         Self::Index(IndexFileBundle {
             index: OnDiskFile {
@@ -203,6 +224,18 @@ impl IndexAndPacks {
                 path: Arc::new(data_path),
                 state: OnDiskFileState::Unloaded,
             },
+        })
+    }
+
+    fn new_multi(index_path: PathBuf) -> Self {
+        Self::MultiIndex(MultiIndexFileBundle {
+            multi_index: OnDiskFile {
+                path: Arc::new(index_path),
+                state: OnDiskFileState::Unloaded,
+            },
+            data: todo!(
+                "figure we actually have to map it here or find a way to learn about the data files in advance."
+            ),
         })
     }
 }
