@@ -209,6 +209,13 @@ impl IndexAndPacks {
         }
     }
 
+    pub(crate) fn index_is_loaded(&self) -> bool {
+        match self {
+            Self::Index(bundle) => bundle.index.is_loaded(),
+            Self::MultiIndex(bundle) => bundle.multi_index.is_loaded(),
+        }
+    }
+
     pub(crate) fn is_disposable(&self) -> bool {
         match self {
             Self::Index(bundle) => bundle.index.is_disposable() || bundle.data.is_disposable(),

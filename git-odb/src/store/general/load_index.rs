@@ -1,9 +1,11 @@
 use arc_swap::access::Access;
+use arc_swap::ArcSwap;
 use parking_lot::lock_api::MutexGuard;
 use parking_lot::RawMutex;
 use std::collections::{BTreeMap, VecDeque};
 use std::ffi::OsStr;
 use std::path::Path;
+use std::sync::atomic::AtomicUsize;
 use std::time::SystemTime;
 use std::{
     path::PathBuf,
@@ -54,11 +56,19 @@ mod error {
         Alternate(#[from] crate::alternate::Error),
         #[error("The slotmap turned out to be too small with {} entries, would need {} more", .current, .needed)]
         InsufficientSlots { current: usize, needed: usize },
+        /// The problem here is that some logic assumes that more recent generations are higher than previous ones. If we would overflow,
+        /// we would break that invariant which can lead to the wrong object from being returned. It would probably be super rare, but…
+        /// let's not risk it.
+        #[error(
+            "Would have overflown amount of max possible generations of {}",
+            super::Generation::MAX
+        )]
+        GenerationOverflow,
     }
 }
 
 use crate::general::store::{
-    Generation, IndexAndPacks, MultiIndexFileBundle, MutableIndexAndPack, OnDiskFile, OnDiskFileState,
+    Generation, IndexAndPacks, MultiIndexFileBundle, MutableIndexAndPack, OnDiskFile, OnDiskFileState, SlotMapIndex,
 };
 pub use error::Error;
 
@@ -171,6 +181,8 @@ impl super::Store {
         let mut index_paths_to_add = was_uninitialized
             .then(|| VecDeque::with_capacity(indices_by_modification_time.len()))
             .unwrap_or_default();
+
+        let mut num_loaded_indices = 0;
         for (index_path, mtime) in indices_by_modification_time.into_iter() {
             match idx_by_index_path.remove(&index_path) {
                 Some(slot_idx) => {
@@ -178,30 +190,38 @@ impl super::Store {
                     if is_multipack_index(&index_path)
                         && Option::as_ref(&slot.files.load())
                             .map(|b| b.mtime() != mtime)
-                            .unwrap_or(false)
+                            .expect("slot is set or we wouldn't know it points to this file")
                     {
                         // we have a changed multi-pack index. We can't just change the existing slot as it may alter slot indices
                         // that are currently available. Instead we have to move what's there into a new slot, along with the changes,
                         // and later free the slot or dispose of the index in the slot (like we do for removed/missing files).
-                        index_paths_to_add.push_back((index_path, mtime, Some(slot_idx)))
+                        index_paths_to_add.push_back((index_path, mtime, Some(slot_idx)));
+                        // If the current slot is loaded, the soon-to-be copied multi-index path will be loaded as well.
+                        if Option::as_ref(&slot.files.load())
+                            .map(|f| f.index_is_loaded())
+                            .expect("slot is set - see above")
+                        {
+                            num_loaded_indices += 1;
+                        }
                     } else {
                         // packs and indices are immutable, so no need to check modification times. Unchanged multi-pack indices also
                         // are handled like this.
-                        Self::assure_slot_matches_index(
+                        if Self::assure_slot_matches_index(
                             &objects_directory,
                             slot,
                             index_path,
                             mtime,
                             index.generation,
                             false, /*allow init*/
-                        );
+                        ) {
+                            num_loaded_indices += 1;
+                        }
                         new_slot_map_indices.push(slot_idx);
                     }
                 }
                 None => index_paths_to_add.push_back((index_path, mtime, None)),
             }
         }
-        let continue_at_index = new_slot_map_indices.len();
         let needs_stable_indices = self.maintain_stable_indices(&objects_directory);
 
         let mut next_possibly_free_index = index
@@ -272,6 +292,38 @@ impl super::Store {
             0,
             "By this time we have assigned all new files to slots"
         );
+
+        let generation = if needs_generation_change {
+            index
+                .generation
+                .checked_add(1)
+                .ok_or_else(|| Error::GenerationOverflow)?
+        } else {
+            index.generation
+        };
+        let index_unchanged = index.slot_indices == new_slot_map_indices;
+        if generation != index.generation {
+            assert!(
+                !index_unchanged,
+                "if the generation changed, the slot index must have changed for sure"
+            );
+        }
+        if !index_unchanged || loose_dbs != index.loose_dbs {
+            let new_index = Arc::new(SlotMapIndex {
+                slot_indices: new_slot_map_indices,
+                loose_dbs,
+                generation,
+                // if there was a prior generation, some indices might already be loaded. But we deal with it by trying to load the next index then,
+                // until we find one.
+                next_index_to_load: index_unchanged
+                    .then(|| Arc::clone(&index.next_index_to_load))
+                    .unwrap_or_default(),
+                loaded_indices: index_unchanged
+                    .then(|| Arc::clone(&index.loaded_indices))
+                    .unwrap_or_else(|| Arc::new(num_loaded_indices.into())),
+            });
+            self.index.store(new_index);
+        }
 
         // deleted items - remove their slots AFTER we have set the new index if we may alter indices, otherwise we only declare them garbage.
         // removing slots may cause pack loading to fail, and they will then reload their indices.
@@ -367,7 +419,7 @@ impl super::Store {
         slot.files.store(files);
     }
 
-    /// Returns Some(true) if the slot was empty, or Some(false) if it was collected
+    /// Returns true if the index was loaded.
     fn assure_slot_matches_index(
         lock: &parking_lot::MutexGuard<'_, PathBuf>,
         slot: &MutableIndexAndPack,
@@ -375,7 +427,7 @@ impl super::Store {
         mtime: SystemTime,
         current_generation: Generation,
         may_init: bool,
-    ) {
+    ) -> bool {
         match Option::as_ref(&slot.files.load()) {
             Some(bundle) => {
                 assert_eq!(
@@ -397,7 +449,10 @@ impl super::Store {
                     // Safety: can't race as we hold the lock.
                     slot.generation.store(current_generation, Ordering::SeqCst);
                     slot.files.store(files);
+                } else {
+                    // it's already in the correct state, either loaded or unloaded.
                 }
+                bundle.index_is_loaded()
             }
             None => {
                 if may_init {
@@ -412,6 +467,7 @@ impl super::Store {
                     // Safety: can't race as we hold the lock.
                     slot.generation.store(current_generation, Ordering::SeqCst);
                     slot.files.store(files);
+                    false
                 } else {
                     unreachable!("BUG: a slot can never be deleted if we have it recorded in the index WHILE changing said index. There shouldn't be a race")
                 }

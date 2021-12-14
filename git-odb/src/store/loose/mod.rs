@@ -3,7 +3,7 @@ const HEADER_READ_UNCOMPRESSED_BYTES: usize = 512;
 use std::path::PathBuf;
 
 /// A database for reading and writing objects to disk, one file per object.
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Store {
     /// The directory in which objects are stored, containing 256 folders representing the hashes first byte.
     pub path: PathBuf,
