@@ -184,7 +184,7 @@ impl super::Store {
                         // we have a changed multi-pack index. We can't just change the existing slot as it may alter slot indices
                         // that are currently available. Instead we have to move what's there into a new slot, along with the changes,
                         // and later free the slot or dispose of the index in the slot (like we do for removed/missing files).
-                        todo!()
+                        index_paths_to_add.push_back((index_path, mtime, Some(slot_idx)))
                     } else {
                         // packs and indices are immutable, so no need to check modification times. Unchanged multi-pack indices also
                         // are handled like this.
@@ -198,7 +198,7 @@ impl super::Store {
                         new_slot_map_indices.push(slot_idx);
                     }
                 }
-                None => index_paths_to_add.push_back((index_path, mtime)),
+                None => index_paths_to_add.push_back((index_path, mtime, None)),
             }
         }
         let continue_at_index = new_slot_map_indices.len();
@@ -213,7 +213,7 @@ impl super::Store {
         let mut num_indices_checked = 0;
         let mut needs_generation_change = false;
         let mut slot_indices_to_remove: Vec<_> = idx_by_index_path.into_values().collect();
-        while let Some((index_path, mtime)) = index_paths_to_add.pop_front() {
+        while let Some((index_path, mtime, move_from_slot_idx)) = index_paths_to_add.pop_front() {
             'increment_slot_index: loop {
                 if num_indices_checked == self.files.len() {
                     return Err(Error::InsufficientSlots {
@@ -229,15 +229,38 @@ impl super::Store {
                 // This isn't racy as it's only us who can change the Option::Some/None state of a slot.
                 match &**slot.files.load() {
                     Some(bundle) => {
+                        if is_multipack_index(&index_path) && bundle.index_path() == index_path {
+                            // it's possible to see ourselves in case all slots are taken, but there are still a few more to look for.
+                            // This can only happen for multi-pack indices which are mutable in place.
+                            continue;
+                        }
                         assert_ne!(
                             bundle.index_path(),
                             index_path,
-                            "BUG: we cannot coincidentally find another file of the same name"
+                            "BUG: an index of the same path must have been handled already"
                         );
                         if !needs_stable_indices && bundle.is_disposable() {
-                            Self::set_slot_to_index(&objects_directory, slot, index_path, mtime);
-                            new_slot_map_indices.push(slot_index);
-                            // To avoid handling out the wrong pack (due to reassigned pack ids), declare this a new generation.
+                            match move_from_slot_idx {
+                                Some(move_from_slot_idx) => {
+                                    assert_ne!(
+                                        move_from_slot_idx, slot_index,
+                                        "BUG: we can't have existed, and not exist anymore as this isn't racy"
+                                    );
+                                    self.copy_multi_pack_index(
+                                        &objects_directory,
+                                        move_from_slot_idx,
+                                        slot,
+                                        index_path,
+                                        mtime,
+                                    );
+                                    slot_indices_to_remove.push(move_from_slot_idx);
+                                }
+                                None => {
+                                    Self::set_slot_to_index(&objects_directory, slot, index_path, mtime);
+                                    new_slot_map_indices.push(slot_index);
+                                    // To avoid handling out the wrong pack (due to reassigned pack ids), declare this a new generation.
+                                }
+                            }
                             needs_generation_change = true;
                             break 'increment_slot_index;
                         } else {
@@ -246,13 +269,32 @@ impl super::Store {
                         }
                     }
                     None => {
-                        Self::assure_slot_matches_index(
-                            &objects_directory,
-                            slot,
-                            index_path,
-                            mtime,
-                            true, /*may init*/
-                        );
+                        // an entirely unused (or deleted) slot, free to take.
+                        match move_from_slot_idx {
+                            Some(move_from_slot_idx) => {
+                                assert_ne!(
+                                    move_from_slot_idx, slot_index,
+                                    "BUG: we can't have existed, and not exist anymore as this isn't racy"
+                                );
+                                self.copy_multi_pack_index(
+                                    &objects_directory,
+                                    move_from_slot_idx,
+                                    slot,
+                                    index_path,
+                                    mtime,
+                                );
+                                slot_indices_to_remove.push(move_from_slot_idx);
+                            }
+                            None => {
+                                Self::assure_slot_matches_index(
+                                    &objects_directory,
+                                    slot,
+                                    index_path,
+                                    mtime,
+                                    true, /*may init*/
+                                );
+                            }
+                        }
                         new_slot_map_indices.push(slot_index);
                         break 'increment_slot_index;
                     }
@@ -270,6 +312,17 @@ impl super::Store {
         for slot_idx in slot_indices_to_remove {}
 
         todo!("consolidate")
+    }
+
+    fn copy_multi_pack_index(
+        &self,
+        lock: &parking_lot::MutexGuard<'_, PathBuf>,
+        from_slot_idx: usize,
+        dest_slot: &MutableIndexAndPack,
+        index_path: PathBuf,
+        mtime: SystemTime,
+    ) {
+        todo!("copy/clone resources over, but leave the original alone for now")
     }
 
     fn set_slot_to_index(
