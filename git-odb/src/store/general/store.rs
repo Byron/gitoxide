@@ -1,4 +1,5 @@
 use std::ffi::OsStr;
+use std::time::SystemTime;
 use std::{
     ops::BitXor,
     path::{Path, PathBuf},
@@ -85,6 +86,8 @@ impl SlotMapIndex {
 pub(crate) struct OnDiskFile<T: Clone> {
     /// The last known path of the file
     path: Arc<PathBuf>,
+    /// the time the file was last modified
+    mtime: SystemTime,
     state: OnDiskFileState<T>,
 }
 
@@ -180,6 +183,13 @@ impl IndexAndPacks {
         }
     }
 
+    pub(crate) fn mtime(&self) -> SystemTime {
+        match self {
+            IndexAndPacks::Index(index) => index.index.mtime,
+            IndexAndPacks::MultiIndex(index) => index.multi_index.mtime,
+        }
+    }
+
     /// If we are garbaged, put ourselve into the loaded state. Otherwise put ourselves back to unloaded.
     pub(crate) fn put_back(&mut self) {
         match self {
@@ -205,33 +215,36 @@ impl IndexAndPacks {
         }
     }
 
-    pub(crate) fn new_by_index_path(index_path: PathBuf) -> Self {
+    pub(crate) fn new_by_index_path(index_path: PathBuf, mtime: SystemTime) -> Self {
         if index_path.extension() == Some(OsStr::new("idx")) {
-            IndexAndPacks::new_single(index_path)
+            IndexAndPacks::new_single(index_path, mtime)
         } else {
-            IndexAndPacks::new_multi(index_path)
+            IndexAndPacks::new_multi(index_path, mtime)
         }
     }
 
-    fn new_single(index_path: PathBuf) -> Self {
+    fn new_single(index_path: PathBuf, mtime: SystemTime) -> Self {
         let data_path = index_path.with_extension("pack");
         Self::Index(IndexFileBundle {
             index: OnDiskFile {
                 path: Arc::new(index_path),
                 state: OnDiskFileState::Unloaded,
+                mtime,
             },
             data: OnDiskFile {
                 path: Arc::new(data_path),
                 state: OnDiskFileState::Unloaded,
+                mtime,
             },
         })
     }
 
-    fn new_multi(index_path: PathBuf) -> Self {
+    fn new_multi(index_path: PathBuf, mtime: SystemTime) -> Self {
         Self::MultiIndex(MultiIndexFileBundle {
             multi_index: OnDiskFile {
                 path: Arc::new(index_path),
                 state: OnDiskFileState::Unloaded,
+                mtime,
             },
             data: todo!(
                 "figure we actually have to map it here or find a way to learn about the data files in advance."

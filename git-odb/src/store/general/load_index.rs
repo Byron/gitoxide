@@ -2,6 +2,7 @@ use arc_swap::access::Access;
 use std::collections::{BTreeMap, VecDeque};
 use std::ffi::OsStr;
 use std::path::Path;
+use std::time::SystemTime;
 use std::{
     path::PathBuf,
     sync::{atomic::Ordering, Arc},
@@ -18,16 +19,11 @@ pub(crate) enum Outcome {
     /// indices and maps to be dropped.
     Replace(Snapshot),
     /// Despite all values being full copies, indices are still compatible to what was before. This also means
-    /// the caller can continue searching the added indices and loose-dbs.
+    /// the caller can continue searching the added indices and loose-dbs, provided they find the last matching
+    /// one.
     /// Or in other words, new indices were only added to the known list, and what was seen before is known not to have changed.
     /// Besides that, the full internal state can be replaced as with `Replace`.
-    ReplaceStable {
-        snapshot: Snapshot,
-        /// The index into Snapshot::indices from which to continue the search, avoiding to unnecessarily search through unchanged
-        /// indices again. The new indices are <all existing ones> - <removed ones> + <added ones>
-        /// The index _can_ be past the end of the indices vector, which indicates that no new indices were added.
-        continue_at_index: usize,
-    },
+    ReplaceStable(Snapshot),
 }
 
 pub(crate) struct Snapshot {
@@ -100,7 +96,7 @@ impl super::Store {
     /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
     fn consolidate_with_disk_state(&self) -> Result<Option<Outcome>, Error> {
         let index = self.index.load();
-        let index_state = Arc::as_ptr(&index) as usize;
+        let previous_index_state = Arc::as_ptr(&index) as usize;
         let previous_generation = index.generation;
 
         // IMPORTANT: get a lock after we recorded the previous state.
@@ -108,7 +104,7 @@ impl super::Store {
 
         // Now we know the index isn't going to change anymore, even though threads might still load indices in the meantime.
         let index = self.index.load();
-        if index_state != Arc::as_ptr(&index) as usize {
+        if previous_index_state != Arc::as_ptr(&index) as usize {
             // Someone else took the look before and changed the index. Return it without doing any additional work.
             return Ok(Some(
                 self.collect_replace_outcome(index.generation == previous_generation),
@@ -135,6 +131,9 @@ impl super::Store {
         };
 
         // Outside of this method we will never assign new slot indices.
+        fn is_multipack_index(path: &Path) -> bool {
+            path.file_name() == Some(OsStr::new("multi-pack-index"))
+        }
         let mut indices_by_modification_time = Vec::with_capacity(index.slot_indices.len());
         for db_path in db_paths {
             let packs = db_path.join("pack");
@@ -150,10 +149,9 @@ impl super::Store {
                     .filter(|(_, md)| md.file_type().is_file())
                     .filter(|(p, _)| {
                         let ext = p.extension();
-                        ext == Some(OsStr::new("idx"))
-                            || (ext.is_none() && p.file_name() == Some(OsStr::new("multi-pack-index")))
+                        ext == Some(OsStr::new("idx")) || (ext.is_none() && is_multipack_index(p))
                     })
-                    .map(|(p, md)| md.modified().map_err(Error::from).map(|mod_time| (p, mod_time)))
+                    .map(|(p, md)| md.modified().map_err(Error::from).map(|mtime| (p, mtime)))
                     .collect::<Result<Vec<_>, _>>()?,
             );
         }
@@ -174,14 +172,33 @@ impl super::Store {
         let mut index_paths_to_add = was_uninitialized
             .then(|| VecDeque::with_capacity(indices_by_modification_time.len()))
             .unwrap_or_default();
-        for index_path in indices_by_modification_time.into_iter().map(|(p, _mtime)| p) {
+        for (index_path, mtime) in indices_by_modification_time.into_iter() {
             match idx_by_index_path.remove(&index_path) {
                 Some(slot_idx) => {
                     let slot = &self.files[slot_idx];
-                    Self::assure_slot_matches_index(&objects_directory, slot, index_path, false /*allow init*/);
-                    new_slot_map_indices.push(slot_idx);
+                    if is_multipack_index(&index_path)
+                        && Option::as_ref(&slot.files.load())
+                            .map(|b| b.mtime() != mtime)
+                            .unwrap_or(false)
+                    {
+                        // we have a changed multi-pack index. We can't just change the existing slot as it may alter slot indices
+                        // that are currently available. Instead we have to move what's there into a new slot, along with the changes,
+                        // and later free the slot or dispose of the index in the slot (like we do for removed/missing files).
+                        todo!()
+                    } else {
+                        // packs and indices are immutable, so no need to check modification times. Unchanged multi-pack indices also
+                        // are handled like this.
+                        Self::assure_slot_matches_index(
+                            &objects_directory,
+                            slot,
+                            index_path,
+                            mtime,
+                            false, /*allow init*/
+                        );
+                        new_slot_map_indices.push(slot_idx);
+                    }
                 }
-                None => index_paths_to_add.push_back(index_path),
+                None => index_paths_to_add.push_back((index_path, mtime)),
             }
         }
         let continue_at_index = new_slot_map_indices.len();
@@ -195,8 +212,9 @@ impl super::Store {
             .unwrap_or(0);
         let mut num_indices_checked = 0;
         let mut needs_generation_change = false;
-        while let Some(index_path) = index_paths_to_add.pop_front() {
-            'increment_slots: loop {
+        let mut slot_indices_to_remove: Vec<_> = idx_by_index_path.into_values().collect();
+        while let Some((index_path, mtime)) = index_paths_to_add.pop_front() {
+            'increment_slot_index: loop {
                 if num_indices_checked == self.files.len() {
                     return Err(Error::InsufficientSlots {
                         current: self.files.len(),
@@ -217,19 +235,26 @@ impl super::Store {
                             "BUG: we cannot coincidentally find another file of the same name"
                         );
                         if !needs_stable_indices && bundle.is_disposable() {
-                            Self::set_slot_to_index(&objects_directory, slot, index_path);
+                            Self::set_slot_to_index(&objects_directory, slot, index_path, mtime);
                             new_slot_map_indices.push(slot_index);
                             // To avoid handling out the wrong pack (due to reassigned pack ids), declare this a new generation.
                             needs_generation_change = true;
+                            break 'increment_slot_index;
                         } else {
                             // A valid slot, taken by another file, keep looking
                             continue;
                         }
                     }
                     None => {
-                        Self::assure_slot_matches_index(&objects_directory, slot, index_path, true /*may init*/);
+                        Self::assure_slot_matches_index(
+                            &objects_directory,
+                            slot,
+                            index_path,
+                            mtime,
+                            true, /*may init*/
+                        );
                         new_slot_map_indices.push(slot_index);
-                        break 'increment_slots;
+                        break 'increment_slot_index;
                     }
                 }
             }
@@ -242,16 +267,21 @@ impl super::Store {
 
         // deleted items - remove their slots AFTER we have set the new index if we may alter indices, otherwise we only declare them garbage.
         // removing slots may cause pack loading to fail, and they will then reload their indices.
-        for (index_path, slot_idx) in idx_by_index_path {}
+        for slot_idx in slot_indices_to_remove {}
 
         todo!("consolidate")
     }
 
-    fn set_slot_to_index(lock: &parking_lot::MutexGuard<'_, PathBuf>, slot: &MutableIndexAndPack, index_path: PathBuf) {
+    fn set_slot_to_index(
+        lock: &parking_lot::MutexGuard<'_, PathBuf>,
+        slot: &MutableIndexAndPack,
+        index_path: PathBuf,
+        mtime: SystemTime,
+    ) {
         let _lock = slot.write.lock();
         let mut files = slot.files.load_full();
         let files_mut = Arc::make_mut(&mut files);
-        *files_mut = Some(IndexAndPacks::new_by_index_path(index_path));
+        *files_mut = Some(IndexAndPacks::new_by_index_path(index_path, mtime));
         slot.files.store(files);
     }
 
@@ -259,6 +289,7 @@ impl super::Store {
         lock: &parking_lot::MutexGuard<'_, PathBuf>,
         slot: &MutableIndexAndPack,
         index_path: PathBuf,
+        mtime: SystemTime,
         may_init: bool,
     ) {
         match Option::as_ref(&slot.files.load()) {
@@ -291,7 +322,7 @@ impl super::Store {
                         files_mut.is_none(),
                         "BUG: There must be no race between us checking and obtaining a lock."
                     );
-                    *files_mut = IndexAndPacks::new_by_index_path(index_path).into();
+                    *files_mut = IndexAndPacks::new_by_index_path(index_path, mtime).into();
                     slot.files.store(files);
                 } else {
                     unreachable!("BUG: a slot can never be deleted if we have it recorded in the index WHILE changing said index. There shouldn't be a race")
