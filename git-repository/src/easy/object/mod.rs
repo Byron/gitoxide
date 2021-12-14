@@ -14,63 +14,11 @@ pub(crate) mod cache {
     pub use git_pack::cache::object::MemoryCappedHashmap;
 }
 pub use errors::{conversion, find, write};
+///
+pub mod commit;
 mod impls;
 pub mod peel;
 mod tree;
-///
-pub mod commit {
-    use crate::easy::{Commit, Tree};
-
-    mod error {
-        use crate::easy::object;
-
-        #[derive(Debug, thiserror::Error)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            #[error(transparent)]
-            FindExistingObject(#[from] object::find::existing::OdbError),
-            #[error("The commit could not be decoded fully or partially")]
-            Decode,
-            #[error("Expected object of type {}, but got {}", .expected, .actual)]
-            ObjectKind {
-                expected: git_object::Kind,
-                actual: git_object::Kind,
-            },
-        }
-    }
-    use crate::bstr::BStr;
-    pub use error::Error;
-
-    impl<'repo> Commit<'repo> {
-        /// TODO: docs, tests
-        pub fn message(&self) -> Result<git_object::commit::MessageRef<'_>, git_object::decode::Error> {
-            Ok(self.decode()?.message())
-        }
-        /// TODO: docs, tests
-        pub fn message_raw(&self) -> Result<&'_ BStr, git_object::decode::Error> {
-            Ok(self.decode()?.message)
-        }
-
-        /// TODO: docs, tests
-        pub fn decode(&self) -> Result<git_object::CommitRef<'_>, git_object::decode::Error> {
-            git_object::CommitRef::from_bytes(&self.data)
-        }
-
-        /// Parse the commit and return the the tree it points to.
-        pub fn tree(&self) -> Result<Tree<'repo>, Error> {
-            let tree_id = git_object::CommitRefIter::from_bytes(&self.data)
-                .tree_id()
-                .ok_or_else(|| Error::Decode)?;
-            match self.handle.find_object(tree_id)?.try_into_tree() {
-                Ok(tree) => Ok(tree),
-                Err(obj) => Err(Error::ObjectKind {
-                    actual: obj.kind,
-                    expected: git_object::Kind::Tree,
-                }),
-            }
-        }
-    }
-}
 
 impl DetachedObject {
     /// Infuse this owned object with an [`easy::Handle`].
