@@ -1,4 +1,6 @@
 use arc_swap::access::Access;
+use parking_lot::lock_api::MutexGuard;
+use parking_lot::RawMutex;
 use std::collections::{BTreeMap, VecDeque};
 use std::ffi::OsStr;
 use std::path::Path;
@@ -130,10 +132,6 @@ impl super::Store {
             Arc::clone(&index.loose_dbs)
         };
 
-        // Outside of this method we will never assign new slot indices.
-        fn is_multipack_index(path: &Path) -> bool {
-            path.file_name() == Some(OsStr::new("multi-pack-index"))
-        }
         let mut indices_by_modification_time = Vec::with_capacity(index.slot_indices.len());
         for db_path in db_paths {
             let packs = db_path.join("pack");
@@ -229,7 +227,7 @@ impl super::Store {
                 match move_from_slot_idx {
                     Some(move_from_slot_idx) => {
                         debug_assert!(is_multipack_index(&index_path), "only set for multi-pack indices");
-                        if let Some(dest_was_empty) = self.copy_multi_pack_index(
+                        if let Some(dest_was_empty) = self.try_copy_multi_pack_index(
                             &objects_directory,
                             move_from_slot_idx,
                             slot,
@@ -254,40 +252,23 @@ impl super::Store {
                         }
                     }
                     None => {
-                        match &**slot.files.load() {
-                            Some(bundle) => {
-                                debug_assert!(
-                                    !is_multipack_index(&index_path),
-                                    "move slots are never set for normal indices"
-                                );
-                                assert_ne!(
-                                    bundle.index_path(),
-                                    index_path,
-                                    "BUG: an index of the same path must have been handled already"
-                                );
-                                if !needs_stable_indices && bundle.is_disposable() {
-                                    Self::set_slot_to_index(&objects_directory, slot, index_path, mtime);
-                                    new_slot_map_indices.push(slot_index);
-                                    // To avoid handling out the wrong pack (due to reassigned pack ids), declare this a new generation.
-                                    needs_generation_change = true;
-                                    break 'increment_slot_index;
-                                } else {
-                                    // A valid slot, taken by another file, keep looking
-                                    continue;
-                                }
+                        if let Some(dest_was_empty) = Self::try_set_single_index_slot(
+                            &objects_directory,
+                            slot,
+                            index_path.clone(),
+                            mtime,
+                            needs_stable_indices,
+                        ) {
+                            new_slot_map_indices.push(slot_index);
+                            if !dest_was_empty {
+                                // TODO: see not about raciness above. It applies here as well, even though there is a chance that it will
+                                //       never show as we usually delete slots only after setting the new index, or dispose of them
+                                //       if indices must remain stable.
+                                //       Only while they are disposable is there an option for a race, which could happen if there are
+                                //       new connections received that write new packs while maintenance merges packs into one.
+                                needs_generation_change = true;
                             }
-                            None => {
-                                // an entirely unused (or deleted) slot, free to take.
-                                Self::assure_slot_matches_index(
-                                    &objects_directory,
-                                    slot,
-                                    index_path,
-                                    mtime,
-                                    true, /*may init*/
-                                );
-                                new_slot_map_indices.push(slot_index);
-                                break 'increment_slot_index;
-                            }
+                            break 'increment_slot_index;
                         }
                     }
                 }
@@ -307,8 +288,43 @@ impl super::Store {
         todo!("consolidate")
     }
 
+    /// Returns Some(true) if the slot was empty, or Some(false) if it was collected
+    fn try_set_single_index_slot(
+        objects_directory: &parking_lot::MutexGuard<'_, PathBuf>,
+        slot: &MutableIndexAndPack,
+        index_path: PathBuf,
+        mtime: SystemTime,
+        needs_stable_indices: bool,
+    ) -> Option<bool> {
+        match &**slot.files.load() {
+            Some(bundle) => {
+                debug_assert!(
+                    !is_multipack_index(&index_path),
+                    "move slots are never set for normal indices"
+                );
+                assert_ne!(
+                    bundle.index_path(),
+                    index_path,
+                    "BUG: an index of the same path must have been handled already"
+                );
+                if !needs_stable_indices && bundle.is_disposable() {
+                    Self::set_slot_to_index(&objects_directory, slot, index_path, mtime);
+                    Some(false)
+                } else {
+                    // A valid slot, taken by another file, keep looking
+                    None
+                }
+            }
+            None => {
+                // an entirely unused (or deleted) slot, free to take.
+                Self::assure_slot_matches_index(&objects_directory, slot, index_path, mtime, true /*may init*/);
+                Some(true)
+            }
+        }
+    }
+
     // returns Some<dest slot was empty> if the copy could happen because dest-slot was actually free or disposable , and Some(true) if it was empty
-    fn copy_multi_pack_index(
+    fn try_copy_multi_pack_index(
         &self,
         lock: &parking_lot::MutexGuard<'_, PathBuf>,
         from_slot_idx: usize,
@@ -438,4 +454,9 @@ impl super::Store {
             Outcome::Replace(snapshot)
         }
     }
+}
+
+// Outside of this method we will never assign new slot indices.
+fn is_multipack_index(path: &Path) -> bool {
+    path.file_name() == Some(OsStr::new("multi-pack-index"))
 }
