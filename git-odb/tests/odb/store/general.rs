@@ -1,6 +1,6 @@
 #![allow(unused)]
 use git_features::threading::OwnShared;
-use git_odb::{general, Find, FindExt};
+use git_odb::{general, Find, FindExt, RefreshMode};
 use git_testtools::{fixture_path, hex_to_id};
 
 fn db() -> git_odb::Handle {
@@ -47,7 +47,7 @@ fn contains() {
 
     // pack, the smallest one
     // The new handle should make no difference.
-    let new_handle = handle.clone();
+    let mut new_handle = handle.clone();
     assert!(new_handle.contains(hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0")));
     assert_eq!(
         new_handle.inner.store().metrics(),
@@ -62,6 +62,39 @@ fn contains() {
             loose_dbs: 1
         },
         "when asking for an object in the smallest pack, all inbetween packs are also loaded."
+    );
+
+    assert!(!new_handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assert_eq!(
+        new_handle.inner.store().metrics(),
+        git_odb::general::store::Metrics {
+            num_handles: 2,
+            num_refreshes: 2,
+            open_indices: 3,
+            known_indices: 3,
+            open_packs: 0,
+            known_packs: 3,
+            unused_slots: 61,
+            loose_dbs: 1
+        },
+        "trigger refreshes each time there is an object miss"
+    );
+
+    new_handle.inner.refresh_mode = RefreshMode::Never;
+    assert!(!new_handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assert_eq!(
+        new_handle.inner.store().metrics(),
+        git_odb::general::store::Metrics {
+            num_handles: 2,
+            num_refreshes: 2,
+            open_indices: 3,
+            known_indices: 3,
+            open_packs: 0,
+            known_packs: 3,
+            unused_slots: 61,
+            loose_dbs: 1
+        },
+        "if no refreshes are allowed, there is no additional refresh"
     );
 }
 
