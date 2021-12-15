@@ -196,7 +196,7 @@ where
         }
         let (_, _, thread_count) = git::parallel::optimize_chunk_size_and_thread_limit(50, None, thread_limit, None);
         let progress = progress::ThroughputOnDrop::new(progress);
-        let mut handle = odb.to_handle_arc();
+        let mut handle = odb.to_cache_arc();
         {
             let per_thread_object_pack_size = pack_cache_size_in_bytes / thread_count;
             if per_thread_object_pack_size >= 10_000 {

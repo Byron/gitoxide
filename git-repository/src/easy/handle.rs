@@ -55,7 +55,7 @@ impl From<&crate::Repository> for easy::Handle {
     fn from(repo: &crate::Repository) -> Self {
         easy::Handle::from_refs_and_objects(
             repo.refs.clone(),
-            repo.objects.to_handle_shared(),
+            repo.objects.to_cache_shared(),
             repo.hash_kind,
             repo.work_tree.clone(),
         )

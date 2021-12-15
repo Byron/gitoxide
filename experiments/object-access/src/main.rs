@@ -14,7 +14,7 @@ fn main() -> anyhow::Result<()> {
 
     let hashes = {
         let start = Instant::now();
-        let hashes = repo.odb.iter().collect::<Result<Vec<_>, _>>()?;
+        let hashes = repo.objects.iter().collect::<Result<Vec<_>, _>>()?;
         let elapsed = start.elapsed();
         println!("gitoxide: {} objects (collected in {:?}", hashes.len(), elapsed);
         hashes
@@ -23,10 +23,40 @@ fn main() -> anyhow::Result<()> {
     let objs_per_sec = |elapsed: std::time::Duration| hashes.len() as f32 / elapsed.as_secs_f32();
 
     let start = Instant::now();
-    do_gitoxide_in_parallel(&hashes, &repo, || odb::pack::cache::Never, AccessMode::ObjectExists)?;
+    do_gitoxide_in_parallel_sync(&hashes, &repo, || odb::pack::cache::Never, AccessMode::ObjectExists)?;
     let elapsed = start.elapsed();
     println!(
         "parallel gitoxide : confirmed {} objects exists in {:?} ({:0.0} objects/s)",
+        hashes.len(),
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    do_new_gitoxide_store_in_parallel(
+        &hashes,
+        &repo.objects_dir(),
+        || odb::pack::cache::Never,
+        AccessMode::ObjectExists,
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide (new store): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
+        hashes.len(),
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    do_gitoxide_in_parallel_through_arc(
+        &hashes,
+        &repo.objects_dir(),
+        odb::pack::cache::Never::default,
+        AccessMode::ObjectExists,
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide (Arc): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
         hashes.len(),
         elapsed,
         objs_per_sec(elapsed)
@@ -46,7 +76,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     let start = Instant::now();
-    let bytes = do_gitoxide_in_parallel(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
+    let bytes = do_gitoxide_in_parallel_sync(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
     let elapsed = start.elapsed();
     println!(
         "parallel gitoxide (uncached, warmup): confirmed {} bytes in {:?} ({:0.0} objects/s)",
@@ -56,7 +86,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let bytes = do_gitoxide_in_parallel(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
+    let bytes = do_gitoxide_in_parallel_sync(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
     let elapsed = start.elapsed();
     println!(
         "parallel gitoxide (uncached): confirmed {} bytes in {:?} ({:0.0} objects/s)",
@@ -66,105 +96,9 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let bytes = do_gitoxide_in_parallel_through_arc_rw_lock(
-        &hashes,
-        &repo.odb.dbs[0].loose.path,
-        odb::pack::cache::Never::default,
-        AccessMode::ObjectData,
-        LockMode::ReadThenWrite,
-    )?;
-    let elapsed = start.elapsed();
-    println!(
-        "parallel gitoxide (uncached, Arc, RwLock + Write): confirmed {} bytes in {:?} ({:0.0} objects/s)",
-        bytes,
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
-    let start = Instant::now();
-    do_gitoxide_in_parallel_through_arc_rw_lock(
-        &hashes,
-        &repo.odb.dbs[0].loose.path,
-        odb::pack::cache::Never::default,
-        AccessMode::ObjectExists,
-        LockMode::ReadThenWrite,
-    )?;
-    let elapsed = start.elapsed();
-    println!(
-        "parallel gitoxide (Arc, RwLock + Write): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
-        hashes.len(),
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
-    let start = Instant::now();
-    let bytes = do_gitoxide_in_parallel_through_arc_rw_lock(
-        &hashes,
-        &repo.odb.dbs[0].loose.path,
-        odb::pack::cache::Never::default,
-        AccessMode::ObjectData,
-        LockMode::UpgradableRead,
-    )?;
-    let elapsed = start.elapsed();
-    println!(
-        "parallel gitoxide (uncached, Arc, UpgradableRwLock): confirmed {} bytes in {:?} ({:0.0} objects/s)",
-        bytes,
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
-    let start = Instant::now();
-    do_gitoxide_in_parallel_through_arc_rw_lock(
-        &hashes,
-        &repo.odb.dbs[0].loose.path,
-        odb::pack::cache::Never::default,
-        AccessMode::ObjectExists,
-        LockMode::UpgradableRead,
-    )?;
-    let elapsed = start.elapsed();
-    println!(
-        "parallel gitoxide (Arc, UpgradableRwLock): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
-        hashes.len(),
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
-    let start = Instant::now();
-    let bytes = do_gitoxide_in_parallel_through_arc_rw_lock(
-        &hashes,
-        &repo.odb.dbs[0].loose.path,
-        odb::pack::cache::Never::default,
-        AccessMode::ObjectData,
-        LockMode::UpgradableReadAndWrite,
-    )?;
-    let elapsed = start.elapsed();
-    println!(
-        "parallel gitoxide (uncached, Arc, UpgradableRwLock + Upgrade): confirmed {} bytes in {:?} ({:0.0} objects/s)",
-        bytes,
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
-    let start = Instant::now();
-    do_gitoxide_in_parallel_through_arc_rw_lock(
-        &hashes,
-        &repo.odb.dbs[0].loose.path,
-        odb::pack::cache::Never::default,
-        AccessMode::ObjectExists,
-        LockMode::UpgradableReadAndWrite,
-    )?;
-    let elapsed = start.elapsed();
-    println!(
-        "parallel gitoxide (Arc, UpgradableRwLock + Upgrade): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
-        hashes.len(),
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
-    let start = Instant::now();
     let bytes = do_gitoxide_in_parallel_through_arc(
         &hashes,
-        &repo.odb.dbs[0].loose.path,
+        &repo.objects_dir(),
         odb::pack::cache::Never::default,
         AccessMode::ObjectData,
     )?;
@@ -190,54 +124,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     let start = Instant::now();
-    do_gitoxide_in_parallel_through_arc(
-        &hashes,
-        &repo.odb.dbs[0].loose.path,
-        odb::pack::cache::Never::default,
-        AccessMode::ObjectExists,
-    )?;
-    let elapsed = start.elapsed();
-    println!(
-        "parallel gitoxide (Arc): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
-        hashes.len(),
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
-    let start = Instant::now();
-    let bytes = do_gitoxide_in_parallel_through_arc_rw_lock(
-        &hashes,
-        &repo.odb.dbs[0].loose.path,
-        odb::pack::cache::Never::default,
-        AccessMode::ObjectData,
-        LockMode::Read,
-    )?;
-    let elapsed = start.elapsed();
-    println!(
-        "parallel gitoxide (uncached, Arc, RwLock): confirmed {} bytes in {:?} ({:0.0} objects/s)",
-        bytes,
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
-    let start = Instant::now();
-    do_gitoxide_in_parallel_through_arc_rw_lock(
-        &hashes,
-        &repo.odb.dbs[0].loose.path,
-        odb::pack::cache::Never::default,
-        AccessMode::ObjectExists,
-        LockMode::Read,
-    )?;
-    let elapsed = start.elapsed();
-    println!(
-        "parallel gitoxide (Arc, RwLock): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
-        hashes.len(),
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
-    let start = Instant::now();
-    let bytes = do_gitoxide_in_parallel(
+    let bytes = do_gitoxide_in_parallel_sync(
         &hashes,
         &repo,
         || odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES),
@@ -253,7 +140,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let bytes = do_gitoxide_in_parallel(
+    let bytes = do_gitoxide_in_parallel_sync(
         &hashes,
         &repo,
         odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_STATIC_CACHE_SIZE>::default,
@@ -360,16 +247,23 @@ fn do_parallel_git2(hashes: &[ObjectId], git_dir: &Path) -> anyhow::Result<u64> 
     Ok(bytes.load(std::sync::atomic::Ordering::Acquire))
 }
 
-fn do_gitoxide<C>(hashes: &[ObjectId], repo: &Repository, new_cache: impl FnOnce() -> C) -> anyhow::Result<u64>
+fn do_gitoxide<C>(
+    hashes: &[ObjectId],
+    repo: &Repository,
+    new_cache: impl Fn() -> C + Send + Sync + 'static,
+) -> anyhow::Result<u64>
 where
-    C: odb::pack::cache::DecodeEntry,
+    C: odb::pack::cache::DecodeEntry + Send + 'static,
 {
     use git_repository::prelude::FindExt;
     let mut buf = Vec::new();
     let mut bytes = 0u64;
-    let mut cache = new_cache();
+    let handle = repo
+        .objects
+        .to_cache_arc()
+        .with_pack_cache(move || Box::new(new_cache()));
     for hash in hashes {
-        let obj = repo.odb.find(hash, &mut buf, &mut cache)?;
+        let obj = handle.find(hash, &mut buf)?;
         bytes += obj.data.len() as u64;
     }
     Ok(bytes)
@@ -380,28 +274,37 @@ enum AccessMode {
     ObjectExists,
 }
 
-fn do_gitoxide_in_parallel<C>(
+fn do_gitoxide_in_parallel_sync<C>(
     hashes: &[ObjectId],
     repo: &Repository,
-    new_cache: impl Fn() -> C + Sync + Send,
+    new_cache: impl Fn() -> C + Send + Clone + Sync + 'static,
     mode: AccessMode,
 ) -> anyhow::Result<u64>
 where
-    C: odb::pack::cache::DecodeEntry,
+    C: odb::pack::cache::DecodeEntry + Send + 'static,
 {
     use git_repository::prelude::FindExt;
     use rayon::prelude::*;
     let bytes = std::sync::atomic::AtomicU64::default();
     hashes.par_iter().try_for_each_init::<_, _, _, anyhow::Result<_>>(
-        || (Vec::new(), new_cache()),
-        |(buf, cache), hash| {
+        move || {
+            (
+                Vec::new(),
+                repo.objects.to_cache_arc().with_pack_cache({
+                    let new_cache = new_cache.clone();
+                    move || Box::new(new_cache())
+                }),
+            )
+        },
+        |(buf, objects), hash| {
             match mode {
                 AccessMode::ObjectData => {
-                    let obj = repo.odb.find(hash, buf, cache)?;
+                    let obj = objects.find(hash, buf)?;
                     bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
                 }
                 AccessMode::ObjectExists => {
-                    assert!(repo.odb.contains(hash), "each traversed object exists");
+                    use git_repository::prelude::Find;
+                    assert!(objects.contains(hash), "each traversed object exists");
                 }
             }
             Ok(())
@@ -452,32 +355,33 @@ where
     Ok(bytes.load(std::sync::atomic::Ordering::Acquire))
 }
 
-fn do_gitoxide_in_parallel_through_arc<C>(
+fn do_new_gitoxide_store_in_parallel<C>(
     hashes: &[ObjectId],
-    repo: &Path,
-    new_cache: impl Fn() -> C + Send + Clone,
+    objects_dir: &Path,
+    new_cache: impl Fn() -> C + Send + Sync + 'static,
     mode: AccessMode,
 ) -> anyhow::Result<u64>
 where
-    C: odb::pack::cache::DecodeEntry,
+    C: odb::pack::cache::DecodeEntry + Send + 'static,
 {
     use git_repository::prelude::FindExt;
     let bytes = std::sync::atomic::AtomicU64::default();
-    let odb = Arc::new(git_repository::odb::linked::Store::at(repo)?);
+    let handle = git_repository::odb::at(objects_dir)?.with_pack_cache(move || Box::new(new_cache()));
 
     git_repository::parallel::in_parallel(
         hashes.chunks(1000),
         None,
-        move |_| (Vec::new(), new_cache(), odb.clone()),
-        |hashes, (buf, cache, odb)| {
+        move |_| (Vec::new(), handle.clone()),
+        |hashes, (buf, cache)| {
             for hash in hashes {
                 match mode {
                     AccessMode::ObjectData => {
-                        let obj = odb.find(hash, buf, cache)?;
+                        let obj = cache.find(hash, buf)?;
                         bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
                     }
                     AccessMode::ObjectExists => {
-                        assert!(odb.contains(hash), "each traversed object exists");
+                        use git_repository::prelude::Find;
+                        assert!(cache.contains(hash), "each traversed object exists");
                     }
                 }
             }
@@ -488,70 +392,42 @@ where
     Ok(bytes.load(std::sync::atomic::Ordering::Acquire))
 }
 
-enum LockMode {
-    Read,
-    ReadThenWrite,
-    UpgradableRead,
-    UpgradableReadAndWrite,
-}
-
-fn do_gitoxide_in_parallel_through_arc_rw_lock<C>(
+fn do_gitoxide_in_parallel_through_arc<C>(
     hashes: &[ObjectId],
-    repo: &Path,
-    new_cache: impl Fn() -> C + Send + Clone,
+    objects_dir: &Path,
+    new_cache: impl Fn() -> C + Send + Sync + Clone + 'static,
     mode: AccessMode,
-    lock: LockMode,
 ) -> anyhow::Result<u64>
 where
-    C: odb::pack::cache::DecodeEntry,
+    C: odb::pack::cache::DecodeEntry + Send + 'static,
 {
     use git_repository::prelude::FindExt;
     let bytes = std::sync::atomic::AtomicU64::default();
-    let odb = Arc::new(parking_lot::RwLock::new(git_repository::odb::linked::Store::at(repo)?));
+    let odb = Arc::new(git_repository::odb::linked::Store::at(objects_dir)?);
 
     git_repository::parallel::in_parallel(
         hashes.chunks(1000),
         None,
-        move |_| (Vec::new(), new_cache(), odb.clone()),
-        |hashes, (buf, cache, odb)| {
+        move |_| {
+            (
+                Vec::new(),
+                odb.to_cache_arc().with_pack_cache({
+                    let new_cache = new_cache.clone();
+                    move || Box::new(new_cache())
+                }),
+            )
+        },
+        |hashes, (buf, odb)| {
             for hash in hashes {
                 match mode {
-                    AccessMode::ObjectData => match lock {
-                        LockMode::Read => {
-                            let obj = odb.read().find(hash, buf, cache)?;
-                            bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
-                        }
-                        LockMode::ReadThenWrite => {
-                            let obj = odb.read().find(hash, buf, cache)?;
-                            drop(odb.write());
-                            bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
-                        }
-                        LockMode::UpgradableRead => {
-                            let obj = odb.upgradable_read().find(hash, buf, cache)?;
-                            bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
-                        }
-                        LockMode::UpgradableReadAndWrite => {
-                            let obj = parking_lot::RwLockUpgradableReadGuard::upgrade(odb.upgradable_read())
-                                .find(hash, buf, cache)?;
-                            bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
-                        }
-                    },
-                    AccessMode::ObjectExists => match lock {
-                        LockMode::Read => assert!(odb.read().contains(hash), "each traversed object exists"),
-                        LockMode::ReadThenWrite => {
-                            assert!(odb.read().contains(hash), "each traversed object exists");
-                            drop(odb.write());
-                        }
-                        LockMode::UpgradableRead => {
-                            assert!(odb.upgradable_read().contains(hash), "each traversed object exists")
-                        }
-                        LockMode::UpgradableReadAndWrite => {
-                            assert!(
-                                parking_lot::RwLockUpgradableReadGuard::upgrade(odb.upgradable_read()).contains(hash),
-                                "each traversed object exists"
-                            )
-                        }
-                    },
+                    AccessMode::ObjectData => {
+                        let obj = odb.find(hash, buf)?;
+                        bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
+                    }
+                    AccessMode::ObjectExists => {
+                        use git_repository::prelude::Find;
+                        assert!(odb.contains(hash), "each traversed object exists");
+                    }
                 }
             }
             Ok(())
