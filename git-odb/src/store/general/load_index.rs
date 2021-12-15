@@ -76,9 +76,8 @@ impl super::Store {
         marker: &store::SlotIndexMarker,
     ) -> Result<Option<Outcome>, Error> {
         let index = self.index.load();
-        let state_id = index.state_id();
         if !index.is_initialized() {
-            return self.consolidate_with_disk_state();
+            return self.consolidate_with_disk_state(false /*load one new index*/);
         }
 
         if marker.generation != index.generation || marker.state_id != index.state_id() {
@@ -93,7 +92,9 @@ impl super::Store {
                 // …and if that didn't yield anything new consider refreshing our disk state.
                 match refresh_mode {
                     RefreshMode::Never => Ok(None),
-                    RefreshMode::AfterAllIndicesLoaded => self.consolidate_with_disk_state(),
+                    RefreshMode::AfterAllIndicesLoaded => {
+                        self.consolidate_with_disk_state(true /*load one new index*/)
+                    }
                 }
             }
         }
@@ -171,7 +172,8 @@ impl super::Store {
     }
 
     /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
-    fn consolidate_with_disk_state(&self) -> Result<Option<Outcome>, Error> {
+    /// `load_new_index` is an optimization to at least provide one newly loaded pack after refreshing the slot map.
+    fn consolidate_with_disk_state(&self, load_new_index: bool) -> Result<Option<Outcome>, Error> {
         let index = self.index.load();
         let previous_index_state = Arc::as_ptr(&index) as usize;
 
@@ -403,10 +405,14 @@ impl super::Store {
             };
         }
 
-        Ok(if index.state_id() == self.index.load().state_id() {
+        let new_index = self.index.load();
+        Ok(if index.state_id() == new_index.state_id() {
             // there was no change, and nothing was loaded in the meantime, reflect that in the return value to not get into loops
             None
         } else {
+            if load_new_index {
+                self.load_next_index(new_index);
+            }
             Some(self.collect_outcome())
         })
     }

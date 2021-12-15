@@ -37,7 +37,7 @@ fn main() -> anyhow::Result<()> {
     let start = Instant::now();
     let (object_store, _) = do_new_gitoxide_store_in_parallel(
         &hashes,
-        &repo.objects_dir(),
+        repo.objects_dir(),
         || odb::pack::cache::Never,
         AccessMode::ObjectExists,
         None,
@@ -53,7 +53,7 @@ fn main() -> anyhow::Result<()> {
     let start = Instant::now();
     do_new_gitoxide_store_in_parallel(
         &hashes,
-        &repo.objects_dir(),
+        repo.objects_dir(),
         || odb::pack::cache::Never,
         AccessMode::ObjectExists,
         Some(object_store),
@@ -69,7 +69,7 @@ fn main() -> anyhow::Result<()> {
     let start = Instant::now();
     do_gitoxide_in_parallel_through_arc(
         &hashes,
-        &repo.objects_dir(),
+        repo.objects_dir(),
         odb::pack::cache::Never::default,
         AccessMode::ObjectExists,
     )?;
@@ -117,7 +117,7 @@ fn main() -> anyhow::Result<()> {
     let start = Instant::now();
     let bytes = do_gitoxide_in_parallel_through_arc(
         &hashes,
-        &repo.objects_dir(),
+        repo.objects_dir(),
         odb::pack::cache::Never::default,
         AccessMode::ObjectData,
     )?;
