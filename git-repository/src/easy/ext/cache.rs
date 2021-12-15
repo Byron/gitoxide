@@ -42,7 +42,7 @@ impl easy::Handle {
             let mut this = self;
             if !pack_cache_disabled {
                 let bytes = parse_bytes_from_var("GITOXIDE_PACK_CACHE_MEMORY");
-                let new_pack_cache = move || -> Box<git_odb::handle::PackCache> {
+                let new_pack_cache = move || -> Box<git_odb::cache::PackCache> {
                     match bytes {
                         Some(bytes) => Box::new(git_pack::cache::lru::MemoryCappedHashmap::new(bytes)),
                         None => Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default()),

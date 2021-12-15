@@ -21,7 +21,7 @@ use git_features::threading::OwnShared;
 pub use git_pack as pack;
 
 mod store;
-pub use store::{compound, general, handle, linked, loose, sink, Cache, RefreshMode, Sink};
+pub use store::{cache, compound, general, linked, loose, sink, Cache, RefreshMode, Sink};
 
 pub mod alternate;
 

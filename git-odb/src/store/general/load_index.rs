@@ -80,22 +80,20 @@ impl super::Store {
             return self.consolidate_with_disk_state();
         }
 
-        let outcome = {
-            if marker.generation != index.generation || marker.state_id != index.state_id() {
-                self.collect_replace_outcome()
-            } else {
-                // always compare to the latest state
-                // Nothing changed in the mean time, try to load another index…
-                // TODO: load another index file, make sure it's of a compatible generation or else… what? Wait for the new index?
+        if marker.generation != index.generation || marker.state_id != index.state_id() {
+            /// We have a more recent state already, provide it.
+            return Ok(Some(self.collect_replace_outcome()));
+        } else {
+            // always compare to the latest state
+            // Nothing changed in the mean time, try to load another index…
+            // TODO: load another index file, make sure it's of a compatible generation or else… what? Wait for the new index?
 
-                // …and if that didn't yield anything new consider refreshing our disk state.
-                match refresh_mode {
-                    RefreshMode::Never => return Ok(None),
-                    RefreshMode::AfterAllIndicesLoaded => return self.consolidate_with_disk_state(),
-                }
-            }
+            // …and if that didn't yield anything new consider refreshing our disk state.
+            return match refresh_mode {
+                RefreshMode::Never => return Ok(None),
+                RefreshMode::AfterAllIndicesLoaded => return self.consolidate_with_disk_state(),
+            };
         };
-        Ok(Some(outcome))
     }
 
     /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
@@ -330,7 +328,12 @@ impl super::Store {
             };
         }
 
-        Ok(Some(self.collect_replace_outcome()))
+        Ok(if index.state_id() == self.index.load().state_id() {
+            // there was no change, and nothing was loaded in the meantime, reflect that in the return value to not get into loops
+            None
+        } else {
+            Some(self.collect_replace_outcome())
+        })
     }
 
     /// Returns Some(true) if the slot was empty, or Some(false) if it was collected

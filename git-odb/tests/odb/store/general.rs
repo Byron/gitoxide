@@ -26,6 +26,9 @@ fn contains() {
         },
         "it only refreshed the file list, yielding the loose db to find this object, but no pack was opened yet"
     );
+
+    // pack 11fd
+    assert!(handle.contains(hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0")));
 }
 
 #[test]
