@@ -4,8 +4,9 @@ use parking_lot::lock_api::MutexGuard;
 use parking_lot::RawMutex;
 use std::collections::{BTreeMap, VecDeque};
 use std::ffi::OsStr;
+use std::ops::Deref;
 use std::path::Path;
-use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::{AtomicU16, AtomicUsize};
 use std::time::SystemTime;
 use std::{
     path::PathBuf,
@@ -82,18 +83,85 @@ impl super::Store {
 
         if marker.generation != index.generation || marker.state_id != index.state_id() {
             /// We have a more recent state already, provide it.
-            return Ok(Some(self.collect_replace_outcome()));
+            Ok(Some(self.collect_outcome()))
         } else {
             // always compare to the latest state
             // Nothing changed in the mean time, try to load another index…
-            // TODO: load another index file, make sure it's of a compatible generation or else… what? Wait for the new index?
+            if self.load_next_index(index) {
+                Ok(Some(self.collect_outcome()))
+            } else {
+                // …and if that didn't yield anything new consider refreshing our disk state.
+                match refresh_mode {
+                    RefreshMode::Never => Ok(None),
+                    RefreshMode::AfterAllIndicesLoaded => self.consolidate_with_disk_state(),
+                }
+            }
+        }
+    }
 
-            // …and if that didn't yield anything new consider refreshing our disk state.
-            return match refresh_mode {
-                RefreshMode::Never => return Ok(None),
-                RefreshMode::AfterAllIndicesLoaded => return self.consolidate_with_disk_state(),
-            };
-        };
+    /// load a new index (if not yet loaded), and return true if one was indeed loaded (leading to a state_id() change) of the current index.
+    /// Note that interacting with the slot-map is inherently racy and we have to deal with it, being conservative in what we even try to load
+    /// as our index might already be out-of-date as we try to use it to learn what's next.
+    fn load_next_index(&self, mut index: arc_swap::Guard<Arc<SlotMapIndex>>) -> bool {
+        'retry_with_changed_index: loop {
+            let previous_state_id = index.state_id();
+            'retry_with_next_slot_index: loop {
+                match index
+                    .next_index_to_load
+                    .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |current| {
+                        (current != index.slot_indices.len()).then(|| current + 1)
+                    }) {
+                    Ok(slot_map_index) => {
+                        // This slot-map index is in bounds and was only given to us.
+                        let _ongoing_operation = IncOnNewAndDecOnDrop::new(&index.num_indices_currently_being_loaded);
+                        let slot = &self.files[index.slot_indices[slot_map_index]];
+                        let _lock = slot.write.lock();
+                        if slot.generation.load(Ordering::SeqCst) > index.generation {
+                            // There is a disk consolidation in progress which just overwrote a slot that cold be disposed with some other
+                            // index, one we didn't intend to load.
+                            // Continue with the next slot index in the hope there is something else we can do…
+                            continue 'retry_with_next_slot_index;
+                        }
+                        let mut bundle = slot.files.load_full();
+                        let bundle_mut = Arc::make_mut(&mut bundle);
+                        if let Some(bundle) = bundle_mut.as_mut() {
+                            // these are always expected to be set, unless somebody raced us. We handle this later by retrying.
+                            let _loaded_count = IncOnDrop(&index.loaded_indices);
+                            match bundle.load_index() {
+                                Ok(_) => break 'retry_with_next_slot_index,
+                                Err(_) => continue 'retry_with_next_slot_index,
+                            }
+                        }
+                    }
+                    Err(_nothing_more_to_load) => {
+                        // There can be contention as many threads start working at the same time and take all the
+                        // slots to load indices for. Some threads might just be left-over and have to wait for something
+                        // to change.
+                        let num_load_operations = index.num_indices_currently_being_loaded.deref();
+                        // TODO: potentially hot loop - could this be a condition variable?
+                        while num_load_operations.load(Ordering::Relaxed) != 0 {
+                            std::thread::yield_now()
+                        }
+                        break 'retry_with_next_slot_index;
+                    }
+                }
+            }
+            if previous_state_id == index.state_id() {
+                let potentially_new_index = self.index.load();
+                if Arc::as_ptr(&potentially_new_index) == Arc::as_ptr(&index) {
+                    // There isn't a new index with which to retry the whole ordeal, so nothing could be done here.
+                    return false;
+                } else {
+                    // the index changed, worth trying again
+                    index = potentially_new_index;
+                    continue 'retry_with_changed_index;
+                }
+            } else {
+                // something inarguably changed, probably an index was loaded. 'probably' because we consider failed loads valid attempts,
+                // even they don't change anything for the caller which would then do a round for nothing.
+                return true;
+            }
+        }
     }
 
     /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
@@ -108,7 +176,7 @@ impl super::Store {
         let index = self.index.load();
         if previous_index_state != Arc::as_ptr(&index) as usize {
             // Someone else took the look before and changed the index. Return it without doing any additional work.
-            return Ok(Some(self.collect_replace_outcome()));
+            return Ok(Some(self.collect_outcome()));
         }
 
         let was_uninitialized = !index.is_initialized();
@@ -306,6 +374,7 @@ impl super::Store {
                 loaded_indices: index_unchanged
                     .then(|| Arc::clone(&index.loaded_indices))
                     .unwrap_or_else(|| Arc::new(num_loaded_indices.into())),
+                num_indices_currently_being_loaded: Default::default(),
             });
             self.index.store(new_index);
         }
@@ -332,7 +401,7 @@ impl super::Store {
             // there was no change, and nothing was loaded in the meantime, reflect that in the return value to not get into loops
             None
         } else {
-            Some(self.collect_replace_outcome())
+            Some(self.collect_outcome())
         })
     }
 
@@ -527,7 +596,7 @@ impl super::Store {
         }
     }
 
-    fn collect_replace_outcome(&self) -> Outcome {
+    fn collect_outcome(&self) -> Outcome {
         let snapshot = self.collect_snapshot();
         Outcome::Replace(snapshot)
     }
@@ -536,4 +605,24 @@ impl super::Store {
 // Outside of this method we will never assign new slot indices.
 fn is_multipack_index(path: &Path) -> bool {
     path.file_name() == Some(OsStr::new("multi-pack-index"))
+}
+
+struct IncOnNewAndDecOnDrop<'a>(&'a AtomicU16);
+impl<'a> IncOnNewAndDecOnDrop<'a> {
+    pub fn new(v: &'a AtomicU16) -> Self {
+        v.fetch_add(1, Ordering::SeqCst);
+        Self(v)
+    }
+}
+impl<'a> Drop for IncOnNewAndDecOnDrop<'a> {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
+struct IncOnDrop<'a>(&'a AtomicUsize);
+impl<'a> Drop for IncOnDrop<'a> {
+    fn drop(&mut self) {
+        self.0.fetch_add(1, Ordering::SeqCst);
+    }
 }

@@ -1,5 +1,5 @@
 use std::ffi::OsStr;
-use std::sync::atomic::AtomicU32;
+use std::sync::atomic::{AtomicU16, AtomicU32};
 use std::time::SystemTime;
 use std::{
     ops::BitXor,
@@ -62,6 +62,9 @@ pub struct SlotMapIndex {
     /// If a load failed, there will also be an increment.
     /// Shared across SlotMapIndex instances of the same generation.
     pub(crate) loaded_indices: Arc<AtomicUsize>,
+    /// The amount of indices that are currently being loaded.
+    /// Zero if no loading operation is currently happening, or more otherwise.
+    pub(crate) num_indices_currently_being_loaded: Arc<AtomicU16>,
 }
 
 impl SlotMapIndex {
@@ -248,6 +251,10 @@ impl IndexAndPacks {
                 bundle.multi_index.is_disposable() || bundle.data.iter().any(|odf| odf.is_disposable())
             }
         }
+    }
+
+    pub(crate) fn load_index(&mut self) -> std::io::Result<()> {
+        todo!("load actual index")
     }
 
     pub(crate) fn new_by_index_path(index_path: PathBuf, mtime: SystemTime) -> Self {
