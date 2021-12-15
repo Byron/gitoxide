@@ -27,8 +27,42 @@ fn contains() {
         "it only refreshed the file list, yielding the loose db to find this object, but no pack was opened yet"
     );
 
-    // pack 11fd
+    // pack c043, the biggest one
     assert!(handle.contains(hex_to_id("dd25c539efbb0ab018caa4cda2d133285634e9b5")));
+
+    assert_eq!(
+        handle.inner.store().metrics(),
+        git_odb::general::store::Metrics {
+            num_handles: 1,
+            num_refreshes: 1,
+            open_indices: 1,
+            known_indices: 3,
+            open_packs: 0,
+            known_packs: 3,
+            unused_slots: 61,
+            loose_dbs: 1
+        },
+        "it loaded the biggest back only, which is the first in the list"
+    );
+
+    // pack, the smallest one
+    // The new handle should make no difference.
+    let new_handle = handle.clone();
+    assert!(new_handle.contains(hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0")));
+    assert_eq!(
+        new_handle.inner.store().metrics(),
+        git_odb::general::store::Metrics {
+            num_handles: 2,
+            num_refreshes: 1,
+            open_indices: 3,
+            known_indices: 3,
+            open_packs: 0,
+            known_packs: 3,
+            unused_slots: 61,
+            loose_dbs: 1
+        },
+        "when asking for an object in the smallest pack, all inbetween packs are also loaded."
+    );
 }
 
 #[test]

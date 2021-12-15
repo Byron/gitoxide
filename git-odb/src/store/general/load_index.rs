@@ -222,14 +222,14 @@ impl super::Store {
                         let ext = p.extension();
                         ext == Some(OsStr::new("idx")) || (ext.is_none() && is_multipack_index(p))
                     })
-                    .map(|(p, md)| md.modified().map_err(Error::from).map(|mtime| (p, mtime)))
+                    .map(|(p, md)| md.modified().map_err(Error::from).map(|mtime| (p, mtime, md.len())))
                     .collect::<Result<Vec<_>, _>>()?,
             );
         }
-        // Like libgit2, sort by modification date, newest first, to serve as good starting point.
-        // Git itself doesn't change the order which may safe time, and relies on a LRU sorting on lookup later.
-        // We can do that to in the handle.
-        indices_by_modification_time.sort_by(|l, r| l.1.cmp(&r.1).reverse());
+        // Unlike libgit2, do not sort by modification date, but by size and put the biggest indices first. That way
+        // the chance to hit an object should be higher. We leave it to the handle to sort by LRU.
+        // Git itself doesn't change the order which may safe time, but we want it to be stable which also helps some tests.
+        indices_by_modification_time.sort_by(|l, r| l.2.cmp(&r.2).reverse());
         let mut idx_by_index_path: BTreeMap<_, _> = index
             .slot_indices
             .iter()
@@ -245,7 +245,7 @@ impl super::Store {
             .unwrap_or_default();
 
         let mut num_loaded_indices = 0;
-        for (index_path, mtime) in indices_by_modification_time.into_iter() {
+        for (index_path, mtime) in indices_by_modification_time.into_iter().map(|(a, b, _)| (a, b)) {
             match idx_by_index_path.remove(&index_path) {
                 Some(slot_idx) => {
                     let slot = &self.files[slot_idx];
