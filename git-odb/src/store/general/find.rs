@@ -15,11 +15,17 @@ where
     fn contains(&self, id: impl AsRef<oid>) -> bool {
         let id = id.as_ref();
         loop {
-            let snapshot = self.snapshot.borrow();
-            for index in &snapshot.indices {
+            let mut snapshot = self.snapshot.borrow_mut();
+            let mut iter = snapshot.indices.iter();
+            let mut idx = 0;
+            while let Some(index) = iter.next() {
                 if index.contains(id) {
+                    if idx != 0 {
+                        snapshot.indices.swap(0, idx);
+                    }
                     return true;
                 }
+                idx += 1;
             }
 
             for lodb in snapshot.loose_dbs.iter() {
