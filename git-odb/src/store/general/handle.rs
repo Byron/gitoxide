@@ -123,14 +123,11 @@ impl super::Store {
         refresh_mode: crate::RefreshMode,
     ) -> super::Handle<OwnShared<super::Store>> {
         let token = self.register_handle();
-        let mut snapshot = self.collect_snapshot();
-        let indices = RefCell::new(std::mem::take(&mut snapshot.indices));
         super::Handle {
             store: self.clone(),
             refresh_mode,
             token: Some(token),
-            snapshot: RefCell::new(snapshot),
-            indices,
+            snapshot: RefCell::new(self.collect_snapshot()),
         }
     }
 }
@@ -167,14 +164,11 @@ where
     S: Deref<Target = super::Store> + Clone,
 {
     fn clone(&self) -> Self {
-        let mut snapshot = self.store.collect_snapshot();
-        let indices = RefCell::new(std::mem::take(&mut snapshot.indices));
         super::Handle {
             store: self.store.clone(),
             refresh_mode: self.refresh_mode,
             token: self.store.register_handle().into(),
-            snapshot: RefCell::new(snapshot),
-            indices,
+            snapshot: RefCell::new(self.store.collect_snapshot()),
         }
     }
 }
