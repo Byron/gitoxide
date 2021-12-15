@@ -92,7 +92,7 @@ impl super::Store {
             } else if marker.state_id == index.state_id() {
                 // always compare to the latest state
                 // Nothing changed in the mean time, try to load another index…
-                // TODO: load another index file
+                // TODO: load another index file, make sure it's of a compatible generation or else… what? Wait for the new index?
 
                 // …and if that didn't yield anything new consider refreshing our disk state.
                 match refresh_mode {
@@ -324,7 +324,21 @@ impl super::Store {
 
         // deleted items - remove their slots AFTER we have set the new index if we may alter indices, otherwise we only declare them garbage.
         // removing slots may cause pack loading to fail, and they will then reload their indices.
-        for slot_idx in slot_indices_to_remove {}
+        for slot in slot_indices_to_remove.into_iter().map(|idx| &self.files[idx]) {
+            let _lock = slot.write.lock();
+            let mut files = slot.files.load_full();
+            let files_mut = Arc::make_mut(&mut files);
+            if needs_stable_indices {
+                if let Some(files) = files_mut.as_mut() {
+                    files.trash();
+                    // generation stays the same, as it's the same value still but scheduled for eventual removal.
+                }
+            } else {
+                *files_mut = None;
+                // Not racy due to lock, generation must be set after unsetting the value.
+                slot.generation.store(0, Ordering::SeqCst);
+            };
+        }
 
         todo!("consolidate")
     }
@@ -408,11 +422,15 @@ impl super::Store {
         slot: &MutableIndexAndPack,
         index_path: PathBuf,
         mtime: SystemTime,
-        current_generation: Generation,
+        generation: Generation,
     ) {
         let _lock = slot.write.lock();
         let mut files = slot.files.load_full();
         let files_mut = Arc::make_mut(&mut files);
+        // set the generation before we actually change the value, otherwise readers of old generations could observe the new one.
+        // We rather want them to turn around here and update their index, which, by that time, migth actually already be available.
+        // If not, they would fail unable to load a pack or index they need, but that's preferred over returning wrong objects.
+        slot.generation.store(generation, Ordering::SeqCst);
         *files_mut = Some(IndexAndPacks::new_by_index_path(index_path, mtime));
         slot.files.store(files);
     }
@@ -444,7 +462,9 @@ impl super::Store {
                         .as_mut()
                         .expect("BUG: cannot change from something to nothing, would be race")
                         .put_back();
-                    // Safety: can't race as we hold the lock.
+                    // Safety: can't race as we hold the lock, must be set before replacing the data.
+                    // NOTE that we don't change the generation as it's still the very same index we talk about, it doesn't change
+                    // identity.
                     slot.generation.store(current_generation, Ordering::SeqCst);
                     slot.files.store(files);
                 } else {

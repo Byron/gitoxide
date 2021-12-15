@@ -134,6 +134,15 @@ impl<T: Clone> OnDiskFile<T> {
         }
     }
 
+    pub fn trash(&mut self) {
+        match std::mem::replace(&mut self.state, OnDiskFileState::Missing) {
+            OnDiskFileState::Loaded(v) => self.state = OnDiskFileState::Garbage(v),
+            other @ (OnDiskFileState::Garbage(_) | OnDiskFileState::Unloaded | OnDiskFileState::Missing) => {
+                self.state = other
+            }
+        }
+    }
+
     /// We do it like this as we first have to check for a loaded interior in read-only mode, and then upgrade
     /// when we know that loading is necessary. This also works around borrow check, which is a nice coincidence.
     pub fn do_load(&mut self, load: impl FnOnce(&Path) -> std::io::Result<T>) -> std::io::Result<Option<&T>> {
@@ -204,6 +213,22 @@ impl IndexAndPacks {
                 bundle.multi_index.put_back();
                 for data in &mut bundle.data {
                     data.put_back();
+                }
+            }
+        }
+    }
+
+    // The inverse of `put_back()`, by trashing the content.
+    pub(crate) fn trash(&mut self) {
+        match self {
+            IndexAndPacks::Index(bundle) => {
+                bundle.index.trash();
+                bundle.data.trash();
+            }
+            IndexAndPacks::MultiIndex(bundle) => {
+                bundle.multi_index.trash();
+                for data in &mut bundle.data {
+                    data.trash();
                 }
             }
         }
