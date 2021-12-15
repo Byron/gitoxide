@@ -366,7 +366,8 @@ where
 {
     use git_repository::prelude::FindExt;
     let bytes = std::sync::atomic::AtomicU64::default();
-    let handle = git_repository::odb::at(objects_dir)?.with_pack_cache(move || Box::new(new_cache()));
+    let num_slots: usize = std::env::args().nth(2).and_then(|num| num.parse().ok()).unwrap_or(64);
+    let handle = git_repository::odb::at_opts(objects_dir, num_slots)?.with_pack_cache(move || Box::new(new_cache()));
 
     git_repository::parallel::in_parallel(
         hashes.chunks(1000),

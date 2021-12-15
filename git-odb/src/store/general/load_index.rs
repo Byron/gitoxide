@@ -411,7 +411,7 @@ impl super::Store {
         })
     }
 
-    /// Returns Some(true) if the slot was empty, or Some(false) if it was collected
+    /// Returns Some(true) if the slot was empty, or Some(false) if it was collected, None if it couldn't claim the slot.
     fn try_set_single_index_slot(
         objects_directory: &parking_lot::MutexGuard<'_, PathBuf>,
         slot: &MutableIndexAndPack,
@@ -424,14 +424,14 @@ impl super::Store {
             Some(bundle) => {
                 debug_assert!(
                     !is_multipack_index(&index_path),
-                    "move slots are never set for normal indices"
-                );
-                assert_ne!(
-                    bundle.index_path(),
-                    index_path,
-                    "BUG: an index of the same path must have been handled already"
+                    "multi-indices are not handled here, but use their own 'move' logic"
                 );
                 if !needs_stable_indices && bundle.is_disposable() {
+                    assert_ne!(
+                        bundle.index_path(),
+                        index_path,
+                        "BUG: an index of the same path must have been handled already"
+                    );
                     // Need to declare this to be the future to avoid anything in that slot to be returned to people who
                     // last saw the old state. They will then try to get a new index which by that time, might be happening
                     // in time so they get the latest one. If not, they will probably get into the same situation again until
