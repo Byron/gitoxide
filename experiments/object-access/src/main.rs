@@ -81,6 +81,26 @@ fn main() -> anyhow::Result<()> {
         objs_per_sec(elapsed)
     );
 
+    let start = Instant::now();
+    do_parallel_git2(hashes.as_slice(), repo.git_dir(), AccessMode::ObjectExists)?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel libgit2: confirmed {} exist in {:?} ({:0.0} objects/s)",
+        hashes.len(),
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    do_git2(hashes.as_slice(), repo.git_dir(), AccessMode::ObjectExists)?;
+    let elapsed = start.elapsed();
+    println!(
+        "libgit2:  confirmed {} exist in {:?} ({:0.0} objects/s)",
+        hashes.len(),
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
     #[cfg(feature = "radicle-nightly")]
     {
         let start = Instant::now();
@@ -174,7 +194,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let bytes = do_parallel_git2(hashes.as_slice(), repo.git_dir())?;
+    let bytes = do_parallel_git2(hashes.as_slice(), repo.git_dir(), AccessMode::ObjectData)?;
     let elapsed = start.elapsed();
     println!(
         "parallel libgit2:  confirmed {} bytes in {:?} ({:0.0} objects/s)",
@@ -222,9 +242,8 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let bytes = do_git2(hashes.as_slice(), repo.git_dir())?;
+    let bytes = do_git2(hashes.as_slice(), repo.git_dir(), AccessMode::ObjectData)?;
     let elapsed = start.elapsed();
-
     println!(
         "libgit2:  confirmed {} bytes in {:?} ({:0.0} objects/s)",
         bytes,
@@ -235,20 +254,27 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn do_git2(hashes: &[ObjectId], git_dir: &Path) -> anyhow::Result<u64> {
+fn do_git2(hashes: &[ObjectId], git_dir: &Path, mode: AccessMode) -> anyhow::Result<u64> {
     git2::opts::strict_hash_verification(false);
     let repo = git2::Repository::open(git_dir)?;
     let odb = repo.odb()?;
     let mut bytes = 0u64;
     for hash in hashes {
         let hash = git2::Oid::from_bytes(hash.as_slice())?;
-        let obj = odb.read(hash)?;
-        bytes += obj.len() as u64;
+        match mode {
+            AccessMode::ObjectData => {
+                let obj = odb.read(hash)?;
+                bytes += obj.len() as u64;
+            }
+            AccessMode::ObjectExists => {
+                assert!(odb.exists(hash));
+            }
+        }
     }
     Ok(bytes)
 }
 
-fn do_parallel_git2(hashes: &[ObjectId], git_dir: &Path) -> anyhow::Result<u64> {
+fn do_parallel_git2(hashes: &[ObjectId], git_dir: &Path, mode: AccessMode) -> anyhow::Result<u64> {
     use rayon::prelude::*;
     git2::opts::strict_hash_verification(false);
     let bytes = std::sync::atomic::AtomicU64::default();
@@ -257,8 +283,15 @@ fn do_parallel_git2(hashes: &[ObjectId], git_dir: &Path) -> anyhow::Result<u64> 
         |repo, hash| {
             let odb = repo.odb()?;
             let hash = git2::Oid::from_bytes(hash.as_slice())?;
-            let obj = odb.read(hash)?;
-            bytes.fetch_add(obj.len() as u64, std::sync::atomic::Ordering::Relaxed);
+            match mode {
+                AccessMode::ObjectData => {
+                    let obj = odb.read(hash)?;
+                    bytes.fetch_add(obj.len() as u64, std::sync::atomic::Ordering::Relaxed);
+                }
+                AccessMode::ObjectExists => {
+                    assert!(odb.exists(hash));
+                }
+            }
             Ok(())
         },
     )?;

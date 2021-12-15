@@ -16,16 +16,18 @@ where
         let id = id.as_ref();
         loop {
             let mut snapshot = self.snapshot.borrow_mut();
-            let mut iter = snapshot.indices.iter();
-            let mut idx = 0;
-            while let Some(index) = iter.next() {
-                if index.contains(id) {
-                    if idx != 0 {
-                        snapshot.indices.swap(0, idx);
+            {
+                let mut indices = snapshot.indices.iter();
+                let mut idx = 0;
+                while let Some(index) = indices.next() {
+                    if index.contains(id) {
+                        if idx != 0 {
+                            snapshot.indices.swap(0, idx);
+                        }
+                        return true;
                     }
-                    return true;
+                    idx += 1;
                 }
-                idx += 1;
             }
 
             for lodb in snapshot.loose_dbs.iter() {
