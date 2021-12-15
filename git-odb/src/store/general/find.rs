@@ -15,13 +15,22 @@ where
     fn contains(&self, id: impl AsRef<oid>) -> bool {
         let id = id.as_ref();
         loop {
-            let snapshot = self.snapshot.borrow();
-            for index in &snapshot.indices {
-                if index.contains(id) {
-                    return true;
+            {
+                let mut indices = self.indices.borrow_mut();
+                let mut iter = indices.iter();
+                let mut idx = 0;
+                while let Some(index) = iter.next() {
+                    if index.contains(id) {
+                        if idx != 0 {
+                            indices.swap(0, idx);
+                        }
+                        return true;
+                    }
+                    idx += 1;
                 }
             }
 
+            let snapshot = self.snapshot.borrow();
             for lodb in snapshot.loose_dbs.iter() {
                 if lodb.contains(id) {
                     return true;
@@ -29,8 +38,9 @@ where
             }
 
             match self.store.load_one_index(self.refresh_mode, &snapshot.marker) {
-                Ok(Some(load_index::Outcome::Replace(new_snapshot))) => {
+                Ok(Some(load_index::Outcome::Replace(mut new_snapshot))) => {
                     drop(snapshot);
+                    *self.indices.borrow_mut() = std::mem::take(&mut new_snapshot.indices);
                     *self.snapshot.borrow_mut() = new_snapshot;
                 }
                 Ok(None) => return false, // nothing more to load, or our refresh mode doesn't allow disk refreshes

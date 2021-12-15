@@ -16,6 +16,7 @@ where
 
     pub(crate) token: Option<handle::Mode>,
     snapshot: RefCell<load_index::Snapshot>,
+    indices: RefCell<Vec<handle::IndexLookup>>,
 }
 
 pub struct Store {

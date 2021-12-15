@@ -1,6 +1,8 @@
 use std::{path::Path, sync::Arc, time::Instant};
 
+use crate::odb::{general, Cache, RefreshMode};
 use anyhow::anyhow;
+use git_repository::threading::OwnShared;
 use git_repository::{hash::ObjectId, odb, Repository};
 
 const GITOXIDE_STATIC_CACHE_SIZE: usize = 64;
@@ -33,15 +35,32 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
+    let (object_store, _) = do_new_gitoxide_store_in_parallel(
+        &hashes,
+        &repo.objects_dir(),
+        || odb::pack::cache::Never,
+        AccessMode::ObjectExists,
+        None,
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide (new store): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
+        hashes.len(),
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
     do_new_gitoxide_store_in_parallel(
         &hashes,
         &repo.objects_dir(),
         || odb::pack::cache::Never,
         AccessMode::ObjectExists,
+        Some(object_store),
     )?;
     let elapsed = start.elapsed();
     println!(
-        "parallel gitoxide (new store): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
+        "parallel gitoxide (new store, warm): confirmed {} objects exists in {:?} ({:0.0} objects/s)",
         hashes.len(),
         elapsed,
         objs_per_sec(elapsed)
@@ -360,14 +379,21 @@ fn do_new_gitoxide_store_in_parallel<C>(
     objects_dir: &Path,
     new_cache: impl Fn() -> C + Send + Sync + 'static,
     mode: AccessMode,
-) -> anyhow::Result<u64>
+    store: Option<OwnShared<general::Store>>,
+) -> anyhow::Result<(std::sync::Arc<git_repository::odb::general::Store>, u64)>
 where
     C: odb::pack::cache::DecodeEntry + Send + 'static,
 {
     use git_repository::prelude::FindExt;
     let bytes = std::sync::atomic::AtomicU64::default();
     let num_slots: usize = std::env::args().nth(2).and_then(|num| num.parse().ok()).unwrap_or(64);
-    let handle = git_repository::odb::at_opts(objects_dir, num_slots)?.with_pack_cache(move || Box::new(new_cache()));
+
+    let store = match store {
+        Some(store) => store,
+        None => OwnShared::new(general::Store::at_opts(objects_dir, num_slots)?),
+    };
+    let handle =
+        Cache::from(store.to_handle(RefreshMode::AfterAllIndicesLoaded)).with_pack_cache(move || Box::new(new_cache()));
 
     git_repository::parallel::in_parallel(
         hashes.chunks(1000),
@@ -390,7 +416,7 @@ where
         },
         git_repository::parallel::reduce::IdentityWithResult::<(), anyhow::Error>::default(),
     )?;
-    Ok(bytes.load(std::sync::atomic::Ordering::Acquire))
+    Ok((store, bytes.load(std::sync::atomic::Ordering::Acquire)))
 }
 
 fn do_gitoxide_in_parallel_through_arc<C>(
