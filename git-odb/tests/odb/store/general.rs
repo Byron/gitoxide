@@ -8,11 +8,10 @@ fn db() -> git_odb::Handle {
 }
 
 #[test]
-#[ignore]
 fn contains() {
     let mut handle = db();
 
-    assert!(handle.contains(hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980")));
+    assert!(handle.contains(hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"))); // loose object
     assert_eq!(
         handle.inner.store().metrics(),
         git_odb::general::store::Metrics {
@@ -22,7 +21,8 @@ fn contains() {
             known_indices: 3,
             open_packs: 0,
             known_packs: 3,
-            unused_slots: 61
+            unused_slots: 61,
+            loose_dbs: 1
         },
         "it only refreshed the file list, yielding the loose db to find this object, but no pack was opened yet"
     );
@@ -49,6 +49,7 @@ fn lookup() {
             open_packs: 0,
             known_packs: 0,
             unused_slots: 64,
+            loose_dbs: 1
         },
         "nothing happened yet, the store is totally lazy"
     );
@@ -66,6 +67,7 @@ fn lookup() {
         open_packs: 3,
         known_packs: 3,
         unused_slots: 61,
+        loose_dbs: 1,
     };
     assert_eq!(
         handle.inner.store().metrics(),
@@ -114,7 +116,8 @@ fn missing_objects_triggers_everything_is_loaded() {
             known_indices: 3,
             open_packs: 3,
             known_packs: 3,
-            unused_slots: 61
+            unused_slots: 61,
+            loose_dbs: 1
         },
         "first refresh triggered by on-disk check, second refresh triggered to see if something changed."
     );

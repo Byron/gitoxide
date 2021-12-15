@@ -308,4 +308,5 @@ pub struct Metrics {
     pub open_packs: usize,
     pub known_packs: usize,
     pub unused_slots: usize,
+    pub loose_dbs: usize,
 }

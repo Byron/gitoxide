@@ -1,5 +1,6 @@
 use std::ops::Deref;
 
+use crate::general::load_index;
 use git_hash::oid;
 use git_object::Data;
 use git_pack::{cache::DecodeEntry, data::entry::Location, index::Entry};
@@ -12,38 +13,28 @@ where
 
     // TODO: probably make this method fallible, but that would mean its own error type.
     fn contains(&self, id: impl AsRef<oid>) -> bool {
-        let mut last_seen_index = None;
-        let mut last_seen_ldb = None;
-
         loop {
             let id = id.as_ref();
             let snapshot = self.snapshot.borrow();
-            for (idx, index) in snapshot.indices[last_seen_index.unwrap_or_default()..]
-                .iter()
-                .enumerate()
-            {
+            for index in &snapshot.indices {
                 if index.contains(id) {
                     return true;
                 }
-                last_seen_index = Some(idx);
             }
 
-            for (idx, lodb) in snapshot.loose_dbs[last_seen_ldb.unwrap_or_default()..]
-                .iter()
-                .enumerate()
-            {
+            for lodb in snapshot.loose_dbs.iter() {
                 if lodb.contains(id) {
                     return true;
                 }
-                last_seen_ldb = Some(idx);
             }
 
             match self.store.load_one_index(self.refresh_mode, &snapshot.marker) {
-                Ok(Some(outcome)) => {
-                    todo!("deal with outcome")
+                Ok(Some(load_index::Outcome::Replace(new_snapshot))) => {
+                    drop(snapshot);
+                    *self.snapshot.borrow_mut() = new_snapshot;
                 }
                 Ok(None) => return false, // nothing more to load, or our refresh mode doesn't allow disk refreshes
-                Err(_) => return false, // something went wrong, nothing we can handle here with this trait. TODO: Maybe that should change?
+                Err(_) => return false, // something went wrong, nothing we can communicate here with this trait. TODO: Maybe that should change?
             }
         }
     }

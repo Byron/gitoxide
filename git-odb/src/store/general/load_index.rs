@@ -22,12 +22,6 @@ pub(crate) enum Outcome {
     /// This happens if we have witnessed a generational change invalidating all of our ids and causing currently loaded
     /// indices and maps to be dropped.
     Replace(Snapshot),
-    /// Despite all values being full copies, indices are still compatible to what was before. This also means
-    /// the caller can continue searching the added indices and loose-dbs, provided they find the last matching
-    /// one.
-    /// Or in other words, new indices were only added to the known list, and what was seen before is known not to have changed.
-    /// Besides that, the full internal state can be replaced as with `Replace`.
-    ReplaceStable(Snapshot),
 }
 
 pub(crate) struct Snapshot {
@@ -87,9 +81,9 @@ impl super::Store {
         }
 
         let outcome = {
-            if marker.generation != index.generation {
-                self.collect_replace_outcome(false /*stable*/)
-            } else if marker.state_id == index.state_id() {
+            if marker.generation != index.generation || marker.state_id != index.state_id() {
+                self.collect_replace_outcome()
+            } else {
                 // always compare to the latest state
                 // Nothing changed in the mean time, try to load another index…
                 // TODO: load another index file, make sure it's of a compatible generation or else… what? Wait for the new index?
@@ -99,8 +93,6 @@ impl super::Store {
                     RefreshMode::Never => return Ok(None),
                     RefreshMode::AfterAllIndicesLoaded => return self.consolidate_with_disk_state(),
                 }
-            } else {
-                self.collect_replace_outcome(true /*stable*/)
             }
         };
         Ok(Some(outcome))
@@ -110,7 +102,6 @@ impl super::Store {
     fn consolidate_with_disk_state(&self) -> Result<Option<Outcome>, Error> {
         let index = self.index.load();
         let previous_index_state = Arc::as_ptr(&index) as usize;
-        let previous_generation = index.generation;
 
         // IMPORTANT: get a lock after we recorded the previous state.
         let objects_directory = self.path.lock();
@@ -119,13 +110,12 @@ impl super::Store {
         let index = self.index.load();
         if previous_index_state != Arc::as_ptr(&index) as usize {
             // Someone else took the look before and changed the index. Return it without doing any additional work.
-            return Ok(Some(
-                self.collect_replace_outcome(index.generation == previous_generation),
-            ));
+            return Ok(Some(self.collect_replace_outcome()));
         }
 
         let was_uninitialized = !index.is_initialized();
         self.num_disk_state_consolidation.fetch_add(1, Ordering::Relaxed);
+
         let db_paths: Vec<_> = std::iter::once(objects_directory.clone())
             .chain(crate::alternate::resolve(&*objects_directory)?)
             .collect();
@@ -340,7 +330,7 @@ impl super::Store {
             };
         }
 
-        todo!("consolidate")
+        Ok(Some(self.collect_replace_outcome()))
     }
 
     /// Returns Some(true) if the slot was empty, or Some(false) if it was collected
@@ -534,13 +524,9 @@ impl super::Store {
         }
     }
 
-    fn collect_replace_outcome(&self, is_stable: bool) -> Outcome {
+    fn collect_replace_outcome(&self) -> Outcome {
         let snapshot = self.collect_snapshot();
-        if is_stable {
-            Outcome::ReplaceStable(snapshot)
-        } else {
-            Outcome::Replace(snapshot)
-        }
+        Outcome::Replace(snapshot)
     }
 }
 

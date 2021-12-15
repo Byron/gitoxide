@@ -10,7 +10,8 @@ impl super::Store {
         let mut known_indices = 0;
         let mut unused_slots = 0;
 
-        for f in self.index.load().slot_indices.iter().map(|idx| &self.files[*idx]) {
+        let index = self.index.load();
+        for f in index.slot_indices.iter().map(|idx| &self.files[*idx]) {
             match &**f.files.load() {
                 Some(IndexAndPacks::Index(bundle)) => {
                     if bundle.index.is_loaded() {
@@ -34,7 +35,13 @@ impl super::Store {
                         known_packs += 1;
                     }
                 }
-                None => unused_slots += 1,
+                None => {}
+            }
+        }
+
+        for slot in &self.files {
+            if slot.files.load().is_none() {
+                unused_slots += 1;
             }
         }
 
@@ -47,6 +54,7 @@ impl super::Store {
             known_indices,
             known_packs,
             unused_slots,
+            loose_dbs: index.loose_dbs.len(),
         }
     }
 }
