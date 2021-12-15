@@ -28,7 +28,7 @@ fn contains() {
     );
 
     // pack 11fd
-    assert!(handle.contains(hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0")));
+    assert!(handle.contains(hex_to_id("dd25c539efbb0ab018caa4cda2d133285634e9b5")));
 }
 
 #[test]

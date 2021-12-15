@@ -13,8 +13,8 @@ where
 
     // TODO: probably make this method fallible, but that would mean its own error type.
     fn contains(&self, id: impl AsRef<oid>) -> bool {
+        let id = id.as_ref();
         loop {
-            let id = id.as_ref();
             let snapshot = self.snapshot.borrow();
             for index in &snapshot.indices {
                 if index.contains(id) {

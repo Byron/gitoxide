@@ -121,6 +121,24 @@ impl<T: Clone> OnDiskFile<T> {
         matches!(self.state, OnDiskFileState::Garbage(_) | OnDiskFileState::Missing)
     }
 
+    pub(crate) fn load_from_disk(&mut self, load: impl FnOnce(&Path) -> std::io::Result<T>) -> std::io::Result<()> {
+        use OnDiskFileState::*;
+        match self.state {
+            Unloaded | Missing => match load(&self.path) {
+                Ok(v) => {
+                    self.state = Loaded(v);
+                    Ok(())
+                }
+                Err(err) => {
+                    // TODO: Should be provide more information? We don't even know what exactly failed right now, degenerating information.
+                    self.state = Missing;
+                    Err(err)
+                }
+            },
+            Loaded(_) | Garbage(_) => Ok(()),
+        }
+    }
+
     pub fn loaded(&self) -> Option<&T> {
         use OnDiskFileState::*;
         match &self.state {
@@ -254,7 +272,14 @@ impl IndexAndPacks {
     }
 
     pub(crate) fn load_index(&mut self) -> std::io::Result<()> {
-        todo!("load actual index")
+        match self {
+            IndexAndPacks::Index(bundle) => bundle.index.load_from_disk(|path| {
+                git_pack::index::File::at(path)
+                    .map(Arc::new)
+                    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
+            }),
+            IndexAndPacks::MultiIndex(bundle) => todo!("load multi-index"),
+        }
     }
 
     pub(crate) fn new_by_index_path(index_path: PathBuf, mtime: SystemTime) -> Self {

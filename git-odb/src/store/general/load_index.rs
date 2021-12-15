@@ -124,12 +124,18 @@ impl super::Store {
                         }
                         let mut bundle = slot.files.load_full();
                         let bundle_mut = Arc::make_mut(&mut bundle);
-                        if let Some(bundle) = bundle_mut.as_mut() {
+                        if let Some(files) = bundle_mut.as_mut() {
                             // these are always expected to be set, unless somebody raced us. We handle this later by retrying.
                             let _loaded_count = IncOnDrop(&index.loaded_indices);
-                            match bundle.load_index() {
-                                Ok(_) => break 'retry_with_next_slot_index,
-                                Err(_) => continue 'retry_with_next_slot_index,
+                            match files.load_index() {
+                                Ok(_) => {
+                                    slot.files.store(bundle);
+                                    break 'retry_with_next_slot_index;
+                                }
+                                Err(_) => {
+                                    slot.files.store(bundle);
+                                    continue 'retry_with_next_slot_index;
+                                }
                             }
                         }
                     }
