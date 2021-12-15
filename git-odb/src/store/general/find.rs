@@ -17,16 +17,13 @@ where
         loop {
             let mut snapshot = self.snapshot.borrow_mut();
             {
-                let mut indices = snapshot.indices.iter();
-                let mut idx = 0;
-                while let Some(index) = indices.next() {
+                for (idx, index) in snapshot.indices.iter().enumerate() {
                     if index.contains(id) {
                         if idx != 0 {
                             snapshot.indices.swap(0, idx);
                         }
                         return true;
                     }
-                    idx += 1;
                 }
             }
 
