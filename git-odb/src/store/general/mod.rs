@@ -42,7 +42,7 @@ pub struct Store {
 
 mod find;
 
-mod init;
+pub mod init;
 
 pub mod store;
 

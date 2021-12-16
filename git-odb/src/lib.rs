@@ -29,15 +29,15 @@ pub mod alternate;
 pub type Handle = Cache<general::Handle<OwnShared<general::Store>>>;
 
 /// Create a new cached odb handle.
-pub fn at_opts(objects_dir: impl Into<PathBuf>, num_slots: usize) -> std::io::Result<Handle> {
+pub fn at_opts(objects_dir: impl Into<PathBuf>, slots: general::init::Slots) -> std::io::Result<Handle> {
     let handle =
-        OwnShared::new(general::Store::at_opts(objects_dir, num_slots)?).to_handle(RefreshMode::AfterAllIndicesLoaded);
+        OwnShared::new(general::Store::at_opts(objects_dir, slots)?).to_handle(RefreshMode::AfterAllIndicesLoaded);
     Ok(Cache::from(handle))
 }
 
 /// Create a new cached odb handle.
 pub fn at(objects_dir: impl Into<PathBuf>) -> std::io::Result<Handle> {
-    at_opts(objects_dir, 64)
+    at_opts(objects_dir, Default::default())
 }
 
 ///

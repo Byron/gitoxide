@@ -458,11 +458,14 @@ where
 {
     use git_repository::prelude::FindExt;
     let bytes = std::sync::atomic::AtomicU64::default();
-    let num_slots: usize = std::env::args().nth(2).and_then(|num| num.parse().ok()).unwrap_or(64);
+    let slots = std::env::args()
+        .nth(2)
+        .and_then(|num| num.parse().ok().map(git_repository::odb::general::init::Slots::Given))
+        .unwrap_or_default();
 
     let store = match store {
         Some(store) => store,
-        None => OwnShared::new(general::Store::at_opts(objects_dir, num_slots)?),
+        None => OwnShared::new(general::Store::at_opts(objects_dir, slots)?),
     };
     let handle =
         Cache::from(store.to_handle(RefreshMode::AfterAllIndicesLoaded)).with_pack_cache(move || Box::new(new_cache()));

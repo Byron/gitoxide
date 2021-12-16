@@ -1,5 +1,5 @@
 use arc_swap::access::Access;
-use arc_swap::ArcSwap;
+use arc_swap::{ArcSwap, Guard};
 use parking_lot::lock_api::MutexGuard;
 use parking_lot::RawMutex;
 use std::collections::{BTreeMap, VecDeque};
@@ -207,31 +207,8 @@ impl super::Store {
             Arc::clone(&index.loose_dbs)
         };
 
-        let mut indices_by_modification_time = Vec::with_capacity(index.slot_indices.len());
-        for db_path in db_paths {
-            let packs = db_path.join("pack");
-            let entries = match std::fs::read_dir(&packs) {
-                Ok(e) => e,
-                Err(err) if err.kind() == std::io::ErrorKind::NotFound => continue,
-                Err(err) => return Err(err.into()),
-            };
-            indices_by_modification_time.extend(
-                entries
-                    .filter_map(Result::ok)
-                    .filter_map(|e| e.metadata().map(|md| (e.path(), md)).ok())
-                    .filter(|(_, md)| md.file_type().is_file())
-                    .filter(|(p, _)| {
-                        let ext = p.extension();
-                        ext == Some(OsStr::new("idx")) || (ext.is_none() && is_multipack_index(p))
-                    })
-                    .map(|(p, md)| md.modified().map_err(Error::from).map(|mtime| (p, mtime, md.len())))
-                    .collect::<Result<Vec<_>, _>>()?,
-            );
-        }
-        // Unlike libgit2, do not sort by modification date, but by size and put the biggest indices first. That way
-        // the chance to hit an object should be higher. We leave it to the handle to sort by LRU.
-        // Git itself doesn't change the order which may safe time, but we want it to be stable which also helps some tests.
-        indices_by_modification_time.sort_by(|l, r| l.2.cmp(&r.2).reverse());
+        let indices_by_modification_time =
+            Self::collect_indices_and_mtime_sorted_by_size(db_paths, index.slot_indices.len().into())?;
         let mut idx_by_index_path: BTreeMap<_, _> = index
             .slot_indices
             .iter()
@@ -415,6 +392,38 @@ impl super::Store {
             }
             Some(self.collect_outcome())
         })
+    }
+
+    pub(crate) fn collect_indices_and_mtime_sorted_by_size(
+        db_paths: Vec<PathBuf>,
+        initial_capacity: Option<usize>,
+    ) -> Result<Vec<(PathBuf, SystemTime, u64)>, Error> {
+        let mut indices_by_modification_time = Vec::with_capacity(initial_capacity.unwrap_or_default());
+        for db_path in db_paths {
+            let packs = db_path.join("pack");
+            let entries = match std::fs::read_dir(&packs) {
+                Ok(e) => e,
+                Err(err) if err.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(err) => return Err(err.into()),
+            };
+            indices_by_modification_time.extend(
+                entries
+                    .filter_map(Result::ok)
+                    .filter_map(|e| e.metadata().map(|md| (e.path(), md)).ok())
+                    .filter(|(_, md)| md.file_type().is_file())
+                    .filter(|(p, _)| {
+                        let ext = p.extension();
+                        ext == Some(OsStr::new("idx")) || (ext.is_none() && is_multipack_index(p))
+                    })
+                    .map(|(p, md)| md.modified().map_err(Error::from).map(|mtime| (p, mtime, md.len())))
+                    .collect::<Result<Vec<_>, _>>()?,
+            );
+        }
+        // Unlike libgit2, do not sort by modification date, but by size and put the biggest indices first. That way
+        // the chance to hit an object should be higher. We leave it to the handle to sort by LRU.
+        // Git itself doesn't change the order which may safe time, but we want it to be stable which also helps some tests.
+        indices_by_modification_time.sort_by(|l, r| l.2.cmp(&r.2).reverse());
+        Ok(indices_by_modification_time)
     }
 
     /// Returns Some(true) if the slot was empty, or Some(false) if it was collected, None if it couldn't claim the slot.

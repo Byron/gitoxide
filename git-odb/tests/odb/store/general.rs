@@ -21,7 +21,7 @@ fn contains() {
             known_indices: 3,
             open_packs: 0,
             known_packs: 3,
-            unused_slots: 61,
+            unused_slots: 29,
             loose_dbs: 1
         },
         "it only refreshed the file list, yielding the loose db to find this object, but no pack was opened yet"
@@ -39,7 +39,7 @@ fn contains() {
             known_indices: 3,
             open_packs: 0,
             known_packs: 3,
-            unused_slots: 61,
+            unused_slots: 29,
             loose_dbs: 1
         },
         "it loaded the biggest back only, which is the first in the list"
@@ -59,7 +59,7 @@ fn contains() {
             known_indices: 3,
             open_packs: 0,
             known_packs: 3,
-            unused_slots: 61,
+            unused_slots: 29,
             loose_dbs: 1
         },
         "when asking for an object in the smallest pack, all inbetween packs are also loaded."
@@ -75,7 +75,7 @@ fn contains() {
             known_indices: 3,
             open_packs: 0,
             known_packs: 3,
-            unused_slots: 61,
+            unused_slots: 29,
             loose_dbs: 1
         },
         "trigger refreshes each time there is an object miss"
@@ -92,7 +92,7 @@ fn contains() {
             known_indices: 3,
             open_packs: 0,
             known_packs: 3,
-            unused_slots: 61,
+            unused_slots: 29,
             loose_dbs: 1
         },
         "if no refreshes are allowed, there is no additional refresh"
@@ -118,7 +118,7 @@ fn lookup() {
             known_indices: 0,
             open_packs: 0,
             known_packs: 0,
-            unused_slots: 64,
+            unused_slots: 32,
             loose_dbs: 0
         },
         "nothing happened yet, the store is totally lazy"
@@ -136,7 +136,7 @@ fn lookup() {
         known_indices: 3,
         open_packs: 3,
         known_packs: 3,
-        unused_slots: 61,
+        unused_slots: 29,
         loose_dbs: 1,
     };
     assert_eq!(
@@ -185,7 +185,7 @@ fn missing_objects_triggers_everything_is_loaded() {
             known_indices: 3,
             open_packs: 0,
             known_packs: 3,
-            unused_slots: 61,
+            unused_slots: 29,
             loose_dbs: 1
         },
         "first refresh triggered by on-disk check, second refresh triggered to see if something changed, contains() only sees indices"
@@ -205,7 +205,7 @@ fn missing_objects_triggers_everything_is_loaded() {
             known_indices: 3,
             open_packs: 0,
             known_packs: 3,
-            unused_slots: 61,
+            unused_slots: 29,
             loose_dbs: 1
         },
         "there are still no packs opened as no index contained the object"
