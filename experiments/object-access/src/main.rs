@@ -163,17 +163,6 @@ fn main() -> anyhow::Result<()> {
         objs_per_sec(elapsed)
     );
 
-    // here
-    let start = Instant::now();
-    let bytes = do_gitoxide_in_parallel_sync(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
-    let elapsed = start.elapsed();
-    println!(
-        "parallel gitoxide (uncached, warmup): confirmed {} bytes in {:?} ({:0.0} objects/s)",
-        bytes,
-        elapsed,
-        objs_per_sec(elapsed)
-    );
-
     let start = Instant::now();
     let bytes = do_gitoxide_in_parallel_sync(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
     let elapsed = start.elapsed();
@@ -244,10 +233,10 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let bytes = do_parallel_git2(hashes.as_slice(), repo.git_dir(), AccessMode::ObjectData)?;
+    let bytes = do_git2(hashes.as_slice(), repo.git_dir(), AccessMode::ObjectData)?;
     let elapsed = start.elapsed();
     println!(
-        "parallel libgit2:  confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        "libgit2:  confirmed {} bytes in {:?} ({:0.0} objects/s)",
         bytes,
         elapsed,
         objs_per_sec(elapsed)
@@ -292,10 +281,10 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let bytes = do_git2(hashes.as_slice(), repo.git_dir(), AccessMode::ObjectData)?;
+    let bytes = do_parallel_git2(hashes.as_slice(), repo.git_dir(), AccessMode::ObjectData)?;
     let elapsed = start.elapsed();
     println!(
-        "libgit2:  confirmed {} bytes in {:?} ({:0.0} objects/s)",
+        "parallel libgit2:  confirmed {} bytes in {:?} ({:0.0} objects/s)",
         bytes,
         elapsed,
         objs_per_sec(elapsed)
