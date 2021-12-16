@@ -1,15 +1,32 @@
 use std::ops::Deref;
 
-use crate::general::load_index;
+use crate::general::{handle, load_index};
 use git_hash::oid;
 use git_object::Data;
 use git_pack::{cache::DecodeEntry, data::entry::Location, index::Entry};
+
+mod error {
+    use crate::{loose, pack};
+
+    /// Returned by [`compound::Store::try_find()`]
+    #[derive(thiserror::Error, Debug)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("An error occurred while obtaining an object from the loose object store")]
+        Loose(#[from] loose::find::Error),
+        #[error("An error occurred while obtaining an object from the packed object store")]
+        Pack(#[from] pack::data::decode_entry::Error),
+        #[error(transparent)]
+        LoadIndex(#[from] crate::general::load_index::Error),
+    }
+}
+pub use error::Error;
 
 impl<S> crate::pack::Find for super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
 {
-    type Error = crate::compound::find::Error;
+    type Error = Error;
 
     // TODO: probably make this method fallible, but that would mean its own error type.
     fn contains(&self, id: impl AsRef<oid>) -> bool {
@@ -50,7 +67,73 @@ where
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl DecodeEntry,
     ) -> Result<Option<(Data<'a>, Option<Location>)>, Self::Error> {
-        todo!("try find cached")
+        let id = id.as_ref();
+        loop {
+            let mut snapshot = self.snapshot.borrow_mut();
+            {
+                for (idx, index) in snapshot.indices.iter_mut().enumerate() {
+                    if let Some((handle::IndexForObjectInPack { pack_id, pack_offset }, index_file, possibly_pack)) =
+                        index.lookup(id)
+                    {
+                        let pack = match possibly_pack {
+                            Some(pack) => pack,
+                            None => todo!("try to load pack, reload indices and retry if we don't get one."),
+                        };
+                        let entry = pack.entry(pack_offset);
+                        let header_size = entry.header_size();
+                        let res = pack
+                            .decode_entry(
+                                entry,
+                                buffer,
+                                |id, _out| {
+                                    index_file.lookup(id).map(|idx| {
+                                        git_pack::data::ResolvedBase::InPack(
+                                            pack.entry(index_file.pack_offset_at_index(idx)),
+                                        )
+                                    })
+                                },
+                                pack_cache,
+                            )
+                            .map(move |r| {
+                                (
+                                    git_object::Data {
+                                        kind: r.kind,
+                                        data: buffer.as_slice(),
+                                    },
+                                    Some(git_pack::data::entry::Location {
+                                        pack_id: pack.id,
+                                        pack_offset,
+                                        entry_size: r.compressed_size + header_size,
+                                    }),
+                                )
+                            })?;
+
+                        if idx != 0 {
+                            snapshot.indices.swap(0, idx);
+                        }
+                        return Ok(Some(res));
+                    }
+                }
+            }
+
+            for lodb in snapshot.loose_dbs.iter() {
+                // TODO: remove this double-lookup once the borrow checker allows it.
+                if lodb.contains(id) {
+                    return lodb
+                        .try_find(id, buffer)
+                        .map(|obj| obj.map(|obj| (obj, None)))
+                        .map_err(Into::into);
+                }
+            }
+
+            match self.store.load_one_index(self.refresh_mode, &snapshot.marker)? {
+                Some(load_index::Outcome::Replace(new_snapshot)) => {
+                    drop(snapshot);
+                    *self.snapshot.borrow_mut() = new_snapshot;
+                }
+                None => return Ok(None),
+            }
+        }
     }
 
     fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {

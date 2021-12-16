@@ -31,12 +31,13 @@ pub struct IndexLookup {
 
 pub struct IndexForObjectInPack {
     /// The internal identifier of the pack itself, which either is referred to by an index or a multi-pack index.
-    pack_id: store::PackId,
-    /// The index of the object within the pack
-    object_index_in_pack: u32,
+    pub(crate) pack_id: store::PackId,
+    /// The offset at which the object's entry can be found
+    pub(crate) pack_offset: u64,
 }
 
 pub(crate) mod index_lookup {
+    use std::ops::Deref;
     use std::sync::Arc;
 
     use git_hash::oid;
@@ -60,23 +61,26 @@ pub(crate) mod index_lookup {
         pub(crate) fn lookup(
             &mut self,
             object_id: &oid,
-        ) -> Option<(handle::IndexForObjectInPack, &mut Option<Arc<git_pack::data::File>>)> {
+        ) -> Option<(
+            handle::IndexForObjectInPack,
+            &git_pack::index::File,
+            &mut Option<Arc<git_pack::data::File>>,
+        )> {
             let id = self.id;
             match &mut self.file {
-                handle::SingleOrMultiIndex::Single { index, data } => {
-                    index.lookup(object_id).map(|object_index_in_pack| {
-                        (
-                            handle::IndexForObjectInPack {
-                                pack_id: store::PackId {
-                                    index: id,
-                                    multipack_index: None,
-                                },
-                                object_index_in_pack,
+                handle::SingleOrMultiIndex::Single { index, data } => index.lookup(object_id).map(move |idx| {
+                    (
+                        handle::IndexForObjectInPack {
+                            pack_id: store::PackId {
+                                index: id,
+                                multipack_index: None,
                             },
-                            data,
-                        )
-                    })
-                }
+                            pack_offset: index.pack_offset_at_index(idx),
+                        },
+                        &**index,
+                        data,
+                    )
+                }),
                 handle::SingleOrMultiIndex::Multi { index, data } => {
                     todo!("find respective pack and return it as &mut Option<>")
                 }

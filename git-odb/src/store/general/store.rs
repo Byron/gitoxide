@@ -274,9 +274,10 @@ impl IndexAndPacks {
     pub(crate) fn load_index(&mut self) -> std::io::Result<()> {
         match self {
             IndexAndPacks::Index(bundle) => bundle.index.load_from_disk(|path| {
-                git_pack::index::File::at(path)
-                    .map(Arc::new)
-                    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
+                git_pack::index::File::at(path).map(Arc::new).map_err(|err| match err {
+                    git_pack::index::init::Error::Io { source, .. } => source,
+                    err => std::io::Error::new(std::io::ErrorKind::Other, err),
+                })
             }),
             IndexAndPacks::MultiIndex(bundle) => todo!("load multi-index"),
         }
