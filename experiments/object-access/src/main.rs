@@ -115,6 +115,56 @@ fn main() -> anyhow::Result<()> {
     }
 
     let start = Instant::now();
+    let (object_store, bytes) = do_new_gitoxide_store_in_parallel(
+        &hashes,
+        repo.objects_dir(),
+        || odb::pack::cache::Never,
+        AccessMode::ObjectData,
+        None,
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide (new store, uncached): confirmed {} bytes exists in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let (object_store, bytes) = do_new_gitoxide_store_in_parallel(
+        &hashes,
+        repo.objects_dir(),
+        || odb::pack::cache::Never,
+        AccessMode::ObjectData,
+        Some(object_store),
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide (new store, uncached, warm): confirmed {} bytes exists in {:?} ({:0.0} objects/s)",
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    let start = Instant::now();
+    let (_, bytes) = do_new_gitoxide_store_in_parallel(
+        &hashes,
+        repo.objects_dir(),
+        || odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES),
+        AccessMode::ObjectData,
+        Some(object_store),
+    )?;
+    let elapsed = start.elapsed();
+    println!(
+        "parallel gitoxide (new store, cache = {:.0}MB), warm): confirmed {} bytes exists in {:?} ({:0.0} objects/s)",
+        GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES as f32 / (1024 * 1024) as f32,
+        bytes,
+        elapsed,
+        objs_per_sec(elapsed)
+    );
+
+    // here
+    let start = Instant::now();
     let bytes = do_gitoxide_in_parallel_sync(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
     let elapsed = start.elapsed();
     println!(
