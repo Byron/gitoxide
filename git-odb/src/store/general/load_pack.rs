@@ -1,5 +1,6 @@
-use crate::general::store;
 use std::sync::Arc;
+
+use crate::general::store;
 
 impl super::Store {
     /// If Ok(None) is returned, the pack-id was stale and referred to an unloaded pack or a pack which couldn't be
@@ -57,7 +58,7 @@ impl super::Store {
                     }
                 }
             }
-            Some(multipack_id) => todo!("load from given multipack which needs additional lookup"),
+            Some(_multipack_id) => todo!("load from given multipack which needs additional lookup"),
         }
     }
 }

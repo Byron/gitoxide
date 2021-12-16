@@ -1,16 +1,13 @@
-use std::ffi::OsStr;
-use std::sync::atomic::{AtomicU16, AtomicU32};
-use std::time::SystemTime;
 use std::{
-    ops::BitXor,
+    ffi::OsStr,
     path::{Path, PathBuf},
     sync::{
-        atomic::{AtomicUsize, Ordering},
+        atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering},
         Arc,
     },
+    time::SystemTime,
 };
 
-use crate::general::handle::SingleOrMultiIndex::Single;
 use arc_swap::ArcSwap;
 use git_features::hash;
 
@@ -72,7 +69,7 @@ impl SlotMapIndex {
     pub(crate) fn state_id(self: &Arc<SlotMapIndex>) -> StateId {
         // We let the loaded indices take part despite not being part of our own snapshot.
         // This is to account for indices being loaded in parallel without actually changing the snapshot itself.
-        let mut hash = hash::crc32(&(Arc::as_ptr(self) as usize).to_be_bytes());
+        let hash = hash::crc32(&(Arc::as_ptr(self) as usize).to_be_bytes());
         hash::crc32_update(hash, &self.loaded_indices.load(Ordering::SeqCst).to_be_bytes())
     }
 
@@ -277,7 +274,7 @@ impl IndexAndPacks {
                     err => std::io::Error::new(std::io::ErrorKind::Other, err),
                 })
             }),
-            IndexAndPacks::MultiIndex(bundle) => todo!("load multi-index"),
+            IndexAndPacks::MultiIndex(_bundle) => todo!("load multi-index"),
         }
     }
 
@@ -305,6 +302,7 @@ impl IndexAndPacks {
         })
     }
 
+    #[allow(unused, unreachable_code)]
     fn new_multi(index_path: PathBuf, mtime: SystemTime) -> Self {
         Self::MultiIndex(MultiIndexFileBundle {
             multi_index: OnDiskFile {

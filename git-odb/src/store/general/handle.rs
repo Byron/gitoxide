@@ -1,5 +1,5 @@
-use std::cell::RefCell;
 use std::{
+    cell::RefCell,
     ops::Deref,
     sync::{atomic::Ordering, Arc},
 };
@@ -37,7 +37,6 @@ pub struct IndexForObjectInPack {
 }
 
 pub(crate) mod index_lookup {
-    use std::ops::Deref;
     use std::sync::Arc;
 
     use git_hash::oid;
@@ -81,7 +80,7 @@ pub(crate) mod index_lookup {
                         data,
                     )
                 }),
-                handle::SingleOrMultiIndex::Multi { index, data } => {
+                handle::SingleOrMultiIndex::Multi { index: _, data: _ } => {
                     todo!("find respective pack and return it as &mut Option<>")
                 }
             }

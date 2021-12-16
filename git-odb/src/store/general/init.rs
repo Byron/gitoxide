@@ -1,17 +1,8 @@
-use std::{
-    iter::FromIterator,
-    ops::Deref,
-    path::PathBuf,
-    sync::{atomic::AtomicUsize, Arc},
-};
+use std::{iter::FromIterator, path::PathBuf, sync::Arc};
 
 use arc_swap::ArcSwap;
-use git_features::threading::OwnShared;
 
-use crate::general::{
-    store,
-    store::{MutableIndexAndPack, SlotMapIndex},
-};
+use crate::general::store::{MutableIndexAndPack, SlotMapIndex};
 
 /// Configures the amount of slots in the index slotmap, which is fixed throughout the existence of the store.
 pub enum Slots {

@@ -1,9 +1,10 @@
 use std::ops::Deref;
 
-use crate::general::{handle, load_index};
 use git_hash::oid;
 use git_object::Data;
 use git_pack::{cache::DecodeEntry, data::entry::Location, index::Entry};
+
+use crate::general::{handle, load_index};
 
 mod error {
     use crate::{loose, pack};
@@ -160,15 +161,15 @@ where
         }
     }
 
-    fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
+    fn location_by_oid(&self, _id: impl AsRef<oid>, _buf: &mut Vec<u8>) -> Option<Location> {
         todo!("location by oid")
     }
 
-    fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = Entry> + '_>> {
+    fn index_iter_by_pack_id(&self, _pack_id: u32) -> Option<Box<dyn Iterator<Item = Entry> + '_>> {
         todo!("index iter by pack id")
     }
 
-    fn entry_by_location(&self, location: &Location) -> Option<git_pack::find::Entry<'_>> {
+    fn entry_by_location(&self, _location: &Location) -> Option<git_pack::find::Entry<'_>> {
         todo!("entry by location")
     }
 }

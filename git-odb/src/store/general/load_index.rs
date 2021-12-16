@@ -1,20 +1,17 @@
-use arc_swap::access::Access;
-use arc_swap::{ArcSwap, Guard};
-use parking_lot::lock_api::MutexGuard;
-use parking_lot::RawMutex;
-use std::collections::{BTreeMap, VecDeque};
-use std::ffi::OsStr;
-use std::ops::Deref;
-use std::path::Path;
-use std::sync::atomic::{AtomicU16, AtomicUsize};
-use std::time::SystemTime;
 use std::{
-    path::PathBuf,
-    sync::{atomic::Ordering, Arc},
+    collections::{BTreeMap, VecDeque},
+    ffi::OsStr,
+    ops::Deref,
+    path::{Path, PathBuf},
+    sync::{
+        atomic::{AtomicU16, AtomicUsize, Ordering},
+        Arc,
+    },
+    time::SystemTime,
 };
 
 use crate::{
-    general::{handle, store, store::StateId},
+    general::{handle, store},
     RefreshMode,
 };
 
@@ -35,8 +32,6 @@ pub(crate) struct Snapshot {
 }
 
 mod error {
-    use crate::general;
-    use crate::pack;
     use std::path::PathBuf;
 
     /// Returned by [`general::Store::at_opts()`]
@@ -62,10 +57,9 @@ mod error {
     }
 }
 
-use crate::general::store::{
-    Generation, IndexAndPacks, MultiIndexFileBundle, MutableIndexAndPack, OnDiskFile, OnDiskFileState, SlotMapIndex,
-};
 pub use error::Error;
+
+use crate::general::store::{Generation, IndexAndPacks, MutableIndexAndPack, SlotMapIndex};
 
 impl super::Store {
     /// If `None` is returned, there is new indices and the caller should give up. This is a possibility even if it's allowed to refresh
@@ -81,7 +75,7 @@ impl super::Store {
         }
 
         if marker.generation != index.generation || marker.state_id != index.state_id() {
-            /// We have a more recent state already, provide it.
+            // We have a more recent state already, provide it.
             Ok(Some(self.collect_outcome()))
         } else {
             // always compare to the latest state
@@ -476,7 +470,7 @@ impl super::Store {
     }
 
     // returns Some<dest slot was empty> if the copy could happen because dest-slot was actually free or disposable , and Some(true) if it was empty
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, unused_variables)]
     fn try_copy_multi_pack_index(
         &self,
         lock: &parking_lot::MutexGuard<'_, PathBuf>,
@@ -501,7 +495,7 @@ impl super::Store {
     }
 
     fn set_slot_to_index(
-        lock: &parking_lot::MutexGuard<'_, PathBuf>,
+        _lock: &parking_lot::MutexGuard<'_, PathBuf>,
         slot: &MutableIndexAndPack,
         index_path: PathBuf,
         mtime: SystemTime,
@@ -520,7 +514,7 @@ impl super::Store {
 
     /// Returns true if the index was loaded.
     fn assure_slot_matches_index(
-        lock: &parking_lot::MutexGuard<'_, PathBuf>,
+        _lock: &parking_lot::MutexGuard<'_, PathBuf>,
         slot: &MutableIndexAndPack,
         index_path: PathBuf,
         mtime: SystemTime,

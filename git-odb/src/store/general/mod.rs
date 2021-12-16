@@ -1,7 +1,6 @@
-#![allow(missing_docs, unused, dead_code)]
+#![allow(missing_docs)]
 
-use std::cell::RefCell;
-use std::{ops::Deref, path::PathBuf, sync::atomic::AtomicUsize};
+use std::{cell::RefCell, ops::Deref, path::PathBuf, sync::atomic::AtomicUsize};
 
 use arc_swap::ArcSwap;
 
