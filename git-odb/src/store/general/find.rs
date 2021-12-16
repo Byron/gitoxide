@@ -18,6 +18,8 @@ mod error {
         Pack(#[from] pack::data::decode_entry::Error),
         #[error(transparent)]
         LoadIndex(#[from] crate::general::load_index::Error),
+        #[error(transparent)]
+        LoadPack(#[from] std::io::Error),
     }
 }
 pub use error::Error;
@@ -50,7 +52,7 @@ where
                 }
             }
 
-            match self.store.load_one_index(self.refresh_mode, &snapshot.marker) {
+            match self.store.load_one_index(self.refresh_mode, snapshot.marker) {
                 Ok(Some(load_index::Outcome::Replace(new_snapshot))) => {
                     drop(snapshot);
                     *self.snapshot.borrow_mut() = new_snapshot;
@@ -68,16 +70,38 @@ where
         pack_cache: &mut impl DecodeEntry,
     ) -> Result<Option<(Data<'a>, Option<Location>)>, Self::Error> {
         let id = id.as_ref();
-        loop {
+        'outer: loop {
             let mut snapshot = self.snapshot.borrow_mut();
             {
+                let marker = snapshot.marker;
                 for (idx, index) in snapshot.indices.iter_mut().enumerate() {
                     if let Some((handle::IndexForObjectInPack { pack_id, pack_offset }, index_file, possibly_pack)) =
                         index.lookup(id)
                     {
                         let pack = match possibly_pack {
                             Some(pack) => pack,
-                            None => todo!("try to load pack, reload indices and retry if we don't get one."),
+                            None => match self.store.load_pack(pack_id, marker)? {
+                                Some(pack) => {
+                                    *possibly_pack = Some(pack);
+                                    possibly_pack.as_deref().expect("just put it in")
+                                }
+                                None => {
+                                    // The pack wasn't available anymore so we are supposed to try another round with a fresh index
+                                    match self.store.load_one_index(self.refresh_mode, snapshot.marker)? {
+                                        Some(load_index::Outcome::Replace(new_snapshot)) => {
+                                            drop(snapshot);
+                                            *self.snapshot.borrow_mut() = new_snapshot;
+                                            continue 'outer;
+                                        }
+                                        None => {
+                                            // nothing new in the index, kind of unexpected to not have a pack but to also
+                                            // to have no new index yet. We set the new index before removing any slots, so
+                                            // this should be observable.
+                                            return Ok(None);
+                                        }
+                                    }
+                                }
+                            },
                         };
                         let entry = pack.entry(pack_offset);
                         let header_size = entry.header_size();
@@ -126,7 +150,7 @@ where
                 }
             }
 
-            match self.store.load_one_index(self.refresh_mode, &snapshot.marker)? {
+            match self.store.load_one_index(self.refresh_mode, snapshot.marker)? {
                 Some(load_index::Outcome::Replace(new_snapshot)) => {
                     drop(snapshot);
                     *self.snapshot.borrow_mut() = new_snapshot;

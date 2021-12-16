@@ -73,7 +73,7 @@ impl super::Store {
     pub(crate) fn load_one_index(
         &self,
         refresh_mode: RefreshMode,
-        marker: &store::SlotIndexMarker,
+        marker: store::SlotIndexMarker,
     ) -> Result<Option<Outcome>, Error> {
         let index = self.index.load();
         if !index.is_initialized() {

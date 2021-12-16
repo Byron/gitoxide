@@ -100,15 +100,14 @@ fn contains() {
 }
 
 #[test]
-#[ignore]
 fn lookup() {
     let mut handle = db();
 
     fn can_locate(db: &git_odb::Handle, hex_id: &str) {
         let id = hex_to_id(hex_id);
         let mut buf = Vec::new();
-        assert!(db.contains(id));
         assert!(db.find(id, &mut buf).is_ok());
+        assert!(db.contains(id));
     }
     assert_eq!(
         handle.inner.store().metrics(),
@@ -120,7 +119,7 @@ fn lookup() {
             open_packs: 0,
             known_packs: 0,
             unused_slots: 64,
-            loose_dbs: 1
+            loose_dbs: 0
         },
         "nothing happened yet, the store is totally lazy"
     );
@@ -173,7 +172,6 @@ fn lookup() {
 }
 
 #[test]
-#[ignore]
 fn missing_objects_triggers_everything_is_loaded() {
     let handle = db();
     assert!(!handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
@@ -185,11 +183,31 @@ fn missing_objects_triggers_everything_is_loaded() {
             num_refreshes: 2,
             open_indices: 3,
             known_indices: 3,
-            open_packs: 3,
+            open_packs: 0,
             known_packs: 3,
             unused_slots: 61,
             loose_dbs: 1
         },
-        "first refresh triggered by on-disk check, second refresh triggered to see if something changed."
+        "first refresh triggered by on-disk check, second refresh triggered to see if something changed, contains() only sees indices"
+    );
+
+    let mut buf = Vec::new();
+    assert!(!handle
+        .find(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), &mut buf)
+        .is_ok());
+
+    assert_eq!(
+        handle.inner.store().metrics(),
+        git_odb::general::store::Metrics {
+            num_handles: 1,
+            num_refreshes: 3,
+            open_indices: 3,
+            known_indices: 3,
+            open_packs: 0,
+            known_packs: 3,
+            unused_slots: 61,
+            loose_dbs: 1
+        },
+        "there are still no packs opened as no index contained the object"
     );
 }

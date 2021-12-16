@@ -22,7 +22,7 @@ pub(crate) type AtomicGeneration = AtomicU32;
 
 /// A way to indicate which pack indices we have seen already and which of them are loaded, along with an idea
 /// of whether stored `PackId`s are still usable.
-#[derive(Default)]
+#[derive(Default, Copy, Clone)]
 pub struct SlotIndexMarker {
     /// The generation the `loaded_until_index` belongs to. Indices of different generations are completely incompatible.
     /// This value changes once the internal representation is compacted, something that may happen only if there is no handle
@@ -34,6 +34,7 @@ pub struct SlotIndexMarker {
 }
 
 /// A way to load and refer to a pack uniquely, namespaced by their indexing mechanism, aka multi-pack or not.
+#[derive(Copy, Clone)]
 pub struct PackId {
     /// Note that if `multipack_index = None`, this index is corresponding to the index id.
     /// So a pack is always identified by its corresponding index.
@@ -121,7 +122,8 @@ impl<T: Clone> OnDiskFile<T> {
         matches!(self.state, OnDiskFileState::Garbage(_) | OnDiskFileState::Missing)
     }
 
-    pub(crate) fn load_from_disk(&mut self, load: impl FnOnce(&Path) -> std::io::Result<T>) -> std::io::Result<()> {
+    // On error, always declare the file missing and return an error.
+    pub(crate) fn load_strict(&mut self, load: impl FnOnce(&Path) -> std::io::Result<T>) -> std::io::Result<()> {
         use OnDiskFileState::*;
         match self.state {
             Unloaded | Missing => match load(&self.path) {
@@ -136,6 +138,26 @@ impl<T: Clone> OnDiskFile<T> {
                 }
             },
             Loaded(_) | Garbage(_) => Ok(()),
+        }
+    }
+    /// If the file is missing, we don't consider this failure but instead return Ok(None) to allow recovery.
+    /// when we know that loading is necessary. This also works around borrow check, which is a nice coincidence.
+    pub fn load_with_recovery(&mut self, load: impl FnOnce(&Path) -> std::io::Result<T>) -> std::io::Result<Option<T>> {
+        use OnDiskFileState::*;
+        match &mut self.state {
+            Loaded(v) | Garbage(v) => Ok(Some(v.clone())),
+            Missing => Ok(None),
+            Unloaded => match load(&self.path) {
+                Ok(v) => {
+                    self.state = OnDiskFileState::Loaded(v.clone());
+                    Ok(Some(v))
+                }
+                Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+                    self.state = OnDiskFileState::Missing;
+                    Ok(None)
+                }
+                Err(err) => Err(err),
+            },
         }
     }
 
@@ -161,30 +183,6 @@ impl<T: Clone> OnDiskFile<T> {
             other @ (OnDiskFileState::Garbage(_) | OnDiskFileState::Unloaded | OnDiskFileState::Missing) => {
                 self.state = other
             }
-        }
-    }
-
-    /// We do it like this as we first have to check for a loaded interior in read-only mode, and then upgrade
-    /// when we know that loading is necessary. This also works around borrow check, which is a nice coincidence.
-    pub fn do_load(&mut self, load: impl FnOnce(&Path) -> std::io::Result<T>) -> std::io::Result<Option<&T>> {
-        use OnDiskFileState::*;
-        match &mut self.state {
-            Loaded(_) | Garbage(_) => unreachable!("BUG: check before calling this"),
-            Missing => Ok(None),
-            Unloaded => match load(&self.path) {
-                Ok(v) => {
-                    self.state = OnDiskFileState::Loaded(v);
-                    match &self.state {
-                        Loaded(v) => Ok(Some(v)),
-                        _ => unreachable!(),
-                    }
-                }
-                Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
-                    self.state = OnDiskFileState::Missing;
-                    Ok(None)
-                }
-                Err(err) => Err(err),
-            },
         }
     }
 }
@@ -273,7 +271,7 @@ impl IndexAndPacks {
 
     pub(crate) fn load_index(&mut self) -> std::io::Result<()> {
         match self {
-            IndexAndPacks::Index(bundle) => bundle.index.load_from_disk(|path| {
+            IndexAndPacks::Index(bundle) => bundle.index.load_strict(|path| {
                 git_pack::index::File::at(path).map(Arc::new).map_err(|err| match err {
                     git_pack::index::init::Error::Io { source, .. } => source,
                     err => std::io::Error::new(std::io::ErrorKind::Other, err),
