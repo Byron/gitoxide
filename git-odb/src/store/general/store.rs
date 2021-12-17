@@ -31,13 +31,45 @@ pub struct SlotIndexMarker {
 }
 
 /// A way to load and refer to a pack uniquely, namespaced by their indexing mechanism, aka multi-pack or not.
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 pub struct PackId {
-    /// Note that if `multipack_index = None`, this index is corresponding to the index id.
-    /// So a pack is always identified by its corresponding index.
-    /// If it is a multipack index, this is the id / offset of the pack in the `multipack_index`.
+    /// This is the index in the slot map at which the packs index is located.
     pub(crate) index: IndexId,
+    /// If the pack is in a multi-pack index, this additional index is the pack-index within the multi-pack index identified by `index`.
     pub(crate) multipack_index: Option<IndexId>,
+}
+
+impl PackId {
+    /// Packs have a built-in identifier to make data structures simpler, and this method represents ourselves as such id
+    /// to be convertible back and forth. We essentially compress ourselves into a u32.
+    pub(crate) fn to_intrinsic_pack_id(&self) -> u32 {
+        assert!(self.index < 1 << 15, "There shouldn't be more than 2^15 indices");
+        match self.multipack_index {
+            None => self.index as u32,
+            Some(midx) => {
+                assert!(
+                    midx < 1 << 16,
+                    "There shouldn't be more than 2^16 packs per multi-index"
+                );
+                ((self.index | 1 << 15) | midx << 16) as u32
+            }
+        }
+    }
+
+    pub(crate) fn from_intrinsic_pack_id(pack_id: u32) -> Self {
+        if pack_id & (1 << 15) == 0 {
+            PackId {
+                index: pack_id as usize,
+                multipack_index: None,
+            }
+        } else {
+            PackId {
+                index: (pack_id & 0x7fff) as IndexId,
+                multipack_index: Some((pack_id >> 16) as IndexId),
+            }
+        }
+    }
 }
 
 /// An index that changes only if the packs directory changes and its contents is re-read.
@@ -338,4 +370,37 @@ pub struct Metrics {
     pub known_packs: usize,
     pub unused_slots: usize,
     pub loose_dbs: usize,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod pack_id {
+        use super::PackId;
+
+        #[test]
+        fn to_intrinsic_roundtrip() {
+            let single = PackId {
+                index: (1 << 15) - 1,
+                multipack_index: None,
+            };
+            let multi = PackId {
+                index: (1 << 15) - 1,
+                multipack_index: Some((1 << 16) - 1),
+            };
+            assert_eq!(PackId::from_intrinsic_pack_id(single.to_intrinsic_pack_id()), single);
+            assert_eq!(PackId::from_intrinsic_pack_id(multi.to_intrinsic_pack_id()), multi);
+        }
+
+        #[test]
+        #[should_panic]
+        fn max_supported_index_count() {
+            PackId {
+                index: 1 << 15,
+                multipack_index: None,
+            }
+            .to_intrinsic_pack_id();
+        }
+    }
 }

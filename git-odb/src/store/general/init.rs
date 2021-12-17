@@ -11,7 +11,7 @@ pub enum Slots {
     /// on the server side where the repository setup is controlled.
     ///
     /// Note that this won't affect their packs, as each index can have one or more packs associated with it.
-    Given(usize),
+    Given(u16),
     /// Compute the amount of slots needed, as probably best used on the client side where a variety of repositories is encountered.
     AsNeededByDiskState {
         /// 1.0 means no safety, 1.1 means 10% more slots than needed
@@ -46,7 +46,7 @@ impl super::Store {
             ));
         }
         let slot_count = match slots {
-            Slots::Given(n) => n,
+            Slots::Given(n) => n as usize,
             Slots::AsNeededByDiskState { multiplier, minimum } => {
                 let mut db_paths = crate::alternate::resolve(&objects_dir)
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
@@ -58,6 +58,12 @@ impl super::Store {
                 ((num_slots as f32 * multiplier) as usize).max(minimum)
             }
         };
+        if slot_count >= 1 << 15 {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Cannot use more than 1^15 slots",
+            ));
+        }
         Ok(super::Store {
             path: parking_lot::Mutex::new(objects_dir),
             files: Vec::from_iter(std::iter::repeat_with(MutableIndexAndPack::default).take(slot_count)),

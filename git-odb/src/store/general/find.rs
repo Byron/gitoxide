@@ -162,14 +162,26 @@ where
     }
 
     fn location_by_oid(&self, _id: impl AsRef<oid>, _buf: &mut Vec<u8>) -> Option<Location> {
+        assert!(
+            matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
+            "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
+        );
         todo!("location by oid")
     }
 
     fn index_iter_by_pack_id(&self, _pack_id: u32) -> Option<Box<dyn Iterator<Item = Entry> + '_>> {
+        assert!(
+            matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
+            "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
+        );
         todo!("index iter by pack id")
     }
 
     fn entry_by_location(&self, _location: &Location) -> Option<git_pack::find::Entry<'_>> {
+        assert!(
+            matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
+            "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
+        );
         todo!("entry by location")
     }
 }

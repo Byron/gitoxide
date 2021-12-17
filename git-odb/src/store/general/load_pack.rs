@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::sync::Arc;
 
 use crate::general::store;
@@ -17,6 +18,18 @@ impl super::Store {
         if index.generation != marker.generation {
             return Ok(None);
         }
+        fn load_pack(path: &Path, id: store::PackId) -> std::io::Result<Arc<git_pack::data::File>> {
+            git_pack::data::File::at(path)
+                .map(|mut pack| {
+                    pack.id = id.to_intrinsic_pack_id();
+                    Arc::new(pack)
+                })
+                .map_err(|err| match err {
+                    git_pack::data::header::decode::Error::Io { source, .. } => source,
+                    other => std::io::Error::new(std::io::ErrorKind::Other, other),
+                })
+        }
+
         match id.multipack_index {
             None => {
                 let f = &self.files[id.index];
@@ -30,12 +43,7 @@ impl super::Store {
                                 let files_mut = Arc::make_mut(&mut files);
                                 let pack = match files_mut {
                                     Some(store::IndexAndPacks::Index(bundle)) => {
-                                        bundle.data.load_with_recovery(|path| {
-                                            git_pack::data::File::at(path).map(Arc::new).map_err(|err| match err {
-                                                git_pack::data::header::decode::Error::Io { source, .. } => source,
-                                                other => std::io::Error::new(std::io::ErrorKind::Other, other),
-                                            })
-                                        })?
+                                        bundle.data.load_with_recovery(|path| load_pack(path, id))?
                                     }
                                     Some(store::IndexAndPacks::MultiIndex(_)) => {
                                         // something changed between us getting the lock, trigger a complete index refresh.

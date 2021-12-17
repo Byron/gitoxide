@@ -483,7 +483,15 @@ impl super::Store {
                 }
                 todo!("copy to possibly disposable slot")
             }
-            None => todo!("copy/clone resources over, but leave the original alone for now"),
+            None => {
+                // Do NOT copy the packs over, they need to be reopened to get the correct pack id matching the new slot map index.
+                // If we try are allowed to delete the original, and nobody has the pack referenced, it is closed which is preferred.
+                // Thus we simply always start new with packs in multi-pack indices.
+                // In the worst case this could mean duplicate file handle usage though as the old and the new index can't share
+                // packs due to the intrinsic id.
+                // Note that the ID is used for cache access, too, so it must be unique. It must also be mappable from pack-id to slotmap id.
+                todo!("copy/clone resources over, but leave the original alone for now")
+            }
         }
     }
 

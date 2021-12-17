@@ -26,6 +26,7 @@ pub enum SingleOrMultiIndex {
 
 pub struct IndexLookup {
     pub(crate) file: SingleOrMultiIndex,
+    /// The index we were found at in the slot map
     pub(crate) id: store::IndexId,
 }
 
