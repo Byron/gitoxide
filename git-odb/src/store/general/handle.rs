@@ -6,7 +6,7 @@ use std::{
 
 use git_features::threading::OwnShared;
 
-use crate::general::store;
+use crate::general::{handle, store};
 
 pub(crate) mod multi_index {
     // TODO: replace this one with an actual implementation of a multi-pack index.
@@ -190,7 +190,14 @@ where
         super::Handle {
             store: self.store.clone(),
             refresh_mode: self.refresh_mode,
-            token: self.store.register_handle().into(),
+            token: {
+                let token = self.store.register_handle();
+                match self.token.as_ref().expect("token is always set here ") {
+                    handle::Mode::DeletedPacksAreInaccessible => token,
+                    handle::Mode::KeepDeletedPacksAvailable => self.store.upgrade_handle(token),
+                }
+                .into()
+            },
             snapshot: RefCell::new(self.store.collect_snapshot()),
         }
     }

@@ -4,7 +4,7 @@ use std::{
 };
 
 use git_features::{parallel::reduce::Finalize, progress};
-use git_odb::{compound, linked, pack, pack::FindExt};
+use git_odb::{compound, pack, pack::FindExt};
 use git_pack::data::{
     output,
     output::{count, entry},
@@ -238,7 +238,7 @@ fn traversals() -> crate::Result {
     {
         let head = hex_to_id("dfcb5e39ac6eb30179808bbab721e8a28ce1b52e");
         let mut commits = commit::Ancestors::new(Some(head), commit::ancestors::State::default(), {
-            let db = Arc::clone(&db);
+            let db = db.clone();
             move |oid, buf| db.find_commit_iter(oid, buf).ok().map(|t| t.0)
         })
         .map(Result::unwrap)
@@ -310,14 +310,14 @@ fn traversals() -> crate::Result {
             "two different ways of counting, still the same in the end"
         );
 
-        write_and_verify(Arc::clone(&db), entries, expected_pack_hash, expected_thin_pack_hash)?;
+        write_and_verify(db.clone(), entries, expected_pack_hash, expected_thin_pack_hash)?;
     }
 
     Ok(())
 }
 
 fn write_and_verify(
-    db: Arc<linked::Store>,
+    db: git_odb::Handle,
     entries: Vec<output::Entry>,
     expected_pack_hash: git_hash::ObjectId,
     expected_thin_pack_hash: Option<git_hash::ObjectId>,
