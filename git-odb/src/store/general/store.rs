@@ -31,8 +31,7 @@ pub struct SlotIndexMarker {
 }
 
 /// A way to load and refer to a pack uniquely, namespaced by their indexing mechanism, aka multi-pack or not.
-#[derive(Debug, Copy, Clone)]
-#[cfg_attr(test, derive(Eq, PartialEq))]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct PackId {
     /// This is the index in the slot map at which the packs index is located.
     pub(crate) index: IndexId,

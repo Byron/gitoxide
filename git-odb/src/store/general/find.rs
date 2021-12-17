@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use std::ops::Deref;
 
 use git_hash::oid;
@@ -23,6 +24,7 @@ mod error {
         LoadPack(#[from] std::io::Error),
     }
 }
+use crate::general;
 pub use error::Error;
 
 impl<S> crate::pack::Find for super::Handle<S>
@@ -164,20 +166,103 @@ where
         }
     }
 
-    fn location_by_oid(&self, _id: impl AsRef<oid>, _buf: &mut Vec<u8>) -> Option<Location> {
+    fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
         assert!(
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
         );
-        todo!("location by oid")
+        let id = id.as_ref();
+        'outer: loop {
+            let mut snapshot = self.snapshot.borrow_mut();
+            {
+                let marker = snapshot.marker;
+                for (idx, index) in snapshot.indices.iter_mut().enumerate() {
+                    if let Some(handle::index_lookup::Outcome {
+                        object_index: handle::IndexForObjectInPack { pack_id, pack_offset },
+                        index_file: _,
+                        pack: possibly_pack,
+                    }) = index.lookup(id)
+                    {
+                        let pack = match possibly_pack {
+                            Some(pack) => pack,
+                            None => match self.store.load_pack(pack_id, marker).ok()? {
+                                Some(pack) => {
+                                    *possibly_pack = Some(pack);
+                                    possibly_pack.as_deref().expect("just put it in")
+                                }
+                                None => {
+                                    // The pack wasn't available anymore so we are supposed to try another round with a fresh index
+                                    match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
+                                        Some(new_snapshot) => {
+                                            drop(snapshot);
+                                            *self.snapshot.borrow_mut() = new_snapshot;
+                                            continue 'outer;
+                                        }
+                                        None => {
+                                            // nothing new in the index, kind of unexpected to not have a pack but to also
+                                            // to have no new index yet. We set the new index before removing any slots, so
+                                            // this should be observable.
+                                            return None;
+                                        }
+                                    }
+                                }
+                            },
+                        };
+                        let entry = pack.entry(pack_offset);
+
+                        buf.resize(entry.decompressed_size.try_into().expect("representable size"), 0);
+                        assert_eq!(pack.id, pack_id.to_intrinsic_pack_id(), "both ids must always match");
+
+                        let res = pack.decompress_entry(&entry, buf).ok().map(|entry_size_past_header| {
+                            git_pack::data::entry::Location {
+                                pack_id: pack.id,
+                                pack_offset,
+                                entry_size: entry.header_size() + entry_size_past_header,
+                            }
+                        });
+
+                        if idx != 0 {
+                            snapshot.indices.swap(0, idx);
+                        }
+                        return res;
+                    }
+                }
+            }
+
+            match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
+                Some(new_snapshot) => {
+                    drop(snapshot);
+                    *self.snapshot.borrow_mut() = new_snapshot;
+                }
+                None => return None,
+            }
+        }
     }
 
-    fn index_iter_by_pack_id(&self, _pack_id: u32) -> Option<Box<dyn Iterator<Item = Entry> + '_>> {
+    fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = Entry> + '_>> {
         assert!(
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
         );
-        todo!("index iter by pack id")
+        let pack_id = general::store::PackId::from_intrinsic_pack_id(pack_id);
+        loop {
+            let mut snapshot = self.snapshot.borrow_mut();
+            {
+                // for index in snapshot.indices.iter() {
+                //     if let Some(iter) = index.iter(pack_id) {
+                //         return Some(iter);
+                //     }
+                // }
+            }
+
+            match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
+                Some(new_snapshot) => {
+                    drop(snapshot);
+                    *self.snapshot.borrow_mut() = new_snapshot;
+                }
+                None => return None,
+            }
+        }
     }
 
     fn entry_by_location(&self, _location: &Location) -> Option<git_pack::find::Entry<'_>> {

@@ -51,6 +51,19 @@ pub(crate) mod index_lookup {
     }
 
     impl handle::IndexLookup {
+        /// Return an iterator over the entries of the given pack. The `pack_id` is only required to
+        pub(crate) fn iter(
+            &self,
+            pack_id: store::PackId,
+        ) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
+            (self.id == pack_id.index).then(|| match &self.file {
+                handle::SingleOrMultiIndex::Single { index, .. } => index.iter(),
+                handle::SingleOrMultiIndex::Multi { .. } => {
+                    todo!("find respective pack and return it as &mut Option<>")
+                }
+            })
+        }
+
         /// Return true if the given object id exists in this index
         pub(crate) fn contains(&self, object_id: &oid) -> bool {
             match &self.file {
