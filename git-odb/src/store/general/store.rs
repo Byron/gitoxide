@@ -42,7 +42,7 @@ pub struct PackId {
 impl PackId {
     /// Packs have a built-in identifier to make data structures simpler, and this method represents ourselves as such id
     /// to be convertible back and forth. We essentially compress ourselves into a u32.
-    pub(crate) fn to_intrinsic_pack_id(&self) -> u32 {
+    pub(crate) fn to_intrinsic_pack_id(self) -> u32 {
         assert!(self.index < 1 << 15, "There shouldn't be more than 2^15 indices");
         match self.multipack_index {
             None => self.index as u32,
