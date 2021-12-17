@@ -41,6 +41,8 @@ pub struct Store {
 
 mod find;
 
+mod write;
+
 pub mod init;
 
 pub mod store;
