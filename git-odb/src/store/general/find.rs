@@ -76,8 +76,11 @@ where
             {
                 let marker = snapshot.marker;
                 for (idx, index) in snapshot.indices.iter_mut().enumerate() {
-                    if let Some((handle::IndexForObjectInPack { pack_id, pack_offset }, index_file, possibly_pack)) =
-                        index.lookup(id)
+                    if let Some(handle::index_lookup::Outcome {
+                        object_index: handle::IndexForObjectInPack { pack_id, pack_offset },
+                        index_file,
+                        pack: possibly_pack,
+                    }) = index.lookup(id)
                     {
                         let pack = match possibly_pack {
                             Some(pack) => pack,

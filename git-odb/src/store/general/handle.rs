@@ -44,6 +44,12 @@ pub(crate) mod index_lookup {
 
     use crate::general::{handle, store};
 
+    pub(crate) struct Outcome<'a> {
+        pub object_index: handle::IndexForObjectInPack,
+        pub index_file: &'a git_pack::index::File,
+        pub pack: &'a mut Option<Arc<git_pack::data::File>>,
+    }
+
     impl handle::IndexLookup {
         /// Return true if the given object id exists in this index
         pub(crate) fn contains(&self, object_id: &oid) -> bool {
@@ -58,28 +64,19 @@ pub(crate) mod index_lookup {
         /// See if the oid is contained in this index, and return its full id for lookup possibly alongside its data file if already
         /// loaded.
         /// If it is not loaded, ask it to be loaded and put it into the returned mutable option for safe-keeping.
-        pub(crate) fn lookup(
-            &mut self,
-            object_id: &oid,
-        ) -> Option<(
-            handle::IndexForObjectInPack,
-            &git_pack::index::File,
-            &mut Option<Arc<git_pack::data::File>>,
-        )> {
+        pub(crate) fn lookup(&mut self, object_id: &oid) -> Option<Outcome<'_>> {
             let id = self.id;
             match &mut self.file {
-                handle::SingleOrMultiIndex::Single { index, data } => index.lookup(object_id).map(move |idx| {
-                    (
-                        handle::IndexForObjectInPack {
-                            pack_id: store::PackId {
-                                index: id,
-                                multipack_index: None,
-                            },
-                            pack_offset: index.pack_offset_at_index(idx),
+                handle::SingleOrMultiIndex::Single { index, data } => index.lookup(object_id).map(move |idx| Outcome {
+                    object_index: handle::IndexForObjectInPack {
+                        pack_id: store::PackId {
+                            index: id,
+                            multipack_index: None,
                         },
-                        &**index,
-                        data,
-                    )
+                        pack_offset: index.pack_offset_at_index(idx),
+                    },
+                    index_file: &**index,
+                    pack: data,
                 }),
                 handle::SingleOrMultiIndex::Multi { index: _, data: _ } => {
                     todo!("find respective pack and return it as &mut Option<>")
