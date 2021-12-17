@@ -166,8 +166,8 @@ mod impls {
             self.inner.location_by_oid(id, buf)
         }
 
-        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
-            self.inner.index_iter_by_pack_id(pack_id)
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+            self.inner.pack_offsets_and_oid(pack_id)
         }
 
         fn entry_by_location(&self, location: &Location) -> Option<git_pack::find::Entry<'_>> {

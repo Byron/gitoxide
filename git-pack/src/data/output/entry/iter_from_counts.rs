@@ -186,10 +186,8 @@ where
                                 allow_thin_pack.then(|| {
                                     |pack_id, base_offset| {
                                         let (cached_pack_id, cache) = pack_offsets_to_id.get_or_insert_with(|| {
-                                            db.index_iter_by_pack_id(pack_id)
-                                                .map(|iter| {
-                                                    let mut v =
-                                                        iter.map(|e| (e.pack_offset, e.oid)).collect::<Vec<_>>();
+                                            db.pack_offsets_and_oid(pack_id)
+                                                .map(|mut v| {
                                                     v.sort_by_key(|e| e.0);
                                                     (pack_id, v)
                                                 })

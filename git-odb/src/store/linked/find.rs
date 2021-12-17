@@ -82,11 +82,11 @@ impl crate::pack::Find for linked::Store {
         None
     }
 
-    fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
+    fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
         self.dbs.iter().find_map(|db| {
             db.bundles
                 .iter()
-                .find_map(|b| (b.pack.id == pack_id).then(|| b.index.iter()))
+                .find_map(|b| (b.pack.id == pack_id).then(|| b.index.iter().map(|e| (e.pack_offset, e.oid)).collect()))
         })
     }
 

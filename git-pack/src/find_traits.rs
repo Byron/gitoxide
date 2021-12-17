@@ -49,8 +49,8 @@ pub trait Find {
     fn location_by_oid(&self, id: impl AsRef<git_hash::oid>, buf: &mut Vec<u8>)
         -> Option<crate::data::entry::Location>;
 
-    /// Find the index matching `pack_id`, or `None` if there is no such pack.
-    fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>>;
+    /// Obtain a vector of all offsets, in index order, along with their object id.
+    fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>>;
 
     /// Return the [`find::Entry`] for `location` if it is backed by a pack.
     ///
@@ -186,8 +186,8 @@ mod find_impls {
             (*self).location_by_oid(id, buf)
         }
 
-        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>> {
-            (*self).index_iter_by_pack_id(pack_id)
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+            (*self).pack_offsets_and_oid(pack_id)
         }
 
         fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<crate::find::Entry<'_>> {
@@ -218,8 +218,8 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>> {
-            self.deref().index_iter_by_pack_id(pack_id)
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+            self.deref().pack_offsets_and_oid(pack_id)
         }
 
         fn entry_by_location(&self, object: &crate::data::entry::Location) -> Option<find::Entry<'_>> {
@@ -250,8 +250,8 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>> {
-            self.deref().index_iter_by_pack_id(pack_id)
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+            self.deref().pack_offsets_and_oid(pack_id)
         }
 
         fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry<'_>> {
@@ -282,8 +282,8 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>> {
-            self.deref().index_iter_by_pack_id(pack_id)
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+            self.deref().pack_offsets_and_oid(pack_id)
         }
 
         fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry<'_>> {

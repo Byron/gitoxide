@@ -593,7 +593,7 @@ mod odb {
         }
 
         /// This requires a one-time mapping/find operation to find the actual pack. That's OK here.
-        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
             todo!()
         }
 

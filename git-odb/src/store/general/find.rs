@@ -3,7 +3,7 @@ use std::ops::Deref;
 
 use git_hash::oid;
 use git_object::Data;
-use git_pack::{cache::DecodeEntry, data::entry::Location, index::Entry};
+use git_pack::{cache::DecodeEntry, data::entry::Location};
 
 use crate::general::handle;
 
@@ -239,20 +239,20 @@ where
         }
     }
 
-    fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = Entry> + '_>> {
+    fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
         assert!(
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
         );
         let pack_id = general::store::PackId::from_intrinsic_pack_id(pack_id);
         loop {
-            let mut snapshot = self.snapshot.borrow_mut();
+            let snapshot = self.snapshot.borrow();
             {
-                // for index in snapshot.indices.iter() {
-                //     if let Some(iter) = index.iter(pack_id) {
-                //         return Some(iter);
-                //     }
-                // }
+                for index in snapshot.indices.iter() {
+                    if let Some(iter) = index.iter(pack_id) {
+                        return Some(iter.map(|e| (e.pack_offset, e.oid)).collect());
+                    }
+                }
             }
 
             match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
