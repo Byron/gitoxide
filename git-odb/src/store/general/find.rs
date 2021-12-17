@@ -265,11 +265,60 @@ where
         }
     }
 
-    fn entry_by_location(&self, _location: &Location) -> Option<git_pack::find::Entry> {
+    fn entry_by_location(&self, location: &Location) -> Option<git_pack::find::Entry> {
         assert!(
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
         );
-        todo!("entry by location")
+        let pack_id = general::store::PackId::from_intrinsic_pack_id(location.pack_id);
+        'outer: loop {
+            let mut snapshot = self.snapshot.borrow_mut();
+            {
+                let marker = snapshot.marker;
+                for index in snapshot.indices.iter_mut() {
+                    if let Some(possibly_pack) = index.pack(pack_id) {
+                        let pack = match possibly_pack {
+                            Some(pack) => pack,
+                            None => match self.store.load_pack(pack_id, marker).ok()? {
+                                Some(pack) => {
+                                    *possibly_pack = Some(pack);
+                                    possibly_pack.as_deref().expect("just put it in")
+                                }
+                                None => {
+                                    // The pack wasn't available anymore so we are supposed to try another round with a fresh index
+                                    match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
+                                        Some(new_snapshot) => {
+                                            drop(snapshot);
+                                            *self.snapshot.borrow_mut() = new_snapshot;
+                                            continue 'outer;
+                                        }
+                                        None => {
+                                            // nothing new in the index, kind of unexpected to not have a pack but to also
+                                            // to have no new index yet. We set the new index before removing any slots, so
+                                            // this should be observable.
+                                            return None;
+                                        }
+                                    }
+                                }
+                            },
+                        };
+                        return pack
+                            .entry_slice(location.entry_range(location.pack_offset))
+                            .map(|data| git_pack::find::Entry {
+                                data: data.to_owned(),
+                                version: pack.version(),
+                            });
+                    }
+                }
+            }
+
+            match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
+                Some(new_snapshot) => {
+                    drop(snapshot);
+                    *self.snapshot.borrow_mut() = new_snapshot;
+                }
+                None => return None,
+            }
+        }
     }
 }

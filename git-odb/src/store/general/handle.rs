@@ -64,6 +64,15 @@ pub(crate) mod index_lookup {
             })
         }
 
+        pub(crate) fn pack(&mut self, pack_id: store::PackId) -> Option<&'_ mut Option<Arc<git_pack::data::File>>> {
+            (self.id == pack_id.index).then(move || match &mut self.file {
+                handle::SingleOrMultiIndex::Single { data, .. } => data,
+                handle::SingleOrMultiIndex::Multi { .. } => {
+                    todo!("find respective pack and return it as &mut Option<>")
+                }
+            })
+        }
+
         /// Return true if the given object id exists in this index
         pub(crate) fn contains(&self, object_id: &oid) -> bool {
             match &self.file {
