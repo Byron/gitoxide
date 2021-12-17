@@ -17,6 +17,13 @@ pub(crate) type StateId = u32;
 pub(crate) type Generation = u32;
 pub(crate) type AtomicGeneration = AtomicU32;
 
+impl super::Store {
+    /// The root path at which we expect to find all objects and packs.
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
 /// A way to indicate which pack indices we have seen already and which of them are loaded, along with an idea
 /// of whether stored `PackId`s are still usable.
 #[derive(Default, Copy, Clone)]

@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, io, path::Path, str::FromStr, sync::Arc, time::Instant};
+use std::{ffi::OsStr, io, path::Path, str::FromStr, time::Instant};
 
 use anyhow::anyhow;
 use git_repository as git;
@@ -9,9 +9,7 @@ use git_repository::{
     objs::bstr::ByteVec,
     odb::{pack, pack::FindExt},
     prelude::Finalize,
-    progress,
-    threading::OwnShared,
-    traverse, Progress,
+    progress, traverse, Progress,
 };
 
 use crate::OutputFormat;
@@ -122,10 +120,7 @@ where
     progress.init(Some(2), progress::steps());
     let tips = tips.into_iter();
     let make_cancellation_err = || anyhow!("Cancelled by user");
-    let (odb, input): (
-        _,
-        Box<dyn Iterator<Item = Result<ObjectId, input_iteration::Error>> + Send>,
-    ) = match input {
+    let input: Box<dyn Iterator<Item = Result<ObjectId, input_iteration::Error>> + Send> = match input {
         None => {
             use git::bstr::ByteSlice;
             use os_str_bytes::OsStrBytes;
@@ -142,25 +137,20 @@ where
                     })
                 })
                 .collect::<Result<Vec<_>, _>>()?;
-            drop(handle);
-            let odb = Arc::new(match OwnShared::try_unwrap(repo.objects) {
-                Ok(odb) => odb,
-                Err(_) => unreachable!(),
-            });
             let iter = Box::new(
                 traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), {
-                    let db = Arc::clone(&odb);
-                    move |oid, buf| db.find_commit_iter(oid, buf).ok().map(|t| t.0)
+                    let db = repo.to_easy();
+                    move |oid, buf| db.objects.find_commit_iter(oid, buf).ok().map(|t| t.0)
                 })
                 .map(|res| res.map_err(Into::into))
                 .inspect(move |_| progress.inc()),
             );
-            (odb, iter)
+            iter
         }
         Some(input) => {
             let mut progress = progress.add_child("iterating");
             progress.init(None, progress::count("objects"));
-            let iter = Box::new(
+            Box::new(
                 input
                     .lines()
                     .map(|hex_id| {
@@ -169,13 +159,6 @@ where
                             .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).map_err(Into::into))
                     })
                     .inspect(move |_| progress.inc()),
-            );
-            (
-                Arc::new(match OwnShared::try_unwrap(repo.objects) {
-                    Ok(odb) => odb,
-                    Err(_) => unreachable!(),
-                }),
-                iter,
             )
         }
     };
@@ -196,7 +179,7 @@ where
         }
         let (_, _, thread_count) = git::parallel::optimize_chunk_size_and_thread_limit(50, None, thread_limit, None);
         let progress = progress::ThroughputOnDrop::new(progress);
-        let mut handle = odb.to_cache_arc();
+        let mut handle = repo.to_easy().objects;
         {
             let per_thread_object_pack_size = pack_cache_size_in_bytes / thread_count;
             if per_thread_object_pack_size >= 10_000 {
@@ -214,9 +197,10 @@ where
             }
         }
         let input_object_expansion = expansion.into();
+        handle.inner.prevent_pack_unload();
         let (mut counts, count_stats) = if may_use_multiple_threads {
             pack::data::output::count::objects(
-                handle,
+                handle.clone(),
                 input,
                 progress,
                 &interrupt::IS_INTERRUPTED,
@@ -228,7 +212,7 @@ where
             )?
         } else {
             pack::data::output::count::objects_unthreaded(
-                handle,
+                handle.clone(),
                 input,
                 progress,
                 &interrupt::IS_INTERRUPTED,
@@ -242,11 +226,13 @@ where
 
     progress.inc();
     let num_objects = counts.len();
+    let mut handle = repo.to_easy().objects;
+    handle.inner.prevent_pack_unload();
     let mut in_order_entries = {
         let progress = progress.add_child("creating entries");
         pack::data::output::InOrderIter::from(pack::data::output::entry::iter_from_counts(
             counts,
-            Arc::clone(&odb),
+            handle,
             progress,
             pack::data::output::entry::iter_from_counts::Options {
                 thread_limit,

@@ -165,7 +165,8 @@ impl super::Store {
         let previous_index_state = Arc::as_ptr(&index) as usize;
 
         // IMPORTANT: get a lock after we recorded the previous state.
-        let objects_directory = self.path.lock();
+        let write = self.write.lock();
+        let objects_directory = &self.path;
 
         // Now we know the index isn't going to change anymore, even though threads might still load indices in the meantime.
         let index = self.index.load();
@@ -177,8 +178,8 @@ impl super::Store {
         let was_uninitialized = !index.is_initialized();
         self.num_disk_state_consolidation.fetch_add(1, Ordering::Relaxed);
 
-        let db_paths: Vec<_> = std::iter::once(objects_directory.clone())
-            .chain(crate::alternate::resolve(&*objects_directory)?)
+        let db_paths: Vec<_> = std::iter::once(objects_directory.to_owned())
+            .chain(crate::alternate::resolve(objects_directory)?)
             .collect();
 
         // turn db paths into loose object databases. Reuse what's there, but only if it is in the right order.
@@ -235,7 +236,7 @@ impl super::Store {
                         // packs and indices are immutable, so no need to check modification times. Unchanged multi-pack indices also
                         // are handled like this.
                         if Self::assure_slot_matches_index(
-                            &objects_directory,
+                            &write,
                             slot,
                             index_path,
                             mtime,
@@ -250,7 +251,7 @@ impl super::Store {
                 None => index_paths_to_add.push_back((index_path, mtime, None)),
             }
         }
-        let needs_stable_indices = self.maintain_stable_indices(&objects_directory);
+        let needs_stable_indices = self.maintain_stable_indices(&write);
 
         let mut next_possibly_free_index = index
             .slot_indices
@@ -278,7 +279,7 @@ impl super::Store {
                     Some(move_from_slot_idx) => {
                         debug_assert!(is_multipack_index(&index_path), "only set for multi-pack indices");
                         if let Some(dest_was_empty) = self.try_copy_multi_pack_index(
-                            &objects_directory,
+                            &write,
                             move_from_slot_idx,
                             slot,
                             index_path.clone(), // TODO: once this settles, consider to return this path if it does nothing or refactor the whole thing.
@@ -297,7 +298,7 @@ impl super::Store {
                     }
                     None => {
                         if let Some(dest_was_empty) = Self::try_set_single_index_slot(
-                            &objects_directory,
+                            &write,
                             slot,
                             index_path.clone(),
                             mtime,
@@ -415,7 +416,7 @@ impl super::Store {
 
     /// Returns Some(true) if the slot was empty, or Some(false) if it was collected, None if it couldn't claim the slot.
     fn try_set_single_index_slot(
-        objects_directory: &parking_lot::MutexGuard<'_, PathBuf>,
+        lock: &parking_lot::MutexGuard<'_, ()>,
         slot: &MutableIndexAndPack,
         index_path: PathBuf,
         mtime: SystemTime,
@@ -440,7 +441,7 @@ impl super::Store {
                     // it finally succeeds. Alternatively, the object will be reported unobtainable, but at least it won't return
                     // some other object.
                     let next_generation = current_generation + 1;
-                    Self::set_slot_to_index(objects_directory, slot, index_path, mtime, next_generation);
+                    Self::set_slot_to_index(lock, slot, index_path, mtime, next_generation);
                     Some(false)
                 } else {
                     // A valid slot, taken by another file, keep looking
@@ -450,7 +451,7 @@ impl super::Store {
             None => {
                 // an entirely unused (or deleted) slot, free to take.
                 Self::assure_slot_matches_index(
-                    objects_directory,
+                    lock,
                     slot,
                     index_path,
                     mtime,
@@ -466,7 +467,7 @@ impl super::Store {
     #[allow(clippy::too_many_arguments, unused_variables)]
     fn try_copy_multi_pack_index(
         &self,
-        lock: &parking_lot::MutexGuard<'_, PathBuf>,
+        lock: &parking_lot::MutexGuard<'_, ()>,
         from_slot_idx: usize,
         dest_slot: &MutableIndexAndPack,
         index_path: PathBuf,
@@ -496,7 +497,7 @@ impl super::Store {
     }
 
     fn set_slot_to_index(
-        _lock: &parking_lot::MutexGuard<'_, PathBuf>,
+        _lock: &parking_lot::MutexGuard<'_, ()>,
         slot: &MutableIndexAndPack,
         index_path: PathBuf,
         mtime: SystemTime,
@@ -515,7 +516,7 @@ impl super::Store {
 
     /// Returns true if the index was loaded.
     fn assure_slot_matches_index(
-        _lock: &parking_lot::MutexGuard<'_, PathBuf>,
+        _lock: &parking_lot::MutexGuard<'_, ()>,
         slot: &MutableIndexAndPack,
         index_path: PathBuf,
         mtime: SystemTime,
@@ -576,7 +577,7 @@ impl super::Store {
     ///
     /// Note that this must be called with a lock to the relevant state held to assure these values don't change while
     /// we are working on said index.
-    fn maintain_stable_indices(&self, _guard: &parking_lot::MutexGuard<'_, PathBuf>) -> bool {
+    fn maintain_stable_indices(&self, _guard: &parking_lot::MutexGuard<'_, ()>) -> bool {
         self.num_handles_stable.load(Ordering::SeqCst) == 0
     }
 

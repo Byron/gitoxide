@@ -65,7 +65,8 @@ impl super::Store {
             ));
         }
         Ok(super::Store {
-            path: parking_lot::Mutex::new(objects_dir),
+            write: Default::default(),
+            path: objects_dir,
             files: Vec::from_iter(std::iter::repeat_with(MutableIndexAndPack::default).take(slot_count)),
             index: ArcSwap::new(Arc::new(SlotMapIndex::default())),
             num_handles_stable: Default::default(),

@@ -349,10 +349,7 @@ where
     use git_repository::prelude::FindExt;
     let mut buf = Vec::new();
     let mut bytes = 0u64;
-    let handle = repo
-        .objects
-        .to_cache_arc()
-        .with_pack_cache(move || Box::new(new_cache()));
+    let handle = repo.objects.to_cache().with_pack_cache(move || Box::new(new_cache()));
     for hash in hashes {
         let obj = handle.find(hash, &mut buf)?;
         bytes += obj.data.len() as u64;
@@ -381,7 +378,7 @@ where
         move || {
             (
                 Vec::new(),
-                repo.objects.to_cache_arc().with_pack_cache({
+                repo.objects.to_cache().with_pack_cache({
                     let new_cache = new_cache.clone();
                     move || Box::new(new_cache())
                 }),

@@ -18,7 +18,7 @@ mod error {
         Io(#[from] std::io::Error),
     }
 }
-use error::Error;
+pub use error::Error;
 
 impl<S> crate::Write for general::Handle<S>
 where

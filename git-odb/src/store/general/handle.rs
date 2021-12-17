@@ -123,7 +123,7 @@ impl super::Store {
     pub(crate) fn remove_handle(&self, mode: Mode) {
         match mode {
             Mode::KeepDeletedPacksAvailable => {
-                let _lock = self.path.lock();
+                let _lock = self.write.lock();
                 self.num_handles_stable.fetch_sub(1, Ordering::SeqCst)
             }
             Mode::DeletedPacksAreInaccessible => self.num_handles_unstable.fetch_sub(1, Ordering::Relaxed),
@@ -131,7 +131,7 @@ impl super::Store {
     }
     pub(crate) fn upgrade_handle(&self, mode: Mode) -> Mode {
         if let Mode::DeletedPacksAreInaccessible = mode {
-            let _lock = self.path.lock();
+            let _lock = self.write.lock();
             self.num_handles_stable.fetch_add(1, Ordering::SeqCst);
             self.num_handles_unstable.fetch_sub(1, Ordering::SeqCst);
         }
@@ -141,6 +141,10 @@ impl super::Store {
 
 /// Handle creation
 impl super::Store {
+    pub fn to_cache(self: &OwnShared<Self>) -> crate::Cache<super::Handle<OwnShared<super::Store>>> {
+        self.to_handle(crate::RefreshMode::AfterAllIndicesLoaded).into()
+    }
+
     pub fn to_handle(
         self: &OwnShared<Self>,
         refresh_mode: crate::RefreshMode,
@@ -168,6 +172,10 @@ where
 
     pub fn store(&self) -> &S::Target {
         &*self.store
+    }
+
+    pub fn store_owned(&self) -> S {
+        self.store.clone()
     }
 }
 

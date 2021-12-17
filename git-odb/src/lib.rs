@@ -28,6 +28,9 @@ pub mod alternate;
 /// A thread-local handle to access any object.
 pub type Handle = Cache<general::Handle<OwnShared<general::Store>>>;
 
+/// A thread-safe store for creation of handles.
+pub type Store = general::Store;
+
 /// Create a new cached odb handle.
 pub fn at_opts(objects_dir: impl Into<PathBuf>, slots: general::init::Slots) -> std::io::Result<Handle> {
     let handle =

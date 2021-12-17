@@ -18,8 +18,11 @@ where
 }
 
 pub struct Store {
+    /// The central write lock without which the slotmap index can't be changed.
+    write: parking_lot::Mutex<()>,
+
     /// The source directory from which all content is loaded, and the central write lock for use when a directory refresh is needed.
-    path: parking_lot::Mutex<PathBuf>,
+    pub(crate) path: PathBuf,
 
     /// A list of indices keeping track of which slots are filled with data. These are usually, but not always, consecutive.
     pub(crate) index: ArcSwap<store::SlotMapIndex>,
@@ -39,9 +42,11 @@ pub struct Store {
     pub(crate) num_disk_state_consolidation: AtomicUsize,
 }
 
-mod find;
+///
+pub mod find;
 
-mod write;
+///
+pub mod write;
 
 pub mod init;
 

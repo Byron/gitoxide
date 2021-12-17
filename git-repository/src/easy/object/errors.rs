@@ -20,7 +20,7 @@ pub mod find {
 
     use crate::easy;
 
-    pub(crate) type OdbError = git_odb::compound::find::Error;
+    pub(crate) type OdbError = git_odb::general::find::Error;
 
     /// The error returned by [`try_find_object()`][easy::Handle::try_find_object()].
     #[derive(Debug, thiserror::Error)]
@@ -36,7 +36,7 @@ pub mod find {
     pub mod existing {
         use crate::easy;
 
-        pub(crate) type OdbError = git_odb::find::existing::Error<git_odb::compound::find::Error>;
+        pub(crate) type OdbError = git_odb::find::existing::Error<git_odb::general::find::Error>;
 
         /// The error returned by [`find_object()`][easy::Handle::find_object()].
         #[derive(Debug, thiserror::Error)]
@@ -53,5 +53,5 @@ pub mod find {
 ///
 pub mod write {
     /// An error to indicate writing to the loose object store failed.
-    pub type Error = git_odb::loose::write::Error;
+    pub type Error = git_odb::general::write::Error;
 }
