@@ -4,7 +4,7 @@ use git_hash::oid;
 use git_object::Data;
 use git_pack::{cache::DecodeEntry, data::entry::Location, index::Entry};
 
-use crate::general::{handle, load_index};
+use crate::general::handle;
 
 mod error {
     use crate::{loose, pack};
@@ -54,7 +54,7 @@ where
             }
 
             match self.store.load_one_index(self.refresh_mode, snapshot.marker) {
-                Ok(Some(load_index::Outcome::Replace(new_snapshot))) => {
+                Ok(Some(new_snapshot)) => {
                     drop(snapshot);
                     *self.snapshot.borrow_mut() = new_snapshot;
                 }
@@ -89,7 +89,7 @@ where
                                 None => {
                                     // The pack wasn't available anymore so we are supposed to try another round with a fresh index
                                     match self.store.load_one_index(self.refresh_mode, snapshot.marker)? {
-                                        Some(load_index::Outcome::Replace(new_snapshot)) => {
+                                        Some(new_snapshot) => {
                                             drop(snapshot);
                                             *self.snapshot.borrow_mut() = new_snapshot;
                                             continue 'outer;
@@ -152,7 +152,7 @@ where
             }
 
             match self.store.load_one_index(self.refresh_mode, snapshot.marker)? {
-                Some(load_index::Outcome::Replace(new_snapshot)) => {
+                Some(new_snapshot) => {
                     drop(snapshot);
                     *self.snapshot.borrow_mut() = new_snapshot;
                 }

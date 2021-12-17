@@ -15,13 +15,6 @@ use crate::{
     RefreshMode,
 };
 
-pub(crate) enum Outcome {
-    /// Drop all data and fully replace it with `indices`.
-    /// This happens if we have witnessed a generational change invalidating all of our ids and causing currently loaded
-    /// indices and maps to be dropped.
-    Replace(Snapshot),
-}
-
 pub(crate) struct Snapshot {
     /// Indices ready for object lookup or contains checks, ordered usually by modification data, recent ones first.
     pub(crate) indices: Vec<handle::IndexLookup>,
@@ -68,7 +61,7 @@ impl super::Store {
         &self,
         refresh_mode: RefreshMode,
         marker: store::SlotIndexMarker,
-    ) -> Result<Option<Outcome>, Error> {
+    ) -> Result<Option<Snapshot>, Error> {
         let index = self.index.load();
         if !index.is_initialized() {
             return self.consolidate_with_disk_state(false /*load one new index*/);
@@ -76,12 +69,12 @@ impl super::Store {
 
         if marker.generation != index.generation || marker.state_id != index.state_id() {
             // We have a more recent state already, provide it.
-            Ok(Some(self.collect_outcome()))
+            Ok(Some(self.collect_snapshot()))
         } else {
             // always compare to the latest state
             // Nothing changed in the mean time, try to load another index…
             if self.load_next_index(index) {
-                Ok(Some(self.collect_outcome()))
+                Ok(Some(self.collect_snapshot()))
             } else {
                 // …and if that didn't yield anything new consider refreshing our disk state.
                 match refresh_mode {
@@ -167,7 +160,7 @@ impl super::Store {
 
     /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
     /// `load_new_index` is an optimization to at least provide one newly loaded pack after refreshing the slot map.
-    fn consolidate_with_disk_state(&self, load_new_index: bool) -> Result<Option<Outcome>, Error> {
+    fn consolidate_with_disk_state(&self, load_new_index: bool) -> Result<Option<Snapshot>, Error> {
         let index = self.index.load();
         let previous_index_state = Arc::as_ptr(&index) as usize;
 
@@ -178,7 +171,7 @@ impl super::Store {
         let index = self.index.load();
         if previous_index_state != Arc::as_ptr(&index) as usize {
             // Someone else took the look before and changed the index. Return it without doing any additional work.
-            return Ok(Some(self.collect_outcome()));
+            return Ok(Some(self.collect_snapshot()));
         }
 
         let was_uninitialized = !index.is_initialized();
@@ -384,7 +377,7 @@ impl super::Store {
             if load_new_index {
                 self.load_next_index(new_index);
             }
-            Some(self.collect_outcome())
+            Some(self.collect_snapshot())
         })
     }
 
@@ -609,11 +602,6 @@ impl super::Store {
             loose_dbs: Arc::clone(&index.loose_dbs),
             marker: index.marker(),
         }
-    }
-
-    fn collect_outcome(&self) -> Outcome {
-        let snapshot = self.collect_snapshot();
-        Outcome::Replace(snapshot)
     }
 }
 

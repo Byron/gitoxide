@@ -1,8 +1,9 @@
-use crate::general;
+use std::{io::Read, ops::Deref};
+
 use git_hash::ObjectId;
 use git_object::Kind;
-use std::io::Read;
-use std::ops::Deref;
+
+use crate::general;
 
 mod error {
     use crate::{general, loose};
@@ -35,16 +36,14 @@ where
         let mut snapshot = self.snapshot.borrow_mut();
         Ok(match snapshot.loose_dbs.get(0) {
             Some(ldb) => ldb.write_stream(kind, size, from, hash)?,
-            None => match self
-                .store
-                .load_one_index(self.refresh_mode, snapshot.marker)?
-                .expect("there is always at least one ODB, and this code runs only once for initialization")
-            {
-                general::load_index::Outcome::Replace(new_snapshot) => {
-                    *snapshot = new_snapshot;
-                    snapshot.loose_dbs[0].write_stream(kind, size, from, hash)?
-                }
-            },
+            None => {
+                let new_snapshot = self
+                    .store
+                    .load_one_index(self.refresh_mode, snapshot.marker)?
+                    .expect("there is always at least one ODB, and this code runs only once for initialization");
+                *snapshot = new_snapshot;
+                snapshot.loose_dbs[0].write_stream(kind, size, from, hash)?
+            }
         })
     }
 }
