@@ -45,6 +45,8 @@ pub struct Store {
 ///
 pub mod find;
 
+pub mod iter;
+
 ///
 pub mod write;
 

@@ -12,11 +12,12 @@ fn main() -> anyhow::Result<()> {
     let repo_git_dir = std::env::args()
         .nth(1)
         .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))?;
-    let repo = git_repository::discover(repo_git_dir)?;
+    let repo = git_repository::discover(&repo_git_dir)?;
 
     let hashes = {
         let start = Instant::now();
-        let hashes = repo.objects.iter().collect::<Result<Vec<_>, _>>()?;
+        let repo = git_repository::discover(repo_git_dir)?;
+        let hashes = repo.objects.iter()?.collect::<Result<Vec<_>, _>>()?;
         let elapsed = start.elapsed();
         println!("gitoxide: {} objects (collected in {:?}", hashes.len(), elapsed);
         hashes

@@ -223,3 +223,19 @@ fn missing_objects_triggers_everything_is_loaded() {
         "there are still no packs opened as no index contained the object"
     );
 }
+
+#[test]
+fn a_bunch_of_loose_and_packed_objects() -> crate::Result {
+    let db = db();
+    let iter = db.inner.iter()?;
+    assert_eq!(
+        iter.size_hint(),
+        (139, None),
+        "we only count packs and have no upper bound"
+    );
+    assert_eq!(iter.count(), 146, "it sees the correct amount of objects");
+    for id in db.inner.iter()? {
+        assert!(db.contains(id?), "each object exists");
+    }
+    Ok(())
+}

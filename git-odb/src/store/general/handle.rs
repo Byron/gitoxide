@@ -83,6 +83,26 @@ pub(crate) mod index_lookup {
             }
         }
 
+        /// Return true if the given object id exists in this index
+        pub(crate) fn oid_at_index(&self, entry_index: u32) -> &git_hash::oid {
+            match &self.file {
+                handle::SingleOrMultiIndex::Single { index, .. } => index.oid_at_index(entry_index),
+                handle::SingleOrMultiIndex::Multi { .. } => {
+                    todo!("find respective pack and return it as &mut Option<>")
+                }
+            }
+        }
+
+        /// Return the amount of objects contained in the index, essentially the number of object ids.
+        pub(crate) fn num_objects(&self) -> u32 {
+            match &self.file {
+                handle::SingleOrMultiIndex::Single { index, .. } => index.num_objects(),
+                handle::SingleOrMultiIndex::Multi { .. } => {
+                    todo!("num_objects() on multi-index")
+                }
+            }
+        }
+
         /// See if the oid is contained in this index, and return its full id for lookup possibly alongside its data file if already
         /// loaded.
         /// If it is not loaded, ask it to be loaded and put it into the returned mutable option for safe-keeping.

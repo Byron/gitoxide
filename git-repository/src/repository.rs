@@ -199,7 +199,7 @@ mod location {
 
         /// Return the path to the directory containing all objects.
         pub fn objects_dir(&self) -> &std::path::Path {
-            &self.objects.path()
+            self.objects.path()
         }
     }
 }
