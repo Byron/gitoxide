@@ -90,14 +90,14 @@ impl crate::pack::Find for linked::Store {
         })
     }
 
-    fn entry_by_location(&self, location: &pack::data::entry::Location) -> Option<Entry<'_>> {
+    fn entry_by_location(&self, location: &pack::data::entry::Location) -> Option<Entry> {
         self.dbs
             .iter()
             .find_map(|db| db.bundles.iter().find(|p| p.pack.id == location.pack_id))
             .map(|b| (b, location))
             .and_then(|(bundle, l)| {
                 bundle.pack.entry_slice(l.entry_range(l.pack_offset)).map(|data| Entry {
-                    data,
+                    data: data.to_owned(),
                     version: bundle.pack.version(),
                 })
             })

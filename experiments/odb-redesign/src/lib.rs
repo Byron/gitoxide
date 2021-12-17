@@ -600,7 +600,7 @@ mod odb {
         /// This operation can be more expensive unless the handle has a local mapping between u32 pack id and the PackId that shows the actual
         /// index. There is no other way to quickly get from actual pack id to where it's stored in our slot-map, and possibly which multi-index
         /// it belongs to.
-        fn entry_by_location(&self, location: &Location) -> Option<Entry<'_>> {
+        fn entry_by_location(&self, location: &Location) -> Option<Entry> {
             todo!()
         }
     }

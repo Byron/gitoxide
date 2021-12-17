@@ -265,7 +265,7 @@ where
         }
     }
 
-    fn entry_by_location(&self, _location: &Location) -> Option<git_pack::find::Entry<'_>> {
+    fn entry_by_location(&self, _location: &Location) -> Option<git_pack::find::Entry> {
         assert!(
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"

@@ -170,7 +170,7 @@ mod impls {
             self.inner.pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, location: &Location) -> Option<git_pack::find::Entry<'_>> {
+        fn entry_by_location(&self, location: &Location) -> Option<git_pack::find::Entry> {
             self.inner.entry_by_location(location)
         }
     }

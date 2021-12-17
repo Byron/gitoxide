@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::io::Write;
 
 use git_hash::ObjectId;
@@ -61,7 +62,7 @@ impl output::Entry {
     /// Create an Entry from a previously counted object which is located in a pack. It's `entry` is provided here.
     /// The `version` specifies what kind of target `Entry` version the caller desires.
     pub fn from_pack_entry(
-        entry: find::Entry<'_>,
+        mut entry: find::Entry,
         count: &output::Count,
         potential_bases: &[output::Count],
         bases_index_offset: usize,
@@ -73,7 +74,7 @@ impl output::Entry {
         };
 
         let pack_offset_must_be_zero = 0;
-        let pack_entry = crate::data::Entry::from_bytes(entry.data, pack_offset_must_be_zero);
+        let pack_entry = crate::data::Entry::from_bytes(&entry.data, pack_offset_must_be_zero);
 
         use crate::data::entry::Header::*;
         match pack_entry.header {
@@ -112,7 +113,15 @@ impl output::Entry {
                 id: count.id.to_owned(),
                 kind,
                 decompressed_size: pack_entry.decompressed_size as usize,
-                compressed_data: entry.data[pack_entry.data_offset as usize..].to_owned(),
+                compressed_data: {
+                    entry.data.copy_within(pack_entry.data_offset as usize.., 0);
+                    entry.data.resize(
+                        entry.data.len()
+                            - usize::try_from(pack_entry.data_offset).expect("offset representable as usize"),
+                        0,
+                    );
+                    entry.data
+                },
             })
         })
     }

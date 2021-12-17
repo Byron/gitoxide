@@ -61,7 +61,7 @@ pub trait Find {
     ///
     /// Custom implementations might be interested in providing their own meta-data with `object`,
     /// which currently isn't possible as the `Locate` trait requires GATs to work like that.
-    fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry<'_>>;
+    fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry>;
 }
 
 mod ext {
@@ -190,7 +190,7 @@ mod find_impls {
             (*self).pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<crate::find::Entry<'_>> {
+        fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<crate::find::Entry> {
             (*self).entry_by_location(location)
         }
     }
@@ -222,7 +222,7 @@ mod find_impls {
             self.deref().pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, object: &crate::data::entry::Location) -> Option<find::Entry<'_>> {
+        fn entry_by_location(&self, object: &crate::data::entry::Location) -> Option<find::Entry> {
             self.deref().entry_by_location(object)
         }
     }
@@ -254,7 +254,7 @@ mod find_impls {
             self.deref().pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry<'_>> {
+        fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry> {
             self.deref().entry_by_location(location)
         }
     }
@@ -286,7 +286,7 @@ mod find_impls {
             self.deref().pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry<'_>> {
+        fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry> {
             self.deref().entry_by_location(location)
         }
     }
