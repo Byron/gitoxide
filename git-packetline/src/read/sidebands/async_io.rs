@@ -62,7 +62,11 @@ enum State<'a, T> {
 /// # SAFETY
 /// It's safe because T is `Send` and we have a test that assures that our `StreamingPeekableIter` is `Send` as well,
 /// hence the `*mut _` is `Send`.
-#[allow(unsafe_code)]
+/// `read_line` isn't send and we can't declare it as such as it forces `Send` in all places (BUT WHY IS THAT A PROBLEM, I don't recall).
+/// However, it's only used when pinned and thus isn't actually sent anywhere, it's a secondary state of the future used after it was Send
+/// to a thread possibly.
+// TODO: Is it possible to declare it as it should be?
+#[allow(unsafe_code, clippy::non_send_fields_in_send_ty)]
 unsafe impl<'a, T> Send for State<'a, T> where T: Send {}
 
 #[cfg(test)]

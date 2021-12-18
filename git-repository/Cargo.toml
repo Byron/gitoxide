@@ -56,7 +56,6 @@ git-features = { version ="^0.18.0", path = "../git-features", features = ["prog
 
 signal-hook = { version = "0.3.9", default-features = false }
 thiserror = "1.0.26"
-parking_lot = { version = "0.11.2", features = ["arc_lock"] }
 clru = "0.5.0"
 byte-unit = "4.0.13"
 log = "0.4.14"

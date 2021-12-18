@@ -1,8 +1,9 @@
 mod ancestor {
-    use crate::hex_to_id;
     use git_hash::{oid, ObjectId};
-    use git_odb::{linked::Store, pack::FindExt};
+    use git_odb::pack::FindExt;
     use git_traverse::commit;
+
+    use crate::hex_to_id;
 
     struct TraversalAssertion<'a> {
         init_script: &'a str,
@@ -35,9 +36,9 @@ mod ancestor {
     }
 
     impl TraversalAssertion<'_> {
-        fn setup(&self) -> crate::Result<(Store, Vec<ObjectId>, Vec<ObjectId>)> {
+        fn setup(&self) -> crate::Result<(git_odb::Handle, Vec<ObjectId>, Vec<ObjectId>)> {
             let dir = git_testtools::scripted_fixture_repo_read_only(self.init_script)?;
-            let store = Store::at(dir.join(".git").join("objects"))?;
+            let store = git_odb::at(dir.join(".git").join("objects"))?;
             let tips: Vec<_> = self.tips.iter().copied().map(hex_to_id).collect();
             let expected: Vec<ObjectId> = tips
                 .clone()

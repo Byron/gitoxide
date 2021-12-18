@@ -26,7 +26,7 @@ pub struct Chunk<'a, T> {
 
 // SAFETY: The raw pointer is uniquely materialized in `Node::into_child_iter`.
 #[allow(unsafe_code)]
-unsafe impl<'a, T> Send for Chunk<'a, T> {}
+unsafe impl<'a, T> Send for Chunk<'a, T> where T: Send {}
 
 impl<'a, T> Iterator for Chunk<'a, T> {
     type Item = Node<'a, T>;

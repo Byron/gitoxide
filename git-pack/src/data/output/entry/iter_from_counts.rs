@@ -186,10 +186,8 @@ where
                                 allow_thin_pack.then(|| {
                                     |pack_id, base_offset| {
                                         let (cached_pack_id, cache) = pack_offsets_to_id.get_or_insert_with(|| {
-                                            db.index_iter_by_pack_id(pack_id)
-                                                .map(|iter| {
-                                                    let mut v =
-                                                        iter.map(|e| (e.pack_offset, e.oid)).collect::<Vec<_>>();
+                                            db.pack_offsets_and_oid(pack_id)
+                                                .map(|mut v| {
                                                     v.sort_by_key(|e| e.0);
                                                     (pack_id, v)
                                                 })
@@ -356,7 +354,7 @@ mod types {
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub enum Mode {
         /// Copy base objects and deltas from packs, while non-packed objects will be treated as base objects
-        /// (i.e. without trying to delta compress them). This is a fast way of obtaining a back while benefitting
+        /// (i.e. without trying to delta compress them). This is a fast way of obtaining a back while benefiting
         /// from existing pack compression and spending the smallest possible time on compressing unpacked objects at
         /// the cost of bandwidth.
         PackCopyAndBaseObjects,

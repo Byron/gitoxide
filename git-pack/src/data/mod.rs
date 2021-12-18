@@ -54,10 +54,13 @@ impl Default for Version {
 pub struct File {
     data: FileBuffer,
     path: std::path::PathBuf,
-    /// A hash to represent the `path` field when used with cache lookup, or a way to identify this pack by its location on disk.
+    /// A value to represent this pack uniquely when used with cache lookup, or a way to identify this pack by its location on disk.
+    /// The same location on disk should yield the same id.
     ///
     /// These must be unique per pack and must be stable, that is they don't change if the pack doesn't change.
     /// If the same id is assigned (or reassigned) to different packs, pack creation or cache access will fail in hard-to-debug ways.
+    ///
+    /// This value is controlled by the owning object store, which can use it in whichever way it wants as long as the above constraints are met.
     pub id: u32,
     version: Version,
     num_objects: u32,

@@ -2,7 +2,7 @@ use std::{fs, io::Read, path::PathBuf};
 
 use git_features::zlib;
 
-use crate::store::loose::{sha1_path, Store, HEADER_READ_UNCOMPRESSED_BYTES};
+use crate::store_impls::loose::{sha1_path, Store, HEADER_READ_UNCOMPRESSED_BYTES};
 
 /// Returned by [`Store::try_find()`]
 #[derive(thiserror::Error, Debug)]

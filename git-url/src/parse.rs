@@ -57,7 +57,7 @@ fn guess_protocol(url: &[u8]) -> &str {
 
 fn sanitize_for_protocol<'a>(protocol: &str, url: &'a str) -> Cow<'a, str> {
     match protocol {
-        "ssh" => url.replacen(":", "/", 1).into(),
+        "ssh" => url.replacen(':', "/", 1).into(),
         _ => url.into(),
     }
 }

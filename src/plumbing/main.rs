@@ -12,8 +12,10 @@ use clap::Parser;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
-use crate::plumbing::options::{Args, Subcommands};
-use crate::shared::pretty::prepare_and_run;
+use crate::{
+    plumbing::options::{Args, Subcommands},
+    shared::pretty::prepare_and_run,
+};
 
 #[cfg(feature = "gitoxide-core-async-client")]
 pub mod async_util {
@@ -106,12 +108,10 @@ pub fn main() -> Result<()> {
                         object_cache_size_in_bytes: object_cache_size_mb.unwrap_or(0) * 1_000_000,
                         statistics: if statistics { Some(format) } else { None },
                         out,
-                        expansion: expansion.unwrap_or_else(|| {
-                            if has_tips {
-                                core::pack::create::ObjectExpansion::TreeTraversal
-                            } else {
-                                core::pack::create::ObjectExpansion::None
-                            }
+                        expansion: expansion.unwrap_or(if has_tips {
+                            core::pack::create::ObjectExpansion::TreeTraversal
+                        } else {
+                            core::pack::create::ObjectExpansion::None
                         }),
                     };
                     let progress = git_features::progress::DoOrDiscard::from(progress);

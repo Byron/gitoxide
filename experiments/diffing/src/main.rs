@@ -39,7 +39,7 @@ fn main() -> anyhow::Result<()> {
     let all_commits = commit_id
         .ancestors({
             let db = db
-                .to_handle()
+                .to_cache()
                 .with_pack_cache(|| Box::new(odb::pack::cache::lru::StaticLinkedList::<64>::default()));
             move |oid, buf| db.find_commit_iter(oid, buf).ok()
         })
@@ -58,7 +58,7 @@ fn main() -> anyhow::Result<()> {
         &all_commits,
         || {
             let handle = db
-                .to_handle()
+                .to_cache()
                 .with_pack_cache(|| Box::new(odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size())))
                 .with_object_cache(|| Box::new(odb::pack::cache::object::MemoryCappedHashmap::new(cache_size())));
             move |oid, buf: &mut Vec<u8>| handle.find(oid, buf).ok()
@@ -82,7 +82,7 @@ fn main() -> anyhow::Result<()> {
         &all_commits,
         || {
             let handle = db
-                .to_handle()
+                .to_cache()
                 .with_object_cache(|| Box::new(odb::pack::cache::object::MemoryCappedHashmap::new(cache_size())));
             move |oid, buf: &mut Vec<u8>| handle.find(oid, buf).ok()
         },
@@ -104,7 +104,7 @@ fn main() -> anyhow::Result<()> {
         &all_commits,
         || {
             let handle = db
-                .to_handle()
+                .to_cache()
                 .with_object_cache(|| Box::new(odb::pack::cache::object::MemoryCappedHashmap::new(cache_size())));
             move |oid, buf: &mut Vec<u8>| handle.find(oid, buf).ok()
         },

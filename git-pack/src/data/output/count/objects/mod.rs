@@ -365,7 +365,7 @@ mod expand {
         out: &mut Vec<output::Count>,
         all_seen: &impl util::InsertImmutable<ObjectId>,
         id: &oid,
-        location: Option<crate::bundle::Location>,
+        location: Option<crate::data::entry::Location>,
         progress: &mut impl Progress,
         statistics: &mut Outcome,
         count_expanded: bool,

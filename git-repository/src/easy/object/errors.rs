@@ -17,16 +17,16 @@ pub mod conversion {
 
 ///
 pub mod find {
-    pub(crate) type OdbError = git_odb::compound::find::Error;
+    pub(crate) type OdbError = git_odb::store::find::Error;
 
     ///
     pub mod existing {
-        pub(crate) type OdbError = git_odb::find::existing::Error<git_odb::compound::find::Error>;
+        pub(crate) type OdbError = git_odb::find::existing::Error<git_odb::store::find::Error>;
     }
 }
 
 ///
 pub mod write {
     /// An error to indicate writing to the loose object store failed.
-    pub type Error = git_odb::loose::write::Error;
+    pub type Error = git_odb::store::write::Error;
 }

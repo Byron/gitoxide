@@ -52,14 +52,12 @@ pub mod existing_iter {
 /// An Entry in a pack providing access to its data.
 ///
 /// Its commonly retrieved by reading from a pack index file followed by a read from a pack data file.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
-pub struct Entry<'a> {
+pub struct Entry {
     /// The pack-data encoded bytes of the pack data entry as present in the pack file, including the header followed by compressed data.
-    pub data: &'a [u8],
-    /// The crc32 hash over the entirety of `data`, or None if the pack file format doesn't support it yet.
-    pub crc32: Option<u32>,
+    pub data: Vec<u8>,
     /// The version of the pack file containing `data`
     pub version: crate::data::Version,
 }

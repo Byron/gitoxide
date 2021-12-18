@@ -25,7 +25,7 @@ pub trait Find {
         &self,
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
-    ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
+    ) -> Result<Option<(git_object::Data<'a>, Option<crate::data::entry::Location>)>, Self::Error> {
         self.try_find_cached(id, buffer, &mut crate::cache::Never)
     }
 
@@ -40,16 +40,17 @@ pub trait Find {
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl crate::cache::DecodeEntry,
-    ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error>;
+    ) -> Result<Option<(git_object::Data<'a>, Option<crate::data::entry::Location>)>, Self::Error>;
 
     /// Find the packs location where an object with `id` can be found in the database, or `None` if there is no pack
     /// holding the object.
     ///
     /// _Note_ that this is always None if the object isn't packed.
-    fn location_by_oid(&self, id: impl AsRef<git_hash::oid>, buf: &mut Vec<u8>) -> Option<crate::bundle::Location>;
+    fn location_by_oid(&self, id: impl AsRef<git_hash::oid>, buf: &mut Vec<u8>)
+        -> Option<crate::data::entry::Location>;
 
-    /// Find the index matching `pack_id`, or `None` if there is no such pack.
-    fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>>;
+    /// Obtain a vector of all offsets, in index order, along with their object id.
+    fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>>;
 
     /// Return the [`find::Entry`] for `location` if it is backed by a pack.
     ///
@@ -60,7 +61,7 @@ pub trait Find {
     ///
     /// Custom implementations might be interested in providing their own meta-data with `object`,
     /// which currently isn't possible as the `Locate` trait requires GATs to work like that.
-    fn entry_by_location(&self, location: &crate::bundle::Location) -> Option<find::Entry<'_>>;
+    fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry>;
 }
 
 mod ext {
@@ -76,7 +77,8 @@ mod ext {
                 &self,
                 id: impl AsRef<git_hash::oid>,
                 buffer: &'a mut Vec<u8>,
-            ) -> Result<($object_type, Option<crate::bundle::Location>), find::existing_object::Error<Self::Error>> {
+            ) -> Result<($object_type, Option<crate::data::entry::Location>), find::existing_object::Error<Self::Error>>
+            {
                 let id = id.as_ref();
                 self.try_find(id, buffer)
                     .map_err(find::existing_object::Error::Find)?
@@ -106,7 +108,7 @@ mod ext {
                 &self,
                 id: impl AsRef<git_hash::oid>,
                 buffer: &'a mut Vec<u8>,
-            ) -> Result<($object_type, Option<crate::bundle::Location>), find::existing_iter::Error<Self::Error>> {
+            ) -> Result<($object_type, Option<crate::data::entry::Location>), find::existing_iter::Error<Self::Error>> {
                 let id = id.as_ref();
                 self.try_find(id, buffer)
                     .map_err(find::existing_iter::Error::Find)?
@@ -131,7 +133,7 @@ mod ext {
             &self,
             id: impl AsRef<git_hash::oid>,
             buffer: &'a mut Vec<u8>,
-        ) -> Result<(git_object::Data<'a>, Option<crate::bundle::Location>), find::existing::Error<Self::Error>>
+        ) -> Result<(git_object::Data<'a>, Option<crate::data::entry::Location>), find::existing::Error<Self::Error>>
         {
             let id = id.as_ref();
             self.try_find(id, buffer)
@@ -159,7 +161,7 @@ mod find_impls {
 
     use git_hash::oid;
 
-    use crate::{bundle::Location, find};
+    use crate::{data::entry::Location, find};
 
     impl<T> crate::Find for &T
     where
@@ -176,19 +178,19 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
+        ) -> Result<Option<(git_object::Data<'a>, Option<crate::data::entry::Location>)>, Self::Error> {
             (*self).try_find_cached(id, buffer, pack_cache)
         }
 
-        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<crate::bundle::Location> {
+        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<crate::data::entry::Location> {
             (*self).location_by_oid(id, buf)
         }
 
-        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>> {
-            (*self).index_iter_by_pack_id(pack_id)
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+            (*self).pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, location: &crate::bundle::Location) -> Option<crate::find::Entry<'_>> {
+        fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<crate::find::Entry> {
             (*self).entry_by_location(location)
         }
     }
@@ -208,7 +210,7 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
+        ) -> Result<Option<(git_object::Data<'a>, Option<crate::data::entry::Location>)>, Self::Error> {
             self.deref().try_find_cached(id, buffer, pack_cache)
         }
 
@@ -216,11 +218,11 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>> {
-            self.deref().index_iter_by_pack_id(pack_id)
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+            self.deref().pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, object: &crate::bundle::Location) -> Option<find::Entry<'_>> {
+        fn entry_by_location(&self, object: &crate::data::entry::Location) -> Option<find::Entry> {
             self.deref().entry_by_location(object)
         }
     }
@@ -240,7 +242,7 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
+        ) -> Result<Option<(git_object::Data<'a>, Option<crate::data::entry::Location>)>, Self::Error> {
             self.deref().try_find_cached(id, buffer, pack_cache)
         }
 
@@ -248,11 +250,11 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>> {
-            self.deref().index_iter_by_pack_id(pack_id)
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+            self.deref().pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, location: &crate::bundle::Location) -> Option<find::Entry<'_>> {
+        fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry> {
             self.deref().entry_by_location(location)
         }
     }
@@ -272,7 +274,7 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<crate::bundle::Location>)>, Self::Error> {
+        ) -> Result<Option<(git_object::Data<'a>, Option<crate::data::entry::Location>)>, Self::Error> {
             self.deref().try_find_cached(id, buffer, pack_cache)
         }
 
@@ -280,11 +282,11 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = crate::index::Entry> + '_>> {
-            self.deref().index_iter_by_pack_id(pack_id)
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+            self.deref().pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, location: &crate::bundle::Location) -> Option<find::Entry<'_>> {
+        fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry> {
             self.deref().entry_by_location(location)
         }
     }

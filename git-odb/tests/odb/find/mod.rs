@@ -1,9 +1,7 @@
-use git_odb::linked;
-
 use crate::fixture_path;
 
-fn linked_db() -> linked::Store {
-    linked::Store::at(fixture_path("objects")).expect("valid object path")
+fn linked_db() -> git_odb::Handle {
+    git_odb::at(fixture_path("objects")).expect("valid object path")
 }
 
 use crate::hex_to_id;

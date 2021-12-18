@@ -11,6 +11,7 @@ use git_repository::{
     odb,
     prelude::*,
     refs::{file::ReferenceExt, peel},
+    threading::OwnShared,
     traverse::{tree, tree::visit::Action},
 };
 
@@ -32,7 +33,7 @@ fn main() -> anyhow::Result<()> {
             .to_owned();
         (repo, commit_id)
     };
-    let db = &repo.objects;
+    let db = repo.to_easy().objects;
 
     let start = Instant::now();
     let all_commits = commit_id
@@ -50,7 +51,7 @@ fn main() -> anyhow::Result<()> {
         let start = Instant::now();
         let (unique, entries) = do_gitoxide_tree_dag_traversal(
             &all_commits,
-            db,
+            db.inner.store_owned(),
             odb::pack::cache::lru::StaticLinkedList::<64>::default,
             *compute_mode,
         )?;
@@ -82,7 +83,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     let start = Instant::now();
-    let count = do_gitoxide_commit_graph_traversal(commit_id, db, || {
+    let count = do_gitoxide_commit_graph_traversal(commit_id, db.clone(), || {
         odb::pack::cache::lru::MemoryCappedHashmap::new(GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES)
     })?;
     let elapsed = start.elapsed();
@@ -98,7 +99,7 @@ fn main() -> anyhow::Result<()> {
     let start = Instant::now();
     let count = do_gitoxide_commit_graph_traversal(
         commit_id,
-        db,
+        db.clone(),
         odb::pack::cache::lru::StaticLinkedList::<GITOXIDE_STATIC_CACHE_SIZE>::default,
     )?;
     let elapsed = start.elapsed();
@@ -138,7 +139,7 @@ fn main() -> anyhow::Result<()> {
 
 fn do_gitoxide_commit_graph_traversal<C>(
     tip: ObjectId,
-    db: &odb::linked::Store,
+    db: git_repository::OdbHandle,
     // TODO: make use of the cache
     _new_cache: impl FnOnce() -> C,
 ) -> anyhow::Result<usize>
@@ -162,12 +163,12 @@ enum Computation {
 
 fn do_gitoxide_tree_dag_traversal<C>(
     commits: &[ObjectId],
-    db: &odb::linked::Store,
-    _new_cache: impl Fn() -> C + Sync + Send, // TODO: use this cache again
+    db: OwnShared<odb::Store>,
+    new_cache: impl Fn() -> C + Send + Sync + Clone + 'static,
     mode: Computation,
 ) -> anyhow::Result<(usize, u64)>
 where
-    C: odb::pack::cache::DecodeEntry,
+    C: odb::pack::cache::DecodeEntry + Send + 'static,
 {
     match mode {
         Computation::SingleThreaded => {
@@ -204,6 +205,7 @@ where
             let mut seen = HashSet::new();
             let mut entries = 0;
 
+            let db = db.to_cache().with_pack_cache(move || Box::new(new_cache()));
             for commit in commits {
                 let tree_id = db
                     .try_find(commit, &mut buf)?
@@ -256,16 +258,22 @@ where
                 .try_for_each_init::<_, _, _, anyhow::Result<_>>(
                     {
                         let seen = &seen;
-                        move || {
-                            (
-                                Count { entries: 0, seen },
-                                Vec::<u8>::new(),
-                                Vec::<u8>::new(),
-                                tree::breadthfirst::State::default(),
-                            )
+                        {
+                            move || {
+                                (
+                                    Count { entries: 0, seen },
+                                    Vec::<u8>::new(),
+                                    Vec::<u8>::new(),
+                                    tree::breadthfirst::State::default(),
+                                    db.to_cache().with_pack_cache({
+                                        let new_cache = new_cache.clone();
+                                        move || Box::new(new_cache())
+                                    }),
+                                )
+                            }
                         }
                     },
-                    |(count, buf, buf2, state), commit| {
+                    |(count, buf, buf2, state, db), commit| {
                         let tid = db
                             .find_commit_iter(commit, buf)?
                             .tree_id()

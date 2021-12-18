@@ -1,8 +1,8 @@
 use git_features::fs;
 
-use crate::store::loose::Store;
+use crate::store_impls::loose;
 
-/// Returned by [`Store::iter()`]
+/// Returned by [`loose::Store::iter()`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -10,14 +10,8 @@ pub enum Error {
     WalkDir(#[from] fs::walkdir::Error),
 }
 
-/// The type for an iterator over `Result<git_hash::ObjectId, Error>)`
-pub type Iter = std::iter::FilterMap<
-    fs::walkdir::DirEntryIter,
-    fn(Result<fs::walkdir::DirEntry, fs::walkdir::Error>) -> Option<Result<git_hash::ObjectId, Error>>,
->;
-
 /// Iteration and traversal
-impl Store {
+impl loose::Store {
     fn iter_filter_map(
         res: Result<fs::walkdir::DirEntry, fs::walkdir::Error>,
     ) -> Option<Result<git_hash::ObjectId, Error>> {
@@ -51,19 +45,19 @@ impl Store {
 
     /// Return an iterator over all objects contained in the database.
     ///
-    /// The [`Id`][git_hash::ObjectId]s returned by the iterator can typically be used in the [`locate(…)`][Store::try_find()] method.
+    /// The [`Id`][git_hash::ObjectId]s returned by the iterator can typically be used in the [`locate(…)`][loose::Store::try_find()] method.
     /// _Note_ that the result is not sorted or stable, thus ordering can change between runs.
     ///
     /// # Notes
     ///
-    /// [`Iter`] is used instead of `impl Iterator<…>` to allow using this iterator in struct fields, as is currently
+    /// [`loose::Iter`] is used instead of `impl Iterator<…>` to allow using this iterator in struct fields, as is currently
     /// needed if iterators need to be implemented by hand in the absence of generators.
-    pub fn iter(&self) -> Iter {
+    pub fn iter(&self) -> loose::Iter {
         fs::walkdir_new(&self.path)
             .min_depth(2)
             .max_depth(3)
             .follow_links(false)
             .into_iter()
-            .filter_map(Store::iter_filter_map)
+            .filter_map(loose::Store::iter_filter_map)
     }
 }

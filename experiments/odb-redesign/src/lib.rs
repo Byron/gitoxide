@@ -1,96 +1,49 @@
 #![allow(dead_code, unused_variables, unreachable_code)]
 
-mod features {
-    mod threaded {
-        use std::sync::Arc;
-
-        pub type OwnShared<T> = Arc<T>;
-        pub type MutableOnDemand<T> = parking_lot::RwLock<T>;
-
-        pub fn get_ref_upgradeable<T>(v: &MutableOnDemand<T>) -> parking_lot::RwLockUpgradableReadGuard<'_, T> {
-            v.upgradable_read()
-        }
-
-        pub fn get_ref<T>(v: &MutableOnDemand<T>) -> parking_lot::RwLockReadGuard<'_, T> {
-            v.read()
-        }
-
-        pub fn get_mut<T>(v: &MutableOnDemand<T>) -> parking_lot::RwLockWriteGuard<'_, T> {
-            v.write()
-        }
-
-        pub fn upgrade_ref_to_mut<T>(
-            v: parking_lot::RwLockUpgradableReadGuard<'_, T>,
-        ) -> parking_lot::RwLockWriteGuard<'_, T> {
-            parking_lot::RwLockUpgradableReadGuard::upgrade(v)
-        }
-    }
-
-    mod local {
-        use std::{
-            cell::{Ref, RefCell, RefMut},
-            rc::Rc,
-        };
-
-        pub type OwnShared<T> = Rc<T>;
-        pub type MutableOnDemand<T> = RefCell<T>;
-
-        pub fn get_ref_upgradeable<T>(v: &RefCell<T>) -> RefMut<'_, T> {
-            v.borrow_mut()
-        }
-
-        pub fn get_mut<T>(v: &RefCell<T>) -> RefMut<'_, T> {
-            v.borrow_mut()
-        }
-
-        pub fn get_ref<T>(v: &RefCell<T>) -> Ref<'_, T> {
-            v.borrow()
-        }
-
-        pub fn upgrade_ref_to_mut<T>(v: RefMut<'_, T>) -> RefMut<'_, T> {
-            v
-        }
-    }
-
-    #[cfg(not(feature = "thread-safe"))]
-    pub use local::*;
-    #[cfg(feature = "thread-safe")]
-    pub use threaded::*;
-}
-
 mod odb {
-    use std::path::PathBuf;
-
-    use git_hash::oid;
-    use git_odb::pack::{bundle::Location, find::Entry};
-
-    use crate::{
-        features,
-        features::{get_mut, get_ref, get_ref_upgradeable, upgrade_ref_to_mut},
-        odb::policy::{load_indices, PackIndexMarker},
+    use std::{
+        path::PathBuf,
+        sync::{
+            atomic::{AtomicUsize, Ordering},
+            Arc,
+        },
     };
 
-    pub mod policy {
+    use arc_swap::ArcSwap;
+    use git_hash::oid;
+    use git_odb::pack::{data::entry::Location, find::Entry};
+
+    use crate::odb::store::{load_indices, SlotIndexMarker, SlotMapIndex};
+
+    pub mod store {
         use std::{
             io,
+            ops::Deref,
             path::{Path, PathBuf},
+            sync::{
+                atomic::{AtomicUsize, Ordering},
+                Arc,
+            },
         };
 
+        use arc_swap::ArcSwap;
         use git_hash::oid;
 
-        use crate::features;
+        use crate::odb::Store;
 
         mod index_file {
-            use crate::{features, odb::policy};
+            use std::sync::Arc;
+
+            use crate::odb::store;
 
             pub enum SingleOrMulti {
                 Single {
-                    index: features::OwnShared<git_pack::index::File>,
-                    data: Option<features::OwnShared<git_pack::data::File>>,
+                    index: Arc<git_pack::index::File>,
+                    data: Option<Arc<git_pack::data::File>>,
                 },
                 Multi {
-                    index: features::OwnShared<policy::MultiIndex>,
-                    data: Vec<Option<features::OwnShared<git_pack::data::File>>>,
+                    index: Arc<store::MultiIndex>,
+                    data: Vec<Option<Arc<git_pack::data::File>>>,
                 },
             }
         }
@@ -116,7 +69,7 @@ mod odb {
 
         pub(crate) struct IndexLookup {
             file: index_file::SingleOrMulti,
-            pub id: IndexId,
+            id: IndexId,
         }
 
         impl IndexLookup {
@@ -126,10 +79,7 @@ mod odb {
             fn lookup(
                 &mut self,
                 object_id: &oid,
-            ) -> Option<(
-                IndexForObjectInPack,
-                &mut Option<features::OwnShared<git_pack::data::File>>,
-            )> {
+            ) -> Option<(IndexForObjectInPack, &mut Option<Arc<git_pack::data::File>>)> {
                 match &mut self.file {
                     index_file::SingleOrMulti::Single { index, data } => {
                         index.lookup(object_id).map(|object_index_in_pack| {
@@ -152,13 +102,15 @@ mod odb {
             }
         }
 
-        pub(crate) struct OnDiskFile<T> {
+        #[derive(Clone)]
+        pub(crate) struct OnDiskFile<T: Clone> {
             /// The last known path of the file
-            path: PathBuf,
+            path: Arc<PathBuf>,
             state: OnDiskFileState<T>,
         }
 
-        pub(crate) enum OnDiskFileState<T> {
+        #[derive(Clone)]
+        pub(crate) enum OnDiskFileState<T: Clone> {
             /// The file is on disk and can be loaded from there.
             Unloaded,
             Loaded(T),
@@ -170,7 +122,7 @@ mod odb {
             Missing,
         }
 
-        impl<T> OnDiskFile<T> {
+        impl<T: Clone> OnDiskFile<T> {
             /// Return true if we hold a memory map of the file already.
             pub fn is_loaded(&self) -> bool {
                 matches!(self.state, OnDiskFileState::Loaded(_) | OnDiskFileState::Garbage(_))
@@ -218,52 +170,48 @@ mod odb {
             KeepDeletedPacksAvailable,
         }
 
+        #[derive(Clone)]
         pub(crate) struct IndexFileBundle {
-            pub index: OnDiskFile<features::OwnShared<git_pack::index::File>>,
-            pub path: PathBuf,
-            pub data: OnDiskFile<features::OwnShared<git_pack::data::File>>,
+            pub index: OnDiskFile<Arc<git_pack::index::File>>,
+            pub data: OnDiskFile<Arc<git_pack::data::File>>,
         }
 
+        #[derive(Clone)]
         pub(crate) struct MultiIndexFileBundle {
-            pub multi_index: OnDiskFile<features::OwnShared<MultiIndex>>,
-            pub data: Vec<OnDiskFile<features::OwnShared<git_pack::data::File>>>,
+            pub multi_index: OnDiskFile<Arc<MultiIndex>>,
+            pub data: Vec<OnDiskFile<Arc<git_pack::data::File>>>,
         }
 
+        #[derive(Clone)]
         pub(crate) enum IndexAndPacks {
             Index(IndexFileBundle),
             /// Note that there can only be one multi-pack file per repository, but thanks to git alternates, there can be multiple overall.
             MultiIndex(MultiIndexFileBundle),
         }
 
+        pub(crate) struct MutableIndexAndPack {
+            pub(crate) files: ArcSwap<IndexAndPacks>,
+            pub(crate) write: parking_lot::Mutex<()>,
+        }
+
         #[derive(Default)]
         pub(crate) struct State {
             /// The root level directory from which we resolve alternates files.
             pub(crate) objects_directory: PathBuf,
-            /// All of our database paths, including `objects_directory` as entrypoint
-            pub(crate) db_paths: Vec<PathBuf>,
-            pub(crate) files: Vec<IndexAndPacks>,
-
-            /// Generations are incremented whenever we decide to clear out our vectors if they are too big and contains too many empty slots.
-            /// If we are not allowed to unload files, the generation will never be changed.
-            pub(crate) generation: u8,
-
-            pub(crate) num_handles_stable: usize,
-            pub(crate) num_handles_unstable: usize,
         }
 
-        impl State {
-            pub(crate) fn marker(&self) -> PackIndexMarker {
-                PackIndexMarker {
-                    generation: self.generation,
-                    pack_index_sequence: self.files.len(),
-                }
+        impl Store {
+            pub(crate) fn marker(&self) -> SlotIndexMarker {
+                (self.index.load().deref()).into()
             }
-            pub(crate) fn snapshot(&self) -> StateInformation {
+
+            /// A best-effort evaluation of metrics, as it counts values that are not synchronized with each other.
+            pub(crate) fn metrics(&self) -> Metrics {
                 let mut open_packs = 0;
                 let mut open_indices = 0;
 
-                for f in &self.files {
-                    match f {
+                for f in self.index.load().slot_indices.iter().map(|idx| &self.files[*idx]) {
+                    match &**f.files.load() {
                         IndexAndPacks::Index(bundle) => {
                             if bundle.index.is_loaded() {
                                 open_indices += 1;
@@ -281,8 +229,9 @@ mod odb {
                     }
                 }
 
-                StateInformation {
-                    num_handles: self.num_handles_unstable + self.num_handles_stable,
+                Metrics {
+                    num_handles: self.num_handles_unstable.load(Ordering::SeqCst)
+                        + self.num_handles_stable.load(Ordering::SeqCst),
                     open_packs,
                     open_indices,
                 }
@@ -293,48 +242,99 @@ mod odb {
             /// Note that updates to multi-pack indices always cause the old index to be invalidated (Missing) and transferred
             /// into the new MultiPack index (reusing previous maps as good as possible), effectively treating them as new index entirely.
             /// That way, extension still work as before such that old indices may be pruned, and changes/new ones are always appended.
-            pub(crate) fn refresh(&mut self) -> io::Result<load_indices::Outcome> {
-                let mut db_paths = git_odb::alternate::resolve(&self.objects_directory)
+            pub(crate) fn refresh(&self) -> io::Result<load_indices::Outcome> {
+                let state = self.state.lock();
+                let mut db_paths = git_odb::alternate::resolve(&state.objects_directory)
                     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
                 // These are in addition to our objects directory
-                db_paths.insert(0, self.objects_directory.clone());
+                db_paths.insert(0, state.objects_directory.clone());
                 todo!()
             }
 
             /// If there is no handle with stable pack ids requirements, unload them.
             /// This property also relates to us pruning our internal state/doing internal maintenance which affects ids, too.
             pub(crate) fn may_unload_packs(&mut self) -> bool {
-                self.num_handles_stable == 0
+                // TODO: figure out if this needs to have the write lock to function properly
+                self.num_handles_stable.load(Ordering::SeqCst) == 0
             }
 
             pub(crate) fn collect_replace_outcome(&self) -> load_indices::Outcome {
-                let indices = self.files.iter().enumerate().filter_map(|(id, file)| {
-                    let lookup = match file {
-                        IndexAndPacks::Index(bundle) => index_file::SingleOrMulti::Single {
-                            index: bundle.index.loaded()?.clone(),
-                            data: bundle.data.loaded().cloned(),
-                        },
-                        IndexAndPacks::MultiIndex(multi) => index_file::SingleOrMulti::Multi {
-                            index: multi.multi_index.loaded()?.clone(),
-                            data: multi.data.iter().map(|f| f.loaded().cloned()).collect(),
-                        },
-                    };
-                    IndexLookup { file: lookup, id }.into()
-                });
+                let guard = self.index.load();
+                let indices = guard
+                    .slot_indices
+                    .iter()
+                    .map(|idx| (*idx, &self.files[*idx]))
+                    .filter_map(|(id, file)| {
+                        let lookup = match &**file.files.load() {
+                            IndexAndPacks::Index(bundle) => index_file::SingleOrMulti::Single {
+                                index: bundle.index.loaded()?.clone(),
+                                data: bundle.data.loaded().cloned(),
+                            },
+                            IndexAndPacks::MultiIndex(multi) => index_file::SingleOrMulti::Multi {
+                                index: multi.multi_index.loaded()?.clone(),
+                                data: multi.data.iter().map(|f| f.loaded().cloned()).collect(),
+                            },
+                        };
+                        IndexLookup { file: lookup, id }.into()
+                    });
                 load_indices::Outcome::Replace {
                     indices: todo!(),
+                    loose_dbs: Arc::clone(&guard.loose_dbs),
                     mark: self.marker(),
                 }
             }
         }
 
-        /// A way to indicate which pack indices we have seen already
-        pub struct PackIndexMarker {
-            /// The generation the `pack_index_sequence` belongs to. Indices of different generations are completely incompatible.
+        /// An index that changes only if the packs directory changes and its contents is re-read.
+        #[derive(Default)]
+        pub struct SlotMapIndex {
+            /// The index into the slot map at which we expect an index or pack file. Neither of these might be loaded yet.
+            pub(crate) slot_indices: Vec<usize>,
+            /// A static value that doesn't ever change for a particular clone of this index.
             pub(crate) generation: u8,
-            /// An ever increasing number within a generation indicating the maximum number of loaded pack indices and
-            /// the amount of slots we have for indices and packs.
-            pub(crate) pack_index_sequence: usize,
+            /// The number of indices loaded thus far when the index of the slot map was last examined, which can change as new indices are loaded
+            /// in parallel.
+            /// Shared across SlotMapIndex instances of the same generation.
+            pub(crate) next_index_to_load: Arc<AtomicUsize>,
+            /// Incremented by one up to `slot_indices.len()` once index was actually loaded. If a load failed, there will be no increment.
+            /// Shared across SlotMapIndex instances of the same generation.
+            pub(crate) loaded_indices: Arc<AtomicUsize>,
+            /// A list of loose object databases as resolved by their alternates file in the `object_directory`. The first entry is this objects
+            /// directory loose file database. All other entries are the loose stores of alternates.
+            /// It's in an Arc to be shared to Handles, but not to be shared across SlotMapIndices
+            pub(crate) loose_dbs: Arc<Vec<git_odb::loose::Store>>,
+        }
+
+        impl SlotMapIndex {
+            pub(crate) fn state_id(self: &Arc<SlotMapIndex>) -> usize {
+                // We let the loaded indices take part despite not being part of our own snapshot.
+                // This is to account for indices being loaded in parallel without actually changing the snapshot itself.
+                (Arc::as_ptr(&self.loose_dbs) as usize ^ Arc::as_ptr(self) as usize)
+                    * (self.loaded_indices.load(Ordering::SeqCst) + 1)
+            }
+        }
+
+        /// Note that this is a snapshot of SlotMapIndex, even though some internal values are shared, it's for sharing to callers, not among
+        /// versions of the SlotMapIndex
+        impl From<&Arc<SlotMapIndex>> for SlotIndexMarker {
+            fn from(v: &Arc<SlotMapIndex>) -> Self {
+                SlotIndexMarker {
+                    generation: v.generation,
+                    state_id: v.state_id(),
+                }
+            }
+        }
+
+        /// A way to indicate which pack indices we have seen already. This type is meant as a snapshot for the internally used `AtomicIndexMarker`.
+        #[derive(Clone, Default)]
+        pub struct SlotIndexMarker {
+            /// The generation the `loaded_until_index` belongs to. Indices of different generations are completely incompatible.
+            /// This value changes once the internal representation is compacted, something that may happen only if there is no handle
+            /// requiring stable pack indices.
+            pub(crate) generation: u8,
+            /// A unique id identifying the index state as well as all loose databases we have last observed.
+            /// If it changes in any way, the value is different.
+            pub(crate) state_id: usize,
         }
 
         /// Define how packs will be refreshed when all indices are loaded, which is useful if a lot of objects are missing.
@@ -350,24 +350,18 @@ mod odb {
         }
 
         pub mod load_indices {
-            use crate::odb::{
-                policy,
-                policy::{IndexId, PackIndexMarker},
-            };
+            use std::sync::Arc;
+
+            use crate::odb::{store, store::SlotIndexMarker};
 
             pub(crate) enum Outcome {
                 /// Drop all data and fully replace it with `indices`.
                 /// This happens if we have witnessed a generational change invalidating all of our ids and causing currently loaded
                 /// indices and maps to be dropped.
                 Replace {
-                    indices: Vec<policy::IndexLookup>, // should probably be small vec to get around most allocations
-                    mark: PackIndexMarker,             // use to show where the caller left off last time
-                },
-                /// Extend with the given indices and keep searching, while dropping invalidated/unloaded ids.
-                Extend {
-                    drop_indices: Vec<IndexId>, // which packs to forget about (along their packs) because they were removed from disk.
-                    indices: Vec<policy::IndexLookup>, // should probably be small vec to get around most allocations
-                    mark: PackIndexMarker,      // use to show where the caller left off last time
+                    indices: Vec<store::IndexLookup>, // should probably be SmallVec to get around most allocations
+                    loose_dbs: Arc<Vec<git_odb::loose::Store>>,
+                    mark: SlotIndexMarker, // use to show where the caller left off last time
                 },
                 /// No new indices to look at, caller should give up
                 NoMoreIndices,
@@ -375,7 +369,7 @@ mod odb {
         }
 
         /// A snapshot about resource usage.
-        pub struct StateInformation {
+        pub struct Metrics {
             pub num_handles: usize,
             pub open_indices: usize,
             pub open_packs: usize,
@@ -386,67 +380,82 @@ mod odb {
     /// The reason for the latter is that it's close to impossible to enforce correctly without heuristics that are probably
     /// better done on the server if there is an indication.
     ///
-    /// There is, however, a way to obtain the current amount of open files held by this instance and it's possible to trigger them
-    /// to be closed. Alternatively, it's safe to replace this instance with a new one which starts fresh.
-    ///
-    /// Note that it's possible to let go of loaded files here as well, even though that would be based on a setting allowed file handles
-    /// which would be managed elsewhere.
+    /// File handles are released only once all handles to the store are gone. It's possible that some handles remain open as 'garbage'
+    /// as they were held while there was a handle which prevented collection. It's best to close these by opening a new store occasionally
+    /// based on the metrics it provides.
     ///
     /// For maintenance, I think it would be best create an instance when a connection comes in, share it across connections to the same
     /// repository, and remove it as the last connection to it is dropped.
     pub struct Store {
-        state: features::MutableOnDemand<policy::State>,
+        /// Possibly mutable state which is accessed only rarely when the folder index has to be refreshed.
+        state: parking_lot::Mutex<store::State>,
+
+        /// A list of indices keeping track of which slots are filled with data. These are usually, but not always, consecutive.
+        /// It also keeps track of which
+        pub(crate) index: ArcSwap<SlotMapIndex>,
+
+        /// The below state acts like a slot-map with each slot is mutable when the write lock is held, but readable independently of it.
+        /// This allows multiple file to be loaded concurrently if there is multiple handles requesting to load packs or additional indices.
+        /// The map is static and cannot typically change.
+        /// It's read often and changed rarely.
+        pub(crate) files: Vec<store::MutableIndexAndPack>,
+
+        /// The amount of handles that would prevent us from unloading packs or indices
+        pub(crate) num_handles_stable: AtomicUsize,
+        /// The amount of handles that don't affect our ability to compact our internal data structures.
+        pub(crate) num_handles_unstable: AtomicUsize,
     }
 
     impl Store {
-        pub fn at(objects_directory: impl Into<PathBuf>) -> features::OwnShared<Self> {
-            features::OwnShared::new(Store {
-                state: features::MutableOnDemand::new(policy::State {
+        pub fn at(objects_directory: impl Into<PathBuf>) -> Arc<Self> {
+            Arc::new(Store {
+                state: parking_lot::Mutex::new(store::State {
                     objects_directory: objects_directory.into(),
-                    ..policy::State::default()
                 }),
+
+                files: vec![], // TODO: initialize with a sane number of slots, probably based on the contents of the packs directory.
+                index: ArcSwap::new(Arc::new(SlotMapIndex::default())),
+
+                num_handles_stable: Default::default(),
+                num_handles_unstable: Default::default(),
             })
         }
 
         /// Allow actually finding things
-        pub fn to_handle(self: &features::OwnShared<Self>) -> Handle {
+        pub fn to_handle(self: &Arc<Self>) -> Handle {
             let mode = self.register_handle();
             Handle {
                 store: self.clone(),
-                refresh_mode: policy::RefreshMode::AfterAllIndicesLoaded,
+                refresh_mode: store::RefreshMode::AfterAllIndicesLoaded,
                 mode: mode.into(),
             }
-        }
-
-        /// Get a snapshot of the current amount of handles and open packs and indices.
-        /// If there are no handles, we are only consuming resources, which might indicate that this instance should be
-        /// discarded.
-        pub fn state_snapshot(&self) -> policy::StateInformation {
-            get_ref(&self.state).snapshot()
         }
     }
 
     /// Handle interaction
     impl Store {
-        pub(crate) fn register_handle(&self) -> policy::HandleModeToken {
-            let mut state = get_mut(&self.state);
-            state.num_handles_unstable += 1;
-            policy::HandleModeToken::DeletedPacksAreInaccessible
+        pub(crate) fn register_handle(&self) -> store::HandleModeToken {
+            self.num_handles_unstable.fetch_add(1, Ordering::Relaxed);
+            store::HandleModeToken::DeletedPacksAreInaccessible
         }
-        pub(crate) fn remove_handle(&self, mode: policy::HandleModeToken) {
-            let mut state = get_mut(&self.state);
+        pub(crate) fn remove_handle(&self, mode: store::HandleModeToken) {
             match mode {
-                policy::HandleModeToken::KeepDeletedPacksAvailable => state.num_handles_stable -= 1,
-                policy::HandleModeToken::DeletedPacksAreInaccessible => state.num_handles_unstable -= 1,
-            }
+                store::HandleModeToken::KeepDeletedPacksAvailable => {
+                    let _lock = self.state.lock();
+                    self.num_handles_stable.fetch_sub(1, Ordering::SeqCst)
+                }
+                store::HandleModeToken::DeletedPacksAreInaccessible => {
+                    self.num_handles_unstable.fetch_sub(1, Ordering::Relaxed)
+                }
+            };
         }
-        pub(crate) fn upgrade_handle(&self, mode: policy::HandleModeToken) -> policy::HandleModeToken {
-            if let policy::HandleModeToken::DeletedPacksAreInaccessible = mode {
-                let mut state = get_mut(&self.state);
-                state.num_handles_unstable -= 1;
-                state.num_handles_stable += 1;
+        pub(crate) fn upgrade_handle(&self, mode: store::HandleModeToken) -> store::HandleModeToken {
+            if let store::HandleModeToken::DeletedPacksAreInaccessible = mode {
+                let _lock = self.state.lock();
+                self.num_handles_stable.fetch_add(1, Ordering::SeqCst);
+                self.num_handles_unstable.fetch_sub(1, Ordering::SeqCst);
             }
-            policy::HandleModeToken::KeepDeletedPacksAvailable
+            store::HandleModeToken::KeepDeletedPacksAvailable
         }
     }
 
@@ -458,47 +467,42 @@ mod odb {
         /// and redo the entire lookup for a valid pack id whose pack can probably be loaded next time.
         pub(crate) fn load_pack(
             &self,
-            id: policy::PackId,
-            marker: PackIndexMarker,
-        ) -> std::io::Result<Option<features::OwnShared<git_pack::data::File>>> {
-            let state = get_ref_upgradeable(&self.state);
-            if state.generation != marker.generation {
+            id: store::PackId,
+            marker: SlotIndexMarker,
+        ) -> std::io::Result<Option<Arc<git_pack::data::File>>> {
+            let index = self.index.load();
+            if index.generation != marker.generation {
                 return Ok(None);
             }
             match id.multipack_index {
                 None => {
-                    match state.files.get(id.index) {
-                        Some(f) => match f {
-                            policy::IndexAndPacks::Index(bundle) => match bundle.data.loaded() {
-                                Some(pack) => Ok(Some(pack.clone())),
-                                None => {
-                                    let mut state = upgrade_ref_to_mut(state);
-                                    let f = &mut state.files[id.index];
-                                    match f {
-                                        policy::IndexAndPacks::Index(bundle) => Ok(bundle
-                                            .data
-                                            .do_load(|path| {
-                                                git_pack::data::File::at(path).map(features::OwnShared::new).map_err(
-                                                    |err| match err {
-                                                        git_odb::pack::data::header::decode::Error::Io {
-                                                            source,
-                                                            ..
-                                                        } => source,
-                                                        other => std::io::Error::new(std::io::ErrorKind::Other, other),
-                                                    },
-                                                )
-                                            })?
-                                            .cloned()),
-                                        _ => unreachable!(),
-                                    }
-                                }
-                            },
-                            // This can also happen if they use an old index into our new and refreshed data which might have a multi-index
-                            // here.
-                            policy::IndexAndPacks::MultiIndex(_) => Ok(None),
+                    let f = &self.files[id.index];
+                    match &**f.files.load() {
+                        store::IndexAndPacks::Index(bundle) => match bundle.data.loaded() {
+                            Some(pack) => Ok(Some(pack.clone())),
+                            None => {
+                                let _lock = f.write.lock();
+                                // let f = &mut files[id.index];
+                                // match f {
+                                //     policy::IndexAndPacks::Index(bundle) => Ok(bundle
+                                //         .data
+                                //         .do_load(|path| {
+                                //             git_pack::data::File::at(path).map(Arc::new).map_err(|err| match err {
+                                //                 git_odb::pack::data::header::decode::Error::Io {
+                                //                     source, ..
+                                //                 } => source,
+                                //                 other => std::io::Error::new(std::io::ErrorKind::Other, other),
+                                //             })
+                                //         })?
+                                //         .cloned()),
+                                //     _ => unreachable!(),
+                                // }
+                                todo!()
+                            }
                         },
-                        // This can happen if we condense our data, returning None tells the caller to refresh their indices
-                        None => Ok(None),
+                        // This can also happen if they use an old index into our new and refreshed data which might have a multi-index
+                        // here.
+                        store::IndexAndPacks::MultiIndex(_) => Ok(None),
                     }
                 }
                 Some(multipack_id) => todo!("load from given multipack which needs additional lookup"),
@@ -506,41 +510,39 @@ mod odb {
         }
         pub(crate) fn load_next_indices(
             &self,
-            refresh_mode: policy::RefreshMode,
-            marker: Option<policy::PackIndexMarker>,
+            refresh_mode: store::RefreshMode,
+            marker: Option<store::SlotIndexMarker>,
         ) -> std::io::Result<load_indices::Outcome> {
-            let state = get_ref_upgradeable(&self.state);
-            if state.db_paths.is_empty() {
-                return upgrade_ref_to_mut(state).refresh();
+            let index = self.index.load();
+            if index.loose_dbs.is_empty() {
+                // TODO: figure out what kind of refreshes we need. This one loads in the initial slot map, but I think this cost is paid
+                //       in full during instantiation.
+                return self.refresh();
             }
 
             Ok(match marker {
                 Some(marker) => {
-                    if marker.generation != state.generation {
-                        state.collect_replace_outcome()
-                    } else if marker.pack_index_sequence == state.files.len() {
+                    if marker.generation != index.generation {
+                        self.collect_replace_outcome()
+                    } else if marker.state_id == index.state_id() {
                         match refresh_mode {
-                            policy::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
-                            policy::RefreshMode::AfterAllIndicesLoaded => return upgrade_ref_to_mut(state).refresh(),
+                            store::RefreshMode::Never => load_indices::Outcome::NoMoreIndices,
+                            store::RefreshMode::AfterAllIndicesLoaded => return self.refresh(),
                         }
                     } else {
-                        load_indices::Outcome::Extend {
-                            indices: todo!("state.files[marker.pack_index_sequence..]"),
-                            drop_indices: Vec::new(),
-                            mark: state.marker(),
-                        }
+                        self.collect_replace_outcome()
                     }
                 }
-                None => state.collect_replace_outcome(),
+                None => self.collect_replace_outcome(),
             })
         }
     }
 
     /// The store shares a policy and keeps a couple of thread-local configuration
     pub struct Handle {
-        store: features::OwnShared<Store>,
-        refresh_mode: policy::RefreshMode,
-        mode: Option<policy::HandleModeToken>,
+        store: Arc<Store>,
+        refresh_mode: store::RefreshMode,
+        mode: Option<store::HandleModeToken>,
     }
 
     impl Handle {
@@ -582,10 +584,7 @@ mod odb {
             id: impl AsRef<git_hash::oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl git_pack::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<git_pack::bundle::Location>)>, Self::Error> {
-            // TODO: if the generation changes, we need to clear the pack-cache as it depends on pack-ids.
-            //       Can we simplify this so it's more obvious what generation does? They must remain stable no matter what
-            //       as pack-caches also depend on them and we don't know about these.
+        ) -> Result<Option<(git_object::Data<'a>, Option<Location>)>, Self::Error> {
             todo!()
         }
 
@@ -593,12 +592,15 @@ mod odb {
             todo!()
         }
 
-        // TODO: turn this into a pack-id
-        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
+        /// This requires a one-time mapping/find operation to find the actual pack. That's OK here.
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
             todo!()
         }
 
-        fn entry_by_location(&self, location: &Location) -> Option<Entry<'_>> {
+        /// This operation can be more expensive unless the handle has a local mapping between u32 pack id and the PackId that shows the actual
+        /// index. There is no other way to quickly get from actual pack id to where it's stored in our slot-map, and possibly which multi-index
+        /// it belongs to.
+        fn entry_by_location(&self, location: &Location) -> Option<Entry> {
             todo!()
         }
     }
@@ -610,9 +612,10 @@ mod odb {
 }
 
 mod refs {
-    use std::path::{Path, PathBuf};
-
-    use crate::features;
+    use std::{
+        path::{Path, PathBuf},
+        sync::Arc,
+    };
 
     pub struct LooseStore {
         path: PathBuf,
@@ -627,41 +630,38 @@ mod refs {
     }
 
     mod inner {
-        use crate::{
-            features,
-            refs::{LooseStore, RefTable},
-        };
+        use crate::refs::{LooseStore, RefTable};
 
         pub(crate) enum StoreSelection {
             Loose(LooseStore),
-            RefTable(features::MutableOnDemand<RefTable>),
+            RefTable(parking_lot::RwLock<RefTable>),
         }
     }
 
     pub struct Store {
         inner: inner::StoreSelection,
-        packed_refs: features::MutableOnDemand<Option<git_ref::packed::Buffer>>,
+        packed_refs: parking_lot::RwLock<Option<git_ref::packed::Buffer>>,
         // And of course some more information to track if packed buffer is fresh
     }
 
     impl Store {
-        pub fn new(path: impl AsRef<Path>) -> features::OwnShared<Self> {
-            features::OwnShared::new(Store {
+        pub fn new(path: impl AsRef<Path>) -> Arc<Self> {
+            Arc::new(Store {
                 inner: inner::StoreSelection::Loose(LooseStore {
                     path: path.as_ref().to_owned(),
                     reflog_mode: 0,
                 }),
-                packed_refs: features::MutableOnDemand::new(None),
+                packed_refs: parking_lot::RwLock::new(None),
             })
         }
-        pub fn to_handle(self: &features::OwnShared<Self>) -> Handle {
+        pub fn to_handle(self: &Arc<Self>) -> Handle {
             Handle {
                 store: self.clone(),
                 namespace: None,
             }
         }
 
-        pub fn to_namespaced_handle(self: &features::OwnShared<Self>, namespace: git_ref::Namespace) -> Handle {
+        pub fn to_namespaced_handle(self: &Arc<Self>, namespace: git_ref::Namespace) -> Handle {
             Handle {
                 store: self.clone(),
                 namespace: namespace.into(),
@@ -671,7 +671,7 @@ mod refs {
 
     #[derive(Clone)]
     pub struct Handle {
-        store: features::OwnShared<Store>,
+        store: Arc<Store>,
         namespace: Option<git_ref::Namespace>,
     }
 
@@ -680,7 +680,9 @@ mod refs {
 }
 
 mod repository {
-    use crate::{features, odb, refs};
+    use std::sync::Arc;
+
+    use crate::{odb, refs};
 
     mod raw {
         use git_pack::Find;
@@ -701,8 +703,8 @@ mod repository {
     /// MUST BE `Sync`
     #[derive(Clone)]
     pub struct Repository {
-        odb: features::OwnShared<odb::Store>,
-        refs: features::OwnShared<refs::Store>,
+        odb: Arc<odb::Store>,
+        refs: Arc<refs::Store>,
     }
 
     #[cfg(test)]

@@ -42,7 +42,7 @@ impl<'repo> Commit<'repo> {
 
     /// Parse the commit and return the the tree object it points to.
     pub fn tree(&self) -> Result<Tree<'repo>, Error> {
-        let tree_id = self.tree_id().ok_or_else(|| Error::Decode)?;
+        let tree_id = self.tree_id().ok_or(Error::Decode)?;
         match self.handle.find_object(tree_id)?.try_into_tree() {
             Ok(tree) => Ok(tree),
             Err(obj) => Err(Error::ObjectKind {

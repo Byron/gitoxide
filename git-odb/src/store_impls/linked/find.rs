@@ -6,7 +6,7 @@ use git_pack::find::Entry;
 
 use crate::{
     pack,
-    store::{compound, linked},
+    store_impls::{compound, linked},
 };
 
 impl crate::pack::Find for linked::Store {
@@ -28,7 +28,7 @@ impl crate::pack::Find for linked::Store {
         id: impl AsRef<oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl git_pack::cache::DecodeEntry,
-    ) -> Result<Option<(git_object::Data<'a>, Option<pack::bundle::Location>)>, Self::Error> {
+    ) -> Result<Option<(git_object::Data<'a>, Option<pack::data::entry::Location>)>, Self::Error> {
         let id = id.as_ref();
         for db in self.dbs.iter() {
             match db.internal_find_packed(id) {
@@ -55,7 +55,7 @@ impl crate::pack::Find for linked::Store {
         Ok(None)
     }
 
-    fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<pack::bundle::Location> {
+    fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<pack::data::entry::Location> {
         let id = id.as_ref();
         for db in self.dbs.iter() {
             if let Some(compound::find::PackLocation {
@@ -72,10 +72,9 @@ impl crate::pack::Find for linked::Store {
                     .pack
                     .decompress_entry(&entry, buf)
                     .ok()
-                    .map(|entry_size_past_header| pack::bundle::Location {
+                    .map(|entry_size_past_header| pack::data::entry::Location {
                         pack_id: bundle.pack.id,
                         pack_offset,
-                        index_file_id: entry_index,
                         entry_size: entry.header_size() + entry_size_past_header,
                     });
             }
@@ -83,25 +82,22 @@ impl crate::pack::Find for linked::Store {
         None
     }
 
-    fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
+    fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
         self.dbs.iter().find_map(|db| {
             db.bundles
                 .iter()
-                .find_map(|b| (b.pack.id == pack_id).then(|| b.index.iter()))
+                .find_map(|b| (b.pack.id == pack_id).then(|| b.index.iter().map(|e| (e.pack_offset, e.oid)).collect()))
         })
     }
 
-    fn entry_by_location(&self, location: &pack::bundle::Location) -> Option<Entry<'_>> {
+    fn entry_by_location(&self, location: &pack::data::entry::Location) -> Option<Entry> {
         self.dbs
             .iter()
             .find_map(|db| db.bundles.iter().find(|p| p.pack.id == location.pack_id))
             .map(|b| (b, location))
             .and_then(|(bundle, l)| {
-                let crc32 = bundle.index.crc32_at_index(l.index_file_id);
-                let pack_offset = bundle.index.pack_offset_at_index(l.index_file_id);
-                bundle.pack.entry_slice(l.entry_range(pack_offset)).map(|data| Entry {
-                    data,
-                    crc32,
+                bundle.pack.entry_slice(l.entry_range(l.pack_offset)).map(|data| Entry {
+                    data: data.to_owned(),
                     version: bundle.pack.version(),
                 })
             })

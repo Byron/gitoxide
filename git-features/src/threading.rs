@@ -17,13 +17,6 @@ mod _impl {
     /// A mapped reference created from a RefGuard
     pub type MappedRefGuard<'a, U> = parking_lot::MappedRwLockReadGuard<'a, U>;
 
-    /// Get an upgradable shared reference through a [`MutableOnDemand`] for read-only access.
-    ///
-    /// This access can be upgraded using [`upgrade_ref_to_mut()`].
-    pub fn get_ref_upgradeable<T>(v: &MutableOnDemand<T>) -> parking_lot::RwLockUpgradableReadGuard<'_, T> {
-        v.upgradable_read()
-    }
-
     /// Get a shared reference through a [`MutableOnDemand`] for read-only access.
     pub fn get_ref<T>(v: &MutableOnDemand<T>) -> RefGuard<'_, T> {
         v.read()
@@ -39,15 +32,7 @@ mod _impl {
         v.lock()
     }
 
-    /// Upgrade a handle previously obtained with [`get_ref_upgradeable()`] to support mutation.
-    pub fn upgrade_ref_to_mut<'a, T>(
-        v: parking_lot::RwLockUpgradableReadGuard<'a, T>,
-        _orig: &'a MutableOnDemand<T>,
-    ) -> parking_lot::RwLockWriteGuard<'a, T> {
-        parking_lot::RwLockUpgradableReadGuard::upgrade(v)
-    }
-
-    /// Downgrade a handle previously obtained with [`upgrade_ref_to_mut()`] to drop mutation support.
+    /// Downgrade a handle previously obtained with [`get_mut()`] to drop mutation support.
     pub fn downgrade_mut_to_ref<'a, T>(
         v: parking_lot::RwLockWriteGuard<'a, T>,
         _orig: &'a MutableOnDemand<T>,
@@ -57,15 +42,6 @@ mod _impl {
 
     /// Map a read guard into a sub-type it contains.
     pub fn map_ref<T, U: ?Sized>(v: RefGuard<'_, T>, f: impl FnOnce(&T) -> &U) -> MappedRefGuard<'_, U> {
-        parking_lot::RwLockReadGuard::map(v, f)
-    }
-
-    /// Map an upgradable read guard into a sub-type it contains.
-    pub fn map_upgradable_ref<T, U: ?Sized>(
-        v: parking_lot::RwLockUpgradableReadGuard<'_, T>,
-        f: impl FnOnce(&T) -> &U,
-    ) -> MappedRefGuard<'_, U> {
-        let v = parking_lot::RwLockUpgradableReadGuard::downgrade(v);
         parking_lot::RwLockReadGuard::map(v, f)
     }
 }
@@ -88,13 +64,6 @@ mod _impl {
     /// A mapped reference created from a RefGuard
     pub type MappedRefGuard<'a, U> = Ref<'a, U>;
 
-    /// Get an upgradable shared reference through a [`MutableOnDemand`] for read-only access.
-    ///
-    /// This access can be upgraded using [`upgrade_ref_to_mut()`].
-    pub fn get_ref_upgradeable<T>(v: &RefCell<T>) -> Ref<'_, T> {
-        v.borrow()
-    }
-
     /// Get a shared reference through a [`MutableOnDemand`] for read-only access.
     pub fn get_mut<T>(v: &RefCell<T>) -> RefMut<'_, T> {
         v.borrow_mut()
@@ -110,12 +79,6 @@ mod _impl {
         v.borrow()
     }
 
-    /// Upgrade a handle previously obtained with [`get_ref_upgradeable()`] to support mutation.
-    pub fn upgrade_ref_to_mut<'a, T>(v: Ref<'a, T>, orig: &'a RefCell<T>) -> RefMut<'a, T> {
-        drop(v);
-        orig.borrow_mut()
-    }
-
     /// Downgrade a handle previously obtained with [`upgrade_ref_to_mut()`] to drop mutation support.
     pub fn downgrade_mut_to_ref<'a, T>(v: RefMut<'a, T>, orig: &'a RefCell<T>) -> RefGuard<'a, T> {
         drop(v);
@@ -124,11 +87,6 @@ mod _impl {
 
     /// Map a read guard into a sub-type it contains.
     pub fn map_ref<T, U: ?Sized>(v: RefGuard<'_, T>, f: impl FnOnce(&T) -> &U) -> MappedRefGuard<'_, U> {
-        Ref::map(v, f)
-    }
-
-    /// Map an upgradable read guard into a sub-type it contains.
-    pub fn map_upgradable_ref<T, U: ?Sized>(v: Ref<'_, T>, f: impl FnOnce(&T) -> &U) -> MappedRefGuard<'_, U> {
         Ref::map(v, f)
     }
 }

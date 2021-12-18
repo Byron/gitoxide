@@ -1,6 +1,6 @@
 use std::{cell::RefCell, sync::Arc};
 
-use crate::Handle;
+use crate::Cache;
 
 /// A type to store pack caches in boxes.
 pub type PackCache = dyn git_pack::cache::DecodeEntry + Send + 'static;
@@ -12,7 +12,7 @@ pub type ObjectCache = dyn git_pack::cache::Object + Send + 'static;
 /// A constructor for boxed object caches.
 pub type NewObjectCacheFn = dyn Fn() -> Box<ObjectCache> + Send + Sync + 'static;
 
-impl<S> Handle<S> {
+impl<S> Cache<S> {
     /// Use this methods directly after creating a new instance to add a constructor for pack caches.
     ///
     /// These are used to speed up decoding objects which are located in packs, reducing long delta chains by storing
@@ -53,13 +53,13 @@ impl<S> Handle<S> {
     }
 }
 
-impl<S> From<S> for Handle<S>
+impl<S> From<S> for Cache<S>
 where
     S: git_pack::Find,
 {
     fn from(store: S) -> Self {
         Self {
-            store,
+            inner: store,
             pack_cache: None,
             new_pack_cache: None,
             object_cache: None,
@@ -68,10 +68,10 @@ where
     }
 }
 
-impl<S: Clone> Clone for Handle<S> {
+impl<S: Clone> Clone for Cache<S> {
     fn clone(&self) -> Self {
-        Handle {
-            store: self.store.clone(),
+        Cache {
+            inner: self.inner.clone(),
             new_pack_cache: self.new_pack_cache.clone(),
             new_object_cache: self.new_object_cache.clone(),
             pack_cache: self.new_pack_cache.as_ref().map(|create| RefCell::new(create())),
@@ -87,9 +87,9 @@ mod impls {
     use git_object::{Data, Kind};
     use git_pack::cache::Object;
 
-    use crate::{pack::bundle::Location, Handle};
+    use crate::{pack::data::entry::Location, Cache};
 
-    impl<S> crate::Write for Handle<S>
+    impl<S> crate::Write for Cache<S>
     where
         S: crate::Write,
     {
@@ -102,18 +102,18 @@ mod impls {
             from: impl Read,
             hash: git_hash::Kind,
         ) -> Result<ObjectId, Self::Error> {
-            self.store.write_stream(kind, size, from, hash)
+            self.inner.write_stream(kind, size, from, hash)
         }
     }
 
-    impl<S> crate::Find for Handle<S>
+    impl<S> crate::Find for Cache<S>
     where
         S: crate::pack::Find,
     {
         type Error = S::Error;
 
         fn contains(&self, id: impl AsRef<oid>) -> bool {
-            self.store.contains(id)
+            self.inner.contains(id)
         }
 
         fn try_find<'a>(&self, id: impl AsRef<oid>, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, Self::Error> {
@@ -121,14 +121,14 @@ mod impls {
         }
     }
 
-    impl<S> crate::pack::Find for Handle<S>
+    impl<S> crate::pack::Find for Cache<S>
     where
         S: crate::pack::Find,
     {
         type Error = S::Error;
 
         fn contains(&self, id: impl AsRef<oid>) -> bool {
-            self.store.contains(id)
+            self.inner.contains(id)
         }
 
         fn try_find<'a>(
@@ -147,13 +147,13 @@ mod impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl git_pack::cache::DecodeEntry,
-        ) -> Result<Option<(Data<'a>, Option<git_pack::bundle::Location>)>, Self::Error> {
+        ) -> Result<Option<(Data<'a>, Option<git_pack::data::entry::Location>)>, Self::Error> {
             if let Some(mut obj_cache) = self.object_cache.as_ref().map(|rc| rc.borrow_mut()) {
                 if let Some(kind) = obj_cache.get(&id.as_ref().to_owned(), buffer) {
                     return Ok(Some((Data::new(kind, buffer), None)));
                 }
             }
-            let possibly_obj = self.store.try_find_cached(id.as_ref(), buffer, pack_cache)?;
+            let possibly_obj = self.inner.try_find_cached(id.as_ref(), buffer, pack_cache)?;
             if let (Some(mut obj_cache), Some((obj, _location))) =
                 (self.object_cache.as_ref().map(|rc| rc.borrow_mut()), &possibly_obj)
             {
@@ -162,16 +162,16 @@ mod impls {
             Ok(possibly_obj)
         }
 
-        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<git_pack::bundle::Location> {
-            self.store.location_by_oid(id, buf)
+        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<git_pack::data::entry::Location> {
+            self.inner.location_by_oid(id, buf)
         }
 
-        fn index_iter_by_pack_id(&self, pack_id: u32) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
-            self.store.index_iter_by_pack_id(pack_id)
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+            self.inner.pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, location: &Location) -> Option<git_pack::find::Entry<'_>> {
-            self.store.entry_by_location(location)
+        fn entry_by_location(&self, location: &Location) -> Option<git_pack::find::Entry> {
+            self.inner.entry_by_location(location)
         }
     }
 }
