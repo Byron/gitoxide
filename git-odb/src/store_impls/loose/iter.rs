@@ -1,6 +1,6 @@
 use git_features::fs;
 
-use crate::store::loose;
+use crate::store_impls::loose;
 
 /// Returned by [`loose::Store::iter()`]
 #[derive(thiserror::Error, Debug)]

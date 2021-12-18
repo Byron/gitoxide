@@ -4,7 +4,7 @@ use git_hash::oid;
 use git_object::Data;
 use git_pack::{cache::DecodeEntry, data::entry::Location};
 
-use crate::dynamic::handle;
+use crate::store::handle;
 
 mod error {
     use crate::{loose, pack};
@@ -18,14 +18,14 @@ mod error {
         #[error("An error occurred while obtaining an object from the packed object store")]
         Pack(#[from] pack::data::decode_entry::Error),
         #[error(transparent)]
-        LoadIndex(#[from] crate::dynamic::load_index::Error),
+        LoadIndex(#[from] crate::store::load_index::Error),
         #[error(transparent)]
         LoadPack(#[from] std::io::Error),
     }
 }
 pub use error::Error;
 
-use crate::dynamic;
+use crate::store::types::PackId;
 
 impl<S> crate::pack::Find for super::Handle<S>
 where
@@ -244,7 +244,7 @@ where
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
         );
-        let pack_id = dynamic::types::PackId::from_intrinsic_pack_id(pack_id);
+        let pack_id = PackId::from_intrinsic_pack_id(pack_id);
         loop {
             let snapshot = self.snapshot.borrow();
             {
@@ -270,7 +270,7 @@ where
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
         );
-        let pack_id = dynamic::types::PackId::from_intrinsic_pack_id(location.pack_id);
+        let pack_id = PackId::from_intrinsic_pack_id(location.pack_id);
         'outer: loop {
             let mut snapshot = self.snapshot.borrow_mut();
             {

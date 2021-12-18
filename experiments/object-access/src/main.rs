@@ -3,7 +3,7 @@ use std::{path::Path, sync::Arc, time::Instant};
 use anyhow::anyhow;
 use git_repository::{hash::ObjectId, odb, threading::OwnShared, Repository};
 
-use crate::odb::{dynamic, Cache, RefreshMode};
+use crate::odb::{Cache, RefreshMode};
 
 const GITOXIDE_STATIC_CACHE_SIZE: usize = 64;
 const GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES: usize = 60_000_000;
@@ -449,8 +449,8 @@ fn do_new_gitoxide_store_in_parallel<C>(
     objects_dir: &Path,
     new_cache: impl Fn() -> C + Send + Sync + 'static,
     mode: AccessMode,
-    store: Option<OwnShared<dynamic::Store>>,
-) -> anyhow::Result<(std::sync::Arc<git_repository::odb::dynamic::Store>, u64)>
+    store: Option<OwnShared<odb::Store>>,
+) -> anyhow::Result<(std::sync::Arc<odb::Store>, u64)>
 where
     C: odb::pack::cache::DecodeEntry + Send + 'static,
 {
@@ -458,12 +458,12 @@ where
     let bytes = std::sync::atomic::AtomicU64::default();
     let slots = std::env::args()
         .nth(2)
-        .and_then(|num| num.parse().ok().map(git_repository::odb::dynamic::init::Slots::Given))
+        .and_then(|num| num.parse().ok().map(odb::store::init::Slots::Given))
         .unwrap_or_default();
 
     let store = match store {
         Some(store) => store,
-        None => OwnShared::new(dynamic::Store::at_opts(objects_dir, slots)?),
+        None => OwnShared::new(odb::Store::at_opts(objects_dir, slots)?),
     };
     let handle =
         Cache::from(store.to_handle(RefreshMode::AfterAllIndicesLoaded)).with_pack_cache(move || Box::new(new_cache()));
@@ -504,7 +504,7 @@ where
     use git_repository::prelude::FindExt;
     let bytes = std::sync::atomic::AtomicU64::default();
     #[allow(deprecated)]
-    let odb = Arc::new(git_repository::odb::linked::Store::at(objects_dir)?);
+    let odb = Arc::new(odb::linked::Store::at(objects_dir)?);
 
     git_repository::parallel::in_parallel(
         hashes.chunks(1000),

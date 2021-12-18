@@ -12,16 +12,18 @@
 // TODO: actually remove the deprecated items and remove thos allow
 #![allow(deprecated)]
 
+use arc_swap::ArcSwap;
 use std::cell::RefCell;
 use std::path::PathBuf;
+use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;
 
 use git_features::threading::OwnShared;
 use git_features::zlib::stream::deflate;
 pub use git_pack as pack;
 
-mod store;
-pub use store::{compound, dynamic, linked, loose, RefreshMode};
+mod store_impls;
+pub use store_impls::{compound, dynamic as store, linked, loose, RefreshMode};
 
 pub mod alternate;
 
@@ -43,7 +45,7 @@ pub struct Cache<S> {
 pub mod cache;
 
 ///
-/// It can optionally compress the content, similarly to what would happen when using a [`loose::Store`][crate::store::loose::Store].
+/// It can optionally compress the content, similarly to what would happen when using a [`loose::Store`][crate::loose::Store].
 ///
 pub struct Sink {
     compressor: Option<RefCell<deflate::Write<std::io::Sink>>>,
@@ -66,17 +68,48 @@ mod traits;
 pub use traits::{Find, FindExt, Write};
 
 /// A thread-local handle to access any object.
-pub type Handle = Cache<dynamic::Handle<OwnShared<dynamic::Store>>>;
+pub type Handle = Cache<store::Handle<OwnShared<Store>>>;
 /// A thread-local handle to access any object, but thread-safe and independent of the actual type of `OwnShared` or feature toggles in `git-features`.
-pub type HandleArc = Cache<dynamic::Handle<Arc<dynamic::Store>>>;
+pub type HandleArc = Cache<store::Handle<Arc<Store>>>;
 
-/// A thread-safe store for creation of handles.
-pub type Store = dynamic::Store;
+use store::types;
+
+#[allow(missing_docs)]
+pub struct Store {
+    /// The central write lock without which the slotmap index can't be changed.
+    write: parking_lot::Mutex<()>,
+
+    /// The source directory from which all content is loaded, and the central write lock for use when a directory refresh is needed.
+    pub(crate) path: PathBuf,
+
+    /// A list of indices keeping track of which slots are filled with data. These are usually, but not always, consecutive.
+    pub(crate) index: ArcSwap<types::SlotMapIndex>,
+
+    /// The below state acts like a slot-map with each slot is mutable when the write lock is held, but readable independently of it.
+    /// This allows multiple file to be loaded concurrently if there is multiple handles requesting to load packs or additional indices.
+    /// The map is static and cannot typically change.
+    /// It's read often and changed rarely.
+    pub(crate) files: Vec<types::MutableIndexAndPack>,
+
+    /// The amount of handles that would prevent us from unloading packs or indices
+    pub(crate) num_handles_stable: AtomicUsize,
+    /// The amount of handles that don't affect our ability to compact our internal data structures or unload packs or indices.
+    pub(crate) num_handles_unstable: AtomicUsize,
+
+    /// The amount of times we re-read the disk state to consolidate our in-memory representation.
+    pub(crate) num_disk_state_consolidation: AtomicUsize,
+}
+
+impl Store {
+    /// The root path at which we expect to find all objects and packs.
+    pub fn path(&self) -> &std::path::Path {
+        &self.path
+    }
+}
 
 /// Create a new cached odb handle with support for additional options.
-pub fn at_opts(objects_dir: impl Into<PathBuf>, slots: dynamic::init::Slots) -> std::io::Result<Handle> {
-    let handle =
-        OwnShared::new(dynamic::Store::at_opts(objects_dir, slots)?).to_handle(RefreshMode::AfterAllIndicesLoaded);
+pub fn at_opts(objects_dir: impl Into<PathBuf>, slots: store::init::Slots) -> std::io::Result<Handle> {
+    let handle = OwnShared::new(Store::at_opts(objects_dir, slots)?).to_handle(RefreshMode::AfterAllIndicesLoaded);
     Ok(Cache::from(handle))
 }
 

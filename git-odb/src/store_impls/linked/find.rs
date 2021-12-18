@@ -6,7 +6,7 @@ use git_pack::find::Entry;
 
 use crate::{
     pack,
-    store::{compound, linked},
+    store_impls::{compound, linked},
 };
 
 impl crate::pack::Find for linked::Store {

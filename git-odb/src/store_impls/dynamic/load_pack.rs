@@ -1,6 +1,6 @@
 use std::{path::Path, sync::Arc};
 
-use crate::dynamic::types;
+use crate::store::types;
 
 impl super::Store {
     /// If Ok(None) is returned, the pack-id was stale and referred to an unloaded pack or a pack which couldn't be

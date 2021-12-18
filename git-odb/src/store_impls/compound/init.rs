@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::{
     pack,
-    store::{compound, loose},
+    store_impls::{compound, loose},
 };
 
 /// Returned by [`compound::Store::at()`]
@@ -23,7 +23,7 @@ pub enum Error {
 impl compound::Store {
     /// Returns a compound database as initialized from the given git `objects_directory`, commonly `.git/objects`.
     ///
-    /// Only loose and packed objects will be considered. See the [linked Db][crate::store::linked::Store] for a database with
+    /// Only loose and packed objects will be considered. See the [linked Db][crate::linked::Store] for a database with
     /// support for _git alternates_, i.e. linking to other repositories.
     ///
     /// `pack_id_offset` is used to allow multiple compound databases to be used for lookups without their pack-ids clashing.

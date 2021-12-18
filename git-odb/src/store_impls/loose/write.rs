@@ -5,7 +5,7 @@ use git_object::WriteTo;
 use tempfile::NamedTempFile;
 
 use super::Store;
-use crate::store::loose;
+use crate::store_impls::loose;
 
 /// Returned by the [`crate::Write`] trait implementation of [`Store`]
 #[derive(thiserror::Error, Debug)]

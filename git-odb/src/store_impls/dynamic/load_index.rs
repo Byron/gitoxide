@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::{
-    dynamic::{handle, types},
+    store::{handle, types},
     RefreshMode,
 };
 
@@ -52,7 +52,7 @@ mod error {
 
 pub use error::Error;
 
-use crate::dynamic::types::{Generation, IndexAndPacks, MutableIndexAndPack, SlotMapIndex};
+use crate::store::types::{Generation, IndexAndPacks, MutableIndexAndPack, SlotMapIndex};
 
 impl super::Store {
     /// If `None` is returned, there is new indices and the caller should give up. This is a possibility even if it's allowed to refresh

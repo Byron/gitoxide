@@ -3,24 +3,25 @@ use std::{io::Read, ops::Deref};
 use git_hash::ObjectId;
 use git_object::Kind;
 
-use crate::dynamic;
+use crate::store;
 
 mod error {
-    use crate::{dynamic, loose};
+    use crate::{loose, store};
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
         #[error(transparent)]
-        LoadIndex(#[from] dynamic::load_index::Error),
+        LoadIndex(#[from] store::load_index::Error),
         #[error(transparent)]
         LooseWrite(#[from] loose::write::Error),
         #[error(transparent)]
         Io(#[from] std::io::Error),
     }
 }
+use crate::store_impls::dynamic;
 pub use error::Error;
 
-impl<S> crate::Write for dynamic::Handle<S>
+impl<S> crate::Write for store::Handle<S>
 where
     S: Deref<Target = dynamic::Store> + Clone,
 {

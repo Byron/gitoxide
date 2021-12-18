@@ -1,6 +1,6 @@
 #![allow(unused)]
 use git_features::threading::OwnShared;
-use git_odb::{dynamic, Find, FindExt, RefreshMode, Write};
+use git_odb::{store, Find, FindExt, RefreshMode, Write};
 use git_testtools::{fixture_path, hex_to_id};
 
 fn db() -> git_odb::Handle {
@@ -26,7 +26,7 @@ fn contains() {
     assert!(handle.contains(hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"))); // loose object
     assert_eq!(
         handle.inner.store().metrics(),
-        git_odb::dynamic::Metrics {
+        git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 1,
             open_indices: 0,
@@ -44,7 +44,7 @@ fn contains() {
 
     assert_eq!(
         handle.inner.store().metrics(),
-        git_odb::dynamic::Metrics {
+        git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 1,
             open_indices: 1,
@@ -64,7 +64,7 @@ fn contains() {
     assert!(new_handle.contains(hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0")));
     assert_eq!(
         new_handle.inner.store().metrics(),
-        git_odb::dynamic::Metrics {
+        git_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 1,
             open_indices: 3,
@@ -80,7 +80,7 @@ fn contains() {
     assert!(!new_handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
         new_handle.inner.store().metrics(),
-        git_odb::dynamic::Metrics {
+        git_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 2,
             open_indices: 3,
@@ -97,7 +97,7 @@ fn contains() {
     assert!(!new_handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
         new_handle.inner.store().metrics(),
-        git_odb::dynamic::Metrics {
+        git_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 2,
             open_indices: 3,
@@ -123,7 +123,7 @@ fn lookup() {
     }
     assert_eq!(
         handle.inner.store().metrics(),
-        git_odb::dynamic::Metrics {
+        git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 0,
             open_indices: 0,
@@ -141,7 +141,7 @@ fn lookup() {
     can_locate(&handle, "4dac9989f96bc5b5b1263b582c08f0c5f0b58542"); // pack a2bf
     can_locate(&handle, "dd25c539efbb0ab018caa4cda2d133285634e9b5"); // pack c043
 
-    let mut all_loaded = git_odb::dynamic::Metrics {
+    let mut all_loaded = git_odb::store::Metrics {
         num_handles: 1,
         num_refreshes: 1,
         open_indices: 3,
@@ -190,7 +190,7 @@ fn missing_objects_triggers_everything_is_loaded() {
 
     assert_eq!(
         handle.inner.store().metrics(),
-        git_odb::dynamic::Metrics {
+        git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 2,
             open_indices: 3,
@@ -210,7 +210,7 @@ fn missing_objects_triggers_everything_is_loaded() {
 
     assert_eq!(
         handle.inner.store().metrics(),
-        git_odb::dynamic::Metrics {
+        git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 3,
             open_indices: 3,

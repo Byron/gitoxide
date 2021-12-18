@@ -1,6 +1,6 @@
 use crate::{
     pack,
-    store::{compound, loose},
+    store_impls::{compound, loose},
 };
 
 /// Returned by [`compound::Store::try_find()`]

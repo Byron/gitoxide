@@ -1,6 +1,6 @@
 use std::sync::atomic::Ordering;
 
-use crate::dynamic::{types, types::IndexAndPacks};
+use crate::store::{types, types::IndexAndPacks};
 
 impl super::Store {
     pub fn metrics(&self) -> types::Metrics {
