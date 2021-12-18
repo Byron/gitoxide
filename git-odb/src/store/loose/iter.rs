@@ -50,7 +50,7 @@ impl loose::Store {
     ///
     /// # Notes
     ///
-    /// [`Iter`] is used instead of `impl Iterator<…>` to allow using this iterator in struct fields, as is currently
+    /// [`loose::Iter`] is used instead of `impl Iterator<…>` to allow using this iterator in struct fields, as is currently
     /// needed if iterators need to be implemented by hand in the absence of generators.
     pub fn iter(&self) -> loose::Iter {
         fs::walkdir_new(&self.path)

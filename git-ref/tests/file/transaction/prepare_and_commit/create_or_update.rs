@@ -3,6 +3,7 @@ use std::convert::TryInto;
 use git_hash::ObjectId;
 use git_lock::acquire::Fail;
 use git_object::bstr::{BString, ByteSlice};
+use git_odb::Find;
 use git_ref::{
     file::{
         transaction::{self, PackedRefs},
@@ -659,12 +660,12 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
         store.open_packed_buffer()?.is_none(),
         "there should be no packed refs to start out with"
     );
-    let odb = git_odb::compound::Store::at(store.base().join("objects"), 0)?;
+    let odb = git_odb::at(store.base().join("objects"))?;
     let edits = store
         .transaction()
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(
             Box::new(move |oid, buf| {
-                odb.try_find(oid, buf, &mut git_odb::pack::cache::Never)
+                odb.try_find(oid, buf)
                     .map(|obj| obj.map(|obj| obj.kind))
                     .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)
             }),
