@@ -136,7 +136,7 @@ where
 }
 
 impl general::Store {
-    /// Like [`Handle::iter()`][super:Handle::iter()].
+    /// Like [`Handle::iter()`][super::Handle::iter()], but accessible directly on the store.
     pub fn iter(&self) -> Result<AllObjects, general::load_index::Error> {
         AllObjects::new(self)
     }

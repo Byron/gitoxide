@@ -9,7 +9,7 @@ use crate::general::handle;
 mod error {
     use crate::{loose, pack};
 
-    /// Returned by [`compound::Store::try_find()`]
+    /// Returned by [`Handle::try_find()`][crate::pack::Find::try_find()]
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]
     pub enum Error {

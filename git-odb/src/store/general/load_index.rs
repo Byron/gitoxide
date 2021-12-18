@@ -27,7 +27,7 @@ pub(crate) struct Snapshot {
 mod error {
     use std::path::PathBuf;
 
-    /// Returned by [`general::Store::at_opts()`]
+    /// Returned by [`crate::at_opts()`]
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]
     pub enum Error {
