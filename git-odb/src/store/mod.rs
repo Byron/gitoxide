@@ -1,16 +1,11 @@
 use std::{cell::RefCell, sync::Arc};
 
-pub use sink::{sink, Sink};
-
 ///
 pub mod cache;
 pub mod compound;
 pub mod general;
 pub mod linked;
 pub mod loose;
-
-///
-pub mod sink;
 
 /// A way to access objects along with pre-configured thread-local caches for packed base objects as well as objects themselves.
 ///

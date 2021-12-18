@@ -9,17 +9,44 @@
 //! * loose object reading and writing
 //! * access to packed objects
 //! * multiple loose objects and pack locations as gathered from `alternates` files.
-#![allow(deprecated)] // TODO: actually remove the deprecated items and remove thos allow
+// TODO: actually remove the deprecated items and remove thos allow
+#![allow(deprecated)]
+
+use std::cell::RefCell;
 use std::path::PathBuf;
 use std::sync::Arc;
 
 use git_features::threading::OwnShared;
+use git_features::zlib::stream::deflate;
 pub use git_pack as pack;
 
 mod store;
-pub use store::{cache, compound, general, linked, loose, sink, Cache, RefreshMode, Sink};
+pub use store::{cache, compound, general, linked, loose, Cache, RefreshMode};
 
 pub mod alternate;
+
+///
+/// It can optionally compress the content, similarly to what would happen when using a [`loose::Store`][crate::store::loose::Store].
+///
+pub struct Sink {
+    compressor: Option<RefCell<deflate::Write<std::io::Sink>>>,
+}
+
+/// Create a new [`Sink`] with compression disabled.
+pub fn sink() -> Sink {
+    Sink { compressor: None }
+}
+
+///
+pub mod sink;
+
+///
+pub mod find;
+
+/// An object database equivalent to `/dev/null`, dropping all objects stored into it.
+mod traits;
+
+pub use traits::{Find, FindExt, Write};
 
 /// A thread-local handle to access any object.
 pub type Handle = Cache<general::Handle<OwnShared<general::Store>>>;
@@ -40,8 +67,3 @@ pub fn at_opts(objects_dir: impl Into<PathBuf>, slots: general::init::Slots) -> 
 pub fn at(objects_dir: impl Into<PathBuf>) -> std::io::Result<Handle> {
     at_opts(objects_dir, Default::default())
 }
-
-///
-pub mod find;
-mod traits;
-pub use traits::{Find, FindExt, Write};
