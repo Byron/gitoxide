@@ -1,5 +1,6 @@
 //! An object database storing each object in a zlib compressed file with its hash in the path
 const HEADER_READ_UNCOMPRESSED_BYTES: usize = 512;
+use git_features::fs;
 use std::path::PathBuf;
 
 /// A database for reading and writing objects to disk, one file per object.
@@ -38,7 +39,12 @@ fn sha1_path(id: &git_hash::oid, mut root: PathBuf) -> PathBuf {
 pub mod find;
 ///
 pub mod iter;
-#[doc(inline)]
-pub use iter::Iter;
+
+/// The type for an iterator over `Result<git_hash::ObjectId, Error>)`
+pub type Iter = std::iter::FilterMap<
+    fs::walkdir::DirEntryIter,
+    fn(Result<fs::walkdir::DirEntry, fs::walkdir::Error>) -> Option<Result<git_hash::ObjectId, iter::Error>>,
+>;
+
 ///
 pub mod write;

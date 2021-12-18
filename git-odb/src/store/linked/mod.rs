@@ -6,7 +6,7 @@ use crate::store::compound;
 /// It does not contain any objects itself.
 ///
 /// Furthermore, it won't handle multi-pack indices and might be removed at some point in the future to allow focussing on a single database.
-#[deprecated(since = "0.27", note = "superseded by git_odb::Store")]
+#[deprecated(since = "0.27.0", note = "superseded by git_odb::Store")]
 pub struct Store {
     /// The compound databases containing the actual objects.
     pub dbs: Vec<compound::Store>,

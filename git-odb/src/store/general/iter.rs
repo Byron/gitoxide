@@ -12,7 +12,7 @@ pub enum State {
         num_objects: u32,
     },
     Loose {
-        iter: loose::iter::Iter,
+        iter: loose::Iter,
         index: usize,
     },
     Depleted,

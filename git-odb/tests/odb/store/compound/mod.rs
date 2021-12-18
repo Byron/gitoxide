@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use git_odb::compound::Store;
 
 use crate::fixture_path;

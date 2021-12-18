@@ -7,7 +7,7 @@ use crate::store::{linked, loose};
 #[allow(clippy::large_enum_variant)]
 enum DbState {
     Pack { pack_index: usize, entry_index: u32 },
-    Loose { iter: loose::iter::Iter },
+    Loose { iter: loose::Iter },
 }
 
 impl Default for DbState {
