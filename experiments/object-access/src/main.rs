@@ -503,6 +503,7 @@ where
 {
     use git_repository::prelude::FindExt;
     let bytes = std::sync::atomic::AtomicU64::default();
+    #[allow(deprecated)]
     let odb = Arc::new(git_repository::odb::linked::Store::at(objects_dir)?);
 
     git_repository::parallel::in_parallel(
