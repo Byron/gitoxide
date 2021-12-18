@@ -1,25 +1,7 @@
-use std::{cell::RefCell, sync::Arc};
-
-///
-pub mod cache;
 pub mod compound;
 pub mod general;
 pub mod linked;
 pub mod loose;
-
-/// A way to access objects along with pre-configured thread-local caches for packed base objects as well as objects themselves.
-///
-/// By default, no cache will be used.
-pub struct Cache<S> {
-    /// The inner provider of trait implementations we use in conjunction with our caches.
-    pub inner: S,
-    // TODO: have single-threaded code-paths also for pack-creation (entries from counts) so that we can use OwnShared here
-    //       instead of Arc. However, it's probably not that important as these aren't called often.
-    new_pack_cache: Option<Arc<cache::NewPackCacheFn>>,
-    new_object_cache: Option<Arc<cache::NewObjectCacheFn>>,
-    pack_cache: Option<RefCell<Box<cache::PackCache>>>,
-    object_cache: Option<RefCell<Box<cache::ObjectCache>>>,
-}
 
 /// Define how packs will be refreshed when all indices are loaded, which is useful if a lot of objects are missing.
 #[derive(Clone, Copy)]

@@ -21,9 +21,26 @@ use git_features::zlib::stream::deflate;
 pub use git_pack as pack;
 
 mod store;
-pub use store::{cache, compound, general, linked, loose, Cache, RefreshMode};
+pub use store::{compound, general, linked, loose, RefreshMode};
 
 pub mod alternate;
+
+/// A way to access objects along with pre-configured thread-local caches for packed base objects as well as objects themselves.
+///
+/// By default, no cache will be used.
+pub struct Cache<S> {
+    /// The inner provider of trait implementations we use in conjunction with our caches.
+    pub inner: S,
+    // TODO: have single-threaded code-paths also for pack-creation (entries from counts) so that we can use OwnShared here
+    //       instead of Arc. However, it's probably not that important as these aren't called often.
+    new_pack_cache: Option<Arc<cache::NewPackCacheFn>>,
+    new_object_cache: Option<Arc<cache::NewObjectCacheFn>>,
+    pack_cache: Option<RefCell<Box<cache::PackCache>>>,
+    object_cache: Option<RefCell<Box<cache::ObjectCache>>>,
+}
+
+///
+pub mod cache;
 
 ///
 /// It can optionally compress the content, similarly to what would happen when using a [`loose::Store`][crate::store::loose::Store].
