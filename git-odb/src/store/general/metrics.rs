@@ -1,9 +1,9 @@
 use std::sync::atomic::Ordering;
 
-use crate::general::{store, store::IndexAndPacks};
+use crate::general::{types, types::IndexAndPacks};
 
 impl super::Store {
-    pub fn metrics(&self) -> store::Metrics {
+    pub fn metrics(&self) -> types::Metrics {
         let mut open_packs = 0;
         let mut open_indices = 0;
         let mut known_packs = 0;
@@ -45,7 +45,7 @@ impl super::Store {
             }
         }
 
-        store::Metrics {
+        types::Metrics {
             num_handles: self.num_handles_unstable.load(Ordering::Relaxed)
                 + self.num_handles_stable.load(Ordering::Relaxed),
             num_refreshes: self.num_disk_state_consolidation.load(Ordering::Relaxed),

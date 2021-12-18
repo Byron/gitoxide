@@ -6,7 +6,7 @@ use std::{
 
 use git_features::threading::OwnShared;
 
-use crate::general::{handle, store};
+use crate::general::{handle, types};
 
 pub(crate) mod multi_index {
     // TODO: replace this one with an actual implementation of a multi-pack index.
@@ -27,12 +27,12 @@ pub enum SingleOrMultiIndex {
 pub struct IndexLookup {
     pub(crate) file: SingleOrMultiIndex,
     /// The index we were found at in the slot map
-    pub(crate) id: store::IndexId,
+    pub(crate) id: types::IndexId,
 }
 
 pub struct IndexForObjectInPack {
     /// The internal identifier of the pack itself, which either is referred to by an index or a multi-pack index.
-    pub(crate) pack_id: store::PackId,
+    pub(crate) pack_id: types::PackId,
     /// The offset at which the object's entry can be found
     pub(crate) pack_offset: u64,
 }
@@ -42,7 +42,7 @@ pub(crate) mod index_lookup {
 
     use git_hash::oid;
 
-    use crate::general::{handle, store};
+    use crate::general::{handle, types};
 
     pub(crate) struct Outcome<'a> {
         pub object_index: handle::IndexForObjectInPack,
@@ -54,7 +54,7 @@ pub(crate) mod index_lookup {
         /// Return an iterator over the entries of the given pack. The `pack_id` is only required to
         pub(crate) fn iter(
             &self,
-            pack_id: store::PackId,
+            pack_id: types::PackId,
         ) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
             (self.id == pack_id.index).then(|| match &self.file {
                 handle::SingleOrMultiIndex::Single { index, .. } => index.iter(),
@@ -64,7 +64,7 @@ pub(crate) mod index_lookup {
             })
         }
 
-        pub(crate) fn pack(&mut self, pack_id: store::PackId) -> Option<&'_ mut Option<Arc<git_pack::data::File>>> {
+        pub(crate) fn pack(&mut self, pack_id: types::PackId) -> Option<&'_ mut Option<Arc<git_pack::data::File>>> {
             (self.id == pack_id.index).then(move || match &mut self.file {
                 handle::SingleOrMultiIndex::Single { data, .. } => data,
                 handle::SingleOrMultiIndex::Multi { .. } => {
@@ -111,7 +111,7 @@ pub(crate) mod index_lookup {
             match &mut self.file {
                 handle::SingleOrMultiIndex::Single { index, data } => index.lookup(object_id).map(move |idx| Outcome {
                     object_index: handle::IndexForObjectInPack {
-                        pack_id: store::PackId {
+                        pack_id: types::PackId {
                             index: id,
                             multipack_index: None,
                         },

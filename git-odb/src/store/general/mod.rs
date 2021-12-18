@@ -25,13 +25,13 @@ pub struct Store {
     pub(crate) path: PathBuf,
 
     /// A list of indices keeping track of which slots are filled with data. These are usually, but not always, consecutive.
-    pub(crate) index: ArcSwap<store::SlotMapIndex>,
+    pub(crate) index: ArcSwap<types::SlotMapIndex>,
 
     /// The below state acts like a slot-map with each slot is mutable when the write lock is held, but readable independently of it.
     /// This allows multiple file to be loaded concurrently if there is multiple handles requesting to load packs or additional indices.
     /// The map is static and cannot typically change.
     /// It's read often and changed rarely.
-    pub(crate) files: Vec<store::MutableIndexAndPack>,
+    pub(crate) files: Vec<types::MutableIndexAndPack>,
 
     /// The amount of handles that would prevent us from unloading packs or indices
     pub(crate) num_handles_stable: AtomicUsize,
@@ -40,6 +40,13 @@ pub struct Store {
 
     /// The amount of times we re-read the disk state to consolidate our in-memory representation.
     pub(crate) num_disk_state_consolidation: AtomicUsize,
+}
+
+impl Store {
+    /// The root path at which we expect to find all objects and packs.
+    pub fn path(&self) -> &std::path::Path {
+        &self.path
+    }
 }
 
 ///
@@ -52,12 +59,13 @@ pub mod write;
 
 pub mod init;
 
-pub mod store;
+pub(crate) mod types;
+pub use types::Metrics;
 
-pub mod handle;
+pub(crate) mod handle;
 
 pub mod load_index;
 
-pub mod load_pack;
+mod load_pack;
 
 mod metrics;

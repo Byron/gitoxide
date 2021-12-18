@@ -244,7 +244,7 @@ where
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
         );
-        let pack_id = general::store::PackId::from_intrinsic_pack_id(pack_id);
+        let pack_id = general::types::PackId::from_intrinsic_pack_id(pack_id);
         loop {
             let snapshot = self.snapshot.borrow();
             {
@@ -270,7 +270,7 @@ where
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
         );
-        let pack_id = general::store::PackId::from_intrinsic_pack_id(location.pack_id);
+        let pack_id = general::types::PackId::from_intrinsic_pack_id(location.pack_id);
         'outer: loop {
             let mut snapshot = self.snapshot.borrow_mut();
             {

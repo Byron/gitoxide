@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::{
-    general::{handle, store},
+    general::{handle, types},
     RefreshMode,
 };
 
@@ -21,7 +21,7 @@ pub(crate) struct Snapshot {
     /// A set of loose objects dbs to search once packed objects weren't found.
     pub(crate) loose_dbs: Arc<Vec<crate::loose::Store>>,
     /// remember what this state represents and to compare to other states.
-    pub(crate) marker: store::SlotIndexMarker,
+    pub(crate) marker: types::SlotIndexMarker,
 }
 
 mod error {
@@ -52,7 +52,7 @@ mod error {
 
 pub use error::Error;
 
-use crate::general::store::{Generation, IndexAndPacks, MutableIndexAndPack, SlotMapIndex};
+use crate::general::types::{Generation, IndexAndPacks, MutableIndexAndPack, SlotMapIndex};
 
 impl super::Store {
     /// If `None` is returned, there is new indices and the caller should give up. This is a possibility even if it's allowed to refresh
@@ -60,7 +60,7 @@ impl super::Store {
     pub(crate) fn load_one_index(
         &self,
         refresh_mode: RefreshMode,
-        marker: store::SlotIndexMarker,
+        marker: types::SlotIndexMarker,
     ) -> Result<Option<Snapshot>, Error> {
         let index = self.index.load();
         if !index.is_initialized() {
@@ -590,11 +590,11 @@ impl super::Store {
                 .map(|idx| (*idx, &self.files[*idx]))
                 .filter_map(|(id, file)| {
                     let lookup = match (&**file.files.load()).as_ref()? {
-                        store::IndexAndPacks::Index(bundle) => handle::SingleOrMultiIndex::Single {
+                        types::IndexAndPacks::Index(bundle) => handle::SingleOrMultiIndex::Single {
                             index: bundle.index.loaded()?.clone(),
                             data: bundle.data.loaded().cloned(),
                         },
-                        store::IndexAndPacks::MultiIndex(multi) => handle::SingleOrMultiIndex::Multi {
+                        types::IndexAndPacks::MultiIndex(multi) => handle::SingleOrMultiIndex::Multi {
                             index: multi.multi_index.loaded()?.clone(),
                             data: multi.data.iter().map(|f| f.loaded().cloned()).collect(),
                         },

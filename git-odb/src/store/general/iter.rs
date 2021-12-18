@@ -4,7 +4,7 @@ use git_hash::ObjectId;
 
 use crate::{general::handle, loose, store::general};
 
-pub enum State {
+enum State {
     Pack {
         index_iter: IntoIter<handle::IndexLookup>,
         index: handle::IndexLookup,
