@@ -32,7 +32,7 @@ fn db(kind: DbKind) -> crate::Result<git_odb::HandleArc> {
             .join(".git")
             .join("objects"),
     };
-    git_odb::general::Store::at_opts(path, git_odb::general::init::Slots::default())
+    git_odb::dynamic::Store::at_opts(path, git_odb::dynamic::init::Slots::default())
         .map_err(Into::into)
         .map(|store| {
             let mut cache = Arc::new(store).to_cache_arc();

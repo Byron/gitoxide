@@ -21,7 +21,7 @@ use git_features::zlib::stream::deflate;
 pub use git_pack as pack;
 
 mod store;
-pub use store::{compound, general, linked, loose, RefreshMode};
+pub use store::{compound, dynamic, linked, loose, RefreshMode};
 
 pub mod alternate;
 
@@ -66,17 +66,17 @@ mod traits;
 pub use traits::{Find, FindExt, Write};
 
 /// A thread-local handle to access any object.
-pub type Handle = Cache<general::Handle<OwnShared<general::Store>>>;
+pub type Handle = Cache<dynamic::Handle<OwnShared<dynamic::Store>>>;
 /// A thread-local handle to access any object, but thread-safe and independent of the actual type of `OwnShared` or feature toggles in `git-features`.
-pub type HandleArc = Cache<general::Handle<Arc<general::Store>>>;
+pub type HandleArc = Cache<dynamic::Handle<Arc<dynamic::Store>>>;
 
 /// A thread-safe store for creation of handles.
-pub type Store = general::Store;
+pub type Store = dynamic::Store;
 
 /// Create a new cached odb handle with support for additional options.
-pub fn at_opts(objects_dir: impl Into<PathBuf>, slots: general::init::Slots) -> std::io::Result<Handle> {
+pub fn at_opts(objects_dir: impl Into<PathBuf>, slots: dynamic::init::Slots) -> std::io::Result<Handle> {
     let handle =
-        OwnShared::new(general::Store::at_opts(objects_dir, slots)?).to_handle(RefreshMode::AfterAllIndicesLoaded);
+        OwnShared::new(dynamic::Store::at_opts(objects_dir, slots)?).to_handle(RefreshMode::AfterAllIndicesLoaded);
     Ok(Cache::from(handle))
 }
 

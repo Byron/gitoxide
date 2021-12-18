@@ -6,7 +6,7 @@ use std::{
 
 use git_features::threading::OwnShared;
 
-use crate::general::{handle, types};
+use crate::dynamic::{handle, types};
 
 pub(crate) mod multi_index {
     // TODO: replace this one with an actual implementation of a multi-pack index.
@@ -42,7 +42,7 @@ pub(crate) mod index_lookup {
 
     use git_hash::oid;
 
-    use crate::general::{handle, types};
+    use crate::dynamic::{handle, types};
 
     pub(crate) struct Outcome<'a> {
         pub object_index: handle::IndexForObjectInPack,

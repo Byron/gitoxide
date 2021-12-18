@@ -3,15 +3,15 @@ use std::{io::Read, ops::Deref};
 use git_hash::ObjectId;
 use git_object::Kind;
 
-use crate::general;
+use crate::dynamic;
 
 mod error {
-    use crate::{general, loose};
+    use crate::{dynamic, loose};
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
         #[error(transparent)]
-        LoadIndex(#[from] general::load_index::Error),
+        LoadIndex(#[from] dynamic::load_index::Error),
         #[error(transparent)]
         LooseWrite(#[from] loose::write::Error),
         #[error(transparent)]
@@ -20,9 +20,9 @@ mod error {
 }
 pub use error::Error;
 
-impl<S> crate::Write for general::Handle<S>
+impl<S> crate::Write for dynamic::Handle<S>
 where
-    S: Deref<Target = general::Store> + Clone,
+    S: Deref<Target = dynamic::Store> + Clone,
 {
     type Error = Error;
 

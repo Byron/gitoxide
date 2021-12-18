@@ -2,7 +2,7 @@ use std::{iter::FromIterator, path::PathBuf, sync::Arc};
 
 use arc_swap::ArcSwap;
 
-use crate::general::types::{MutableIndexAndPack, SlotMapIndex};
+use crate::dynamic::types::{MutableIndexAndPack, SlotMapIndex};
 
 /// Configures the amount of slots in the index slotmap, which is fixed throughout the existence of the store.
 pub enum Slots {

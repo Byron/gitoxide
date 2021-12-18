@@ -2,7 +2,7 @@ use std::{ops::Deref, option::Option::None, sync::Arc, vec::IntoIter};
 
 use git_hash::ObjectId;
 
-use crate::{general::handle, loose, store::general};
+use crate::{dynamic::handle, loose, store::dynamic};
 
 enum State {
     Pack {
@@ -27,7 +27,7 @@ pub struct AllObjects {
 
 impl AllObjects {
     /// Create a new iterator from a general database, which will be forced to load all indices eagerly.
-    pub fn new(db: &general::Store) -> Result<Self, crate::general::load_index::Error> {
+    pub fn new(db: &dynamic::Store) -> Result<Self, crate::dynamic::load_index::Error> {
         let mut snapshot = db.collect_snapshot();
         while let Some(new_snapshot) = db.load_one_index(crate::RefreshMode::Never, snapshot.marker)? {
             snapshot = new_snapshot
@@ -130,14 +130,14 @@ where
     /// Return an iterator over all objects in all linked databases, database after database, first packed
     /// objects with the 'best' packs first, followed by loose objects.
     /// For specialized iterations, use the `dbs` fields directly as all databases are accessible.
-    pub fn iter(&self) -> Result<AllObjects, general::load_index::Error> {
+    pub fn iter(&self) -> Result<AllObjects, dynamic::load_index::Error> {
         AllObjects::new(self.store())
     }
 }
 
-impl general::Store {
+impl dynamic::Store {
     /// Like [`Handle::iter()`][super::Handle::iter()], but accessible directly on the store.
-    pub fn iter(&self) -> Result<AllObjects, general::load_index::Error> {
+    pub fn iter(&self) -> Result<AllObjects, dynamic::load_index::Error> {
         AllObjects::new(self)
     }
 }

@@ -44,13 +44,13 @@ pub mod open {
     /// The options used in [`Repository::open_opts
     #[derive(Default)]
     pub struct Options {
-        object_store_slots: git_odb::general::init::Slots,
+        object_store_slots: git_odb::dynamic::init::Slots,
     }
 
     impl Options {
         /// Set the amount of slots to use for the object database. It's a value that doesn't need changes on the client, typically,
         /// but should be controlled on the server.
-        pub fn object_store_slots(mut self, slots: git_odb::general::init::Slots) -> Self {
+        pub fn object_store_slots(mut self, slots: git_odb::dynamic::init::Slots) -> Self {
             self.object_store_slots = slots;
             self
         }
