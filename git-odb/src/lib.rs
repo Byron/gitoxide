@@ -16,6 +16,7 @@
 //! * [`linked::Store`]
 //!   * A database containing various [`compound::Stores`][compound::Store] as gathered from `alternates` files.
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use git_features::threading::OwnShared;
 pub use git_pack as pack;
@@ -27,6 +28,8 @@ pub mod alternate;
 
 /// A thread-local handle to access any object.
 pub type Handle = Cache<general::Handle<OwnShared<general::Store>>>;
+/// A thread-local handle to access any object, but thread-safe and independent of the actual type of OwnShared.
+pub type HandleArc = Cache<general::Handle<Arc<general::Store>>>;
 
 /// A thread-safe store for creation of handles.
 pub type Store = general::Store;

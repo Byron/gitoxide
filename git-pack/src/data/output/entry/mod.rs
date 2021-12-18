@@ -1,5 +1,4 @@
-use std::convert::TryFrom;
-use std::io::Write;
+use std::{convert::TryFrom, io::Write};
 
 use git_hash::ObjectId;
 

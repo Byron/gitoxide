@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use git_pack::data::output;
 
@@ -24,17 +25,20 @@ enum DbKind {
     DeterministicGeneratedContent,
 }
 
-fn db(kind: DbKind) -> crate::Result<git_odb::Handle> {
+fn db(kind: DbKind) -> crate::Result<git_odb::HandleArc> {
     use DbKind::*;
     let path: PathBuf = match kind {
         DeterministicGeneratedContent => git_testtools::scripted_fixture_repo_read_only("make_pack_gen_repo.sh")?
             .join(".git")
             .join("objects"),
     };
-    git_odb::at(path).map_err(Into::into).map(|mut cache| {
-        cache.inner.prevent_pack_unload();
-        cache
-    })
+    git_odb::general::Store::at_opts(path, git_odb::general::init::Slots::default())
+        .map_err(Into::into)
+        .map(|store| {
+            let mut cache = Arc::new(store).to_cache_arc();
+            cache.inner.prevent_pack_unload();
+            cache
+        })
 }
 
 mod count_and_entries;

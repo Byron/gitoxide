@@ -1,12 +1,8 @@
-use std::sync::Arc;
-use std::vec::IntoIter;
-use std::{ops::Deref, option::Option::None};
+use std::{ops::Deref, option::Option::None, sync::Arc, vec::IntoIter};
 
-use crate::general::handle;
-use crate::loose;
 use git_hash::ObjectId;
 
-use crate::store::general;
+use crate::{general::handle, loose, store::general};
 
 pub enum State {
     Pack {

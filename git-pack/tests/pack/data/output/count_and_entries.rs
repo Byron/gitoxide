@@ -317,7 +317,7 @@ fn traversals() -> crate::Result {
 }
 
 fn write_and_verify(
-    db: git_odb::Handle,
+    db: git_odb::HandleArc,
     entries: Vec<output::Entry>,
     expected_pack_hash: git_hash::ObjectId,
     expected_thin_pack_hash: Option<git_hash::ObjectId>,

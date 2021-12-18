@@ -5,13 +5,13 @@ use std::{
 
 use anyhow::anyhow;
 use dashmap::DashSet;
-use git_repository::threading::OwnShared;
 use git_repository::{
     hash::ObjectId,
     objs::{bstr::BStr, tree::EntryRef},
     odb,
     prelude::*,
     refs::{file::ReferenceExt, peel},
+    threading::OwnShared,
     traverse::{tree, tree::visit::Action},
 };
 

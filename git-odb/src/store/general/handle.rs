@@ -165,6 +165,10 @@ impl super::Store {
         self.to_handle(crate::RefreshMode::AfterAllIndicesLoaded).into()
     }
 
+    pub fn to_cache_arc(self: &Arc<Self>) -> crate::Cache<super::Handle<Arc<super::Store>>> {
+        self.to_handle_arc(crate::RefreshMode::AfterAllIndicesLoaded).into()
+    }
+
     pub fn to_handle(
         self: &OwnShared<Self>,
         refresh_mode: crate::RefreshMode,
@@ -175,6 +179,28 @@ impl super::Store {
             refresh_mode,
             token: Some(token),
             snapshot: RefCell::new(self.collect_snapshot()),
+        }
+    }
+
+    pub fn to_handle_arc(self: &Arc<Self>, refresh_mode: crate::RefreshMode) -> super::Handle<Arc<super::Store>> {
+        let token = self.register_handle();
+        super::Handle {
+            store: self.clone(),
+            refresh_mode,
+            token: Some(token),
+            snapshot: RefCell::new(self.collect_snapshot()),
+        }
+    }
+
+    /// Transform the only instance into an `Arc<Self>` or panic if this is not the only Rc handle
+    /// to the contained store.
+    ///
+    /// This is meant to be used when the `git_features::threading::OwnShared` refers to an `Rc` as it was compiled without the
+    /// `parallel` feature toggle.
+    pub fn into_shared_arc(self: OwnShared<Self>) -> Arc<Self> {
+        match OwnShared::try_unwrap(self) {
+            Ok(this) => Arc::new(this),
+            Err(_) => panic!("BUG: Must be called when there is only one owner for this RC"),
         }
     }
 }

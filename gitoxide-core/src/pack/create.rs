@@ -120,45 +120,54 @@ where
     progress.init(Some(2), progress::steps());
     let tips = tips.into_iter();
     let make_cancellation_err = || anyhow!("Cancelled by user");
-    let input: Box<dyn Iterator<Item = Result<ObjectId, input_iteration::Error>> + Send> = match input {
+    let (mut handle, input): (
+        _,
+        Box<dyn Iterator<Item = Result<ObjectId, input_iteration::Error>> + Send>,
+    ) = match input {
         None => {
             use git::bstr::ByteSlice;
             use os_str_bytes::OsStrBytes;
             let mut progress = progress.add_child("traversing");
-            let handle = repo.to_easy();
             progress.init(None, progress::count("commits"));
             let tips = tips
-                .map(|tip| {
-                    ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else(|_| {
-                        handle
-                            .find_reference(tip.as_ref().to_raw_bytes().as_bstr())
-                            .map_err(anyhow::Error::from)
-                            .and_then(|r| r.into_fully_peeled_id().map(|oid| oid.detach()).map_err(Into::into))
-                    })
+                .map({
+                    let easy = repo.to_easy();
+                    move |tip| {
+                        ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else(|_| {
+                            easy.find_reference(tip.as_ref().to_raw_bytes().as_bstr())
+                                .map_err(anyhow::Error::from)
+                                .and_then(|r| r.into_fully_peeled_id().map(|oid| oid.detach()).map_err(Into::into))
+                        })
+                    }
                 })
                 .collect::<Result<Vec<_>, _>>()?;
+            let handle = repo.objects.into_shared_arc().to_cache_arc();
             let iter = Box::new(
                 traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), {
-                    let db = repo.to_easy();
-                    move |oid, buf| db.objects.find_commit_iter(oid, buf).ok().map(|t| t.0)
+                    let handle = handle.clone();
+                    move |oid, buf| handle.find_commit_iter(oid, buf).ok().map(|t| t.0)
                 })
                 .map(|res| res.map_err(Into::into))
                 .inspect(move |_| progress.inc()),
             );
-            iter
+            (handle, iter)
         }
         Some(input) => {
             let mut progress = progress.add_child("iterating");
             progress.init(None, progress::count("objects"));
-            Box::new(
-                input
-                    .lines()
-                    .map(|hex_id| {
-                        hex_id
-                            .map_err(Into::into)
-                            .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).map_err(Into::into))
-                    })
-                    .inspect(move |_| progress.inc()),
+            let handle = repo.objects.into_shared_arc().to_cache_arc();
+            (
+                handle,
+                Box::new(
+                    input
+                        .lines()
+                        .map(|hex_id| {
+                            hex_id
+                                .map_err(Into::into)
+                                .and_then(|hex_id| ObjectId::from_hex(hex_id.as_bytes()).map_err(Into::into))
+                        })
+                        .inspect(move |_| progress.inc()),
+                ),
             )
         }
     };
@@ -179,7 +188,7 @@ where
         }
         let (_, _, thread_count) = git::parallel::optimize_chunk_size_and_thread_limit(50, None, thread_limit, None);
         let progress = progress::ThroughputOnDrop::new(progress);
-        let mut handle = repo.to_easy().objects;
+
         {
             let per_thread_object_pack_size = pack_cache_size_in_bytes / thread_count;
             if per_thread_object_pack_size >= 10_000 {
@@ -226,8 +235,6 @@ where
 
     progress.inc();
     let num_objects = counts.len();
-    let mut handle = repo.to_easy().objects;
-    handle.inner.prevent_pack_unload();
     let mut in_order_entries = {
         let progress = progress.add_child("creating entries");
         pack::data::output::InOrderIter::from(pack::data::output::entry::iter_from_counts(

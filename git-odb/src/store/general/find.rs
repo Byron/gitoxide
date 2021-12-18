@@ -1,5 +1,4 @@
-use std::convert::TryInto;
-use std::ops::Deref;
+use std::{convert::TryInto, ops::Deref};
 
 use git_hash::oid;
 use git_object::Data;
@@ -24,8 +23,9 @@ mod error {
         LoadPack(#[from] std::io::Error),
     }
 }
-use crate::general;
 pub use error::Error;
+
+use crate::general;
 
 impl<S> crate::pack::Find for super::Handle<S>
 where
