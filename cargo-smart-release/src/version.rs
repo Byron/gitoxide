@@ -130,7 +130,7 @@ pub(crate) fn bump_package_with_spec(
         }
     };
     let desired_release = v;
-    let (latest_release, next_release) = match ctx.crates_index.crate_(&package.name) {
+    let (latest_release, next_release) = match ctx.crates_index.borrow().crate_(&package.name) {
         Some(published_crate) => {
             let latest_release = semver::Version::parse(published_crate.latest_version().version())
                 .expect("valid version in crate index");
