@@ -14,7 +14,7 @@ include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 # serde = ["serde_crate"]
 
 [dependencies]
-dirs = "3"
+dirs = "4"
 nom = { version = "7", default_features = false, features = [ "std" ] }
 memchr = "2"
 serde_crate = { version = "1", package = "serde", optional = true }
