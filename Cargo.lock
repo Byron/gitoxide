@@ -1072,9 +1072,9 @@ dependencies = [
  "btoi",
  "git-features 0.18.0",
  "git-testtools",
- "itoa 0.4.8",
+ "itoa 1.0.1",
  "nom",
- "pretty_assertions",
+ "pretty_assertions 1.0.0",
  "quick-error",
  "serde",
 ]
@@ -1255,7 +1255,7 @@ dependencies = [
  "hex",
  "itoa 0.4.8",
  "nom",
- "pretty_assertions",
+ "pretty_assertions 0.7.2",
  "quick-error",
  "serde",
  "smallvec",
@@ -1289,7 +1289,7 @@ dependencies = [
  "git-pack 0.15.0",
  "git-testtools",
  "parking_lot",
- "pretty_assertions",
+ "pretty_assertions 0.7.2",
  "tempfile",
  "thiserror",
 ]
@@ -2371,6 +2371,18 @@ name = "pretty_assertions"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1cab0e7c02cf376875e9335e0ba1da535775beb5450d21e1dffca068818ed98b"
+dependencies = [
+ "ansi_term",
+ "ctor",
+ "diff",
+ "output_vt100",
+]
+
+[[package]]
+name = "pretty_assertions"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec0cfe1b2403f172ba0f234e500906ee0a3e493fb81092dac23ebefe129301cc"
 dependencies = [
  "ansi_term",
  "ctor",

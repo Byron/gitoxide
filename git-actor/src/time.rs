@@ -15,7 +15,8 @@ impl From<i32> for Sign {
 impl Time {
     /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
-        itoa::write(&mut out, self.time)?;
+        let mut itoa = itoa::Buffer::new();
+        out.write_all(itoa.format(self.time).as_bytes())?;
         out.write_all(SPACE)?;
         out.write_all(match self.sign {
             Sign::Plus => b"+",
@@ -33,12 +34,12 @@ impl Time {
         if hours < 10 {
             out.write_all(ZERO)?;
         }
-        itoa::write(&mut out, hours)?;
+        out.write_all(itoa.format(hours).as_bytes())?;
 
         if minutes < 10 {
             out.write_all(ZERO)?;
         }
-        itoa::write(&mut out, minutes).map(|_| ())
+        out.write_all(itoa.format(minutes).as_bytes()).map(|_| ())
     }
     /// Computes the number of bytes necessary to render this time
     pub fn size(&self) -> usize {
