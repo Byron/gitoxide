@@ -272,36 +272,21 @@ where
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
         );
         let pack_id = PackId::from_intrinsic_pack_id(location.pack_id);
-        'outer: loop {
+        loop {
             let mut snapshot = self.snapshot.borrow_mut();
+            let marker = snapshot.marker;
             {
-                let marker = snapshot.marker;
                 for index in snapshot.indices.iter_mut() {
                     if let Some(possibly_pack) = index.pack(pack_id) {
                         let pack = match possibly_pack {
                             Some(pack) => pack,
-                            None => match self.store.load_pack(pack_id, marker).ok()? {
-                                Some(pack) => {
-                                    *possibly_pack = Some(pack);
-                                    possibly_pack.as_deref().expect("just put it in")
-                                }
-                                None => {
-                                    // The pack wasn't available anymore so we are supposed to try another round with a fresh index
-                                    match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
-                                        Some(new_snapshot) => {
-                                            drop(snapshot);
-                                            *self.snapshot.borrow_mut() = new_snapshot;
-                                            continue 'outer;
-                                        }
-                                        None => {
-                                            // nothing new in the index, kind of unexpected to not have a pack but to also
-                                            // to have no new index yet. We set the new index before removing any slots, so
-                                            // this should be observable.
-                                            return None;
-                                        }
-                                    }
-                                }
-                            },
+                            None => {
+                                let pack = self.store.load_pack(pack_id, marker).ok()?.expect(
+                                "BUG: pack must exist from previous call to locaion_by_oid() and must not be unloaded",
+                            );
+                                *possibly_pack = Some(pack);
+                                possibly_pack.as_deref().expect("just put it in")
+                            }
                         };
                         return pack
                             .entry_slice(location.entry_range(location.pack_offset))
@@ -313,13 +298,12 @@ where
                 }
             }
 
-            match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
-                Some(new_snapshot) => {
-                    drop(snapshot);
-                    *self.snapshot.borrow_mut() = new_snapshot;
-                }
-                None => return None,
-            }
+            snapshot.indices.insert(
+                0,
+                self.store
+                    .index_by_id(pack_id, marker)
+                    .expect("BUG: index must always be present, must not be unloaded or overwritten"),
+            );
         }
     }
 }

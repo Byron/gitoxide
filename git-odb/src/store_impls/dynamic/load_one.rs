@@ -1,7 +1,7 @@
 use std::sync::atomic::Ordering;
 use std::{path::Path, sync::Arc};
 
-use crate::store::types;
+use crate::store::{handle, types};
 
 impl super::Store {
     /// If Ok(None) is returned, the pack-id was stale and referred to an unloaded pack or a pack which couldn't be
@@ -74,5 +74,33 @@ impl super::Store {
             }
             Some(_multipack_id) => todo!("load from given multipack which needs additional lookup"),
         }
+    }
+
+    /// Similar to `.load_pack()`, but for entire indices, bypassing the index entirely and going solely by marker and id.
+    /// Returns `None` if the index wasn't available anymore or could otherwise not be loaded, which can be considered a bug
+    /// as we should always keep needed indices available.
+    pub(crate) fn index_by_id(&self, id: types::PackId, marker: types::SlotIndexMarker) -> Option<handle::IndexLookup> {
+        let slot = self.files.get(id.index)?;
+        if slot.generation.load(Ordering::SeqCst) > marker.generation {
+            // This means somebody just overwrote our trashed slot with a new (or about to be stored) index, which means the slot isn't
+            // what we need it to be.
+            // This shouldn't as we won't overwrite slots while handles need stable indices.
+            return None;
+        }
+        let lookup = match (&**slot.files.load()).as_ref()? {
+            types::IndexAndPacks::Index(bundle) => handle::SingleOrMultiIndex::Single {
+                index: bundle.index.loaded()?.clone(),
+                data: bundle.data.loaded().cloned(),
+            },
+            types::IndexAndPacks::MultiIndex(multi) => handle::SingleOrMultiIndex::Multi {
+                index: multi.multi_index.loaded()?.clone(),
+                data: multi.data.iter().map(|f| f.loaded().cloned()).collect(),
+            },
+        };
+        handle::IndexLookup {
+            id: id.index,
+            file: lookup,
+        }
+        .into()
     }
 }

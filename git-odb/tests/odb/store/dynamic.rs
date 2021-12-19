@@ -243,7 +243,6 @@ fn a_bunch_of_loose_and_packed_objects() -> crate::Result {
 }
 
 #[test]
-#[ignore]
 fn auto_refresh_with_and_without_id_stability() {
     let tmp = git_testtools::tempfile::TempDir::new().unwrap();
     assert!(
@@ -357,7 +356,9 @@ fn auto_refresh_with_and_without_id_stability() {
             stable_handle.entry_by_location(&location).is_some(),
             "it finds the old removed location (still loaded) on the old id, it's still cached in the handle, too"
         );
-        // TODO: get a new stable handle without cache and retry, should still work. Actually, won't because it needs the old index snapshot
-        // and all of them loaded.
+        assert!(
+            stable_handle.clone().entry_by_location(&location).is_some(),
+            "handles without any internal cache also work"
+        );
     }
 }
