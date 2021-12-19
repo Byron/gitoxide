@@ -44,7 +44,7 @@ gitoxide-core-async-client = ["gitoxide-core/async-client", "futures-lite"]
 http-client-curl = ["git-transport-for-configuration-only/http-client-curl"]
 fast = ["git-features/parallel", "git-features/fast-sha1", "git-features/zlib-ng-compat"]
 
-pretty-cli = ["clap",
+pretty-cli = [
     "gitoxide-core/serde1",
     "prodash/progress-tree",
     "prodash/progress-tree-log",
@@ -68,7 +68,7 @@ git-repository = { version ="^0.13.0", path = "git-repository", default-features
 
 git-transport-for-configuration-only = { package = "git-transport", optional = true, version ="^0.14.0", path = "git-transport" }
 
-clap = { version = "=3.0.0-beta.5", optional = true }
+clap = { version = "=3.0.0-rc.7", features = ["derive", "cargo"] }
 prodash = { version = "16.0.0", optional = true, default-features = false }
 atty = { version = "0.2.14", optional = true, default-features = false }
 env_logger = { version = "0.9.0", optional = true, default-features = false, features = ["humantime", "termcolor", "atty"] }
