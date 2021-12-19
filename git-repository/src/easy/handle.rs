@@ -55,9 +55,7 @@ impl From<&crate::Repository> for easy::Handle {
     fn from(repo: &crate::Repository) -> Self {
         easy::Handle::from_refs_and_objects(
             repo.refs.clone(),
-            repo.objects
-                .to_handle(git_odb::RefreshMode::AfterAllIndicesLoaded)
-                .into(),
+            repo.objects.to_handle().into(),
             repo.hash_kind,
             repo.work_tree.clone(),
         )

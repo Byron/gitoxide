@@ -1,6 +1,6 @@
 #![allow(unused)]
 use git_features::threading::OwnShared;
-use git_odb::{store, Find, FindExt, RefreshMode, Write};
+use git_odb::{store, Find, FindExt, Write};
 use git_testtools::{fixture_path, hex_to_id};
 
 fn db() -> git_odb::Handle {
@@ -12,7 +12,7 @@ fn write() -> crate::Result {
     let dir = tempfile::tempdir()?;
     let mut handle = git_odb::at(dir.path())?;
     // It should refresh once even if the refresh mode is never, just to initialize the index
-    handle.inner.refresh_mode = git_odb::RefreshMode::Never;
+    handle.inner.refresh_mode = store::RefreshMode::Never;
 
     let written_id = handle.write_buf(git_object::Kind::Blob, b"hello world", git_hash::Kind::Sha1)?;
     assert_eq!(written_id, hex_to_id("95d09f2b10159347eece71399a7e2e907ea3df4f"));
@@ -93,7 +93,7 @@ fn contains() {
         "trigger refreshes each time there is an object miss"
     );
 
-    new_handle.inner.refresh_mode = RefreshMode::Never;
+    new_handle.inner.refresh_mode = store::RefreshMode::Never;
     assert!(!new_handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
         new_handle.inner.store().metrics(),
@@ -162,7 +162,7 @@ fn lookup() {
 
     assert!(matches!(
         handle.inner.refresh_mode,
-        git_odb::RefreshMode::AfterAllIndicesLoaded
+        store::RefreshMode::AfterAllIndicesLoaded
     ));
     assert!(!handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
 
@@ -173,7 +173,7 @@ fn lookup() {
         "it tried to refresh once to see if the missing object is there then"
     );
 
-    handle.inner.refresh_mode = git_odb::RefreshMode::Never;
+    handle.inner.refresh_mode = store::RefreshMode::Never;
     let previous_refresh_count = all_loaded.num_refreshes;
     assert!(!handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(

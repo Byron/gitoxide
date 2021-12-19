@@ -2,6 +2,7 @@ use std::{ops::Deref, option::Option::None, sync::Arc, vec::IntoIter};
 
 use git_hash::ObjectId;
 
+use crate::store::RefreshMode;
 use crate::{loose, store::handle, store_impls::dynamic};
 
 enum State {
@@ -29,7 +30,7 @@ impl AllObjects {
     /// Create a new iterator from a general database, which will be forced to load all indices eagerly.
     pub fn new(db: &dynamic::Store) -> Result<Self, crate::store::load_index::Error> {
         let mut snapshot = db.collect_snapshot();
-        while let Some(new_snapshot) = db.load_one_index(crate::RefreshMode::Never, snapshot.marker)? {
+        while let Some(new_snapshot) = db.load_one_index(RefreshMode::Never, snapshot.marker)? {
             snapshot = new_snapshot
         }
 

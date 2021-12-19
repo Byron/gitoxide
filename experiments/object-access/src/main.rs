@@ -3,7 +3,7 @@ use std::{path::Path, sync::Arc, time::Instant};
 use anyhow::anyhow;
 use git_repository::{hash::ObjectId, odb, threading::OwnShared, Repository};
 
-use crate::odb::{Cache, RefreshMode};
+use crate::odb::Cache;
 
 const GITOXIDE_STATIC_CACHE_SIZE: usize = 64;
 const GITOXIDE_CACHED_OBJECT_DATA_PER_THREAD_IN_BYTES: usize = 60_000_000;
@@ -465,8 +465,7 @@ where
         Some(store) => store,
         None => OwnShared::new(odb::Store::at_opts(objects_dir, slots)?),
     };
-    let handle =
-        Cache::from(store.to_handle(RefreshMode::AfterAllIndicesLoaded)).with_pack_cache(move || Box::new(new_cache()));
+    let handle = Cache::from(store.to_handle()).with_pack_cache(move || Box::new(new_cache()));
 
     git_repository::parallel::in_parallel(
         hashes.chunks(1000),

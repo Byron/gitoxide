@@ -10,10 +10,7 @@ use std::{
     time::SystemTime,
 };
 
-use crate::{
-    store::{handle, types},
-    RefreshMode,
-};
+use crate::store::{handle, types, RefreshMode};
 
 pub(crate) struct Snapshot {
     /// Indices ready for object lookup or contains checks, ordered usually by modification data, recent ones first.

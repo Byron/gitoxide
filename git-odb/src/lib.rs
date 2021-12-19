@@ -23,7 +23,7 @@ use git_features::zlib::stream::deflate;
 pub use git_pack as pack;
 
 mod store_impls;
-pub use store_impls::{compound, dynamic as store, linked, loose, RefreshMode};
+pub use store_impls::{compound, dynamic as store, linked, loose};
 
 pub mod alternate;
 
@@ -109,7 +109,7 @@ impl Store {
 
 /// Create a new cached odb handle with support for additional options.
 pub fn at_opts(objects_dir: impl Into<PathBuf>, slots: store::init::Slots) -> std::io::Result<Handle> {
-    let handle = OwnShared::new(Store::at_opts(objects_dir, slots)?).to_handle(RefreshMode::AfterAllIndicesLoaded);
+    let handle = OwnShared::new(Store::at_opts(objects_dir, slots)?).to_handle();
     Ok(Cache::from(handle))
 }
 

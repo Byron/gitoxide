@@ -6,7 +6,7 @@ use std::{
 
 use git_features::threading::OwnShared;
 
-use crate::store::{handle, types};
+use crate::store::{handle, types, RefreshMode};
 
 pub(crate) mod multi_index {
     // TODO: replace this one with an actual implementation of a multi-pack index.
@@ -162,31 +162,28 @@ impl super::Store {
 /// Handle creation
 impl super::Store {
     pub fn to_cache(self: &OwnShared<Self>) -> crate::Cache<super::Handle<OwnShared<super::Store>>> {
-        self.to_handle(crate::RefreshMode::AfterAllIndicesLoaded).into()
+        self.to_handle().into()
     }
 
     pub fn to_cache_arc(self: &Arc<Self>) -> crate::Cache<super::Handle<Arc<super::Store>>> {
-        self.to_handle_arc(crate::RefreshMode::AfterAllIndicesLoaded).into()
+        self.to_handle_arc().into()
     }
 
-    pub fn to_handle(
-        self: &OwnShared<Self>,
-        refresh_mode: crate::RefreshMode,
-    ) -> super::Handle<OwnShared<super::Store>> {
+    pub fn to_handle(self: &OwnShared<Self>) -> super::Handle<OwnShared<super::Store>> {
         let token = self.register_handle();
         super::Handle {
             store: self.clone(),
-            refresh_mode,
+            refresh_mode: RefreshMode::default(),
             token: Some(token),
             snapshot: RefCell::new(self.collect_snapshot()),
         }
     }
 
-    pub fn to_handle_arc(self: &Arc<Self>, refresh_mode: crate::RefreshMode) -> super::Handle<Arc<super::Store>> {
+    pub fn to_handle_arc(self: &Arc<Self>) -> super::Handle<Arc<super::Store>> {
         let token = self.register_handle();
         super::Handle {
             store: self.clone(),
-            refresh_mode,
+            refresh_mode: Default::default(),
             token: Some(token),
             snapshot: RefCell::new(self.collect_snapshot()),
         }
@@ -222,6 +219,10 @@ where
 
     pub fn store_owned(&self) -> S {
         self.store.clone()
+    }
+
+    pub fn refresh_never(&mut self) {
+        self.refresh_mode = RefreshMode::Never;
     }
 }
 
