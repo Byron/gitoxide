@@ -31,12 +31,13 @@ fn contains() {
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 1,
-            open_indices: 0,
+            open_reachable_indices: 0,
             known_indices: 3,
-            open_packs: 0,
+            open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
-            loose_dbs: 1
+            loose_dbs: 1,
+            unreachable_indices: 0
         },
         "it only refreshed the file list, yielding the loose db to find this object, but no pack was opened yet"
     );
@@ -49,12 +50,13 @@ fn contains() {
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 1,
-            open_indices: 1,
+            open_reachable_indices: 1,
             known_indices: 3,
-            open_packs: 0,
+            open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
-            loose_dbs: 1
+            loose_dbs: 1,
+            unreachable_indices: 0
         },
         "it loaded the biggest back only, which is the first in the list"
     );
@@ -69,12 +71,13 @@ fn contains() {
         git_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 1,
-            open_indices: 3,
+            open_reachable_indices: 3,
             known_indices: 3,
-            open_packs: 0,
+            open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
-            loose_dbs: 1
+            loose_dbs: 1,
+            unreachable_indices: 0
         },
         "when asking for an object in the smallest pack, all inbetween packs are also loaded."
     );
@@ -85,12 +88,13 @@ fn contains() {
         git_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 2,
-            open_indices: 3,
+            open_reachable_indices: 3,
             known_indices: 3,
-            open_packs: 0,
+            open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
-            loose_dbs: 1
+            loose_dbs: 1,
+            unreachable_indices: 0
         },
         "trigger refreshes each time there is an object miss"
     );
@@ -102,12 +106,13 @@ fn contains() {
         git_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 2,
-            open_indices: 3,
+            open_reachable_indices: 3,
             known_indices: 3,
-            open_packs: 0,
+            open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
-            loose_dbs: 1
+            loose_dbs: 1,
+            unreachable_indices: 0
         },
         "if no refreshes are allowed, there is no additional refresh"
     );
@@ -128,12 +133,13 @@ fn lookup() {
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 0,
-            open_indices: 0,
+            open_reachable_indices: 0,
             known_indices: 0,
-            open_packs: 0,
+            open_reachable_packs: 0,
             known_packs: 0,
             unused_slots: 32,
-            loose_dbs: 0
+            loose_dbs: 0,
+            unreachable_indices: 0
         },
         "nothing happened yet, the store is totally lazy"
     );
@@ -146,12 +152,13 @@ fn lookup() {
     let mut all_loaded = git_odb::store::Metrics {
         num_handles: 1,
         num_refreshes: 1,
-        open_indices: 3,
+        open_reachable_indices: 3,
         known_indices: 3,
-        open_packs: 3,
+        open_reachable_packs: 3,
         known_packs: 3,
         unused_slots: 29,
         loose_dbs: 1,
+        unreachable_indices: 0,
     };
     assert_eq!(
         handle.inner.store().metrics(),
@@ -195,12 +202,13 @@ fn missing_objects_triggers_everything_is_loaded() {
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 2,
-            open_indices: 3,
+            open_reachable_indices: 3,
             known_indices: 3,
-            open_packs: 0,
+            open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
-            loose_dbs: 1
+            loose_dbs: 1,
+            unreachable_indices: 0
         },
         "first refresh triggered by on-disk check, second refresh triggered to see if something changed, contains() only sees indices"
     );
@@ -215,12 +223,13 @@ fn missing_objects_triggers_everything_is_loaded() {
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 3,
-            open_indices: 3,
+            open_reachable_indices: 3,
             known_indices: 3,
-            open_packs: 0,
+            open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
-            loose_dbs: 1
+            loose_dbs: 1,
+            unreachable_indices: 0
         },
         "there are still no packs opened as no index contained the object"
     );
@@ -284,12 +293,13 @@ fn auto_refresh_with_and_without_id_stability() {
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 1,
-            open_indices: 1,
+            open_reachable_indices: 1,
             known_indices: 1,
-            open_packs: 1,
+            open_reachable_packs: 1,
             known_packs: 1,
             unused_slots: 31,
-            loose_dbs: 1
+            loose_dbs: 1,
+            unreachable_indices: 0
         },
         "one pack was opened"
     );
@@ -307,12 +317,13 @@ fn auto_refresh_with_and_without_id_stability() {
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 2,
-            open_indices: 1,
+            open_reachable_indices: 1,
             known_indices: 1,
-            open_packs: 1,
+            open_reachable_packs: 1,
             known_packs: 1,
             unused_slots: 31,
-            loose_dbs: 1
+            loose_dbs: 1,
+            unreachable_indices: 0
         },
         "the old pack was removed, the new was loaded"
     );
@@ -343,12 +354,13 @@ fn auto_refresh_with_and_without_id_stability() {
             git_odb::store::Metrics {
                 num_handles: 2,
                 num_refreshes: 3,
-                open_indices: 1,
+                open_reachable_indices: 1,
                 known_indices: 1,
-                open_packs: 1,
+                open_reachable_packs: 1,
                 known_packs: 1,
                 unused_slots: 30,
-                loose_dbs: 1
+                loose_dbs: 1,
+                unreachable_indices: 1
             },
             "the removed pack is still loaded"
         );
@@ -361,4 +373,29 @@ fn auto_refresh_with_and_without_id_stability() {
             "handles without any internal cache also work"
         );
     }
+
+    hide_pack("pack-a2bf8e71d8c18879e499335762dd95119d93d9f1");
+    unhide_pack("pack-c0438c19fb16422b6bbcce24387b3264416d485b");
+
+    assert!(
+        handle
+            .find(hex_to_id("dd25c539efbb0ab018caa4cda2d133285634e9b5"), &mut buf)
+            .is_ok(),
+        "new pack is loaded, previously loaded is forgotten, lack of cache triggers refresh"
+    );
+    assert_eq!(
+        handle.inner.store().metrics(),
+        git_odb::store::Metrics {
+            num_handles: 1,
+            num_refreshes: 4,
+            open_reachable_indices: 1,
+            known_indices: 1,
+            open_reachable_packs: 1,
+            known_packs: 1,
+            unused_slots: 30,
+            loose_dbs: 1,
+            unreachable_indices: 1
+        },
+        "garbaged slots aren't reclaimed until there is the need. Keeping indices open despite them not being accessible anymore."
+    );
 }

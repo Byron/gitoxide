@@ -364,11 +364,12 @@ pub(crate) struct MutableIndexAndPack {
 pub struct Metrics {
     pub num_handles: usize,
     pub num_refreshes: usize,
-    pub open_indices: usize,
+    pub open_reachable_indices: usize,
     pub known_indices: usize,
-    pub open_packs: usize,
+    pub open_reachable_packs: usize,
     pub known_packs: usize,
     pub unused_slots: usize,
+    pub unreachable_indices: usize,
     pub loose_dbs: usize,
 }
 
