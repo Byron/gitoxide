@@ -815,6 +815,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "dashmap"
+version = "5.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b799062aaf67eb976af3bdca031ee6f846d2f0a5710ddbb0d2efee33f3cc4760"
+dependencies = [
+ "cfg-if",
+ "num_cpus",
+ "parking_lot",
+]
+
+[[package]]
 name = "diff"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1315,7 +1326,7 @@ dependencies = [
  "byteorder",
  "bytesize",
  "clru",
- "dashmap",
+ "dashmap 4.0.2",
  "filebuffer",
  "git-diff 0.11.1",
  "git-features 0.17.0",
@@ -1340,7 +1351,7 @@ dependencies = [
  "bytesize",
  "clru",
  "common_macros",
- "dashmap",
+ "dashmap 5.0.0",
  "filebuffer",
  "git-diff 0.12.0",
  "git-features 0.18.0",
@@ -1504,7 +1515,7 @@ dependencies = [
 name = "git-tempfile"
 version = "1.0.3"
 dependencies = [
- "dashmap",
+ "dashmap 5.0.0",
  "libc",
  "once_cell",
  "signal-hook",
@@ -1518,7 +1529,7 @@ version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "046792b44be24ca39889f2a5cf202ca7fbcf96b66392cfbfa406a990219a47ba"
 dependencies = [
- "dashmap",
+ "dashmap 4.0.2",
  "libc",
  "once_cell",
  "signal-hook",
@@ -2450,7 +2461,7 @@ dependencies = [
  "atty",
  "bytesize",
  "crosstermion",
- "dashmap",
+ "dashmap 4.0.2",
  "futures-core",
  "futures-lite",
  "human_format",
@@ -3051,7 +3062,7 @@ name = "traversal"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "dashmap",
+ "dashmap 5.0.0",
  "git-repository",
  "git2",
  "rayon",
