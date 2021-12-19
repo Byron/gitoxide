@@ -74,7 +74,19 @@ pub type HandleArc = Cache<store::Handle<Arc<Store>>>;
 
 use store::types;
 
-#[allow(missing_docs)]
+/// The object store for use in any applications with support for auto-updates in the light of changes to the object database.
+///
+/// ### Features
+///
+/// - entirely lazy, creating an instance does no disk IO at all if [`Slots::Given`][store::init::Slots::Given] is used.
+/// - multi-threaded lazy-loading of indices and packs
+/// - per-thread pack and object caching avoiding cache trashing.
+/// - most-recently-used packs are always first for speedups if objects are stored in the same pack, typical for packs organized by
+///   commit graph and object age.
+/// - lock-free reading for perfect scaling across all cores, and changes to it don't affect readers as long as these don't want to
+///   enter the same branch.
+/// - sync with the state on disk if objects aren't found to catch up with changes if an object seems to be missing.
+///    - turn off the behaviour above for all handles if objects are expected to be missing due to spare checkouts.
 pub struct Store {
     /// The central write lock without which the slotmap index can't be changed.
     write: parking_lot::Mutex<()>,
@@ -107,13 +119,13 @@ impl Store {
     }
 }
 
-/// Create a new cached odb handle with support for additional options.
+/// Create a new cached handle to the object store with support for additional options.
 pub fn at_opts(objects_dir: impl Into<PathBuf>, slots: store::init::Slots) -> std::io::Result<Handle> {
     let handle = OwnShared::new(Store::at_opts(objects_dir, slots)?).to_handle();
     Ok(Cache::from(handle))
 }
 
-/// Create a new cached odb handle.
+/// Create a new cached handle to the object store.
 pub fn at(objects_dir: impl Into<PathBuf>) -> std::io::Result<Handle> {
     at_opts(objects_dir, Default::default())
 }

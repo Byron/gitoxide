@@ -1,5 +1,4 @@
-#![allow(missing_docs)]
-
+//! The standard object store which should fit all needs.
 use crate::Store;
 use std::{cell::RefCell, ops::Deref};
 
@@ -10,13 +9,14 @@ where
     S: Deref<Target = Store> + Clone,
 {
     pub(crate) store: S,
+    /// Defines what happens when there is no more indices to load.
     pub refresh_mode: RefreshMode,
 
     pub(crate) token: Option<handle::Mode>,
     snapshot: RefCell<load_index::Snapshot>,
 }
 
-/// Define how packs will be refreshed when all indices are loaded, which is useful if a lot of objects are missing.
+/// Decide what happens when all indices are loaded.
 #[derive(Clone, Copy)]
 pub enum RefreshMode {
     /// Check for new or changed pack indices (and pack data files) when the last known index is loaded.
@@ -37,11 +37,13 @@ impl Default for RefreshMode {
 ///
 pub mod find;
 
+///
 pub mod iter;
 
 ///
 pub mod write;
 
+///
 pub mod init;
 
 pub(crate) mod types;
@@ -49,6 +51,7 @@ pub use types::Metrics;
 
 pub(crate) mod handle;
 
+///
 pub mod load_index;
 
 mod load_pack;

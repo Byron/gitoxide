@@ -19,7 +19,7 @@ enum State {
     Depleted,
 }
 
-/// An iterator over all objects of a linked database
+/// An iterator over all objects of an object store.
 pub struct AllObjects {
     state: State,
     num_objects: usize,
@@ -27,7 +27,7 @@ pub struct AllObjects {
 }
 
 impl AllObjects {
-    /// Create a new iterator from a general database, which will be forced to load all indices eagerly.
+    /// Create a new iterator from a dynamic store, which will be forced to load all indices eagerly and in the current thread.
     pub fn new(db: &dynamic::Store) -> Result<Self, crate::store::load_index::Error> {
         let mut snapshot = db.collect_snapshot();
         while let Some(new_snapshot) = db.load_one_index(RefreshMode::Never, snapshot.marker)? {
@@ -128,9 +128,8 @@ impl<S> super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
 {
-    /// Return an iterator over all objects in all linked databases, database after database, first packed
-    /// objects with the 'best' packs first, followed by loose objects.
-    /// For specialized iterations, use the `dbs` fields directly as all databases are accessible.
+    /// Return an iterator over all objects, first the ones in all packs of all linked databases (via alternates),
+    /// followed by all loose objects.
     pub fn iter(&self) -> Result<AllObjects, dynamic::load_index::Error> {
         AllObjects::new(self.store())
     }

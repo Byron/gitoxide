@@ -35,8 +35,9 @@ impl super::Store {
     /// the store to be created without any additional work being done.
     /// `slots` defines how many multi-pack-indices as well as indices we can know about at a time, which includes
     /// the allowance for all additional object databases coming in via `alternates` as well.
-    /// Note that the `slot_count` isn't used for packs, these are included with their multi-index or index respectively.
-    /// In a repository with 250m objects and geometric packing one would expect 27 index/pack pairs, or a single multi-pack index.
+    /// Note that the `slots` isn't used for packs, these are included with their multi-index or index respectively.
+    /// For example, In a repository with 250m objects and geometric packing one would expect 27 index/pack pairs,
+    /// or a single multi-pack index.
     pub fn at_opts(objects_dir: impl Into<PathBuf>, slots: Slots) -> std::io::Result<Self> {
         let objects_dir = objects_dir.into();
         if !objects_dir.is_dir() {

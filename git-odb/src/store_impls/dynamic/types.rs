@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},

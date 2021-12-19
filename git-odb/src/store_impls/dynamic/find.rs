@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use std::{convert::TryInto, ops::Deref};
 
 use git_hash::oid;

@@ -3,6 +3,9 @@ use std::sync::atomic::Ordering;
 use crate::store::{types, types::IndexAndPacks};
 
 impl super::Store {
+    /// Return metrics collected in a racy fashion, giving an idea of what's currently going on in the store.
+    ///
+    /// Use this to decide whether a new instance should be created to get a chance at dropping all open handles.
     pub fn metrics(&self) -> types::Metrics {
         let mut open_packs = 0;
         let mut open_indices = 0;
