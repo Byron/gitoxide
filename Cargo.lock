@@ -2153,22 +2153,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "odb-redesign"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "arc-swap",
- "git-features 0.18.0",
- "git-hash 0.8.0",
- "git-object 0.16.0",
- "git-odb 0.25.0",
- "git-pack 0.15.0",
- "git-ref 0.10.0",
- "parking_lot",
- "thiserror",
-]
-
-[[package]]
 name = "once_cell"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

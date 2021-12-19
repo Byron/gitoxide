@@ -128,7 +128,6 @@ members = [
     "experiments/object-access",
     "experiments/diffing",
     "experiments/traversal",
-    "experiments/odb-redesign",
 
     "cargo-smart-release",
 
