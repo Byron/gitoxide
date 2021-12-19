@@ -9,6 +9,7 @@ use bstr::{BStr, ByteSlice};
 use nom::error::VerboseError;
 use once_cell::sync::Lazy;
 pub use tempfile;
+use tempfile::TempDir;
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
 
@@ -34,6 +35,10 @@ pub fn scripted_fixture_repo_writable_with_args(
     args: impl IntoIterator<Item = &'static str>,
 ) -> std::result::Result<tempfile::TempDir, Box<dyn std::error::Error>> {
     let ro_dir = scripted_fixture_repo_read_only_with_args(script_name, args)?;
+    copy_to_tempdir(&ro_dir).map_err(Into::into)
+}
+
+pub fn copy_to_tempdir(ro_dir: &PathBuf) -> std::io::Result<TempDir> {
     let dst = tempfile::TempDir::new()?;
     fs_extra::copy_items(
         &std::fs::read_dir(ro_dir)?
