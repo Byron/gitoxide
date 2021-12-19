@@ -72,12 +72,12 @@
         * [x] verify checksum
     * [x] streaming write for blobs
     * [x] buffer write for small in-memory objects/non-blobs to bring IO down to open-read-close == 3 syscalls
-* **compound store**
-    * [x] everything loose object stores can do
-    * [x] lookup objects in packs
-* **linked store**
-    * [x] everything the first loose object store can do
-    * [x] lookup objects in multiple linked object stores
+* **dynamic store**
+    * [x] auto-refresh of on-disk state
+    * [x] handles alternates
+    * [ ] multi-pack indices
+    * [x] perfect scaling with cores
+    * [x] support for pack caches, object caches and MRU for best per-thread performance.
 * **sink**
     * [x] write objects and obtain id
 * **alternates**
