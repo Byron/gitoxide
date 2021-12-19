@@ -26,7 +26,7 @@ pub fn loose_header(kind: crate::Kind, size: usize) -> smallvec::SmallVec<[u8; 2
     let mut v = smallvec::SmallVec::new();
     check!(v.write_all(kind.as_bytes()));
     check!(v.write_all(SPACE));
-    check!(itoa::write(&mut v, size));
+    check!(v.write_all(itoa::Buffer::new().format(size).as_bytes()));
     check!(v.write_all(b"\0"));
     v
 }
