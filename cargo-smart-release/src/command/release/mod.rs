@@ -66,13 +66,16 @@ pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependen
     if opts.update_crates_index {
         log::info!(
             "Updating crates-io index at '{}'",
-            ctx.base.crates_index.borrow().path().display()
+            ctx.base.crates_index.path().display()
         );
-        ctx.base.crates_index.borrow_mut().update()?;
+        ctx.base.crates_index.update()?;
     } else if opts.bump_when_needed {
         log::warn!(
             "Consider running with --update-crates-index to assure bumping on demand uses the latest information"
         );
+    }
+    if !ctx.base.crates_index.exists() {
+        log::warn!("Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already");
     }
 
     release_depth_first(ctx, opts)?;
@@ -119,10 +122,12 @@ fn assure_crates_index_is_uptodate<'meta>(
                 .and_then(|lr| (lr >= &b.desired_release).then(|| d))
         })
     {
-        let mut index = crates_index::Index::new_cargo_default()?;
-        log::warn!("Crate '{}' computed version not greater than the current package version. Updating crates index to assure correct results.", dep.package.name);
-        index.update()?;
-        return crate::traverse::dependencies(ctx, opts);
+        let index = crates_index::Index::new_cargo_default();
+        if index.exists() {
+            log::warn!("Crate '{}' computed version not greater than the current package version. Updating crates index to assure correct results.", dep.package.name);
+            index.update()?;
+            return crate::traverse::dependencies(ctx, opts);
+        }
     }
     Ok(crates)
 }

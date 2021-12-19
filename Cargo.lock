@@ -371,7 +371,7 @@ dependencies = [
  "nom",
  "pulldown-cmark",
  "semver",
- "time",
+ "time 0.3.5",
  "toml_edit",
 ]
 
@@ -390,9 +390,9 @@ dependencies = [
 
 [[package]]
 name = "cargo_toml"
-version = "0.10.2"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67110a7844b75a4dda12f4dca5a731c961750d6c8fa3cb6a41ab67411be05d3a"
+checksum = "9c3596addfb02dcdc06f5252ddda9f3785f9230f5827fb4284645240fa05ad92"
 dependencies = [
  "serde",
  "serde_derive",
@@ -428,6 +428,19 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
+name = "chrono"
+version = "0.4.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "670ad68c9088c2a963aaa298cb369688cf3f9465ce5e2d4ca10e6e0098a1ce73"
+dependencies = [
+ "libc",
+ "num-integer",
+ "num-traits",
+ "time 0.1.43",
+ "winapi",
+]
 
 [[package]]
 name = "clap"
@@ -534,11 +547,12 @@ dependencies = [
 
 [[package]]
 name = "crates-index"
-version = "0.18.1"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87c1041763543466e437ad3212f1dbfd73c0ae4f7323e44ff584c5273d1b39c8"
+checksum = "8ad4af5c8dd9940a497ef4473e6e558b660a4a1b6e5ce2cb9d85454e2aaaf947"
 dependencies = [
  "git2",
+ "glob",
  "hex",
  "home",
  "memchr",
@@ -1112,9 +1126,9 @@ dependencies = [
 
 [[package]]
 name = "git-conventional"
-version = "0.11.1"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e85b0054ddc3039f8c9dbf8c2235c51850bbcfe479b10ce61d951911001bb93"
+checksum = "320bc4ceca39bbe9c90bf2eebea9c9e15e079db1e3bf45037bcccb75e56668c2"
 dependencies = [
  "doc-comment",
  "nom",
@@ -1180,7 +1194,7 @@ dependencies = [
  "quick-error",
  "sha-1",
  "sha1",
- "time",
+ "time 0.3.5",
  "walkdir",
 ]
 
@@ -1699,6 +1713,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "glob"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
+
+[[package]]
 name = "gloo-timers"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1880,15 +1900,6 @@ checksum = "172752e853a067cbce46427de8470ddf308af7fd8ceaf9b682ef31a5021b6bb9"
 dependencies = [
  "crossbeam",
  "rayon",
-]
-
-[[package]]
-name = "kstring"
-version = "1.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b310ccceade8121d7d77fee406160e457c2f4e7c7982d589da3499bc7ea4526"
-dependencies = [
- "serde",
 ]
 
 [[package]]
@@ -2118,6 +2129,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f6bb902e437b6d86e03cce10a7e2af662292c5dfef23b65899ea3ac9354ad44"
 dependencies = [
  "winapi",
+]
+
+[[package]]
+name = "num-integer"
+version = "0.1.44"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2cc698a63b549a70bc047073d2949cce27cd1c7b0a4a862d08a8031bc2801db"
+dependencies = [
+ "autocfg",
+ "num-traits",
 ]
 
 [[package]]
@@ -2416,7 +2437,7 @@ dependencies = [
  "humantime",
  "log",
  "parking_lot",
- "time",
+ "time 0.3.5",
  "tui",
  "tui-react",
  "unicode-segmentation",
@@ -2910,6 +2931,16 @@ dependencies = [
 
 [[package]]
 name = "time"
+version = "0.1.43"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca8a50ef2360fbd1eeb0ecd46795a87a19024eb4b53c5dc916ca1fd95fe62438"
+dependencies = [
+ "libc",
+ "winapi",
+]
+
+[[package]]
+name = "time"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "41effe7cfa8af36f439fac33861b66b049edc6f9a32331e2312660529c1c24ad"
@@ -2954,14 +2985,13 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.12.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c14e16aafed5fb7a1bdc293270ca28f17d0a09b4f528f8de34521f2a32d99198"
+checksum = "dbbdcf4f749dd33b1f1ea19b547bf789d87442ec40767d6015e5e2d39158d69a"
 dependencies = [
+ "chrono",
  "combine",
- "indexmap",
- "itertools",
- "kstring",
+ "linked-hash-map",
 ]
 
 [[package]]
