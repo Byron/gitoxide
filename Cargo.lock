@@ -1464,7 +1464,7 @@ dependencies = [
  "git-testtools",
  "git-validate 0.5.3",
  "nom",
- "os_str_bytes 3.1.0",
+ "os_str_bytes 6.0.0",
  "quick-error",
  "serde",
  "tempfile",
