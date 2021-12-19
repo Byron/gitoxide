@@ -565,7 +565,7 @@ fn set_version_and_update_package_dependency(
             }
         }
     }
-    let new_manifest = doc.to_string_in_original_order();
+    let new_manifest = doc.to_string();
     out.write_all(new_manifest.as_bytes())?;
 
     Ok(manifest != new_manifest)
