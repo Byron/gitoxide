@@ -13,6 +13,7 @@ pub(crate) mod commit;
 
 pub(crate) mod bat;
 mod context;
+mod crates_index;
 pub(crate) mod git;
 pub(crate) mod traverse;
 mod utils;

@@ -2,7 +2,6 @@ use cargo_metadata::{
     camino::{Utf8Path, Utf8PathBuf},
     Metadata, Package,
 };
-use crates_index::Index;
 use git_repository as git;
 
 use crate::version::BumpSpec;
@@ -12,7 +11,7 @@ pub struct Context {
     pub meta: Metadata,
     pub repo: git::easy::Handle,
     pub crate_names: Vec<String>,
-    pub crates_index: Index,
+    pub crates_index: crate::crates_index::Index,
     pub history: Option<crate::commit::History>,
     pub bump: BumpSpec,
     pub bump_dependencies: BumpSpec,
@@ -28,7 +27,7 @@ impl Context {
         let meta = cargo_metadata::MetadataCommand::new().exec()?;
         let root = meta.workspace_root.clone();
         let repo = git::discover(&root)?.to_easy().apply_environment();
-        let crates_index = Index::new_cargo_default();
+        let crates_index = crate::crates_index::Index::new_cargo_default()?;
         let history = (force_history_segmentation
             || matches!(bump, BumpSpec::Auto)
             || matches!(bump_dependencies, BumpSpec::Auto))

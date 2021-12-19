@@ -366,6 +366,7 @@ dependencies = [
  "git-conventional",
  "git-repository",
  "git-testtools",
+ "home",
  "insta",
  "log",
  "nom",
@@ -534,12 +535,11 @@ dependencies = [
 
 [[package]]
 name = "crates-index"
-version = "0.17.0"
+version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ad4af5c8dd9940a497ef4473e6e558b660a4a1b6e5ce2cb9d85454e2aaaf947"
+checksum = "87c1041763543466e437ad3212f1dbfd73c0ae4f7323e44ff584c5273d1b39c8"
 dependencies = [
  "git2",
- "glob",
  "hex",
  "home",
  "memchr",
@@ -1698,12 +1698,6 @@ dependencies = [
  "serde_json",
  "tempfile",
 ]
-
-[[package]]
-name = "glob"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 
 [[package]]
 name = "gloo-timers"

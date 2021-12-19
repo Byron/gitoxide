@@ -62,18 +62,18 @@ pub fn release(opts: Options, crates: Vec<String>, bump: BumpSpec, bump_dependen
     } else {
         opts.changelog
     };
-    let ctx = Context::new(crates, bump, bump_dependencies, allow_changelog, opts.changelog_links)?;
+
     if opts.update_crates_index {
-        log::info!(
-            "Updating crates-io index at '{}'",
-            ctx.base.crates_index.path().display()
-        );
-        ctx.base.crates_index.update()?;
+        // Do this before creating our context to pick up a possibly newly fetched/created index.
+        log::info!("Updating crates-io index",);
+        crates_index::Index::new_cargo_default()?.update()?;
     } else if opts.bump_when_needed {
         log::warn!(
             "Consider running with --update-crates-index to assure bumping on demand uses the latest information"
         );
     }
+
+    let ctx = Context::new(crates, bump, bump_dependencies, allow_changelog, opts.changelog_links)?;
     if !ctx.base.crates_index.exists() {
         log::warn!("Crates.io index doesn't exist. Consider using --update-crates-index to help determining if release versions are published already");
     }
@@ -122,7 +122,7 @@ fn assure_crates_index_is_uptodate<'meta>(
                 .and_then(|lr| (lr >= &b.desired_release).then(|| d))
         })
     {
-        let index = crates_index::Index::new_cargo_default();
+        let mut index = crate::crates_index::Index::new_cargo_default()?;
         if index.exists() {
             log::warn!("Crate '{}' computed version not greater than the current package version. Updating crates index to assure correct results.", dep.package.name);
             index.update()?;
