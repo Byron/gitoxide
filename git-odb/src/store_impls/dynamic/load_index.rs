@@ -365,6 +365,7 @@ impl super::Store {
                 // Not racy due to lock, generation must be set after unsetting the value.
                 slot.generation.store(0, Ordering::SeqCst);
             };
+            slot.files.store(files);
         }
 
         let new_index = self.index.load();
@@ -575,7 +576,7 @@ impl super::Store {
     /// Note that this must be called with a lock to the relevant state held to assure these values don't change while
     /// we are working on said index.
     fn maintain_stable_indices(&self, _guard: &parking_lot::MutexGuard<'_, ()>) -> bool {
-        self.num_handles_stable.load(Ordering::SeqCst) == 0
+        self.num_handles_stable.load(Ordering::SeqCst) > 0
     }
 
     pub(crate) fn collect_snapshot(&self) -> Snapshot {

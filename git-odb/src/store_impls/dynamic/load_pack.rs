@@ -1,3 +1,4 @@
+use std::sync::atomic::Ordering;
 use std::{path::Path, sync::Arc};
 
 use crate::store::types;
@@ -29,16 +30,22 @@ impl super::Store {
                 })
         }
 
+        let slot = &self.files[id.index];
+        if slot.generation.load(Ordering::SeqCst) > marker.generation {
+            // There is a disk consolidation in progress which just overwrote a slot that could be disposed with some other
+            // pack, one we didn't intend to load.
+            // Hope that when the caller returns/retries the new index is set so they can fetch it and retry.
+            return Ok(None);
+        }
         match id.multipack_index {
             None => {
-                let f = &self.files[id.index];
-                match &**f.files.load() {
+                match &**slot.files.load() {
                     Some(types::IndexAndPacks::Index(bundle)) => {
                         match bundle.data.loaded() {
                             Some(pack) => Ok(Some(pack.clone())),
                             None => {
-                                let _lock = f.write.lock();
-                                let mut files = f.files.load_full();
+                                let _lock = slot.write.lock();
+                                let mut files = slot.files.load_full();
                                 let files_mut = Arc::make_mut(&mut files);
                                 let pack = match files_mut {
                                     Some(types::IndexAndPacks::Index(bundle)) => {
@@ -52,7 +59,7 @@ impl super::Store {
                                         unreachable!("BUG: must set this handle to be stable to avoid slots to be cleared/changed")
                                     }
                                 };
-                                f.files.store(files);
+                                slot.files.store(files);
                                 Ok(pack)
                             }
                         }

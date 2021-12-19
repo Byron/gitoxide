@@ -9,7 +9,6 @@ use bstr::{BStr, ByteSlice};
 use nom::error::VerboseError;
 use once_cell::sync::Lazy;
 pub use tempfile;
-use tempfile::TempDir;
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
 
@@ -35,16 +34,17 @@ pub fn scripted_fixture_repo_writable_with_args(
     args: impl IntoIterator<Item = &'static str>,
 ) -> std::result::Result<tempfile::TempDir, Box<dyn std::error::Error>> {
     let ro_dir = scripted_fixture_repo_read_only_with_args(script_name, args)?;
-    copy_to_tempdir(&ro_dir).map_err(Into::into)
+    let dst = tempfile::TempDir::new()?;
+    copy_recursively_into_existing_dir(&ro_dir, dst.path())?;
+    Ok(dst)
 }
 
-pub fn copy_to_tempdir(ro_dir: &PathBuf) -> std::io::Result<TempDir> {
-    let dst = tempfile::TempDir::new()?;
+pub fn copy_recursively_into_existing_dir(src_dir: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -> std::io::Result<()> {
     fs_extra::copy_items(
-        &std::fs::read_dir(ro_dir)?
+        &std::fs::read_dir(src_dir)?
             .map(|e| e.map(|e| e.path()))
             .collect::<Result<Vec<_>, _>>()?,
-        dst.path(),
+        dst_dir,
         &fs_extra::dir::CopyOptions {
             overwrite: false,
             skip_exist: false,
@@ -54,7 +54,7 @@ pub fn copy_to_tempdir(ro_dir: &PathBuf) -> std::io::Result<TempDir> {
         },
     )
     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
-    Ok(dst)
+    Ok(())
 }
 
 /// Returns the directory at which the data is present
