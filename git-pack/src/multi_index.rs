@@ -65,7 +65,7 @@ pub mod chunk {
         use os_str_bytes::OsStrBytes;
         use std::path::{Path, PathBuf};
 
-        pub const ID: git_chunk::Kind = 0x504e414d; /* "PNAM" */
+        pub const ID: git_chunk::Kind = *b"PNAM";
 
         pub mod from_slice {
             use git_object::bstr::BString;
@@ -111,7 +111,7 @@ pub mod chunk {
     pub mod fanout {
         use std::convert::TryInto;
 
-        pub const ID: git_chunk::Kind = 0x4f494446; /* "OIDF" */
+        pub const ID: git_chunk::Kind = *b"OIDF";
 
         pub fn from_slice(chunk: &[u8]) -> Option<[u32; 256]> {
             if chunk.len() != 4 * 256 {
@@ -129,7 +129,7 @@ pub mod chunk {
         use git_hash::Kind;
         use std::ops::Range;
 
-        pub const ID: git_chunk::Kind = 0x4f49444c; /* "OIDL" */
+        pub const ID: git_chunk::Kind = *b"OIDL";
 
         pub fn is_valid(offset: &Range<Offset>, hash: git_hash::Kind, num_objects: u32) -> bool {
             (offset.end - offset.start) as usize / hash.len_in_bytes() == num_objects as usize
@@ -139,7 +139,7 @@ pub mod chunk {
         use git_chunk::file::Offset;
         use std::ops::Range;
 
-        pub const ID: git_chunk::Kind = 0x4f4f4646; /* "OOFF" */
+        pub const ID: git_chunk::Kind = *b"OOFF";
 
         pub fn is_valid(offset: &Range<Offset>, num_objects: u32) -> bool {
             let entry_size = 4 /* pack-id */ + 4 /* pack-offset */;
@@ -150,7 +150,7 @@ pub mod chunk {
         use git_chunk::file::Offset;
         use std::ops::Range;
 
-        pub const ID: git_chunk::Kind = 0x4c4f4646; /* "LOFF" */
+        pub const ID: git_chunk::Kind = *b"LOFF";
         pub fn is_valid(offset: Option<&Range<Offset>>) -> bool {
             offset
                 .map(|offset| (offset.end - offset.start) as usize % 8 == 0)
@@ -262,22 +262,22 @@ pub mod init {
             };
 
             let chunks = git_chunk::file::Index::from_bytes(&data, HEADER_LEN, num_chunks as u32)?;
-            let pack_names = chunks.data_by_kind(&data, chunk::pack_names::ID, "PNAM")?;
+            let pack_names = chunks.data_by_kind(&data, chunk::pack_names::ID)?;
             let index_names = chunk::pack_names::from_slice(pack_names, num_packs)?;
 
-            let fan = chunks.data_by_kind(&data, chunk::fanout::ID, "OIDF")?;
+            let fan = chunks.data_by_kind(&data, chunk::fanout::ID)?;
             let fan = chunk::fanout::from_slice(fan).ok_or(Error::MultiPackFanSize)?;
             let num_objects = fan[255];
 
-            let lookup = chunks.offset_by_kind(chunk::lookup::ID, "OIDL")?;
+            let lookup = chunks.offset_by_kind(chunk::lookup::ID)?;
             if !chunk::lookup::is_valid(&lookup, hash_kind, num_objects) {
                 return Err(Error::OidLookupSize);
             }
-            let offsets = chunks.offset_by_kind(chunk::offsets::ID, "OOFF")?;
+            let offsets = chunks.offset_by_kind(chunk::offsets::ID)?;
             if !chunk::offsets::is_valid(&offsets, num_objects) {
                 return Err(Error::OffsetsSize);
             }
-            let large_offsets = chunks.offset_by_kind(chunk::large_offsets::ID, "LOFF").ok();
+            let large_offsets = chunks.offset_by_kind(chunk::large_offsets::ID).ok();
             if !chunk::large_offsets::is_valid(large_offsets.as_ref()) {
                 return Err(Error::LargeOffsetsSize);
             }
