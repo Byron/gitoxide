@@ -24,13 +24,12 @@ const OID_LOOKUP_ENTRY_SIZE: usize = SHA1_SIZE;
 
 const SIGNATURE: &[u8] = b"CGPH";
 
-type ChunkId = [u8; 4];
+type ChunkId = git_chunk::Id;
 const BASE_GRAPHS_LIST_CHUNK_ID: ChunkId = *b"BASE";
 const COMMIT_DATA_CHUNK_ID: ChunkId = *b"CDAT";
 const EXTENDED_EDGES_LIST_CHUNK_ID: ChunkId = *b"EDGE";
 const OID_FAN_CHUNK_ID: ChunkId = *b"OIDF";
 const OID_LOOKUP_CHUNK_ID: ChunkId = *b"OIDL";
-const SENTINEL_CHUNK_ID: ChunkId = [0u8; 4];
 
 // Note that git's commit-graph-format.txt as of v2.28.0 gives an incorrect value 0x0700_0000 for
 // NO_PARENT. Fixed in https://github.com/git/git/commit/4d515253afcef985e94400adbfed7044959f9121 .
