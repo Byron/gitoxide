@@ -1,4 +1,5 @@
 use crate::find;
+use crate::index::access::PackOffset;
 
 /// Describe how object can be located in an object store with built-in facilities to supports packs specifically.
 ///
@@ -50,7 +51,7 @@ pub trait Find {
         -> Option<crate::data::entry::Location>;
 
     /// Obtain a vector of all offsets, in index order, along with their object id.
-    fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>>;
+    fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(PackOffset, git_hash::ObjectId)>>;
 
     /// Return the [`find::Entry`] for `location` if it is backed by a pack.
     ///
@@ -161,6 +162,7 @@ mod find_impls {
 
     use git_hash::oid;
 
+    use crate::index::access::PackOffset;
     use crate::{data::entry::Location, find};
 
     impl<T> crate::Find for &T
@@ -186,7 +188,7 @@ mod find_impls {
             (*self).location_by_oid(id, buf)
         }
 
-        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(PackOffset, git_hash::ObjectId)>> {
             (*self).pack_offsets_and_oid(pack_id)
         }
 
@@ -218,7 +220,7 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(PackOffset, git_hash::ObjectId)>> {
             self.deref().pack_offsets_and_oid(pack_id)
         }
 
@@ -250,7 +252,7 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(PackOffset, git_hash::ObjectId)>> {
             self.deref().pack_offsets_and_oid(pack_id)
         }
 
@@ -282,7 +284,7 @@ mod find_impls {
             self.deref().location_by_oid(id, buf)
         }
 
-        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(u64, git_hash::ObjectId)>> {
+        fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(PackOffset, git_hash::ObjectId)>> {
             self.deref().pack_offsets_and_oid(pack_id)
         }
 
