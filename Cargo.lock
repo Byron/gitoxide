@@ -1343,6 +1343,7 @@ dependencies = [
  "common_macros",
  "dashmap 5.0.0",
  "filebuffer",
+ "git-chunk",
  "git-diff 0.12.0",
  "git-features 0.18.0",
  "git-hash 0.8.0",

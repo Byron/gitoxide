@@ -63,6 +63,8 @@ pub mod init {
             UnsupportedVersion { version: u8 },
             #[error("Unsupported hash kind: {kind})")]
             UnsupportedHashKind { kind: u8 },
+            #[error(transparent)]
+            ChunkFileDecode(#[from] git_chunk::file::decode::Error),
         }
     }
     pub use error::Error;
@@ -82,15 +84,20 @@ pub mod init {
                 path: path.to_owned(),
             })?;
 
-            const HEADER_LEN: usize = (4 /*signature*/ + 1 /*version*/ + 1 /*object id version*/ + 1 /* num chunks */ + 1/* num base files */ + 4/*num pack files*/);
+            const HEADER_LEN: usize = 4 /*signature*/ +
+                        1 /*version*/ +
+                        1 /*object id version*/ +
+                        1 /*num chunks */ +
+                        1 /*num base files */ +
+                        4 /*num pack files*/;
             const TRAILER_LEN: usize = git_hash::Kind::longest().len_in_bytes(); /* trailing hash */
-            if data.len() < HEADER_LEN + TRAILER_LEN {
+            if data.len() < HEADER_LEN + git_chunk::file::Index::EMPTY_SIZE + TRAILER_LEN {
                 return Err(Error::Corrupt {
                     message: "multi-index file is truncated and too short".into(),
                 });
             }
 
-            let (version, hash_kind, num_chunks, num_packs, toc) = {
+            let (version, hash_kind, num_chunks, num_packs) = {
                 let (signature, data) = data.split_at(4);
                 if signature != b"MIDX" {
                     return Err(Error::Corrupt {
@@ -114,11 +121,13 @@ pub mod init {
 
                 let (_num_base_files, data) = data.split_at(1); // TODO: handle base files once it's clear what this does
 
-                let (num_packs, toc) = data.split_at(4);
+                let (num_packs, _) = data.split_at(4);
                 let num_packs = BigEndian::read_u32(num_packs);
 
-                (version, hash_kind, num_chunks, num_packs, toc)
+                (version, hash_kind, num_chunks, num_packs)
             };
+
+            let chunks = git_chunk::file::Index::from_bytes(&data, HEADER_LEN, num_chunks as u32)?;
 
             Ok(File {
                 data,
