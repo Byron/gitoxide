@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.0 (2021-12-20)
 
 Initial release with enough functionality to handle multi-pack indices and commitgraph files.
 
@@ -13,7 +13,7 @@ Initial release with enough functionality to handle multi-pack indices and commi
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release.
+ - 7 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#279](https://github.com/Byron/gitoxide/issues/279)
 
@@ -30,6 +30,7 @@ Initial release with enough functionality to handle multi-pack indices and commi
 <details><summary>view details</summary>
 
  * **[#279](https://github.com/Byron/gitoxide/issues/279)**
+    - update changelog prior to release ([`6ae49e3`](https://github.com/Byron/gitoxide/commit/6ae49e39b2251ad70b72a8f3b3840ebb9334ffd9))
     - remove empty tests ([`e30dcea`](https://github.com/Byron/gitoxide/commit/e30dcea6ca56b7bea175be11868e924317ab9974))
     - read and validate fanout chunk ([`3ca04e3`](https://github.com/Byron/gitoxide/commit/3ca04e355a413975e55adf8b204d6962a9341d32))
     - Read all mandatory and optional chunks ([`99023bb`](https://github.com/Byron/gitoxide/commit/99023bbde027be82e9217868df7f73ecd09bf705))
