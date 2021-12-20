@@ -1353,6 +1353,7 @@ dependencies = [
  "git-testtools",
  "git-traverse 0.11.0",
  "hex",
+ "os_str_bytes 6.0.0",
  "parking_lot",
  "serde",
  "smallvec",

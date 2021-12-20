@@ -2,6 +2,7 @@
 
 use filebuffer::FileBuffer;
 use std::ops::Range;
+use std::path::PathBuf;
 
 /// Known multi-index file versions
 #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Hash, Clone, Copy)]
@@ -28,6 +29,8 @@ pub struct File {
     /// The amount of pack files contained within
     num_packs: u32,
     fan: [u32; 256],
+    num_objects: u32,
+    index_names: Vec<PathBuf>,
 }
 
 ///
@@ -44,9 +47,56 @@ pub mod access {
     }
 }
 
-mod chunk {
+pub mod chunk {
     pub mod pack_names {
+        use git_object::bstr::{BString, ByteSlice};
+        use os_str_bytes::OsStrBytes;
+        use std::path::{Path, PathBuf};
+
         pub const ID: git_chunk::Kind = 0x504e414d; /* "PNAM" */
+
+        pub mod from_slice {
+            use git_object::bstr::BString;
+
+            #[derive(Debug, thiserror::Error)]
+            pub enum Error {
+                #[error("The pack names were not ordered alphabetically.")]
+                NotOrderedAlphabetically,
+                #[error("Each pack path name must be terminated with a null byte")]
+                MissingNullByte,
+                #[error("Couldn't turn path '{path}' into OS path due to encoding issues")]
+                PathEncoding { path: BString },
+            }
+        }
+
+        pub fn from_slice(mut chunk: &[u8], num_packs: u32) -> Result<Vec<PathBuf>, from_slice::Error> {
+            let mut out = Vec::new();
+            for _ in 0..num_packs {
+                let null_byte_pos = chunk
+                    .find_byte(b'\0')
+                    .ok_or_else(|| from_slice::Error::MissingNullByte)?;
+
+                let path = &chunk[..null_byte_pos];
+                let path = Path::from_raw_bytes(path)
+                    .map_err(|_| from_slice::Error::PathEncoding {
+                        path: BString::from(path),
+                    })?
+                    .into_owned();
+
+                if let Some(previous) = out.last() {
+                    if !(previous < &path) {
+                        return Err(from_slice::Error::NotOrderedAlphabetically);
+                    }
+                }
+                out.push(path);
+
+                chunk = &chunk[null_byte_pos + 1..];
+            }
+
+            // NOTE: git writes garbage into this chunk, usually extra \0 bytes, which we simply ignore. If we were strict
+            // about it we couldn't read this chunk data at all.
+            Ok(out)
+        }
     }
     pub mod fanout {
         use std::convert::TryInto;
@@ -84,6 +134,8 @@ pub mod init {
     use std::path::Path;
 
     mod error {
+        use crate::multi_index::chunk;
+
         #[derive(Debug, thiserror::Error)]
         pub enum Error {
             #[error("Could not open multi-index file at '{path}'")]
@@ -105,6 +157,8 @@ pub mod init {
             FileTooLarge(#[from] git_chunk::file::index::data_by_kind::Error),
             #[error("The multi-pack fan doesn't have the correct size of 256 * 4 bytes")]
             MultiPackFanSize,
+            #[error(transparent)]
+            PackNames(#[from] chunk::pack_names::from_slice::Error),
         }
     }
     pub use error::Error;
@@ -168,10 +222,12 @@ pub mod init {
             };
 
             let chunks = git_chunk::file::Index::from_bytes(&data, HEADER_LEN, num_chunks as u32)?;
-            let pack_names = chunks.offset_by_kind(chunk::pack_names::ID, "PNAM")?;
+            let pack_names = chunks.data_by_kind(&data, chunk::pack_names::ID, "PNAM")?;
+            let index_names = chunk::pack_names::from_slice(pack_names, num_packs)?;
 
             let fan = chunks.data_by_kind(&data, chunk::fanout::ID, "OIDF")?;
             let fan = chunk::fanout::from_slice(fan).ok_or_else(|| Error::MultiPackFanSize)?;
+            let num_objects = fan[255];
 
             let lookup = chunks.offset_by_kind(chunk::lookup::ID, "OIDL")?;
             let offsets = chunks.offset_by_kind(chunk::offsets::ID, "OOFF")?;
@@ -183,6 +239,8 @@ pub mod init {
                 version,
                 hash_kind,
                 fan,
+                index_names,
+                num_objects,
                 num_chunks,
                 num_packs,
             })
