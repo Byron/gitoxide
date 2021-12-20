@@ -28,9 +28,13 @@ pub struct File {
     num_chunks: u8,
     /// The amount of pack files contained within
     num_packs: u32,
-    fan: [u32; 256],
     num_objects: u32,
+
+    fan: [u32; 256],
     index_names: Vec<PathBuf>,
+    lookup: Range<git_chunk::file::Offset>,
+    offsets: Range<git_chunk::file::Offset>,
+    pub large_offsets: Option<Range<git_chunk::file::Offset>>,
 }
 
 ///
@@ -115,13 +119,37 @@ pub mod chunk {
         }
     }
     pub mod lookup {
+        use git_chunk::file::Offset;
+        use git_hash::Kind;
+        use std::ops::Range;
+
         pub const ID: git_chunk::Kind = 0x4f49444c; /* "OIDL" */
+
+        pub fn is_valid(offset: &Range<Offset>, hash: git_hash::Kind, num_objects: u32) -> bool {
+            (offset.end - offset.start) as usize / hash.len_in_bytes() == num_objects as usize
+        }
     }
     pub mod offsets {
+        use git_chunk::file::Offset;
+        use std::ops::Range;
+
         pub const ID: git_chunk::Kind = 0x4f4f4646; /* "OOFF" */
+
+        pub fn is_valid(offset: &Range<Offset>, num_objects: u32) -> bool {
+            let entry_size = 4 /* pack-id */ + 4 /* pack-offset */;
+            ((offset.end - offset.start) as usize / num_objects as usize) == entry_size
+        }
     }
     pub mod large_offsets {
+        use git_chunk::file::Offset;
+        use std::ops::Range;
+
         pub const ID: git_chunk::Kind = 0x4c4f4646; /* "LOFF" */
+        pub fn is_valid(offset: Option<&Range<Offset>>) -> bool {
+            offset
+                .map(|offset| (offset.end - offset.start) as usize % 8 == 0)
+                .unwrap_or(true)
+        }
     }
 }
 
@@ -159,6 +187,12 @@ pub mod init {
             MultiPackFanSize,
             #[error(transparent)]
             PackNames(#[from] chunk::pack_names::from_slice::Error),
+            #[error("The chunk with alphabetically ordered object ids doesn't have the correct size")]
+            OidLookupSize,
+            #[error("The chunk with offsets into the pack doesn't have the correct size")]
+            OffsetsSize,
+            #[error("The chunk with large offsets into the pack doesn't have the correct size")]
+            LargeOffsetsSize,
         }
     }
     pub use error::Error;
@@ -230,8 +264,17 @@ pub mod init {
             let num_objects = fan[255];
 
             let lookup = chunks.offset_by_kind(chunk::lookup::ID, "OIDL")?;
+            if !chunk::lookup::is_valid(&lookup, hash_kind, num_objects) {
+                return Err(Error::OidLookupSize);
+            }
             let offsets = chunks.offset_by_kind(chunk::offsets::ID, "OOFF")?;
+            if !chunk::offsets::is_valid(&offsets, num_objects) {
+                return Err(Error::OffsetsSize);
+            }
             let large_offsets = chunks.offset_by_kind(chunk::large_offsets::ID, "LOFF").ok();
+            if !chunk::large_offsets::is_valid(large_offsets.as_ref()) {
+                return Err(Error::LargeOffsetsSize);
+            }
 
             Ok(File {
                 data,
@@ -240,6 +283,9 @@ pub mod init {
                 hash_kind,
                 fan,
                 index_names,
+                lookup,
+                offsets,
+                large_offsets,
                 num_objects,
                 num_chunks,
                 num_packs,
