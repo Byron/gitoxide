@@ -12,7 +12,7 @@ mod error {
             EarlySentinelValue {
                 display("Sentinel value encountered while still processing chunks.")
             }
-            MissingSentinelValue { actual: crate::Kind } {
+            MissingSentinelValue { actual: crate::Id } {
                 display("Sentinel value wasn't found, saw {:?}", std::str::from_utf8(actual.as_ref()).unwrap_or("<non-ascii>"))
             }
             ChunkSizeOutOfBounds { offset: crate::file::Offset, file_length: u64 } {
@@ -21,7 +21,7 @@ mod error {
             NonIncrementalChunkOffsets {
                 display("All chunk offsets must be incrementing.")
             }
-            DuplicateChunk(kind: crate::Kind) {
+            DuplicateChunk(kind: crate::Id) {
                 display("The chunk of kind {:?} was encountered more than once", std::str::from_utf8(kind.as_ref()).unwrap_or("<non-ascii>"))
             }
             TocTooSmall { actual: usize, expected: usize } {

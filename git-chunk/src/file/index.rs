@@ -70,7 +70,7 @@ impl Index {
     /// Find a chunk of `kind` and return its data slice based on its offset.
     pub fn data_by_id<'a>(&self, data: &'a [u8], kind: crate::Id) -> Result<&'a [u8], data_by_kind::Error> {
         let offset = self.offset_by_id(kind)?;
-        Ok(&data[crate::into_usize_range(offset).ok_or(data_by_kind::Error::FileTooLarge)?])
+        Ok(&data[crate::range::into_usize(offset).ok_or(data_by_kind::Error::FileTooLarge)?])
     }
 
     /// Return the end offset lf the last chunk, which is the highest offset as well.
