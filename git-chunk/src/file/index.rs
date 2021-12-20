@@ -9,7 +9,7 @@ pub mod offset_by_kind {
     #[allow(missing_docs)]
     #[derive(Debug)]
     pub struct Error {
-        pub kind: crate::Kind,
+        pub kind: crate::Id,
     }
 
     impl Display for Error {
@@ -48,7 +48,7 @@ pub mod data_by_kind {
 /// An entry of a chunk file index
 pub struct Entry {
     /// The kind of the chunk file
-    pub kind: crate::Kind,
+    pub kind: crate::Id,
     /// The offset, relative to the beginning of the file, at which to find the chunk and its end.
     pub offset: Range<crate::file::Offset>,
 }
@@ -60,7 +60,7 @@ impl Index {
     pub const EMPTY_SIZE: usize = Index::ENTRY_SIZE;
 
     /// Find a chunk of `kind` and return its offset into the data if found
-    pub fn offset_by_kind(&self, kind: crate::Kind) -> Result<Range<crate::file::Offset>, offset_by_kind::Error> {
+    pub fn offset_by_id(&self, kind: crate::Id) -> Result<Range<crate::file::Offset>, offset_by_kind::Error> {
         self.chunks
             .iter()
             .find_map(|c| (c.kind == kind).then(|| c.offset.clone()))
@@ -68,8 +68,8 @@ impl Index {
     }
 
     /// Find a chunk of `kind` and return its data slice based on its offset.
-    pub fn data_by_kind<'a>(&self, data: &'a [u8], kind: crate::Kind) -> Result<&'a [u8], data_by_kind::Error> {
-        let offset = self.offset_by_kind(kind)?;
+    pub fn data_by_id<'a>(&self, data: &'a [u8], kind: crate::Id) -> Result<&'a [u8], data_by_kind::Error> {
+        let offset = self.offset_by_id(kind)?;
         Ok(&data[crate::into_usize_range(offset).ok_or(data_by_kind::Error::FileTooLarge)?])
     }
 

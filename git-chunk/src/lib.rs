@@ -8,10 +8,10 @@ use std::convert::TryInto;
 use std::ops::Range;
 
 /// An identifier to describe the kind of chunk, unique within a chunk file, typically in ASCII
-pub type Kind = [u8; 4];
+pub type Id = [u8; 4];
 
 /// A special value denoting the end of the chunk file table of contents.
-pub const SENTINEL: Kind = [0u8; 4];
+pub const SENTINEL: Id = [0u8; 4];
 
 /// Turn a u64 Range into a usize range safely, to make chunk ranges useful in memory mapped files.
 pub fn into_usize_range(Range { start, end }: Range<file::Offset>) -> Option<Range<usize>> {

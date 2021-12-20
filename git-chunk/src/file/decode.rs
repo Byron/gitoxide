@@ -102,7 +102,7 @@ impl file::Index {
     }
 }
 
-fn to_kind(data: &[u8]) -> crate::Kind {
+fn to_kind(data: &[u8]) -> crate::Id {
     data[..4].try_into().unwrap()
 }
 
