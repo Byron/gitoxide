@@ -29,7 +29,7 @@ mod error {
         #[error("The multi-pack fan doesn't have the correct size of 256 * 4 bytes")]
         MultiPackFanSize,
         #[error(transparent)]
-        PackNames(#[from] chunk::pack_names::from_slice::Error),
+        PackNames(#[from] chunk::index_names::from_slice::Error),
         #[error("The chunk with alphabetically ordered object ids doesn't have the correct size")]
         OidLookupSize,
         #[error("The chunk with offsets into the pack doesn't have the correct size")]
@@ -100,22 +100,23 @@ impl TryFrom<&Path> for File {
         };
 
         let chunks = git_chunk::file::Index::from_bytes(&data, HEADER_LEN, num_chunks as u32)?;
-        let pack_names = chunks.data_by_kind(&data, chunk::pack_names::ID)?;
-        let index_names = chunk::pack_names::from_slice(pack_names, num_packs)?;
 
-        let fan = chunks.data_by_kind(&data, chunk::fanout::ID)?;
+        let index_names = chunks.data_by_id(&data, chunk::index_names::ID)?;
+        let index_names = chunk::index_names::from_slice(index_names, num_packs)?;
+
+        let fan = chunks.data_by_id(&data, chunk::fanout::ID)?;
         let fan = chunk::fanout::from_slice(fan).ok_or(Error::MultiPackFanSize)?;
         let num_objects = fan[255];
 
-        let lookup = chunks.offset_by_kind(chunk::lookup::ID)?;
+        let lookup = chunks.offset_by_id(chunk::lookup::ID)?;
         if !chunk::lookup::is_valid(&lookup, hash_kind, num_objects) {
             return Err(Error::OidLookupSize);
         }
-        let offsets = chunks.offset_by_kind(chunk::offsets::ID)?;
+        let offsets = chunks.offset_by_id(chunk::offsets::ID)?;
         if !chunk::offsets::is_valid(&offsets, num_objects) {
             return Err(Error::OffsetsSize);
         }
-        let large_offsets = chunks.offset_by_kind(chunk::large_offsets::ID).ok();
+        let large_offsets = chunks.offset_by_id(chunk::large_offsets::ID).ok();
         if !chunk::large_offsets::is_valid(large_offsets.as_ref()) {
             return Err(Error::LargeOffsetsSize);
         }

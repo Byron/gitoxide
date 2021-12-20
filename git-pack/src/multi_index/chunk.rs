@@ -1,9 +1,9 @@
-pub mod pack_names {
+pub mod index_names {
     use git_object::bstr::{BString, ByteSlice};
     use os_str_bytes::OsStrBytes;
     use std::path::{Path, PathBuf};
 
-    pub const ID: git_chunk::Kind = *b"PNAM";
+    pub const ID: git_chunk::Id = *b"PNAM";
 
     pub mod from_slice {
         use git_object::bstr::BString;
@@ -50,7 +50,7 @@ pub mod pack_names {
 pub mod fanout {
     use std::convert::TryInto;
 
-    pub const ID: git_chunk::Kind = *b"OIDF";
+    pub const ID: git_chunk::Id = *b"OIDF";
 
     pub fn from_slice(chunk: &[u8]) -> Option<[u32; 256]> {
         if chunk.len() != 4 * 256 {
@@ -69,7 +69,7 @@ pub mod lookup {
     use git_hash::Kind;
     use std::ops::Range;
 
-    pub const ID: git_chunk::Kind = *b"OIDL";
+    pub const ID: git_chunk::Id = *b"OIDL";
 
     pub fn is_valid(offset: &Range<Offset>, hash: git_hash::Kind, num_objects: u32) -> bool {
         (offset.end - offset.start) as usize / hash.len_in_bytes() == num_objects as usize
@@ -80,7 +80,7 @@ pub mod offsets {
     use git_chunk::file::Offset;
     use std::ops::Range;
 
-    pub const ID: git_chunk::Kind = *b"OOFF";
+    pub const ID: git_chunk::Id = *b"OOFF";
 
     pub fn is_valid(offset: &Range<Offset>, num_objects: u32) -> bool {
         let entry_size = 4 /* pack-id */ + 4 /* pack-offset */;
@@ -92,7 +92,7 @@ pub mod large_offsets {
     use git_chunk::file::Offset;
     use std::ops::Range;
 
-    pub const ID: git_chunk::Kind = *b"LOFF";
+    pub const ID: git_chunk::Id = *b"LOFF";
     pub fn is_valid(offset: Option<&Range<Offset>>) -> bool {
         offset
             .map(|offset| (offset.end - offset.start) as usize % 8 == 0)
