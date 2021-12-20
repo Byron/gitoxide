@@ -463,7 +463,13 @@ where
 
     let store = match store {
         Some(store) => store,
-        None => OwnShared::new(odb::Store::at_opts(objects_dir, slots)?),
+        None => OwnShared::new(odb::Store::at_opts(
+            objects_dir,
+            git_repository::odb::store::init::Options {
+                slots,
+                ..Default::default()
+            },
+        )?),
     };
     let handle = Cache::from(store.to_handle()).with_pack_cache(move || Box::new(new_cache()));
 

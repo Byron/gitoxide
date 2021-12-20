@@ -9,9 +9,9 @@ use crate::store::types::{MutableIndexAndPack, SlotMapIndex};
 #[derive(Copy, Clone, Debug)]
 pub struct Options {
     /// How to obtain a size for the slot map.
-    slots: Slots,
+    pub slots: Slots,
     /// If true, we are allowed to use multi-pack indices.
-    use_multi_pack_index: bool,
+    pub use_multi_pack_index: bool,
 }
 
 impl Default for Options {

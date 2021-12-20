@@ -110,6 +110,9 @@ pub mod open {
                     worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());
                 }
             }
+            let use_multi_pack_index = config
+                .value::<Boolean<'_>>("core", None, "multiPackIndex")
+                .map_or(true, |b| matches!(b, Boolean::True(_)));
             let hash_kind = if config
                 .value::<Integer>("core", None, "repositoryFormatVersion")
                 .map_or(0, |v| v.value)
@@ -132,7 +135,13 @@ pub mod open {
             };
 
             Ok(crate::Repository {
-                objects: OwnShared::new(git_odb::Store::at_opts(git_dir.join("objects"), object_store_slots)?),
+                objects: OwnShared::new(git_odb::Store::at_opts(
+                    git_dir.join("objects"),
+                    git_odb::store::init::Options {
+                        slots: object_store_slots,
+                        use_multi_pack_index,
+                    },
+                )?),
                 refs: crate::RefStore::at(
                     git_dir,
                     if worktree_dir.is_none() {
