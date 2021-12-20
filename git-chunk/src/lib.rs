@@ -95,7 +95,7 @@ pub mod file {
                 self.chunks
                     .iter()
                     .find_map(|c| (c.kind == kind).then(|| c.offset.clone()))
-                    .ok_or_else(|| offset_by_kind::Error { kind, name })
+                    .ok_or(offset_by_kind::Error { kind, name })
             }
 
             /// Find a chunk of `kind` and return its data slice based on its offset.
@@ -106,7 +106,7 @@ pub mod file {
                 name: &'static str,
             ) -> Result<&'a [u8], data_by_kind::Error> {
                 let offset = self.offset_by_kind(kind, name)?;
-                Ok(&data[crate::into_usize_range(offset).ok_or_else(|| data_by_kind::Error::FileTooLarge)?])
+                Ok(&data[crate::into_usize_range(offset).ok_or(data_by_kind::Error::FileTooLarge)?])
             }
         }
     }

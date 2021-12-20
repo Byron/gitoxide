@@ -76,9 +76,7 @@ pub mod chunk {
         pub fn from_slice(mut chunk: &[u8], num_packs: u32) -> Result<Vec<PathBuf>, from_slice::Error> {
             let mut out = Vec::new();
             for _ in 0..num_packs {
-                let null_byte_pos = chunk
-                    .find_byte(b'\0')
-                    .ok_or_else(|| from_slice::Error::MissingNullByte)?;
+                let null_byte_pos = chunk.find_byte(b'\0').ok_or(from_slice::Error::MissingNullByte)?;
 
                 let path = &chunk[..null_byte_pos];
                 let path = Path::from_raw_bytes(path)
@@ -88,7 +86,7 @@ pub mod chunk {
                     .into_owned();
 
                 if let Some(previous) = out.last() {
-                    if !(previous < &path) {
+                    if previous >= &path {
                         return Err(from_slice::Error::NotOrderedAlphabetically);
                     }
                 }
@@ -260,7 +258,7 @@ pub mod init {
             let index_names = chunk::pack_names::from_slice(pack_names, num_packs)?;
 
             let fan = chunks.data_by_kind(&data, chunk::fanout::ID, "OIDF")?;
-            let fan = chunk::fanout::from_slice(fan).ok_or_else(|| Error::MultiPackFanSize)?;
+            let fan = chunk::fanout::from_slice(fan).ok_or(Error::MultiPackFanSize)?;
             let num_objects = fan[255];
 
             let lookup = chunks.offset_by_kind(chunk::lookup::ID, "OIDL")?;
