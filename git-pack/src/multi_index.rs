@@ -21,11 +21,30 @@ pub struct File {
     data: FileBuffer,
     path: std::path::PathBuf,
     version: Version,
+    hash_kind: git_hash::Kind,
+    num_chunks: u8,
+    /// The amount of pack files contained within
+    num_packs: u32,
+}
+
+///
+pub mod access {
+    use crate::multi_index::File;
+
+    impl File {
+        pub fn num_packs(&self) -> u32 {
+            self.num_packs
+        }
+        pub fn hash_kind(&self) -> git_hash::Kind {
+            self.hash_kind
+        }
+    }
 }
 
 ///
 pub mod init {
-    use crate::multi_index::File;
+    use crate::multi_index::{File, Version};
+    use byteorder::{BigEndian, ByteOrder};
     use filebuffer::FileBuffer;
     use std::convert::TryFrom;
     use std::path::Path;
@@ -58,7 +77,7 @@ pub mod init {
         type Error = Error;
 
         fn try_from(path: &Path) -> Result<Self, Self::Error> {
-            let data = FileBuffer::open(&path).map_err(|source| Error::Io {
+            let data = FileBuffer::open(path).map_err(|source| Error::Io {
                 source,
                 path: path.to_owned(),
             })?;
@@ -71,7 +90,7 @@ pub mod init {
                 });
             }
 
-            let hash_kind = {
+            let (version, hash_kind, num_chunks, num_packs, toc) = {
                 let (signature, data) = data.split_at(4);
                 if signature != b"MIDX" {
                     return Err(Error::Corrupt {
@@ -79,20 +98,36 @@ pub mod init {
                     });
                 }
                 let (version, data) = data.split_at(1);
-                if version[0] != 1 {
-                    return Err(Error::UnsupportedVersion { version: version[0] });
-                }
+                let version = match version[0] {
+                    1 => Version::V1,
+                    version => return Err(Error::UnsupportedVersion { version }),
+                };
 
                 let (hash_kind, data) = data.split_at(1);
-                match hash_kind[0] {
+                let hash_kind = match hash_kind[0] {
                     1 => git_hash::Kind::Sha1,
                     // TODO: 2 = SHA256, use it once we know it
                     unknown => return Err(Error::UnsupportedHashKind { kind: unknown }),
-                }
-                hash_kind
+                };
+                let (num_chunks, data) = data.split_at(1);
+                let num_chunks = num_chunks[0];
+
+                let (_num_base_files, data) = data.split_at(1); // TODO: handle base files once it's clear what this does
+
+                let (num_packs, toc) = data.split_at(4);
+                let num_packs = BigEndian::read_u32(num_packs);
+
+                (version, hash_kind, num_chunks, num_packs, toc)
             };
 
-            todo!("read everything")
+            Ok(File {
+                data,
+                path: path.to_owned(),
+                version,
+                hash_kind,
+                num_chunks,
+                num_packs,
+            })
         }
     }
 }
