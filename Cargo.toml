@@ -110,6 +110,7 @@ members = [
     "git-config",
     "git-features",
     "git-commitgraph",
+    "git-chunk",
     "git-object",
     "git-diff",
     "git-traverse",

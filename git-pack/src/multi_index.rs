@@ -44,9 +44,9 @@ pub mod access {
 ///
 pub mod init {
     use crate::multi_index::{File, Version};
-    use byteorder::{BigEndian, ByteOrder};
+    use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
     use filebuffer::FileBuffer;
-    use std::convert::TryFrom;
+    use std::convert::{TryFrom, TryInto};
     use std::path::Path;
 
     mod error {

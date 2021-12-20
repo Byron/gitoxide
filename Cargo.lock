@@ -1084,6 +1084,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-chunk"
+version = "0.0.0"
+dependencies = [
+ "git-testtools",
+ "hex",
+ "quick-error",
+]
+
+[[package]]
 name = "git-commitgraph"
 version = "0.7.0"
 dependencies = [

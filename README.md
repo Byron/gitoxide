@@ -62,6 +62,7 @@ Follow linked crate name for detailed status. Please note that all crates follow
 * **usable**
   * [git-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-actor)
   * [git-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-hash)
+  * [git-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-chunk)
   * [git-object](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-object)
   * [git-validate](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-validate)
   * [git-url](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-url)

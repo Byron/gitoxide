@@ -8,6 +8,10 @@
 * [x] API documentation
     * [ ] Some examples
 
+### git-chunk
+* [ ] decode the chunk file table of contents and provide convenient API
+* [ ] write the table of contents
+
 ### git-object
 * *decode (zero-copy)* borrowed objects
     * [x] commit
