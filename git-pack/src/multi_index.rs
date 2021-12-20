@@ -27,7 +27,7 @@ pub struct File {
     num_chunks: u8,
     /// The amount of pack files contained within
     num_packs: u32,
-    fanout: Range<git_chunk::file::Offset>,
+    fan: [u32; 256],
 }
 
 ///
@@ -49,7 +49,20 @@ mod chunk {
         pub const ID: git_chunk::Kind = 0x504e414d; /* "PNAM" */
     }
     pub mod fanout {
+        use std::convert::TryInto;
+
         pub const ID: git_chunk::Kind = 0x4f494446; /* "OIDF" */
+
+        pub fn from_slice(chunk: &[u8]) -> Option<[u32; 256]> {
+            if chunk.len() != 4 * 256 {
+                return None;
+            }
+            let mut out = [0; 256];
+            for (c, f) in chunk.chunks(4).zip(out.iter_mut()) {
+                *f = u32::from_be_bytes(c.try_into().unwrap());
+            }
+            out.into()
+        }
     }
     pub mod lookup {
         pub const ID: git_chunk::Kind = 0x4f49444c; /* "OIDL" */
@@ -87,7 +100,11 @@ pub mod init {
             #[error(transparent)]
             ChunkFileDecode(#[from] git_chunk::file::decode::Error),
             #[error(transparent)]
-            MissingChunk(#[from] git_chunk::file::index::not_found::Error),
+            MissingChunk(#[from] git_chunk::file::index::offset_by_kind::Error),
+            #[error(transparent)]
+            FileTooLarge(#[from] git_chunk::file::index::data_by_kind::Error),
+            #[error("The multi-pack fan doesn't have the correct size of 256 * 4 bytes")]
+            MultiPackFanSize,
         }
     }
     pub use error::Error;
@@ -152,7 +169,10 @@ pub mod init {
 
             let chunks = git_chunk::file::Index::from_bytes(&data, HEADER_LEN, num_chunks as u32)?;
             let pack_names = chunks.offset_by_kind(chunk::pack_names::ID, "PNAM")?;
-            let fanout = chunks.offset_by_kind(chunk::fanout::ID, "OIDF")?;
+
+            let fan = chunks.data_by_kind(&data, chunk::fanout::ID, "OIDF")?;
+            let fan = chunk::fanout::from_slice(fan).ok_or_else(|| Error::MultiPackFanSize)?;
+
             let lookup = chunks.offset_by_kind(chunk::lookup::ID, "OIDL")?;
             let offsets = chunks.offset_by_kind(chunk::offsets::ID, "OOFF")?;
             let large_offsets = chunks.offset_by_kind(chunk::large_offsets::ID, "LOFF").ok();
@@ -162,7 +182,7 @@ pub mod init {
                 path: path.to_owned(),
                 version,
                 hash_kind,
-                fanout,
+                fan,
                 num_chunks,
                 num_packs,
             })

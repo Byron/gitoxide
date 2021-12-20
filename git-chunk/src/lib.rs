@@ -4,11 +4,21 @@
 #![deny(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 
+use std::convert::TryInto;
+use std::ops::Range;
+
 /// An identifier to describe the kind of chunk, unique within a chunk file.
 pub type Kind = u32;
 
 /// A special value denoting the end of the chunk file table of contents.
 pub const SENTINEL: Kind = 0;
+
+/// Turn a u64 Range into a usize range safely, to make chunk ranges useful in memory mapped files.
+pub fn into_usize_range(Range { start, end }: Range<file::Offset>) -> Option<Range<usize>> {
+    let start = start.try_into().ok()?;
+    let end = end.try_into().ok()?;
+    Some(Range { start, end })
+}
 
 ///
 pub mod file {
@@ -18,7 +28,7 @@ pub mod file {
         use std::ops::Range;
 
         ///
-        pub mod not_found {
+        pub mod offset_by_kind {
             use std::fmt::{Display, Formatter};
 
             /// The error returned by [Index::offset_by_kind()][super::Index::offset_by_kind()].
@@ -42,6 +52,26 @@ pub mod file {
             impl std::error::Error for Error {}
         }
 
+        ///
+        pub mod data_by_kind {
+            use quick_error::quick_error;
+            quick_error! {
+                /// The error returned by [Index::data_by_kind()][super::Index::data_by_kind()].
+                #[derive(Debug)]
+                #[allow(missing_docs)]
+                pub enum Error {
+                    NotFound(err: super::offset_by_kind::Error) {
+                        display("The chunk wasn't found in the file index")
+                        from()
+                        source(err)
+                    }
+                    FileTooLarge {
+                        display("The offsets into the file couldn't be represented by usize")
+                    }
+                }
+            }
+        }
+
         /// An entry of a chunk file index
         pub struct Entry {
             /// The kind of the chunk file
@@ -61,11 +91,22 @@ pub mod file {
                 &self,
                 kind: crate::Kind,
                 name: &'static str,
-            ) -> Result<Range<crate::file::Offset>, not_found::Error> {
+            ) -> Result<Range<crate::file::Offset>, offset_by_kind::Error> {
                 self.chunks
                     .iter()
                     .find_map(|c| (c.kind == kind).then(|| c.offset.clone()))
-                    .ok_or_else(|| not_found::Error { kind, name })
+                    .ok_or_else(|| offset_by_kind::Error { kind, name })
+            }
+
+            /// Find a chunk of `kind` and return its data slice based on its offset.
+            pub fn data_by_kind<'a>(
+                &self,
+                data: &'a [u8],
+                kind: crate::Kind,
+                name: &'static str,
+            ) -> Result<&'a [u8], data_by_kind::Error> {
+                let offset = self.offset_by_kind(kind, name)?;
+                Ok(&data[crate::into_usize_range(offset).ok_or_else(|| data_by_kind::Error::FileTooLarge)?])
             }
         }
     }
