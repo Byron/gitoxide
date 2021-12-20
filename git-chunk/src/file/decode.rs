@@ -13,7 +13,7 @@ mod error {
                 display("Sentinel value encountered while still processing chunks.")
             }
             MissingSentinelValue { actual: crate::Kind } {
-                display("Sentinel value wasn't found, saw {:#016x}", actual)
+                display("Sentinel value wasn't found, saw {:?}", std::str::from_utf8(actual.as_ref()).unwrap_or("<non-ascii>"))
             }
             ChunkSizeOutOfBounds { offset: crate::file::Offset, file_length: u64 } {
                 display("The chunk offset {} went past the file of length {} - was it truncated?", offset, file_length)
@@ -22,7 +22,7 @@ mod error {
                 display("All chunk offsets must be incrementing.")
             }
             DuplicateChunk(kind: crate::Kind) {
-                display("The chunk of kind {:#016x} was encountered more than once", kind)
+                display("The chunk of kind {:?} was encountered more than once", std::str::from_utf8(kind.as_ref()).unwrap_or("<non-ascii>"))
             }
             TocTooSmall { actual: usize, expected: usize } {
                 display("The table of contents would be {} bytes, but got only {}", expected, actual)
@@ -58,7 +58,7 @@ impl file::Index {
 
         for _ in 0..num_chunks {
             let (kind, offset) = toc_entry.split_at(4);
-            let kind = be_u32(kind);
+            let kind = to_kind(kind);
             if kind == crate::SENTINEL {
                 return Err(Error::EarlySentinelValue);
             }
@@ -93,7 +93,7 @@ impl file::Index {
             })
         }
 
-        let sentinel = be_u32(&toc_entry[..4]);
+        let sentinel = to_kind(&toc_entry[..4]);
         if sentinel != crate::SENTINEL {
             return Err(Error::MissingSentinelValue { actual: sentinel });
         }
@@ -102,8 +102,8 @@ impl file::Index {
     }
 }
 
-fn be_u32(data: &[u8]) -> u32 {
-    u32::from_be_bytes(data[..4].try_into().unwrap())
+fn to_kind(data: &[u8]) -> crate::Kind {
+    data[..4].try_into().unwrap()
 }
 
 fn be_u64(data: &[u8]) -> u64 {

@@ -10,15 +10,14 @@ pub mod offset_by_kind {
     #[derive(Debug)]
     pub struct Error {
         pub kind: crate::Kind,
-        pub name: &'static str,
     }
 
     impl Display for Error {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             write!(
                 f,
-                "Chunk named {:?} (id = {}) was not found in chunk file index",
-                self.name, self.kind
+                "Chunk named {:?} was not found in chunk file index",
+                std::str::from_utf8(&self.kind).unwrap_or("<non-ascii>")
             )
         }
     }
@@ -61,25 +60,16 @@ impl Index {
     pub const EMPTY_SIZE: usize = Index::ENTRY_SIZE;
 
     /// Find a chunk of `kind` and return its offset into the data if found
-    pub fn offset_by_kind(
-        &self,
-        kind: crate::Kind,
-        name: &'static str,
-    ) -> Result<Range<crate::file::Offset>, offset_by_kind::Error> {
+    pub fn offset_by_kind(&self, kind: crate::Kind) -> Result<Range<crate::file::Offset>, offset_by_kind::Error> {
         self.chunks
             .iter()
             .find_map(|c| (c.kind == kind).then(|| c.offset.clone()))
-            .ok_or(offset_by_kind::Error { kind, name })
+            .ok_or(offset_by_kind::Error { kind })
     }
 
     /// Find a chunk of `kind` and return its data slice based on its offset.
-    pub fn data_by_kind<'a>(
-        &self,
-        data: &'a [u8],
-        kind: crate::Kind,
-        name: &'static str,
-    ) -> Result<&'a [u8], data_by_kind::Error> {
-        let offset = self.offset_by_kind(kind, name)?;
+    pub fn data_by_kind<'a>(&self, data: &'a [u8], kind: crate::Kind) -> Result<&'a [u8], data_by_kind::Error> {
+        let offset = self.offset_by_kind(kind)?;
         Ok(&data[crate::into_usize_range(offset).ok_or(data_by_kind::Error::FileTooLarge)?])
     }
 
