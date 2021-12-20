@@ -6,21 +6,12 @@ use arc_swap::ArcSwap;
 use crate::store::types::{MutableIndexAndPack, SlotMapIndex};
 
 /// Options for use in [`Store::at_opts()`].
-#[derive(Copy, Clone, Debug)]
+#[derive(Default, Copy, Clone, Debug)]
 pub struct Options {
     /// How to obtain a size for the slot map.
     pub slots: Slots,
-    /// If true, we are allowed to use multi-pack indices.
-    pub use_multi_pack_index: bool,
-}
-
-impl Default for Options {
-    fn default() -> Self {
-        Options {
-            slots: Default::default(),
-            use_multi_pack_index: true,
-        }
-    }
+    /// The kind of hash the multi-pack index must have to be considered. If `None`, no multi-pack indices will be used.
+    pub multi_pack_index_hash_kind: Option<git_hash::Kind>,
 }
 
 /// Configures the amount of slots in the index slotmap, which is fixed throughout the existence of the store.
@@ -62,7 +53,7 @@ impl Store {
         objects_dir: impl Into<PathBuf>,
         Options {
             slots,
-            use_multi_pack_index,
+            multi_pack_index_hash_kind,
         }: Options,
     ) -> std::io::Result<Self> {
         let objects_dir = objects_dir.into();
@@ -79,7 +70,7 @@ impl Store {
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                 db_paths.insert(0, objects_dir.clone());
                 let num_slots =
-                    super::Store::collect_indices_and_mtime_sorted_by_size(db_paths, None, use_multi_pack_index)
+                    super::Store::collect_indices_and_mtime_sorted_by_size(db_paths, None, multi_pack_index_hash_kind)
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
                         .len();
 
@@ -97,7 +88,7 @@ impl Store {
             path: objects_dir,
             files: Vec::from_iter(std::iter::repeat_with(MutableIndexAndPack::default).take(slot_count)),
             index: ArcSwap::new(Arc::new(SlotMapIndex::default())),
-            use_multi_pack_index,
+            multi_pack_index_hash_kind,
             num_handles_stable: Default::default(),
             num_handles_unstable: Default::default(),
             num_disk_state_consolidation: Default::default(),

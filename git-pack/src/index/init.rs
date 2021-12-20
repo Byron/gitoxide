@@ -36,8 +36,8 @@ impl TryFrom<&Path> for index::File {
     type Error = Error;
 
     fn try_from(path: &Path) -> Result<Self, Self::Error> {
-        let data = FileBuffer::open(&path).map_err(|e| Error::Io {
-            source: e,
+        let data = FileBuffer::open(&path).map_err(|source| Error::Io {
+            source,
             path: path.to_owned(),
         })?;
         let idx_len = data.len();

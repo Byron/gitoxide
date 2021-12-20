@@ -195,7 +195,7 @@ impl super::Store {
         let indices_by_modification_time = Self::collect_indices_and_mtime_sorted_by_size(
             db_paths,
             index.slot_indices.len().into(),
-            self.use_multi_pack_index,
+            self.multi_pack_index_hash_kind,
         )?;
         let mut idx_by_index_path: BTreeMap<_, _> = index
             .slot_indices
@@ -386,7 +386,7 @@ impl super::Store {
     pub(crate) fn collect_indices_and_mtime_sorted_by_size(
         db_paths: Vec<PathBuf>,
         initial_capacity: Option<usize>,
-        use_multi_pack_index: bool,
+        multi_pack_index_hash_kind: Option<git_hash::Kind>,
     ) -> Result<Vec<(PathBuf, SystemTime, u64)>, Error> {
         let mut indices_by_modification_time = Vec::with_capacity(initial_capacity.unwrap_or_default());
         for db_path in db_paths {
@@ -404,7 +404,7 @@ impl super::Store {
                     .filter(|(p, _)| {
                         let ext = p.extension();
                         ext == Some(OsStr::new("idx"))
-                            || (use_multi_pack_index && ext.is_none() && is_multipack_index(p))
+                            || (multi_pack_index_hash_kind.is_some() && ext.is_none() && is_multipack_index(p))
                     })
                     .map(|(p, md)| md.modified().map_err(Error::from).map(|mtime| (p, mtime, md.len())))
                     .collect::<Result<Vec<_>, _>>()?,
