@@ -34,19 +34,27 @@ pub struct File {
     index_names: Vec<PathBuf>,
     lookup: Range<git_chunk::file::Offset>,
     offsets: Range<git_chunk::file::Offset>,
-    pub large_offsets: Option<Range<git_chunk::file::Offset>>,
+    large_offsets: Option<Range<git_chunk::file::Offset>>,
+    checksum_offset: usize,
 }
 
 ///
 pub mod access {
     use crate::multi_index::File;
+    use std::convert::TryFrom;
 
     impl File {
         pub fn num_packs(&self) -> u32 {
             self.num_packs
         }
+        pub fn num_objects(&self) -> u32 {
+            self.num_objects
+        }
         pub fn hash_kind(&self) -> git_hash::Kind {
             self.hash_kind
+        }
+        pub fn checksum(&self) -> git_hash::ObjectId {
+            git_hash::ObjectId::try_from(&self.data[self.checksum_offset..]).expect("prior validation of checksum size")
         }
     }
 }
@@ -170,7 +178,7 @@ pub mod init {
                 path: std::path::PathBuf,
             },
             #[error("{message}")]
-            Corrupt { message: String },
+            Corrupt { message: &'static str },
             #[error("Unsupported multi-index version: {version})")]
             UnsupportedVersion { version: u8 },
             #[error("Unsupported hash kind: {kind})")]
@@ -219,7 +227,7 @@ pub mod init {
             const TRAILER_LEN: usize = git_hash::Kind::longest().len_in_bytes(); /* trailing hash */
             if data.len() < HEADER_LEN + git_chunk::file::Index::EMPTY_SIZE + TRAILER_LEN {
                 return Err(Error::Corrupt {
-                    message: "multi-index file is truncated and too short".into(),
+                    message: "multi-index file is truncated and too short",
                 });
             }
 
@@ -227,7 +235,7 @@ pub mod init {
                 let (signature, data) = data.split_at(4);
                 if signature != b"MIDX" {
                     return Err(Error::Corrupt {
-                        message: "Invalid signature".into(),
+                        message: "Invalid signature",
                     });
                 }
                 let (version, data) = data.split_at(1);
@@ -274,6 +282,14 @@ pub mod init {
                 return Err(Error::LargeOffsetsSize);
             }
 
+            let checksum_offset = chunks.highest_offset() as usize;
+            let trailer = &data[checksum_offset..];
+            if trailer.len() != hash_kind.len_in_bytes() {
+                return Err(Error::Corrupt {
+                    message: "Trailing checksum didn't have the expected size or there were unknown bytes after the checksum.",
+                });
+            }
+
             Ok(File {
                 data,
                 path: path.to_owned(),
@@ -284,6 +300,7 @@ pub mod init {
                 lookup,
                 offsets,
                 large_offsets,
+                checksum_offset,
                 num_objects,
                 num_chunks,
                 num_packs,
