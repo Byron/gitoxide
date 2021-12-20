@@ -45,17 +45,20 @@
         * [x] Add support for zlib-ng for 2.5x _compression_ performance
         * [x] objects to entries iterator
             * [x] input objects as-is
-            * [ ] pack only changed objects as derived from input
+            * [x] pack only changed objects as derived from input
             * [x] base object compression
             * [ ] delta compression
             * [x] create 'thin' pack, i.e. deltas that are based on objects the other side has.
             * [x] parallel implementation that scales perfectly
         * [x] entries to pack data iterator
+        * [ ] write index along with the new pack
     * [x] **verify** pack with statistics
         * [x] brute force - less memory
-        * [x] indexed - faster, but more memory
+        * [x] indexed - optimal speed, but more memory
     * **advanced**
         * [ ] Multi-Pack index file (MIDX)
+            * [ ] read
+            * [ ] write 
         * [ ] 'bitmap' file
         * [ ] [special handling for networked packs](https://github.com/git/git/blob/89b43f80a514aee58b662ad606e6352e03eaeee4/packfile.c#L949:L949)
         * [ ] [detect and retry packed object reading](https://github.com/git/git/blob/89b43f80a514aee58b662ad606e6352e03eaeee4/packfile.c#L1268:L1268)
