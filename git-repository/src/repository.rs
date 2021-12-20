@@ -34,6 +34,7 @@ mod from_path {
 
 ///
 pub mod open {
+    use git_config::file::GitConfig;
     use std::{borrow::Cow, path::PathBuf};
 
     use git_config::values::{Boolean, Integer};
@@ -103,21 +104,16 @@ pub mod open {
         ) -> Result<Self, Error> {
             let config = git_config::file::GitConfig::open(git_dir.join("config"))?;
             if worktree_dir.is_none() {
-                let is_bare = config
-                    .value::<Boolean<'_>>("core", None, "bare")
-                    .map_or(false, |b| matches!(b, Boolean::True(_)));
+                let is_bare = config_bool(&config, "core.bare", false);
                 if !is_bare {
                     worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());
                 }
             }
-            let use_multi_pack_index = config
-                .value::<Boolean<'_>>("core", None, "multiPackIndex")
-                .map_or(true, |b| matches!(b, Boolean::True(_)));
-            let hash_kind = if config
+            let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true);
+            let repo_format_version = config
                 .value::<Integer>("core", None, "repositoryFormatVersion")
-                .map_or(0, |v| v.value)
-                == 1
-            {
+                .map_or(0, |v| v.value);
+            let hash_kind = if repo_format_version == 1 {
                 if let Ok(format) = config.value::<Cow<'_, [u8]>>("extensions", None, "objectFormat") {
                     match format.as_ref() {
                         b"sha1" => git_hash::Kind::Sha1,
@@ -154,6 +150,13 @@ pub mod open {
                 hash_kind,
             })
         }
+    }
+
+    fn config_bool(config: &GitConfig<'_>, key: &str, default: bool) -> bool {
+        let (section, key) = key.split_once(".").expect("valid section.key format");
+        config
+            .value::<Boolean<'_>>(section, None, key)
+            .map_or(default, |b| matches!(b, Boolean::True(_)))
     }
 }
 
