@@ -34,3 +34,4 @@ mod bundle;
 mod data;
 mod index;
 mod iter;
+mod multi_index;

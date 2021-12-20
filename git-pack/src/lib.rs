@@ -36,3 +36,5 @@ pub use find_traits::{Find, FindExt};
 
 ///
 pub mod index;
+///
+pub mod multi_index;
