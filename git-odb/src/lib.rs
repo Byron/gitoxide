@@ -110,6 +110,8 @@ pub struct Store {
 
     /// The amount of times we re-read the disk state to consolidate our in-memory representation.
     pub(crate) num_disk_state_consolidation: AtomicUsize,
+    /// If true, we are allowed to use multi-pack indices.
+    pub use_multi_pack_index: bool,
 }
 
 impl Store {
@@ -120,8 +122,8 @@ impl Store {
 }
 
 /// Create a new cached handle to the object store with support for additional options.
-pub fn at_opts(objects_dir: impl Into<PathBuf>, slots: store::init::Slots) -> std::io::Result<Handle> {
-    let handle = OwnShared::new(Store::at_opts(objects_dir, slots)?).to_handle();
+pub fn at_opts(objects_dir: impl Into<PathBuf>, options: store::init::Options) -> std::io::Result<Handle> {
+    let handle = OwnShared::new(Store::at_opts(objects_dir, options)?).to_handle();
     Ok(Cache::from(handle))
 }
 

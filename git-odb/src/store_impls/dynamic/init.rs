@@ -1,10 +1,30 @@
 use std::{iter::FromIterator, path::PathBuf, sync::Arc};
 
+use crate::Store;
 use arc_swap::ArcSwap;
 
 use crate::store::types::{MutableIndexAndPack, SlotMapIndex};
 
+/// Options for use in [`Store::at_opts()`].
+#[derive(Copy, Clone, Debug)]
+pub struct Options {
+    /// How to obtain a size for the slot map.
+    slots: Slots,
+    /// If true, we are allowed to use multi-pack indices.
+    use_multi_pack_index: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options {
+            slots: Default::default(),
+            use_multi_pack_index: true,
+        }
+    }
+}
+
 /// Configures the amount of slots in the index slotmap, which is fixed throughout the existence of the store.
+#[derive(Copy, Clone, Debug)]
 pub enum Slots {
     /// The amount of slots to use, that is the total amount of indices we can hold at a time.
     /// Using this has the advantage of avoiding an initial directory listing of the repository, and is recommended
@@ -30,7 +50,7 @@ impl Default for Slots {
     }
 }
 
-impl super::Store {
+impl Store {
     /// Open the store at `objects_dir` (containing loose objects and `packs/`), which must only be a directory for
     /// the store to be created without any additional work being done.
     /// `slots` defines how many multi-pack-indices as well as indices we can know about at a time, which includes
@@ -38,7 +58,13 @@ impl super::Store {
     /// Note that the `slots` isn't used for packs, these are included with their multi-index or index respectively.
     /// For example, In a repository with 250m objects and geometric packing one would expect 27 index/pack pairs,
     /// or a single multi-pack index.
-    pub fn at_opts(objects_dir: impl Into<PathBuf>, slots: Slots) -> std::io::Result<Self> {
+    pub fn at_opts(
+        objects_dir: impl Into<PathBuf>,
+        Options {
+            slots,
+            use_multi_pack_index,
+        }: Options,
+    ) -> std::io::Result<Self> {
         let objects_dir = objects_dir.into();
         if !objects_dir.is_dir() {
             return Err(std::io::Error::new(
@@ -52,9 +78,10 @@ impl super::Store {
                 let mut db_paths = crate::alternate::resolve(&objects_dir)
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                 db_paths.insert(0, objects_dir.clone());
-                let num_slots = super::Store::collect_indices_and_mtime_sorted_by_size(db_paths, None)
-                    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
-                    .len();
+                let num_slots =
+                    super::Store::collect_indices_and_mtime_sorted_by_size(db_paths, None, use_multi_pack_index)
+                        .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
+                        .len();
 
                 ((num_slots as f32 * multiplier) as usize).max(minimum)
             }
@@ -65,11 +92,12 @@ impl super::Store {
                 "Cannot use more than 1^15 slots",
             ));
         }
-        Ok(super::Store {
+        Ok(Store {
             write: Default::default(),
             path: objects_dir,
             files: Vec::from_iter(std::iter::repeat_with(MutableIndexAndPack::default).take(slot_count)),
             index: ArcSwap::new(Arc::new(SlotMapIndex::default())),
+            use_multi_pack_index,
             num_handles_stable: Default::default(),
             num_handles_unstable: Default::default(),
             num_disk_state_consolidation: Default::default(),
