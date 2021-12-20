@@ -12,7 +12,7 @@ radicle-nightly = ["link-git"]
 
 [dependencies]
 anyhow = "1"
-git-repository = { path = "../../git-repository", version ="^0.13.0", features = ["unstable"] }
+git-repository = { path = "../../git-repository", version ="^0.14.0", features = ["unstable"] }
 git2 = "0.13"
 link-git = { git = "https://github.com/radicle-dev/radicle-link", rev = "b1c4971ba78d562d617a7620c5ec9409571fbbd0", optional = true }
 rayon = "1.5.0"

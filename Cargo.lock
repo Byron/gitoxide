@@ -354,7 +354,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-smart-release"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1085,7 +1085,7 @@ dependencies = [
 
 [[package]]
 name = "git-chunk"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "quick-error",
 ]
@@ -1147,7 +1147,7 @@ version = "0.12.0"
 dependencies = [
  "git-hash 0.8.0",
  "git-object 0.16.0",
- "git-odb 0.25.0",
+ "git-odb 0.26.0",
  "git-testtools",
  "git-traverse 0.11.0",
  "quick-error",
@@ -1290,7 +1290,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "arc-swap",
  "btoi",
@@ -1298,7 +1298,7 @@ dependencies = [
  "git-features 0.18.0",
  "git-hash 0.8.0",
  "git-object 0.16.0",
- "git-pack 0.15.0",
+ "git-pack 0.16.0",
  "git-testtools",
  "parking_lot",
  "pretty_assertions",
@@ -1333,7 +1333,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.15.0"
+version = "0.16.0"
 dependencies = [
  "bstr",
  "byteorder",
@@ -1347,7 +1347,7 @@ dependencies = [
  "git-features 0.18.0",
  "git-hash 0.8.0",
  "git-object 0.16.0",
- "git-odb 0.25.0",
+ "git-odb 0.26.0",
  "git-tempfile 1.0.3",
  "git-testtools",
  "git-traverse 0.11.0",
@@ -1369,7 +1369,7 @@ dependencies = [
  "bstr",
  "futures-io",
  "futures-lite",
- "git-odb 0.25.0",
+ "git-odb 0.26.0",
  "hex",
  "maybe-async",
  "pin-project-lite",
@@ -1460,7 +1460,7 @@ dependencies = [
  "git-hash 0.8.0",
  "git-lock 1.0.1",
  "git-object 0.16.0",
- "git-odb 0.25.0",
+ "git-odb 0.26.0",
  "git-tempfile 1.0.3",
  "git-testtools",
  "git-validate 0.5.3",
@@ -1473,7 +1473,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "anyhow",
  "byte-unit",
@@ -1485,8 +1485,8 @@ dependencies = [
  "git-hash 0.8.0",
  "git-lock 1.0.1",
  "git-object 0.16.0",
- "git-odb 0.25.0",
- "git-pack 0.15.0",
+ "git-odb 0.26.0",
+ "git-pack 0.16.0",
  "git-protocol 0.13.0",
  "git-ref 0.10.0",
  "git-tempfile 1.0.3",
@@ -1571,7 +1571,7 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "git-features 0.18.0",
- "git-pack 0.15.0",
+ "git-pack 0.16.0",
  "git-packetline 0.12.2",
  "git-url 0.3.4",
  "maybe-async",
@@ -1598,7 +1598,7 @@ version = "0.11.0"
 dependencies = [
  "git-hash 0.8.0",
  "git-object 0.16.0",
- "git-odb 0.25.0",
+ "git-odb 0.26.0",
  "git-testtools",
  "quick-error",
 ]
@@ -1696,7 +1696,7 @@ dependencies = [
  "futures-lite",
  "git-commitgraph",
  "git-config",
- "git-pack 0.15.0",
+ "git-pack 0.16.0",
  "git-repository",
  "git-url 0.3.4",
  "itertools",

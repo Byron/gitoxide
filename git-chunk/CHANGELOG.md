@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.2.0 (2021-12-20)
 
 ### New Features
 
@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
+ - 5 commits contributed to the release.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#279](https://github.com/Byron/gitoxide/issues/279)
 
@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **[#279](https://github.com/Byron/gitoxide/issues/279)**
+    - update changelog ([`099f055`](https://github.com/Byron/gitoxide/commit/099f0559f835e5893cfc91d6d07216ed65db0790))
     - Use `[u8;4]` as chunk id ([`9d9f2ee`](https://github.com/Byron/gitoxide/commit/9d9f2ee55202788910cd955cdcc08196d18f2cf5))
     - new file::Index::highest_offset() method ([`d0fab1e`](https://github.com/Byron/gitoxide/commit/d0fab1e7f083088f607365ceec056e6e521cbdcc))
     - refactor ([`7a9e628`](https://github.com/Byron/gitoxide/commit/7a9e628725c927d4fed8ef70e96ca2b802195bff))
