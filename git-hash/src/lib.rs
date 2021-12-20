@@ -94,4 +94,10 @@ impl Kind {
             Kind::Sha1 => 40,
         }
     }
+    /// Returns the amount of bytes taken up by the hash of the current kind
+    pub const fn len_in_bytes(&self) -> usize {
+        match self {
+            Kind::Sha1 => 20,
+        }
+    }
 }
