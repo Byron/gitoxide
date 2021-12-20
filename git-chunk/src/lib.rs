@@ -17,6 +17,31 @@ pub mod file {
         use crate::file::Index;
         use std::ops::Range;
 
+        ///
+        pub mod not_found {
+            use std::fmt::{Display, Formatter};
+
+            /// The error returned by [Index::offset_by_kind()][super::Index::offset_by_kind()].
+            #[allow(missing_docs)]
+            #[derive(Debug)]
+            pub struct Error {
+                pub kind: crate::Kind,
+                pub name: &'static str,
+            }
+
+            impl Display for Error {
+                fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                    write!(
+                        f,
+                        "Chunk named {:?} (id = {}) was not found in chunk file index",
+                        self.name, self.kind
+                    )
+                }
+            }
+
+            impl std::error::Error for Error {}
+        }
+
         /// An entry of a chunk file index
         pub struct Entry {
             /// The kind of the chunk file
@@ -32,10 +57,15 @@ pub mod file {
             pub const EMPTY_SIZE: usize = Index::ENTRY_SIZE;
 
             /// Find a chunk of `kind` and return its offset into the data if found
-            pub fn offset_by_kind(&self, kind: crate::Kind) -> Option<Range<crate::file::Offset>> {
+            pub fn offset_by_kind(
+                &self,
+                kind: crate::Kind,
+                name: &'static str,
+            ) -> Result<Range<crate::file::Offset>, not_found::Error> {
                 self.chunks
                     .iter()
                     .find_map(|c| (c.kind == kind).then(|| c.offset.clone()))
+                    .ok_or_else(|| not_found::Error { kind, name })
             }
         }
     }

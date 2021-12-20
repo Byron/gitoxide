@@ -1,5 +1,7 @@
 #![allow(missing_docs, unused)]
+
 use filebuffer::FileBuffer;
+use std::ops::Range;
 
 /// Known multi-index file versions
 #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Hash, Clone, Copy)]
@@ -25,6 +27,7 @@ pub struct File {
     num_chunks: u8,
     /// The amount of pack files contained within
     num_packs: u32,
+    fanout: Range<git_chunk::file::Offset>,
 }
 
 ///
@@ -41,9 +44,27 @@ pub mod access {
     }
 }
 
+mod chunk {
+    pub mod pack_names {
+        pub const ID: git_chunk::Kind = 0x504e414d; /* "PNAM" */
+    }
+    pub mod fanout {
+        pub const ID: git_chunk::Kind = 0x4f494446; /* "OIDF" */
+    }
+    pub mod lookup {
+        pub const ID: git_chunk::Kind = 0x4f49444c; /* "OIDL" */
+    }
+    pub mod offsets {
+        pub const ID: git_chunk::Kind = 0x4f4f4646; /* "OOFF" */
+    }
+    pub mod large_offsets {
+        pub const ID: git_chunk::Kind = 0x4c4f4646; /* "LOFF" */
+    }
+}
+
 ///
 pub mod init {
-    use crate::multi_index::{File, Version};
+    use crate::multi_index::{chunk, File, Version};
     use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
     use filebuffer::FileBuffer;
     use std::convert::{TryFrom, TryInto};
@@ -65,6 +86,8 @@ pub mod init {
             UnsupportedHashKind { kind: u8 },
             #[error(transparent)]
             ChunkFileDecode(#[from] git_chunk::file::decode::Error),
+            #[error(transparent)]
+            MissingChunk(#[from] git_chunk::file::index::not_found::Error),
         }
     }
     pub use error::Error;
@@ -128,12 +151,18 @@ pub mod init {
             };
 
             let chunks = git_chunk::file::Index::from_bytes(&data, HEADER_LEN, num_chunks as u32)?;
+            let pack_names = chunks.offset_by_kind(chunk::pack_names::ID, "PNAM")?;
+            let fanout = chunks.offset_by_kind(chunk::fanout::ID, "OIDF")?;
+            let lookup = chunks.offset_by_kind(chunk::lookup::ID, "OIDL")?;
+            let offsets = chunks.offset_by_kind(chunk::offsets::ID, "OOFF")?;
+            let large_offsets = chunks.offset_by_kind(chunk::large_offsets::ID, "LOFF").ok();
 
             Ok(File {
                 data,
                 path: path.to_owned(),
                 version,
                 hash_kind,
+                fanout,
                 num_chunks,
                 num_packs,
             })
