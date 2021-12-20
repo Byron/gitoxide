@@ -1085,10 +1085,9 @@ dependencies = [
 
 [[package]]
 name = "git-chunk"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "git-testtools",
- "hex",
  "quick-error",
 ]
 

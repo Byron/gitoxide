@@ -22,6 +22,7 @@ echo "in root: gitoxide CLI"
 (enter git-lock && indent cargo diet -n --package-size-limit 15KB)
 (enter git-config && indent cargo diet -n --package-size-limit 65KB)
 (enter git-hash && indent cargo diet -n --package-size-limit 10KB)
+(enter git-chunk && indent cargo diet -n --package-size-limit 5KB)
 (enter git-features && indent cargo diet -n --package-size-limit 35KB)
 (enter git-ref && indent cargo diet -n --package-size-limit 50KB)
 (enter git-diff && indent cargo diet -n --package-size-limit 10KB)
