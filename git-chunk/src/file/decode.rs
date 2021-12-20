@@ -18,6 +18,9 @@ mod error {
             ChunkSizeOutOfBounds { offset: crate::file::Offset, file_length: u64 } {
                 display("The chunk offset {} went past the file of length {} - was it truncated?", offset, file_length)
             }
+            NonIncrementalChunkOffsets {
+                display("All chunk offsets must be incrementing.")
+            }
             DuplicateChunk(kind: crate::Kind) {
                 display("The chunk of kind {:#016x} was encountered more than once", kind)
             }
@@ -77,6 +80,9 @@ impl file::Index {
                     offset: next_offset,
                     file_length: data_len,
                 });
+            }
+            if next_offset <= offset {
+                return Err(Error::NonIncrementalChunkOffsets);
             }
             chunks.push(index::Entry {
                 kind,

@@ -82,4 +82,10 @@ impl Index {
         let offset = self.offset_by_kind(kind, name)?;
         Ok(&data[crate::into_usize_range(offset).ok_or(data_by_kind::Error::FileTooLarge)?])
     }
+
+    /// Return the end offset lf the last chunk, which is the highest offset as well.
+    /// It's definitely available as we have one or more chunks.
+    pub fn highest_offset(&self) -> crate::file::Offset {
+        self.chunks.last().expect("at least one chunk").offset.end
+    }
 }
