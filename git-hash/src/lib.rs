@@ -100,4 +100,12 @@ impl Kind {
             Kind::Sha1 => 20,
         }
     }
+
+    /// Converts a size in bytes as obtained by `Kind::len_in_bytes()` into the corresponding hash kind, if possible.
+    pub const fn from_len_in_bytes(bytes: usize) -> Option<Self> {
+        Some(match bytes {
+            20 => Kind::Sha1,
+            _ => return None,
+        })
+    }
 }
