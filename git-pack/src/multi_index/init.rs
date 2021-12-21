@@ -58,8 +58,10 @@ impl TryFrom<&Path> for File {
                     1 /*num chunks */ +
                     1 /*num base files */ +
                     4 /*num pack files*/;
-        const TRAILER_LEN: usize = git_hash::Kind::longest().len_in_bytes(); /* trailing hash */
-        if data.len() < HEADER_LEN + git_chunk::file::Index::EMPTY_SIZE + TRAILER_LEN {
+        const TRAILER_LEN: usize = git_hash::Kind::shortest().len_in_bytes(); /* trailing hash */
+        if data.len()
+            < HEADER_LEN + git_chunk::file::Index::size_for_entries(4 /*index names, fan, offsets, oids*/) + TRAILER_LEN
+        {
             return Err(Error::Corrupt {
                 message: "multi-index file is truncated and too short",
             });
