@@ -66,7 +66,7 @@ impl easy::Handle {
         let state = self;
         state
             .objects
-            .write(object, state.hash_kind)
+            .write(object)
             .map(|oid| oid.attach(self))
             .map_err(Into::into)
     }

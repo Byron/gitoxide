@@ -8,7 +8,6 @@ use std::{
 use anyhow::{anyhow, Result};
 use git_repository::{
     easy::object,
-    hash,
     hash::ObjectId,
     objs, odb,
     odb::{loose, pack, Write},
@@ -115,23 +114,17 @@ enum OutputWriter {
 impl git_repository::odb::Write for OutputWriter {
     type Error = Error;
 
-    fn write_buf(&self, kind: object::Kind, from: &[u8], hash: hash::Kind) -> Result<ObjectId, Self::Error> {
+    fn write_buf(&self, kind: object::Kind, from: &[u8]) -> Result<ObjectId, Self::Error> {
         match self {
-            OutputWriter::Loose(db) => db.write_buf(kind, from, hash).map_err(Into::into),
-            OutputWriter::Sink(db) => db.write_buf(kind, from, hash).map_err(Into::into),
+            OutputWriter::Loose(db) => db.write_buf(kind, from).map_err(Into::into),
+            OutputWriter::Sink(db) => db.write_buf(kind, from).map_err(Into::into),
         }
     }
 
-    fn write_stream(
-        &self,
-        kind: object::Kind,
-        size: u64,
-        from: impl Read,
-        hash: hash::Kind,
-    ) -> Result<ObjectId, Self::Error> {
+    fn write_stream(&self, kind: object::Kind, size: u64, from: impl Read) -> Result<ObjectId, Self::Error> {
         match self {
-            OutputWriter::Loose(db) => db.write_stream(kind, size, from, hash).map_err(Into::into),
-            OutputWriter::Sink(db) => db.write_stream(kind, size, from, hash).map_err(Into::into),
+            OutputWriter::Loose(db) => db.write_stream(kind, size, from).map_err(Into::into),
+            OutputWriter::Sink(db) => db.write_stream(kind, size, from).map_err(Into::into),
         }
     }
 }
@@ -140,7 +133,7 @@ impl OutputWriter {
     fn new(path: Option<impl AsRef<Path>>, compress: bool, hash_kind: git_repository::hash::Kind) -> Self {
         match path {
             Some(path) => OutputWriter::Loose(loose::Store::at(path.as_ref(), hash_kind)),
-            None => OutputWriter::Sink(odb::sink().compress(compress)),
+            None => OutputWriter::Sink(odb::sink(hash_kind).compress(compress)),
         }
     }
 }
@@ -205,12 +198,12 @@ pub fn pack_or_pack_index(
             {
                 let object_path = object_path.map(|p| p.as_ref().to_owned());
                 move || {
-                    let hash_kind= git_repository::hash::Kind::Sha1;
+                    let hash_kind = git_repository::hash::Kind::Sha1; // TODO: make this configurable via CLI
                     let out = OutputWriter::new(object_path.clone(), sink_compress, hash_kind);
                     let object_verifier = if verify { object_path.as_ref().map(|path| loose::Store::at(path, hash_kind)) } else { None };
                     let mut read_buf = Vec::new();
                     move |object_kind, buf, index_entry, progress| {
-                        let written_id = out.write_buf(object_kind, buf, hash::Kind::Sha1).map_err(|err| {
+                        let written_id = out.write_buf(object_kind, buf).map_err(|err| {
                             Error::Write(
                                 Box::new(err) as Box<dyn std::error::Error + Send + Sync>,
                                 object_kind,
