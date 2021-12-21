@@ -50,7 +50,7 @@ pub mod access {
             self.num_objects
         }
         pub fn hash_kind(&self) -> git_hash::Kind {
-            git_hash::Kind::from_len_in_bytes(self.hash_len).expect("init checked hash len")
+            git_hash::Kind::from_len_in_bytes(self.hash_len)
         }
         pub fn checksum(&self) -> git_hash::ObjectId {
             git_hash::ObjectId::from(&self.data[self.data.len() - self.hash_len..])

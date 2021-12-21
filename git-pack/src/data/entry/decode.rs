@@ -3,8 +3,6 @@ use std::io;
 use super::{BLOB, COMMIT, OFS_DELTA, REF_DELTA, TAG, TREE};
 use crate::data;
 
-const SHA1_SIZE: usize = git_hash::Kind::Sha1.len_in_bytes();
-
 /// Decoding
 impl data::Entry {
     /// Decode an entry from the given entry data `d`, providing the `pack_offset` to allow tracking the start of the entry data section.
@@ -46,7 +44,7 @@ impl data::Entry {
     }
 
     /// Instantiate an `Entry` from the reader `r`, providing the `pack_offset` to allow tracking the start of the entry data section.
-    pub fn from_read(mut r: impl io::Read, pack_offset: u64) -> Result<data::Entry, io::Error> {
+    pub fn from_read(mut r: impl io::Read, pack_offset: u64, hash_len: usize) -> Result<data::Entry, io::Error> {
         let (type_id, size, mut consumed) = streaming_parse_header_info(&mut r)?;
 
         use crate::data::entry::Header::*;
@@ -60,12 +58,13 @@ impl data::Entry {
                 delta
             }
             REF_DELTA => {
-                let mut buf = [0u8; SHA1_SIZE];
-                r.read_exact(&mut buf)?;
+                let mut buf = git_hash::Kind::buf();
+                let hash = &mut buf[..hash_len];
+                r.read_exact(hash)?;
                 let delta = RefDelta {
-                    base_id: git_hash::ObjectId::new_sha1(buf),
+                    base_id: git_hash::ObjectId::from(&hash[..]),
                 };
-                consumed += SHA1_SIZE;
+                consumed += hash_len;
                 delta
             }
             BLOB => Blob,

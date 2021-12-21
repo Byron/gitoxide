@@ -22,6 +22,7 @@ pub struct BytesToEntriesIter<BR> {
     mode: input::Mode,
     compressed: input::EntryDataMode,
     compressed_buf: Option<Vec<u8>>,
+    hash_len: usize,
 }
 
 impl<BR> BytesToEntriesIter<BR>
@@ -39,12 +40,14 @@ where
     }
 
     /// Obtain an iterator from a `read` stream to a pack data file and configure it using `mode` and `compressed`.
+    /// `hash_kind` specifies which hash is used for objects in ref-delta entries.
     ///
     /// Note that `read` is expected at the beginning of a valid pack data file with a header, entries and a trailer.
     pub fn new_from_header(
         mut read: BR,
         mode: input::Mode,
         compressed: input::EntryDataMode,
+        hash_kind: git_hash::Kind,
     ) -> Result<BytesToEntriesIter<BR>, input::Error> {
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
@@ -64,12 +67,13 @@ where
             kind,
             objects_left: num_objects,
             hash: (mode != input::Mode::AsIs).then(|| {
-                let mut hash = Sha1::default();
+                let mut hash = git_features::hash::hasher(hash_kind);
                 hash.update(&header_data);
                 hash
             }),
             mode,
             compressed_buf: None,
+            hash_len: hash_kind.len_in_bytes(),
         })
     }
 
@@ -86,11 +90,11 @@ where
                         hash,
                     },
                 );
-                let res = crate::data::Entry::from_read(&mut read, self.offset);
+                let res = crate::data::Entry::from_read(&mut read, self.offset, self.hash_len);
                 self.hash = Some(read.write.hash);
                 res
             }
-            None => crate::data::Entry::from_read(&mut self.read, self.offset),
+            None => crate::data::Entry::from_read(&mut self.read, self.offset, self.hash_len),
         }
         .map_err(input::Error::from)?;
 
@@ -271,6 +275,11 @@ impl crate::data::File {
     /// Returns an iterator over [`Entries`][crate::data::input::Entry], without making use of the memory mapping.
     pub fn streaming_iter(&self) -> Result<BytesToEntriesIter<impl io::BufRead>, input::Error> {
         let reader = io::BufReader::with_capacity(4096 * 8, fs::File::open(&self.path)?);
-        BytesToEntriesIter::new_from_header(reader, input::Mode::Verify, input::EntryDataMode::KeepAndCrc32)
+        BytesToEntriesIter::new_from_header(
+            reader,
+            input::Mode::Verify,
+            input::EntryDataMode::KeepAndCrc32,
+            git_hash::Kind::from_len_in_bytes(self.hash_len),
+        )
     }
 }

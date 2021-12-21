@@ -55,6 +55,7 @@ impl crate::Bundle {
             progress: progress::ThroughputOnDrop::new(read_progress),
         };
 
+        let hash_kind = options.hash_kind;
         let data_file = Arc::new(parking_lot::Mutex::new(match directory.as_ref() {
             Some(directory) => git_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?,
             None => git_tempfile::new(std::env::temp_dir(), ContainingDirectory::Exists, AutoRemove::Tempfile)?,
@@ -74,6 +75,7 @@ impl crate::Bundle {
                         buffered_pack,
                         options.iteration_mode,
                         data::input::EntryDataMode::KeepAndCrc32,
+                        hash_kind,
                     )?,
                     thin_pack_lookup_fn,
                 );
@@ -105,12 +107,12 @@ impl crate::Bundle {
                     buffered_pack,
                     options.iteration_mode,
                     data::input::EntryDataMode::Crc32,
+                    hash_kind,
                 )?;
                 let pack_kind = pack_entries_iter.kind();
                 (Box::new(pack_entries_iter), pack_kind)
             }
         };
-        let hash_kind = options.hash_kind;
         let (outcome, data_path, index_path) = crate::Bundle::inner_write(
             directory,
             progress,
@@ -156,6 +158,7 @@ impl crate::Bundle {
             Some(directory) => git_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?,
             None => git_tempfile::new(std::env::temp_dir(), ContainingDirectory::Exists, AutoRemove::Tempfile)?,
         }));
+        let hash_kind = options.hash_kind;
         let eight_pages = 4096 * 8;
         let (pack_entries_iter, pack_kind): (
             Box<dyn Iterator<Item = Result<data::input::Entry, data::input::Error>> + Send + 'static>,
@@ -172,6 +175,7 @@ impl crate::Bundle {
                         buffered_pack,
                         options.iteration_mode,
                         data::input::EntryDataMode::KeepAndCrc32,
+                        hash_kind,
                     )?,
                     thin_pack_lookup_fn,
                 );
@@ -191,6 +195,7 @@ impl crate::Bundle {
                     buffered_pack,
                     options.iteration_mode,
                     data::input::EntryDataMode::Crc32,
+                    hash_kind,
                 )?;
                 let pack_kind = pack_entries_iter.kind();
                 (Box::new(pack_entries_iter), pack_kind)
@@ -200,7 +205,6 @@ impl crate::Bundle {
         let pack_entries_iter =
             git_features::parallel::EagerIterIf::new(move || num_objects > 25_000, pack_entries_iter, 5_000, 5);
 
-        let hash_kind = options.hash_kind;
         let (outcome, data_path, index_path) = crate::Bundle::inner_write(
             directory,
             progress,

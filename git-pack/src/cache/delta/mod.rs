@@ -167,6 +167,7 @@ mod tests {
                     git_features::progress::Discard,
                     &AtomicBool::new(false),
                     |id| idx.lookup(id).map(|index| idx.pack_offset_at_index(index)),
+                    git_hash::Kind::Sha1,
                 )?;
                 Ok(())
             }

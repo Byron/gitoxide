@@ -48,6 +48,7 @@ impl<T> Tree<T> {
         mut progress: impl Progress,
         should_interrupt: &AtomicBool,
         resolve_in_pack_id: impl Fn(&git_hash::oid) -> Option<PackOffset>,
+        hash_kind: git_hash::Kind,
     ) -> Result<Self, Error> {
         let mut r = io::BufReader::with_capacity(
             8192 * 8, // this value directly corresponds to performance, 8k (default) is about 4x slower than 64k
@@ -79,12 +80,13 @@ impl<T> Tree<T> {
 
         let mut previous_cursor_position = None::<u64>;
 
+        let hash_len = hash_kind.len_in_bytes();
         for (idx, data) in data_sorted_by_offsets.enumerate() {
             let pack_offset = get_pack_offset(&data);
             if let Some(previous_offset) = previous_cursor_position {
                 Self::advance_cursor_to_pack_offset(&mut r, pack_offset, previous_offset)?;
             };
-            let entry = crate::data::Entry::from_read(&mut r, pack_offset).map_err(|err| Error::Io {
+            let entry = crate::data::Entry::from_read(&mut r, pack_offset, hash_len).map_err(|err| Error::Io {
                 source: err,
                 message: "EOF while parsing header",
             })?;
