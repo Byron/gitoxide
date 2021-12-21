@@ -17,30 +17,30 @@ impl loose::Iter {
     ) -> Option<Result<git_hash::ObjectId, Error>> {
         use std::path::Component::Normal;
 
-        let mut is_valid_path = false;
-        let e = res.map_err(Error::WalkDir).map(|e| {
-            let p = e.path();
-            let mut ci = p.components();
-            let (c2, c1) = (ci.next_back(), ci.next_back());
-            if let (Some(Normal(c1)), Some(Normal(c2))) = (c1, c2) {
-                if c1.len() == 2 && c2.len() == self.hash_hex_len - 2 {
-                    if let (Some(c1), Some(c2)) = (c1.to_str(), c2.to_str()) {
-                        let mut buf = git_hash::Kind::hex_buf();
-                        {
-                            let (first_byte, rest) = buf[..self.hash_hex_len].split_at_mut(2);
-                            first_byte.copy_from_slice(c1.as_bytes());
-                            rest.copy_from_slice(c2.as_bytes());
-                        }
-                        if let Ok(b) = git_hash::ObjectId::from_hex(&buf[..self.hash_hex_len]) {
-                            is_valid_path = true;
-                            return b;
+        match res {
+            Ok(e) => {
+                let p = e.path();
+                let mut ci = p.components();
+                let (c2, c1) = (ci.next_back(), ci.next_back());
+                if let (Some(Normal(c1)), Some(Normal(c2))) = (c1, c2) {
+                    if c1.len() == 2 && c2.len() == self.hash_hex_len - 2 {
+                        if let (Some(c1), Some(c2)) = (c1.to_str(), c2.to_str()) {
+                            let mut buf = git_hash::Kind::hex_buf();
+                            {
+                                let (first_byte, rest) = buf[..self.hash_hex_len].split_at_mut(2);
+                                first_byte.copy_from_slice(c1.as_bytes());
+                                rest.copy_from_slice(c2.as_bytes());
+                            }
+                            if let Ok(b) = git_hash::ObjectId::from_hex(&buf[..self.hash_hex_len]) {
+                                return Some(Ok(b));
+                            }
                         }
                     }
                 }
             }
-            git_hash::ObjectId::null_sha1()
-        });
-        is_valid_path.then(|| e)
+            Err(err) => return Some(Err(err.into())),
+        };
+        None
     }
 }
 
