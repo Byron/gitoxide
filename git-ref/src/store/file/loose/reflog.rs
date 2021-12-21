@@ -148,7 +148,7 @@ pub mod create_or_update {
                         write!(
                             file,
                             "{} {} ",
-                            previous_oid.unwrap_or_else(|| ObjectId::null(new.kind())),
+                            previous_oid.unwrap_or_else(|| new.kind().null_owned()),
                             new
                         )
                         .and_then(|_| committer.write_to(&mut file))
