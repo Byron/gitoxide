@@ -41,18 +41,20 @@ impl compound::Store {
                     .filter(|(p, _)| p.extension().unwrap_or_default() == "idx")
                     .enumerate()
                     .map(|(idx, (p, md))| {
-                        pack::Bundle::at(p).map_err(Error::from).and_then(|mut b| {
-                            md.modified().map_err(Into::into).map(|mod_time| {
-                                (
-                                    {
-                                        // don't rely on crc32 for producing non-clashing ids. It's the kind of bug we don't want
-                                        b.pack.id = idx as u32 + pack_id_offset;
-                                        b
-                                    },
-                                    mod_time,
-                                )
+                        pack::Bundle::at(p, git_hash::Kind::Sha1)
+                            .map_err(Error::from)
+                            .and_then(|mut b| {
+                                md.modified().map_err(Into::into).map(|mod_time| {
+                                    (
+                                        {
+                                            // don't rely on crc32 for producing non-clashing ids. It's the kind of bug we don't want
+                                            b.pack.id = idx as u32 + pack_id_offset;
+                                            b
+                                        },
+                                        mod_time,
+                                    )
+                                })
                             })
-                        })
                     })
                     .collect::<Result<Vec<_>, _>>()?;
                 // Like libgit2, sort by modification date, newest first
