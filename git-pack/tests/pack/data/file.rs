@@ -12,16 +12,14 @@ mod method {
     use std::sync::atomic::AtomicBool;
 
     use git_features::progress;
+    use git_testtools::hex_to_id;
 
     use crate::pack::{data::file::pack_at, SMALL_PACK};
 
     #[test]
     fn checksum() {
         let p = pack_at(SMALL_PACK);
-        assert_eq!(
-            hex::encode(p.checksum().sha1()),
-            "0f3ea84cd1bba10c2a03d736a460635082833e59"
-        );
+        assert_eq!(p.checksum(), hex_to_id("0f3ea84cd1bba10c2a03d736a460635082833e59"));
     }
 
     #[test]
