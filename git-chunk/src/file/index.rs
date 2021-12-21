@@ -59,6 +59,11 @@ impl Index {
     /// The smallest possible size of an index, consisting only of the sentinel value pointing past itself.
     pub const EMPTY_SIZE: usize = Index::ENTRY_SIZE;
 
+    /// Returns the size in bytes an index with `num_entries` would take.
+    pub const fn size_for_entries(num_entries: usize) -> usize {
+        Self::ENTRY_SIZE * (num_entries + 1/*sentinel*/)
+    }
+
     /// Find a chunk of `kind` and return its offset into the data if found
     pub fn offset_by_id(&self, kind: crate::Id) -> Result<Range<crate::file::Offset>, offset_by_kind::Error> {
         self.chunks
