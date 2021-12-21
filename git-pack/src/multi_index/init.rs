@@ -104,27 +104,33 @@ impl TryFrom<&Path> for File {
         let fan = chunk::fanout::from_slice(fan).ok_or(Error::MultiPackFanSize)?;
         let num_objects = fan[255];
 
-        let lookup = chunks.usize_offset_by_id(chunk::lookup::ID)?;
-        if !chunk::lookup::is_valid(&lookup, hash_kind, num_objects) {
-            return Err(Error::InvalidChunkSize {
-                id: chunk::lookup::ID,
-                message: "The chunk with alphabetically ordered object ids doesn't have the correct size",
-            });
-        }
-        let offsets = chunks.usize_offset_by_id(chunk::offsets::ID)?;
-        if !chunk::offsets::is_valid(&offsets, num_objects) {
-            return Err(Error::InvalidChunkSize {
-                id: chunk::offsets::ID,
-                message: "The chunk with offsets into the pack doesn't have the correct size",
-            });
-        }
-        let large_offsets = chunks.usize_offset_by_id(chunk::large_offsets::ID).ok();
-        if !chunk::large_offsets::is_valid(large_offsets.as_ref()) {
-            return Err(Error::InvalidChunkSize {
-                id: chunk::large_offsets::ID,
-                message: "The chunk with large offsets into the pack doesn't have the correct size",
-            });
-        }
+        let lookup = chunks.validated_usize_offset_by_id(chunk::lookup::ID, |offset| {
+            chunk::lookup::is_valid(&offset, hash_kind, num_objects)
+                .then(|| offset)
+                .ok_or(Error::InvalidChunkSize {
+                    id: chunk::lookup::ID,
+                    message: "The chunk with alphabetically ordered object ids doesn't have the correct size",
+                })
+        })??;
+        let offsets = chunks.validated_usize_offset_by_id(chunk::offsets::ID, |offset| {
+            chunk::offsets::is_valid(&offset, num_objects)
+                .then(|| offset)
+                .ok_or(Error::InvalidChunkSize {
+                    id: chunk::offsets::ID,
+                    message: "The chunk with offsets into the pack doesn't have the correct size",
+                })
+        })??;
+        let large_offsets = chunks
+            .validated_usize_offset_by_id(chunk::large_offsets::ID, |offset| {
+                chunk::large_offsets::is_valid(&offset)
+                    .then(|| offset)
+                    .ok_or(Error::InvalidChunkSize {
+                        id: chunk::large_offsets::ID,
+                        message: "The chunk with large offsets into the pack doesn't have the correct size",
+                    })
+            })
+            .ok()
+            .transpose()?;
 
         let checksum_offset = chunks.highest_offset() as usize;
         let trailer = &data[checksum_offset..];

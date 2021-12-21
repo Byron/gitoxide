@@ -93,9 +93,7 @@ pub mod large_offsets {
     use std::ops::Range;
 
     pub const ID: git_chunk::Id = *b"LOFF";
-    pub fn is_valid(offset: Option<&Range<usize>>) -> bool {
-        offset
-            .map(|offset| (offset.end - offset.start) % 8 == 0)
-            .unwrap_or(true)
+    pub fn is_valid(offset: &Range<usize>) -> bool {
+        (offset.end - offset.start) % 8 == 0
     }
 }
