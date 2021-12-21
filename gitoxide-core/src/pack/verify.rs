@@ -128,9 +128,10 @@ where
             path.display()
         )
     })?;
+    let hash_kind = git_repository::hash::Kind::Sha1; // TODO: make it configurable via Context/CLI
     let res = match ext {
         "pack" => {
-            let pack = odb::pack::data::File::at(path).with_context(|| "Could not open pack file")?;
+            let pack = odb::pack::data::File::at(path, hash_kind).with_context(|| "Could not open pack file")?;
             pack.verify_checksum(
                 progress::DoOrDiscard::from(progress).add_child("Sha1 of pack"),
                 &should_interrupt,
@@ -138,9 +139,9 @@ where
             .map(|id| (id, None))?
         }
         "idx" => {
-            let idx = odb::pack::index::File::at(path).with_context(|| "Could not open pack index file")?;
+            let idx = odb::pack::index::File::at(path, hash_kind).with_context(|| "Could not open pack index file")?;
             let packfile_path = path.with_extension("pack");
-            let pack = odb::pack::data::File::at(&packfile_path)
+            let pack = odb::pack::data::File::at(&packfile_path, hash_kind)
                 .map_err(|e| {
                     writeln!(
                         err,

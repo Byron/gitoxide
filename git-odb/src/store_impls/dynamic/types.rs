@@ -298,13 +298,15 @@ impl IndexAndPacks {
         }
     }
 
-    pub(crate) fn load_index(&mut self) -> std::io::Result<()> {
+    pub(crate) fn load_index(&mut self, hash_kind: git_hash::Kind) -> std::io::Result<()> {
         match self {
             IndexAndPacks::Index(bundle) => bundle.index.load_strict(|path| {
-                git_pack::index::File::at(path).map(Arc::new).map_err(|err| match err {
-                    git_pack::index::init::Error::Io { source, .. } => source,
-                    err => std::io::Error::new(std::io::ErrorKind::Other, err),
-                })
+                git_pack::index::File::at(path, hash_kind)
+                    .map(Arc::new)
+                    .map_err(|err| match err {
+                        git_pack::index::init::Error::Io { source, .. } => source,
+                        err => std::io::Error::new(std::io::ErrorKind::Other, err),
+                    })
             }),
             IndexAndPacks::MultiIndex(_bundle) => todo!("load multi-index"),
         }

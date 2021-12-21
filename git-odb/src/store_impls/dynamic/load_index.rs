@@ -112,7 +112,7 @@ impl super::Store {
                         if let Some(files) = bundle_mut.as_mut() {
                             // these are always expected to be set, unless somebody raced us. We handle this later by retrying.
                             let _loaded_count = IncOnDrop(&index.loaded_indices);
-                            match files.load_index() {
+                            match files.load_index(self.hash_kind) {
                                 Ok(_) => {
                                     slot.files.store(bundle);
                                     break 'retry_with_next_slot_index;
