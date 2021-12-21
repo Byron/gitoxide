@@ -23,16 +23,13 @@ impl Store {
     }
 }
 
-fn sha1_path(id: &git_hash::oid, mut root: PathBuf) -> PathBuf {
-    match id.kind() {
-        git_hash::Kind::Sha1 => {
-            let hex = id.to_sha1_hex();
-            let buf = std::str::from_utf8(&hex).expect("ascii only in hex");
-            root.push(&buf[..2]);
-            root.push(&buf[2..]);
-            root
-        }
-    }
+fn hash_path(id: &git_hash::oid, mut root: PathBuf) -> PathBuf {
+    let mut hex = git_hash::Kind::hex_buf();
+    id.hex_to_buf(hex.as_mut());
+    let buf = std::str::from_utf8(&hex).expect("ascii only in hex");
+    root.push(&buf[..2]);
+    root.push(&buf[2..]);
+    root
 }
 
 ///
