@@ -1,5 +1,5 @@
 mod file {
-    use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+    const SHA1_SIZE: usize = git_hash::Kind::Sha1.len_in_bytes();
     use git_object::{self as object};
     use git_odb::pack;
 

@@ -4,7 +4,6 @@ use std::{
 };
 
 use filebuffer::FileBuffer;
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 
 use crate::data;
 
@@ -28,9 +27,9 @@ impl TryFrom<&Path> for data::File {
             path: path.to_owned(),
         })?;
         let pack_len = data.len();
-        if pack_len < N32_SIZE * 3 + SHA1_SIZE {
+        if pack_len < N32_SIZE * 3 + git_hash::Kind::shortest().len_in_bytes() {
             return Err(data::header::decode::Error::Corrupt(format!(
-                "Pack data of size {} is too small for even an empty pack",
+                "Pack data of size {} is too small for even an empty pack with shortest hash",
                 pack_len
             )));
         }

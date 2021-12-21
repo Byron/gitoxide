@@ -1,7 +1,9 @@
 use std::io;
 
-use super::{BLOB, COMMIT, OFS_DELTA, REF_DELTA, SHA1_SIZE, TAG, TREE};
+use super::{BLOB, COMMIT, OFS_DELTA, REF_DELTA, TAG, TREE};
 use crate::data;
+
+const SHA1_SIZE: usize = git_hash::Kind::Sha1.len_in_bytes();
 
 /// Decoding
 impl data::Entry {

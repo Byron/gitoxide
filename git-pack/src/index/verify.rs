@@ -1,13 +1,13 @@
 use std::sync::{atomic::AtomicBool, Arc};
 
 use git_features::progress::{self, Progress};
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 use git_object::{
     bstr::{BString, ByteSlice},
     WriteTo,
 };
 
 use crate::index;
+const SHA1_SIZE: usize = git_hash::Kind::Sha1.len_in_bytes();
 
 /// Returned by [`index::File::verify_checksum()`]
 #[derive(thiserror::Error, Debug)]

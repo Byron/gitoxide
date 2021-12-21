@@ -1,5 +1,3 @@
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-
 use crate::data::Entry;
 
 const _TYPE_EXT1: u8 = 0;

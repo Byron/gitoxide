@@ -2,7 +2,7 @@ use std::{convert::TryFrom, mem::size_of, path::Path};
 
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
+const SHA1_SIZE: usize = git_hash::Kind::Sha1.len_in_bytes();
 
 use crate::index::{self, Version, FAN_LEN, V2_SIGNATURE};
 

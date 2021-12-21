@@ -2,7 +2,6 @@
 use std::{convert::TryInto, path::Path};
 
 use filebuffer::FileBuffer;
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 
 /// An representing an full- or delta-object within a pack
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -83,7 +82,7 @@ impl File {
 
     /// The position of the byte one past the last pack entry, or in other terms, the first byte of the trailing hash.
     pub fn pack_end(&self) -> usize {
-        self.data.len() - SHA1_SIZE
+        self.data.len() - git_hash::Kind::Sha1.len_in_bytes()
     }
 
     /// The path to the pack data file on disk

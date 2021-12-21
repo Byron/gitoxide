@@ -215,18 +215,12 @@ pub mod refs {
     pub(crate) fn print(mut out: impl io::Write, refs: &[Ref]) -> io::Result<()> {
         for r in refs {
             match r {
-                Ref::Direct { path, object } => writeln!(&mut out, "{} {}", object.to_sha1_hex_string(), path),
+                Ref::Direct { path, object } => writeln!(&mut out, "{} {}", object.to_hex(), path),
                 Ref::Peeled { path, object, tag } => {
-                    writeln!(&mut out, "{} {} tag:{}", object.to_sha1_hex_string(), path, tag)
+                    writeln!(&mut out, "{} {} tag:{}", object.to_hex(), path, tag)
                 }
                 Ref::Symbolic { path, target, object } => {
-                    writeln!(
-                        &mut out,
-                        "{} {} symref-target:{}",
-                        object.to_sha1_hex_string(),
-                        path,
-                        target
-                    )
+                    writeln!(&mut out, "{} {} symref-target:{}", object.to_hex(), path, target)
                 }
             }?;
         }

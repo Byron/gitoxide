@@ -246,7 +246,7 @@ impl crate::Bundle {
                     should_interrupt,
                 )?;
 
-                let data_path = directory.join(format!("{}.pack", outcome.data_hash.to_sha1_hex_string()));
+                let data_path = directory.join(format!("{}.pack", outcome.data_hash.to_hex()));
                 let index_path = data_path.with_extension("idx");
 
                 Arc::try_unwrap(data_file)
