@@ -24,7 +24,7 @@ pub struct File {
     data: FileBuffer,
     path: std::path::PathBuf,
     version: Version,
-    hash_kind: git_hash::Kind,
+    hash_len: usize,
     num_chunks: u8,
     /// The amount of pack files contained within
     num_packs: u32,
@@ -35,7 +35,6 @@ pub struct File {
     lookup: Range<usize>,
     offsets: Range<usize>,
     large_offsets: Option<Range<usize>>,
-    checksum_offset: usize,
 }
 
 ///
@@ -51,10 +50,11 @@ pub mod access {
             self.num_objects
         }
         pub fn hash_kind(&self) -> git_hash::Kind {
-            self.hash_kind
+            git_hash::Kind::from_len_in_bytes(self.hash_len).expect("init checked hash len")
         }
         pub fn checksum(&self) -> git_hash::ObjectId {
-            git_hash::ObjectId::try_from(&self.data[self.checksum_offset..]).expect("prior validation of checksum size")
+            git_hash::ObjectId::try_from(&self.data[self.data.len() - self.hash_len..])
+                .expect("prior validation of checksum size")
         }
     }
 }
