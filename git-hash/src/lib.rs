@@ -49,19 +49,13 @@ pub mod decode {
         type Err = Error;
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            use hex::FromHex;
-            match s.len() {
-                40 => Ok(ObjectId::Sha1(
-                    <[u8; 20]>::from_hex(s).expect("our length check is correct thus we can decode hex"),
-                )),
-                len => Err(Error::InvalidHexEncodingLength(len)),
-            }
+            Self::from_hex(s.as_bytes())
         }
     }
 }
 
 /// The size of a SHA1 hash digest in bytes
-pub const SIZE_OF_SHA1_DIGEST: usize = 20;
+const SIZE_OF_SHA1_DIGEST: usize = 20;
 
 /// Denotes the kind of function to produce a `Id`
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
