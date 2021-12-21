@@ -44,6 +44,8 @@ pub enum Error {
     },
     #[error("Missing required chunk {:?}", .0.as_bstr())]
     MissingChunk(ChunkId),
+    #[error(transparent)]
+    MissingChunk2(#[from] git_chunk::file::index::offset_by_kind::Error),
     #[error("{0}")]
     Trailer(String),
     #[error("Commit-graph file uses unsupported hash version: {0}")]
@@ -116,41 +118,30 @@ impl TryFrom<&Path> for File {
 
         let chunks = git_chunk::file::Index::from_bytes(&data, ofs, chunk_count as u32)?;
 
-        let mut base_graphs_list_offset: Option<usize> = None;
-        let mut commit_data_offset: Option<usize> = None;
-        let mut commit_data_count = 0u32;
-        let mut fan_offset: Option<usize> = None;
-        let mut oid_lookup_offset: Option<usize> = None;
-        let mut oid_lookup_count = 0u32;
-
-        if let Some(chunk_range) = chunks
-            .offset_by_id(BASE_GRAPHS_LIST_CHUNK_ID)
-            .ok()
-            .and_then(git_chunk::range::into_usize)
-        {
-            let chunk_size = chunk_range.len();
-            if chunk_size % SHA1_SIZE != 0 {
-                return Err(Error::InvalidChunkSize {
-                    id: BASE_GRAPHS_LIST_CHUNK_ID,
-                    msg: format!("chunk size {} is not a multiple of {}", chunk_size, SHA1_SIZE),
-                });
+        let base_graphs_list_offset = match chunks.usize_offset_by_id(BASE_GRAPHS_LIST_CHUNK_ID).ok() {
+            Some(chunk_range) => {
+                let chunk_size = chunk_range.len();
+                if chunk_size % SHA1_SIZE != 0 {
+                    return Err(Error::InvalidChunkSize {
+                        id: BASE_GRAPHS_LIST_CHUNK_ID,
+                        msg: format!("chunk size {} is not a multiple of {}", chunk_size, SHA1_SIZE),
+                    });
+                }
+                let chunk_base_graph_count: u32 = (chunk_size / SHA1_SIZE)
+                    .try_into()
+                    .expect("base graph count to fit in 32-bits");
+                if chunk_base_graph_count != u32::from(base_graph_count) {
+                    return Err(Error::BaseGraphMismatch {
+                        from_chunk: chunk_base_graph_count,
+                        from_header: base_graph_count,
+                    });
+                }
+                Some(chunk_range.start)
             }
-            let chunk_base_graph_count: u32 = (chunk_size / SHA1_SIZE)
-                .try_into()
-                .expect("base graph count to fit in 32-bits");
-            if chunk_base_graph_count != u32::from(base_graph_count) {
-                return Err(Error::BaseGraphMismatch {
-                    from_chunk: chunk_base_graph_count,
-                    from_header: base_graph_count,
-                });
-            }
-            base_graphs_list_offset = Some(chunk_range.start);
-        }
-        if let Some(chunk_range) = chunks
-            .offset_by_id(COMMIT_DATA_CHUNK_ID)
-            .ok()
-            .and_then(git_chunk::range::into_usize)
-        {
+            None => None,
+        };
+        let (commit_data_offset, commit_data_count) = {
+            let chunk_range = chunks.usize_offset_by_id(COMMIT_DATA_CHUNK_ID)?;
             let chunk_size = chunk_range.len();
 
             if chunk_size % COMMIT_DATA_ENTRY_SIZE != 0 {
@@ -162,22 +153,21 @@ impl TryFrom<&Path> for File {
                     ),
                 });
             }
-            commit_data_offset = Some(chunk_range.start);
-            commit_data_count = (chunk_size / COMMIT_DATA_ENTRY_SIZE)
-                .try_into()
-                .expect("number of commits in CDAT chunk to fit in 32 bits");
-        }
+            (
+                chunk_range.start,
+                (chunk_size / COMMIT_DATA_ENTRY_SIZE)
+                    .try_into()
+                    .expect("number of commits in CDAT chunk to fit in 32 bits"),
+            )
+        };
 
         let extra_edges_list_range = chunks
             .offset_by_id(EXTENDED_EDGES_LIST_CHUNK_ID)
             .ok()
             .and_then(git_chunk::range::into_usize);
 
-        if let Some(chunk_range) = chunks
-            .offset_by_id(OID_FAN_CHUNK_ID)
-            .ok()
-            .and_then(git_chunk::range::into_usize)
-        {
+        let fan_offset = {
+            let chunk_range = chunks.usize_offset_by_id(OID_FAN_CHUNK_ID)?;
             let chunk_size = chunk_range.len();
 
             let expected_size = 4 * FAN_LEN;
@@ -187,39 +177,29 @@ impl TryFrom<&Path> for File {
                     msg: format!("expected chunk length {}, got {}", expected_size, chunk_size),
                 });
             }
-            fan_offset = Some(chunk_range.start);
-        }
+            chunk_range.start
+        };
 
-        if let Some(chunk_range) = chunks
-            .offset_by_id(OID_LOOKUP_CHUNK_ID)
-            .ok()
-            .and_then(git_chunk::range::into_usize)
-        {
+        let (oid_lookup_offset, oid_lookup_count) = {
+            let chunk_range = chunks.usize_offset_by_id(OID_LOOKUP_CHUNK_ID)?;
             let chunk_size = chunk_range.len();
 
             if chunk_size % OID_LOOKUP_ENTRY_SIZE != 0 {
                 return Err(Error::InvalidChunkSize {
-                    id: OID_FAN_CHUNK_ID,
+                    id: OID_LOOKUP_CHUNK_ID,
                     msg: format!(
                         "chunk size {} is not a multiple of {}",
                         chunk_size, OID_LOOKUP_ENTRY_SIZE
                     ),
                 });
             }
-            oid_lookup_offset = Some(chunk_range.start);
-            oid_lookup_count = (chunk_size / OID_LOOKUP_ENTRY_SIZE)
-                .try_into()
-                .expect("number of commits in OIDL chunk to fit in 32 bits");
-            // TODO(ST): Figure out how to handle this. Don't know what to do with the commented code.
-            // git allows extra garbage in the extra edges list chunk?
-            // if oid_lookup_count > 0 {
-            //     let last_edge = &data[next_chunk_offset - 4..next_chunk_offset];
-            //     let last_edge = BigEndian::read_u32(last_edge);
-            //     if let ExtraEdge::Internal(_) = ExtraEdge::from_raw(last_edge) {
-            //         return Err(Error::ExtraEdgesListOverflow);
-            //     }
-            // }
-        }
+            (
+                chunk_range.start,
+                (chunk_size / OID_LOOKUP_ENTRY_SIZE)
+                    .try_into()
+                    .expect("number of commits in OIDL chunk to fit in 32 bits"),
+            )
+        };
 
         let trailer = &data[chunks.highest_offset() as usize..];
         if trailer.len() != TRAILER_LEN {
@@ -230,10 +210,7 @@ impl TryFrom<&Path> for File {
             )));
         }
 
-        let fan_offset = fan_offset.ok_or(Error::MissingChunk(OID_FAN_CHUNK_ID))?;
-        let oid_lookup_offset = oid_lookup_offset.ok_or(Error::MissingChunk(OID_LOOKUP_CHUNK_ID))?;
-        let commit_data_offset = commit_data_offset.ok_or(Error::MissingChunk(COMMIT_DATA_CHUNK_ID))?;
-        if base_graph_count > 0 && base_graphs_list_offset == None {
+        if base_graph_count > 0 && base_graphs_list_offset.is_none() {
             return Err(Error::MissingChunk(BASE_GRAPHS_LIST_CHUNK_ID));
         }
 
