@@ -1,13 +1,15 @@
 //! An object database storing each object in a zlib compressed file with its hash in the path
 const HEADER_READ_UNCOMPRESSED_BYTES: usize = 512;
 use git_features::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// A database for reading and writing objects to disk, one file per object.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Store {
     /// The directory in which objects are stored, containing 256 folders representing the hashes first byte.
-    pub path: PathBuf,
+    pub(crate) path: PathBuf,
+    /// The kind of hash we should assume during iteration and when writing new objects.
+    pub(crate) hash_kind: git_hash::Kind,
 }
 
 /// Initialization
@@ -16,10 +18,21 @@ impl Store {
     /// contain all loose objects.
     ///
     /// In a git repository, this would be `.git/objects`.
-    pub fn at(objects_directory: impl Into<PathBuf>) -> Store {
+    pub fn at(objects_directory: impl Into<PathBuf>, hash_kind: git_hash::Kind) -> Store {
         Store {
             path: objects_directory.into(),
+            hash_kind,
         }
+    }
+
+    /// Return the path to our `objects` directory.
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    /// Return the kind of hash we would iterate and write.
+    pub fn hash_kind(&self) -> git_hash::Kind {
+        self.hash_kind
     }
 }
 

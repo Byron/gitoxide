@@ -10,8 +10,10 @@ use crate::store::types::{MutableIndexAndPack, SlotMapIndex};
 pub struct Options {
     /// How to obtain a size for the slot map.
     pub slots: Slots,
-    /// The kind of hash the multi-pack index must have to be considered. If `None`, no multi-pack indices will be used.
-    pub multi_pack_index_hash_kind: Option<git_hash::Kind>,
+    /// The kind of hash we expect in our packs and would use for loose object iteration and object writing.
+    pub hash_kind: git_hash::Kind,
+    /// If false, no multi-pack indices will be used. If true, they will be used if their hash matches `hash_kind`.
+    pub use_multi_pack_index: bool,
 }
 
 /// Configures the amount of slots in the index slotmap, which is fixed throughout the existence of the store.
@@ -53,7 +55,8 @@ impl Store {
         objects_dir: impl Into<PathBuf>,
         Options {
             slots,
-            multi_pack_index_hash_kind,
+            hash_kind,
+            use_multi_pack_index,
         }: Options,
     ) -> std::io::Result<Self> {
         let objects_dir = objects_dir.into();
@@ -69,10 +72,13 @@ impl Store {
                 let mut db_paths = crate::alternate::resolve(&objects_dir)
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                 db_paths.insert(0, objects_dir.clone());
-                let num_slots =
-                    super::Store::collect_indices_and_mtime_sorted_by_size(db_paths, None, multi_pack_index_hash_kind)
-                        .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
-                        .len();
+                let num_slots = super::Store::collect_indices_and_mtime_sorted_by_size(
+                    db_paths,
+                    None,
+                    use_multi_pack_index.then(|| hash_kind),
+                )
+                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
+                .len();
 
                 ((num_slots as f32 * multiplier) as usize).max(minimum)
             }
@@ -88,7 +94,8 @@ impl Store {
             path: objects_dir,
             files: Vec::from_iter(std::iter::repeat_with(MutableIndexAndPack::default).take(slot_count)),
             index: ArcSwap::new(Arc::new(SlotMapIndex::default())),
-            multi_pack_index_hash_kind,
+            use_multi_pack_index,
+            hash_kind,
             num_handles_stable: Default::default(),
             num_handles_unstable: Default::default(),
             num_disk_state_consolidation: Default::default(),

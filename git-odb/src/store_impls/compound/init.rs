@@ -63,7 +63,7 @@ impl compound::Store {
         };
 
         Ok(compound::Store {
-            loose: loose::Store::at(loose_objects),
+            loose: loose::Store::at(loose_objects, git_hash::Kind::Sha1),
             bundles: packs,
         })
     }

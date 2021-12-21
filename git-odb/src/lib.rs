@@ -110,8 +110,10 @@ pub struct Store {
 
     /// The amount of times we re-read the disk state to consolidate our in-memory representation.
     pub(crate) num_disk_state_consolidation: AtomicUsize,
-    /// If Some(kind), we are allowed to use multi-pack indices and they must have the given hash kind or be ignored.
-    multi_pack_index_hash_kind: Option<git_hash::Kind>,
+    /// If true, we are allowed to use multi-pack indices and they must have the `hash_kind` or be ignored.
+    use_multi_pack_index: bool,
+    /// The hash kind to use for some operations
+    hash_kind: git_hash::Kind,
 }
 
 impl Store {

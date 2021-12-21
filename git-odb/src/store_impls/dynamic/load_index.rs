@@ -187,7 +187,12 @@ impl super::Store {
                 .zip(index.loose_dbs.iter().map(|ldb| &ldb.path))
                 .any(|(lhs, rhs)| lhs != rhs)
         {
-            Arc::new(db_paths.iter().map(crate::loose::Store::at).collect::<Vec<_>>())
+            Arc::new(
+                db_paths
+                    .iter()
+                    .map(|path| crate::loose::Store::at(path, self.hash_kind))
+                    .collect::<Vec<_>>(),
+            )
         } else {
             Arc::clone(&index.loose_dbs)
         };
@@ -195,7 +200,7 @@ impl super::Store {
         let indices_by_modification_time = Self::collect_indices_and_mtime_sorted_by_size(
             db_paths,
             index.slot_indices.len().into(),
-            self.multi_pack_index_hash_kind,
+            self.use_multi_pack_index.then(|| self.hash_kind),
         )?;
         let mut idx_by_index_path: BTreeMap<_, _> = index
             .slot_indices
