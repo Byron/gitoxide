@@ -73,22 +73,26 @@ impl Default for Kind {
 
 impl Kind {
     /// Returns the shortest hash we support
+    #[inline]
     pub const fn shortest() -> Self {
         Self::Sha1
     }
 
     /// Returns the longest hash we support
+    #[inline]
     pub const fn longest() -> Self {
         Self::Sha1
     }
 
     /// Returns the amount of ascii-characters needed to encode this has in hex
+    #[inline]
     pub const fn len_in_hex(&self) -> usize {
         match self {
             Kind::Sha1 => 40,
         }
     }
     /// Returns the amount of bytes taken up by the hash of the current kind
+    #[inline]
     pub const fn len_in_bytes(&self) -> usize {
         match self {
             Kind::Sha1 => 20,
@@ -96,6 +100,7 @@ impl Kind {
     }
 
     /// Converts a size in bytes as obtained by `Kind::len_in_bytes()` into the corresponding hash kind, if possible.
+    #[inline]
     pub const fn from_len_in_bytes(bytes: usize) -> Option<Self> {
         Some(match bytes {
             20 => Kind::Sha1,
@@ -104,9 +109,18 @@ impl Kind {
     }
 
     /// Create a null-id of our hash kind.
+    #[inline]
     pub fn null(&self) -> &'static oid {
         match self {
             Kind::Sha1 => oid::null_sha1(),
+        }
+    }
+
+    /// Create a null-id of our hash kind.
+    #[inline]
+    pub const fn null_owned(&self) -> ObjectId {
+        match self {
+            Kind::Sha1 => ObjectId::null_sha1(),
         }
     }
 }

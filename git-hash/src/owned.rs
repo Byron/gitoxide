@@ -25,16 +25,21 @@ impl std::fmt::Debug for ObjectId {
 /// Access and conversion
 impl ObjectId {
     /// Returns the kind of hash used in this `Id`
+    #[inline]
     pub fn kind(&self) -> crate::Kind {
-        crate::Kind::Sha1
+        match self {
+            ObjectId::Sha1(_) => crate::Kind::Sha1,
+        }
     }
     /// Return the raw byte slice representing this hash
+    #[inline]
     pub fn as_slice(&self) -> &[u8] {
         match self {
             Self::Sha1(b) => b.as_ref(),
         }
     }
     /// Return the raw mutable byte slice representing this hash
+    #[inline]
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
         match self {
             Self::Sha1(b) => b.as_mut(),
@@ -42,11 +47,13 @@ impl ObjectId {
     }
 
     /// Write ourselves to `out` in hexadecimal notation
+    #[inline]
     pub fn write_hex_to(&self, mut out: impl io::Write) -> io::Result<()> {
         out.write_all(&self.to_sha1_hex())
     }
 
     /// The hash of an empty tree
+    #[inline]
     pub const fn empty_tree(hash: Kind) -> ObjectId {
         match hash {
             Kind::Sha1 => {
@@ -56,6 +63,7 @@ impl ObjectId {
     }
 
     /// Returns true if this hash consists of all null bytes
+    #[inline]
     pub fn is_null(&self) -> bool {
         match self {
             ObjectId::Sha1(digest) => &digest[..] == Self::null_sha1().as_bytes(),
@@ -63,6 +71,7 @@ impl ObjectId {
     }
 
     /// Returns an Digest representing a hash with whose memory is zeroed.
+    #[inline]
     pub const fn null(kind: crate::Kind) -> ObjectId {
         match kind {
             crate::Kind::Sha1 => Self::null_sha1(),
@@ -75,6 +84,7 @@ impl ObjectId {
     /// Returns ourselves as slice of 20 bytes.
     ///
     /// Panics if this instance is not a sha1 hash.
+    #[inline]
     pub fn sha1(&self) -> &[u8; SIZE_OF_SHA1_DIGEST] {
         match self {
             Self::Sha1(b) => b,
@@ -84,6 +94,7 @@ impl ObjectId {
     /// Return ourselves as array of 40 hexadecimal bytes.
     ///
     /// Panics if this instance is not a sha1 hash.
+    #[inline]
     pub fn to_sha1_hex(self) -> [u8; SIZE_OF_SHA1_DIGEST * 2] {
         match self {
             Self::Sha1(b) => {
@@ -95,6 +106,7 @@ impl ObjectId {
     }
 
     /// Instantiate an Digest from 20 bytes of a Sha1 digest.
+    #[inline]
     pub fn new_sha1(id: [u8; SIZE_OF_SHA1_DIGEST]) -> Self {
         ObjectId::Sha1(id)
     }
@@ -102,6 +114,7 @@ impl ObjectId {
     /// Instantiate an Digest from a slice 20 borrowed bytes of a Sha1 digest.
     ///
     /// Panics of the slice doesn't have a length of 20.
+    #[inline]
     pub fn from_20_bytes(b: &[u8]) -> ObjectId {
         let mut id = [0; SIZE_OF_SHA1_DIGEST];
         id.copy_from_slice(b);
@@ -109,6 +122,7 @@ impl ObjectId {
     }
 
     /// Returns an Digest representing a Sha1 with whose memory is zeroed.
+    #[inline]
     pub const fn null_sha1() -> ObjectId {
         ObjectId::Sha1([0u8; 20])
     }

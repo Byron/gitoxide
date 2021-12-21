@@ -45,13 +45,14 @@ impl<'a> fmt::Display for HexDisplay<'a> {
 
 impl fmt::Debug for oid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.kind() {
-            crate::Kind::Sha1 => f.write_str("Sha1(")?,
-        }
-        for b in self.as_bytes() {
-            write!(f, "{:02x}", b)?;
-        }
-        f.write_str(")")
+        write!(
+            f,
+            "{}({})",
+            match self.kind() {
+                crate::Kind::Sha1 => "Sha1",
+            },
+            self.to_hex(),
+        )
     }
 }
 
@@ -82,7 +83,7 @@ impl oid {
     }
 
     /// Only from code that statically assures correct sizes using array conversions
-    fn from(value: &[u8]) -> &Self {
+    pub(crate) fn from_bytes(value: &[u8]) -> &Self {
         #[allow(unsafe_code)]
         unsafe {
             &*(value as *const [u8] as *const oid)
@@ -93,23 +94,27 @@ impl oid {
 /// Access
 impl oid {
     /// The kind of hash used for this Digest
+    #[inline]
     pub fn kind(&self) -> crate::Kind {
         crate::Kind::from_len_in_bytes(self.bytes.len())
             .expect("creating this instance is checked and fails on unknown lengths")
     }
 
     /// The first byte of the hash, commonly used to partition a set of `Id`s
+    #[inline]
     pub fn first_byte(&self) -> u8 {
         self.bytes[0]
     }
 
     #[inline]
     /// Interpret this object id as raw byte slice.
+    #[inline]
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
 
     /// Return a type which can display itself in hexadecimal form with the `len` amount of characters.
+    #[inline]
     pub fn to_hex_with_len(&self, len: usize) -> HexDisplay<'_> {
         HexDisplay {
             inner: self,
@@ -118,6 +123,7 @@ impl oid {
     }
 
     /// Return a type which displays this oid as hex in full.
+    #[inline]
     pub fn to_hex(&self) -> HexDisplay<'_> {
         HexDisplay {
             inner: self,
@@ -137,7 +143,7 @@ impl oid {
         buf
     }
 
-    /// Returns the bytes making up the Sha1.
+    /// Returns the bytes array making up the Sha1.
     ///
     /// **Panics** if this is not a Sha1 hash, as identifiable by [`ObjectId::kind()`].
     pub fn sha1(&self) -> &[u8; SIZE_OF_SHA1_DIGEST] {
@@ -145,8 +151,9 @@ impl oid {
     }
 
     /// Returns a Sha1 digest with all bytes being initialized to zero.
-    pub fn null_sha1() -> &'static Self {
-        oid::from([0u8; SIZE_OF_SHA1_DIGEST].as_ref())
+    #[inline]
+    pub(crate) fn null_sha1() -> &'static Self {
+        oid::from_bytes([0u8; SIZE_OF_SHA1_DIGEST].as_ref())
     }
 }
 
@@ -168,7 +175,7 @@ impl ToOwned for oid {
 
 impl<'a> From<&'a [u8; SIZE_OF_SHA1_DIGEST]> for &'a oid {
     fn from(v: &'a [u8; SIZE_OF_SHA1_DIGEST]) -> Self {
-        oid::from(v.as_ref())
+        oid::from_bytes(v.as_ref())
     }
 }
 
