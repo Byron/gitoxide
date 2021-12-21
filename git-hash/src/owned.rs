@@ -94,14 +94,6 @@ impl ObjectId {
         }
     }
 
-    /// Return ourselves as hexadecimal string with a length of 40 bytes.
-    ///
-    /// Panics if this instance is not a sha1 hash.
-    pub fn to_sha1_hex_string(self) -> String {
-        let buf = self.to_sha1_hex();
-        std::str::from_utf8(&buf).expect("hex is valid UTF-8").to_string()
-    }
-
     /// Instantiate an Digest from 20 bytes of a Sha1 digest.
     pub fn new_sha1(id: [u8; SIZE_OF_SHA1_DIGEST]) -> Self {
         ObjectId::Sha1(id)
