@@ -52,6 +52,7 @@
     "num_objects": 13
   },
   "pack_kind": "V2",
+  "hash_kind": "Sha1",
   "index_path": ""
   "data_path": ""
 }
