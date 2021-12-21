@@ -29,8 +29,8 @@ pub enum Error {
 impl crate::traits::Write for Store {
     type Error = Error;
 
-    fn write(&self, object: impl WriteTo, hash: git_hash::Kind) -> Result<git_hash::ObjectId, Self::Error> {
-        let mut to = self.dest(hash)?;
+    fn write(&self, object: impl WriteTo) -> Result<git_hash::ObjectId, Self::Error> {
+        let mut to = self.dest()?;
         to.write_all(&object.loose_header()).map_err(|err| Error::Io {
             source: err,
             message: "write header to tempfile in",
@@ -48,13 +48,8 @@ impl crate::traits::Write for Store {
     /// Write the given buffer in `from` to disk in one syscall at best.
     ///
     /// This will cost at least 4 IO operations.
-    fn write_buf(
-        &self,
-        kind: git_object::Kind,
-        from: &[u8],
-        hash: git_hash::Kind,
-    ) -> Result<git_hash::ObjectId, Self::Error> {
-        let mut to = self.dest(hash)?;
+    fn write_buf(&self, kind: git_object::Kind, from: &[u8]) -> Result<git_hash::ObjectId, Self::Error> {
+        let mut to = self.dest()?;
         to.write_all(&git_object::encode::loose_header(kind, from.len()))
             .map_err(|err| Error::Io {
                 source: err,
@@ -79,9 +74,8 @@ impl crate::traits::Write for Store {
         kind: git_object::Kind,
         size: u64,
         mut from: impl io::Read,
-        hash: git_hash::Kind,
     ) -> Result<git_hash::ObjectId, Self::Error> {
-        let mut to = self.dest(hash)?;
+        let mut to = self.dest()?;
         to.write_all(&git_object::encode::loose_header(
             kind,
             size.try_into().expect("object size to fit into usize"),
@@ -105,14 +99,14 @@ impl crate::traits::Write for Store {
 type CompressedTempfile = deflate::Write<NamedTempFile>;
 
 impl Store {
-    fn dest(&self, hash: git_hash::Kind) -> Result<hash::Write<CompressedTempfile>, Error> {
+    fn dest(&self) -> Result<hash::Write<CompressedTempfile>, Error> {
         Ok(hash::Write::new(
             deflate::Write::new(NamedTempFile::new_in(&self.path).map_err(|err| Error::Io {
                 source: err,
                 message: "create named temp file in",
                 path: self.path.to_owned(),
             })?),
-            hash,
+            self.hash_kind,
         ))
     }
 

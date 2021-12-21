@@ -16,7 +16,7 @@ fn write() -> crate::Result {
     // It should refresh once even if the refresh mode is never, just to initialize the index
     handle.inner.refresh_mode = store::RefreshMode::Never;
 
-    let written_id = handle.write_buf(git_object::Kind::Blob, b"hello world", git_hash::Kind::Sha1)?;
+    let written_id = handle.write_buf(git_object::Kind::Blob, b"hello world")?;
     assert_eq!(written_id, hex_to_id("95d09f2b10159347eece71399a7e2e907ea3df4f"));
     Ok(())
 }

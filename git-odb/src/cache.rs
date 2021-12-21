@@ -95,14 +95,8 @@ mod impls {
     {
         type Error = S::Error;
 
-        fn write_stream(
-            &self,
-            kind: Kind,
-            size: u64,
-            from: impl Read,
-            hash: git_hash::Kind,
-        ) -> Result<ObjectId, Self::Error> {
-            self.inner.write_stream(kind, size, from, hash)
+        fn write_stream(&self, kind: Kind, size: u64, from: impl Read) -> Result<ObjectId, Self::Error> {
+            self.inner.write_stream(kind, size, from)
         }
     }
 

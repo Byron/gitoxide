@@ -29,23 +29,17 @@ where
 {
     type Error = Error;
 
-    fn write_stream(
-        &self,
-        kind: Kind,
-        size: u64,
-        from: impl Read,
-        hash: git_hash::Kind,
-    ) -> Result<ObjectId, Self::Error> {
+    fn write_stream(&self, kind: Kind, size: u64, from: impl Read) -> Result<ObjectId, Self::Error> {
         let mut snapshot = self.snapshot.borrow_mut();
         Ok(match snapshot.loose_dbs.get(0) {
-            Some(ldb) => ldb.write_stream(kind, size, from, hash)?,
+            Some(ldb) => ldb.write_stream(kind, size, from)?,
             None => {
                 let new_snapshot = self
                     .store
                     .load_one_index(self.refresh_mode, snapshot.marker)?
                     .expect("there is always at least one ODB, and this code runs only once for initialization");
                 *snapshot = new_snapshot;
-                snapshot.loose_dbs[0].write_stream(kind, size, from, hash)?
+                snapshot.loose_dbs[0].write_stream(kind, size, from)?
             }
         })
     }
