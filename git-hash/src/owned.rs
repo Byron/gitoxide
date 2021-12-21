@@ -77,7 +77,7 @@ impl ObjectId {
 impl ObjectId {
     /// Instantiate an Digest from 20 bytes of a Sha1 digest.
     #[inline]
-    pub fn new_sha1(id: [u8; SIZE_OF_SHA1_DIGEST]) -> Self {
+    fn new_sha1(id: [u8; SIZE_OF_SHA1_DIGEST]) -> Self {
         ObjectId::Sha1(id)
     }
 
