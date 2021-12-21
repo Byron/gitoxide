@@ -67,6 +67,20 @@ impl Index {
             .ok_or(offset_by_kind::Error { kind })
     }
 
+    /// Find a chunk of `kind` and return its offset as usize range into the data if found.
+    ///
+    ///
+    /// # Panics
+    ///
+    /// - if the usize conversion fails, which isn't expected as memory maps can't be created if files are too large
+    ///   to require such offsets.
+    pub fn usize_offset_by_id(&self, kind: crate::Id) -> Result<Range<usize>, offset_by_kind::Error> {
+        self.chunks
+            .iter()
+            .find_map(|c| (c.kind == kind).then(|| crate::range::into_usize_or_panic(c.offset.clone())))
+            .ok_or(offset_by_kind::Error { kind })
+    }
+
     /// Find a chunk of `kind` and return its data slice based on its offset.
     pub fn data_by_id<'a>(&self, data: &'a [u8], kind: crate::Id) -> Result<&'a [u8], data_by_kind::Error> {
         let offset = self.offset_by_id(kind)?;

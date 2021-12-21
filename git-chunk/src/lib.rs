@@ -23,6 +23,15 @@ pub mod range {
         let end = end.try_into().ok()?;
         Some(Range { start, end })
     }
+
+    /// Similar to [`into_usize()`], but panics assuming that the memory map couldn't be created if offsets
+    /// stored are too high.
+    ///
+    /// This is only true for correctly formed files, as it's entirely possible to provide out of bounds offsets
+    /// which are checked for separately - we wouldn't be here if that was the case.
+    pub fn into_usize_or_panic(range: Range<file::Offset>) -> Range<usize> {
+        into_usize(range).expect("memory maps can't be created if files are too large")
+    }
 }
 
 ///
