@@ -137,9 +137,9 @@ impl git_repository::odb::Write for OutputWriter {
 }
 
 impl OutputWriter {
-    fn new(path: Option<impl AsRef<Path>>, compress: bool) -> Self {
+    fn new(path: Option<impl AsRef<Path>>, compress: bool, hash_kind: git_repository::hash::Kind) -> Self {
         match path {
-            Some(path) => OutputWriter::Loose(loose::Store::at(path.as_ref())),
+            Some(path) => OutputWriter::Loose(loose::Store::at(path.as_ref(), hash_kind)),
             None => OutputWriter::Sink(odb::sink().compress(compress)),
         }
     }
@@ -205,8 +205,9 @@ pub fn pack_or_pack_index(
             {
                 let object_path = object_path.map(|p| p.as_ref().to_owned());
                 move || {
-                    let out = OutputWriter::new(object_path.clone(), sink_compress);
-                    let object_verifier = if verify { object_path.as_ref().map(loose::Store::at) } else { None };
+                    let hash_kind= git_repository::hash::Kind::Sha1;
+                    let out = OutputWriter::new(object_path.clone(), sink_compress, hash_kind);
+                    let object_verifier = if verify { object_path.as_ref().map(|path| loose::Store::at(path, hash_kind)) } else { None };
                     let mut read_buf = Vec::new();
                     move |object_kind, buf, index_entry, progress| {
                         let written_id = out.write_buf(object_kind, buf, hash::Kind::Sha1).map_err(|err| {

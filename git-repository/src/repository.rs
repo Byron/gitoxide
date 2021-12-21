@@ -135,7 +135,8 @@ pub mod open {
                     git_dir.join("objects"),
                     git_odb::store::init::Options {
                         slots: object_store_slots,
-                        multi_pack_index_hash_kind: use_multi_pack_index.then(|| hash_kind),
+                        hash_kind,
+                        use_multi_pack_index,
                     },
                 )?),
                 refs: crate::RefStore::at(

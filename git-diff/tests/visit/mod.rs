@@ -116,7 +116,7 @@ mod changes {
                 std::fs::read(
                     db.dbs[0]
                         .loose
-                        .path
+                        .path()
                         .parent()
                         .unwrap()
                         .join("refs")
