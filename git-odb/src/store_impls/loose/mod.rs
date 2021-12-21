@@ -38,8 +38,8 @@ impl Store {
 
 fn hash_path(id: &git_hash::oid, mut root: PathBuf) -> PathBuf {
     let mut hex = git_hash::Kind::hex_buf();
-    id.hex_to_buf(hex.as_mut());
-    let buf = std::str::from_utf8(&hex).expect("ascii only in hex");
+    let hex_len = id.hex_to_buf(hex.as_mut());
+    let buf = std::str::from_utf8(&hex[..hex_len]).expect("ascii only in hex");
     root.push(&buf[..2]);
     root.push(&buf[2..]);
     root

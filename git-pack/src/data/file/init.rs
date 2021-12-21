@@ -22,7 +22,7 @@ impl data::File {
             path: path.to_owned(),
         })?;
         let pack_len = data.len();
-        if pack_len < N32_SIZE * 3 + git_hash::Kind::shortest().len_in_bytes() {
+        if pack_len < N32_SIZE * 3 + hash_len {
             return Err(data::header::decode::Error::Corrupt(format!(
                 "Pack data of size {} is too small for even an empty pack with shortest hash",
                 pack_len
