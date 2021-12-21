@@ -34,12 +34,12 @@ impl Bundle {
             .ok_or_else(|| Error::InvalidPath(path.to_owned()))?;
         Ok(match ext {
             "idx" => Self {
-                index: crate::index::File::at(path)?,
+                index: crate::index::File::at(path, hash_kind)?,
                 pack: crate::data::File::at(path.with_extension("pack"), hash_kind)?,
             },
             "pack" => Self {
                 pack: crate::data::File::at(path, hash_kind)?,
-                index: crate::index::File::at(path.with_extension("idx"))?,
+                index: crate::index::File::at(path.with_extension("idx"), hash_kind)?,
             },
             _ => return Err(Error::InvalidPath(path.to_owned())),
         })

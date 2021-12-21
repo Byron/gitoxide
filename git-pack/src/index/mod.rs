@@ -108,6 +108,7 @@ pub struct File {
     version: Version,
     num_objects: u32,
     fan: [u32; FAN_LEN],
+    hash_len: usize,
 }
 
 /// Basic file information

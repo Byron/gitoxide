@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, mem::size_of, path::Path};
+use std::{mem::size_of, path::Path};
 
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
@@ -27,15 +27,14 @@ const FOOTER_SIZE: usize = SHA1_SIZE * 2;
 /// Instantiation
 impl index::File {
     /// Open the pack index file at the given `path`.
-    pub fn at(path: impl AsRef<Path>) -> Result<index::File, Error> {
-        Self::try_from(path.as_ref())
+    ///
+    /// The `hash_kind` is a way to read (and write) the same file format with different hashes, as the hash kind
+    /// isn't stored within the file format itself.
+    pub fn at(path: impl AsRef<Path>, hash_kind: git_hash::Kind) -> Result<index::File, Error> {
+        Self::at_inner(path.as_ref(), hash_kind.len_in_bytes())
     }
-}
 
-impl TryFrom<&Path> for index::File {
-    type Error = Error;
-
-    fn try_from(path: &Path) -> Result<Self, Self::Error> {
+    fn at_inner(path: &Path, hash_len: usize) -> Result<index::File, Error> {
         let data = FileBuffer::open(&path).map_err(|source| Error::Io {
             source,
             path: path.to_owned(),
@@ -79,6 +78,7 @@ impl TryFrom<&Path> for index::File {
             version: kind,
             num_objects,
             fan,
+            hash_len,
         })
     }
 }
