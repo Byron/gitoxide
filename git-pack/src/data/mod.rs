@@ -85,7 +85,7 @@ impl File {
 
     /// The position of the byte one past the last pack entry, or in other terms, the first byte of the trailing hash.
     pub fn pack_end(&self) -> usize {
-        self.data.len() - git_hash::Kind::Sha1.len_in_bytes()
+        self.data.len() - self.hash_len
     }
 
     /// The path to the pack data file on disk

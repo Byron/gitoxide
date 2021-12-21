@@ -179,7 +179,7 @@ mod file {
                 assert_eq!(outcome.index_kind, desired_kind);
                 assert_eq!(
                     outcome.index_hash,
-                    git_hash::ObjectId::from_20_bytes(&expected[end_of_pack_hash..end_of_index_hash])
+                    git_hash::ObjectId::from(&expected[end_of_pack_hash..end_of_index_hash])
                 );
                 Ok(())
             }

@@ -27,7 +27,7 @@ impl data::Entry {
             }
             REF_DELTA => {
                 let delta = RefDelta {
-                    base_id: git_hash::ObjectId::from_20_bytes(&d[consumed..consumed + SHA1_SIZE]),
+                    base_id: git_hash::ObjectId::from(&d[consumed..consumed + SHA1_SIZE]),
                 };
                 consumed += SHA1_SIZE;
                 delta
