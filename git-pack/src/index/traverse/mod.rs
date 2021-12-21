@@ -216,11 +216,11 @@ where
     E: std::error::Error + Send + Sync + 'static,
 {
     if check.object_checksum() {
-        let mut hasher = git_features::hash::Sha1::default();
+        let mut hasher = git_features::hash::hasher(index_entry.oid.kind());
         hasher.update(&git_object::encode::loose_header(object_kind, decompressed.len()));
         hasher.update(decompressed);
 
-        let actual_oid = git_hash::ObjectId::new_sha1(hasher.digest());
+        let actual_oid = git_hash::ObjectId::from(hasher.digest());
         if actual_oid != index_entry.oid {
             return Err(Error::PackObjectMismatch {
                 actual: actual_oid,

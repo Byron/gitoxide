@@ -48,11 +48,11 @@ impl File {
             Ok(id) => id,
             Err(_io_err) => {
                 let start = std::time::Instant::now();
-                let mut hasher = git_features::hash::Sha1::default();
+                let mut hasher = git_features::hash::hasher(git_hash::Kind::from_len_in_bytes(self.hash_len));
                 hasher.update(&self.data[..right_before_trailer]);
                 progress.inc_by(right_before_trailer);
                 progress.show_throughput(start);
-                git_hash::ObjectId::new_sha1(hasher.digest())
+                git_hash::ObjectId::from(hasher.digest())
             }
         };
 
