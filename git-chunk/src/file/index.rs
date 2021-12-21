@@ -5,7 +5,7 @@ use std::ops::Range;
 pub mod offset_by_kind {
     use std::fmt::{Display, Formatter};
 
-    /// The error returned by [Index::offset_by_kind()][super::Index::offset_by_kind()].
+    /// The error returned by [Index::offset_by_kind()][super::Index::offset_by_id()].
     #[allow(missing_docs)]
     #[derive(Debug)]
     pub struct Error {
@@ -29,7 +29,7 @@ pub mod offset_by_kind {
 pub mod data_by_kind {
     use quick_error::quick_error;
     quick_error! {
-        /// The error returned by [Index::data_by_kind()][super::Index::data_by_kind()].
+        /// The error returned by [Index::data_by_kind()][super::Index::data_by_id()].
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {
@@ -86,7 +86,7 @@ impl Index {
             .ok_or(offset_by_kind::Error { kind })
     }
 
-    /// Like [`usize_offset_by_id()`] but with support for validation and transformation using a function.
+    /// Like [`Index::usize_offset_by_id()`] but with support for validation and transformation using a function.
     pub fn validated_usize_offset_by_id<T>(
         &self,
         kind: crate::Id,

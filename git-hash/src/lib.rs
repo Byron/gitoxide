@@ -33,7 +33,7 @@ pub mod decode {
     impl ObjectId {
         /// Create an instance from a `buffer` of 40 bytes encoded with hexadecimal notation.
         ///
-        /// Such a buffer can be obtained using [`write_hex_to(buffer)`][ObjectId::write_hex_to()]
+        /// Such a buffer can be obtained using [`oid::write_hex_to(buffer)`][super::oid::write_hex_to()]
         pub fn from_hex(buffer: &[u8]) -> Result<ObjectId, Error> {
             use hex::FromHex;
             match buffer.len() {
