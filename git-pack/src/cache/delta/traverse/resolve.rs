@@ -13,6 +13,7 @@ use crate::{
 pub(crate) fn deltas<T, F, P, MBFN, S, E>(
     nodes: crate::cache::delta::Chunk<'_, T>,
     (bytes_buf, ref mut progress, state, resolve, modify_base): &mut (Vec<u8>, P, S, F, MBFN),
+    hash_len: usize,
 ) -> Result<(usize, u64), Error>
 where
     F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()>,
@@ -31,7 +32,7 @@ where
         resolve(slice.clone(), &mut bytes_buf).ok_or(Error::ResolveFailed {
             pack_offset: slice.start,
         })?;
-        let entry = crate::data::Entry::from_bytes(&bytes_buf, slice.start);
+        let entry = crate::data::Entry::from_bytes(&bytes_buf, slice.start, hash_len);
         let compressed = &bytes_buf[entry.header_size() as usize..];
         let decompressed_len = entry.decompressed_size as usize;
         Ok((entry, slice.end, decompress_all_at_once(compressed, decompressed_len)?))

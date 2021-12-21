@@ -249,6 +249,7 @@ impl crate::Bundle {
                     indexing_progress,
                     &mut index_file,
                     should_interrupt,
+                    hash_kind,
                 )?;
 
                 let data_path = directory.join(format!("{}.pack", outcome.data_hash.to_hex()));
@@ -278,6 +279,7 @@ impl crate::Bundle {
                     indexing_progress,
                     io::sink(),
                     should_interrupt,
+                    hash_kind,
                 )?,
                 None,
                 None,

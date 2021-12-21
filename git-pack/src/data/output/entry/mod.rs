@@ -73,7 +73,8 @@ impl output::Entry {
         };
 
         let pack_offset_must_be_zero = 0;
-        let pack_entry = crate::data::Entry::from_bytes(&entry.data, pack_offset_must_be_zero);
+        let pack_entry =
+            crate::data::Entry::from_bytes(&entry.data, pack_offset_must_be_zero, count.id.as_slice().len());
 
         use crate::data::entry::Header::*;
         match pack_entry.header {

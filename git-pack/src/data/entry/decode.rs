@@ -12,7 +12,7 @@ impl data::Entry {
     /// # Panics
     ///
     /// If we cannot understand the header, garbage data is likely to trigger this.
-    pub fn from_bytes(d: &[u8], pack_offset: u64) -> data::Entry {
+    pub fn from_bytes(d: &[u8], pack_offset: u64, hash_len: usize) -> data::Entry {
         let (type_id, size, mut consumed) = parse_header_info(d);
 
         use crate::data::entry::Header::*;
@@ -27,9 +27,9 @@ impl data::Entry {
             }
             REF_DELTA => {
                 let delta = RefDelta {
-                    base_id: git_hash::ObjectId::from(&d[consumed..consumed + SHA1_SIZE]),
+                    base_id: git_hash::ObjectId::from(&d[consumed..][..hash_len]),
                 };
-                consumed += SHA1_SIZE;
+                consumed += hash_len;
                 delta
             }
             BLOB => Blob,

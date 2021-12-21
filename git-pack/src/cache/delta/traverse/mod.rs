@@ -69,6 +69,8 @@ where
     ///   running for each thread receiving fully decoded objects along with contextual information, which either succceeds with `Ok(())`
     ///   or returns a `CustomError`.
     ///   Note that `node_data` can be modified to allow storing maintaining computation results on a per-object basis.
+    /// * `hash_kind` specifies what kind of hashes we expect to be stored in oid-delta entries, which is viable to decoding them
+    ///   with the correct size.
     ///
     /// This method returns a vector of all tree items, along with their potentially modified custom node data.
     ///
@@ -85,6 +87,7 @@ where
         pack_entries_end: u64,
         new_thread_state: impl Fn() -> S + Send + Clone,
         inspect_object: MBFN,
+        hash_kind: git_hash::Kind,
     ) -> Result<VecDeque<Item<T>>, Error>
     where
         F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Clone,
@@ -114,7 +117,7 @@ where
                     )
                 }
             },
-            move |root_nodes, state| resolve::deltas(root_nodes, state),
+            move |root_nodes, state| resolve::deltas(root_nodes, state, hash_kind.len_in_bytes()),
             Reducer::new(num_objects, object_progress, size_progress, should_interrupt),
         )?;
         Ok(self.into_items())

@@ -126,7 +126,7 @@ impl<T> Tree<T> {
     ) -> Result<(), Error> {
         let bytes_to_skip: u64 = pack_offset
             .checked_sub(previous_offset)
-            .expect("continuously ascending pack offets");
+            .expect("continuously ascending pack offsets");
         if bytes_to_skip == 0 {
             return Ok(());
         }

@@ -119,6 +119,7 @@ impl index::File {
                             res => res,
                         }
                     },
+                    git_hash::Kind::from_len_in_bytes(self.hash_len).expect("valid hash len"),
                 )?);
                 outcome.pack_size = pack.data_len() as u64;
                 Ok(outcome)

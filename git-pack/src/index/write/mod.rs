@@ -47,6 +47,7 @@ impl crate::index::File {
     /// `tread_limit` is used for a parallel tree traversal for obtaining object hashes with optimal performance.
     /// `root_progress` is the top-level progress to stay informed about the progress of this potentially long-running
     /// computation.
+    /// `object_hash` defines what kind of object hash we write into the index file.
     ///
     /// # Remarks
     ///
@@ -63,6 +64,7 @@ impl crate::index::File {
         mut root_progress: impl Progress,
         out: impl io::Write,
         should_interrupt: &AtomicBool,
+        object_hash: git_hash::Kind,
     ) -> Result<Outcome, Error>
     where
         F: FnOnce() -> io::Result<F2>,
@@ -181,6 +183,7 @@ impl crate::index::File {
                     modify_base(data, entry, bytes, kind.hash());
                     Ok::<_, Error>(())
                 },
+                object_hash,
             )?;
             root_progress.inc();
 
