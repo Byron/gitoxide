@@ -51,10 +51,10 @@ pub mod find;
 pub mod iter;
 
 /// The type for an iterator over `Result<git_hash::ObjectId, Error>)`
-pub type Iter = std::iter::FilterMap<
-    fs::walkdir::DirEntryIter,
-    fn(Result<fs::walkdir::DirEntry, fs::walkdir::Error>) -> Option<Result<git_hash::ObjectId, iter::Error>>,
->;
+pub struct Iter {
+    inner: fs::walkdir::DirEntryIter,
+    hash_hex_len: usize,
+}
 
 ///
 pub mod write;
