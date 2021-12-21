@@ -108,13 +108,6 @@ impl ObjectId {
         ObjectId::Sha1(id)
     }
 
-    /// Instantiate an Digest from a borrowed array of 20 bytes of a Sha1 digest.
-    pub fn from_borrowed_sha1(b: &[u8; SIZE_OF_SHA1_DIGEST]) -> ObjectId {
-        let mut id = [0; SIZE_OF_SHA1_DIGEST];
-        id.copy_from_slice(&b[..]);
-        ObjectId::Sha1(id)
-    }
-
     /// Returns an Digest representing a Sha1 with whose memory is zeroed.
     pub const fn null_sha1() -> ObjectId {
         ObjectId::Sha1([0u8; 20])
@@ -166,10 +159,7 @@ impl Borrow<crate::oid> for ObjectId {
 
 impl fmt::Display for ObjectId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for b in self.as_bytes() {
-            write!(f, "{:02x}", b)?;
-        }
-        Ok(())
+        write!(f, "{}", self.to_hex())
     }
 }
 
