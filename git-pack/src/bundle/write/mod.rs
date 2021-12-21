@@ -110,6 +110,7 @@ impl crate::Bundle {
                 (Box::new(pack_entries_iter), pack_kind)
             }
         };
+        let hash_kind = options.hash_kind;
         let (outcome, data_path, index_path) = crate::Bundle::inner_write(
             directory,
             progress,
@@ -121,6 +122,7 @@ impl crate::Bundle {
 
         Ok(Outcome {
             index: outcome,
+            hash_kind,
             pack_kind,
             data_path,
             index_path,
@@ -198,6 +200,7 @@ impl crate::Bundle {
         let pack_entries_iter =
             git_features::parallel::EagerIterIf::new(move || num_objects > 25_000, pack_entries_iter, 5_000, 5);
 
+        let hash_kind = options.hash_kind;
         let (outcome, data_path, index_path) = crate::Bundle::inner_write(
             directory,
             progress,
@@ -209,6 +212,7 @@ impl crate::Bundle {
 
         Ok(Outcome {
             index: outcome,
+            hash_kind,
             pack_kind,
             data_path,
             index_path,
@@ -222,6 +226,7 @@ impl crate::Bundle {
             thread_limit,
             iteration_mode: _,
             index_kind,
+            hash_kind,
         }: Options,
         data_file: Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>,
         pack_entries_iter: impl Iterator<Item = Result<data::input::Entry, data::input::Error>>,

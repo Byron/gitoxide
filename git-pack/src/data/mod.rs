@@ -63,6 +63,9 @@ pub struct File {
     pub id: u32,
     version: Version,
     num_objects: u32,
+    /// The size of the hash contained within. This is entirely determined by the caller, and repositories have to know which hash to use
+    /// based on their configuration.
+    hash_len: usize,
 }
 
 /// Information about the pack data file itself

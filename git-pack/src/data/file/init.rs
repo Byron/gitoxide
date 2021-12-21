@@ -1,7 +1,4 @@
-use std::{
-    convert::{TryFrom, TryInto},
-    path::Path,
-};
+use std::{convert::TryInto, path::Path};
 
 use filebuffer::FileBuffer;
 
@@ -9,17 +6,15 @@ use crate::data;
 
 /// Instantiation
 impl data::File {
-    /// Try opening a data file at the given `path`.
-    pub fn at(path: impl AsRef<Path>) -> Result<data::File, data::header::decode::Error> {
-        data::File::try_from(path.as_ref())
+    /// Try opening a data file at the given `path`, and assume hashes are stored with the given `hash_len`.
+    ///
+    /// The `hash_kind` is a way to read (and write) the same file format with different hashes, as the hash kind
+    /// isn't stored within the file format itself.
+    pub fn at(path: impl AsRef<Path>, hash_kind: git_hash::Kind) -> Result<data::File, data::header::decode::Error> {
+        Self::at_inner(path.as_ref(), hash_kind.len_in_bytes())
     }
-}
 
-impl TryFrom<&Path> for data::File {
-    type Error = data::header::decode::Error;
-
-    /// Try opening a data file at the given `path`.
-    fn try_from(path: &Path) -> Result<Self, Self::Error> {
+    fn at_inner(path: &Path, hash_len: usize) -> Result<data::File, data::header::decode::Error> {
         use crate::data::header::N32_SIZE;
 
         let data = FileBuffer::open(path).map_err(|e| data::header::decode::Error::Io {
@@ -41,6 +36,7 @@ impl TryFrom<&Path> for data::File {
             id: git_features::hash::crc32(path.as_os_str().to_string_lossy().as_bytes()),
             version: kind,
             num_objects,
+            hash_len,
         })
     }
 }

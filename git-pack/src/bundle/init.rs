@@ -1,7 +1,4 @@
-use std::{
-    convert::TryFrom,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use crate::Bundle;
 
@@ -23,15 +20,14 @@ impl Bundle {
     ///
     /// The corresponding complementary file is expected to be present.
     /// Also available via [`Bundle::try_from()`].
-    pub fn at(path: impl AsRef<Path>) -> Result<Self, Error> {
-        Self::try_from(path.as_ref())
+    ///
+    /// The `hash_kind` is a way to read (and write) the same file format with different hashes, as the hash kind
+    /// isn't stored within the file format itself.
+    pub fn at(path: impl AsRef<Path>, hash_kind: git_hash::Kind) -> Result<Self, Error> {
+        Self::at_inner(path.as_ref(), hash_kind)
     }
-}
 
-impl TryFrom<&Path> for Bundle {
-    type Error = Error;
-
-    fn try_from(path: &Path) -> Result<Self, Self::Error> {
+    fn at_inner(path: &Path, hash_kind: git_hash::Kind) -> Result<Self, Error> {
         let ext = path
             .extension()
             .and_then(|e| e.to_str())
@@ -39,10 +35,10 @@ impl TryFrom<&Path> for Bundle {
         Ok(match ext {
             "idx" => Self {
                 index: crate::index::File::at(path)?,
-                pack: crate::data::File::at(path.with_extension("pack"))?,
+                pack: crate::data::File::at(path.with_extension("pack"), hash_kind)?,
             },
             "pack" => Self {
-                pack: crate::data::File::at(path)?,
+                pack: crate::data::File::at(path, hash_kind)?,
                 index: crate::index::File::at(path.with_extension("idx"))?,
             },
             _ => return Err(Error::InvalidPath(path.to_owned())),
