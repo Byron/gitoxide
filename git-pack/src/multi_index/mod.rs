@@ -32,9 +32,9 @@ pub struct File {
 
     fan: [u32; 256],
     index_names: Vec<PathBuf>,
-    lookup: Range<git_chunk::file::Offset>,
-    offsets: Range<git_chunk::file::Offset>,
-    large_offsets: Option<Range<git_chunk::file::Offset>>,
+    lookup: Range<usize>,
+    offsets: Range<usize>,
+    large_offsets: Option<Range<usize>>,
     checksum_offset: usize,
 }
 

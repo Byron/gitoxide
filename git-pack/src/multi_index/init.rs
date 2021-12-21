@@ -30,12 +30,8 @@ mod error {
         MultiPackFanSize,
         #[error(transparent)]
         PackNames(#[from] chunk::index_names::from_slice::Error),
-        #[error("The chunk with alphabetically ordered object ids doesn't have the correct size")]
-        OidLookupSize,
-        #[error("The chunk with offsets into the pack doesn't have the correct size")]
-        OffsetsSize,
-        #[error("The chunk with large offsets into the pack doesn't have the correct size")]
-        LargeOffsetsSize,
+        #[error("multi-index chunk {:?} has invalid size: {message}", String::from_utf8_lossy(.id))]
+        InvalidChunkSize { id: git_chunk::Id, message: &'static str },
     }
 }
 
@@ -108,17 +104,26 @@ impl TryFrom<&Path> for File {
         let fan = chunk::fanout::from_slice(fan).ok_or(Error::MultiPackFanSize)?;
         let num_objects = fan[255];
 
-        let lookup = chunks.offset_by_id(chunk::lookup::ID)?;
+        let lookup = chunks.usize_offset_by_id(chunk::lookup::ID)?;
         if !chunk::lookup::is_valid(&lookup, hash_kind, num_objects) {
-            return Err(Error::OidLookupSize);
+            return Err(Error::InvalidChunkSize {
+                id: chunk::lookup::ID,
+                message: "The chunk with alphabetically ordered object ids doesn't have the correct size",
+            });
         }
-        let offsets = chunks.offset_by_id(chunk::offsets::ID)?;
+        let offsets = chunks.usize_offset_by_id(chunk::offsets::ID)?;
         if !chunk::offsets::is_valid(&offsets, num_objects) {
-            return Err(Error::OffsetsSize);
+            return Err(Error::InvalidChunkSize {
+                id: chunk::offsets::ID,
+                message: "The chunk with offsets into the pack doesn't have the correct size",
+            });
         }
-        let large_offsets = chunks.offset_by_id(chunk::large_offsets::ID).ok();
+        let large_offsets = chunks.usize_offset_by_id(chunk::large_offsets::ID).ok();
         if !chunk::large_offsets::is_valid(large_offsets.as_ref()) {
-            return Err(Error::LargeOffsetsSize);
+            return Err(Error::InvalidChunkSize {
+                id: chunk::large_offsets::ID,
+                message: "The chunk with large offsets into the pack doesn't have the correct size",
+            });
         }
 
         let checksum_offset = chunks.highest_offset() as usize;

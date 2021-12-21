@@ -29,23 +29,15 @@ pub enum Error {
     },
     #[error("{0}")]
     Corrupt(String),
-    #[error("Commit-graph file contains multiple {:?} chunks", .0.as_bstr())]
-    DuplicateChunk(ChunkId),
     // This error case is disabled, as git allows extra garbage in the extra edges list?
     // #[error("The last entry in commit-graph's extended edges list does is not marked as being terminal")]
     // ExtraEdgesOverflow,
-    #[error("Commit-graph chunk {:?} has invalid size: {msg}", .id.as_bstr())]
-    InvalidChunkSize { id: ChunkId, msg: String },
     #[error("Could not open commit-graph file at '{}'", .path.display())]
     Io {
         #[source]
         err: std::io::Error,
         path: std::path::PathBuf,
     },
-    #[error("Missing required chunk {:?}", .0.as_bstr())]
-    MissingChunk(ChunkId),
-    #[error(transparent)]
-    MissingChunk2(#[from] git_chunk::file::index::offset_by_kind::Error),
     #[error("{0}")]
     Trailer(String),
     #[error("Commit-graph file uses unsupported hash version: {0}")]
@@ -54,6 +46,10 @@ pub enum Error {
     UnsupportedVersion(u8),
     #[error(transparent)]
     ChunkFileDecode(#[from] git_chunk::file::decode::Error),
+    #[error(transparent)]
+    MissingChunk(#[from] git_chunk::file::index::offset_by_kind::Error),
+    #[error("Commit-graph chunk {:?} has invalid size: {msg}", .id.as_bstr())]
+    InvalidChunkSize { id: ChunkId, msg: String },
 }
 
 const TRAILER_LEN: usize = SHA1_SIZE;
@@ -211,7 +207,10 @@ impl TryFrom<&Path> for File {
         }
 
         if base_graph_count > 0 && base_graphs_list_offset.is_none() {
-            return Err(Error::MissingChunk(BASE_GRAPHS_LIST_CHUNK_ID));
+            return Err(git_chunk::file::index::offset_by_kind::Error {
+                kind: BASE_GRAPHS_LIST_CHUNK_ID,
+            }
+            .into());
         }
 
         let (fan, _) = read_fan(&data[fan_offset..]);

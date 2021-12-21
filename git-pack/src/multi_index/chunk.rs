@@ -71,8 +71,8 @@ pub mod lookup {
 
     pub const ID: git_chunk::Id = *b"OIDL";
 
-    pub fn is_valid(offset: &Range<Offset>, hash: git_hash::Kind, num_objects: u32) -> bool {
-        (offset.end - offset.start) as usize / hash.len_in_bytes() == num_objects as usize
+    pub fn is_valid(offset: &Range<usize>, hash: git_hash::Kind, num_objects: u32) -> bool {
+        (offset.end - offset.start) / hash.len_in_bytes() == num_objects as usize
     }
 }
 
@@ -82,9 +82,9 @@ pub mod offsets {
 
     pub const ID: git_chunk::Id = *b"OOFF";
 
-    pub fn is_valid(offset: &Range<Offset>, num_objects: u32) -> bool {
+    pub fn is_valid(offset: &Range<usize>, num_objects: u32) -> bool {
         let entry_size = 4 /* pack-id */ + 4 /* pack-offset */;
-        ((offset.end - offset.start) as usize / num_objects as usize) == entry_size
+        ((offset.end - offset.start) / num_objects as usize) == entry_size
     }
 }
 
@@ -93,9 +93,9 @@ pub mod large_offsets {
     use std::ops::Range;
 
     pub const ID: git_chunk::Id = *b"LOFF";
-    pub fn is_valid(offset: Option<&Range<Offset>>) -> bool {
+    pub fn is_valid(offset: Option<&Range<usize>>) -> bool {
         offset
-            .map(|offset| (offset.end - offset.start) as usize % 8 == 0)
+            .map(|offset| (offset.end - offset.start) % 8 == 0)
             .unwrap_or(true)
     }
 }
