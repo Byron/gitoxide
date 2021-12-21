@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, convert::TryInto, fmt, io, ops::Deref};
+use std::{borrow::Borrow, convert::TryInto, fmt, ops::Deref};
 
 use crate::{borrowed::oid, Kind, SIZE_OF_SHA1_DIGEST};
 
@@ -46,12 +46,6 @@ impl ObjectId {
         }
     }
 
-    /// Write ourselves to `out` in hexadecimal notation
-    #[inline]
-    pub fn write_hex_to(&self, mut out: impl io::Write) -> io::Result<()> {
-        out.write_all(&self.to_sha1_hex())
-    }
-
     /// The hash of an empty tree
     #[inline]
     pub const fn empty_tree(hash: Kind) -> ObjectId {
@@ -66,7 +60,7 @@ impl ObjectId {
     #[inline]
     pub fn is_null(&self) -> bool {
         match self {
-            ObjectId::Sha1(digest) => &digest[..] == Self::null_sha1().as_bytes(),
+            ObjectId::Sha1(digest) => &digest[..] == oid::null_sha1().as_bytes(),
         }
     }
 
@@ -81,30 +75,6 @@ impl ObjectId {
 
 /// Sha1 hash specific methods
 impl ObjectId {
-    /// Returns ourselves as slice of 20 bytes.
-    ///
-    /// Panics if this instance is not a sha1 hash.
-    #[inline]
-    pub fn sha1(&self) -> &[u8; SIZE_OF_SHA1_DIGEST] {
-        match self {
-            Self::Sha1(b) => b,
-        }
-    }
-
-    /// Return ourselves as array of 40 hexadecimal bytes.
-    ///
-    /// Panics if this instance is not a sha1 hash.
-    #[inline]
-    pub fn to_sha1_hex(self) -> [u8; SIZE_OF_SHA1_DIGEST * 2] {
-        match self {
-            Self::Sha1(b) => {
-                let mut hex_buf = [0u8; 40];
-                hex::encode_to_slice(b, &mut hex_buf).expect("we can count");
-                hex_buf
-            }
-        }
-    }
-
     /// Instantiate an Digest from 20 bytes of a Sha1 digest.
     #[inline]
     pub fn new_sha1(id: [u8; SIZE_OF_SHA1_DIGEST]) -> Self {

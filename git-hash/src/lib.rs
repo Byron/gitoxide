@@ -84,6 +84,12 @@ impl Kind {
         Self::Sha1
     }
 
+    /// Returns a buffer suitable to hold the longest possible hash in hex.
+    #[inline]
+    pub const fn hex_buf() -> [u8; Kind::longest().len_in_hex()] {
+        [0u8; Kind::longest().len_in_hex()]
+    }
+
     /// Returns the amount of ascii-characters needed to encode this has in hex
     #[inline]
     pub const fn len_in_hex(&self) -> usize {

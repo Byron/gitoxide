@@ -31,15 +31,10 @@ pub struct HexDisplay<'a> {
 
 impl<'a> fmt::Display for HexDisplay<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.inner.kind() {
-            crate::Kind::Sha1 => {
-                let buf = self.inner.to_sha1_hex();
-                f.write_str(
-                    std::str::from_utf8(&buf[..self.hex_len.min(crate::Kind::Sha1.len_in_hex())])
-                        .expect("hex is always utf8 representable"),
-                )
-            }
-        }
+        let mut hex = crate::Kind::hex_buf();
+        let max_len = self.inner.hex_to_buf(hex.as_mut());
+        let hex = std::str::from_utf8(&hex[..self.hex_len.min(max_len)]).expect("ascii only in hex");
+        f.write_str(hex)
     }
 }
 
@@ -134,20 +129,22 @@ impl oid {
 
 /// Sha1 specific methods
 impl oid {
-    /// Returns an array with a hexadecimal encoded version of the Sha1 hash this `Id` represents.
+    /// Write ourselves to the `out` in hexadecimal notation, returning the amount of written bytes.
     ///
-    /// **Panics** if this is not a Sha1 hash, as identifiable by [`ObjectId::kind()`].
-    pub fn to_sha1_hex(&self) -> [u8; SIZE_OF_SHA1_DIGEST * 2] {
-        let mut buf = [0u8; SIZE_OF_SHA1_DIGEST * 2];
-        hex::encode_to_slice(&self.bytes, &mut buf).expect("to count correctly");
-        buf
+    /// **Panics** if the buffer isn't big enough to hold twice as many bytes as the current binary size.
+    #[inline]
+    pub fn hex_to_buf(&self, buf: &mut [u8]) -> usize {
+        let num_hex_bytes = self.bytes.len() * 2;
+        hex::encode_to_slice(&self.bytes, &mut buf[..num_hex_bytes]).expect("to count correctly");
+        num_hex_bytes
     }
 
-    /// Returns the bytes array making up the Sha1.
-    ///
-    /// **Panics** if this is not a Sha1 hash, as identifiable by [`ObjectId::kind()`].
-    pub fn sha1(&self) -> &[u8; SIZE_OF_SHA1_DIGEST] {
-        self.bytes.try_into().expect("correctly sized slice")
+    /// Write ourselves to `out` in hexadecimal notation
+    #[inline]
+    pub fn write_hex_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+        let mut hex = crate::Kind::hex_buf();
+        let hex_len = self.hex_to_buf(&mut hex);
+        out.write_all(&hex[..hex_len])
     }
 
     /// Returns a Sha1 digest with all bytes being initialized to zero.
