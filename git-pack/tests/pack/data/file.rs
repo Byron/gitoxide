@@ -1,11 +1,9 @@
-use std::convert::TryFrom;
-
 use git_odb::pack;
 
 use crate::fixture_path;
 
 fn pack_at(at: &str) -> pack::data::File {
-    pack::data::File::try_from(fixture_path(at).as_path()).expect("valid pack file")
+    pack::data::File::at(fixture_path(at).as_path(), git_hash::Kind::Sha1).expect("valid pack file")
 }
 
 mod method {

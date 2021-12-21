@@ -75,7 +75,7 @@ mod new_from_header {
                 let entry = iter.next().expect("last object")?;
                 assert_eq!(
                     entry.trailer.expect("trailer id"),
-                    pack::data::File::at(fixture_path(SMALL_PACK))?.checksum(),
+                    pack::data::File::at(fixture_path(SMALL_PACK), git_hash::Kind::Sha1)?.checksum(),
                     "last object contains the trailer - a hash over all bytes in the pack"
                 );
                 assert_eq!(iter.len(), 0);
@@ -111,7 +111,7 @@ mod new_from_header {
         assert_eq!(iter.by_ref().take(42 - 1).count(), num_objects - 1);
         assert_eq!(
             iter.next().expect("last object")?.trailer.expect("trailer id"),
-            pack::data::File::at(fixture_path(SMALL_PACK))?.checksum(),
+            pack::data::File::at(fixture_path(SMALL_PACK), git_hash::Kind::Sha1)?.checksum(),
             "the correct checksum should be restored"
         );
         Ok(())

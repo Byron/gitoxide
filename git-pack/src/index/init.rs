@@ -2,7 +2,6 @@ use std::{mem::size_of, path::Path};
 
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
-const SHA1_SIZE: usize = git_hash::Kind::Sha1.len_in_bytes();
 
 use crate::index::{self, Version, FAN_LEN, V2_SIGNATURE};
 
@@ -22,7 +21,6 @@ pub enum Error {
 }
 
 const N32_SIZE: usize = size_of::<u32>();
-const FOOTER_SIZE: usize = SHA1_SIZE * 2;
 
 /// Instantiation
 impl index::File {
@@ -40,7 +38,9 @@ impl index::File {
             path: path.to_owned(),
         })?;
         let idx_len = data.len();
-        if idx_len < FAN_LEN * N32_SIZE + FOOTER_SIZE {
+
+        let footer_size = hash_len * 2;
+        if idx_len < FAN_LEN * N32_SIZE + footer_size {
             return Err(Error::Corrupt {
                 message: format!("Pack index of size {} is too small for even an empty index", idx_len),
             });

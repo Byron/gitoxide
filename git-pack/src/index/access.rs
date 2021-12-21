@@ -1,7 +1,6 @@
 use std::{convert::TryInto, mem::size_of};
 
 use byteorder::{BigEndian, ByteOrder};
-const SHA1_SIZE: usize = git_hash::Kind::Sha1.len_in_bytes();
 
 use crate::index::{self, FAN_LEN};
 
@@ -33,12 +32,12 @@ impl index::File {
     fn iter_v1(&self) -> impl Iterator<Item = Entry> + '_ {
         match self.version {
             index::Version::V1 => self.data[V1_HEADER_SIZE..]
-                .chunks(N32_SIZE + SHA1_SIZE)
+                .chunks(N32_SIZE + self.hash_len)
                 .take(self.num_objects as usize)
                 .map(|c| {
                     let (ofs, oid) = c.split_at(N32_SIZE);
                     Entry {
-                        oid: git_hash::ObjectId::from_20_bytes(oid),
+                        oid: git_hash::ObjectId::from(oid),
                         pack_offset: BigEndian::read_u32(ofs) as u64,
                         crc32: None,
                     }
@@ -51,13 +50,13 @@ impl index::File {
         let pack64_offset = self.offset_pack_offset64_v2();
         match self.version {
             index::Version::V2 => izip!(
-                self.data[V2_HEADER_SIZE..].chunks(SHA1_SIZE),
+                self.data[V2_HEADER_SIZE..].chunks(self.hash_len),
                 self.data[self.offset_crc32_v2()..].chunks(N32_SIZE),
                 self.data[self.offset_pack_offset_v2()..].chunks(N32_SIZE)
             )
             .take(self.num_objects as usize)
             .map(move |(oid, crc32, ofs32)| Entry {
-                oid: git_hash::ObjectId::from_20_bytes(oid),
+                oid: git_hash::ObjectId::from(oid),
                 pack_offset: self.pack_offset_from_offset_v2(ofs32, pack64_offset),
                 crc32: Some(BigEndian::read_u32(crc32)),
             }),
@@ -76,10 +75,10 @@ impl index::File {
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
         let start = match self.version {
-            index::Version::V2 => V2_HEADER_SIZE + index * SHA1_SIZE,
-            index::Version::V1 => V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE) + N32_SIZE,
+            index::Version::V2 => V2_HEADER_SIZE + index * self.hash_len,
+            index::Version::V1 => V1_HEADER_SIZE + index * (N32_SIZE + self.hash_len) + N32_SIZE,
         };
-        git_hash::oid::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
+        git_hash::oid::try_from(&self.data[start..][..self.hash_len]).expect("hash bytes to be alright")
     }
 
     /// Returns the offset into our pack data file at which to start reading the object at `index`.
@@ -94,11 +93,11 @@ impl index::File {
         match self.version {
             index::Version::V2 => {
                 let start = self.offset_pack_offset_v2() + index * N32_SIZE;
-                self.pack_offset_from_offset_v2(&self.data[start..start + N32_SIZE], self.offset_pack_offset64_v2())
+                self.pack_offset_from_offset_v2(&self.data[start..][..N32_SIZE], self.offset_pack_offset64_v2())
             }
             index::Version::V1 => {
-                let start = V1_HEADER_SIZE + index * (N32_SIZE + SHA1_SIZE);
-                BigEndian::read_u32(&self.data[start..start + N32_SIZE]) as u64
+                let start = V1_HEADER_SIZE + index * (N32_SIZE + self.hash_len);
+                BigEndian::read_u32(&self.data[start..][..N32_SIZE]) as u64
             }
         }
     }
@@ -122,7 +121,7 @@ impl index::File {
         }
     }
 
-    /// Returns the `index` of the given SHA1 for use with the [`oid_at_index()`][index::File::oid_at_index()],
+    /// Returns the `index` of the given hash for use with the [`oid_at_index()`][index::File::oid_at_index()],
     /// [`pack_offset_at_index()`][index::File::pack_offset_at_index()] or [`crc32_at_index()`][index::File::crc32_at_index()].
     pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<u32> {
         let id = id.as_ref();
@@ -178,7 +177,7 @@ impl index::File {
     }
 
     fn offset_crc32_v2(&self) -> usize {
-        V2_HEADER_SIZE + self.num_objects as usize * SHA1_SIZE
+        V2_HEADER_SIZE + self.num_objects as usize * self.hash_len
     }
 
     fn offset_pack_offset_v2(&self) -> usize {
@@ -194,7 +193,7 @@ impl index::File {
         let ofs32 = BigEndian::read_u32(offset);
         if (ofs32 & N32_HIGH_BIT) == N32_HIGH_BIT {
             let from = pack64_offset + (ofs32 ^ N32_HIGH_BIT) as usize * N64_SIZE;
-            BigEndian::read_u64(&self.data[from..from + N64_SIZE])
+            BigEndian::read_u64(&self.data[from..][..N64_SIZE])
         } else {
             ofs32 as u64
         }

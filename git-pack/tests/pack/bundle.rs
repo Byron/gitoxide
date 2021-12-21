@@ -6,7 +6,7 @@ mod locate {
     use crate::{fixture_path, hex_to_id, pack::SMALL_PACK_INDEX};
 
     fn locate<'a>(hex_id: &str, out: &'a mut Vec<u8>) -> git_object::Data<'a> {
-        let bundle = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX)).expect("pack and idx");
+        let bundle = pack::Bundle::at(fixture_path(SMALL_PACK_INDEX), git_hash::Kind::Sha1).expect("pack and idx");
         bundle
             .find(hex_to_id(hex_id), out, &mut pack::cache::Never)
             .expect("read success")
@@ -23,8 +23,8 @@ mod locate {
         fn all() -> Result<(), Box<dyn std::error::Error>> {
             for (index_path, data_path) in PACKS_AND_INDICES {
                 // both paths are equivalent
-                pack::Bundle::at(fixture_path(index_path))?;
-                let bundle = pack::Bundle::at(fixture_path(data_path))?;
+                pack::Bundle::at(fixture_path(index_path), git_hash::Kind::Sha1)?;
+                let bundle = pack::Bundle::at(fixture_path(data_path), git_hash::Kind::Sha1)?;
 
                 let mut buf = Vec::new();
                 for entry in bundle.index.iter() {
@@ -98,6 +98,7 @@ mod write_to_directory {
             pack_kind: pack::data::Version::V2,
             index_path: None,
             data_path: None,
+            hash_kind: git_hash::Kind::Sha1,
         })
     }
 
@@ -107,7 +108,7 @@ mod write_to_directory {
         assert_eq!(res, expected_outcome()?);
         assert_eq!(
             res.index.index_hash,
-            pack::index::File::at(fixture_path(SMALL_PACK_INDEX))?.index_checksum()
+            pack::index::File::at(fixture_path(SMALL_PACK_INDEX), git_hash::Kind::Sha1)?.index_checksum()
         );
         assert!(res.to_bundle().is_none());
         Ok(())
@@ -156,6 +157,7 @@ mod write_to_directory {
                 thread_limit: None,
                 iteration_mode: pack::data::input::Mode::Verify,
                 index_kind: pack::index::Version::V2,
+                hash_kind: git_hash::Kind::Sha1,
             },
         )
         .map_err(Into::into)

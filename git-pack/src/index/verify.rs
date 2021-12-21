@@ -7,7 +7,6 @@ use git_object::{
 };
 
 use crate::index;
-const SHA1_SIZE: usize = git_hash::Kind::Sha1.len_in_bytes();
 
 /// Returned by [`index::File::verify_checksum()`]
 #[derive(thiserror::Error, Debug)]
@@ -54,15 +53,15 @@ impl index::File {
     ///
     /// It's a hash over all bytes of the index.
     pub fn index_checksum(&self) -> git_hash::ObjectId {
-        git_hash::ObjectId::from_20_bytes(&self.data[self.data.len() - SHA1_SIZE..])
+        git_hash::ObjectId::from(&self.data[self.data.len() - self.hash_len..])
     }
 
     /// Returns the hash of the pack data file that this index file corresponds to.
     ///
     /// It should [`crate::data::File::checksum()`] of the corresponding pack data file.
     pub fn pack_checksum(&self) -> git_hash::ObjectId {
-        let from = self.data.len() - SHA1_SIZE * 2;
-        git_hash::ObjectId::from_20_bytes(&self.data[from..from + SHA1_SIZE])
+        let from = self.data.len() - self.hash_len * 2;
+        git_hash::ObjectId::from(&self.data[from..][..self.hash_len])
     }
 
     /// Validate that our [`index_checksum()`][index::File::index_checksum()] matches the actual contents
@@ -72,7 +71,7 @@ impl index::File {
         mut progress: impl Progress,
         should_interrupt: &AtomicBool,
     ) -> Result<git_hash::ObjectId, Error> {
-        let data_len_without_trailer = self.data.len() - SHA1_SIZE;
+        let data_len_without_trailer = self.data.len() - self.hash_len;
         let actual = match git_features::hash::bytes_of_file(
             &self.path,
             data_len_without_trailer,

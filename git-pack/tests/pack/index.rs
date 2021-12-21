@@ -16,7 +16,7 @@ mod file {
 
             #[test]
             fn lookup() -> Result<(), Box<dyn std::error::Error>> {
-                let idx = index::File::at(&fixture_path(INDEX_V1))?;
+                let idx = index::File::at(&fixture_path(INDEX_V1), git_hash::Kind::Sha1)?;
                 for (id, desired_index, assertion) in &[
                     (&b"036bd66fe9b6591e959e6df51160e636ab1a682e"[..], Some(0), "first"),
                     (b"f7f791d96b9a34ef0f08db4b007c5309b9adc3d6", Some(65), "close to last"),
@@ -46,7 +46,7 @@ mod file {
 
             #[test]
             fn lookup() -> Result<(), Box<dyn std::error::Error>> {
-                let idx = index::File::at(&fixture_path(INDEX_V2))?;
+                let idx = index::File::at(&fixture_path(INDEX_V2), git_hash::Kind::Sha1)?;
                 for (id, desired_index, assertion) in &[
                     (&b"0ead45fc727edcf5cadca25ef922284f32bb6fc1"[..], Some(0), "first"),
                     (b"e800b9c207e17f9b11e321cc1fba5dfe08af4222", Some(29), "last"),
@@ -288,8 +288,8 @@ mod file {
                 },
             ),
         ] {
-            let idx = index::File::at(&fixture_path(index_path))?;
-            let pack = pack::data::File::at(&fixture_path(pack_path))?;
+            let idx = index::File::at(&fixture_path(index_path), git_hash::Kind::Sha1)?;
+            let pack = pack::data::File::at(&fixture_path(pack_path), git_hash::Kind::Sha1)?;
 
             assert_eq!(pack.version(), pack::data::Version::V2);
             assert_eq!(pack.num_objects(), idx.num_objects());
@@ -392,7 +392,7 @@ mod file {
                 "0f3ea84cd1bba10c2a03d736a460635082833e59",
             ),
         ] {
-            let idx = index::File::at(&fixture_path(path))?;
+            let idx = index::File::at(&fixture_path(path), git_hash::Kind::Sha1)?;
             assert_eq!(idx.version(), *kind);
             assert_eq!(idx.num_objects(), *num_objects);
             assert_eq!(

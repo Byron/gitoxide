@@ -53,8 +53,7 @@ pub mod access {
             git_hash::Kind::from_len_in_bytes(self.hash_len).expect("init checked hash len")
         }
         pub fn checksum(&self) -> git_hash::ObjectId {
-            git_hash::ObjectId::try_from(&self.data[self.data.len() - self.hash_len..])
-                .expect("prior validation of checksum size")
+            git_hash::ObjectId::from(&self.data[self.data.len() - self.hash_len..])
         }
     }
 }
