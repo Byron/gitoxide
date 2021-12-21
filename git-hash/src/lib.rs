@@ -108,4 +108,11 @@ impl Kind {
             _ => return None,
         })
     }
+
+    /// Create a null-id of our hash kind.
+    pub fn null(&self) -> &'static oid {
+        match self {
+            Kind::Sha1 => oid::null_sha1(),
+        }
+    }
 }

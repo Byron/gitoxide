@@ -94,10 +94,8 @@ impl oid {
 impl oid {
     /// The kind of hash used for this Digest
     pub fn kind(&self) -> crate::Kind {
-        match self.bytes.len() {
-            20 => crate::Kind::Sha1,
-            _ => unreachable!("creating this instance is checked and fails on unknown lengths"),
-        }
+        crate::Kind::from_len_in_bytes(self.bytes.len())
+            .expect("creating this instance is checked and fails on unknown lengths")
     }
 
     /// The first byte of the hash, commonly used to partition a set of `Id`s
@@ -112,10 +110,18 @@ impl oid {
     }
 
     /// Return a type which can display itself in hexadecimal form with the `len` amount of characters.
-    pub fn to_hex(&self, len: usize) -> HexDisplay<'_> {
+    pub fn to_hex_with_len(&self, len: usize) -> HexDisplay<'_> {
         HexDisplay {
             inner: self,
             hex_len: len,
+        }
+    }
+
+    /// Return a type which displays this oid as hex in full.
+    pub fn to_hex(&self) -> HexDisplay<'_> {
+        HexDisplay {
+            inner: self,
+            hex_len: self.bytes.len() * 2,
         }
     }
 }
