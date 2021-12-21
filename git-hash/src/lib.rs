@@ -90,6 +90,12 @@ impl Kind {
         [0u8; Kind::longest().len_in_hex()]
     }
 
+    /// Returns a buffer suitable to hold the longest possible hash as raw bytes.
+    #[inline]
+    pub const fn buf() -> [u8; Kind::longest().len_in_bytes()] {
+        [0u8; Kind::longest().len_in_bytes()]
+    }
+
     /// Returns the amount of ascii-characters needed to encode this has in hex
     #[inline]
     pub const fn len_in_hex(&self) -> usize {
@@ -106,12 +112,14 @@ impl Kind {
     }
 
     /// Converts a size in bytes as obtained by `Kind::len_in_bytes()` into the corresponding hash kind, if possible.
+    ///
+    /// **Panics** if the hash length doesn't match a known hash.
     #[inline]
-    pub const fn from_len_in_bytes(bytes: usize) -> Option<Self> {
-        Some(match bytes {
+    pub const fn from_len_in_bytes(bytes: usize) -> Self {
+        match bytes {
             20 => Kind::Sha1,
-            _ => return None,
-        })
+            _ => panic!("BUG: must be called only with valid hash lengths produced by len_in_bytes()"),
+        }
     }
 
     /// Create a null-id of our hash kind.

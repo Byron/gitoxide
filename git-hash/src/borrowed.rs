@@ -92,7 +92,6 @@ impl oid {
     #[inline]
     pub fn kind(&self) -> crate::Kind {
         crate::Kind::from_len_in_bytes(self.bytes.len())
-            .expect("creating this instance is checked and fails on unknown lengths")
     }
 
     /// The first byte of the hash, commonly used to partition a set of `Id`s
