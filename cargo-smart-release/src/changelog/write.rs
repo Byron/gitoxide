@@ -364,10 +364,10 @@ fn format_category(cat: &Category, link_mode: &Linkables) -> String {
 
 fn format_oid(id: &git::oid, link_mode: &Linkables) -> String {
     match link_mode {
-        Linkables::AsText => id.to_hex(7).to_string(),
+        Linkables::AsText => id.to_hex_with_len(7).to_string(),
         Linkables::AsLinks { repository_url } => match repository_url.github_https() {
             Some(base_url) => {
-                format!("[`{}`]({}/commit/{})", id.to_hex(7), base_url, id)
+                format!("[`{}`]({}/commit/{})", id.to_hex_with_len(7), base_url, id)
             }
             None => format_oid(id, &Linkables::AsText),
         },
