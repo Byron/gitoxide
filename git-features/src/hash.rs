@@ -139,7 +139,7 @@ pub fn bytes(
         }
     }
 
-    let id = git_hash::ObjectId::new_sha1(hasher.digest());
+    let id = git_hash::ObjectId::from(hasher.digest());
     progress.show_throughput(start);
     Ok(id)
 }

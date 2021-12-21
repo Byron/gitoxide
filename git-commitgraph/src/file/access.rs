@@ -28,7 +28,7 @@ impl File {
     ///
     /// Note that it is always conforming to the hash used in the owning repository.
     pub fn hash_kind(&self) -> git_hash::Kind {
-        git_hash::Kind::from_len_in_bytes(self.hash_len).expect("hash len validated during init")
+        git_hash::Kind::from_len_in_bytes(self.hash_len)
     }
 
     /// Returns an object id at the given index in our list of (sorted) hashes.

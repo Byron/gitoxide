@@ -30,6 +30,7 @@ mod new_from_header {
                 std::io::BufReader::new(data.as_slice()),
                 Mode::AsIs,
                 EntryDataMode::Ignore,
+                git_hash::Kind::Sha1,
             )? {
                 let entry = entry?;
 
@@ -66,6 +67,7 @@ mod new_from_header {
                     std::io::BufReader::new(fs::File::open(fixture_path(SMALL_PACK))?),
                     *trailer_mode,
                     *compression_mode,
+                    git_hash::Kind::Sha1,
                 )?;
 
                 let num_objects = iter.len();
@@ -107,6 +109,7 @@ mod new_from_header {
             std::io::BufReader::new(&pack[..pack.len() - 20]),
             Mode::Restore,
             EntryDataMode::Ignore,
+            git_hash::Kind::Sha1,
         )?;
         let num_objects = iter.len();
         assert_eq!(iter.by_ref().take(42 - 1).count(), num_objects - 1);
@@ -125,6 +128,7 @@ mod new_from_header {
             std::io::BufReader::new(&pack[..pack.len() / 2]),
             Mode::Restore,
             EntryDataMode::Ignore,
+            git_hash::Kind::Sha1,
         )?;
         let mut num_objects = 0;
         while let Some(entry) = iter.next() {

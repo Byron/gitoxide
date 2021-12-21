@@ -114,6 +114,7 @@ mod file {
                     io::BufReader::new(fs::File::open(fixture_path(data_path))?),
                     *mode,
                     *compressed,
+                    git_hash::Kind::Sha1,
                 )?;
 
                 let mut actual = Vec::<u8>::new();
@@ -127,6 +128,7 @@ mod file {
                     progress::Discard,
                     &mut actual,
                     &AtomicBool::new(false),
+                    git_hash::Kind::Sha1,
                 )?;
 
                 let expected = fs::read(fixture_path(index_path))?;

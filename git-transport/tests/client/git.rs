@@ -123,6 +123,7 @@ async fn handshake_v1_and_request() -> crate::Result {
         reader,
         input::Mode::Verify,
         input::EntryDataMode::Crc32,
+        git_hash::Kind::Sha1,
     )?;
     assert_eq!(entries.count(), expected_entries);
 
@@ -330,6 +331,7 @@ async fn handshake_v2_and_request_inner() -> crate::Result {
         reader,
         input::Mode::Verify,
         input::EntryDataMode::Crc32,
+        git_hash::Kind::Sha1,
     )?;
     assert_eq!(entries.count(), expected_entries);
 

@@ -61,12 +61,14 @@ async fn read_pack_with_progress_extraction() -> crate::Result {
         util::BlockOn(pack_read),
         pack::data::input::Mode::Verify,
         pack::data::input::EntryDataMode::Ignore,
+        git_hash::Kind::Sha1,
     )?;
     #[cfg(feature = "blocking-io")]
     let mut pack_entries = pack::data::input::BytesToEntriesIter::new_from_header(
         pack_read,
         pack::data::input::Mode::Verify,
         pack::data::input::EntryDataMode::Ignore,
+        git_hash::Kind::Sha1,
     )?;
     let all_but_last = pack_entries.size_hint().0 - 1;
     let last = pack_entries.nth(all_but_last).expect("last entry")?;
