@@ -85,7 +85,7 @@ impl ObjectId {
     ///
     /// Panics of the slice doesn't have a length of 20.
     #[inline]
-    pub fn from_20_bytes(b: &[u8]) -> ObjectId {
+    pub(crate) fn from_20_bytes(b: &[u8]) -> ObjectId {
         let mut id = [0; SIZE_OF_SHA1_DIGEST];
         id.copy_from_slice(b);
         ObjectId::Sha1(id)
