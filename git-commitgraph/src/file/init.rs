@@ -6,12 +6,10 @@ use std::{
 use bstr::ByteSlice;
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 
 use crate::file::{
-    ChunkId, File, BASE_GRAPHS_LIST_CHUNK_ID, CHUNK_LOOKUP_SIZE, COMMIT_DATA_CHUNK_ID, COMMIT_DATA_ENTRY_SIZE,
-    EXTENDED_EDGES_LIST_CHUNK_ID, FAN_LEN, HEADER_LEN, OID_FAN_CHUNK_ID, OID_LOOKUP_CHUNK_ID, OID_LOOKUP_ENTRY_SIZE,
-    SIGNATURE,
+    ChunkId, File, BASE_GRAPHS_LIST_CHUNK_ID, COMMIT_DATA_CHUNK_ID, COMMIT_DATA_ENTRY_SIZE_SANS_HASH,
+    EXTENDED_EDGES_LIST_CHUNK_ID, FAN_LEN, HEADER_LEN, OID_FAN_CHUNK_ID, OID_LOOKUP_CHUNK_ID, SIGNATURE,
 };
 
 /// The error used in [`File::at()`].
@@ -52,11 +50,9 @@ pub enum Error {
     InvalidChunkSize { id: ChunkId, msg: String },
 }
 
-const TRAILER_LEN: usize = SHA1_SIZE;
-const MIN_FILE_SIZE: usize = HEADER_LEN + ((MIN_CHUNKS + 1) * CHUNK_LOOKUP_SIZE) + TRAILER_LEN;
-
-// Required chunks: OIDF, OIDL, CDAT
-const MIN_CHUNKS: usize = 3;
+const MIN_FILE_SIZE: usize = HEADER_LEN
+    + git_chunk::file::Index::size_for_entries(3 /*OIDF, OIDL, CDAT*/)
+    + git_hash::Kind::shortest().len_in_bytes();
 
 impl File {
     /// Try to parse the commit graph file at `path`.
@@ -96,8 +92,8 @@ impl TryFrom<&Path> for File {
         };
         ofs += 1;
 
-        match data[ofs] {
-            1 => (),
+        let hash_kind = match data[ofs] {
+            1 => git_hash::Kind::Sha1,
             x => {
                 return Err(Error::UnsupportedHashVersion(x));
             }
@@ -117,13 +113,17 @@ impl TryFrom<&Path> for File {
         let base_graphs_list_offset = chunks
             .validated_usize_offset_by_id(BASE_GRAPHS_LIST_CHUNK_ID, |chunk_range| {
                 let chunk_size = chunk_range.len();
-                if chunk_size % SHA1_SIZE != 0 {
+                if chunk_size % hash_kind.len_in_bytes() != 0 {
                     return Err(Error::InvalidChunkSize {
                         id: BASE_GRAPHS_LIST_CHUNK_ID,
-                        msg: format!("chunk size {} is not a multiple of {}", chunk_size, SHA1_SIZE),
+                        msg: format!(
+                            "chunk size {} is not a multiple of {}",
+                            chunk_size,
+                            hash_kind.len_in_bytes()
+                        ),
                     });
                 }
-                let chunk_base_graph_count: u32 = (chunk_size / SHA1_SIZE)
+                let chunk_base_graph_count: u32 = (chunk_size / hash_kind.len_in_bytes())
                     .try_into()
                     .expect("base graph count to fit in 32-bits");
                 if chunk_base_graph_count != u32::from(base_graph_count) {
@@ -141,18 +141,16 @@ impl TryFrom<&Path> for File {
             chunks.validated_usize_offset_by_id(COMMIT_DATA_CHUNK_ID, |chunk_range| {
                 let chunk_size = chunk_range.len();
 
-                if chunk_size % COMMIT_DATA_ENTRY_SIZE != 0 {
+                let entry_size = hash_kind.len_in_bytes() + COMMIT_DATA_ENTRY_SIZE_SANS_HASH;
+                if chunk_size % entry_size != 0 {
                     return Err(Error::InvalidChunkSize {
                         id: COMMIT_DATA_CHUNK_ID,
-                        msg: format!(
-                            "chunk size {} is not a multiple of {}",
-                            chunk_size, COMMIT_DATA_ENTRY_SIZE
-                        ),
+                        msg: format!("chunk size {} is not a multiple of {}", chunk_size, entry_size),
                     });
                 }
                 Ok((
                     chunk_range.start,
-                    (chunk_size / COMMIT_DATA_ENTRY_SIZE)
+                    (chunk_size / entry_size)
                         .try_into()
                         .expect("number of commits in CDAT chunk to fit in 32 bits"),
                 ))
@@ -175,18 +173,19 @@ impl TryFrom<&Path> for File {
             chunks.validated_usize_offset_by_id(OID_LOOKUP_CHUNK_ID, |chunk_range| {
                 let chunk_size = chunk_range.len();
 
-                if chunk_size % OID_LOOKUP_ENTRY_SIZE != 0 {
+                if chunk_size % hash_kind.len_in_bytes() != 0 {
                     return Err(Error::InvalidChunkSize {
                         id: OID_LOOKUP_CHUNK_ID,
                         msg: format!(
                             "chunk size {} is not a multiple of {}",
-                            chunk_size, OID_LOOKUP_ENTRY_SIZE
+                            chunk_size,
+                            hash_kind.len_in_bytes()
                         ),
                     });
                 }
                 Ok((
                     chunk_range.start,
-                    (chunk_size / OID_LOOKUP_ENTRY_SIZE)
+                    (chunk_size / hash_kind.len_in_bytes())
                         .try_into()
                         .expect("number of commits in OIDL chunk to fit in 32 bits"),
                 ))
@@ -195,10 +194,10 @@ impl TryFrom<&Path> for File {
         let extra_edges_list_range = chunks.usize_offset_by_id(EXTENDED_EDGES_LIST_CHUNK_ID).ok();
 
         let trailer = &data[chunks.highest_offset() as usize..];
-        if trailer.len() != TRAILER_LEN {
+        if trailer.len() != hash_kind.len_in_bytes() {
             return Err(Error::Trailer(format!(
                 "Expected commit-graph trailer to contain {} bytes, got {}",
-                TRAILER_LEN,
+                hash_kind.len_in_bytes(),
                 trailer.len()
             )));
         }
@@ -236,6 +235,7 @@ impl TryFrom<&Path> for File {
             fan,
             oid_lookup_offset,
             path: path.to_owned(),
+            hash_len: hash_kind.len_in_bytes(),
         })
     }
 }

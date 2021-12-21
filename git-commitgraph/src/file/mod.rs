@@ -7,7 +7,6 @@ use std::{
 };
 
 use filebuffer::FileBuffer;
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
 
 pub use self::{commit::Commit, init::Error};
 
@@ -16,11 +15,9 @@ pub mod commit;
 mod init;
 pub mod verify;
 
-const CHUNK_LOOKUP_SIZE: usize = 12;
-const COMMIT_DATA_ENTRY_SIZE: usize = SHA1_SIZE + 16;
+const COMMIT_DATA_ENTRY_SIZE_SANS_HASH: usize = 16;
 const FAN_LEN: usize = 256;
 const HEADER_LEN: usize = 8;
-const OID_LOOKUP_ENTRY_SIZE: usize = SHA1_SIZE;
 
 const SIGNATURE: &[u8] = b"CGPH";
 
@@ -50,6 +47,7 @@ pub struct File {
     fan: [u32; FAN_LEN],
     oid_lookup_offset: usize,
     path: PathBuf,
+    hash_len: usize,
 }
 
 /// The position of a given commit within a graph file, starting at 0.

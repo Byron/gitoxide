@@ -4,9 +4,7 @@ use std::{
     path::Path,
 };
 
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-
-use crate::file::{self, commit::Commit, File, COMMIT_DATA_ENTRY_SIZE};
+use crate::file::{self, commit::Commit, File, COMMIT_DATA_ENTRY_SIZE_SANS_HASH};
 
 /// Access
 impl File {
@@ -30,10 +28,10 @@ impl File {
     ///
     /// Note that it is always conforming to the hash used in the owning repository.
     pub fn hash_kind(&self) -> git_hash::Kind {
-        git_hash::Kind::Sha1
+        git_hash::Kind::from_len_in_bytes(self.hash_len).expect("hash len validated during init")
     }
 
-    /// Returns 20 bytes sha1 at the given index in our list of (sorted) sha1 hashes.
+    /// Returns an object id at the given index in our list of (sorted) hashes.
     /// The position ranges from 0 to self.num_commits()
     // copied from git-odb/src/pack/index/ext
     pub fn id_at(&self, pos: file::Position) -> &git_hash::oid {
@@ -47,17 +45,17 @@ impl File {
             .0
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
-        let start = self.oid_lookup_offset + (pos * SHA1_SIZE);
-        git_hash::oid::try_from(&self.data[start..start + SHA1_SIZE]).expect("20 bytes SHA1 to be alright")
+        let start = self.oid_lookup_offset + (pos * self.hash_len);
+        git_hash::oid::try_from(&self.data[start..][..self.hash_len]).expect("hash bytes to be alright")
     }
 
     /// Return an iterator over all object hashes stored in the base graph.
     pub fn iter_base_graph_ids(&self) -> impl Iterator<Item = &git_hash::oid> {
         let start = self.base_graphs_list_offset.unwrap_or(0);
-        let base_graphs_list = &self.data[start..start + (SHA1_SIZE * usize::from(self.base_graph_count))];
+        let base_graphs_list = &self.data[start..][..self.hash_len * usize::from(self.base_graph_count)];
         base_graphs_list
-            .chunks(SHA1_SIZE)
-            .map(|bytes| git_hash::oid::try_from(bytes).expect("20 bytes SHA1 to be alright"))
+            .chunks(self.hash_len)
+            .map(|bytes| git_hash::oid::try_from(bytes).expect("hash bytes to be alright"))
     }
 
     /// return an iterator over all commits in this file.
@@ -80,7 +78,7 @@ impl File {
 
         // Bisect using indices
         // TODO: Performance of V2 could possibly be better if we would be able to do a binary search
-        // on 20 byte chunks directly, but doing so requires transmuting and that is not safe, even though
+        // on hash-sized chunks directly, but doing so requires transmuting and that is not safe, even though
         // it should not be if the bytes match up and the type has no destructor.
         while lower_bound < upper_bound {
             let mid = (lower_bound + upper_bound) / 2;
@@ -123,8 +121,9 @@ impl File {
             .0
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
-        let start = self.commit_data_offset + (pos * COMMIT_DATA_ENTRY_SIZE);
-        &self.data[start..start + COMMIT_DATA_ENTRY_SIZE]
+        let entry_size = self.hash_len + COMMIT_DATA_ENTRY_SIZE_SANS_HASH;
+        let start = self.commit_data_offset + (pos * entry_size);
+        &self.data[start..][..entry_size]
     }
 
     /// Returns the byte slice for this file's entire Extra Edge List (EDGE) chunk.

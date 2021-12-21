@@ -5,13 +5,11 @@ use std::{
     slice::Chunks,
 };
 
-use byteorder::{BigEndian, ByteOrder};
-use git_hash::SIZE_OF_SHA1_DIGEST as SHA1_SIZE;
-
 use crate::{
     file::{self, File, EXTENDED_EDGES_MASK, LAST_EXTENDED_EDGE_MASK, NO_PARENT},
     graph,
 };
+use byteorder::{BigEndian, ByteOrder};
 
 /// The error used in the [`file::commit`][self] module.
 #[derive(thiserror::Error, Debug)]
@@ -45,11 +43,11 @@ impl<'a> Commit<'a> {
         Commit {
             file,
             pos,
-            root_tree_id: git_hash::oid::try_from(&bytes[..SHA1_SIZE]).expect("20 bytes SHA1 to be alright"),
-            parent1: ParentEdge::from_raw(BigEndian::read_u32(&bytes[SHA1_SIZE..SHA1_SIZE + 4])),
-            parent2: ParentEdge::from_raw(BigEndian::read_u32(&bytes[SHA1_SIZE + 4..SHA1_SIZE + 8])),
-            generation: BigEndian::read_u32(&bytes[SHA1_SIZE + 8..SHA1_SIZE + 12]) >> 2,
-            commit_timestamp: BigEndian::read_u64(&bytes[SHA1_SIZE + 8..SHA1_SIZE + 16]) & 0x0003_ffff_ffff,
+            root_tree_id: git_hash::oid::try_from(&bytes[..file.hash_len]).expect("hash bytes to be alright"),
+            parent1: ParentEdge::from_raw(BigEndian::read_u32(&bytes[file.hash_len..][..4])),
+            parent2: ParentEdge::from_raw(BigEndian::read_u32(&bytes[file.hash_len + 4..][..4])),
+            generation: BigEndian::read_u32(&bytes[file.hash_len + 8..][..4]) >> 2,
+            commit_timestamp: BigEndian::read_u64(&bytes[file.hash_len + 8..][..8]) & 0x0003_ffff_ffff,
         }
     }
 
