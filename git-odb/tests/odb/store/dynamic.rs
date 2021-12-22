@@ -1,9 +1,10 @@
 #![allow(unused)]
 
+use std::process::Command;
+
 use git_features::threading::OwnShared;
 use git_odb::{store, Find, FindExt, Write};
 use git_testtools::{fixture_path, hex_to_id};
-use std::process::Command;
 
 fn db() -> git_odb::Handle {
     git_odb::at(fixture_path("objects")).expect("valid object path")

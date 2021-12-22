@@ -34,10 +34,12 @@ mod from_path {
 
 ///
 pub mod open {
-    use git_config::file::GitConfig;
     use std::{borrow::Cow, path::PathBuf};
 
-    use git_config::values::{Boolean, Integer};
+    use git_config::{
+        file::GitConfig,
+        values::{Boolean, Integer},
+    };
     use git_features::threading::OwnShared;
 
     use crate::Repository;

@@ -4,8 +4,9 @@ use std::{
     io::{self, Write},
 };
 
-use crate::Sink;
 use git_features::zlib::stream::deflate;
+
+use crate::Sink;
 
 impl Sink {
     /// Enable or disable compression. Compression is disabled by default

@@ -1,7 +1,8 @@
 //! An object database storing each object in a zlib compressed file with its hash in the path
 const HEADER_READ_UNCOMPRESSED_BYTES: usize = 512;
-use git_features::fs;
 use std::path::{Path, PathBuf};
+
+use git_features::fs;
 
 /// A database for reading and writing objects to disk, one file per object.
 #[derive(Clone, PartialEq, Eq)]

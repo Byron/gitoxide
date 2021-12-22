@@ -1,5 +1,7 @@
-use std::sync::atomic::Ordering;
-use std::{path::Path, sync::Arc};
+use std::{
+    path::Path,
+    sync::{atomic::Ordering, Arc},
+};
 
 use crate::store::{handle, types};
 

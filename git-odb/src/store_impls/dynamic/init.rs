@@ -1,9 +1,11 @@
 use std::{iter::FromIterator, path::PathBuf, sync::Arc};
 
-use crate::Store;
 use arc_swap::ArcSwap;
 
-use crate::store::types::{MutableIndexAndPack, SlotMapIndex};
+use crate::{
+    store::types::{MutableIndexAndPack, SlotMapIndex},
+    Store,
+};
 
 /// Options for use in [`Store::at_opts()`].
 #[derive(Default, Copy, Clone, Debug)]

@@ -1,9 +1,10 @@
 use git_repository::easy;
 
 mod commit {
-    use crate::basic_repo;
     use git_repository::easy::{Commit, Handle};
     use git_testtools::hex_to_id;
+
+    use crate::basic_repo;
 
     #[test]
     fn tree() {

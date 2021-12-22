@@ -2,8 +2,11 @@ use std::{ops::Deref, option::Option::None, sync::Arc, vec::IntoIter};
 
 use git_hash::ObjectId;
 
-use crate::store::RefreshMode;
-use crate::{loose, store::handle, store_impls::dynamic};
+use crate::{
+    loose,
+    store::{handle, RefreshMode},
+    store_impls::dynamic,
+};
 
 enum State {
     Pack {

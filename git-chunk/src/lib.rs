@@ -12,8 +12,7 @@ pub const SENTINEL: Id = [0u8; 4];
 
 ///
 pub mod range {
-    use std::convert::TryInto;
-    use std::ops::Range;
+    use std::{convert::TryInto, ops::Range};
 
     use crate::file;
 

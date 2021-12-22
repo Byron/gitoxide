@@ -49,12 +49,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 mod visit {
-    use git_hash::oid;
-    use git_repository as git;
     use std::process::id;
 
-    use git_object::bstr::BStr;
-    use git_object::tree::EntryRef;
+    use git_hash::oid;
+    use git_object::{bstr::BStr, tree::EntryRef};
+    use git_repository as git;
     use git_traverse::tree::visit::Action;
 
     pub(crate) struct Tree {

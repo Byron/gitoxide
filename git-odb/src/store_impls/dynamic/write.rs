@@ -20,8 +20,9 @@ mod error {
         Io(#[from] std::io::Error),
     }
 }
-use crate::store_impls::dynamic;
 pub use error::Error;
+
+use crate::store_impls::dynamic;
 
 impl<S> crate::Write for store::Handle<S>
 where

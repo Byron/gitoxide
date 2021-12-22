@@ -12,14 +12,14 @@
 // TODO: actually remove the deprecated items and remove thos allow
 #![allow(deprecated)]
 
-use arc_swap::ArcSwap;
-use std::cell::RefCell;
-use std::path::PathBuf;
-use std::sync::atomic::AtomicUsize;
-use std::sync::Arc;
+use std::{
+    cell::RefCell,
+    path::PathBuf,
+    sync::{atomic::AtomicUsize, Arc},
+};
 
-use git_features::threading::OwnShared;
-use git_features::zlib::stream::deflate;
+use arc_swap::ArcSwap;
+use git_features::{threading::OwnShared, zlib::stream::deflate};
 pub use git_pack as pack;
 
 mod store_impls;

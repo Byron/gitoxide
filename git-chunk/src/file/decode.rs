@@ -1,6 +1,6 @@
+use std::{convert::TryInto, ops::Range};
+
 pub use error::Error;
-use std::convert::TryInto;
-use std::ops::Range;
 
 mod error {
     use quick_error::quick_error;
@@ -34,8 +34,7 @@ mod error {
     }
 }
 
-use crate::file;
-use crate::file::index;
+use crate::{file, file::index};
 
 impl file::Index {
     /// Provided a mapped file at the beginning via `data`, starting at `toc_offset` decode all chunk information to return

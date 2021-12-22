@@ -1,6 +1,7 @@
 #![allow(deprecated)]
-use crate::fixture_path;
 use git_odb::linked::Store;
+
+use crate::fixture_path;
 
 fn db() -> Store {
     Store::at(fixture_path("objects")).expect("valid object path")

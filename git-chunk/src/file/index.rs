@@ -1,5 +1,6 @@
-use crate::file::Index;
 use std::ops::Range;
+
+use crate::file::Index;
 
 ///
 pub mod offset_by_kind {

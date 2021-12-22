@@ -5,11 +5,12 @@ use std::{
     slice::Chunks,
 };
 
+use byteorder::{BigEndian, ByteOrder};
+
 use crate::{
     file::{self, File, EXTENDED_EDGES_MASK, LAST_EXTENDED_EDGE_MASK, NO_PARENT},
     graph,
 };
-use byteorder::{BigEndian, ByteOrder};
 
 /// The error used in the [`file::commit`][self] module.
 #[derive(thiserror::Error, Debug)]

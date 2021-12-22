@@ -1,6 +1,7 @@
 //! The standard object store which should fit all needs.
-use crate::Store;
 use std::{cell::RefCell, ops::Deref};
+
+use crate::Store;
 
 /// This effectively acts like a handle but exists to be usable from the actual `crate::Handle` implementation which adds caches on top.
 /// Each store is quickly cloned and contains thread-local state for shared packs.
