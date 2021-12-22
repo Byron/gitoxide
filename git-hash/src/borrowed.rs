@@ -65,7 +65,8 @@ quick_error! {
 /// Conversion
 impl oid {
     /// Try to create a shared object id from a slice of bytes representing a hash `digest`
-    pub fn try_from(digest: &[u8]) -> Result<&Self, Error> {
+    #[inline]
+    pub fn try_from_bytes(digest: &[u8]) -> Result<&Self, Error> {
         match digest.len() {
             20 => Ok(
                 #[allow(unsafe_code)]
@@ -75,6 +76,12 @@ impl oid {
             ),
             len => Err(Error::InvalidByteSliceLength(len)),
         }
+    }
+
+    /// Create an OID from the input `value` slice without performing any safety check.
+    /// Use only once sure that `value` is a hash of valid length.
+    pub fn from_bytes_unchecked(value: &[u8]) -> &Self {
+        Self::from_bytes(value)
     }
 
     /// Only from code that statically assures correct sizes using array conversions
@@ -220,7 +227,7 @@ impl<'de: 'a, 'a> serde::Deserialize<'de> for &'a oid {
                         return Err(__err);
                     }
                 };
-                Ok(oid::try_from(__field0).expect("exactly 20 bytes"))
+                Ok(oid::try_from_bytes(__field0).expect("hash of known length"))
             }
             #[inline]
             fn visit_seq<__A>(self, mut __seq: __A) -> std::result::Result<Self::Value, __A::Error>
@@ -241,7 +248,7 @@ impl<'de: 'a, 'a> serde::Deserialize<'de> for &'a oid {
                         ));
                     }
                 };
-                Ok(oid::try_from(__field0).expect("exactly 20 bytes"))
+                Ok(oid::try_from_bytes(__field0).expect("hash of known length"))
             }
         }
         serde::Deserializer::deserialize_newtype_struct(

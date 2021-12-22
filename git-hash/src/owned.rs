@@ -131,7 +131,7 @@ impl Deref for ObjectId {
 
 impl AsRef<crate::oid> for ObjectId {
     fn as_ref(&self) -> &oid {
-        oid::try_from(self.as_slice()).expect("sibling type always implements all hashes we support")
+        oid::from_bytes_unchecked(self.as_slice())
     }
 }
 
