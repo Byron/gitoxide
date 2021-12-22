@@ -163,8 +163,8 @@ pub fn pack_or_pack_index(
     use anyhow::Context;
 
     let path = pack_path.as_ref();
-    let hash_kind = git_repository::hash::Kind::Sha1; // TODO: make this configurable via CLI, maybe even different values for I/O
-    let bundle = pack::Bundle::at(path, hash_kind).with_context(|| {
+    let object_hash = git_repository::hash::Kind::Sha1; // TODO: make this configurable via CLI, maybe even different values for I/O
+    let bundle = pack::Bundle::at(path, object_hash).with_context(|| {
         format!(
             "Could not find .idx or .pack file from given file at '{}'",
             path.display()
@@ -199,8 +199,8 @@ pub fn pack_or_pack_index(
             {
                 let object_path = object_path.map(|p| p.as_ref().to_owned());
                 move || {
-                    let out = OutputWriter::new(object_path.clone(), sink_compress, hash_kind);
-                    let object_verifier = if verify { object_path.as_ref().map(|path| loose::Store::at(path, hash_kind)) } else { None };
+                    let out = OutputWriter::new(object_path.clone(), sink_compress, object_hash);
+                    let object_verifier = if verify { object_path.as_ref().map(|path| loose::Store::at(path, object_hash)) } else { None };
                     let mut read_buf = Vec::new();
                     move |object_kind, buf, index_entry, progress| {
                         let written_id = out.write_buf(object_kind, buf).map_err(|err| {
