@@ -130,10 +130,10 @@ impl git_repository::odb::Write for OutputWriter {
 }
 
 impl OutputWriter {
-    fn new(path: Option<impl AsRef<Path>>, compress: bool, hash_kind: git_repository::hash::Kind) -> Self {
+    fn new(path: Option<impl AsRef<Path>>, compress: bool, object_hash: git_repository::hash::Kind) -> Self {
         match path {
-            Some(path) => OutputWriter::Loose(loose::Store::at(path.as_ref(), hash_kind)),
-            None => OutputWriter::Sink(odb::sink(hash_kind).compress(compress)),
+            Some(path) => OutputWriter::Loose(loose::Store::at(path.as_ref(), object_hash)),
+            None => OutputWriter::Sink(odb::sink(object_hash).compress(compress)),
         }
     }
 }

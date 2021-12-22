@@ -85,7 +85,7 @@ pub fn from_pack(
         thread_limit: ctx.thread_limit,
         iteration_mode: ctx.iteration_mode.into(),
         index_kind: pack::index::Version::default(),
-        hash_kind: git_repository::hash::Kind::Sha1, // TODO: make this configurable via CLI, context
+        object_hash: git_repository::hash::Kind::Sha1, // TODO: make this configurable via CLI, context
     };
     let out = ctx.out;
     let format = ctx.format;
