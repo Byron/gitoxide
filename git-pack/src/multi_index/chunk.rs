@@ -65,8 +65,6 @@ pub mod fanout {
 }
 
 pub mod lookup {
-    use git_chunk::file::Offset;
-    use git_hash::Kind;
     use std::ops::Range;
 
     pub const ID: git_chunk::Id = *b"OIDL";
@@ -77,7 +75,6 @@ pub mod lookup {
 }
 
 pub mod offsets {
-    use git_chunk::file::Offset;
     use std::ops::Range;
 
     pub const ID: git_chunk::Id = *b"OOFF";
@@ -89,7 +86,6 @@ pub mod offsets {
 }
 
 pub mod large_offsets {
-    use git_chunk::file::Offset;
     use std::ops::Range;
 
     pub const ID: git_chunk::Id = *b"LOFF";

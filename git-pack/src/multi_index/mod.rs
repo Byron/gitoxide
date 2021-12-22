@@ -1,7 +1,6 @@
-#![allow(missing_docs, unused)]
+#![allow(missing_docs)]
 
 use filebuffer::FileBuffer;
-use std::ops::Range;
 use std::path::PathBuf;
 
 /// Known multi-index file versions
@@ -29,7 +28,6 @@ pub struct File {
     version: Version,
     hash_len: usize,
     object_hash: git_hash::Kind,
-    num_chunks: u8,
     /// The amount of pack files contained within
     num_packs: u32,
     num_objects: u32,

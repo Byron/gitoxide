@@ -8,6 +8,7 @@ fn access() {
         .join(".git/objects/pack/multi-pack-index");
     let file = git_pack::multi_index::File::at(&path).unwrap();
 
+    assert_eq!(file.version(), git_pack::multi_index::Version::V1);
     assert_eq!(file.path(), path);
     assert_eq!(file.num_packs(), 1);
     assert_eq!(file.object_hash(), git_hash::Kind::Sha1);

@@ -1,7 +1,6 @@
 use crate::data;
-use crate::multi_index::{File, PackIndex};
+use crate::multi_index::{File, PackIndex, Version};
 use byteorder::{BigEndian, ByteOrder};
-use std::convert::{TryFrom, TryInto};
 use std::path::{Path, PathBuf};
 
 /// Represents an entry within a multi index file, effectively mapping object [`IDs`][git_hash::ObjectId] to pack data files and the offset
@@ -18,6 +17,9 @@ pub struct Entry {
 }
 
 impl File {
+    pub fn version(&self) -> Version {
+        self.version
+    }
     pub fn path(&self) -> &Path {
         &self.path
     }

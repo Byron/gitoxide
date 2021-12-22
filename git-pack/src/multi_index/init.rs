@@ -1,7 +1,7 @@
 use crate::multi_index::{chunk, File, Version};
-use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
+use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 use std::path::Path;
 
 mod error {
@@ -155,7 +155,6 @@ impl TryFrom<&Path> for File {
             offsets_ofs: offsets.start,
             large_offsets_ofs: large_offsets.map(|r| r.start),
             num_objects,
-            num_chunks,
             num_packs,
         })
     }
