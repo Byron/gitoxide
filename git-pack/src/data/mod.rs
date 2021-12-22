@@ -1,6 +1,9 @@
 //! a pack data file
 use std::{convert::TryInto, path::Path};
 
+/// The offset to an entry into the pack data file, relative to its beginning.
+pub type Offset = u64;
+
 use filebuffer::FileBuffer;
 
 /// An representing an full- or delta-object within a pack
@@ -12,7 +15,7 @@ pub struct Entry {
     /// The decompressed size of the object in bytes
     pub decompressed_size: u64,
     /// absolute offset to compressed object data in the pack, just behind the entry's header
-    pub data_offset: u64,
+    pub data_offset: Offset,
 }
 
 mod file;
@@ -32,7 +35,7 @@ pub mod output;
 /// A slice into a pack file denoting a pack entry.
 ///
 /// An entry can be decoded into an object.
-pub type EntryRange = std::ops::Range<u64>;
+pub type EntryRange = std::ops::Range<Offset>;
 
 /// Supported versions of a pack data file
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -112,7 +115,7 @@ impl File {
     /// # Panics
     ///
     /// If `pack_offset` or `size` are pointing to a range outside of the mapped pack data.
-    pub fn entry_crc32(&self, pack_offset: u64, size: usize) -> u32 {
+    pub fn entry_crc32(&self, pack_offset: Offset, size: usize) -> u32 {
         let pack_offset: usize = pack_offset.try_into().expect("pack_size fits into usize");
         git_features::hash::crc32(&self.data[pack_offset..pack_offset + size])
     }

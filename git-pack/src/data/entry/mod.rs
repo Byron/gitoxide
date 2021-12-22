@@ -18,12 +18,12 @@ pub struct Location {
     /// The size of the entry of disk so that the range of bytes of the entry is `pack_offset..pack_offset + entry_size`.
     pub entry_size: usize,
     /// The start of the entry in the pack identified by `pack_id`.
-    pub pack_offset: u64,
+    pub pack_offset: data::Offset,
 }
 
 impl Location {
     /// Compute a range suitable for lookup in pack data using the [`entry_slice()`][crate::data::File::entry_slice()] method.
-    pub fn entry_range(&self, pack_offset: u64) -> crate::data::EntryRange {
+    pub fn entry_range(&self, pack_offset: data::Offset) -> crate::data::EntryRange {
         pack_offset..pack_offset + self.entry_size as u64
     }
 }
@@ -31,12 +31,12 @@ impl Location {
 /// Access
 impl Entry {
     /// Compute the pack offset to the base entry of the object represented by this entry.
-    pub fn base_pack_offset(&self, distance: u64) -> u64 {
+    pub fn base_pack_offset(&self, distance: u64) -> data::Offset {
         let pack_offset = self.data_offset - self.header_size() as u64;
         pack_offset.checked_sub(distance).expect("in-bound distance of deltas")
     }
     /// The pack offset at which this entry starts
-    pub fn pack_offset(&self) -> u64 {
+    pub fn pack_offset(&self) -> data::Offset {
         self.data_offset - self.header_size() as u64
     }
     /// The amount of bytes used to describe this entry in the pack. The header starts at [`Self::pack_offset()`]
@@ -48,4 +48,5 @@ impl Entry {
 mod decode;
 
 mod header;
+use crate::data;
 pub use header::Header;

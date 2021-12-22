@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 
 use super::ResolvedBase;
 use crate::{
-    cache,
+    cache, data,
     data::{delta, File},
 };
 
@@ -26,7 +26,7 @@ struct Delta {
     result_size: usize,
 
     decompressed_size: usize,
-    data_offset: u64,
+    data_offset: data::Offset,
 }
 
 /// Additional information and statistics about a successfully decoded object produced by [`File::decode_entry()`].
@@ -102,7 +102,7 @@ impl File {
     /// Obtain the [`Entry`][crate::data::Entry] at the given `offset` into the pack.
     ///
     /// The `offset` is typically obtained from the pack index file.
-    pub fn entry(&self, offset: u64) -> crate::data::Entry {
+    pub fn entry(&self, offset: data::Offset) -> crate::data::Entry {
         self.assure_v2();
         let pack_offset: usize = offset.try_into().expect("offset representable by machine");
         assert!(pack_offset <= self.data.len(), "offset out of bounds");
@@ -116,7 +116,7 @@ impl File {
     /// Note that this method does not resolve deltified objects, but merely decompresses their content
     /// `out` is expected to be large enough to hold `entry.size` bytes.
     /// Returns the amount of packed bytes there read from the pack data file.
-    fn decompress_entry_from_data_offset(&self, data_offset: u64, out: &mut [u8]) -> Result<usize, Error> {
+    fn decompress_entry_from_data_offset(&self, data_offset: data::Offset, out: &mut [u8]) -> Result<usize, Error> {
         let offset: usize = data_offset.try_into().expect("offset representable by machine");
         assert!(offset < self.data.len(), "entry offset out of bounds");
 

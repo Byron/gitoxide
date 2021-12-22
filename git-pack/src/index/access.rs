@@ -1,5 +1,6 @@
 use std::mem::size_of;
 
+use crate::data;
 use byteorder::{BigEndian, ByteOrder};
 
 use crate::index::{self, FAN_LEN};
@@ -10,8 +11,6 @@ const V1_HEADER_SIZE: usize = FAN_LEN * N32_SIZE;
 const V2_HEADER_SIZE: usize = N32_SIZE * 2 + FAN_LEN * N32_SIZE;
 const N32_HIGH_BIT: u32 = 1 << 31;
 
-pub(crate) type PackOffset = u64;
-
 /// Represents an entry within a pack index file, effectively mapping object [`IDs`][git_hash::ObjectId] to pack data file locations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -19,7 +18,7 @@ pub struct Entry {
     /// The ID of the object
     pub oid: git_hash::ObjectId,
     /// The offset to the object's header in the pack data file
-    pub pack_offset: PackOffset,
+    pub pack_offset: data::Offset,
     /// The CRC32 hash over all bytes of the pack data entry.
     ///
     /// This can be useful for direct copies of pack data entries from one pack to another with insurance there was no bit rot.
@@ -84,7 +83,7 @@ impl index::File {
     /// # Panics
     ///
     /// If `index` is out of bounds.
-    pub fn pack_offset_at_index(&self, index: u32) -> PackOffset {
+    pub fn pack_offset_at_index(&self, index: u32) -> data::Offset {
         let index = index as usize;
         match self.version {
             index::Version::V2 => {
@@ -123,10 +122,6 @@ impl index::File {
         let mut upper_bound = self.fan[first_byte];
         let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };
 
-        // Bisect using indices
-        // TODO: Performance of V2 could possibly be better if we would be able to do a binary search
-        // on 20 byte chunks directly, but doing so requires transmuting and that is not safe, even though
-        // it should not be if the bytes match up and the type has no destructor.
         while lower_bound < upper_bound {
             let mid = (lower_bound + upper_bound) / 2;
             let mid_sha = self.oid_at_index(mid);
@@ -152,7 +147,7 @@ impl index::File {
     /// Return a vector of ascending offsets into our respective pack data file.
     ///
     /// Useful to control an iteration over all pack entries in a cache-friendly way.
-    pub fn sorted_offsets(&self) -> Vec<PackOffset> {
+    pub fn sorted_offsets(&self) -> Vec<data::Offset> {
         let mut ofs: Vec<_> = match self.version {
             index::Version::V1 => self.iter().map(|e| e.pack_offset).collect(),
             index::Version::V2 => {
@@ -186,7 +181,7 @@ impl index::File {
     }
 
     #[inline]
-    fn pack_offset_from_offset_v2(&self, offset: &[u8], pack64_offset: usize) -> PackOffset {
+    fn pack_offset_from_offset_v2(&self, offset: &[u8], pack64_offset: usize) -> data::Offset {
         debug_assert_eq!(self.version, index::Version::V2);
         let ofs32 = BigEndian::read_u32(offset);
         if (ofs32 & N32_HIGH_BIT) == N32_HIGH_BIT {

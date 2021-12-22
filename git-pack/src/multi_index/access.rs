@@ -1,4 +1,6 @@
-use crate::multi_index::File;
+use crate::data;
+use crate::multi_index::{File, PackIndex};
+use byteorder::{BigEndian, ByteOrder};
 use std::convert::{TryFrom, TryInto};
 use std::path::{Path, PathBuf};
 
@@ -38,9 +40,6 @@ impl File {
         let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };
 
         // Bisect using indices
-        // TODO: Performance of V2 could possibly be better if we would be able to do a binary search
-        // on 20 byte chunks directly, but doing so requires transmuting and that is not safe, even though
-        // it should not be if the bytes match up and the type has no destructor.
         while lower_bound < upper_bound {
             let mid = (lower_bound + upper_bound) / 2;
             let mid_sha = self.oid_at_index(mid);
@@ -53,5 +52,27 @@ impl File {
             }
         }
         None
+    }
+
+    pub fn pack_offset_and_pack_id_at_index(&self, index: u32) -> (PackIndex, data::Offset) {
+        const OFFSET_ENTRY_SIZE: usize = 4 + 4;
+        let index = index as usize;
+        let start = self.offsets_ofs + index * OFFSET_ENTRY_SIZE;
+
+        const HIGH_BIT: u32 = 1 << 31;
+
+        let pack_index = BigEndian::read_u32(&self.data[start..][..4]);
+        let offset = &self.data[start + 4..][..4];
+        let ofs32 = BigEndian::read_u32(offset);
+        let pack_offset = if (ofs32 & HIGH_BIT) == HIGH_BIT {
+            let offsets_64 = self
+                .large_offsets_ofs
+                .expect("non-malformed file that has large offsets if these are contained");
+            let from = offsets_64 + (ofs32 ^ HIGH_BIT) as usize * 8;
+            BigEndian::read_u64(&self.data[from..][..8])
+        } else {
+            ofs32 as u64
+        };
+        (pack_index, pack_offset)
     }
 }

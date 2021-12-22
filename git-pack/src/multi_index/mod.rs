@@ -18,6 +18,9 @@ impl Default for Version {
     }
 }
 
+/// An index into our [`File::index_names()`] array yielding the name of the index and by impclication, its pack file.
+pub type PackIndex = u32;
+
 /// A representation of an index file for multiple packs at the same time, typically stored in a file
 /// named 'multi-pack-index'.
 pub struct File {
@@ -34,8 +37,8 @@ pub struct File {
     fan: [u32; 256],
     index_names: Vec<PathBuf>,
     lookup_ofs: usize,
-    offsets: Range<usize>,
-    large_offsets: Option<Range<usize>>,
+    offsets_ofs: usize,
+    large_offsets_ofs: Option<usize>,
 }
 
 ///

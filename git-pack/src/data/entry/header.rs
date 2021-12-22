@@ -1,3 +1,4 @@
+use crate::data;
 use std::io;
 
 use super::{BLOB, COMMIT, OFS_DELTA, REF_DELTA, TAG, TREE};
@@ -38,7 +39,7 @@ pub enum Header {
 
 impl Header {
     /// Subtract `distance` from `pack_offset` safely without the chance for overflow or no-ops if `distance` is 0.
-    pub fn verified_base_pack_offset(pack_offset: u64, distance: u64) -> Option<u64> {
+    pub fn verified_base_pack_offset(pack_offset: data::Offset, distance: u64) -> Option<data::Offset> {
         if distance == 0 {
             return None;
         }

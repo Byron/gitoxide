@@ -18,13 +18,16 @@ fn access() {
         vec![PathBuf::from("pack-542ad1d1c7c762ea4e36907570ff9e4b5b7dde1b.idx")]
     );
 
-    for (idx, expected_oid) in &[
-        (0u32, hex_to_id("000f574443efab4ddbeee3621e49124eb3f8b6d0")),
-        (140, hex_to_id("2935a65b1d69fb33c93dabc4cdf65a6f4d30ce4c")),
-        (867, hex_to_id("ffea360a6a54c1185eeae4f3cfefc927cf7a35a9")),
+    for (idx, expected_pack_offset, expected_oid) in &[
+        (0u32, 25267u64, hex_to_id("000f574443efab4ddbeee3621e49124eb3f8b6d0")),
+        (140, 30421, hex_to_id("2935a65b1d69fb33c93dabc4cdf65a6f4d30ce4c")),
+        (867, 24540, hex_to_id("ffea360a6a54c1185eeae4f3cfefc927cf7a35a9")),
     ] {
         let actual_oid = file.oid_at_index(*idx);
         assert_eq!(actual_oid, *expected_oid);
         assert_eq!(file.lookup(actual_oid), Some(*idx));
+        let (pack_id, pack_offset) = file.pack_offset_and_pack_id_at_index(*idx);
+        assert_eq!(pack_id, 0, "we only have one pack here");
+        assert_eq!(pack_offset, *expected_pack_offset);
     }
 }

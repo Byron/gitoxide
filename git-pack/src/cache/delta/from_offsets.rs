@@ -8,7 +8,7 @@ use std::{
 
 use git_features::progress::{self, Progress};
 
-use crate::{cache::delta::Tree, index::access::PackOffset};
+use crate::{cache::delta::Tree, data};
 
 /// Returned by [`Tree::from_offsets_in_pack()`]
 #[derive(thiserror::Error, Debug)]
@@ -31,23 +31,23 @@ const PACK_HEADER_LEN: usize = 12;
 /// Generate tree from certain input
 impl<T> Tree<T> {
     /// Create a new `Tree` from any data sorted by offset, ascending as returned by the `data_sorted_by_offsets` iterator.
-    /// * `get_pack_offset(item: &T`) -> PackOffset` is a function returning the pack offset of the given item, which can be used
+    /// * `get_pack_offset(item: &T`) -> data::Offset` is a function returning the pack offset of the given item, which can be used
     /// for obtaining the objects entry within the pack.
     /// * `pack_path` is the path to the pack file itself and from which to read the entry data, which is a pack file matching the offsets
     /// returned by `get_pack_offset(…)`.
     /// * `progress` is used to track progress when creating the tree.
-    /// * `resolve_in_pack_id(git_hash::oid) -> Option<PackOffset>` takes an object ID and tries to resolve it to an object within this pack if
+    /// * `resolve_in_pack_id(git_hash::oid) -> Option<data::Offset>` takes an object ID and tries to resolve it to an object within this pack if
     /// possible. Failing to do so aborts the operation, and this function is not expected to be called in usual packs. It's a theoretical
     /// possibility though as old packs might have referred to their objects using the 20 bytes hash, instead of their encoded offset from the base.
     ///
     /// Note that the sort order is ascending. The given pack file path must match the provided offsets.
     pub fn from_offsets_in_pack(
         data_sorted_by_offsets: impl Iterator<Item = T>,
-        get_pack_offset: impl Fn(&T) -> PackOffset,
+        get_pack_offset: impl Fn(&T) -> data::Offset,
         pack_path: impl AsRef<std::path::Path>,
         mut progress: impl Progress,
         should_interrupt: &AtomicBool,
-        resolve_in_pack_id: impl Fn(&git_hash::oid) -> Option<PackOffset>,
+        resolve_in_pack_id: impl Fn(&git_hash::oid) -> Option<data::Offset>,
         object_hash: git_hash::Kind,
     ) -> Result<Self, Error> {
         let mut r = io::BufReader::with_capacity(

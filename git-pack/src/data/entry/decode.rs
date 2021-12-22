@@ -10,7 +10,7 @@ impl data::Entry {
     /// # Panics
     ///
     /// If we cannot understand the header, garbage data is likely to trigger this.
-    pub fn from_bytes(d: &[u8], pack_offset: u64, hash_len: usize) -> data::Entry {
+    pub fn from_bytes(d: &[u8], pack_offset: data::Offset, hash_len: usize) -> data::Entry {
         let (type_id, size, mut consumed) = parse_header_info(d);
 
         use crate::data::entry::Header::*;
@@ -44,7 +44,11 @@ impl data::Entry {
     }
 
     /// Instantiate an `Entry` from the reader `r`, providing the `pack_offset` to allow tracking the start of the entry data section.
-    pub fn from_read(mut r: impl io::Read, pack_offset: u64, hash_len: usize) -> Result<data::Entry, io::Error> {
+    pub fn from_read(
+        mut r: impl io::Read,
+        pack_offset: data::Offset,
+        hash_len: usize,
+    ) -> Result<data::Entry, io::Error> {
         let (type_id, size, mut consumed) = streaming_parse_header_info(&mut r)?;
 
         use crate::data::entry::Header::*;

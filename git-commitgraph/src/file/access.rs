@@ -76,10 +76,6 @@ impl File {
         let mut upper_bound = self.fan[first_byte];
         let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };
 
-        // Bisect using indices
-        // TODO: Performance of V2 could possibly be better if we would be able to do a binary search
-        // on hash-sized chunks directly, but doing so requires transmuting and that is not safe, even though
-        // it should not be if the bytes match up and the type has no destructor.
         while lower_bound < upper_bound {
             let mid = (lower_bound + upper_bound) / 2;
             let mid_sha = self.id_at(file::Position(mid));
