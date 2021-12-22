@@ -12,6 +12,10 @@ pub struct Store {
     ///
     /// Typical base paths are `.git` repository folders.
     base: PathBuf,
+    /// The kind of hash to assume in a couple of situations. Note that currently we are able to read any valid hash from files
+    /// which might want to change one day.
+    object_hash: git_hash::Kind,
+
     /// The way to handle reflog edits
     pub write_reflog: WriteReflog,
     /// The namespace to use for edits and reads

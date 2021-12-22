@@ -32,12 +32,18 @@ mod init {
     impl file::Store {
         /// Create a new instance at the given `git_dir`, which commonly is a standard git repository with a
         /// `refs/` subdirectory.
-        pub fn at(git_dir: impl Into<PathBuf>, write_reflog: crate::file::WriteReflog) -> Self {
+        /// The `object_hash` defines which kind of hash we should recognize.
+        pub fn at(
+            git_dir: impl Into<PathBuf>,
+            write_reflog: crate::file::WriteReflog,
+            object_hash: git_hash::Kind,
+        ) -> Self {
             file::Store {
                 base: git_dir.into(),
                 write_reflog,
                 namespace: None,
                 packed: Default::default(),
+                object_hash,
             }
         }
     }

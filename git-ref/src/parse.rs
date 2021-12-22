@@ -12,6 +12,8 @@ fn is_hex_digit_lc(b: u8) -> bool {
 
 /// Copy from https://github.com/Byron/gitoxide/blob/f270850ff92eab15258023b8e59346ec200303bd/git-object/src/immutable/parse.rs#L64
 pub fn hex_hash<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], &'a BStr, E> {
+    // NOTE: It's important to be able to read all hashes, do not parameterize it. Hashes can be rejected at a later stage
+    // if needed.
     take_while_m_n(
         git_hash::Kind::shortest().len_in_hex(),
         git_hash::Kind::longest().len_in_hex(),
