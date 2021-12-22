@@ -6,12 +6,12 @@ use crate::data;
 
 /// Instantiation
 impl data::File {
-    /// Try opening a data file at the given `path`, and assume hashes are stored with the given `hash_len`.
+    /// Try opening a data file at the given `path`.
     ///
-    /// The `hash_kind` is a way to read (and write) the same file format with different hashes, as the hash kind
+    /// The `object_hash` is a way to read (and write) the same file format with different hashes, as the hash kind
     /// isn't stored within the file format itself.
-    pub fn at(path: impl AsRef<Path>, hash_kind: git_hash::Kind) -> Result<data::File, data::header::decode::Error> {
-        Self::at_inner(path.as_ref(), hash_kind.len_in_bytes())
+    pub fn at(path: impl AsRef<Path>, object_hash: git_hash::Kind) -> Result<data::File, data::header::decode::Error> {
+        Self::at_inner(path.as_ref(), object_hash.len_in_bytes())
     }
 
     fn at_inner(path: &Path, hash_len: usize) -> Result<data::File, data::header::decode::Error> {

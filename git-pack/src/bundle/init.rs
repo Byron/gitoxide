@@ -20,25 +20,25 @@ impl Bundle {
     ///
     /// The corresponding complementary file is expected to be present.
     ///
-    /// The `hash_kind` is a way to read (and write) the same file format with different hashes, as the hash kind
+    /// The `object_hash` is a way to read (and write) the same file format with different hashes, as the hash kind
     /// isn't stored within the file format itself.
-    pub fn at(path: impl AsRef<Path>, hash_kind: git_hash::Kind) -> Result<Self, Error> {
-        Self::at_inner(path.as_ref(), hash_kind)
+    pub fn at(path: impl AsRef<Path>, object_hash: git_hash::Kind) -> Result<Self, Error> {
+        Self::at_inner(path.as_ref(), object_hash)
     }
 
-    fn at_inner(path: &Path, hash_kind: git_hash::Kind) -> Result<Self, Error> {
+    fn at_inner(path: &Path, object_hash: git_hash::Kind) -> Result<Self, Error> {
         let ext = path
             .extension()
             .and_then(|e| e.to_str())
             .ok_or_else(|| Error::InvalidPath(path.to_owned()))?;
         Ok(match ext {
             "idx" => Self {
-                index: crate::index::File::at(path, hash_kind)?,
-                pack: crate::data::File::at(path.with_extension("pack"), hash_kind)?,
+                index: crate::index::File::at(path, object_hash)?,
+                pack: crate::data::File::at(path.with_extension("pack"), object_hash)?,
             },
             "pack" => Self {
-                pack: crate::data::File::at(path, hash_kind)?,
-                index: crate::index::File::at(path.with_extension("idx"), hash_kind)?,
+                pack: crate::data::File::at(path, object_hash)?,
+                index: crate::index::File::at(path.with_extension("idx"), object_hash)?,
             },
             _ => return Err(Error::InvalidPath(path.to_owned())),
         })

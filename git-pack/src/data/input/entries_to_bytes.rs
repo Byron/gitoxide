@@ -24,7 +24,7 @@ pub struct EntriesToBytesIter<I: Iterator, W> {
     /// If we are done, no additional writes will occour
     is_done: bool,
     /// The kind of hash to use for the digest
-    hash_kind: git_hash::Kind,
+    object_hash: git_hash::Kind,
 }
 
 impl<I, W> EntriesToBytesIter<I, W>
@@ -35,24 +35,24 @@ where
     /// Create a new instance reading [entries][input::Entry] from an `input` iterator and write pack data bytes to
     /// `output` writer, resembling a pack of `version`. The amonut of entries will be dynaimcally determined and
     /// the pack is completed once the last entry was written.
-    /// `hash_kind` is the kind of hash to use for the pack checksum and maybe other places, depending on the version.
+    /// `object_hash` is the kind of hash to use for the pack checksum and maybe other places, depending on the version.
     ///
     /// # Panics
     ///
     /// Not all combinations of `hash_kind` and `version` are supported currently triggering assertion errors.
-    pub fn new(input: I, output: W, version: crate::data::Version, hash_kind: git_hash::Kind) -> Self {
+    pub fn new(input: I, output: W, version: crate::data::Version, object_hash: git_hash::Kind) -> Self {
         assert!(
             matches!(version, crate::data::Version::V2),
             "currently only pack version 2 can be written",
         );
         assert!(
-            matches!(hash_kind, git_hash::Kind::Sha1),
+            matches!(object_hash, git_hash::Kind::Sha1),
             "currently only Sha1 is supported, right now we don't know how other hashes are encoded",
         );
         EntriesToBytesIter {
             input: input.peekable(),
             output,
-            hash_kind,
+            object_hash,
             num_entries: 0,
             trailer: None,
             data_version: version,
@@ -98,7 +98,7 @@ where
         let digest = hash::bytes(
             &mut self.output,
             num_bytes_written as usize,
-            self.hash_kind,
+            self.object_hash,
             &mut git_features::progress::Discard,
             &interrupt_never,
         )?;

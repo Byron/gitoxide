@@ -62,19 +62,15 @@ where
         output: W,
         num_entries: u32,
         version: crate::data::Version,
-        hash_kind: git_hash::Kind,
+        object_hash: git_hash::Kind,
     ) -> Self {
         assert!(
             matches!(version, crate::data::Version::V2),
             "currently only pack version 2 can be written",
         );
-        assert!(
-            matches!(hash_kind, git_hash::Kind::Sha1),
-            "currently only Sha1 is supported, right now we don't know how other hashes are encoded",
-        );
         FromEntriesIter {
             input,
-            output: hash::Write::new(output, hash_kind),
+            output: hash::Write::new(output, object_hash),
             trailer: None,
             entry_version: version,
             pack_offsets_and_validity: Vec::with_capacity(num_entries as usize),

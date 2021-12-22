@@ -87,7 +87,7 @@ where
         pack_entries_end: u64,
         new_thread_state: impl Fn() -> S + Send + Clone,
         inspect_object: MBFN,
-        hash_kind: git_hash::Kind,
+        object_hash: git_hash::Kind,
     ) -> Result<VecDeque<Item<T>>, Error>
     where
         F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Clone,
@@ -117,7 +117,7 @@ where
                     )
                 }
             },
-            move |root_nodes, state| resolve::deltas(root_nodes, state, hash_kind.len_in_bytes()),
+            move |root_nodes, state| resolve::deltas(root_nodes, state, object_hash.len_in_bytes()),
             Reducer::new(num_objects, object_progress, size_progress, should_interrupt),
         )?;
         Ok(self.into_items())

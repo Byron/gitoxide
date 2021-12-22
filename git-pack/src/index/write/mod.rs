@@ -225,8 +225,8 @@ fn modify_base(
     decompressed: &[u8],
     hash: git_hash::Kind,
 ) {
-    fn compute_hash(kind: git_object::Kind, bytes: &[u8], hash_kind: git_hash::Kind) -> git_hash::ObjectId {
-        let mut hasher = git_features::hash::hasher(hash_kind);
+    fn compute_hash(kind: git_object::Kind, bytes: &[u8], object_hash: git_hash::Kind) -> git_hash::ObjectId {
+        let mut hasher = git_features::hash::hasher(object_hash);
         hasher.update(&git_object::encode::loose_header(kind, bytes.len()));
         hasher.update(bytes);
         git_hash::ObjectId::from(hasher.digest())

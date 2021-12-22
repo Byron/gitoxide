@@ -98,7 +98,7 @@ mod write_to_directory {
             pack_kind: pack::data::Version::V2,
             index_path: None,
             data_path: None,
-            hash_kind: git_hash::Kind::Sha1,
+            object_hash: git_hash::Kind::Sha1,
         })
     }
 
@@ -157,7 +157,7 @@ mod write_to_directory {
                 thread_limit: None,
                 iteration_mode: pack::data::input::Mode::Verify,
                 index_kind: pack::index::Version::V2,
-                hash_kind: git_hash::Kind::Sha1,
+                object_hash: git_hash::Kind::Sha1,
             },
         )
         .map_err(Into::into)

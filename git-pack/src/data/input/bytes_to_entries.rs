@@ -40,14 +40,14 @@ where
     }
 
     /// Obtain an iterator from a `read` stream to a pack data file and configure it using `mode` and `compressed`.
-    /// `hash_kind` specifies which hash is used for objects in ref-delta entries.
+    /// `object_hash` specifies which hash is used for objects in ref-delta entries.
     ///
     /// Note that `read` is expected at the beginning of a valid pack data file with a header, entries and a trailer.
     pub fn new_from_header(
         mut read: BR,
         mode: input::Mode,
         compressed: input::EntryDataMode,
-        hash_kind: git_hash::Kind,
+        object_hash: git_hash::Kind,
     ) -> Result<BytesToEntriesIter<BR>, input::Error> {
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
@@ -67,13 +67,13 @@ where
             kind,
             objects_left: num_objects,
             hash: (mode != input::Mode::AsIs).then(|| {
-                let mut hash = git_features::hash::hasher(hash_kind);
+                let mut hash = git_features::hash::hasher(object_hash);
                 hash.update(&header_data);
                 hash
             }),
             mode,
             compressed_buf: None,
-            hash_len: hash_kind.len_in_bytes(),
+            hash_len: object_hash.len_in_bytes(),
         })
     }
 
