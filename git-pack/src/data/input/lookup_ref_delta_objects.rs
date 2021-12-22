@@ -9,14 +9,14 @@ pub struct LookupRefDeltaObjectsIter<I, LFn> {
     /// The inner iterator whose entries we will resolve.
     pub inner: I,
     lookup: LFn,
-    /// The cached delta to provide next time we are called
+    /// The cached delta to provide next time we are called, it's the delta to go with the base we just resolved in its place.
     next_delta: Option<input::Entry>,
     /// Fuse to stop iteration after first missing object.
     error: bool,
     /// The overall pack-offset we accumulated thus far. Each inserted entry offsets all following
     /// objects by its length. We need to determine exactly where the object was inserted to see if its affected at all.
     inserted_entry_length_at_offset: Vec<Change>,
-    /// The sum of all entries added so far, as a cache
+    /// The sum of all entries added so far, as a cache to avoid recomputation
     inserted_entries_length_in_bytes: i64,
     buf: Vec<u8>,
 }
@@ -61,7 +61,9 @@ where
             shifted_pack_offset,
             pack_offset,
             size_change_in_bytes: size_change,
-            oid: oid.into().unwrap_or_else(ObjectId::null_sha1),
+            oid: oid.into().unwrap_or_else(||
+                // NOTE: this value acts as sentinel and the actual hash kind doesn't matter.
+                git_hash::Kind::Sha1.null()),
         });
         self.inserted_entries_length_in_bytes += size_change;
     }
@@ -102,8 +104,8 @@ where
                                 Some(obj) => {
                                     let current_pack_offset = entry.pack_offset;
                                     let mut entry = match input::Entry::from_data_obj(&obj, 0) {
-                                        Err(err) => return Some(Err(err)),
                                         Ok(e) => e,
+                                        Err(err) => return Some(Err(err)),
                                     };
                                     entry.pack_offset = self.shifted_pack_offset(current_pack_offset);
                                     self.track_change(
@@ -137,6 +139,8 @@ where
                 _ => {
                     if self.inserted_entries_length_in_bytes != 0 {
                         if let Header::OfsDelta { base_distance } = entry.header {
+                            // We have to find the new distance based on the previous distance to the base, using the absolute
+                            // pack offset computed from it as stored in `base_pack_offset`.
                             let base_pack_offset = entry
                                 .pack_offset
                                 .checked_sub(base_distance)
@@ -175,6 +179,7 @@ where
                                 }
                             }
                         } else {
+                            // Offset this entry by all changes (positive or negative) that we saw thus far.
                             entry.pack_offset = self.shifted_pack_offset(entry.pack_offset);
                         }
                     }
@@ -193,8 +198,13 @@ where
 
 #[derive(Debug)]
 struct Change {
+    /// The original pack offset as mentioned in the entry we saw. This is used to find this as base object if deltas refer to it by
+    /// old offset.
     pack_offset: u64,
+    /// The new pack offset that is the shifted location of the pack entry in the pack.
     shifted_pack_offset: u64,
+    /// The size change of the entry header, negative values denote shrinking, positive denote growing.
     size_change_in_bytes: i64,
+    /// The object id of the entry responsible for the change, or null if it's an entry just for tracking an insertion.
     oid: ObjectId,
 }

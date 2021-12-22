@@ -30,7 +30,7 @@ impl input::Entry {
 
     /// Update our CRC value by recalculating it from our header and compressed data.
     pub fn compute_crc32(&self) -> u32 {
-        let mut header_buf = [0u8; 32];
+        let mut header_buf = [0u8; 12 + git_hash::Kind::longest().len_in_bytes()];
         let header_len = self
             .header
             .write_to(self.decompressed_size, header_buf.as_mut())
