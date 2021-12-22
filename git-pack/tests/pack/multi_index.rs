@@ -30,4 +30,14 @@ fn access() {
         assert_eq!(pack_id, 0, "we only have one pack here");
         assert_eq!(pack_offset, *expected_pack_offset);
     }
+
+    let mut count = 0;
+    for (idx, entry) in file.iter().enumerate() {
+        assert_eq!(entry.oid, file.oid_at_index(idx as u32));
+        let (pack_index, pack_offset) = file.pack_offset_and_pack_id_at_index(idx as u32);
+        assert_eq!(pack_index, entry.pack_index);
+        assert_eq!(pack_offset, entry.pack_offset);
+        count += 1;
+    }
+    assert_eq!(count, file.num_objects());
 }

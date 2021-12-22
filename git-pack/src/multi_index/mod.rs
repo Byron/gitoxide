@@ -42,7 +42,7 @@ pub struct File {
 }
 
 ///
-pub mod access;
+mod access;
 
 ///
 pub mod chunk;

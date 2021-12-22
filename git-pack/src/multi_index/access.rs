@@ -4,6 +4,19 @@ use byteorder::{BigEndian, ByteOrder};
 use std::convert::{TryFrom, TryInto};
 use std::path::{Path, PathBuf};
 
+/// Represents an entry within a multi index file, effectively mapping object [`IDs`][git_hash::ObjectId] to pack data files and the offset
+/// within.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Entry {
+    /// The ID of the object.
+    pub oid: git_hash::ObjectId,
+    /// The offset to the object's header in the pack data file.
+    pub pack_offset: data::Offset,
+    /// The index of the pack matching our [`File::index_names()`] slice.
+    pub pack_index: PackIndex,
+}
+
 impl File {
     pub fn path(&self) -> &Path {
         &self.path
@@ -74,5 +87,16 @@ impl File {
             ofs32 as u64
         };
         (pack_index, pack_offset)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = Entry> + '_ {
+        (0..self.num_objects).map(move |idx| {
+            let (pack_index, pack_offset) = self.pack_offset_and_pack_id_at_index(idx);
+            Entry {
+                oid: self.oid_at_index(idx).to_owned(),
+                pack_offset,
+                pack_index,
+            }
+        })
     }
 }
