@@ -93,7 +93,7 @@ impl ObjectId {
 
     /// Returns an Digest representing a Sha1 with whose memory is zeroed.
     #[inline]
-    pub const fn null_sha1() -> ObjectId {
+    pub(crate) const fn null_sha1() -> ObjectId {
         ObjectId::Sha1([0u8; 20])
     }
 }
