@@ -1,5 +1,6 @@
 use git_hash::ObjectId;
 use git_object::{bstr::BStr, TreeRefIter};
+use git_odb::FindExt;
 
 use crate::{
     easy,
@@ -54,5 +55,40 @@ impl<'repo> Tree<'repo> {
             }
         }
         Ok(None)
+    }
+
+    /// Obtain a platform for initiating a variety of traversals.
+    pub fn traverse(&self) -> Traversal<'_, 'repo> {
+        Traversal { root: self }
+    }
+}
+
+/// An intermediate object to start traversing the parent tree from.
+pub struct Traversal<'a, 'repo> {
+    root: &'a Tree<'repo>,
+}
+
+impl<'a, 'repo> Traversal<'a, 'repo> {
+    /// Start a breadth-first traversal with a delegate, note that it's not sorted.
+    /// TODO: more docs or links to git-traverse
+    pub fn breadthfirst<V>(&self, delegate: &mut V) -> Result<(), git_traverse::tree::breadthfirst::Error>
+    where
+        V: git_traverse::tree::Visit,
+    {
+        let root = git_object::TreeRefIter::from_bytes(&self.root.data);
+        let state = git_traverse::tree::breadthfirst::State::default();
+        git_traverse::tree::breadthfirst(
+            root,
+            state,
+            |oid, buf| self.root.handle.objects.find_tree_iter(oid, buf).ok(),
+            delegate,
+        )
+    }
+
+    /// Returns all entries and their file paths, recursively, as reachable from this tree.
+    pub fn files(&self) -> Result<Vec<git_traverse::tree::recorder::Entry>, git_traverse::tree::breadthfirst::Error> {
+        let mut recorder = git_traverse::tree::Recorder::default();
+        self.breadthfirst(&mut recorder)?;
+        Ok(recorder.records)
     }
 }

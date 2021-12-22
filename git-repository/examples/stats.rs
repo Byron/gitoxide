@@ -28,16 +28,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{}", commit.message_raw()?);
 
     let tree = commit.tree()?;
-    let root = git::objs::TreeRefIter::from_bytes(&tree.data);
 
     let mut delegate = visit::Tree::new(handle.clone());
-    let mut state = git_traverse::tree::breadthfirst::State::default();
-    git_traverse::tree::breadthfirst(
-        root,
-        state,
-        |oid, buf| handle.objects.find_tree_iter(oid, buf).ok(),
-        &mut delegate,
-    )?;
+    tree.traverse().breadthfirst(&mut delegate)?;
+    // tree.traverse().breadthfirst.files()
+
     println!("num trees: {}", delegate.num_trees);
     println!("num blobs: {}", delegate.num_blobs);
     println!("num blobs_executable: {}", delegate.num_blobs_exec);

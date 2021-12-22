@@ -18,7 +18,8 @@ pub use errors::{conversion, find, write};
 pub mod commit;
 mod impls;
 pub mod peel;
-mod tree;
+///
+pub mod tree;
 
 impl DetachedObject {
     /// Infuse this owned object with an [`easy::Handle`].
