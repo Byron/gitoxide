@@ -33,31 +33,13 @@ pub struct File {
 
     fan: [u32; 256],
     index_names: Vec<PathBuf>,
-    lookup: Range<usize>,
+    lookup_ofs: usize,
     offsets: Range<usize>,
     large_offsets: Option<Range<usize>>,
 }
 
 ///
-pub mod access {
-    use crate::multi_index::File;
-    use std::convert::TryFrom;
-
-    impl File {
-        pub fn num_packs(&self) -> u32 {
-            self.num_packs
-        }
-        pub fn num_objects(&self) -> u32 {
-            self.num_objects
-        }
-        pub fn object_hash(&self) -> git_hash::Kind {
-            self.object_hash
-        }
-        pub fn checksum(&self) -> git_hash::ObjectId {
-            git_hash::ObjectId::from(&self.data[self.data.len() - self.hash_len..])
-        }
-    }
-}
+pub mod access;
 
 ///
 pub mod chunk;

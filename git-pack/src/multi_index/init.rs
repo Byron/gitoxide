@@ -151,7 +151,7 @@ impl TryFrom<&Path> for File {
             object_hash,
             fan,
             index_names,
-            lookup,
+            lookup_ofs: lookup.start,
             offsets,
             large_offsets,
             num_objects,

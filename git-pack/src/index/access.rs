@@ -64,21 +64,19 @@ impl index::File {
         }
     }
 
-    /// Returns 20 bytes sha1 at the given index in our list of (sorted) sha1 hashes.
+    /// Returns the object hash at the given index in our list of (sorted) sha1 hashes.
     /// The index ranges from 0 to self.num_objects()
     ///
     /// # Panics
     ///
     /// If `index` is out of bounds.
     pub fn oid_at_index(&self, index: u32) -> &git_hash::oid {
-        let index: usize = index
-            .try_into()
-            .expect("an architecture able to hold 32 bits of integer");
+        let index = index as usize;
         let start = match self.version {
             index::Version::V2 => V2_HEADER_SIZE + index * self.hash_len,
             index::Version::V1 => V1_HEADER_SIZE + index * (N32_SIZE + self.hash_len) + N32_SIZE,
         };
-        git_hash::oid::try_from(&self.data[start..][..self.hash_len]).expect("hash bytes to be alright")
+        git_hash::oid::from_bytes_unchecked(&self.data[start..][..self.hash_len])
     }
 
     /// Returns the offset into our pack data file at which to start reading the object at `index`.
