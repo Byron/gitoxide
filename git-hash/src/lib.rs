@@ -124,7 +124,7 @@ impl Kind {
 
     /// Create a null-id of our hash kind.
     #[inline]
-    pub fn null(&self) -> &'static oid {
+    pub fn null_ref(&self) -> &'static oid {
         match self {
             Kind::Sha1 => oid::null_sha1(),
         }
@@ -132,7 +132,7 @@ impl Kind {
 
     /// Create a null-id of our hash kind.
     #[inline]
-    pub const fn null_owned(&self) -> ObjectId {
+    pub const fn null(&self) -> ObjectId {
         match self {
             Kind::Sha1 => ObjectId::null_sha1(),
         }
