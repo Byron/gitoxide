@@ -43,7 +43,7 @@ impl<'a> Commit<'a> {
         Commit {
             file,
             pos,
-            root_tree_id: git_hash::oid::try_from(&bytes[..file.hash_len]).expect("hash bytes to be alright"),
+            root_tree_id: git_hash::oid::from_bytes_unchecked(&bytes[..file.hash_len]),
             parent1: ParentEdge::from_raw(BigEndian::read_u32(&bytes[file.hash_len..][..4])),
             parent2: ParentEdge::from_raw(BigEndian::read_u32(&bytes[file.hash_len + 4..][..4])),
             generation: BigEndian::read_u32(&bytes[file.hash_len + 8..][..4]) >> 2,

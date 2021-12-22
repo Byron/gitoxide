@@ -46,7 +46,7 @@ impl File {
             .try_into()
             .expect("an architecture able to hold 32 bits of integer");
         let start = self.oid_lookup_offset + (pos * self.hash_len);
-        git_hash::oid::try_from(&self.data[start..][..self.hash_len]).expect("hash bytes to be alright")
+        git_hash::oid::from_bytes_unchecked(&self.data[start..][..self.hash_len])
     }
 
     /// Return an iterator over all object hashes stored in the base graph.
@@ -55,7 +55,7 @@ impl File {
         let base_graphs_list = &self.data[start..][..self.hash_len * usize::from(self.base_graph_count)];
         base_graphs_list
             .chunks(self.hash_len)
-            .map(|bytes| git_hash::oid::try_from(bytes).expect("hash bytes to be alright"))
+            .map(|bytes| git_hash::oid::from_bytes_unchecked(bytes))
     }
 
     /// return an iterator over all commits in this file.

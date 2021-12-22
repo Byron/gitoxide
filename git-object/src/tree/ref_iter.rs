@@ -133,7 +133,7 @@ mod decode {
             EntryRef {
                 mode,
                 filename: filename.as_bstr(),
-                oid: git_hash::oid::try_from(oid).expect("we counted exactly 20 bytes"),
+                oid: git_hash::oid::try_from_bytes(oid).expect("we counted exactly 20 bytes"),
             },
         ))
     }
@@ -150,7 +150,7 @@ mod decode {
             EntryRef {
                 mode,
                 filename: filename.as_bstr(),
-                oid: git_hash::oid::try_from(oid).expect("we counted exactly 20 bytes"),
+                oid: git_hash::oid::try_from_bytes(oid).expect("we counted exactly 20 bytes"),
             },
         ))
     }

@@ -65,8 +65,7 @@ pub struct Outcome {
 impl File {
     /// Returns the trailing checksum over the entire content of this file.
     pub fn checksum(&self) -> &git_hash::oid {
-        git_hash::oid::try_from(&self.data[self.data.len() - self.hash_len..])
-            .expect("file to be large enough for a hash")
+        git_hash::oid::from_bytes_unchecked(&self.data[self.data.len() - self.hash_len..])
     }
 
     /// Traverse all [commits][file::Commit] stored in this file and call `processor(commit) -> Result<(), Error>` on it.
