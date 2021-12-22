@@ -55,7 +55,7 @@ impl File {
         let base_graphs_list = &self.data[start..][..self.hash_len * usize::from(self.base_graph_count)];
         base_graphs_list
             .chunks(self.hash_len)
-            .map(|bytes| git_hash::oid::from_bytes_unchecked(bytes))
+            .map(git_hash::oid::from_bytes_unchecked)
     }
 
     /// return an iterator over all commits in this file.
