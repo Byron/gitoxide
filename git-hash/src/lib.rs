@@ -114,8 +114,12 @@ impl Kind {
     /// Converts a size in bytes as obtained by `Kind::len_in_bytes()` into the corresponding hash kind, if possible.
     ///
     /// **Panics** if the hash length doesn't match a known hash.
+    ///
+    /// NOTE that this method isn't public as it shouldn't be encouraged to assume all hashes have the same length.
+    /// However, if there should be such a thing, our `oid` implementation will have to become an enum and it's pretty breaking
+    /// to the way it's currently being used as auto-dereffing doesn't work anymore. Let's hope it won't happen.
     #[inline]
-    pub const fn from_len_in_bytes(bytes: usize) -> Self {
+    pub(crate) const fn from_len_in_bytes(bytes: usize) -> Self {
         match bytes {
             20 => Kind::Sha1,
             _ => panic!("BUG: must be called only with valid hash lengths produced by len_in_bytes()"),
