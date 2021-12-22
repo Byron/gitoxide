@@ -98,7 +98,6 @@ mod refedit_ext {
     mod splitting {
         use std::{cell::Cell, convert::TryInto};
 
-        use git_hash::ObjectId;
         use git_ref::{
             transaction::{Change, LogChange, PreviousValue, RefEdit, RefEditsExt, RefLog},
             FullNameRef, PartialNameRef, Target,
@@ -119,7 +118,7 @@ mod refedit_ext {
         fn non_symbolic_refs_are_ignored_or_if_the_deref_flag_is_not_set() -> crate::Result {
             let store = MockStore::with(Some((
                 "refs/heads/anything-but-not-symbolic",
-                Target::Peeled(ObjectId::null_sha1()),
+                Target::Peeled(git_hash::Kind::Sha1.null()),
             )));
             let mut edits = vec![
                 RefEdit {
@@ -207,7 +206,7 @@ mod refedit_ext {
                             force_create_reflog: true,
                             message: "the log message".into(),
                         },
-                        new: Target::Peeled(ObjectId::null_sha1()),
+                        new: Target::Peeled(git_hash::Kind::Sha1.null()),
                     },
                     name: "refs/heads/update-symbolic-1".try_into()?,
                     deref: true,
@@ -277,7 +276,7 @@ mod refedit_ext {
                     change: Change::Update {
                         expected: PreviousValue::MustNotExist,
                         log: log.clone(),
-                        new: Target::Peeled(ObjectId::null_sha1()),
+                        new: Target::Peeled(git_hash::Kind::Sha1.null()),
                     },
                     name: "refs/heads/update-symbolic-1".try_into()?,
                     deref: true,
@@ -313,7 +312,7 @@ mod refedit_ext {
                         change: Change::Update {
                             expected: PreviousValue::Any,
                             log: log_only.clone(),
-                            new: Target::Peeled(ObjectId::null_sha1()),
+                            new: Target::Peeled(git_hash::Kind::Sha1.null()),
                         },
                         name: "refs/heads/update-symbolic-1".try_into()?,
                         deref: false,
@@ -330,7 +329,7 @@ mod refedit_ext {
                         change: Change::Update {
                             expected: PreviousValue::Any,
                             log: log_only,
-                            new: Target::Peeled(ObjectId::null_sha1()),
+                            new: Target::Peeled(git_hash::Kind::Sha1.null()),
                         },
                         name: "refs/heads/update-symbolic-2".try_into()?,
                         deref: false,
@@ -347,7 +346,7 @@ mod refedit_ext {
                         change: Change::Update {
                             expected: PreviousValue::MustNotExist,
                             log,
-                            new: Target::Peeled(ObjectId::null_sha1()),
+                            new: Target::Peeled(git_hash::Kind::Sha1.null()),
                         },
                         name: "refs/heads/update-symbolic-3".try_into()?,
                         deref: false,

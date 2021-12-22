@@ -116,7 +116,7 @@ impl crate::index::File {
                     tree.add_root(
                         pack_offset,
                         TreeEntry {
-                            id: object_hash.null_owned(),
+                            id: object_hash.null(),
                             crc32,
                         },
                     )?;
@@ -134,7 +134,7 @@ impl crate::index::File {
                         base_pack_offset,
                         pack_offset,
                         TreeEntry {
-                            id: object_hash.null_owned(),
+                            id: object_hash.null(),
                             crc32,
                         },
                     )?;

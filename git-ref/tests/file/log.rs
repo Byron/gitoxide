@@ -159,7 +159,6 @@ mod iter {
         }
     }
     mod forward {
-        use git_hash::ObjectId;
         use git_object::bstr::B;
 
         use crate::file::log::iter::reflog;
@@ -172,7 +171,7 @@ mod iter {
 
             let mut iter = git_ref::file::log::iter::forward(&log);
             let line = iter.next().unwrap()?;
-            assert_eq!(line.previous_oid(), ObjectId::null_sha1());
+            assert_eq!(line.previous_oid(), git_hash::Kind::Sha1.null());
             assert_eq!(line.new_oid, B("134385f6d781b7e97062102c6a483440bfda2a03"));
             assert_eq!(line.message, B("commit (initial): c1"));
             assert!(iter.all(|l| l.is_ok()), "all lines parse fine");

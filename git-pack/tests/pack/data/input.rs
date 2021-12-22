@@ -149,7 +149,7 @@ mod lookup_ref_delta_objects {
 
     #[test]
     fn lookup_errors_trigger_a_fuse_and_stop_iteration() {
-        let input = vec![entry(delta_ref(ObjectId::null_sha1()), D_A), entry(base(), D_B)];
+        let input = vec![entry(delta_ref(git_hash::Kind::Sha1.null()), D_A), entry(base(), D_B)];
         let mut calls = 0;
         let mut result = LookupRefDeltaObjectsIter::new(into_results_iter(input), |_, _| {
             calls += 1;
@@ -162,7 +162,7 @@ mod lookup_ref_delta_objects {
             result.pop().expect("one"),
             Err(input::Error::NotFound {
                 object_id
-            }) if object_id == ObjectId::null_sha1()
+            }) if object_id == git_hash::Kind::Sha1.null()
         ))
     }
 
@@ -171,14 +171,14 @@ mod lookup_ref_delta_objects {
         let input = vec![
             Ok(entry(base(), D_A)),
             Err(input::Error::NotFound {
-                object_id: ObjectId::null_sha1(),
+                object_id: git_hash::Kind::Sha1.null(),
             }),
             Ok(entry(base(), D_B)),
         ];
         let expected = vec![
             Ok(entry(base(), D_A)),
             Err(input::Error::NotFound {
-                object_id: ObjectId::null_sha1(),
+                object_id: git_hash::Kind::Sha1.null(),
             }),
             Ok(entry(base(), D_B)),
         ];

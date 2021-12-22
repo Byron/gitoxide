@@ -114,7 +114,7 @@ impl<'s> Transaction<'s> {
                     | (PreviousValue::MustExist, Some(_))
                     | (PreviousValue::MustNotExist | PreviousValue::ExistingMustMatch(_), None) => {}
                     (PreviousValue::MustExist, None) => {
-                        let expected = Target::Peeled(store.object_hash.null_owned());
+                        let expected = Target::Peeled(store.object_hash.null());
                         let full_name = change.name();
                         return Err(Error::MustExist { full_name, expected });
                     }

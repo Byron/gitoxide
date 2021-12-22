@@ -145,24 +145,19 @@ pub mod create_or_update {
                     };
 
                     if let Some(mut file) = file_for_appending {
-                        write!(
-                            file,
-                            "{} {} ",
-                            previous_oid.unwrap_or_else(|| new.kind().null_owned()),
-                            new
-                        )
-                        .and_then(|_| committer.write_to(&mut file))
-                        .and_then(|_| {
-                            if !message.is_empty() {
-                                writeln!(file, "\t{}", message)
-                            } else {
-                                writeln!(file)
-                            }
-                        })
-                        .map_err(|err| Error::Append {
-                            err,
-                            reflog_path: self.reflock_resource_to_log_path(lock),
-                        })?;
+                        write!(file, "{} {} ", previous_oid.unwrap_or_else(|| new.kind().null()), new)
+                            .and_then(|_| committer.write_to(&mut file))
+                            .and_then(|_| {
+                                if !message.is_empty() {
+                                    writeln!(file, "\t{}", message)
+                                } else {
+                                    writeln!(file)
+                                }
+                            })
+                            .map_err(|err| Error::Append {
+                                err,
+                                reflog_path: self.reflock_resource_to_log_path(lock),
+                            })?;
                     }
                     Ok(())
                 }

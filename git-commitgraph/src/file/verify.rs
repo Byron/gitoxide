@@ -81,7 +81,7 @@ impl File {
             .map_err(|(actual, expected)| Error::Mismatch { actual, expected })?;
         verify_split_chain_filename_hash(&self.path, self.checksum()).map_err(Error::Filename)?;
 
-        let null_id = self.hash_kind().null();
+        let null_id = self.hash_kind().null_ref();
 
         let mut stats = Outcome {
             max_generation: 0,

@@ -244,7 +244,7 @@ fn traversals() -> crate::Result {
         .map(Result::unwrap)
         .collect::<Vec<_>>();
         if let Some(take) = take {
-            commits.resize(take, git_hash::ObjectId::null_sha1());
+            commits.resize(take, git_hash::git_hash::Kind::Sha1.null_owned());
         }
 
         let deterministic_count_needs_single_thread = Some(1);
