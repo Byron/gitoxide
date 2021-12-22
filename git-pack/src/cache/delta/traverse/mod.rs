@@ -51,7 +51,7 @@ pub struct Context<'a, S> {
 
 impl<T> Tree<T>
 where
-    T: Default + Send,
+    T: Send,
 {
     /// Traverse this tree of delta objects with a function `inspect_object` to process each object at will.
     ///

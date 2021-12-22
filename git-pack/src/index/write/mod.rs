@@ -13,15 +13,6 @@ pub(crate) struct TreeEntry {
     pub crc32: u32,
 }
 
-impl Default for TreeEntry {
-    fn default() -> Self {
-        TreeEntry {
-            id: git_hash::ObjectId::null_sha1(),
-            crc32: 0,
-        }
-    }
-}
-
 /// Information gathered while executing [`write_data_iter_to_stream()`][crate::index::File::write_data_iter_to_stream]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

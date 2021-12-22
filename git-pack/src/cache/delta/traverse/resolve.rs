@@ -19,7 +19,6 @@ where
     F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()>,
     P: Progress,
     MBFN: Fn(&mut T, &mut P, Context<'_, S>) -> Result<(), E>,
-    T: Default,
     E: std::error::Error + Send + Sync + 'static,
 {
     let mut decompressed_bytes_by_pack_offset = BTreeMap::new();
