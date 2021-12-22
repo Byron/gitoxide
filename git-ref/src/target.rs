@@ -101,11 +101,6 @@ impl Target {
             Target::Peeled(_) => None,
         }
     }
-
-    /// Create an instance that signals that a reference should exist if this value is used in a [`Change`][crate::transaction::Change].
-    pub fn must_exist() -> Self {
-        Target::Peeled(ObjectId::null_sha1())
-    }
 }
 
 impl<'a> From<crate::TargetRef<'a>> for Target {

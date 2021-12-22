@@ -86,7 +86,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
                 assert_eq!(
                     reflog_lines(&store, full_name, &mut buf)?,
                     vec![crate::log::Line {
-                        previous_oid: ObjectId::null_sha1(),
+                        previous_oid: git_hash::Kind::Sha1.null_owned(),
                         new_oid: new,
                         signature: committer.clone(),
                         message: "the message".into()

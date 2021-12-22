@@ -71,11 +71,12 @@ fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_ca
 fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
     let (_keep, store) = empty_store()?;
 
+    let new_target = Target::Peeled(ObjectId::null_sha1());
     let res = store.transaction().prepare(
         Some(RefEdit {
             change: Change::Update {
                 log: LogChange::default(),
-                new: Target::Peeled(ObjectId::null_sha1()),
+                new: new_target.clone(),
                 expected: PreviousValue::MustExist,
             },
             name: "HEAD".try_into()?,
@@ -87,7 +88,7 @@ fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
     match res {
         Err(transaction::prepare::Error::MustExist { full_name, expected }) => {
             assert_eq!(full_name, "HEAD");
-            assert_eq!(expected, Target::must_exist());
+            assert_eq!(expected, new_target);
         }
         _ => unreachable!("unexpected result"),
     }
