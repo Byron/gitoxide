@@ -113,7 +113,7 @@ pub mod open {
             let repo_format_version = config
                 .value::<Integer>("core", None, "repositoryFormatVersion")
                 .map_or(0, |v| v.value);
-            let hash_kind = if repo_format_version == 1 {
+            let object_hash = if repo_format_version == 1 {
                 if let Ok(format) = config.value::<Cow<'_, [u8]>>("extensions", None, "objectFormat") {
                     match format.as_ref() {
                         b"sha1" => git_hash::Kind::Sha1,
@@ -135,7 +135,7 @@ pub mod open {
                     git_dir.join("objects"),
                     git_odb::store::init::Options {
                         slots: object_store_slots,
-                        hash_kind,
+                        object_hash,
                         use_multi_pack_index,
                     },
                 )?),
@@ -146,9 +146,10 @@ pub mod open {
                     } else {
                         git_ref::store::WriteReflog::Normal
                     },
+                    object_hash,
                 ),
                 work_tree: worktree_dir,
-                hash_kind,
+                object_hash,
             })
         }
     }

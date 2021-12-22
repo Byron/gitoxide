@@ -6,7 +6,7 @@ mod write_object {
         let oid = repo.write_object(&git_repository::objs::TreeRef::empty())?;
         assert_eq!(
             oid,
-            git_repository::hash::ObjectId::empty_tree(repo.hash_kind()),
+            git_repository::hash::ObjectId::empty_tree(repo.object_hash()),
             "it produces a well-known empty tree id"
         );
         Ok(())

@@ -122,7 +122,7 @@ pub struct Handle {
     pub objects: crate::OdbHandle,
     work_tree: Option<PathBuf>,
     /// The kind of hash that is used or should be used for object ids
-    hash_kind: git_hash::Kind,
+    object_hash: git_hash::Kind,
     /// A free-list of re-usable object backing buffers
     bufs: RefCell<Vec<Vec<u8>>>,
 }

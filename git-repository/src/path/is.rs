@@ -35,7 +35,15 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::Kind, Error> {
     let dot_git = git_dir.as_ref();
 
     {
-        let refs = crate::RefStore::at(&dot_git, git_ref::store::WriteReflog::Normal);
+        // We expect to be able to parse any ref-hash, so we shouldn't have to know the repos hash here.
+        // With ref-table, the has is probably stored as part of the ref-db itself, so we can handle it from there.
+        // In other words, it's important not to fail on detached heads here because we guessed the hash kind wrongly.
+        let object_hash_should_not_matter_here = git_hash::Kind::Sha1;
+        let refs = crate::RefStore::at(
+            &dot_git,
+            git_ref::store::WriteReflog::Normal,
+            object_hash_should_not_matter_here,
+        );
         let head = refs.find_loose("HEAD")?;
         if head.name.as_bstr() != "HEAD" {
             return Err(Error::MisplacedHead {

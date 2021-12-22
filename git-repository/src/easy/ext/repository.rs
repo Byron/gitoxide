@@ -14,8 +14,8 @@ impl easy::Handle {
         git_actor::Signature::empty()
     }
 
-    /// The kind of hash the repository is configured to use.
-    pub fn hash_kind(&self) -> git_hash::Kind {
-        self.hash_kind
+    /// The kind of object hash the repository is configured to use.
+    pub fn object_hash(&self) -> git_hash::Kind {
+        self.object_hash
     }
 }

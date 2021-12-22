@@ -11,7 +11,7 @@ impl Clone for easy::Handle {
         easy::Handle::from_refs_and_objects(
             self.refs.clone(),
             self.objects.clone(),
-            self.hash_kind,
+            self.object_hash,
             self.work_tree.clone(),
         )
     }
@@ -29,12 +29,12 @@ impl easy::Handle {
     pub(crate) fn from_refs_and_objects(
         refs: crate::RefStore,
         objects: crate::OdbHandle,
-        hash_kind: git_hash::Kind,
+        object_hash: git_hash::Kind,
         work_tree: Option<PathBuf>,
     ) -> Self {
         easy::Handle {
             bufs: RefCell::new(Vec::with_capacity(4)),
-            hash_kind,
+            object_hash,
             work_tree,
             objects: {
                 #[cfg(feature = "max-performance")]
@@ -56,7 +56,7 @@ impl From<&crate::Repository> for easy::Handle {
         easy::Handle::from_refs_and_objects(
             repo.refs.clone(),
             repo.objects.to_handle().into(),
-            repo.hash_kind,
+            repo.object_hash,
             repo.work_tree.clone(),
         )
     }
