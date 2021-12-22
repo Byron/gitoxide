@@ -11,7 +11,7 @@ pub struct Options {
     /// How to obtain a size for the slot map.
     pub slots: Slots,
     /// The kind of hash we expect in our packs and would use for loose object iteration and object writing.
-    pub hash_kind: git_hash::Kind,
+    pub object_hash: git_hash::Kind,
     /// If false, no multi-pack indices will be used. If true, they will be used if their hash matches `hash_kind`.
     pub use_multi_pack_index: bool,
 }
@@ -55,7 +55,7 @@ impl Store {
         objects_dir: impl Into<PathBuf>,
         Options {
             slots,
-            hash_kind,
+            object_hash,
             use_multi_pack_index,
         }: Options,
     ) -> std::io::Result<Self> {
@@ -75,7 +75,7 @@ impl Store {
                 let num_slots = super::Store::collect_indices_and_mtime_sorted_by_size(
                     db_paths,
                     None,
-                    use_multi_pack_index.then(|| hash_kind),
+                    use_multi_pack_index.then(|| object_hash),
                 )
                 .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
                 .len();
@@ -95,7 +95,7 @@ impl Store {
             files: Vec::from_iter(std::iter::repeat_with(MutableIndexAndPack::default).take(slot_count)),
             index: ArcSwap::new(Arc::new(SlotMapIndex::default())),
             use_multi_pack_index,
-            hash_kind,
+            object_hash,
             num_handles_stable: Default::default(),
             num_handles_unstable: Default::default(),
             num_disk_state_consolidation: Default::default(),

@@ -29,7 +29,7 @@ impl Store {
 
     /// Returns true if the given id is contained in our repository.
     pub fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool {
-        debug_assert_eq!(self.hash_kind, id.as_ref().kind());
+        debug_assert_eq!(self.object_hash, id.as_ref().kind());
         hash_path(id.as_ref(), self.path.clone()).is_file()
     }
 
@@ -43,7 +43,7 @@ impl Store {
         id: impl AsRef<git_hash::oid>,
         out: &'a mut Vec<u8>,
     ) -> Result<Option<git_object::Data<'a>>, Error> {
-        debug_assert_eq!(self.hash_kind, id.as_ref().kind());
+        debug_assert_eq!(self.object_hash, id.as_ref().kind());
         match self.find_inner(id.as_ref(), out) {
             Ok(obj) => Ok(Some(obj)),
             Err(err) => match err {

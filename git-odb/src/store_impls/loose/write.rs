@@ -106,7 +106,7 @@ impl Store {
                 message: "create named temp file in",
                 path: self.path.to_owned(),
             })?),
-            self.hash_kind,
+            self.object_hash,
         ))
     }
 

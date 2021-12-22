@@ -75,7 +75,7 @@ impl loose::Store {
                 .max_depth(3)
                 .follow_links(false)
                 .into_iter(),
-            hash_hex_len: self.hash_kind.len_in_hex(),
+            hash_hex_len: self.object_hash.len_in_hex(),
         }
     }
 }

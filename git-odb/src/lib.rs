@@ -49,14 +49,14 @@ pub mod cache;
 ///
 pub struct Sink {
     compressor: Option<RefCell<deflate::Write<std::io::Sink>>>,
-    hash_kind: git_hash::Kind,
+    object_hash: git_hash::Kind,
 }
 
 /// Create a new [`Sink`] with compression disabled.
-pub fn sink(hash_kind: git_hash::Kind) -> Sink {
+pub fn sink(object_hash: git_hash::Kind) -> Sink {
     Sink {
         compressor: None,
-        hash_kind,
+        object_hash,
     }
 }
 
@@ -117,7 +117,7 @@ pub struct Store {
     /// If true, we are allowed to use multi-pack indices and they must have the `hash_kind` or be ignored.
     use_multi_pack_index: bool,
     /// The hash kind to use for some operations
-    hash_kind: git_hash::Kind,
+    object_hash: git_hash::Kind,
 }
 
 impl Store {

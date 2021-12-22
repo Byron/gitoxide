@@ -9,7 +9,7 @@ pub struct Store {
     /// The directory in which objects are stored, containing 256 folders representing the hashes first byte.
     pub(crate) path: PathBuf,
     /// The kind of hash we should assume during iteration and when writing new objects.
-    pub(crate) hash_kind: git_hash::Kind,
+    pub(crate) object_hash: git_hash::Kind,
 }
 
 /// Initialization
@@ -18,10 +18,12 @@ impl Store {
     /// contain all loose objects.
     ///
     /// In a git repository, this would be `.git/objects`.
-    pub fn at(objects_directory: impl Into<PathBuf>, hash_kind: git_hash::Kind) -> Store {
+    ///
+    /// The `object_hash` determines which hash to use when writing, finding or iterating objects.
+    pub fn at(objects_directory: impl Into<PathBuf>, object_hash: git_hash::Kind) -> Store {
         Store {
             path: objects_directory.into(),
-            hash_kind,
+            object_hash,
         }
     }
 
@@ -32,7 +34,7 @@ impl Store {
 
     /// Return the kind of hash we would iterate and write.
     pub fn hash_kind(&self) -> git_hash::Kind {
-        self.hash_kind
+        self.object_hash
     }
 }
 

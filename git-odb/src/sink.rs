@@ -39,7 +39,7 @@ impl crate::traits::Write for Sink {
             }
             Ok(())
         };
-        match self.hash_kind {
+        match self.object_hash {
             git_hash::Kind::Sha1 => {
                 let mut hasher = Sha1::default();
                 hasher.update(&header);
