@@ -59,13 +59,37 @@ impl<'repo> Tree<'repo> {
 
     /// Obtain a platform for initiating a variety of traversals.
     pub fn traverse(&self) -> Traversal<'_, 'repo> {
-        Traversal { root: self }
+        Traversal {
+            root: self,
+            breadthfirst: BreadthFirstTraversalPresets { root: self },
+        }
     }
 }
 
 /// An intermediate object to start traversing the parent tree from.
 pub struct Traversal<'a, 'repo> {
     root: &'a Tree<'repo>,
+    /// TODO: EXPLAIN
+    pub breadthfirst: BreadthFirstTraversalPresets<'a, 'repo>,
+}
+
+/// TODO: explain THIS!
+#[derive(Copy, Clone)]
+pub struct BreadthFirstTraversalPresets<'a, 'repo> {
+    root: &'a Tree<'repo>,
+}
+
+impl<'a, 'repo> BreadthFirstTraversalPresets<'a, 'repo> {
+    /// Returns all entries and their file paths, recursively, as reachable from this tree.
+    pub fn files(&self) -> Result<Vec<git_traverse::tree::recorder::Entry>, git_traverse::tree::breadthfirst::Error> {
+        let mut recorder = git_traverse::tree::Recorder::default();
+        Traversal {
+            root: self.root,
+            breadthfirst: *self,
+        }
+        .breadthfirst(&mut recorder)?;
+        Ok(recorder.records)
+    }
 }
 
 impl<'a, 'repo> Traversal<'a, 'repo> {
@@ -83,12 +107,5 @@ impl<'a, 'repo> Traversal<'a, 'repo> {
             |oid, buf| self.root.handle.objects.find_tree_iter(oid, buf).ok(),
             delegate,
         )
-    }
-
-    /// Returns all entries and their file paths, recursively, as reachable from this tree.
-    pub fn files(&self) -> Result<Vec<git_traverse::tree::recorder::Entry>, git_traverse::tree::breadthfirst::Error> {
-        let mut recorder = git_traverse::tree::Recorder::default();
-        self.breadthfirst(&mut recorder)?;
-        Ok(recorder.records)
     }
 }

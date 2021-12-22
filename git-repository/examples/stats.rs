@@ -31,7 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut delegate = visit::Tree::new(handle.clone());
     tree.traverse().breadthfirst(&mut delegate)?;
-    // tree.traverse().breadthfirst.files()
+    let _files = tree.traverse().breadthfirst.files()?;
 
     println!("num trees: {}", delegate.num_trees);
     println!("num blobs: {}", delegate.num_blobs);
