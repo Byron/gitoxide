@@ -1,7 +1,6 @@
-#![allow(missing_docs)]
+use std::path::PathBuf;
 
 use filebuffer::FileBuffer;
-use std::path::PathBuf;
 
 /// Known multi-index file versions
 #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Hash, Clone, Copy)]

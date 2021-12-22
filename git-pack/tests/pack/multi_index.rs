@@ -1,5 +1,6 @@
-use git_testtools::hex_to_id;
 use std::path::PathBuf;
+
+use git_testtools::hex_to_id;
 
 #[test]
 fn access() {

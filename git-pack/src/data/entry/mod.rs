@@ -48,5 +48,6 @@ impl Entry {
 mod decode;
 
 mod header;
-use crate::data;
 pub use header::Header;
+
+use crate::data;

@@ -1,9 +1,11 @@
 use std::mem::size_of;
 
-use crate::data;
 use byteorder::{BigEndian, ByteOrder};
 
-use crate::index::{self, FAN_LEN};
+use crate::{
+    data,
+    index::{self, FAN_LEN},
+};
 
 const N32_SIZE: usize = size_of::<u32>();
 const N64_SIZE: usize = size_of::<u64>();

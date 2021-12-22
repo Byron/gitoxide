@@ -1,8 +1,11 @@
-use crate::multi_index::{chunk, File, Version};
+#![allow(missing_docs)]
+
+use std::{convert::TryFrom, path::Path};
+
 use byteorder::{BigEndian, ByteOrder};
 use filebuffer::FileBuffer;
-use std::convert::TryFrom;
-use std::path::Path;
+
+use crate::multi_index::{chunk, File, Version};
 
 mod error {
     use crate::multi_index::chunk;
@@ -29,7 +32,7 @@ mod error {
         #[error("The multi-pack fan doesn't have the correct size of 256 * 4 bytes")]
         MultiPackFanSize,
         #[error(transparent)]
-        PackNames(#[from] chunk::index_names::from_slice::Error),
+        PackNames(#[from] chunk::index_names::decode::Error),
         #[error("multi-index chunk {:?} has invalid size: {message}", String::from_utf8_lossy(.id))]
         InvalidChunkSize { id: git_chunk::Id, message: &'static str },
     }
@@ -100,10 +103,10 @@ impl TryFrom<&Path> for File {
         let chunks = git_chunk::file::Index::from_bytes(&data, HEADER_LEN, num_chunks as u32)?;
 
         let index_names = chunks.data_by_id(&data, chunk::index_names::ID)?;
-        let index_names = chunk::index_names::from_slice(index_names, num_packs)?;
+        let index_names = chunk::index_names::from_bytes(index_names, num_packs)?;
 
         let fan = chunks.data_by_id(&data, chunk::fanout::ID)?;
-        let fan = chunk::fanout::from_slice(fan).ok_or(Error::MultiPackFanSize)?;
+        let fan = chunk::fanout::from_bytes(fan).ok_or(Error::MultiPackFanSize)?;
         let num_objects = fan[255];
 
         let lookup = chunks.validated_usize_offset_by_id(chunk::lookup::ID, |offset| {

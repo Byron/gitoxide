@@ -1,7 +1,13 @@
-use crate::data;
-use crate::multi_index::{File, PackIndex, Version};
-use byteorder::{BigEndian, ByteOrder};
+#![allow(missing_docs)]
+
 use std::path::{Path, PathBuf};
+
+use byteorder::{BigEndian, ByteOrder};
+
+use crate::{
+    data,
+    multi_index::{File, PackIndex, Version},
+};
 
 /// Represents an entry within a multi index file, effectively mapping object [`IDs`][git_hash::ObjectId] to pack data files and the offset
 /// within.

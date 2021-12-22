@@ -1,5 +1,4 @@
-use std::hash::Hash;
-use std::{io, io::SeekFrom, path::PathBuf, sync::Arc};
+use std::{hash::Hash, io, io::SeekFrom, path::PathBuf, sync::Arc};
 
 use git_tempfile::handle::Writable;
 

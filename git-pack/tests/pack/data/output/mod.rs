@@ -1,5 +1,4 @@
-use std::path::PathBuf;
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use git_pack::data::output;
 
