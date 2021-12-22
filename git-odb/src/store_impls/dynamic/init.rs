@@ -12,7 +12,7 @@ pub struct Options {
     pub slots: Slots,
     /// The kind of hash we expect in our packs and would use for loose object iteration and object writing.
     pub object_hash: git_hash::Kind,
-    /// If false, no multi-pack indices will be used. If true, they will be used if their hash matches `hash_kind`.
+    /// If false, no multi-pack indices will be used. If true, they will be used if their hash matches `object_hash`.
     pub use_multi_pack_index: bool,
 }
 

@@ -365,7 +365,7 @@ fn write_and_verify(
     assert_eq!(hash, expected_pack_hash, "pack hashes are stable if the input is");
 
     // Re-generate the index from the pack for validation.
-    let hash_kind = git_hash::Kind::Sha1; // TODO: parameterize this
+    let object_hash = git_hash::Kind::Sha1; // TODO: parameterize this
     let bundle = pack::Bundle::at(
         pack::Bundle::write_to_directory(
             std::io::BufReader::new(std::fs::File::open(pack_file_path)?),
@@ -377,7 +377,7 @@ fn write_and_verify(
         )?
         .data_path
         .expect("directory set"),
-        hash_kind,
+        object_hash,
     )?;
     if let Some(thin_pack_checksum) = expected_thin_pack_hash {
         let actual_checksum = bundle

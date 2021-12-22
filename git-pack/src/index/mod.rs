@@ -109,6 +109,7 @@ pub struct File {
     num_objects: u32,
     fan: [u32; FAN_LEN],
     hash_len: usize,
+    object_hash: git_hash::Kind,
 }
 
 /// Basic file information
@@ -124,6 +125,10 @@ impl File {
     /// The amount of objects stored in the pack and index
     pub fn num_objects(&self) -> u32 {
         self.num_objects
+    }
+    /// The kind of hash we assume
+    pub fn object_hash(&self) -> git_hash::Kind {
+        self.object_hash
     }
 }
 

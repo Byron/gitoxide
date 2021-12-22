@@ -67,7 +67,7 @@ impl TryFrom<&Path> for File {
             });
         }
 
-        let (version, hash_kind, num_chunks, num_packs) = {
+        let (version, object_hash, num_chunks, num_packs) = {
             let (signature, data) = data.split_at(4);
             if signature != b"MIDX" {
                 return Err(Error::Corrupt {
@@ -80,8 +80,8 @@ impl TryFrom<&Path> for File {
                 version => return Err(Error::UnsupportedVersion { version }),
             };
 
-            let (hash_kind, data) = data.split_at(1);
-            let hash_kind = match hash_kind[0] {
+            let (object_hash, data) = data.split_at(1);
+            let object_hash = match object_hash[0] {
                 1 => git_hash::Kind::Sha1,
                 // TODO: 2 = SHA256, use it once we know it
                 unknown => return Err(Error::UnsupportedHashKind { kind: unknown }),
@@ -94,7 +94,7 @@ impl TryFrom<&Path> for File {
             let (num_packs, _) = data.split_at(4);
             let num_packs = BigEndian::read_u32(num_packs);
 
-            (version, hash_kind, num_chunks, num_packs)
+            (version, object_hash, num_chunks, num_packs)
         };
 
         let chunks = git_chunk::file::Index::from_bytes(&data, HEADER_LEN, num_chunks as u32)?;
@@ -107,7 +107,7 @@ impl TryFrom<&Path> for File {
         let num_objects = fan[255];
 
         let lookup = chunks.validated_usize_offset_by_id(chunk::lookup::ID, |offset| {
-            chunk::lookup::is_valid(&offset, hash_kind, num_objects)
+            chunk::lookup::is_valid(&offset, object_hash, num_objects)
                 .then(|| offset)
                 .ok_or(Error::InvalidChunkSize {
                     id: chunk::lookup::ID,
@@ -136,7 +136,7 @@ impl TryFrom<&Path> for File {
 
         let checksum_offset = chunks.highest_offset() as usize;
         let trailer = &data[checksum_offset..];
-        if trailer.len() != hash_kind.len_in_bytes() {
+        if trailer.len() != object_hash.len_in_bytes() {
             return Err(Error::Corrupt {
                 message:
                     "Trailing checksum didn't have the expected size or there were unknown bytes after the checksum.",
@@ -147,7 +147,8 @@ impl TryFrom<&Path> for File {
             data,
             path: path.to_owned(),
             version,
-            hash_len: hash_kind.len_in_bytes(),
+            hash_len: object_hash.len_in_bytes(),
+            object_hash,
             fan,
             index_names,
             lookup,

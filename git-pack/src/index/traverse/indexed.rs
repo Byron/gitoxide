@@ -68,7 +68,7 @@ impl index::File {
                     progress.add_child("indexing"),
                     &should_interrupt,
                     |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
-                    git_hash::Kind::from_len_in_bytes(self.hash_len),
+                    self.object_hash,
                 )?;
                 let there_are_enough_objects = || self.num_objects > 10_000;
                 let mut outcome = digest_statistics(tree.traverse(
@@ -120,7 +120,7 @@ impl index::File {
                             res => res,
                         }
                     },
-                    git_hash::Kind::from_len_in_bytes(self.hash_len),
+                    self.object_hash,
                 )?);
                 outcome.pack_size = pack.data_len() as u64;
                 Ok(outcome)

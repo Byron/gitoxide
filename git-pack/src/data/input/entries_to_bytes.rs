@@ -39,7 +39,7 @@ where
     ///
     /// # Panics
     ///
-    /// Not all combinations of `hash_kind` and `version` are supported currently triggering assertion errors.
+    /// Not all combinations of `object_hash` and `version` are supported currently triggering assertion errors.
     pub fn new(input: I, output: W, version: crate::data::Version, object_hash: git_hash::Kind) -> Self {
         assert!(
             matches!(version, crate::data::Version::V2),

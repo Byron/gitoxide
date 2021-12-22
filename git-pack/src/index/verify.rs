@@ -82,7 +82,7 @@ impl index::File {
             Ok(id) => id,
             Err(_io_err) => {
                 let start = std::time::Instant::now();
-                let mut hasher = git_features::hash::hasher(git_hash::Kind::from_len_in_bytes(self.hash_len));
+                let mut hasher = git_features::hash::hasher(self.object_hash);
                 hasher.update(&self.data[..data_len_without_trailer]);
                 progress.inc_by(data_len_without_trailer);
                 progress.show_throughput(start);

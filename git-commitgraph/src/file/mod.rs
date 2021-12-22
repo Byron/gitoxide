@@ -48,6 +48,7 @@ pub struct File {
     oid_lookup_offset: usize,
     path: PathBuf,
     hash_len: usize,
+    object_hash: git_hash::Kind,
 }
 
 /// The position of a given commit within a graph file, starting at 0.

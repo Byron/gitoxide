@@ -25,6 +25,7 @@ pub struct File {
     path: std::path::PathBuf,
     version: Version,
     hash_len: usize,
+    object_hash: git_hash::Kind,
     num_chunks: u8,
     /// The amount of pack files contained within
     num_packs: u32,
@@ -49,8 +50,8 @@ pub mod access {
         pub fn num_objects(&self) -> u32 {
             self.num_objects
         }
-        pub fn hash_kind(&self) -> git_hash::Kind {
-            git_hash::Kind::from_len_in_bytes(self.hash_len)
+        pub fn object_hash(&self) -> git_hash::Kind {
+            self.object_hash
         }
         pub fn checksum(&self) -> git_hash::ObjectId {
             git_hash::ObjectId::from(&self.data[self.data.len() - self.hash_len..])

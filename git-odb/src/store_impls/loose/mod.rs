@@ -33,7 +33,7 @@ impl Store {
     }
 
     /// Return the kind of hash we would iterate and write.
-    pub fn hash_kind(&self) -> git_hash::Kind {
+    pub fn object_hash(&self) -> git_hash::Kind {
         self.object_hash
     }
 }

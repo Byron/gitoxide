@@ -81,7 +81,7 @@ impl File {
             .map_err(|(actual, expected)| Error::Mismatch { actual, expected })?;
         verify_split_chain_filename_hash(&self.path, self.checksum()).map_err(Error::Filename)?;
 
-        let null_id = self.hash_kind().null_ref();
+        let null_id = self.object_hash().null_ref();
 
         let mut stats = Outcome {
             max_generation: 0,
@@ -149,7 +149,7 @@ impl File {
         // as these files are usually small enough to process them in less than a second, even for the large ones.
         // But it's possible, once a progress instance is passed.
         let data_len_without_trailer = self.data.len() - self.hash_len;
-        let mut hasher = git_features::hash::hasher(self.hash_kind());
+        let mut hasher = git_features::hash::hasher(self.object_hash());
         hasher.update(&self.data[..data_len_without_trailer]);
         let actual = git_hash::ObjectId::from(hasher.digest().as_ref());
 

@@ -279,7 +279,7 @@ impl crate::data::File {
             reader,
             input::Mode::Verify,
             input::EntryDataMode::KeepAndCrc32,
-            git_hash::Kind::from_len_in_bytes(self.hash_len),
+            self.object_hash,
         )
     }
 }

@@ -98,12 +98,12 @@ impl Graph {
         for window in files.windows(2) {
             let f1 = &window[0];
             let f2 = &window[1];
-            if f1.hash_kind() != f2.hash_kind() {
+            if f1.object_hash() != f2.object_hash() {
                 return Err(Error::HashVersionMismatch {
                     path1: f1.path().to_owned(),
-                    hash1: f1.hash_kind(),
+                    hash1: f1.object_hash(),
                     path2: f2.path().to_owned(),
-                    hash2: f2.hash_kind(),
+                    hash2: f2.object_hash(),
                 });
             }
         }

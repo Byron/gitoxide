@@ -29,15 +29,16 @@ impl index::File {
     /// The `object_hash` is a way to read (and write) the same file format with different hashes, as the hash kind
     /// isn't stored within the file format itself.
     pub fn at(path: impl AsRef<Path>, object_hash: git_hash::Kind) -> Result<index::File, Error> {
-        Self::at_inner(path.as_ref(), object_hash.len_in_bytes())
+        Self::at_inner(path.as_ref(), object_hash)
     }
 
-    fn at_inner(path: &Path, hash_len: usize) -> Result<index::File, Error> {
+    fn at_inner(path: &Path, object_hash: git_hash::Kind) -> Result<index::File, Error> {
         let data = FileBuffer::open(&path).map_err(|source| Error::Io {
             source,
             path: path.to_owned(),
         })?;
         let idx_len = data.len();
+        let hash_len = object_hash.len_in_bytes();
 
         let footer_size = hash_len * 2;
         if idx_len < FAN_LEN * N32_SIZE + footer_size {
@@ -79,6 +80,7 @@ impl index::File {
             num_objects,
             fan,
             hash_len,
+            object_hash,
         })
     }
 }

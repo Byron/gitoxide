@@ -27,8 +27,8 @@ impl File {
     /// The kind of hash used in this File.
     ///
     /// Note that it is always conforming to the hash used in the owning repository.
-    pub fn hash_kind(&self) -> git_hash::Kind {
-        git_hash::Kind::from_len_in_bytes(self.hash_len)
+    pub fn object_hash(&self) -> git_hash::Kind {
+        self.object_hash
     }
 
     /// Returns an object id at the given index in our list of (sorted) hashes.

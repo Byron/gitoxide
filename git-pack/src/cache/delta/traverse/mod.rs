@@ -69,7 +69,7 @@ where
     ///   running for each thread receiving fully decoded objects along with contextual information, which either succceeds with `Ok(())`
     ///   or returns a `CustomError`.
     ///   Note that `node_data` can be modified to allow storing maintaining computation results on a per-object basis.
-    /// * `hash_kind` specifies what kind of hashes we expect to be stored in oid-delta entries, which is viable to decoding them
+    /// * `object_hash` specifies what kind of hashes we expect to be stored in oid-delta entries, which is viable to decoding them
     ///   with the correct size.
     ///
     /// This method returns a vector of all tree items, along with their potentially modified custom node data.
