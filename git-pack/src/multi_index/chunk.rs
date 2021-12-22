@@ -51,10 +51,8 @@ pub mod index_names {
             chunk = &chunk[null_byte_pos + 1..];
         }
 
-        if !chunk.is_empty() {
-            if !chunk.iter().all(|b| *b == 0) {
-                return Err(decode::Error::UnknownTrailerBytes);
-            }
+        if !chunk.is_empty() && !chunk.iter().all(|b| *b == 0) {
+            return Err(decode::Error::UnknownTrailerBytes);
         }
         // NOTE: git writes garbage into this chunk, usually extra \0 bytes, which we simply ignore. If we were strict
         // about it we couldn't read this chunk data at all.
