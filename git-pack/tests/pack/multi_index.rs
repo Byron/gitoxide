@@ -25,5 +25,6 @@ fn access() {
     ] {
         let actual_oid = file.oid_at_index(*idx);
         assert_eq!(actual_oid, *expected_oid);
+        assert_eq!(file.lookup(actual_oid), Some(*idx));
     }
 }

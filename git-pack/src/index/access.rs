@@ -1,4 +1,4 @@
-use std::{convert::TryInto, mem::size_of};
+use std::mem::size_of;
 
 use byteorder::{BigEndian, ByteOrder};
 
@@ -85,9 +85,7 @@ impl index::File {
     ///
     /// If `index` is out of bounds.
     pub fn pack_offset_at_index(&self, index: u32) -> PackOffset {
-        let index: usize = index
-            .try_into()
-            .expect("an architecture able to hold 32 bits of integer");
+        let index = index as usize;
         match self.version {
             index::Version::V2 => {
                 let start = self.offset_pack_offset_v2() + index * N32_SIZE;
@@ -107,9 +105,7 @@ impl index::File {
     ///
     /// If `index` is out of bounds.
     pub fn crc32_at_index(&self, index: u32) -> Option<u32> {
-        let index: usize = index
-            .try_into()
-            .expect("an architecture able to hold 32 bits of integer");
+        let index = index as usize;
         match self.version {
             index::Version::V2 => {
                 let start = self.offset_crc32_v2() + index * N32_SIZE;
@@ -174,18 +170,22 @@ impl index::File {
         ofs
     }
 
+    #[inline]
     fn offset_crc32_v2(&self) -> usize {
         V2_HEADER_SIZE + self.num_objects as usize * self.hash_len
     }
 
+    #[inline]
     fn offset_pack_offset_v2(&self) -> usize {
         self.offset_crc32_v2() + self.num_objects as usize * N32_SIZE
     }
 
+    #[inline]
     fn offset_pack_offset64_v2(&self) -> usize {
         self.offset_pack_offset_v2() + self.num_objects as usize * N32_SIZE
     }
 
+    #[inline]
     fn pack_offset_from_offset_v2(&self, offset: &[u8], pack64_offset: usize) -> PackOffset {
         debug_assert_eq!(self.version, index::Version::V2);
         let ofs32 = BigEndian::read_u32(offset);
