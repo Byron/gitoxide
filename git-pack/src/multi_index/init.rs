@@ -1,5 +1,3 @@
-#![allow(missing_docs)]
-
 use std::{convert::TryFrom, path::Path};
 
 use byteorder::{BigEndian, ByteOrder};
@@ -10,7 +8,9 @@ use crate::multi_index::{chunk, File, Version};
 mod error {
     use crate::multi_index::chunk;
 
+    /// The error returned by [File::at()][super::File::at()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error("Could not open multi-index file at '{path}'")]
         Io {
@@ -22,7 +22,7 @@ mod error {
         #[error("Unsupported multi-index version: {version})")]
         UnsupportedVersion { version: u8 },
         #[error("Unsupported hash kind: {kind})")]
-        UnsupportedHashKind { kind: u8 },
+        UnsupportedObjectHash { kind: u8 },
         #[error(transparent)]
         ChunkFileDecode(#[from] git_chunk::file::decode::Error),
         #[error(transparent)]
@@ -40,7 +40,9 @@ mod error {
 
 pub use error::Error;
 
+/// Initialization
 impl File {
+    /// Open the multi-index file at the given `path`.
     pub fn at(path: impl AsRef<Path>) -> Result<Self, Error> {
         Self::try_from(path.as_ref())
     }
@@ -70,7 +72,7 @@ impl TryFrom<&Path> for File {
             });
         }
 
-        let (version, object_hash, num_chunks, num_packs) = {
+        let (version, object_hash, num_chunks, num_indices) = {
             let (signature, data) = data.split_at(4);
             if signature != b"MIDX" {
                 return Err(Error::Corrupt {
@@ -87,23 +89,23 @@ impl TryFrom<&Path> for File {
             let object_hash = match object_hash[0] {
                 1 => git_hash::Kind::Sha1,
                 // TODO: 2 = SHA256, use it once we know it
-                unknown => return Err(Error::UnsupportedHashKind { kind: unknown }),
+                unknown => return Err(Error::UnsupportedObjectHash { kind: unknown }),
             };
             let (num_chunks, data) = data.split_at(1);
             let num_chunks = num_chunks[0];
 
             let (_num_base_files, data) = data.split_at(1); // TODO: handle base files once it's clear what this does
 
-            let (num_packs, _) = data.split_at(4);
-            let num_packs = BigEndian::read_u32(num_packs);
+            let (num_indices, _) = data.split_at(4);
+            let num_indices = BigEndian::read_u32(num_indices);
 
-            (version, object_hash, num_chunks, num_packs)
+            (version, object_hash, num_chunks, num_indices)
         };
 
         let chunks = git_chunk::file::Index::from_bytes(&data, HEADER_LEN, num_chunks as u32)?;
 
         let index_names = chunks.data_by_id(&data, chunk::index_names::ID)?;
-        let index_names = chunk::index_names::from_bytes(index_names, num_packs)?;
+        let index_names = chunk::index_names::from_bytes(index_names, num_indices)?;
 
         let fan = chunks.data_by_id(&data, chunk::fanout::ID)?;
         let fan = chunk::fanout::from_bytes(fan).ok_or(Error::MultiPackFanSize)?;
@@ -158,7 +160,7 @@ impl TryFrom<&Path> for File {
             offsets_ofs: offsets.start,
             large_offsets_ofs: large_offsets.map(|r| r.start),
             num_objects,
-            num_packs,
+            num_indices,
         })
     }
 }

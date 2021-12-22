@@ -28,7 +28,7 @@ pub struct File {
     hash_len: usize,
     object_hash: git_hash::Kind,
     /// The amount of pack files contained within
-    num_packs: u32,
+    num_indices: u32,
     num_objects: u32,
 
     fan: [u32; 256],

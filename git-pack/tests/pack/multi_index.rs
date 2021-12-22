@@ -11,7 +11,7 @@ fn access() {
 
     assert_eq!(file.version(), git_pack::multi_index::Version::V1);
     assert_eq!(file.path(), path);
-    assert_eq!(file.num_packs(), 1);
+    assert_eq!(file.num_indices(), 1);
     assert_eq!(file.object_hash(), git_hash::Kind::Sha1);
     assert_eq!(file.num_objects(), 868);
     assert_eq!(file.checksum(), hex_to_id("39a3804d0a84de609e4fcb49e66dc1297c75ca11"));
