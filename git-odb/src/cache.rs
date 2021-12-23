@@ -1,3 +1,4 @@
+use std::ops::{Deref, DerefMut};
 use std::{cell::RefCell, sync::Arc};
 
 use crate::Cache;
@@ -13,6 +14,10 @@ pub type ObjectCache = dyn git_pack::cache::Object + Send + 'static;
 pub type NewObjectCacheFn = dyn Fn() -> Box<ObjectCache> + Send + Sync + 'static;
 
 impl<S> Cache<S> {
+    /// Dissolve this instance, discard all caches, and return the inner implementation.
+    pub fn into_inner(self) -> S {
+        self.inner
+    }
     /// Use this methods directly after creating a new instance to add a constructor for pack caches.
     ///
     /// These are used to speed up decoding objects which are located in packs, reducing long delta chains by storing
@@ -77,6 +82,20 @@ impl<S: Clone> Clone for Cache<S> {
             pack_cache: self.new_pack_cache.as_ref().map(|create| RefCell::new(create())),
             object_cache: self.new_object_cache.as_ref().map(|create| RefCell::new(create())),
         }
+    }
+}
+
+impl<S> Deref for Cache<S> {
+    type Target = S;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl<S> DerefMut for Cache<S> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
     }
 }
 

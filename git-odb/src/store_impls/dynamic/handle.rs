@@ -225,6 +225,11 @@ where
     pub fn refresh_never(&mut self) {
         self.refresh_mode = RefreshMode::Never;
     }
+
+    /// Return the current refresh mode.
+    pub fn refresh_mode(&mut self) -> RefreshMode {
+        self.refresh_mode
+    }
 }
 
 impl<S> Drop for super::Handle<S>

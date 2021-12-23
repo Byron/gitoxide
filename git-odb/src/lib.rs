@@ -32,7 +32,9 @@ pub mod alternate;
 /// By default, no cache will be used.
 pub struct Cache<S> {
     /// The inner provider of trait implementations we use in conjunction with our caches.
-    pub inner: S,
+    ///
+    /// For calling methods on `inner`, prefer to make use of auto-dereferencing, i.e. `cache.inner_method()` instead of `cache.inner.inner_method()`.
+    inner: S,
     // TODO: have single-threaded code-paths also for pack-creation (entries from counts) so that we can use OwnShared here
     //       instead of Arc. However, it's probably not that important as these aren't called often.
     new_pack_cache: Option<Arc<cache::NewPackCacheFn>>,
