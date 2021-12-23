@@ -11,6 +11,28 @@ fn db() -> git_odb::Handle {
 }
 
 #[test]
+#[ignore]
+fn multi_index_access() {
+    let db = git_odb::at(
+        git_testtools::scripted_fixture_repo_read_only("make_repo_multi_index.sh")
+            .unwrap()
+            .join(".git/objects"),
+    )
+    .unwrap();
+    let mut count = 0;
+    let mut buf = Vec::new();
+    for oid in db.iter().unwrap() {
+        let oid = oid.unwrap();
+        assert!(db.contains(oid));
+        assert!(db.find(oid, &mut buf).is_ok());
+        count += 1;
+    }
+    assert_eq!(count, 42);
+
+    // TODO: trigger an update/change of the multi-index by changing the mtime. Be aware of lacking precision.
+}
+
+#[test]
 fn write() -> crate::Result {
     let dir = tempfile::tempdir()?;
     let mut handle = git_odb::at(dir.path())?;

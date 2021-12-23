@@ -8,7 +8,7 @@ use crate::{
 };
 
 /// Options for use in [`Store::at_opts()`].
-#[derive(Default, Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct Options {
     /// How to obtain a size for the slot map.
     pub slots: Slots,
@@ -16,6 +16,16 @@ pub struct Options {
     pub object_hash: git_hash::Kind,
     /// If false, no multi-pack indices will be used. If true, they will be used if their hash matches `object_hash`.
     pub use_multi_pack_index: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options {
+            slots: Default::default(),
+            object_hash: Default::default(),
+            use_multi_pack_index: true,
+        }
+    }
 }
 
 /// Configures the amount of slots in the index slotmap, which is fixed throughout the existence of the store.

@@ -401,19 +401,28 @@ impl super::Store {
                 Err(err) if err.kind() == std::io::ErrorKind::NotFound => continue,
                 Err(err) => return Err(err.into()),
             };
-            indices_by_modification_time.extend(
-                entries
-                    .filter_map(Result::ok)
-                    .filter_map(|e| e.metadata().map(|md| (e.path(), md)).ok())
-                    .filter(|(_, md)| md.file_type().is_file())
-                    .filter(|(p, _)| {
-                        let ext = p.extension();
-                        ext == Some(OsStr::new("idx"))
-                            || (multi_pack_index_object_hash.is_some() && ext.is_none() && is_multipack_index(p))
-                    })
-                    .map(|(p, md)| md.modified().map_err(Error::from).map(|mtime| (p, mtime, md.len())))
-                    .collect::<Result<Vec<_>, _>>()?,
-            );
+            let indices = entries
+                .filter_map(Result::ok)
+                .filter_map(|e| e.metadata().map(|md| (e.path(), md)).ok())
+                .filter(|(_, md)| md.file_type().is_file())
+                .filter(|(p, _)| {
+                    let ext = p.extension();
+                    ext == Some(OsStr::new("idx"))
+                        || (multi_pack_index_object_hash.is_some() && ext.is_none() && is_multipack_index(p))
+                })
+                .map(|(p, md)| md.modified().map_err(Error::from).map(|mtime| (p, mtime, md.len())))
+                .collect::<Result<Vec<_>, _>>()?;
+            match multi_pack_index_object_hash {
+                Some(object_hash) => {
+                    if let Some(Ok(multi_index_res)) = indices
+                        .iter()
+                        .find_map(|(p, _, _)| is_multipack_index(p).then(|| git_pack::multi_index::File::at(p)))
+                    {
+                    }
+                }
+                None => {}
+            }
+            indices_by_modification_time.extend(indices.into_iter().filter(|(p, _, _)| !is_multipack_index(p)))
         }
         // Unlike libgit2, do not sort by modification date, but by size and put the biggest indices first. That way
         // the chance to hit an object should be higher. We leave it to the handle to sort by LRU.
