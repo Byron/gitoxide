@@ -349,6 +349,20 @@ impl IndexAndPacks {
             ),
         })
     }
+
+    #[allow(unused, unreachable_code)]
+    pub fn new_multi_from_open_file(multi_index: git_pack::multi_index::File, mtime: SystemTime) -> Self {
+        Self::MultiIndex(MultiIndexFileBundle {
+            multi_index: OnDiskFile {
+                path: Arc::new(multi_index.path().to_owned()),
+                state: OnDiskFileState::Loaded(Arc::new(multi_index)),
+                mtime,
+            },
+            data: todo!(
+                "figure we actually have to map it here or find a way to learn about the data files in advance."
+            ),
+        })
+    }
 }
 
 #[derive(Default)]

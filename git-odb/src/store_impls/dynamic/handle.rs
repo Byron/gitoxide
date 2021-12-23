@@ -10,8 +10,8 @@ use git_features::threading::OwnShared;
 use crate::store::{handle, types, RefreshMode};
 
 pub(crate) mod multi_index {
-    // TODO: replace this one with an actual implementation of a multi-pack index.
-    pub type File = ();
+    // TODO: remove this declaration and replace it with the actual type where it's used
+    pub type File = git_pack::multi_index::File;
 }
 
 pub enum SingleOrMultiIndex {
