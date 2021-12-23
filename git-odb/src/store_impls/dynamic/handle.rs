@@ -59,8 +59,18 @@ pub(crate) mod index_lookup {
         ) -> Option<Box<dyn Iterator<Item = git_pack::index::Entry> + '_>> {
             (self.id == pack_id.index).then(|| match &self.file {
                 handle::SingleOrMultiIndex::Single { index, .. } => index.iter(),
-                handle::SingleOrMultiIndex::Multi { .. } => {
-                    todo!("find respective pack and return it as &mut Option<>")
+                handle::SingleOrMultiIndex::Multi { index, .. } => {
+                    // TODO: figure out if this could actually not be true all the time.
+                    let pack_index = pack_id
+                        .multipack_index
+                        .expect("multi-pack index must be set if this is a multi-pack");
+                    Box::new(index.iter().filter_map(move |e| {
+                        (e.pack_index == pack_index as u32).then(|| git_pack::index::Entry {
+                            oid: e.oid,
+                            pack_offset: e.pack_offset,
+                            crc32: None,
+                        })
+                    }))
                 }
             })
         }
@@ -68,8 +78,12 @@ pub(crate) mod index_lookup {
         pub(crate) fn pack(&mut self, pack_id: types::PackId) -> Option<&'_ mut Option<Arc<git_pack::data::File>>> {
             (self.id == pack_id.index).then(move || match &mut self.file {
                 handle::SingleOrMultiIndex::Single { data, .. } => data,
-                handle::SingleOrMultiIndex::Multi { .. } => {
-                    todo!("find respective pack and return it as &mut Option<>")
+                handle::SingleOrMultiIndex::Multi { data, .. } => {
+                    // TODO: figure out if this could actually not be true all the time.
+                    let pack_index = pack_id
+                        .multipack_index
+                        .expect("multi-pack index must be set if this is a multi-pack");
+                    &mut data[pack_index]
                 }
             })
         }
@@ -78,9 +92,7 @@ pub(crate) mod index_lookup {
         pub(crate) fn contains(&self, object_id: &oid) -> bool {
             match &self.file {
                 handle::SingleOrMultiIndex::Single { index, .. } => index.lookup(object_id).is_some(),
-                handle::SingleOrMultiIndex::Multi { .. } => {
-                    todo!("find respective pack and return it as &mut Option<>")
-                }
+                handle::SingleOrMultiIndex::Multi { index, .. } => index.lookup(object_id).is_some(),
             }
         }
 
@@ -88,9 +100,7 @@ pub(crate) mod index_lookup {
         pub(crate) fn oid_at_index(&self, entry_index: u32) -> &git_hash::oid {
             match &self.file {
                 handle::SingleOrMultiIndex::Single { index, .. } => index.oid_at_index(entry_index),
-                handle::SingleOrMultiIndex::Multi { .. } => {
-                    todo!("find respective pack and return it as &mut Option<>")
-                }
+                handle::SingleOrMultiIndex::Multi { index, .. } => index.oid_at_index(entry_index),
             }
         }
 
@@ -98,9 +108,7 @@ pub(crate) mod index_lookup {
         pub(crate) fn num_objects(&self) -> u32 {
             match &self.file {
                 handle::SingleOrMultiIndex::Single { index, .. } => index.num_objects(),
-                handle::SingleOrMultiIndex::Multi { .. } => {
-                    todo!("num_objects() on multi-index")
-                }
+                handle::SingleOrMultiIndex::Multi { index, .. } => index.num_objects(),
             }
         }
 
@@ -121,9 +129,22 @@ pub(crate) mod index_lookup {
                     index_file: &**index,
                     pack: data,
                 }),
-                handle::SingleOrMultiIndex::Multi { index: _, data: _ } => {
-                    todo!("find respective pack and return it as &mut Option<>")
-                }
+                handle::SingleOrMultiIndex::Multi { index, data } => index.lookup(object_id).map(move |idx| {
+                    let (pack_index, pack_offset) = index.pack_offset_and_pack_id_at_index(idx);
+                    let pack_index = pack_index as usize;
+                    Outcome {
+                        object_index: handle::IndexForObjectInPack {
+                            pack_id: types::PackId {
+                                index: id,
+                                multipack_index: Some(pack_index),
+                            },
+                            pack_offset,
+                        },
+                        // index_file: &**index,
+                        index_file: todo!("figure out how to pass different kinds of indices"),
+                        pack: &mut data[pack_index],
+                    }
+                }),
             }
         }
     }

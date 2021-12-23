@@ -421,14 +421,31 @@ impl super::Store {
                 .collect::<Result<Vec<_>, _>>()?;
 
             // let mut filter_multi_index
-            if let Some((object_hash, multi_index)) = multi_pack_index_object_hash.and_then(|hash| {
-                indices.iter().find_map(|(p, _, _)| {
+            if let Some((multi_index, mtime, flen)) = multi_pack_index_object_hash.and_then(|hash| {
+                indices.iter().find_map(|(p, a, b)| {
                     is_multipack_index(p)
-                        .then(|| git_pack::multi_index::File::at(p).ok().map(|midx| (hash, midx)))
+                        .then(|| {
+                            git_pack::multi_index::File::at(p)
+                                .ok()
+                                .filter(|midx| midx.object_hash() == hash)
+                                .map(|midx| (midx, *a, *b))
+                        })
                         .flatten()
                 })
             }) {
-                todo!("remove indices that are part fo the multi-index")
+                let index_names_in_multi_index: Vec<_> =
+                    multi_index.index_names().iter().map(|p| p.as_path()).collect();
+                let mut indices_not_in_multi_index: Vec<(Either, _, _)> = indices
+                    .into_iter()
+                    .filter_map(|(path, a, b)| {
+                        (path != multi_index.path()
+                            && !index_names_in_multi_index
+                                .contains(&Path::new(path.file_name().expect("file name present"))))
+                        .then(|| (Either::IndexPath(path), a, b))
+                    })
+                    .collect();
+                indices_not_in_multi_index.insert(0, (Either::MultiIndexFile(Arc::new(multi_index)), mtime, flen));
+                indices_by_modification_time.extend(indices_not_in_multi_index);
             } else {
                 indices_by_modification_time.extend(
                     indices
@@ -671,7 +688,7 @@ impl<'a> Drop for IncOnDrop<'a> {
 
 pub(crate) enum Either {
     IndexPath(PathBuf),
-    MultiIndexFile(git_pack::multi_index::File),
+    MultiIndexFile(Arc<git_pack::multi_index::File>),
 }
 
 impl Either {
@@ -684,7 +701,7 @@ impl Either {
 
     fn into_index_and_packs(self, mtime: SystemTime) -> IndexAndPacks {
         match self {
-            Either::IndexPath(path) => IndexAndPacks::new_by_index_path(path, mtime),
+            Either::IndexPath(path) => IndexAndPacks::new_single(path, mtime),
             Either::MultiIndexFile(file) => IndexAndPacks::new_multi_from_open_file(file, mtime),
         }
     }

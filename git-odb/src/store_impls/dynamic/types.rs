@@ -1,6 +1,5 @@
 #![allow(missing_docs)]
 use std::{
-    ffi::OsStr,
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering},
@@ -308,60 +307,65 @@ impl IndexAndPacks {
                         err => std::io::Error::new(std::io::ErrorKind::Other, err),
                     })
             }),
-            IndexAndPacks::MultiIndex(_bundle) => todo!("load multi-index"),
+            IndexAndPacks::MultiIndex(bundle) => {
+                bundle.multi_index.load_strict(|path| {
+                    git_pack::multi_index::File::at(path)
+                        .map(Arc::new)
+                        .map_err(|err| match err {
+                            git_pack::multi_index::init::Error::Io { source, .. } => source,
+                            err => std::io::Error::new(std::io::ErrorKind::Other, err),
+                        })
+                })?;
+                if let Some(multi_index) = bundle.multi_index.loaded() {
+                    bundle.data = Self::index_names_to_pack_paths(multi_index);
+                }
+                Ok(())
+            }
         }
     }
 
-    pub(crate) fn new_by_index_path(index_path: PathBuf, mtime: SystemTime) -> Self {
-        if index_path.extension() == Some(OsStr::new("idx")) {
-            IndexAndPacks::new_single(index_path, mtime)
-        } else {
-            IndexAndPacks::new_multi(index_path, mtime)
-        }
-    }
-
-    fn new_single(index_path: PathBuf, mtime: SystemTime) -> Self {
+    pub(crate) fn new_single(index_path: PathBuf, mtime: SystemTime) -> Self {
         let data_path = index_path.with_extension("pack");
         Self::Index(IndexFileBundle {
             index: OnDiskFile {
-                path: Arc::new(index_path),
+                path: index_path.into(),
                 state: OnDiskFileState::Unloaded,
                 mtime,
             },
             data: OnDiskFile {
-                path: Arc::new(data_path),
+                path: data_path.into(),
                 state: OnDiskFileState::Unloaded,
                 mtime,
             },
         })
     }
 
-    #[allow(unused, unreachable_code)]
-    fn new_multi(index_path: PathBuf, mtime: SystemTime) -> Self {
-        Self::MultiIndex(MultiIndexFileBundle {
-            multi_index: OnDiskFile {
-                path: Arc::new(index_path),
-                state: OnDiskFileState::Unloaded,
-                mtime,
-            },
-            data: todo!(
-                "figure we actually have to map it here or find a way to learn about the data files in advance."
-            ),
-        })
-    }
-
-    #[allow(unused, unreachable_code)]
-    pub fn new_multi_from_open_file(multi_index: git_pack::multi_index::File, mtime: SystemTime) -> Self {
+    pub(crate) fn new_multi_from_open_file(multi_index: Arc<git_pack::multi_index::File>, mtime: SystemTime) -> Self {
+        let data = Self::index_names_to_pack_paths(&multi_index);
         Self::MultiIndex(MultiIndexFileBundle {
             multi_index: OnDiskFile {
                 path: Arc::new(multi_index.path().to_owned()),
-                state: OnDiskFileState::Loaded(Arc::new(multi_index)),
+                state: OnDiskFileState::Loaded(multi_index),
                 mtime,
             },
-            data: todo!(
-                "figure we actually have to map it here or find a way to learn about the data files in advance."
-            ),
+            data,
         })
+    }
+
+    fn index_names_to_pack_paths(
+        multi_index: &git_pack::multi_index::File,
+    ) -> Vec<OnDiskFile<Arc<git_pack::data::File>>> {
+        let parent_dir = multi_index.path().parent().expect("parent present");
+        let data = multi_index
+            .index_names()
+            .iter()
+            .map(|idx| OnDiskFile {
+                path: parent_dir.join(idx.with_extension("pack")).into(),
+                state: OnDiskFileState::Unloaded,
+                mtime: SystemTime::UNIX_EPOCH,
+            })
+            .collect();
+        data
     }
 }
 
