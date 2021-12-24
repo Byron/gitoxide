@@ -11,23 +11,55 @@ fn db() -> git_odb::Handle {
 }
 
 #[test]
-#[ignore]
 fn multi_index_access() {
-    let db = git_odb::at(
+    let handle = git_odb::at(
         git_testtools::scripted_fixture_repo_read_only("make_repo_multi_index.sh")
             .unwrap()
             .join(".git/objects"),
     )
     .unwrap();
+
+    assert_eq!(
+        handle.store().metrics(),
+        git_odb::store::Metrics {
+            num_handles: 1,
+            num_refreshes: 0,
+            open_reachable_indices: 0,
+            known_indices: 0,
+            open_reachable_packs: 0,
+            known_packs: 0,
+            unused_slots: 32,
+            loose_dbs: 0,
+            unreachable_indices: 0
+        },
+        "it starts out knowing nothing, it's completely lazy"
+    );
+
     let mut count = 0;
     let mut buf = Vec::new();
-    for oid in db.iter().unwrap() {
+    for oid in handle.iter().unwrap() {
         let oid = oid.unwrap();
-        assert!(db.contains(oid));
-        assert!(db.find(oid, &mut buf).is_ok());
+        assert!(handle.contains(oid));
+        assert!(handle.find(oid, &mut buf).is_ok());
         count += 1;
     }
     assert_eq!(count, 868);
+
+    assert_eq!(
+        handle.store().metrics(),
+        git_odb::store::Metrics {
+            num_handles: 1,
+            num_refreshes: 1,
+            open_reachable_indices: 1,
+            known_indices: 1,
+            open_reachable_packs: 1,
+            known_packs: 1,
+            unused_slots: 31,
+            loose_dbs: 1,
+            unreachable_indices: 0
+        },
+        "it opened only a single multi-index and its pack - hard to see it's actually a multi-index as it's just one index anyway…"
+    );
 
     // TODO: trigger an update/change of the multi-index by changing the mtime. Be aware of lacking precision.
 }

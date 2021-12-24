@@ -390,6 +390,7 @@ pub(crate) struct MutableIndexAndPack {
 /// A snapshot about resource usage.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Metrics {
+    /// The total amount of handles which can be used to access object information.
     pub num_handles: usize,
     pub num_refreshes: usize,
     pub open_reachable_indices: usize,

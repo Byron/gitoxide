@@ -78,7 +78,45 @@ impl super::Store {
                     }
                 }
             }
-            Some(_multipack_id) => todo!("load from given multipack which needs additional lookup"),
+            Some(pack_index) => {
+                match &**slot.files.load() {
+                    Some(types::IndexAndPacks::MultiIndex(bundle)) => {
+                        match bundle.data.get(pack_index as usize) {
+                            None => Ok(None), // somewhat unexpected, data must be stale
+                            Some(on_disk_pack) => match on_disk_pack.loaded() {
+                                Some(pack) => Ok(Some(pack.clone())),
+                                None => {
+                                    let _lock = slot.write.lock();
+                                    let mut files = slot.files.load_full();
+                                    let files_mut = Arc::make_mut(&mut files);
+                                    let pack = match files_mut {
+                                        Some(types::IndexAndPacks::Index(_)) => {
+                                            // something changed between us getting the lock, trigger a complete index refresh.
+                                            None
+                                        }
+                                        Some(types::IndexAndPacks::MultiIndex(bundle)) => bundle
+                                            .data
+                                            .get_mut(pack_index as usize)
+                                            .expect("BUG: must set this handle to be stable")
+                                            .load_with_recovery(|path| load_pack(path, id, self.object_hash))?,
+                                        None => {
+                                            unreachable!("BUG: must set this handle to be stable to avoid slots to be cleared/changed")
+                                        }
+                                    };
+                                    slot.files.store(files);
+                                    Ok(pack)
+                                }
+                            },
+                        }
+                    }
+                    // This can also happen if they use an old index into our new and refreshed data which might have a multi-index
+                    // here.
+                    Some(types::IndexAndPacks::Index(_)) => Ok(None),
+                    None => {
+                        unreachable!("BUG: must set this handle to be stable to avoid slots to be cleared/changed")
+                    }
+                }
+            }
         }
     }
 
