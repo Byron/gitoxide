@@ -1,4 +1,3 @@
-#![allow(missing_docs)]
 use std::{
     cell::RefCell,
     ops::Deref,
@@ -214,14 +213,21 @@ impl super::Store {
 
 /// Handle creation
 impl super::Store {
+    /// Create a new cache filled with a handle to this store, if this store is supporting shared ownership.
+    ///
+    /// Note that the actual type of `OwnShared` depends on the `parallel` feature toggle of the `git-features` crate.
     pub fn to_cache(self: &OwnShared<Self>) -> crate::Cache<super::Handle<OwnShared<super::Store>>> {
         self.to_handle().into()
     }
 
+    /// Create a new cache filled with a handle to this store if this store is held in an `Arc`.
     pub fn to_cache_arc(self: &Arc<Self>) -> crate::Cache<super::Handle<Arc<super::Store>>> {
         self.to_handle_arc().into()
     }
 
+    /// Create a new database handle to this store if this store is supporting shared ownership.
+    ///
+    /// See also, [`to_cache()`][super::Store::to_cache()] which is probably more useful.
     pub fn to_handle(self: &OwnShared<Self>) -> super::Handle<OwnShared<super::Store>> {
         let token = self.register_handle();
         super::Handle {
@@ -232,6 +238,9 @@ impl super::Store {
         }
     }
 
+    /// Create a new database handle to this store if this store is held in an `Arc`.
+    ///
+    /// This method is useful in applications that know they will use threads.
     pub fn to_handle_arc(self: &Arc<Self>) -> super::Handle<Arc<super::Store>> {
         let token = self.register_handle();
         super::Handle {
@@ -266,14 +275,21 @@ where
         self.token = self.token.take().map(|token| self.store.upgrade_handle(token));
     }
 
-    pub fn store(&self) -> &S::Target {
+    /// Return a shared reference to the contained store.
+    pub fn store_ref(&self) -> &S::Target {
         &*self.store
     }
 
-    pub fn store_owned(&self) -> S {
+    /// Return an owned store with shared ownership.
+    pub fn store(&self) -> S {
         self.store.clone()
     }
 
+    /// Set the handle to never cause ODB refreshes if an object could not be found.
+    ///
+    /// The latter is the default, as typically all objects referenced in a git repository are contained in the local clone.
+    /// More recently, however, this doesn't always have to be the case due to sparse checkouts and other ways to only have a
+    /// limited amount of objects available locally.
     pub fn refresh_never(&mut self) {
         self.refresh_mode = RefreshMode::Never;
     }

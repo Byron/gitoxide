@@ -51,7 +51,7 @@ fn main() -> anyhow::Result<()> {
         let start = Instant::now();
         let (unique, entries) = do_gitoxide_tree_dag_traversal(
             &all_commits,
-            db.store_owned(),
+            db.store(),
             odb::pack::cache::lru::StaticLinkedList::<64>::default,
             *compute_mode,
         )?;

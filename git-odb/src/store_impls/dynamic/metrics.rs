@@ -62,7 +62,7 @@ impl super::Store {
             num_refreshes: self.num_disk_state_consolidation.load(Ordering::Relaxed),
             open_reachable_packs: open_packs,
             open_reachable_indices: open_indices,
-            known_indices,
+            known_reachable_indices: known_indices,
             known_packs,
             unused_slots,
             loose_dbs: index.loose_dbs.len(),

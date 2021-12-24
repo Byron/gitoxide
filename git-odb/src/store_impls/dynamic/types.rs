@@ -1,4 +1,3 @@
-#![allow(missing_docs)]
 use std::{
     path::{Path, PathBuf},
     sync::{
@@ -392,13 +391,29 @@ pub(crate) struct MutableIndexAndPack {
 pub struct Metrics {
     /// The total amount of handles which can be used to access object information.
     pub num_handles: usize,
+    /// The amount of refreshes performed to reconcile with the ODB state on disk.
     pub num_refreshes: usize,
+    /// The amount of indices that are currently open and will be returned to handles.
     pub open_reachable_indices: usize,
-    pub known_indices: usize,
+    /// The amount of reachable, known indices, which aren't opened yet.
+    pub known_reachable_indices: usize,
+    /// The amount of packs which are open in memory and will be returned to handles.
     pub open_reachable_packs: usize,
+    /// The amount of packs that are reachable and will be returned to handles. They aren't open yet.
     pub known_packs: usize,
+    /// The amount of slots which are empty.
+    ///
+    /// Over time these will fill, but they can be emptied as files are removed from disk.
     pub unused_slots: usize,
+    /// Unreachable indices are still using slots, but aren't returned to new handles anymore unless they still happen to
+    /// know their id.
+    ///
+    /// This allows to keep files available while they are still potentially required for operations like pack generation, despite
+    /// the file on disk being removed or changed.
     pub unreachable_indices: usize,
+    /// The amount of loose object databases currently available for object retrieval.
+    ///
+    /// There may be more than one if 'alternates' are used.
     pub loose_dbs: usize,
 }
 

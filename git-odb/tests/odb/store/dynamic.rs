@@ -20,12 +20,12 @@ fn multi_index_access() {
     .unwrap();
 
     assert_eq!(
-        handle.store().metrics(),
+        handle.store_ref().metrics(),
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 0,
             open_reachable_indices: 0,
-            known_indices: 0,
+            known_reachable_indices: 0,
             open_reachable_packs: 0,
             known_packs: 0,
             unused_slots: 32,
@@ -46,12 +46,12 @@ fn multi_index_access() {
     assert_eq!(count, 868);
 
     assert_eq!(
-        handle.store().metrics(),
+        handle.store_ref().metrics(),
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 1,
             open_reachable_indices: 1,
-            known_indices: 1,
+            known_reachable_indices: 1,
             open_reachable_packs: 1,
             known_packs: 1,
             unused_slots: 31,
@@ -82,12 +82,12 @@ fn contains() {
 
     assert!(handle.contains(hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"))); // loose object
     assert_eq!(
-        handle.store().metrics(),
+        handle.store_ref().metrics(),
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 1,
             open_reachable_indices: 0,
-            known_indices: 3,
+            known_reachable_indices: 3,
             open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
@@ -101,12 +101,12 @@ fn contains() {
     assert!(handle.contains(hex_to_id("dd25c539efbb0ab018caa4cda2d133285634e9b5")));
 
     assert_eq!(
-        handle.store().metrics(),
+        handle.store_ref().metrics(),
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 1,
             open_reachable_indices: 1,
-            known_indices: 3,
+            known_reachable_indices: 3,
             open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
@@ -122,12 +122,12 @@ fn contains() {
     let mut new_handle = handle.clone();
     assert!(new_handle.contains(hex_to_id("501b297447a8255d3533c6858bb692575cdefaa0")));
     assert_eq!(
-        new_handle.store().metrics(),
+        new_handle.store_ref().metrics(),
         git_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 1,
             open_reachable_indices: 3,
-            known_indices: 3,
+            known_reachable_indices: 3,
             open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
@@ -139,12 +139,12 @@ fn contains() {
 
     assert!(!new_handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
-        new_handle.store().metrics(),
+        new_handle.store_ref().metrics(),
         git_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 2,
             open_reachable_indices: 3,
-            known_indices: 3,
+            known_reachable_indices: 3,
             open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
@@ -157,12 +157,12 @@ fn contains() {
     new_handle.refresh_never();
     assert!(!new_handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
-        new_handle.store().metrics(),
+        new_handle.store_ref().metrics(),
         git_odb::store::Metrics {
             num_handles: 2,
             num_refreshes: 2,
             open_reachable_indices: 3,
-            known_indices: 3,
+            known_reachable_indices: 3,
             open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
@@ -184,12 +184,12 @@ fn lookup() {
         assert!(db.contains(id));
     }
     assert_eq!(
-        handle.store().metrics(),
+        handle.store_ref().metrics(),
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 0,
             open_reachable_indices: 0,
-            known_indices: 0,
+            known_reachable_indices: 0,
             open_reachable_packs: 0,
             known_packs: 0,
             unused_slots: 32,
@@ -208,14 +208,18 @@ fn lookup() {
         num_handles: 1,
         num_refreshes: 1,
         open_reachable_indices: 3,
-        known_indices: 3,
+        known_reachable_indices: 3,
         open_reachable_packs: 3,
         known_packs: 3,
         unused_slots: 29,
         loose_dbs: 1,
         unreachable_indices: 0,
     };
-    assert_eq!(handle.store().metrics(), all_loaded, "all packs and indices are loaded");
+    assert_eq!(
+        handle.store_ref().metrics(),
+        all_loaded,
+        "all packs and indices are loaded"
+    );
 
     // Loose
     can_locate(&handle, "37d4e6c5c48ba0d245164c4e10d5f41140cab980");
@@ -228,7 +232,7 @@ fn lookup() {
 
     all_loaded.num_refreshes += 1;
     assert_eq!(
-        handle.store().metrics(),
+        handle.store_ref().metrics(),
         all_loaded,
         "it tried to refresh once to see if the missing object is there then"
     );
@@ -237,7 +241,7 @@ fn lookup() {
     let previous_refresh_count = all_loaded.num_refreshes;
     assert!(!handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     assert_eq!(
-        handle.store().metrics().num_refreshes,
+        handle.store_ref().metrics().num_refreshes,
         previous_refresh_count,
         "it didn't try to refresh the on-disk state after failing to find the object."
     );
@@ -249,12 +253,12 @@ fn missing_objects_triggers_everything_is_loaded() {
     assert!(!handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
 
     assert_eq!(
-        handle.store().metrics(),
+        handle.store_ref().metrics(),
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 2,
             open_reachable_indices: 3,
-            known_indices: 3,
+            known_reachable_indices: 3,
             open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
@@ -270,12 +274,12 @@ fn missing_objects_triggers_everything_is_loaded() {
         .is_ok());
 
     assert_eq!(
-        handle.store().metrics(),
+        handle.store_ref().metrics(),
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 3,
             open_reachable_indices: 3,
-            known_indices: 3,
+            known_reachable_indices: 3,
             open_reachable_packs: 0,
             known_packs: 3,
             unused_slots: 29,
@@ -338,12 +342,12 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
         "can find object in existing pack at pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx"
     );
     assert_eq!(
-        handle.store().metrics(),
+        handle.store_ref().metrics(),
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 1,
             open_reachable_indices: 1,
-            known_indices: 1,
+            known_reachable_indices: 1,
             open_reachable_packs: 1,
             known_packs: 1,
             unused_slots: 31,
@@ -362,12 +366,12 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
         "now finding the object in the new pack"
     );
     assert_eq!(
-        handle.store().metrics(),
+        handle.store_ref().metrics(),
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 2,
             open_reachable_indices: 1,
-            known_indices: 1,
+            known_reachable_indices: 1,
             open_reachable_packs: 1,
             known_packs: 1,
             unused_slots: 31,
@@ -399,12 +403,12 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
             "it finds the object in the newly unhidden pack, which also triggers a refresh providing it with new indices"
         );
         assert_eq!(
-            handle.store().metrics(),
+            handle.store_ref().metrics(),
             git_odb::store::Metrics {
                 num_handles: 2,
                 num_refreshes: 3,
                 open_reachable_indices: 1,
-                known_indices: 1,
+                known_reachable_indices: 1,
                 open_reachable_packs: 1,
                 known_packs: 1,
                 unused_slots: 30,
@@ -433,12 +437,12 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
         "new pack is loaded, previously loaded is forgotten, lack of cache triggers refresh"
     );
     assert_eq!(
-        handle.store().metrics(),
+        handle.store_ref().metrics(),
         git_odb::store::Metrics {
             num_handles: 1,
             num_refreshes: 4,
             open_reachable_indices: 1,
-            known_indices: 1,
+            known_reachable_indices: 1,
             open_reachable_packs: 1,
             known_packs: 1,
             unused_slots: 30,
