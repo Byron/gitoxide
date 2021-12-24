@@ -84,7 +84,7 @@ impl Store {
                 let mut db_paths = crate::alternate::resolve(&objects_dir)
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                 db_paths.insert(0, objects_dir.clone());
-                let num_slots = super::Store::collect_indices_and_mtime_sorted_by_size(db_paths, None, None, None)
+                let num_slots = super::Store::collect_indices_and_mtime_sorted_by_size(db_paths, None, None)
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
                     .len();
 

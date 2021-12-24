@@ -43,3 +43,4 @@ arc-swap = "1.5.0"
 git-testtools = { path = "../tests/tools"}
 git-actor = { path = "../git-actor" }
 pretty_assertions = "1.0.0"
+filetime = "0.2.15"

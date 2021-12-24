@@ -197,20 +197,19 @@ impl super::Store {
             Arc::clone(&index.loose_dbs)
         };
 
+        let indices_by_modification_time = Self::collect_indices_and_mtime_sorted_by_size(
+            db_paths,
+            index.slot_indices.len().into(),
+            self.use_multi_pack_index.then(|| self.object_hash),
+        )?;
         let mut idx_by_index_path: BTreeMap<_, _> = index
             .slot_indices
             .iter()
             .filter_map(|&idx| {
                 let f = &self.files[idx];
-                Option::as_ref(&f.files.load()).map(|f| (f.index_path().to_owned(), (idx, f.mtime())))
+                Option::as_ref(&f.files.load()).map(|f| (f.index_path().to_owned(), idx))
             })
             .collect();
-        let indices_by_modification_time = Self::collect_indices_and_mtime_sorted_by_size(
-            db_paths,
-            index.slot_indices.len().into(),
-            self.use_multi_pack_index.then(|| self.object_hash),
-            Some(&idx_by_index_path),
-        )?;
 
         let mut new_slot_map_indices = Vec::new(); // these indices into the slot map still exist there/didn't change
         let mut index_paths_to_add = was_uninitialized
@@ -220,7 +219,7 @@ impl super::Store {
         let mut num_loaded_indices = 0;
         for (index_info, mtime) in indices_by_modification_time.into_iter().map(|(a, b, _)| (a, b)) {
             match idx_by_index_path.remove(index_info.path()) {
-                Some((slot_idx, _)) => {
+                Some(slot_idx) => {
                     let slot = &self.files[slot_idx];
                     if index_info.is_multi_index()
                         && Option::as_ref(&slot.files.load())
@@ -267,7 +266,7 @@ impl super::Store {
             .unwrap_or(0);
         let mut num_indices_checked = 0;
         let mut needs_generation_change = false;
-        let mut slot_indices_to_remove: Vec<_> = idx_by_index_path.into_values().map(|(idx, _mtime)| idx).collect();
+        let mut slot_indices_to_remove: Vec<_> = idx_by_index_path.into_values().collect();
         while let Some((mut index_info, mtime, move_from_slot_idx)) = index_paths_to_add.pop_front() {
             'increment_slot_index: loop {
                 if num_indices_checked == self.files.len() {
@@ -400,7 +399,6 @@ impl super::Store {
         db_paths: Vec<PathBuf>,
         initial_capacity: Option<usize>,
         multi_pack_index_object_hash: Option<git_hash::Kind>,
-        index_and_mtime_by_path: Option<&BTreeMap<PathBuf, (usize, SystemTime)>>,
     ) -> Result<Vec<(Either, SystemTime, u64)>, Error> {
         let mut indices_by_modification_time = Vec::with_capacity(initial_capacity.unwrap_or_default());
         for db_path in db_paths {
@@ -422,29 +420,20 @@ impl super::Store {
                 .map(|(p, md)| md.modified().map_err(Error::from).map(|mtime| (p, mtime, md.len())))
                 .collect::<Result<Vec<_>, _>>()?;
 
-            // let mut filter_multi_index
-            if let Some((multi_index, mtime, flen)) = multi_pack_index_object_hash.and_then(|hash| {
-                indices.iter().find_map(|(p, mtime, b)| {
+            let multi_index_info = multi_pack_index_object_hash.and_then(|hash| {
+                indices.iter().find_map(|(p, a, b)| {
                     is_multipack_index(p)
                         .then(|| {
-                            // Only open the file if it actually changed compared to when we last saw it, if there is such an entry
-                            let should_open_multi_index = index_and_mtime_by_path
-                                .and_then(|mtime_by_path| {
-                                    mtime_by_path.get(p).map(|(_, last_seen_mtime)| last_seen_mtime > mtime)
-                                })
-                                .unwrap_or(true);
-                            if should_open_multi_index {
-                                git_pack::multi_index::File::at(p)
-                                    .ok()
-                                    .filter(|midx| midx.object_hash() == hash)
-                                    .map(|midx| (midx, *mtime, *b))
-                            } else {
-                                None
-                            }
+                            // we always open the multi-pack here to be able to remove indices
+                            git_pack::multi_index::File::at(p)
+                                .ok()
+                                .filter(|midx| midx.object_hash() == hash)
+                                .map(|midx| (midx, *a, *b))
                         })
                         .flatten()
                 })
-            }) {
+            });
+            if let Some((multi_index, mtime, flen)) = multi_index_info {
                 let index_names_in_multi_index: Vec<_> =
                     multi_index.index_names().iter().map(|p| p.as_path()).collect();
                 let mut indices_not_in_multi_index: Vec<(Either, _, _)> = indices
