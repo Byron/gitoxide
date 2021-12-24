@@ -71,7 +71,7 @@ impl File {
 
     /// Find the index ranging from 0 to [File::num_objects()] that belongs to data associated with `id`, or `None` if it wasn't found.
     ///
-    /// Use this index for finding additional information via [`File::pack_offset_and_pack_id_at_index()`].
+    /// Use this index for finding additional information via [`File::pack_id_and_pack_offset_at_index()`].
     pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<EntryIndex> {
         let id = id.as_ref();
         let first_byte = id.first_byte() as usize;
