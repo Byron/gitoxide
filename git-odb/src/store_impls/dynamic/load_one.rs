@@ -37,6 +37,8 @@ impl super::Store {
         }
 
         let slot = &self.files[id.index];
+        // pin the current state before loading in the generation. That way we won't risk seeing the wrong value later.
+        let slot_files = &**slot.files.load();
         if slot.generation.load(Ordering::SeqCst) > marker.generation {
             // There is a disk consolidation in progress which just overwrote a slot that could be disposed with some other
             // pack, one we didn't intend to load.
@@ -45,7 +47,7 @@ impl super::Store {
         }
         match id.multipack_index {
             None => {
-                match &**slot.files.load() {
+                match slot_files {
                     Some(types::IndexAndPacks::Index(bundle)) => {
                         match bundle.data.loaded() {
                             Some(pack) => Ok(Some(pack.clone())),
@@ -79,7 +81,7 @@ impl super::Store {
                 }
             }
             Some(pack_index) => {
-                match &**slot.files.load() {
+                match slot_files {
                     Some(types::IndexAndPacks::MultiIndex(bundle)) => {
                         match bundle.data.get(pack_index as usize) {
                             None => Ok(None), // somewhat unexpected, data must be stale
@@ -125,13 +127,15 @@ impl super::Store {
     /// as we should always keep needed indices available.
     pub(crate) fn index_by_id(&self, id: types::PackId, marker: types::SlotIndexMarker) -> Option<handle::IndexLookup> {
         let slot = self.files.get(id.index)?;
+        // Pin this value before we check the generation to avoid seeing something newer later.
+        let slot_files = &**slot.files.load();
         if slot.generation.load(Ordering::SeqCst) > marker.generation {
             // This means somebody just overwrote our trashed slot with a new (or about to be stored) index, which means the slot isn't
             // what we need it to be.
             // This shouldn't as we won't overwrite slots while handles need stable indices.
             return None;
         }
-        let lookup = match (&**slot.files.load()).as_ref()? {
+        let lookup = match (slot_files).as_ref()? {
             types::IndexAndPacks::Index(bundle) => handle::SingleOrMultiIndex::Single {
                 index: bundle.index.loaded()?.clone(),
                 data: bundle.data.loaded().cloned(),

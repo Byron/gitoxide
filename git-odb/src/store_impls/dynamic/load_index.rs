@@ -376,10 +376,12 @@ impl super::Store {
                 }
             } else {
                 *files_mut = None;
-                // Not racy due to lock, generation must be set after unsetting the value.
-                slot.generation.store(0, Ordering::SeqCst);
             };
             slot.files.store(files);
+            if !needs_stable_indices {
+                // Not racy due to lock, generation must be set after unsetting the value AND storing it.
+                slot.generation.store(0, Ordering::SeqCst);
+            }
         }
 
         let new_index = self.index.load();
@@ -618,7 +620,7 @@ impl super::Store {
                         "BUG: There must be no race between us checking and obtaining a lock."
                     );
                     *files_mut = Some(index_info.into_index_and_packs(mtime));
-                    // Safety: can't race as we hold the lock.
+                    // Safety: can't race as we hold the lock, have to set the generation beforehand to help avoid others to observe the value.
                     slot.generation.store(current_generation, Ordering::SeqCst);
                     slot.files.store(files);
                     false
