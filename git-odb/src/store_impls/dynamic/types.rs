@@ -36,7 +36,7 @@ pub struct PackId {
     /// This is the index in the slot map at which the packs index is located.
     pub(crate) index: IndexId,
     /// If the pack is in a multi-pack index, this additional index is the pack-index within the multi-pack index identified by `index`.
-    pub(crate) multipack_index: Option<IndexId>,
+    pub(crate) multipack_index: Option<git_pack::multi_index::PackIndex>,
 }
 
 impl PackId {
@@ -45,7 +45,7 @@ impl PackId {
         (1 << 15) - 1
     }
     /// Returns the maximum of packs we can represent if stored in a multi-index.
-    pub(crate) const fn max_packs_in_multi_index() -> usize {
+    pub(crate) const fn max_packs_in_multi_index() -> git_pack::multi_index::PackIndex {
         (1 << 16) - 1
     }
     /// Packs have a built-in identifier to make data structures simpler, and this method represents ourselves as such id
@@ -59,7 +59,7 @@ impl PackId {
                     midx <= Self::max_packs_in_multi_index(),
                     "There shouldn't be more than 2^16 packs per multi-index"
                 );
-                ((self.index | 1 << 15) | midx << 16) as git_pack::data::Id
+                ((self.index as git_pack::data::Id | 1 << 15) | midx << 16) as git_pack::data::Id
             }
         }
     }
@@ -73,7 +73,7 @@ impl PackId {
         } else {
             PackId {
                 index: (pack_id & 0x7fff) as IndexId,
-                multipack_index: Some((pack_id >> 16) as IndexId),
+                multipack_index: Some(pack_id >> 16),
             }
         }
     }

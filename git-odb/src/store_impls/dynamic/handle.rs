@@ -6,6 +6,7 @@ use std::{
 };
 
 use git_features::threading::OwnShared;
+use git_hash::oid;
 
 use crate::store::{handle, types, RefreshMode};
 
@@ -25,7 +26,33 @@ pub enum SingleOrMultiIndex {
     },
 }
 
-// pub enum SingleOrMultiIndexRef<'a> {}
+/// A utility to allow looking up pack offsets for a particular pack
+pub enum IntraPackLookup<'a> {
+    Single(&'a git_pack::index::File),
+    /// the internal pack-id inside of a multi-index for which the lookup is supposed to be.
+    /// Used to prevent ref-delta OIDs to, for some reason, point to a different pack.
+    Multi {
+        index: &'a git_pack::multi_index::File,
+        required_pack_index: git_pack::multi_index::PackIndex,
+    },
+}
+
+impl<'a> IntraPackLookup<'a> {
+    pub(crate) fn pack_offset_by_id(&self, id: &oid) -> Option<git_pack::data::Offset> {
+        match self {
+            IntraPackLookup::Single(index) => index
+                .lookup(id)
+                .map(|entry_index| index.pack_offset_at_index(entry_index)),
+            IntraPackLookup::Multi {
+                index,
+                required_pack_index,
+            } => index.lookup(id).and_then(|entry_index| {
+                let (pack_index, pack_offset) = index.pack_id_and_pack_offset_at_index(entry_index);
+                (pack_index == *required_pack_index).then(|| pack_offset)
+            }),
+        }
+    }
+}
 
 pub struct IndexLookup {
     pub(crate) file: SingleOrMultiIndex,
@@ -45,11 +72,12 @@ pub(crate) mod index_lookup {
 
     use git_hash::oid;
 
+    use crate::store::handle::IntraPackLookup;
     use crate::store::{handle, types};
 
     pub(crate) struct Outcome<'a> {
         pub object_index: handle::IndexForObjectInPack,
-        pub index_file: &'a git_pack::index::File,
+        pub index_file: IntraPackLookup<'a>,
         pub pack: &'a mut Option<Arc<git_pack::data::File>>,
     }
 
@@ -62,10 +90,9 @@ pub(crate) mod index_lookup {
             (self.id == pack_id.index).then(|| match &self.file {
                 handle::SingleOrMultiIndex::Single { index, .. } => index.iter(),
                 handle::SingleOrMultiIndex::Multi { index, .. } => {
-                    // TODO: figure out if this could actually not be true all the time.
-                    let pack_index = pack_id
-                        .multipack_index
-                        .expect("multi-pack index must be set if this is a multi-pack");
+                    let pack_index = pack_id.multipack_index.expect(
+                        "BUG: multi-pack index must be set if this is a multi-pack, pack-indices seem unstable",
+                    );
                     Box::new(index.iter().filter_map(move |e| {
                         (e.pack_index == pack_index as u32).then(|| git_pack::index::Entry {
                             oid: e.oid,
@@ -81,11 +108,10 @@ pub(crate) mod index_lookup {
             (self.id == pack_id.index).then(move || match &mut self.file {
                 handle::SingleOrMultiIndex::Single { data, .. } => data,
                 handle::SingleOrMultiIndex::Multi { data, .. } => {
-                    // TODO: figure out if this could actually not be true all the time.
-                    let pack_index = pack_id
-                        .multipack_index
-                        .expect("multi-pack index must be set if this is a multi-pack");
-                    &mut data[pack_index]
+                    let pack_index = pack_id.multipack_index.expect(
+                        "BUG: multi-pack index must be set if this is a multi-pack, pack-indices seem unstable",
+                    );
+                    &mut data[pack_index as usize]
                 }
             })
         }
@@ -130,12 +156,11 @@ pub(crate) mod index_lookup {
                         },
                         pack_offset: index.pack_offset_at_index(idx),
                     },
-                    index_file: &**index,
+                    index_file: IntraPackLookup::Single(&**index),
                     pack: data,
                 }),
                 handle::SingleOrMultiIndex::Multi { index, data } => index.lookup(object_id).map(move |idx| {
-                    let (pack_index, pack_offset) = index.pack_offset_and_pack_id_at_index(idx);
-                    let pack_index = pack_index as usize;
+                    let (pack_index, pack_offset) = index.pack_id_and_pack_offset_at_index(idx);
                     Outcome {
                         object_index: handle::IndexForObjectInPack {
                             pack_id: types::PackId {
@@ -144,9 +169,11 @@ pub(crate) mod index_lookup {
                             },
                             pack_offset,
                         },
-                        // index_file: &**index,
-                        index_file: todo!("figure out how to pass different kinds of indices"),
-                        pack: &mut data[pack_index],
+                        index_file: IntraPackLookup::Multi {
+                            index: &**index,
+                            required_pack_index: pack_index,
+                        },
+                        pack: &mut data[pack_index as usize],
                     }
                 }),
             }
