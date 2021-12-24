@@ -11,7 +11,6 @@ fn db() -> git_odb::Handle {
 }
 
 #[test]
-#[ignore]
 fn multi_index_access() {
     let db = git_odb::at(
         git_testtools::scripted_fixture_repo_read_only("make_repo_multi_index.sh")

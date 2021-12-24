@@ -40,26 +40,34 @@ pub struct PackId {
 }
 
 impl PackId {
+    /// Returns the maximum of indices we can represent.
+    pub(crate) const fn max_indices() -> usize {
+        (1 << 15) - 1
+    }
+    /// Returns the maximum of packs we can represent if stored in a multi-index.
+    pub(crate) const fn max_packs_in_multi_index() -> usize {
+        (1 << 16) - 1
+    }
     /// Packs have a built-in identifier to make data structures simpler, and this method represents ourselves as such id
     /// to be convertible back and forth. We essentially compress ourselves into a u32.
-    pub(crate) fn to_intrinsic_pack_id(self) -> u32 {
-        assert!(self.index < 1 << 15, "There shouldn't be more than 2^15 indices");
+    pub(crate) fn to_intrinsic_pack_id(self) -> git_pack::data::Id {
+        assert!(self.index < (1 << 15), "There shouldn't be more than 2^15 indices");
         match self.multipack_index {
-            None => self.index as u32,
+            None => self.index as git_pack::data::Id,
             Some(midx) => {
                 assert!(
-                    midx < 1 << 16,
+                    midx <= Self::max_packs_in_multi_index(),
                     "There shouldn't be more than 2^16 packs per multi-index"
                 );
-                ((self.index | 1 << 15) | midx << 16) as u32
+                ((self.index | 1 << 15) | midx << 16) as git_pack::data::Id
             }
         }
     }
 
-    pub(crate) fn from_intrinsic_pack_id(pack_id: u32) -> Self {
+    pub(crate) fn from_intrinsic_pack_id(pack_id: git_pack::data::Id) -> Self {
         if pack_id & (1 << 15) == 0 {
             PackId {
-                index: pack_id as usize,
+                index: (pack_id & 0x7fff) as IndexId,
                 multipack_index: None,
             }
         } else {

@@ -94,7 +94,7 @@ impl Store {
                 ((num_slots as f32 * multiplier) as usize).max(minimum)
             }
         };
-        if slot_count >= 1 << 15 {
+        if slot_count > crate::store::types::PackId::max_indices() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "Cannot use more than 1^15 slots",

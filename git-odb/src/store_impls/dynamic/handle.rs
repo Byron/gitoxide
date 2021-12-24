@@ -25,6 +25,8 @@ pub enum SingleOrMultiIndex {
     },
 }
 
+// pub enum SingleOrMultiIndexRef<'a> {}
+
 pub struct IndexLookup {
     pub(crate) file: SingleOrMultiIndex,
     /// The index we were found at in the slot map
@@ -114,6 +116,8 @@ pub(crate) mod index_lookup {
 
         /// See if the oid is contained in this index, and return its full id for lookup possibly alongside its data file if already
         /// loaded.
+        /// Also return the index itself as it's needed to resolve intra-pack ref-delta objects. They are a possibility even though
+        /// they won't be used in practice as it's more efficient to store their offsets.
         /// If it is not loaded, ask it to be loaded and put it into the returned mutable option for safe-keeping.
         pub(crate) fn lookup(&mut self, object_id: &oid) -> Option<Outcome<'_>> {
             let id = self.id;
