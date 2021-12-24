@@ -84,12 +84,9 @@ impl Store {
                 let mut db_paths = crate::alternate::resolve(&objects_dir)
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                 db_paths.insert(0, objects_dir.clone());
-                let num_slots = super::Store::collect_indices_and_mtime_sorted_by_size(
-                    db_paths, None,
-                    None, /*don't allow loading multi-index files for a pessimistic count and saving time*/
-                )
-                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
-                .len();
+                let num_slots = super::Store::collect_indices_and_mtime_sorted_by_size(db_paths, None, None, None)
+                    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
+                    .len();
 
                 ((num_slots as f32 * multiplier) as usize).max(minimum)
             }

@@ -197,19 +197,20 @@ impl super::Store {
             Arc::clone(&index.loose_dbs)
         };
 
-        let indices_by_modification_time = Self::collect_indices_and_mtime_sorted_by_size(
-            db_paths,
-            index.slot_indices.len().into(),
-            self.use_multi_pack_index.then(|| self.object_hash),
-        )?;
         let mut idx_by_index_path: BTreeMap<_, _> = index
             .slot_indices
             .iter()
             .filter_map(|&idx| {
                 let f = &self.files[idx];
-                Option::as_ref(&f.files.load()).map(|f| (f.index_path().to_owned(), idx))
+                Option::as_ref(&f.files.load()).map(|f| (f.index_path().to_owned(), (idx, f.mtime())))
             })
             .collect();
+        let indices_by_modification_time = Self::collect_indices_and_mtime_sorted_by_size(
+            db_paths,
+            index.slot_indices.len().into(),
+            self.use_multi_pack_index.then(|| self.object_hash),
+            Some(&idx_by_index_path),
+        )?;
 
         let mut new_slot_map_indices = Vec::new(); // these indices into the slot map still exist there/didn't change
         let mut index_paths_to_add = was_uninitialized
@@ -219,7 +220,7 @@ impl super::Store {
         let mut num_loaded_indices = 0;
         for (index_info, mtime) in indices_by_modification_time.into_iter().map(|(a, b, _)| (a, b)) {
             match idx_by_index_path.remove(index_info.path()) {
-                Some(slot_idx) => {
+                Some((slot_idx, _)) => {
                     let slot = &self.files[slot_idx];
                     if index_info.is_multi_index()
                         && Option::as_ref(&slot.files.load())
@@ -239,7 +240,7 @@ impl super::Store {
                         }
                     } else {
                         // packs and indices are immutable, so no need to check modification times. Unchanged multi-pack indices also
-                        // are handled like this.
+                        // are handled like this just to be sure they are in the desired state.
                         if Self::assure_slot_matches_index(
                             &write,
                             slot,
@@ -266,14 +267,13 @@ impl super::Store {
             .unwrap_or(0);
         let mut num_indices_checked = 0;
         let mut needs_generation_change = false;
-        let mut slot_indices_to_remove: Vec<_> = idx_by_index_path.into_values().collect();
+        let mut slot_indices_to_remove: Vec<_> = idx_by_index_path.into_values().map(|(idx, _mtime)| idx).collect();
         while let Some((mut index_info, mtime, move_from_slot_idx)) = index_paths_to_add.pop_front() {
             'increment_slot_index: loop {
                 if num_indices_checked == self.files.len() {
                     return Err(Error::InsufficientSlots {
                         current: self.files.len(),
-                        needed: index_paths_to_add.len() + 1,
-                        /*the one currently popped off*/
+                        needed: index_paths_to_add.len() + 1, /*the one currently popped off*/
                     });
                 }
                 let slot_index = next_possibly_free_index;
@@ -394,11 +394,11 @@ impl super::Store {
         })
     }
 
-    // TODO: optionally pass the slotmap reverse mapping as it would allow to save opening a multi-index if its mtime didn't change.
     pub(crate) fn collect_indices_and_mtime_sorted_by_size(
         db_paths: Vec<PathBuf>,
         initial_capacity: Option<usize>,
         multi_pack_index_object_hash: Option<git_hash::Kind>,
+        index_and_mtime_by_path: Option<&BTreeMap<PathBuf, (usize, SystemTime)>>,
     ) -> Result<Vec<(Either, SystemTime, u64)>, Error> {
         let mut indices_by_modification_time = Vec::with_capacity(initial_capacity.unwrap_or_default());
         for db_path in db_paths {
@@ -422,13 +422,23 @@ impl super::Store {
 
             // let mut filter_multi_index
             if let Some((multi_index, mtime, flen)) = multi_pack_index_object_hash.and_then(|hash| {
-                indices.iter().find_map(|(p, a, b)| {
+                indices.iter().find_map(|(p, mtime, b)| {
                     is_multipack_index(p)
                         .then(|| {
-                            git_pack::multi_index::File::at(p)
-                                .ok()
-                                .filter(|midx| midx.object_hash() == hash)
-                                .map(|midx| (midx, *a, *b))
+                            // Only open the file if it actually changed compared to when we last saw it, if there is such an entry
+                            let should_open_multi_index = index_and_mtime_by_path
+                                .and_then(|mtime_by_path| {
+                                    mtime_by_path.get(p).map(|(_, last_seen_mtime)| last_seen_mtime > mtime)
+                                })
+                                .unwrap_or(true);
+                            if should_open_multi_index {
+                                git_pack::multi_index::File::at(p)
+                                    .ok()
+                                    .filter(|midx| midx.object_hash() == hash)
+                                    .map(|midx| (midx, *mtime, *b))
+                            } else {
+                                None
+                            }
                         })
                         .flatten()
                 })
@@ -561,7 +571,7 @@ impl super::Store {
         slot.files.store(files);
     }
 
-    /// Returns true if the index was loaded.
+    /// Returns true if the index was left in a loaded state.
     fn assure_slot_matches_index(
         _lock: &parking_lot::MutexGuard<'_, ()>,
         slot: &MutableIndexAndPack,
