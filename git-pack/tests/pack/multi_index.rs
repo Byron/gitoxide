@@ -28,7 +28,7 @@ fn access() {
         let actual_oid = file.oid_at_index(*idx);
         assert_eq!(actual_oid, *expected_oid);
         assert_eq!(file.lookup(actual_oid), Some(*idx));
-        let (pack_id, pack_offset) = file.pack_offset_and_pack_id_at_index(*idx);
+        let (pack_id, pack_offset) = file.pack_id_and_pack_offset_at_index(*idx);
         assert_eq!(pack_id, 0, "we only have one pack here");
         assert_eq!(pack_offset, *expected_pack_offset);
     }
@@ -36,7 +36,7 @@ fn access() {
     let mut count = 0;
     for (idx, entry) in file.iter().enumerate() {
         assert_eq!(entry.oid, file.oid_at_index(idx as u32));
-        let (pack_index, pack_offset) = file.pack_offset_and_pack_id_at_index(idx as u32);
+        let (pack_index, pack_offset) = file.pack_id_and_pack_offset_at_index(idx as u32);
         assert_eq!(pack_index, entry.pack_index);
         assert_eq!(pack_offset, entry.pack_offset);
         count += 1;

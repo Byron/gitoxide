@@ -99,6 +99,9 @@ impl Version {
     }
 }
 
+/// The type for referring to indices of an entry within the index file.
+pub type EntryIndex = u32;
+
 const FAN_LEN: usize = 256;
 
 /// A representation of a pack index file
@@ -122,8 +125,8 @@ impl File {
     pub fn path(&self) -> &std::path::Path {
         &self.path
     }
-    /// The amount of objects stored in the pack and index
-    pub fn num_objects(&self) -> u32 {
+    /// The amount of objects stored in the pack and index, as one past the highest entry index.
+    pub fn num_objects(&self) -> EntryIndex {
         self.num_objects
     }
     /// The kind of hash we assume

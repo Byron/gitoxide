@@ -19,6 +19,9 @@ impl Default for Version {
 /// An index into our [`File::index_names()`] array yielding the name of the index and by impclication, its pack file.
 pub type PackIndex = u32;
 
+/// The type for referring to indices of an entry within the index file.
+pub type EntryIndex = u32;
+
 /// A representation of an index file for multiple packs at the same time, typically stored in a file
 /// named 'multi-pack-index'.
 pub struct File {

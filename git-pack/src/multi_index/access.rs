@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use byteorder::{BigEndian, ByteOrder};
 
+use crate::multi_index::EntryIndex;
 use crate::{
     data,
     multi_index::{File, PackIndex, Version},
@@ -32,12 +33,13 @@ impl File {
     pub fn path(&self) -> &Path {
         &self.path
     }
-    /// Returns the amount of indices stored in this multi-index file. It's the same as [File::index_names().len()][File::index_names()].
-    pub fn num_indices(&self) -> u32 {
+    /// Returns the amount of indices stored in this multi-index file. It's the same as [File::index_names().len()][File::index_names()],
+    /// and returned as one past the highest known index.
+    pub fn num_indices(&self) -> PackIndex {
         self.num_indices
     }
-    /// Returns the total amount of objects available for lookup.
-    pub fn num_objects(&self) -> u32 {
+    /// Returns the total amount of objects available for lookup, and returned as one past the highest known entry index
+    pub fn num_objects(&self) -> EntryIndex {
         self.num_objects
     }
     /// Returns the kind of hash function used for object ids available in this index.
@@ -60,7 +62,7 @@ impl File {
 
 impl File {
     /// Return the object id at the given `index`, which ranges from 0 to [File::num_objects()].
-    pub fn oid_at_index(&self, index: u32) -> &git_hash::oid {
+    pub fn oid_at_index(&self, index: EntryIndex) -> &git_hash::oid {
         debug_assert!(index < self.num_objects, "index out of bounds");
         let index: usize = index as usize;
         let start = self.lookup_ofs + index * self.hash_len;
@@ -70,7 +72,7 @@ impl File {
     /// Find the index ranging from 0 to [File::num_objects()] that belongs to data associated with `id`, or `None` if it wasn't found.
     ///
     /// Use this index for finding additional information via [`File::pack_offset_and_pack_id_at_index()`].
-    pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<u32> {
+    pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<EntryIndex> {
         let id = id.as_ref();
         let first_byte = id.first_byte() as usize;
         let mut upper_bound = self.fan[first_byte];
@@ -94,7 +96,7 @@ impl File {
     /// Given the `index` ranging from 0 to [File::num_objects()], return the pack index and its absolute offset into the pack.
     ///
     /// The pack-index refers to an entry in the [`index_names`][File::index_names()] list, from which the pack can be derived.
-    pub fn pack_offset_and_pack_id_at_index(&self, index: u32) -> (PackIndex, data::Offset) {
+    pub fn pack_id_and_pack_offset_at_index(&self, index: EntryIndex) -> (PackIndex, data::Offset) {
         const OFFSET_ENTRY_SIZE: usize = 4 + 4;
         let index = index as usize;
         let start = self.offsets_ofs + index * OFFSET_ENTRY_SIZE;
@@ -119,7 +121,7 @@ impl File {
     /// Return an iterator over all entries within this file.
     pub fn iter(&self) -> impl Iterator<Item = Entry> + '_ {
         (0..self.num_objects).map(move |idx| {
-            let (pack_index, pack_offset) = self.pack_offset_and_pack_id_at_index(idx);
+            let (pack_index, pack_offset) = self.pack_id_and_pack_offset_at_index(idx);
             Entry {
                 oid: self.oid_at_index(idx).to_owned(),
                 pack_offset,
