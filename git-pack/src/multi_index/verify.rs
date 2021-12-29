@@ -1,6 +1,8 @@
-use crate::multi_index::File;
-use git_features::progress::Progress;
 use std::sync::atomic::AtomicBool;
+
+use git_features::progress::Progress;
+
+use crate::multi_index::File;
 
 ///
 pub mod integrity {

@@ -2,10 +2,10 @@ use std::{io, path::Path, str::FromStr, sync::atomic::AtomicBool};
 
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
+use git_pack_for_configuration_only::index::traverse::Outcome;
 use git_repository as git;
 use git_repository::{
     easy::object,
-    hash::ObjectId,
     odb,
     odb::{pack, pack::index},
     Progress,
@@ -113,19 +113,27 @@ pub fn pack_or_pack_index<W1, W2>(
         algorithm,
         should_interrupt,
     }: Context<'_, W1, W2>,
-) -> Result<(ObjectId, Option<index::traverse::Outcome>)>
+) -> Result<()>
 where
     W1: io::Write,
     W2: io::Write,
 {
     let path = path.as_ref();
-    let ext = path.extension().and_then(|ext| ext.to_str()).ok_or_else(|| {
-        anyhow!(
-            "Cannot determine data type on path without extension '{}', expecting default extensions 'idx' and 'pack'",
-            path.display()
-        )
-    })?;
+    let ext = path.extension().and_then(|ext| ext.to_str()).unwrap_or("");
     let object_hash = git::hash::Kind::Sha1; // TODO: make it configurable via Context/CLI
+    const CACHE_SIZE: usize = 64;
+    let cache = || -> EitherCache<CACHE_SIZE> {
+        if matches!(algorithm, Algorithm::LessMemory) {
+            if output_statistics.is_some() {
+                // turn off acceleration as we need to see entire chains all the time
+                EitherCache::Left(pack::cache::Never)
+            } else {
+                EitherCache::Right(pack::cache::lru::StaticLinkedList::<CACHE_SIZE>::default())
+            }
+        } else {
+            EitherCache::Left(pack::cache::Never)
+        }
+    };
     let res = match ext {
         "pack" => {
             let pack = odb::pack::data::File::at(path, object_hash).with_context(|| "Could not open pack file")?;
@@ -148,19 +156,6 @@ where
                     e
                 })
                 .ok();
-            const CACHE_SIZE: usize = 64;
-            let cache = || -> EitherCache<CACHE_SIZE> {
-                if matches!(algorithm, Algorithm::LessMemory) {
-                    if output_statistics.is_some() {
-                        // turn off acceleration as we need to see entire chains all the time
-                        EitherCache::Left(pack::cache::Never)
-                    } else {
-                        EitherCache::Right(pack::cache::lru::StaticLinkedList::<CACHE_SIZE>::default())
-                    }
-                } else {
-                    EitherCache::Left(pack::cache::Never)
-                }
-            };
 
             idx.verify_integrity(
                 pack.as_ref().map(|p| git::odb::pack::index::verify::PackContext {
@@ -176,18 +171,42 @@ where
             .map(|o| (o.actual_index_checksum, o.pack_traverse_outcome))
             .with_context(|| "Verification failure")?
         }
+        "" => {
+            match path.file_name() {
+                Some(file_name) if file_name == "multi-pack-index" => {
+                    let multi_index = git::odb::pack::multi_index::File::at(path)?;
+                    let res = multi_index.verify_integrity(mode, algorithm.into(), cache, thread_limit, progress, should_interrupt)?;
+                    for stats in res.pack_traverse_outcomes {
+                        output_outcome(&mut out, output_statistics, &stats)?;
+                    }
+                    return Ok(())
+                },
+                _ => return Err(anyhow!(
+                        "Cannot determine data type on path without extension '{}', expecting default extensions 'idx' and 'pack'",
+                        path.display()
+                    ))
+            }
+        }
         ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),
     };
     if let Some(stats) = res.1.as_ref() {
-        #[cfg_attr(not(feature = "serde1"), allow(clippy::single_match))]
-        match output_statistics {
-            Some(OutputFormat::Human) => drop(print_statistics(&mut out, stats)),
-            #[cfg(feature = "serde1")]
-            Some(OutputFormat::Json) => serde_json::to_writer_pretty(out, stats)?,
-            _ => {}
-        };
+        output_outcome(&mut out, output_statistics, stats)?;
     }
-    Ok(res)
+    Ok(())
+}
+
+fn output_outcome<W1>(mut out: &mut W1, output_statistics: Option<OutputFormat>, stats: &Outcome) -> anyhow::Result<()>
+where
+    W1: io::Write,
+{
+    #[cfg_attr(not(feature = "serde1"), allow(clippy::single_match))]
+    match output_statistics {
+        Some(OutputFormat::Human) => drop(print_statistics(&mut out, stats)),
+        #[cfg(feature = "serde1")]
+        Some(OutputFormat::Json) => serde_json::to_writer_pretty(out, stats)?,
+        _ => {}
+    };
+    Ok(())
 }
 
 fn print_statistics(out: &mut impl io::Write, stats: &index::traverse::Outcome) -> io::Result<()> {

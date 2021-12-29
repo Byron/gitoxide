@@ -1,9 +1,10 @@
 mod file {
     const SHA1_SIZE: usize = git_hash::Kind::Sha1.len_in_bytes();
 
+    use std::sync::atomic::AtomicBool;
+
     use git_object::{self as object};
     use git_odb::pack;
-    use std::sync::atomic::AtomicBool;
 
     use crate::{
         fixture_path, hex_to_id,

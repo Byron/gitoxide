@@ -1,5 +1,8 @@
-use std::ops::{Deref, DerefMut};
-use std::{cell::RefCell, sync::Arc};
+use std::{
+    cell::RefCell,
+    ops::{Deref, DerefMut},
+    sync::Arc,
+};
 
 use crate::Cache;
 

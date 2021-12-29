@@ -1,6 +1,6 @@
-use git_pack::multi_index::File;
 use std::path::PathBuf;
 
+use git_pack::multi_index::File;
 use git_testtools::hex_to_id;
 
 fn multi_index() -> (File, PathBuf) {
@@ -52,10 +52,12 @@ fn access() {
 }
 
 mod verify {
-    use crate::pack::multi_index::multi_index;
+    use std::sync::atomic::AtomicBool;
+
     use common_macros::b_tree_map;
     use git_features::progress;
-    use std::sync::atomic::AtomicBool;
+
+    use crate::pack::multi_index::multi_index;
 
     #[test]
     fn checksum() {

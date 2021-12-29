@@ -2,10 +2,9 @@ use std::path::{Path, PathBuf};
 
 use byteorder::{BigEndian, ByteOrder};
 
-use crate::multi_index::EntryIndex;
 use crate::{
     data,
-    multi_index::{File, PackIndex, Version},
+    multi_index::{EntryIndex, File, PackIndex, Version},
 };
 
 /// Represents an entry within a multi index file, effectively mapping object [`IDs`][git_hash::ObjectId] to pack data

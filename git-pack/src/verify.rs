@@ -1,6 +1,6 @@
+use std::{path::Path, sync::atomic::AtomicBool};
+
 use git_features::progress::Progress;
-use std::path::Path;
-use std::sync::atomic::AtomicBool;
 
 ///
 pub mod checksum {

@@ -71,8 +71,7 @@ pub(crate) mod index_lookup {
 
     use git_hash::oid;
 
-    use crate::store::handle::IntraPackLookup;
-    use crate::store::{handle, types};
+    use crate::store::{handle, handle::IntraPackLookup, types};
 
     pub(crate) struct Outcome<'a> {
         pub object_index: handle::IndexForObjectInPack,
