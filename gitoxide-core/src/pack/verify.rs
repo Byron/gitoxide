@@ -131,7 +131,7 @@ where
             let pack = odb::pack::data::File::at(path, object_hash).with_context(|| "Could not open pack file")?;
             pack.verify_checksum(
                 progress::DoOrDiscard::from(progress).add_child("Sha1 of pack"),
-                &should_interrupt,
+                should_interrupt,
             )
             .map(|id| (id, None))?
         }
@@ -174,7 +174,7 @@ where
                 }),
                 thread_limit,
                 progress,
-                &should_interrupt,
+                should_interrupt,
             )
             .map(|o| (o.actual_index_checksum, o.pack_traverse_outcome))
             .with_context(|| "Verification failure")?

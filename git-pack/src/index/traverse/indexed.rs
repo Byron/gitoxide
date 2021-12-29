@@ -41,7 +41,7 @@ impl index::File {
                 let pack_progress = progress.add_child("SHA1 of pack");
                 let index_progress = progress.add_child("SHA1 of index");
                 move || {
-                    let res = self.possibly_verify(pack, check, pack_progress, index_progress, &should_interrupt);
+                    let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
                     if res.is_err() {
                         should_interrupt.store(true, Ordering::SeqCst);
                     }
@@ -56,7 +56,7 @@ impl index::File {
                     |e| e.index_entry.pack_offset,
                     pack.path(),
                     progress.add_child("indexing"),
-                    &should_interrupt,
+                    should_interrupt,
                     |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
                     self.object_hash,
                 )?;
@@ -67,7 +67,7 @@ impl index::File {
                     progress.add_child("Resolving"),
                     progress.add_child("Decoding"),
                     thread_limit,
-                    &should_interrupt,
+                    should_interrupt,
                     pack.pack_end() as u64,
                     new_processor,
                     |data,

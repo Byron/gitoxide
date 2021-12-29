@@ -133,7 +133,7 @@ impl index::File {
                         }
                         Ok(stats)
                     },
-                    Reducer::from_progress(reduce_progress, pack.data_len(), check, &should_interrupt),
+                    Reducer::from_progress(reduce_progress, pack.data_len(), check, should_interrupt),
                 )
             },
         );
