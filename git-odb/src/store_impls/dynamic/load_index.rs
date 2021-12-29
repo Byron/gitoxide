@@ -238,14 +238,7 @@ impl super::Store {
                         // packs and indices are immutable, so no need to check modification times. Unchanged multi-pack indices also
                         // are handled like this just to be sure they are in the desired state. For these, the only way this could happen
                         // is if somebody deletes and then puts back
-                        if Self::assure_slot_matches_index(
-                            &write,
-                            slot,
-                            index_info,
-                            mtime,
-                            index.generation,
-                            false, /*allow init*/
-                        ) {
+                        if Self::assure_slot_matches_index(&write, slot, index_info, mtime, index.generation) {
                             num_loaded_indices += 1;
                         }
                         new_slot_map_indices.push(slot_idx);
@@ -284,7 +277,7 @@ impl super::Store {
                             // don't try to move onto ourselves
                             continue 'increment_slot_index;
                         }
-                        match self.try_copy_multi_pack_index(
+                        match Self::try_set_index_slot(
                             &write,
                             slot,
                             index_info,
@@ -305,7 +298,7 @@ impl super::Store {
                         }
                     }
                     None => {
-                        match Self::try_set_single_index_slot(
+                        match Self::try_set_index_slot(
                             &write,
                             slot,
                             index_info,
@@ -463,89 +456,45 @@ impl super::Store {
         Ok(indices_by_modification_time)
     }
 
-    /// Returns Ok(true) if the slot was empty, or Some(false) if it was collected, None if it couldn't claim the slot.
-    fn try_set_single_index_slot(
+    /// returns Ok<dest slot was empty> if the copy could happen because dest-slot was actually free or disposable , and Some(true) if it was empty
+    #[allow(clippy::too_many_arguments, unused_variables)]
+    fn try_set_index_slot(
         lock: &parking_lot::MutexGuard<'_, ()>,
-        slot: &MutableIndexAndPack,
+        dest_slot: &MutableIndexAndPack,
         index_info: Either,
         mtime: SystemTime,
         current_generation: Generation,
         needs_stable_indices: bool,
     ) -> Result<bool, Either> {
-        match &**slot.files.load() {
+        let (dest_slot_was_empty, generation) = match &**dest_slot.files.load() {
             Some(bundle) => {
-                debug_assert!(
-                    !index_info.is_multi_index(),
-                    "multi-indices are not handled here, but use their own 'move' logic"
-                );
-                if !needs_stable_indices && bundle.is_disposable() {
-                    assert_ne!(
-                        bundle.index_path(),
-                        index_info.path(),
-                        "BUG: an index of the same path must have been handled already"
-                    );
-                    // Need to declare this to be the future to avoid anything in that slot to be returned to people who
-                    // last saw the old state. They will then try to get a new index which by that time, might be happening
-                    // in time so they get the latest one. If not, they will probably get into the same situation again until
-                    // it finally succeeds. Alternatively, the object will be reported unobtainable, but at least it won't return
-                    // some other object.
-                    let next_generation = current_generation + 1;
-                    Self::set_slot_to_index(lock, slot, index_info, mtime, next_generation);
-                    Ok(false)
-                } else {
-                    // A valid slot, taken by another file, keep looking
-                    Err(index_info)
-                }
-            }
-            None => {
-                // an entirely unused (or deleted) slot, free to take.
-                Self::assure_slot_matches_index(
-                    lock,
-                    slot,
-                    index_info,
-                    mtime,
-                    current_generation,
-                    true, /*may init*/
-                );
-                Ok(true)
-            }
-        }
-    }
-
-    /// returns Ok<dest slot was empty> if the copy could happen because dest-slot was actually free or disposable , and Some(true) if it was empty
-    #[allow(clippy::too_many_arguments, unused_variables)]
-    fn try_copy_multi_pack_index(
-        &self,
-        lock: &parking_lot::MutexGuard<'_, ()>,
-        dest_slot: &MutableIndexAndPack,
-        multi_index: Either,
-        mtime: SystemTime,
-        current_generation: Generation,
-        needs_stable_indices: bool,
-    ) -> Result<bool, Either> {
-        let dest_slot_files = dest_slot.files.load_full();
-        let (dest_slot_was_empty, generation) = match &*dest_slot_files {
-            Some(bundle) => {
-                if bundle.index_path() == multi_index.path() || (bundle.is_disposable() && needs_stable_indices) {
+                if bundle.index_path() == index_info.path() || (bundle.is_disposable() && needs_stable_indices) {
                     // it might be possible to see ourselves in case all slots are taken, but there are still a few more destination
                     // slots to look for.
-                    return Err(multi_index);
+                    return Err(index_info);
                 }
                 // Since we overwrite an existing slot, we have to increment the generation to prevent anyone from trying to use it while
                 // before we are replacing it with a different value.
+                // In detail:
+                // We need to declare this to be the future to avoid anything in that slot to be returned to people who
+                // last saw the old state. They will then try to get a new index which by that time, might be happening
+                // in time so they get the latest one. If not, they will probably get into the same situation again until
+                // it finally succeeds. Alternatively, the object will be reported unobtainable, but at least it won't return
+                // some other object.
                 (false, current_generation + 1)
             }
             None => {
-                // Do NOT copy the packs over, they need to be reopened to get the correct pack id matching the new slot map index.
-                // If we are allowed to delete the original, and nobody has the pack referenced, it is closed which is preferred.
-                // Thus we simply always start new with packs in multi-pack indices.
-                // In the worst case this could mean duplicate file handle usage though as the old and the new index can't share
-                // packs due to the intrinsic id.
-                // Note that the ID is used for cache access, too, so it must be unique. It must also be mappable from pack-id to slotmap id.
+                // For multi-pack indices:
+                //   Do NOT copy the packs over, they need to be reopened to get the correct pack id matching the new slot map index.
+                //   If we are allowed to delete the original, and nobody has the pack referenced, it is closed which is preferred.
+                //   Thus we simply always start new with packs in multi-pack indices.
+                //   In the worst case this could mean duplicate file handle usage though as the old and the new index can't share
+                //   packs due to the intrinsic id.
+                //   Note that the ID is used for cache access, too, so it must be unique. It must also be mappable from pack-id to slotmap id.
                 (true, current_generation)
             }
         };
-        Self::set_slot_to_index(lock, dest_slot, multi_index, mtime, generation);
+        Self::set_slot_to_index(lock, dest_slot, index_info, mtime, generation);
         Ok(dest_slot_was_empty)
     }
 
@@ -562,6 +511,7 @@ impl super::Store {
         // set the generation before we actually change the value, otherwise readers of old generations could observe the new one.
         // We rather want them to turn around here and update their index, which, by that time, migth actually already be available.
         // If not, they would fail unable to load a pack or index they need, but that's preferred over returning wrong objects.
+        // Safety: can't race as we hold the lock, have to set the generation beforehand to help avoid others to observe the value.
         slot.generation.store(generation, Ordering::SeqCst);
         *files_mut = Some(index_info.into_index_and_packs(mtime));
         slot.files.store(files);
@@ -574,7 +524,6 @@ impl super::Store {
         index_info: Either,
         mtime: SystemTime,
         current_generation: Generation,
-        may_init: bool,
     ) -> bool {
         match Option::as_ref(&slot.files.load()) {
             Some(bundle) => {
@@ -609,22 +558,7 @@ impl super::Store {
                 bundle.index_is_loaded()
             }
             None => {
-                if may_init {
-                    let _lock = slot.write.lock();
-                    let mut files = slot.files.load_full();
-                    let files_mut = Arc::make_mut(&mut files);
-                    assert!(
-                        files_mut.is_none(),
-                        "BUG: There must be no race between us checking and obtaining a lock."
-                    );
-                    *files_mut = Some(index_info.into_index_and_packs(mtime));
-                    // Safety: can't race as we hold the lock, have to set the generation beforehand to help avoid others to observe the value.
-                    slot.generation.store(current_generation, Ordering::SeqCst);
-                    slot.files.store(files);
-                    false
-                } else {
-                    unreachable!("BUG: a slot can never be deleted if we have it recorded in the index WHILE changing said index. There shouldn't be a race")
-                }
+                unreachable!("BUG: a slot can never be deleted if we have it recorded in the index WHILE changing said index. There shouldn't be a race")
             }
         }
     }
