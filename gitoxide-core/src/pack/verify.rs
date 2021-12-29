@@ -2,7 +2,6 @@ use std::{io, path::Path, str::FromStr, sync::atomic::AtomicBool};
 
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
-use git_pack_for_configuration_only::index::traverse::Outcome;
 use git_repository as git;
 use git_repository::{
     easy::object,
@@ -176,9 +175,17 @@ where
                 Some(file_name) if file_name == "multi-pack-index" => {
                     let multi_index = git::odb::pack::multi_index::File::at(path)?;
                     let res = multi_index.verify_integrity(mode, algorithm.into(), cache, thread_limit, progress, should_interrupt)?;
-                    for stats in res.pack_traverse_outcomes {
-                        output_outcome(&mut out, output_statistics, &stats)?;
-                    }
+                    match output_statistics {
+                        Some(OutputFormat::Human) => {
+                            for (index_name, stats) in multi_index.index_names().iter().zip(res.pack_traverse_outcomes) {
+                                writeln!(out, "{}", index_name.display()).ok();
+                                drop(print_statistics(&mut out, &stats));
+                            }
+                        },
+                        #[cfg(feature = "serde1")]
+                        Some(OutputFormat::Json) => serde_json::to_writer_pretty(out, &multi_index.index_names().iter().zip(res.pack_traverse_outcomes).collect::<Vec<_>>())?,
+                        _ => {}
+                    };
                     return Ok(())
                 },
                 _ => return Err(anyhow!(
@@ -190,22 +197,14 @@ where
         ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),
     };
     if let Some(stats) = res.1.as_ref() {
-        output_outcome(&mut out, output_statistics, stats)?;
+        #[cfg_attr(not(feature = "serde1"), allow(clippy::single_match))]
+        match output_statistics {
+            Some(OutputFormat::Human) => drop(print_statistics(&mut out, stats)),
+            #[cfg(feature = "serde1")]
+            Some(OutputFormat::Json) => serde_json::to_writer_pretty(out, stats)?,
+            _ => {}
+        };
     }
-    Ok(())
-}
-
-fn output_outcome<W1>(mut out: &mut W1, output_statistics: Option<OutputFormat>, stats: &Outcome) -> anyhow::Result<()>
-where
-    W1: io::Write,
-{
-    #[cfg_attr(not(feature = "serde1"), allow(clippy::single_match))]
-    match output_statistics {
-        Some(OutputFormat::Human) => drop(print_statistics(&mut out, stats)),
-        #[cfg(feature = "serde1")]
-        Some(OutputFormat::Json) => serde_json::to_writer_pretty(out, stats)?,
-        _ => {}
-    };
     Ok(())
 }
 

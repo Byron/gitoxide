@@ -60,8 +60,14 @@ impl index::File {
     {
         let (verify_result, traversal_result) = parallel::join(
             {
-                let pack_progress = progress.add_child("SHA1 of pack");
-                let index_progress = progress.add_child("SHA1 of index");
+                let pack_progress = progress.add_child(format!(
+                    "Hash of pack '{}'",
+                    pack.path().file_name().expect("pack has filename").to_string_lossy()
+                ));
+                let index_progress = progress.add_child(format!(
+                    "Hash of index '{}'",
+                    self.path.file_name().expect("index has filename").to_string_lossy()
+                ));
                 move || {
                     let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
                     if res.is_err() {
