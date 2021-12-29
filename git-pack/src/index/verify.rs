@@ -1,6 +1,6 @@
 use std::sync::atomic::AtomicBool;
 
-use git_features::progress::{self, Progress};
+use git_features::progress::Progress;
 use git_object::{bstr::ByteSlice, WriteTo};
 
 use crate::index;
@@ -35,7 +35,7 @@ pub mod integrity {
         /// The packs traversal outcome, if one was provided
         pub pack_traverse_outcome: Option<crate::index::traverse::Outcome>,
         /// The provided progress instance.
-        pub progress: Option<P>,
+        pub progress: P,
     }
 }
 
@@ -129,7 +129,7 @@ impl index::File {
         &self,
         pack: Option<PackContext<'_, C, F>>,
         thread_limit: Option<usize>,
-        progress: Option<P>,
+        mut progress: P,
         should_interrupt: &AtomicBool,
     ) -> Result<integrity::Outcome<P>, index::traverse::Error<crate::index::verify::integrity::Error>>
     where
@@ -137,7 +137,6 @@ impl index::File {
         C: crate::cache::DecodeEntry,
         F: Fn() -> C + Send + Clone,
     {
-        let mut root = progress::DoOrDiscard::from(progress);
         match pack {
             Some(PackContext {
                 data: pack,
@@ -147,7 +146,7 @@ impl index::File {
             }) => self
                 .traverse(
                     pack,
-                    root.into_inner(),
+                    progress,
                     || {
                         let mut encode_buf = Vec::with_capacity(2048);
                         move |kind, data, index_entry, progress| {
@@ -162,18 +161,18 @@ impl index::File {
                         should_interrupt,
                     },
                 )
-                .map(|(id, outcome, root)| integrity::Outcome {
+                .map(|(id, outcome, progress)| integrity::Outcome {
                     actual_index_checksum: id,
                     pack_traverse_outcome: Some(outcome),
-                    progress: root,
+                    progress,
                 }),
             None => self
-                .verify_checksum(root.add_child("Sha1 of index"), should_interrupt)
+                .verify_checksum(progress.add_child("Sha1 of index"), should_interrupt)
                 .map_err(Into::into)
                 .map(|id| integrity::Outcome {
                     actual_index_checksum: id,
                     pack_traverse_outcome: None,
-                    progress: root.into_inner(),
+                    progress,
                 }),
         }
     }

@@ -76,7 +76,7 @@ mod verify {
                 git_pack::index::traverse::Algorithm::DeltaTreeLookup,
                 || git_pack::cache::Never,
                 None,
-                Some(progress::Discard),
+                progress::Discard,
                 &AtomicBool::new(false),
             )
             .unwrap();

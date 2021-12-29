@@ -23,7 +23,7 @@ pub mod integrity {
         /// The for each entry in [`index_names()`][super::File::index_names()] provide the corresponding pack traversal outcome.
         pub pack_traverse_outcomes: Vec<crate::index::traverse::Outcome>,
         /// The provided progress instance.
-        pub progress: Option<P>,
+        pub progress: P,
     }
 }
 
@@ -61,7 +61,7 @@ impl File {
         traversal: crate::index::traverse::Algorithm,
         make_pack_lookup_cache: impl Fn() -> C + Send + Clone,
         thread_limit: Option<usize>,
-        mut progress: Option<P>,
+        mut progress: P,
         should_interrupt: &AtomicBool,
     ) -> Result<integrity::Outcome<P>, crate::index::traverse::Error<integrity::Error>>
     where
@@ -70,7 +70,6 @@ impl File {
     {
         let parent = self.path.parent().expect("must be in a directory");
 
-        let mut progress = git_features::progress::DoOrDiscard::from(progress);
         let actual_index_checksum = self
             .verify_checksum(
                 progress.add_child(format!("checksum of '{}'", self.path.display())),
@@ -78,16 +77,14 @@ impl File {
             )
             .map_err(integrity::Error::from)
             .map_err(crate::index::traverse::Error::Processor)?;
-        let mut progress = progress.into_inner();
 
         let mut pack_traverse_outcomes = Vec::new();
         for index_file_name in &self.index_names {
             let bundle = crate::Bundle::at(parent.join(index_file_name), self.object_hash)
                 .map_err(integrity::Error::from)
                 .map_err(crate::index::traverse::Error::Processor)?;
-            if let Some(progress) = progress.as_mut() {
-                progress.set_name(index_file_name.display().to_string());
-            }
+
+            progress.set_name(index_file_name.display().to_string());
             let crate::bundle::verify::integrity::Outcome {
                 actual_index_checksum: _,
                 pack_traverse_outcome,

@@ -308,7 +308,7 @@ mod file {
                                 make_cache_fn: || cache::Never
                             }),
                             None,
-                            progress::Discard.into(),
+                            progress::Discard,
                             &AtomicBool::new(false)
                         )
                         .map(|o| (o.actual_index_checksum, o.pack_traverse_outcome))?,
@@ -408,7 +408,7 @@ mod file {
                 idx.verify_integrity(
                     None::<git_pack::index::verify::PackContext<'_, _, fn() -> cache::Never>>,
                     None,
-                    progress::Discard.into(),
+                    progress::Discard,
                     &AtomicBool::new(false)
                 )
                 .map(|o| (o.actual_index_checksum, o.pack_traverse_outcome))?,

@@ -1,9 +1,6 @@
 use std::sync::atomic::AtomicBool;
 
-use git_features::{
-    parallel,
-    progress::{self, Progress},
-};
+use git_features::{parallel, progress::Progress};
 
 use crate::index;
 
@@ -67,7 +64,7 @@ impl index::File {
     pub fn traverse<P, C, Processor, E>(
         &self,
         pack: &crate::data::File,
-        progress: Option<P>,
+        progress: P,
         new_processor: impl Fn() -> Processor + Send + Clone,
         new_cache: impl Fn() -> C + Send + Clone,
         Options {
@@ -76,7 +73,7 @@ impl index::File {
             check,
             should_interrupt,
         }: Options<'_>,
-    ) -> Result<(git_hash::ObjectId, Outcome, Option<P>), Error<E>>
+    ) -> Result<(git_hash::ObjectId, Outcome, P), Error<E>>
     where
         P: Progress,
         C: crate::cache::DecodeEntry,
@@ -85,10 +82,9 @@ impl index::File {
             git_object::Kind,
             &[u8],
             &index::Entry,
-            &mut progress::DoOrDiscard<<<P as Progress>::SubProgress as Progress>::SubProgress>,
+            &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
         ) -> Result<(), E>,
     {
-        let progress = progress::DoOrDiscard::from(progress);
         match algorithm {
             Algorithm::Lookup => self.traverse_with_lookup(
                 new_processor,
@@ -105,7 +101,6 @@ impl index::File {
                 self.traverse_with_index(check, thread_limit, new_processor, progress, pack, should_interrupt)
             }
         }
-        .map(|(a, b, p)| (a, b, p.into_inner()))
     }
 
     fn possibly_verify<E>(

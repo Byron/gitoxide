@@ -114,7 +114,6 @@ pub fn main() -> Result<()> {
                             core::pack::create::ObjectExpansion::None
                         }),
                     };
-                    let progress = git_features::progress::DoOrDiscard::from(progress);
                     core::pack::create(repository, tips, input, output_directory, progress, context)
                 },
             )
@@ -233,7 +232,7 @@ pub fn main() -> Result<()> {
                 core::pack::index::from_pack(
                     input,
                     directory,
-                    git_features::progress::DoOrDiscard::from(progress),
+                    progress,
                     core::pack::index::Context {
                         thread_limit,
                         iteration_mode,

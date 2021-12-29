@@ -392,7 +392,7 @@ fn write_and_verify(
         pack::index::traverse::Algorithm::Lookup,
         || pack::cache::Never,
         None,
-        progress::Discard.into(),
+        progress::Discard,
         &should_interrupt,
     )?;
 

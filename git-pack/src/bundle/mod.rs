@@ -20,7 +20,7 @@ pub mod verify {
             /// The packs traversal outcome
             pub pack_traverse_outcome: crate::index::traverse::Outcome,
             /// The provided progress instance.
-            pub progress: Option<P>,
+            pub progress: P,
         }
     }
 
@@ -35,7 +35,7 @@ pub mod verify {
             traversal: crate::index::traverse::Algorithm,
             make_pack_lookup_cache: impl Fn() -> C + Send + Clone,
             thread_limit: Option<usize>,
-            progress: Option<P>,
+            progress: P,
             should_interrupt: &AtomicBool,
         ) -> Result<integrity::Outcome<P>, crate::index::traverse::Error<crate::index::verify::integrity::Error>>
         where

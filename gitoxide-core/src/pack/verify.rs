@@ -8,7 +8,7 @@ use git_repository::{
     hash::ObjectId,
     odb,
     odb::{pack, pack::index},
-    progress, Progress,
+    Progress,
 };
 pub use index::verify::Mode;
 
@@ -103,7 +103,7 @@ impl<const SIZE: usize> pack::cache::DecodeEntry for EitherCache<SIZE> {
 
 pub fn pack_or_pack_index<W1, W2>(
     path: impl AsRef<Path>,
-    progress: Option<impl Progress>,
+    mut progress: impl Progress,
     Context {
         mut out,
         mut err,
@@ -129,11 +129,8 @@ where
     let res = match ext {
         "pack" => {
             let pack = odb::pack::data::File::at(path, object_hash).with_context(|| "Could not open pack file")?;
-            pack.verify_checksum(
-                progress::DoOrDiscard::from(progress).add_child("Sha1 of pack"),
-                should_interrupt,
-            )
-            .map(|id| (id, None))?
+            pack.verify_checksum(progress.add_child("Sha1 of pack"), should_interrupt)
+                .map(|id| (id, None))?
         }
         "idx" => {
             let idx =

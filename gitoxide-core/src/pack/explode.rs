@@ -11,7 +11,7 @@ use git_repository::{
     hash::ObjectId,
     objs, odb,
     odb::{loose, pack, Write},
-    progress, Progress,
+    Progress,
 };
 use quick_error::quick_error;
 
@@ -151,7 +151,7 @@ pub fn pack_or_pack_index(
     pack_path: impl AsRef<Path>,
     object_path: Option<impl AsRef<Path>>,
     check: SafetyCheck,
-    progress: Option<impl Progress>,
+    progress: impl Progress,
     Context {
         thread_limit,
         delete_pack,
@@ -191,7 +191,7 @@ pub fn pack_or_pack_index(
                 pack::index::traverse::Algorithm::DeltaTreeLookup
             }
         });
-    let mut progress = bundle
+    let (_, _, mut progress) = bundle
         .index
         .traverse(
             &bundle.pack,
@@ -239,7 +239,6 @@ pub fn pack_or_pack_index(
                 should_interrupt: &should_interrupt,
             },
         )
-        .map(|(_, _, c)| progress::DoOrDiscard::from(c))
         .with_context(|| "Failed to explode the entire pack - some loose objects may have been created nonetheless")?;
 
     let (index_path, data_path) = (bundle.index.path().to_owned(), bundle.pack.path().to_owned());
