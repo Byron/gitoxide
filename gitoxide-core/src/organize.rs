@@ -177,7 +177,11 @@ fn handle(
             match kind {
                 RepoKind::Bare => path,
                 RepoKind::WorkingTree => {
-                    path.set_extension("");
+                    if let Some(ext) = path.extension() {
+                        if ext == "git" {
+                            path.set_extension("");
+                        }
+                    }
                     path
                 }
             }
