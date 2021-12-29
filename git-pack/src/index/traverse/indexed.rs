@@ -1,9 +1,6 @@
 use std::{
     collections::VecDeque,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
+    sync::atomic::{AtomicBool, Ordering},
 };
 
 use git_features::{parallel, progress::Progress};
@@ -27,7 +24,7 @@ impl index::File {
         new_processor: impl Fn() -> Processor + Send + Clone,
         mut progress: P,
         pack: &crate::data::File,
-        should_interrupt: Arc<AtomicBool>,
+        should_interrupt: &AtomicBool,
     ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
     where
         P: Progress,
@@ -43,15 +40,8 @@ impl index::File {
             {
                 let pack_progress = progress.add_child("SHA1 of pack");
                 let index_progress = progress.add_child("SHA1 of index");
-                let should_interrupt = Arc::clone(&should_interrupt);
                 move || {
-                    let res = self.possibly_verify(
-                        pack,
-                        check,
-                        pack_progress,
-                        index_progress,
-                        Arc::clone(&should_interrupt),
-                    );
+                    let res = self.possibly_verify(pack, check, pack_progress, index_progress, &should_interrupt);
                     if res.is_err() {
                         should_interrupt.store(true, Ordering::SeqCst);
                     }

@@ -302,7 +302,7 @@ pub fn main() -> Result<()> {
                         thread_limit,
                         mode,
                         algorithm,
-                        should_interrupt,
+                        should_interrupt: &should_interrupt,
                     },
                 )
             },

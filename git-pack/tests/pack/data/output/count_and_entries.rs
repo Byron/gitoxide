@@ -1,7 +1,4 @@
-use std::{
-    convert::Infallible,
-    sync::{atomic::AtomicBool, Arc},
-};
+use std::{convert::Infallible, sync::atomic::AtomicBool};
 
 use git_features::{parallel::reduce::Finalize, progress};
 use git_odb::{compound, pack, pack::FindExt};
@@ -396,7 +393,7 @@ fn write_and_verify(
         || pack::cache::Never,
         None,
         progress::Discard.into(),
-        Arc::new(should_interrupt),
+        &should_interrupt,
     )?;
 
     Ok(())

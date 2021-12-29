@@ -1,9 +1,4 @@
-use std::{
-    io,
-    path::Path,
-    str::FromStr,
-    sync::{atomic::AtomicBool, Arc},
-};
+use std::{io, path::Path, str::FromStr, sync::atomic::AtomicBool};
 
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
@@ -54,7 +49,7 @@ impl From<Algorithm> for index::traverse::Algorithm {
 }
 
 /// A general purpose context for many operations provided here
-pub struct Context<W1: io::Write, W2: io::Write> {
+pub struct Context<'a, W1: io::Write, W2: io::Write> {
     /// If set, provide statistics to `out` in the given format
     pub output_statistics: Option<OutputFormat>,
     /// A stream to which to output operation results
@@ -67,11 +62,12 @@ pub struct Context<W1: io::Write, W2: io::Write> {
     pub thread_limit: Option<usize>,
     pub mode: index::verify::Mode,
     pub algorithm: Algorithm,
-    pub should_interrupt: Arc<AtomicBool>,
+    pub should_interrupt: &'a AtomicBool,
 }
 
-impl Default for Context<Vec<u8>, Vec<u8>> {
-    fn default() -> Self {
+impl<'a> Context<'a, Vec<u8>, Vec<u8>> {
+    /// Create a new default context with all fields being the default.
+    pub fn new(should_interrupt: &'a AtomicBool) -> Self {
         Context {
             output_statistics: None,
             thread_limit: None,
@@ -79,7 +75,7 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
             algorithm: Algorithm::LessMemory,
             out: Vec::new(),
             err: Vec::new(),
-            should_interrupt: Default::default(),
+            should_interrupt,
         }
     }
 }
@@ -116,7 +112,7 @@ pub fn pack_or_pack_index<W1, W2>(
         thread_limit,
         algorithm,
         should_interrupt,
-    }: Context<W1, W2>,
+    }: Context<'_, W1, W2>,
 ) -> Result<(ObjectId, Option<index::traverse::Outcome>)>
 where
     W1: io::Write,
@@ -178,7 +174,7 @@ where
                 }),
                 thread_limit,
                 progress,
-                should_interrupt,
+                &should_interrupt,
             )
             .map(|(a, b, _)| (a, b))
             .with_context(|| "Verification failure")?

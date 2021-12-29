@@ -1,4 +1,4 @@
-use std::sync::{atomic::AtomicBool, Arc};
+use std::sync::atomic::AtomicBool;
 
 use git_features::progress::{self, Progress};
 use git_object::{bstr::ByteSlice, WriteTo};
@@ -120,7 +120,7 @@ impl index::File {
         pack: Option<PackContext<'_, C, F>>,
         thread_limit: Option<usize>,
         progress: Option<P>,
-        should_interrupt: Arc<AtomicBool>,
+        should_interrupt: &AtomicBool,
     ) -> Result<
         (git_hash::ObjectId, Option<index::traverse::Outcome>, Option<P>),
         index::traverse::Error<crate::index::verify::integrity::Error>,
@@ -157,7 +157,7 @@ impl index::File {
                 )
                 .map(|(id, outcome, root)| (id, Some(outcome), root)),
             None => self
-                .verify_checksum(root.add_child("Sha1 of index"), &should_interrupt)
+                .verify_checksum(root.add_child("Sha1 of index"), should_interrupt)
                 .map_err(Into::into)
                 .map(|id| (id, None, root.into_inner())),
         }

@@ -6,7 +6,7 @@ mod find;
 pub mod write;
 
 mod verify {
-    use std::sync::{atomic::AtomicBool, Arc};
+    use std::sync::atomic::AtomicBool;
 
     use git_features::progress::Progress;
 
@@ -22,7 +22,7 @@ mod verify {
             make_pack_lookup_cache: impl Fn() -> C + Send + Clone,
             thread_limit: Option<usize>,
             progress: Option<P>,
-            should_interrupt: Arc<AtomicBool>,
+            should_interrupt: &AtomicBool,
         ) -> Result<
             (git_hash::ObjectId, Option<crate::index::traverse::Outcome>, Option<P>),
             crate::index::traverse::Error<crate::index::verify::integrity::Error>,

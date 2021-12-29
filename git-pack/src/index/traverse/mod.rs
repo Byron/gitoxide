@@ -1,4 +1,4 @@
-use std::sync::{atomic::AtomicBool, Arc};
+use std::sync::atomic::AtomicBool;
 
 use git_features::{
     parallel,
@@ -21,13 +21,13 @@ mod types;
 pub use types::{Algorithm, Outcome, SafetyCheck};
 
 mod options {
-    use std::sync::{atomic::AtomicBool, Arc};
+    use std::sync::atomic::AtomicBool;
 
     use crate::index::traverse::{Algorithm, SafetyCheck};
 
     /// Traversal options for [`traverse()`][crate::index::File::traverse()]
     #[derive(Debug, Clone)]
-    pub struct Options {
+    pub struct Options<'a> {
         /// The algorithm to employ.
         pub algorithm: Algorithm,
         /// If `Some`, only use the given amount of threads. Otherwise, the amount of threads to use will be selected based on
@@ -37,18 +37,7 @@ mod options {
         pub check: SafetyCheck,
         /// A flag to indicate whether the algorithm should be interrupted. Will be checked occasionally allow stopping a running
         /// computation.
-        pub should_interrupt: Arc<AtomicBool>,
-    }
-
-    impl Default for Options {
-        fn default() -> Self {
-            Self {
-                algorithm: Algorithm::Lookup,
-                thread_limit: Default::default(),
-                check: Default::default(),
-                should_interrupt: Default::default(),
-            }
-        }
+        pub should_interrupt: &'a AtomicBool,
     }
 }
 pub use options::Options;
@@ -86,7 +75,7 @@ impl index::File {
             thread_limit,
             check,
             should_interrupt,
-        }: Options,
+        }: Options<'_>,
     ) -> Result<(git_hash::ObjectId, Outcome, Option<P>), Error<E>>
     where
         P: Progress,
@@ -125,7 +114,7 @@ impl index::File {
         check: SafetyCheck,
         pack_progress: impl Progress,
         index_progress: impl Progress,
-        should_interrupt: Arc<AtomicBool>,
+        should_interrupt: &AtomicBool,
     ) -> Result<git_hash::ObjectId, Error<E>>
     where
         E: std::error::Error + Send + Sync + 'static,
@@ -138,11 +127,8 @@ impl index::File {
                 });
             }
             let (pack_res, id) = parallel::join(
-                {
-                    let should_interrupt = Arc::clone(&should_interrupt);
-                    move || pack.verify_checksum(pack_progress, &should_interrupt)
-                },
-                move || self.verify_checksum(index_progress, &should_interrupt),
+                move || pack.verify_checksum(pack_progress, should_interrupt),
+                move || self.verify_checksum(index_progress, should_interrupt),
             );
             pack_res?;
             id?
