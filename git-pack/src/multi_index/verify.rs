@@ -2,6 +2,7 @@ use crate::multi_index::File;
 use git_features::progress::Progress;
 use std::sync::atomic::AtomicBool;
 
+///
 pub mod checksum {
     /// Returned by [`index::File::verify_checksum()`][crate::index::File::verify_checksum()].
     pub type Error = crate::verify::checksum::Error;

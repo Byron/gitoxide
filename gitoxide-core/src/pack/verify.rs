@@ -7,6 +7,7 @@ use std::{
 
 use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
+use git_repository as git;
 use git_repository::{
     easy::object,
     hash::ObjectId,
@@ -128,7 +129,7 @@ where
             path.display()
         )
     })?;
-    let object_hash = git_repository::hash::Kind::Sha1; // TODO: make it configurable via Context/CLI
+    let object_hash = git::hash::Kind::Sha1; // TODO: make it configurable via Context/CLI
     let res = match ext {
         "pack" => {
             let pack = odb::pack::data::File::at(path, object_hash).with_context(|| "Could not open pack file")?;
@@ -169,7 +170,12 @@ where
             };
 
             idx.verify_integrity(
-                pack.as_ref().map(|p| (p, mode, algorithm.into(), cache)),
+                pack.as_ref().map(|p| git::odb::pack::index::verify::PackContext {
+                    data: p,
+                    verify_mode: mode,
+                    traversal_algorithm: algorithm.into(),
+                    make_cache_fn: cache,
+                }),
                 thread_limit,
                 progress,
                 should_interrupt,

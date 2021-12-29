@@ -32,7 +32,12 @@ mod verify {
             C: crate::cache::DecodeEntry,
         {
             self.index.verify_integrity(
-                Some((&self.pack, verify_mode, traversal, make_pack_lookup_cache)),
+                Some(crate::index::verify::PackContext {
+                    data: &self.pack,
+                    verify_mode: verify_mode,
+                    traversal_algorithm: traversal,
+                    make_cache_fn: make_pack_lookup_cache,
+                }),
                 thread_limit,
                 progress,
                 should_interrupt,

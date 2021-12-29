@@ -299,7 +299,12 @@ mod file {
                 for mode in MODES {
                     assert_eq!(
                         idx.verify_integrity(
-                            Some((&pack, *mode, *algo, || cache::Never)),
+                            Some(git_pack::index::verify::PackContext {
+                                data: &pack,
+                                verify_mode: *mode,
+                                traversal_algorithm: *algo,
+                                make_cache_fn: || cache::Never
+                            }),
                             None,
                             progress::Discard.into(),
                             Default::default()
@@ -399,7 +404,7 @@ mod file {
             assert_eq!(idx.num_objects(), *num_objects);
             assert_eq!(
                 idx.verify_integrity(
-                    None::<(_, _, _, fn() -> cache::Never)>,
+                    None::<git_pack::index::verify::PackContext<'_, _, fn() -> cache::Never>>,
                     None,
                     progress::Discard.into(),
                     Default::default()

@@ -26,8 +26,6 @@ pub mod integrity {
             expected: BString,
             actual: BString,
         },
-        #[error(transparent)]
-        ObjectEncode(#[from] std::io::Error),
     }
 }
 
@@ -48,6 +46,22 @@ pub enum Mode {
     /// Validate SHA1 and CRC32, and decode and encode each non-Blob object.
     /// Each object should yield exactly the same hash when re-encoded.
     Sha1Crc32DecodeEncode,
+}
+
+/// Information to allow verifying the integrity of an index with the help of its corresponding pack.
+pub struct PackContext<'a, C, F>
+where
+    C: crate::cache::DecodeEntry,
+    F: Fn() -> C + Send + Clone,
+{
+    /// The pack data file itself.
+    pub data: &'a crate::data::File,
+    /// the way to verify the pack data.
+    pub verify_mode: Mode,
+    /// The traversal algorithm to use
+    pub traversal_algorithm: index::traverse::Algorithm,
+    /// A function to create a pack cache for each tread.
+    pub make_cache_fn: F,
 }
 
 /// Verify and validate the content of the index file
@@ -101,14 +115,9 @@ impl index::File {
     ///
     /// The given `progress` is inevitably consumed if there is an error, which is a tradeoff chosen to easily allow using `?` in the
     /// error case.
-    pub fn verify_integrity<C, P>(
+    pub fn verify_integrity<P, C, F>(
         &self,
-        pack: Option<(
-            &crate::data::File,
-            Mode,
-            index::traverse::Algorithm,
-            impl Fn() -> C + Send + Clone,
-        )>,
+        pack: Option<PackContext<'_, C, F>>,
         thread_limit: Option<usize>,
         progress: Option<P>,
         should_interrupt: Arc<AtomicBool>,
@@ -119,10 +128,16 @@ impl index::File {
     where
         P: Progress,
         C: crate::cache::DecodeEntry,
+        F: Fn() -> C + Send + Clone,
     {
         let mut root = progress::DoOrDiscard::from(progress);
         match pack {
-            Some((pack, mode, algorithm, make_cache)) => self
+            Some(PackContext {
+                data: pack,
+                verify_mode: mode,
+                traversal_algorithm: algorithm,
+                make_cache_fn: make_cache,
+            }) => self
                 .traverse(
                     pack,
                     root.into_inner(),
@@ -173,7 +188,9 @@ impl index::File {
                     })?;
                     if let Mode::Sha1Crc32DecodeEncode = mode {
                         encode_buf.clear();
-                        object.write_to(&mut *encode_buf)?;
+                        object
+                            .write_to(&mut *encode_buf)
+                            .expect("writing to a memory buffer never fails");
                         if encode_buf.as_slice() != buf {
                             let mut should_return_error = true;
                             if let git_object::Kind::Tree = object_kind {

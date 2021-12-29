@@ -44,7 +44,8 @@ pub struct File {
 ///
 mod access;
 
-mod verify;
+///
+pub mod verify;
 
 ///
 pub mod chunk;
