@@ -1,37 +1,40 @@
 use std::sync::{atomic::AtomicBool, Arc};
 
 use git_features::progress::{self, Progress};
-use git_object::{
-    bstr::{BString, ByteSlice},
-    WriteTo,
-};
+use git_object::{bstr::ByteSlice, WriteTo};
 
 use crate::index;
 
-/// Returned by [`index::File::verify_checksum()`]
-#[derive(thiserror::Error, Debug)]
-#[allow(missing_docs)]
-pub enum Error {
-    #[error("index checksum mismatch: expected {expected}, got {actual}")]
-    Mismatch {
-        expected: git_hash::ObjectId,
-        actual: git_hash::ObjectId,
-    },
-    #[error("{kind} object {id} could not be decoded")]
-    ObjectDecode {
-        source: git_object::decode::Error,
-        kind: git_object::Kind,
-        id: git_hash::ObjectId,
-    },
-    #[error("{kind} object {id} wasn't re-encoded without change, wanted\n{expected}\n\nGOT\n\n{actual}")]
-    ObjectEncodeMismatch {
-        kind: git_object::Kind,
-        id: git_hash::ObjectId,
-        expected: BString,
-        actual: BString,
-    },
-    #[error(transparent)]
-    ObjectEncode(#[from] std::io::Error),
+///
+pub mod integrity {
+    use git_object::bstr::BString;
+
+    /// Returned by [`index::File::verify_integrity()`][crate::index::File::verify_integrity()].
+    #[derive(thiserror::Error, Debug)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("{kind} object {id} could not be decoded")]
+        ObjectDecode {
+            source: git_object::decode::Error,
+            kind: git_object::Kind,
+            id: git_hash::ObjectId,
+        },
+        #[error("{kind} object {id} wasn't re-encoded without change, wanted\n{expected}\n\nGOT\n\n{actual}")]
+        ObjectEncodeMismatch {
+            kind: git_object::Kind,
+            id: git_hash::ObjectId,
+            expected: BString,
+            actual: BString,
+        },
+        #[error(transparent)]
+        ObjectEncode(#[from] std::io::Error),
+    }
+}
+
+///
+pub mod checksum {
+    /// Returned by [`index::File::verify_checksum()`][crate::index::File::verify_checksum()].
+    pub type Error = crate::verify::checksum::Error;
 }
 
 /// Various ways in which a pack and index can be verified
@@ -68,34 +71,17 @@ impl index::File {
     /// of this index file, and return it if it does.
     pub fn verify_checksum(
         &self,
-        mut progress: impl Progress,
+        progress: impl Progress,
         should_interrupt: &AtomicBool,
-    ) -> Result<git_hash::ObjectId, Error> {
-        let data_len_without_trailer = self.data.len() - self.hash_len;
-        let actual = match git_features::hash::bytes_of_file(
-            &self.path,
-            data_len_without_trailer,
-            git_hash::Kind::Sha1,
-            &mut progress,
+    ) -> Result<git_hash::ObjectId, checksum::Error> {
+        crate::verify::checksum_on_disk_or_mmap(
+            self.path(),
+            &self.data,
+            self.index_checksum(),
+            self.object_hash,
+            progress,
             should_interrupt,
-        ) {
-            Ok(id) => id,
-            Err(_io_err) => {
-                let start = std::time::Instant::now();
-                let mut hasher = git_features::hash::hasher(self.object_hash);
-                hasher.update(&self.data[..data_len_without_trailer]);
-                progress.inc_by(data_len_without_trailer);
-                progress.show_throughput(start);
-                git_hash::ObjectId::from(hasher.digest())
-            }
-        };
-
-        let expected = self.index_checksum();
-        if actual == expected {
-            Ok(actual)
-        } else {
-            Err(Error::Mismatch { actual, expected })
-        }
+        )
     }
 
     /// The most thorough validation of integrity of both index file and the corresponding pack data file, if provided.
@@ -128,7 +114,7 @@ impl index::File {
         should_interrupt: Arc<AtomicBool>,
     ) -> Result<
         (git_hash::ObjectId, Option<index::traverse::Outcome>, Option<P>),
-        index::traverse::Error<crate::index::verify::Error>,
+        index::traverse::Error<crate::index::verify::integrity::Error>,
     >
     where
         P: Progress,
@@ -170,7 +156,7 @@ impl index::File {
         buf: &[u8],
         index_entry: &index::Entry,
         progress: &mut P,
-    ) -> Result<(), Error>
+    ) -> Result<(), integrity::Error>
     where
         P: Progress,
     {
@@ -178,12 +164,13 @@ impl index::File {
             use git_object::Kind::*;
             match object_kind {
                 Tree | Commit | Tag => {
-                    let object =
-                        git_object::ObjectRef::from_bytes(object_kind, buf).map_err(|err| Error::ObjectDecode {
+                    let object = git_object::ObjectRef::from_bytes(object_kind, buf).map_err(|err| {
+                        integrity::Error::ObjectDecode {
                             source: err,
                             kind: object_kind,
                             id: index_entry.oid,
-                        })?;
+                        }
+                    })?;
                     if let Mode::Sha1Crc32DecodeEncode = mode {
                         encode_buf.clear();
                         object.write_to(&mut *encode_buf)?;
@@ -196,7 +183,7 @@ impl index::File {
                                 }
                             }
                             if should_return_error {
-                                return Err(Error::ObjectEncodeMismatch {
+                                return Err(integrity::Error::ObjectEncodeMismatch {
                                     kind: object_kind,
                                     id: index_entry.oid,
                                     expected: buf.into(),

@@ -4,17 +4,10 @@ use git_features::progress::Progress;
 
 use crate::data::File;
 
-/// Returned by [`File::verify_checksum()`]
-#[derive(thiserror::Error, Debug)]
-#[allow(missing_docs)]
-pub enum Error {
-    #[error("pack checksum mismatch: expected {expected}, got {actual}")]
-    Mismatch {
-        expected: git_hash::ObjectId,
-        actual: git_hash::ObjectId,
-    },
-    #[error("could not read pack file")]
-    Io(#[from] std::io::Error),
+///
+pub mod checksum {
+    /// Returned by [`data::File::verify_checksum()`][crate::data::File::verify_checksum()].
+    pub type Error = crate::verify::checksum::Error;
 }
 
 /// Checksums and verify checksums
@@ -34,33 +27,16 @@ impl File {
     /// even more thorough integrity check.
     pub fn verify_checksum(
         &self,
-        mut progress: impl Progress,
+        progress: impl Progress,
         should_interrupt: &AtomicBool,
-    ) -> Result<git_hash::ObjectId, Error> {
-        let right_before_trailer = self.data.len() - self.hash_len;
-        let actual = match git_features::hash::bytes_of_file(
-            &self.path,
-            right_before_trailer,
-            git_hash::Kind::Sha1,
-            &mut progress,
+    ) -> Result<git_hash::ObjectId, checksum::Error> {
+        crate::verify::checksum_on_disk_or_mmap(
+            self.path(),
+            &self.data,
+            self.checksum(),
+            self.object_hash,
+            progress,
             should_interrupt,
-        ) {
-            Ok(id) => id,
-            Err(_io_err) => {
-                let start = std::time::Instant::now();
-                let mut hasher = git_features::hash::hasher(self.object_hash);
-                hasher.update(&self.data[..right_before_trailer]);
-                progress.inc_by(right_before_trailer);
-                progress.show_throughput(start);
-                git_hash::ObjectId::from(hasher.digest())
-            }
-        };
-
-        let expected = self.checksum();
-        if actual == expected {
-            Ok(actual)
-        } else {
-            Err(Error::Mismatch { actual, expected })
-        }
+        )
     }
 }

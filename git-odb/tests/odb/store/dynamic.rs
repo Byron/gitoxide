@@ -11,9 +11,9 @@ fn db() -> git_odb::Handle {
 }
 
 #[test]
-fn multi_index_access() {
-    let dir = git_testtools::scripted_fixture_repo_writable("make_repo_multi_index.sh").unwrap();
-    let handle = git_odb::at(dir.path().join(".git/objects")).unwrap();
+fn multi_index_access() -> crate::Result {
+    let dir = git_testtools::scripted_fixture_repo_writable("make_repo_multi_index.sh")?;
+    let handle = git_odb::at(dir.path().join(".git/objects"))?;
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -34,8 +34,8 @@ fn multi_index_access() {
 
     let mut count = 0;
     let mut buf = Vec::new();
-    for oid in handle.iter().unwrap() {
-        let oid = oid.unwrap();
+    for oid in handle.iter()? {
+        let oid = oid?;
         assert!(handle.contains(oid));
         assert!(handle.find(oid, &mut buf).is_ok());
         count += 1;
@@ -82,8 +82,7 @@ fn multi_index_access() {
     filetime::set_file_mtime(
         handle.store_ref().path().join("pack/multi-pack-index"),
         filetime::FileTime::now(),
-    )
-    .unwrap();
+    )?;
     handle.contains(non_existing_to_trigger_refresh);
 
     assert_eq!(
@@ -102,18 +101,19 @@ fn multi_index_access() {
         },
         "everything seems to remain as it was, even though we moved our multi-index to a new slot and removed the old one"
     );
+    Ok(())
 }
 
 #[test]
-fn multi_index_keep_open() {
-    let dir = git_testtools::scripted_fixture_repo_writable("make_repo_multi_index.sh").unwrap();
+fn multi_index_keep_open() -> crate::Result {
+    let dir = git_testtools::scripted_fixture_repo_writable("make_repo_multi_index.sh")?;
     let (stable_handle, handle) = {
-        let mut stable_handle = git_odb::at(dir.path().join(".git/objects")).unwrap();
+        let mut stable_handle = git_odb::at(dir.path().join(".git/objects"))?;
         let handle = stable_handle.clone();
         stable_handle.prevent_pack_unload();
         (stable_handle, handle)
     };
-    let oid = handle.iter().unwrap().next().expect("first oid").unwrap();
+    let oid = handle.iter()?.next().expect("first oid")?;
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -141,8 +141,7 @@ fn multi_index_keep_open() {
     filetime::set_file_mtime(
         handle.store_ref().path().join("pack/multi-pack-index"),
         filetime::FileTime::now(),
-    )
-    .unwrap();
+    )?;
     git_odb::Find::contains(&handle, non_existing_to_trigger_refresh);
 
     assert_eq!(
@@ -166,6 +165,7 @@ fn multi_index_keep_open() {
         git_odb::pack::Find::entry_by_location(&stable_handle, &location).is_some(),
         "the entry can still be found even though the location is invalid"
     );
+    Ok(())
 }
 
 #[test]

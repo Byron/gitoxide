@@ -1,13 +1,19 @@
+use git_pack::multi_index::File;
 use std::path::PathBuf;
 
 use git_testtools::hex_to_id;
 
-#[test]
-fn access() {
+fn multi_index() -> (File, PathBuf) {
     let path = git_testtools::scripted_fixture_repo_read_only("make_pack_gen_repo_multi_index.sh")
-        .unwrap()
+        .expect("test fixture exists")
         .join(".git/objects/pack/multi-pack-index");
     let file = git_pack::multi_index::File::at(&path).unwrap();
+    (file, path)
+}
+
+#[test]
+fn access() {
+    let (file, path) = multi_index();
 
     assert_eq!(file.version(), git_pack::multi_index::Version::V1);
     assert_eq!(file.path(), path);
@@ -15,6 +21,7 @@ fn access() {
     assert_eq!(file.object_hash(), git_hash::Kind::Sha1);
     assert_eq!(file.num_objects(), 868);
     assert_eq!(file.checksum(), hex_to_id("39a3804d0a84de609e4fcb49e66dc1297c75ca11"));
+    // assert_eq!()
     assert_eq!(
         file.index_names(),
         vec![PathBuf::from("pack-542ad1d1c7c762ea4e36907570ff9e4b5b7dde1b.idx")]
@@ -42,4 +49,20 @@ fn access() {
         count += 1;
     }
     assert_eq!(count, file.num_objects());
+}
+
+mod verify {
+    use crate::pack::multi_index::multi_index;
+    use git_features::progress;
+    use std::sync::atomic::AtomicBool;
+
+    #[test]
+    fn checksum() {
+        let (file, _) = multi_index();
+        assert_eq!(
+            file.verify_checksum(progress::Discard, &AtomicBool::new(false))
+                .unwrap(),
+            file.checksum()
+        );
+    }
 }

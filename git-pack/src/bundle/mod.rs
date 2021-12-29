@@ -25,7 +25,7 @@ mod verify {
             should_interrupt: Arc<AtomicBool>,
         ) -> Result<
             (git_hash::ObjectId, Option<crate::index::traverse::Outcome>, Option<P>),
-            crate::index::traverse::Error<crate::index::verify::Error>,
+            crate::index::traverse::Error<crate::index::verify::integrity::Error>,
         >
         where
             P: Progress,
