@@ -23,7 +23,7 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
         expected: git_hash::ObjectId,
         actual: git_hash::ObjectId,
     },
-    #[error("The SHA1 of {kind} object at offset {offset} didn't match the checksum in the index file: expected {expected}, got {actual}")]
+    #[error("The hash of {kind} object at offset {offset} didn't match the checksum in the index file: expected {expected}, got {actual}")]
     PackObjectMismatch {
         expected: git_hash::ObjectId,
         actual: git_hash::ObjectId,

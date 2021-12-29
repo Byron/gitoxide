@@ -75,7 +75,7 @@ impl Default for Context<Vec<u8>, Vec<u8>> {
         Context {
             output_statistics: None,
             thread_limit: None,
-            mode: index::verify::Mode::Sha1Crc32,
+            mode: index::verify::Mode::HashCrc32,
             algorithm: Algorithm::LessMemory,
             out: Vec::new(),
             err: Vec::new(),

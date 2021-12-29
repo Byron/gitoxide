@@ -34,7 +34,7 @@ mod verify {
             self.index.verify_integrity(
                 Some(crate::index::verify::PackContext {
                     data: &self.pack,
-                    verify_mode: verify_mode,
+                    verify_mode,
                     traversal_algorithm: traversal,
                     make_cache_fn: make_pack_lookup_cache,
                 }),

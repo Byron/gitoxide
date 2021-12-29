@@ -200,9 +200,9 @@ mod file {
     ];
 
     static MODES: &[index::verify::Mode] = &[
-        index::verify::Mode::Sha1Crc32,
-        index::verify::Mode::Sha1Crc32Decode,
-        index::verify::Mode::Sha1Crc32DecodeEncode,
+        index::verify::Mode::HashCrc32,
+        index::verify::Mode::HashCrc32Decode,
+        index::verify::Mode::HashCrc32DecodeEncode,
     ];
 
     #[test]

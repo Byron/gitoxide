@@ -391,7 +391,7 @@ fn write_and_verify(
     }
 
     bundle.verify_integrity(
-        pack::index::verify::Mode::Sha1Crc32DecodeEncode,
+        pack::index::verify::Mode::HashCrc32DecodeEncode,
         pack::index::traverse::Algorithm::Lookup,
         || pack::cache::Never,
         None,

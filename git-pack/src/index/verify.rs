@@ -38,14 +38,14 @@ pub mod checksum {
 /// Various ways in which a pack and index can be verified
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Mode {
-    /// Validate SHA1 and CRC32
-    Sha1Crc32,
-    /// Validate SHA1 and CRC32, and decode each non-Blob object.
+    /// Validate the object hash and CRC32
+    HashCrc32,
+    /// Validate hash and CRC32, and decode each non-Blob object.
     /// Each object should be valid, i.e. be decodable.
-    Sha1Crc32Decode,
-    /// Validate SHA1 and CRC32, and decode and encode each non-Blob object.
+    HashCrc32Decode,
+    /// Validate hash and CRC32, and decode and encode each non-Blob object.
     /// Each object should yield exactly the same hash when re-encoded.
-    Sha1Crc32DecodeEncode,
+    HashCrc32DecodeEncode,
 }
 
 /// Information to allow verifying the integrity of an index with the help of its corresponding pack.
@@ -175,7 +175,7 @@ impl index::File {
     where
         P: Progress,
     {
-        if let Mode::Sha1Crc32Decode | Mode::Sha1Crc32DecodeEncode = mode {
+        if let Mode::HashCrc32Decode | Mode::HashCrc32DecodeEncode = mode {
             use git_object::Kind::*;
             match object_kind {
                 Tree | Commit | Tag => {
@@ -186,7 +186,7 @@ impl index::File {
                             id: index_entry.oid,
                         }
                     })?;
-                    if let Mode::Sha1Crc32DecodeEncode = mode {
+                    if let Mode::HashCrc32DecodeEncode = mode {
                         encode_buf.clear();
                         object
                             .write_to(&mut *encode_buf)

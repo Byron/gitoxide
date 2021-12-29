@@ -287,9 +287,9 @@ pub fn main() -> Result<()> {
             None,
             move |progress, out, err| {
                 let mode = match (decode, re_encode) {
-                    (true, false) => verify::Mode::Sha1Crc32Decode,
-                    (true, true) | (false, true) => verify::Mode::Sha1Crc32DecodeEncode,
-                    (false, false) => verify::Mode::Sha1Crc32,
+                    (true, false) => verify::Mode::HashCrc32Decode,
+                    (true, true) | (false, true) => verify::Mode::HashCrc32DecodeEncode,
+                    (false, false) => verify::Mode::HashCrc32,
                 };
                 let output_statistics = if statistics { Some(format) } else { None };
                 verify::pack_or_pack_index(
