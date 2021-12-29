@@ -37,9 +37,7 @@ where
     // TODO: probably make this method fallible, but that would mean its own error type.
     fn contains(&self, id: impl AsRef<oid>) -> bool {
         let id = id.as_ref();
-        let mut count = 0;
         loop {
-            count += 1;
             let mut snapshot = self.snapshot.borrow_mut();
             {
                 for (idx, index) in snapshot.indices.iter().enumerate() {
@@ -62,9 +60,6 @@ where
                 Ok(Some(new_snapshot)) => {
                     drop(snapshot);
                     *self.snapshot.borrow_mut() = new_snapshot;
-                    if count == 50 {
-                        return false;
-                    }
                 }
                 Ok(None) => return false, // nothing more to load, or our refresh mode doesn't allow disk refreshes
                 Err(_) => return false, // something went wrong, nothing we can communicate here with this trait. TODO: Maybe that should change?

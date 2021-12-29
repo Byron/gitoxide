@@ -11,7 +11,6 @@ fn db() -> git_odb::Handle {
 }
 
 #[test]
-#[ignore]
 fn multi_index_access() {
     let dir = git_testtools::scripted_fixture_repo_writable("make_repo_multi_index.sh").unwrap();
     let handle = git_odb::at(dir.path().join(".git/objects")).unwrap();
@@ -61,13 +60,6 @@ fn multi_index_access() {
     let non_existing_to_trigger_refresh = hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     handle.contains(non_existing_to_trigger_refresh);
 
-    filetime::set_file_mtime(
-        handle.store_ref().path().join("pack/multi-pack-index"),
-        filetime::FileTime::now(),
-    )
-    .unwrap();
-    handle.contains(non_existing_to_trigger_refresh);
-
     assert_eq!(
         handle.store_ref().metrics(),
         git_odb::store::Metrics {
@@ -81,8 +73,37 @@ fn multi_index_access() {
             loose_dbs: 1,
             unreachable_indices: 0
         },
+        "A miss means just another refresh with no other change"
+    );
+
+    filetime::set_file_mtime(
+        handle.store_ref().path().join("pack/multi-pack-index"),
+        filetime::FileTime::now(),
+    )
+    .unwrap();
+    handle.contains(non_existing_to_trigger_refresh);
+
+    assert_eq!(
+        handle.store_ref().metrics(),
+        git_odb::store::Metrics {
+            num_handles: 1,
+            num_refreshes: 2 + 1 /*legit refresh with changes*/ + 1 /*a refresh attempt with no changes, causing 'contains()' to give up*/,
+            open_reachable_indices: 1,
+            known_reachable_indices: 1,
+            open_reachable_packs: 0,
+            known_packs: 1,
+            unused_slots: 31,
+            loose_dbs: 1,
+            unreachable_indices: 0
+        },
         "everything seems to remain as it was, even though we moved our multi-index to a new slot and removed the old one"
     );
+}
+
+#[test]
+#[ignore]
+fn multi_index_keep_open() {
+    todo!("prevent unloading the previous multi-index and show 'old' locations stay accessible")
 }
 
 #[test]
