@@ -311,7 +311,7 @@ mod file {
                             progress::Discard.into(),
                             &AtomicBool::new(false)
                         )
-                        .map(|(a, b, _)| (a, b))?,
+                        .map(|o| (o.actual_index_checksum, o.pack_traverse_outcome))?,
                         (idx.index_checksum(), Some(stats.to_owned())),
                         "{:?} -> {:?}",
                         algo,
@@ -411,7 +411,7 @@ mod file {
                     progress::Discard.into(),
                     &AtomicBool::new(false)
                 )
-                .map(|(a, b, _)| (a, b))?,
+                .map(|o| (o.actual_index_checksum, o.pack_traverse_outcome))?,
                 (idx.index_checksum(), None)
             );
             assert_eq!(idx.index_checksum(), hex_to_id(index_checksum));

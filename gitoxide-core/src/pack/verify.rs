@@ -176,7 +176,7 @@ where
                 progress,
                 &should_interrupt,
             )
-            .map(|(a, b, _)| (a, b))
+            .map(|o| (o.actual_index_checksum, o.pack_traverse_outcome))
             .with_context(|| "Verification failure")?
         }
         ext => return Err(anyhow!("Unknown extension {:?}, expecting 'idx' or 'pack'", ext)),

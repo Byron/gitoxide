@@ -27,6 +27,16 @@ pub mod integrity {
             actual: BString,
         },
     }
+
+    /// Returned by [`index::File::verify_integrity()`][crate::index::File::verify_integrity()].
+    pub struct Outcome<P> {
+        /// The computed checksum of the index which matched the stored one.
+        pub actual_index_checksum: git_hash::ObjectId,
+        /// The packs traversal outcome, if one was provided
+        pub pack_traverse_outcome: Option<crate::index::traverse::Outcome>,
+        /// The provided progress instance.
+        pub progress: Option<P>,
+    }
 }
 
 ///
@@ -121,10 +131,7 @@ impl index::File {
         thread_limit: Option<usize>,
         progress: Option<P>,
         should_interrupt: &AtomicBool,
-    ) -> Result<
-        (git_hash::ObjectId, Option<index::traverse::Outcome>, Option<P>),
-        index::traverse::Error<crate::index::verify::integrity::Error>,
-    >
+    ) -> Result<integrity::Outcome<P>, index::traverse::Error<crate::index::verify::integrity::Error>>
     where
         P: Progress,
         C: crate::cache::DecodeEntry,
@@ -155,11 +162,19 @@ impl index::File {
                         should_interrupt,
                     },
                 )
-                .map(|(id, outcome, root)| (id, Some(outcome), root)),
+                .map(|(id, outcome, root)| integrity::Outcome {
+                    actual_index_checksum: id,
+                    pack_traverse_outcome: Some(outcome),
+                    progress: root,
+                }),
             None => self
                 .verify_checksum(root.add_child("Sha1 of index"), should_interrupt)
                 .map_err(Into::into)
-                .map(|id| (id, None, root.into_inner())),
+                .map(|id| integrity::Outcome {
+                    actual_index_checksum: id,
+                    pack_traverse_outcome: None,
+                    progress: root.into_inner(),
+                }),
         }
     }
 
