@@ -283,7 +283,7 @@ pub fn main() -> Result<()> {
             verbose,
             progress,
             progress_keep_open,
-            None,
+            verify::PROGRESS_RANGE,
             move |progress, out, err| {
                 let mode = match (decode, re_encode) {
                     (true, false) => verify::Mode::HashCrc32Decode,

@@ -10,6 +10,7 @@ use git_repository::{
     Progress,
 };
 pub use index::verify::Mode;
+pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 use crate::OutputFormat;
 

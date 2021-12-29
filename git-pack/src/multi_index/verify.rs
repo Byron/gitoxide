@@ -81,16 +81,25 @@ impl File {
             .map_err(crate::index::traverse::Error::Processor)?;
 
         let mut pack_traverse_outcomes = Vec::new();
+
+        progress.set_name("Validating");
+        let start = std::time::Instant::now();
+
+        progress.init(
+            Some(self.num_indices as usize),
+            git_features::progress::count("indices"),
+        );
         for index_file_name in &self.index_names {
+            progress.inc();
             let bundle = crate::Bundle::at(parent.join(index_file_name), self.object_hash)
                 .map_err(integrity::Error::from)
                 .map_err(crate::index::traverse::Error::Processor)?;
 
-            progress.set_name(index_file_name.display().to_string());
+            let progress = progress.add_child(index_file_name.display().to_string());
             let crate::bundle::verify::integrity::Outcome {
                 actual_index_checksum: _,
                 pack_traverse_outcome,
-                progress: used_progress,
+                progress: _,
             } = bundle
                 .verify_integrity(
                     verify_mode,
@@ -135,8 +144,9 @@ impl File {
                     }
                 })?;
             pack_traverse_outcomes.push(pack_traverse_outcome);
-            progress = used_progress;
         }
+
+        progress.show_throughput(start);
 
         Ok(integrity::Outcome {
             actual_index_checksum,
