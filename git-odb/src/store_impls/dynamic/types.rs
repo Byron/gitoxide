@@ -411,6 +411,8 @@ pub struct Metrics {
     /// This allows to keep files available while they are still potentially required for operations like pack generation, despite
     /// the file on disk being removed or changed.
     pub unreachable_indices: usize,
+    /// Equivalent to `unreachable_indices`, but for mapped packed data files
+    pub unreachable_packs: usize,
     /// The amount of loose object databases currently available for object retrieval.
     ///
     /// There may be more than one if 'alternates' are used.

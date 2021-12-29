@@ -13,6 +13,7 @@ impl super::Store {
         let mut known_indices = 0;
         let mut unused_slots = 0;
         let mut unreachable_indices = 0;
+        let mut unreachable_packs = 0;
 
         let index = self.index.load();
         for f in index.slot_indices.iter().map(|idx| &self.files[*idx]) {
@@ -51,6 +52,18 @@ impl super::Store {
                 Some(bundle) => {
                     if bundle.is_disposable() {
                         unreachable_indices += 1;
+                        unreachable_packs += match bundle {
+                            IndexAndPacks::Index(single) => {
+                                if single.data.is_loaded() {
+                                    1
+                                } else {
+                                    0
+                                }
+                            }
+                            IndexAndPacks::MultiIndex(multi) => {
+                                multi.data.iter().map(|p| if p.is_loaded() { 1 } else { 0 }).sum()
+                            }
+                        }
                     }
                 }
             }
@@ -67,6 +80,7 @@ impl super::Store {
             unused_slots,
             loose_dbs: index.loose_dbs.len(),
             unreachable_indices,
+            unreachable_packs,
         }
     }
 }

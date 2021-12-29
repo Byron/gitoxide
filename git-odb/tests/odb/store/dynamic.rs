@@ -26,7 +26,8 @@ fn multi_index_access() {
             known_packs: 0,
             unused_slots: 32,
             loose_dbs: 0,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "it starts out knowing nothing, it's completely lazy"
     );
@@ -52,7 +53,8 @@ fn multi_index_access() {
             known_packs: 1,
             unused_slots: 31,
             loose_dbs: 1,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "it opened only a single multi-index and its pack - hard to see it's actually a multi-index as it's just one index anyway…"
     );
@@ -71,7 +73,8 @@ fn multi_index_access() {
             known_packs: 1,
             unused_slots: 31,
             loose_dbs: 1,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "A miss means just another refresh with no other change"
     );
@@ -94,16 +97,75 @@ fn multi_index_access() {
             known_packs: 1,
             unused_slots: 31,
             loose_dbs: 1,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "everything seems to remain as it was, even though we moved our multi-index to a new slot and removed the old one"
     );
 }
 
 #[test]
-#[ignore]
 fn multi_index_keep_open() {
-    todo!("prevent unloading the previous multi-index and show 'old' locations stay accessible")
+    let dir = git_testtools::scripted_fixture_repo_writable("make_repo_multi_index.sh").unwrap();
+    let (stable_handle, handle) = {
+        let mut stable_handle = git_odb::at(dir.path().join(".git/objects")).unwrap();
+        let handle = stable_handle.clone();
+        stable_handle.prevent_pack_unload();
+        (stable_handle, handle)
+    };
+    let oid = handle.iter().unwrap().next().expect("first oid").unwrap();
+
+    assert_eq!(
+        handle.store_ref().metrics(),
+        git_odb::store::Metrics {
+            num_handles: 2,
+            num_refreshes: 1,
+            open_reachable_indices: 1,
+            known_reachable_indices: 1,
+            open_reachable_packs: 0,
+            known_packs: 1,
+            unused_slots: 31,
+            loose_dbs: 1,
+            unreachable_indices: 0,
+            unreachable_packs: 0
+        },
+        "it opened the multi-pack index for iteration"
+    );
+    let mut buf = Vec::new();
+    use git_pack::{Find, FindExt};
+    let location = stable_handle
+        .location_by_oid(oid, &mut buf)
+        .expect("oid exists and is packed");
+
+    let non_existing_to_trigger_refresh = hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    filetime::set_file_mtime(
+        handle.store_ref().path().join("pack/multi-pack-index"),
+        filetime::FileTime::now(),
+    )
+    .unwrap();
+    git_odb::Find::contains(&handle, non_existing_to_trigger_refresh);
+
+    assert_eq!(
+        handle.store_ref().metrics(),
+        git_odb::store::Metrics {
+            num_handles: 2,
+            num_refreshes: 3,
+            open_reachable_indices: 1,
+            known_reachable_indices: 1,
+            open_reachable_packs: 0, /*no pack is open anymore at least as seen from the index*/
+            known_packs: 1,
+            unused_slots: 30,
+            loose_dbs: 1,
+            unreachable_indices: 1,
+            unreachable_packs: 1
+        },
+        "now there is an unreachable index and pack which is still loaded, but whose pack hasn't been loaded"
+    );
+
+    assert!(
+        git_odb::pack::Find::entry_by_location(&stable_handle, &location).is_some(),
+        "the entry can still be found even though the location is invalid"
+    );
 }
 
 #[test]
@@ -134,7 +196,8 @@ fn contains() {
             known_packs: 3,
             unused_slots: 29,
             loose_dbs: 1,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "it only refreshed the file list, yielding the loose db to find this object, but no pack was opened yet"
     );
@@ -153,7 +216,8 @@ fn contains() {
             known_packs: 3,
             unused_slots: 29,
             loose_dbs: 1,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "it loaded the biggest back only, which is the first in the list"
     );
@@ -174,7 +238,8 @@ fn contains() {
             known_packs: 3,
             unused_slots: 29,
             loose_dbs: 1,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "when asking for an object in the smallest pack, all inbetween packs are also loaded."
     );
@@ -191,7 +256,8 @@ fn contains() {
             known_packs: 3,
             unused_slots: 29,
             loose_dbs: 1,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "trigger refreshes each time there is an object miss"
     );
@@ -209,7 +275,8 @@ fn contains() {
             known_packs: 3,
             unused_slots: 29,
             loose_dbs: 1,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "if no refreshes are allowed, there is no additional refresh"
     );
@@ -236,7 +303,8 @@ fn lookup() {
             known_packs: 0,
             unused_slots: 32,
             loose_dbs: 0,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "nothing happened yet, the store is totally lazy"
     );
@@ -256,6 +324,7 @@ fn lookup() {
         unused_slots: 29,
         loose_dbs: 1,
         unreachable_indices: 0,
+        unreachable_packs: 0,
     };
     assert_eq!(
         handle.store_ref().metrics(),
@@ -305,7 +374,8 @@ fn missing_objects_triggers_everything_is_loaded() {
             known_packs: 3,
             unused_slots: 29,
             loose_dbs: 1,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "first refresh triggered by on-disk check, second refresh triggered to see if something changed, contains() only sees indices"
     );
@@ -326,7 +396,8 @@ fn missing_objects_triggers_everything_is_loaded() {
             known_packs: 3,
             unused_slots: 29,
             loose_dbs: 1,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "there are still no packs opened as no index contained the object"
     );
@@ -394,7 +465,8 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
             known_packs: 1,
             unused_slots: 31,
             loose_dbs: 1,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "one pack was opened"
     );
@@ -418,7 +490,8 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
             known_packs: 1,
             unused_slots: 31,
             loose_dbs: 1,
-            unreachable_indices: 0
+            unreachable_indices: 0,
+            unreachable_packs: 0
         },
         "the old pack was removed, the new was loaded"
     );
@@ -455,7 +528,8 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
                 known_packs: 1,
                 unused_slots: 30,
                 loose_dbs: 1,
-                unreachable_indices: 1
+                unreachable_indices: 1,
+                unreachable_packs: 1
             },
             "the removed pack is still loaded"
         );
@@ -489,7 +563,8 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
             known_packs: 1,
             unused_slots: 30,
             loose_dbs: 1,
-            unreachable_indices: 1
+            unreachable_indices: 1,
+            unreachable_packs: 1
         },
         "garbaged slots aren't reclaimed until there is the need. Keeping indices open despite them not being accessible anymore."
     );
