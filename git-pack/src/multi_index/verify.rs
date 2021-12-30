@@ -42,7 +42,7 @@ pub mod integrity {
         /// The computed checksum of the multi-index which matched the stored one.
         pub actual_index_checksum: git_hash::ObjectId,
         /// The for each entry in [`index_names()`][super::File::index_names()] provide the corresponding pack traversal outcome.
-        pub pack_traverse_outcomes: Vec<crate::index::traverse::Outcome>,
+        pub pack_traverse_outcomes: Vec<crate::index::traverse::Statistics>,
         /// The provided progress instance.
         pub progress: P,
     }

@@ -32,7 +32,7 @@ pub struct Reducer<'a, P, E> {
     check: traverse::SafetyCheck,
     then: Instant,
     entries_seen: usize,
-    stats: traverse::Outcome,
+    stats: traverse::Statistics,
     should_interrupt: &'a AtomicBool,
     _error: std::marker::PhantomData<E>,
 }
@@ -47,7 +47,7 @@ where
         check: traverse::SafetyCheck,
         should_interrupt: &'a AtomicBool,
     ) -> Self {
-        let stats = traverse::Outcome {
+        let stats = traverse::Statistics {
             pack_size: pack_data_len_in_bytes as u64,
             ..Default::default()
         };
@@ -70,7 +70,7 @@ where
 {
     type Input = Result<Vec<data::decode_entry::Outcome>, traverse::Error<E>>;
     type FeedProduce = ();
-    type Output = traverse::Outcome;
+    type Output = traverse::Statistics;
     type Error = traverse::Error<E>;
 
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {

@@ -15,7 +15,7 @@ mod error;
 pub use error::Error;
 
 mod types;
-pub use types::{Algorithm, Outcome, SafetyCheck};
+pub use types::{Algorithm, SafetyCheck, Statistics};
 
 mod options {
     use std::sync::atomic::AtomicBool;
@@ -38,6 +38,16 @@ mod options {
     }
 }
 pub use options::Options;
+
+/// The outcome of the [`traverse()`][index::File::traverse()] method.
+pub struct Outcome<P> {
+    /// The checksum obtained when hashing the file, which matched the checksum contained within the file.
+    pub actual_index_checksum: git_hash::ObjectId,
+    /// The statistics obtaine during traversal.
+    pub statistics: Statistics,
+    /// The input progress to allow reuse.
+    pub progress: P,
+}
 
 /// Traversal of pack data files using an index file
 impl index::File {
@@ -73,7 +83,7 @@ impl index::File {
             check,
             should_interrupt,
         }: Options<'_>,
-    ) -> Result<(git_hash::ObjectId, Outcome, P), Error<E>>
+    ) -> Result<Outcome<P>, Error<E>>
     where
         P: Progress,
         C: crate::cache::DecodeEntry,

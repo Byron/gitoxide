@@ -18,7 +18,7 @@ pub mod verify {
             /// The computed checksum of the index which matched the stored one.
             pub actual_index_checksum: git_hash::ObjectId,
             /// The packs traversal outcome
-            pub pack_traverse_outcome: crate::index::traverse::Outcome,
+            pub pack_traverse_outcome: crate::index::traverse::Statistics,
             /// The provided progress instance.
             pub progress: P,
         }
@@ -56,7 +56,7 @@ pub mod verify {
                 )
                 .map(|o| integrity::Outcome {
                     actual_index_checksum: o.actual_index_checksum,
-                    pack_traverse_outcome: o.pack_traverse_outcome.expect("pack is set"),
+                    pack_traverse_outcome: o.pack_traverse_statistics.expect("pack is set"),
                     progress: o.progress,
                 })
         }

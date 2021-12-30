@@ -214,7 +214,7 @@ mod file {
             (
                 INDEX_V2,
                 PACK_FOR_INDEX_V2,
-                index::traverse::Outcome {
+                index::traverse::Statistics {
                     average: Outcome {
                         kind: object::Kind::Tree,
                         num_deltas: 1,
@@ -244,7 +244,7 @@ mod file {
             (
                 INDEX_V1,
                 PACK_FOR_INDEX_V1,
-                index::traverse::Outcome {
+                index::traverse::Statistics {
                     average: Outcome {
                         kind: object::Kind::Tree,
                         num_deltas: 0,
@@ -269,7 +269,7 @@ mod file {
             (
                 SMALL_PACK_INDEX,
                 SMALL_PACK,
-                index::traverse::Outcome {
+                index::traverse::Statistics {
                     average: Outcome {
                         kind: object::Kind::Tree,
                         num_deltas: 0,
@@ -312,7 +312,7 @@ mod file {
                             progress::Discard,
                             &AtomicBool::new(false)
                         )
-                        .map(|o| (o.actual_index_checksum, o.pack_traverse_outcome))?,
+                        .map(|o| (o.actual_index_checksum, o.pack_traverse_statistics))?,
                         (idx.index_checksum(), Some(stats.to_owned())),
                         "{:?} -> {:?}",
                         algo,
@@ -412,7 +412,7 @@ mod file {
                     progress::Discard,
                     &AtomicBool::new(false)
                 )
-                .map(|o| (o.actual_index_checksum, o.pack_traverse_outcome))?,
+                .map(|o| (o.actual_index_checksum, o.pack_traverse_statistics))?,
                 (idx.index_checksum(), None)
             );
             assert_eq!(idx.index_checksum(), hex_to_id(index_checksum));

@@ -6,6 +6,7 @@ use std::{
 use git_features::{parallel, progress::Progress};
 
 use super::{Error, SafetyCheck};
+use crate::index::traverse::Outcome;
 use crate::{
     cache::delta::traverse::Context,
     index::{self, util::index_entries_sorted_by_offset_ascending},
@@ -25,7 +26,7 @@ impl index::File {
         mut progress: P,
         pack: &crate::data::File,
         should_interrupt: &AtomicBool,
-    ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
+    ) -> Result<Outcome<P>, Error<E>>
     where
         P: Progress,
         Processor: FnMut(
@@ -122,9 +123,11 @@ impl index::File {
                 Ok(outcome)
             },
         );
-        let id = verify_result?;
-        let outcome = traversal_result?;
-        Ok((id, outcome, progress))
+        Ok(Outcome {
+            actual_index_checksum: verify_result?,
+            statistics: traversal_result?,
+            progress,
+        })
     }
 }
 
@@ -150,8 +153,8 @@ impl From<crate::index::Entry> for Entry {
     }
 }
 
-fn digest_statistics(items: VecDeque<crate::cache::delta::Item<Entry>>) -> index::traverse::Outcome {
-    let mut res = index::traverse::Outcome::default();
+fn digest_statistics(items: VecDeque<crate::cache::delta::Item<Entry>>) -> index::traverse::Statistics {
+    let mut res = index::traverse::Statistics::default();
     let average = &mut res.average;
     for item in &items {
         res.total_compressed_entries_size += item.data.compressed_size;

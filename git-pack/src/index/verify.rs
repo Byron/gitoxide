@@ -37,7 +37,7 @@ pub mod integrity {
         /// The computed checksum of the index which matched the stored one.
         pub actual_index_checksum: git_hash::ObjectId,
         /// The packs traversal outcome, if one was provided
-        pub pack_traverse_outcome: Option<crate::index::traverse::Outcome>,
+        pub pack_traverse_statistics: Option<crate::index::traverse::Statistics>,
         /// The provided progress instance.
         pub progress: P,
     }
@@ -174,17 +174,17 @@ impl index::File {
                         should_interrupt,
                     },
                 )
-                .map(|(id, outcome, progress)| integrity::Outcome {
-                    actual_index_checksum: id,
-                    pack_traverse_outcome: Some(outcome),
-                    progress,
+                .map(|o| integrity::Outcome {
+                    actual_index_checksum: o.actual_index_checksum,
+                    pack_traverse_statistics: Some(o.statistics),
+                    progress: o.progress,
                 }),
             None => self
                 .verify_checksum(progress.add_child("Sha1 of index"), should_interrupt)
                 .map_err(Into::into)
                 .map(|id| integrity::Outcome {
                     actual_index_checksum: id,
-                    pack_traverse_outcome: None,
+                    pack_traverse_statistics: None,
                     progress,
                 }),
         }

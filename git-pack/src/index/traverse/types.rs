@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 
-/// The outcome of the [`traverse()`][crate::index::File::traverse()] method
+/// Statistics regarding object encountered during execution of the [`traverse()`][crate::index::File::traverse()] method.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Outcome {
+pub struct Statistics {
     /// The average over all decoded objects
     pub average: crate::data::decode_entry::Outcome,
     /// A mapping of the length of the chain to the amount of objects at that length.
@@ -29,9 +29,9 @@ pub struct Outcome {
     pub num_blobs: u32,
 }
 
-impl Default for Outcome {
+impl Default for Statistics {
     fn default() -> Self {
-        Outcome {
+        Statistics {
             average: crate::data::decode_entry::Outcome::default_from_kind(git_object::Kind::Tree),
             objects_per_chain_length: Default::default(),
             total_compressed_entries_size: 0,

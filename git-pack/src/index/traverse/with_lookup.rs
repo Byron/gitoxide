@@ -26,6 +26,7 @@ mod options {
 }
 use std::sync::atomic::Ordering;
 
+use crate::index::traverse::Outcome;
 use git_features::threading::{lock, Mutable, OwnShared};
 pub use options::Options;
 
@@ -46,7 +47,7 @@ impl index::File {
             check,
             should_interrupt,
         }: Options<'_>,
-    ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
+    ) -> Result<Outcome<P>, Error<E>>
     where
         P: Progress,
         C: crate::cache::DecodeEntry,
@@ -144,8 +145,10 @@ impl index::File {
                 )
             },
         );
-        let id = verify_result?;
-        let res = traversal_result?;
-        Ok((id, res, progress))
+        Ok(Outcome {
+            actual_index_checksum: verify_result?,
+            statistics: traversal_result?,
+            progress,
+        })
     }
 }
