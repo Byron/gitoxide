@@ -58,6 +58,17 @@ pub mod index_names {
         // about it we couldn't read this chunk data at all.
         Ok(out)
     }
+
+    /// Calculate the size on disk for our chunk with the given index paths. Note that these are expected to have been processed already
+    /// to actually be file names.
+    pub fn storage_size(_paths: impl IntoIterator<Item = impl AsRef<Path>>) -> u64 {
+        todo!("path computation with padding")
+    }
+
+    /// Write all `paths` in order to `out`.
+    pub fn write(_paths: impl IntoIterator<Item = impl AsRef<Path>>, _out: impl std::io::Write) -> std::io::Result<()> {
+        todo!("write path names")
+    }
 }
 
 /// Information for the chunk with the fanout table

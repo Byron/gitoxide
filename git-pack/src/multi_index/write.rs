@@ -1,6 +1,8 @@
 #![allow(missing_docs, unused)]
+
 use crate::multi_index;
 use git_features::progress::Progress;
+use std::io::Write;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 
@@ -37,11 +39,38 @@ impl multi_index::File {
     where
         P: Progress,
     {
-        let out = git_features::hash::Write::new(out, object_hash);
-        let index_paths_sorted = {
+        let mut out = git_features::hash::Write::new(out, object_hash);
+        let (index_paths_sorted, index_filenames_sorted) = {
             index_paths.sort();
-            index_paths
+            let file_names = index_paths
+                .iter()
+                .map(|p| PathBuf::from(p.file_name().expect("file name present")))
+                .collect::<Vec<_>>();
+            (index_paths, file_names)
         };
-        todo!()
+        let mut cf = git_chunk::file::Index::for_writing();
+        cf.plan_chunk(
+            multi_index::chunk::index_names::ID,
+            multi_index::chunk::index_names::storage_size(&index_filenames_sorted),
+        );
+        let mut chunk_write = cf.into_write(&mut out)?;
+        while let Some(chunk_to_write) = chunk_write.next_chunk() {
+            match chunk_to_write {
+                multi_index::chunk::index_names::ID => {
+                    multi_index::chunk::index_names::write(&index_filenames_sorted, &mut chunk_write)?
+                }
+                unknown => unreachable!("BUG: forgot to implement chunk {:?}", std::str::from_utf8(&unknown)),
+            }
+        }
+
+        // write trailing checksum
+        let multi_index_checksum: git_hash::ObjectId = out.hash.digest().into();
+        let mut out = out.inner;
+        out.write_all(multi_index_checksum.as_slice())?;
+
+        Ok(Outcome {
+            multi_index_checksum,
+            progress,
+        })
     }
 }

@@ -97,7 +97,10 @@ impl file::Index {
             return Err(Error::MissingSentinelValue { actual: sentinel });
         }
 
-        Ok(file::Index { chunks })
+        Ok(file::Index {
+            chunks,
+            will_write: false,
+        })
     }
 }
 
