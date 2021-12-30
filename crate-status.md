@@ -35,6 +35,7 @@
         * [x] decode (zero copy)
         * [x] verify checksum
     * [x] simple and fast pack traversal
+        * [ ] [fast pack traversal works with ref-deltas](https://github.com/Byron/gitoxide/blob/8f9a55bb31af32b266d7c53426bc925361a627b2/git-pack/src/cache/delta/from_offsets.rs#L101-L105)
     * [x] decode
         * [x] full objects
         * [x] deltified objects
@@ -61,8 +62,9 @@
         * [x] indexed - optimal speed, but more memory
     * **advanced**
         * [ ] Multi-Pack index file (MIDX)
-            * [ ] read
+            * [x] read
             * [ ] write 
+            * [x] verify
         * [ ] 'bitmap' file
         * [ ] [special handling for networked packs](https://github.com/git/git/blob/89b43f80a514aee58b662ad606e6352e03eaeee4/packfile.c#L949:L949)
         * [ ] [detect and retry packed object reading](https://github.com/git/git/blob/89b43f80a514aee58b662ad606e6352e03eaeee4/packfile.c#L1268:L1268)
