@@ -7,9 +7,10 @@ pub mod index;
 pub type Offset = u64;
 
 /// A chunk file providing a table into the parent data.
+#[derive(Default)]
 pub struct Index {
     /// Validated chunks as defined by their index entries.
     ///
     /// Note that this list cannot be empty.
-    pub chunks: Vec<index::Entry>,
+    chunks: Vec<index::Entry>,
 }
