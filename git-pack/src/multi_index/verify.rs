@@ -7,6 +7,8 @@ use crate::multi_index::File;
 
 ///
 pub mod integrity {
+    use crate::multi_index::EntryIndex;
+
     /// Returned by [`multi_index::File::verify_integrity()`][crate::multi_index::File::verify_integrity()].
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]
@@ -28,7 +30,7 @@ pub mod integrity {
         #[error("{id} wasn't found in the index referenced in the multi-pack index")]
         OidNotFound { id: git_hash::ObjectId },
         #[error("The object id at multi-index entry {index} wasn't in order")]
-        OutOfOrder { index: u32 },
+        OutOfOrder { index: EntryIndex },
         #[error("The fan at index {index} is out of order as it's larger then the following value.")]
         Fan { index: usize },
         #[error("The multi-index claims to have no objects")]
@@ -158,7 +160,7 @@ impl File {
                 .map_err(integrity::Error::from)
                 .map_err(crate::index::traverse::Error::Processor)?;
 
-            let slice_end = pack_ids_slice.partition_point(|e| e.0 == pack_id as u32);
+            let slice_end = pack_ids_slice.partition_point(|e| e.0 == pack_id as crate::data::Id);
             let multi_index_entries_to_check = &pack_ids_slice[..slice_end];
             pack_ids_slice = &pack_ids_slice[slice_end..];
 
