@@ -191,7 +191,8 @@ pub fn pack_or_pack_index(
                 pack::index::traverse::Algorithm::DeltaTreeLookup
             }
         });
-    let (_, _, mut progress) = bundle
+
+    let pack::index::traverse::Outcome{mut progress, ..} = bundle
         .index
         .traverse(
             &bundle.pack,

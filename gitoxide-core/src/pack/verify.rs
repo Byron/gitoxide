@@ -168,7 +168,7 @@ where
                 progress,
                 should_interrupt,
             )
-            .map(|o| (o.actual_index_checksum, o.pack_traverse_outcome))
+            .map(|o| (o.actual_index_checksum, o.pack_traverse_statistics))
             .with_context(|| "Verification failure")?
         }
         "" => {
@@ -209,7 +209,7 @@ where
     Ok(())
 }
 
-fn print_statistics(out: &mut impl io::Write, stats: &index::traverse::Outcome) -> io::Result<()> {
+fn print_statistics(out: &mut impl io::Write, stats: &index::traverse::Statistics) -> io::Result<()> {
     writeln!(out, "objects per delta chain length")?;
     let mut chain_length_to_object: Vec<_> = stats.objects_per_chain_length.iter().map(|(a, b)| (*a, *b)).collect();
     chain_length_to_object.sort_by_key(|e| e.0);
