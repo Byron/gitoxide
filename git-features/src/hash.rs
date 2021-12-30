@@ -176,8 +176,8 @@ mod write {
         T: std::io::Write,
     {
         /// Create a new hash writer which hashes all bytes written to `inner` with a hash of `kind`.
-        pub fn new(inner: T, kind: git_hash::Kind) -> Self {
-            match kind {
+        pub fn new(inner: T, object_hash: git_hash::Kind) -> Self {
+            match object_hash {
                 git_hash::Kind::Sha1 => Write {
                     inner,
                     hash: Sha1::default(),
