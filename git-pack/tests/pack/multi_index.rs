@@ -74,12 +74,10 @@ mod verify {
         let (file, _) = multi_index();
         let outcome = file
             .verify_integrity(
-                git_pack::index::verify::Mode::HashCrc32DecodeEncode,
-                git_pack::index::traverse::Algorithm::DeltaTreeLookup,
                 || git_pack::cache::Never,
-                None,
                 progress::Discard,
                 &AtomicBool::new(false),
+                Default::default(),
             )
             .unwrap();
         assert_eq!(outcome.actual_index_checksum, file.checksum());
@@ -109,6 +107,66 @@ mod verify {
                 num_tags: 1,
                 num_blobs: 811
             }]
+        );
+    }
+}
+
+mod write {
+    use git_features::progress;
+    use git_testtools::{fixture_path, hex_to_id};
+    use std::path::PathBuf;
+    use std::sync::atomic::AtomicBool;
+
+    #[test]
+    #[ignore]
+    fn from_paths() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let input_indices = std::fs::read_dir(fixture_path("objects/pack"))
+            .unwrap()
+            .filter_map(|r| {
+                r.ok()
+                    .map(|e| e.path())
+                    .filter(|p| p.extension().and_then(|e| e.to_str()).unwrap_or("") == "idx")
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(input_indices.len(), 3);
+        let output_path = dir.path().join("multi-pack-index");
+        let mut out = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&output_path)
+            .unwrap();
+        let outcome = git_pack::multi_index::File::write_from_index_paths(
+            input_indices,
+            &mut out,
+            progress::Discard,
+            &AtomicBool::new(false),
+            git_pack::multi_index::write::Options {
+                object_hash: git_hash::Kind::Sha1,
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            outcome.multi_index_checksum,
+            hex_to_id("dddddddddddddddddddddddddddddddddddddddd")
+        );
+
+        let file = git_pack::multi_index::File::at(output_path).unwrap();
+        assert_eq!(file.num_indices(), 3);
+        assert_eq!(file.index_names(), vec![PathBuf::from("hello.idx")]);
+        assert_eq!(file.num_objects(), 42);
+        assert_eq!(file.checksum(), outcome.multi_index_checksum);
+        assert_eq!(
+            file.verify_integrity(
+                || git_pack::cache::Never,
+                progress::Discard,
+                &AtomicBool::new(false),
+                Default::default()
+            )
+            .unwrap()
+            .actual_index_checksum,
+            outcome.multi_index_checksum
         );
     }
 }

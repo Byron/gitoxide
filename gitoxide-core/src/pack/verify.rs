@@ -175,7 +175,7 @@ where
             match path.file_name() {
                 Some(file_name) if file_name == "multi-pack-index" => {
                     let multi_index = git::odb::pack::multi_index::File::at(path)?;
-                    let res = multi_index.verify_integrity(mode, algorithm.into(), cache, thread_limit, progress, should_interrupt)?;
+                    let res = multi_index.verify_integrity(cache, progress, should_interrupt, git::odb::pack::multi_index::verify::integrity::Options{verify_mode: mode, traversal: algorithm.into(),thread_limit })?;
                     match output_statistics {
                         Some(OutputFormat::Human) => {
                             for (index_name, stats) in multi_index.index_names().iter().zip(res.pack_traverse_outcomes) {

@@ -46,6 +46,17 @@ pub mod integrity {
         /// The provided progress instance.
         pub progress: P,
     }
+
+    /// Additional options to define how the integrity should be verified.
+    #[derive(Default)]
+    pub struct Options {
+        /// The thoroughness of the verification
+        pub verify_mode: crate::index::verify::Mode,
+        /// The way to traverse packs
+        pub traversal: crate::index::traverse::Algorithm,
+        /// The amount of theads to use of `Some(N)`, with `None|Some(0)` using all available cores are used.
+        pub thread_limit: Option<usize>,
+    }
 }
 
 ///
@@ -78,12 +89,14 @@ impl File {
     #[allow(unused)]
     pub fn verify_integrity<C, P>(
         &self,
-        verify_mode: crate::index::verify::Mode,
-        traversal: crate::index::traverse::Algorithm,
         make_pack_lookup_cache: impl Fn() -> C + Send + Clone,
-        thread_limit: Option<usize>,
         mut progress: P,
         should_interrupt: &AtomicBool,
+        integrity::Options {
+            verify_mode,
+            traversal,
+            thread_limit,
+        }: integrity::Options,
     ) -> Result<integrity::Outcome<P>, crate::index::traverse::Error<integrity::Error>>
     where
         P: Progress,

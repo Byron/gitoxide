@@ -42,6 +42,9 @@ pub struct File {
 }
 
 ///
+pub mod write;
+
+///
 mod access;
 
 ///

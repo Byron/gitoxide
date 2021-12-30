@@ -62,6 +62,12 @@ pub enum Mode {
     HashCrc32DecodeEncode,
 }
 
+impl Default for Mode {
+    fn default() -> Self {
+        Mode::HashCrc32DecodeEncode
+    }
+}
+
 /// Information to allow verifying the integrity of an index with the help of its corresponding pack.
 pub struct PackContext<'a, C, F>
 where
