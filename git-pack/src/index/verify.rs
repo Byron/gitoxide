@@ -15,6 +15,8 @@ pub mod integrity {
     pub enum Error {
         #[error("The fan at index {index} is out of order as it's larger then the following value.")]
         Fan { index: usize },
+        #[error("The index claims to have no objects")]
+        Empty,
         #[error("{kind} object {id} could not be decoded")]
         ObjectDecode {
             source: git_object::decode::Error,
@@ -140,10 +142,14 @@ impl index::File {
         F: Fn() -> C + Send + Clone,
     {
         if let Some(first_invalid) = crate::verify::fan(&self.fan) {
-            return Err(index::traverse::Error::Processor(
-                index::verify::integrity::Error::Fan { index: first_invalid },
-            ));
+            return Err(index::traverse::Error::Processor(integrity::Error::Fan {
+                index: first_invalid,
+            }));
         }
+        if self.num_objects == 0 {
+            return Err(crate::index::traverse::Error::Processor(integrity::Error::Empty));
+        }
+
         match pack {
             Some(PackContext {
                 data: pack,

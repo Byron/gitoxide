@@ -22,6 +22,8 @@ pub mod integrity {
         OutOfOrder { index: usize },
         #[error("The fan at index {index} is out of order as it's larger then the following value.")]
         Fan { index: usize },
+        #[error("The multi-index claims to have no objects")]
+        Empty,
     }
 
     /// Returned by [`multi_index::File::verify_integrity()`][crate::multi_index::File::verify_integrity()].
@@ -87,9 +89,13 @@ impl File {
             .map_err(crate::index::traverse::Error::Processor)?;
 
         if let Some(first_invalid) = crate::verify::fan(&self.fan) {
-            return Err(crate::index::traverse::Error::Processor(
-                crate::multi_index::verify::integrity::Error::Fan { index: first_invalid },
-            ));
+            return Err(crate::index::traverse::Error::Processor(integrity::Error::Fan {
+                index: first_invalid,
+            }));
+        }
+
+        if self.num_objects == 0 {
+            return Err(crate::index::traverse::Error::Processor(integrity::Error::Empty));
         }
 
         let mut pack_traverse_outcomes = Vec::new();
