@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::sync::atomic::AtomicBool;
 
 use git_features::progress::Progress;
@@ -10,6 +11,12 @@ pub mod integrity {
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]
     pub enum Error {
+        #[error("Object {id} should be at pack-offset {expected_pack_offset} but was found at {actual_pack_offset}")]
+        PackOffsetMismatch {
+            id: git_hash::ObjectId,
+            expected_pack_offset: u64,
+            actual_pack_offset: u64,
+        },
         #[error(transparent)]
         MultiIndexChecksum(#[from] crate::multi_index::verify::checksum::Error),
         #[error(transparent)]
@@ -18,8 +25,10 @@ pub mod integrity {
         BundleInit(#[from] crate::bundle::init::Error),
         #[error("Counted {actual} objects, but expected {expected} as per multi-index")]
         UnexpectedObjectCount { actual: usize, expected: usize },
-        #[error("The object at multi-index entry {index} didn't match the expected oid sort-order or pack-offset")]
-        OutOfOrder { index: usize },
+        #[error("{id} wasn't found in the index referenced in the multi-pack index")]
+        OidNotFound { id: git_hash::ObjectId },
+        #[error("The object id at multi-index entry {index} wasn't in order")]
+        OutOfOrder { index: u32 },
         #[error("The fan at index {index} is out of order as it's larger then the following value.")]
         Fan { index: usize },
         #[error("The multi-index claims to have no objects")]
@@ -107,17 +116,72 @@ impl File {
             Some(self.num_indices as usize),
             git_features::progress::count("indices"),
         );
-        let mut order_progress = progress.add_child("obtain oid and offset");
-        order_progress.init(
+
+        let order_start = std::time::Instant::now();
+        let mut our_progress = progress.add_child("checking oid order");
+        our_progress.init(
             Some(self.num_objects as usize),
             git_features::progress::count("objects"),
         );
-        let mut oids_and_offsets = Vec::with_capacity(self.num_objects as usize);
+
+        let mut pack_ids_and_offsets = Vec::with_capacity(self.num_objects as usize);
+        let mut total_objects_checked = 0;
+        for entry_index in 0..(self.num_objects - 1) {
+            let lhs = self.oid_at_index(entry_index);
+            let rhs = self.oid_at_index(entry_index + 1);
+
+            if rhs.cmp(lhs) != Ordering::Greater {
+                return Err(crate::index::traverse::Error::Processor(integrity::Error::OutOfOrder {
+                    index: entry_index,
+                }));
+            }
+            let (pack_id, _) = self.pack_id_and_pack_offset_at_index(entry_index);
+            pack_ids_and_offsets.push((pack_id, entry_index));
+            our_progress.inc();
+        }
+        {
+            let entry_index = self.num_objects - 1;
+            let (pack_id, _) = self.pack_id_and_pack_offset_at_index(entry_index);
+            pack_ids_and_offsets.push((pack_id, entry_index));
+        }
+        // sort by pack-id to allow handling all indices matching a pack while its open.
+        pack_ids_and_offsets.sort_by(|l, r| l.0.cmp(&r.0));
+        our_progress.show_throughput(order_start);
+
+        our_progress.set_name("verify object offsets");
+        our_progress.set(0);
+
+        let mut pack_ids_slice = pack_ids_and_offsets.as_slice();
         for (pack_id, index_file_name) in self.index_names.iter().enumerate() {
             progress.inc();
             let bundle = crate::Bundle::at(parent.join(index_file_name), self.object_hash)
                 .map_err(integrity::Error::from)
                 .map_err(crate::index::traverse::Error::Processor)?;
+
+            let slice_end = pack_ids_slice.partition_point(|e| e.0 == pack_id as u32);
+            let multi_index_entries_to_check = &pack_ids_slice[..slice_end];
+            pack_ids_slice = &pack_ids_slice[slice_end..];
+
+            for entry_id in multi_index_entries_to_check.iter().map(|e| e.1) {
+                let oid = self.oid_at_index(entry_id);
+                let (_, expected_pack_offset) = self.pack_id_and_pack_offset_at_index(entry_id);
+                let entry_in_bundle_index = bundle.index.lookup(oid).ok_or_else(|| {
+                    crate::index::traverse::Error::Processor(integrity::Error::OidNotFound { id: oid.to_owned() })
+                })?;
+                let actual_pack_offset = bundle.index.pack_offset_at_index(entry_in_bundle_index);
+                if actual_pack_offset != expected_pack_offset {
+                    return Err(crate::index::traverse::Error::Processor(
+                        integrity::Error::PackOffsetMismatch {
+                            id: oid.to_owned(),
+                            expected_pack_offset,
+                            actual_pack_offset,
+                        },
+                    ));
+                }
+                our_progress.inc();
+            }
+
+            total_objects_checked += multi_index_entries_to_check.len();
 
             let progress = progress.add_child(index_file_name.display().to_string());
             let crate::bundle::verify::integrity::Outcome {
@@ -168,51 +232,13 @@ impl File {
                     }
                 })?;
             pack_traverse_outcomes.push(pack_traverse_outcome);
-
-            oids_and_offsets.extend(
-                bundle
-                    .index
-                    .iter()
-                    .map(|e| (e.oid, e.pack_offset, pack_id as crate::multi_index::PackIndex)),
-            );
-            order_progress.inc_by(bundle.index.num_objects() as usize);
         }
 
-        let order_start = std::time::Instant::now();
-        order_progress.set_name("ordering by oid and deduplicating");
-        order_progress.set(0);
-        oids_and_offsets.sort_by(|l, r| l.0.cmp(&r.0));
-        oids_and_offsets.dedup_by(|l, r| l.0.eq(&r.0));
+        assert_eq!(
+            self.num_objects as usize, total_objects_checked,
+            "BUG: our slicing should allow to visit all objects"
+        );
 
-        if oids_and_offsets.len() != self.num_objects as usize {
-            return Err(crate::index::traverse::Error::Processor(
-                integrity::Error::UnexpectedObjectCount {
-                    actual: oids_and_offsets.len(),
-                    expected: self.num_objects as usize,
-                },
-            ));
-        }
-
-        order_progress.set_name("comparing oid and pack offset");
-        for (index, ((loid, lpack_offset, lpack_id), (roid, rpack_offset, rpack_id))) in oids_and_offsets
-            .into_iter()
-            .zip(self.iter().map(|e| (e.oid, e.pack_offset, e.pack_index)))
-            .enumerate()
-        {
-            if loid != roid || lpack_offset != rpack_offset || lpack_id != rpack_id {
-                if loid == roid && lpack_id != rpack_id {
-                    // Right now we can't properly determine which pack would be chosen if objects exists in multiple packs, hence
-                    // our comparison might be off here.
-                    // TODO: check how git does the comparison or get into multi-index writing to be more true to the source.
-                    continue;
-                }
-                return Err(crate::index::traverse::Error::Processor(integrity::Error::OutOfOrder {
-                    index,
-                }));
-            }
-        }
-        order_progress.inc_by(self.num_objects as usize);
-        order_progress.show_throughput(order_start);
         progress.show_throughput(start);
 
         Ok(integrity::Outcome {
