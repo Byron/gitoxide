@@ -8,7 +8,7 @@ use crate::{
 };
 
 /// Options for use in [`Store::at_opts()`].
-#[derive(Default, Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct Options {
     /// How to obtain a size for the slot map.
     pub slots: Slots,
@@ -16,6 +16,16 @@ pub struct Options {
     pub object_hash: git_hash::Kind,
     /// If false, no multi-pack indices will be used. If true, they will be used if their hash matches `object_hash`.
     pub use_multi_pack_index: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options {
+            slots: Default::default(),
+            object_hash: Default::default(),
+            use_multi_pack_index: true,
+        }
+    }
 }
 
 /// Configures the amount of slots in the index slotmap, which is fixed throughout the existence of the store.
@@ -74,18 +84,14 @@ impl Store {
                 let mut db_paths = crate::alternate::resolve(&objects_dir)
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                 db_paths.insert(0, objects_dir.clone());
-                let num_slots = super::Store::collect_indices_and_mtime_sorted_by_size(
-                    db_paths,
-                    None,
-                    use_multi_pack_index.then(|| object_hash),
-                )
-                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
-                .len();
+                let num_slots = super::Store::collect_indices_and_mtime_sorted_by_size(db_paths, None, None)
+                    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
+                    .len();
 
                 ((num_slots as f32 * multiplier) as usize).max(minimum)
             }
         };
-        if slot_count >= 1 << 15 {
+        if slot_count > crate::store::types::PackId::max_indices() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "Cannot use more than 1^15 slots",

@@ -134,7 +134,7 @@ where
     /// Return an iterator over all objects, first the ones in all packs of all linked databases (via alternates),
     /// followed by all loose objects.
     pub fn iter(&self) -> Result<AllObjects, dynamic::load_index::Error> {
-        AllObjects::new(self.store())
+        AllObjects::new(self.store_ref())
     }
 }
 

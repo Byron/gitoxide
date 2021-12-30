@@ -1,9 +1,6 @@
 use std::{
     collections::VecDeque,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
+    sync::atomic::{AtomicBool, Ordering},
 };
 
 use git_features::{parallel, progress::Progress};
@@ -27,7 +24,7 @@ impl index::File {
         new_processor: impl Fn() -> Processor + Send + Clone,
         mut progress: P,
         pack: &crate::data::File,
-        should_interrupt: Arc<AtomicBool>,
+        should_interrupt: &AtomicBool,
     ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
     where
         P: Progress,
@@ -41,17 +38,16 @@ impl index::File {
     {
         let (verify_result, traversal_result) = parallel::join(
             {
-                let pack_progress = progress.add_child("SHA1 of pack");
-                let index_progress = progress.add_child("SHA1 of index");
-                let should_interrupt = Arc::clone(&should_interrupt);
+                let pack_progress = progress.add_child(format!(
+                    "Hash of pack '{}'",
+                    pack.path().file_name().expect("pack has filename").to_string_lossy()
+                ));
+                let index_progress = progress.add_child(format!(
+                    "Hash of index '{}'",
+                    self.path.file_name().expect("index has filename").to_string_lossy()
+                ));
                 move || {
-                    let res = self.possibly_verify(
-                        pack,
-                        check,
-                        pack_progress,
-                        index_progress,
-                        Arc::clone(&should_interrupt),
-                    );
+                    let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
                     if res.is_err() {
                         should_interrupt.store(true, Ordering::SeqCst);
                     }
@@ -66,7 +62,7 @@ impl index::File {
                     |e| e.index_entry.pack_offset,
                     pack.path(),
                     progress.add_child("indexing"),
-                    &should_interrupt,
+                    should_interrupt,
                     |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
                     self.object_hash,
                 )?;
@@ -77,7 +73,7 @@ impl index::File {
                     progress.add_child("Resolving"),
                     progress.add_child("Decoding"),
                     thread_limit,
-                    &should_interrupt,
+                    should_interrupt,
                     pack.pack_end() as u64,
                     new_processor,
                     |data,

@@ -216,44 +216,35 @@ impl super::Store {
             .then(|| VecDeque::with_capacity(indices_by_modification_time.len()))
             .unwrap_or_default();
 
+        // Figure out this number based on what we see while handling the existing indices
         let mut num_loaded_indices = 0;
-        for (index_path, mtime) in indices_by_modification_time.into_iter().map(|(a, b, _)| (a, b)) {
-            match idx_by_index_path.remove(&index_path) {
+        for (index_info, mtime) in indices_by_modification_time.into_iter().map(|(a, b, _)| (a, b)) {
+            match idx_by_index_path.remove(index_info.path()) {
                 Some(slot_idx) => {
                     let slot = &self.files[slot_idx];
-                    if is_multipack_index(&index_path)
-                        && Option::as_ref(&slot.files.load())
-                            .map(|b| b.mtime() != mtime)
-                            .expect("slot is set or we wouldn't know it points to this file")
-                    {
+                    let files_guard = slot.files.load();
+                    let files =
+                        Option::as_ref(&files_guard).expect("slot is set or we wouldn't know it points to this file");
+                    if index_info.is_multi_index() && files.mtime() != mtime {
                         // we have a changed multi-pack index. We can't just change the existing slot as it may alter slot indices
                         // that are currently available. Instead we have to move what's there into a new slot, along with the changes,
                         // and later free the slot or dispose of the index in the slot (like we do for removed/missing files).
-                        index_paths_to_add.push_back((index_path, mtime, Some(slot_idx)));
+                        index_paths_to_add.push_back((index_info, mtime, Some(slot_idx)));
                         // If the current slot is loaded, the soon-to-be copied multi-index path will be loaded as well.
-                        if Option::as_ref(&slot.files.load())
-                            .map(|f| f.index_is_loaded())
-                            .expect("slot is set - see above")
-                        {
+                        if files.index_is_loaded() {
                             num_loaded_indices += 1;
                         }
                     } else {
                         // packs and indices are immutable, so no need to check modification times. Unchanged multi-pack indices also
-                        // are handled like this.
-                        if Self::assure_slot_matches_index(
-                            &write,
-                            slot,
-                            index_path,
-                            mtime,
-                            index.generation,
-                            false, /*allow init*/
-                        ) {
+                        // are handled like this just to be sure they are in the desired state. For these, the only way this could happen
+                        // is if somebody deletes and then puts back
+                        if Self::assure_slot_matches_index(&write, slot, index_info, mtime, index.generation) {
                             num_loaded_indices += 1;
                         }
                         new_slot_map_indices.push(slot_idx);
                     }
                 }
-                None => index_paths_to_add.push_back((index_path, mtime, None)),
+                None => index_paths_to_add.push_back((index_info, mtime, None)),
             }
         }
         let needs_stable_indices = self.maintain_stable_indices(&write);
@@ -267,13 +258,12 @@ impl super::Store {
         let mut num_indices_checked = 0;
         let mut needs_generation_change = false;
         let mut slot_indices_to_remove: Vec<_> = idx_by_index_path.into_values().collect();
-        while let Some((index_path, mtime, move_from_slot_idx)) = index_paths_to_add.pop_front() {
+        while let Some((mut index_info, mtime, move_from_slot_idx)) = index_paths_to_add.pop_front() {
             'increment_slot_index: loop {
                 if num_indices_checked == self.files.len() {
                     return Err(Error::InsufficientSlots {
                         current: self.files.len(),
-                        needed: index_paths_to_add.len() + 1,
-                        /*the one currently popped off*/
+                        needed: index_paths_to_add.len() + 1, /*the one currently popped off*/
                     });
                 }
                 let slot_index = next_possibly_free_index;
@@ -282,39 +272,48 @@ impl super::Store {
                 num_indices_checked += 1;
                 match move_from_slot_idx {
                     Some(move_from_slot_idx) => {
-                        debug_assert!(is_multipack_index(&index_path), "only set for multi-pack indices");
-                        if let Some(dest_was_empty) = self.try_copy_multi_pack_index(
+                        debug_assert!(index_info.is_multi_index(), "only set for multi-pack indices");
+                        if slot_index == move_from_slot_idx {
+                            // don't try to move onto ourselves
+                            continue 'increment_slot_index;
+                        }
+                        match Self::try_set_index_slot(
                             &write,
-                            move_from_slot_idx,
                             slot,
-                            index_path.clone(), // TODO: once this settles, consider to return this path if it does nothing or refactor the whole thing.
+                            index_info,
                             mtime,
                             index.generation,
                             needs_stable_indices,
                         ) {
-                            slot_indices_to_remove.push(move_from_slot_idx);
-                            new_slot_map_indices.push(slot_index);
-                            // To avoid handling out the wrong pack (due to reassigned pack ids), declare this a new generation.
-                            if !dest_was_empty {
-                                needs_generation_change = true;
+                            Ok(dest_was_empty) => {
+                                slot_indices_to_remove.push(move_from_slot_idx);
+                                new_slot_map_indices.push(slot_index);
+                                // To avoid handling out the wrong pack (due to reassigned pack ids), declare this a new generation.
+                                if !dest_was_empty {
+                                    needs_generation_change = true;
+                                }
+                                break 'increment_slot_index;
                             }
-                            break 'increment_slot_index;
+                            Err(unused_index_info) => index_info = unused_index_info,
                         }
                     }
                     None => {
-                        if let Some(dest_was_empty) = Self::try_set_single_index_slot(
+                        match Self::try_set_index_slot(
                             &write,
                             slot,
-                            index_path.clone(),
+                            index_info,
                             mtime,
                             index.generation,
                             needs_stable_indices,
                         ) {
-                            new_slot_map_indices.push(slot_index);
-                            if !dest_was_empty {
-                                needs_generation_change = true;
+                            Ok(dest_was_empty) => {
+                                new_slot_map_indices.push(slot_index);
+                                if !dest_was_empty {
+                                    needs_generation_change = true;
+                                }
+                                break 'increment_slot_index;
                             }
-                            break 'increment_slot_index;
+                            Err(unused_index_info) => index_info = unused_index_info,
                         }
                     }
                 }
@@ -370,10 +369,12 @@ impl super::Store {
                 }
             } else {
                 *files_mut = None;
-                // Not racy due to lock, generation must be set after unsetting the value.
-                slot.generation.store(0, Ordering::SeqCst);
             };
             slot.files.store(files);
+            if !needs_stable_indices {
+                // Not racy due to lock, generation must be set after unsetting the value AND storing it.
+                slot.generation.store(0, Ordering::SeqCst);
+            }
         }
 
         let new_index = self.index.load();
@@ -392,7 +393,7 @@ impl super::Store {
         db_paths: Vec<PathBuf>,
         initial_capacity: Option<usize>,
         multi_pack_index_object_hash: Option<git_hash::Kind>,
-    ) -> Result<Vec<(PathBuf, SystemTime, u64)>, Error> {
+    ) -> Result<Vec<(Either, SystemTime, u64)>, Error> {
         let mut indices_by_modification_time = Vec::with_capacity(initial_capacity.unwrap_or_default());
         for db_path in db_paths {
             let packs = db_path.join("pack");
@@ -401,19 +402,52 @@ impl super::Store {
                 Err(err) if err.kind() == std::io::ErrorKind::NotFound => continue,
                 Err(err) => return Err(err.into()),
             };
-            indices_by_modification_time.extend(
-                entries
-                    .filter_map(Result::ok)
-                    .filter_map(|e| e.metadata().map(|md| (e.path(), md)).ok())
-                    .filter(|(_, md)| md.file_type().is_file())
-                    .filter(|(p, _)| {
-                        let ext = p.extension();
-                        ext == Some(OsStr::new("idx"))
-                            || (multi_pack_index_object_hash.is_some() && ext.is_none() && is_multipack_index(p))
+            let indices = entries
+                .filter_map(Result::ok)
+                .filter_map(|e| e.metadata().map(|md| (e.path(), md)).ok())
+                .filter(|(_, md)| md.file_type().is_file())
+                .filter(|(p, _)| {
+                    let ext = p.extension();
+                    (ext == Some(OsStr::new("idx")) && p.with_extension("pack").is_file())
+                        || (multi_pack_index_object_hash.is_some() && ext.is_none() && is_multipack_index(p))
+                })
+                .map(|(p, md)| md.modified().map_err(Error::from).map(|mtime| (p, mtime, md.len())))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            let multi_index_info = multi_pack_index_object_hash.and_then(|hash| {
+                indices.iter().find_map(|(p, a, b)| {
+                    is_multipack_index(p)
+                        .then(|| {
+                            // we always open the multi-pack here to be able to remove indices
+                            git_pack::multi_index::File::at(p)
+                                .ok()
+                                .filter(|midx| midx.object_hash() == hash)
+                                .map(|midx| (midx, *a, *b))
+                        })
+                        .flatten()
+                })
+            });
+            if let Some((multi_index, mtime, flen)) = multi_index_info {
+                let index_names_in_multi_index: Vec<_> =
+                    multi_index.index_names().iter().map(|p| p.as_path()).collect();
+                let mut indices_not_in_multi_index: Vec<(Either, _, _)> = indices
+                    .into_iter()
+                    .filter_map(|(path, a, b)| {
+                        (path != multi_index.path()
+                            && !index_names_in_multi_index
+                                .contains(&Path::new(path.file_name().expect("file name present"))))
+                        .then(|| (Either::IndexPath(path), a, b))
                     })
-                    .map(|(p, md)| md.modified().map_err(Error::from).map(|mtime| (p, mtime, md.len())))
-                    .collect::<Result<Vec<_>, _>>()?,
-            );
+                    .collect();
+                indices_not_in_multi_index.insert(0, (Either::MultiIndexFile(Arc::new(multi_index)), mtime, flen));
+                indices_by_modification_time.extend(indices_not_in_multi_index);
+            } else {
+                indices_by_modification_time.extend(
+                    indices
+                        .into_iter()
+                        .filter_map(|(p, a, b)| (!is_multipack_index(&p)).then(|| (Either::IndexPath(p), a, b))),
+                )
+            }
         }
         // Unlike libgit2, do not sort by modification date, but by size and put the biggest indices first. That way
         // the chance to hit an object should be higher. We leave it to the handle to sort by LRU.
@@ -422,92 +456,52 @@ impl super::Store {
         Ok(indices_by_modification_time)
     }
 
-    /// Returns Some(true) if the slot was empty, or Some(false) if it was collected, None if it couldn't claim the slot.
-    fn try_set_single_index_slot(
-        lock: &parking_lot::MutexGuard<'_, ()>,
-        slot: &MutableIndexAndPack,
-        index_path: PathBuf,
-        mtime: SystemTime,
-        current_generation: Generation,
-        needs_stable_indices: bool,
-    ) -> Option<bool> {
-        match &**slot.files.load() {
-            Some(bundle) => {
-                debug_assert!(
-                    !is_multipack_index(&index_path),
-                    "multi-indices are not handled here, but use their own 'move' logic"
-                );
-                if !needs_stable_indices && bundle.is_disposable() {
-                    assert_ne!(
-                        bundle.index_path(),
-                        index_path,
-                        "BUG: an index of the same path must have been handled already"
-                    );
-                    // Need to declare this to be the future to avoid anything in that slot to be returned to people who
-                    // last saw the old state. They will then try to get a new index which by that time, might be happening
-                    // in time so they get the latest one. If not, they will probably get into the same situation again until
-                    // it finally succeeds. Alternatively, the object will be reported unobtainable, but at least it won't return
-                    // some other object.
-                    let next_generation = current_generation + 1;
-                    Self::set_slot_to_index(lock, slot, index_path, mtime, next_generation);
-                    Some(false)
-                } else {
-                    // A valid slot, taken by another file, keep looking
-                    None
-                }
-            }
-            None => {
-                // an entirely unused (or deleted) slot, free to take.
-                Self::assure_slot_matches_index(
-                    lock,
-                    slot,
-                    index_path,
-                    mtime,
-                    current_generation,
-                    true, /*may init*/
-                );
-                Some(true)
-            }
-        }
-    }
-
-    // returns Some<dest slot was empty> if the copy could happen because dest-slot was actually free or disposable , and Some(true) if it was empty
+    /// returns Ok<dest slot was empty> if the copy could happen because dest-slot was actually free or disposable , and Some(true) if it was empty
     #[allow(clippy::too_many_arguments, unused_variables)]
-    fn try_copy_multi_pack_index(
-        &self,
+    fn try_set_index_slot(
         lock: &parking_lot::MutexGuard<'_, ()>,
-        from_slot_idx: usize,
         dest_slot: &MutableIndexAndPack,
-        index_path: PathBuf,
+        index_info: Either,
         mtime: SystemTime,
         current_generation: Generation,
         needs_stable_indices: bool,
-    ) -> Option<bool> {
-        match &**dest_slot.files.load() {
+    ) -> Result<bool, Either> {
+        let (dest_slot_was_empty, generation) = match &**dest_slot.files.load() {
             Some(bundle) => {
-                if bundle.index_path() == index_path {
-                    // it's possible to see ourselves in case all slots are taken, but there are still a few more to look for.
-                    // This can only happen for multi-pack indices which are mutable in place.
-                    return None;
+                if bundle.index_path() == index_info.path() || (bundle.is_disposable() && needs_stable_indices) {
+                    // it might be possible to see ourselves in case all slots are taken, but there are still a few more destination
+                    // slots to look for.
+                    return Err(index_info);
                 }
-                todo!("copy to possibly disposable slot")
+                // Since we overwrite an existing slot, we have to increment the generation to prevent anyone from trying to use it while
+                // before we are replacing it with a different value.
+                // In detail:
+                // We need to declare this to be the future to avoid anything in that slot to be returned to people who
+                // last saw the old state. They will then try to get a new index which by that time, might be happening
+                // in time so they get the latest one. If not, they will probably get into the same situation again until
+                // it finally succeeds. Alternatively, the object will be reported unobtainable, but at least it won't return
+                // some other object.
+                (false, current_generation + 1)
             }
             None => {
-                // Do NOT copy the packs over, they need to be reopened to get the correct pack id matching the new slot map index.
-                // If we try are allowed to delete the original, and nobody has the pack referenced, it is closed which is preferred.
-                // Thus we simply always start new with packs in multi-pack indices.
-                // In the worst case this could mean duplicate file handle usage though as the old and the new index can't share
-                // packs due to the intrinsic id.
-                // Note that the ID is used for cache access, too, so it must be unique. It must also be mappable from pack-id to slotmap id.
-                todo!("copy/clone resources over, but leave the original alone for now")
+                // For multi-pack indices:
+                //   Do NOT copy the packs over, they need to be reopened to get the correct pack id matching the new slot map index.
+                //   If we are allowed to delete the original, and nobody has the pack referenced, it is closed which is preferred.
+                //   Thus we simply always start new with packs in multi-pack indices.
+                //   In the worst case this could mean duplicate file handle usage though as the old and the new index can't share
+                //   packs due to the intrinsic id.
+                //   Note that the ID is used for cache access, too, so it must be unique. It must also be mappable from pack-id to slotmap id.
+                (true, current_generation)
             }
-        }
+        };
+        Self::set_slot_to_index(lock, dest_slot, index_info, mtime, generation);
+        Ok(dest_slot_was_empty)
     }
 
     fn set_slot_to_index(
         _lock: &parking_lot::MutexGuard<'_, ()>,
         slot: &MutableIndexAndPack,
-        index_path: PathBuf,
+        index_info: Either,
         mtime: SystemTime,
         generation: Generation,
     ) {
@@ -517,25 +511,25 @@ impl super::Store {
         // set the generation before we actually change the value, otherwise readers of old generations could observe the new one.
         // We rather want them to turn around here and update their index, which, by that time, migth actually already be available.
         // If not, they would fail unable to load a pack or index they need, but that's preferred over returning wrong objects.
+        // Safety: can't race as we hold the lock, have to set the generation beforehand to help avoid others to observe the value.
         slot.generation.store(generation, Ordering::SeqCst);
-        *files_mut = Some(IndexAndPacks::new_by_index_path(index_path, mtime));
+        *files_mut = Some(index_info.into_index_and_packs(mtime));
         slot.files.store(files);
     }
 
-    /// Returns true if the index was loaded.
+    /// Returns true if the index was left in a loaded state.
     fn assure_slot_matches_index(
         _lock: &parking_lot::MutexGuard<'_, ()>,
         slot: &MutableIndexAndPack,
-        index_path: PathBuf,
+        index_info: Either,
         mtime: SystemTime,
         current_generation: Generation,
-        may_init: bool,
     ) -> bool {
         match Option::as_ref(&slot.files.load()) {
             Some(bundle) => {
                 assert_eq!(
                     bundle.index_path(),
-                    index_path,
+                    index_info.path(),
                     "Parallel writers cannot change the file the slot points to."
                 );
                 if bundle.is_disposable() {
@@ -544,11 +538,15 @@ impl super::Store {
                     // have them in a decent state now that we know/think they are there.
                     let _lock = slot.write.lock();
                     let mut files = slot.files.load_full();
-                    let files_mut = Arc::make_mut(&mut files);
-                    files_mut
+                    let files_mut = Arc::make_mut(&mut files)
                         .as_mut()
-                        .expect("BUG: cannot change from something to nothing, would be race")
-                        .put_back();
+                        .expect("BUG: cannot change from something to nothing, would be race");
+                    files_mut.put_back();
+                    debug_assert_eq!(
+                        files_mut.mtime(),
+                        mtime,
+                        "BUG: we can only put back files that didn't obviously change"
+                    );
                     // Safety: can't race as we hold the lock, must be set before replacing the data.
                     // NOTE that we don't change the generation as it's still the very same index we talk about, it doesn't change
                     // identity.
@@ -560,22 +558,7 @@ impl super::Store {
                 bundle.index_is_loaded()
             }
             None => {
-                if may_init {
-                    let _lock = slot.write.lock();
-                    let mut files = slot.files.load_full();
-                    let files_mut = Arc::make_mut(&mut files);
-                    assert!(
-                        files_mut.is_none(),
-                        "BUG: There must be no race between us checking and obtaining a lock."
-                    );
-                    *files_mut = IndexAndPacks::new_by_index_path(index_path, mtime).into();
-                    // Safety: can't race as we hold the lock.
-                    slot.generation.store(current_generation, Ordering::SeqCst);
-                    slot.files.store(files);
-                    false
-                } else {
-                    unreachable!("BUG: a slot can never be deleted if we have it recorded in the index WHILE changing said index. There shouldn't be a race")
-                }
+                unreachable!("BUG: a slot can never be deleted if we have it recorded in the index WHILE changing said index. There shouldn't be a race")
             }
         }
     }
@@ -644,5 +627,50 @@ struct IncOnDrop<'a>(&'a AtomicUsize);
 impl<'a> Drop for IncOnDrop<'a> {
     fn drop(&mut self) {
         self.0.fetch_add(1, Ordering::SeqCst);
+    }
+}
+
+pub(crate) enum Either {
+    IndexPath(PathBuf),
+    MultiIndexFile(Arc<git_pack::multi_index::File>),
+}
+
+impl Either {
+    fn path(&self) -> &Path {
+        match self {
+            Either::IndexPath(p) => p,
+            Either::MultiIndexFile(f) => f.path(),
+        }
+    }
+
+    fn into_index_and_packs(self, mtime: SystemTime) -> IndexAndPacks {
+        match self {
+            Either::IndexPath(path) => IndexAndPacks::new_single(path, mtime),
+            Either::MultiIndexFile(file) => IndexAndPacks::new_multi_from_open_file(file, mtime),
+        }
+    }
+
+    fn is_multi_index(&self) -> bool {
+        matches!(self, Either::MultiIndexFile(_))
+    }
+}
+
+impl Eq for Either {}
+
+impl PartialEq<Self> for Either {
+    fn eq(&self, other: &Self) -> bool {
+        self.path().eq(other.path())
+    }
+}
+
+impl PartialOrd<Self> for Either {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.path().partial_cmp(other.path())
+    }
+}
+
+impl Ord for Either {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.path().cmp(other.path())
     }
 }

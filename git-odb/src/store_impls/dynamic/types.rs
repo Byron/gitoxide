@@ -1,6 +1,4 @@
-#![allow(missing_docs)]
 use std::{
-    ffi::OsStr,
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicU16, AtomicU32, AtomicUsize, Ordering},
@@ -37,36 +35,44 @@ pub struct PackId {
     /// This is the index in the slot map at which the packs index is located.
     pub(crate) index: IndexId,
     /// If the pack is in a multi-pack index, this additional index is the pack-index within the multi-pack index identified by `index`.
-    pub(crate) multipack_index: Option<IndexId>,
+    pub(crate) multipack_index: Option<git_pack::multi_index::PackIndex>,
 }
 
 impl PackId {
+    /// Returns the maximum of indices we can represent.
+    pub(crate) const fn max_indices() -> usize {
+        (1 << 15) - 1
+    }
+    /// Returns the maximum of packs we can represent if stored in a multi-index.
+    pub(crate) const fn max_packs_in_multi_index() -> git_pack::multi_index::PackIndex {
+        (1 << 16) - 1
+    }
     /// Packs have a built-in identifier to make data structures simpler, and this method represents ourselves as such id
     /// to be convertible back and forth. We essentially compress ourselves into a u32.
-    pub(crate) fn to_intrinsic_pack_id(self) -> u32 {
-        assert!(self.index < 1 << 15, "There shouldn't be more than 2^15 indices");
+    pub(crate) fn to_intrinsic_pack_id(self) -> git_pack::data::Id {
+        assert!(self.index < (1 << 15), "There shouldn't be more than 2^15 indices");
         match self.multipack_index {
-            None => self.index as u32,
+            None => self.index as git_pack::data::Id,
             Some(midx) => {
                 assert!(
-                    midx < 1 << 16,
+                    midx <= Self::max_packs_in_multi_index(),
                     "There shouldn't be more than 2^16 packs per multi-index"
                 );
-                ((self.index | 1 << 15) | midx << 16) as u32
+                ((self.index as git_pack::data::Id | 1 << 15) | midx << 16) as git_pack::data::Id
             }
         }
     }
 
-    pub(crate) fn from_intrinsic_pack_id(pack_id: u32) -> Self {
+    pub(crate) fn from_intrinsic_pack_id(pack_id: git_pack::data::Id) -> Self {
         if pack_id & (1 << 15) == 0 {
             PackId {
-                index: pack_id as usize,
+                index: (pack_id & 0x7fff) as IndexId,
                 multipack_index: None,
             }
         } else {
             PackId {
                 index: (pack_id & 0x7fff) as IndexId,
-                multipack_index: Some((pack_id >> 16) as IndexId),
+                multipack_index: Some(pack_id >> 16),
             }
         }
     }
@@ -308,46 +314,65 @@ impl IndexAndPacks {
                         err => std::io::Error::new(std::io::ErrorKind::Other, err),
                     })
             }),
-            IndexAndPacks::MultiIndex(_bundle) => todo!("load multi-index"),
+            IndexAndPacks::MultiIndex(bundle) => {
+                bundle.multi_index.load_strict(|path| {
+                    git_pack::multi_index::File::at(path)
+                        .map(Arc::new)
+                        .map_err(|err| match err {
+                            git_pack::multi_index::init::Error::Io { source, .. } => source,
+                            err => std::io::Error::new(std::io::ErrorKind::Other, err),
+                        })
+                })?;
+                if let Some(multi_index) = bundle.multi_index.loaded() {
+                    bundle.data = Self::index_names_to_pack_paths(multi_index);
+                }
+                Ok(())
+            }
         }
     }
 
-    pub(crate) fn new_by_index_path(index_path: PathBuf, mtime: SystemTime) -> Self {
-        if index_path.extension() == Some(OsStr::new("idx")) {
-            IndexAndPacks::new_single(index_path, mtime)
-        } else {
-            IndexAndPacks::new_multi(index_path, mtime)
-        }
-    }
-
-    fn new_single(index_path: PathBuf, mtime: SystemTime) -> Self {
+    pub(crate) fn new_single(index_path: PathBuf, mtime: SystemTime) -> Self {
         let data_path = index_path.with_extension("pack");
         Self::Index(IndexFileBundle {
             index: OnDiskFile {
-                path: Arc::new(index_path),
+                path: index_path.into(),
                 state: OnDiskFileState::Unloaded,
                 mtime,
             },
             data: OnDiskFile {
-                path: Arc::new(data_path),
+                path: data_path.into(),
                 state: OnDiskFileState::Unloaded,
                 mtime,
             },
         })
     }
 
-    #[allow(unused, unreachable_code)]
-    fn new_multi(index_path: PathBuf, mtime: SystemTime) -> Self {
+    pub(crate) fn new_multi_from_open_file(multi_index: Arc<git_pack::multi_index::File>, mtime: SystemTime) -> Self {
+        let data = Self::index_names_to_pack_paths(&multi_index);
         Self::MultiIndex(MultiIndexFileBundle {
             multi_index: OnDiskFile {
-                path: Arc::new(index_path),
-                state: OnDiskFileState::Unloaded,
+                path: Arc::new(multi_index.path().to_owned()),
+                state: OnDiskFileState::Loaded(multi_index),
                 mtime,
             },
-            data: todo!(
-                "figure we actually have to map it here or find a way to learn about the data files in advance."
-            ),
+            data,
         })
+    }
+
+    fn index_names_to_pack_paths(
+        multi_index: &git_pack::multi_index::File,
+    ) -> Vec<OnDiskFile<Arc<git_pack::data::File>>> {
+        let parent_dir = multi_index.path().parent().expect("parent present");
+        let data = multi_index
+            .index_names()
+            .iter()
+            .map(|idx| OnDiskFile {
+                path: parent_dir.join(idx.with_extension("pack")).into(),
+                state: OnDiskFileState::Unloaded,
+                mtime: SystemTime::UNIX_EPOCH,
+            })
+            .collect();
+        data
     }
 }
 
@@ -364,14 +389,33 @@ pub(crate) struct MutableIndexAndPack {
 /// A snapshot about resource usage.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Metrics {
+    /// The total amount of handles which can be used to access object information.
     pub num_handles: usize,
+    /// The amount of refreshes performed to reconcile with the ODB state on disk.
     pub num_refreshes: usize,
+    /// The amount of indices that are currently open and will be returned to handles.
     pub open_reachable_indices: usize,
-    pub known_indices: usize,
+    /// The amount of reachable, known indices, which aren't opened yet.
+    pub known_reachable_indices: usize,
+    /// The amount of packs which are open in memory and will be returned to handles.
     pub open_reachable_packs: usize,
+    /// The amount of packs that are reachable and will be returned to handles. They aren't open yet.
     pub known_packs: usize,
+    /// The amount of slots which are empty.
+    ///
+    /// Over time these will fill, but they can be emptied as files are removed from disk.
     pub unused_slots: usize,
+    /// Unreachable indices are still using slots, but aren't returned to new handles anymore unless they still happen to
+    /// know their id.
+    ///
+    /// This allows to keep files available while they are still potentially required for operations like pack generation, despite
+    /// the file on disk being removed or changed.
     pub unreachable_indices: usize,
+    /// Equivalent to `unreachable_indices`, but for mapped packed data files
+    pub unreachable_packs: usize,
+    /// The amount of loose object databases currently available for object retrieval.
+    ///
+    /// There may be more than one if 'alternates' are used.
     pub loose_dbs: usize,
 }
 

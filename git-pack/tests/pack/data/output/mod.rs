@@ -35,7 +35,7 @@ fn db(kind: DbKind) -> crate::Result<git_odb::HandleArc> {
         .map_err(Into::into)
         .map(|store| {
             let mut cache = Arc::new(store).to_cache_arc();
-            cache.inner.prevent_pack_unload();
+            cache.prevent_pack_unload();
             cache
         })
 }

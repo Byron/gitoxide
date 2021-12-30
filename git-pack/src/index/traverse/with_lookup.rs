@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use git_features::{
     parallel::{self, in_parallel_if},
     progress::{self, unit, Progress},
@@ -9,13 +7,13 @@ use super::{Error, Reducer};
 use crate::{data, index, index::util};
 
 mod options {
-    use std::sync::{atomic::AtomicBool, Arc};
+    use std::sync::atomic::AtomicBool;
 
     use crate::index::traverse::SafetyCheck;
 
     /// Traversal options for [`traverse()`][crate::index::File::traverse_with_lookup()]
-    #[derive(Default, Debug, Clone)]
-    pub struct Options {
+    #[derive(Debug, Clone)]
+    pub struct Options<'a> {
         /// If `Some`, only use the given amount of threads. Otherwise, the amount of threads to use will be selected based on
         /// the amount of available logical cores.
         pub thread_limit: Option<usize>,
@@ -23,7 +21,7 @@ mod options {
         pub check: SafetyCheck,
         /// A flag to indicate whether the algorithm should be interrupted. Will be checked occasionally allow stopping a running
         /// computation.
-        pub should_interrupt: Arc<AtomicBool>,
+        pub should_interrupt: &'a AtomicBool,
     }
 }
 use std::sync::atomic::Ordering;
@@ -47,7 +45,7 @@ impl index::File {
             thread_limit,
             check,
             should_interrupt,
-        }: Options,
+        }: Options<'_>,
     ) -> Result<(git_hash::ObjectId, index::traverse::Outcome, P), Error<E>>
     where
         P: Progress,
@@ -62,17 +60,16 @@ impl index::File {
     {
         let (verify_result, traversal_result) = parallel::join(
             {
-                let pack_progress = progress.add_child("SHA1 of pack");
-                let index_progress = progress.add_child("SHA1 of index");
-                let should_interrupt = Arc::clone(&should_interrupt);
+                let pack_progress = progress.add_child(format!(
+                    "Hash of pack '{}'",
+                    pack.path().file_name().expect("pack has filename").to_string_lossy()
+                ));
+                let index_progress = progress.add_child(format!(
+                    "Hash of index '{}'",
+                    self.path.file_name().expect("index has filename").to_string_lossy()
+                ));
                 move || {
-                    let res = self.possibly_verify(
-                        pack,
-                        check,
-                        pack_progress,
-                        index_progress,
-                        Arc::clone(&should_interrupt),
-                    );
+                    let res = self.possibly_verify(pack, check, pack_progress, index_progress, should_interrupt);
                     if res.is_err() {
                         should_interrupt.store(true, Ordering::SeqCst);
                     }
@@ -120,6 +117,7 @@ impl index::File {
                             ))),
                         );
                         let mut stats = Vec::with_capacity(entries.len());
+                        progress.set(0);
                         for index_entry in entries.iter() {
                             let result = self.decode_and_process_entry(
                                 check,
@@ -142,7 +140,7 @@ impl index::File {
                         }
                         Ok(stats)
                     },
-                    Reducer::from_progress(reduce_progress, pack.data_len(), check, &should_interrupt),
+                    Reducer::from_progress(reduce_progress, pack.data_len(), check, should_interrupt),
                 )
             },
         );

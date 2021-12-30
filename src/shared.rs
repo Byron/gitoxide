@@ -49,6 +49,7 @@ pub mod pretty {
     use std::io::{stderr, stdout};
 
     use anyhow::Result;
+    use git_repository::progress;
 
     use crate::shared::ProgressRange;
 
@@ -59,12 +60,16 @@ pub mod pretty {
         #[cfg_attr(not(feature = "prodash-render-tui"), allow(unused_variables))] progress_keep_open: bool,
         #[cfg_attr(not(feature = "prodash-render-line"), allow(unused_variables))] range: impl Into<Option<ProgressRange>>,
         #[cfg(not(any(feature = "prodash-render-line", feature = "prodash-render-tui")))] run: impl FnOnce(
-            Option<prodash::progress::Log>,
+            progress::DoOrDiscard<prodash::progress::Log>,
             &mut dyn std::io::Write,
             &mut dyn std::io::Write,
         )
             -> Result<T>,
-        #[cfg(any(feature = "prodash-render-line", feature = "prodash-render-tui"))] run: impl FnOnce(Option<prodash::tree::Item>, &mut dyn std::io::Write, &mut dyn std::io::Write) -> Result<T>
+        #[cfg(any(feature = "prodash-render-line", feature = "prodash-render-tui"))] run: impl FnOnce(
+                progress::DoOrDiscard<prodash::tree::Item>,
+                &mut dyn std::io::Write,
+                &mut dyn std::io::Write,
+            ) -> Result<T>
             + Send
             + std::panic::UnwindSafe
             + 'static,
@@ -72,13 +77,17 @@ pub mod pretty {
         crate::shared::init_env_logger(false);
 
         match (verbose, progress) {
-            (false, false) => run(None, &mut stdout(), &mut stderr()),
+            (false, false) => run(progress::DoOrDiscard::from(None), &mut stdout(), &mut stderr()),
             (true, false) => {
                 let progress = crate::shared::progress_tree();
                 let sub_progress = progress.add_child(name);
                 #[cfg(not(feature = "prodash-render-line"))]
                 {
-                    run(Some(sub_progress), &mut stdout(), &mut stderr())
+                    run(
+                        progress::DoOrDiscard::from(Some(sub_progress)),
+                        &mut stdout(),
+                        &mut stderr(),
+                    )
                 }
                 #[cfg(feature = "prodash-render-line")]
                 {
@@ -105,7 +114,7 @@ pub mod pretty {
                     let join_handle = std::thread::spawn(move || {
                         let mut out = Vec::<u8>::new();
                         let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                            run(Some(sub_progress), &mut out, &mut stderr())
+                            run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut stderr())
                         }));
                         match res {
                             Ok(res) => tx.send(Event::ComputationDone(res, out)).ok(),
@@ -174,7 +183,7 @@ pub mod pretty {
                     // We might have something interesting to show, which would be hidden by the alternate screen if there is a progress TUI
                     // We know that the printing happens at the end, so this is fine.
                     let mut out = Vec::new();
-                    let res = run(Some(sub_progress), &mut out, &mut stderr());
+                    let res = run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut stderr());
                     tx.send(Event::ComputationDone(res, out)).ok();
                 });
                 loop {

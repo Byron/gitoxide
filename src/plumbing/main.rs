@@ -114,7 +114,6 @@ pub fn main() -> Result<()> {
                             core::pack::create::ObjectExpansion::None
                         }),
                     };
-                    let progress = git_features::progress::DoOrDiscard::from(progress);
                     core::pack::create(repository, tips, input, output_directory, progress, context)
                 },
             )
@@ -233,7 +232,7 @@ pub fn main() -> Result<()> {
                 core::pack::index::from_pack(
                     input,
                     directory,
-                    git_features::progress::DoOrDiscard::from(progress),
+                    progress,
                     core::pack::index::Context {
                         thread_limit,
                         iteration_mode,
@@ -284,12 +283,12 @@ pub fn main() -> Result<()> {
             verbose,
             progress,
             progress_keep_open,
-            None,
+            verify::PROGRESS_RANGE,
             move |progress, out, err| {
                 let mode = match (decode, re_encode) {
-                    (true, false) => verify::Mode::Sha1Crc32Decode,
-                    (true, true) | (false, true) => verify::Mode::Sha1Crc32DecodeEncode,
-                    (false, false) => verify::Mode::Sha1Crc32,
+                    (true, false) => verify::Mode::HashCrc32Decode,
+                    (true, true) | (false, true) => verify::Mode::HashCrc32DecodeEncode,
+                    (false, false) => verify::Mode::HashCrc32,
                 };
                 let output_statistics = if statistics { Some(format) } else { None };
                 verify::pack_or_pack_index(
@@ -302,7 +301,7 @@ pub fn main() -> Result<()> {
                         thread_limit,
                         mode,
                         algorithm,
-                        should_interrupt,
+                        should_interrupt: &should_interrupt,
                     },
                 )
             },

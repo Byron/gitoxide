@@ -1,9 +1,6 @@
-use std::sync::{atomic::AtomicBool, Arc};
+use std::sync::atomic::AtomicBool;
 
-use git_features::{
-    parallel,
-    progress::{self, Progress},
-};
+use git_features::{parallel, progress::Progress};
 
 use crate::index;
 
@@ -21,13 +18,13 @@ mod types;
 pub use types::{Algorithm, Outcome, SafetyCheck};
 
 mod options {
-    use std::sync::{atomic::AtomicBool, Arc};
+    use std::sync::atomic::AtomicBool;
 
     use crate::index::traverse::{Algorithm, SafetyCheck};
 
     /// Traversal options for [`traverse()`][crate::index::File::traverse()]
     #[derive(Debug, Clone)]
-    pub struct Options {
+    pub struct Options<'a> {
         /// The algorithm to employ.
         pub algorithm: Algorithm,
         /// If `Some`, only use the given amount of threads. Otherwise, the amount of threads to use will be selected based on
@@ -37,18 +34,7 @@ mod options {
         pub check: SafetyCheck,
         /// A flag to indicate whether the algorithm should be interrupted. Will be checked occasionally allow stopping a running
         /// computation.
-        pub should_interrupt: Arc<AtomicBool>,
-    }
-
-    impl Default for Options {
-        fn default() -> Self {
-            Self {
-                algorithm: Algorithm::Lookup,
-                thread_limit: Default::default(),
-                check: Default::default(),
-                should_interrupt: Default::default(),
-            }
-        }
+        pub should_interrupt: &'a AtomicBool,
     }
 }
 pub use options::Options;
@@ -78,7 +64,7 @@ impl index::File {
     pub fn traverse<P, C, Processor, E>(
         &self,
         pack: &crate::data::File,
-        progress: Option<P>,
+        progress: P,
         new_processor: impl Fn() -> Processor + Send + Clone,
         new_cache: impl Fn() -> C + Send + Clone,
         Options {
@@ -86,8 +72,8 @@ impl index::File {
             thread_limit,
             check,
             should_interrupt,
-        }: Options,
-    ) -> Result<(git_hash::ObjectId, Outcome, Option<P>), Error<E>>
+        }: Options<'_>,
+    ) -> Result<(git_hash::ObjectId, Outcome, P), Error<E>>
     where
         P: Progress,
         C: crate::cache::DecodeEntry,
@@ -96,10 +82,9 @@ impl index::File {
             git_object::Kind,
             &[u8],
             &index::Entry,
-            &mut progress::DoOrDiscard<<<P as Progress>::SubProgress as Progress>::SubProgress>,
+            &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
         ) -> Result<(), E>,
     {
-        let progress = progress::DoOrDiscard::from(progress);
         match algorithm {
             Algorithm::Lookup => self.traverse_with_lookup(
                 new_processor,
@@ -116,7 +101,6 @@ impl index::File {
                 self.traverse_with_index(check, thread_limit, new_processor, progress, pack, should_interrupt)
             }
         }
-        .map(|(a, b, p)| (a, b, p.into_inner()))
     }
 
     fn possibly_verify<E>(
@@ -125,7 +109,7 @@ impl index::File {
         check: SafetyCheck,
         pack_progress: impl Progress,
         index_progress: impl Progress,
-        should_interrupt: Arc<AtomicBool>,
+        should_interrupt: &AtomicBool,
     ) -> Result<git_hash::ObjectId, Error<E>>
     where
         E: std::error::Error + Send + Sync + 'static,
@@ -138,11 +122,8 @@ impl index::File {
                 });
             }
             let (pack_res, id) = parallel::join(
-                {
-                    let should_interrupt = Arc::clone(&should_interrupt);
-                    move || pack.verify_checksum(pack_progress, &should_interrupt)
-                },
-                move || self.verify_checksum(index_progress, &should_interrupt),
+                move || pack.verify_checksum(pack_progress, should_interrupt),
+                move || self.verify_checksum(index_progress, should_interrupt),
             );
             pack_res?;
             id?

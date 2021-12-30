@@ -4,7 +4,7 @@ use byteorder::{BigEndian, ByteOrder};
 
 use crate::{
     data,
-    index::{self, FAN_LEN},
+    index::{self, EntryIndex, FAN_LEN},
 };
 
 const N32_SIZE: usize = size_of::<u32>();
@@ -71,7 +71,7 @@ impl index::File {
     /// # Panics
     ///
     /// If `index` is out of bounds.
-    pub fn oid_at_index(&self, index: u32) -> &git_hash::oid {
+    pub fn oid_at_index(&self, index: EntryIndex) -> &git_hash::oid {
         let index = index as usize;
         let start = match self.version {
             index::Version::V2 => V2_HEADER_SIZE + index * self.hash_len,
@@ -85,7 +85,7 @@ impl index::File {
     /// # Panics
     ///
     /// If `index` is out of bounds.
-    pub fn pack_offset_at_index(&self, index: u32) -> data::Offset {
+    pub fn pack_offset_at_index(&self, index: EntryIndex) -> data::Offset {
         let index = index as usize;
         match self.version {
             index::Version::V2 => {
@@ -105,7 +105,7 @@ impl index::File {
     /// # Panics
     ///
     /// If `index` is out of bounds.
-    pub fn crc32_at_index(&self, index: u32) -> Option<u32> {
+    pub fn crc32_at_index(&self, index: EntryIndex) -> Option<u32> {
         let index = index as usize;
         match self.version {
             index::Version::V2 => {
@@ -118,7 +118,7 @@ impl index::File {
 
     /// Returns the `index` of the given hash for use with the [`oid_at_index()`][index::File::oid_at_index()],
     /// [`pack_offset_at_index()`][index::File::pack_offset_at_index()] or [`crc32_at_index()`][index::File::crc32_at_index()].
-    pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<u32> {
+    pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<EntryIndex> {
         let id = id.as_ref();
         let first_byte = id.first_byte() as usize;
         let mut upper_bound = self.fan[first_byte];

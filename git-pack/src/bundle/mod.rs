@@ -5,10 +5,24 @@ mod find;
 ///
 pub mod write;
 
-mod verify {
-    use std::sync::{atomic::AtomicBool, Arc};
+///
+pub mod verify {
+    use std::sync::atomic::AtomicBool;
 
     use git_features::progress::Progress;
+
+    ///
+    pub mod integrity {
+        /// Returned by [`Bundle::verify_integrity()`][crate::Bundle::verify_integrity()].
+        pub struct Outcome<P> {
+            /// The computed checksum of the index which matched the stored one.
+            pub actual_index_checksum: git_hash::ObjectId,
+            /// The packs traversal outcome
+            pub pack_traverse_outcome: crate::index::traverse::Outcome,
+            /// The provided progress instance.
+            pub progress: P,
+        }
+    }
 
     use crate::Bundle;
 
@@ -21,22 +35,30 @@ mod verify {
             traversal: crate::index::traverse::Algorithm,
             make_pack_lookup_cache: impl Fn() -> C + Send + Clone,
             thread_limit: Option<usize>,
-            progress: Option<P>,
-            should_interrupt: Arc<AtomicBool>,
-        ) -> Result<
-            (git_hash::ObjectId, Option<crate::index::traverse::Outcome>, Option<P>),
-            crate::index::traverse::Error<crate::index::verify::Error>,
-        >
+            progress: P,
+            should_interrupt: &AtomicBool,
+        ) -> Result<integrity::Outcome<P>, crate::index::traverse::Error<crate::index::verify::integrity::Error>>
         where
             P: Progress,
             C: crate::cache::DecodeEntry,
         {
-            self.index.verify_integrity(
-                Some((&self.pack, verify_mode, traversal, make_pack_lookup_cache)),
-                thread_limit,
-                progress,
-                should_interrupt,
-            )
+            self.index
+                .verify_integrity(
+                    Some(crate::index::verify::PackContext {
+                        data: &self.pack,
+                        verify_mode,
+                        traversal_algorithm: traversal,
+                        make_cache_fn: make_pack_lookup_cache,
+                    }),
+                    thread_limit,
+                    progress,
+                    should_interrupt,
+                )
+                .map(|o| integrity::Outcome {
+                    actual_index_checksum: o.actual_index_checksum,
+                    pack_traverse_outcome: o.pack_traverse_outcome.expect("pack is set"),
+                    progress: o.progress,
+                })
         }
     }
 }

@@ -11,7 +11,7 @@ use git_repository::{
     hash::ObjectId,
     objs, odb,
     odb::{loose, pack, Write},
-    progress, Progress,
+    Progress,
 };
 use quick_error::quick_error;
 
@@ -151,7 +151,7 @@ pub fn pack_or_pack_index(
     pack_path: impl AsRef<Path>,
     object_path: Option<impl AsRef<Path>>,
     check: SafetyCheck,
-    progress: Option<impl Progress>,
+    progress: impl Progress,
     Context {
         thread_limit,
         delete_pack,
@@ -191,7 +191,7 @@ pub fn pack_or_pack_index(
                 pack::index::traverse::Algorithm::DeltaTreeLookup
             }
         });
-    let mut progress = bundle
+    let (_, _, mut progress) = bundle
         .index
         .traverse(
             &bundle.pack,
@@ -200,7 +200,7 @@ pub fn pack_or_pack_index(
                 let object_path = object_path.map(|p| p.as_ref().to_owned());
                 move || {
                     let out = OutputWriter::new(object_path.clone(), sink_compress, object_hash);
-                    let object_verifier = if verify { object_path.as_ref().map(|path| loose::Store::at(path, object_hash)) } else { None };
+                    let loose_odb = verify.then(|| object_path.as_ref().map(|path| loose::Store::at(path, object_hash))).flatten();
                     let mut read_buf = Vec::new();
                     move |object_kind, buf, index_entry, progress| {
                         let written_id = out.write_buf(object_kind, buf).map_err(|err| {
@@ -220,7 +220,7 @@ pub fn pack_or_pack_index(
                                 return Err(Error::ObjectEncodeMismatch(object_kind, index_entry.oid, written_id));
                             }
                         }
-                        if let Some(verifier) = object_verifier.as_ref() {
+                        if let Some(verifier) = loose_odb.as_ref() {
                             let obj = verifier
                                 .try_find(written_id, &mut read_buf)
                                 .map_err(|err| Error::WrittenFileCorrupt(err, written_id))?
@@ -236,10 +236,9 @@ pub fn pack_or_pack_index(
                 algorithm,
                 thread_limit,
                 check: check.into(),
-                should_interrupt,
+                should_interrupt: &should_interrupt,
             },
         )
-        .map(|(_, _, c)| progress::DoOrDiscard::from(c))
         .with_context(|| "Failed to explode the entire pack - some loose objects may have been created nonetheless")?;
 
     let (index_path, data_path) = (bundle.index.path().to_owned(), bundle.pack.path().to_owned());

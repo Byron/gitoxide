@@ -4,6 +4,9 @@ use std::{convert::TryInto, path::Path};
 /// The offset to an entry into the pack data file, relative to its beginning.
 pub type Offset = u64;
 
+/// An identifier to uniquely identify all packs loaded within a known context or namespace.
+pub type Id = u32;
+
 use filebuffer::FileBuffer;
 
 /// An representing an full- or delta-object within a pack
@@ -63,7 +66,7 @@ pub struct File {
     /// If the same id is assigned (or reassigned) to different packs, pack creation or cache access will fail in hard-to-debug ways.
     ///
     /// This value is controlled by the owning object store, which can use it in whichever way it wants as long as the above constraints are met.
-    pub id: u32,
+    pub id: Id,
     version: Version,
     num_objects: u32,
     /// The size of the hash contained within. This is entirely determined by the caller, and repositories have to know which hash to use

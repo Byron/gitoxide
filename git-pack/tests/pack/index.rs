@@ -1,5 +1,8 @@
 mod file {
     const SHA1_SIZE: usize = git_hash::Kind::Sha1.len_in_bytes();
+
+    use std::sync::atomic::AtomicBool;
+
     use git_object::{self as object};
     use git_odb::pack;
 
@@ -200,9 +203,9 @@ mod file {
     ];
 
     static MODES: &[index::verify::Mode] = &[
-        index::verify::Mode::Sha1Crc32,
-        index::verify::Mode::Sha1Crc32Decode,
-        index::verify::Mode::Sha1Crc32DecodeEncode,
+        index::verify::Mode::HashCrc32,
+        index::verify::Mode::HashCrc32Decode,
+        index::verify::Mode::HashCrc32DecodeEncode,
     ];
 
     #[test]
@@ -299,12 +302,17 @@ mod file {
                 for mode in MODES {
                     assert_eq!(
                         idx.verify_integrity(
-                            Some((&pack, *mode, *algo, || cache::Never)),
+                            Some(git_pack::index::verify::PackContext {
+                                data: &pack,
+                                verify_mode: *mode,
+                                traversal_algorithm: *algo,
+                                make_cache_fn: || cache::Never
+                            }),
                             None,
-                            progress::Discard.into(),
-                            Default::default()
+                            progress::Discard,
+                            &AtomicBool::new(false)
                         )
-                        .map(|(a, b, _)| (a, b))?,
+                        .map(|o| (o.actual_index_checksum, o.pack_traverse_outcome))?,
                         (idx.index_checksum(), Some(stats.to_owned())),
                         "{:?} -> {:?}",
                         algo,
@@ -399,12 +407,12 @@ mod file {
             assert_eq!(idx.num_objects(), *num_objects);
             assert_eq!(
                 idx.verify_integrity(
-                    None::<(_, _, _, fn() -> cache::Never)>,
+                    None::<git_pack::index::verify::PackContext<'_, _, fn() -> cache::Never>>,
                     None,
-                    progress::Discard.into(),
-                    Default::default()
+                    progress::Discard,
+                    &AtomicBool::new(false)
                 )
-                .map(|(a, b, _)| (a, b))?,
+                .map(|o| (o.actual_index_checksum, o.pack_traverse_outcome))?,
                 (idx.index_checksum(), None)
             );
             assert_eq!(idx.index_checksum(), hex_to_id(index_checksum));

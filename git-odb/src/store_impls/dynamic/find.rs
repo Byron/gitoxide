@@ -117,10 +117,8 @@ where
                                 entry,
                                 buffer,
                                 |id, _out| {
-                                    index_file.lookup(id).map(|idx| {
-                                        git_pack::data::ResolvedBase::InPack(
-                                            pack.entry(index_file.pack_offset_at_index(idx)),
-                                        )
+                                    index_file.pack_offset_by_id(id).map(|pack_offset| {
+                                        git_pack::data::ResolvedBase::InPack(pack.entry(pack_offset))
                                     })
                                 },
                                 pack_cache,
