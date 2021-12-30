@@ -117,6 +117,7 @@ impl index::File {
                             ))),
                         );
                         let mut stats = Vec::with_capacity(entries.len());
+                        progress.set(0);
                         for index_entry in entries.iter() {
                             let result = self.decode_and_process_entry(
                                 check,
