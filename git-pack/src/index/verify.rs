@@ -13,6 +13,8 @@ pub mod integrity {
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]
     pub enum Error {
+        #[error("The fan at index {index} is out of order as it's larger then the following value.")]
+        Fan { index: usize },
         #[error("{kind} object {id} could not be decoded")]
         ObjectDecode {
             source: git_object::decode::Error,
@@ -131,12 +133,17 @@ impl index::File {
         thread_limit: Option<usize>,
         mut progress: P,
         should_interrupt: &AtomicBool,
-    ) -> Result<integrity::Outcome<P>, index::traverse::Error<crate::index::verify::integrity::Error>>
+    ) -> Result<integrity::Outcome<P>, index::traverse::Error<index::verify::integrity::Error>>
     where
         P: Progress,
         C: crate::cache::DecodeEntry,
         F: Fn() -> C + Send + Clone,
     {
+        if let Some(first_invalid) = crate::verify::fan(&self.fan) {
+            return Err(index::traverse::Error::Processor(
+                index::verify::integrity::Error::Fan { index: first_invalid },
+            ));
+        }
         match pack {
             Some(PackContext {
                 data: pack,

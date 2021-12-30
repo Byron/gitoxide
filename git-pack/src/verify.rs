@@ -18,6 +18,13 @@ pub mod checksum {
     }
 }
 
+/// Returns the `index` at which the following `index + 1` value is not an increment over the value at `index`.
+pub fn fan(data: &[u32]) -> Option<usize> {
+    data.windows(2)
+        .enumerate()
+        .find_map(|(win_index, v)| (v[0] > v[1]).then(|| win_index))
+}
+
 /// Calculate the hash of the given kind by trying to read the file from disk at `data_path` or falling back on the mapped content in `data`.
 /// `Ok(desired_hash)` or `Err(Some(actual_hash))` is returned if the hash matches or mismatches.
 /// If the `Err(None)` is returned, the operation was interrupted.

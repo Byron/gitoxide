@@ -20,6 +20,8 @@ pub mod integrity {
         UnexpectedObjectCount { actual: usize, expected: usize },
         #[error("The object at multi-index entry {index} didn't match the expected oid sort-order or pack-offset")]
         OutOfOrder { index: usize },
+        #[error("The fan at index {index} is out of order as it's larger then the following value.")]
+        Fan { index: usize },
     }
 
     /// Returned by [`multi_index::File::verify_integrity()`][crate::multi_index::File::verify_integrity()].
@@ -83,6 +85,12 @@ impl File {
             )
             .map_err(integrity::Error::from)
             .map_err(crate::index::traverse::Error::Processor)?;
+
+        if let Some(first_invalid) = crate::verify::fan(&self.fan) {
+            return Err(crate::index::traverse::Error::Processor(
+                crate::multi_index::verify::integrity::Error::Fan { index: first_invalid },
+            ));
+        }
 
         let mut pack_traverse_outcomes = Vec::new();
 
