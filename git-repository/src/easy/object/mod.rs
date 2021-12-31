@@ -76,7 +76,7 @@ impl<'repo> Object<'repo> {
         DetachedObject {
             id: self.id,
             kind: self.kind,
-            data: self.data.to_owned(),
+            data: self.data.clone(),
         }
     }
 
@@ -85,7 +85,7 @@ impl<'repo> Object<'repo> {
         DetachedObject {
             id: self.id,
             kind: self.kind,
-            data: self.data.to_owned(),
+            data: self.data.clone(),
         }
     }
 
@@ -104,12 +104,12 @@ impl<'repo> Object<'repo> {
     ///
     /// - this object is not a commit
     /// - the commit could not be decoded
-    pub fn to_commit(&self) -> git_object::CommitRef<'_> {
-        self.try_to_commit().expect("BUG: need a commit")
+    pub fn to_commit_ref(&self) -> git_object::CommitRef<'_> {
+        self.try_to_commit_ref().expect("BUG: need a commit")
     }
 
     /// Obtain a fully parsed commit whose fields reference our data buffer.
-    pub fn try_to_commit(&self) -> Result<git_object::CommitRef<'_>, conversion::Error> {
+    pub fn try_to_commit_ref(&self) -> Result<git_object::CommitRef<'_>, conversion::Error> {
         git_object::Data::new(self.kind, &self.data)
             .decode()?
             .into_commit()
@@ -124,14 +124,14 @@ impl<'repo> Object<'repo> {
     /// # Panic
     ///
     /// - this object is not a commit
-    pub fn to_commit_iter(&self) -> git_object::CommitRefIter<'_> {
+    pub fn to_commit_ref_iter(&self) -> git_object::CommitRefIter<'_> {
         git_object::Data::new(self.kind, &self.data)
             .try_into_commit_iter()
             .expect("BUG: This object must be a commit")
     }
 
     /// Obtain a commit token iterator from the data in this instance, if it is a commit.
-    pub fn try_to_commit_iter(&self) -> Option<git_object::CommitRefIter<'_>> {
+    pub fn try_to_commit_ref_iter(&self) -> Option<git_object::CommitRefIter<'_>> {
         git_object::Data::new(self.kind, &self.data).try_into_commit_iter()
     }
 
@@ -140,7 +140,7 @@ impl<'repo> Object<'repo> {
     /// # Panic
     ///
     /// - this object is not a tag
-    pub fn to_tag_iter(&self) -> git_object::TagRefIter<'_> {
+    pub fn to_tag_ref_iter(&self) -> git_object::TagRefIter<'_> {
         git_object::Data::new(self.kind, &self.data)
             .try_into_tag_iter()
             .expect("BUG: this object must be a tag")
@@ -151,7 +151,7 @@ impl<'repo> Object<'repo> {
     /// # Panic
     ///
     /// - this object is not a tag
-    pub fn try_to_tag_iter(&self) -> Option<git_object::TagRefIter<'_>> {
+    pub fn try_to_tag_ref_iter(&self) -> Option<git_object::TagRefIter<'_>> {
         git_object::Data::new(self.kind, &self.data).try_into_tag_iter()
     }
 
@@ -161,12 +161,12 @@ impl<'repo> Object<'repo> {
     ///
     /// - this object is not a tag
     /// - the tag could not be decoded
-    pub fn to_tag(&self) -> git_object::TagRef<'_> {
-        self.try_to_tag().expect("BUG: need tag")
+    pub fn to_tag_ref(&self) -> git_object::TagRef<'_> {
+        self.try_to_tag_ref().expect("BUG: need tag")
     }
 
     /// Obtain a fully parsed tag object whose fields reference our data buffer.
-    pub fn try_to_tag(&self) -> Result<git_object::TagRef<'_>, conversion::Error> {
+    pub fn try_to_tag_ref(&self) -> Result<git_object::TagRef<'_>, conversion::Error> {
         git_object::Data::new(self.kind, &self.data)
             .decode()?
             .into_tag()

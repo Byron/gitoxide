@@ -58,7 +58,7 @@ mod tag {
         assert_eq!(tag_ref.name().as_bstr(), "refs/tags/v1.0.0");
         assert_ne!(tag_ref.id(), current_head_id, "it points to the tag object");
         let tag = tag_ref.id().object()?;
-        let tag = tag.try_to_tag()?;
+        let tag = tag.try_to_tag_ref()?;
         assert_eq!(tag.name, "v1.0.0");
         assert_eq!(current_head_id, tag.target(), "the tag points to the commit");
         assert_eq!(tag.target_kind, git_object::Kind::Commit);
@@ -132,12 +132,12 @@ mod commit {
     fn multi_line_commit_message_uses_first_line_in_ref_log_ref_nonexisting() -> crate::Result {
         let (repo, _keep) = crate::basic_rw_repo()?;
         let parent = repo.find_reference("HEAD")?.peel_to_id_in_place()?;
-        let empty_tree_id = parent.object()?.to_commit_iter().tree_id().expect("tree to be set");
+        let empty_tree_id = parent.object()?.to_commit_ref_iter().tree_id().expect("tree to be set");
         assert_eq!(
             parent
                 .try_object()?
                 .expect("present")
-                .to_commit_iter()
+                .to_commit_ref_iter()
                 .tree_id()
                 .expect("tree to be set"),
             empty_tree_id,
