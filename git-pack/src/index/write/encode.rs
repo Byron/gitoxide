@@ -56,12 +56,16 @@ pub(crate) fn write_to(
                     Ordering::Less => unreachable!("ids should be ordered, and we make sure to keep ahead with them"),
                     Ordering::Greater => upper_bound,
                     Ordering::Equal => {
-                        idx_and_entry = iter.find(|(_, entry)| entry.data.id.as_slice()[0] != byte);
-                        upper_bound = match idx_and_entry.as_ref() {
-                            Some((idx, _)) => *idx as u32,
-                            None => entries_len,
-                        };
-                        upper_bound
+                        if byte == 255 {
+                            entries_len
+                        } else {
+                            idx_and_entry = iter.find(|(_, entry)| entry.data.id.as_slice()[0] != byte);
+                            upper_bound = idx_and_entry
+                                .as_ref()
+                                .map(|(idx, _)| *idx as u32)
+                                .unwrap_or(entries_len);
+                            upper_bound
+                        }
                     }
                 },
                 None => entries_len,
