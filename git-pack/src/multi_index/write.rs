@@ -1,7 +1,9 @@
 #![allow(missing_docs, unused)]
 
 use crate::multi_index;
+use byteorder::{BigEndian, WriteBytesExt};
 use git_features::progress::Progress;
+use std::convert::TryInto;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
@@ -29,6 +31,14 @@ pub struct Outcome<P> {
 }
 
 impl multi_index::File {
+    pub(crate) const SIGNATURE: &'static [u8] = b"MIDX";
+    pub(crate) const HEADER_LEN: usize = 4 /*signature*/ +
+        1 /*version*/ +
+        1 /*object id version*/ +
+        1 /*num chunks */ +
+        1 /*num base files */ +
+        4 /*num pack files*/;
+
     pub fn write_from_index_paths<P>(
         mut index_paths: Vec<PathBuf>,
         out: impl std::io::Write,
@@ -53,7 +63,14 @@ impl multi_index::File {
             multi_index::chunk::index_names::ID,
             multi_index::chunk::index_names::storage_size(&index_filenames_sorted),
         );
-        let mut chunk_write = cf.into_write(&mut out)?;
+
+        let bytes_written = Self::write_header(
+            &mut out,
+            cf.num_chunks().try_into().expect("BUG: wrote more than 256 chunks"),
+            index_paths_sorted.len() as u32,
+            object_hash,
+        )?;
+        let mut chunk_write = cf.into_write(&mut out, bytes_written)?;
         while let Some(chunk_to_write) = chunk_write.next_chunk() {
             match chunk_to_write {
                 multi_index::chunk::index_names::ID => {
@@ -72,5 +89,21 @@ impl multi_index::File {
             multi_index_checksum,
             progress,
         })
+    }
+
+    fn write_header(
+        mut out: impl std::io::Write,
+        num_chunks: u8,
+        num_indices: u32,
+        object_hash: git_hash::Kind,
+    ) -> std::io::Result<usize> {
+        out.write_all(Self::SIGNATURE)?;
+        out.write_all(&[crate::multi_index::Version::V1 as u8])?;
+        out.write_all(&[object_hash as u8])?;
+        out.write_all(&[num_chunks])?;
+        out.write_all(&[0])?; /* unused number of base files */
+        out.write_u32::<BigEndian>(num_indices)?;
+
+        Ok(Self::HEADER_LEN)
     }
 }

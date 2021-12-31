@@ -61,14 +61,47 @@ pub mod index_names {
 
     /// Calculate the size on disk for our chunk with the given index paths. Note that these are expected to have been processed already
     /// to actually be file names.
-    pub fn storage_size(_paths: impl IntoIterator<Item = impl AsRef<Path>>) -> u64 {
-        todo!("path computation with padding")
+    pub fn storage_size(paths: impl IntoIterator<Item = impl AsRef<Path>>) -> u64 {
+        let mut count = 0u64;
+        for path in paths {
+            let path = path.as_ref();
+            let ascii_path = path.to_str().expect("UTF-8 compatible paths");
+            assert!(
+                ascii_path.is_ascii(),
+                "must use ascii bytes for correct size computation"
+            );
+            count += (ascii_path.as_bytes().len() + 1/* null byte */) as u64
+        }
+
+        let needed_alignment = CHUNK_ALIGNMENT - (count % CHUNK_ALIGNMENT);
+        if needed_alignment < CHUNK_ALIGNMENT {
+            count += needed_alignment;
+        }
+        count
     }
 
-    /// Write all `paths` in order to `out`.
-    pub fn write(_paths: impl IntoIterator<Item = impl AsRef<Path>>, _out: impl std::io::Write) -> std::io::Result<()> {
-        todo!("write path names")
+    /// Write all `paths` in order to `out`, including padding.
+    pub fn write(
+        paths: impl IntoIterator<Item = impl AsRef<Path>>,
+        mut out: impl std::io::Write,
+    ) -> std::io::Result<()> {
+        let mut written_bytes = 0;
+        for path in paths {
+            let path = path.as_ref().to_str().expect("UTF-8 path");
+            out.write_all(path.as_bytes())?;
+            out.write_all(&[0])?;
+            written_bytes += path.as_bytes().len() as u64 + 1;
+        }
+
+        let needed_alignment = CHUNK_ALIGNMENT - (written_bytes % CHUNK_ALIGNMENT);
+        if needed_alignment < CHUNK_ALIGNMENT {
+            let padding = [0u8; CHUNK_ALIGNMENT as usize];
+            out.write_all(&padding[..needed_alignment as usize])?;
+        }
+        Ok(())
     }
+
+    const CHUNK_ALIGNMENT: u64 = 4;
 }
 
 /// Information for the chunk with the fanout table

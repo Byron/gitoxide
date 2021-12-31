@@ -57,15 +57,11 @@ impl TryFrom<&Path> for File {
             path: path.to_owned(),
         })?;
 
-        const HEADER_LEN: usize = 4 /*signature*/ +
-                    1 /*version*/ +
-                    1 /*object id version*/ +
-                    1 /*num chunks */ +
-                    1 /*num base files */ +
-                    4 /*num pack files*/;
         const TRAILER_LEN: usize = git_hash::Kind::shortest().len_in_bytes(); /* trailing hash */
         if data.len()
-            < HEADER_LEN + git_chunk::file::Index::size_for_entries(4 /*index names, fan, offsets, oids*/) + TRAILER_LEN
+            < Self::HEADER_LEN
+                + git_chunk::file::Index::size_for_entries(4 /*index names, fan, offsets, oids*/)
+                + TRAILER_LEN
         {
             return Err(Error::Corrupt {
                 message: "multi-index file is truncated and too short",
@@ -74,7 +70,7 @@ impl TryFrom<&Path> for File {
 
         let (version, object_hash, num_chunks, num_indices) = {
             let (signature, data) = data.split_at(4);
-            if signature != b"MIDX" {
+            if signature != Self::SIGNATURE {
                 return Err(Error::Corrupt {
                     message: "Invalid signature",
                 });
@@ -86,11 +82,8 @@ impl TryFrom<&Path> for File {
             };
 
             let (object_hash, data) = data.split_at(1);
-            let object_hash = match object_hash[0] {
-                1 => git_hash::Kind::Sha1,
-                // TODO: 2 = SHA256, use it once we know it
-                unknown => return Err(Error::UnsupportedObjectHash { kind: unknown }),
-            };
+            let object_hash = git_hash::Kind::try_from(object_hash[0])
+                .map_err(|unknown| Error::UnsupportedObjectHash { kind: unknown })?;
             let (num_chunks, data) = data.split_at(1);
             let num_chunks = num_chunks[0];
 
@@ -102,7 +95,7 @@ impl TryFrom<&Path> for File {
             (version, object_hash, num_chunks, num_indices)
         };
 
-        let chunks = git_chunk::file::Index::from_bytes(&data, HEADER_LEN, num_chunks as u32)?;
+        let chunks = git_chunk::file::Index::from_bytes(&data, Self::HEADER_LEN, num_chunks as u32)?;
 
         let index_names = chunks.data_by_id(&data, chunk::index_names::ID)?;
         let index_names = chunk::index_names::from_bytes(index_names, num_indices)?;
