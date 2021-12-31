@@ -5,7 +5,9 @@
 #![deny(rust_2018_idioms, missing_docs)]
 
 mod borrowed;
+
 pub use borrowed::oid;
+use std::convert::TryFrom;
 
 mod owned;
 pub use owned::ObjectId;
@@ -62,12 +64,23 @@ const SIZE_OF_SHA1_DIGEST: usize = 20;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
     /// The Sha1 hash with 160 bits.
-    Sha1,
+    Sha1 = 1,
 }
 
 impl Default for Kind {
     fn default() -> Self {
         Kind::Sha1
+    }
+}
+
+impl TryFrom<u8> for Kind {
+    type Error = u8;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        Ok(match value {
+            1 => Kind::Sha1,
+            unknown => return Err(unknown),
+        })
     }
 }
 
