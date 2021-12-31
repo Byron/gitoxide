@@ -31,7 +31,7 @@ impl Section {
             .attach(handle)
             .object()
             .expect("object exists")
-            .to_commit()
+            .to_commit_ref()
             .committer
             .time;
 

@@ -49,7 +49,7 @@ pub fn collect(handle: &git::easy::Handle) -> anyhow::Result<Option<commit::Hist
         let (message, tree_id, parent_tree_id, commit_time) = {
             let (message, tree_id, commit_time, parent_commit_id) = {
                 let object = commit_id.object()?;
-                let commit = object.to_commit();
+                let commit = object.to_commit_ref();
                 (
                     commit.message.to_vec(),
                     commit.tree(),
@@ -60,7 +60,7 @@ pub fn collect(handle: &git::easy::Handle) -> anyhow::Result<Option<commit::Hist
             (
                 message,
                 tree_id,
-                parent_commit_id.map(|id| id.attach(&repo).object().expect("present").to_commit().tree()),
+                parent_commit_id.map(|id| id.attach(&repo).object().expect("present").to_commit_ref().tree()),
                 commit_time,
             )
         };
