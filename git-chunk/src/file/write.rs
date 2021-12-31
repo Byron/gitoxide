@@ -78,14 +78,14 @@ pub use write_chunk::Chunk;
 /// Writing
 impl Index {
     /// Create a new index whose sole purpose is to be receiving chunks using [`plan_chunk()`][Index::plan_chunk()] and to be written to
-    /// an output using [`write_to()`][Index::into_write()]
+    /// an output using [`into_write()`][Index::into_write()]
     pub fn for_writing() -> Self {
         Index {
             will_write: true,
             chunks: Vec::new(),
         }
     }
-    /// Plan to write a new chunk as part of the index when [`write_to()`][Index::write_to()] is called.
+    /// Plan to write a new chunk as part of the index when [`into_write()`][Index::into_write()] is called.
     pub fn plan_chunk(&mut self, chunk: crate::Id, exact_size_on_disk: u64) {
         assert!(self.will_write, "BUG: create the index with `for_writing()`");
         assert!(
