@@ -6,8 +6,9 @@
 
 mod borrowed;
 
-pub use borrowed::oid;
 use std::convert::TryFrom;
+
+pub use borrowed::oid;
 
 mod owned;
 pub use owned::ObjectId;

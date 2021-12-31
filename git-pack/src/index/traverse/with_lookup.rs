@@ -26,9 +26,10 @@ mod options {
 }
 use std::sync::atomic::Ordering;
 
-use crate::index::traverse::Outcome;
 use git_features::threading::{lock, Mutable, OwnShared};
 pub use options::Options;
+
+use crate::index::traverse::Outcome;
 
 /// Verify and validate the content of the index file
 impl index::File {

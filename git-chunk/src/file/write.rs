@@ -1,6 +1,5 @@
 #![allow(missing_docs, unused)]
-use crate::file::index::Entry;
-use crate::file::Index;
+use crate::file::{index::Entry, Index};
 
 enum State {
     Collecting,
@@ -8,8 +7,9 @@ enum State {
 }
 
 mod write_chunk {
-    use crate::file::index;
     use std::collections::VecDeque;
+
+    use crate::file::index;
 
     pub struct Chunk<W> {
         chunks_to_write: VecDeque<index::Entry>,

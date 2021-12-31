@@ -106,9 +106,11 @@ pub mod index_names {
 
 /// Information for the chunk with the fanout table
 pub mod fanout {
-    use crate::multi_index;
-    use byteorder::{BigEndian, WriteBytesExt};
     use std::convert::TryInto;
+
+    use byteorder::{BigEndian, WriteBytesExt};
+
+    use crate::multi_index;
 
     /// The size of the fanout table
     pub const SIZE: usize = 4 * 256;
@@ -144,8 +146,9 @@ pub mod fanout {
 
 /// Information about the oid lookup table.
 pub mod lookup {
-    use crate::multi_index;
     use std::ops::Range;
+
+    use crate::multi_index;
 
     /// The id uniquely identifying the oid lookup table.
     pub const ID: git_chunk::Id = *b"OIDL";
@@ -173,9 +176,11 @@ pub mod lookup {
 
 /// Information about the offsets table.
 pub mod offsets {
-    use crate::multi_index;
-    use byteorder::{BigEndian, WriteBytesExt};
     use std::ops::Range;
+
+    use byteorder::{BigEndian, WriteBytesExt};
+
+    use crate::multi_index;
 
     /// The id uniquely identifying the offsets table.
     pub const ID: git_chunk::Id = *b"OOFF";
@@ -185,11 +190,10 @@ pub mod offsets {
         (entries * (4 /*pack-id*/ + 4/* pack offset */)) as u64
     }
 
-    /// Returns the amount of entries that need a u64 offset.
     pub(crate) fn write(
         sorted_entries: &[multi_index::write::Entry],
         mut out: impl std::io::Write,
-    ) -> std::io::Result<u32> {
+    ) -> std::io::Result<()> {
         use crate::index::write::encode::{HIGH_BIT, LARGE_OFFSET_THRESHOLD};
         let mut num_large_offsets = 0u32;
 
@@ -205,7 +209,7 @@ pub mod offsets {
             };
             out.write_u32::<BigEndian>(offset)?;
         }
-        Ok(num_large_offsets)
+        Ok(())
     }
 
     /// Returns true if the `offset` range seems to match the size required for `num_objects`.
@@ -219,11 +223,44 @@ pub mod offsets {
 pub mod large_offsets {
     use std::ops::Range;
 
+    use byteorder::{BigEndian, WriteBytesExt};
+
+    use crate::{index::write::encode::LARGE_OFFSET_THRESHOLD, multi_index};
+
     /// The id uniquely identifying the large offsets table (with 64 bit offsets)
     pub const ID: git_chunk::Id = *b"LOFF";
 
+    pub(crate) fn num_large_offsets(entries: &[multi_index::write::Entry]) -> usize {
+        entries
+            .iter()
+            .filter(|e| e.pack_offset > LARGE_OFFSET_THRESHOLD)
+            .count()
+    }
     /// Returns true if the `offsets` range seems to be properly aligned for the data we expect.
     pub fn is_valid(offset: &Range<usize>) -> bool {
         (offset.end - offset.start) % 8 == 0
+    }
+
+    pub(crate) fn write(
+        sorted_entries: &[multi_index::write::Entry],
+        num_large_offsets: usize,
+        mut out: impl std::io::Write,
+    ) -> std::io::Result<()> {
+        for offset in sorted_entries
+            .iter()
+            .filter_map(|e| (e.pack_offset > LARGE_OFFSET_THRESHOLD).then(|| e.pack_offset))
+        {
+            out.write_u64::<BigEndian>(offset)?;
+            num_large_offsets
+                .checked_sub(1)
+                .expect("BUG: wrote more offsets the previously found");
+        }
+        assert_eq!(num_large_offsets, 0, "BUG: wrote less offsets than initially counted");
+        Ok(())
+    }
+
+    /// Return the amount of bytes needed to store the given amount of `large_offsets`
+    pub(crate) fn storage_size(large_offsets: usize) -> u64 {
+        8 * large_offsets as u64
     }
 }

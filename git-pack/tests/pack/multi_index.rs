@@ -112,10 +112,10 @@ mod verify {
 }
 
 mod write {
+    use std::{path::PathBuf, sync::atomic::AtomicBool};
+
     use git_features::progress;
     use git_testtools::{fixture_path, hex_to_id};
-    use std::path::PathBuf;
-    use std::sync::atomic::AtomicBool;
 
     #[test]
     fn from_paths() {
@@ -136,7 +136,7 @@ mod write {
             .open(&output_path)
             .unwrap();
         let outcome = git_pack::multi_index::File::write_from_index_paths(
-            input_indices,
+            input_indices.clone(),
             &mut out,
             progress::Discard,
             &AtomicBool::new(false),
@@ -148,14 +148,28 @@ mod write {
 
         assert_eq!(
             outcome.multi_index_checksum,
-            hex_to_id("dddddddddddddddddddddddddddddddddddddddd")
+            hex_to_id("d34d327039a3554f8a644b29e07b903fa71ef269")
         );
 
         let file = git_pack::multi_index::File::at(output_path).unwrap();
         assert_eq!(file.num_indices(), 3);
-        assert_eq!(file.index_names(), vec![PathBuf::from("hello.idx")]);
-        assert_eq!(file.num_objects(), 42);
+        assert_eq!(
+            file.index_names(),
+            vec![
+                PathBuf::from("pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx"),
+                PathBuf::from("pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx"),
+                PathBuf::from("pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx"),
+            ]
+        );
+        assert_eq!(file.num_objects(), 139);
         assert_eq!(file.checksum(), outcome.multi_index_checksum);
+
+        for index in &input_indices {
+            std::fs::copy(index, dir.path().join(index.file_name().expect("present"))).unwrap();
+            let pack = index.with_extension("pack");
+            std::fs::copy(&pack, dir.path().join(pack.file_name().expect("present"))).unwrap();
+        }
+
         assert_eq!(
             file.verify_integrity(
                 || git_pack::cache::Never,

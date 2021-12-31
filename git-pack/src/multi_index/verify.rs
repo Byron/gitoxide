@@ -1,5 +1,4 @@
-use std::cmp::Ordering;
-use std::sync::atomic::AtomicBool;
+use std::{cmp::Ordering, sync::atomic::AtomicBool};
 
 use git_features::progress::Progress;
 

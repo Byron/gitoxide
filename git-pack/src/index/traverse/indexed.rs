@@ -6,10 +6,9 @@ use std::{
 use git_features::{parallel, progress::Progress};
 
 use super::{Error, SafetyCheck};
-use crate::index::traverse::Outcome;
 use crate::{
     cache::delta::traverse::Context,
-    index::{self, util::index_entries_sorted_by_offset_ascending},
+    index::{self, traverse::Outcome, util::index_entries_sorted_by_offset_ascending},
 };
 
 /// Traversal with index
