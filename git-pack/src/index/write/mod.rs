@@ -5,7 +5,7 @@ use git_features::progress::{self, Progress};
 
 use crate::cache::delta::{traverse::Context, Tree};
 
-mod encode;
+pub(crate) mod encode;
 mod error;
 
 pub(crate) struct TreeEntry {

@@ -7,17 +7,30 @@ use std::convert::TryInto;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
+use std::time::{Instant, SystemTime};
 
 mod error {
+    /// The error returned by [multi_index::File::write_from_index_paths()][super::multi_index::File::write_from_index_paths()]..
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
         #[error(transparent)]
         Io(#[from] std::io::Error),
         #[error("Interrupted")]
         Interrupted,
+        #[error(transparent)]
+        OpenIndex(#[from] crate::index::init::Error),
     }
 }
 pub use error::Error;
+
+/// An entry suitable for sorting and writing
+pub(crate) struct Entry {
+    pub(crate) id: git_hash::ObjectId,
+    pack_index: u32,
+    pack_offset: crate::data::Offset,
+    /// Used for sorting in case of duplicates
+    index_mtime: SystemTime,
+}
 
 pub struct Options {
     pub object_hash: git_hash::Kind,
@@ -42,7 +55,7 @@ impl multi_index::File {
     pub fn write_from_index_paths<P>(
         mut index_paths: Vec<PathBuf>,
         out: impl std::io::Write,
-        progress: P,
+        mut progress: P,
         should_interrupt: &AtomicBool,
         Options { object_hash }: Options,
     ) -> Result<Outcome<P>, Error>
@@ -58,11 +71,51 @@ impl multi_index::File {
                 .collect::<Vec<_>>();
             (index_paths, file_names)
         };
+
+        let entries = {
+            let mut entries = Vec::new();
+            let start = Instant::now();
+            let mut progress = progress.add_child("Collecting entries");
+            progress.init(Some(index_paths_sorted.len()), git_features::progress::count("indices"));
+
+            // This could be parallelized… but it's probably not worth it unless you have 500mio objects.
+            for (index_id, index) in index_paths_sorted.iter().enumerate() {
+                let mtime = index
+                    .metadata()
+                    .and_then(|m| m.modified())
+                    .unwrap_or(SystemTime::UNIX_EPOCH);
+                let index = crate::index::File::at(index, object_hash)?;
+
+                entries.reserve(index.num_objects() as usize);
+                entries.extend(index.iter().map(|e| Entry {
+                    id: e.oid,
+                    pack_index: index_id as u32,
+                    pack_offset: e.pack_offset,
+                    index_mtime: mtime,
+                }));
+                progress.inc();
+            }
+            progress.show_throughput(start);
+
+            let start = Instant::now();
+            progress.set_name("Deduplicate");
+            progress.init(Some(entries.len()), git_features::progress::count("entries"));
+            entries.sort_by(|l, r| {
+                l.id.cmp(&r.id)
+                    .then_with(|| l.index_mtime.cmp(&r.index_mtime).reverse())
+                    .then_with(|| l.pack_index.cmp(&r.pack_index))
+            });
+            entries.dedup_by_key(|e| e.id);
+            progress.show_throughput(start);
+            entries
+        };
+
         let mut cf = git_chunk::file::Index::for_writing();
         cf.plan_chunk(
             multi_index::chunk::index_names::ID,
             multi_index::chunk::index_names::storage_size(&index_filenames_sorted),
         );
+        cf.plan_chunk(multi_index::chunk::fanout::ID, multi_index::chunk::fanout::SIZE as u64);
 
         let bytes_written = Self::write_header(
             &mut out,
@@ -76,6 +129,7 @@ impl multi_index::File {
                 multi_index::chunk::index_names::ID => {
                     multi_index::chunk::index_names::write(&index_filenames_sorted, &mut chunk_write)?
                 }
+                multi_index::chunk::fanout::ID => multi_index::chunk::fanout::write(&entries, &mut chunk_write)?,
                 unknown => unreachable!("BUG: forgot to implement chunk {:?}", std::str::from_utf8(&unknown)),
             }
         }

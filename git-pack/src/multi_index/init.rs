@@ -61,6 +61,7 @@ impl TryFrom<&Path> for File {
         if data.len()
             < Self::HEADER_LEN
                 + git_chunk::file::Index::size_for_entries(4 /*index names, fan, offsets, oids*/)
+                + chunk::fanout::SIZE
                 + TRAILER_LEN
         {
             return Err(Error::Corrupt {
