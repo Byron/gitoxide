@@ -52,6 +52,7 @@ pub enum Error {
 
 const MIN_FILE_SIZE: usize = HEADER_LEN
     + git_chunk::file::Index::size_for_entries(3 /*OIDF, OIDL, CDAT*/)
+    + FAN_LEN * 4 /* FANOUT TABLE CHUNK OIDF */
     + git_hash::Kind::shortest().len_in_bytes();
 
 impl File {
