@@ -144,10 +144,26 @@ pub mod fanout {
 
 /// Information about the oid lookup table.
 pub mod lookup {
+    use crate::multi_index;
     use std::ops::Range;
 
     /// The id uniquely identifying the oid lookup table.
     pub const ID: git_chunk::Id = *b"OIDL";
+
+    /// Return the amount of bytes needed to store the data on disk for the given amount of `entries`
+    pub fn storage_size(entries: usize, object_hash: git_hash::Kind) -> u64 {
+        (entries * object_hash.len_in_bytes()) as u64
+    }
+
+    pub(crate) fn write(
+        sorted_entries: &[multi_index::write::Entry],
+        mut out: impl std::io::Write,
+    ) -> std::io::Result<()> {
+        for entry in sorted_entries {
+            out.write_all(entry.id.as_slice())?;
+        }
+        Ok(())
+    }
 
     /// Return true if the size of the `offset` range seems to match for a `hash` of the given kind and the amount of objects.
     pub fn is_valid(offset: &Range<usize>, hash: git_hash::Kind, num_objects: u32) -> bool {

@@ -116,6 +116,10 @@ impl multi_index::File {
             multi_index::chunk::index_names::storage_size(&index_filenames_sorted),
         );
         cf.plan_chunk(multi_index::chunk::fanout::ID, multi_index::chunk::fanout::SIZE as u64);
+        cf.plan_chunk(
+            multi_index::chunk::lookup::ID,
+            multi_index::chunk::lookup::storage_size(entries.len(), object_hash),
+        );
 
         let bytes_written = Self::write_header(
             &mut out,
@@ -130,6 +134,7 @@ impl multi_index::File {
                     multi_index::chunk::index_names::write(&index_filenames_sorted, &mut chunk_write)?
                 }
                 multi_index::chunk::fanout::ID => multi_index::chunk::fanout::write(&entries, &mut chunk_write)?,
+                multi_index::chunk::lookup::ID => multi_index::chunk::lookup::write(&entries, &mut chunk_write)?,
                 unknown => unreachable!("BUG: forgot to implement chunk {:?}", std::str::from_utf8(&unknown)),
             }
         }

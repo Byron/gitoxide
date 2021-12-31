@@ -118,7 +118,6 @@ mod write {
     use std::sync::atomic::AtomicBool;
 
     #[test]
-    #[ignore]
     fn from_paths() {
         let dir = tempfile::TempDir::new().unwrap();
         let input_indices = std::fs::read_dir(fixture_path("objects/pack"))
