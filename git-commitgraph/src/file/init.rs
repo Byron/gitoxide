@@ -92,12 +92,7 @@ impl TryFrom<&Path> for File {
         };
         ofs += 1;
 
-        let object_hash = match data[ofs] {
-            1 => git_hash::Kind::Sha1,
-            x => {
-                return Err(Error::UnsupportedHashVersion(x));
-            }
-        };
+        let object_hash = git_hash::Kind::try_from(data[ofs]).map_err(|x| Error::UnsupportedHashVersion(x))?;
         ofs += 1;
 
         let chunk_count = data[ofs];
