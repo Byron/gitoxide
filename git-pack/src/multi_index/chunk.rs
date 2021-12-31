@@ -173,10 +173,40 @@ pub mod lookup {
 
 /// Information about the offsets table.
 pub mod offsets {
+    use crate::multi_index;
+    use byteorder::{BigEndian, WriteBytesExt};
     use std::ops::Range;
 
     /// The id uniquely identifying the offsets table.
     pub const ID: git_chunk::Id = *b"OOFF";
+
+    /// Return the amount of bytes needed to offset data for `entries`.
+    pub fn storage_size(entries: usize) -> u64 {
+        (entries * (4 /*pack-id*/ + 4/* pack offset */)) as u64
+    }
+
+    /// Returns the amount of entries that need a u64 offset.
+    pub(crate) fn write(
+        sorted_entries: &[multi_index::write::Entry],
+        mut out: impl std::io::Write,
+    ) -> std::io::Result<u32> {
+        use crate::index::write::encode::{HIGH_BIT, LARGE_OFFSET_THRESHOLD};
+        let mut num_large_offsets = 0u32;
+
+        for entry in sorted_entries {
+            out.write_u32::<BigEndian>(entry.pack_index)?;
+
+            let offset = if entry.pack_offset > LARGE_OFFSET_THRESHOLD {
+                let res = num_large_offsets | HIGH_BIT;
+                num_large_offsets += 1;
+                res
+            } else {
+                entry.pack_offset as u32
+            };
+            out.write_u32::<BigEndian>(offset)?;
+        }
+        Ok(num_large_offsets)
+    }
 
     /// Returns true if the `offset` range seems to match the size required for `num_objects`.
     pub fn is_valid(offset: &Range<usize>, num_objects: u32) -> bool {

@@ -1,5 +1,8 @@
 use std::{cmp::Ordering, collections::VecDeque, io};
 
+pub(crate) const LARGE_OFFSET_THRESHOLD: u64 = 0x7fff_ffff;
+pub(crate) const HIGH_BIT: u32 = 0x8000_0000;
+
 use byteorder::{BigEndian, WriteBytesExt};
 use git_features::{
     hash,
@@ -33,9 +36,6 @@ pub(crate) fn write_to(
     ));
     out.write_all(V2_SIGNATURE)?;
     out.write_u32::<BigEndian>(kind as u32)?;
-
-    const LARGE_OFFSET_THRESHOLD: u64 = 0x7fff_ffff;
-    const HIGH_BIT: u32 = 0x8000_0000;
 
     let needs_64bit_offsets =
         entries_sorted_by_oid.back().expect("at least one pack entry").offset > LARGE_OFFSET_THRESHOLD;

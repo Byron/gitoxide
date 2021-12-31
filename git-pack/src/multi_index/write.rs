@@ -26,8 +26,8 @@ pub use error::Error;
 /// An entry suitable for sorting and writing
 pub(crate) struct Entry {
     pub(crate) id: git_hash::ObjectId,
-    pack_index: u32,
-    pack_offset: crate::data::Offset,
+    pub(crate) pack_index: u32,
+    pub(crate) pack_offset: crate::data::Offset,
     /// Used for sorting in case of duplicates
     index_mtime: SystemTime,
 }
@@ -120,6 +120,10 @@ impl multi_index::File {
             multi_index::chunk::lookup::ID,
             multi_index::chunk::lookup::storage_size(entries.len(), object_hash),
         );
+        cf.plan_chunk(
+            multi_index::chunk::offsets::ID,
+            multi_index::chunk::offsets::storage_size(entries.len()),
+        );
 
         let bytes_written = Self::write_header(
             &mut out,
@@ -128,6 +132,7 @@ impl multi_index::File {
             object_hash,
         )?;
         let mut chunk_write = cf.into_write(&mut out, bytes_written)?;
+        let mut num_large_offsets = None;
         while let Some(chunk_to_write) = chunk_write.next_chunk() {
             match chunk_to_write {
                 multi_index::chunk::index_names::ID => {
@@ -135,6 +140,9 @@ impl multi_index::File {
                 }
                 multi_index::chunk::fanout::ID => multi_index::chunk::fanout::write(&entries, &mut chunk_write)?,
                 multi_index::chunk::lookup::ID => multi_index::chunk::lookup::write(&entries, &mut chunk_write)?,
+                multi_index::chunk::offsets::ID => {
+                    num_large_offsets = multi_index::chunk::offsets::write(&entries, &mut chunk_write)?.into();
+                }
                 unknown => unreachable!("BUG: forgot to implement chunk {:?}", std::str::from_utf8(&unknown)),
             }
         }
