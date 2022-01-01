@@ -384,43 +384,43 @@ title "gix pack"
       }
     )
     (with "a valid pack INDEX file"
-      PACK_INDEX_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx"
+      MULTI_PACK_INDEX="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx"
       (with "no statistics"
         it "verifies the pack index successfully and with desired output" && {
           WITH_SNAPSHOT="$snapshot/index-success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" pack verify "$PACK_INDEX_FILE"
+          expect_run $SUCCESSFULLY "$exe_plumbing" pack verify "$MULTI_PACK_INDEX"
         }
       )
       (with "statistics"
         it "verifies the pack index successfully and with desired output" && {
           WITH_SNAPSHOT="$snapshot/index-with-statistics-success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --statistics "$PACK_INDEX_FILE"
+          expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --statistics "$MULTI_PACK_INDEX"
         }
 
         (with "and the less-memory algorithm"
           it "verifies the pack index successfully and with desired output" && {
             WITH_SNAPSHOT="$snapshot/index-with-statistics-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --algorithm less-memory --statistics "$PACK_INDEX_FILE"
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --algorithm less-memory --statistics "$MULTI_PACK_INDEX"
           }
         )
       )
       (with "decode"
         it "verifies the pack index successfully and with desired output, and decodes all objects" && {
           WITH_SNAPSHOT="$snapshot/index-success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --algorithm less-memory --decode "$PACK_INDEX_FILE"
+          expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --algorithm less-memory --decode "$MULTI_PACK_INDEX"
         }
       )
       (with "re-encode"
         it "verifies the pack index successfully and with desired output, and re-encodes all objects" && {
           WITH_SNAPSHOT="$snapshot/index-success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --algorithm less-time --re-encode "$PACK_INDEX_FILE"
+          expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --algorithm less-time --re-encode "$MULTI_PACK_INDEX"
         }
       )
       if test "$kind" = "max"; then
       (with "statistics (JSON)"
         it "verifies the pack index successfully and with desired output" && {
           WITH_SNAPSHOT="$snapshot/index-with-statistics-json-success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" --format json --threads 1 pack verify --statistics "$PACK_INDEX_FILE"
+          expect_run $SUCCESSFULLY "$exe_plumbing" --format json --threads 1 pack verify --statistics "$MULTI_PACK_INDEX"
         }
       )
       fi
@@ -428,46 +428,53 @@ title "gix pack"
     (with "a valid multi-pack index"
       snapshot="$snapshot/multi-index"
       (sandbox
-        PACK_INDEX_FILE=multi-pack-index
+        MULTI_PACK_INDEX=multi-pack-index
         cp $fixtures/packs/pack-* .
-        $exe_plumbing pack multi-index create *.idx -o $PACK_INDEX_FILE
+        $exe_plumbing pack multi-index create *.idx -o $MULTI_PACK_INDEX
+
+        (when "using fast validation via 'pack multi-index verify'"
+          it "verifies the pack index successfully and with desired output" && {
+            WITH_SNAPSHOT="$snapshot/fast-index-success" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack multi-index verify "$MULTI_PACK_INDEX"
+          }
+        )
 
         (with "no statistics"
           it "verifies the pack index successfully and with desired output" && {
             WITH_SNAPSHOT="$snapshot/index-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" pack verify "$PACK_INDEX_FILE"
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack verify "$MULTI_PACK_INDEX"
           }
         )
         (with "statistics"
           it "verifies the pack index successfully and with desired output" && {
             WITH_SNAPSHOT="$snapshot/index-with-statistics-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --statistics "$PACK_INDEX_FILE"
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --statistics "$MULTI_PACK_INDEX"
           }
 
           (with "and the less-memory algorithm"
             it "verifies the pack index successfully and with desired output" && {
               WITH_SNAPSHOT="$snapshot/index-with-statistics-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --algorithm less-memory --statistics "$PACK_INDEX_FILE"
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --algorithm less-memory --statistics "$MULTI_PACK_INDEX"
             }
           )
         )
         (with "decode"
           it "verifies the pack index successfully and with desired output, and decodes all objects" && {
             WITH_SNAPSHOT="$snapshot/index-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --algorithm less-memory --decode "$PACK_INDEX_FILE"
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --algorithm less-memory --decode "$MULTI_PACK_INDEX"
           }
         )
         (with "re-encode"
           it "verifies the pack index successfully and with desired output, and re-encodes all objects" && {
             WITH_SNAPSHOT="$snapshot/index-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --algorithm less-time --re-encode "$PACK_INDEX_FILE"
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack verify --algorithm less-time --re-encode "$MULTI_PACK_INDEX"
           }
         )
         if test "$kind" = "max"; then
         (with "statistics (JSON)"
           it "verifies the pack index successfully and with desired output" && {
             WITH_SNAPSHOT="$snapshot/index-with-statistics-json-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" --format json --threads 1 pack verify --statistics "$PACK_INDEX_FILE"
+            expect_run $SUCCESSFULLY "$exe_plumbing" --format json --threads 1 pack verify --statistics "$MULTI_PACK_INDEX"
           }
         )
         fi
@@ -475,8 +482,8 @@ title "gix pack"
     )
     (sandbox
       (with "an INvalid pack INDEX file"
-        PACK_INDEX_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx"
-        cp $PACK_INDEX_FILE index.idx
+        MULTI_PACK_INDEX="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx"
+        cp $MULTI_PACK_INDEX index.idx
         echo $'\0' >> index.idx
         it "fails to verify the pack index and with desired output" && {
           WITH_SNAPSHOT="$snapshot/index-failure" \

@@ -248,7 +248,13 @@ pub mod pack {
 
         #[derive(Debug, clap::Parser)]
         pub enum Subcommands {
-            /// create a multi-pack index from one or more pack index files
+            /// Verify a multi-index quickly without inspecting objects themselves
+            #[clap(setting = AppSettings::DisableVersionFlag)]
+            Verify {
+                /// The path to the multi-pack-index to verify.
+                multi_index_path: PathBuf,
+            },
+            /// Create a multi-pack index from one or more pack index files
             #[clap(setting = AppSettings::DisableVersionFlag)]
             Create {
                 /// The path to which the multi-index file should be written, overwriting any possibly existing file.

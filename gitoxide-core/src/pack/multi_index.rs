@@ -7,6 +7,11 @@ use git_repository as git;
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
+pub fn verify(multi_index_path: PathBuf, progress: impl Progress, should_interrupt: &AtomicBool) -> anyhow::Result<()> {
+    git::odb::pack::multi_index::File::at(multi_index_path)?.verify_integrity_fast(progress, should_interrupt)?;
+    Ok(())
+}
+
 pub fn create(
     index_paths: Vec<PathBuf>,
     output_path: PathBuf,

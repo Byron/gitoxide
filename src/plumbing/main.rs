@@ -243,6 +243,20 @@ pub fn main() -> Result<()> {
             )
             .map(|_| ()),
             pack::Subcommands::MultiIndex(subcommands) => match subcommands {
+                pack::multi_index::Subcommands::Verify { multi_index_path } => prepare_and_run(
+                    "pack-multi-index-verify",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    core::pack::multi_index::PROGRESS_RANGE,
+                    move |progress, _out, _err| {
+                        core::pack::multi_index::verify(
+                            multi_index_path,
+                            progress,
+                            &git_repository::interrupt::IS_INTERRUPTED,
+                        )
+                    },
+                ),
                 pack::multi_index::Subcommands::Create {
                     output_path,
                     index_paths,
