@@ -1,16 +1,12 @@
-#![allow(missing_docs, unused)]
 use crate::file::{index::Entry, Index};
-
-enum State {
-    Collecting,
-    WriteChunks,
-}
 
 mod write_chunk {
     use std::collections::VecDeque;
 
     use crate::file::index;
 
+    /// A [`Write`][std::io::Write] implementation that validates chunk sizes while allowing the user to know
+    /// which chunk is to be written next.
     pub struct Chunk<W> {
         chunks_to_write: VecDeque<index::Entry>,
         inner: W,
@@ -107,7 +103,7 @@ impl Index {
     /// After [planning all chunks][Index::plan_chunk()] call this method with the destination to write the chunks to.
     /// Use the [Chunk] writer to write each chunk in order.
     /// `current_offset` is the byte position at which `out` will continue writing.
-    pub fn into_write<W>(self, mut out: W, mut current_offset: usize) -> std::io::Result<Chunk<W>>
+    pub fn into_write<W>(self, mut out: W, current_offset: usize) -> std::io::Result<Chunk<W>>
     where
         W: std::io::Write,
     {
@@ -115,7 +111,7 @@ impl Index {
             self.will_write,
             "BUG: create the index with `for_writing()`, cannot write decoded indices"
         );
-        /// First chunk starts past the table of contents
+        // First chunk starts past the table of contents
         let mut current_offset = (current_offset + Self::size_for_entries(self.num_chunks())) as u64;
 
         for entry in &self.chunks {
