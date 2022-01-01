@@ -22,15 +22,18 @@ fn size_of_count() {
 
 enum DbKind {
     DeterministicGeneratedContent,
+    DeterministicGeneratedContentMultiIndex,
 }
 
 fn db(kind: DbKind) -> crate::Result<git_odb::HandleArc> {
     use DbKind::*;
-    let path: PathBuf = match kind {
-        DeterministicGeneratedContent => git_testtools::scripted_fixture_repo_read_only("make_pack_gen_repo.sh")?
-            .join(".git")
-            .join("objects"),
+    let name = match kind {
+        DeterministicGeneratedContent => "make_pack_gen_repo.sh",
+        DeterministicGeneratedContentMultiIndex => "make_pack_gen_repo_multi_index.sh",
     };
+    let path: PathBuf = git_testtools::scripted_fixture_repo_read_only(name)?
+        .join(".git")
+        .join("objects");
     git_odb::Store::at_opts(path, git_odb::store::init::Options::default())
         .map_err(Into::into)
         .map(|store| {
