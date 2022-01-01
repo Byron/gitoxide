@@ -35,8 +35,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] **create** - create a pack from given objects or tips of the commit graph.
       * [ ] **send** - create a pack and send it using the pack protocol to stdout, similar to 'git-upload-pack', 
             for consumption by **pack-receive** or _git-receive-pack_
-      * [x] [index from data](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
-          * [ ] support for thin packs (as needed for fetch/pull)
+      * **index**
+      * [x] [create](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
+          * [x] support for thin packs (as needed for fetch/pull)
     * **commitgraph**
       * [x] **verify** - assure that a commitgraph is consistent
     * **remote**

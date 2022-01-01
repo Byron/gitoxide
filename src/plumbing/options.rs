@@ -153,37 +153,9 @@ pub mod pack {
             /// If unset, they will be discarded.
             directory: Option<PathBuf>,
         },
-        /// create a pack index from a pack data file.
-        #[clap(setting = AppSettings::DisableVersionFlag)]
-        IndexFromData {
-            /// Specify how to iterate the pack, defaults to 'verify'
-            ///
-            /// Valid values are
-            ///
-            ///  **as-is** do not do anything and expect the pack file to be valid as per the trailing hash,
-            ///  **verify** the input ourselves and validate that it matches with the hash provided in the pack,
-            ///  **restore** hash the input ourselves and ignore failing entries, instead finish the pack with the hash we computed
-            ///  to keep as many objects as possible.
-            #[clap(
-                long,
-                short = 'i',
-                default_value = "verify",
-                possible_values(core::pack::index::IterationMode::variants())
-            )]
-            iteration_mode: core::pack::index::IterationMode,
-
-            /// Path to the pack file to read (with .pack extension).
-            ///
-            /// If unset, the pack file is expected on stdin.
-            #[clap(long, short = 'p')]
-            pack_path: Option<PathBuf>,
-
-            /// The folder into which to place the pack and the generated index file
-            ///
-            /// If unset, only informational output will be provided to standard output.
-            #[clap(parse(from_os_str))]
-            directory: Option<PathBuf>,
-        },
+        /// Subcommands for interacting with pack indices (.idx)
+        #[clap(subcommand)]
+        Index(index::Subcommands),
         /// Dissolve a pack into its loose objects.
         ///
         /// Note that this effectively removes delta compression for an average compression of 2x, creating one file per object in the process.
@@ -260,6 +232,48 @@ pub mod pack {
             #[clap(parse(from_os_str))]
             path: PathBuf,
         },
+    }
+
+    ///
+    pub mod index {
+        use clap::AppSettings;
+        use gitoxide_core as core;
+        use std::path::PathBuf;
+
+        #[derive(Debug, clap::Parser)]
+        pub enum Subcommands {
+            /// create a pack index from a pack data file.
+            #[clap(setting = AppSettings::DisableVersionFlag)]
+            Create {
+                /// Specify how to iterate the pack, defaults to 'verify'
+                ///
+                /// Valid values are
+                ///
+                ///  **as-is** do not do anything and expect the pack file to be valid as per the trailing hash,
+                ///  **verify** the input ourselves and validate that it matches with the hash provided in the pack,
+                ///  **restore** hash the input ourselves and ignore failing entries, instead finish the pack with the hash we computed
+                ///  to keep as many objects as possible.
+                #[clap(
+                    long,
+                    short = 'i',
+                    default_value = "verify",
+                    possible_values(core::pack::index::IterationMode::variants())
+                )]
+                iteration_mode: core::pack::index::IterationMode,
+
+                /// Path to the pack file to read (with .pack extension).
+                ///
+                /// If unset, the pack file is expected on stdin.
+                #[clap(long, short = 'p')]
+                pack_path: Option<PathBuf>,
+
+                /// The folder into which to place the pack and the generated index file
+                ///
+                /// If unset, only informational output will be provided to standard output.
+                #[clap(parse(from_os_str))]
+                directory: Option<PathBuf>,
+            },
+        }
     }
 }
 

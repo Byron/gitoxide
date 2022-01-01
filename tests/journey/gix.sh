@@ -196,68 +196,76 @@ title "gix pack"
       fi
     )
   )
-  title "gix pack index-from-data"
-  (with "the 'index-from-data' sub-command"
-    snapshot="$snapshot/index-from-data"
-    PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
-    (with "a valid and complete pack file"
-      (with "NO output directory specified"
-        (with "pack file passed as file"
-          it "generates an index into a sink and outputs pack and index information" && {
-            WITH_SNAPSHOT="$snapshot/no-output-dir-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" pack index-from-data -p "$PACK_FILE"
-          }
+  (with "the 'index' sub-command"
+    snapshot="$snapshot/index"
+    title "gix pack index create"
+    (with "the 'create' sub-command"
+      snapshot="$snapshot/create"
+      PACK_FILE="$fixtures/packs/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.pack"
+      (with "a valid and complete pack file"
+        (with "NO output directory specified"
+          (with "pack file passed as file"
+            it "generates an index into a sink and outputs pack and index information" && {
+              WITH_SNAPSHOT="$snapshot/no-output-dir-success" \
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack index create -p "$PACK_FILE"
+            }
+          )
+          (with "pack file passed from stdin"
+            it "generates an index into a sink and outputs pack and index information" && {
+              WITH_SNAPSHOT="$snapshot/no-output-dir-success" \
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack index create < "$PACK_FILE"
+            }
+            if test "$kind" = "max"; then
+            (with "--format json"
+              it "generates the index into a sink and outputs information as JSON" && {
+                WITH_SNAPSHOT="$snapshot/no-output-dir-as-json-success" \
+                expect_run $SUCCESSFULLY "$exe_plumbing" --format json pack index create < "$PACK_FILE"
+              }
+            )
+            fi
+          )
         )
-        (with "pack file passed from stdin"
-          it "generates an index into a sink and outputs pack and index information" && {
-            WITH_SNAPSHOT="$snapshot/no-output-dir-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" pack index-from-data < "$PACK_FILE"
+        (sandbox
+          (with "with an output directory specified"
+            it "generates an index and outputs information" && {
+              WITH_SNAPSHOT="$snapshot/output-dir-success" \
+              expect_run $SUCCESSFULLY "$exe_plumbing" pack index create -p "$PACK_FILE" "$PWD"
+            }
+            it "writes the index and pack into the directory (they have the same names, different suffixes)" && {
+              WITH_SNAPSHOT="$snapshot/output-dir-content" \
+              expect_run $SUCCESSFULLY ls
+            }
+          )
+        )
+      )
+      (with "'restore' iteration mode"
+        (sandbox
+          cp "${PACK_FILE}" .
+          PACK_FILE="${PACK_FILE##*/}"
+          "$jtt" mess-in-the-middle "${PACK_FILE}"
+
+          it "generates an index and outputs information (instead of failing)" && {
+            WITH_SNAPSHOT="$snapshot/output-dir-restore-success" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack index create -i restore -p "$PACK_FILE" "$PWD"
           }
+
           if test "$kind" = "max"; then
-          (with "--format json"
-            it "generates the index into a sink and outputs information as JSON" && {
-              WITH_SNAPSHOT="$snapshot/no-output-dir-as-json-success" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" --format json pack index-from-data < "$PACK_FILE"
+          (with "--format json and the very same output directory"
+            it "generates the index, overwriting existing files, and outputs information as JSON" && {
+              WITH_SNAPSHOT="$snapshot/output-dir-restore-as-json-success" \
+              SNAPSHOT_FILTER=remove-paths \
+              expect_run $SUCCESSFULLY "$exe_plumbing" --format json pack index create -i restore $PWD < "$PACK_FILE"
             }
           )
           fi
         )
       )
-      (sandbox
-        (with "with an output directory specified"
-          it "generates an index and outputs information" && {
-            WITH_SNAPSHOT="$snapshot/output-dir-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" pack index-from-data -p "$PACK_FILE" "$PWD"
-          }
-          it "writes the index and pack into the directory (they have the same names, different suffixes)" && {
-            WITH_SNAPSHOT="$snapshot/output-dir-content" \
-            expect_run $SUCCESSFULLY ls
-          }
-        )
-      )
     )
-    (with "'restore' iteration mode"
-      (sandbox
-        cp "${PACK_FILE}" .
-        PACK_FILE="${PACK_FILE##*/}"
-        "$jtt" mess-in-the-middle "${PACK_FILE}"
+  )
 
-        it "generates an index and outputs information (instead of failing)" && {
-          WITH_SNAPSHOT="$snapshot/output-dir-restore-success" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" pack index-from-data -i restore -p "$PACK_FILE" "$PWD"
-        }
+  title "gix pack multi-index"
+  (with "the 'multi-index' sub-command"
 
-        if test "$kind" = "max"; then
-        (with "--format json and the very same output directory"
-          it "generates the index, overwriting existing files, and outputs information as JSON" && {
-            WITH_SNAPSHOT="$snapshot/output-dir-restore-as-json-success" \
-            SNAPSHOT_FILTER=remove-paths \
-            expect_run $SUCCESSFULLY "$exe_plumbing" --format json pack index-from-data -i restore $PWD < "$PACK_FILE"
-          }
-        )
-        fi
-      )
-    )
   )
 
   title "gix pack explode"

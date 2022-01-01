@@ -177,42 +177,6 @@ pub fn main() -> Result<()> {
                     )
                 },
             ),
-            pack::Subcommands::IndexFromData {
-                iteration_mode,
-                pack_path,
-                directory,
-            } => prepare_and_run(
-                "pack-index-from-data",
-                verbose,
-                progress,
-                progress_keep_open,
-                core::pack::index::PROGRESS_RANGE,
-                move |progress, out, _err| {
-                    use gitoxide_core::pack::index::PathOrRead;
-                    let input = if let Some(path) = pack_path {
-                        PathOrRead::Path(path)
-                    } else {
-                        if atty::is(atty::Stream::Stdin) {
-                            anyhow::bail!(
-                                "Refusing to read from standard input as no path is given, but it's a terminal."
-                            )
-                        }
-                        PathOrRead::Read(Box::new(std::io::stdin()))
-                    };
-                    core::pack::index::from_pack(
-                        input,
-                        directory,
-                        progress,
-                        core::pack::index::Context {
-                            thread_limit,
-                            iteration_mode,
-                            format,
-                            out,
-                            should_interrupt: &git_repository::interrupt::IS_INTERRUPTED,
-                        },
-                    )
-                },
-            ),
             pack::Subcommands::Explode {
                 check,
                 sink_compress,
@@ -277,6 +241,44 @@ pub fn main() -> Result<()> {
                 },
             )
             .map(|_| ()),
+            pack::Subcommands::Index(subcommands) => match subcommands {
+                pack::index::Subcommands::Create {
+                    iteration_mode,
+                    pack_path,
+                    directory,
+                } => prepare_and_run(
+                    "pack-index-from-data",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    core::pack::index::PROGRESS_RANGE,
+                    move |progress, out, _err| {
+                        use gitoxide_core::pack::index::PathOrRead;
+                        let input = if let Some(path) = pack_path {
+                            PathOrRead::Path(path)
+                        } else {
+                            if atty::is(atty::Stream::Stdin) {
+                                anyhow::bail!(
+                                    "Refusing to read from standard input as no path is given, but it's a terminal."
+                                )
+                            }
+                            PathOrRead::Read(Box::new(std::io::stdin()))
+                        };
+                        core::pack::index::from_pack(
+                            input,
+                            directory,
+                            progress,
+                            core::pack::index::Context {
+                                thread_limit,
+                                iteration_mode,
+                                format,
+                                out,
+                                should_interrupt: &git_repository::interrupt::IS_INTERRUPTED,
+                            },
+                        )
+                    },
+                ),
+            },
         },
         #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         Subcommands::Remote(subcommands) => match subcommands {
