@@ -95,6 +95,12 @@ impl Index {
         })
     }
 
+    /// Return the total size of all planned chunks thus far.
+    pub fn planned_storage_size(&self) -> u64 {
+        assert!(self.will_write, "BUG: create the index with `for_writing()`");
+        self.chunks.iter().map(|e| e.offset.end).sum()
+    }
+
     /// Return the amount of chunks we currently know.
     pub fn num_chunks(&self) -> usize {
         self.chunks.len()

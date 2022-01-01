@@ -137,6 +137,17 @@ impl multi_index::File {
             );
         }
 
+        let mut write_progress = progress.add_child("Writing multi-index");
+        let mut write_start = Instant::now();
+        write_progress.init(
+            Some(cf.planned_storage_size() as usize + Self::HEADER_LEN),
+            git_features::progress::bytes(),
+        );
+        let mut out = git_features::progress::Write {
+            inner: out,
+            progress: write_progress,
+        };
+
         let bytes_written = Self::write_header(
             &mut out,
             cf.num_chunks().try_into().expect("BUG: wrote more than 256 chunks"),
@@ -167,9 +178,9 @@ impl multi_index::File {
         }
 
         // write trailing checksum
-        let multi_index_checksum: git_hash::ObjectId = out.hash.digest().into();
-        let mut out = out.inner;
-        out.write_all(multi_index_checksum.as_slice())?;
+        let multi_index_checksum: git_hash::ObjectId = out.inner.hash.digest().into();
+        out.inner.inner.write_all(multi_index_checksum.as_slice())?;
+        out.progress.show_throughput(write_start);
 
         Ok(Outcome {
             multi_index_checksum,
