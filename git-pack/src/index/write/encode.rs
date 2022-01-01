@@ -37,8 +37,6 @@ pub(crate) fn write_to(
     out.write_all(V2_SIGNATURE)?;
     out.write_u32::<BigEndian>(kind as u32)?;
 
-    let needs_64bit_offsets =
-        entries_sorted_by_oid.back().expect("at least one pack entry").offset > LARGE_OFFSET_THRESHOLD;
     progress.init(Some(4), progress::steps());
     let start = std::time::Instant::now();
     let _info = progress.add_child("writing fan-out table");
@@ -65,7 +63,7 @@ pub(crate) fn write_to(
     {
         let mut offsets64 = Vec::<u64>::new();
         for entry in &entries_sorted_by_oid {
-            out.write_u32::<BigEndian>(if needs_64bit_offsets && entry.offset > LARGE_OFFSET_THRESHOLD {
+            out.write_u32::<BigEndian>(if entry.offset > LARGE_OFFSET_THRESHOLD {
                 assert!(
                     offsets64.len() < LARGE_OFFSET_THRESHOLD as usize,
                     "Encoding breakdown - way too many 64bit offsets"
@@ -76,10 +74,8 @@ pub(crate) fn write_to(
                 entry.offset as u32
             })?;
         }
-        if needs_64bit_offsets {
-            for value in offsets64 {
-                out.write_u64::<BigEndian>(value)?;
-            }
+        for value in offsets64 {
+            out.write_u64::<BigEndian>(value)?;
         }
     }
 
