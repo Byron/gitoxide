@@ -97,14 +97,47 @@ impl File {
         )
     }
 
+    /// Similar to [`verify_integrity()`][File::verify_integrity()] but without any deep inspection of objects.
+    ///
+    /// Instead we only validate the contents of the multi-index itself.
+    pub fn verify_integrity_fast<P>(
+        &self,
+        progress: P,
+        should_interrupt: &AtomicBool,
+    ) -> Result<(git_hash::ObjectId, P), integrity::Error>
+    where
+        P: Progress,
+    {
+        self.verify_integrity_inner(progress, should_interrupt, false, integrity::Options::default())
+            .map_err(|err| match err {
+                crate::index::traverse::Error::Processor(err) => err,
+                _ => unreachable!("BUG: no other error type is possible"),
+            })
+            .map(|o| (o.actual_index_checksum, o.progress))
+    }
+
     /// Similar to [`crate::Bundle::verify_integrity()`] but checks all contained indices and their packs.
     ///
     /// Note that it's considered a failure if an index doesn't have a corresponding pack.
-    #[allow(unused)]
     pub fn verify_integrity<C, P, F>(
+        &self,
+        progress: P,
+        should_interrupt: &AtomicBool,
+        options: integrity::Options<F>,
+    ) -> Result<integrity::Outcome<P>, crate::index::traverse::Error<integrity::Error>>
+    where
+        P: Progress,
+        C: crate::cache::DecodeEntry,
+        F: Fn() -> C + Send + Clone,
+    {
+        self.verify_integrity_inner(progress, should_interrupt, true, options)
+    }
+
+    fn verify_integrity_inner<C, P, F>(
         &self,
         mut progress: P,
         should_interrupt: &AtomicBool,
+        deep_check: bool,
         integrity::Options {
             verify_mode,
             traversal,
@@ -191,9 +224,23 @@ impl File {
             progress.set_name(index_file_name.display().to_string());
             progress.inc();
 
-            let bundle = crate::Bundle::at(parent.join(index_file_name), self.object_hash)
-                .map_err(integrity::Error::from)
-                .map_err(crate::index::traverse::Error::Processor)?;
+            let mut bundle = None;
+            let index;
+            let index_path = parent.join(index_file_name);
+            let index = if deep_check {
+                bundle = crate::Bundle::at(index_path, self.object_hash)
+                    .map_err(integrity::Error::from)
+                    .map_err(crate::index::traverse::Error::Processor)?
+                    .into();
+                bundle.as_ref().map(|b| &b.index).expect("just set")
+            } else {
+                index = Some(
+                    crate::index::File::at(index_path, self.object_hash)
+                        .map_err(|err| integrity::Error::BundleInit(crate::bundle::init::Error::Index(err)))
+                        .map_err(crate::index::traverse::Error::Processor)?,
+                );
+                index.as_ref().expect("just set")
+            };
 
             let slice_end = pack_ids_slice.partition_point(|e| e.0 == pack_id as crate::data::Id);
             let multi_index_entries_to_check = &pack_ids_slice[..slice_end];
@@ -203,10 +250,10 @@ impl File {
                 for entry_id in multi_index_entries_to_check.iter().map(|e| e.1) {
                     let oid = self.oid_at_index(entry_id);
                     let (_, expected_pack_offset) = self.pack_id_and_pack_offset_at_index(entry_id);
-                    let entry_in_bundle_index = bundle.index.lookup(oid).ok_or_else(|| {
+                    let entry_in_bundle_index = index.lookup(oid).ok_or_else(|| {
                         crate::index::traverse::Error::Processor(integrity::Error::OidNotFound { id: oid.to_owned() })
                     })?;
-                    let actual_pack_offset = bundle.index.pack_offset_at_index(entry_in_bundle_index);
+                    let actual_pack_offset = index.pack_offset_at_index(entry_in_bundle_index);
                     if actual_pack_offset != expected_pack_offset {
                         return Err(crate::index::traverse::Error::Processor(
                             integrity::Error::PackOffsetMismatch {
@@ -226,7 +273,7 @@ impl File {
             total_objects_checked += multi_index_entries_to_check.len();
 
             progress.set_name("Validating");
-            {
+            if let Some(bundle) = bundle {
                 let progress = progress.add_child(index_file_name.display().to_string());
                 let crate::bundle::verify::integrity::Outcome {
                     actual_index_checksum: _,

@@ -171,5 +171,11 @@ mod write {
                 .actual_index_checksum,
             outcome.multi_index_checksum
         );
+
+        let outcome = file
+            .verify_integrity_fast(progress::Discard, &AtomicBool::new(false))
+            .unwrap();
+
+        assert_eq!(outcome.0, file.checksum());
     }
 }
