@@ -143,19 +143,26 @@ impl multi_index::File {
             index_paths_sorted.len() as u32,
             object_hash,
         )?;
-        let mut chunk_write = cf.into_write(&mut out, bytes_written)?;
-        while let Some(chunk_to_write) = chunk_write.next_chunk() {
-            match chunk_to_write {
-                multi_index::chunk::index_names::ID => {
-                    multi_index::chunk::index_names::write(&index_filenames_sorted, &mut chunk_write)?
+
+        {
+            progress.set_name("Writing chunks");
+            progress.init(Some(cf.num_chunks()), git_features::progress::count("chunks"));
+
+            let mut chunk_write = cf.into_write(&mut out, bytes_written)?;
+            while let Some(chunk_to_write) = chunk_write.next_chunk() {
+                match chunk_to_write {
+                    multi_index::chunk::index_names::ID => {
+                        multi_index::chunk::index_names::write(&index_filenames_sorted, &mut chunk_write)?
+                    }
+                    multi_index::chunk::fanout::ID => multi_index::chunk::fanout::write(&entries, &mut chunk_write)?,
+                    multi_index::chunk::lookup::ID => multi_index::chunk::lookup::write(&entries, &mut chunk_write)?,
+                    multi_index::chunk::offsets::ID => multi_index::chunk::offsets::write(&entries, &mut chunk_write)?,
+                    multi_index::chunk::large_offsets::ID => {
+                        multi_index::chunk::large_offsets::write(&entries, num_large_offsets, &mut chunk_write)?
+                    }
+                    unknown => unreachable!("BUG: forgot to implement chunk {:?}", std::str::from_utf8(&unknown)),
                 }
-                multi_index::chunk::fanout::ID => multi_index::chunk::fanout::write(&entries, &mut chunk_write)?,
-                multi_index::chunk::lookup::ID => multi_index::chunk::lookup::write(&entries, &mut chunk_write)?,
-                multi_index::chunk::offsets::ID => multi_index::chunk::offsets::write(&entries, &mut chunk_write)?,
-                multi_index::chunk::large_offsets::ID => {
-                    multi_index::chunk::large_offsets::write(&entries, num_large_offsets, &mut chunk_write)?
-                }
-                unknown => unreachable!("BUG: forgot to implement chunk {:?}", std::str::from_utf8(&unknown)),
+                progress.inc();
             }
         }
 
