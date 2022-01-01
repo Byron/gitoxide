@@ -38,8 +38,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * **index**
       * [x] [create](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
           * [x] support for thin packs (as needed for fetch/pull)
-    * **commitgraph**
-      * [x] **verify** - assure that a commitgraph is consistent
+    * **commit-graph**
+      * [x] **verify** - assure that a commit-graph is consistent
     * **remote**
       * [ref-list](https://asciinema.org/a/359320) - list all (or given) references from a remote at the given URL
 

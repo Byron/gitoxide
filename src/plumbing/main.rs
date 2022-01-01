@@ -356,7 +356,7 @@ pub fn main() -> Result<()> {
                 },
             ),
         },
-        Subcommands::Commitgraph(subcommands) => match subcommands {
+        Subcommands::CommitGraph(subcommands) => match subcommands {
             commitgraph::Subcommands::Verify { path, statistics } => prepare_and_run(
                 "commitgraph-verify",
                 verbose,

@@ -53,9 +53,9 @@ pub enum Subcommands {
     #[clap(subcommand)]
     #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     Remote(remote::Subcommands),
-    /// Subcommands for interacting with commitgraphs
+    /// Subcommands for interacting with commit-graphs
     #[clap(subcommand)]
-    Commitgraph(commitgraph::Subcommands),
+    CommitGraph(commitgraph::Subcommands),
 }
 
 ///

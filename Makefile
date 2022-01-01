@@ -257,7 +257,7 @@ stress: ## Run various algorithms on big repositories
 .PHONY: stress-commitgraph
 stress-commitgraph: release-lean $(commit_graphs)
 	set -x; for path in $(wordlist 2, 999, $^); do \
-		time ./target/release/gix --verbose commit-graph-verify $$path; \
+		time ./target/release/gix --verbose commit-graph verify $$path; \
 	done
 
 .PHONY: bench-git-config
