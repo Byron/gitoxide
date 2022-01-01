@@ -1,6 +1,4 @@
-#![allow(unused)]
-
-use std::{borrow::Cow, collections::HashMap};
+use std::collections::HashMap;
 
 use git_repository as git;
 
@@ -19,7 +17,7 @@ pub struct Message {
     pub breaking: bool,
     /// If set, this commit message body contains a specific description of the breaking change.
     pub breaking_description: Option<String>,
-    /// all dditional information parsed from the title.
+    /// all additional information parsed from the title.
     pub additions: Vec<message::Addition>,
 }
 

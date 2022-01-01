@@ -1,6 +1,5 @@
-use git_conventional::Type;
 use git_repository as git;
-use git_repository::bstr::{BStr, ByteSlice};
+use git_repository::bstr::ByteSlice;
 
 use crate::commit::Message;
 

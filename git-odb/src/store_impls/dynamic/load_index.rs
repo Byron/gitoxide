@@ -457,7 +457,7 @@ impl super::Store {
     }
 
     /// returns Ok<dest slot was empty> if the copy could happen because dest-slot was actually free or disposable , and Some(true) if it was empty
-    #[allow(clippy::too_many_arguments, unused_variables)]
+    #[allow(clippy::too_many_arguments)]
     fn try_set_index_slot(
         lock: &parking_lot::MutexGuard<'_, ()>,
         dest_slot: &MutableIndexAndPack,

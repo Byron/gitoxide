@@ -1,8 +1,6 @@
-#![allow(missing_docs, unused)]
-
+use std::sync::atomic::Ordering;
 use std::{
     convert::TryInto,
-    io::Write,
     path::PathBuf,
     sync::atomic::AtomicBool,
     time::{Instant, SystemTime},
@@ -16,6 +14,7 @@ use crate::multi_index;
 mod error {
     /// The error returned by [multi_index::File::write_from_index_paths()][super::multi_index::File::write_from_index_paths()]..
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
         Io(#[from] std::io::Error),
@@ -36,10 +35,13 @@ pub(crate) struct Entry {
     index_mtime: SystemTime,
 }
 
+/// Options for use in [`multi_index::File::write_from_index_paths()`].
 pub struct Options {
+    /// The kind of hash to use for objects and to expect in the input files.
     pub object_hash: git_hash::Kind,
 }
 
+/// The result of [`multi_index::File::write_from_index_paths()`].
 pub struct Outcome<P> {
     /// The calculated multi-index checksum of the file at `multi_index_path`.
     pub multi_index_checksum: git_hash::ObjectId,
@@ -56,6 +58,9 @@ impl multi_index::File {
         1 /*num base files */ +
         4 /*num pack files*/;
 
+    /// Create a new multi-index file for writing to `out` from the pack index files at `index_paths`.
+    ///
+    /// Progress is sent to `progress` and interruptions checked via `should_interrupt`.
     pub fn write_from_index_paths<P>(
         mut index_paths: Vec<PathBuf>,
         out: impl std::io::Write,
@@ -66,7 +71,7 @@ impl multi_index::File {
     where
         P: Progress,
     {
-        let mut out = git_features::hash::Write::new(out, object_hash);
+        let out = git_features::hash::Write::new(out, object_hash);
         let (index_paths_sorted, index_filenames_sorted) = {
             index_paths.sort();
             let file_names = index_paths
@@ -98,6 +103,9 @@ impl multi_index::File {
                     index_mtime: mtime,
                 }));
                 progress.inc();
+                if should_interrupt.load(Ordering::Relaxed) {
+                    return Err(Error::Interrupted);
+                }
             }
             progress.show_throughput(start);
 
@@ -111,6 +119,9 @@ impl multi_index::File {
             });
             entries.dedup_by_key(|e| e.id);
             progress.show_throughput(start);
+            if should_interrupt.load(Ordering::Relaxed) {
+                return Err(Error::Interrupted);
+            }
             entries
         };
 
@@ -138,7 +149,7 @@ impl multi_index::File {
         }
 
         let mut write_progress = progress.add_child("Writing multi-index");
-        let mut write_start = Instant::now();
+        let write_start = Instant::now();
         write_progress.init(
             Some(cf.planned_storage_size() as usize + Self::HEADER_LEN),
             git_features::progress::bytes(),
@@ -174,6 +185,9 @@ impl multi_index::File {
                     unknown => unreachable!("BUG: forgot to implement chunk {:?}", std::str::from_utf8(&unknown)),
                 }
                 progress.inc();
+                if should_interrupt.load(Ordering::Relaxed) {
+                    return Err(Error::Interrupted);
+                }
             }
         }
 
