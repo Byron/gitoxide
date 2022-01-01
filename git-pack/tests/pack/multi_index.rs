@@ -73,12 +73,7 @@ mod verify {
     fn integrity() {
         let (file, _) = multi_index();
         let outcome = file
-            .verify_integrity(
-                || git_pack::cache::Never,
-                progress::Discard,
-                &AtomicBool::new(false),
-                Default::default(),
-            )
+            .verify_integrity(progress::Discard, &AtomicBool::new(false), Default::default())
             .unwrap();
         assert_eq!(outcome.actual_index_checksum, file.checksum());
         assert_eq!(
@@ -171,14 +166,9 @@ mod write {
         }
 
         assert_eq!(
-            file.verify_integrity(
-                || git_pack::cache::Never,
-                progress::Discard,
-                &AtomicBool::new(false),
-                Default::default()
-            )
-            .unwrap()
-            .actual_index_checksum,
+            file.verify_integrity(progress::Discard, &AtomicBool::new(false), Default::default())
+                .unwrap()
+                .actual_index_checksum,
             outcome.multi_index_checksum
         );
     }

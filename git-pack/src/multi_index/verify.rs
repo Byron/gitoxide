@@ -50,14 +50,26 @@ pub mod integrity {
     }
 
     /// Additional options to define how the integrity should be verified.
-    #[derive(Default)]
-    pub struct Options {
+    pub struct Options<F> {
         /// The thoroughness of the verification
         pub verify_mode: crate::index::verify::Mode,
         /// The way to traverse packs
         pub traversal: crate::index::traverse::Algorithm,
         /// The amount of theads to use of `Some(N)`, with `None|Some(0)` using all available cores are used.
         pub thread_limit: Option<usize>,
+        /// A function to create a pack cache
+        pub make_pack_lookup_cache: F,
+    }
+
+    impl Default for Options<fn() -> crate::cache::Never> {
+        fn default() -> Self {
+            Options {
+                verify_mode: Default::default(),
+                traversal: Default::default(),
+                thread_limit: None,
+                make_pack_lookup_cache: || crate::cache::Never,
+            }
+        }
     }
 }
 
@@ -89,20 +101,21 @@ impl File {
     ///
     /// Note that it's considered a failure if an index doesn't have a corresponding pack.
     #[allow(unused)]
-    pub fn verify_integrity<C, P>(
+    pub fn verify_integrity<C, P, F>(
         &self,
-        make_pack_lookup_cache: impl Fn() -> C + Send + Clone,
         mut progress: P,
         should_interrupt: &AtomicBool,
         integrity::Options {
             verify_mode,
             traversal,
             thread_limit,
-        }: integrity::Options,
+            make_pack_lookup_cache,
+        }: integrity::Options<F>,
     ) -> Result<integrity::Outcome<P>, crate::index::traverse::Error<integrity::Error>>
     where
         P: Progress,
         C: crate::cache::DecodeEntry,
+        F: Fn() -> C + Send + Clone,
     {
         let parent = self.path.parent().expect("must be in a directory");
 
