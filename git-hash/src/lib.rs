@@ -7,6 +7,7 @@
 mod borrowed;
 
 use std::convert::TryFrom;
+use std::str::FromStr;
 
 pub use borrowed::oid;
 
@@ -81,6 +82,17 @@ impl TryFrom<u8> for Kind {
         Ok(match value {
             1 => Kind::Sha1,
             unknown => return Err(unknown),
+        })
+    }
+}
+
+impl FromStr for Kind {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "sha1" | "SHA1" => Kind::Sha1,
+            other => return Err(other.into()),
         })
     }
 }

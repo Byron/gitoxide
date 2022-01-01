@@ -55,6 +55,7 @@ pub struct Context<'a, W: io::Write> {
     pub format: OutputFormat,
     pub should_interrupt: &'a AtomicBool,
     pub out: W,
+    pub object_hash: git_repository::hash::Kind,
 }
 
 pub fn stream_len(mut s: impl io::Seek) -> io::Result<u64> {
@@ -85,7 +86,7 @@ pub fn from_pack(
         thread_limit: ctx.thread_limit,
         iteration_mode: ctx.iteration_mode.into(),
         index_kind: pack::index::Version::default(),
-        object_hash: git_repository::hash::Kind::Sha1, // TODO: make this configurable via CLI, context
+        object_hash: ctx.object_hash,
     };
     let out = ctx.out;
     let format = ctx.format;

@@ -42,7 +42,7 @@ title "git-tempfile crate"
 title "gix pack"
 (when "running 'pack'"
   snapshot="$snapshot/pack"
-  
+
   title "gix pack receive"
   (with "the 'receive' sub-command"
     snapshot="$snapshot/receive"
@@ -265,7 +265,18 @@ title "gix pack"
 
   title "gix pack multi-index"
   (with "the 'multi-index' sub-command"
-
+      snapshot="$snapshot/multi-index"
+      title "gix pack multi-index create"
+      (with "the 'create' sub-command"
+          snapshot="$snapshot/create"
+          (with 'multiple pack indices'
+            (sandbox
+              it "creates a multi-index successfully" && {
+                expect_run $SUCCESSFULLY "$exe_plumbing" pack multi-index create $fixtures/packs/pack-*.idx -o multi-pack-index
+              }
+            )
+          )
+      )
   )
 
   title "gix pack explode"

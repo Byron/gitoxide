@@ -1,5 +1,6 @@
 pub mod explode;
 pub mod index;
+pub mod multi_index;
 pub mod verify;
 
 #[cfg(any(feature = "async-client", feature = "blocking-client"))]

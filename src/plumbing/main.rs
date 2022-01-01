@@ -51,6 +51,7 @@ pub fn main() -> Result<()> {
     let verbose = args.verbose;
     let format = args.format;
     let cmd = args.cmd;
+    let object_hash = args.object_hash;
 
     let progress;
     let progress_keep_open;
@@ -241,13 +242,34 @@ pub fn main() -> Result<()> {
                 },
             )
             .map(|_| ()),
+            pack::Subcommands::MultiIndex(subcommands) => match subcommands {
+                pack::multi_index::Subcommands::Create {
+                    output_path,
+                    index_paths,
+                } => prepare_and_run(
+                    "pack-multi-index-create",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    core::pack::multi_index::PROGRESS_RANGE,
+                    move |progress, _out, _err| {
+                        core::pack::multi_index::create(
+                            index_paths,
+                            output_path,
+                            progress,
+                            &git_repository::interrupt::IS_INTERRUPTED,
+                            object_hash,
+                        )
+                    },
+                ),
+            },
             pack::Subcommands::Index(subcommands) => match subcommands {
                 pack::index::Subcommands::Create {
                     iteration_mode,
                     pack_path,
                     directory,
                 } => prepare_and_run(
-                    "pack-index-from-data",
+                    "pack-index-create",
                     verbose,
                     progress,
                     progress_keep_open,
@@ -273,6 +295,7 @@ pub fn main() -> Result<()> {
                                 iteration_mode,
                                 format,
                                 out,
+                                object_hash,
                                 should_interrupt: &git_repository::interrupt::IS_INTERRUPTED,
                             },
                         )
@@ -321,7 +344,7 @@ pub fn main() -> Result<()> {
         },
         Subcommands::Commitgraph(subcommands) => match subcommands {
             commitgraph::Subcommands::Verify { path, statistics } => prepare_and_run(
-                "commit-graph-verify",
+                "commitgraph-verify",
                 verbose,
                 progress,
                 progress_keep_open,

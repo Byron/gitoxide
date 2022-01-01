@@ -36,6 +36,10 @@ pub struct Args {
     )]
     pub format: core::OutputFormat,
 
+    /// The object format to assume when reading files that don't inherently know about it, or when writing files.
+    #[clap(long, default_value = "sha1", possible_values(&["sha1"]))]
+    pub object_hash: git_repository::hash::Kind,
+
     #[clap(subcommand)]
     pub cmd: Subcommands,
 }
@@ -63,6 +67,12 @@ pub mod pack {
 
     #[derive(Debug, clap::Parser)]
     pub enum Subcommands {
+        /// Subcommands for interacting with pack indices (.idx)
+        #[clap(subcommand)]
+        Index(index::Subcommands),
+        /// Subcommands for interacting with multi-pack indices (named "multi-pack-index")
+        #[clap(subcommand)]
+        MultiIndex(multi_index::Subcommands),
         /// Create a new pack with a set of objects.
         #[clap(setting = AppSettings::DisableVersionFlag)]
         Create {
@@ -153,9 +163,6 @@ pub mod pack {
             /// If unset, they will be discarded.
             directory: Option<PathBuf>,
         },
-        /// Subcommands for interacting with pack indices (.idx)
-        #[clap(subcommand)]
-        Index(index::Subcommands),
         /// Dissolve a pack into its loose objects.
         ///
         /// Note that this effectively removes delta compression for an average compression of 2x, creating one file per object in the process.
@@ -232,6 +239,29 @@ pub mod pack {
             #[clap(parse(from_os_str))]
             path: PathBuf,
         },
+    }
+
+    ///
+    pub mod multi_index {
+        use clap::AppSettings;
+        use std::path::PathBuf;
+
+        #[derive(Debug, clap::Parser)]
+        pub enum Subcommands {
+            /// create a multi-pack index from one or more pack index files
+            #[clap(setting = AppSettings::DisableVersionFlag)]
+            Create {
+                /// The path to which the multi-index file should be written, overwriting any possibly existing file.
+                ///
+                /// Note for the multi-index to be useful, it should be side-by-side with the supplied `.idx` files.
+                #[clap(long, short = 'o')]
+                output_path: PathBuf,
+
+                /// Paths to the pack index files to read (with .idx extension).
+                #[clap(required = true)]
+                index_paths: Vec<PathBuf>,
+            },
+        }
     }
 
     ///
