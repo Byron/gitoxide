@@ -176,6 +176,7 @@ pub mod lookup {
 
 /// Information about the offsets table.
 pub mod offsets {
+    use std::convert::TryInto;
     use std::ops::Range;
 
     use byteorder::{BigEndian, WriteBytesExt};
@@ -192,6 +193,7 @@ pub mod offsets {
 
     pub(crate) fn write(
         sorted_entries: &[multi_index::write::Entry],
+        large_offsets_needed: bool,
         mut out: impl std::io::Write,
     ) -> std::io::Result<()> {
         use crate::index::write::encode::{HIGH_BIT, LARGE_OFFSET_THRESHOLD};
@@ -200,12 +202,19 @@ pub mod offsets {
         for entry in sorted_entries {
             out.write_u32::<BigEndian>(entry.pack_index)?;
 
-            let offset = if entry.pack_offset > LARGE_OFFSET_THRESHOLD {
-                let res = num_large_offsets | HIGH_BIT;
-                num_large_offsets += 1;
-                res
+            let offset: u32 = if large_offsets_needed {
+                if entry.pack_offset > LARGE_OFFSET_THRESHOLD {
+                    let res = num_large_offsets | HIGH_BIT;
+                    num_large_offsets += 1;
+                    res
+                } else {
+                    entry.pack_offset as u32
+                }
             } else {
-                entry.pack_offset as u32
+                entry
+                    .pack_offset
+                    .try_into()
+                    .expect("without large offsets, pack-offset fits u32")
             };
             out.write_u32::<BigEndian>(offset)?;
         }
@@ -230,11 +239,20 @@ pub mod large_offsets {
     /// The id uniquely identifying the large offsets table (with 64 bit offsets)
     pub const ID: git_chunk::Id = *b"LOFF";
 
-    pub(crate) fn num_large_offsets(entries: &[multi_index::write::Entry]) -> usize {
-        entries
-            .iter()
-            .filter(|e| e.pack_offset > LARGE_OFFSET_THRESHOLD)
-            .count()
+    /// Returns Some(num-large-offset) if there are offsets larger than u32.
+    pub(crate) fn num_large_offsets(entries: &[multi_index::write::Entry]) -> Option<usize> {
+        let mut num_large_offsets = 0;
+        let mut needs_large_offsets = false;
+        for entry in entries {
+            if entry.pack_offset > LARGE_OFFSET_THRESHOLD {
+                num_large_offsets += 1;
+            }
+            if entry.pack_offset > u32::MAX as crate::data::Offset {
+                needs_large_offsets = true;
+            }
+        }
+
+        needs_large_offsets.then(|| num_large_offsets)
     }
     /// Returns true if the `offsets` range seems to be properly aligned for the data we expect.
     pub fn is_valid(offset: &Range<usize>) -> bool {

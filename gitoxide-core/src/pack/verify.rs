@@ -178,13 +178,13 @@ where
                     let res = multi_index.verify_integrity(cache, progress, should_interrupt, git::odb::pack::multi_index::verify::integrity::Options{verify_mode: mode, traversal: algorithm.into(),thread_limit })?;
                     match output_statistics {
                         Some(OutputFormat::Human) => {
-                            for (index_name, stats) in multi_index.index_names().iter().zip(res.pack_traverse_outcomes) {
+                            for (index_name, stats) in multi_index.index_names().iter().zip(res.pack_traverse_statistics) {
                                 writeln!(out, "{}", index_name.display()).ok();
                                 drop(print_statistics(&mut out, &stats));
                             }
                         },
                         #[cfg(feature = "serde1")]
-                        Some(OutputFormat::Json) => serde_json::to_writer_pretty(out, &multi_index.index_names().iter().zip(res.pack_traverse_outcomes).collect::<Vec<_>>())?,
+                        Some(OutputFormat::Json) => serde_json::to_writer_pretty(out, &multi_index.index_names().iter().zip(res.pack_traverse_statistics).collect::<Vec<_>>())?,
                         _ => {}
                     };
                     return Ok(())

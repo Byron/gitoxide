@@ -82,7 +82,7 @@ mod verify {
             .unwrap();
         assert_eq!(outcome.actual_index_checksum, file.checksum());
         assert_eq!(
-            outcome.pack_traverse_outcomes,
+            outcome.pack_traverse_statistics,
             vec![git_pack::index::traverse::Statistics {
                 average: git_pack::data::decode_entry::Outcome {
                     kind: git_object::Kind::Tree,

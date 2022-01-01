@@ -142,7 +142,7 @@ impl multi_index::File {
         );
 
         let num_large_offsets = multi_index::chunk::large_offsets::num_large_offsets(&entries);
-        if num_large_offsets > 0 {
+        if let Some(num_large_offsets) = num_large_offsets {
             cf.plan_chunk(
                 multi_index::chunk::large_offsets::ID,
                 multi_index::chunk::large_offsets::storage_size(num_large_offsets),
@@ -179,10 +179,14 @@ impl multi_index::File {
                     }
                     multi_index::chunk::fanout::ID => multi_index::chunk::fanout::write(&entries, &mut chunk_write)?,
                     multi_index::chunk::lookup::ID => multi_index::chunk::lookup::write(&entries, &mut chunk_write)?,
-                    multi_index::chunk::offsets::ID => multi_index::chunk::offsets::write(&entries, &mut chunk_write)?,
-                    multi_index::chunk::large_offsets::ID => {
-                        multi_index::chunk::large_offsets::write(&entries, num_large_offsets, &mut chunk_write)?
+                    multi_index::chunk::offsets::ID => {
+                        multi_index::chunk::offsets::write(&entries, num_large_offsets.is_some(), &mut chunk_write)?
                     }
+                    multi_index::chunk::large_offsets::ID => multi_index::chunk::large_offsets::write(
+                        &entries,
+                        num_large_offsets.expect("available if planned"),
+                        &mut chunk_write,
+                    )?,
                     unknown => unreachable!("BUG: forgot to implement chunk {:?}", std::str::from_utf8(&unknown)),
                 }
                 progress.inc();
