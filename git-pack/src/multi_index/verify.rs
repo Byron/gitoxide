@@ -1,3 +1,4 @@
+use std::time::Instant;
 use std::{cmp::Ordering, sync::atomic::AtomicBool};
 
 use git_features::progress::Progress;
@@ -105,7 +106,7 @@ impl File {
 
         let actual_index_checksum = self
             .verify_checksum(
-                progress.add_child(format!("checksum of '{}'", self.path.display())),
+                progress.add_child(format!("{}: checksum", self.path.display())),
                 should_interrupt,
             )
             .map_err(integrity::Error::from)
@@ -123,129 +124,141 @@ impl File {
 
         let mut pack_traverse_statistics = Vec::new();
 
-        progress.set_name("Validating");
-        let start = std::time::Instant::now();
+        let operation_start = Instant::now();
+        let mut total_objects_checked = 0;
+        let mut pack_ids_and_offsets = Vec::with_capacity(self.num_objects as usize);
+        {
+            let order_start = Instant::now();
+            let mut progress = progress.add_child("checking oid order");
+            progress.init(
+                Some(self.num_objects as usize),
+                git_features::progress::count("objects"),
+            );
+
+            for entry_index in 0..(self.num_objects - 1) {
+                let lhs = self.oid_at_index(entry_index);
+                let rhs = self.oid_at_index(entry_index + 1);
+
+                if rhs.cmp(lhs) != Ordering::Greater {
+                    return Err(crate::index::traverse::Error::Processor(integrity::Error::OutOfOrder {
+                        index: entry_index,
+                    }));
+                }
+                let (pack_id, _) = self.pack_id_and_pack_offset_at_index(entry_index);
+                pack_ids_and_offsets.push((pack_id, entry_index));
+                progress.inc();
+            }
+            {
+                let entry_index = self.num_objects - 1;
+                let (pack_id, _) = self.pack_id_and_pack_offset_at_index(entry_index);
+                pack_ids_and_offsets.push((pack_id, entry_index));
+            }
+            // sort by pack-id to allow handling all indices matching a pack while its open.
+            pack_ids_and_offsets.sort_by(|l, r| l.0.cmp(&r.0));
+            progress.show_throughput(order_start);
+        };
 
         progress.init(
             Some(self.num_indices as usize),
             git_features::progress::count("indices"),
         );
 
-        let order_start = std::time::Instant::now();
-        let mut our_progress = progress.add_child("checking oid order");
-        our_progress.init(
-            Some(self.num_objects as usize),
+        let mut pack_ids_slice = pack_ids_and_offsets.as_slice();
+
+        let offset_start = Instant::now();
+        let mut offsets_progress = progress.add_child("verify object offsets");
+        offsets_progress.init(
+            Some(pack_ids_and_offsets.len()),
             git_features::progress::count("objects"),
         );
 
-        let mut pack_ids_and_offsets = Vec::with_capacity(self.num_objects as usize);
-        let mut total_objects_checked = 0;
-        for entry_index in 0..(self.num_objects - 1) {
-            let lhs = self.oid_at_index(entry_index);
-            let rhs = self.oid_at_index(entry_index + 1);
-
-            if rhs.cmp(lhs) != Ordering::Greater {
-                return Err(crate::index::traverse::Error::Processor(integrity::Error::OutOfOrder {
-                    index: entry_index,
-                }));
-            }
-            let (pack_id, _) = self.pack_id_and_pack_offset_at_index(entry_index);
-            pack_ids_and_offsets.push((pack_id, entry_index));
-            our_progress.inc();
-        }
-        {
-            let entry_index = self.num_objects - 1;
-            let (pack_id, _) = self.pack_id_and_pack_offset_at_index(entry_index);
-            pack_ids_and_offsets.push((pack_id, entry_index));
-        }
-        // sort by pack-id to allow handling all indices matching a pack while its open.
-        pack_ids_and_offsets.sort_by(|l, r| l.0.cmp(&r.0));
-        our_progress.show_throughput(order_start);
-
-        our_progress.set_name("verify object offsets");
-        our_progress.set(0);
-
-        let mut pack_ids_slice = pack_ids_and_offsets.as_slice();
         for (pack_id, index_file_name) in self.index_names.iter().enumerate() {
+            progress.set_name(index_file_name.display().to_string());
             progress.inc();
+
             let bundle = crate::Bundle::at(parent.join(index_file_name), self.object_hash)
                 .map_err(integrity::Error::from)
                 .map_err(crate::index::traverse::Error::Processor)?;
 
             let slice_end = pack_ids_slice.partition_point(|e| e.0 == pack_id as crate::data::Id);
             let multi_index_entries_to_check = &pack_ids_slice[..slice_end];
-            pack_ids_slice = &pack_ids_slice[slice_end..];
+            {
+                pack_ids_slice = &pack_ids_slice[slice_end..];
 
-            for entry_id in multi_index_entries_to_check.iter().map(|e| e.1) {
-                let oid = self.oid_at_index(entry_id);
-                let (_, expected_pack_offset) = self.pack_id_and_pack_offset_at_index(entry_id);
-                let entry_in_bundle_index = bundle.index.lookup(oid).ok_or_else(|| {
-                    crate::index::traverse::Error::Processor(integrity::Error::OidNotFound { id: oid.to_owned() })
-                })?;
-                let actual_pack_offset = bundle.index.pack_offset_at_index(entry_in_bundle_index);
-                if actual_pack_offset != expected_pack_offset {
-                    return Err(crate::index::traverse::Error::Processor(
-                        integrity::Error::PackOffsetMismatch {
-                            id: oid.to_owned(),
-                            expected_pack_offset,
-                            actual_pack_offset,
-                        },
-                    ));
+                for entry_id in multi_index_entries_to_check.iter().map(|e| e.1) {
+                    let oid = self.oid_at_index(entry_id);
+                    let (_, expected_pack_offset) = self.pack_id_and_pack_offset_at_index(entry_id);
+                    let entry_in_bundle_index = bundle.index.lookup(oid).ok_or_else(|| {
+                        crate::index::traverse::Error::Processor(integrity::Error::OidNotFound { id: oid.to_owned() })
+                    })?;
+                    let actual_pack_offset = bundle.index.pack_offset_at_index(entry_in_bundle_index);
+                    if actual_pack_offset != expected_pack_offset {
+                        return Err(crate::index::traverse::Error::Processor(
+                            integrity::Error::PackOffsetMismatch {
+                                id: oid.to_owned(),
+                                expected_pack_offset,
+                                actual_pack_offset,
+                            },
+                        ));
+                    }
+                    offsets_progress.inc();
                 }
-                our_progress.inc();
             }
 
             total_objects_checked += multi_index_entries_to_check.len();
 
-            let progress = progress.add_child(index_file_name.display().to_string());
-            let crate::bundle::verify::integrity::Outcome {
-                actual_index_checksum: _,
-                pack_traverse_outcome,
-                progress: _,
-            } = bundle
-                .verify_integrity(
-                    verify_mode,
-                    traversal,
-                    make_pack_lookup_cache.clone(),
-                    thread_limit,
-                    progress,
-                    should_interrupt,
-                )
-                .map_err(|err| {
-                    use crate::index::traverse::Error::*;
-                    match err {
-                        Processor(err) => Processor(integrity::Error::IndexIntegrity(err)),
-                        VerifyChecksum(err) => VerifyChecksum(err),
-                        Tree(err) => Tree(err),
-                        TreeTraversal(err) => TreeTraversal(err),
-                        PackDecode { id, offset, source } => PackDecode { id, offset, source },
-                        PackMismatch { expected, actual } => PackMismatch { expected, actual },
-                        PackObjectMismatch {
-                            expected,
-                            actual,
-                            offset,
-                            kind,
-                        } => PackObjectMismatch {
-                            expected,
-                            actual,
-                            offset,
-                            kind,
-                        },
-                        Crc32Mismatch {
-                            expected,
-                            actual,
-                            offset,
-                            kind,
-                        } => Crc32Mismatch {
-                            expected,
-                            actual,
-                            offset,
-                            kind,
-                        },
-                        Interrupted => Interrupted,
-                    }
-                })?;
-            pack_traverse_statistics.push(pack_traverse_outcome);
+            progress.set_name("Validating");
+            {
+                let progress = progress.add_child(index_file_name.display().to_string());
+                let crate::bundle::verify::integrity::Outcome {
+                    actual_index_checksum: _,
+                    pack_traverse_outcome,
+                    progress: _,
+                } = bundle
+                    .verify_integrity(
+                        verify_mode,
+                        traversal,
+                        make_pack_lookup_cache.clone(),
+                        thread_limit,
+                        progress,
+                        should_interrupt,
+                    )
+                    .map_err(|err| {
+                        use crate::index::traverse::Error::*;
+                        match err {
+                            Processor(err) => Processor(integrity::Error::IndexIntegrity(err)),
+                            VerifyChecksum(err) => VerifyChecksum(err),
+                            Tree(err) => Tree(err),
+                            TreeTraversal(err) => TreeTraversal(err),
+                            PackDecode { id, offset, source } => PackDecode { id, offset, source },
+                            PackMismatch { expected, actual } => PackMismatch { expected, actual },
+                            PackObjectMismatch {
+                                expected,
+                                actual,
+                                offset,
+                                kind,
+                            } => PackObjectMismatch {
+                                expected,
+                                actual,
+                                offset,
+                                kind,
+                            },
+                            Crc32Mismatch {
+                                expected,
+                                actual,
+                                offset,
+                                kind,
+                            } => Crc32Mismatch {
+                                expected,
+                                actual,
+                                offset,
+                                kind,
+                            },
+                            Interrupted => Interrupted,
+                        }
+                    })?;
+                pack_traverse_statistics.push(pack_traverse_outcome);
+            }
         }
 
         assert_eq!(
@@ -253,7 +266,8 @@ impl File {
             "BUG: our slicing should allow to visit all objects"
         );
 
-        progress.show_throughput(start);
+        offsets_progress.show_throughput(offset_start);
+        progress.show_throughput(operation_start);
 
         Ok(integrity::Outcome {
             actual_index_checksum,
