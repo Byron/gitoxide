@@ -37,7 +37,7 @@ pub fn steps() -> Option<Unit> {
 /// A structure passing every [`read`][std::io::Read::read()] call through to the contained Progress instance using [`inc_by(bytes_read)`][Progress::inc_by()].
 pub struct Read<R, P> {
     /// The implementor of [`std::io::Read`] to which progress is added
-    pub reader: R,
+    pub inner: R,
     /// The progress instance receiving progress information on each invocation of `reader`
     pub progress: P,
 }
@@ -48,7 +48,7 @@ where
     P: Progress,
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        let bytes_read = self.reader.read(buf)?;
+        let bytes_read = self.inner.read(buf)?;
         self.progress.inc_by(bytes_read as usize);
         Ok(bytes_read)
     }
@@ -60,10 +60,10 @@ where
     P: Progress,
 {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
-        self.reader.fill_buf()
+        self.inner.fill_buf()
     }
 
     fn consume(&mut self, amt: usize) {
-        self.reader.consume(amt)
+        self.inner.consume(amt)
     }
 }
