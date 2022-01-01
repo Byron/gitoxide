@@ -118,6 +118,7 @@ impl multi_index::File {
                     .then_with(|| l.pack_index.cmp(&r.pack_index))
             });
             entries.dedup_by_key(|e| e.id);
+            progress.inc_by(entries.len());
             progress.show_throughput(start);
             if should_interrupt.load(Ordering::Relaxed) {
                 return Err(Error::Interrupted);

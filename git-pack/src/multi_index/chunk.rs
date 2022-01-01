@@ -243,7 +243,7 @@ pub mod large_offsets {
 
     pub(crate) fn write(
         sorted_entries: &[multi_index::write::Entry],
-        num_large_offsets: usize,
+        mut num_large_offsets: usize,
         mut out: impl std::io::Write,
     ) -> std::io::Result<()> {
         for offset in sorted_entries
@@ -251,7 +251,7 @@ pub mod large_offsets {
             .filter_map(|e| (e.pack_offset > LARGE_OFFSET_THRESHOLD).then(|| e.pack_offset))
         {
             out.write_u64::<BigEndian>(offset)?;
-            num_large_offsets
+            num_large_offsets = num_large_offsets
                 .checked_sub(1)
                 .expect("BUG: wrote more offsets the previously found");
         }

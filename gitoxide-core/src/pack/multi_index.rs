@@ -5,7 +5,7 @@ use std::sync::atomic::AtomicBool;
 
 use git_repository as git;
 
-pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 2..=3;
+pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub fn create(
     index_paths: Vec<PathBuf>,
