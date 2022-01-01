@@ -51,7 +51,7 @@ impl crate::Bundle {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(None, progress::bytes());
         let pack = progress::Read {
-            reader: pack,
+            inner: pack,
             progress: progress::ThroughputOnDrop::new(read_progress),
         };
 
@@ -150,7 +150,7 @@ impl crate::Bundle {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
         let pack = progress::Read {
-            reader: pack,
+            inner: pack,
             progress: progress::ThroughputOnDrop::new(read_progress),
         };
 
