@@ -193,82 +193,86 @@ title "gix pack-receive"
   )
 )
 
-title "gix remote-ref-list"
-(when "running 'remote-ref-list'"
-  snapshot="$snapshot/remote-ref-list"
-  (small-repo-in-sandbox
-    if [[ "$kind" != "small" ]]; then
+title "gix remote"
+(when "running 'remote'"
+  snapshot="$snapshot/remote"
+  title "gix remote ref-list"
+  (with "the 'ref-list' subcommand"
+    snapshot="$snapshot/ref-list"
+    (small-repo-in-sandbox
+      if [[ "$kind" != "small" ]]; then
 
-    if [[ "$kind" != "async" ]]; then
-    (with "file:// protocol"
-      (with "version 1"
-        it "generates the correct output" && {
-          WITH_SNAPSHOT="$snapshot/file-v-any" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 1 .git
-        }
-      )
-      (with "version 2"
-        it "generates the correct output" && {
-          WITH_SNAPSHOT="$snapshot/file-v-any" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list --protocol 2 "$PWD/.git"
-        }
-      )
-      if test "$kind" = "max"; then
-      (with "--format json"
-        it "generates the correct output in JSON format" && {
-          WITH_SNAPSHOT="$snapshot/file-v-any-json" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" --format json remote-ref-list .git
-        }
-      )
-      fi
-    )
-    fi
-
-    (with "git:// protocol"
-      launch-git-daemon
-      (with "version 1"
-        it "generates the correct output" && {
-          WITH_SNAPSHOT="$snapshot/file-v-any" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 1 git://localhost/
-        }
-      )
-      (with "version 2"
-        it "generates the correct output" && {
-          WITH_SNAPSHOT="$snapshot/file-v-any" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 2 git://localhost/
-        }
-      )
-    )
-    if [[ "$kind" == "small" ]]; then
-    (with "https:// protocol (in small builds)"
-      it "fails as http is not compiled in" && {
-        WITH_SNAPSHOT="$snapshot/fail-http-in-small" \
-        expect_run $WITH_FAILURE "$exe_plumbing" remote-ref-list -p 1 https://github.com/byron/gitoxide
-      }
-    )
-    fi
-    (on_ci
-      if [[ "$kind" = "max" ]]; then
-      (with "https:// protocol"
+      if [[ "$kind" != "async" ]]; then
+      (with "file:// protocol"
         (with "version 1"
           it "generates the correct output" && {
-            expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 1 https://github.com/byron/gitoxide
+            WITH_SNAPSHOT="$snapshot/file-v-any" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" remote ref-list -p 1 .git
           }
         )
         (with "version 2"
           it "generates the correct output" && {
-            expect_run $SUCCESSFULLY "$exe_plumbing" remote-ref-list -p 2 https://github.com/byron/gitoxide
+            WITH_SNAPSHOT="$snapshot/file-v-any" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" remote ref-list --protocol 2 "$PWD/.git"
+          }
+        )
+        if test "$kind" = "max"; then
+        (with "--format json"
+          it "generates the correct output in JSON format" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any-json" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" --format json remote ref-list .git
+          }
+        )
+        fi
+      )
+      fi
+
+      (with "git:// protocol"
+        launch-git-daemon
+        (with "version 1"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" remote ref-list -p 1 git://localhost/
+          }
+        )
+        (with "version 2"
+          it "generates the correct output" && {
+            WITH_SNAPSHOT="$snapshot/file-v-any" \
+            expect_run $SUCCESSFULLY "$exe_plumbing" remote ref-list -p 2 git://localhost/
           }
         )
       )
+      if [[ "$kind" == "small" ]]; then
+      (with "https:// protocol (in small builds)"
+        it "fails as http is not compiled in" && {
+          WITH_SNAPSHOT="$snapshot/fail-http-in-small" \
+          expect_run $WITH_FAILURE "$exe_plumbing" remote ref-list -p 1 https://github.com/byron/gitoxide
+        }
+      )
+      fi
+      (on_ci
+        if [[ "$kind" = "max" ]]; then
+        (with "https:// protocol"
+          (with "version 1"
+            it "generates the correct output" && {
+              expect_run $SUCCESSFULLY "$exe_plumbing" remote ref-list -p 1 https://github.com/byron/gitoxide
+            }
+          )
+          (with "version 2"
+            it "generates the correct output" && {
+              expect_run $SUCCESSFULLY "$exe_plumbing" remote ref-list -p 2 https://github.com/byron/gitoxide
+            }
+          )
+        )
+        fi
+      )
+      else
+        it "fails as the CLI doesn't include networking in 'small' mode" && {
+          WITH_SNAPSHOT="$snapshot/remote ref-list-no-networking-in-small-failure" \
+          expect_run 2 "$exe_plumbing" remote ref-list -p 1 .git
+        }
       fi
     )
-    else
-      it "fails as the CLI doesn't include networking in 'small' mode" && {
-        WITH_SNAPSHOT="$snapshot/remote-ref-list-no-networking-in-small-failure" \
-        expect_run 2 "$exe_plumbing" remote-ref-list -p 1 .git
-      }
-    fi
   )
 )
 

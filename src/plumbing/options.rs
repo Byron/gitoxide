@@ -132,22 +132,10 @@ pub enum Subcommands {
         /// If unset, they will be discarded.
         directory: Option<PathBuf>,
     },
-    /// List remote references from a remote identified by a url.
-    ///
-    /// This is the plumbing equivalent of `git ls-remote`.
-    /// Supported URLs are documented here: <https://www.git-scm.com/docs/git-clone#_git_urls>
-    #[clap(setting = AppSettings::DisableVersionFlag)]
+    /// Subcommands for interacting with git remotes, e.g. git repositories hosted on servers.
+    #[clap(subcommand)]
     #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
-    RemoteRefList {
-        /// The protocol version to use. Valid values are 1 and 2
-        #[clap(long, short = 'p')]
-        protocol: Option<core::net::Protocol>,
-
-        /// the URLs or path from which to receive references
-        ///
-        /// See here for a list of supported URLs: <https://www.git-scm.com/docs/git-clone#_git_urls>
-        url: String,
-    },
+    Remote(remote::Subcommands),
     #[clap(setting = AppSettings::DisableVersionFlag)]
     PackIndexFromData {
         /// Specify how to iterate the pack, defaults to 'verify'
@@ -262,6 +250,7 @@ pub mod commitgraph {
 
     #[derive(Debug, clap::Parser)]
     pub enum Subcommands {
+        /// Verify the integrity of a commit graph
         #[clap(setting = AppSettings::DisableVersionFlag)]
         Verify {
             /// The path to '.git/objects/info/', '.git/objects/info/commit-graphs/', or '.git/objects/info/commit-graph' to validate.
@@ -270,6 +259,32 @@ pub mod commitgraph {
             /// output statistical information about the pack
             #[clap(long, short = 's')]
             statistics: bool,
+        },
+    }
+}
+
+///
+#[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
+pub mod remote {
+    use clap::AppSettings;
+    use gitoxide_core as core;
+
+    #[derive(Debug, clap::Parser)]
+    pub enum Subcommands {
+        /// List remote references from a remote identified by a url.
+        ///
+        /// This is the plumbing equivalent of `git ls-remote`.
+        /// Supported URLs are documented here: <https://www.git-scm.com/docs/git-clone#_git_urls>
+        #[clap(setting = AppSettings::DisableVersionFlag)]
+        RefList {
+            /// The protocol version to use. Valid values are 1 and 2
+            #[clap(long, short = 'p')]
+            protocol: Option<core::net::Protocol>,
+
+            /// the URLs or path from which to receive references
+            ///
+            /// See here for a list of supported URLs: <https://www.git-scm.com/docs/git-clone#_git_urls>
+            url: String,
         },
     }
 }
