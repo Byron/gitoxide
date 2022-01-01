@@ -35,6 +35,8 @@ pub mod integrity {
         Fan { index: usize },
         #[error("The multi-index claims to have no objects")]
         Empty,
+        #[error("Interrupted")]
+        Interrupted,
     }
 
     /// Returned by [`multi_index::File::verify_integrity()`][crate::multi_index::File::verify_integrity()].
@@ -202,6 +204,9 @@ impl File {
                         ));
                     }
                     offsets_progress.inc();
+                }
+                if should_interrupt.load(std::sync::atomic::Ordering::Relaxed) {
+                    return Err(crate::index::traverse::Error::Processor(integrity::Error::Interrupted));
                 }
             }
 
