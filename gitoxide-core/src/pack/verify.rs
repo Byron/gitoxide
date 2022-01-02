@@ -63,21 +63,7 @@ pub struct Context<'a, W1: io::Write, W2: io::Write> {
     pub mode: index::verify::Mode,
     pub algorithm: Algorithm,
     pub should_interrupt: &'a AtomicBool,
-}
-
-impl<'a> Context<'a, Vec<u8>, Vec<u8>> {
-    /// Create a new default context with all fields being the default.
-    pub fn new(should_interrupt: &'a AtomicBool) -> Self {
-        Context {
-            output_statistics: None,
-            thread_limit: None,
-            mode: index::verify::Mode::HashCrc32,
-            algorithm: Algorithm::LessMemory,
-            out: Vec::new(),
-            err: Vec::new(),
-            should_interrupt,
-        }
-    }
+    pub object_hash: git::hash::Kind,
 }
 
 enum EitherCache<const SIZE: usize> {
@@ -112,6 +98,7 @@ pub fn pack_or_pack_index<W1, W2>(
         thread_limit,
         algorithm,
         should_interrupt,
+        object_hash,
     }: Context<'_, W1, W2>,
 ) -> Result<()>
 where
@@ -120,7 +107,6 @@ where
 {
     let path = path.as_ref();
     let ext = path.extension().and_then(|ext| ext.to_str()).unwrap_or("");
-    let object_hash = git::hash::Kind::Sha1; // TODO: make it configurable via Context/CLI
     const CACHE_SIZE: usize = 64;
     let cache = || -> EitherCache<CACHE_SIZE> {
         if matches!(algorithm, Algorithm::LessMemory) {
@@ -160,11 +146,13 @@ where
             idx.verify_integrity(
                 pack.as_ref().map(|p| git::odb::pack::index::verify::PackContext {
                     data: p,
-                    verify_mode: mode,
-                    traversal_algorithm: algorithm.into(),
-                    make_cache_fn: cache,
+                    options: git::odb::pack::index::verify::integrity::Options {
+                        verify_mode: mode,
+                        traversal: algorithm.into(),
+                        make_pack_lookup_cache: cache,
+                        thread_limit
+                    }
                 }),
-                thread_limit,
                 progress,
                 should_interrupt,
             )

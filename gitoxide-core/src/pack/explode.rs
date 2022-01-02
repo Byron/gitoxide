@@ -145,6 +145,7 @@ pub struct Context {
     pub sink_compress: bool,
     pub verify: bool,
     pub should_interrupt: Arc<AtomicBool>,
+    pub object_hash: git_repository::hash::Kind,
 }
 
 pub fn pack_or_pack_index(
@@ -158,12 +159,12 @@ pub fn pack_or_pack_index(
         sink_compress,
         verify,
         should_interrupt,
+        object_hash,
     }: Context,
 ) -> Result<()> {
     use anyhow::Context;
 
     let path = pack_path.as_ref();
-    let object_hash = git_repository::hash::Kind::Sha1; // TODO: make this configurable via CLI, maybe even different values for I/O
     let bundle = pack::Bundle::at(path, object_hash).with_context(|| {
         format!(
             "Could not find .idx or .pack file from given file at '{}'",
@@ -197,6 +198,7 @@ pub fn pack_or_pack_index(
         .traverse(
             &bundle.pack,
             progress,
+            &should_interrupt,
             {
                 let object_path = object_path.map(|p| p.as_ref().to_owned());
                 move || {
@@ -232,12 +234,11 @@ pub fn pack_or_pack_index(
                     }
                 }
             },
-            pack::cache::lru::StaticLinkedList::<64>::default,
             pack::index::traverse::Options {
-                algorithm,
+                traversal: algorithm,
                 thread_limit,
                 check: check.into(),
-                should_interrupt: &should_interrupt,
+                make_pack_lookup_cache:             pack::cache::lru::StaticLinkedList::<64>::default,
             },
         )
         .with_context(|| "Failed to explode the entire pack - some loose objects may have been created nonetheless")?;

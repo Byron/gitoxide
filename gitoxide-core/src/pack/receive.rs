@@ -26,6 +26,7 @@ pub struct Context<W> {
     pub format: OutputFormat,
     pub should_interrupt: Arc<AtomicBool>,
     pub out: W,
+    pub object_hash: git_repository::hash::Kind,
 }
 
 struct CloneDelegate<W> {
@@ -330,7 +331,7 @@ fn receive_pack_blocking<W: io::Write>(
         thread_limit: ctx.thread_limit,
         index_kind: pack::index::Version::V2,
         iteration_mode: pack::data::input::Mode::Verify,
-        object_hash: git_repository::hash::Kind::Sha1, // TODO: make this configurable, but respect the server response as well.
+        object_hash: ctx.object_hash,
     };
     let outcome =
         pack::Bundle::write_to_directory(input, directory.take(), progress, &ctx.should_interrupt, None, options)

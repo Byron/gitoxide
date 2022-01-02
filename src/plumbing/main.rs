@@ -144,6 +144,7 @@ pub fn main() -> Result<()> {
                         format,
                         out: std::io::stdout(),
                         should_interrupt,
+                        object_hash,
                     },
                 );
                 return futures_lite::future::block_on(fut);
@@ -174,6 +175,7 @@ pub fn main() -> Result<()> {
                             format,
                             should_interrupt,
                             out,
+                            object_hash,
                         },
                     )
                 },
@@ -203,6 +205,7 @@ pub fn main() -> Result<()> {
                             sink_compress,
                             verify,
                             should_interrupt,
+                            object_hash,
                         },
                     )
                 },
@@ -237,6 +240,7 @@ pub fn main() -> Result<()> {
                             mode,
                             algorithm,
                             should_interrupt: &should_interrupt,
+                            object_hash,
                         },
                     )
                 },
