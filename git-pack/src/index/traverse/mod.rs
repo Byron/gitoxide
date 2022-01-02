@@ -17,27 +17,30 @@ pub use error::Error;
 mod types;
 pub use types::{Algorithm, SafetyCheck, Statistics};
 
-mod options {
-    use std::sync::atomic::AtomicBool;
+/// Traversal options for [`index::File::traverse()`].
+#[derive(Debug, Clone)]
+pub struct Options<F> {
+    /// The algorithm to employ.
+    pub traversal: Algorithm,
+    /// If `Some`, only use the given amount of threads. Otherwise, the amount of threads to use will be selected based on
+    /// the amount of available logical cores.
+    pub thread_limit: Option<usize>,
+    /// The kinds of safety checks to perform.
+    pub check: SafetyCheck,
+    /// A function to create a pack cache
+    pub make_pack_lookup_cache: F,
+}
 
-    use crate::index::traverse::{Algorithm, SafetyCheck};
-
-    /// Traversal options for [`traverse()`][crate::index::File::traverse()]
-    #[derive(Debug, Clone)]
-    pub struct Options<'a> {
-        /// The algorithm to employ.
-        pub algorithm: Algorithm,
-        /// If `Some`, only use the given amount of threads. Otherwise, the amount of threads to use will be selected based on
-        /// the amount of available logical cores.
-        pub thread_limit: Option<usize>,
-        /// The kinds of safety checks to perform.
-        pub check: SafetyCheck,
-        /// A flag to indicate whether the algorithm should be interrupted. Will be checked occasionally allow stopping a running
-        /// computation.
-        pub should_interrupt: &'a AtomicBool,
+impl Default for Options<fn() -> crate::cache::Never> {
+    fn default() -> Self {
+        Options {
+            check: Default::default(),
+            traversal: Default::default(),
+            thread_limit: None,
+            make_pack_lookup_cache: || crate::cache::Never,
+        }
     }
 }
-pub use options::Options;
 
 /// The outcome of the [`traverse()`][index::File::traverse()] method.
 pub struct Outcome<P> {
@@ -58,7 +61,7 @@ impl index::File {
     ///
     /// # Algorithms
     ///
-    /// Using the [`Options::algorithm`] field one can chose between two algorithms providing different tradeoffs. Both invoke
+    /// Using the [`Options::traversal`] field one can chose between two algorithms providing different tradeoffs. Both invoke
     /// `new_processor()` to create functions receiving decoded objects, their object kind, index entry and a progress instance to provide
     /// progress information.
     ///
@@ -71,18 +74,18 @@ impl index::File {
     ///
     /// Use [`thread_limit`][Options::thread_limit] to further control parallelism and [`check`][SafetyCheck] to define how much the passed
     /// objects shall be verified beforehand.
-    pub fn traverse<P, C, Processor, E>(
+    pub fn traverse<P, C, Processor, E, F>(
         &self,
         pack: &crate::data::File,
         progress: P,
+        should_interrupt: &AtomicBool,
         new_processor: impl Fn() -> Processor + Send + Clone,
-        new_cache: impl Fn() -> C + Send + Clone,
         Options {
-            algorithm,
+            traversal,
             thread_limit,
             check,
-            should_interrupt,
-        }: Options<'_>,
+            make_pack_lookup_cache,
+        }: Options<F>,
     ) -> Result<Outcome<P>, Error<E>>
     where
         P: Progress,
@@ -94,17 +97,18 @@ impl index::File {
             &index::Entry,
             &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
         ) -> Result<(), E>,
+        F: Fn() -> C + Send + Clone,
     {
-        match algorithm {
+        match traversal {
             Algorithm::Lookup => self.traverse_with_lookup(
                 new_processor,
-                new_cache,
-                progress,
                 pack,
+                progress,
+                should_interrupt,
                 with_lookup::Options {
                     thread_limit,
                     check,
-                    should_interrupt,
+                    make_pack_lookup_cache,
                 },
             ),
             Algorithm::DeltaTreeLookup => {

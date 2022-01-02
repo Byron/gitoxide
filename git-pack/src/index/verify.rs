@@ -41,6 +41,29 @@ pub mod integrity {
         /// The provided progress instance.
         pub progress: P,
     }
+
+    /// Additional options to define how the integrity should be verified.
+    pub struct Options<F> {
+        /// The thoroughness of the verification
+        pub verify_mode: crate::index::verify::Mode,
+        /// The way to traverse packs
+        pub traversal: crate::index::traverse::Algorithm,
+        /// The amount of theads to use of `Some(N)`, with `None|Some(0)` using all available cores are used.
+        pub thread_limit: Option<usize>,
+        /// A function to create a pack cache
+        pub make_pack_lookup_cache: F,
+    }
+
+    impl Default for Options<fn() -> crate::cache::Never> {
+        fn default() -> Self {
+            Options {
+                verify_mode: Default::default(),
+                traversal: Default::default(),
+                thread_limit: None,
+                make_pack_lookup_cache: || crate::cache::Never,
+            }
+        }
+    }
 }
 
 ///
@@ -69,19 +92,11 @@ impl Default for Mode {
 }
 
 /// Information to allow verifying the integrity of an index with the help of its corresponding pack.
-pub struct PackContext<'a, C, F>
-where
-    C: crate::cache::DecodeEntry,
-    F: Fn() -> C + Send + Clone,
-{
+pub struct PackContext<'a, F> {
     /// The pack data file itself.
     pub data: &'a crate::data::File,
-    /// the way to verify the pack data.
-    pub verify_mode: Mode,
-    /// The traversal algorithm to use
-    pub traversal_algorithm: index::traverse::Algorithm,
-    /// A function to create a pack cache for each tread.
-    pub make_cache_fn: F,
+    /// The options further configuring the pack traversal and verification
+    pub options: integrity::Options<F>,
 }
 
 /// Verify and validate the content of the index file
@@ -137,8 +152,7 @@ impl index::File {
     /// error case.
     pub fn verify_integrity<P, C, F>(
         &self,
-        pack: Option<PackContext<'_, C, F>>,
-        thread_limit: Option<usize>,
+        pack: Option<PackContext<'_, F>>,
         mut progress: P,
         should_interrupt: &AtomicBool,
     ) -> Result<integrity::Outcome<P>, index::traverse::Error<index::verify::integrity::Error>>
@@ -159,25 +173,29 @@ impl index::File {
         match pack {
             Some(PackContext {
                 data: pack,
-                verify_mode: mode,
-                traversal_algorithm: algorithm,
-                make_cache_fn: make_cache,
+                options:
+                    integrity::Options {
+                        verify_mode,
+                        traversal,
+                        thread_limit,
+                        make_pack_lookup_cache,
+                    },
             }) => self
                 .traverse(
                     pack,
                     progress,
+                    should_interrupt,
                     || {
                         let mut encode_buf = Vec::with_capacity(2048);
                         move |kind, data, index_entry, progress| {
-                            Self::verify_entry(mode, &mut encode_buf, kind, data, index_entry, progress)
+                            Self::verify_entry(verify_mode, &mut encode_buf, kind, data, index_entry, progress)
                         }
                     },
-                    make_cache,
                     index::traverse::Options {
-                        algorithm,
+                        traversal,
                         thread_limit,
                         check: index::traverse::SafetyCheck::All,
-                        should_interrupt,
+                        make_pack_lookup_cache,
                     },
                 )
                 .map(|o| integrity::Outcome {
@@ -198,7 +216,7 @@ impl index::File {
 
     #[allow(clippy::too_many_arguments)]
     fn verify_entry<P>(
-        mode: Mode,
+        verify_mode: Mode,
         encode_buf: &mut Vec<u8>,
         object_kind: git_object::Kind,
         buf: &[u8],
@@ -208,7 +226,7 @@ impl index::File {
     where
         P: Progress,
     {
-        if let Mode::HashCrc32Decode | Mode::HashCrc32DecodeEncode = mode {
+        if let Mode::HashCrc32Decode | Mode::HashCrc32DecodeEncode = verify_mode {
             use git_object::Kind::*;
             match object_kind {
                 Tree | Commit | Tag => {
@@ -219,7 +237,7 @@ impl index::File {
                             id: index_entry.oid,
                         }
                     })?;
-                    if let Mode::HashCrc32DecodeEncode = mode {
+                    if let Mode::HashCrc32DecodeEncode = verify_mode {
                         encode_buf.clear();
                         object
                             .write_to(&mut *encode_buf)

@@ -393,12 +393,14 @@ fn write_and_verify(
     }
 
     bundle.verify_integrity(
-        pack::index::verify::Mode::HashCrc32DecodeEncode,
-        pack::index::traverse::Algorithm::Lookup,
-        || pack::cache::Never,
-        None,
         progress::Discard,
         &should_interrupt,
+        git_pack::index::verify::integrity::Options {
+            verify_mode: pack::index::verify::Mode::HashCrc32DecodeEncode,
+            traversal: pack::index::traverse::Algorithm::Lookup,
+            make_pack_lookup_cache: || pack::cache::Never,
+            thread_limit: None,
+        },
     )?;
 
     Ok(())

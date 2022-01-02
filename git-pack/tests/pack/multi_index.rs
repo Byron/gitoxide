@@ -60,13 +60,13 @@ mod verify {
     use crate::pack::multi_index::multi_index;
 
     #[test]
-    fn checksum() {
+    fn checksum() -> crate::Result {
         let (file, _) = multi_index();
         assert_eq!(
-            file.verify_checksum(progress::Discard, &AtomicBool::new(false))
-                .unwrap(),
+            file.verify_checksum(progress::Discard, &AtomicBool::new(false))?,
             file.checksum()
         );
+        Ok(())
     }
 
     #[test]
@@ -113,10 +113,9 @@ mod write {
     use git_testtools::{fixture_path, hex_to_id};
 
     #[test]
-    fn from_paths() {
-        let dir = tempfile::TempDir::new().unwrap();
-        let input_indices = std::fs::read_dir(fixture_path("objects/pack"))
-            .unwrap()
+    fn from_paths() -> crate::Result {
+        let dir = tempfile::TempDir::new()?;
+        let input_indices = std::fs::read_dir(fixture_path("objects/pack"))?
             .filter_map(|r| {
                 r.ok()
                     .map(|e| e.path())
@@ -128,8 +127,7 @@ mod write {
         let mut out = std::fs::OpenOptions::new()
             .write(true)
             .create_new(true)
-            .open(&output_path)
-            .unwrap();
+            .open(&output_path)?;
         let outcome = git_pack::multi_index::File::write_from_index_paths(
             input_indices.clone(),
             &mut out,
@@ -138,15 +136,14 @@ mod write {
             git_pack::multi_index::write::Options {
                 object_hash: git_hash::Kind::Sha1,
             },
-        )
-        .unwrap();
+        )?;
 
         assert_eq!(
             outcome.multi_index_checksum,
             hex_to_id("d34d327039a3554f8a644b29e07b903fa71ef269")
         );
 
-        let file = git_pack::multi_index::File::at(output_path).unwrap();
+        let file = git_pack::multi_index::File::at(output_path)?;
         assert_eq!(file.num_indices(), 3);
         assert_eq!(
             file.index_names(),
@@ -160,22 +157,20 @@ mod write {
         assert_eq!(file.checksum(), outcome.multi_index_checksum);
 
         for index in &input_indices {
-            std::fs::copy(index, dir.path().join(index.file_name().expect("present"))).unwrap();
+            std::fs::copy(index, dir.path().join(index.file_name().expect("present")))?;
             let pack = index.with_extension("pack");
-            std::fs::copy(&pack, dir.path().join(pack.file_name().expect("present"))).unwrap();
+            std::fs::copy(&pack, dir.path().join(pack.file_name().expect("present")))?;
         }
 
         assert_eq!(
-            file.verify_integrity(progress::Discard, &AtomicBool::new(false), Default::default())
-                .unwrap()
+            file.verify_integrity(progress::Discard, &AtomicBool::new(false), Default::default())?
                 .actual_index_checksum,
             outcome.multi_index_checksum
         );
 
-        let outcome = file
-            .verify_integrity_fast(progress::Discard, &AtomicBool::new(false))
-            .unwrap();
+        let outcome = file.verify_integrity_fast(progress::Discard, &AtomicBool::new(false))?;
 
         assert_eq!(outcome.0, file.checksum());
+        Ok(())
     }
 }

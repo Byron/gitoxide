@@ -29,28 +29,23 @@ pub mod verify {
     impl Bundle {
         /// Similar to [`crate::index::File::verify_integrity()`] but more convenient to call as the presence of the
         /// pack file is a given.
-        pub fn verify_integrity<C, P>(
+        pub fn verify_integrity<C, P, F>(
             &self,
-            verify_mode: crate::index::verify::Mode,
-            traversal: crate::index::traverse::Algorithm,
-            make_pack_lookup_cache: impl Fn() -> C + Send + Clone,
-            thread_limit: Option<usize>,
             progress: P,
             should_interrupt: &AtomicBool,
+            options: crate::index::verify::integrity::Options<F>,
         ) -> Result<integrity::Outcome<P>, crate::index::traverse::Error<crate::index::verify::integrity::Error>>
         where
             P: Progress,
             C: crate::cache::DecodeEntry,
+            F: Fn() -> C + Send + Clone,
         {
             self.index
                 .verify_integrity(
                     Some(crate::index::verify::PackContext {
                         data: &self.pack,
-                        verify_mode,
-                        traversal_algorithm: traversal,
-                        make_cache_fn: make_pack_lookup_cache,
+                        options,
                     }),
-                    thread_limit,
                     progress,
                     should_interrupt,
                 )

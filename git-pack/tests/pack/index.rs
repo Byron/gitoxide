@@ -304,11 +304,13 @@ mod file {
                         idx.verify_integrity(
                             Some(git_pack::index::verify::PackContext {
                                 data: &pack,
-                                verify_mode: *mode,
-                                traversal_algorithm: *algo,
-                                make_cache_fn: || cache::Never
+                                options: git_pack::index::verify::integrity::Options {
+                                    verify_mode: *mode,
+                                    traversal: *algo,
+                                    make_pack_lookup_cache: || cache::Never,
+                                    thread_limit: None
+                                }
                             }),
-                            None,
                             progress::Discard,
                             &AtomicBool::new(false)
                         )
@@ -407,8 +409,7 @@ mod file {
             assert_eq!(idx.num_objects(), *num_objects);
             assert_eq!(
                 idx.verify_integrity(
-                    None::<git_pack::index::verify::PackContext<'_, _, fn() -> cache::Never>>,
-                    None,
+                    None::<git_pack::index::verify::PackContext<'_, fn() -> cache::Never>>,
                     progress::Discard,
                     &AtomicBool::new(false)
                 )

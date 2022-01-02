@@ -281,12 +281,14 @@ impl File {
                     progress: _,
                 } = bundle
                     .verify_integrity(
-                        verify_mode,
-                        traversal,
-                        make_pack_lookup_cache.clone(),
-                        thread_limit,
                         progress,
                         should_interrupt,
+                        crate::index::verify::integrity::Options {
+                            verify_mode,
+                            traversal,
+                            make_pack_lookup_cache: make_pack_lookup_cache.clone(),
+                            thread_limit,
+                        },
                     )
                     .map_err(|err| {
                         use crate::index::traverse::Error::*;
