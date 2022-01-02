@@ -49,6 +49,22 @@ pub struct Context<'a, S> {
     pub level: u16,
 }
 
+/// Options for [`Tree::traverse()`].
+pub struct Options<'a, P1, P2> {
+    /// is a progress instance to track progress for each object in the traversal.
+    pub object_progress: P1,
+    /// is a progress instance to track the overall progress.
+    pub size_progress: P2,
+    /// If `Some`, only use the given amount of threads. Otherwise, the amount of threads to use will be selected based on
+    /// the amount of available logical cores.
+    pub thread_limit: Option<usize>,
+    /// Abort the operation if the value is `true`.
+    pub should_interrupt: &'a AtomicBool,
+    /// specifies what kind of hashes we expect to be stored in oid-delta entries, which is viable to decoding them
+    /// with the correct size.
+    pub object_hash: git_hash::Kind,
+}
+
 impl<T> Tree<T>
 where
     T: Send,
@@ -59,9 +75,6 @@ where
     /// * `resolve(EntrySlice, &mut Vec<u8>) -> Option<()>` resolves the bytes in the pack for the given `EntrySlice` and stores them in the
     ///   output vector. It returns `Some(())` if the object existed in the pack, or `None` to indicate a resolution error, which would abort the
     ///   operation as well.
-    /// * `object_progress` is a progress instance to track progress for each object in the traversal.
-    /// * `size_progress` is a progress instance to track the overall progress.
-    /// * `tread_limit` is limits the amount of threads used if `Some` or otherwise defaults to all available logical cores.
     /// * `pack_entries_end` marks one-past-the-last byte of the last entry in the pack, as the last entries size would otherwise
     ///   be unknown as it's not part of the index file.
     /// * `new_thread_state() -> State` is a function to create state to be used in each thread, invoked once per thread.
@@ -69,25 +82,24 @@ where
     ///   running for each thread receiving fully decoded objects along with contextual information, which either succceeds with `Ok(())`
     ///   or returns a `CustomError`.
     ///   Note that `node_data` can be modified to allow storing maintaining computation results on a per-object basis.
-    /// * `object_hash` specifies what kind of hashes we expect to be stored in oid-delta entries, which is viable to decoding them
-    ///   with the correct size.
     ///
     /// This method returns a vector of all tree items, along with their potentially modified custom node data.
     ///
     /// _Note_ that this method consumed the Tree to assure safe parallel traversal with mutation support.
-    #[allow(clippy::too_many_arguments)]
     pub fn traverse<F, P1, P2, MBFN, S, E>(
         mut self,
         should_run_in_parallel: impl FnOnce() -> bool,
         resolve: F,
-        object_progress: P1,
-        size_progress: P2,
-        thread_limit: Option<usize>,
-        should_interrupt: &AtomicBool,
         pack_entries_end: u64,
         new_thread_state: impl Fn() -> S + Send + Clone,
         inspect_object: MBFN,
-        object_hash: git_hash::Kind,
+        Options {
+            thread_limit,
+            object_progress,
+            size_progress,
+            should_interrupt,
+            object_hash,
+        }: Options<'_, P1, P2>,
     ) -> Result<VecDeque<Item<T>>, Error>
     where
         F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Clone,

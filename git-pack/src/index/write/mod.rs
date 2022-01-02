@@ -159,10 +159,6 @@ impl crate::index::File {
             let mut items = tree.traverse(
                 in_parallel_if_pack_is_big_enough,
                 resolver,
-                root_progress.add_child("Resolving"),
-                root_progress.add_child("Decoding"),
-                thread_limit,
-                should_interrupt,
                 pack_entries_end,
                 || (),
                 |data,
@@ -175,7 +171,13 @@ impl crate::index::File {
                     modify_base(data, entry, bytes, kind.hash());
                     Ok::<_, Error>(())
                 },
-                object_hash,
+                crate::cache::delta::traverse::Options {
+                    object_progress: root_progress.add_child("Resolving"),
+                    size_progress: root_progress.add_child("Decoding"),
+                    thread_limit,
+                    should_interrupt,
+                    object_hash,
+                },
             )?;
             root_progress.inc();
 

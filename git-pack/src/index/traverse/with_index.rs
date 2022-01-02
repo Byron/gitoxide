@@ -5,11 +5,20 @@ use std::{
 
 use git_features::{parallel, progress::Progress};
 
-use super::{Error, SafetyCheck};
+use super::Error;
 use crate::{
     cache::delta::traverse::Context,
     index::{self, traverse::Outcome, util::index_entries_sorted_by_offset_ascending},
 };
+
+/// Traversal options for [`traverse_with_index()`][index::File::traverse_with_index()]
+pub struct Options {
+    /// If `Some`, only use the given amount of threads. Otherwise, the amount of threads to use will be selected based on
+    /// the amount of available logical cores.
+    pub thread_limit: Option<usize>,
+    /// The kinds of safety checks to perform.
+    pub check: crate::index::traverse::SafetyCheck,
+}
 
 /// Traversal with index
 impl index::File {
@@ -19,12 +28,11 @@ impl index::File {
     /// For more details, see the documentation on the [`traverse()`][index::File::traverse()] method.
     pub fn traverse_with_index<P, Processor, E>(
         &self,
-        check: SafetyCheck,
-        thread_limit: Option<usize>,
+        pack: &crate::data::File,
         new_processor: impl Fn() -> Processor + Send + Clone,
         mut progress: P,
-        pack: &crate::data::File,
         should_interrupt: &AtomicBool,
+        Options { check, thread_limit }: Options,
     ) -> Result<Outcome<P>, Error<E>>
     where
         P: Progress,
@@ -58,22 +66,18 @@ impl index::File {
                 let sorted_entries =
                     index_entries_sorted_by_offset_ascending(self, progress.add_child("collecting sorted index"));
                 let tree = crate::cache::delta::Tree::from_offsets_in_pack(
+                    pack.path(),
                     sorted_entries.into_iter().map(Entry::from),
                     |e| e.index_entry.pack_offset,
-                    pack.path(),
+                    |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
                     progress.add_child("indexing"),
                     should_interrupt,
-                    |id| self.lookup(id).map(|idx| self.pack_offset_at_index(idx)),
                     self.object_hash,
                 )?;
                 let there_are_enough_objects = || self.num_objects > 10_000;
                 let mut outcome = digest_statistics(tree.traverse(
                     there_are_enough_objects,
                     |slice, out| pack.entry_slice(slice).map(|entry| out.copy_from_slice(entry)),
-                    progress.add_child("Resolving"),
-                    progress.add_child("Decoding"),
-                    thread_limit,
-                    should_interrupt,
                     pack.pack_end() as u64,
                     new_processor,
                     |data,
@@ -116,7 +120,13 @@ impl index::File {
                             res => res,
                         }
                     },
-                    self.object_hash,
+                    crate::cache::delta::traverse::Options {
+                        object_progress: progress.add_child("Resolving"),
+                        size_progress: progress.add_child("Decoding"),
+                        thread_limit,
+                        should_interrupt,
+                        object_hash: self.object_hash,
+                    },
                 )?);
                 outcome.pack_size = pack.data_len() as u64;
                 Ok(outcome)

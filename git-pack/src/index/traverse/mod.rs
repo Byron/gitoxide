@@ -4,9 +4,9 @@ use git_features::{parallel, progress::Progress};
 
 use crate::index;
 
-///
-mod indexed;
 mod reduce;
+///
+pub mod with_index;
 ///
 pub mod with_lookup;
 use reduce::Reducer;
@@ -111,9 +111,13 @@ impl index::File {
                     make_pack_lookup_cache,
                 },
             ),
-            Algorithm::DeltaTreeLookup => {
-                self.traverse_with_index(check, thread_limit, new_processor, progress, pack, should_interrupt)
-            }
+            Algorithm::DeltaTreeLookup => self.traverse_with_index(
+                pack,
+                new_processor,
+                progress,
+                should_interrupt,
+                crate::index::traverse::with_index::Options { check, thread_limit },
+            ),
         }
     }
 

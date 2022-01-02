@@ -161,12 +161,12 @@ mod tests {
             fn tree(index_path: &str, pack_path: &str) -> Result<(), Box<dyn std::error::Error>> {
                 let idx = pack::index::File::at(fixture_path(index_path), git_hash::Kind::Sha1)?;
                 crate::cache::delta::Tree::from_offsets_in_pack(
+                    fixture_path(pack_path),
                     idx.sorted_offsets().into_iter(),
                     |ofs| *ofs,
-                    fixture_path(pack_path),
+                    |id| idx.lookup(id).map(|index| idx.pack_offset_at_index(index)),
                     git_features::progress::Discard,
                     &AtomicBool::new(false),
-                    |id| idx.lookup(id).map(|index| idx.pack_offset_at_index(index)),
                     git_hash::Kind::Sha1,
                 )?;
                 Ok(())
