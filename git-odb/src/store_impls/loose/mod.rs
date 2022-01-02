@@ -52,6 +52,8 @@ fn hash_path(id: &git_hash::oid, mut root: PathBuf) -> PathBuf {
 pub mod find;
 ///
 pub mod iter;
+///
+pub mod verify;
 
 /// The type for an iterator over `Result<git_hash::ObjectId, Error>)`
 pub struct Iter {

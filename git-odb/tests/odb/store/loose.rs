@@ -1,3 +1,6 @@
+use git_actor::{Sign, Time};
+use git_object::bstr::ByteSlice;
+
 use git_odb::loose::Store;
 use pretty_assertions::assert_eq;
 
@@ -29,10 +32,18 @@ pub fn locate_oid(id: git_hash::ObjectId, buf: &mut Vec<u8>) -> git_object::Data
     ldb().try_find(id, buf).expect("read success").expect("id present")
 }
 
+#[test]
+#[ignore]
+fn verify_integrity() {
+    let db = ldb();
+    let outcome = db.verify_integrity().unwrap();
+    assert_eq!(outcome.num_objects, 42);
+}
+
 mod write {
     use git_odb::{loose, Write};
 
-    use crate::store::loose::backend::{locate_oid, object_ids};
+    use crate::store::loose::{locate_oid, object_ids};
 
     #[test]
     fn read_and_write() -> Result<(), Box<dyn std::error::Error>> {
@@ -66,8 +77,7 @@ mod locate {
     use crate::{
         hex_to_id,
         store::loose::{
-            backend::{ldb, locate_oid},
-            signature,
+            signature, {ldb, locate_oid},
         },
     };
 
@@ -208,5 +218,17 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
         };
         assert_eq!(o.decode()?.as_tree().expect("tree"), &expected);
         Ok(())
+    }
+}
+
+fn signature(time: u32) -> git_actor::SignatureRef<'static> {
+    git_actor::SignatureRef {
+        name: b"Sebastian Thiel".as_bstr(),
+        email: b"byronimo@gmail.com".as_bstr(),
+        time: Time {
+            time,
+            offset: 7200,
+            sign: Sign::Plus,
+        },
     }
 }

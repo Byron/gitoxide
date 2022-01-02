@@ -163,7 +163,7 @@ where
             match path.file_name() {
                 Some(file_name) if file_name == "multi-pack-index" => {
                     let multi_index = git::odb::pack::multi_index::File::at(path)?;
-                    let res = multi_index.verify_integrity(progress, should_interrupt, git::odb::pack::multi_index::verify::integrity::Options{
+                    let res = multi_index.verify_integrity(progress, should_interrupt, git::odb::pack::index::verify::integrity::Options{
                         verify_mode: mode,
                         traversal: algorithm.into(),
                         thread_limit,
