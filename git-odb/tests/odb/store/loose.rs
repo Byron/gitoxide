@@ -33,11 +33,10 @@ pub fn locate_oid(id: git_hash::ObjectId, buf: &mut Vec<u8>) -> git_object::Data
 }
 
 #[test]
-#[ignore]
 fn verify_integrity() {
     let db = ldb();
     let outcome = db.verify_integrity().unwrap();
-    assert_eq!(outcome.num_objects, 42);
+    assert_eq!(outcome.num_objects, 7);
 }
 
 mod write {
