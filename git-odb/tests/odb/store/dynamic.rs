@@ -567,3 +567,41 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
     );
     Ok(())
 }
+
+mod verify {
+    use crate::store::dynamic::db;
+    use git_features::progress;
+    use std::sync::atomic::AtomicBool;
+
+    #[test]
+    #[ignore]
+    fn verify_integrity() {
+        let handle = db();
+        let outcome = handle
+            .store_ref()
+            .verify_integrity(progress::Discard, &AtomicBool::new(false), Default::default())
+            .unwrap();
+        assert_eq!(
+            outcome.pack_traverse_statistics.len(),
+            3,
+            "there are only three packs to check"
+        );
+
+        assert_eq!(
+            handle.store_ref().metrics(),
+            git_odb::store::Metrics {
+                num_handles: 1,
+                num_refreshes: 1,
+                open_reachable_indices: 0,
+                known_reachable_indices: 3,
+                open_reachable_packs: 0,
+                known_packs: 3,
+                unused_slots: 29,
+                loose_dbs: 1,
+                unreachable_indices: 0,
+                unreachable_packs: 0
+            },
+            "verification only discovers files on disk but won't cause them to be opened permanently"
+        );
+    }
+}

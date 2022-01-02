@@ -55,6 +55,9 @@ pub(crate) mod handle;
 ///
 pub mod load_index;
 
+///
+pub mod verify;
+
 mod load_one;
 
 mod metrics;
