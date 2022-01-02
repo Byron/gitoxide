@@ -1,6 +1,8 @@
 use git_actor::{Sign, Time};
 use git_object::bstr::ByteSlice;
+use std::sync::atomic::AtomicBool;
 
+use git_features::progress;
 use git_odb::loose::Store;
 use pretty_assertions::assert_eq;
 
@@ -35,7 +37,7 @@ pub fn locate_oid(id: git_hash::ObjectId, buf: &mut Vec<u8>) -> git_object::Data
 #[test]
 fn verify_integrity() {
     let db = ldb();
-    let outcome = db.verify_integrity().unwrap();
+    let outcome = db.verify_integrity(progress::Discard, &AtomicBool::new(false)).unwrap();
     assert_eq!(outcome.num_objects, 7);
 }
 

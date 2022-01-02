@@ -571,6 +571,7 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
 mod verify {
     use crate::store::dynamic::db;
     use git_features::progress;
+    use git_testtools::fixture_path;
     use std::sync::atomic::AtomicBool;
 
     #[test]
@@ -580,10 +581,25 @@ mod verify {
             .store_ref()
             .verify_integrity(progress::Discard, &AtomicBool::new(false), Default::default())
             .unwrap();
+        assert_eq!(outcome.index_statistics.len(), 3, "there are only three packs to check");
         assert_eq!(
-            outcome.pack_traverse_statistics.len(),
-            3,
-            "there are only three packs to check"
+            outcome.index_statistics[0].path,
+            fixture_path("objects/pack/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx")
+        );
+        assert_eq!(
+            outcome.index_statistics[1].path,
+            fixture_path("objects/pack/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx")
+        );
+        assert_eq!(
+            outcome.index_statistics[2].path,
+            fixture_path("objects/pack/pack-11fdfa9e156ab73caae3b6da867192221f2089c2.idx")
+        );
+        assert_eq!(
+            outcome.loose_object_stores,
+            vec![git_odb::store::verify::integrity::LooseObjectStatistics {
+                path: fixture_path("objects"),
+                statistics: git_odb::loose::verify::integrity::Statistics { num_objects: 7 }
+            }]
         );
 
         assert_eq!(

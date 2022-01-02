@@ -1,5 +1,7 @@
 use crate::loose::Store;
 use crate::Write;
+use git_features::progress::Progress;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 ///
 pub mod integrity {
@@ -21,10 +23,14 @@ pub mod integrity {
         },
         #[error("Objects were deleted during iteration - try again")]
         Retry,
+        #[error("Interrupted")]
+        Interrupted,
     }
 
     /// The outcome returned by [`verify_integrity()`][super::Store::verify_integrity()].
-    pub struct Outcome {
+    #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub struct Statistics {
         /// The amount of loose objects we checked.
         pub num_objects: usize,
     }
@@ -32,11 +38,17 @@ pub mod integrity {
 
 impl Store {
     /// Check all loose objects for their integrity checking their hash matches the actual data and by decoding them fully.
-    pub fn verify_integrity(&self) -> Result<integrity::Outcome, integrity::Error> {
+    pub fn verify_integrity(
+        &self,
+        mut progress: impl Progress,
+        should_interrupt: &AtomicBool,
+    ) -> Result<integrity::Statistics, integrity::Error> {
         let mut buf = Vec::new();
-        let mut num_objects = 0;
         let sink = crate::sink(self.object_hash);
 
+        let mut num_objects = 0;
+        let mut progress = progress.add_child("validating");
+        progress.init(None, git_features::progress::count("objects"));
         for id in self.iter().filter_map(Result::ok) {
             let object = self
                 .try_find(id, &mut buf)
@@ -55,8 +67,14 @@ impl Store {
                 kind: object.kind,
                 id,
             })?;
+
+            progress.inc();
             num_objects += 1;
+            if should_interrupt.load(Ordering::SeqCst) {
+                return Err(integrity::Error::Interrupted);
+            }
         }
-        Ok(integrity::Outcome { num_objects })
+
+        Ok(integrity::Statistics { num_objects })
     }
 }

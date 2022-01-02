@@ -1,14 +1,14 @@
 use crate::pack;
+use crate::store::verify::integrity::{IndexStatistics, SingleOrMultiStatistics};
 use crate::types::IndexAndPacks;
 use git_features::progress::Progress;
 use std::ops::Deref;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-#[allow(missing_docs, unused)]
-
 ///
 pub mod integrity {
     use crate::pack;
+    use std::path::PathBuf;
 
     /// Returned by [`Store::verify_integrity()`][crate::Store::verify_integrity()].
     #[derive(Debug, thiserror::Error)]
@@ -21,6 +21,8 @@ pub mod integrity {
         #[error(transparent)]
         IndexOpen(#[from] pack::index::init::Error),
         #[error(transparent)]
+        LooseObjectStoreIntegrity(#[from] crate::loose::verify::integrity::Error),
+        #[error(transparent)]
         MultiIndexOpen(#[from] pack::multi_index::init::Error),
         #[error(transparent)]
         PackOpen(#[from] pack::data::init::Error),
@@ -30,10 +32,41 @@ pub mod integrity {
         NeedsRetryDueToChangeOnDisk,
     }
 
+    #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    /// Integrity information about loose object databases
+    pub struct LooseObjectStatistics {
+        /// The path to the root directory of the loose objects database
+        pub path: PathBuf,
+        /// The statistics created after verifying the loose object database.
+        pub statistics: crate::loose::verify::integrity::Statistics,
+    }
+
+    #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    /// Traversal statistics of packs governed by single indices or multi-pack indices.
+    #[allow(missing_docs)]
+    pub enum SingleOrMultiStatistics {
+        Single(pack::index::traverse::Statistics),
+        Multi(Vec<(PathBuf, pack::index::traverse::Statistics)>),
+    }
+
+    /// Statistics gathered when traversing packs of various kinds of indices.
+    #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub struct IndexStatistics {
+        /// The path to the index or multi-pack index for which statics were gathered.
+        pub path: PathBuf,
+        /// The actual statistics for the index at `path`.
+        pub statistics: SingleOrMultiStatistics,
+    }
+
     /// Returned by [`Store::verify_integrity()`][crate::Store::verify_integrity()].
     pub struct Outcome<P> {
-        /// Pack traversal statistics for each pack whose objects were checked.
-        pub pack_traverse_statistics: Vec<pack::index::traverse::Statistics>,
+        /// Statistics for validated loose object stores.
+        pub loose_object_stores: Vec<LooseObjectStatistics>,
+        /// Pack traversal statistics for each index and their pack(s)
+        pub index_statistics: Vec<IndexStatistics>,
         /// The provided progress instance.
         pub progress: P,
     }
@@ -104,11 +137,14 @@ impl super::Store {
                         progress.add_child("Checking integrity"),
                         should_interrupt,
                     )?;
-                    statistics.push(
-                        outcome
-                            .pack_traverse_statistics
-                            .expect("pack provided so there are stats"),
-                    );
+                    statistics.push(IndexStatistics {
+                        path: bundle.index.path().to_owned(),
+                        statistics: SingleOrMultiStatistics::Single(
+                            outcome
+                                .pack_traverse_statistics
+                                .expect("pack provided so there are stats"),
+                        ),
+                    });
                 }
                 IndexAndPacks::MultiIndex(bundle) => {
                     let index;
@@ -124,18 +160,45 @@ impl super::Store {
                         should_interrupt,
                         options.clone(),
                     )?;
-                    statistics.extend(outcome.pack_traverse_statistics);
+
+                    let index_dir = bundle.multi_index.path().parent().expect("file in a directory");
+                    statistics.push(IndexStatistics {
+                        path: Default::default(),
+                        statistics: SingleOrMultiStatistics::Multi(
+                            outcome
+                                .pack_traverse_statistics
+                                .into_iter()
+                                .zip(index.index_names())
+                                .map(|(statistics, index_name)| (index_dir.join(index_name), statistics))
+                                .collect(),
+                        ),
+                    });
                 }
             }
             progress.inc();
         }
 
-        for _loose_db in &*index.loose_dbs {
-            // TODO: impl verify integrity for loose object databases
+        progress.init(
+            Some(index.loose_dbs.len()),
+            git_features::progress::count("loose object stores"),
+        );
+        let mut loose_object_stores = Vec::new();
+        for loose_db in &*index.loose_dbs {
+            let out = loose_db
+                .verify_integrity(
+                    progress.add_child(loose_db.path().display().to_string()),
+                    should_interrupt,
+                )
+                .map(|statistics| integrity::LooseObjectStatistics {
+                    path: loose_db.path().to_owned(),
+                    statistics,
+                })?;
+            loose_object_stores.push(out);
         }
 
         Ok(integrity::Outcome {
-            pack_traverse_statistics: statistics,
+            loose_object_stores,
+            index_statistics: statistics,
             progress,
         })
     }
