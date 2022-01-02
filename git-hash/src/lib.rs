@@ -6,8 +6,7 @@
 
 mod borrowed;
 
-use std::convert::TryFrom;
-use std::str::FromStr;
+use std::{convert::TryFrom, str::FromStr};
 
 pub use borrowed::oid;
 

@@ -1,9 +1,7 @@
-use git_repository::Progress;
-use std::io::BufWriter;
-use std::path::PathBuf;
-use std::sync::atomic::AtomicBool;
+use std::{io::BufWriter, path::PathBuf, sync::atomic::AtomicBool};
 
 use git_repository as git;
+use git_repository::Progress;
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 

@@ -1,10 +1,8 @@
-use std::time::Instant;
-use std::{cmp::Ordering, sync::atomic::AtomicBool};
+use std::{cmp::Ordering, sync::atomic::AtomicBool, time::Instant};
 
-use crate::index;
 use git_features::progress::Progress;
 
-use crate::multi_index::File;
+use crate::{index, multi_index::File};
 
 ///
 pub mod integrity {

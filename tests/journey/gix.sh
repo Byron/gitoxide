@@ -39,6 +39,22 @@ title "git-tempfile crate"
   )
 )
 
+title "gix repository"
+(when "running 'repository'"
+  snapshot="$snapshot/repository"
+  (small-repo-in-sandbox
+    (with "the 'verify' sub-command"
+      snapshot="$snapshot/verify"
+      (with 'human output format'
+        it "generates correct output" && {
+          WITH_SNAPSHOT="$snapshot/success-format-human" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" --format human repo verify
+        }
+      )
+    )
+  )
+)
+
 title "gix pack"
 (when "running 'pack'"
   snapshot="$snapshot/pack"

@@ -15,7 +15,7 @@ use gitoxide_core::pack::verify;
 #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 use crate::plumbing::options::remote;
 use crate::{
-    plumbing::options::{commitgraph, pack, Args, Subcommands},
+    plumbing::options::{commitgraph, pack, repo, Args, Subcommands},
     shared::pretty::prepare_and_run,
 };
 
@@ -73,6 +73,18 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        Subcommands::Repository(subcommands) => match subcommands {
+            repo::Subcommands::Verify { repository } => prepare_and_run(
+                "repository-verify",
+                verbose,
+                progress,
+                progress_keep_open,
+                core::repository::verify::PROGRESS_RANGE,
+                move |progress, out, _err| {
+                    core::repository::verify::integrity(repository, format, out, progress, &should_interrupt)
+                },
+            ),
+        },
         Subcommands::Pack(subcommands) => match subcommands {
             pack::Subcommands::Create {
                 repository,

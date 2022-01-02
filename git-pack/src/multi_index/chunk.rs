@@ -176,8 +176,7 @@ pub mod lookup {
 
 /// Information about the offsets table.
 pub mod offsets {
-    use std::convert::TryInto;
-    use std::ops::Range;
+    use std::{convert::TryInto, ops::Range};
 
     use byteorder::{BigEndian, WriteBytesExt};
 

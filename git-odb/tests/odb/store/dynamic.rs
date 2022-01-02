@@ -569,10 +569,12 @@ fn auto_refresh_with_and_without_id_stability() -> crate::Result {
 }
 
 mod verify {
-    use crate::store::dynamic::db;
+    use std::sync::atomic::AtomicBool;
+
     use git_features::progress;
     use git_testtools::fixture_path;
-    use std::sync::atomic::AtomicBool;
+
+    use crate::store::dynamic::db;
 
     #[test]
     fn integrity() {

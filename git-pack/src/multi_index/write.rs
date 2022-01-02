@@ -1,8 +1,7 @@
-use std::sync::atomic::Ordering;
 use std::{
     convert::TryInto,
     path::PathBuf,
-    sync::atomic::AtomicBool,
+    sync::atomic::{AtomicBool, Ordering},
     time::{Instant, SystemTime},
 };
 

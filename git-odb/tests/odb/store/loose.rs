@@ -1,8 +1,8 @@
-use git_actor::{Sign, Time};
-use git_object::bstr::ByteSlice;
 use std::sync::atomic::AtomicBool;
 
+use git_actor::{Sign, Time};
 use git_features::progress;
+use git_object::bstr::ByteSlice;
 use git_odb::loose::Store;
 use pretty_assertions::assert_eq;
 
@@ -77,9 +77,7 @@ mod locate {
 
     use crate::{
         hex_to_id,
-        store::loose::{
-            signature, {ldb, locate_oid},
-        },
+        store::loose::{ldb, locate_oid, signature},
     };
 
     fn locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> git_object::Data<'a> {

@@ -1,14 +1,24 @@
-use crate::pack;
-use crate::store::verify::integrity::{IndexStatistics, SingleOrMultiStatistics};
-use crate::types::IndexAndPacks;
+use std::{
+    ops::Deref,
+    sync::atomic::{AtomicBool, Ordering},
+};
+
 use git_features::progress::Progress;
-use std::ops::Deref;
-use std::sync::atomic::{AtomicBool, Ordering};
+
+use crate::{
+    pack,
+    store::verify::integrity::{IndexStatistics, SingleOrMultiStatistics},
+    types::IndexAndPacks,
+};
 
 ///
 pub mod integrity {
-    use crate::pack;
     use std::path::PathBuf;
+
+    use crate::pack;
+
+    /// Options for use in [`Store::verify_integrity()`][crate::Store::verify_integrity()].
+    pub type Options<F> = pack::index::verify::integrity::Options<F>;
 
     /// Returned by [`Store::verify_integrity()`][crate::Store::verify_integrity()].
     #[derive(Debug, thiserror::Error)]
@@ -81,7 +91,7 @@ impl super::Store {
         &self,
         mut progress: P,
         should_interrupt: &AtomicBool,
-        options: pack::index::verify::integrity::Options<F>,
+        options: integrity::Options<F>,
     ) -> Result<integrity::Outcome<P>, integrity::Error>
     where
         P: Progress,

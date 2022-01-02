@@ -1,8 +1,9 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use git_features::{
     parallel::{self, in_parallel_if},
     progress::{self, unit, Progress},
 };
-use std::sync::atomic::{AtomicBool, Ordering};
 
 use super::{Error, Reducer};
 use crate::{data, index, index::util};

@@ -1,7 +1,11 @@
-use crate::loose::Store;
-use crate::Write;
+use std::{
+    sync::atomic::{AtomicBool, Ordering},
+    time::Instant,
+};
+
 use git_features::progress::Progress;
-use std::sync::atomic::{AtomicBool, Ordering};
+
+use crate::{loose::Store, Write};
 
 ///
 pub mod integrity {
@@ -47,6 +51,7 @@ impl Store {
         let sink = crate::sink(self.object_hash);
 
         let mut num_objects = 0;
+        let start = Instant::now();
         let mut progress = progress.add_child("validating");
         progress.init(None, git_features::progress::count("objects"));
         for id in self.iter().filter_map(Result::ok) {
@@ -74,6 +79,7 @@ impl Store {
                 return Err(integrity::Error::Interrupted);
             }
         }
+        progress.show_throughput(start);
 
         Ok(integrity::Statistics { num_objects })
     }

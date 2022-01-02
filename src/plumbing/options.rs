@@ -3,7 +3,7 @@ use gitoxide_core as core;
 
 #[derive(Debug, clap::Parser)]
 #[clap(name = "gix-plumbing", about = "The git underworld", version = clap::crate_version!())]
-#[clap(setting = AppSettings::SubcommandRequired)]
+#[clap(setting = AppSettings::SubcommandRequiredElseHelp)]
 pub struct Args {
     #[clap(long, short = 't')]
     /// The amount of threads to use for some operations.
@@ -56,14 +56,17 @@ pub enum Subcommands {
     /// Subcommands for interacting with commit-graphs
     #[clap(subcommand)]
     CommitGraph(commitgraph::Subcommands),
+    /// Subcommands for interacting with entire git repositories
+    #[clap(subcommand)]
+    Repository(repo::Subcommands),
 }
 
 ///
 pub mod pack {
+    use std::{ffi::OsString, path::PathBuf};
+
     use clap::AppSettings;
     use gitoxide_core as core;
-    use std::ffi::OsString;
-    use std::path::PathBuf;
 
     #[derive(Debug, clap::Parser)]
     pub enum Subcommands {
@@ -243,8 +246,9 @@ pub mod pack {
 
     ///
     pub mod multi_index {
-        use clap::AppSettings;
         use std::path::PathBuf;
+
+        use clap::AppSettings;
 
         #[derive(Debug, clap::Parser)]
         pub enum Subcommands {
@@ -272,9 +276,10 @@ pub mod pack {
 
     ///
     pub mod index {
+        use std::path::PathBuf;
+
         use clap::AppSettings;
         use gitoxide_core as core;
-        use std::path::PathBuf;
 
         #[derive(Debug, clap::Parser)]
         pub enum Subcommands {
@@ -314,9 +319,28 @@ pub mod pack {
 }
 
 ///
-pub mod commitgraph {
-    use clap::AppSettings;
+pub mod repo {
     use std::path::PathBuf;
+
+    use clap::AppSettings;
+
+    #[derive(Debug, clap::Parser)]
+    #[clap(alias = "repo")]
+    pub enum Subcommands {
+        /// Verify the integrity of the entire repository
+        #[clap(setting = AppSettings::DisableVersionFlag)]
+        Verify {
+            #[clap(short = 'r', long, default_value = ".")]
+            repository: PathBuf,
+        },
+    }
+}
+
+///
+pub mod commitgraph {
+    use std::path::PathBuf;
+
+    use clap::AppSettings;
 
     #[derive(Debug, clap::Parser)]
     pub enum Subcommands {
