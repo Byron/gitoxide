@@ -147,6 +147,9 @@ pub(crate) enum OnDiskFileState<T: Clone> {
 }
 
 impl<T: Clone> OnDiskFile<T> {
+    pub fn path(&self) -> &Path {
+        &*self.path
+    }
     /// Return true if we hold a memory map of the file already.
     pub fn is_loaded(&self) -> bool {
         matches!(self.state, OnDiskFileState::Loaded(_) | OnDiskFileState::Garbage(_))

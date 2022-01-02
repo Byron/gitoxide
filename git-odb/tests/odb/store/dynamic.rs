@@ -574,8 +574,7 @@ mod verify {
     use std::sync::atomic::AtomicBool;
 
     #[test]
-    #[ignore]
-    fn verify_integrity() {
+    fn integrity() {
         let handle = db();
         let outcome = handle
             .store_ref()
