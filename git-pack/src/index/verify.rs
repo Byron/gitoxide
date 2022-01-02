@@ -43,6 +43,7 @@ pub mod integrity {
     }
 
     /// Additional options to define how the integrity should be verified.
+    #[derive(Clone)]
     pub struct Options<F> {
         /// The thoroughness of the verification
         pub verify_mode: crate::index::verify::Mode,

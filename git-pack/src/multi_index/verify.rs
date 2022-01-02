@@ -1,6 +1,7 @@
 use std::time::Instant;
 use std::{cmp::Ordering, sync::atomic::AtomicBool};
 
+use crate::index;
 use git_features::progress::Progress;
 
 use crate::multi_index::File;
@@ -48,29 +49,6 @@ pub mod integrity {
         /// The provided progress instance.
         pub progress: P,
     }
-
-    /// Additional options to define how the integrity should be verified.
-    pub struct Options<F> {
-        /// The thoroughness of the verification
-        pub verify_mode: crate::index::verify::Mode,
-        /// The way to traverse packs
-        pub traversal: crate::index::traverse::Algorithm,
-        /// The amount of theads to use of `Some(N)`, with `None|Some(0)` using all available cores are used.
-        pub thread_limit: Option<usize>,
-        /// A function to create a pack cache
-        pub make_pack_lookup_cache: F,
-    }
-
-    impl Default for Options<fn() -> crate::cache::Never> {
-        fn default() -> Self {
-            Options {
-                verify_mode: Default::default(),
-                traversal: Default::default(),
-                thread_limit: None,
-                make_pack_lookup_cache: || crate::cache::Never,
-            }
-        }
-    }
 }
 
 ///
@@ -108,12 +86,17 @@ impl File {
     where
         P: Progress,
     {
-        self.verify_integrity_inner(progress, should_interrupt, false, integrity::Options::default())
-            .map_err(|err| match err {
-                crate::index::traverse::Error::Processor(err) => err,
-                _ => unreachable!("BUG: no other error type is possible"),
-            })
-            .map(|o| (o.actual_index_checksum, o.progress))
+        self.verify_integrity_inner(
+            progress,
+            should_interrupt,
+            false,
+            index::verify::integrity::Options::default(),
+        )
+        .map_err(|err| match err {
+            index::traverse::Error::Processor(err) => err,
+            _ => unreachable!("BUG: no other error type is possible"),
+        })
+        .map(|o| (o.actual_index_checksum, o.progress))
     }
 
     /// Similar to [`crate::Bundle::verify_integrity()`] but checks all contained indices and their packs.
@@ -123,8 +106,8 @@ impl File {
         &self,
         progress: P,
         should_interrupt: &AtomicBool,
-        options: integrity::Options<F>,
-    ) -> Result<integrity::Outcome<P>, crate::index::traverse::Error<integrity::Error>>
+        options: index::verify::integrity::Options<F>,
+    ) -> Result<integrity::Outcome<P>, index::traverse::Error<integrity::Error>>
     where
         P: Progress,
         C: crate::cache::DecodeEntry,
@@ -138,13 +121,8 @@ impl File {
         mut progress: P,
         should_interrupt: &AtomicBool,
         deep_check: bool,
-        integrity::Options {
-            verify_mode,
-            traversal,
-            thread_limit,
-            make_pack_lookup_cache,
-        }: integrity::Options<F>,
-    ) -> Result<integrity::Outcome<P>, crate::index::traverse::Error<integrity::Error>>
+        options: index::verify::integrity::Options<F>,
+    ) -> Result<integrity::Outcome<P>, index::traverse::Error<integrity::Error>>
     where
         P: Progress,
         C: crate::cache::DecodeEntry,
@@ -158,16 +136,16 @@ impl File {
                 should_interrupt,
             )
             .map_err(integrity::Error::from)
-            .map_err(crate::index::traverse::Error::Processor)?;
+            .map_err(index::traverse::Error::Processor)?;
 
         if let Some(first_invalid) = crate::verify::fan(&self.fan) {
-            return Err(crate::index::traverse::Error::Processor(integrity::Error::Fan {
+            return Err(index::traverse::Error::Processor(integrity::Error::Fan {
                 index: first_invalid,
             }));
         }
 
         if self.num_objects == 0 {
-            return Err(crate::index::traverse::Error::Processor(integrity::Error::Empty));
+            return Err(index::traverse::Error::Processor(integrity::Error::Empty));
         }
 
         let mut pack_traverse_statistics = Vec::new();
@@ -188,7 +166,7 @@ impl File {
                 let rhs = self.oid_at_index(entry_index + 1);
 
                 if rhs.cmp(lhs) != Ordering::Greater {
-                    return Err(crate::index::traverse::Error::Processor(integrity::Error::OutOfOrder {
+                    return Err(index::traverse::Error::Processor(integrity::Error::OutOfOrder {
                         index: entry_index,
                     }));
                 }
@@ -230,14 +208,14 @@ impl File {
             let index = if deep_check {
                 bundle = crate::Bundle::at(index_path, self.object_hash)
                     .map_err(integrity::Error::from)
-                    .map_err(crate::index::traverse::Error::Processor)?
+                    .map_err(index::traverse::Error::Processor)?
                     .into();
                 bundle.as_ref().map(|b| &b.index).expect("just set")
             } else {
                 index = Some(
-                    crate::index::File::at(index_path, self.object_hash)
+                    index::File::at(index_path, self.object_hash)
                         .map_err(|err| integrity::Error::BundleInit(crate::bundle::init::Error::Index(err)))
-                        .map_err(crate::index::traverse::Error::Processor)?,
+                        .map_err(index::traverse::Error::Processor)?,
                 );
                 index.as_ref().expect("just set")
             };
@@ -251,11 +229,11 @@ impl File {
                     let oid = self.oid_at_index(entry_id);
                     let (_, expected_pack_offset) = self.pack_id_and_pack_offset_at_index(entry_id);
                     let entry_in_bundle_index = index.lookup(oid).ok_or_else(|| {
-                        crate::index::traverse::Error::Processor(integrity::Error::OidNotFound { id: oid.to_owned() })
+                        index::traverse::Error::Processor(integrity::Error::OidNotFound { id: oid.to_owned() })
                     })?;
                     let actual_pack_offset = index.pack_offset_at_index(entry_in_bundle_index);
                     if actual_pack_offset != expected_pack_offset {
-                        return Err(crate::index::traverse::Error::Processor(
+                        return Err(index::traverse::Error::Processor(
                             integrity::Error::PackOffsetMismatch {
                                 id: oid.to_owned(),
                                 expected_pack_offset,
@@ -266,7 +244,7 @@ impl File {
                     offsets_progress.inc();
                 }
                 if should_interrupt.load(std::sync::atomic::Ordering::Relaxed) {
-                    return Err(crate::index::traverse::Error::Processor(integrity::Error::Interrupted));
+                    return Err(index::traverse::Error::Processor(integrity::Error::Interrupted));
                 }
             }
 
@@ -280,18 +258,9 @@ impl File {
                     pack_traverse_outcome,
                     progress: _,
                 } = bundle
-                    .verify_integrity(
-                        progress,
-                        should_interrupt,
-                        crate::index::verify::integrity::Options {
-                            verify_mode,
-                            traversal,
-                            make_pack_lookup_cache: make_pack_lookup_cache.clone(),
-                            thread_limit,
-                        },
-                    )
+                    .verify_integrity(progress, should_interrupt, options.clone())
                     .map_err(|err| {
-                        use crate::index::traverse::Error::*;
+                        use index::traverse::Error::*;
                         match err {
                             Processor(err) => Processor(integrity::Error::IndexIntegrity(err)),
                             VerifyChecksum(err) => VerifyChecksum(err),

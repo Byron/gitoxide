@@ -27,6 +27,11 @@ pub use file::{decode_entry, verify, ResolvedBase};
 pub mod header;
 
 ///
+pub mod init {
+    pub use super::header::decode::Error;
+}
+
+///
 pub mod entry;
 
 ///
