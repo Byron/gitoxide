@@ -157,7 +157,7 @@ impl super::Store {
 
     /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
     /// `load_new_index` is an optimization to at least provide one newly loaded pack after refreshing the slot map.
-    fn consolidate_with_disk_state(&self, load_new_index: bool) -> Result<Option<Snapshot>, Error> {
+    pub(crate) fn consolidate_with_disk_state(&self, load_new_index: bool) -> Result<Option<Snapshot>, Error> {
         let index = self.index.load();
         let previous_index_state = Arc::as_ptr(&index) as usize;
 
@@ -372,8 +372,8 @@ impl super::Store {
             };
             slot.files.store(files);
             if !needs_stable_indices {
-                // Not racy due to lock, generation must be set after unsetting the value AND storing it.
-                slot.generation.store(0, Ordering::SeqCst);
+                // Not racy due to lock, generation must be set after unsetting the slot value AND storing it.
+                slot.generation.store(generation, Ordering::SeqCst);
             }
         }
 
