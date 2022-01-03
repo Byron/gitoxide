@@ -48,9 +48,17 @@ title "gix repository"
       (with 'human output format'
         it "generates correct output" && {
           WITH_SNAPSHOT="$snapshot/success-format-human" \
-          expect_run $SUCCESSFULLY "$exe_plumbing" --format human repo verify
+          expect_run $SUCCESSFULLY "$exe_plumbing" --format human repo verify -s
         }
       )
+      if test "$kind" = "max"; then
+      (with "--format json"
+        it "generates the correct output in JSON format" && {
+          WITH_SNAPSHOT="$snapshot/success-format-json" \
+          expect_run $SUCCESSFULLY "$exe_plumbing" --format json repository verify --statistics
+        }
+      )
+      fi
     )
   )
 )

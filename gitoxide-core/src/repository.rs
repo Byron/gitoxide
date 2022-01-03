@@ -30,18 +30,18 @@ pub mod verify {
 
     pub fn integrity(
         repo: PathBuf,
-        _out: impl std::io::Write,
+        mut out: impl std::io::Write,
         progress: impl Progress,
         should_interrupt: &AtomicBool,
         Context {
-            output_statistics: _,
+            output_statistics,
             thread_limit,
             verify_mode,
             algorithm,
         }: Context,
     ) -> anyhow::Result<()> {
         let repo = git_repository::open(repo)?;
-        repo.objects.verify_integrity(
+        let outcome = repo.objects.verify_integrity(
             progress,
             should_interrupt,
             git_repository::odb::pack::index::verify::integrity::Options {
@@ -52,6 +52,20 @@ pub mod verify {
                 make_pack_lookup_cache: || git_repository::odb::pack::cache::Never,
             },
         )?;
+        match output_statistics {
+            Some(OutputFormat::Human) => writeln!(out, "Human output is currently unsupported, use JSON instead")?,
+            #[cfg(feature = "serde1")]
+            Some(OutputFormat::Json) => {
+                serde_json::to_writer_pretty(
+                    out,
+                    &serde_json::json!({
+                        "index-statistics" : outcome.index_statistics,
+                        "loose-object-stores" : outcome.loose_object_stores
+                    }),
+                )?;
+            }
+            None => {}
+        }
         Ok(())
     }
 }

@@ -40,6 +40,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
           * [x] support for thin packs (as needed for fetch/pull)
     * **commit-graph**
       * [x] **verify** - assure that a commit-graph is consistent
+    * **repository**
+      * **verify** - validate a whole repository, for now only the object database.
     * **remote**
       * [ref-list](https://asciinema.org/a/359320) - list all (or given) references from a remote at the given URL
 

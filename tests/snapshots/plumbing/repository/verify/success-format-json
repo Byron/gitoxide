@@ -1,0 +1,11 @@
+{
+  "index-statistics": [],
+  "loose-object-stores": [
+    {
+      "path": "./.git/objects",
+      "statistics": {
+        "num_objects": 9
+      }
+    }
+  ]
+}

@@ -13,6 +13,7 @@ doctest = false
 
 [features]
 internal-testing-git-features-parallel = ["git-features/parallel"]
+serde1 = ["serde", "git-hash/serde1", "git-object/serde1", "git-pack/serde1" ]
 
 [[test]]
 name = "multi-threaded"
@@ -32,6 +33,7 @@ git-features = { version ="^0.18.0", path = "../git-features", features = ["rust
 git-hash = { version ="^0.8.0", path = "../git-hash" }
 git-object = { version ="^0.16.0", path = "../git-object" }
 git-pack = { version ="^0.16.0", path = "../git-pack" }
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 
 btoi = "0.4.2"
 tempfile = "3.1.0"

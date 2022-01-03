@@ -1315,6 +1315,7 @@ dependencies = [
  "git-testtools",
  "parking_lot",
  "pretty_assertions",
+ "serde",
  "tempfile",
  "thiserror",
 ]

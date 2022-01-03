@@ -125,6 +125,7 @@ check: ## Build all code in suitable configurations
 					  && cargo check --no-default-features --features one-stop-shop \
 					  && cargo check --no-default-features --features max-performance \
 					  && cargo check --no-default-features
+	cd git-odb && cargo check --features serde1
 	cd cargo-smart-release && cargo check --all
 	cd experiments/object-access && cargo check
 	cd experiments/diffing && cargo check
