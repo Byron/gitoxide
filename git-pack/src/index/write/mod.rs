@@ -204,6 +204,7 @@ impl crate::index::File {
             indexing_start,
             num_objects as usize,
             progress::count("objects").expect("unit always set"),
+            progress::MessageLevel::Success,
         );
         Ok(Outcome {
             index_kind: kind,

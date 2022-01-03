@@ -1178,7 +1178,7 @@ dependencies = [
  "git-hash 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jwalk",
  "num_cpus",
- "prodash",
+ "prodash 16.1.3",
  "quick-error",
  "sha1",
  "walkdir",
@@ -1197,7 +1197,7 @@ dependencies = [
  "jwalk",
  "num_cpus",
  "parking_lot",
- "prodash",
+ "prodash 17.0.0",
  "quick-error",
  "sha-1",
  "sha1",
@@ -1692,7 +1692,7 @@ dependencies = [
  "git-repository",
  "git-transport 0.14.0",
  "gitoxide-core",
- "prodash",
+ "prodash 17.0.0",
 ]
 
 [[package]]
@@ -2413,6 +2413,16 @@ name = "prodash"
 version = "16.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "79b828b82b039761e012573c3f4b73c16bc549205bd288ae65f1b99f2e394317"
+dependencies = [
+ "bytesize",
+ "human_format",
+]
+
+[[package]]
+name = "prodash"
+version = "17.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edbe4a69808dd170060b586d15b55694d74eaa55c7ee313137d9b0491e2539a6"
 dependencies = [
  "async-io",
  "atty",

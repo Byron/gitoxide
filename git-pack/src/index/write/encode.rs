@@ -92,6 +92,7 @@ pub(crate) fn write_to(
         start,
         (bytes_written_without_trailer + 20) as usize,
         progress::bytes().expect("unit always set"),
+        progress::MessageLevel::Success,
     );
 
     Ok(index_hash)

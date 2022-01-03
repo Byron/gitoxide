@@ -4,7 +4,7 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-use git_features::progress::Progress;
+use git_features::progress::{MessageLevel, Progress};
 
 use crate::{
     pack,
@@ -202,6 +202,7 @@ impl super::Store {
                 start,
                 num_objects as usize,
                 git_features::progress::count("objects").expect("set"),
+                MessageLevel::Success,
             );
             progress.inc();
         }
