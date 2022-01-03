@@ -189,13 +189,6 @@ impl File {
 
         let mut pack_ids_slice = pack_ids_and_offsets.as_slice();
 
-        let offset_start = Instant::now();
-        let mut offsets_progress = progress.add_child("verify object offsets");
-        offsets_progress.init(
-            Some(pack_ids_and_offsets.len()),
-            git_features::progress::count("objects"),
-        );
-
         for (pack_id, index_file_name) in self.index_names.iter().enumerate() {
             progress.set_name(index_file_name.display().to_string());
             progress.inc();
@@ -221,6 +214,12 @@ impl File {
             let slice_end = pack_ids_slice.partition_point(|e| e.0 == pack_id as crate::data::Id);
             let multi_index_entries_to_check = &pack_ids_slice[..slice_end];
             {
+                let offset_start = Instant::now();
+                let mut offsets_progress = progress.add_child("verify object offsets");
+                offsets_progress.init(
+                    Some(pack_ids_and_offsets.len()),
+                    git_features::progress::count("objects"),
+                );
                 pack_ids_slice = &pack_ids_slice[slice_end..];
 
                 for entry_id in multi_index_entries_to_check.iter().map(|e| e.1) {
@@ -241,20 +240,21 @@ impl File {
                     }
                     offsets_progress.inc();
                 }
+
                 if should_interrupt.load(std::sync::atomic::Ordering::Relaxed) {
                     return Err(index::traverse::Error::Processor(integrity::Error::Interrupted));
                 }
+                offsets_progress.show_throughput(offset_start);
             }
 
             total_objects_checked += multi_index_entries_to_check.len();
 
-            progress.set_name("Validating");
             if let Some(bundle) = bundle {
-                let progress = progress.add_child(index_file_name.display().to_string());
+                progress.set_name(format!("Validating {}", index_file_name.display().to_string()));
                 let crate::bundle::verify::integrity::Outcome {
                     actual_index_checksum: _,
                     pack_traverse_outcome,
-                    progress: _,
+                    progress: returned_progress,
                 } = bundle
                     .verify_integrity(progress, should_interrupt, options.clone())
                     .map_err(|err| {
@@ -291,6 +291,7 @@ impl File {
                             Interrupted => Interrupted,
                         }
                     })?;
+                progress = returned_progress;
                 pack_traverse_statistics.push(pack_traverse_outcome);
             }
         }
@@ -300,7 +301,7 @@ impl File {
             "BUG: our slicing should allow to visit all objects"
         );
 
-        offsets_progress.show_throughput(offset_start);
+        progress.set_name("Validating multi-pack");
         progress.show_throughput(operation_start);
 
         Ok(integrity::Outcome {

@@ -53,7 +53,7 @@ impl Store {
         let mut num_objects = 0;
         let start = Instant::now();
         let mut progress = progress.add_child("Validating");
-        progress.init(None, git_features::progress::count("objects"));
+        progress.init(None, git_features::progress::count("loose objects"));
         for id in self.iter().filter_map(Result::ok) {
             let object = self
                 .try_find(id, &mut buf)
