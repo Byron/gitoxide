@@ -7,18 +7,18 @@ pub enum Error {
     #[error("Pack offsets must only increment. The previous pack offset was {last_pack_offset}, the current one is {pack_offset}")]
     InvariantIncreasingPackOffset {
         /// The last seen pack offset
-        last_pack_offset: u64,
+        last_pack_offset: crate::data::Offset,
         /// The invariant violating offset
-        pack_offset: u64,
+        pack_offset: crate::data::Offset,
     },
     #[error(
         "The delta at pack offset {delta_pack_offset} could not find its base at {base_pack_offset} - it should have been seen already"
     )]
     InvariantBasesBeforeDeltasNeedThem {
         /// The delta pack offset whose base we could not find
-        delta_pack_offset: u64,
+        delta_pack_offset: crate::data::Offset,
         /// The base pack offset which was not yet added to the tree
-        base_pack_offset: u64,
+        base_pack_offset: crate::data::Offset,
     },
 }
 
@@ -33,11 +33,12 @@ pub mod from_offsets;
 /// An item stored within the [`Tree`]
 pub struct Item<T> {
     /// The offset into the pack file at which the pack entry's data is located.
-    pub offset: u64,
+    pub offset: crate::data::Offset,
     /// The offset of the next item in the pack file.
-    pub next_offset: u64,
+    pub next_offset: crate::data::Offset,
     /// Data to store with each Item, effectively data associated with each entry in a pack.
     pub data: T,
+    /// Indices into our Tree's `items`, one for each pack entry that depends on us.
     children: Vec<usize>,
 }
 /// A tree that allows one-time iteration over all nodes and their children, consuming it in the process,
@@ -47,6 +48,7 @@ pub struct Tree<T> {
     /// Roots are first, then children.
     items: VecDeque<Item<T>>,
     roots: usize,
+    /// The last child index into the `items` array
     last_index: usize,
 }
 
@@ -60,7 +62,7 @@ impl<T> Tree<T> {
         })
     }
 
-    fn assert_is_incrementing_and_update_next_offset(&mut self, offset: u64) -> Result<(), Error> {
+    fn assert_is_incrementing_and_update_next_offset(&mut self, offset: crate::data::Offset) -> Result<(), Error> {
         if self.items.is_empty() {
             return Ok(());
         }
@@ -75,7 +77,7 @@ impl<T> Tree<T> {
         Ok(())
     }
 
-    fn set_pack_entries_end(&mut self, pack_entries_end: u64) {
+    fn set_pack_entries_end_and_resolve_ref_offsets(&mut self, pack_entries_end: crate::data::Offset) {
         if !self.items.is_empty() {
             self.items[self.last_index].next_offset = pack_entries_end;
         }
@@ -83,7 +85,7 @@ impl<T> Tree<T> {
 
     /// Add a new root node, one that only has children but is not a child itself, at the given pack `offset` and associate
     /// custom `data` with it.
-    pub fn add_root(&mut self, offset: u64, data: T) -> Result<(), Error> {
+    pub fn add_root(&mut self, offset: crate::data::Offset, data: T) -> Result<(), Error> {
         self.assert_is_incrementing_and_update_next_offset(offset)?;
         self.last_index = 0;
         self.items.push_front(Item {
@@ -97,7 +99,12 @@ impl<T> Tree<T> {
     }
 
     /// Add a child of the item at `base_offset` which itself resides at pack `offset` and associate custom `data` with it.
-    pub fn add_child(&mut self, base_offset: u64, offset: u64, data: T) -> Result<(), Error> {
+    pub fn add_child(
+        &mut self,
+        base_offset: crate::data::Offset,
+        offset: crate::data::Offset,
+        data: T,
+    ) -> Result<(), Error> {
         self.assert_is_incrementing_and_update_next_offset(offset)?;
         let (roots, children) = self.items.as_mut_slices();
         assert_eq!(
@@ -175,7 +182,7 @@ mod tests {
     }
 
     struct TreeItem<D> {
-        _offset: u64,
+        _offset: crate::data::Offset,
         _data: D,
         _children: Vec<usize>,
     }
@@ -188,7 +195,7 @@ mod tests {
         }
 
         struct TreeItemOption<D> {
-            _offset: u64,
+            _offset: crate::data::Offset,
             _data: Option<D>,
             _children: Vec<usize>,
         }

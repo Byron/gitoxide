@@ -1,7 +1,7 @@
 mod file {
     const SHA1_SIZE: usize = git_hash::Kind::Sha1.len_in_bytes();
 
-    use std::sync::atomic::AtomicBool;
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
     use git_object::{self as object};
     use git_odb::pack;
@@ -200,15 +200,22 @@ mod file {
         )
         .unwrap();
         let data = pack::data::File::at(index.path().with_extension("pack"), Default::default()).unwrap();
+        let count = AtomicUsize::new(0);
         let _it_should_work = index
             .traverse_with_index(
                 &data,
-                || |_, _, _, _| Ok::<_, std::io::Error>(()),
+                || {
+                    |_, _, _, _| {
+                        count.fetch_add(1, Ordering::SeqCst);
+                        Ok::<_, std::io::Error>(())
+                    }
+                },
                 progress::Discard,
                 &AtomicBool::new(false),
                 index::traverse::with_index::Options::default(),
             )
             .unwrap();
+        assert_eq!(count.load(Ordering::SeqCst), 9, "we traverse all objects");
     }
 
     use common_macros::b_tree_map;
