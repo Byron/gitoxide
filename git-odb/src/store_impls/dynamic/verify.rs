@@ -1,3 +1,4 @@
+use std::time::Instant;
 use std::{
     ops::Deref,
     sync::atomic::{AtomicBool, Ordering},
@@ -120,8 +121,17 @@ impl super::Store {
             }
             let files = slot.files.load();
             let files = Option::as_ref(&files).ok_or(integrity::Error::NeedsRetryDueToChangeOnDisk)?;
+            let progress_message = |path: &std::path::Path| {
+                format!(
+                    "Checking integrity: {}",
+                    path.file_name()
+                        .map(|f| f.to_string_lossy())
+                        .unwrap_or_else(std::borrow::Cow::default)
+                )
+            };
 
-            match files {
+            let start = Instant::now();
+            let (mut child_progress, num_objects) = match files {
                 IndexAndPacks::Index(bundle) => {
                     let index;
                     let index = match bundle.index.loaded() {
@@ -144,7 +154,7 @@ impl super::Store {
                             data,
                             options: options.clone(),
                         }),
-                        progress.add_child("Checking integrity"),
+                        progress.add_child(progress_message(index.path())),
                         should_interrupt,
                     )?;
                     statistics.push(IndexStatistics {
@@ -155,6 +165,7 @@ impl super::Store {
                                 .expect("pack provided so there are stats"),
                         ),
                     });
+                    (outcome.progress, index.num_objects())
                 }
                 IndexAndPacks::MultiIndex(bundle) => {
                     let index;
@@ -166,7 +177,7 @@ impl super::Store {
                         }
                     };
                     let outcome = index.verify_integrity(
-                        progress.add_child("Checking integrity"),
+                        progress.add_child(progress_message(index.path())),
                         should_interrupt,
                         options.clone(),
                     )?;
@@ -183,8 +194,15 @@ impl super::Store {
                                 .collect(),
                         ),
                     });
+                    (outcome.progress, index.num_objects())
                 }
-            }
+            };
+
+            child_progress.show_throughput_with(
+                start,
+                num_objects as usize,
+                git_features::progress::count("objects").expect("set"),
+            );
             progress.inc();
         }
 
