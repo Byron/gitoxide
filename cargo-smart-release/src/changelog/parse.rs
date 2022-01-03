@@ -14,7 +14,7 @@ use nom::{
     sequence::{delimited, preceded, separated_pair, terminated, tuple},
     Finish, IResult,
 };
-use pulldown_cmark::{CowStr, Event, OffsetIter, Tag};
+use pulldown_cmark::{CowStr, Event, HeadingLevel, OffsetIter, Tag};
 
 use crate::{
     changelog,
@@ -140,7 +140,7 @@ impl Section {
                         }
                     }
                 }
-                Event::Start(Tag::Heading(indent)) => {
+                Event::Start(Tag::Heading(indent, _, _)) => {
                     record_unknown_range(&mut segments, unknown_range.take(), &body);
                     enum State {
                         ParseConventional { title: String },
@@ -195,7 +195,7 @@ impl Section {
                             if matches!(state, State::ConsiderUserAuthored) {
                                 update_unknown_range(&mut unknown_range, range.clone());
                             }
-                            !matches!(e, Event::End(Tag::Heading(_)))
+                            !matches!(e, Event::End(Tag::Heading(_, _, _)))
                         })
                         .count();
                     match state {
@@ -236,8 +236,8 @@ impl Section {
 fn parse_conventional_to_next_section_title(
     markdown: &str,
     title: String,
-    events: &mut Peekable<OffsetIter<'_>>,
-    level: u32,
+    events: &mut Peekable<OffsetIter<'_, '_>>,
+    level: HeadingLevel,
     unknown: &mut String,
 ) -> Segment {
     let is_breaking = title.ends_with(section::segment::Conventional::BREAKING_TITLE_ENCLOSED);
@@ -256,7 +256,7 @@ fn parse_conventional_to_next_section_title(
     };
     while let Some((event, _range)) = events.peek() {
         match event {
-            Event::Start(Tag::Heading(indent)) if *indent == level => break,
+            Event::Start(Tag::Heading(indent, _, _)) if *indent == level => break,
             _ => {
                 let (event, _range) = events.next().expect("peeked before so event is present");
                 match event {
@@ -329,7 +329,7 @@ fn parse_conventional_to_next_section_title(
 
 fn parse_id_fallback_to_user_message(
     markdown: &str,
-    events: &mut Peekable<OffsetIter<'_>>,
+    events: &mut Peekable<OffsetIter<'_, '_>>,
     conventional: &mut Conventional,
     item_range: Range<usize>,
     tag: CowStr<'_>,
@@ -382,7 +382,7 @@ fn parse_id_fallback_to_user_message(
 
 fn make_user_message_and_consume_item(
     markdown: &str,
-    events: &mut Peekable<OffsetIter<'_>>,
+    events: &mut Peekable<OffsetIter<'_, '_>>,
     conventional: &mut Conventional,
     range: Range<usize>,
 ) {
@@ -438,10 +438,10 @@ fn track_unknown_event(unknown_event: Event<'_>, unknown: &mut String) {
     }
 }
 
-fn skip_to_next_section_title(events: &mut Peekable<OffsetIter<'_>>, level: u32) {
+fn skip_to_next_section_title(events: &mut Peekable<OffsetIter<'_, '_>>, level: HeadingLevel) {
     while let Some((event, _range)) = events.peek() {
         match event {
-            Event::Start(Tag::Heading(indent)) if *indent == level => break,
+            Event::Start(Tag::Heading(indent, _, _)) if *indent == level => break,
             _ => {
                 events.next();
                 continue;
