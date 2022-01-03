@@ -13,6 +13,7 @@ pub enum Error {
 
 mod iter;
 pub use iter::{Chunk, Node};
+
 ///
 pub mod traverse;
 
@@ -147,11 +148,6 @@ impl<T> Tree<T> {
             children: Vec::new(),
         });
         Ok(())
-    }
-
-    /// Transform this `Tree` into its items.
-    pub fn into_items(self) -> (Vec<Item<T>>, Vec<Item<T>>) {
-        (self.root_items, self.child_items)
     }
 }
 

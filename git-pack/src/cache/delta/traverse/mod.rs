@@ -69,6 +69,14 @@ pub struct Options<'a, P1, P2> {
     pub object_hash: git_hash::Kind,
 }
 
+/// The outcome of [`Tree::traverse()`]
+pub struct Outcome<T> {
+    /// The items that have no children in the pack, i.e. base objects.
+    pub roots: Vec<Item<T>>,
+    /// The items that children to a root object, i.e. delta objects.
+    pub children: Vec<Item<T>>,
+}
+
 impl<T> Tree<T>
 where
     T: Send,
@@ -104,7 +112,7 @@ where
             should_interrupt,
             object_hash,
         }: Options<'_, P1, P2>,
-    ) -> Result<(Vec<Item<T>>, Vec<Item<T>>), Error>
+    ) -> Result<Outcome<T>, Error>
     where
         F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Clone,
         P1: Progress,
@@ -136,7 +144,10 @@ where
             move |root_nodes, state| resolve::deltas(root_nodes, state, object_hash.len_in_bytes()),
             Reducer::new(num_objects, object_progress, size_progress, should_interrupt),
         )?;
-        Ok(self.into_items())
+        Ok(Outcome {
+            roots: self.root_items,
+            children: self.child_items,
+        })
     }
 }
 

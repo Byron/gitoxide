@@ -4,7 +4,7 @@ use git_features::{parallel, progress::Progress};
 
 use super::Error;
 use crate::{
-    cache::delta::traverse::Context,
+    cache::delta::traverse,
     index::{self, traverse::Outcome, util::index_entries_sorted_by_offset_ascending},
 };
 
@@ -80,7 +80,7 @@ impl index::File {
                     new_processor,
                     |data,
                      progress,
-                     Context {
+                     traverse::Context {
                          entry: pack_entry,
                          entry_end,
                          decompressed: bytes,
@@ -160,12 +160,7 @@ impl From<crate::index::Entry> for Entry {
     }
 }
 
-fn digest_statistics(
-    (roots, children): (
-        Vec<crate::cache::delta::Item<Entry>>,
-        Vec<crate::cache::delta::Item<Entry>>,
-    ),
-) -> index::traverse::Statistics {
+fn digest_statistics(traverse::Outcome { roots, children }: traverse::Outcome<Entry>) -> index::traverse::Statistics {
     let mut res = index::traverse::Statistics::default();
     let average = &mut res.average;
     for item in roots.iter().chain(children.iter()) {

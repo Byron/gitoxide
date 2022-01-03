@@ -3,7 +3,7 @@ use std::{convert::TryInto, io, sync::atomic::AtomicBool};
 pub use error::Error;
 use git_features::progress::{self, Progress};
 
-use crate::cache::delta::{traverse::Context, Tree};
+use crate::cache::delta::{traverse, Tree};
 
 pub(crate) mod encode;
 mod error;
@@ -156,14 +156,14 @@ impl crate::index::File {
         let resolver = make_resolver()?;
         let sorted_pack_offsets_by_oid = {
             let in_parallel_if_pack_is_big_enough = || bytes_to_process > 5_000_000;
-            let (roots, children) = tree.traverse(
+            let traverse::Outcome { roots, children } = tree.traverse(
                 in_parallel_if_pack_is_big_enough,
                 resolver,
                 pack_entries_end,
                 || (),
                 |data,
                  _progress,
-                 Context {
+                 traverse::Context {
                      entry,
                      decompressed: bytes,
                      ..
