@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 /// Returned when using various methods on a [`Tree`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
@@ -32,15 +30,23 @@ pub struct Item<T> {
     /// Indices into our Tree's `items`, one for each pack entry that depends on us.
     children: Vec<usize>,
 }
+
+/// Identify what kind of node we have last seen
+enum NodeKind {
+    Root,
+    Child,
+}
+
 /// A tree that allows one-time iteration over all nodes and their children, consuming it in the process,
 /// while being shareable among threads without a lock.
 /// It does this by making the guarantee that iteration only happens once.
 pub struct Tree<T> {
-    /// Roots are first, then children.
-    items: VecDeque<Item<T>>,
-    roots: usize,
-    /// The last child index into the `items` array
-    last_index: usize,
+    /// The root nodes, i.e. base objects
+    root_items: Vec<Item<T>>,
+    /// The child nodes, i.e. those that rely a base object, like ref and ofs delta objets
+    child_items: Vec<Item<T>>,
+    /// The last encountered node was either a root or a child.
+    last_seen: Option<NodeKind>,
     /// Future child offsets, associating their offset into the pack with their index in the items array.
     /// (parent_offset, child_index)
     future_child_offsets: Vec<(crate::data::Offset, usize)>,
@@ -50,22 +56,27 @@ impl<T> Tree<T> {
     /// Instantiate a empty tree capable of storing `num_objects` amounts of items.
     pub fn with_capacity(num_objects: usize) -> Result<Self, Error> {
         Ok(Tree {
-            items: VecDeque::with_capacity(num_objects),
-            roots: 0,
-            last_index: 0,
+            root_items: Vec::with_capacity(num_objects / 2),
+            child_items: Vec::with_capacity(num_objects / 2),
+            last_seen: None,
             future_child_offsets: Vec::new(),
         })
     }
 
+    fn num_items(&self) -> usize {
+        self.root_items.len() + self.child_items.len()
+    }
+
     fn assert_is_incrementing_and_update_next_offset(&mut self, offset: crate::data::Offset) -> Result<(), Error> {
-        if self.items.is_empty() {
-            return Ok(());
-        }
-        let item = &mut self.items[self.last_index];
-        let last_offset = item.offset;
-        if offset <= last_offset {
+        let items = match &self.last_seen {
+            Some(NodeKind::Root) => &mut self.root_items,
+            Some(NodeKind::Child) => &mut self.child_items,
+            None => return Ok(()),
+        };
+        let item = &mut items.last_mut().expect("last seen won't lie");
+        if offset <= item.offset {
             return Err(Error::InvariantIncreasingPackOffset {
-                last_pack_offset: last_offset,
+                last_pack_offset: item.offset,
                 pack_offset: offset,
             });
         }
@@ -77,22 +88,12 @@ impl<T> Tree<T> {
         &mut self,
         pack_entries_end: crate::data::Offset,
     ) -> Result<(), traverse::Error> {
-        if self.items.is_empty() {
-            return Ok(());
-        };
-
         if !self.future_child_offsets.is_empty() {
-            let (roots, children) = self.items.as_mut_slices();
-            assert_eq!(
-                roots.len(),
-                self.roots,
-                "item deque has been resized, maybe we added more nodes than we declared in the constructor?"
-            );
             for (parent_offset, child_index) in self.future_child_offsets.drain(..) {
-                if let Ok(i) = children.binary_search_by_key(&parent_offset, |i| i.offset) {
-                    children[i].children.push(child_index);
-                } else if let Ok(i) = roots.binary_search_by(|i| parent_offset.cmp(&i.offset)) {
-                    roots[i].children.push(child_index);
+                if let Ok(i) = self.child_items.binary_search_by_key(&parent_offset, |i| i.offset) {
+                    self.child_items[i].children.push(child_index);
+                } else if let Ok(i) = self.root_items.binary_search_by_key(&parent_offset, |i| i.offset) {
+                    self.root_items[i].children.push(child_index);
                 } else {
                     return Err(traverse::Error::OutOfPackRefDelta {
                         base_pack_offset: parent_offset,
@@ -101,7 +102,8 @@ impl<T> Tree<T> {
             }
         }
 
-        self.items[self.last_index].next_offset = pack_entries_end;
+        self.assert_is_incrementing_and_update_next_offset(pack_entries_end)
+            .expect("BUG: pack now is smaller than all previously seen entries");
         Ok(())
     }
 
@@ -109,14 +111,13 @@ impl<T> Tree<T> {
     /// custom `data` with it.
     pub fn add_root(&mut self, offset: crate::data::Offset, data: T) -> Result<(), Error> {
         self.assert_is_incrementing_and_update_next_offset(offset)?;
-        self.last_index = 0;
-        self.items.push_front(Item {
+        self.last_seen = NodeKind::Root.into();
+        self.root_items.push(Item {
             offset,
             next_offset: 0,
             data,
             children: Vec::new(),
         });
-        self.roots += 1;
         Ok(())
     }
 
@@ -128,22 +129,18 @@ impl<T> Tree<T> {
         data: T,
     ) -> Result<(), Error> {
         self.assert_is_incrementing_and_update_next_offset(offset)?;
-        let (roots, children) = self.items.as_mut_slices();
-        assert_eq!(
-            roots.len(),
-            self.roots,
-            "item deque has been resized, maybe we added more nodes than we declared in the constructor?"
-        );
-        let next_child_index = children.len();
-        if let Ok(i) = children.binary_search_by_key(&base_offset, |i| i.offset) {
-            children[i].children.push(next_child_index);
-        } else if let Ok(i) = roots.binary_search_by(|i| base_offset.cmp(&i.offset)) {
-            roots[i].children.push(next_child_index);
+
+        let next_child_index = self.child_items.len();
+        if let Ok(i) = self.child_items.binary_search_by_key(&base_offset, |i| i.offset) {
+            self.child_items[i].children.push(next_child_index);
+        } else if let Ok(i) = self.root_items.binary_search_by_key(&base_offset, |i| i.offset) {
+            self.root_items[i].children.push(next_child_index);
         } else {
             self.future_child_offsets.push((base_offset, next_child_index));
         }
-        self.last_index = self.items.len();
-        self.items.push_back(Item {
+
+        self.last_seen = NodeKind::Child.into();
+        self.child_items.push(Item {
             offset,
             next_offset: 0,
             data,
@@ -153,8 +150,8 @@ impl<T> Tree<T> {
     }
 
     /// Transform this `Tree` into its items.
-    pub fn into_items(self) -> VecDeque<Item<T>> {
-        self.items
+    pub fn into_items(self) -> (Vec<Item<T>>, Vec<Item<T>>) {
+        (self.root_items, self.child_items)
     }
 }
 

@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::VecDeque, io};
+use std::{cmp::Ordering, io};
 
 pub(crate) const LARGE_OFFSET_THRESHOLD: u64 = 0x7fff_ffff;
 pub(crate) const HIGH_BIT: u32 = 0x8000_0000;
@@ -13,7 +13,7 @@ use crate::index::{util::Count, V2_SIGNATURE};
 
 pub(crate) fn write_to(
     out: impl io::Write,
-    entries_sorted_by_oid: VecDeque<crate::cache::delta::Item<crate::index::write::TreeEntry>>,
+    entries_sorted_by_oid: Vec<crate::cache::delta::Item<crate::index::write::TreeEntry>>,
     pack_hash: &git_hash::ObjectId,
     kind: crate::index::Version,
     mut progress: impl Progress,

@@ -1,7 +1,4 @@
-use std::{
-    collections::VecDeque,
-    sync::atomic::{AtomicBool, Ordering},
-};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use git_features::{parallel, progress::Progress};
 
@@ -163,10 +160,15 @@ impl From<crate::index::Entry> for Entry {
     }
 }
 
-fn digest_statistics(items: VecDeque<crate::cache::delta::Item<Entry>>) -> index::traverse::Statistics {
+fn digest_statistics(
+    (roots, children): (
+        Vec<crate::cache::delta::Item<Entry>>,
+        Vec<crate::cache::delta::Item<Entry>>,
+    ),
+) -> index::traverse::Statistics {
     let mut res = index::traverse::Statistics::default();
     let average = &mut res.average;
-    for item in &items {
+    for item in roots.iter().chain(children.iter()) {
         res.total_compressed_entries_size += item.data.compressed_size;
         res.total_decompressed_entries_size += item.data.decompressed_size;
         res.total_object_size += item.data.object_size;
@@ -185,10 +187,11 @@ fn digest_statistics(items: VecDeque<crate::cache::delta::Item<Entry>>) -> index
         };
     }
 
-    average.decompressed_size /= items.len() as u64;
-    average.compressed_size /= items.len();
-    average.object_size /= items.len() as u64;
-    average.num_deltas /= items.len() as u32;
+    let num_nodes = roots.len() + children.len();
+    average.decompressed_size /= num_nodes as u64;
+    average.compressed_size /= num_nodes;
+    average.object_size /= num_nodes as u64;
+    average.num_deltas /= num_nodes as u32;
 
     res
 }

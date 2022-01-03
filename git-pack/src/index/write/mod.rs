@@ -156,7 +156,7 @@ impl crate::index::File {
         let resolver = make_resolver()?;
         let sorted_pack_offsets_by_oid = {
             let in_parallel_if_pack_is_big_enough = || bytes_to_process > 5_000_000;
-            let mut items = tree.traverse(
+            let (roots, children) = tree.traverse(
                 in_parallel_if_pack_is_big_enough,
                 resolver,
                 pack_entries_end,
@@ -181,9 +181,11 @@ impl crate::index::File {
             )?;
             root_progress.inc();
 
+            let mut items = roots;
+            items.extend(children);
             {
                 let _progress = root_progress.add_child("sorting by id");
-                items.make_contiguous().sort_by_key(|e| e.data.id);
+                items.sort_by_key(|e| e.data.id);
             }
 
             root_progress.inc();

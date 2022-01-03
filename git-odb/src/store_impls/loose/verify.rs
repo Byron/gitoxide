@@ -52,7 +52,7 @@ impl Store {
 
         let mut num_objects = 0;
         let start = Instant::now();
-        let mut progress = progress.add_child("validating");
+        let mut progress = progress.add_child("Validating");
         progress.init(None, git_features::progress::count("objects"));
         for id in self.iter().filter_map(Result::ok) {
             let object = self

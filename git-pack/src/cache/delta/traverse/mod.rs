@@ -1,7 +1,4 @@
-use std::{
-    collections::VecDeque,
-    sync::atomic::{AtomicBool, Ordering},
-};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use git_features::{
     parallel,
@@ -107,7 +104,7 @@ where
             should_interrupt,
             object_hash,
         }: Options<'_, P1, P2>,
-    ) -> Result<VecDeque<Item<T>>, Error>
+    ) -> Result<(Vec<Item<T>>, Vec<Item<T>>), Error>
     where
         F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Clone,
         P1: Progress,
@@ -119,7 +116,7 @@ where
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
         let object_progress = OwnShared::new(Mutable::new(object_progress));
 
-        let num_objects = self.items.len();
+        let num_objects = self.num_items();
         in_parallel_if(
             should_run_in_parallel,
             self.iter_root_chunks(chunk_size),
