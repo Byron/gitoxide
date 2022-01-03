@@ -238,7 +238,7 @@ pub mod pack {
             /// owned objects, causing plenty of allocation to occour.
             re_encode: bool,
 
-            /// The '.pack' or '.idx' file whose checksum to validate.
+            /// The '.pack', '.idx' or 'multi-pack-index' file to validate.
             #[clap(parse(from_os_str))]
             path: PathBuf,
         },
