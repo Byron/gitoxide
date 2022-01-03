@@ -210,38 +210,44 @@ pub mod pack {
         /// Verify the integrity of a pack, index or multi-index file
         #[clap(setting = AppSettings::DisableVersionFlag)]
         Verify {
-            /// output statistical information about the pack
-            #[clap(long, short = 's')]
-            statistics: bool,
-            /// The algorithm used to verify the pack. They differ in costs.
-            #[clap(
-                long,
-                short = 'a',
-                default_value = "less-time",
-                possible_values(core::pack::verify::Algorithm::variants())
-            )]
-            algorithm: core::pack::verify::Algorithm,
-
-            #[clap(long, conflicts_with("re-encode"))]
-            /// Decode and parse tags, commits and trees to validate their correctness beyond hashing correctly.
-            ///
-            /// Malformed objects should not usually occur, but could be injected on purpose or accident.
-            /// This will reduce overall performance.
-            decode: bool,
-
-            #[clap(long)]
-            /// Decode and parse tags, commits and trees to validate their correctness, and re-encode them.
-            ///
-            /// This flag is primarily to test the implementation of encoding, and requires to decode the object first.
-            /// Encoding an object after decoding it should yield exactly the same bytes.
-            /// This will reduce overall performance even more, as re-encoding requires to transform zero-copy objects into
-            /// owned objects, causing plenty of allocation to occour.
-            re_encode: bool,
+            #[clap(flatten)]
+            args: VerifyOptions,
 
             /// The '.pack', '.idx' or 'multi-pack-index' file to validate.
             #[clap(parse(from_os_str))]
             path: PathBuf,
         },
+    }
+
+    #[derive(Debug, clap::Parser)]
+    pub struct VerifyOptions {
+        /// output statistical information
+        #[clap(long, short = 's')]
+        pub statistics: bool,
+        /// The algorithm used to verify packs. They differ in costs.
+        #[clap(
+            long,
+            short = 'a',
+            default_value = "less-time",
+            possible_values(core::pack::verify::Algorithm::variants())
+        )]
+        pub algorithm: core::pack::verify::Algorithm,
+
+        #[clap(long, conflicts_with("re-encode"))]
+        /// Decode and parse tags, commits and trees to validate their correctness beyond hashing correctly.
+        ///
+        /// Malformed objects should not usually occur, but could be injected on purpose or accident.
+        /// This will reduce overall performance.
+        pub decode: bool,
+
+        #[clap(long)]
+        /// Decode and parse tags, commits and trees to validate their correctness, and re-encode them.
+        ///
+        /// This flag is primarily to test the implementation of encoding, and requires to decode the object first.
+        /// Encoding an object after decoding it should yield exactly the same bytes.
+        /// This will reduce overall performance even more, as re-encoding requires to transform zero-copy objects into
+        /// owned objects, causing plenty of allocation to occour.
+        pub re_encode: bool,
     }
 
     ///
@@ -330,6 +336,8 @@ pub mod repo {
         /// Verify the integrity of the entire repository
         #[clap(setting = AppSettings::DisableVersionFlag)]
         Verify {
+            #[clap(flatten)]
+            args: super::pack::VerifyOptions,
             #[clap(short = 'r', long, default_value = ".")]
             repository: PathBuf,
         },

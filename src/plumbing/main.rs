@@ -74,14 +74,34 @@ pub fn main() -> Result<()> {
 
     match cmd {
         Subcommands::Repository(subcommands) => match subcommands {
-            repo::Subcommands::Verify { repository } => prepare_and_run(
+            repo::Subcommands::Verify {
+                args:
+                    pack::VerifyOptions {
+                        statistics,
+                        algorithm,
+                        decode,
+                        re_encode,
+                    },
+                repository,
+            } => prepare_and_run(
                 "repository-verify",
                 verbose,
                 progress,
                 progress_keep_open,
                 core::repository::verify::PROGRESS_RANGE,
                 move |progress, out, _err| {
-                    core::repository::verify::integrity(repository, format, out, progress, &should_interrupt)
+                    core::repository::verify::integrity(
+                        repository,
+                        out,
+                        progress,
+                        &should_interrupt,
+                        core::repository::verify::Context {
+                            output_statistics: statistics.then(|| format),
+                            algorithm,
+                            verify_mode: verify_mode(decode, re_encode),
+                            thread_limit,
+                        },
+                    )
                 },
             ),
         },
@@ -223,11 +243,14 @@ pub fn main() -> Result<()> {
                 },
             ),
             pack::Subcommands::Verify {
+                args:
+                    pack::VerifyOptions {
+                        algorithm,
+                        decode,
+                        re_encode,
+                        statistics,
+                    },
                 path,
-                algorithm,
-                decode,
-                re_encode,
-                statistics,
             } => prepare_and_run(
                 "pack-verify",
                 verbose,
@@ -235,11 +258,7 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 verify::PROGRESS_RANGE,
                 move |progress, out, err| {
-                    let mode = match (decode, re_encode) {
-                        (true, false) => verify::Mode::HashCrc32Decode,
-                        (true, true) | (false, true) => verify::Mode::HashCrc32DecodeEncode,
-                        (false, false) => verify::Mode::HashCrc32,
-                    };
+                    let mode = verify_mode(decode, re_encode);
                     let output_statistics = if statistics { Some(format) } else { None };
                     verify::pack_or_pack_index(
                         path,
@@ -395,4 +414,12 @@ pub fn main() -> Result<()> {
         },
     }?;
     Ok(())
+}
+
+fn verify_mode(decode: bool, re_encode: bool) -> verify::Mode {
+    match (decode, re_encode) {
+        (true, false) => verify::Mode::HashCrc32Decode,
+        (true, true) | (false, true) => verify::Mode::HashCrc32DecodeEncode,
+        (false, false) => verify::Mode::HashCrc32,
+    }
 }
