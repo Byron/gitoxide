@@ -101,19 +101,23 @@ impl ChangeLog {
         repo: &git::easy::Handle,
         selection: segment::Selection,
     ) -> Self {
-        let mut prev_segment = None;
         ChangeLog {
-            sections: segments.iter().fold(Vec::new(), |mut acc, segment| {
-                acc.push(Section::from_history_segment(
-                    package,
-                    segment,
-                    repo,
-                    selection,
-                    prev_segment,
-                ));
-                prev_segment = segment.into();
-                acc
-            }),
+            sections: {
+                let mut s = segments.windows(2).fold(Vec::new(), |mut acc, segments| {
+                    acc.push(Section::from_history_segment(
+                        package,
+                        &segments[0],
+                        repo,
+                        selection,
+                        (&segments[1]).into(),
+                    ));
+                    acc
+                });
+                if let Some(segment) = segments.last() {
+                    s.push(Section::from_history_segment(package, segment, repo, selection, None))
+                }
+                s
+            },
         }
     }
 }
