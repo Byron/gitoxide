@@ -11,15 +11,6 @@ pub enum Error {
         /// The invariant violating offset
         pack_offset: crate::data::Offset,
     },
-    #[error(
-        "The delta at pack offset {delta_pack_offset} could not find its base at {base_pack_offset} - it should have been seen already"
-    )]
-    InvariantBasesBeforeDeltasNeedThem {
-        /// The delta pack offset whose base we could not find
-        delta_pack_offset: crate::data::Offset,
-        /// The base pack offset which was not yet added to the tree
-        base_pack_offset: crate::data::Offset,
-    },
 }
 
 mod iter;
@@ -50,6 +41,9 @@ pub struct Tree<T> {
     roots: usize,
     /// The last child index into the `items` array
     last_index: usize,
+    /// Future child offsets, associating their offset into the pack with their index in the items array.
+    /// (parent_offset, child_index)
+    future_child_offsets: Vec<(crate::data::Offset, usize)>,
 }
 
 impl<T> Tree<T> {
@@ -59,6 +53,7 @@ impl<T> Tree<T> {
             items: VecDeque::with_capacity(num_objects),
             roots: 0,
             last_index: 0,
+            future_child_offsets: Vec::new(),
         })
     }
 
@@ -66,21 +61,48 @@ impl<T> Tree<T> {
         if self.items.is_empty() {
             return Ok(());
         }
-        let last_offset = self.items[self.last_index].offset;
+        let item = &mut self.items[self.last_index];
+        let last_offset = item.offset;
         if offset <= last_offset {
             return Err(Error::InvariantIncreasingPackOffset {
                 last_pack_offset: last_offset,
                 pack_offset: offset,
             });
         }
-        self.items[self.last_index].next_offset = offset;
+        item.next_offset = offset;
         Ok(())
     }
 
-    fn set_pack_entries_end_and_resolve_ref_offsets(&mut self, pack_entries_end: crate::data::Offset) {
-        if !self.items.is_empty() {
-            self.items[self.last_index].next_offset = pack_entries_end;
+    fn set_pack_entries_end_and_resolve_ref_offsets(
+        &mut self,
+        pack_entries_end: crate::data::Offset,
+    ) -> Result<(), traverse::Error> {
+        if self.items.is_empty() {
+            return Ok(());
+        };
+
+        if !self.future_child_offsets.is_empty() {
+            let (roots, children) = self.items.as_mut_slices();
+            assert_eq!(
+                roots.len(),
+                self.roots,
+                "item deque has been resized, maybe we added more nodes than we declared in the constructor?"
+            );
+            for (parent_offset, child_index) in self.future_child_offsets.drain(..) {
+                if let Ok(i) = children.binary_search_by_key(&parent_offset, |i| i.offset) {
+                    children[i].children.push(child_index);
+                } else if let Ok(i) = roots.binary_search_by(|i| parent_offset.cmp(&i.offset)) {
+                    roots[i].children.push(child_index);
+                } else {
+                    return Err(traverse::Error::OutOfPackRefDelta {
+                        base_pack_offset: parent_offset,
+                    });
+                }
+            }
         }
+
+        self.items[self.last_index].next_offset = pack_entries_end;
+        Ok(())
     }
 
     /// Add a new root node, one that only has children but is not a child itself, at the given pack `offset` and associate
@@ -118,10 +140,7 @@ impl<T> Tree<T> {
         } else if let Ok(i) = roots.binary_search_by(|i| base_offset.cmp(&i.offset)) {
             roots[i].children.push(next_child_index);
         } else {
-            return Err(Error::InvariantBasesBeforeDeltasNeedThem {
-                delta_pack_offset: offset,
-                base_pack_offset: base_offset,
-            });
+            self.future_child_offsets.push((base_offset, next_child_index));
         }
         self.last_index = self.items.len();
         self.items.push_back(Item {

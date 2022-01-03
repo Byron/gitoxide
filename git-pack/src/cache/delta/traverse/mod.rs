@@ -32,6 +32,13 @@ pub enum Error {
     Inspect(#[from] Box<dyn std::error::Error + Send + Sync>),
     #[error("Interrupted")]
     Interrupted,
+    #[error(
+    "The base at {base_pack_offset} was referred to by a ref-delta, but it was never added to the tree as if the pack was still thin."
+    )]
+    OutOfPackRefDelta {
+        /// The base's offset which was from a resolved ref-delta that didn't actually get added to the tree
+        base_pack_offset: crate::data::Offset,
+    },
 }
 
 /// Additional context passed to the `inspect_object(…)` function of the [`Tree::traverse()`] method.
@@ -108,7 +115,7 @@ where
         MBFN: Fn(&mut T, &mut <P1 as Progress>::SubProgress, Context<'_, S>) -> Result<(), E> + Send + Clone,
         E: std::error::Error + Send + Sync + 'static,
     {
-        self.set_pack_entries_end_and_resolve_ref_offsets(pack_entries_end);
+        self.set_pack_entries_end_and_resolve_ref_offsets(pack_entries_end)?;
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
         let object_progress = OwnShared::new(Mutable::new(object_progress));
 

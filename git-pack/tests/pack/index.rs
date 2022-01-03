@@ -192,7 +192,6 @@ mod file {
     }
 
     #[test]
-    #[ignore]
     fn traverse_with_index_and_forward_ref_deltas() {
         let index = index::File::at(
             fixture_path("objects/pack-with-forward-delta/pack-0bb5bc1e3d864c617c2539445c832ccdd531cd4e.idx"),

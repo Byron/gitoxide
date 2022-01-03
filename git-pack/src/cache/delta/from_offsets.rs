@@ -98,11 +98,6 @@ impl<T> Tree<T> {
                     tree.add_root(pack_offset, data)?;
                 }
                 RefDelta { base_id } => {
-                    // TODO: ref-deltas can also point to objects (by offset) which we haven't seen yet, so this should really be
-                    //       handled maybe by delaying those? Add-Child needs things ordered ascending though, so it's not trivial to do
-                    //       and probably requires tham offset-rewriting.
-                    //       Note that some packs created by libgit2 generally look like that, see the 'index-bare' repo that is operated on by git2
-                    //       and try the 'pack-verify' with the less-time algorithm for reproduction.
                     resolve_in_pack_id(base_id.as_ref())
                         .ok_or(Error::UnresolvedRefDelta { id: base_id })
                         .and_then(|base_pack_offset| {

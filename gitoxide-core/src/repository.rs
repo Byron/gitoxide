@@ -14,7 +14,7 @@ pub mod verify {
 
     use crate::OutputFormat;
 
-    pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=4;
+    pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
     pub fn integrity(
         repo: PathBuf,
