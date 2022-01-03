@@ -3,6 +3,7 @@ use std::{collections::BTreeMap, ops::Sub};
 use cargo_metadata::Package;
 use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
+use time::OffsetDateTime;
 
 use crate::{
     changelog,
@@ -23,19 +24,11 @@ impl Section {
         segment: &commit::history::Segment<'_>,
         handle: &git::easy::Handle,
         selection: section::segment::Selection,
+        prev_segment: Option<&commit::history::Segment<'_>>,
     ) -> Self {
-        let time = segment
-            .head
-            .peeled
-            .expect("all refs here are peeled")
-            .attach(handle)
-            .object()
-            .expect("object exists")
-            .to_commit_ref()
-            .committer
-            .time;
+        let date_time = segment_head_time(segment, handle);
+        let prev_date_time = prev_segment.map(|segment| segment_head_time(segment, handle));
 
-        let date_time = time_to_offset_date_time(time);
         let mut segments = Vec::new();
         let history = &segment.history;
         if !history.is_empty() {
@@ -104,6 +97,7 @@ impl Section {
                     section::segment::CommitStatistics {
                         count: history.len(),
                         duration,
+                        time_passed_since_last_release: prev_date_time.map(|prev_time| date_time.sub(prev_time)),
                         conventional_count: history.iter().filter(|item| item.message.kind.is_some()).count(),
                         unique_issues: {
                             let mut v = commits_by_category
@@ -162,4 +156,19 @@ impl Section {
             unknown: Default::default(),
         }
     }
+}
+
+fn segment_head_time(segment: &commit::history::Segment<'_>, handle: &git::easy::Handle) -> OffsetDateTime {
+    let time = segment
+        .head
+        .peeled
+        .expect("all refs here are peeled")
+        .attach(handle)
+        .object()
+        .expect("object exists")
+        .to_commit_ref()
+        .committer
+        .time;
+
+    time_to_offset_date_time(time)
 }

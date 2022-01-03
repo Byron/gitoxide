@@ -114,6 +114,8 @@ pub struct CommitStatistics {
     pub conventional_count: usize,
     /// The issue numbers that were referenced in commit messages
     pub unique_issues: Vec<details::Category>,
+    /// The duration from the release before this one, if this isn't the first release.
+    pub time_passed_since_last_release: Option<time::Duration>,
 }
 
 impl CommitStatistics {

@@ -239,6 +239,7 @@ fn segments() {
     let statistics = section::Segment::Statistics(section::Data::Generated(section::segment::CommitStatistics {
         count: 1,
         duration: None,
+        time_passed_since_last_release: None,
         conventional_count: 2,
         unique_issues: vec![],
     }));

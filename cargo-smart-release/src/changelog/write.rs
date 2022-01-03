@@ -287,6 +287,7 @@ impl section::Segment {
                 duration,
                 conventional_count,
                 unique_issues,
+                time_passed_since_last_release,
             })) => {
                 writeln!(out, "{} {}\n", heading(section_level), segment::CommitStatistics::TITLE)?;
                 if write_html {
@@ -306,6 +307,18 @@ impl section::Segment {
                         _ => ".".into(),
                     }
                 )?;
+                if let Some(time_between_releases) = time_passed_since_last_release.filter(|d| d.whole_days() > 0) {
+                    writeln!(
+                        out,
+                        " - {} {} passed between releases.",
+                        time_between_releases.whole_days(),
+                        if time_between_releases.whole_days() == 1 {
+                            "day"
+                        } else {
+                            "days"
+                        }
+                    )?;
+                }
                 writeln!(
                     out,
                     " - {} {} where understood as [conventional](https://www.conventionalcommits.org).",

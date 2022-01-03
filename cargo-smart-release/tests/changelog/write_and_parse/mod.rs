@@ -112,6 +112,7 @@ fn all_section_types_round_trips_lossy() -> Result {
                         count: 100,
                         duration: time::Duration::days(32).into(),
                         conventional_count: 20,
+                        time_passed_since_last_release: Some(time::Duration::days(60)),
                         unique_issues: vec![
                             section::segment::details::Category::Issue("1".into()),
                             section::segment::details::Category::Uncategorized,

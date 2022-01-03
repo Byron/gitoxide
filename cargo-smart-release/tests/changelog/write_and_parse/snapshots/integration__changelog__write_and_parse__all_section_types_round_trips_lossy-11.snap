@@ -1,5 +1,6 @@
 ---
 source: cargo-smart-release/tests/changelog/write_and_parse/mod.rs
+assertion_line: 183
 expression: buf
 
 ---
@@ -13,6 +14,7 @@ expression: buf
 ##### Commit Statistics
 
  - 100 commits contributed to the release over the course of 32 calendar days.
+ - 60 days passed between releases.
  - 20 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: #1, Uncategorized, #42
 
