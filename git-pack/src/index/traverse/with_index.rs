@@ -12,6 +12,7 @@ use crate::{
 };
 
 /// Traversal options for [`traverse_with_index()`][index::File::traverse_with_index()]
+#[derive(Default)]
 pub struct Options {
     /// If `Some`, only use the given amount of threads. Otherwise, the amount of threads to use will be selected based on
     /// the amount of available logical cores.

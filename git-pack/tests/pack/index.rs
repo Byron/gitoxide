@@ -191,6 +191,26 @@ mod file {
         }
     }
 
+    #[test]
+    #[ignore]
+    fn traverse_with_index_and_forward_ref_deltas() {
+        let index = index::File::at(
+            fixture_path("objects/pack-with-forward-delta/pack-0bb5bc1e3d864c617c2539445c832ccdd531cd4e.idx"),
+            Default::default(),
+        )
+        .unwrap();
+        let data = pack::data::File::at(index.path().with_extension("pack"), Default::default()).unwrap();
+        let _it_should_work = index
+            .traverse_with_index(
+                &data,
+                || |_, _, _, _| Ok::<_, std::io::Error>(()),
+                progress::Discard,
+                &AtomicBool::new(false),
+                index::traverse::with_index::Options::default(),
+            )
+            .unwrap();
+    }
+
     use common_macros::b_tree_map;
     use git_features::progress;
     use git_pack::{cache, data::decode_entry::Outcome, index};
