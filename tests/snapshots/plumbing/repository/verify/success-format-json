@@ -1,6 +1,6 @@
 {
-  "index-statistics": [],
-  "loose-object-stores": [
+  "index_statistics": [],
+  "loose_object-stores": [
     {
       "path": "./.git/objects",
       "statistics": {

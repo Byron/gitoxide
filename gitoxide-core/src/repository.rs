@@ -59,8 +59,8 @@ pub mod verify {
                 serde_json::to_writer_pretty(
                     out,
                     &serde_json::json!({
-                        "index-statistics" : outcome.index_statistics,
-                        "loose-object-stores" : outcome.loose_object_stores
+                        "index_statistics" : outcome.index_statistics,
+                        "loose_object-stores" : outcome.loose_object_stores
                     }),
                 )?;
             }
