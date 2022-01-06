@@ -297,9 +297,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.8.0"
+version = "3.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f1e260c3a9040a7c19a12468758f4c16f31a81a1fe087482be9570ec864bb6c"
+checksum = "fe438c9d2f2b0fb88a112154ed81e30b0a491c29322afe1db3b6eec5811f5ba0"
 
 [[package]]
 name = "byte-unit"
@@ -360,7 +360,7 @@ dependencies = [
  "bitflags",
  "cargo_metadata",
  "cargo_toml",
- "clap 3.0.0",
+ "clap 3.0.5",
  "crates-index",
  "env_logger",
  "git-conventional",
@@ -443,9 +443,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.0.0"
+version = "3.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d17bf219fcd37199b9a29e00ba65dfb8cd5b2688b7297ec14ff829c40ac50ca9"
+checksum = "f6f34b09b9ee8c7c7b400fe2f8df39cafc9538b03d6ba7f4ae13e4cb90bfbb7d"
 dependencies = [
  "atty",
  "bitflags",
@@ -460,9 +460,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.0.0"
+version = "3.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1b9752c030a14235a0bd5ef3ad60a1dcac8468c30921327fc8af36b20c790b9"
+checksum = "41a0645a430ec9136d2d701e54a95d557de12649a9dd7109ced3187e648ac824"
 dependencies = [
  "heck",
  "proc-macro-error",
@@ -479,9 +479,9 @@ checksum = "218d6bd3dde8e442a975fa1cd233c0e5fded7596bccfe39f58eca98d22421e0a"
 
 [[package]]
 name = "cmake"
-version = "0.1.46"
+version = "0.1.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7b858541263efe664aead4a5209a4ae5c5d2811167d4ed4ee0944503f8d2089"
+checksum = "3950760410f5b8d5caf61569022fb0727357feef133d964827e40511e44f07c2"
 dependencies = [
  "cc",
 ]
@@ -513,13 +513,13 @@ dependencies = [
 
 [[package]]
 name = "console"
-version = "0.14.1"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3993e6445baa160675931ec041a5e03ca84b9c6e32a056150d3aa2bdda0a1f45"
+checksum = "a28b32d32ca44b70c3e4acd7db1babf555fa026e385fb95f18028f88848b3c31"
 dependencies = [
  "encode_unicode",
- "lazy_static",
  "libc",
+ "once_cell",
  "terminal_size",
  "winapi",
 ]
@@ -1039,9 +1039,9 @@ dependencies = [
 
 [[package]]
 name = "generic-array"
-version = "0.14.4"
+version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "501466ecc8a30d1d3b7fc9229b122b2ce8ed6e9d9223f1138d4babb253e51817"
+checksum = "fd48d33ec7f05fbfa152300fdad764757cbded343c1aa1cff2fbaf4134851803"
 dependencies = [
  "typenum",
  "version_check",
@@ -1685,7 +1685,7 @@ version = "0.11.0"
 dependencies = [
  "anyhow",
  "atty",
- "clap 3.0.0",
+ "clap 3.0.5",
  "crosstermion",
  "env_logger",
  "futures-lite",
@@ -1754,12 +1754,9 @@ dependencies = [
 
 [[package]]
 name = "heck"
-version = "0.3.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
-dependencies = [
- "unicode-segmentation",
-]
+checksum = "2540771e65fc8cb83cd6e8a237f70c319bd5c29f78ed1084ba5d50eeac86f7f9"
 
 [[package]]
 name = "hermit-abi"
@@ -1837,9 +1834,9 @@ dependencies = [
 
 [[package]]
 name = "insta"
-version = "1.9.0"
+version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86c4e56d571b4cc829f0ce71506bd865a90369eeab5f3d3657ba96230beb8012"
+checksum = "b3cb858fc306825b542b1311d5fd536e4483680528f303a17a1d6803b0f6ce17"
 dependencies = [
  "console",
  "lazy_static",
