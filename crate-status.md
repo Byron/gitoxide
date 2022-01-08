@@ -216,6 +216,8 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [ ] threaded cache entry reading
 * `stat` update
     * [ ] optional threaded `stat` based on thread_cost (aka preload)
+* [ ] handling of `.gitignore` and system file exclude configuration
+* [ ] handle potential races
 * extensions
     * [ ] TREE for speeding up tree generation
     * [ ] REUC resolving undo
