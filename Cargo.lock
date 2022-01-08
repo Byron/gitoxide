@@ -1227,6 +1227,11 @@ dependencies = [
 [[package]]
 name = "git-index"
 version = "0.0.0"
+dependencies = [
+ "git-hash 0.8.0",
+ "git-testtools",
+ "quick-error",
+]
 
 [[package]]
 name = "git-lock"

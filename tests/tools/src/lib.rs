@@ -19,7 +19,9 @@ pub fn hex_to_id(hex: &str) -> git_hash::ObjectId {
 pub fn fixture_path(path: impl AsRef<Path>) -> PathBuf {
     PathBuf::from("tests").join("fixtures").join(path.as_ref())
 }
-pub fn scripted_fixture_repo_read_only(script_name: &str) -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
+pub fn scripted_fixture_repo_read_only(
+    script_name: impl AsRef<Path>,
+) -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
     scripted_fixture_repo_read_only_with_args(script_name, None)
 }
 
@@ -59,7 +61,7 @@ pub fn copy_recursively_into_existing_dir(src_dir: impl AsRef<Path>, dst_dir: im
 
 /// Returns the directory at which the data is present
 pub fn scripted_fixture_repo_read_only_with_args(
-    script_name: &str,
+    script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = &'static str>,
 ) -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
     let script_path = fixture_path(script_name);
