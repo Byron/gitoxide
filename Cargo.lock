@@ -1665,6 +1665,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-worktree"
+version = "0.0.0"
+
+[[package]]
 name = "git2"
 version = "0.13.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"

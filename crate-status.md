@@ -206,6 +206,11 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [x] API documentation
     * [ ] Some examples
 
+### git-worktree
+* handle the working tree/checkout
+* manage multiple worktrees
+* deal with exclude specifications, like .gitignore and other exclude files.
+
 ### git-index
 * read 
   * [ ] V2
