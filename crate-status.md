@@ -61,9 +61,9 @@
         * [x] brute force - less memory
         * [x] indexed - optimal speed, but more memory
     * **advanced**
-        * [ ] Multi-Pack index file (MIDX)
+        * [x] Multi-Pack index file (MIDX)
             * [x] read
-            * [ ] write 
+            * [x] write 
             * [x] verify
         * [ ] 'bitmap' file
         * [ ] [special handling for networked packs](https://github.com/git/git/blob/89b43f80a514aee58b662ad606e6352e03eaeee4/packfile.c#L949:L949)
