@@ -1,5 +1,4 @@
-#![forbid(unsafe_code)]
-#![deny(rust_2018_idioms)]
+#![deny(unsafe_code, missing_docs, rust_2018_idioms)]
 #![allow(missing_docs)]
 
 use std::path::PathBuf;
@@ -8,7 +7,7 @@ pub mod file {
     pub mod init {
         #![allow(unused)]
         use crate::File;
-        use filebuffer::FileBuffer;
+        use memmap2::Mmap;
         use std::path::Path;
 
         mod error {
@@ -29,7 +28,9 @@ pub mod file {
 
         impl File {
             pub fn at(path: impl AsRef<Path>, object_hash: git_hash::Kind) -> Result<Self, Error> {
-                let data = FileBuffer::open(path)?;
+                // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
+                #[allow(unsafe_code)]
+                let data = unsafe { Mmap::map(&std::fs::File::open(path)?)? };
 
                 todo!("read file")
             }
