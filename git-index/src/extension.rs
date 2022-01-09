@@ -2,7 +2,9 @@ use crate::{util::read_u32, Version};
 
 const MIN_SIZE: usize = 4 /* signature */ + 4 /* size */;
 
-fn decode_header(data: &[u8]) -> ([u8; 4], u32, &[u8]) {
+pub type Signature = [u8; 4];
+
+fn decode_header(data: &[u8]) -> (Signature, u32, &[u8]) {
     let (signature, data) = data.split_at(4);
     let (size, data) = data.split_at(4);
     (signature.try_into().unwrap(), read_u32(size), data)
@@ -19,21 +21,86 @@ mod end_of_index_entry {
             }
 
             let start_of_eoie = data.len() - EndOfIndexEntry::SIZE_WITH_HEADER - hash_len;
-            let data = &data[start_of_eoie..][..hash_len];
+            let ext_data = &data[start_of_eoie..][..hash_len];
 
-            let (signature, ext_size, data) = extension::decode_header(data);
+            let (signature, ext_size, ext_data) = extension::decode_header(ext_data);
             if signature != EndOfIndexEntry::SIGNATURE || ext_size as usize != EndOfIndexEntry::SIZE {
                 return None;
             }
 
-            let (offset, hash) = data.split_at(4);
+            let (offset, checksum) = ext_data.split_at(4);
             let offset = read_u32(offset) as usize;
-            if offset < header::SIZE || offset > start_of_eoie {
+            if offset < header::SIZE || offset > start_of_eoie || checksum.len() != git_hash::Kind::Sha1.len_in_bytes()
+            {
+                dbg!("checksum too small");
                 return None;
             }
-            todo!("eoie")
+
+            let mut hasher = git_features::hash::hasher(git_hash::Kind::Sha1);
+            let mut last_chunk = None;
+            for (signature, chunk) in
+                extension::Iter::new(&data[offset..data.len() - EndOfIndexEntry::SIZE_WITH_HEADER - hash_len])
+            {
+                hasher.update(&signature);
+                hasher.update(&(chunk.len() as u32).to_be_bytes());
+                last_chunk = Some(chunk);
+            }
+
+            if hasher.digest() != checksum {
+                return None;
+            }
+            if last_chunk
+                .map(|s| s.as_ptr_range() != ext_data.as_ptr_range())
+                .unwrap_or(true)
+            {
+                return None;
+            }
+            todo!("euio")
         }
     }
+}
+
+mod iter {
+    use crate::extension;
+    use crate::extension::Iter;
+    use crate::util::read_u32;
+
+    impl<'a> Iter<'a> {
+        pub fn new(data_at_beginning_of_extensions_and_truncated: &'a [u8]) -> Self {
+            Iter {
+                data: data_at_beginning_of_extensions_and_truncated,
+            }
+        }
+    }
+
+    impl<'a> Iterator for Iter<'a> {
+        type Item = (extension::Signature, &'a [u8]);
+
+        fn next(&mut self) -> Option<Self::Item> {
+            if self.data.len() < 4 + 4 {
+                return None;
+            }
+
+            let (signature, data) = self.data.split_at(4);
+            let (size, data) = data.split_at(4);
+            let size = read_u32(size) as usize;
+
+            match data.get(..size) {
+                Some(ext_data) => {
+                    self.data = &data[size..];
+                    Some((signature.try_into().unwrap(), ext_data))
+                }
+                None => {
+                    self.data = &[];
+                    None
+                }
+            }
+        }
+    }
+}
+
+pub struct Iter<'a> {
+    data: &'a [u8],
 }
 
 pub struct EndOfIndexEntry {
@@ -44,7 +111,7 @@ pub struct EndOfIndexEntry {
 }
 
 impl EndOfIndexEntry {
-    pub const SIGNATURE: &'static [u8] = b"EOIE";
+    pub const SIGNATURE: Signature = *b"EOIE";
     pub const SIZE: usize = 4 /* offset to extensions */ + git_hash::Kind::Sha1.len_in_bytes();
     pub const SIZE_WITH_HEADER: usize = crate::extension::MIN_SIZE + Self::SIZE;
 }

@@ -16,6 +16,7 @@ serde1 = ["serde"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+git-features = { version ="^0.18.0", path = "../git-features", features = ["rustsha1"] }
 git-hash = { version ="^0.8.0", path = "../git-hash" }
 
 quick-error = "2.0.0"
