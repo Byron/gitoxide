@@ -4,7 +4,6 @@ use std::{
 };
 
 use bstr::ByteSlice;
-use byteorder::{BigEndian, ByteOrder};
 use memmap2::Mmap;
 
 use crate::file::{
@@ -249,7 +248,7 @@ impl TryFrom<&Path> for File {
 fn read_fan(d: &[u8]) -> ([u32; FAN_LEN], usize) {
     let mut fan = [0; FAN_LEN];
     for (c, f) in d.chunks(4).zip(fan.iter_mut()) {
-        *f = BigEndian::read_u32(c);
+        *f = u32::from_be_bytes(c.try_into().unwrap());
     }
     (fan, FAN_LEN * 4)
 }

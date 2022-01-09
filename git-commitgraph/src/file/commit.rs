@@ -5,8 +5,6 @@ use std::{
     slice::Chunks,
 };
 
-use byteorder::{BigEndian, ByteOrder};
-
 use crate::{
     file::{self, File, EXTENDED_EDGES_MASK, LAST_EXTENDED_EDGE_MASK, NO_PARENT},
     graph,
@@ -38,6 +36,11 @@ pub struct Commit<'a> {
     root_tree_id: &'a git_hash::oid,
 }
 
+#[inline]
+fn read_u32(b: &[u8]) -> u32 {
+    u32::from_be_bytes(b.try_into().unwrap())
+}
+
 impl<'a> Commit<'a> {
     pub(crate) fn new(file: &'a File, pos: file::Position) -> Self {
         let bytes = file.commit_data_bytes(pos);
@@ -45,10 +48,11 @@ impl<'a> Commit<'a> {
             file,
             pos,
             root_tree_id: git_hash::oid::from_bytes_unchecked(&bytes[..file.hash_len]),
-            parent1: ParentEdge::from_raw(BigEndian::read_u32(&bytes[file.hash_len..][..4])),
-            parent2: ParentEdge::from_raw(BigEndian::read_u32(&bytes[file.hash_len + 4..][..4])),
-            generation: BigEndian::read_u32(&bytes[file.hash_len + 8..][..4]) >> 2,
-            commit_timestamp: BigEndian::read_u64(&bytes[file.hash_len + 8..][..8]) & 0x0003_ffff_ffff,
+            parent1: ParentEdge::from_raw(read_u32(&bytes[file.hash_len..][..4])),
+            parent2: ParentEdge::from_raw(read_u32(&bytes[file.hash_len + 4..][..4])),
+            generation: read_u32(&bytes[file.hash_len + 8..][..4]) >> 2,
+            commit_timestamp: u64::from_be_bytes(bytes[file.hash_len + 8..][..8].try_into().unwrap())
+                & 0x0003_ffff_ffff,
         }
     }
 
@@ -173,7 +177,7 @@ impl<'a> Iterator for ParentIterator<'a> {
             },
             ParentIteratorState::Extra(mut chunks) => {
                 if let Some(chunk) = chunks.next() {
-                    let extra_edge = BigEndian::read_u32(chunk);
+                    let extra_edge = read_u32(chunk);
                     match ExtraEdge::from_raw(extra_edge) {
                         ExtraEdge::Internal(pos) => {
                             self.state = ParentIteratorState::Extra(chunks);
