@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use filebuffer::FileBuffer;
+use memmap2::Mmap;
 
 /// Known multi-index file versions
 #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Hash, Clone, Copy)]
@@ -25,7 +25,7 @@ pub type EntryIndex = u32;
 /// A representation of an index file for multiple packs at the same time, typically stored in a file
 /// named 'multi-pack-index'.
 pub struct File {
-    data: FileBuffer,
+    data: Mmap,
     path: std::path::PathBuf,
     version: Version,
     hash_len: usize,

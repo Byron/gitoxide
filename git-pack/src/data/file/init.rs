@@ -1,7 +1,5 @@
 use std::{convert::TryInto, path::Path};
 
-use filebuffer::FileBuffer;
-
 use crate::data;
 
 /// Instantiation
@@ -18,7 +16,7 @@ impl data::File {
         use crate::data::header::N32_SIZE;
         let hash_len = object_hash.len_in_bytes();
 
-        let data = FileBuffer::open(path).map_err(|e| data::header::decode::Error::Io {
+        let data = crate::mmap::read_only(path).map_err(|e| data::header::decode::Error::Io {
             source: e,
             path: path.to_owned(),
         })?;

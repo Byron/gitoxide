@@ -1,7 +1,6 @@
 use std::{mem::size_of, path::Path};
 
 use byteorder::{BigEndian, ByteOrder};
-use filebuffer::FileBuffer;
 
 use crate::index::{self, Version, FAN_LEN, V2_SIGNATURE};
 
@@ -33,7 +32,7 @@ impl index::File {
     }
 
     fn at_inner(path: &Path, object_hash: git_hash::Kind) -> Result<index::File, Error> {
-        let data = FileBuffer::open(&path).map_err(|source| Error::Io {
+        let data = crate::mmap::read_only(&path).map_err(|source| Error::Io {
             source,
             path: path.to_owned(),
         })?;

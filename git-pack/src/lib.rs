@@ -41,3 +41,16 @@ pub mod multi_index;
 
 ///
 pub mod verify;
+
+mod mmap {
+    use std::path::Path;
+
+    pub fn read_only(path: &Path) -> std::io::Result<memmap2::Mmap> {
+        let file = std::fs::File::open(path)?;
+        // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
+        #[allow(unsafe_code)]
+        unsafe {
+            memmap2::Mmap::map(&file)
+        }
+    }
+}

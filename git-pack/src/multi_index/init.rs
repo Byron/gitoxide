@@ -1,7 +1,6 @@
 use std::{convert::TryFrom, path::Path};
 
 use byteorder::{BigEndian, ByteOrder};
-use filebuffer::FileBuffer;
 
 use crate::multi_index::{chunk, File, Version};
 
@@ -52,7 +51,7 @@ impl TryFrom<&Path> for File {
     type Error = Error;
 
     fn try_from(path: &Path) -> Result<Self, Self::Error> {
-        let data = FileBuffer::open(path).map_err(|source| Error::Io {
+        let data = crate::mmap::read_only(path).map_err(|source| Error::Io {
             source,
             path: path.to_owned(),
         })?;

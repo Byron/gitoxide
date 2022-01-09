@@ -4,7 +4,6 @@ use std::{
     sync::{atomic::AtomicBool, Arc},
 };
 
-use filebuffer::FileBuffer;
 use git_features::{interrupt, progress, progress::Progress};
 use git_tempfile::{handle::Writable, AutoRemove, ContainingDirectory};
 
@@ -295,7 +294,9 @@ impl crate::Bundle {
 fn new_pack_file_resolver(
     data_file: Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>,
 ) -> io::Result<impl Fn(data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Clone> {
-    let mapped_file = Arc::new(FileBuffer::open(data_file.lock().with_mut(|f| f.path().to_owned())?)?);
+    let mapped_file = Arc::new(crate::mmap::read_only(
+        &data_file.lock().with_mut(|f| f.path().to_owned())?,
+    )?);
     let pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
         mapped_file
             .get(range.start as usize..range.end as usize)

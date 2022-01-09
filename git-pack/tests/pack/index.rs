@@ -76,10 +76,10 @@ mod file {
         mod any {
             use std::{fs, io, sync::atomic::AtomicBool};
 
-            use filebuffer::FileBuffer;
             use git_features::progress;
             use git_odb::pack;
             use git_pack::data::{input, EntryRange};
+            use memmap2::Mmap;
 
             use crate::{fixture_path, pack::V2_PACKS_AND_INDICES};
 

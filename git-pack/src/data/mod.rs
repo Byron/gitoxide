@@ -7,7 +7,7 @@ pub type Offset = u64;
 /// An identifier to uniquely identify all packs loaded within a known context or namespace.
 pub type Id = u32;
 
-use filebuffer::FileBuffer;
+use memmap2::Mmap;
 
 /// An representing an full- or delta-object within a pack
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -62,7 +62,7 @@ impl Default for Version {
 
 /// A pack data file
 pub struct File {
-    data: FileBuffer,
+    data: Mmap,
     path: std::path::PathBuf,
     /// A value to represent this pack uniquely when used with cache lookup, or a way to identify this pack by its location on disk.
     /// The same location on disk should yield the same id.

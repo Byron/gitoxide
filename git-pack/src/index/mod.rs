@@ -73,7 +73,7 @@ macro_rules! izip {
     };
 }
 
-use filebuffer::FileBuffer;
+use memmap2::Mmap;
 
 /// The version of an index file
 #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Hash, Clone, Copy)]
@@ -106,7 +106,7 @@ const FAN_LEN: usize = 256;
 
 /// A representation of a pack index file
 pub struct File {
-    data: FileBuffer,
+    data: Mmap,
     path: std::path::PathBuf,
     version: Version,
     num_objects: u32,
