@@ -1,7 +1,7 @@
-use std::time::Instant;
 use std::{
     ops::Deref,
     sync::atomic::{AtomicBool, Ordering},
+    time::Instant,
 };
 
 use git_features::progress::{MessageLevel, Progress};

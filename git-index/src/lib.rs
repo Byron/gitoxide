@@ -1,13 +1,50 @@
 #![deny(unsafe_code, missing_docs, rust_2018_idioms)]
 #![allow(missing_docs, unused)]
 
-use filetime::FileTime;
 use std::path::PathBuf;
+
+use filetime::FileTime;
 
 pub mod file;
 
 pub mod extension {
+    use crate::{util::read_u32, Version};
+
     const MIN_SIZE: usize = 4 /* signature */ + 4 /* size */;
+
+    fn decode_header(data: &[u8]) -> ([u8; 4], u32, &[u8]) {
+        let (signature, data) = data.split_at(4);
+        let (size, data) = data.split_at(4);
+        (signature.try_into().unwrap(), read_u32(size), data)
+    }
+
+    mod end_of_index_entry {
+        use crate::{extension, extension::EndOfIndexEntry, file::header, util::read_u32};
+
+        impl EndOfIndexEntry {
+            pub fn from_bytes(data: &[u8], object_hash: git_hash::Kind) -> Option<Self> {
+                let hash_len = object_hash.len_in_bytes();
+                if data.len() < EndOfIndexEntry::SIZE_WITH_HEADER + hash_len {
+                    return None;
+                }
+
+                let start_of_eoie = data.len() - EndOfIndexEntry::SIZE_WITH_HEADER - hash_len;
+                let data = &data[start_of_eoie..][..hash_len];
+
+                let (signature, ext_size, data) = extension::decode_header(data);
+                if &signature != EndOfIndexEntry::SIGNATURE || ext_size as usize != EndOfIndexEntry::SIZE {
+                    return None;
+                }
+
+                let (offset, hash) = data.split_at(4);
+                let offset = read_u32(offset) as usize;
+                if offset < header::SIZE {
+                    return None;
+                }
+                todo!("eoie")
+            }
+        }
+    }
 
     pub struct EndOfIndexEntry {
         /// The offset the the beginning of all extensions, or the end of all entries.
@@ -24,8 +61,9 @@ pub mod extension {
 }
 
 pub mod init {
-    use crate::State;
     use filetime::FileTime;
+
+    use crate::State;
 
     impl State {
         /// Returns an empty state.
@@ -70,4 +108,11 @@ pub struct State {
     /// Note that on platforms that only have a precisions of a second for this time, we will treat all entries with the
     /// same timestamp as this as potentially changed, checking more thoroughly if a change actually happened.
     timestamp: FileTime,
+}
+
+pub(crate) mod util {
+    #[inline]
+    pub fn read_u32(b: &[u8]) -> u32 {
+        u32::from_be_bytes(b.try_into().unwrap())
+    }
 }

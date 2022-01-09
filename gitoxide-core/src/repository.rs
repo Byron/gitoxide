@@ -8,11 +8,11 @@ pub fn init(directory: Option<PathBuf>) -> Result<git_repository::Path> {
 }
 
 pub mod verify {
-    use crate::pack;
-    use crate::OutputFormat;
     use std::{path::PathBuf, sync::atomic::AtomicBool};
 
     use git_repository::Progress;
+
+    use crate::{pack, OutputFormat};
 
     /// A general purpose context for many operations provided here
     pub struct Context {
