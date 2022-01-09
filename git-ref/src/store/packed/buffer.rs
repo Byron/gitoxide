@@ -19,7 +19,7 @@ impl AsRef<[u8]> for packed::Backing {
 pub mod open {
     use std::path::PathBuf;
 
-    use filebuffer::FileBuffer;
+    use memmap2::Mmap;
 
     use crate::store_impl::packed;
 
@@ -35,7 +35,13 @@ pub mod open {
                 let backing = if std::fs::metadata(&path)?.len() <= use_memory_map_if_larger_than_bytes {
                     packed::Backing::InMemory(std::fs::read(&path)?)
                 } else {
-                    packed::Backing::Mapped(FileBuffer::open(&path)?)
+                    packed::Backing::Mapped(
+                        // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
+                        #[allow(unsafe_code)]
+                        unsafe {
+                            Mmap::map(&std::fs::File::open(&path)?)?
+                        },
+                    )
                 };
 
                 let (offset, sorted) = {

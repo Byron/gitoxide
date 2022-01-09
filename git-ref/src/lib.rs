@@ -16,8 +16,7 @@
 //!     * references are stored in a single human-readable file, along with their targets if they are symbolic.
 //! * **ref-table**
 //!   * supersedes all of the above to allow handling hundreds of thousands of references.
-#![forbid(unsafe_code)]
-#![deny(missing_docs, rust_2018_idioms)]
+#![deny(unsafe_code, missing_docs, rust_2018_idioms)]
 
 use std::borrow::Cow;
 

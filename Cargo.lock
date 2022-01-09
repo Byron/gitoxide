@@ -1474,7 +1474,6 @@ dependencies = [
 name = "git-ref"
 version = "0.10.0"
 dependencies = [
- "filebuffer",
  "git-actor 0.7.0",
  "git-features 0.18.0",
  "git-hash 0.8.0",
@@ -1484,6 +1483,7 @@ dependencies = [
  "git-tempfile 1.0.3",
  "git-testtools",
  "git-validate 0.5.3",
+ "memmap2",
  "nom",
  "os_str_bytes 6.0.0",
  "quick-error",
@@ -2076,6 +2076,15 @@ name = "memchr"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
+
+[[package]]
+name = "memmap2"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4647a11b578fead29cdbb34d4adef8dd3dc35b876c9c6d5240d83f205abfe96e"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "memoffset"

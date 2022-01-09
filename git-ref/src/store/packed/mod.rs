@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
-use filebuffer::FileBuffer;
 use git_features::threading::OwnShared;
 use git_hash::ObjectId;
 use git_object::bstr::{BStr, BString};
+use memmap2::Mmap;
 
 use crate::{transaction::RefEdit, FullNameRef};
 
@@ -12,7 +12,7 @@ enum Backing {
     /// The buffer is loaded entirely in memory, along with the `offset` to the first record past the header.
     InMemory(Vec<u8>),
     /// The buffer is mapping the file on disk, along with the offset to the first record past the header
-    Mapped(FileBuffer),
+    Mapped(Mmap),
 }
 
 /// A buffer containing a packed-ref file that is either memory mapped or fully in-memory depending on a cutoff.
