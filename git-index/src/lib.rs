@@ -6,6 +6,23 @@ use std::path::PathBuf;
 
 pub mod file;
 
+pub mod extension {
+    const MIN_SIZE: usize = 4 /* signature */ + 4 /* size */;
+
+    pub struct EndOfIndexEntry {
+        /// The offset the the beginning of all extensions, or the end of all entries.
+        offset_to_extensions: u32,
+        /// The SHA1 checksum over the signature and size of all extensions.
+        checksum: git_hash::ObjectId,
+    }
+
+    impl EndOfIndexEntry {
+        pub const SIGNATURE: &'static [u8] = b"EOIE";
+        pub const SIZE: usize = 4 /* offset to extensions */ + git_hash::Kind::Sha1.len_in_bytes();
+        pub const SIZE_WITH_HEADER: usize = crate::extension::MIN_SIZE + Self::SIZE;
+    }
+}
+
 pub mod init {
     use crate::State;
     use filetime::FileTime;
