@@ -108,8 +108,6 @@ pub mod index_names {
 pub mod fanout {
     use std::convert::TryInto;
 
-    use byteorder::{BigEndian, WriteBytesExt};
-
     use crate::multi_index;
 
     /// The size of the fanout table
@@ -138,7 +136,7 @@ pub mod fanout {
         let fanout = crate::index::write::encode::fanout(sorted_entries.iter().map(|e| e.id.first_byte()));
 
         for value in fanout {
-            out.write_u32::<BigEndian>(value)?;
+            out.write_all(&value.to_be_bytes())?;
         }
         Ok(())
     }
@@ -178,8 +176,6 @@ pub mod lookup {
 pub mod offsets {
     use std::{convert::TryInto, ops::Range};
 
-    use byteorder::{BigEndian, WriteBytesExt};
-
     use crate::multi_index;
 
     /// The id uniquely identifying the offsets table.
@@ -199,7 +195,7 @@ pub mod offsets {
         let mut num_large_offsets = 0u32;
 
         for entry in sorted_entries {
-            out.write_u32::<BigEndian>(entry.pack_index)?;
+            out.write_all(&entry.pack_index.to_be_bytes())?;
 
             let offset: u32 = if large_offsets_needed {
                 if entry.pack_offset > LARGE_OFFSET_THRESHOLD {
@@ -215,7 +211,7 @@ pub mod offsets {
                     .try_into()
                     .expect("without large offsets, pack-offset fits u32")
             };
-            out.write_u32::<BigEndian>(offset)?;
+            out.write_all(&offset.to_be_bytes())?;
         }
         Ok(())
     }
@@ -230,8 +226,6 @@ pub mod offsets {
 /// Information about the large offsets table.
 pub mod large_offsets {
     use std::ops::Range;
-
-    use byteorder::{BigEndian, WriteBytesExt};
 
     use crate::{index::write::encode::LARGE_OFFSET_THRESHOLD, multi_index};
 
@@ -267,7 +261,7 @@ pub mod large_offsets {
             .iter()
             .filter_map(|e| (e.pack_offset > LARGE_OFFSET_THRESHOLD).then(|| e.pack_offset))
         {
-            out.write_u64::<BigEndian>(offset)?;
+            out.write_all(&offset.to_be_bytes())?;
             num_large_offsets = num_large_offsets
                 .checked_sub(1)
                 .expect("BUG: wrote more offsets the previously found");

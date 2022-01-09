@@ -5,7 +5,6 @@ use std::{
     time::{Instant, SystemTime},
 };
 
-use byteorder::{BigEndian, WriteBytesExt};
 use git_features::progress::Progress;
 
 use crate::multi_index;
@@ -217,7 +216,7 @@ impl multi_index::File {
         out.write_all(&[object_hash as u8])?;
         out.write_all(&[num_chunks])?;
         out.write_all(&[0])?; /* unused number of base files */
-        out.write_u32::<BigEndian>(num_indices)?;
+        out.write_all(&num_indices.to_be_bytes())?;
 
         Ok(Self::HEADER_LEN)
     }

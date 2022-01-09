@@ -1,7 +1,5 @@
 use std::mem::size_of;
 
-use byteorder::{BigEndian, ByteOrder};
-
 use crate::{
     data,
     index::{self, EntryIndex, FAN_LEN},
@@ -39,7 +37,7 @@ impl index::File {
                     let (ofs, oid) = c.split_at(N32_SIZE);
                     Entry {
                         oid: git_hash::ObjectId::from(oid),
-                        pack_offset: BigEndian::read_u32(ofs) as u64,
+                        pack_offset: crate::read_u32(ofs) as u64,
                         crc32: None,
                     }
                 }),
@@ -59,7 +57,7 @@ impl index::File {
             .map(move |(oid, crc32, ofs32)| Entry {
                 oid: git_hash::ObjectId::from(oid),
                 pack_offset: self.pack_offset_from_offset_v2(ofs32, pack64_offset),
-                crc32: Some(BigEndian::read_u32(crc32)),
+                crc32: Some(crate::read_u32(crc32)),
             }),
             _ => panic!("Cannot use iter_v2() on index of type {:?}", self.version),
         }
@@ -94,7 +92,7 @@ impl index::File {
             }
             index::Version::V1 => {
                 let start = V1_HEADER_SIZE + index * (N32_SIZE + self.hash_len);
-                BigEndian::read_u32(&self.data[start..][..N32_SIZE]) as u64
+                crate::read_u32(&self.data[start..][..N32_SIZE]) as u64
             }
         }
     }
@@ -110,7 +108,7 @@ impl index::File {
         match self.version {
             index::Version::V2 => {
                 let start = self.offset_crc32_v2() + index * N32_SIZE;
-                Some(BigEndian::read_u32(&self.data[start..start + N32_SIZE]))
+                Some(crate::read_u32(&self.data[start..start + N32_SIZE]))
             }
             index::Version::V1 => None,
         }
@@ -153,14 +151,13 @@ impl index::File {
         let mut ofs: Vec<_> = match self.version {
             index::Version::V1 => self.iter().map(|e| e.pack_offset).collect(),
             index::Version::V2 => {
-                let mut v = Vec::with_capacity(self.num_objects as usize);
-                let mut ofs32 = &self.data[self.offset_pack_offset_v2()..];
-                let pack_offset_64 = self.offset_pack_offset64_v2();
-                for _ in 0..self.num_objects {
-                    v.push(self.pack_offset_from_offset_v2(ofs32, pack_offset_64));
-                    ofs32 = &ofs32[4..];
-                }
-                v
+                let offset32_start = &self.data[self.offset_pack_offset_v2()..];
+                let pack_offset_64_start = self.offset_pack_offset64_v2();
+                offset32_start
+                    .chunks(N32_SIZE)
+                    .take(self.num_objects as usize)
+                    .map(|offset| self.pack_offset_from_offset_v2(offset, pack_offset_64_start))
+                    .collect()
             }
         };
         ofs.sort_unstable();
@@ -185,10 +182,10 @@ impl index::File {
     #[inline]
     fn pack_offset_from_offset_v2(&self, offset: &[u8], pack64_offset: usize) -> data::Offset {
         debug_assert_eq!(self.version, index::Version::V2);
-        let ofs32 = BigEndian::read_u32(offset);
+        let ofs32 = crate::read_u32(offset);
         if (ofs32 & N32_HIGH_BIT) == N32_HIGH_BIT {
             let from = pack64_offset + (ofs32 ^ N32_HIGH_BIT) as usize * N64_SIZE;
-            BigEndian::read_u64(&self.data[from..][..N64_SIZE])
+            crate::read_u64(&self.data[from..][..N64_SIZE])
         } else {
             ofs32 as u64
         }

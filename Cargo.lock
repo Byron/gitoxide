@@ -1357,7 +1357,6 @@ name = "git-pack"
 version = "0.16.0"
 dependencies = [
  "bstr",
- "byteorder",
  "bytesize",
  "clru",
  "common_macros",

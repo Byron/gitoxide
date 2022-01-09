@@ -1,7 +1,5 @@
 use std::{mem::size_of, path::Path};
 
-use byteorder::{BigEndian, ByteOrder};
-
 use crate::index::{self, Version, FAN_LEN, V2_SIGNATURE};
 
 /// Returned by [`index::File::at()`].
@@ -57,7 +55,7 @@ impl index::File {
             let d = {
                 if let Version::V2 = kind {
                     let (vd, dr) = d.split_at(N32_SIZE);
-                    let version = BigEndian::read_u32(vd);
+                    let version = crate::read_u32(vd);
                     if version != Version::V2 as u32 {
                         return Err(Error::UnsupportedVersion { version });
                     }
@@ -87,7 +85,7 @@ impl index::File {
 fn read_fan(d: &[u8]) -> ([u32; FAN_LEN], usize) {
     let mut fan = [0; FAN_LEN];
     for (c, f) in d.chunks(N32_SIZE).zip(fan.iter_mut()) {
-        *f = BigEndian::read_u32(c);
+        *f = crate::read_u32(c);
     }
     (fan, FAN_LEN * N32_SIZE)
 }

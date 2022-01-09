@@ -1,5 +1,3 @@
-use byteorder::{BigEndian, ByteOrder};
-
 use crate::data;
 
 pub(crate) const N32_SIZE: usize = std::mem::size_of::<u32>();
@@ -11,13 +9,13 @@ pub fn decode(data: &[u8; 12]) -> Result<(data::Version, u32), decode::Error> {
         return Err(decode::Error::Corrupt("Pack data type not recognized".into()));
     }
     ofs += N32_SIZE;
-    let kind = match BigEndian::read_u32(&data[ofs..ofs + N32_SIZE]) {
+    let kind = match crate::read_u32(&data[ofs..ofs + N32_SIZE]) {
         2 => data::Version::V2,
         3 => data::Version::V3,
         v => return Err(decode::Error::UnsupportedVersion(v)),
     };
     ofs += N32_SIZE;
-    let num_objects = BigEndian::read_u32(&data[ofs..ofs + N32_SIZE]);
+    let num_objects = crate::read_u32(&data[ofs..ofs + N32_SIZE]);
 
     Ok((kind, num_objects))
 }

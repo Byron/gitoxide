@@ -32,6 +32,7 @@ pub mod cache;
 pub mod data;
 
 mod find_traits;
+
 pub use find_traits::{Find, FindExt};
 
 ///
@@ -53,4 +54,16 @@ mod mmap {
             memmap2::Mmap::map(&file)
         }
     }
+}
+
+use std::convert::TryInto;
+
+#[inline]
+fn read_u32(b: &[u8]) -> u32 {
+    u32::from_be_bytes(b.try_into().unwrap())
+}
+
+#[inline]
+fn read_u64(b: &[u8]) -> u64 {
+    u64::from_be_bytes(b.try_into().unwrap())
 }

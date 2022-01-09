@@ -1,7 +1,5 @@
 use std::path::{Path, PathBuf};
 
-use byteorder::{BigEndian, ByteOrder};
-
 use crate::{
     data,
     multi_index::{EntryIndex, File, PackIndex, Version},
@@ -102,15 +100,15 @@ impl File {
 
         const HIGH_BIT: u32 = 1 << 31;
 
-        let pack_index = BigEndian::read_u32(&self.data[start..][..4]);
+        let pack_index = crate::read_u32(&self.data[start..][..4]);
         let offset = &self.data[start + 4..][..4];
-        let ofs32 = BigEndian::read_u32(offset);
+        let ofs32 = crate::read_u32(offset);
         let pack_offset = if (ofs32 & HIGH_BIT) == HIGH_BIT {
             // We determine if large offsets are actually larger than 4GB and if not, we don't use the high-bit to signal anything
             // but allow the presence of the large-offset chunk to signal what's happening.
             if let Some(offsets_64) = self.large_offsets_ofs {
                 let from = offsets_64 + (ofs32 ^ HIGH_BIT) as usize * 8;
-                BigEndian::read_u64(&self.data[from..][..8])
+                crate::read_u64(&self.data[from..][..8])
             } else {
                 ofs32 as u64
             }

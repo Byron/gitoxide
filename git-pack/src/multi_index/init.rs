@@ -1,7 +1,5 @@
 use std::{convert::TryFrom, path::Path};
 
-use byteorder::{BigEndian, ByteOrder};
-
 use crate::multi_index::{chunk, File, Version};
 
 mod error {
@@ -90,7 +88,7 @@ impl TryFrom<&Path> for File {
             let (_num_base_files, data) = data.split_at(1); // TODO: handle base files once it's clear what this does
 
             let (num_indices, _) = data.split_at(4);
-            let num_indices = BigEndian::read_u32(num_indices);
+            let num_indices = crate::read_u32(num_indices);
 
             (version, object_hash, num_chunks, num_indices)
         };

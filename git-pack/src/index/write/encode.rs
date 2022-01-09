@@ -3,7 +3,6 @@ use std::{cmp::Ordering, io};
 pub(crate) const LARGE_OFFSET_THRESHOLD: u64 = 0x7fff_ffff;
 pub(crate) const HIGH_BIT: u32 = 0x8000_0000;
 
-use byteorder::{BigEndian, WriteBytesExt};
 use git_features::{
     hash,
     progress::{self, Progress},
@@ -35,7 +34,7 @@ pub(crate) fn write_to(
         hash::Write::new(out, kind.hash()),
     ));
     out.write_all(V2_SIGNATURE)?;
-    out.write_u32::<BigEndian>(kind as u32)?;
+    out.write_all(&(kind as u32).to_be_bytes())?;
 
     progress.init(Some(4), progress::steps());
     let start = std::time::Instant::now();
@@ -43,7 +42,7 @@ pub(crate) fn write_to(
     let fan_out = fanout(entries_sorted_by_oid.iter().map(|e| e.data.id.first_byte()));
 
     for value in fan_out {
-        out.write_u32::<BigEndian>(value)?;
+        out.write_all(&value.to_be_bytes())?;
     }
 
     progress.inc();
@@ -55,7 +54,7 @@ pub(crate) fn write_to(
     progress.inc();
     let _info = progress.add_child("writing crc32");
     for entry in &entries_sorted_by_oid {
-        out.write_u32::<BigEndian>(entry.data.crc32)?;
+        out.write_all(&entry.data.crc32.to_be_bytes())?;
     }
 
     progress.inc();
@@ -63,7 +62,7 @@ pub(crate) fn write_to(
     {
         let mut offsets64 = Vec::<u64>::new();
         for entry in &entries_sorted_by_oid {
-            out.write_u32::<BigEndian>(if entry.offset > LARGE_OFFSET_THRESHOLD {
+            let offset: u32 = if entry.offset > LARGE_OFFSET_THRESHOLD {
                 assert!(
                     offsets64.len() < LARGE_OFFSET_THRESHOLD as usize,
                     "Encoding breakdown - way too many 64bit offsets"
@@ -72,10 +71,11 @@ pub(crate) fn write_to(
                 ((offsets64.len() - 1) as u32) | HIGH_BIT
             } else {
                 entry.offset as u32
-            })?;
+            };
+            out.write_all(&offset.to_be_bytes())?;
         }
         for value in offsets64 {
-            out.write_u64::<BigEndian>(value)?;
+            out.write_all(&value.to_be_bytes())?;
         }
     }
 
