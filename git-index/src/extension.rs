@@ -22,7 +22,7 @@ mod end_of_index_entry {
             let data = &data[start_of_eoie..][..hash_len];
 
             let (signature, ext_size, data) = extension::decode_header(data);
-            if &signature != EndOfIndexEntry::SIGNATURE || ext_size as usize != EndOfIndexEntry::SIZE {
+            if signature != EndOfIndexEntry::SIGNATURE || ext_size as usize != EndOfIndexEntry::SIZE {
                 return None;
             }
 
