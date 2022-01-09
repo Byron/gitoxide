@@ -32,7 +32,7 @@ impl index::File {
     }
 
     fn at_inner(path: &Path, object_hash: git_hash::Kind) -> Result<index::File, Error> {
-        let data = crate::mmap::read_only(&path).map_err(|source| Error::Io {
+        let data = crate::mmap::read_only(path).map_err(|source| Error::Io {
             source,
             path: path.to_owned(),
         })?;

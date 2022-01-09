@@ -41,6 +41,7 @@ pub mod verify {
         }: Context,
     ) -> anyhow::Result<()> {
         let repo = git_repository::open(repo)?;
+        #[cfg_attr(not(feature = "serde1"), allow(unused))]
         let outcome = repo.objects.verify_integrity(
             progress,
             should_interrupt,
