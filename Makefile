@@ -82,6 +82,7 @@ check: ## Build all code in suitable configurations
 				&& cargo check
 	cd git-object && cargo check --all-features \
                   && cargo check --features verbose-object-parsing-errors
+	cd git-index && cargo check --features serde1
 	cd git-actor && cargo check --features serde1
 	cd git-pack && cargo check --features serde1 \
 			   && cargo check --features pack-cache-lru-static \

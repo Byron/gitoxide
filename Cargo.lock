@@ -1228,10 +1228,12 @@ dependencies = [
 name = "git-index"
 version = "0.0.0"
 dependencies = [
+ "filetime",
  "git-hash 0.8.0",
  "git-testtools",
  "memmap2",
  "quick-error",
+ "serde",
 ]
 
 [[package]]

@@ -4,7 +4,6 @@ mod init {
     }
 
     #[test]
-    #[ignore]
     fn read_v2() {
         let _file = file("v2");
     }

@@ -1,18 +1,22 @@
 #![deny(unsafe_code, missing_docs, rust_2018_idioms)]
-#![allow(missing_docs)]
+#![allow(missing_docs, unused)]
 
+use filetime::FileTime;
 use std::path::PathBuf;
 
 pub mod file;
 
 pub mod init {
     use crate::State;
+    use filetime::FileTime;
 
     impl State {
         /// Returns an empty state.
-        /// TODO: figure out if it needs to know some configuration
-        pub fn new() -> Self {
-            State
+        /// TODO: figure out if it needs to know some configuration, and if this would actually be used somewhere
+        fn new() -> Self {
+            State {
+                timestamp: FileTime::from_system_time(std::time::SystemTime::UNIX_EPOCH),
+            }
         }
     }
 
@@ -21,6 +25,16 @@ pub mod init {
             State::new()
         }
     }
+}
+
+/// All known versions of a git index file.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[allow(missing_docs)]
+pub enum Version {
+    V2 = 2,
+    V3 = 3,
+    V4 = 4,
 }
 
 /// An index file whose state was read from a file on disk.
@@ -33,4 +47,10 @@ pub struct File {
 ///
 /// As opposed to a snapshot, it's meant to be altered and eventually be written back to disk or converted into a tree.
 /// We treat index and its state synonymous.
-pub struct State;
+pub struct State {
+    /// The time at which the state was created, indicating its freshness compared to other files on disk.
+    ///
+    /// Note that on platforms that only have a precisions of a second for this time, we will treat all entries with the
+    /// same timestamp as this as potentially changed, checking more thoroughly if a change actually happened.
+    timestamp: FileTime,
+}
