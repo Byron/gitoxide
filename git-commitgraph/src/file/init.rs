@@ -5,7 +5,7 @@ use std::{
 
 use bstr::ByteSlice;
 use byteorder::{BigEndian, ByteOrder};
-use filebuffer::FileBuffer;
+use memmap2::Mmap;
 
 use crate::file::{
     ChunkId, File, BASE_GRAPHS_LIST_CHUNK_ID, COMMIT_DATA_CHUNK_ID, COMMIT_DATA_ENTRY_SIZE_SANS_HASH,
@@ -66,10 +66,18 @@ impl TryFrom<&Path> for File {
     type Error = Error;
 
     fn try_from(path: &Path) -> Result<Self, Self::Error> {
-        let data = FileBuffer::open(path).map_err(|e| Error::Io {
-            err: e,
-            path: path.to_owned(),
-        })?;
+        let data = std::fs::File::open(path)
+            .and_then(|file| {
+                // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
+                #[allow(unsafe_code)]
+                unsafe {
+                    Mmap::map(&file)
+                }
+            })
+            .map_err(|e| Error::Io {
+                err: e,
+                path: path.to_owned(),
+            })?;
         let data_size = data.len();
         if data_size < MIN_FILE_SIZE {
             return Err(Error::Corrupt(

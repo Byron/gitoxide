@@ -1108,11 +1108,11 @@ version = "0.7.0"
 dependencies = [
  "bstr",
  "byteorder",
- "filebuffer",
  "git-chunk",
  "git-features 0.18.0",
  "git-hash 0.8.0",
  "git-testtools",
+ "memmap2",
  "serde",
  "thiserror",
 ]

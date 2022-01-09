@@ -7,8 +7,7 @@
 //! As generating the full commit graph from scratch can take some time, git may write new commits
 //! to separate [files][file::File] instead of overwriting the original file.
 //! Eventually, git will merge these files together as the number of files grows.
-#![forbid(unsafe_code)]
-#![deny(rust_2018_idioms, missing_docs)]
+#![deny(unsafe_code, rust_2018_idioms, missing_docs)]
 
 pub mod file;
 pub mod graph;

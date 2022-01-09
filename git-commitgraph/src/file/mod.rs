@@ -6,7 +6,7 @@ use std::{
     path::PathBuf,
 };
 
-use filebuffer::FileBuffer;
+use memmap2::Mmap;
 
 pub use self::{commit::Commit, init::Error};
 
@@ -42,7 +42,7 @@ pub struct File {
     base_graph_count: u8,
     base_graphs_list_offset: Option<usize>,
     commit_data_offset: usize,
-    data: FileBuffer,
+    data: Mmap,
     extra_edges_list_range: Option<Range<usize>>,
     fan: [u32; FAN_LEN],
     oid_lookup_offset: usize,
