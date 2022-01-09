@@ -42,7 +42,7 @@ pub mod init {
             };
 
             let (version, num_entries, post_header_data) = header::decode(&data, object_hash)?;
-            let start_of_extensions = extension::EndOfIndexEntry::from_bytes(&data, object_hash);
+            let start_of_extensions = extension::end_of_index_entry::decode(&data, object_hash);
 
             Ok(File {
                 state: State { timestamp: mtime },

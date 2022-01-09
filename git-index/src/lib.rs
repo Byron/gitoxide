@@ -7,7 +7,7 @@ use filetime::FileTime;
 
 pub mod file;
 
-pub mod extension;
+pub(crate) mod extension;
 
 pub mod init {
     use filetime::FileTime;
