@@ -21,7 +21,7 @@ mod end_of_index_entry {
             }
 
             let start_of_eoie = data.len() - EndOfIndexEntry::SIZE_WITH_HEADER - hash_len;
-            let ext_data = &data[start_of_eoie..][..hash_len];
+            let ext_data = &data[start_of_eoie..data.len() - hash_len];
 
             let (signature, ext_size, ext_data) = extension::decode_header(ext_data);
             if signature != EndOfIndexEntry::SIGNATURE || ext_size as usize != EndOfIndexEntry::SIZE {
@@ -32,7 +32,6 @@ mod end_of_index_entry {
             let offset = read_u32(offset) as usize;
             if offset < header::SIZE || offset > start_of_eoie || checksum.len() != git_hash::Kind::Sha1.len_in_bytes()
             {
-                dbg!("checksum too small");
                 return None;
             }
 
@@ -49,8 +48,9 @@ mod end_of_index_entry {
             if hasher.digest() != checksum {
                 return None;
             }
+            // The last-to-this chunk ends where ours starts
             if last_chunk
-                .map(|s| s.as_ptr_range() != ext_data.as_ptr_range())
+                .map(|s| s.as_ptr_range().end != (&data[start_of_eoie]) as *const _)
                 .unwrap_or(true)
             {
                 return None;
