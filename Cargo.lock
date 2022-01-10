@@ -208,6 +208,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "atoi"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "616896e05fc0e2649463a93a15183c6a16bf03413a7af88ef1285ddedfa9cda5"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "atomic-waker"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1227,6 +1236,7 @@ dependencies = [
 name = "git-index"
 version = "0.0.0"
 dependencies = [
+ "atoi",
  "filetime",
  "git-features 0.18.0",
  "git-hash 0.8.0",

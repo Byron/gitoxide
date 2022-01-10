@@ -30,7 +30,8 @@ pub mod init {
         fn new() -> Self {
             State {
                 timestamp: FileTime::from_system_time(std::time::SystemTime::UNIX_EPOCH),
-                version: Version::V4,
+                version: Version::V3,
+                cache_tree: None,
             }
         }
     }
@@ -71,11 +72,29 @@ pub struct State {
     /// same timestamp as this as potentially changed, checking more thoroughly if a change actually happened.
     timestamp: FileTime,
     version: Version,
+    pub cache_tree: Option<extension::Tree>,
 }
 
 pub(crate) mod util {
     #[inline]
     pub fn read_u32(b: &[u8]) -> u32 {
         u32::from_be_bytes(b.try_into().unwrap())
+    }
+
+    #[inline]
+    pub fn split_at_byte_exclusive(data: &[u8], byte: u8) -> Option<(&[u8], &[u8])> {
+        if data.len() < 2 {
+            return None;
+        }
+        data.iter().enumerate().find_map(|(idx, b)| {
+            (*b == byte).then(|| {
+                if idx == 0 {
+                    (&[] as &[u8], &data[1..])
+                } else {
+                    let (a, b) = data.split_at(idx);
+                    (a, &b[1..])
+                }
+            })
+        })
     }
 }
