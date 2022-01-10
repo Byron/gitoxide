@@ -18,4 +18,8 @@ mod init {
         let file = file("v2_more_files");
         assert_eq!(file.version(), Version::V2);
     }
+
+    #[test]
+    #[ignore]
+    fn read_without_any_extension() {}
 }

@@ -84,14 +84,17 @@ mod iter {
             }
         }
 
-        pub fn new_without_checksum(data_at_beginning_of_extensions: &'a [u8], object_hash: git_hash::Kind) -> Self {
+        pub fn new_without_checksum(
+            data_at_beginning_of_extensions: &'a [u8],
+            object_hash: git_hash::Kind,
+        ) -> Option<Self> {
             let end = data_at_beginning_of_extensions
                 .len()
-                .checked_sub(object_hash.len_in_bytes())
-                .expect("someone asserted that there is at least one extension");
+                .checked_sub(object_hash.len_in_bytes())?;
             Iter {
                 data: &data_at_beginning_of_extensions[..end],
             }
+            .into()
         }
     }
 

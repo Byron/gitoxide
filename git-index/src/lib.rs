@@ -55,6 +55,9 @@ pub enum Version {
     V4 = 4,
 }
 
+/// An entry in the index, identifying a non-tree item on disk.
+pub struct Entry;
+
 /// An index file whose state was read from a file on disk.
 pub struct File {
     pub state: State,

@@ -1,4 +1,4 @@
-use crate::{extension, State};
+use crate::{extension, Entry, State, Version};
 use filetime::FileTime;
 use git_hash::Kind;
 
@@ -79,10 +79,15 @@ impl State {
         // Note that we ignore all errors for optional signatures.
         match start_of_extensions {
             Some(offset) => {
-                ext = load_extensions(&data[offset..], object_hash);
+                let (ext, entries) =
+                    git_features::parallel::join(|| load_extensions(&data[offset..], object_hash), || ());
                 todo!("load all extensions in thread, then get IEOT, then possibly multi-threaded entry parsing")
             }
-            None => todo!("load entries singlge-threaded, then extensions"),
+            None => {
+                let (entries, data) = load_entries(version, data, num_entries, object_hash)?;
+                let ext = load_extensions(data, object_hash);
+                todo!("load entries singlge-threaded, then extensions")
+            }
         }
 
         Ok(State {
@@ -93,19 +98,31 @@ impl State {
     }
 }
 
+fn load_entries(
+    version: Version,
+    beginning_of_entries: &[u8],
+    num_entries: u32,
+    object_hash: git_hash::Kind,
+) -> Result<(Vec<Entry>, &[u8]), Error> {
+    todo!("load entries")
+}
+
 fn load_extensions(beginning_of_extensions: &[u8], object_hash: git_hash::Kind) -> Extensions {
-    let extensions = extension::Iter::new_without_checksum(beginning_of_extensions, object_hash);
-    let mut ext = Extensions::default();
-    for (signature, ext_data) in extensions {
-        match signature {
-            extension::tree::SIGNATURE => {
-                ext.cache_tree = extension::tree::decode(ext_data, object_hash);
+    extension::Iter::new_without_checksum(beginning_of_extensions, object_hash)
+        .map(|extensions| {
+            let mut ext = Extensions::default();
+            for (signature, ext_data) in extensions {
+                match signature {
+                    extension::tree::SIGNATURE => {
+                        ext.cache_tree = extension::tree::decode(ext_data, object_hash);
+                    }
+                    extension::end_of_index_entry::SIGNATURE => {} // skip already done
+                    _unknown => {}                                 // skip unknown extensions, too
+                }
             }
-            extension::end_of_index_entry::SIGNATURE => {} // skip already done
-            _unknown => {}                                 // skip unknown extensions, too
-        }
-    }
-    ext
+            ext
+        })
+        .unwrap_or_default()
 }
 
 #[derive(Default)]
