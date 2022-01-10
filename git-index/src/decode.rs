@@ -72,8 +72,8 @@ pub use error::Error;
 
 impl State {
     pub fn from_bytes(data: &[u8], timestamp: FileTime, object_hash: git_hash::Kind) -> Result<Self, Error> {
-        let (version, num_entries, post_header_data) = header::decode(&data, object_hash)?;
-        let start_of_extensions = extension::end_of_index_entry::decode(&data, object_hash);
+        let (version, num_entries, post_header_data) = header::decode(data, object_hash)?;
+        let start_of_extensions = extension::end_of_index_entry::decode(data, object_hash);
         let mut ext = Extensions::default();
 
         // Note that we ignore all errors for optional signatures.
