@@ -243,11 +243,17 @@ Provide a CLI to for the most basic user journey:
   as well. What would an MVP look like? Maybe even something that could ship with gitoxide.
 * [ ] A truly awesome history rewriter which makes it easy to understand what happened while avoiding all pitfalls. Think BFG, but more awesome, if that's possible.
 * [ ] `git-tui` should learn a lot from [fossil-scm] regarding the presentation of data. Maybe [this](https://github.com/Lutetium-Vanadium/requestty/) can be used for prompts. Probably [magit] has a lot to offer, too.
-* [ ] Can markdown be used as database so issue-trackers along with meta-data could just be markdown files which are mostly human-editable? Could user interfaces
-  be meta-data aware and just hide the meta-data chunks which are now editable in the GUI itself? Doing this would make conflicts easier to resolve than an `sqlite`
-  database.
-    * ~~A git-backend for `sqlite` which should allow embedding sqlite databases into git repositories, which in turn can be used for bug-trackers, wikis or other
-      features, making for a fully distributed github like experience, maybe.~~
+* An event-based database that uses commit messages to store deltas, while occasionally aggregating the actual state in a tree. Of course it's distributed by nature, allowing
+  people to work offline.
+  - It's abstracted to completely hide the actual data model behind it, allowing for all kinds of things to be implemented on top.
+  - Commits probably need a nanosecond component for the timestamp, which can be added via custom header field.
+  - having recording all changes allows for perfect merging, both on the client or on the server, while keeping a natural audit log which makes it useful for mission critical
+    databases in business.
+  * Can markdown be used as database so issue-trackers along with meta-data could just be markdown files which are mostly human-editable? Could user interfaces
+    be meta-data aware and just hide the meta-data chunks which are now editable in the GUI itself? Doing this would make conflicts easier to resolve than an `sqlite`
+    database.
+      * ~~A git-backend for `sqlite` which should allow embedding sqlite databases into git repositories, which in turn can be used for bug-trackers, wikis or other
+        features, making for a fully distributed github like experience, maybe.~~
 
 ### Ideas for Spin-Offs
 
