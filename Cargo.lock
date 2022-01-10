@@ -1234,6 +1234,7 @@ dependencies = [
  "memmap2",
  "quick-error",
  "serde",
+ "smallvec",
 ]
 
 [[package]]

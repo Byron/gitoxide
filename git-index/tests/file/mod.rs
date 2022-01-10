@@ -6,7 +6,7 @@ mod init {
     }
 
     #[test]
-    fn read_v2() {
+    fn read_v2_with_single_entry_tree() {
         let file = file("v2");
         assert_eq!(file.version(), Version::V2);
     }

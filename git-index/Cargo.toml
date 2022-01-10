@@ -24,6 +24,7 @@ memmap2 = "0.5.0"
 filetime = "0.2.15"
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
+smallvec = "1.7.0"
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools"}

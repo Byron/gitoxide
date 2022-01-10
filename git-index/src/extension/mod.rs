@@ -1,4 +1,5 @@
 use crate::{util::read_u32, Version};
+use smallvec::SmallVec;
 
 const MIN_SIZE: usize = 4 /* signature */ + 4 /* size */;
 
@@ -9,6 +10,15 @@ fn decode_header(data: &[u8]) -> (Signature, u32, &[u8]) {
     let (size, data) = data.split_at(4);
     (signature.try_into().unwrap(), read_u32(size), data)
 }
+
+pub struct Tree {
+    /// Only set if there are any entries in the index we are associated with.
+    id: Option<tree::NodeId>,
+    name: SmallVec<[u8; 23]>,
+    children: Vec<Tree>,
+}
+
+pub(crate) mod tree;
 
 pub(crate) mod end_of_index_entry {
     use crate::{decode::header, extension, extension::Signature, util::read_u32};
@@ -67,6 +77,16 @@ mod iter {
         pub fn new(data_at_beginning_of_extensions_and_truncated: &'a [u8]) -> Self {
             Iter {
                 data: data_at_beginning_of_extensions_and_truncated,
+            }
+        }
+
+        pub fn new_without_checksum(data_at_beginning_of_extensions: &'a [u8], object_hash: git_hash::Kind) -> Self {
+            let end = data_at_beginning_of_extensions
+                .len()
+                .checked_sub(object_hash.len_in_bytes())
+                .expect("someone asserted that there is at least one extension");
+            Iter {
+                data: &data_at_beginning_of_extensions[..end],
             }
         }
     }

@@ -67,13 +67,29 @@ mod error {
         }
     }
 }
-
 pub use error::Error;
 
 impl State {
     pub fn from_bytes(data: &[u8], timestamp: FileTime, object_hash: git_hash::Kind) -> Result<Self, Error> {
         let (version, num_entries, post_header_data) = header::decode(&data, object_hash)?;
         let start_of_extensions = extension::end_of_index_entry::decode(&data, object_hash);
+        match start_of_extensions {
+            Some(offset) => {
+                let extensions = extension::Iter::new_without_checksum(&data[offset..], object_hash);
+                for (signature, ext_data) in extensions {
+                    match signature {
+                        extension::tree::SIGNATURE => {
+                            let tree = extension::tree::decode(ext_data, object_hash);
+                            todo!("put tree somewhere")
+                        }
+                        extension::end_of_index_entry::SIGNATURE => {} // skip already done
+                        _unknown => {}                                 // skip unknown extensions, too
+                    }
+                }
+                todo!("load all extensions in thread, then get IEOT, then possibly multi-threaded entry parsing")
+            }
+            None => todo!("load entries singlge-threaded, then extensions"),
+        }
 
         Ok(State { timestamp, version })
     }
