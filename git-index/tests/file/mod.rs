@@ -22,4 +22,8 @@ mod init {
     #[test]
     #[ignore]
     fn read_without_any_extension() {}
+
+    #[test]
+    #[ignore]
+    fn read_v4_with_delta_paths() {}
 }

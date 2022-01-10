@@ -7,3 +7,12 @@ pub fn index_fixture_path(name: &str) -> PathBuf {
         .expect("script works");
     dir.join(".git").join("index")
 }
+
+#[test]
+fn size_of_entry() {
+    assert_eq!(std::mem::size_of::<git_index::Entry>(), 64);
+
+    // the reason we have our own time is half the size.
+    assert_eq!(std::mem::size_of::<git_index::entry::Time>(), 8);
+    assert_eq!(std::mem::size_of::<filetime::FileTime>(), 16);
+}

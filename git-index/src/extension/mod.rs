@@ -1,4 +1,4 @@
-use crate::{util::read_u32, Version};
+use crate::{util::from_be_u32, Version};
 use smallvec::SmallVec;
 
 const MIN_SIZE: usize = 4 /* signature */ + 4 /* size */;
@@ -8,7 +8,7 @@ pub type Signature = [u8; 4];
 fn decode_header(data: &[u8]) -> (Signature, u32, &[u8]) {
     let (signature, data) = data.split_at(4);
     let (size, data) = data.split_at(4);
-    (signature.try_into().unwrap(), read_u32(size), data)
+    (signature.try_into().unwrap(), from_be_u32(size), data)
 }
 
 /// A structure to associate object ids of a tree with sections in the index entries list.
@@ -25,7 +25,7 @@ pub struct Tree {
 pub(crate) mod tree;
 
 pub(crate) mod end_of_index_entry {
-    use crate::{decode::header, extension, extension::Signature, util::read_u32};
+    use crate::{decode::header, extension, extension::Signature, util::from_be_u32};
 
     pub const SIGNATURE: Signature = *b"EOIE";
     pub const SIZE: usize = 4 /* offset to extensions */ + git_hash::Kind::Sha1.len_in_bytes();
@@ -46,7 +46,7 @@ pub(crate) mod end_of_index_entry {
         }
 
         let (offset, checksum) = ext_data.split_at(4);
-        let offset = read_u32(offset) as usize;
+        let offset = from_be_u32(offset) as usize;
         if offset < header::SIZE || offset > start_of_eoie || checksum.len() != git_hash::Kind::Sha1.len_in_bytes() {
             return None;
         }
@@ -75,7 +75,7 @@ pub(crate) mod end_of_index_entry {
 }
 
 mod iter {
-    use crate::{extension, extension::Iter, util::read_u32};
+    use crate::{extension, extension::Iter, util::from_be_u32};
 
     impl<'a> Iter<'a> {
         pub fn new(data_at_beginning_of_extensions_and_truncated: &'a [u8]) -> Self {
@@ -108,7 +108,7 @@ mod iter {
 
             let (signature, data) = self.data.split_at(4);
             let (size, data) = data.split_at(4);
-            let size = read_u32(size) as usize;
+            let size = from_be_u32(size) as usize;
 
             match data.get(..size) {
                 Some(ext_data) => {

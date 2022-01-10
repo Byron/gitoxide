@@ -9,6 +9,7 @@ edition = "2021"
 
 [lib]
 doctest = false
+test = true
 
 [features]
 serde1 = ["serde"]
