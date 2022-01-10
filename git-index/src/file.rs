@@ -1,3 +1,22 @@
+mod impls {
+    use crate::{File, State};
+    use std::ops::{Deref, DerefMut};
+
+    impl Deref for File {
+        type Target = State;
+
+        fn deref(&self) -> &Self::Target {
+            &self.state
+        }
+    }
+
+    impl DerefMut for File {
+        fn deref_mut(&mut self) -> &mut Self::Target {
+            &mut self.state
+        }
+    }
+}
+
 pub mod init {
     #![allow(unused)]
 

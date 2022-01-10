@@ -9,6 +9,16 @@ pub mod file;
 
 pub(crate) mod extension;
 
+mod access {
+    use crate::{State, Version};
+
+    impl State {
+        pub fn version(&self) -> Version {
+            self.version
+        }
+    }
+}
+
 pub mod init {
     use filetime::FileTime;
 
