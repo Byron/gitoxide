@@ -120,7 +120,12 @@ fn load_entries(
     todo!("load entries")
 }
 
-fn decode_entry(data: &[u8], hash_len: usize) -> Option<Entry> {
+fn decode_entry<'a>(
+    data: &'a [u8],
+    path_backing: &mut Vec<u8>,
+    hash_len: usize,
+    version: Version,
+) -> Option<(Entry, &'a [u8])> {
     let (ctime_secs, data) = read_u32(data)?;
     let (ctime_nsecs, data) = read_u32(data)?;
     let (mtime_secs, data) = read_u32(data)?;
@@ -149,27 +154,52 @@ fn decode_entry(data: &[u8], hash_len: usize) -> Option<Entry> {
         (flags, data)
     };
 
-    Entry {
-        stat: entry::Stat {
-            ctime: entry::Time {
-                secs: ctime_secs,
-                nsecs: ctime_nsecs,
+    let (path, data) = match version {
+        Version::V2 | Version::V3 => {
+            if (flags & entry::mask::PATH_LEN) == entry::mask::PATH_LEN {
+                todo!("get to 0 byte and skip padding")
+            } else {
+                let path_len = (flags & entry::mask::PATH_LEN) as usize;
+                let (path, data) = split_at_pos(data, path_len)?;
+
+                let start = path_backing.len();
+                path_backing.extend_from_slice(path);
+
+                (start..path_backing.len(), skip_padding(data))
+            }
+        }
+        Version::V4 => todo!("handle delta-paths"),
+    };
+
+    Some((
+        Entry {
+            stat: entry::Stat {
+                ctime: entry::Time {
+                    secs: ctime_secs,
+                    nsecs: ctime_nsecs,
+                },
+                mtime: entry::Time {
+                    secs: mtime_secs,
+                    nsecs: mtime_nsecs,
+                },
+                dev,
+                ino,
+                mode,
+                uid,
+                gid,
+                size,
             },
-            mtime: entry::Time {
-                secs: mtime_secs,
-                nsecs: mtime_nsecs,
-            },
-            dev,
-            ino,
-            mode,
-            uid,
-            gid,
-            size,
+            id: git_hash::ObjectId::from(hash),
+            flags: flags & !entry::mask::PATH_LEN,
         },
-        id: git_hash::ObjectId::from(hash),
-        flags: flags & !entry::mask::PATH_LEN,
-    }
-    .into()
+        data,
+    ))
+}
+
+#[inline]
+fn skip_padding(data: &[u8]) -> &[u8] {
+    let foo = data.iter().filter(|b| **b == 0).count();
+    todo!("continue")
 }
 
 #[inline]
