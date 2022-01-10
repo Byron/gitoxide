@@ -11,7 +11,7 @@ fn decode_header(data: &[u8]) -> (Signature, u32, &[u8]) {
 }
 
 pub(crate) mod end_of_index_entry {
-    use crate::{extension, extension::Signature, file::header, util::read_u32};
+    use crate::{extension, extension::Signature, header, util::read_u32};
 
     pub const SIGNATURE: Signature = *b"EOIE";
     pub const SIZE: usize = 4 /* offset to extensions */ + git_hash::Kind::Sha1.len_in_bytes();
