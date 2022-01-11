@@ -102,21 +102,11 @@ impl Header {
                 out.write_all(oid.as_slice())?;
                 written += oid.as_slice().len();
             }
-            OfsDelta { mut base_distance } => {
+            OfsDelta { base_distance } => {
                 let mut buf = [0u8; 10];
-                let mut bytes_written = 1;
-                buf[buf.len() - 1] = base_distance as u8 & 0b0111_1111;
-                for out in buf.iter_mut().rev().skip(1) {
-                    base_distance >>= 7;
-                    if base_distance == 0 {
-                        break;
-                    }
-                    base_distance -= 1;
-                    *out = 0b1000_0000 | (base_distance as u8 & 0b0111_1111);
-                    bytes_written += 1;
-                }
-                out.write_all(&buf[buf.len() - bytes_written..])?;
-                written += bytes_written;
+                let buf = leb64_encode(*base_distance, &mut buf);
+                out.write_all(buf)?;
+                written += buf.len();
             }
             Blob | Tree | Commit | Tag => {}
         }
@@ -127,5 +117,34 @@ impl Header {
     pub fn size(&self, decompressed_size: u64) -> usize {
         self.write_to(decompressed_size, io::sink())
             .expect("io::sink() to never fail")
+    }
+}
+
+#[inline]
+fn leb64_encode(mut n: u64, buf: &mut [u8; 10]) -> &[u8] {
+    let mut bytes_written = 1;
+    buf[buf.len() - 1] = n as u8 & 0b0111_1111;
+    for out in buf.iter_mut().rev().skip(1) {
+        n >>= 7;
+        if n == 0 {
+            break;
+        }
+        n -= 1;
+        *out = 0b1000_0000 | (n as u8 & 0b0111_1111);
+        bytes_written += 1;
+    }
+    debug_assert_eq!(n, 0, "BUG: buffer must be large enough to hold a 64 bit integer");
+    &buf[buf.len() - bytes_written..]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn leb64_encode_max_int() {
+        let mut buf = [0u8; 10];
+        let buf = leb64_encode(u64::MAX, &mut buf);
+        assert_eq!(buf.len(), 10, "10 bytes should be used when 64bits are encoded");
     }
 }
