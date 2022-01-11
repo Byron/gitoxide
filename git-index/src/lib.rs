@@ -1,8 +1,7 @@
 #![deny(unsafe_code, missing_docs, rust_2018_idioms)]
 #![allow(missing_docs, unused)]
 
-use std::ops::Range;
-use std::path::PathBuf;
+use std::{ops::Range, path::PathBuf};
 
 use filetime::FileTime;
 

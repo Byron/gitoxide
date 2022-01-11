@@ -1,6 +1,9 @@
-use crate::extension::{Signature, Tree};
-use crate::util::split_at_byte_exclusive;
 use git_hash::ObjectId;
+
+use crate::{
+    extension::{Signature, Tree},
+    util::split_at_byte_exclusive,
+};
 
 pub const SIGNATURE: Signature = *b"TREE";
 

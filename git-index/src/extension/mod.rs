@@ -1,5 +1,6 @@
-use crate::{util::from_be_u32, Version};
 use smallvec::SmallVec;
+
+use crate::{util::from_be_u32, Version};
 
 const MIN_SIZE: usize = 4 /* signature */ + 4 /* size */;
 

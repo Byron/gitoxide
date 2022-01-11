@@ -1,9 +1,12 @@
-use crate::{entry, extension, Entry, State, Version};
 use filetime::FileTime;
 use git_hash::Kind;
 
+use crate::{entry, extension, Entry, State, Version};
+
 pub mod header {
     pub(crate) const SIZE: usize = 4 /*signature*/ + 4 /*version*/ + 4 /* num entries */;
+
+    use crate::{util::from_be_u32, Version};
 
     mod error {
         use quick_error::quick_error;
@@ -20,7 +23,6 @@ pub mod header {
             }
         }
     }
-    use crate::{util::from_be_u32, Version};
     pub use error::Error;
 
     pub(crate) fn decode(data: &[u8], object_hash: git_hash::Kind) -> Result<(crate::Version, u32, &[u8]), Error> {
@@ -74,8 +76,9 @@ mod error {
         }
     }
 }
-use crate::util::{from_be_u32, split_at_byte_exclusive, split_at_pos};
 pub use error::Error;
+
+use crate::util::{from_be_u32, split_at_byte_exclusive, split_at_pos};
 
 impl State {
     pub fn from_bytes(
@@ -153,8 +156,7 @@ impl State {
 }
 
 mod load_entries {
-    use crate::decode::header;
-    use crate::{Entry, Version};
+    use crate::{decode::header, Entry, Version};
 
     pub struct Outcome {
         pub entries: Vec<Entry>,

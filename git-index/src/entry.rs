@@ -33,8 +33,9 @@ pub struct Stat {
 }
 
 mod access {
-    use crate::{Entry, State};
     use bstr::{BStr, ByteSlice};
+
+    use crate::{Entry, State};
 
     impl Entry {
         pub fn path<'a>(&self, state: &'a State) -> &'a BStr {

@@ -1,6 +1,7 @@
 mod impls {
-    use crate::{File, State};
     use std::ops::{Deref, DerefMut};
+
+    use crate::{File, State};
 
     impl Deref for File {
         type Target = State;
