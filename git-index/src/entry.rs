@@ -1,5 +1,5 @@
 pub(crate) mod mode {
-    const S_IFDIR: u32 = 0040000;
+    const S_IFDIR: u32 = 0o040000;
     pub fn is_sparse(mode: u32) -> bool {
         mode == S_IFDIR
     }
