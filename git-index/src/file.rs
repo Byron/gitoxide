@@ -25,7 +25,7 @@ pub mod init {
 
     use memmap2::Mmap;
 
-    use crate::{extension, File, State};
+    use crate::{decode, extension, File, State};
 
     mod error {
         use quick_error::quick_error;
@@ -49,7 +49,7 @@ pub mod init {
     pub use error::Error;
 
     impl File {
-        pub fn at(path: impl Into<PathBuf>, object_hash: git_hash::Kind) -> Result<Self, Error> {
+        pub fn at(path: impl Into<PathBuf>, options: decode::Options) -> Result<Self, Error> {
             let path = path.into();
             let (data, mtime) = {
                 // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
@@ -59,7 +59,7 @@ pub mod init {
                 (data, filetime::FileTime::from_last_modification_time(&file.metadata()?))
             };
 
-            let (state, checksum) = State::from_bytes(&data, mtime, object_hash)?;
+            let (state, checksum) = State::from_bytes(&data, mtime, options)?;
             Ok(File { state, path, checksum })
         }
     }

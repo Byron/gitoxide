@@ -29,11 +29,28 @@ mod error {
 }
 pub use error::Error;
 
+#[derive(Default)]
+pub struct Options {
+    pub object_hash: git_hash::Kind,
+    /// If Some(_), we are allowed to use more than one thread. If Some(N), use no more than N threads. If Some(0)|None, use as many threads
+    /// as there are physical cores.
+    ///
+    /// This applies to loading extensions in parallel to entries if the common EOIE extension is available.
+    /// It also allows to use multiple threads for loading entries if the IEOT extension is present.
+    pub num_threads: Option<usize>,
+    /// The minimum size in bytes to load extensions in their own thread, assuming there is enough `num_threads` available.
+    pub min_extension_block_in_bytes_for_threading: usize,
+}
+
 impl State {
     pub fn from_bytes(
         data: &[u8],
         timestamp: FileTime,
-        object_hash: git_hash::Kind,
+        Options {
+            object_hash,
+            num_threads: _,
+            min_extension_block_in_bytes_for_threading: _,
+        }: Options,
     ) -> Result<(Self, git_hash::ObjectId), Error> {
         let (version, num_entries, post_header_data) = header::decode(data, object_hash)?;
         let start_of_extensions = extension::end_of_index_entry::decode(data, object_hash);

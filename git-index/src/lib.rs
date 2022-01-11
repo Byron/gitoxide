@@ -30,10 +30,12 @@ pub mod decode;
 /// All known versions of a git index file.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[allow(missing_docs)]
 pub enum Version {
+    /// Supports entries and various extensions.
     V2 = 2,
+    /// Adds support for additional flags for each entry.
     V3 = 3,
+    /// Supports deltified entry paths.
     V4 = 4,
 }
 

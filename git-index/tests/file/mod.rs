@@ -3,7 +3,7 @@ mod init {
     use git_testtools::hex_to_id;
 
     fn file(name: &str) -> git_index::File {
-        git_index::File::at(crate::index_fixture_path(name), git_hash::Kind::Sha1).unwrap()
+        git_index::File::at(crate::index_fixture_path(name), git_index::decode::Options::default()).unwrap()
     }
 
     #[test]
