@@ -1,6 +1,7 @@
 #![deny(unsafe_code, missing_docs, rust_2018_idioms)]
 #![allow(missing_docs, unused)]
 
+use std::ops::Range;
 use std::path::PathBuf;
 
 use filetime::FileTime;
@@ -9,12 +10,18 @@ pub mod file;
 
 pub(crate) mod extension;
 
+pub mod entry;
+
 mod access {
-    use crate::{State, Version};
+    use crate::{Entry, State, Version};
 
     impl State {
         pub fn version(&self) -> Version {
             self.version
+        }
+
+        pub fn entries(&self) -> &[Entry] {
+            &self.entries
         }
     }
 }
@@ -31,43 +38,12 @@ pub enum Version {
     V4 = 4,
 }
 
-pub mod entry {
-    pub(crate) mod mode {
-        const S_IFDIR: u32 = 0040000;
-        pub fn is_sparse(mode: u32) -> bool {
-            mode == S_IFDIR
-        }
-    }
-    pub(crate) mod flags {
-        pub const EXTENDED: u32 = 0x4000;
-        pub const INTENT_TO_ADD: u32 = 1 << 29;
-        pub const SKIP_WORKTREE: u32 = 1 << 30;
-    }
-    pub(crate) mod mask {
-        pub const PATH_LEN: u32 = 0x0fff;
-    }
-    pub struct Time {
-        pub secs: u32,
-        pub nsecs: u32,
-    }
-    pub struct Stat {
-        pub mtime: Time,
-        pub ctime: Time,
-        pub dev: u32,
-        pub ino: u32,
-        pub mode: u32,
-        pub uid: u32,
-        pub gid: u32,
-        /// The size of bytes on disk. Capped to u32 so files bigger than that will need thorough checking (and hopefully never make it)
-        pub size: u32,
-    }
-}
-
 /// An entry in the index, identifying a non-tree item on disk.
 pub struct Entry {
     pub stat: entry::Stat,
     pub id: git_hash::ObjectId,
     pub flags: u32,
+    path: Range<usize>,
 }
 
 /// An index file whose state was read from a file on disk.

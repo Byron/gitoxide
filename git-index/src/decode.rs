@@ -296,6 +296,7 @@ fn decode_entry<'a>(
             },
             id: git_hash::ObjectId::from(hash),
             flags: flags & !entry::mask::PATH_LEN,
+            path,
         },
         data,
     ))

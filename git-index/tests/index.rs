@@ -10,7 +10,7 @@ pub fn index_fixture_path(name: &str) -> PathBuf {
 
 #[test]
 fn size_of_entry() {
-    assert_eq!(std::mem::size_of::<git_index::Entry>(), 64);
+    assert_eq!(std::mem::size_of::<git_index::Entry>(), 80);
 
     // the reason we have our own time is half the size.
     assert_eq!(std::mem::size_of::<git_index::entry::Time>(), 8);
