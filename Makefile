@@ -140,6 +140,8 @@ unit-tests: ## run all unit tests
 	cd git-object && cargo test && cargo test --features verbose-object-parsing-errors
 	cd git-pack && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
 				&& cargo test --features "internal-testing-git-features-parallel"
+	cd git-index && cargo test --features internal-testing-to-avoid-being-run-by-cargo-test-all \
+				&& cargo test --features "internal-testing-git-features-parallel"
 	cd git-packetline && cargo test \
 					  && cargo test --features blocking-io,maybe-async/is_sync --test blocking-packetline \
 					  && cargo test --features "async-io" --test async-packetline

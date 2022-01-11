@@ -11,8 +11,21 @@ edition = "2021"
 doctest = false
 test = true
 
+[[test]]
+name = "multi-threaded"
+path = "tests/index-multi-threaded.rs"
+required-features = ["internal-testing-git-features-parallel"]
+
+[[test]]
+name = "single-threaded"
+path = "tests/index-single-threaded.rs"
+required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
+
 [features]
 serde1 = ["serde"]
+
+internal-testing-git-features-parallel = ["git-features/parallel"]
+internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

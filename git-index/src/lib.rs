@@ -110,3 +110,12 @@ pub(crate) mod util {
         data.split_at(pos).into()
     }
 }
+
+#[test]
+fn size_of_entry() {
+    assert_eq!(std::mem::size_of::<crate::Entry>(), 80);
+
+    // the reason we have our own time is half the size.
+    assert_eq!(std::mem::size_of::<crate::entry::Time>(), 8);
+    assert_eq!(std::mem::size_of::<filetime::FileTime>(), 16);
+}

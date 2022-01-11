@@ -37,7 +37,7 @@ pub struct Options {
     ///
     /// This applies to loading extensions in parallel to entries if the common EOIE extension is available.
     /// It also allows to use multiple threads for loading entries if the IEOT extension is present.
-    pub num_threads: Option<usize>,
+    pub thread_limit: Option<usize>,
     /// The minimum size in bytes to load extensions in their own thread, assuming there is enough `num_threads` available.
     pub min_extension_block_in_bytes_for_threading: usize,
 }
@@ -48,13 +48,14 @@ impl State {
         timestamp: FileTime,
         Options {
             object_hash,
-            num_threads: _,
+            thread_limit,
             min_extension_block_in_bytes_for_threading: _,
         }: Options,
     ) -> Result<(Self, git_hash::ObjectId), Error> {
         let (version, num_entries, post_header_data) = header::decode(data, object_hash)?;
         let start_of_extensions = extension::end_of_index_entry::decode(data, object_hash);
 
+        let num_threads = git_features::parallel::num_threads(thread_limit);
         let path_backing_buffer_size = entries::estimate_path_storage_requirements_in_bytes(
             num_entries,
             data.len(),
@@ -62,8 +63,9 @@ impl State {
             object_hash,
             version,
         );
+
         let (entries, ext, data) = match start_of_extensions {
-            Some(offset) => {
+            Some(offset) if num_threads > 1 => {
                 let start_of_extensions = &data[offset..];
                 let index_offsets_table = extension::index_entry_offset_table::find(start_of_extensions, object_hash);
                 let (entries_res, (ext, data)) = match index_offsets_table {
@@ -89,7 +91,7 @@ impl State {
                 };
                 (entries_res?.0, ext, data)
             }
-            None => {
+            None | Some(_) => {
                 let (entries, data) = entries::load_all(
                     post_header_data,
                     num_entries,
