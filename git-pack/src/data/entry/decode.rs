@@ -1,3 +1,4 @@
+use git_features::decode::{leb64, leb64_from_read};
 use std::io;
 
 use super::{BLOB, COMMIT, OFS_DELTA, REF_DELTA, TAG, TREE};
@@ -16,7 +17,7 @@ impl data::Entry {
         use crate::data::entry::Header::*;
         let object = match type_id {
             OFS_DELTA => {
-                let (distance, leb_bytes) = leb64decode(&d[consumed..]);
+                let (distance, leb_bytes) = leb64(&d[consumed..]);
                 let delta = OfsDelta {
                     base_distance: distance,
                 };
@@ -54,7 +55,7 @@ impl data::Entry {
         use crate::data::entry::Header::*;
         let object = match type_id {
             OFS_DELTA => {
-                let (distance, leb_bytes) = streaming_leb64decode(&mut r)?;
+                let (distance, leb_bytes) = leb64_from_read(&mut r)?;
                 let delta = OfsDelta {
                     base_distance: distance,
                 };
@@ -83,37 +84,6 @@ impl data::Entry {
             data_offset: pack_offset + consumed as u64,
         })
     }
-}
-
-#[inline]
-fn streaming_leb64decode(mut r: impl io::Read) -> Result<(u64, usize), io::Error> {
-    let mut b = [0u8; 1];
-    let mut i = 0;
-    r.read_exact(&mut b)?;
-    i += 1;
-    let mut value = b[0] as u64 & 0x7f;
-    while b[0] & 0x80 != 0 {
-        r.read_exact(&mut b)?;
-        i += 1;
-        value += 1;
-        value = (value << 7) + (b[0] as u64 & 0x7f)
-    }
-    Ok((value, i))
-}
-
-#[inline]
-fn leb64decode(d: &[u8]) -> (u64, usize) {
-    let mut i = 0;
-    let mut c = d[i];
-    i += 1;
-    let mut value = c as u64 & 0x7f;
-    while c & 0x80 != 0 {
-        c = d[i];
-        i += 1;
-        value += 1;
-        value = (value << 7) + (c as u64 & 0x7f)
-    }
-    (value, i)
 }
 
 #[inline]
