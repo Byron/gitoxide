@@ -81,6 +81,7 @@ mod iter {
         pub fn new(data_at_beginning_of_extensions_and_truncated: &'a [u8]) -> Self {
             Iter {
                 data: data_at_beginning_of_extensions_and_truncated,
+                consumed: 0,
             }
         }
 
@@ -93,6 +94,7 @@ mod iter {
                 .checked_sub(object_hash.len_in_bytes())?;
             Iter {
                 data: &data_at_beginning_of_extensions[..end],
+                consumed: 0,
             }
             .into()
         }
@@ -108,11 +110,15 @@ mod iter {
 
             let (signature, data) = self.data.split_at(4);
             let (size, data) = data.split_at(4);
+            self.data = data;
+            self.consumed += 4 + 4;
+
             let size = from_be_u32(size) as usize;
 
             match data.get(..size) {
                 Some(ext_data) => {
                     self.data = &data[size..];
+                    self.consumed += size;
                     Some((signature.try_into().unwrap(), ext_data))
                 }
                 None => {
@@ -125,5 +131,6 @@ mod iter {
 }
 
 pub struct Iter<'a> {
-    pub data: &'a [u8],
+    data: &'a [u8],
+    pub consumed: usize,
 }

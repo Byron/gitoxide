@@ -318,9 +318,9 @@ fn read_u16(data: &[u8]) -> Option<(u16, &[u8])> {
 
 fn load_extensions(beginning_of_extensions: &[u8], object_hash: git_hash::Kind) -> (Extensions, &[u8]) {
     extension::Iter::new_without_checksum(beginning_of_extensions, object_hash)
-        .map(|mut extensions| {
+        .map(|mut ext_iter| {
             let mut ext = Extensions::default();
-            for (signature, ext_data) in extensions.by_ref() {
+            for (signature, ext_data) in ext_iter.by_ref() {
                 match signature {
                     extension::tree::SIGNATURE => {
                         ext.cache_tree = extension::tree::decode(ext_data, object_hash);
@@ -329,7 +329,7 @@ fn load_extensions(beginning_of_extensions: &[u8], object_hash: git_hash::Kind) 
                     _unknown => {}                                 // skip unknown extensions, too
                 }
             }
-            (ext, extensions.data)
+            (ext, &beginning_of_extensions[ext_iter.consumed..])
         })
         .unwrap_or_else(|| (Extensions::default(), beginning_of_extensions))
 }
