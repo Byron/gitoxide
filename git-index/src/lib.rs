@@ -19,30 +19,6 @@ mod access {
     }
 }
 
-pub mod init {
-    use filetime::FileTime;
-
-    use crate::{State, Version};
-
-    impl State {
-        /// Returns an empty state.
-        /// TODO: figure out if it needs to know some configuration, and if this would actually be used somewhere
-        fn new() -> Self {
-            State {
-                timestamp: FileTime::from_system_time(std::time::SystemTime::UNIX_EPOCH),
-                version: Version::V3,
-                cache_tree: None,
-            }
-        }
-    }
-
-    impl Default for State {
-        fn default() -> Self {
-            State::new()
-        }
-    }
-}
-
 pub mod decode;
 
 /// All known versions of a git index file.
@@ -56,6 +32,12 @@ pub enum Version {
 }
 
 pub mod entry {
+    pub(crate) mod mode {
+        const S_IFDIR: u32 = 0040000;
+        pub fn is_sparse(mode: u32) -> bool {
+            mode == S_IFDIR
+        }
+    }
     pub(crate) mod flags {
         pub const EXTENDED: u32 = 0x4000;
         pub const INTENT_TO_ADD: u32 = 1 << 29;
@@ -92,6 +74,8 @@ pub struct Entry {
 pub struct File {
     pub state: State,
     pub path: PathBuf,
+    /// The checksum of all bytes prior to the checksum itself.
+    pub checksum: git_hash::ObjectId,
 }
 
 /// An in-memory cache of a fully parsed git index file.
@@ -105,7 +89,12 @@ pub struct State {
     /// same timestamp as this as potentially changed, checking more thoroughly if a change actually happened.
     timestamp: FileTime,
     version: Version,
-    pub cache_tree: Option<extension::Tree>,
+    cache_tree: Option<extension::Tree>,
+    entries: Vec<Entry>,
+    /// A memory area keeping all index paths, in full length, independently of the index version.
+    path_backing: Vec<u8>,
+    /// True if one entry in the index has a special marker mode
+    is_sparse: bool,
 }
 
 pub(crate) mod util {

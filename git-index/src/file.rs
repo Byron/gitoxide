@@ -58,10 +58,8 @@ pub mod init {
                 (data, filetime::FileTime::from_last_modification_time(&file.metadata()?))
             };
 
-            Ok(File {
-                state: State::from_bytes(&data, mtime, object_hash)?,
-                path,
-            })
+            let (state, checksum) = State::from_bytes(&data, mtime, object_hash)?;
+            Ok(File { state, path, checksum })
         }
     }
 }

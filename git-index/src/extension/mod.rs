@@ -125,5 +125,5 @@ mod iter {
 }
 
 pub struct Iter<'a> {
-    data: &'a [u8],
+    pub data: &'a [u8],
 }

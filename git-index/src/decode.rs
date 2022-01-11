@@ -65,59 +65,147 @@ mod error {
                 source(err)
                 from()
             }
+            Entry(index: u32) {
+                display("Could not parse entry at index {}", index)
+            }
+            UnexpectedTrailerLength { expected: usize, actual: usize } {
+                display("Index trailer should have been {} bytes long, but was {}", expected, actual)
+            }
         }
     }
 }
-use crate::util::{from_be_u32, split_at_pos};
+use crate::util::{from_be_u32, split_at_byte_exclusive, split_at_pos};
 pub use error::Error;
 
 impl State {
-    pub fn from_bytes(data: &[u8], timestamp: FileTime, object_hash: git_hash::Kind) -> Result<Self, Error> {
+    pub fn from_bytes(
+        data: &[u8],
+        timestamp: FileTime,
+        object_hash: git_hash::Kind,
+    ) -> Result<(Self, git_hash::ObjectId), Error> {
         let (version, num_entries, post_header_data) = header::decode(data, object_hash)?;
         let start_of_extensions = extension::end_of_index_entry::decode(data, object_hash);
-        let mut ext = Extensions::default();
 
-        // Note that we ignore all errors for optional signatures.
-        match start_of_extensions {
+        let path_backing_buffer_size = load_entries::estimate_path_storage_requirements_in_bytes(
+            num_entries,
+            data.len(),
+            start_of_extensions,
+            object_hash,
+            version,
+        );
+        let (entries, ext, data) = match start_of_extensions {
             Some(offset) => {
-                let (ext, entries) =
-                    git_features::parallel::join(|| load_extensions(&data[offset..], object_hash), || ());
-                todo!("load all extensions in thread, then get IEOT, then possibly multi-threaded entry parsing")
+                let (entries_res, (ext, data)) = git_features::parallel::join(
+                    // TODO load all extensions in thread, then get IEOT, then possibly multi-threaded entry parsing
+                    || load_entries(data, num_entries, path_backing_buffer_size, object_hash, version),
+                    || load_extensions(&data[offset..], object_hash),
+                );
+                (entries_res?.0, ext, data)
             }
             None => {
-                let (entries, data) = load_entries(data, num_entries, object_hash, version)?;
-                let ext = load_extensions(data, object_hash);
-                todo!("load entries singlge-threaded, then extensions")
+                let (entries, data) = load_entries(data, num_entries, path_backing_buffer_size, object_hash, version)?;
+                let (ext, data) = load_extensions(data, object_hash);
+                (entries, ext, data)
             }
+        };
+
+        if data.len() != object_hash.len_in_bytes() {
+            return Err(Error::UnexpectedTrailerLength {
+                expected: object_hash.len_in_bytes(),
+                actual: data.len(),
+            });
         }
 
-        Ok(State {
-            timestamp,
-            version,
-            cache_tree: ext.cache_tree,
-        })
+        let checksum = git_hash::ObjectId::from(data);
+        let load_entries::Outcome {
+            entries,
+            path_backing,
+            is_sparse,
+        } = entries;
+        let Extensions { cache_tree } = ext;
+
+        Ok((
+            State {
+                timestamp,
+                version,
+                cache_tree,
+                entries,
+                path_backing,
+                is_sparse,
+            },
+            checksum,
+        ))
     }
 }
 
 mod load_entries {
-    use crate::Entry;
+    use crate::decode::header;
+    use crate::{Entry, Version};
 
     pub struct Outcome {
-        entries: Vec<Entry>,
-        /// A memory area keeping all index paths, in full length, independently of the index version.
-        path_backing: Vec<u8>,
-        /// True if one entry in the index has a special marker mode
-        is_sparse: bool,
+        pub entries: Vec<Entry>,
+        pub path_backing: Vec<u8>,
+        pub is_sparse: bool,
+    }
+
+    pub fn estimate_path_storage_requirements_in_bytes(
+        num_entries: u32,
+        on_disk_size: usize,
+        offset_to_extensions: Option<usize>,
+        object_hash: git_hash::Kind,
+        version: Version,
+    ) -> usize {
+        const fn on_disk_entry_sans_path(object_hash: git_hash::Kind) -> usize {
+            8 + // ctime
+            8 + // mtime
+            (4 * 6) +  // various stat fields
+            2 + // flag, ignore extended flag as we'd rather overallocate a bit
+            object_hash.len_in_bytes()
+        };
+        match version {
+            Version::V3 | Version::V2 => {
+                let size_of_entries_block = offset_to_extensions.unwrap_or(on_disk_size);
+                size_of_entries_block
+                    .saturating_sub(num_entries as usize * on_disk_entry_sans_path(object_hash))
+                    .saturating_sub(header::SIZE)
+            }
+            Version::V4 => num_entries as usize * 80, /* a guess directly from git sources */
+        }
     }
 }
 
+/// Note that `data` must point to the beginning of the entries, right past the header.
 fn load_entries(
-    beginning_of_entries: &[u8],
+    mut data: &[u8],
     num_entries: u32,
+    path_backing_capacity: usize,
     object_hash: git_hash::Kind,
     version: Version,
 ) -> Result<(load_entries::Outcome, &[u8]), Error> {
-    todo!("load entries")
+    let mut path_backing = Vec::<u8>::with_capacity(path_backing_capacity);
+    let mut entries = Vec::with_capacity(num_entries as usize);
+    let mut is_sparse = false;
+    for idx in 0..num_entries {
+        let (entry, remaining) =
+            decode_entry(data, &mut path_backing, object_hash.len_in_bytes(), version).ok_or(Error::Entry(idx))?;
+        data = remaining;
+        if entry::mode::is_sparse(entry.stat.mode) {
+            is_sparse = true;
+        }
+        // TODO: entries are actually in an intrusive collection, with path as key. Could be set for us. This affects 'ignore_case' which we
+        //       also don't yet handle but probably could, maybe even smartly with the collection.
+        //       For now it's unclear to me how they access the index, they could iterate quickly, and have fast access by path.
+        entries.push(entry);
+    }
+
+    Ok((
+        load_entries::Outcome {
+            entries,
+            path_backing,
+            is_sparse,
+        },
+        data,
+    ))
 }
 
 fn decode_entry<'a>(
@@ -156,19 +244,22 @@ fn decode_entry<'a>(
 
     let (path, data) = match version {
         Version::V2 | Version::V3 => {
-            if (flags & entry::mask::PATH_LEN) == entry::mask::PATH_LEN {
-                todo!("get to 0 byte and skip padding")
+            let (path, data) = if (flags & entry::mask::PATH_LEN) == entry::mask::PATH_LEN {
+                split_at_byte_exclusive(data, 0)?
             } else {
                 let path_len = (flags & entry::mask::PATH_LEN) as usize;
-                let (path, data) = split_at_pos(data, path_len)?;
+                split_at_pos(data, path_len)?
+            };
 
-                let start = path_backing.len();
-                path_backing.extend_from_slice(path);
-
-                (start..path_backing.len(), skip_padding(data))
-            }
+            (path, skip_padding(data))
         }
         Version::V4 => todo!("handle delta-paths"),
+    };
+
+    let path = {
+        let start = path_backing.len();
+        path_backing.extend_from_slice(path);
+        start..path_backing.len()
     };
 
     Some((
@@ -198,8 +289,8 @@ fn decode_entry<'a>(
 
 #[inline]
 fn skip_padding(data: &[u8]) -> &[u8] {
-    let foo = data.iter().filter(|b| **b == 0).count();
-    todo!("continue")
+    let skip = data.iter().take_while(|b| **b == 0).count();
+    &data[skip..]
 }
 
 #[inline]
@@ -208,14 +299,14 @@ fn read_u32(data: &[u8]) -> Option<(u32, &[u8])> {
 }
 #[inline]
 fn read_u16(data: &[u8]) -> Option<(u16, &[u8])> {
-    split_at_pos(data, 4).map(|(num, data)| (u16::from_be_bytes(num.try_into().unwrap()), data))
+    split_at_pos(data, 2).map(|(num, data)| (u16::from_be_bytes(num.try_into().unwrap()), data))
 }
 
-fn load_extensions(beginning_of_extensions: &[u8], object_hash: git_hash::Kind) -> Extensions {
+fn load_extensions(beginning_of_extensions: &[u8], object_hash: git_hash::Kind) -> (Extensions, &[u8]) {
     extension::Iter::new_without_checksum(beginning_of_extensions, object_hash)
-        .map(|extensions| {
+        .map(|mut extensions| {
             let mut ext = Extensions::default();
-            for (signature, ext_data) in extensions {
+            for (signature, ext_data) in extensions.by_ref() {
                 match signature {
                     extension::tree::SIGNATURE => {
                         ext.cache_tree = extension::tree::decode(ext_data, object_hash);
@@ -224,9 +315,9 @@ fn load_extensions(beginning_of_extensions: &[u8], object_hash: git_hash::Kind) 
                     _unknown => {}                                 // skip unknown extensions, too
                 }
             }
-            ext
+            (ext, extensions.data)
         })
-        .unwrap_or_default()
+        .unwrap_or_else(|| (Extensions::default(), beginning_of_extensions))
 }
 
 #[derive(Default)]

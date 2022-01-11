@@ -6,14 +6,12 @@ mod init {
     }
 
     #[test]
-    #[ignore]
     fn read_v2_with_single_entry_tree_and_eoie_ext() {
         let file = file("v2");
         assert_eq!(file.version(), Version::V2);
     }
 
     #[test]
-    #[ignore]
     fn read_v2_with_multiple_entries_without_eoie_ext() {
         let file = file("v2_more_files");
         assert_eq!(file.version(), Version::V2);
