@@ -97,13 +97,27 @@ impl State {
             Some(offset) => {
                 let (entries_res, (ext, data)) = git_features::parallel::join(
                     // TODO load all extensions in thread, then get IEOT, then possibly multi-threaded entry parsing
-                    || load_entries(data, num_entries, path_backing_buffer_size, object_hash, version),
+                    || {
+                        load_entries(
+                            post_header_data,
+                            num_entries,
+                            path_backing_buffer_size,
+                            object_hash,
+                            version,
+                        )
+                    },
                     || load_extensions(&data[offset..], object_hash),
                 );
                 (entries_res?.0, ext, data)
             }
             None => {
-                let (entries, data) = load_entries(data, num_entries, path_backing_buffer_size, object_hash, version)?;
+                let (entries, data) = load_entries(
+                    post_header_data,
+                    num_entries,
+                    path_backing_buffer_size,
+                    object_hash,
+                    version,
+                )?;
                 let (ext, data) = load_extensions(data, object_hash);
                 (entries, ext, data)
             }
