@@ -1,9 +1,11 @@
-use crate::util::{split_at_byte_exclusive, split_at_pos};
+use std::ops::Range;
+
 use crate::{
     decode::{header, Error},
-    entry, Entry, Version,
+    entry,
+    util::{read_u32, split_at_byte_exclusive, split_at_pos},
+    Entry, Version,
 };
-use std::ops::Range;
 
 /// a guess directly from git sources
 pub const AVERAGE_V4_DELTA_PATH_LEN_IN_BYTES: usize = 80;
@@ -182,11 +184,6 @@ fn load_one<'a>(
 fn skip_padding(data: &[u8]) -> &[u8] {
     let skip = data.iter().take_while(|b| **b == 0).count();
     &data[skip..]
-}
-
-#[inline]
-fn read_u32(data: &[u8]) -> Option<(u32, &[u8])> {
-    split_at_pos(data, 4).map(|(num, data)| (u32::from_be_bytes(num.try_into().unwrap()), data))
 }
 
 #[inline]

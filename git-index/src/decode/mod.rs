@@ -1,10 +1,14 @@
+use std::ops::Range;
+
 use bstr::{BStr, ByteSlice};
 use filetime::FileTime;
 use git_hash::Kind;
-use std::ops::Range;
 
-use crate::util::{from_be_u32, split_at_byte_exclusive, split_at_pos};
-use crate::{entry, extension, Entry, State, Version};
+use crate::{
+    entry, extension,
+    util::{from_be_u32, split_at_byte_exclusive, split_at_pos},
+    Entry, State, Version,
+};
 
 mod entries;
 pub mod header;
@@ -51,19 +55,29 @@ impl State {
         );
         let (entries, ext, data) = match start_of_extensions {
             Some(offset) => {
-                let (entries_res, (ext, data)) = git_features::parallel::join(
-                    // TODO load all extensions in thread, then get IEOT, then possibly multi-threaded entry parsing
-                    || {
-                        entries::load_all(
-                            post_header_data,
-                            num_entries,
-                            path_backing_buffer_size,
-                            object_hash,
-                            version,
+                let start_of_extensions = &data[offset..];
+                let index_offsets_table = extension::index_entry_offset_table::find(start_of_extensions, object_hash);
+                let (entries_res, (ext, data)) = match index_offsets_table {
+                    Some(entry_offsets) => {
+                        dbg!(entry_offsets);
+                        todo!("threaded entry loading if its worth it")
+                    }
+                    None => {
+                        git_features::parallel::join(
+                            // TODO load all extensions in scoped, then get IEOT, then possibly multi-threaded entry parsing
+                            || {
+                                entries::load_all(
+                                    post_header_data,
+                                    num_entries,
+                                    path_backing_buffer_size,
+                                    object_hash,
+                                    version,
+                                )
+                            },
+                            || extension::decode::all(start_of_extensions, object_hash),
                         )
-                    },
-                    || extension::decode::all(&data[offset..], object_hash),
-                );
+                    }
+                };
                 (entries_res?.0, ext, data)
             }
             None => {

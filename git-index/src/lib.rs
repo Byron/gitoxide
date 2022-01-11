@@ -74,6 +74,11 @@ pub struct State {
 
 pub(crate) mod util {
     #[inline]
+    pub fn read_u32(data: &[u8]) -> Option<(u32, &[u8])> {
+        split_at_pos(data, 4).map(|(num, data)| (u32::from_be_bytes(num.try_into().unwrap()), data))
+    }
+
+    #[inline]
     pub fn from_be_u32(b: &[u8]) -> u32 {
         u32::from_be_bytes(b.try_into().unwrap())
     }

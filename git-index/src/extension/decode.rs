@@ -1,6 +1,4 @@
-use crate::extension;
-use crate::extension::Signature;
-use crate::util::from_be_u32;
+use crate::{extension, extension::Signature, util::from_be_u32};
 
 pub fn header(data: &[u8]) -> (Signature, u32, &[u8]) {
     let (signature, data) = data.split_at(4);
@@ -18,6 +16,7 @@ pub fn all(beginning_of_extensions: &[u8], object_hash: git_hash::Kind) -> (Outc
                         ext.cache_tree = extension::tree::decode(ext_data, object_hash);
                     }
                     extension::end_of_index_entry::SIGNATURE => {} // skip already done
+                    extension::index_entry_offset_table::SIGNATURE => {} // not relevant/obtained already
                     _unknown => {}                                 // skip unknown extensions, too
                 }
             }

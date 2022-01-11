@@ -1,5 +1,6 @@
-use git_features::decode::{leb64, leb64_from_read};
 use std::io;
+
+use git_features::decode::{leb64, leb64_from_read};
 
 use super::{BLOB, COMMIT, OFS_DELTA, REF_DELTA, TAG, TREE};
 use crate::data;
