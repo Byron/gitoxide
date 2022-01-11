@@ -1,5 +1,7 @@
+use bstr::{BStr, ByteSlice};
 use filetime::FileTime;
 use git_hash::Kind;
+use std::ops::Range;
 
 use crate::{entry, extension, Entry, State, Version};
 
@@ -157,6 +159,8 @@ impl State {
 
 mod load_entries {
     use crate::{decode::header, Entry, Version};
+    /// a guess directly from git sources
+    pub const AVERAGE_V4_DELTA_PATH_LEN_IN_BYTES: usize = 80;
 
     pub struct Outcome {
         pub entries: Vec<Entry>,
@@ -185,7 +189,7 @@ mod load_entries {
                     .saturating_sub(num_entries as usize * on_disk_entry_sans_path(object_hash))
                     .saturating_sub(header::SIZE)
             }
-            Version::V4 => num_entries as usize * 80, /* a guess directly from git sources */
+            Version::V4 => num_entries as usize * AVERAGE_V4_DELTA_PATH_LEN_IN_BYTES,
         }
     }
 }
@@ -199,11 +203,22 @@ fn load_entries(
     version: Version,
 ) -> Result<(load_entries::Outcome, &[u8]), Error> {
     let mut path_backing = Vec::<u8>::with_capacity(path_backing_capacity);
-    let mut entries = Vec::with_capacity(num_entries as usize);
+    let mut entries = Vec::<Entry>::with_capacity(num_entries as usize);
     let mut is_sparse = false;
+    let has_delta_paths = version == Version::V4;
+    let mut prev_path = None;
+    let mut delta_buf = Vec::<u8>::with_capacity(load_entries::AVERAGE_V4_DELTA_PATH_LEN_IN_BYTES);
+
     for idx in 0..num_entries {
-        let (entry, remaining) =
-            decode_entry(data, &mut path_backing, object_hash.len_in_bytes(), version).ok_or(Error::Entry(idx))?;
+        let (entry, remaining) = decode_entry(
+            data,
+            &mut path_backing,
+            object_hash.len_in_bytes(),
+            has_delta_paths,
+            prev_path,
+        )
+        .ok_or(Error::Entry(idx))?;
+
         data = remaining;
         if entry::mode::is_sparse(entry.stat.mode) {
             is_sparse = true;
@@ -212,6 +227,7 @@ fn load_entries(
         //       also don't yet handle but probably could, maybe even smartly with the collection.
         //       For now it's unclear to me how they access the index, they could iterate quickly, and have fast access by path.
         entries.push(entry);
+        prev_path = entries.last().map(|e| (e.path.clone(), &mut delta_buf));
     }
 
     Ok((
@@ -224,11 +240,13 @@ fn load_entries(
     ))
 }
 
+/// Note that `prev_path` is only useful if the version is V4
 fn decode_entry<'a>(
     data: &'a [u8],
     path_backing: &mut Vec<u8>,
     hash_len: usize,
-    version: Version,
+    has_delta_paths: bool,
+    prev_path_and_buf: Option<(Range<usize>, &mut Vec<u8>)>,
 ) -> Option<(Entry, &'a [u8])> {
     let (ctime_secs, data) = read_u32(data)?;
     let (ctime_nsecs, data) = read_u32(data)?;
@@ -258,25 +276,36 @@ fn decode_entry<'a>(
         (flags, data)
     };
 
-    let (path, data) = match version {
-        Version::V2 | Version::V3 => {
-            let (path, data) = if (flags & entry::mask::PATH_LEN) == entry::mask::PATH_LEN {
-                split_at_byte_exclusive(data, 0)?
-            } else {
-                let path_len = (flags & entry::mask::PATH_LEN) as usize;
-                split_at_pos(data, path_len)?
-            };
-
-            (path, skip_padding(data))
+    let start = path_backing.len();
+    let data = if has_delta_paths {
+        let (strip_len, consumed) = git_features::decode::leb64(data);
+        let data = &data[consumed..];
+        if let Some((prev_path, buf)) = prev_path_and_buf {
+            let end = prev_path.end.checked_sub(strip_len.try_into().ok()?)?;
+            let copy_len = end.checked_sub(prev_path.start)?;
+            if copy_len > 0 {
+                buf.resize(copy_len, 0);
+                buf.copy_from_slice(&path_backing[prev_path.start..end]);
+                path_backing.extend_from_slice(buf);
+            }
         }
-        Version::V4 => todo!("handle delta-paths"),
-    };
 
-    let path = {
-        let start = path_backing.len();
+        let (path, data) = split_at_byte_exclusive(data, 0)?;
         path_backing.extend_from_slice(path);
-        start..path_backing.len()
+
+        data
+    } else {
+        let (path, data) = if (flags & entry::mask::PATH_LEN) == entry::mask::PATH_LEN {
+            split_at_byte_exclusive(data, 0)?
+        } else {
+            let path_len = (flags & entry::mask::PATH_LEN) as usize;
+            split_at_pos(data, path_len)?
+        };
+
+        path_backing.extend_from_slice(path);
+        skip_padding(data)
     };
+    let path_range = start..path_backing.len();
 
     Some((
         Entry {
@@ -298,7 +327,7 @@ fn decode_entry<'a>(
             },
             id: git_hash::ObjectId::from(hash),
             flags: flags & !entry::mask::PATH_LEN,
-            path,
+            path: path_range,
         },
         data,
     ))

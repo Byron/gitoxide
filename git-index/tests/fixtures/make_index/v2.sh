@@ -1,7 +1,8 @@
 #!/bin/bash
 set -eu -o pipefail
 
-GIT_INDEX_VERSION=2 git init -q
+export GIT_INDEX_VERSION=2
+git init -q
 git config commit.gpgsign false
 git config index.threads 2
 

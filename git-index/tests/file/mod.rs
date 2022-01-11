@@ -36,6 +36,29 @@ mod init {
     fn read_without_any_extension() {}
 
     #[test]
-    #[ignore]
-    fn read_v4_with_delta_paths_and_ieot_ext() {}
+    fn read_v4_with_delta_paths_and_ieot_ext() {
+        let file = file("v4_more_files_IEOT");
+        assert_eq!(file.version(), Version::V4);
+
+        assert_eq!(file.entries().len(), 10);
+        for (idx, path) in [
+            "a",
+            "b",
+            "c",
+            "d/a",
+            "d/b",
+            "d/c",
+            "d/last/123",
+            "d/last/34",
+            "d/last/6",
+            "x",
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let e = &file.entries()[idx];
+            assert_eq!(e.path(&file), path);
+            assert_eq!(e.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"))
+        }
+    }
 }
