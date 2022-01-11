@@ -29,7 +29,7 @@ pub fn estimate_path_storage_requirements_in_bytes(
         (4 * 6) +  // various stat fields
         2 + // flag, ignore extended flag as we'd rather overallocate a bit
         object_hash.len_in_bytes()
-    };
+    }
     match version {
         Version::V3 | Version::V2 => {
             let size_of_entries_block = offset_to_extensions.unwrap_or(on_disk_size);
@@ -109,7 +109,7 @@ fn load_one<'a>(
     let (flags, data) = read_u16(data)?;
     let flags = flags as u32;
     let (flags, data) = if flags & entry::flags::EXTENDED == entry::flags::EXTENDED {
-        let (mut extended_flags, data) = read_u16(data)?;
+        let (extended_flags, data) = read_u16(data)?;
         let extended_flags: u32 = (extended_flags as u32) << 16;
         const ALL_KNOWN_EXTENDED_FLAGS: u32 = entry::flags::INTENT_TO_ADD | entry::flags::SKIP_WORKTREE;
         assert_eq!(

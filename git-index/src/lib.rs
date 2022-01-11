@@ -1,5 +1,5 @@
 #![deny(unsafe_code, missing_docs, rust_2018_idioms)]
-#![allow(missing_docs, unused)]
+#![allow(missing_docs, dead_code)]
 
 use std::{ops::Range, path::PathBuf};
 

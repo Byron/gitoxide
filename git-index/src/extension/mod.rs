@@ -1,7 +1,5 @@
 use smallvec::SmallVec;
 
-use crate::{util::from_be_u32, Version};
-
 const MIN_SIZE: usize = 4 /* signature */ + 4 /* size */;
 
 pub type Signature = [u8; 4];
@@ -48,7 +46,7 @@ pub(crate) mod index_entry_offset_table {
             _unknown => return None,
         }
 
-        let entry_size = (4 + 4);
+        let entry_size = 4 + 4;
         let num_offsets = data.len() / entry_size;
         if num_offsets == 0 || data.len() % entry_size != 0 {
             return None;

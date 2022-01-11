@@ -1,14 +1,6 @@
-use std::ops::Range;
-
-use bstr::{BStr, ByteSlice};
 use filetime::FileTime;
-use git_hash::Kind;
 
-use crate::{
-    entry, extension,
-    util::{from_be_u32, split_at_byte_exclusive, split_at_pos},
-    Entry, State, Version,
-};
+use crate::{extension, State};
 
 mod entries;
 pub mod header;
