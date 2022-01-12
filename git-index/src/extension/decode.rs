@@ -17,7 +17,10 @@ pub fn all(maybe_beginning_of_extensions: &[u8], object_hash: git_hash::Kind) ->
                     }
                     extension::end_of_index_entry::SIGNATURE => {} // skip already done
                     extension::index_entry_offset_table::SIGNATURE => {} // not relevant/obtained already
-                    _unknown => {}                                 // skip unknown extensions, too
+                    mandatory if mandatory[0].is_ascii_lowercase() => match mandatory {
+                        _unknown => todo!("error on mandatory extension that we can't handle"),
+                    },
+                    _unknown => {} // skip unknown extensions, too
                 }
             }
             (ext, &maybe_beginning_of_extensions[ext_iter.consumed..])
