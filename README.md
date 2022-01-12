@@ -84,6 +84,7 @@ Follow linked crate name for detailed status. Please note that all crates follow
   * `gitoxide-core`
 * **very early**    
   * [git-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-index)
+  * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
 * **idea**
   * [git-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-worktree)
   * [git-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tui)

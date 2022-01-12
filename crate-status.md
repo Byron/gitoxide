@@ -211,7 +211,18 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * manage multiple worktrees
 * deal with exclude specifications, like .gitignore and other exclude files.
 
+### git-bitmap
+
+A plumbing crate with shared functionality regarding EWAH compressed bitmaps.
+
+* [ ] `Array` type to read and write bits
+* [ ] decode on-disk representation
+* [ ] encode on-disk representation
+
 ### git-index
+
+The git staging area.
+
 * read 
   * [x] V2
   * [x] V3

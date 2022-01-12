@@ -1105,6 +1105,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-bitmap"
+version = "0.0.0"
+dependencies = [
+ "git-testtools",
+ "quick-error",
+]
+
+[[package]]
 name = "git-chunk"
 version = "0.2.0"
 dependencies = [

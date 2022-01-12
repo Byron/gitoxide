@@ -115,6 +115,7 @@ members = [
     "git-diff",
     "git-traverse",
     "git-index",
+    "git-bitmap",
     "git-worktree",
     "git-packetline",
     "git-transport",
