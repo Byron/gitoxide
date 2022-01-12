@@ -10,6 +10,17 @@ pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl Fn
     .unwrap()
 }
 
+/// Runs `f` with a scope to be used for spawning threads that will not outlive the function call.
+/// That way it's possible to handle threads without needing the 'static lifetime for data they interact with.
+///
+/// Note that the threads should not rely on actual parallelism as threading might be turned off entirely.
+pub fn threads<'env, F, R>(f: F) -> std::thread::Result<R>
+where
+    F: FnOnce(&crossbeam_utils::thread::Scope<'env>) -> R,
+{
+    crossbeam_utils::thread::scope(f)
+}
+
 /// Read items from `input` and `consume` them in multiple threads,
 /// whose output output is collected by a `reducer`. Its task is to
 /// aggregate these outputs into the final result returned by this function with the benefit of not having to be thread-safe.
