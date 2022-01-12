@@ -32,6 +32,7 @@ internal-testing-to-avoid-being-run-by-cargo-test-all = []
 [dependencies]
 git-features = { version ="^0.18.0", path = "../git-features", features = ["rustsha1"] }
 git-hash = { version ="^0.8.0", path = "../git-hash" }
+git-bitmap = { version ="^0.0.0", path = "../git-bitmap" }
 
 quick-error = "2.0.0"
 memmap2 = "0.5.0"

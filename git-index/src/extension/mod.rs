@@ -22,6 +22,7 @@ pub struct Tree {
 
 pub struct Link {
     pub shared_index_checksum: git_hash::ObjectId,
+    pub bitmaps: Option<link::Bitmaps>,
 }
 
 mod iter;
@@ -40,6 +41,11 @@ pub mod link {
 
     pub const SIGNATURE: Signature = *b"link";
 
+    pub struct Bitmaps {
+        pub delete: git_bitmap::ewah::Array,
+        pub replace: git_bitmap::ewah::Array,
+    }
+
     pub mod decode {
         use quick_error::quick_error;
 
@@ -48,6 +54,10 @@ pub mod link {
             pub enum Error {
                 Corrupt(message: &'static str) {
                     display("{}", message)
+                }
+                BitmapDecode{err: git_bitmap::ewah::decode::Error, kind: &'static str} {
+                    display("{} bitmap corrupt", kind)
+                    source(err)
                 }
             }
         }
@@ -63,8 +73,22 @@ pub mod link {
         if data.is_empty() {
             return Ok(Link {
                 shared_index_checksum: id,
+                bitmaps: None,
             });
         }
-        todo!("decode link bitmaps")
+
+        let (delete, data) =
+            git_bitmap::ewah::decode(data).map_err(|err| decode::Error::BitmapDecode { kind: "delete", err })?;
+        let (replace, data) =
+            git_bitmap::ewah::decode(data).map_err(|err| decode::Error::BitmapDecode { kind: "replace", err })?;
+
+        if !data.is_empty() {
+            return Err(decode::Error::Corrupt("garbage trailing link extension"));
+        }
+
+        Ok(Link {
+            shared_index_checksum: id,
+            bitmaps: Some(Bitmaps { delete, replace }),
+        })
     }
 }

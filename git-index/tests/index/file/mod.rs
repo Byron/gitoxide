@@ -56,7 +56,6 @@ mod init {
     }
 
     #[test]
-    #[ignore]
     fn read_v2_split_index() {
         let file = file("v2_split_index");
         assert_eq!(file.version(), Version::V2);

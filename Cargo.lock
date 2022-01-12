@@ -1247,6 +1247,7 @@ dependencies = [
  "atoi",
  "bstr",
  "filetime",
+ "git-bitmap",
  "git-features 0.18.0",
  "git-hash 0.8.0",
  "git-testtools",
