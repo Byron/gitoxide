@@ -41,6 +41,9 @@ mod serial;
 #[cfg(not(feature = "parallel"))]
 pub use serial::{in_parallel, join, threads};
 
+mod in_order;
+pub use in_order::InOrderIter;
+
 mod eager_iter;
 pub use eager_iter::{EagerIter, EagerIterIf};
 

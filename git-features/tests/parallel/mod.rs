@@ -1,6 +1,8 @@
 //! Tests that are working similarly in parallel and serial mode
 use git_features::parallel;
 
+mod in_order_iter;
+
 #[derive(Default)]
 struct Adder {
     count: usize,
