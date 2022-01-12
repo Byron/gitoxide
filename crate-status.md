@@ -213,11 +213,12 @@ Check out the [performance discussion][git-traverse-performance] as well.
 
 ### git-bitmap
 
-A plumbing crate with shared functionality regarding EWAH compressed bitmaps.
+A plumbing crate with shared functionality regarding EWAH compressed bitmaps, as well as other kinds of bitmap implementations.
 
-* [ ] `Array` type to read and write bits
-* [ ] decode on-disk representation
-* [ ] encode on-disk representation
+* **EWAH**
+  * [ ] `Array` type to read and write bits
+  * [x] decode on-disk representation
+  * [ ] encode on-disk representation
 
 ### git-index
 
@@ -235,8 +236,8 @@ The git staging area.
     * [ ] REUC resolving undo
     * [ ] UNTR untracked cache
     * [ ] FSMN file system monitor cache V1 and V2
-    * [ ] link base indices to take information from, split index
-    * [ ] sdir sparse directory entries
+    * [x] 'link' base indices to take information from, split index
+    * [ ] 'sdir' sparse directory entries
 * `stat` update
     * [ ] optional threaded `stat` based on thread_cost (aka preload)
 * [ ] handling of `.gitignore` and system file exclude configuration
@@ -246,11 +247,11 @@ The git staging area.
     * [ ] REUC resolving undo
     * [ ] UNTR untracked cache
     * [ ] FSMN file system monitor cache V1 and V2
-    * [ ] link base indices to take information from, split index
-    * [ ] sdir sparse directory entries
     * [ ] EOIE end of index entry
     * [ ] IEOT index entry offset table
-* additinoal support
+    * [ ] 'link' base indices to take information from, split index
+    * [ ] 'sdir' sparse directory entries
+* additional support
     * [ ] non-sparse
     * [ ] sparse (search for [`sparse index` here](https://github.blog/2021-08-16-highlights-from-git-2-33/))
 * add and remove entries

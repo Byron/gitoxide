@@ -37,11 +37,14 @@ pub mod ewah {
         let (len, data) = decode::u32(data).ok_or_else(|| decode::Error::Corrupt("eof reading chunk length"))?;
         let len = len as usize;
 
-        let (mut bits, data) =
-            decode::split_at_pos(data, len).ok_or_else(|| decode::Error::Corrupt("eof while reading bit data"))?;
+        // NOTE: git does this by copying all bytes first, and then it will change the endianess in a separate loop.
+        //       Maybe it's faster, but we can't do it without unsafe. Let's leave it to the optimizer and maybe
+        //       one day somebody will find out that it's worth it to use unsafe here.
+        let (mut bits, data) = decode::split_at_pos(data, len * std::mem::size_of::<u64>())
+            .ok_or_else(|| decode::Error::Corrupt("eof while reading bit data"))?;
         let mut buf = Vec::<u64>::with_capacity(len);
         for _ in 0..len {
-            let (bit_num, rest) = bits.split_at(8);
+            let (bit_num, rest) = bits.split_at(std::mem::size_of::<u64>());
             bits = rest;
             buf.push(u64::from_be_bytes(bit_num.try_into().unwrap()))
         }
