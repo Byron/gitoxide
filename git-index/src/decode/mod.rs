@@ -68,27 +68,28 @@ impl State {
             Some(offset) if num_threads > 1 => {
                 let start_of_extensions = &data[offset..];
                 let index_offsets_table = extension::index_entry_offset_table::find(start_of_extensions, object_hash);
-                let (entries_res, (ext, data)) = match index_offsets_table {
-                    Some(entry_offsets) => {
-                        dbg!(entry_offsets);
-                        todo!("threaded entry loading if its worth it")
-                    }
-                    None => {
-                        git_features::parallel::join(
+                let (entries_res, (ext, data)) = git_features::parallel::threads(|_scope| {
+                    match index_offsets_table {
+                        Some(entry_offsets) => {
+                            dbg!(entry_offsets);
+                            todo!("threaded entry loading if its worth it")
+                        }
+                        None => {
                             // TODO load all extensions in scoped, then get IEOT, then possibly multi-threaded entry parsing
-                            || {
+                            (
                                 entries::load_all(
                                     post_header_data,
                                     num_entries,
                                     path_backing_buffer_size,
                                     object_hash,
                                     version,
-                                )
-                            },
-                            || extension::decode::all(start_of_extensions, object_hash),
-                        )
+                                ),
+                                extension::decode::all(start_of_extensions, object_hash),
+                            )
+                        }
                     }
-                };
+                })
+                .unwrap(); // this unwrap is for panics - if these happened we are done anyway.
                 (entries_res?.0, ext, data)
             }
             None | Some(_) => {

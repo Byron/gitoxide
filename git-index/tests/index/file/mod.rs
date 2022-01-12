@@ -36,7 +36,6 @@ mod init {
     fn read_without_any_extension() {}
 
     #[test]
-    #[ignore]
     fn read_v4_with_delta_paths_and_ieot_ext() {
         let file = file("v4_more_files_IEOT");
         assert_eq!(file.version(), Version::V4);
