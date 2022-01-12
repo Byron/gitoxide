@@ -28,6 +28,7 @@ mod error {
     }
 }
 pub use error::Error;
+use git_features::parallel::InOrderIter;
 
 #[derive(Default)]
 pub struct Options {
@@ -82,16 +83,18 @@ impl State {
                             for (id, chunks) in entry_offsets.chunks(chunk_size).enumerate() {
                                 let chunks = chunks.to_vec();
                                 threads.push(scope.spawn(move |_| {
-                                    let num_entries = chunks.iter().map(|c| c.num_entries).sum::<u32>() as usize;
-                                    let mut entries = Vec::with_capacity(num_entries);
-                                    let path_backing_buffer_size = entries::estimate_path_storage_requirements_in_bytes(
-                                        num_entries as u32,
-                                        data.len() / num_chunks,
-                                        start_of_extensions.map(|ofs| ofs / num_chunks),
-                                        object_hash,
-                                        version,
-                                    );
-                                    let mut path_backing = Vec::with_capacity(path_backing_buffer_size);
+                                    let num_entries_for_chunks =
+                                        chunks.iter().map(|c| c.num_entries).sum::<u32>() as usize;
+                                    let mut entries = Vec::with_capacity(num_entries_for_chunks);
+                                    let path_backing_buffer_size_for_chunks =
+                                        entries::estimate_path_storage_requirements_in_bytes(
+                                            num_entries_for_chunks as u32,
+                                            data.len() / num_chunks,
+                                            start_of_extensions.map(|ofs| ofs / num_chunks),
+                                            object_hash,
+                                            version,
+                                        );
+                                    let mut path_backing = Vec::with_capacity(path_backing_buffer_size_for_chunks);
                                     let mut is_sparse = false;
                                     for offset in chunks {
                                         let (
@@ -119,7 +122,35 @@ impl State {
                                     ))
                                 }));
                             }
-                            todo!("combined thread results in order ")
+                            let mut results =
+                                InOrderIter::from(threads.into_iter().map(|thread| thread.join().unwrap()));
+                            let mut acc = results.next().expect("have at least two results, one per thread");
+                            // We explicitly don't adjust the reserve in acc and rather allow for more copying
+                            // to happens as vectors grow to keep the peak memory size low.
+                            // NOTE: one day, we might use a memory pool for paths. We could encode the block of memory
+                            //       in some bytes in the path offset. That way there is more indirection/slower access
+                            //       to the path, but it would save time here.
+                            //       As it stands, `git` is definitely more efficient at this and probably uses less memory too.
+                            //       Maybe benchmarks can tell if that is noticeable later at 200/400GB/s memory bandwidth, or maybe just
+                            //       100GB/s on a single core.
+                            while let (Ok(lhs), Some(res)) = (acc.as_mut(), results.next()) {
+                                match res {
+                                    Ok(rhs) => {
+                                        lhs.is_sparse |= rhs.is_sparse;
+                                        let ofs = lhs.path_backing.len();
+                                        lhs.path_backing.extend(rhs.path_backing);
+                                        lhs.entries.extend(rhs.entries.into_iter().map(|mut e| {
+                                            e.path.start += ofs;
+                                            e.path.end += ofs;
+                                            e
+                                        }));
+                                    }
+                                    Err(err) => {
+                                        acc = Err(err);
+                                    }
+                                }
+                            }
+                            acc.map(|acc| (acc, &data[data.len() - object_hash.len_in_bytes()..]))
                         }
                         None => load_entries(
                             post_header_data,

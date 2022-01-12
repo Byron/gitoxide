@@ -6,8 +6,8 @@ pub fn header(data: &[u8]) -> (Signature, u32, &[u8]) {
     (signature.try_into().unwrap(), from_be_u32(size), data)
 }
 
-pub fn all(beginning_of_extensions: &[u8], object_hash: git_hash::Kind) -> (Outcome, &[u8]) {
-    extension::Iter::new_without_checksum(beginning_of_extensions, object_hash)
+pub fn all(maybe_beginning_of_extensions: &[u8], object_hash: git_hash::Kind) -> (Outcome, &[u8]) {
+    extension::Iter::new_without_checksum(maybe_beginning_of_extensions, object_hash)
         .map(|mut ext_iter| {
             let mut ext = Outcome::default();
             for (signature, ext_data) in ext_iter.by_ref() {
@@ -20,9 +20,9 @@ pub fn all(beginning_of_extensions: &[u8], object_hash: git_hash::Kind) -> (Outc
                     _unknown => {}                                 // skip unknown extensions, too
                 }
             }
-            (ext, &beginning_of_extensions[ext_iter.consumed..])
+            (ext, &maybe_beginning_of_extensions[ext_iter.consumed..])
         })
-        .unwrap_or_else(|| (Outcome::default(), beginning_of_extensions))
+        .unwrap_or_else(|| (Outcome::default(), maybe_beginning_of_extensions))
 }
 
 #[derive(Default)]
