@@ -4,9 +4,6 @@ use std::{cmp::Ordering, collections::BTreeMap};
 pub type SequenceId = usize;
 
 /// An iterator which olds iterated items with a **sequential** ID starting at 0 long enough to dispense them in order.
-///
-/// Note that this iterator is made specifically to support the signature of the iterator returned
-/// by [from_counts_iter(…)][super::entry::iter_from_counts()].
 pub struct InOrderIter<T, I> {
     /// The iterator yielding the out-of-order elements we are to yield in order.
     pub inner: I,
