@@ -8,6 +8,7 @@ use git_repository::{
     interrupt,
     objs::bstr::ByteVec,
     odb::{pack, pack::FindExt},
+    parallel::InOrderIter,
     prelude::Finalize,
     progress, traverse, Progress,
 };
@@ -237,7 +238,7 @@ where
     let num_objects = counts.len();
     let mut in_order_entries = {
         let progress = progress.add_child("creating entries");
-        pack::data::output::InOrderIter::from(pack::data::output::entry::iter_from_counts(
+        InOrderIter::from(pack::data::output::entry::iter_from_counts(
             counts,
             handle,
             progress,

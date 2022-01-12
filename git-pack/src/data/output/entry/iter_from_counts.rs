@@ -1,7 +1,6 @@
 use std::{cmp::Ordering, sync::Arc};
 
-use git_features::parallel::SequenceId;
-use git_features::{parallel, progress::Progress};
+use git_features::{parallel, parallel::SequenceId, progress::Progress};
 
 use crate::data::output;
 
@@ -277,8 +276,7 @@ mod util {
 mod reduce {
     use std::marker::PhantomData;
 
-    use git_features::parallel;
-    use git_features::parallel::SequenceId;
+    use git_features::{parallel, parallel::SequenceId};
 
     use super::Outcome;
     use crate::data::output;

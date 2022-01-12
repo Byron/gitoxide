@@ -1,7 +1,9 @@
 use std::{convert::Infallible, sync::atomic::AtomicBool};
 
-use git_features::parallel::InOrderIter;
-use git_features::{parallel::reduce::Finalize, progress};
+use git_features::{
+    parallel::{reduce::Finalize, InOrderIter},
+    progress,
+};
 use git_odb::{compound, pack, pack::FindExt};
 use git_pack::data::{
     output,
