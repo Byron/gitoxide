@@ -13,12 +13,16 @@ pub fn all(maybe_beginning_of_extensions: &[u8], object_hash: git_hash::Kind) ->
             for (signature, ext_data) in ext_iter.by_ref() {
                 match signature {
                     extension::tree::SIGNATURE => {
-                        ext.cache_tree = extension::tree::decode(ext_data, object_hash);
+                        ext.tree = extension::tree::decode(ext_data, object_hash);
                     }
                     extension::end_of_index_entry::SIGNATURE => {} // skip already done
                     extension::index_entry_offset_table::SIGNATURE => {} // not relevant/obtained already
                     mandatory if mandatory[0].is_ascii_lowercase() => match mandatory {
-                        _unknown => todo!("error on mandatory extension that we can't handle"),
+                        extension::link::SIGNATURE => ext.link = extension::link::decode(ext_data, object_hash),
+                        _unknown => todo!(
+                            "error on mandatory extension that we can't handle: {}",
+                            String::from_utf8_lossy(&_unknown)
+                        ),
                     },
                     _unknown => {} // skip unknown extensions, too
                 }
@@ -30,5 +34,6 @@ pub fn all(maybe_beginning_of_extensions: &[u8], object_hash: git_hash::Kind) ->
 
 #[derive(Default)]
 pub struct Outcome {
-    pub cache_tree: Option<extension::Tree>,
+    pub tree: Option<extension::Tree>,
+    pub link: Option<extension::Link>,
 }

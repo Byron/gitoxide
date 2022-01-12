@@ -194,16 +194,18 @@ impl State {
             path_backing,
             is_sparse,
         } = entries;
-        let extension::decode::Outcome { cache_tree } = ext;
+        let extension::decode::Outcome { tree, link } = ext;
 
         Ok((
             State {
                 timestamp,
                 version,
-                cache_tree,
                 entries,
                 path_backing,
                 is_sparse,
+
+                tree,
+                link,
             },
             checksum,
         ))

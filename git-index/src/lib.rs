@@ -33,7 +33,7 @@ pub mod decode;
 pub enum Version {
     /// Supports entries and various extensions.
     V2 = 2,
-    /// Adds support for additional flags for each entry.
+    /// Adds support for additional flags for each entry, called extended entries.
     V3 = 3,
     /// Supports deltified entry paths.
     V4 = 4,
@@ -66,12 +66,15 @@ pub struct State {
     /// same timestamp as this as potentially changed, checking more thoroughly if a change actually happened.
     timestamp: FileTime,
     version: Version,
-    cache_tree: Option<extension::Tree>,
     entries: Vec<Entry>,
     /// A memory area keeping all index paths, in full length, independently of the index version.
     path_backing: Vec<u8>,
     /// True if one entry in the index has a special marker mode
     is_sparse: bool,
+
+    // Extensions
+    tree: Option<extension::Tree>,
+    link: Option<extension::Link>,
 }
 
 pub(crate) mod util {

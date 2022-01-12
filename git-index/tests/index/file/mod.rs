@@ -3,10 +3,10 @@ mod init {
     use git_testtools::hex_to_id;
 
     fn file(name: &str) -> git_index::File {
-        git_index::File::at(crate::index::fixture_path(name), git_index::decode::Options::default()).unwrap()
+        git_index::File::at(crate::fixture_path(name), git_index::decode::Options::default()).unwrap()
     }
     fn file_opt(name: &str, opts: git_index::decode::Options) -> git_index::File {
-        git_index::File::at(crate::index::fixture_path(name), opts).unwrap()
+        git_index::File::at(crate::fixture_path(name), opts).unwrap()
     }
 
     #[test]
@@ -43,8 +43,24 @@ mod init {
     }
 
     #[test]
+    fn read_split_index_without_any_extension() {
+        let file = git_index::File::at(
+            crate::fixture_path("v2_split_index")
+                .parent()
+                .unwrap()
+                .join("sharedindex.f1d614440cb10c1b0ba226b0fe73ce5e9d2552dc"),
+            git_index::decode::Options::default(),
+        )
+        .unwrap();
+        assert_eq!(file.version(), Version::V2);
+    }
+
+    #[test]
     #[ignore]
-    fn read_without_any_extension() {}
+    fn read_v2_split_index() {
+        let file = file("v2_split_index");
+        assert_eq!(file.version(), Version::V2);
+    }
 
     #[test]
     fn read_v4_with_delta_paths_and_ieot_ext() {
