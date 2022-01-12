@@ -1,6 +1,7 @@
 mod init {
     use git_index::Version;
     use git_testtools::hex_to_id;
+    use std::path::{Path, PathBuf};
 
     fn file(name: &str) -> git_index::File {
         git_index::File::at(crate::fixture_path(name), git_index::decode::Options::default()).unwrap()
@@ -42,13 +43,20 @@ mod init {
         }
     }
 
+    fn find_shared_index_for(index: impl AsRef<Path>) -> PathBuf {
+        let mut matches = std::fs::read_dir(index.as_ref().parent().unwrap())
+            .unwrap()
+            .map(Result::unwrap)
+            .filter(|e: &std::fs::DirEntry| e.file_name().into_string().unwrap().starts_with("sharedindex."));
+        let res = matches.next().unwrap();
+        assert!(matches.next().is_none(), "found more than one shared indices");
+        res.path()
+    }
+
     #[test]
     fn read_split_index_without_any_extension() {
         let file = git_index::File::at(
-            crate::fixture_path("v2_split_index")
-                .parent()
-                .unwrap()
-                .join("sharedindex.f1d614440cb10c1b0ba226b0fe73ce5e9d2552dc"),
+            find_shared_index_for(crate::fixture_path("v2_split_index")),
             git_index::decode::Options::default(),
         )
         .unwrap();
