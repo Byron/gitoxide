@@ -42,8 +42,8 @@ pub mod link {
     pub const SIGNATURE: Signature = *b"link";
 
     pub struct Bitmaps {
-        pub delete: git_bitmap::ewah::Array,
-        pub replace: git_bitmap::ewah::Array,
+        pub delete: git_bitmap::ewah::Vec,
+        pub replace: git_bitmap::ewah::Vec,
     }
 
     pub mod decode {

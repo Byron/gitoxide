@@ -32,7 +32,7 @@ pub mod ewah {
         }
     }
 
-    pub fn decode(data: &[u8]) -> Result<(Array, &[u8]), decode::Error> {
+    pub fn decode(data: &[u8]) -> Result<(Vec, &[u8]), decode::Error> {
         let (num_bits, data) = decode::u32(data).ok_or(decode::Error::Corrupt("eof reading amount of bits"))?;
         let (len, data) = decode::u32(data).ok_or(decode::Error::Corrupt("eof reading chunk length"))?;
         let len = len as usize;
@@ -42,7 +42,7 @@ pub mod ewah {
         //       one day somebody will find out that it's worth it to use unsafe here.
         let (mut bits, data) = decode::split_at_pos(data, len * std::mem::size_of::<u64>())
             .ok_or(decode::Error::Corrupt("eof while reading bit data"))?;
-        let mut buf = Vec::<u64>::with_capacity(len);
+        let mut buf = std::vec::Vec::<u64>::with_capacity(len);
         for _ in 0..len {
             let (bit_num, rest) = bits.split_at(std::mem::size_of::<u64>());
             bits = rest;
@@ -52,7 +52,7 @@ pub mod ewah {
         let (rlw, data) = decode::u32(data).ok_or(decode::Error::Corrupt("eof while reading run length width"))?;
 
         Ok((
-            Array {
+            Vec {
                 num_bits,
                 bits: buf,
                 rlw,
@@ -61,10 +61,11 @@ pub mod ewah {
         ))
     }
 
+    /// A growable collection of u64 that are seen as stream of individual bits.
     #[allow(dead_code)]
-    pub struct Array {
+    pub struct Vec {
         num_bits: u32,
-        bits: Vec<u64>,
+        bits: std::vec::Vec<u64>,
         rlw: u32,
     }
 }
