@@ -44,4 +44,3 @@ fn db(kind: DbKind) -> crate::Result<git_odb::HandleArc> {
 }
 
 mod count_and_entries;
-mod in_order_iter;

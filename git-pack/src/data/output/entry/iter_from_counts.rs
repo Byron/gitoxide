@@ -1,8 +1,9 @@
 use std::{cmp::Ordering, sync::Arc};
 
+use git_features::parallel::SequenceId;
 use git_features::{parallel, progress::Progress};
 
-use crate::data::{output, output::ChunkId};
+use crate::data::output;
 
 /// Given a known list of object `counts`, calculate entries ready to be put into a data pack.
 ///
@@ -44,7 +45,7 @@ pub fn iter_from_counts<Find>(
         thread_limit,
         chunk_size,
     }: Options,
-) -> impl Iterator<Item = Result<(ChunkId, Vec<output::Entry>), Error<Find::Error>>>
+) -> impl Iterator<Item = Result<(SequenceId, Vec<output::Entry>), Error<Find::Error>>>
        + parallel::reduce::Finalize<Reduce = reduce::Statistics<Error<Find::Error>>>
 where
     Find: crate::Find + Send + Clone + 'static,
@@ -152,7 +153,7 @@ where
         },
         {
             let counts = Arc::clone(&counts);
-            move |(chunk_id, chunk_range): (ChunkId, std::ops::Range<usize>), (buf, progress)| {
+            move |(chunk_id, chunk_range): (SequenceId, std::ops::Range<usize>), (buf, progress)| {
                 let mut out = Vec::new();
                 let chunk = &counts[chunk_range];
                 let mut stats = Outcome::default();
@@ -277,8 +278,9 @@ mod reduce {
     use std::marker::PhantomData;
 
     use git_features::parallel;
+    use git_features::parallel::SequenceId;
 
-    use super::{ChunkId, Outcome};
+    use super::Outcome;
     use crate::data::output;
 
     pub struct Statistics<E> {
@@ -296,8 +298,8 @@ mod reduce {
     }
 
     impl<Error> parallel::Reduce for Statistics<Error> {
-        type Input = Result<(ChunkId, Vec<output::Entry>, Outcome), Error>;
-        type FeedProduce = (ChunkId, Vec<output::Entry>);
+        type Input = Result<(SequenceId, Vec<output::Entry>, Outcome), Error>;
+        type FeedProduce = (SequenceId, Vec<output::Entry>);
         type Output = Outcome;
         type Error = Error;
 

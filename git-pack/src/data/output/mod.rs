@@ -39,6 +39,3 @@ pub mod entry;
 
 ///
 pub mod bytes;
-
-mod in_order;
-pub use in_order::{ChunkId, InOrderIter};

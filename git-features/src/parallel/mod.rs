@@ -42,7 +42,7 @@ mod serial;
 pub use serial::{in_parallel, join, threads};
 
 mod in_order;
-pub use in_order::InOrderIter;
+pub use in_order::{InOrderIter, SequenceId};
 
 mod eager_iter;
 pub use eager_iter::{EagerIter, EagerIterIf};
