@@ -15,6 +15,11 @@ mod error {
             MandatoryUnimplemented(signature: extension::Signature) {
                 display("Encountered mandatory extension '{}' which isn't implemented yet", String::from_utf8_lossy(signature))
             }
+            Link(err: extension::link::decode::Error) {
+                display("Could not parse mandatory link extension")
+                source(err)
+                from()
+            }
         }
     }
 }
@@ -35,7 +40,7 @@ pub fn all(maybe_beginning_of_extensions: &[u8], object_hash: git_hash::Kind) ->
             extension::end_of_index_entry::SIGNATURE => {} // skip already done
             extension::index_entry_offset_table::SIGNATURE => {} // not relevant/obtained already
             mandatory if mandatory[0].is_ascii_lowercase() => match mandatory {
-                extension::link::SIGNATURE => ext.link = extension::link::decode(ext_data, object_hash),
+                extension::link::SIGNATURE => ext.link = extension::link::decode(ext_data, object_hash)?.into(),
                 unknown => return Err(Error::MandatoryUnimplemented(unknown)),
             },
             _unknown => {} // skip unknown extensions, too

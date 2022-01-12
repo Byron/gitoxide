@@ -21,7 +21,7 @@ pub struct Tree {
 }
 
 pub struct Link {
-    shared_index_checksum: git_hash::ObjectId,
+    pub shared_index_checksum: git_hash::ObjectId,
 }
 
 mod iter;
@@ -34,11 +34,37 @@ pub(crate) mod end_of_index_entry;
 
 pub(crate) mod index_entry_offset_table;
 
-pub(crate) mod link {
+pub mod link {
     use crate::extension::{Link, Signature};
+    use crate::util::split_at_pos;
+
     pub const SIGNATURE: Signature = *b"link";
 
-    pub fn decode(_data: &[u8], _object_hash: git_hash::Kind) -> Option<Link> {
-        todo!("decode link")
+    pub mod decode {
+        use quick_error::quick_error;
+
+        quick_error! {
+            #[derive(Debug)]
+            pub enum Error {
+                Corrupt(message: &'static str) {
+                    display("{}", message)
+                }
+            }
+        }
+    }
+
+    pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Result<Link, decode::Error> {
+        let (id, data) = split_at_pos(data, object_hash.len_in_bytes())
+            .ok_or(decode::Error::Corrupt(
+                "link extension too short to read share index checksum",
+            ))
+            .map(|(id, d)| (git_hash::ObjectId::from(id), d))?;
+
+        if data.is_empty() {
+            return Ok(Link {
+                shared_index_checksum: id,
+            });
+        }
+        todo!("decode link bitmaps")
     }
 }
