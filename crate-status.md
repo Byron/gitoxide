@@ -213,25 +213,32 @@ Check out the [performance discussion][git-traverse-performance] as well.
 
 ### git-index
 * read 
-  * [ ] V2
-  * [ ] V3
-  * [ ] V4
+  * [x] V2
+  * [x] V3
+  * [x] V4
   * optional threading
-    * [ ] concurrent loading of index extensions
-    * [ ] threaded cache entry reading
+    * [x] concurrent loading of index extensions
+    * [x] threaded entry reading
+  * extensions
+    * [x] TREE for speeding up tree generation
+    * [ ] REUC resolving undo
+    * [ ] UNTR untracked cache
+    * [ ] FSMN file system monitor cache V1 and V2
+    * [ ] link base indices to take information from, split index
+    * [ ] sdir sparse directory entries
 * `stat` update
     * [ ] optional threaded `stat` based on thread_cost (aka preload)
 * [ ] handling of `.gitignore` and system file exclude configuration
 * [ ] handle potential races
-* extensions
+* maintain extensions when altering the cache
     * [ ] TREE for speeding up tree generation
     * [ ] REUC resolving undo
     * [ ] UNTR untracked cache
     * [ ] FSMN file system monitor cache V1 and V2
-    * [ ] EOIE end of index entry
-    * [ ] IEOT index entry offset table
     * [ ] link base indices to take information from, split index
     * [ ] sdir sparse directory entries
+    * [ ] EOIE end of index entry
+    * [ ] IEOT index entry offset table
 * additinoal support
     * [ ] non-sparse
     * [ ] sparse (search for [`sparse index` here](https://github.blog/2021-08-16-highlights-from-git-2-33/))
