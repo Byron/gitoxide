@@ -31,7 +31,7 @@ pub(crate) mod end_of_index_entry;
 pub(crate) mod index_entry_offset_table {
     use crate::{extension, extension::Signature, util::read_u32};
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone, Copy)]
     pub struct Offset {
         pub from_beginning_of_file: u32,
         pub num_entries: u32,

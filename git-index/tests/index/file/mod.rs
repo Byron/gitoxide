@@ -5,17 +5,28 @@ mod init {
     fn file(name: &str) -> git_index::File {
         git_index::File::at(crate::index::fixture_path(name), git_index::decode::Options::default()).unwrap()
     }
+    fn file_opt(name: &str, opts: git_index::decode::Options) -> git_index::File {
+        git_index::File::at(crate::index::fixture_path(name), opts).unwrap()
+    }
 
     #[test]
     fn read_v2_with_single_entry_tree_and_eoie_ext() {
-        let file = file("v2");
-        assert_eq!(file.version(), Version::V2);
+        let file_disallow_threaded_loading = file_opt(
+            "v2",
+            git_index::decode::Options {
+                min_extension_block_in_bytes_for_threading: 100000,
+                ..Default::default()
+            },
+        );
+        for file in [file("v2"), file_disallow_threaded_loading] {
+            assert_eq!(file.version(), Version::V2);
 
-        assert_eq!(file.entries().len(), 1);
+            assert_eq!(file.entries().len(), 1);
 
-        let entry = &file.entries()[0];
-        assert_eq!(entry.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"));
-        assert_eq!(entry.path(&file.state), "a");
+            let entry = &file.entries()[0];
+            assert_eq!(entry.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"));
+            assert_eq!(entry.path(&file.state), "a");
+        }
     }
 
     #[test]

@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 use crate::{
-    decode::{header, Error},
+    decode::{self, header},
     entry,
     util::{read_u32, split_at_byte_exclusive, split_at_pos},
     Entry, Version,
@@ -11,8 +11,6 @@ use crate::{
 pub const AVERAGE_V4_DELTA_PATH_LEN_IN_BYTES: usize = 80;
 
 pub struct Outcome {
-    pub entries: Vec<Entry>,
-    pub path_backing: Vec<u8>,
     pub is_sparse: bool,
 }
 
@@ -42,15 +40,14 @@ pub fn estimate_path_storage_requirements_in_bytes(
 }
 
 /// Note that `data` must point to the beginning of the entries, right past the header.
-pub fn load_all(
-    mut data: &[u8],
+pub fn load_chunk<'a>(
+    mut data: &'a [u8],
+    entries: &mut Vec<Entry>,
+    path_backing: &mut Vec<u8>,
     num_entries: u32,
-    path_backing_capacity: usize,
     object_hash: git_hash::Kind,
     version: Version,
-) -> Result<(Outcome, &[u8]), Error> {
-    let mut path_backing = Vec::<u8>::with_capacity(path_backing_capacity);
-    let mut entries = Vec::<Entry>::with_capacity(num_entries as usize);
+) -> Result<(Outcome, &'a [u8]), decode::Error> {
     let mut is_sparse = false;
     let has_delta_paths = version == Version::V4;
     let mut prev_path = None;
@@ -59,12 +56,12 @@ pub fn load_all(
     for idx in 0..num_entries {
         let (entry, remaining) = load_one(
             data,
-            &mut path_backing,
+            path_backing,
             object_hash.len_in_bytes(),
             has_delta_paths,
             prev_path,
         )
-        .ok_or(Error::Entry(idx))?;
+        .ok_or(decode::Error::Entry(idx))?;
 
         data = remaining;
         if entry::mode::is_sparse(entry.stat.mode) {
@@ -77,14 +74,7 @@ pub fn load_all(
         prev_path = entries.last().map(|e| (e.path.clone(), &mut delta_buf));
     }
 
-    Ok((
-        Outcome {
-            entries,
-            path_backing,
-            is_sparse,
-        },
-        data,
-    ))
+    Ok((Outcome { is_sparse }, data))
 }
 
 /// Note that `prev_path` is only useful if the version is V4
