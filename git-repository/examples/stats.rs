@@ -4,7 +4,7 @@ use git_odb::FindExt;
 use git_repository as git;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let repo = git_repository::discover(".")?;
+    let repo = git::discover(".")?;
     println!(
         "Repo: {}",
         repo.work_tree.as_deref().unwrap_or(repo.git_dir()).display()

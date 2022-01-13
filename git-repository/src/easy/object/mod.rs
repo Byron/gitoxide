@@ -81,11 +81,11 @@ impl<'repo> Object<'repo> {
     }
 
     /// Turn this instance into an owned one, copying our data in the process.
-    pub fn into_owned(self) -> DetachedObject {
+    pub fn into_owned(mut self) -> DetachedObject {
         DetachedObject {
             id: self.id,
             kind: self.kind,
-            data: self.data.clone(),
+            data: std::mem::take(&mut self.data),
         }
     }
 

@@ -76,6 +76,8 @@ impl easy::Handle {
 
     #[inline]
     pub(crate) fn reuse_buffer(&self, data: &mut Vec<u8>) {
-        self.bufs.borrow_mut().push(std::mem::take(data));
+        if data.capacity() > 0 {
+            self.bufs.borrow_mut().push(std::mem::take(data));
+        }
     }
 }
