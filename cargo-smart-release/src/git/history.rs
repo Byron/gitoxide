@@ -29,12 +29,12 @@ pub enum SegmentScope {
 }
 
 pub fn collect(handle: &git::easy::Handle) -> anyhow::Result<Option<commit::History>> {
-    let mut repo = handle.clone();
-    repo.object_cache_size(64 * 1024);
-    let reference = match repo.head()?.peeled()?.kind {
+    let mut handle = handle.clone();
+    handle.object_cache_size(64 * 1024);
+    let reference = match handle.head()?.peeled()?.kind {
         head::Kind::Detached { .. } => bail!("Refusing to operate on a detached head."),
         head::Kind::Unborn { .. } => return Ok(None),
-        head::Kind::Symbolic(r) => r.attach(&repo),
+        head::Kind::Symbolic(r) => r.attach(&handle),
     };
 
     let mut items = Vec::new();
@@ -60,7 +60,7 @@ pub fn collect(handle: &git::easy::Handle) -> anyhow::Result<Option<commit::Hist
             (
                 message,
                 tree_id,
-                parent_commit_id.map(|id| id.attach(&repo).object().expect("present").to_commit_ref().tree()),
+                parent_commit_id.map(|id| id.attach(&handle).object().expect("present").to_commit_ref().tree()),
                 commit_time,
             )
         };
@@ -75,9 +75,9 @@ pub fn collect(handle: &git::easy::Handle) -> anyhow::Result<Option<commit::Hist
             }
             Ok(m) => m,
         };
-        data_by_tree_id.insert(tree_id, repo.find_object(tree_id)?.data.to_owned());
+        data_by_tree_id.insert(tree_id, handle.find_object(tree_id)?.data.to_owned());
         if let Some(tree_id) = parent_tree_id {
-            data_by_tree_id.insert(tree_id, repo.find_object(tree_id)?.data.to_owned());
+            data_by_tree_id.insert(tree_id, handle.find_object(tree_id)?.data.to_owned());
         }
         items.push(commit::history::Item {
             id: commit_id.detach(),
