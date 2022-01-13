@@ -35,7 +35,7 @@ impl<'repo> TryFrom<Object<'repo>> for Commit<'repo> {
             object::Kind::Commit => Ok(Commit {
                 id: value.id,
                 handle,
-                data: steal(&mut value.data),
+                data: steal_from_freelist(&mut value.data),
             }),
             _ => Err(value),
         }
@@ -51,7 +51,7 @@ impl<'repo> TryFrom<Object<'repo>> for Tree<'repo> {
             object::Kind::Tree => Ok(Tree {
                 id: value.id,
                 handle,
-                data: steal(&mut value.data),
+                data: steal_from_freelist(&mut value.data),
             }),
             _ => Err(value),
         }
@@ -60,6 +60,6 @@ impl<'repo> TryFrom<Object<'repo>> for Tree<'repo> {
 
 /// In conjunction with the handles free list, leaving an empty Vec in place of the original causes it to not be
 /// returned to the free list.
-fn steal(data: &mut Vec<u8>) -> Vec<u8> {
+fn steal_from_freelist(data: &mut Vec<u8>) -> Vec<u8> {
     std::mem::take(data)
 }
