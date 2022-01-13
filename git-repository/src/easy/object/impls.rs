@@ -29,16 +29,13 @@ impl AsRef<[u8]> for DetachedObject {
 impl<'repo> TryFrom<Object<'repo>> for Commit<'repo> {
     type Error = Object<'repo>;
 
-    fn try_from(value: Object<'repo>) -> Result<Self, Self::Error> {
+    fn try_from(mut value: Object<'repo>) -> Result<Self, Self::Error> {
         let handle = value.handle;
         match value.kind {
             object::Kind::Commit => Ok(Commit {
                 id: value.id,
                 handle,
-                data: {
-                    drop(value);
-                    handle.free_buf()
-                },
+                data: steal(&mut value.data),
             }),
             _ => Err(value),
         }
@@ -48,18 +45,21 @@ impl<'repo> TryFrom<Object<'repo>> for Commit<'repo> {
 impl<'repo> TryFrom<Object<'repo>> for Tree<'repo> {
     type Error = Object<'repo>;
 
-    fn try_from(value: Object<'repo>) -> Result<Self, Self::Error> {
+    fn try_from(mut value: Object<'repo>) -> Result<Self, Self::Error> {
         let handle = value.handle;
         match value.kind {
             object::Kind::Tree => Ok(Tree {
                 id: value.id,
                 handle,
-                data: {
-                    drop(value);
-                    handle.free_buf()
-                },
+                data: steal(&mut value.data),
             }),
             _ => Err(value),
         }
     }
+}
+
+/// In conjunction with the handles free list, leaving an empty Vec in place of the original causes it to not be
+/// returned to the free list.
+fn steal(data: &mut Vec<u8>) -> Vec<u8> {
+    std::mem::take(data)
 }
