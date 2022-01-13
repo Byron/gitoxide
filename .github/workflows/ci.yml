@@ -24,7 +24,7 @@ jobs:
     - name: Setup dependencies (macos)
       if: startsWith(matrix.os, 'macos')
       run:
-        brew install tree
+        brew install tree openssl
     - name: test
       env:
         CI: true
