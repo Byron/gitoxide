@@ -237,7 +237,7 @@ The git staging area.
     * [ ] UNTR untracked cache
     * [ ] FSMN file system monitor cache V1 and V2
     * [x] 'link' base indices to take information from, split index
-    * [ ] 'sdir' sparse directory entries
+    * [x] 'sdir' sparse directory entries - marker
 * `stat` update
     * [ ] optional threaded `stat` based on thread_cost (aka preload)
 * [ ] handling of `.gitignore` and system file exclude configuration
