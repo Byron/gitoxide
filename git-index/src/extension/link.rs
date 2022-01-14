@@ -1,5 +1,7 @@
-use crate::extension::{Link, Signature};
-use crate::util::split_at_pos;
+use crate::{
+    extension::{Link, Signature},
+    util::split_at_pos,
+};
 
 pub const SIGNATURE: Signature = *b"link";
 

@@ -7,8 +7,9 @@ pub fn header(data: &[u8]) -> (Signature, u32, &[u8]) {
 }
 
 mod error {
-    use crate::extension;
     use quick_error::quick_error;
+
+    use crate::extension;
     quick_error! {
         #[derive(Debug)]
         pub enum Error {

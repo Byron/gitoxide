@@ -1,4 +1,3 @@
-use parking_lot::Mutex;
 use std::{
     collections::BTreeMap,
     path::{Path, PathBuf},
@@ -8,6 +7,7 @@ pub use bstr;
 use bstr::{BStr, ByteSlice};
 use nom::error::VerboseError;
 use once_cell::sync::Lazy;
+use parking_lot::Mutex;
 pub use tempfile;
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));

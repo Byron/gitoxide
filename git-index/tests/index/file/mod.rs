@@ -1,7 +1,8 @@
 mod init {
+    use std::path::{Path, PathBuf};
+
     use git_index::Version;
     use git_testtools::hex_to_id;
-    use std::path::{Path, PathBuf};
 
     fn loose_file(name: &str) -> git_index::File {
         let path = git_testtools::fixture_path(Path::new("loose_index").join(name).with_extension("git-index"));
@@ -74,7 +75,6 @@ mod init {
     }
 
     #[test]
-    #[ignore]
     fn read_reuc_extension() {
         let file = loose_file("REUC");
         assert_eq!(file.version(), Version::V2);
