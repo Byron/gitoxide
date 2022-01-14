@@ -203,6 +203,7 @@ impl State {
         let extension::decode::Outcome {
             tree,
             link,
+            resolve_undo,
             is_sparse: is_sparse_from_ext, // a marker is needed in case there are no directories
         } = ext;
         is_sparse |= is_sparse_from_ext;
@@ -217,6 +218,7 @@ impl State {
 
                 tree,
                 link,
+                resolve_undo,
             },
             checksum,
         ))

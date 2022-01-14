@@ -75,6 +75,7 @@ pub struct State {
     // Extensions
     tree: Option<extension::Tree>,
     link: Option<extension::Link>,
+    resolve_undo: Option<extension::resolve_undo::Paths>,
 }
 
 pub(crate) mod util {

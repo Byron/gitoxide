@@ -3,6 +3,10 @@ mod init {
     use git_testtools::hex_to_id;
     use std::path::{Path, PathBuf};
 
+    fn loose_file(name: &str) -> git_index::File {
+        let path = git_testtools::fixture_path(Path::new("loose_index").join(name).with_extension("git-index"));
+        git_index::File::at(path, git_index::decode::Options::default()).unwrap()
+    }
     fn file(name: &str) -> git_index::File {
         git_index::File::at(crate::fixture_path(name), git_index::decode::Options::default()).unwrap()
     }
@@ -66,6 +70,13 @@ mod init {
     #[test]
     fn read_v2_split_index() {
         let file = file("v2_split_index");
+        assert_eq!(file.version(), Version::V2);
+    }
+
+    #[test]
+    #[ignore]
+    fn read_reuc_extension() {
+        let file = loose_file("REUC");
         assert_eq!(file.version(), Version::V2);
     }
 
