@@ -107,7 +107,6 @@ impl oid {
         self.bytes[0]
     }
 
-    #[inline]
     /// Interpret this object id as raw byte slice.
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {

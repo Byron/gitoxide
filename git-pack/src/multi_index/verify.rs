@@ -250,7 +250,7 @@ impl File {
             total_objects_checked += multi_index_entries_to_check.len();
 
             if let Some(bundle) = bundle {
-                progress.set_name(format!("Validating {}", index_file_name.display().to_string()));
+                progress.set_name(format!("Validating {}", index_file_name.display()));
                 let crate::bundle::verify::integrity::Outcome {
                     actual_index_checksum: _,
                     pack_traverse_outcome,
