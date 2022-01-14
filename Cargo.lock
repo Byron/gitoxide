@@ -1579,6 +1579,7 @@ dependencies = [
  "git-hash 0.8.0",
  "nom",
  "once_cell",
+ "parking_lot",
  "tempfile",
 ]
 
