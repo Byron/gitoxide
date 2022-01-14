@@ -50,7 +50,6 @@ pub mod ewah {
         }
 
         let (rlw, data) = decode::u32(data).ok_or(decode::Error::Corrupt("eof while reading run length width"))?;
-        dbg!(rlw);
 
         Ok((
             Vec {

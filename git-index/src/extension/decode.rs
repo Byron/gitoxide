@@ -41,6 +41,13 @@ pub fn all(maybe_beginning_of_extensions: &[u8], object_hash: git_hash::Kind) ->
             extension::index_entry_offset_table::SIGNATURE => {} // not relevant/obtained already
             mandatory if mandatory[0].is_ascii_lowercase() => match mandatory {
                 extension::link::SIGNATURE => ext.link = extension::link::decode(ext_data, object_hash)?.into(),
+                extension::sparse::SIGNATURE => {
+                    if !ext_data.is_empty() {
+                        // only used as a marker, if this changes we need this implementation.
+                        return Err(Error::MandatoryUnimplemented(mandatory));
+                    }
+                    ext.is_sparse = true
+                }
                 unknown => return Err(Error::MandatoryUnimplemented(unknown)),
             },
             _unknown => {} // skip unknown extensions, too
@@ -53,4 +60,5 @@ pub fn all(maybe_beginning_of_extensions: &[u8], object_hash: git_hash::Kind) ->
 pub struct Outcome {
     pub tree: Option<extension::Tree>,
     pub link: Option<extension::Link>,
+    pub is_sparse: bool,
 }

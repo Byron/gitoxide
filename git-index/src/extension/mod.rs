@@ -35,6 +35,13 @@ pub(crate) mod end_of_index_entry;
 
 pub(crate) mod index_entry_offset_table;
 
+pub mod sparse {
+    use crate::extension::Signature;
+
+    /// Only used as an indicator
+    pub const SIGNATURE: Signature = *b"sdir";
+}
+
 pub mod link {
     use crate::extension::{Link, Signature};
     use crate::util::split_at_pos;

@@ -198,9 +198,14 @@ impl State {
         let EntriesOutcome {
             entries,
             path_backing,
-            is_sparse,
+            mut is_sparse,
         } = entries;
-        let extension::decode::Outcome { tree, link } = ext;
+        let extension::decode::Outcome {
+            tree,
+            link,
+            is_sparse: is_sparse_from_ext, // a marker is needed in case there are no directories
+        } = ext;
+        is_sparse |= is_sparse_from_ext;
 
         Ok((
             State {
