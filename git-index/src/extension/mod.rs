@@ -78,8 +78,15 @@ pub mod untracked_cache {
         pub name: BString,
         /// Untracked files and directory names
         pub untracked_entries: Vec<BString>,
-        /// Sub-directories similar to this one
-        pub sub_directories: Vec<Directory>,
+        /// indices for sub-directories similar to this one.
+        pub sub_directories: Vec<usize>,
+    }
+
+    pub struct RootDirectory {
+        /// Index to the root directory into our flattened directory list
+        index: usize,
+        ///
+        flattened_directories: Vec<Directory>,
     }
 
     /// Only used as an indicator
@@ -99,7 +106,7 @@ pub mod untracked_cache {
         let (dir_flags, data) = read_u32(data)?;
         let (exclude_filename_per_dir, data) = split_at_byte_exclusive(data, 0)?;
 
-        let (expected_block_count, data) = var_int(data)?;
+        let (num_directory_blocks, data) = var_int(data)?;
 
         let mut res = UntrackedCache {
             identifier: identifier.into(),
@@ -108,14 +115,21 @@ pub mod untracked_cache {
             exclude_filename_per_dir: exclude_filename_per_dir.into(),
             dir_flags,
         };
-        if expected_block_count == 0 {
+        if num_directory_blocks == 0 {
             return data.is_empty().then(|| res);
         }
 
-        let (root_dir, actual_block_count, data) = decode_directory_block(data)?;
-        if actual_block_count != expected_block_count {
+        let num_directory_blocks = num_directory_blocks.try_into().ok()?;
+        let mut directories = Vec::<Directory>::with_capacity(num_directory_blocks);
+
+        let (root_index, data) = decode_directory_block(data, &mut directories)?;
+        if directories.len() != num_directory_blocks {
             return None;
         }
+        let root_dir = RootDirectory {
+            index: root_index,
+            flattened_directories: directories,
+        };
 
         let (valid, data) = git_bitmap::ewah::decode(data).ok()?;
         let (check_only, data) = git_bitmap::ewah::decode(data).ok()?;
@@ -124,7 +138,7 @@ pub mod untracked_cache {
         todo!("decode UNTR")
     }
 
-    fn decode_directory_block(data: &[u8]) -> Option<(Directory, u64, &[u8])> {
+    fn decode_directory_block<'a>(data: &'a [u8], directories: &mut Vec<Directory>) -> Option<(usize, &'a [u8])> {
         let (num_untracked, data) = var_int(data)?;
         let (num_dirs, data) = var_int(data)?;
         let (name, mut data) = split_at_byte_exclusive(data, 0)?;
@@ -135,24 +149,20 @@ pub mod untracked_cache {
             untracked_entries.push(name.into());
         }
 
-        let mut num_blocks = 1;
         let mut sub_directories = Vec::with_capacity(num_dirs.try_into().ok()?);
         for _ in 0..num_dirs {
-            let (dir, blocks, rest) = decode_directory_block(data)?;
+            let (dir_index, rest) = decode_directory_block(data, directories)?;
             data = rest;
-            num_blocks += blocks;
-            sub_directories.push(dir);
+            sub_directories.push(dir_index);
         }
-        (
-            Directory {
-                name: name.into(),
-                untracked_entries,
-                sub_directories,
-            },
-            num_blocks,
-            data,
-        )
-            .into()
+
+        let index = directories.len();
+        directories.push(Directory {
+            name: name.into(),
+            untracked_entries,
+            sub_directories,
+        });
+        (index, data).into()
     }
 
     fn decode_oid_stat(data: &[u8], hash_len: usize) -> Option<(OidStat, &[u8])> {
