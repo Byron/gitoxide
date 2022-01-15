@@ -22,7 +22,13 @@ yanked = "warn"
 # 2019-12-17 there are no security notice advisories in
 # https://github.com/rustsec/advisory-db
 notice = "warn"
-ignore = [ ]
+ignore = [
+    # unsoundness in Dashmap, no fix yet, prodash uses it and parts of packing machinerey. 
+    # Ignore until they fix it.
+    "RUSTSEC-2022-0002" 
+]
+
+
 
 # This section is considered when running `cargo deny check licenses`
 # More documentation for the licenses section can be found here:
