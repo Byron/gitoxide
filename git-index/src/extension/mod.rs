@@ -25,6 +25,8 @@ pub struct Link {
     pub bitmaps: Option<link::Bitmaps>,
 }
 
+pub struct Untracked;
+
 mod iter;
 
 pub(crate) mod decode;
@@ -37,66 +39,16 @@ pub(crate) mod index_entry_offset_table;
 
 pub mod link;
 
-pub(crate) mod resolve_undo {
-    use bstr::BString;
-    use git_hash::ObjectId;
+pub(crate) mod resolve_undo;
 
-    use crate::{
-        extension::Signature,
-        util::{split_at_byte_exclusive, split_at_pos},
-    };
+pub(crate) mod untracked {
+    use crate::extension::{Signature, Untracked};
 
-    pub type Paths = Vec<ResolvePath>;
+    /// Only used as an indicator
+    pub const SIGNATURE: Signature = *b"UNTR";
 
-    pub struct ResolvePath {
-        /// relative to the root of the repository, or what would be stored in the index
-        name: BString,
-
-        /// 0 = ancestor/common, 1 = ours, 2 = theirs
-        stages: [Option<Stage>; 3],
-    }
-
-    pub struct Stage {
-        mode: u32,
-        id: ObjectId,
-    }
-
-    pub const SIGNATURE: Signature = *b"REUC";
-
-    pub fn decode(mut data: &[u8], object_hash: git_hash::Kind) -> Option<Paths> {
-        let hash_len = object_hash.len_in_bytes();
-        let mut out = Vec::new();
-
-        while !data.is_empty() {
-            let (path, rest) = split_at_byte_exclusive(data, 0)?;
-            data = rest;
-
-            let mut modes = [0u32; 3];
-            for mode in modes.iter_mut() {
-                let (mode_ascii, rest) = split_at_byte_exclusive(data, 0)?;
-                data = rest;
-                *mode = u32::from_str_radix(std::str::from_utf8(mode_ascii).ok()?, 8).ok()?;
-            }
-
-            let mut stages = [None, None, None];
-            for (mode, stage) in modes.into_iter().zip(stages.iter_mut()) {
-                if mode == 0 {
-                    continue;
-                }
-                let (hash, rest) = split_at_pos(data, hash_len)?;
-                data = rest;
-                *stage = Some(Stage {
-                    mode,
-                    id: ObjectId::from(hash),
-                });
-            }
-
-            out.push(ResolvePath {
-                name: path.into(),
-                stages,
-            });
-        }
-        out.into()
+    pub fn decode(_data: &[u8], _object_hash: git_hash::Kind) -> Option<Untracked> {
+        todo!("decode UNTR")
     }
 }
 

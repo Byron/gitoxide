@@ -76,6 +76,7 @@ pub struct State {
     tree: Option<extension::Tree>,
     link: Option<extension::Link>,
     resolve_undo: Option<extension::resolve_undo::Paths>,
+    untracked: Option<extension::Untracked>,
 }
 
 pub(crate) mod util {
