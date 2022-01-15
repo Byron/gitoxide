@@ -56,7 +56,8 @@ pub(crate) mod resolve_undo;
 pub mod untracked_cache {
     use crate::entry;
     use crate::extension::{Signature, UntrackedCache};
-    use crate::util::{read_u32, split_at_byte_exclusive, split_at_pos};
+    use crate::util::{read_u32, split_at_byte_exclusive, split_at_pos, var_int};
+    use bstr::BString;
     use git_hash::ObjectId;
 
     pub struct OidStat {
@@ -71,6 +72,16 @@ pub mod untracked_cache {
         pub id: ObjectId,
     }
 
+    /// A directory with information about its untracked files, and its sub-directories
+    pub struct Directory {
+        /// The directories name, or an empty string if this is the root directory.
+        pub name: BString,
+        /// Untracked files and directory names
+        pub untracked_entries: Vec<BString>,
+        /// Sub-directories similar to this one
+        pub sub_directories: Vec<Directory>,
+    }
+
     /// Only used as an indicator
     pub const SIGNATURE: Signature = *b"UNTR";
 
@@ -79,19 +90,69 @@ pub mod untracked_cache {
         if !data.last().map(|b| *b == 0).unwrap_or(false) {
             return None;
         }
-        let (identifier_len, consumed) = git_features::decode::leb64(data);
-        let (_, data) = data.split_at(consumed);
+        let (identifier_len, data) = var_int(data)?;
         let (identifier, data) = split_at_pos(data, identifier_len.try_into().ok()?)?;
-        dbg!(String::from_utf8_lossy(identifier));
 
         let hash_len = object_hash.len_in_bytes();
         let (info_exclude, data) = decode_oid_stat(data, hash_len)?;
         let (excludes_file, data) = decode_oid_stat(data, hash_len)?;
         let (dir_flags, data) = read_u32(data)?;
         let (exclude_filename_per_dir, data) = split_at_byte_exclusive(data, 0)?;
-        dbg!(String::from_utf8_lossy(exclude_filename_per_dir));
+
+        let (expected_block_count, data) = var_int(data)?;
+
+        let mut res = UntrackedCache {
+            identifier: identifier.into(),
+            info_exclude: (!info_exclude.id.is_null()).then(|| info_exclude),
+            excludes_file: (!excludes_file.id.is_null()).then(|| excludes_file),
+            exclude_filename_per_dir: exclude_filename_per_dir.into(),
+            dir_flags,
+        };
+        if expected_block_count == 0 {
+            return data.is_empty().then(|| res);
+        }
+
+        let (root_dir, actual_block_count, data) = decode_directory_block(data)?;
+        if actual_block_count != expected_block_count {
+            return None;
+        }
+
+        let (valid, data) = git_bitmap::ewah::decode(data).ok()?;
+        let (check_only, data) = git_bitmap::ewah::decode(data).ok()?;
+        let (hash_valid, data) = git_bitmap::ewah::decode(data).ok()?;
 
         todo!("decode UNTR")
+    }
+
+    fn decode_directory_block(data: &[u8]) -> Option<(Directory, u64, &[u8])> {
+        let (num_untracked, data) = var_int(data)?;
+        let (num_dirs, data) = var_int(data)?;
+        let (name, mut data) = split_at_byte_exclusive(data, 0)?;
+        let mut untracked_entries = Vec::<BString>::with_capacity(num_untracked.try_into().ok()?);
+        for _ in 0..num_untracked {
+            let (name, rest) = split_at_byte_exclusive(data, 0)?;
+            data = rest;
+            untracked_entries.push(name.into());
+        }
+
+        let mut num_blocks = 1;
+        let mut sub_directories = Vec::with_capacity(num_dirs.try_into().ok()?);
+        for _ in 0..num_dirs {
+            let (dir, blocks, rest) = decode_directory_block(data)?;
+            data = rest;
+            num_blocks += blocks;
+            sub_directories.push(dir);
+        }
+        (
+            Directory {
+                name: name.into(),
+                untracked_entries,
+                sub_directories,
+            },
+            num_blocks,
+            data,
+        )
+            .into()
     }
 
     fn decode_oid_stat(data: &[u8], hash_len: usize) -> Option<(OidStat, &[u8])> {

@@ -81,6 +81,13 @@ pub struct State {
 
 pub(crate) mod util {
     #[inline]
+    pub fn var_int(data: &[u8]) -> Option<(u64, &[u8])> {
+        let (num, consumed) = git_features::decode::leb64_from_read(data).ok()?;
+        let data = &data[consumed..];
+        (num, data).into()
+    }
+
+    #[inline]
     pub fn read_u32(data: &[u8]) -> Option<(u32, &[u8])> {
         split_at_pos(data, 4).map(|(num, data)| (u32::from_be_bytes(num.try_into().unwrap()), data))
     }

@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+use crate::util::var_int;
 use crate::{
     decode::{self, header},
     entry,
@@ -115,8 +116,7 @@ fn load_one<'a>(
 
     let start = path_backing.len();
     let data = if has_delta_paths {
-        let (strip_len, consumed) = git_features::decode::leb64(data);
-        let data = &data[consumed..];
+        let (strip_len, data) = var_int(data)?;
         if let Some((prev_path, buf)) = prev_path_and_buf {
             let end = prev_path.end.checked_sub(strip_len.try_into().ok()?)?;
             let copy_len = end.checked_sub(prev_path.start)?;
