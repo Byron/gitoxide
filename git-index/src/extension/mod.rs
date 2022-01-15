@@ -82,9 +82,8 @@ pub mod untracked_cache {
         pub sub_directories: Vec<usize>,
     }
 
+    /// The first entry in the list of flattened directories is the this root directory itself.
     pub struct RootDirectory {
-        /// Index to the root directory into our flattened directory list
-        index: usize,
         ///
         flattened_directories: Vec<Directory>,
     }
@@ -122,12 +121,11 @@ pub mod untracked_cache {
         let num_directory_blocks = num_directory_blocks.try_into().ok()?;
         let mut directories = Vec::<Directory>::with_capacity(num_directory_blocks);
 
-        let (root_index, data) = decode_directory_block(data, &mut directories)?;
+        let data = decode_directory_block(data, &mut directories)?;
         if directories.len() != num_directory_blocks {
             return None;
         }
         let root_dir = RootDirectory {
-            index: root_index,
             flattened_directories: directories,
         };
 
@@ -138,7 +136,7 @@ pub mod untracked_cache {
         todo!("decode UNTR")
     }
 
-    fn decode_directory_block<'a>(data: &'a [u8], directories: &mut Vec<Directory>) -> Option<(usize, &'a [u8])> {
+    fn decode_directory_block<'a>(data: &'a [u8], directories: &mut Vec<Directory>) -> Option<&'a [u8]> {
         let (num_untracked, data) = var_int(data)?;
         let (num_dirs, data) = var_int(data)?;
         let (name, mut data) = split_at_byte_exclusive(data, 0)?;
@@ -149,20 +147,21 @@ pub mod untracked_cache {
             untracked_entries.push(name.into());
         }
 
-        let mut sub_directories = Vec::with_capacity(num_dirs.try_into().ok()?);
-        for _ in 0..num_dirs {
-            let (dir_index, rest) = decode_directory_block(data, directories)?;
-            data = rest;
-            sub_directories.push(dir_index);
-        }
-
         let index = directories.len();
         directories.push(Directory {
             name: name.into(),
             untracked_entries,
-            sub_directories,
+            sub_directories: Vec::with_capacity(num_dirs.try_into().ok()?),
         });
-        (index, data).into()
+
+        for _ in 0..num_dirs {
+            let subdir_index = directories.len();
+            let rest = decode_directory_block(data, directories)?;
+            data = rest;
+            directories[index].sub_directories.push(subdir_index);
+        }
+
+        data.into()
     }
 
     fn decode_oid_stat(data: &[u8], hash_len: usize) -> Option<(OidStat, &[u8])> {
