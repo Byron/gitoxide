@@ -41,8 +41,8 @@ pub fn all(maybe_beginning_of_extensions: &[u8], object_hash: git_hash::Kind) ->
             extension::resolve_undo::SIGNATURE => {
                 ext.resolve_undo = extension::resolve_undo::decode(ext_data, object_hash);
             }
-            extension::untracked::SIGNATURE => {
-                ext.untracked = extension::untracked::decode(ext_data, object_hash);
+            extension::untracked_cache::SIGNATURE => {
+                ext.untracked = extension::untracked_cache::decode(ext_data, object_hash);
             }
             extension::end_of_index_entry::SIGNATURE => {} // skip already done
             extension::index_entry_offset_table::SIGNATURE => {} // not relevant/obtained already
@@ -68,6 +68,6 @@ pub struct Outcome {
     pub tree: Option<extension::Tree>,
     pub link: Option<extension::Link>,
     pub resolve_undo: Option<extension::resolve_undo::Paths>,
-    pub untracked: Option<extension::Untracked>,
+    pub untracked: Option<extension::UntrackedCache>,
     pub is_sparse: bool,
 }
