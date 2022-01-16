@@ -72,9 +72,9 @@ pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<UntrackedCache
     let (check_only, data) = git_bitmap::ewah::decode(data).ok()?;
     let (hash_valid, mut data) = git_bitmap::ewah::decode(data).ok()?;
 
-    if valid.len() > num_directory_blocks
-        || check_only.len() > num_directory_blocks
-        || hash_valid.len() > num_directory_blocks
+    if valid.num_bits() > num_directory_blocks
+        || check_only.num_bits() > num_directory_blocks
+        || hash_valid.num_bits() > num_directory_blocks
     {
         return None;
     }

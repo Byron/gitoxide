@@ -35,7 +35,7 @@ pub fn decode(data: &[u8]) -> Result<(Vec, &[u8]), decode::Error> {
 
     Ok((
         Vec {
-            num_bits: num_bits,
+            num_bits,
             bits: buf,
             rlw: rlw as usize,
         },
@@ -81,7 +81,7 @@ mod access {
         }
 
         /// The amount of bits we are currently holding.
-        pub fn len(&self) -> usize {
+        pub fn num_bits(&self) -> usize {
             self.num_bits.try_into().expect("we are not on 16 bit systems")
         }
     }
