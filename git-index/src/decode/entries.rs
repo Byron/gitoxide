@@ -40,7 +40,7 @@ pub fn estimate_path_storage_requirements_in_bytes(
 }
 
 /// Note that `data` must point to the beginning of the entries, right past the header.
-pub fn load_chunk<'a>(
+pub fn chunk<'a>(
     mut data: &'a [u8],
     entries: &mut Vec<Entry>,
     path_backing: &mut Vec<u8>,

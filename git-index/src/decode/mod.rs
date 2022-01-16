@@ -108,7 +108,7 @@ impl State {
                                                 is_sparse: chunk_is_sparse,
                                             },
                                             _data,
-                                        ) = entries::load_chunk(
+                                        ) = entries::chunk(
                                             &data[offset.from_beginning_of_file as usize..],
                                             &mut entries,
                                             &mut path_backing,
@@ -158,7 +158,7 @@ impl State {
                             }
                             acc.map(|acc| (acc, &data[data.len() - object_hash.len_in_bytes()..]))
                         }
-                        None => load_entries(
+                        None => entries(
                             post_header_data,
                             path_backing_buffer_size,
                             num_entries,
@@ -176,7 +176,7 @@ impl State {
                 (entries_res?.0, ext, data)
             }
             None | Some(_) => {
-                let (entries, data) = load_entries(
+                let (entries, data) = entries(
                     post_header_data,
                     path_backing_buffer_size,
                     num_entries,
@@ -234,7 +234,7 @@ struct EntriesOutcome {
     pub is_sparse: bool,
 }
 
-fn load_entries(
+fn entries(
     post_header_data: &[u8],
     path_backing_buffer_size: usize,
     num_entries: u32,
@@ -243,7 +243,7 @@ fn load_entries(
 ) -> Result<(EntriesOutcome, &[u8]), Error> {
     let mut entries = Vec::with_capacity(num_entries as usize);
     let mut path_backing = Vec::with_capacity(path_backing_buffer_size);
-    entries::load_chunk(
+    entries::chunk(
         post_header_data,
         &mut entries,
         &mut path_backing,

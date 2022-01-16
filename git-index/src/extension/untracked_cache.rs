@@ -22,17 +22,11 @@ pub struct Directory {
     pub sub_directories: Vec<usize>,
 
     /// The directories stat data, if available or valid // TODO: or is it the exclude file?
-    pub stat: Option<OidStat>,
+    pub stat: Option<entry::Stat>,
     /// The oid of a .gitignore file, if it exists
     pub exclude_file_oid: Option<ObjectId>,
     /// TODO: figure out what this really does
     pub check_only: bool,
-}
-
-/// The first entry in the list of flattened directories is the this root directory itself.
-pub struct RootDirectory {
-    ///
-    flattened_directories: Vec<Directory>,
 }
 
 /// Only used as an indicator
@@ -60,27 +54,54 @@ pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<UntrackedCache
         excludes_file: (!excludes_file.id.is_null()).then(|| excludes_file),
         exclude_filename_per_dir: exclude_filename_per_dir.into(),
         dir_flags,
+        directories: Vec::new(),
     };
     if num_directory_blocks == 0 {
         return data.is_empty().then(|| res);
     }
 
     let num_directory_blocks = num_directory_blocks.try_into().ok()?;
-    let mut directories = Vec::<Directory>::with_capacity(num_directory_blocks);
+    let directories = &mut res.directories;
+    directories.reserve(num_directory_blocks);
 
-    let data = decode_directory_block(data, &mut directories)?;
+    let data = decode_directory_block(data, directories)?;
     if directories.len() != num_directory_blocks {
         return None;
     }
-    let root_dir = RootDirectory {
-        flattened_directories: directories,
-    };
-
     let (valid, data) = git_bitmap::ewah::decode(data).ok()?;
     let (check_only, data) = git_bitmap::ewah::decode(data).ok()?;
-    let (hash_valid, data) = git_bitmap::ewah::decode(data).ok()?;
+    let (hash_valid, mut data) = git_bitmap::ewah::decode(data).ok()?;
 
-    todo!("decode UNTR")
+    if valid.len() > num_directory_blocks
+        || check_only.len() > num_directory_blocks
+        || hash_valid.len() > num_directory_blocks
+    {
+        return None;
+    }
+
+    check_only.for_each_set_bit(|index| {
+        directories[index].check_only = true;
+        Some(())
+    })?;
+    valid.for_each_set_bit(|index| {
+        let (stat, rest) = crate::decode::stat(data)?;
+        directories[index].stat = stat.into();
+        data = rest;
+        Some(())
+    });
+    hash_valid.for_each_set_bit(|index| {
+        let (hash, rest) = split_at_pos(data, hash_len)?;
+        data = rest;
+        directories[index].exclude_file_oid = ObjectId::from(hash).into();
+        todo!("actually find a cache that has oids here");
+        Some(())
+    });
+
+    // null-byte checked in the beginning
+    if data.len() != 1 {
+        return None;
+    }
+    res.into()
 }
 
 fn decode_directory_block<'a>(data: &'a [u8], directories: &mut Vec<Directory>) -> Option<&'a [u8]> {

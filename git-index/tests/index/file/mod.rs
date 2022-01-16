@@ -81,7 +81,6 @@ mod init {
     }
 
     #[test]
-    #[ignore]
     fn read_untr_extension() {
         let file = loose_file("UNTR");
         assert_eq!(file.version(), Version::V2);

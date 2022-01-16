@@ -37,6 +37,9 @@ pub struct UntrackedCache {
     /// Usually `.gitignore`
     exclude_filename_per_dir: BString,
     dir_flags: u32,
+
+    /// A list of directories and sub-directories, with `directories[0]` being the root.
+    directories: Vec<untracked_cache::Directory>,
 }
 
 mod iter;
