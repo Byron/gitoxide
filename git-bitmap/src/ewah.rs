@@ -35,7 +35,7 @@ pub fn decode(data: &[u8]) -> Result<(Vec, &[u8]), decode::Error> {
 
     Ok((
         Vec {
-            num_bits,
+            num_bits: num_bits,
             bits: buf,
             rlw: rlw as usize,
         },
@@ -48,12 +48,66 @@ mod access {
 
     impl Vec {
         /// Call `f(index)` for each bit that is true, given the index of the bit that identifies it uniquely within the bit array.
+        /// If `f` returns `None` the iteration will be stopped and `None` is returned.
         ///
         /// The index is sequential like in any other vector.
-        pub fn for_each_set_bit(&self, _f: impl FnMut(usize)) {
-            todo!("for each")
+        pub fn for_each_set_bit(&self, mut f: impl FnMut(usize) -> Option<()>) -> Option<()> {
+            let mut index = 0;
+            let mut iter = self.bits.iter();
+            while let Some(word) = iter.next() {
+                if rlw_runbit_is_set(word) {
+                    let len = rlw_running_len_bits(word);
+                    for _ in 0..len {
+                        f(index)?;
+                        index += 1;
+                    }
+                } else {
+                    index += rlw_running_len_bits(word);
+                }
+
+                for _ in 0..rlw_literal_words(word) {
+                    let word = iter
+                        .next()
+                        .expect("BUG: ran out of words while going through uncompressed portion");
+                    for bit_index in 0..64 {
+                        if word & (1 << bit_index) != 0 {
+                            f(index)?;
+                        }
+                        index += 1;
+                    }
+                }
+            }
+            Some(())
+        }
+
+        /// The amount of bits we are currently holding.
+        pub fn len(&self) -> usize {
+            self.num_bits.try_into().expect("we are not on 16 bit systems")
         }
     }
+
+    #[inline]
+    fn rlw_running_len_bits(w: &u64) -> usize {
+        rlw_running_len(w) * 64
+    }
+
+    #[inline]
+    fn rlw_running_len(w: &u64) -> usize {
+        (w >> 1) as usize & RLW_LARGEST_RUNNING_COUNT
+    }
+
+    #[inline]
+    fn rlw_literal_words(w: &u64) -> usize {
+        (w >> (1 + RLW_RUNNING_BITS)) as usize
+    }
+
+    #[inline]
+    fn rlw_runbit_is_set(w: &u64) -> bool {
+        w & 1 == 1
+    }
+
+    const RLW_RUNNING_BITS: usize = 32;
+    const RLW_LARGEST_RUNNING_COUNT: usize = (1 << RLW_RUNNING_BITS) - 1;
 }
 
 /// A growable collection of u64 that are seen as stream of individual bits.
