@@ -206,6 +206,7 @@ impl State {
             link,
             resolve_undo,
             untracked,
+            fs_monitor,
             is_sparse: is_sparse_from_ext, // a marker is needed in case there are no directories
         } = ext;
         is_sparse |= is_sparse_from_ext;
@@ -222,6 +223,7 @@ impl State {
                 link,
                 resolve_undo,
                 untracked,
+                fs_monitor,
             },
             checksum,
         ))

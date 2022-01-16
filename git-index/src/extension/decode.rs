@@ -44,6 +44,9 @@ pub fn all(maybe_beginning_of_extensions: &[u8], object_hash: git_hash::Kind) ->
             extension::untracked_cache::SIGNATURE => {
                 ext.untracked = extension::untracked_cache::decode(ext_data, object_hash);
             }
+            extension::fs_monitor::SIGNATURE => {
+                ext.fs_monitor = extension::fs_monitor::decode(ext_data);
+            }
             extension::end_of_index_entry::SIGNATURE => {} // skip already done
             extension::index_entry_offset_table::SIGNATURE => {} // not relevant/obtained already
             mandatory if mandatory[0].is_ascii_lowercase() => match mandatory {
@@ -69,5 +72,6 @@ pub struct Outcome {
     pub link: Option<extension::Link>,
     pub resolve_undo: Option<extension::resolve_undo::Paths>,
     pub untracked: Option<extension::UntrackedCache>,
+    pub fs_monitor: Option<extension::FsMonitor>,
     pub is_sparse: bool,
 }

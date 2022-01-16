@@ -78,6 +78,7 @@ pub struct State {
     link: Option<extension::Link>,
     resolve_undo: Option<extension::resolve_undo::Paths>,
     untracked: Option<extension::UntrackedCache>,
+    fs_monitor: Option<extension::FsMonitor>,
 }
 
 pub(crate) mod util {

@@ -42,7 +42,19 @@ pub struct UntrackedCache {
     directories: Vec<untracked_cache::Directory>,
 }
 
+pub struct FsMonitor;
+
 mod iter;
+
+pub(crate) mod fs_monitor {
+    use crate::extension::{FsMonitor, Signature};
+
+    pub const SIGNATURE: Signature = *b"FSMN";
+
+    pub fn decode(data: &[u8]) -> Option<FsMonitor> {
+        todo!("decode fsmon")
+    }
+}
 
 pub(crate) mod decode;
 
