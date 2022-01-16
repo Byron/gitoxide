@@ -1,0 +1,13 @@
+diff --git a/dir.c b/dir.c
+index d91295f2bc..d34ed6fff7 100644
+--- a/dir.c
++++ b/dir.c
+@@ -3689,7 +3689,7 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
+ 	ewah_each_bit(rd.check_only, set_check_only, &rd);
+ 	rd.data = next + len;
+ 	ewah_each_bit(rd.valid, read_stat, &rd);
+-	ewah_each_bit(rd.sha1_valid, read_oid, &rd);
++	// ewah_each_bit(rd.sha1_valid, read_oid, &rd);
+ 	next = rd.data;
+ 
+ done:

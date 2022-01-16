@@ -93,7 +93,6 @@ pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<UntrackedCache
         let (hash, rest) = split_at_pos(data, hash_len)?;
         data = rest;
         directories[index].exclude_file_oid = ObjectId::from(hash).into();
-        todo!("actually find a cache that has oids here");
         Some(())
     });
 

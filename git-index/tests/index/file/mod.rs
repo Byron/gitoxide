@@ -87,6 +87,12 @@ mod init {
     }
 
     #[test]
+    fn read_untr_extension_with_oids() {
+        let file = loose_file("UNTR-with-oids");
+        assert_eq!(file.version(), Version::V2);
+    }
+
+    #[test]
     fn read_v4_with_delta_paths_and_ieot_ext() {
         let file = file("v4_more_files_IEOT");
         assert_eq!(file.version(), Version::V4);
