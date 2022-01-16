@@ -1,10 +1,9 @@
 use std::ops::Range;
 
-use crate::util::var_int;
 use crate::{
     decode::{self, header},
     entry,
-    util::{read_u32, split_at_byte_exclusive, split_at_pos},
+    util::{read_u32, split_at_byte_exclusive, split_at_pos, var_int},
     Entry, Version,
 };
 
