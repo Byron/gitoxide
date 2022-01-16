@@ -42,17 +42,48 @@ pub struct UntrackedCache {
     directories: Vec<untracked_cache::Directory>,
 }
 
-pub struct FsMonitor;
+pub struct FsMonitor {
+    token: fs_monitor::Token,
+    /// if a bit is true, the resepctive entry is NOT valid as per the fs monitor.
+    entry_dirty: git_bitmap::ewah::Vec,
+}
 
 mod iter;
 
 pub(crate) mod fs_monitor {
     use crate::extension::{FsMonitor, Signature};
+    use crate::util::{read_u32, read_u64, split_at_byte_exclusive};
+    use bstr::BString;
+
+    pub enum Token {
+        V1 { nanos_since_1970: u64 },
+        V2 { token: BString },
+    }
 
     pub const SIGNATURE: Signature = *b"FSMN";
 
     pub fn decode(data: &[u8]) -> Option<FsMonitor> {
-        todo!("decode fsmon")
+        let (version, data) = read_u32(data)?;
+        let (token, data) = match version {
+            1 => {
+                let (nanos_since_1970, data) = read_u64(data)?;
+                (Token::V1 { nanos_since_1970 }, data)
+            }
+            2 => {
+                let (token, data) = split_at_byte_exclusive(data, 0)?;
+                (Token::V2 { token: token.into() }, data)
+            }
+            _ => return None,
+        };
+
+        let (ewah_size, data) = read_u32(data)?;
+        let (entry_dirty, data) = git_bitmap::ewah::decode(&data[..ewah_size as usize]).ok()?;
+
+        if !data.is_empty() {
+            return None;
+        }
+
+        FsMonitor { token, entry_dirty }.into()
     }
 }
 

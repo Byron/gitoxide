@@ -95,6 +95,11 @@ pub(crate) mod util {
     }
 
     #[inline]
+    pub fn read_u64(data: &[u8]) -> Option<(u64, &[u8])> {
+        split_at_pos(data, 8).map(|(num, data)| (u64::from_be_bytes(num.try_into().unwrap()), data))
+    }
+
+    #[inline]
     pub fn from_be_u32(b: &[u8]) -> u32 {
         u32::from_be_bytes(b.try_into().unwrap())
     }

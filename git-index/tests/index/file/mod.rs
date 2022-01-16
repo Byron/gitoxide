@@ -93,7 +93,6 @@ mod init {
     }
 
     #[test]
-    #[ignore]
     fn read_fsmn_v1() {
         let file = loose_file("FSMN");
         assert_eq!(file.version(), Version::V2);
