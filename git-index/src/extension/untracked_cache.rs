@@ -8,14 +8,7 @@ use crate::{
 };
 
 pub struct OidStat {
-    pub mtime: entry::Time,
-    pub ctime: entry::Time,
-    pub dev: u32,
-    pub ino: u32,
-    pub uid: u32,
-    pub gid: u32,
-    /// The size of bytes on disk. Capped to u32 so files bigger than that will need thorough checking (and hopefully never make it)
-    pub size: u32,
+    pub stat: entry::Stat,
     pub id: ObjectId,
 }
 
@@ -27,6 +20,13 @@ pub struct Directory {
     pub untracked_entries: Vec<BString>,
     /// indices for sub-directories similar to this one.
     pub sub_directories: Vec<usize>,
+
+    /// The directories stat data, if available or valid // TODO: or is it the exclude file?
+    pub stat: Option<OidStat>,
+    /// The oid of a .gitignore file, if it exists
+    pub exclude_file_oid: Option<ObjectId>,
+    /// TODO: figure out what this really does
+    pub check_only: bool,
 }
 
 /// The first entry in the list of flattened directories is the this root directory itself.
@@ -99,6 +99,10 @@ fn decode_directory_block<'a>(data: &'a [u8], directories: &mut Vec<Directory>) 
         name: name.into(),
         untracked_entries,
         sub_directories: Vec::with_capacity(num_dirs.try_into().ok()?),
+        // the following are set later through their bitmaps
+        stat: None,
+        exclude_file_oid: None,
+        check_only: false,
     });
 
     for _ in 0..num_dirs {
@@ -112,31 +116,11 @@ fn decode_directory_block<'a>(data: &'a [u8], directories: &mut Vec<Directory>) 
 }
 
 fn decode_oid_stat(data: &[u8], hash_len: usize) -> Option<(OidStat, &[u8])> {
-    let (ctime_secs, data) = read_u32(data)?;
-    let (ctime_nsecs, data) = read_u32(data)?;
-    let (mtime_secs, data) = read_u32(data)?;
-    let (mtime_nsecs, data) = read_u32(data)?;
-    let (dev, data) = read_u32(data)?;
-    let (ino, data) = read_u32(data)?;
-    let (uid, data) = read_u32(data)?;
-    let (gid, data) = read_u32(data)?;
-    let (size, data) = read_u32(data)?;
+    let (stat, data) = crate::decode::stat(data)?;
     let (hash, data) = split_at_pos(data, hash_len)?;
     Some((
         OidStat {
-            mtime: entry::Time {
-                secs: ctime_secs,
-                nsecs: ctime_nsecs,
-            },
-            ctime: entry::Time {
-                secs: mtime_secs,
-                nsecs: mtime_nsecs,
-            },
-            dev,
-            ino,
-            uid,
-            gid,
-            size,
+            stat,
             id: ObjectId::from(hash),
         },
         data,

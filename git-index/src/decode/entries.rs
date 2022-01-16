@@ -64,7 +64,7 @@ pub fn load_chunk<'a>(
         .ok_or(decode::Error::Entry(idx))?;
 
         data = remaining;
-        if entry::mode::is_sparse(entry.stat.mode) {
+        if entry::mode::is_sparse(entry.mode) {
             is_sparse = true;
         }
         // TODO: entries are actually in an intrusive collection, with path as key. Could be set for us. This affects 'ignore_case' which we
@@ -156,13 +156,13 @@ fn load_one<'a>(
                 },
                 dev,
                 ino,
-                mode,
                 uid,
                 gid,
                 size,
             },
             id: git_hash::ObjectId::from(hash),
             flags: flags & !entry::mask::PATH_LEN,
+            mode,
             path: path_range,
         },
         data,

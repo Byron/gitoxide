@@ -1,6 +1,6 @@
 use filetime::FileTime;
 
-use crate::{extension, Entry, State, Version};
+use crate::{entry, extension, Entry, State, Version};
 
 mod entries;
 pub mod header;
@@ -32,6 +32,7 @@ mod error {
         }
     }
 }
+use crate::util::read_u32;
 pub use error::Error;
 use git_features::parallel::InOrderIter;
 
@@ -260,4 +261,34 @@ fn load_entries(
             data,
         )
     })
+}
+
+pub(crate) fn stat(data: &[u8]) -> Option<(entry::Stat, &[u8])> {
+    let (ctime_secs, data) = read_u32(data)?;
+    let (ctime_nsecs, data) = read_u32(data)?;
+    let (mtime_secs, data) = read_u32(data)?;
+    let (mtime_nsecs, data) = read_u32(data)?;
+    let (dev, data) = read_u32(data)?;
+    let (ino, data) = read_u32(data)?;
+    let (uid, data) = read_u32(data)?;
+    let (gid, data) = read_u32(data)?;
+    let (size, data) = read_u32(data)?;
+    Some((
+        entry::Stat {
+            mtime: entry::Time {
+                secs: ctime_secs,
+                nsecs: ctime_nsecs,
+            },
+            ctime: entry::Time {
+                secs: mtime_secs,
+                nsecs: mtime_nsecs,
+            },
+            dev,
+            ino,
+            uid,
+            gid,
+            size,
+        },
+        data,
+    ))
 }

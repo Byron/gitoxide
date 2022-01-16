@@ -25,7 +25,6 @@ pub struct Stat {
     pub ctime: Time,
     pub dev: u32,
     pub ino: u32,
-    pub mode: u32,
     pub uid: u32,
     pub gid: u32,
     /// The size of bytes on disk. Capped to u32 so files bigger than that will need thorough checking (and hopefully never make it)
