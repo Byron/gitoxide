@@ -235,7 +235,7 @@ The git staging area.
     * [x] TREE for speeding up tree generation
     * [x] REUC resolving undo
     * [x] UNTR untracked cache
-    * [ ] FSMN file system monitor cache V1 and V2
+    * [x] FSMN file system monitor cache V1 and V2
     * [x] 'link' base indices to take information from, split index
     * [x] 'sdir' sparse directory entries - marker
 * `stat` update

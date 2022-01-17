@@ -1245,6 +1245,7 @@ name = "git-index"
 version = "0.0.0"
 dependencies = [
  "atoi",
+ "bitflags",
  "bstr",
  "filetime",
  "git-bitmap",

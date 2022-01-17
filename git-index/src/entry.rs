@@ -1,7 +1,16 @@
+use bitflags::bitflags;
+
+bitflags! {
+    pub struct Mode: u32 {
+        const IFDIR = 0o040000;
+    }
+}
+
 pub(crate) mod mode {
-    const S_IFDIR: u32 = 0o040000;
-    pub fn is_sparse(mode: u32) -> bool {
-        mode == S_IFDIR
+    impl super::Mode {
+        pub fn is_sparse(&self) -> bool {
+            *self == Self::IFDIR
+        }
     }
 }
 

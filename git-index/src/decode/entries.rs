@@ -64,7 +64,7 @@ pub fn chunk<'a>(
         .ok_or(decode::Error::Entry(idx))?;
 
         data = remaining;
-        if entry::mode::is_sparse(entry.mode) {
+        if entry.mode.is_sparse() {
             is_sparse = true;
         }
         // TODO: entries are actually in an intrusive collection, with path as key. Could be set for us. This affects 'ignore_case' which we
@@ -162,7 +162,8 @@ fn load_one<'a>(
             },
             id: git_hash::ObjectId::from(hash),
             flags: flags & !entry::mask::PATH_LEN,
-            mode,
+            // This forces us to add the bits we need before being able to use them.
+            mode: entry::Mode::from_bits_truncate(mode),
             path: path_range,
         },
         data,
