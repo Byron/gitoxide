@@ -43,7 +43,7 @@ pub enum Version {
 pub struct Entry {
     pub stat: entry::Stat,
     pub id: git_hash::ObjectId,
-    pub flags: u32,
+    pub flags: entry::Flags,
     pub mode: entry::Mode,
     path: Range<usize>,
 }

@@ -97,20 +97,14 @@ fn load_one<'a>(
     let (size, data) = read_u32(data)?;
     let (hash, data) = split_at_pos(data, hash_len)?;
     let (flags, data) = read_u16(data)?;
-    let flags = flags as u32;
-    let (flags, data) = if flags & entry::flags::EXTENDED == entry::flags::EXTENDED {
+    let flags = entry::at_rest::Flags::from_bits(flags)?;
+    let (flags, data) = if flags.contains(entry::at_rest::Flags::EXTENDED) {
         let (extended_flags, data) = read_u16(data)?;
-        let extended_flags: u32 = (extended_flags as u32) << 16;
-        const ALL_KNOWN_EXTENDED_FLAGS: u32 = entry::flags::INTENT_TO_ADD | entry::flags::SKIP_WORKTREE;
-        assert_eq!(
-            extended_flags & !ALL_KNOWN_EXTENDED_FLAGS,
-            0,
-            "BUG: encountered unknown extended bitflags in {:b}",
-            extended_flags
-        );
-        (flags | extended_flags, data)
+        let extended_flags = entry::at_rest::FlagsExtended::from_bits(extended_flags)?;
+        let extended_flags = extended_flags.to_flags()?;
+        (flags.to_memory() | extended_flags, data)
     } else {
-        (flags, data)
+        (flags.to_memory(), data)
     };
 
     let start = path_backing.len();
@@ -131,10 +125,10 @@ fn load_one<'a>(
 
         data
     } else {
-        let (path, data) = if (flags & entry::mask::PATH_LEN) == entry::mask::PATH_LEN {
+        let (path, data) = if flags.contains(entry::Flags::PATH_LEN) {
             split_at_byte_exclusive(data, 0)?
         } else {
-            let path_len = (flags & entry::mask::PATH_LEN) as usize;
+            let path_len = (flags.bits() & entry::Flags::PATH_LEN.bits()) as usize;
             split_at_pos(data, path_len)?
         };
 
@@ -161,7 +155,7 @@ fn load_one<'a>(
                 size,
             },
             id: git_hash::ObjectId::from(hash),
-            flags: flags & !entry::mask::PATH_LEN,
+            flags: flags & !entry::Flags::PATH_LEN,
             // This forces us to add the bits we need before being able to use them.
             mode: entry::Mode::from_bits_truncate(mode),
             path: path_range,

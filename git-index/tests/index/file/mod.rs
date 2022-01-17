@@ -1,7 +1,7 @@
 mod init {
     use std::path::{Path, PathBuf};
 
-    use git_index::Version;
+    use git_index::{entry, Version};
     use git_testtools::hex_to_id;
 
     fn loose_file(name: &str) -> git_index::File {
@@ -31,6 +31,8 @@ mod init {
 
             let entry = &file.entries()[0];
             assert_eq!(entry.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"));
+            assert!(entry.flags.is_empty());
+            assert_eq!(entry.mode, entry::Mode::FILE);
             assert_eq!(entry.path(&file.state), "a");
         }
     }
@@ -44,6 +46,8 @@ mod init {
         for (idx, path) in ["a", "b", "c", "d/a", "d/b", "d/c"].into_iter().enumerate() {
             let e = &file.entries()[idx];
             assert_eq!(e.path(&file), path);
+            assert!(e.flags.is_empty());
+            assert_eq!(e.mode, entry::Mode::FILE);
             assert_eq!(e.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"))
         }
     }
@@ -121,6 +125,8 @@ mod init {
         {
             let e = &file.entries()[idx];
             assert_eq!(e.path(&file), path);
+            assert!(e.flags.is_empty());
+            assert_eq!(e.mode, entry::Mode::FILE);
             assert_eq!(e.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"))
         }
     }
