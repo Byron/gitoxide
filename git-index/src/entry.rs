@@ -45,14 +45,14 @@ pub(crate) mod at_rest {
     }
 
     impl FlagsExtended {
-        pub fn to_flags(&self) -> Option<super::Flags> {
+        pub fn to_flags(self) -> Option<super::Flags> {
             super::Flags::from_bits((self.bits as u32) << 16)
         }
     }
 
     impl Flags {
-        pub fn to_memory(&self) -> super::Flags {
-            super::Flags::from_bits((*self & Flags::PATH_LEN).bits as u32)
+        pub fn to_memory(self) -> super::Flags {
+            super::Flags::from_bits((self & Flags::PATH_LEN).bits as u32)
                 .expect("PATHLEN is part of memory representation")
         }
     }
