@@ -36,6 +36,8 @@ impl<'r> Platform<'r> {
     /// Return an iterator over all references that match the given `prefix`.
     ///
     /// These are of the form `refs/heads` or `refs/remotes/origin`, and must not contain relative paths components like `.` or `..`.
+    // TODO: Create a custom `Path` type that enforces the requirements of git naturally, this type is surprising possibly on windows
+    //       and when not using a trailing '/' to signal directories.
     pub fn prefixed(&self, prefix: impl AsRef<Path>) -> Result<Iter<'_>, init::Error> {
         Ok(Iter {
             inner: self.platform.prefixed(prefix)?,
