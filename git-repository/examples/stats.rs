@@ -54,11 +54,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .count();
     let inaccessible_refs = handle.references()?.all()?.filter(Result::is_err).count();
 
-    println!("num local branches: {num_branches}");
-    println!("num remote branches: {num_remote_branches}");
-    println!("num tags: {num_tags}");
-    println!("refs with inaccessible objects: {broken_refs}");
-    println!("inaccessible refs: {inaccessible_refs}");
+    println!("num local branches: {}", num_branches);
+    println!("num remote branches: {}", num_remote_branches);
+    println!("num tags: {}", num_tags);
+    println!("refs with inaccessible objects: {}", broken_refs);
+    println!("inaccessible refs: {}", inaccessible_refs);
 
     std::fs::write(
         "tags.gitoxide",
