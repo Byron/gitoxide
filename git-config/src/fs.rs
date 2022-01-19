@@ -165,10 +165,10 @@ impl<'config> Config<'config> {
     ) -> Option<(T, ConfigSource)> {
         let mapping = self.mapping();
 
-        for (conf, source) in mapping {
+        for (conf, source) in mapping.iter() {
             if let Some(conf) = conf {
                 if let Ok(v) = conf.value(section_name, subsection_name, key) {
-                    return Some((v, source));
+                    return Some((v, *source));
                 }
             }
         }
@@ -199,9 +199,9 @@ impl<'config> Config<'config> {
     ) -> Result<Option<(T, ConfigSource)>, GitConfigError<'lookup>> {
         let mapping = self.mapping();
 
-        for (conf, source) in mapping {
+        for (conf, source) in mapping.iter() {
             if let Some(conf) = conf {
-                return Ok(Some((conf.value(section_name, subsection_name, key)?, source)));
+                return Ok(Some((conf.value(section_name, subsection_name, key)?, *source)));
             }
         }
 
