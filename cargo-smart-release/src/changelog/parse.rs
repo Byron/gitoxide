@@ -424,7 +424,7 @@ fn record_unknown_range(out: &mut Vec<section::Segment>, range: Option<Range<usi
 }
 
 fn track_unknown_event(unknown_event: Event<'_>, unknown: &mut String) {
-    log::trace!("Cannot handle {:?}", unknown_event);
+    log::warn!("Cannot handle {:?}", unknown_event);
     match unknown_event {
         Event::Html(text)
         | Event::Code(text)
