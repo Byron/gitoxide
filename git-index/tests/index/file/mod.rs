@@ -85,6 +85,21 @@ mod init {
     }
 
     #[test]
+    fn read_v2_very_long_path() {
+        let file = loose_file("very-long-path");
+        assert_eq!(file.version(), Version::V2);
+
+        assert_eq!(file.state.entries().len(), 9);
+        assert_eq!(
+            file.state.entries()[0].path(&file.state),
+            std::iter::repeat('a')
+                .take(4096)
+                .chain(std::iter::once('q'))
+                .collect::<String>()
+        );
+    }
+
+    #[test]
     fn read_reuc_extension() {
         let file = loose_file("REUC");
         assert_eq!(file.version(), Version::V2);
