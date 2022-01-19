@@ -60,24 +60,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("refs with inaccessible objects: {}", broken_refs);
     println!("inaccessible refs: {}", inaccessible_refs);
 
-    std::fs::write(
-        "tags.gitoxide",
-        handle
-            .references()?
-            .prefixed("refs/tags/")?
-            .map(|t| {
-                t.unwrap()
-                    .name()
-                    .to_path()
-                    .file_name()
-                    .unwrap()
-                    .to_string_lossy()
-                    .to_string()
-            })
-            .collect::<Vec<_>>()
-            .join("\n"),
-    )?;
-
     Ok(())
 }
 
