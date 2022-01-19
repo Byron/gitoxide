@@ -5,6 +5,73 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-cb7e4e784d615f9fa3d6fb9c36240f0592403358/> Add InOrderIter to 'parallel' module
+   This iterator makes possible identifies results using a sequence id
+   and returns only consecutive items.
+   
+   Use it to collect unordered results produced by threads.
+   It's advantage to collecting yourself and sorting is the potential
+   for a smaller memory footprint of in-flight results, one doesn't
+   have to collect them all for ordering, necessarily.
+ - <csr-id-ca095ed881db2a8f06a6b067dbaac17e923b0945/> Make a scope-like abstraction available
+   This allows more delicate threading control like is required for the
+   index.
+ - <csr-id-b8400ed80543d67a5895c975ba9b1fc28427411c/> decoding of variable int numbers.
+   It's here only so that we can share the code across crates, for now
+   without any feature toggles.
+ - <csr-id-0a749a22057b5513a8cefa0e26b0a9a268c769d3/> Add `progress::Write` to automatically pass bytes written to a progress instance
+
+### Changed (BREAKING)
+
+ - <csr-id-61e5cfece4d8f405e35fc1957b00ce1da7526c26/> renamed `progress::Read::reader` -> `progress::Read::inner`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 15 commits contributed to the release over the course of 41 calendar days.
+ - 51 days passed between releases.
+ - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 4 unique issues were worked on: [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#266](https://github.com/Byron/gitoxide/issues/266)**
+    - update sha-1 dependency to 0.10 ([`361892c`](https://github.com/Byron/gitoxide/commit/361892ca15aa648802f6701ab6a5a30aedde3449))
+    - remove slow/unnecessary threading utilities ([`269b7ef`](https://github.com/Byron/gitoxide/commit/269b7efc47bb1d6380b2059f63bd0c53fcd285de))
+ * **[#279](https://github.com/Byron/gitoxide/issues/279)**
+    - Add `progress::Write` to automatically pass bytes written to a progress instance ([`0a749a2`](https://github.com/Byron/gitoxide/commit/0a749a22057b5513a8cefa0e26b0a9a268c769d3))
+    - renamed `progress::Read::reader` -> `progress::Read::inner` ([`61e5cfe`](https://github.com/Byron/gitoxide/commit/61e5cfece4d8f405e35fc1957b00ce1da7526c26))
+    - Adjust to changes in git-hash and git-pack ([`0cae25b`](https://github.com/Byron/gitoxide/commit/0cae25b1bb3c902ec323f17a1d9743e42fe213d0))
+ * **[#287](https://github.com/Byron/gitoxide/issues/287)**
+    - upgrade to prodash 17 ([`47860b7`](https://github.com/Byron/gitoxide/commit/47860b7e2769260cfb8522ae455c491605093423))
+ * **[#293](https://github.com/Byron/gitoxide/issues/293)**
+    - fix docs ([`3f89b63`](https://github.com/Byron/gitoxide/commit/3f89b6336e79bc12bc31d40b74221e79a72d2b36))
+    - fix build ([`e3977fe`](https://github.com/Byron/gitoxide/commit/e3977fe033550bfd3297cdd674934e40476aa38b))
+    - Use InOrderIter from git-features ([`7721b5f`](https://github.com/Byron/gitoxide/commit/7721b5fc7cba86d785e0936fdfab2ea41163219f))
+    - Add InOrderIter to 'parallel' module ([`cb7e4e7`](https://github.com/Byron/gitoxide/commit/cb7e4e784d615f9fa3d6fb9c36240f0592403358))
+    - Make a scope-like abstraction available ([`ca095ed`](https://github.com/Byron/gitoxide/commit/ca095ed881db2a8f06a6b067dbaac17e923b0945))
+    - single and multi-threaded index tests ([`a22cb0f`](https://github.com/Byron/gitoxide/commit/a22cb0f1ead9a2f32e43eb2fb378281e592a4ed3))
+    - decoding of variable int numbers. ([`b8400ed`](https://github.com/Byron/gitoxide/commit/b8400ed80543d67a5895c975ba9b1fc28427411c))
+ * **Uncategorized**
+    - refactor ([`e7fbd9f`](https://github.com/Byron/gitoxide/commit/e7fbd9f3700496ad7bb7e71226c4d25429f0ccd5))
+    - thanks clippy ([`7dd2313`](https://github.com/Byron/gitoxide/commit/7dd2313d980fe7c058319ae66d313b3097e3ae5f))
+</details>
+
 ## 0.18.0 (2021-11-29)
 
 ### New Features
@@ -31,7 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 5 calendar days.
+ - 9 commits contributed to the release over the course of 5 calendar days.
+ - 40 days passed between releases.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#259](https://github.com/Byron/gitoxide/issues/259), [#263](https://github.com/Byron/gitoxide/issues/263)
 
@@ -56,6 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - A mad attempt to use thread-local everywhere and avoid Sync… ([`0af5077`](https://github.com/Byron/gitoxide/commit/0af5077e1f028c1c69bbdc098bb567e486282c37))
     - add threading primitives with feature toggle ([`7e95d8a`](https://github.com/Byron/gitoxide/commit/7e95d8ab29051ffc892f2dcbaf5369e8c7e7b294))
  * **Uncategorized**
+    - Release git-features v0.18.0, git-actor v0.7.0, git-config v0.1.9, git-object v0.16.0, git-diff v0.12.0, git-traverse v0.11.0, git-pack v0.15.0, git-odb v0.25.0, git-packetline v0.12.2, git-transport v0.14.0, git-protocol v0.13.0, git-ref v0.10.0, git-repository v0.13.0, cargo-smart-release v0.7.0, safety bump 12 crates ([`acd3737`](https://github.com/Byron/gitoxide/commit/acd37371dcd92ebac3d1f039224d02f2b4e9fa0b))
     - Adjust changelogs prior to release ([`ec38950`](https://github.com/Byron/gitoxide/commit/ec3895005d141abe79764eaff7c0f04153e38d73))
     - thanks clippy ([`db1bb99`](https://github.com/Byron/gitoxide/commit/db1bb99101a9248b464b0df9f526067b8f2a184e))
 </details>
@@ -69,6 +138,7 @@ A maintenance release due to properly dealing with previously breaking changes i
 <csr-read-only-do-not-edit/>
 
  - 4 commits contributed to the release.
+ - 3 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com/Byron/gitoxide/issues/222)
 
@@ -95,6 +165,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 9 commits contributed to the release over the course of 5 calendar days.
+ - 38 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#198](https://github.com/Byron/gitoxide/issues/198)
 
@@ -123,7 +194,8 @@ This release contains no functional changes.
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 6 calendar days.
+ - 5 commits contributed to the release over the course of 1 calendar day.
+ - 10 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -135,13 +207,10 @@ This release contains no functional changes.
 
  * **Uncategorized**
     - Release git-features v0.16.4 ([`fd189c7`](https://github.com/Byron/gitoxide/commit/fd189c7d973ad2a639d319f3761f37aa90712ef6))
-    - Bump git-hash v0.6.0 ([`6efd90d`](https://github.com/Byron/gitoxide/commit/6efd90db54f7f7441b76159dba3be80c15657a3d))
-    - [features #190] be more explicit about why sha1-asm is disabled ([`507d710`](https://github.com/Byron/gitoxide/commit/507d710d837c3911a9329c1c132eee912a37e1a8))
-    - [various #190] rename 'local-offset' to 'local-time-support' ([`3a7d379`](https://github.com/Byron/gitoxide/commit/3a7d3793a235ac872437f3bfedb9dd8fde9b31b1))
-    - [actor #190] methods to get an actor signature at the current time ([`6d0bedd`](https://github.com/Byron/gitoxide/commit/6d0beddb20092a80b113a39c862d6b680d79deb6))
     - [features #189] simple UTC-offset support for git-features ([`b58134b`](https://github.com/Byron/gitoxide/commit/b58134bbd132f9e685d1adf7859ec5219c16dd25))
     - [features #???] WIP local time ([`1388ebf`](https://github.com/Byron/gitoxide/commit/1388ebf0925eb326ec3045d7f83bd5beda22a6fe))
     - [#189] Upgrade to prodash 16… ([`8e98418`](https://github.com/Byron/gitoxide/commit/8e98418652926860f58906a6f21a3210e2f0183f))
+    - Bump git-hash v0.6.0 ([`6efd90d`](https://github.com/Byron/gitoxide/commit/6efd90db54f7f7441b76159dba3be80c15657a3d))
 </details>
 
 ## v0.16.3 (2021-08-27)
@@ -150,7 +219,8 @@ This release contains no functional changes.
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 5 calendar days.
+ - 8 commits contributed to the release over the course of 5 calendar days.
+ - 10 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -167,6 +237,9 @@ This release contains no functional changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - [features #190] be more explicit about why sha1-asm is disabled ([`507d710`](https://github.com/Byron/gitoxide/commit/507d710d837c3911a9329c1c132eee912a37e1a8))
+    - [various #190] rename 'local-offset' to 'local-time-support' ([`3a7d379`](https://github.com/Byron/gitoxide/commit/3a7d3793a235ac872437f3bfedb9dd8fde9b31b1))
+    - [actor #190] methods to get an actor signature at the current time ([`6d0bedd`](https://github.com/Byron/gitoxide/commit/6d0beddb20092a80b113a39c862d6b680d79deb6))
     - [pack #67] Optimize caches based on cache debugging ([`1271c01`](https://github.com/Byron/gitoxide/commit/1271c01d2635ab49474add61a9feb78b98bd6180))
     - [pack #67] Add cache debugging capabilities to git-features ([`8776c98`](https://github.com/Byron/gitoxide/commit/8776c9834ac4622b3057f5db464a9817ed9acdb0))
     - thanks clippy ([`d689599`](https://github.com/Byron/gitoxide/commit/d689599d1b819c18a3be60075170dbe00462e216))
@@ -181,6 +254,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release over the course of 1 calendar day.
+ - 6 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -223,6 +297,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 57 commits contributed to the release over the course of 78 calendar days.
+ - 93 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -299,6 +374,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release over the course of 5 calendar days.
+ - 8 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -320,6 +396,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 33 commits contributed to the release over the course of 12 calendar days.
+ - 21 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -378,6 +455,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 7 commits contributed to the release over the course of 10 calendar days.
+ - 74 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#63](https://github.com/Byron/gitoxide/issues/63)
 
@@ -425,6 +503,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 8 commits contributed to the release over the course of 38 calendar days.
+ - 38 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -472,6 +551,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 7 commits contributed to the release over the course of 18 calendar days.
+ - 19 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -498,6 +578,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 11 commits contributed to the release over the course of 6 calendar days.
+ - 7 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -527,7 +608,8 @@ This release contains no functional changes.
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 63 calendar days.
+ - 7 commits contributed to the release over the course of 63 calendar days.
+ - 67 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -543,6 +625,7 @@ This release contains no functional changes.
     - move 'git_odb::hash::bytes_of_file' into git_features::hash ([`c5f6b45`](https://github.com/Byron/gitoxide/commit/c5f6b4587ee4042a080c0505613b0c72fdfe5273))
     - remove dash in all repository links ([`98c1360`](https://github.com/Byron/gitoxide/commit/98c1360ba4d2fb3443602b7da8775906224feb1d))
     - Use parallel walkdir (via jwalk) when parallel feature is enabled ([`f444c85`](https://github.com/Byron/gitoxide/commit/f444c859f5b215ea70a46d5493a2babbf7a98235))
+    - Switch to prodash 10 and safe a lot of trait bounds in the process ([`e2fb1d9`](https://github.com/Byron/gitoxide/commit/e2fb1d944b4d803a11c91f868b831d406fb5e35f))
     - refactor ([`e4bcfe6`](https://github.com/Byron/gitoxide/commit/e4bcfe6406b14feffa63598c7cdcc8ecc73222bd))
 </details>
 
@@ -552,7 +635,8 @@ This release contains no functional changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 1 calendar day.
+ - 13 commits contributed to the release over the course of 24 calendar days.
+ - 26 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -564,33 +648,6 @@ This release contains no functional changes.
 
  * **Uncategorized**
     - (cargo-release) version 0.6.0 ([`9ef184e`](https://github.com/Byron/gitoxide/commit/9ef184e35712f938fb4f9f6da7390a8777a9284e))
-    - Switch to prodash 10 and safe a lot of trait bounds in the process ([`e2fb1d9`](https://github.com/Byron/gitoxide/commit/e2fb1d944b4d803a11c91f868b831d406fb5e35f))
-</details>
-
-## v0.5.0 (2020-09-12)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 13 commits contributed to the release over the course of 21 calendar days.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - (cargo-release) version 0.5.0 ([`82b7313`](https://github.com/Byron/gitoxide/commit/82b73131b79ec3c42a712dad1c0766a72209d737))
     - [clone] This actually works: first MVP of retrieving packs via clone ([`c06d819`](https://github.com/Byron/gitoxide/commit/c06d8194173f9ec468ddd0faf72dd6d8dbf7d35d))
     - [clone] test (and fix) for piped line reading ([`afe2996`](https://github.com/Byron/gitoxide/commit/afe2996689b5bea915ac5f142d320056faf49899))
     - [clone] Send headers with BufReaders ([`6a95aaa`](https://github.com/Byron/gitoxide/commit/6a95aaab582941c6d1697dde6982c0aa8896c73d))
@@ -605,6 +662,26 @@ This release contains no functional changes.
     - Fix git-features hash tests ([`35e8809`](https://github.com/Byron/gitoxide/commit/35e8809f6bc7d19ed9e0bac8e3af85f433978901))
 </details>
 
+## v0.5.0 (2020-09-12)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' where seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - (cargo-release) version 0.5.0 ([`82b7313`](https://github.com/Byron/gitoxide/commit/82b73131b79ec3c42a712dad1c0766a72209d737))
+</details>
+
 ## v0.4.0 (2020-08-18)
 
 ### Commit Statistics
@@ -612,6 +689,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 5 commits contributed to the release over the course of 4 calendar days.
+ - 6 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -636,6 +714,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 30 commits contributed to the release over the course of 16 calendar days.
+ - 20 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -691,6 +770,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 11 commits contributed to the release over the course of 10 calendar days.
+ - 11 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 

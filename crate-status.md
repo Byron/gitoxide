@@ -216,7 +216,8 @@ Check out the [performance discussion][git-traverse-performance] as well.
 A plumbing crate with shared functionality regarding EWAH compressed bitmaps, as well as other kinds of bitmap implementations.
 
 * **EWAH**
-  * [ ] `Array` type to read and write bits
+  * `Array` type to read and write bits
+     * [x] execute closure for each `true` bit
   * [x] decode on-disk representation
   * [ ] encode on-disk representation
 
@@ -225,9 +226,9 @@ A plumbing crate with shared functionality regarding EWAH compressed bitmaps, as
 The git staging area.
 
 * read 
-  * [x] V2
-  * [x] V3
-  * [x] V4
+  * [x] V2 - the default, including long-paths support
+  * [x] V3 - extended flags
+  * [x] V4 - delta-compression for paths
   * optional threading
     * [x] concurrent loading of index extensions
     * [x] threaded entry reading
