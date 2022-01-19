@@ -37,10 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-c079fbe2099bd0ba43e811e987a80ae14e15e131/> Kind::from_len_in_bytes() is infallible
  - <csr-id-2a799e662aa172c243b54d1df0dfc78501cb024f/> remove `ObjectId::from_20_bytes()` from public API
    Use `ObjectId::from()` or `ObjectId::try_from()` instead.
- - <csr-id-53c748d7f438f57e8119cdf04402bfeaa9f2a286/> remove various SHA1 specific hex utilities in favor of unspecific new ones
-   - removed `to_sha1_hex()`, use `oid::hex_to_buf()` and
-     `oid::hex_to_buf()` instead.
-   - remove `ObjectId::write_hex_to()` in favor of `oid::write_hex_to()`
+ - <csr-id-53c748d7f438f57e8119cdf04402bfeaa9f2a286/> remove various SHA1 specific hex utilities in favor of unspecific new ones.
+   
+   removed `to_sha1_hex()`, use `oid::hex_to_buf()` and `oid::hex_to_buf()` instead.
+   remove `ObjectId::write_hex_to()` in favor of `oid::write_hex_to()`
  - <csr-id-67652cb5cf01c45291d6e117c31290c585bab9d1/> `oid::null_sha1()` replaced with `Kind::null()`
  - <csr-id-3363f1e61295810964ddb0c255eed87a87fe6539/> remove `ObjectId::from_borrowed_sha1()`
  - <csr-id-75b901eff177dade43a28e770920a2b2206ded69/> remove `ObjectId::to_sha1_hex_string()`

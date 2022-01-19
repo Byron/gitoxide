@@ -93,6 +93,7 @@ Here is what `cargo smart-release` does differently: "It tries really hard to do
 * When determining if something changed in top-level crates, only the `src/` directory is used, unless there is only a single crate in the workspace. This value is hard-coded.
 * For change tracking, it will only obtain manifest values once to know where a crate lives, and
   expects it to not be moved.
+* If list items populated by commit messages contain items themselves, round-tripping will fail. Ideally there was a way to parse an item on the same level only.
 
 ## Acknowledgements
 
