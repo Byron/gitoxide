@@ -1,7 +1,7 @@
 //! Hash functions and hash utilities
 //!
 //! With the `fast-sha1` feature, the `Sha1` hash type will use a more elaborate implementation utilizing hardware support
-//! in case it is available. Otherwise the `sha1` feature should be set. `fast-sha1` will take precedence.
+//! in case it is available. Otherwise the `rustsha1` feature should be set. `fast-sha1` will take precedence.
 //! Otherwise, a minimal yet performant implementation is used instead for a decent trade-off between compile times and run-time performance.
 #[cfg(all(feature = "rustsha1", not(feature = "fast-sha1")))]
 mod _impl {
@@ -9,7 +9,7 @@ mod _impl {
 
     /// A implementation of the Sha1 hash, which can be used once.
     #[derive(Default, Clone)]
-    pub struct Sha1(rustsha1::Sha1);
+    pub struct Sha1(sha1_smol::Sha1);
 
     impl Sha1 {
         /// Digest the given `bytes`.
