@@ -79,6 +79,12 @@ mod init {
     }
 
     #[test]
+    fn read_v3_extended_flags() {
+        let file = loose_file("extended-flags");
+        assert_eq!(file.version(), Version::V3);
+    }
+
+    #[test]
     fn read_reuc_extension() {
         let file = loose_file("REUC");
         assert_eq!(file.version(), Version::V2);
