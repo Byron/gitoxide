@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.0 (2022-01-19)
 
 The initial release which can read a complete index, version 2 to 4, with all extensions.
 The reading can be performed with multiple threads as well, partially depending on whether
@@ -15,7 +15,7 @@ certain extensions are present.
 
 <csr-read-only-do-not-edit/>
 
- - 70 commits contributed to the release over the course of 490 calendar days.
+ - 71 commits contributed to the release over the course of 490 calendar days.
  - 509 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#293](https://github.com/Byron/gitoxide/issues/293)
@@ -33,6 +33,7 @@ certain extensions are present.
 <details><summary>view details</summary>
 
  * **[#293](https://github.com/Byron/gitoxide/issues/293)**
+    - prepare changelogs for git-index and dependencies ([`f54bf4b`](https://github.com/Byron/gitoxide/commit/f54bf4bde92b892b6d425987a6a37e10319c4635))
     - Test for extra-long paths ([`3d61afe`](https://github.com/Byron/gitoxide/commit/3d61afe615227e2af96525eba5b0e8e2f94207f3))
     - Test for extended flags ([`ae3b697`](https://github.com/Byron/gitoxide/commit/ae3b69710cf316cb8164120d4b98f051eef363bc))
     - Use bitflags for Flags (in-memory and at-rest) ([`ea86eb0`](https://github.com/Byron/gitoxide/commit/ea86eb0bebb0f067fc8710779c2c296632451c54))
