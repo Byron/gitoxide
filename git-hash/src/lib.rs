@@ -143,8 +143,9 @@ impl Kind {
     /// NOTE that this method isn't public as it shouldn't be encouraged to assume all hashes have the same length.
     /// However, if there should be such a thing, our `oid` implementation will have to become an enum and it's pretty breaking
     /// to the way it's currently being used as auto-dereffing doesn't work anymore. Let's hope it won't happen.
+    // TODO: make 'const' once Rust 1.57 is more readily available in projects using 'gitoxide'.
     #[inline]
-    pub(crate) const fn from_len_in_bytes(bytes: usize) -> Self {
+    pub(crate) fn from_len_in_bytes(bytes: usize) -> Self {
         match bytes {
             20 => Kind::Sha1,
             _ => panic!("BUG: must be called only with valid hash lengths produced by len_in_bytes()"),
