@@ -135,7 +135,7 @@ pub mod fanout {
     ) -> std::io::Result<()> {
         let fanout = crate::index::write::encode::fanout(sorted_entries.iter().map(|e| e.id.first_byte()));
 
-        for value in fanout {
+        for value in fanout.iter() {
             out.write_all(&value.to_be_bytes())?;
         }
         Ok(())

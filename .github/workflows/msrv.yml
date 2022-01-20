@@ -1,0 +1,26 @@
+on:
+  # Trigger the workflow on push to master or any pull request
+  # Ignore all tags
+  push:
+    branches:
+      - main
+    tags-ignore: '*'
+  pull_request:
+    branches:
+      - 'main'
+
+name: Minimum Supported Rust Version
+
+jobs:
+  rustfmt:
+    name: cargo check MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: "1.52.0"
+          override: true
+      - run: cargo check --all
+      - run: cargo check --all --no-default-features --features lean-async

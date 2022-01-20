@@ -68,16 +68,15 @@ impl<'s> Transaction<'s> {
                     }
                     (PreviousValue::ExistingMustMatch(_), None)
                     | (PreviousValue::MustExist, Some(_))
-                    | (PreviousValue::Any, None | Some(_)) => {}
-                    (PreviousValue::MustExist | PreviousValue::MustExistAndMatch(_), None) => {
+                    | (PreviousValue::Any, Some(_))
+                    | (PreviousValue::Any, None) => {}
+                    (PreviousValue::MustExist, None) | (PreviousValue::MustExistAndMatch(_), None) => {
                         return Err(Error::DeleteReferenceMustExist {
                             full_name: change.name(),
                         })
                     }
-                    (
-                        PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
-                        Some(existing),
-                    ) => {
+                    (PreviousValue::MustExistAndMatch(previous), Some(existing))
+                    | (PreviousValue::ExistingMustMatch(previous), Some(existing)) => {
                         let actual = existing.target.clone();
                         if *previous != actual {
                             let expected = previous.clone();
@@ -112,7 +111,8 @@ impl<'s> Transaction<'s> {
                 match (&expected, &existing_ref) {
                     (PreviousValue::Any, _)
                     | (PreviousValue::MustExist, Some(_))
-                    | (PreviousValue::MustNotExist | PreviousValue::ExistingMustMatch(_), None) => {}
+                    | (PreviousValue::MustNotExist, None)
+                    | (PreviousValue::ExistingMustMatch(_), None) => {}
                     (PreviousValue::MustExist, None) => {
                         let expected = Target::Peeled(store.object_hash.null());
                         let full_name = change.name();
@@ -128,10 +128,8 @@ impl<'s> Transaction<'s> {
                             });
                         }
                     }
-                    (
-                        PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
-                        Some(existing),
-                    ) => {
+                    (PreviousValue::MustExistAndMatch(previous), Some(existing))
+                    | (PreviousValue::ExistingMustMatch(previous), Some(existing)) => {
                         if *previous != existing.target {
                             let actual = existing.target.clone();
                             let expected = previous.to_owned();
@@ -238,8 +236,13 @@ impl<'s> Transaction<'s> {
                     continue;
                 }
                 match edit.update.change {
+                    // TODO: use or-pattern here once MRV is big enough (blocked by vergen 1.52)
                     Change::Update {
-                        expected: PreviousValue::ExistingMustMatch(_) | PreviousValue::MustExistAndMatch(_),
+                        expected: PreviousValue::ExistingMustMatch(_),
+                        ..
+                    }
+                    | Change::Update {
+                        expected: PreviousValue::MustExistAndMatch(_),
                         ..
                     } => needs_packed_refs_lookups = true,
                     Change::Delete { .. } => {

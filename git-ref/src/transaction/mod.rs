@@ -86,12 +86,21 @@ impl Change {
     /// Return references to values that are in common between all variants.
     pub fn previous_value(&self) -> Option<crate::TargetRef<'_>> {
         match self {
+            // TODO: use or-patterns once MRV is larger than 1.52 (and this is supported)
             Change::Update {
-                expected: PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
+                expected: PreviousValue::MustExistAndMatch(previous),
                 ..
-            } => previous,
-            Change::Delete {
-                expected: PreviousValue::MustExistAndMatch(previous) | PreviousValue::ExistingMustMatch(previous),
+            }
+            | Change::Update {
+                expected: PreviousValue::ExistingMustMatch(previous),
+                ..
+            }
+            | Change::Delete {
+                expected: PreviousValue::MustExistAndMatch(previous),
+                ..
+            }
+            | Change::Delete {
+                expected: PreviousValue::ExistingMustMatch(previous),
                 ..
             } => previous,
             _ => return None,

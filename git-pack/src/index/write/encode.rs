@@ -41,7 +41,7 @@ pub(crate) fn write_to(
     let _info = progress.add_child("writing fan-out table");
     let fan_out = fanout(entries_sorted_by_oid.iter().map(|e| e.data.id.first_byte()));
 
-    for value in fan_out {
+    for value in fan_out.iter() {
         out.write_all(&value.to_be_bytes())?;
     }
 
