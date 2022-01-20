@@ -257,7 +257,7 @@ impl super::Store {
             .unwrap_or(0);
         let mut num_indices_checked = 0;
         let mut needs_generation_change = false;
-        let mut slot_indices_to_remove: Vec<_> = idx_by_index_path.into_values().collect();
+        let mut slot_indices_to_remove: Vec<_> = idx_by_index_path.into_iter().map(|(_, v)| v).collect();
         while let Some((mut index_info, mtime, move_from_slot_idx)) = index_paths_to_add.pop_front() {
             'increment_slot_index: loop {
                 if num_indices_checked == self.files.len() {

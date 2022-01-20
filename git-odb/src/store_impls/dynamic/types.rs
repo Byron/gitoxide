@@ -211,16 +211,16 @@ impl<T: Clone> OnDiskFile<T> {
         match std::mem::replace(&mut self.state, OnDiskFileState::Missing) {
             OnDiskFileState::Garbage(v) => self.state = OnDiskFileState::Loaded(v),
             OnDiskFileState::Missing => self.state = OnDiskFileState::Unloaded,
-            other @ (OnDiskFileState::Loaded(_) | OnDiskFileState::Unloaded) => self.state = other,
+            other @ OnDiskFileState::Loaded(_) | other @ OnDiskFileState::Unloaded => self.state = other,
         }
     }
 
     pub fn trash(&mut self) {
         match std::mem::replace(&mut self.state, OnDiskFileState::Missing) {
             OnDiskFileState::Loaded(v) => self.state = OnDiskFileState::Garbage(v),
-            other @ (OnDiskFileState::Garbage(_) | OnDiskFileState::Unloaded | OnDiskFileState::Missing) => {
-                self.state = other
-            }
+            other @ OnDiskFileState::Garbage(_)
+            | other @ OnDiskFileState::Unloaded
+            | other @ OnDiskFileState::Missing => self.state = other,
         }
     }
 }
