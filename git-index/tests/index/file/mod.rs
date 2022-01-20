@@ -43,7 +43,7 @@ mod init {
         assert_eq!(file.version(), Version::V2);
 
         assert_eq!(file.entries().len(), 6);
-        for (idx, path) in ["a", "b", "c", "d/a", "d/b", "d/c"].into_iter().enumerate() {
+        for (idx, path) in ["a", "b", "c", "d/a", "d/b", "d/c"].iter().enumerate() {
             let e = &file.entries()[idx];
             assert_eq!(e.path(&file), path);
             assert!(e.flags.is_empty());
@@ -141,7 +141,7 @@ mod init {
             "d/last/6",
             "x",
         ]
-        .into_iter()
+        .iter()
         .enumerate()
         {
             let e = &file.entries()[idx];

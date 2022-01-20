@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use bstr::BString;
 use git_hash::ObjectId;
 

@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use crate::{extension, extension::Signature, util::from_be_u32};
 
 pub fn header(data: &[u8]) -> (Signature, u32, &[u8]) {

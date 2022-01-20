@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use crate::{extension, extension::Iter, util::from_be_u32};
 
 impl<'a> Iter<'a> {

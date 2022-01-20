@@ -32,9 +32,10 @@ mod error {
         }
     }
 }
-use crate::util::read_u32;
 pub use error::Error;
 use git_features::parallel::InOrderIter;
+
+use crate::util::read_u32;
 
 #[derive(Default)]
 pub struct Options {

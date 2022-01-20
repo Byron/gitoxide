@@ -82,6 +82,8 @@ pub struct State {
 }
 
 pub(crate) mod util {
+    use std::convert::TryInto;
+
     #[inline]
     pub fn var_int(data: &[u8]) -> Option<(u64, &[u8])> {
         let (num, consumed) = git_features::decode::leb64_from_read(data).ok()?;

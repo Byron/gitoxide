@@ -51,9 +51,12 @@ pub struct FsMonitor {
 mod iter;
 
 pub(crate) mod fs_monitor {
-    use crate::extension::{FsMonitor, Signature};
-    use crate::util::{read_u32, read_u64, split_at_byte_exclusive};
     use bstr::BString;
+
+    use crate::{
+        extension::{FsMonitor, Signature},
+        util::{read_u32, read_u64, split_at_byte_exclusive},
+    };
 
     pub enum Token {
         V1 { nanos_since_1970: u64 },

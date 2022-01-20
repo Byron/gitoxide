@@ -39,14 +39,14 @@ pub fn decode(mut data: &[u8], object_hash: git_hash::Kind) -> Option<Paths> {
         }
 
         let mut stages = [None, None, None];
-        for (mode, stage) in modes.into_iter().zip(stages.iter_mut()) {
-            if mode == 0 {
+        for (mode, stage) in modes.iter().zip(stages.iter_mut()) {
+            if *mode == 0 {
                 continue;
             }
             let (hash, rest) = split_at_pos(data, hash_len)?;
             data = rest;
             *stage = Some(Stage {
-                mode,
+                mode: *mode,
                 id: ObjectId::from(hash),
             });
         }
