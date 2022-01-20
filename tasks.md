@@ -1,6 +1,50 @@
 This file sketches out the tasks required to be able to clone a repository whilst checking out its head ref.
 
-### Index, worktree and diffing
+### Repository Clone
+
+* **git-odb**
+  * [x] all docs, sans examples
+  * [x] Rename pack data/pack index `Kind` to `Version` or similar, because that's what it really is.
+* **git-object** refactor
+  * [x] split `Id` and everything hash related into `git-hash`
+  * [x] use `git-hash` inside of `git-features`, remove cycle
+* **git-config**
+  * [x] Thanks to a generous contribution it's mostly done and well on the way
+  * [ ] Push it towards 1.0
+  * [ ] `Config` type which integrates multiple files into one interface, much like a *multi* version of `File`
+  * [x] Make `gix organize` use `git-config` on single files (the repository configuration)
+* **git-ref**
+  * [x] transactional creation of refs
+  * [x] iteration of refs
+* **git-index**
+  * [ ] Create an index from tree
+* **git-bitmap**
+  * [ ] 
+* **git-worktree**
+  * [ ] checkout an index
+* **git-repository**
+  * [x] instance for a valid looking repository
+    * [ ] support shallow repos/references
+  * [ ] create-update refs as received from clone/git-receive-pack safely (i.e. with required locking)
+  * [ ] clone from https remote
+* **gix repository clone**
+  * [ ] try initializing repo on output path - if so, use that to learn about pack location and place new pack there, allow Repo to create refs somehow.
+    * _probably this is done using the repository itself, which steers the whole process and injects it's own delegates_.
+  * [ ] otherwise create the scaffolding needed for a new repository, probably based on `init` implementation
+* **gix pack receive**
+  * [x] resolve thin pack with Bundle
+
+### FSCK an entire repository
+
+* **multi-db** (incorporate object lookup for loose objects and packs)
+  * [x] multi-threaded
+  * [x] delta-tree cache for speedups
+  * [ ] ref-validity check by traversing everything, including reflog, checking reachability of objects accordingly
+  * [x] fs-check - verify all object content of a git repository
+    * probably this should be based on indexed pack traversal for maximum decoding speed and not on individual
+      object lookup
+   
+### Index, worktree and diffing - `git status` like
 
 * [ ] a complete index implementation
 * [ ] an understanding on how worktrees work (also consider `git worktree`) in conjunction git-index
@@ -19,7 +63,7 @@ This file sketches out the tasks required to be able to clone a repository whils
   * [ ] `ReceivePack` logic for V1 and V2
   * [ ] _async_ & _blocking_ negotiation of commits
   
-### Client fetch/pull (server to client)
+### Server fetch/pull (server to client)
 
 * **git-odb**
 
@@ -60,46 +104,6 @@ Probably more like a toy at first merely for testing operation against various g
   
 [sim-crate]: https://crates.io/crates/similar
 
-### Repository Clone
-
-* **git-odb**
-  * [x] all docs, sans examples
-  * [x] Rename pack data/pack index `Kind` to `Version` or similar, because that's what it really is.
-* **git-object** refactor
-  * [x] split `Id` and everything hash related into `git-hash`
-  * [x] use `git-hash` inside of `git-features`, remove cycle
-* **git-config**
-  * [x] Thanks to a generous contribution it's mostly done and well on the way
-  * [ ] Push it towards 1.0
-  * [ ] `Config` type which integrates multiple files into one interface, much like a *multi* version of `File`
-  * [x] Make `gix organize` use `git-config` on single files (the repository configuration)
-* **git-ref**
-  * [x] transactional creation of refs
-  * [x] iteration of refs
-* **git-index**
-  * [ ] Create an index from tree
-  * [ ] Checkout index to worktree
-* **git-repository**
-  * [x] instance for a valid looking repository
-    * [ ] support shallow repos/references
-  * [ ] create-update refs as received from clone/git-receive-pack safely (i.e. with required locking)
-  * [ ] clone from https remote
-* **gix repository clone**
-  * [ ] try initializing repo on output path - if so, use that to learn about pack location and place new pack there, allow Repo to create refs somehow.
-    * _probably this is done using the repository itself, which steers the whole process and injects it's own delegates_.
-  * [ ] otherwise create the scaffolding needed for a new repository, probably based on `init` implementation
-* **gix pack receive**
-  * [x] resolve thin pack with Bundle
-
-### FSCK an entire repository
-
-* **multi-db** (incorporate object lookup for loose objects and packs)
-  * [x] multi-threaded
-  * [x] delta-tree cache for speedups
-  * [ ] ref-validity check by traversing everything, including reflog, checking reachability of objects accordingly
-  * [x] fs-check - verify all object content of a git repository 
-     * probably this should be based on indexed pack traversal for maximum decoding speed and not on individual
-       object lookup
     
 ### gix organize
 
