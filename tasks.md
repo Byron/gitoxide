@@ -19,7 +19,7 @@ This file sketches out the tasks required to be able to clone a repository whils
 * **git-index**
   * [ ] Create an index from tree
 * **git-bitmap**
-  * [ ] 
+  * [x] pieces needed for git-index to work.
 * **git-worktree**
   * [ ] checkout an index
 * **git-repository**
