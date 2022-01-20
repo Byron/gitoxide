@@ -22,5 +22,4 @@ jobs:
           profile: minimal
           toolchain: "1.52.0"
           override: true
-      - run: cargo check --all
-      - run: cargo check --all --no-default-features --features lean-async
+      - run: make check-msrv

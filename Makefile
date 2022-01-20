@@ -64,6 +64,11 @@ clippy: ## Run cargo clippy on all crates
 	cargo clippy --all --no-default-features --features small
 	cargo clippy --all --no-default-features --features lean-async --tests
 
+check-msrv: ## Check the minimal support rust version for packages that use it
+	rustc --version
+	cargo check --package git-repository
+	cargo check --package git-repository --no-default-features --features async-network-client
+
 check: ## Build all code in suitable configurations
 	cargo check --all
 	cargo check --no-default-features --features small
