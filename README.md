@@ -102,7 +102,7 @@ Many crates use feature flags to allow tuning the compiled result based on your 
 
 [cargo-features]: https://github.com/Byron/gitoxide/blob/main/cargo-features.md#git-config
 
-### Stability
+### Stability and MSRV
 
 Our [stability guide] helps to judge how much churn can be expected when depending on crates in this workspace.
 

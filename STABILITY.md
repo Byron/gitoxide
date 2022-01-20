@@ -118,11 +118,12 @@ Once breaking changes are known to be planned, deprecation warnings should be pr
 
 Minor version updates for new features can be released when needed assuming there are no other breaking changes, updating the build identifiers for year and month accordingly.
 
-## The _Minimal Stable Rust Version_ (->MSRV)
+## The _Minimal Supported Rust Version_ (->MSRV)
 
-The MSRV is automatically assumed to be the latest stable version.
+The MSRV is automatically assumed to be the latest stable version for all crates with the following exception: `git-repository` and all it's dependencies must
+adhere to an MSRV, as validated by the `msrv.yml` GitHub workflow.
 
-Increasing the MSRV is not considered a breaking change and doesn't warrant a major version bump itself.
+Increasing the MSRV is considered a breaking change and warrants a major version bump itself for stable crates and a minor version bump for pre-release crates.
 
 Please let us know if you have other requirement and we see if we can provide stability guarantees for it or reduce the MSRV to a given version.
 
