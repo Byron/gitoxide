@@ -13,6 +13,8 @@ pub type Error = git_validate::reference::name::Error;
 
 impl<'a> FullNameRef<'a> {
     /// Convert this name into the relative path identifying the reference location.
+    // TODO: use custom `Path` type instead, as this isn't really a path. See ref iteration with prefix for
+    //       similar comment.
     pub fn to_path(self) -> Cow<'a, Path> {
         self.0.to_path().expect("UTF-8 conversion always succeeds").into()
     }

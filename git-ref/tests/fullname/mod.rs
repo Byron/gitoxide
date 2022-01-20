@@ -1,6 +1,12 @@
 use std::convert::TryInto;
 
 #[test]
+fn file_name() {
+    let name: git_ref::FullName = "refs/heads/main".try_into().unwrap();
+    assert_eq!(name.to_ref().file_name(), "main");
+}
+
+#[test]
 fn prefix_with_namespace_and_stripping() {
     let ns = git_ref::namespace::expand("foo").unwrap();
     let mut name: git_ref::FullName = "refs/heads/main".try_into().unwrap();

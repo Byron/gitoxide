@@ -106,4 +106,10 @@ impl<'a> FullNameRef<'a> {
     pub fn to_owned(&self) -> FullName {
         FullName(self.0.to_owned())
     }
+
+    /// Return the file name portion of a full name, for instance `main` if the
+    /// full name was `refs/heads/main`.
+    pub fn file_name(&self) -> &BStr {
+        self.0.rsplitn(2, |b| *b == b'/').next().expect("valid ref").as_bstr()
+    }
 }
