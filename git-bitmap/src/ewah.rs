@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 pub mod decode {
     use quick_error::quick_error;
 
@@ -44,6 +46,8 @@ pub fn decode(data: &[u8]) -> Result<(Vec, &[u8]), decode::Error> {
 }
 
 mod access {
+    use std::convert::TryInto;
+
     use super::Vec;
 
     impl Vec {

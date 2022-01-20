@@ -8,6 +8,8 @@
 pub mod ewah;
 
 pub(crate) mod decode {
+    use std::convert::TryInto;
+
     use quick_error::quick_error;
 
     quick_error! {
