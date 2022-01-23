@@ -22,6 +22,10 @@ mod access {
         pub fn entries(&self) -> &[Entry] {
             &self.entries
         }
+
+        pub fn entries_mut(&mut self) -> &mut [Entry] {
+            &mut self.entries
+        }
     }
 }
 

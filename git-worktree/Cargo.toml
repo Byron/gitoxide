@@ -13,3 +13,13 @@ doctest = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+git-index = { version = "^0.1.0", path = "../git-index" }
+quick-error = "2.0.1"
+git-hash = { version = "^0.9.0", path = "../git-hash" }
+git-object = { version = "^0.17.0", path = "../git-object" }
+
+[dev-dependencies]
+git-odb = { path = "../git-odb" }
+walkdir = "2.3.2"
+git-testtools = { path = "../tests/tools" }
+tempfile = "3.2.0"
