@@ -96,6 +96,14 @@ impl FromStr for Kind {
     }
 }
 
+impl std::fmt::Display for Kind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Kind::Sha1 => f.write_str("SHA1"),
+        }
+    }
+}
+
 impl Kind {
     /// Returns the shortest hash we support
     #[inline]
