@@ -13,7 +13,7 @@ pub struct Iter<'a> {
 /// A structure to associate object ids of a tree with sections in the index entries list.
 ///
 /// It allows to more quickly build trees by avoiding as it can quickly re-use portions of the index and its associated tree ids
-/// if there wa sno change to them. Portions of this tree are invalidated as the index is changed.
+/// if there was no change to them. Portions of this tree are invalidated as the index is changed.
 pub struct Tree {
     name: SmallVec<[u8; 23]>,
     /// Only set if there are any entries in the index we are associated with.
