@@ -12,6 +12,7 @@ use clap::Parser;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
+use crate::plumbing::options::index;
 #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 use crate::plumbing::options::remote;
 use crate::{
@@ -73,6 +74,19 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        Subcommands::Index(subcommands) => match subcommands {
+            index::Subcommands::Entries {
+                object_hash,
+                index_path,
+            } => prepare_and_run(
+                "index-entries",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| core::index::entries(index_path, out, object_hash),
+            ),
+        },
         Subcommands::Repository(subcommands) => match subcommands {
             repo::Subcommands::Verify {
                 args:

@@ -119,6 +119,6 @@ mod access {
 pub struct Vec {
     num_bits: u32,
     bits: std::vec::Vec<u64>,
-    /// RLW is an offset into the `bits` buffer, so `1` translates into &bits[1] essentially.
+    /// RLW is an offset into the `bits` buffer, so `1` translates into &bits\[1] essentially.
     rlw: usize,
 }

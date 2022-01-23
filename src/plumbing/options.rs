@@ -56,6 +56,9 @@ pub enum Subcommands {
     /// Subcommands for interacting with commit-graphs
     #[clap(subcommand)]
     CommitGraph(commitgraph::Subcommands),
+    /// Subcommands for interacting with a worktree index, typically at .git/index
+    #[clap(subcommand)]
+    Index(index::Subcommands),
     /// Subcommands for interacting with entire git repositories
     #[clap(subcommand)]
     Repository(repo::Subcommands),
@@ -340,6 +343,28 @@ pub mod repo {
             args: super::pack::VerifyOptions,
             #[clap(short = 'r', long, default_value = ".")]
             repository: PathBuf,
+        },
+    }
+}
+
+///
+pub mod index {
+    use std::path::PathBuf;
+
+    use clap::AppSettings;
+
+    #[derive(Debug, clap::Parser)]
+    #[clap(alias = "index")]
+    pub enum Subcommands {
+        /// Print all entries to standard output
+        #[clap(setting = AppSettings::DisableVersionFlag)]
+        Entries {
+            /// The object format to assume when reading files that don't inherently know about it, or when writing files.
+            #[clap(long, default_value = "sha1", possible_values(&["sha1"]))]
+            object_hash: git_repository::hash::Kind,
+
+            /// The path too the index file.
+            index_path: PathBuf,
         },
     }
 }
