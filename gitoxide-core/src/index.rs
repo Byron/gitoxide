@@ -17,7 +17,13 @@ pub fn entries(
     for entry in file.entries() {
         writeln!(
             out,
-            "{}{:?} {} {}",
+            "{} {}{:?} {} {}",
+            match entry.flags.stage() {
+                0 => "BASE   ",
+                1 => "OURS   ",
+                2 => "THEIRS ",
+                _ => "UNKNOWN",
+            },
             if entry.flags.is_empty() {
                 "".to_string()
             } else {

@@ -61,6 +61,7 @@ pub(crate) mod at_rest {
 bitflags! {
     /// In-memory flags
     pub struct Flags: u32 {
+        const STAGE_MASK = 0x3000;
         // TODO: could we use the pathlen ourselves to save 8 bytes? And how to handle longer paths than that? 0 as sentinel maybe?
         const PATH_LEN = 0x0fff;
         const UPDATE = 1 << 16;
@@ -85,6 +86,12 @@ bitflags! {
 
         const INTENT_TO_ADD = 1 << 29; // stored at rest, see at_rest::FlagsExtended
         const SKIP_WORKTREE = 1 << 30; // stored at rest
+    }
+}
+
+impl Flags {
+    pub fn stage(&self) -> u32 {
+        (*self & Flags::STAGE_MASK).bits >> 12
     }
 }
 
