@@ -43,9 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    trait and thus isn't passed along anymore in parameters.
    
    The `sink()` function now takes the kind of hash as parameter.
- - <csr-id-ad1b9ea17eb4b98ebd2fddebe82a8fee1d63e9dd/> various changes to the `loose::Store`
-   - Change `path` field to read-only `path()` method
-   - add `hash_kind` parameter to `loose::Store::at(…, hash_kind)`
+ - <csr-id-ad1b9ea17eb4b98ebd2fddebe82a8fee1d63e9dd/> various changes to the `loose::Store`.
+ 
+   Change `path` field to read-only `path()` method
+   add `hash_kind` parameter to `loose::Store::at(…, hash_kind)`
  - <csr-id-ab4e726fcec65871a81056a9c69af8ea3f56b2a3/> move `sink::Sink` to the top-level exclusively
  - <csr-id-8bb5c9a75cd91ae0d888bc8e93707cfc9cc08090/> move `loose::iter::Iter` to `loose::Iter`
  - <csr-id-3f05fea55dc8acce1ed62ecbe4e0a1394f2720b7/> remove `make_object_cache` parameter from `git_pack::data::output::count::objects()`

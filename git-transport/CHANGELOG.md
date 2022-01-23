@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+A maintenance release with no relevant changes.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
