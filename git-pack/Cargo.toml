@@ -33,9 +33,9 @@ required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 all-features = true
 
 [dependencies]
-git-features = { version = "^0.19.0", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib"] }
-git-hash = { version = "^0.9.0", path = "../git-hash" }
-git-chunk = { version ="^0.2.0", path = "../git-chunk" }
+git-features = { version = "^0.19.1", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib"] }
+git-hash = { version = "^0.9.1", path = "../git-hash" }
+git-chunk = { version = "^0.3.0", path = "../git-chunk" }
 git-object = { version = "^0.17.0", path = "../git-object" }
 git-traverse = { version = "^0.12.0", path = "../git-traverse" }
 git-diff = { version = "^0.13.0", path = "../git-diff" }

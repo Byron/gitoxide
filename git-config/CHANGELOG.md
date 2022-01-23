@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.10 (2022-01-23)
 
 ### New Features
 
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 51 calendar days.
+ - 4 commits contributed to the release over the course of 51 calendar days.
  - 55 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#266](https://github.com/Byron/gitoxide/issues/266)
@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#266](https://github.com/Byron/gitoxide/issues/266)**
     - upgrade dependencies ([`8adf0d8`](https://github.com/Byron/gitoxide/commit/8adf0d80bbd5c4e81ccd0b5363dbce6609a6c90a))
  * **Uncategorized**
+    - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
     - compatibility with Rust <1.53 ([`61af06b`](https://github.com/Byron/gitoxide/commit/61af06b905926849abce19677ff4b9ac05d625a3))
     - thanks clippy ([`7dd2313`](https://github.com/Byron/gitoxide/commit/7dd2313d980fe7c058319ae66d313b3097e3ae5f))
 </details>

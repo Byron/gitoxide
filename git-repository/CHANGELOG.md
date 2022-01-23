@@ -5,12 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.14.0 (2022-01-23)
 
-<csr-id-7a91212631219e94b9454d2874b53f3ecc1db77e/> 
-<csr-id-b2cc0c63570d45de032d63e62d94c3344783440e/> 
-<csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/> 
-<csr-id-2290d006705ff47ad780b009fe58ee422b3285af/> 
+<csr-id-7a91212631219e94b9454d2874b53f3ecc1db77e/>
+<csr-id-b2cc0c63570d45de032d63e62d94c3344783440e/>
+<csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/>
+<csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
 
 ### New Features
 
@@ -79,7 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 59 commits contributed to the release over the course of 51 calendar days.
+ - 60 commits contributed to the release over the course of 51 calendar days.
  - 55 days passed between releases.
  - 18 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#215](https://github.com/Byron/gitoxide/issues/215), [#266](https://github.com/Byron/gitoxide/issues/266), [#274](https://github.com/Byron/gitoxide/issues/274), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293)
@@ -141,6 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Make obvious that we steal data from the free list ([`3523aa4`](https://github.com/Byron/gitoxide/commit/3523aa433d4d87d5f75ca7bb7c1b1e228c0aa07d))
     - handle won't try to reuse empty buffers to allow it to be claimed ([`0fb4c91`](https://github.com/Byron/gitoxide/commit/0fb4c91c32ee67642e52ce70e3b4060ca1dd3952))
  * **Uncategorized**
+    - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
     - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
     - remove debug-helper ([`c243215`](https://github.com/Byron/gitoxide/commit/c2432158ca4be3008847bce40cfe536e082d1f4a))
     - Don't use bleeding edge features ([`3de0ab1`](https://github.com/Byron/gitoxide/commit/3de0ab1163d267102e7605da1d7a114574508a00))

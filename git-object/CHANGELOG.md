@@ -5,9 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.17.0 (2022-01-23)
 
-<csr-id-2290d006705ff47ad780b009fe58ee422b3285af/> 
+<csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
 
 ### New Features
 
@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 51 calendar days.
+ - 11 commits contributed to the release over the course of 51 calendar days.
  - 55 days passed between releases.
  - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279)
@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#279](https://github.com/Byron/gitoxide/issues/279)**
     - adapt to changes in git-hash ([`5eb0230`](https://github.com/Byron/gitoxide/commit/5eb0230b58c25c0aa744eee0bd878dd91410dbe1))
  * **Uncategorized**
+    - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
     - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
     - Merge branch 'oknozor-feat/traversal-sort-by-committer-date' ([`6add377`](https://github.com/Byron/gitoxide/commit/6add3773c64a9155c236a36bd002099c218882eb))
     - rename `commit::ref_iter::Token::into_id()` to `*::try_into_id()` ([`fda2a8d`](https://github.com/Byron/gitoxide/commit/fda2a8d2f5f8b7d80b4cc0177d08d6a061f1b8f1))

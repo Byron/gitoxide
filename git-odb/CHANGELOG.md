@@ -5,9 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.26.0 (2022-01-23)
 
-<csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/> 
+<csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/>
 <csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
 
 ### New Features
@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    
    The `sink()` function now takes the kind of hash as parameter.
  - <csr-id-ad1b9ea17eb4b98ebd2fddebe82a8fee1d63e9dd/> various changes to the `loose::Store`.
- 
+   
    Change `path` field to read-only `path()` method
    add `hash_kind` parameter to `loose::Store::at(…, hash_kind)`
  - <csr-id-ab4e726fcec65871a81056a9c69af8ea3f56b2a3/> move `sink::Sink` to the top-level exclusively
@@ -60,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - move git_pack::data::Object to git_object::Data, massively alter git_odb::Find trait
    This will break a lot, but has to happen to prepare these traits for the
    next generation of object databases.
- 
+
 ### New Features (BREAKING)
 
  - <csr-id-bf73a94b43288b6634dbb33f2433656987a73baf/> `Cache::inner` removed in favor of `Deref/Mut` and `into_inner()`
@@ -73,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 157 commits contributed to the release over the course of 51 calendar days.
+ - 159 commits contributed to the release over the course of 51 calendar days.
  - 55 days passed between releases.
  - 24 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#260](https://github.com/Byron/gitoxide/issues/260), [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298)
@@ -246,6 +246,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#298](https://github.com/Byron/gitoxide/issues/298)**
     - support Rust 1.52 ([`9c14de3`](https://github.com/Byron/gitoxide/commit/9c14de391a1a9f1055922164d1757c9aa9720807))
  * **Uncategorized**
+    - prepare changelogs for release ([`674ec73`](https://github.com/Byron/gitoxide/commit/674ec73b0816baa2c63b4ef1b40b7a41849c5e95))
+    - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
     - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
     - Release git-chunk v0.2.0, safety bump 4 crates ([`b792fab`](https://github.com/Byron/gitoxide/commit/b792fabf9f5f93ab906ac5a5bb3e4f01c179290a))
     - refactor ([`c09a44d`](https://github.com/Byron/gitoxide/commit/c09a44db8e2bf6f45ebcd7423ab7438308557c49))

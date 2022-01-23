@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 1.0.4 (2022-01-23)
 
 A maintenance release thanks to upgraded dependencies.
 
@@ -13,8 +13,8 @@ A maintenance release thanks to upgraded dependencies.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release over the course of 35 calendar days.
- - 99 days passed between releases.
+ - 3 commits contributed to the release over the course of 35 calendar days.
+ - 100 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#266](https://github.com/Byron/gitoxide/issues/266)
 
@@ -26,6 +26,9 @@ A maintenance release thanks to upgraded dependencies.
 
  * **[#266](https://github.com/Byron/gitoxide/issues/266)**
     - upgrade dashmap to latest version ([`52d4fe5`](https://github.com/Byron/gitoxide/commit/52d4fe55b6dd88f72479abd4015cab063ddaaf97))
+ * **Uncategorized**
+    - prepare changelogs for release ([`674ec73`](https://github.com/Byron/gitoxide/commit/674ec73b0816baa2c63b4ef1b40b7a41849c5e95))
+    - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
 </details>
 
 ## v1.0.3 (2021-10-15)

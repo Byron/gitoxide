@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.3.0 (2022-01-23)
 
 ### New Features
 
@@ -31,8 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 33 calendar days.
- - 33 days passed between releases.
+ - 15 commits contributed to the release over the course of 33 calendar days.
+ - 34 days passed between releases.
  - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#279](https://github.com/Byron/gitoxide/issues/279)
 
@@ -57,6 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - add `file::Index::usize_offset_by_id()` and `range::into_usize_or_panic()` ([`e14096e`](https://github.com/Byron/gitoxide/commit/e14096e0c19689a1e2480b484537b2a0ffbfc3b9))
     - rename `into_usize_range()` to `range::into_usize()` ([`9328015`](https://github.com/Byron/gitoxide/commit/9328015c653cae582882c346965b51d7cf6b9d08))
     - rename `Kind` to `Id` ([`dda26a4`](https://github.com/Byron/gitoxide/commit/dda26a4ddd7cc195c10b79a7f428d6298285197b))
+ * **Uncategorized**
+    - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
 </details>
 
 ## 0.2.0 (2021-12-20)

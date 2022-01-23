@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.19.1 (2022-01-23)
 
 A maintenance release thanks to upgrade to `prodash` 18.
 
@@ -13,8 +13,8 @@ A maintenance release thanks to upgrade to `prodash` 18.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
- - 3 days passed between releases.
+ - 3 commits contributed to the release.
+ - 4 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -25,6 +25,8 @@ A maintenance release thanks to upgrade to `prodash` 18.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelogs for release ([`674ec73`](https://github.com/Byron/gitoxide/commit/674ec73b0816baa2c63b4ef1b40b7a41849c5e95))
+    - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
     - upgrade to tui 0.17 and prodash 18 ([`eba101a`](https://github.com/Byron/gitoxide/commit/eba101a576ecb7bc0f63357d0dd81eb817b94be4))
 </details>
 

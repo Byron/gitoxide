@@ -5,11 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.11.0 (2022-01-23)
 
-<csr-id-c46dec311c76a83dba136be5dba6b70d739c354d/> 
+<csr-id-c46dec311c76a83dba136be5dba6b70d739c354d/>
 <csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/>
-<csr-id-2290d006705ff47ad780b009fe58ee422b3285af/> 
+<csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
 
 ### New Features
 
@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 20 commits contributed to the release over the course of 55 calendar days.
+ - 21 commits contributed to the release over the course of 55 calendar days.
  - 55 days passed between releases.
  - 8 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 5 unique issues were worked on: [#263](https://github.com/Byron/gitoxide/issues/263), [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298)
@@ -83,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#298](https://github.com/Byron/gitoxide/issues/298)**
     - FullNameRef::file_name() ([`28e3251`](https://github.com/Byron/gitoxide/commit/28e3251ee1996f638eaa0bc7b39b06be436f6eb7))
  * **Uncategorized**
+    - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
     - support Rust 1.52 ([`42e0487`](https://github.com/Byron/gitoxide/commit/42e0487286c1f745837c0ce337ed7c9d86b14516))
     - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
     - thanks clippy ([`7dd2313`](https://github.com/Byron/gitoxide/commit/7dd2313d980fe7c058319ae66d313b3097e3ae5f))

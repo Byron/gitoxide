@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.8.0 (2022-01-23)
 
 A maintenance release thanks to upgraded dependencies.
 
@@ -13,7 +13,7 @@ A maintenance release thanks to upgraded dependencies.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 35 calendar days.
+ - 4 commits contributed to the release over the course of 35 calendar days.
  - 55 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -25,6 +25,8 @@ A maintenance release thanks to upgraded dependencies.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelogs for release ([`674ec73`](https://github.com/Byron/gitoxide/commit/674ec73b0816baa2c63b4ef1b40b7a41849c5e95))
+    - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
     - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
     - upgrade git-actor dependencies ([`82bb1c0`](https://github.com/Byron/gitoxide/commit/82bb1c0ee622db073805126f9e62cbc91820ccf6))
 </details>

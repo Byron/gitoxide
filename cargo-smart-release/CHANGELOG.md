@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.8.0 (2022-01-23)
 
 ### New Features
 
@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 27 commits contributed to the release over the course of 51 calendar days.
+ - 28 commits contributed to the release over the course of 51 calendar days.
  - 55 days passed between releases.
  - 7 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#266](https://github.com/Byron/gitoxide/issues/266), [#270](https://github.com/Byron/gitoxide/issues/270), [#274](https://github.com/Byron/gitoxide/issues/274), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#308](https://github.com/Byron/gitoxide/issues/308)
@@ -73,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#308](https://github.com/Byron/gitoxide/issues/308)**
     - more prominent message if 'bat' wasn't found in PATH ([`9c1e38b`](https://github.com/Byron/gitoxide/commit/9c1e38bfcffea372f06c78a44b2abc2284b7a87e))
  * **Uncategorized**
+    - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
     - highlight (non-fatal) errors when losslessly parsing changelogs ([`51d1c68`](https://github.com/Byron/gitoxide/commit/51d1c686763b4c036ec2c3c15d7c3ebb48e208de))
     - Better not have items within items in changelogs ([`6946125`](https://github.com/Byron/gitoxide/commit/69461254b1bfda5e60911164096e4a061e241296))
     - upgrade dependencies ([`968df47`](https://github.com/Byron/gitoxide/commit/968df4746729556dcf4f5039b1d1ed1a1da2705a))
