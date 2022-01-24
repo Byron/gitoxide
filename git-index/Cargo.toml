@@ -22,7 +22,7 @@ path = "tests/index-single-threaded.rs"
 required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
 [features]
-serde1 = ["serde"]
+serde1 = ["serde", "smallvec/serde", "git-hash/serde1"]
 
 internal-testing-git-features-parallel = ["git-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []

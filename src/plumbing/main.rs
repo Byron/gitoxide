@@ -85,7 +85,7 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |_progress, out, _err| {
-                    core::index::information(index_path, out, core::index::entries::Options { object_hash, format })
+                    core::index::information(index_path, out, core::index::Options { object_hash, format })
                 },
             ),
             index::Subcommands::Entries => prepare_and_run(
@@ -95,7 +95,7 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |_progress, out, _err| {
-                    core::index::entries(index_path, out, core::index::entries::Options { object_hash, format })
+                    core::index::entries(index_path, out, core::index::Options { object_hash, format })
                 },
             ),
         },

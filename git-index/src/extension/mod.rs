@@ -15,10 +15,10 @@ pub struct Iter<'a> {
 /// It allows to more quickly build trees by avoiding as it can quickly re-use portions of the index and its associated tree ids
 /// if there was no change to them. Portions of this tree are invalidated as the index is changed.
 pub struct Tree {
-    name: SmallVec<[u8; 23]>,
+    pub name: SmallVec<[u8; 23]>,
     /// Only set if there are any entries in the index we are associated with.
-    id: Option<tree::NodeId>,
-    children: Vec<Tree>,
+    pub id: Option<tree::NodeId>,
+    pub children: Vec<Tree>,
 }
 
 pub struct Link {

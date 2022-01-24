@@ -9,9 +9,9 @@ pub const SIGNATURE: Signature = *b"TREE";
 
 pub struct NodeId {
     /// The id of the directory tree of the associated tree object.
-    id: git_hash::ObjectId,
+    pub id: git_hash::ObjectId,
     /// The amount of non-tree entries contained within, and definitely not zero.
-    entry_count: u32,
+    pub entry_count: u32,
 }
 
 /// A recursive data structure

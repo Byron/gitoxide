@@ -1,11 +1,6 @@
 use git_repository as git;
 use git_repository::bstr::ByteSlice;
 
-pub struct Options {
-    pub object_hash: git::hash::Kind,
-    pub format: crate::OutputFormat,
-}
-
 #[cfg(feature = "serde1")]
 pub(crate) fn to_json(
     mut out: &mut impl std::io::Write,
