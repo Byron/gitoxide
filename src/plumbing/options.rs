@@ -37,14 +37,14 @@ pub struct Args {
     pub format: core::OutputFormat,
 
     /// The object format to assume when reading files that don't inherently know about it, or when writing files.
-    #[clap(long, default_value = "sha1", possible_values(&["sha1"]))]
+    #[clap(long, default_value_t = git_repository::hash::Kind::default(), possible_values(&["SHA1"]))]
     pub object_hash: git_repository::hash::Kind,
 
     #[clap(subcommand)]
     pub cmd: Subcommands,
 }
 
-#[derive(Debug, clap::Parser)]
+#[derive(Debug, clap::Subcommand)]
 pub enum Subcommands {
     /// Subcommands for interacting with packs and their indices.
     #[clap(subcommand)]
@@ -56,6 +56,8 @@ pub enum Subcommands {
     /// Subcommands for interacting with commit-graphs
     #[clap(subcommand)]
     CommitGraph(commitgraph::Subcommands),
+    /// Subcommands for interacting with a worktree index, typically at .git/index
+    Index(index::Platform),
     /// Subcommands for interacting with entire git repositories
     #[clap(subcommand)]
     Repository(repo::Subcommands),
@@ -65,10 +67,9 @@ pub enum Subcommands {
 pub mod pack {
     use std::{ffi::OsString, path::PathBuf};
 
-    use clap::AppSettings;
     use gitoxide_core as core;
 
-    #[derive(Debug, clap::Parser)]
+    #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
         /// Subcommands for interacting with pack indices (.idx)
         #[clap(subcommand)]
@@ -77,7 +78,6 @@ pub mod pack {
         #[clap(subcommand)]
         MultiIndex(multi_index::Subcommands),
         /// Create a new pack with a set of objects.
-        #[clap(setting = AppSettings::DisableVersionFlag)]
         Create {
             #[clap(long, short = 'r')]
             /// the directory containing the '.git' repository from which objects should be read.
@@ -137,7 +137,6 @@ pub mod pack {
             tips: Vec<OsString>,
         },
         /// Use the git-protocol to receive a pack, emulating a clone.
-        #[clap(setting = AppSettings::DisableVersionFlag)]
         #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         Receive {
             /// The protocol version to use. Valid values are 1 and 2
@@ -170,7 +169,6 @@ pub mod pack {
         ///
         /// Note that this effectively removes delta compression for an average compression of 2x, creating one file per object in the process.
         /// Thus this should only be done to dissolve small packs after a fetch.
-        #[clap(setting = AppSettings::DisableVersionFlag)]
         Explode {
             #[clap(long)]
             /// Read written objects back and assert they match their source. Fail the operation otherwise.
@@ -208,7 +206,6 @@ pub mod pack {
             object_path: Option<PathBuf>,
         },
         /// Verify the integrity of a pack, index or multi-index file
-        #[clap(setting = AppSettings::DisableVersionFlag)]
         Verify {
             #[clap(flatten)]
             args: VerifyOptions,
@@ -254,18 +251,14 @@ pub mod pack {
     pub mod multi_index {
         use std::path::PathBuf;
 
-        use clap::AppSettings;
-
-        #[derive(Debug, clap::Parser)]
+        #[derive(Debug, clap::Subcommand)]
         pub enum Subcommands {
             /// Verify a multi-index quickly without inspecting objects themselves
-            #[clap(setting = AppSettings::DisableVersionFlag)]
             Verify {
                 /// The path to the multi-pack-index to verify.
                 multi_index_path: PathBuf,
             },
             /// Create a multi-pack index from one or more pack index files
-            #[clap(setting = AppSettings::DisableVersionFlag)]
             Create {
                 /// The path to which the multi-index file should be written, overwriting any possibly existing file.
                 ///
@@ -284,13 +277,11 @@ pub mod pack {
     pub mod index {
         use std::path::PathBuf;
 
-        use clap::AppSettings;
         use gitoxide_core as core;
 
-        #[derive(Debug, clap::Parser)]
+        #[derive(Debug, clap::Subcommand)]
         pub enum Subcommands {
             /// create a pack index from a pack data file.
-            #[clap(setting = AppSettings::DisableVersionFlag)]
             Create {
                 /// Specify how to iterate the pack, defaults to 'verify'
                 ///
@@ -328,13 +319,10 @@ pub mod pack {
 pub mod repo {
     use std::path::PathBuf;
 
-    use clap::AppSettings;
-
-    #[derive(Debug, clap::Parser)]
+    #[derive(Debug, clap::Subcommand)]
     #[clap(alias = "repo")]
     pub enum Subcommands {
         /// Verify the integrity of the entire repository
-        #[clap(setting = AppSettings::DisableVersionFlag)]
         Verify {
             #[clap(flatten)]
             args: super::pack::VerifyOptions,
@@ -345,15 +333,44 @@ pub mod repo {
 }
 
 ///
+pub mod index {
+    use std::path::PathBuf;
+
+    #[derive(Debug, clap::Parser)]
+    pub struct Platform {
+        /// The object format to assume when reading files that don't inherently know about it, or when writing files.
+        #[clap(long, default_value_t = git_repository::hash::Kind::default(), possible_values(&["SHA1"]))]
+        pub object_hash: git_repository::hash::Kind,
+
+        /// The path to the index file.
+        #[clap(short = 'i', long, default_value = ".git/index")]
+        pub index_path: PathBuf,
+
+        /// Subcommands
+        #[clap(subcommand)]
+        pub cmd: Subcommands,
+    }
+
+    #[derive(Debug, clap::Subcommand)]
+    pub enum Subcommands {
+        /// Print all entries to standard output
+        Entries,
+        /// Print information about the index structure
+        Info {
+            /// Do not extract specific extension information to gain only a superficial idea of the index's composition.
+            #[clap(long)]
+            no_details: bool,
+        },
+    }
+}
+
+///
 pub mod commitgraph {
     use std::path::PathBuf;
 
-    use clap::AppSettings;
-
-    #[derive(Debug, clap::Parser)]
+    #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
         /// Verify the integrity of a commit graph
-        #[clap(setting = AppSettings::DisableVersionFlag)]
         Verify {
             /// The path to '.git/objects/info/', '.git/objects/info/commit-graphs/', or '.git/objects/info/commit-graph' to validate.
             #[clap(parse(from_os_str))]
@@ -368,16 +385,14 @@ pub mod commitgraph {
 ///
 #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 pub mod remote {
-    use clap::AppSettings;
     use gitoxide_core as core;
 
-    #[derive(Debug, clap::Parser)]
+    #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
         /// List remote references from a remote identified by a url.
         ///
         /// This is the plumbing equivalent of `git ls-remote`.
         /// Supported URLs are documented here: <https://www.git-scm.com/docs/git-clone#_git_urls>
-        #[clap(setting = AppSettings::DisableVersionFlag)]
         RefList {
             /// The protocol version to use. Valid values are 1 and 2
             #[clap(long, short = 'p')]

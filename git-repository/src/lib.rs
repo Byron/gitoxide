@@ -86,6 +86,7 @@
 //! * [`url`]
 //! * [`actor`]
 //! * [`bstr`][bstr]
+//! * [`index`]
 //! * [`objs`]
 //! * [`odb`]
 //!   * [`pack`][odb::pack]
@@ -118,6 +119,8 @@ pub use git_features::{parallel, progress, progress::Progress, threading};
 pub use git_hash as hash;
 #[doc(inline)]
 pub use git_hash::{oid, ObjectId};
+#[cfg(all(feature = "unstable", feature = "git-index"))]
+pub use git_index as index;
 pub use git_lock as lock;
 pub use git_object as objs;
 pub use git_object::bstr;

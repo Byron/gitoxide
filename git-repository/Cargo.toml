@@ -14,8 +14,8 @@ test = true
 
 [features]
 default = ["max-performance", "one-stop-shop"]
-unstable = []
-serde1 = ["git-pack/serde1", "git-object/serde1", "git-protocol/serde1", "git-transport/serde1", "git-ref/serde1", "git-odb/serde1"]
+unstable = ["git-index"]
+serde1 = ["git-pack/serde1", "git-object/serde1", "git-protocol/serde1", "git-transport/serde1", "git-ref/serde1", "git-odb/serde1", "git-index/serde1"]
 # enable when https://github.com/RustCrypto/asm-hashes/issues/17 is fixed
 # max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-features/fast-sha1"]
 max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-pack/pack-cache-lru-static", "git-pack/pack-cache-lru-dynamic"]
@@ -53,6 +53,9 @@ git-protocol = { version = "^0.14.0", path = "../git-protocol", optional = true 
 git-transport = { version = "^0.15.0", path = "../git-transport", optional = true }
 git-diff = { version = "^0.13.0", path = "../git-diff", optional = true }
 git-features = { version = "^0.19.1", path = "../git-features", features = ["progress"] }
+
+# unstable only
+git-index = { version ="^0.1.0", path = "../git-index", optional = true }
 
 signal-hook = { version = "0.3.9", default-features = false }
 thiserror = "1.0.26"

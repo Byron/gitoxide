@@ -24,11 +24,10 @@ pub struct Args {
     pub cmd: Subcommands,
 }
 
-#[derive(Debug, clap::Parser)]
+#[derive(Debug, clap::Subcommand)]
 pub enum Subcommands {
     /// Initialize the repository in the current directory.
     #[clap(visible_alias = "initialize")]
-    #[clap(setting = AppSettings::DisableVersionFlag)]
     Init {
         /// The directory in which to initialize a new git repository.
         ///
@@ -44,12 +43,11 @@ pub enum Subcommands {
 }
 
 #[cfg(feature = "gitoxide-core-tools")]
-#[derive(Debug, clap::Parser)]
-#[clap(setting = AppSettings::DisableVersionFlag, setting = AppSettings::SubcommandRequired)]
+#[derive(Debug, clap::Subcommand)]
+#[clap(setting = AppSettings::SubcommandRequired)]
 #[clap(visible_alias = "t")]
 pub enum ToolCommands {
     /// Find all repositories in a given directory.
-    #[clap(setting = AppSettings::DisableVersionFlag)]
     Find {
         /// The directory in which to find all git repositories.
         ///
@@ -57,7 +55,6 @@ pub enum ToolCommands {
         root: Option<PathBuf>,
     },
     /// Move all repositories found in a directory into a structure matching their clone URLs.
-    #[clap(setting = AppSettings::DisableVersionFlag)]
     Organize {
         #[clap(long)]
         /// The operation will be in dry-run mode unless this flag is set.

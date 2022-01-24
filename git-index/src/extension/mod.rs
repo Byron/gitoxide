@@ -15,10 +15,10 @@ pub struct Iter<'a> {
 /// It allows to more quickly build trees by avoiding as it can quickly re-use portions of the index and its associated tree ids
 /// if there was no change to them. Portions of this tree are invalidated as the index is changed.
 pub struct Tree {
-    name: SmallVec<[u8; 23]>,
+    pub name: SmallVec<[u8; 23]>,
     /// Only set if there are any entries in the index we are associated with.
-    id: Option<tree::NodeId>,
-    children: Vec<Tree>,
+    pub id: Option<tree::NodeId>,
+    pub children: Vec<Tree>,
 }
 
 pub struct Link {
@@ -50,45 +50,7 @@ pub struct FsMonitor {
 
 mod iter;
 
-pub(crate) mod fs_monitor {
-    use bstr::BString;
-
-    use crate::{
-        extension::{FsMonitor, Signature},
-        util::{read_u32, read_u64, split_at_byte_exclusive},
-    };
-
-    pub enum Token {
-        V1 { nanos_since_1970: u64 },
-        V2 { token: BString },
-    }
-
-    pub const SIGNATURE: Signature = *b"FSMN";
-
-    pub fn decode(data: &[u8]) -> Option<FsMonitor> {
-        let (version, data) = read_u32(data)?;
-        let (token, data) = match version {
-            1 => {
-                let (nanos_since_1970, data) = read_u64(data)?;
-                (Token::V1 { nanos_since_1970 }, data)
-            }
-            2 => {
-                let (token, data) = split_at_byte_exclusive(data, 0)?;
-                (Token::V2 { token: token.into() }, data)
-            }
-            _ => return None,
-        };
-
-        let (ewah_size, data) = read_u32(data)?;
-        let (entry_dirty, data) = git_bitmap::ewah::decode(&data[..ewah_size as usize]).ok()?;
-
-        if !data.is_empty() {
-            return None;
-        }
-
-        FsMonitor { token, entry_dirty }.into()
-    }
-}
+pub(crate) mod fs_monitor;
 
 pub(crate) mod decode;
 
