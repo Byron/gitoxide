@@ -89,16 +89,16 @@ impl TryFrom<git::index::File> for Collection {
                     count += 1;
                     tree.into()
                 });
-                if let Some(_) = f.link() {
+                if f.link().is_some() {
                     count += 1
                 };
-                if let Some(_) = f.resolve_undo() {
+                if f.resolve_undo().is_some() {
                     count += 1
                 };
-                if let Some(_) = f.untracked() {
+                if f.untracked().is_some() {
                     count += 1
                 };
-                if let Some(_) = f.fs_monitor() {
+                if f.fs_monitor().is_some() {
                     count += 1
                 };
                 Extensions { count, tree }

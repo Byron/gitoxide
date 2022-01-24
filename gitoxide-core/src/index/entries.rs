@@ -1,5 +1,4 @@
 use git_repository as git;
-use git_repository::bstr::ByteSlice;
 
 #[cfg(feature = "serde1")]
 pub(crate) fn to_json(
@@ -8,6 +7,8 @@ pub(crate) fn to_json(
     entry: &git::index::Entry,
     is_last: bool,
 ) -> anyhow::Result<()> {
+    use git_repository::bstr::ByteSlice;
+
     #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
     struct Entry<'a> {
         stat: &'a git::index::entry::Stat,

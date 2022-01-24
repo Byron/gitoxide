@@ -1,4 +1,3 @@
-use std::convert::TryFrom;
 use std::path::Path;
 
 use git_repository as git;
@@ -10,23 +9,28 @@ pub struct Options {
 
 mod entries;
 
+#[cfg(feature = "serde1")]
 mod information;
 
+#[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
 pub fn information(
     index_path: impl AsRef<Path>,
     out: impl std::io::Write,
     Options { object_hash, format }: Options,
 ) -> anyhow::Result<()> {
     use crate::OutputFormat::*;
-    let info = information::Collection::try_from(parse_file(index_path, object_hash)?)?;
     match format {
         Human => {
             anyhow::bail!("Only JSON output is implemented");
         }
         #[cfg(feature = "serde1")]
-        Json => serde_json::to_writer_pretty(out, &info)?,
+        Json => {
+            use std::convert::TryFrom;
+            let info = information::Collection::try_from(parse_file(index_path, object_hash)?)?;
+            serde_json::to_writer_pretty(out, &info)?;
+            Ok(())
+        }
     }
-    Ok(())
 }
 
 pub fn entries(
