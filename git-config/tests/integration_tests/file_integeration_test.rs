@@ -1,4 +1,3 @@
-use std::ops::Deref;
 use std::{borrow::Cow, convert::TryFrom, path::Path};
 
 use git_config::{file::GitConfig, values::*};
@@ -7,36 +6,6 @@ use git_config::{file::GitConfig, values::*};
 fn parse_config_with_windows_line_endings_successfully() -> crate::Result {
     GitConfig::open(Path::new("tests").join("fixtures").join("repo-config.crlf"))?;
     Ok(())
-}
-
-#[test]
-fn foobar() {
-    use git_config::file::GitConfig;
-    use git_config::parser::Key;
-
-    let input = r#"
-[url "ssh://git@github.com/"]
-    insteadOf = https://github.com/
-[url "ssh://git@bitbucket.org"]
-    insteadOf = https://bitbucket.org/
-"#;
-    let config = GitConfig::try_from(input).unwrap();
-    let url = config.sections_by_name("url");
-    assert_eq!(url.len(), 2);
-
-    for (i, u) in url.iter().enumerate() {
-        let instead_of = u.value(&Key::from("insteadOf"));
-
-        // todo(sub-section-name)
-        dbg!(u);
-        // assert_eq!(xxxxx, "ssh://git@github.com/")
-
-        if i == 1 {
-            assert_eq!(instead_of.unwrap().deref(), "https://github.com/".as_bytes())
-        } else {
-            assert_eq!(instead_of.unwrap().as_ref(), "https://bitbucket.org/".as_bytes())
-        }
-    }
 }
 
 /// Asserts we can cast into all variants of our type
