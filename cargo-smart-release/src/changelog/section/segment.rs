@@ -22,18 +22,22 @@ pub mod conventional {
     }
 
     /// Note that this depends on `crate::commit::message::to_static()`,
-    /// Note having a headline means it won't be written back unless it contains breaking changes.
+    /// Not having a headline means it won't be written back unless it contains breaking changes.
     pub fn as_headline(kind: &str) -> Option<&'static str> {
         // NOTE: adding one here needs additions to parse.rs
         Some(match kind {
             "fix" => "Bug Fixes",
-            "add" => "Added",
+            "add" | "added" => "Added",
             "feat" => "New Features",
             "revert" => "Reverted",
             "remove" => "Removed",
             "change" => "Changed",
             "docs" => "Documentation",
             "perf" => "Performance",
+            "chore" => "Chore",
+            "test" => "Test",
+            "refactor" => "Refactor",
+            "style" => "Style",
             _unknown => return None,
         })
     }

@@ -10,12 +10,10 @@
 [INFO ] Up to 3 changelogs would be previewed if the --execute is set and --no-changelog-preview is unset.
 [WARN ] WOULD ask for review after commit as the changelog entry is empty for crates: a, b
 [WARN ] To fix the changelog manually, run: cargo changelog --write c a
-[WARN ] This changelog is likely to be fully generated from commit history or contain lower-case git-conventional headlines: c. Would stop after commit to allow edits.
-[WARN ]  c
 [TRACE] WOULD run "git" "commit" "-am" "Adjusting changelogs prior to release of a v0.8.0, b v0.8.0, c v8.0.0"
 [TRACE] WOULD create tag object a-v0.8.0 with changelog message, first line is: '### Commit Statistics'
 [TRACE] WOULD create tag object b-v0.8.0 with changelog message, first line is: '### Commit Statistics'
-[TRACE] WOULD create tag object c-v8.0.0 with changelog message, first line is: '### refactor (BREAKING)'
+[TRACE] WOULD create tag object c-v8.0.0 with changelog message, first line is: '### Refactor (BREAKING)'
 [TRACE] WOULD run "gh" "release" "create" "a-v0.8.0" "--title" "a v0.8.0" "--notes" "### Commit Statistics\n…" [note truncated]
 [TRACE] WOULD run "gh" "release" "create" "b-v0.8.0" "--title" "b v0.8.0" "--notes" "### Commit Statistics\n…" [note truncated]
-[TRACE] WOULD run "gh" "release" "create" "c-v8.0.0" "--title" "c v8.0.0" "--notes" "### refactor (BREAKING…" [note truncated]
+[TRACE] WOULD run "gh" "release" "create" "c-v8.0.0" "--title" "c v8.0.0" "--notes" "### Refactor (BREAKING…" [note truncated]
