@@ -31,9 +31,9 @@ let input = r#"
 [other "internal"]
   hello = world
 "#;
-let mut config = GitConfig::from(input)?;
-let boolean = config.get_config::<Boolean>("core", None, "some-bool");
-config.set_value("other", Some("internal"), "hello", "clippy!");
+let mut config = GitConfig::try_from(input)?;
+let boolean = config.value::<Boolean>("core", None, "some-bool")?;
+config.set_raw_value("other", Some("internal"), "hello", "clippy!".into())?
 ```
 
 ## Contributing
