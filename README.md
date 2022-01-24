@@ -42,6 +42,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] **verify** - assure that a commit-graph is consistent
     * **repository**
       * **verify** - validate a whole repository, for now only the object database.
+    * **index**
+      * [x] **entries** - show detailed entry information for human or machine consumption (via JSON)
+      * [x] **info** - display general information about the index itself, with detailed extension information by default
     * **remote**
       * [ref-list](https://asciinema.org/a/359320) - list all (or given) references from a remote at the given URL
 
