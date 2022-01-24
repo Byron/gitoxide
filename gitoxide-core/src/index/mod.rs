@@ -9,7 +9,6 @@ pub struct Options {
 
 mod entries;
 
-#[cfg(feature = "serde1")]
 pub mod information;
 
 #[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
