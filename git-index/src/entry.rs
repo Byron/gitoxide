@@ -66,7 +66,7 @@ pub(crate) mod at_rest {
 
         #[test]
         fn flags_from_bits_with_conflict() {
-            let input = 0b11100010_10001011;
+            let input = 0b1110_0010_1000_1011;
             assert_eq!(Flags::from_bits(input).unwrap().bits, input);
         }
     }
