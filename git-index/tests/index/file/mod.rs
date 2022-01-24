@@ -124,7 +124,6 @@ mod init {
     }
 
     #[test]
-    #[ignore]
     fn read_file_with_conflicts() {
         let file = loose_file("conflicting-file");
         assert_eq!(file.version(), Version::V2);

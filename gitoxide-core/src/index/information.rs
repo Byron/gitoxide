@@ -61,9 +61,10 @@ mod serde_only {
 
     #[derive(serde::Serialize)]
     pub struct Entries {
-        stage_0: usize,
-        stage_1: usize,
-        stage_2: usize,
+        stage_0_merged: usize,
+        stage_1_base: usize,
+        stage_2_ours: usize,
+        stage_3_theirs: usize,
         kind: EntryKind,
         flags: EntryFlag,
     }
@@ -108,14 +109,15 @@ mod serde_only {
                     Extensions { names, tree }
                 },
                 entries: {
-                    let (mut stage_0, mut stage_1, mut stage_2) = (0, 0, 0);
+                    let (mut stage_0_merged, mut stage_1_base, mut stage_2_ours, mut stage_3_theirs) = (0, 0, 0, 0);
                     let (mut dir, mut file, mut executable, mut symlink, mut submodule, mut other) = (0, 0, 0, 0, 0, 0);
                     let (mut intent_to_add, mut skip_worktree) = (0, 0);
                     for entry in f.entries() {
                         match entry.flags.stage() {
-                            0 => stage_0 += 1,
-                            1 => stage_1 += 1,
-                            2 => stage_2 += 1,
+                            0 => stage_0_merged += 1,
+                            1 => stage_1_base += 1,
+                            2 => stage_2_ours += 1,
+                            3 => stage_3_theirs += 1,
                             invalid => anyhow::bail!("Invalid stage {} encountered", invalid),
                         }
                         match entry.mode {
@@ -134,9 +136,10 @@ mod serde_only {
                         }
                     }
                     Entries {
-                        stage_0,
-                        stage_1,
-                        stage_2,
+                        stage_0_merged,
+                        stage_1_base,
+                        stage_2_ours,
+                        stage_3_theirs,
                         kind: EntryKind {
                             dir,
                             file,
