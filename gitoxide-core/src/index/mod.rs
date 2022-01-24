@@ -10,13 +10,16 @@ pub struct Options {
 mod entries;
 
 #[cfg(feature = "serde1")]
-mod information;
+pub mod information;
 
 #[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
 pub fn information(
     index_path: impl AsRef<Path>,
     out: impl std::io::Write,
-    Options { object_hash, format }: Options,
+    information::Options {
+        index: Options { object_hash, format },
+        extension_details,
+    }: information::Options,
 ) -> anyhow::Result<()> {
     use crate::OutputFormat::*;
     match format {
@@ -25,8 +28,7 @@ pub fn information(
         }
         #[cfg(feature = "serde1")]
         Json => {
-            use std::convert::TryFrom;
-            let info = information::Collection::try_from(parse_file(index_path, object_hash)?)?;
+            let info = information::Collection::try_from_file(parse_file(index_path, object_hash)?, extension_details)?;
             serde_json::to_writer_pretty(out, &info)?;
             Ok(())
         }

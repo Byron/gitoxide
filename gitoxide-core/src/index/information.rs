@@ -1,5 +1,10 @@
 use git_repository as git;
-use std::convert::TryFrom;
+
+pub struct Options {
+    pub index: super::Options,
+    /// If true, show exstension in detail.
+    pub extension_details: bool,
+}
 
 mod ext {
     #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
@@ -76,18 +81,16 @@ pub(crate) struct Collection {
     extensions: Extensions,
 }
 
-impl TryFrom<git::index::File> for Collection {
-    type Error = anyhow::Error;
-
-    fn try_from(f: git::index::File) -> Result<Self, Self::Error> {
+impl Collection {
+    pub fn try_from_file(f: git::index::File, extension_details: bool) -> anyhow::Result<Self> {
         Ok(Collection {
             version: f.version() as u8,
             checksum: f.checksum.to_hex().to_string(),
             extensions: {
                 let mut count = 0;
-                let tree = f.tree().map(|tree| {
+                let tree = f.tree().and_then(|tree| {
                     count += 1;
-                    tree.into()
+                    extension_details.then(|| tree.into())
                 });
                 if f.link().is_some() {
                     count += 1

@@ -356,7 +356,11 @@ pub mod index {
         /// Print all entries to standard output
         Entries,
         /// Print information about the index structure
-        Info,
+        Info {
+            /// Do not extract specific extension information to gain only a superficial idea of the index's composition.
+            #[clap(long)]
+            no_details: bool,
+        },
     }
 }
 
