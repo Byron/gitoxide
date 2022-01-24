@@ -124,6 +124,14 @@ mod init {
     }
 
     #[test]
+    #[ignore]
+    fn read_file_with_conflicts() {
+        let file = loose_file("conflicting-file");
+        assert_eq!(file.version(), Version::V2);
+        assert_eq!(file.entries().len(), 3);
+    }
+
+    #[test]
     fn read_v4_with_delta_paths_and_ieot_ext() {
         let file = file("v4_more_files_IEOT");
         assert_eq!(file.version(), Version::V4);
