@@ -463,7 +463,9 @@ impl<'event> GitConfig<'event> {
             .collect()
     }
 
-    /// Get all sections that match the provided name. Returning the section header and body.
+    /// Get all sections that match the `section_name`, returning all matching section header along with their body.
+    ///
+    /// An empty `Vec` is returned if there is no section with `section_name`.
     ///
     /// # Example
     ///
