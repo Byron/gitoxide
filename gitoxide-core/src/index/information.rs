@@ -69,7 +69,7 @@ pub(crate) struct Entries {
 
 #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
 pub(crate) struct Extensions {
-    count: usize,
+    names: Vec<&'static str>,
     tree: Option<ext::Tree>,
 }
 
@@ -87,24 +87,24 @@ impl Collection {
             version: f.version() as u8,
             checksum: f.checksum.to_hex().to_string(),
             extensions: {
-                let mut count = 0;
+                let mut names = Vec::new();
                 let tree = f.tree().and_then(|tree| {
-                    count += 1;
+                    names.push("tree (TREE)");
                     extension_details.then(|| tree.into())
                 });
                 if f.link().is_some() {
-                    count += 1
+                    names.push("link");
                 };
                 if f.resolve_undo().is_some() {
-                    count += 1
+                    names.push("resolve-undo (REUC)");
                 };
                 if f.untracked().is_some() {
-                    count += 1
+                    names.push("untracked (UNTR)");
                 };
                 if f.fs_monitor().is_some() {
-                    count += 1
+                    names.push("fs-monitor (FSMN)");
                 };
-                Extensions { count, tree }
+                Extensions { names, tree }
             },
             entries: {
                 let (mut stage_0, mut stage_1, mut stage_2) = (0, 0, 0);
