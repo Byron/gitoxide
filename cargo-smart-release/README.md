@@ -53,7 +53,7 @@ cargo install cargo-smart-release
 * [x] avoid making any releases if there are no changes
 * [x] avoid bumping versions if the current version isn't released, allowing you to control the version by editing the cargo manifest
 * [x] [conventional] commit message drive changelog scaffolding and to automatically derive the crate version to publish
-* [x] automatically release dependent workspace pre-release crates along with the desired one if they changed since their last release
+* [x] automatically release dependent workspace IDP crates along with the desired one if they changed since their last release
 * [x] automatically adjust manifest versions and update manifests of crates which use those whose versions were incremented
 * [x] conservatively bump downstream workspace crates in the light of breaking changes, even though these won't be published, making downstream breakage impossible
 * [x] use git tags to know if a crate changed at all, skipping publishes if there is no code change at all

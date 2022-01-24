@@ -61,7 +61,7 @@ Follow linked crate name for detailed status. Please note that all crates follow
 * **Stability Tier 2**
   - [git-tempfile](https://github.com/Byron/gitoxide/blob/main/git-tempfile/README.md)
 
-### In Development/Pre-Release
+### Initial Development
 * **usable**
   * [git-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-actor)
   * [git-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-hash)
