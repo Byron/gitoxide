@@ -57,8 +57,7 @@ pub enum Subcommands {
     #[clap(subcommand)]
     CommitGraph(commitgraph::Subcommands),
     /// Subcommands for interacting with a worktree index, typically at .git/index
-    #[clap(subcommand)]
-    Index(index::Subcommands),
+    Index(index::Platform),
     /// Subcommands for interacting with entire git repositories
     #[clap(subcommand)]
     Repository(repo::Subcommands),
@@ -337,18 +336,27 @@ pub mod repo {
 pub mod index {
     use std::path::PathBuf;
 
+    #[derive(Debug, clap::Parser)]
+    pub struct Platform {
+        /// The object format to assume when reading files that don't inherently know about it, or when writing files.
+        #[clap(long, default_value_t = git_repository::hash::Kind::default(), possible_values(&["SHA1"]))]
+        pub object_hash: git_repository::hash::Kind,
+
+        /// The path to the index file.
+        #[clap(short = 'i', long, default_value = ".git/index")]
+        pub index_path: PathBuf,
+
+        /// Subcommands
+        #[clap(subcommand)]
+        pub cmd: Subcommands,
+    }
+
     #[derive(Debug, clap::Subcommand)]
-    #[clap(alias = "index")]
     pub enum Subcommands {
         /// Print all entries to standard output
-        Entries {
-            /// The object format to assume when reading files that don't inherently know about it, or when writing files.
-            #[clap(long, default_value_t = git_repository::hash::Kind::default(), possible_values(&["SHA1"]))]
-            object_hash: git_repository::hash::Kind,
-
-            /// The path to the index file.
-            index_path: PathBuf,
-        },
+        Entries,
+        /// Print information about the index structure
+        Info,
     }
 }
 

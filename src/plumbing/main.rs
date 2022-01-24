@@ -73,11 +73,22 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
-        Subcommands::Index(subcommands) => match subcommands {
-            index::Subcommands::Entries {
-                object_hash,
-                index_path,
-            } => prepare_and_run(
+        Subcommands::Index(index::Platform {
+            object_hash,
+            index_path,
+            cmd,
+        }) => match cmd {
+            index::Subcommands::Info => prepare_and_run(
+                "index-entries",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| {
+                    core::index::information(index_path, out, core::index::entries::Options { object_hash, format })
+                },
+            ),
+            index::Subcommands::Entries => prepare_and_run(
                 "index-entries",
                 verbose,
                 progress,
