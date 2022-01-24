@@ -12,11 +12,10 @@ use clap::Parser;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
-use crate::plumbing::options::index;
 #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 use crate::plumbing::options::remote;
 use crate::{
-    plumbing::options::{commitgraph, pack, repo, Args, Subcommands},
+    plumbing::options::{commitgraph, index, pack, repo, Args, Subcommands},
     shared::pretty::prepare_and_run,
 };
 

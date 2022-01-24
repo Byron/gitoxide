@@ -154,9 +154,8 @@ pub mod prelude {
 pub mod path;
 
 mod repository;
-pub use repository::{discover, init, open};
-
 use git_features::threading::OwnShared;
+pub use repository::{discover, init, open};
 
 /// The standard type for a store to handle git references.
 pub type RefStore = git_ref::file::Store;
