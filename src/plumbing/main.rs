@@ -84,7 +84,9 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, _err| core::index::entries(index_path, out, object_hash),
+                move |_progress, out, _err| {
+                    core::index::entries(index_path, out, core::index::entries::Options { object_hash, format })
+                },
             ),
         },
         Subcommands::Repository(subcommands) => match subcommands {

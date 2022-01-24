@@ -15,7 +15,7 @@ test = true
 [features]
 default = ["max-performance", "one-stop-shop"]
 unstable = ["git-index"]
-serde1 = ["git-pack/serde1", "git-object/serde1", "git-protocol/serde1", "git-transport/serde1", "git-ref/serde1", "git-odb/serde1"]
+serde1 = ["git-pack/serde1", "git-object/serde1", "git-protocol/serde1", "git-transport/serde1", "git-ref/serde1", "git-odb/serde1", "git-index/serde1"]
 # enable when https://github.com/RustCrypto/asm-hashes/issues/17 is fixed
 # max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-features/fast-sha1"]
 max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-pack/pack-cache-lru-static", "git-pack/pack-cache-lru-dynamic"]
