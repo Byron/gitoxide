@@ -1,4 +1,5 @@
 mod init {
+    use bstr::ByteSlice;
     use std::path::{Path, PathBuf};
 
     use git_index::{entry, Version};
@@ -34,6 +35,12 @@ mod init {
             assert!(entry.flags.is_empty());
             assert_eq!(entry.mode, entry::Mode::FILE);
             assert_eq!(entry.path(&file.state), "a");
+
+            let tree = file.tree().unwrap();
+            assert_eq!(tree.num_entries, 1);
+            assert_eq!(tree.id, hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"));
+            assert!(tree.name.is_empty());
+            assert!(tree.children.is_empty());
         }
     }
     #[test]
@@ -41,6 +48,11 @@ mod init {
         let file = file("v2_empty");
         assert_eq!(file.version(), Version::V2);
         assert_eq!(file.entries().len(), 0);
+        let tree = file.tree().unwrap();
+        assert_eq!(tree.num_entries, 0);
+        assert!(tree.name.is_empty());
+        assert!(tree.children.is_empty());
+        assert_eq!(tree.id, hex_to_id("4b825dc642cb6eb9a060e54bf8d69288fbee4904"));
     }
 
     #[test]
@@ -56,6 +68,17 @@ mod init {
             assert_eq!(e.mode, entry::Mode::FILE);
             assert_eq!(e.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"))
         }
+
+        let tree = file.tree().unwrap();
+        assert_eq!(tree.id, hex_to_id("c9b29c3168d8e677450cc650238b23d9390801fb"));
+        assert_eq!(tree.num_entries, 6);
+        assert!(tree.name.is_empty());
+        assert_eq!(tree.children.len(), 1);
+
+        let tree = &tree.children[0];
+        assert_eq!(tree.id, hex_to_id("765b32c65d38f04c4f287abda055818ec0f26912"));
+        assert_eq!(tree.num_entries, 3);
+        assert_eq!(tree.name.as_bstr(), "d");
     }
 
     fn find_shared_index_for(index: impl AsRef<Path>) -> PathBuf {
