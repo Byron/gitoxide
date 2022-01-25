@@ -224,6 +224,10 @@ For additional details, also take a look at the [collaboration guide].
 - [Getting into Gitoxide](https://youtube.com/playlist?list=PLMHbQxe1e9MkEmuj9csczEK1O06l0Npy5)
    - Get an introduction to `gitoxide` itself which should be a good foundation for any contribution, but isn't a requirement for contributions either.
 
+#### Other Media
+
+- [Rustacean Station Podcast](https://rustacean-station.org/episode/055-sebastian-thiel/)
+
 ## Roadmap
 
 ### Features for 1.0
@@ -231,11 +235,13 @@ For additional details, also take a look at the [collaboration guide].
 Provide a CLI to for the most basic user journey:
 
 * [x] initialize a repository
-* [ ] clone a repository
+* clone a repository
+   - [ ] bare
+   - [ ] with working tree
 * [ ] create a commit
 * [ ] add a remote
 * [ ] push
-  * [ ] create (thin) pack
+  * [x] create (thin) pack
 
 ### Ideas for Examples
 
