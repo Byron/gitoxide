@@ -1,5 +1,6 @@
 use git_hash::ObjectId;
 
+use crate::util::split_at_pos;
 use crate::{
     extension::{Signature, Tree},
     util::split_at_byte_exclusive,
@@ -31,19 +32,14 @@ pub fn one_recursive(data: &[u8], hash_len: usize) -> Option<(Tree, &[u8])> {
     let (entry_count, data) = split_at_byte_exclusive(data, b' ')?;
     let entry_count: u32 = atoi::atoi(entry_count)?;
 
-    let (subtree_count, mut data) = split_at_byte_exclusive(data, b'\n')?;
+    let (subtree_count, data) = split_at_byte_exclusive(data, b'\n')?;
     let subtree_count: usize = atoi::atoi(subtree_count)?;
 
-    let node_id = (entry_count != 0)
-        .then(|| {
-            (data.len() >= hash_len).then(|| {
-                let (hash, rest) = data.split_at(hash_len);
-                data = rest;
-                ObjectId::from(hash)
-            })
-        })
-        .flatten()
-        .map(|id| NodeId { id, entry_count });
+    let (hash, mut data) = split_at_pos(data, hash_len)?;
+    let node_id = NodeId {
+        id: ObjectId::from(hash),
+        entry_count,
+    };
 
     let mut subtrees = Vec::with_capacity(subtree_count);
     for _ in 0..subtree_count {
@@ -68,6 +64,6 @@ mod tests {
 
     #[test]
     fn size_of_tree() {
-        assert_eq!(std::mem::size_of::<Tree>(), 88);
+        assert_eq!(std::mem::size_of::<Tree>(), 80);
     }
 }

@@ -12,7 +12,7 @@ mod serde_only {
         pub(crate) struct Tree {
             name: String,
             /// Only set if there are any entries in the index we are associated with.
-            id: Option<tree::NodeId>,
+            id: tree::NodeId,
             children: Vec<Tree>,
         }
 
@@ -24,10 +24,10 @@ mod serde_only {
                 fn from(t: &'a git_repository::index::extension::Tree) -> Self {
                     super::Tree {
                         name: t.name.as_bstr().to_string(),
-                        id: t.id.as_ref().map(|id| NodeId {
-                            entry_count: id.entry_count,
-                            id: id.id.to_hex().to_string(),
-                        }),
+                        id: NodeId {
+                            entry_count: t.id.entry_count,
+                            id: t.id.id.to_hex().to_string(),
+                        },
                         children: t.children.iter().map(|t| t.into()).collect(),
                     }
                 }

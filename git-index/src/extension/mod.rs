@@ -17,7 +17,7 @@ pub struct Iter<'a> {
 pub struct Tree {
     pub name: SmallVec<[u8; 23]>,
     /// Only set if there are any entries in the index we are associated with.
-    pub id: Option<tree::NodeId>,
+    pub id: tree::NodeId,
     pub children: Vec<Tree>,
 }
 

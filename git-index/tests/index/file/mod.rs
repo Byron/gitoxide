@@ -36,6 +36,12 @@ mod init {
             assert_eq!(entry.path(&file.state), "a");
         }
     }
+    #[test]
+    fn read_v2_empty() {
+        let file = file("v2_empty");
+        assert_eq!(file.version(), Version::V2);
+        assert_eq!(file.entries().len(), 0);
+    }
 
     #[test]
     fn read_v2_with_multiple_entries_without_eoie_ext() {
