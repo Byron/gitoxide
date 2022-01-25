@@ -45,7 +45,7 @@ mod init {
     }
     #[test]
     fn read_v2_empty() {
-        let file = file("v2_empty");
+        let file = file("V2_empty");
         assert_eq!(file.version(), Version::V2);
         assert_eq!(file.entries().len(), 0);
         let tree = file.tree().unwrap();
@@ -105,6 +105,8 @@ mod init {
     fn read_v2_split_index() {
         let file = file("v2_split_index");
         assert_eq!(file.version(), Version::V2);
+
+        assert!(file.link().is_some());
     }
 
     #[test]
@@ -132,24 +134,32 @@ mod init {
     fn read_reuc_extension() {
         let file = loose_file("REUC");
         assert_eq!(file.version(), Version::V2);
+
+        assert!(file.resolve_undo().is_some());
     }
 
     #[test]
     fn read_untr_extension() {
         let file = loose_file("UNTR");
         assert_eq!(file.version(), Version::V2);
+
+        assert!(file.untracked().is_some());
     }
 
     #[test]
     fn read_untr_extension_with_oids() {
         let file = loose_file("UNTR-with-oids");
         assert_eq!(file.version(), Version::V2);
+
+        assert!(file.untracked().is_some());
     }
 
     #[test]
     fn read_fsmn_v1() {
         let file = loose_file("FSMN");
         assert_eq!(file.version(), Version::V2);
+
+        assert!(file.fs_monitor().is_some());
     }
 
     #[test]
