@@ -11,8 +11,10 @@ mod serde_only {
         #[derive(serde::Serialize)]
         pub(crate) struct Tree {
             name: String,
-            /// Only set if there are any entries in the index we are associated with.
-            id: tree::NodeId,
+            /// The id of the directory tree of the associated tree object.
+            id: String,
+            /// The amount of non-tree entries contained within, and definitely not zero.
+            num_entries: u32,
             children: Vec<Tree>,
         }
 
@@ -24,22 +26,15 @@ mod serde_only {
                 fn from(t: &'a git_repository::index::extension::Tree) -> Self {
                     super::Tree {
                         name: t.name.as_bstr().to_string(),
-                        id: NodeId {
-                            entry_count: t.id.entry_count,
-                            id: t.id.id.to_hex().to_string(),
-                        },
+                        id: t.id.to_hex().to_string(),
+                        num_entries: t.num_entries,
                         children: t.children.iter().map(|t| t.into()).collect(),
                     }
                 }
             }
 
             #[derive(serde::Serialize, serde::Deserialize)]
-            pub struct NodeId {
-                /// The id of the directory tree of the associated tree object.
-                id: String,
-                /// The amount of non-tree entries contained within, and definitely not zero.
-                entry_count: u32,
-            }
+            pub struct NodeId {}
         }
     }
 

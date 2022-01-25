@@ -8,13 +8,6 @@ use crate::{
 
 pub const SIGNATURE: Signature = *b"TREE";
 
-pub struct NodeId {
-    /// The id of the directory tree of the associated tree object.
-    pub id: git_hash::ObjectId,
-    /// The amount of non-tree entries contained within, and definitely not zero.
-    pub entry_count: u32,
-}
-
 /// A recursive data structure
 pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<Tree> {
     let (tree, data) = one_recursive(data, object_hash.len_in_bytes())?;
@@ -30,16 +23,13 @@ pub fn one_recursive(data: &[u8], hash_len: usize) -> Option<(Tree, &[u8])> {
     let (path, data) = split_at_byte_exclusive(data, 0)?;
 
     let (entry_count, data) = split_at_byte_exclusive(data, b' ')?;
-    let entry_count: u32 = atoi::atoi(entry_count)?;
+    let num_entries: u32 = atoi::atoi(entry_count)?;
 
     let (subtree_count, data) = split_at_byte_exclusive(data, b'\n')?;
     let subtree_count: usize = atoi::atoi(subtree_count)?;
 
     let (hash, mut data) = split_at_pos(data, hash_len)?;
-    let node_id = NodeId {
-        id: ObjectId::from(hash),
-        entry_count,
-    };
+    let id = ObjectId::from(hash);
 
     let mut subtrees = Vec::with_capacity(subtree_count);
     for _ in 0..subtree_count {
@@ -50,7 +40,8 @@ pub fn one_recursive(data: &[u8], hash_len: usize) -> Option<(Tree, &[u8])> {
 
     Some((
         Tree {
-            id: node_id,
+            id,
+            num_entries,
             name: path.into(),
             children: subtrees,
         },

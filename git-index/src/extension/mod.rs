@@ -16,8 +16,11 @@ pub struct Iter<'a> {
 /// if there was no change to them. Portions of this tree are invalidated as the index is changed.
 pub struct Tree {
     pub name: SmallVec<[u8; 23]>,
-    /// Only set if there are any entries in the index we are associated with.
-    pub id: tree::NodeId,
+    /// The id of the directory tree of the associated tree object.
+    pub id: git_hash::ObjectId,
+    /// The amount of non-tree items in this directory tree, including sub-trees, recursively.
+    /// The value of the top-level tree is thus equal to the value of the total amount of entries.
+    pub num_entries: u32,
     pub children: Vec<Tree>,
 }
 
