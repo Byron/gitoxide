@@ -7,13 +7,19 @@ mod init {
 
     fn loose_file(name: &str) -> git_index::File {
         let path = git_testtools::fixture_path(Path::new("loose_index").join(name).with_extension("git-index"));
-        git_index::File::at(path, git_index::decode::Options::default()).unwrap()
+        let file = git_index::File::at(path, git_index::decode::Options::default()).unwrap();
+        file.verify_integrity().unwrap();
+        file
     }
     fn file(name: &str) -> git_index::File {
-        git_index::File::at(crate::fixture_path(name), git_index::decode::Options::default()).unwrap()
+        let file = git_index::File::at(crate::fixture_path(name), git_index::decode::Options::default()).unwrap();
+        file.verify_integrity().unwrap();
+        file
     }
     fn file_opt(name: &str, opts: git_index::decode::Options) -> git_index::File {
-        git_index::File::at(crate::fixture_path(name), opts).unwrap()
+        let file = git_index::File::at(crate::fixture_path(name), opts).unwrap();
+        file.verify_integrity().unwrap();
+        file
     }
 
     #[test]
