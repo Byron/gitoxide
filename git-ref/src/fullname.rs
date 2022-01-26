@@ -56,6 +56,12 @@ impl<'a> From<crate::FullNameRef<'a>> for FullName {
     }
 }
 
+impl std::fmt::Display for FullName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.0, f)
+    }
+}
+
 impl FullName {
     /// Interpret this fully qualified reference name as partial name.
     pub fn to_partial(&self) -> crate::PartialNameRef<'_> {
