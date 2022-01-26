@@ -21,6 +21,7 @@ mod error {
 pub use error::Error;
 
 use crate::bstr::BStr;
+use crate::easy;
 
 impl<'repo> Commit<'repo> {
     /// Parse the commits message into a [`MessageRef`][git_object::commit::MessageRef], after decoding the entire commit object.
@@ -46,10 +47,7 @@ impl<'repo> Commit<'repo> {
         let tree_id = self.tree_id().ok_or(Error::Decode)?;
         match self.handle.find_object(tree_id)?.try_into_tree() {
             Ok(tree) => Ok(tree),
-            Err(obj) => Err(Error::ObjectKind {
-                actual: obj.kind,
-                expected: git_object::Kind::Tree,
-            }),
+            Err(easy::object::try_into::Error { actual, expected, .. }) => Err(Error::ObjectKind { actual, expected }),
         }
     }
 
