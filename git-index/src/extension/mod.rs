@@ -57,7 +57,7 @@ pub(crate) mod fs_monitor;
 
 pub(crate) mod decode;
 
-pub(crate) mod tree;
+pub mod tree;
 
 pub(crate) mod end_of_index_entry;
 

@@ -1,3 +1,4 @@
+use bstr::ByteSlice;
 use git_hash::ObjectId;
 
 use crate::util::split_at_pos;
@@ -7,6 +8,65 @@ use crate::{
 };
 
 pub const SIGNATURE: Signature = *b"TREE";
+
+pub mod verify {
+    use bstr::BString;
+    use quick_error::quick_error;
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            RootWithName { name: BString } {
+                display("The root tree was named '{}', even though it should be empty", name)
+            }
+            EntriesCount {actual: u32, expected: u32 } {
+                display("Expected not more than {} entries to be reachable from the top-level, but actual count was {}", expected, actual)
+            }
+        }
+    }
+}
+
+impl Tree {
+    pub fn verify(&self) -> Result<(), verify::Error> {
+        fn verify_recursive(children: &[Tree]) -> Result<Option<u32>, verify::Error> {
+            if children.is_empty() {
+                return Ok(None);
+            }
+            let mut entries = 0;
+            for child in children {
+                let actual_num_entries = verify_recursive(&child.children)?;
+                if let Some(actual) = actual_num_entries {
+                    if actual > child.num_entries {
+                        return Err(verify::Error::EntriesCount {
+                            actual,
+                            expected: child.num_entries,
+                        });
+                    }
+                }
+                entries += child.num_entries;
+            }
+            Ok(entries.into())
+        }
+
+        if !self.name.is_empty() {
+            return Err(verify::Error::RootWithName {
+                name: self.name.as_bstr().into(),
+            });
+        }
+
+        let declared_entries = verify_recursive(&self.children)?;
+        if let Some(actual) = declared_entries {
+            if actual > self.num_entries {
+                return Err(verify::Error::EntriesCount {
+                    actual,
+                    expected: self.num_entries,
+                });
+            }
+        }
+
+        Ok(())
+    }
+}
 
 /// A recursive data structure
 pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<Tree> {

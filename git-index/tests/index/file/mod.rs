@@ -8,6 +8,7 @@ mod init {
     fn verify(index: git_index::File) -> git_index::File {
         index.verify_integrity().unwrap();
         index.verify_entries().unwrap();
+        index.verify_extensions().unwrap();
         index
     }
 

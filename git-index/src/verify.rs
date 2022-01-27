@@ -9,7 +9,23 @@ pub mod entries {
         #[derive(Debug)]
         pub enum Error {
             OutOfOrder { current_index: usize, current_path: BString, current_stage: u8, previous_path: BString, previous_stage: u8 } {
-                display("todo")
+                display("Entry '{}' (stage = {}) at index {} should order after prior entry '{}' (stage = {})", current_path, current_stage, current_index, previous_path, previous_stage)
+            }
+        }
+    }
+}
+
+pub mod extensions {
+    use crate::extension;
+    use quick_error::quick_error;
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            Tree(err: extension::tree::verify::Error) {
+                display("The tree extension wasn't valid")
+                source(err)
+                from()
             }
         }
     }
@@ -32,6 +48,13 @@ impl State {
             }
             previous = Some(entry);
         }
+        Ok(())
+    }
+
+    pub fn verify_extensions(&self) -> Result<(), extensions::Error> {
+        self.tree().map(|t| t.verify()).transpose()?;
+        // TODO: verify links by running the whole set of tests on the index
+        //       - do that once we load it as well, or maybe that's lazy loaded? Too many questions for now.
         Ok(())
     }
 }
