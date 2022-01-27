@@ -15,6 +15,8 @@ mod access;
 
 pub mod decode;
 
+pub mod verify;
+
 /// All known versions of a git index file.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

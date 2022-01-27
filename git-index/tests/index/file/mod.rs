@@ -5,21 +5,24 @@ mod init {
     use git_index::{entry, Version};
     use git_testtools::hex_to_id;
 
+    fn verify(index: git_index::File) -> git_index::File {
+        index.verify_integrity().unwrap();
+        index.verify_entries().unwrap();
+        index
+    }
+
     fn loose_file(name: &str) -> git_index::File {
         let path = git_testtools::fixture_path(Path::new("loose_index").join(name).with_extension("git-index"));
         let file = git_index::File::at(path, git_index::decode::Options::default()).unwrap();
-        file.verify_integrity().unwrap();
-        file
+        verify(file)
     }
     fn file(name: &str) -> git_index::File {
         let file = git_index::File::at(crate::fixture_path(name), git_index::decode::Options::default()).unwrap();
-        file.verify_integrity().unwrap();
-        file
+        verify(file)
     }
     fn file_opt(name: &str, opts: git_index::decode::Options) -> git_index::File {
         let file = git_index::File::at(crate::fixture_path(name), opts).unwrap();
-        file.verify_integrity().unwrap();
-        file
+        verify(file)
     }
 
     #[test]
