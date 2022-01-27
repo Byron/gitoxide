@@ -1,5 +1,6 @@
 use bstr::ByteSlice;
 use git_hash::ObjectId;
+use std::cmp::Ordering;
 
 use crate::util::split_at_pos;
 use crate::{
@@ -22,19 +23,30 @@ pub mod verify {
             EntriesCount {actual: u32, expected: u32 } {
                 display("Expected not more than {} entries to be reachable from the top-level, but actual count was {}", expected, actual)
             }
+            OutOfOrder { parent_id: git_hash::ObjectId, current_path: BString, previous_path: BString } {
+                display("Parent tree '{}' contained out-of order trees prev = '{}' and next = '{}'", parent_id, previous_path, current_path)
+            }
         }
     }
 }
 
 impl Tree {
+    fn name_cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let common_len = self.name.len().min(other.name.len());
+        self.name[..common_len]
+            .cmp(&other.name[..common_len])
+            .then_with(|| self.name.len().cmp(&other.name.len()))
+    }
+
     pub fn verify(&self) -> Result<(), verify::Error> {
-        fn verify_recursive(children: &[Tree]) -> Result<Option<u32>, verify::Error> {
+        fn verify_recursive(parent_id: git_hash::ObjectId, children: &[Tree]) -> Result<Option<u32>, verify::Error> {
             if children.is_empty() {
                 return Ok(None);
             }
             let mut entries = 0;
+            let mut prev = None::<&Tree>;
             for child in children {
-                let actual_num_entries = verify_recursive(&child.children)?;
+                let actual_num_entries = verify_recursive(child.id, &child.children)?;
                 if let Some(actual) = actual_num_entries {
                     if actual > child.num_entries {
                         return Err(verify::Error::EntriesCount {
@@ -44,6 +56,16 @@ impl Tree {
                     }
                 }
                 entries += child.num_entries;
+                if let Some(prev) = prev {
+                    if prev.name_cmp(child) != Ordering::Less {
+                        return Err(verify::Error::OutOfOrder {
+                            parent_id,
+                            previous_path: prev.name.as_bstr().into(),
+                            current_path: child.name.as_bstr().into(),
+                        });
+                    }
+                }
+                prev = Some(child);
             }
             Ok(entries.into())
         }
@@ -54,7 +76,7 @@ impl Tree {
             });
         }
 
-        let declared_entries = verify_recursive(&self.children)?;
+        let declared_entries = verify_recursive(self.id, &self.children)?;
         if let Some(actual) = declared_entries {
             if actual > self.num_entries {
                 return Err(verify::Error::EntriesCount {

@@ -114,7 +114,9 @@ impl Flags {
 #[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Time {
+    /// The amount of seconds elapsed since EPOCH
     pub secs: u32,
+    /// The amount of nanoseconds elapsed in the current second, ranging from 0 to 999.999.999 .
     pub nsecs: u32,
 }
 
