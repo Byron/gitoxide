@@ -11,19 +11,43 @@ mod entries;
 
 pub mod information;
 
-#[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
+pub fn verify(
+    index_path: impl AsRef<Path>,
+    mut out: impl std::io::Write,
+    Options { object_hash, format }: Options,
+) -> anyhow::Result<()> {
+    let file = parse_file(index_path, object_hash)?;
+    file.verify_integrity()?;
+    file.verify_entries()?;
+    #[cfg_attr(not(feature = "serde1"), allow(irrefutable_let_patterns))]
+    if let crate::OutputFormat::Human = format {
+        writeln!(out, "OK").ok();
+    }
+    Ok(())
+}
+
+#[cfg_attr(not(feature = "serde1"), allow(unused_variables, unused_mut))]
 pub fn information(
     index_path: impl AsRef<Path>,
     out: impl std::io::Write,
+    mut err: impl std::io::Write,
     information::Options {
-        index: Options { object_hash, format },
+        index: Options {
+            object_hash,
+            mut format,
+        },
         extension_details,
     }: information::Options,
 ) -> anyhow::Result<()> {
     use crate::OutputFormat::*;
+    #[cfg(feature = "serde1")]
+    if let Human = format {
+        writeln!(err, "Defaulting to JSON printing as nothing else will be implemented.").ok();
+        format = Json;
+    }
     match format {
         Human => {
-            anyhow::bail!("Only JSON output is implemented");
+            anyhow::bail!("Cannot print information using 'human' format.")
         }
         #[cfg(feature = "serde1")]
         Json => {

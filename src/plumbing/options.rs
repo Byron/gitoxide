@@ -353,6 +353,8 @@ pub mod index {
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
+        /// Validate constraints and assumptions of an index along with its integrity.
+        Verify,
         /// Print all entries to standard output
         Entries,
         /// Print information about the index structure
