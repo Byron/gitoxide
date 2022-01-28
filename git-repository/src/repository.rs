@@ -19,6 +19,7 @@ mod access {
         /// Load the index file of this repository's workspace, if present.
         ///
         /// Note that it is loaded into memory each time this method is called, but also is independent of the workspace.
+        #[cfg(feature = "git-index")]
         pub fn load_index(&self) -> Option<Result<git_index::File, git_index::file::init::Error>> {
             // TODO: choose better/correct options
             let opts = git_index::decode::Options {
