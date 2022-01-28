@@ -31,13 +31,6 @@ pub mod verify {
 }
 
 impl Tree {
-    fn name_cmp(&self, other: &Self) -> std::cmp::Ordering {
-        let common_len = self.name.len().min(other.name.len());
-        self.name[..common_len]
-            .cmp(&other.name[..common_len])
-            .then_with(|| self.name.len().cmp(&other.name.len()))
-    }
-
     pub fn verify(&self) -> Result<(), verify::Error> {
         fn verify_recursive(parent_id: git_hash::ObjectId, children: &[Tree]) -> Result<Option<u32>, verify::Error> {
             if children.is_empty() {
@@ -57,7 +50,7 @@ impl Tree {
                 }
                 entries += child.num_entries;
                 if let Some(prev) = prev {
-                    if prev.name_cmp(child) != Ordering::Less {
+                    if prev.name.cmp(&child.name) != Ordering::Less {
                         return Err(verify::Error::OutOfOrder {
                             parent_id,
                             previous_path: prev.name.as_bstr().into(),
@@ -116,7 +109,10 @@ pub fn one_recursive(data: &[u8], hash_len: usize) -> Option<(Tree, &[u8])> {
     let mut subtrees = Vec::with_capacity(subtree_count);
     for _ in 0..subtree_count {
         let (tree, rest) = one_recursive(data, hash_len)?;
-        subtrees.push(tree);
+        match subtrees.binary_search_by(|t: &Tree| t.name.cmp(&tree.name)) {
+            Ok(_existing_index) => return None,
+            Err(insert_position) => subtrees.insert(insert_position, tree),
+        }
         data = rest;
     }
 
