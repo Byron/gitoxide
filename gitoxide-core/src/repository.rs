@@ -10,6 +10,7 @@ pub fn init(directory: Option<PathBuf>) -> Result<git_repository::Path> {
 pub mod verify {
     use std::{path::PathBuf, sync::atomic::AtomicBool};
 
+    use git_repository as git;
     use git_repository::Progress;
 
     use crate::{pack, OutputFormat};
@@ -57,7 +58,11 @@ pub mod verify {
         if let Some(index) = repo.load_index().transpose()? {
             index.verify_integrity()?;
             index.verify_entries()?;
-            index.verify_extensions()?;
+            index.verify_extensions(true, {
+                use git::odb::FindExt;
+                let handle = repo.objects.to_handle();
+                move |oid, buf: &mut Vec<u8>| handle.find_tree(oid, buf).ok()
+            })?;
         }
         match output_statistics {
             Some(OutputFormat::Human) => writeln!(out, "Human output is currently unsupported, use JSON instead")?,

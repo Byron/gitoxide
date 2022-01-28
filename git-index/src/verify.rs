@@ -19,6 +19,10 @@ pub mod extensions {
     use crate::extension;
     use quick_error::quick_error;
 
+    pub fn no_find<'a>(_: &git_hash::oid, _: &'a mut Vec<u8>) -> Option<git_object::TreeRef<'a>> {
+        None
+    }
+
     quick_error! {
         #[derive(Debug)]
         pub enum Error {
@@ -51,7 +55,11 @@ impl State {
         Ok(())
     }
 
-    pub fn verify_extensions(&self) -> Result<(), extensions::Error> {
+    /// Note: `find` cannot be `Option<F>` as we can't call it with a closure then due to the indirection through `Some`.
+    pub fn verify_extensions<F>(&self, _use_find: bool, _find: F) -> Result<(), extensions::Error>
+    where
+        F: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<git_object::TreeRef<'a>>,
+    {
         self.tree().map(|t| t.verify()).transpose()?;
         // TODO: verify links by running the whole set of tests on the index
         //       - do that once we load it as well, or maybe that's lazy loaded? Too many questions for now.

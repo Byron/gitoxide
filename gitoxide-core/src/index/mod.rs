@@ -19,7 +19,7 @@ pub fn verify(
     let file = parse_file(index_path, object_hash)?;
     file.verify_integrity()?;
     file.verify_entries()?;
-    file.verify_extensions()?;
+    file.verify_extensions(false, git::index::verify::extensions::no_find)?;
     #[cfg_attr(not(feature = "serde1"), allow(irrefutable_let_patterns))]
     if let crate::OutputFormat::Human = format {
         writeln!(out, "OK").ok();
