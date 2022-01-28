@@ -14,6 +14,24 @@ mod access {
         pub fn to_easy(&self) -> easy::Handle {
             self.into()
         }
+
+        // TODO: tests
+        /// Load the index file of this repository's workspace, if present.
+        ///
+        /// Note that it is loaded into memory each time this method is called, but also is independent of the workspace.
+        pub fn load_index(&self) -> Option<Result<git_index::File, git_index::file::init::Error>> {
+            // TODO: choose better/correct options
+            let opts = git_index::decode::Options {
+                object_hash: self.object_hash,
+                thread_limit: None,
+                min_extension_block_in_bytes_for_threading: 1024 * 256,
+            };
+            match git_index::File::at(self.git_dir().join("index"), opts) {
+                Ok(index) => Some(Ok(index)),
+                Err(git_index::file::init::Error::Io(err)) if err.kind() == std::io::ErrorKind::NotFound => None,
+                Err(err) => Some(Err(err)),
+            }
+        }
     }
 }
 
