@@ -53,6 +53,12 @@ pub mod verify {
                 make_pack_lookup_cache: || git_repository::odb::pack::cache::Never,
             },
         )?;
+        // TODO: make this work for indices in multiple workspaces, once we have workspace support
+        if let Some(index) = repo.load_index().transpose()? {
+            index.verify_integrity()?;
+            index.verify_entries()?;
+            index.verify_extensions()?;
+        }
         match output_statistics {
             Some(OutputFormat::Human) => writeln!(out, "Human output is currently unsupported, use JSON instead")?,
             #[cfg(feature = "serde1")]
