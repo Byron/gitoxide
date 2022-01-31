@@ -114,7 +114,9 @@ impl Flags {
 #[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Time {
+    /// The amount of seconds elapsed since EPOCH
     pub secs: u32,
+    /// The amount of nanoseconds elapsed in the current second, ranging from 0 to 999.999.999 .
     pub nsecs: u32,
 }
 
@@ -139,6 +141,28 @@ mod access {
     impl Entry {
         pub fn path<'a>(&self, state: &'a State) -> &'a BStr {
             (&state.path_backing[self.path.clone()]).as_bstr()
+        }
+
+        pub fn stage(&self) -> u32 {
+            self.flags.stage()
+        }
+    }
+}
+
+mod _impls {
+    use std::cmp::Ordering;
+
+    use crate::{Entry, State};
+
+    impl Entry {
+        pub fn cmp(&self, other: &Self, state: &State) -> Ordering {
+            let lhs = self.path(state);
+            let rhs = other.path(state);
+            let common_len = lhs.len().min(rhs.len());
+            lhs[..common_len]
+                .cmp(&rhs[..common_len])
+                .then_with(|| lhs.len().cmp(&rhs.len()))
+                .then_with(|| self.stage().cmp(&other.stage()))
         }
     }
 }

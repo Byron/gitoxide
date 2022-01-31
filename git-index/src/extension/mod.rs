@@ -16,8 +16,11 @@ pub struct Iter<'a> {
 /// if there was no change to them. Portions of this tree are invalidated as the index is changed.
 pub struct Tree {
     pub name: SmallVec<[u8; 23]>,
-    /// Only set if there are any entries in the index we are associated with.
-    pub id: Option<tree::NodeId>,
+    /// The id of the directory tree of the associated tree object.
+    pub id: git_hash::ObjectId,
+    /// The amount of non-tree items in this directory tree, including sub-trees, recursively.
+    /// The value of the top-level tree is thus equal to the value of the total amount of entries.
+    pub num_entries: u32,
     pub children: Vec<Tree>,
 }
 
@@ -26,6 +29,7 @@ pub struct Link {
     pub bitmaps: Option<link::Bitmaps>,
 }
 
+#[allow(dead_code)]
 pub struct UntrackedCache {
     /// Something identifying the location and machine that this cache is for.
     /// Should the repository be copied to a different machine, the entire cache can immediately be invalidated.
@@ -42,6 +46,7 @@ pub struct UntrackedCache {
     directories: Vec<untracked_cache::Directory>,
 }
 
+#[allow(dead_code)]
 pub struct FsMonitor {
     token: fs_monitor::Token,
     /// if a bit is true, the resepctive entry is NOT valid as per the fs monitor.
@@ -54,7 +59,7 @@ pub(crate) mod fs_monitor;
 
 pub(crate) mod decode;
 
-pub(crate) mod tree;
+pub mod tree;
 
 pub(crate) mod end_of_index_entry;
 

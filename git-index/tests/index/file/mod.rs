@@ -1,18 +1,31 @@
 mod init {
     use std::path::{Path, PathBuf};
 
+    use bstr::ByteSlice;
     use git_index::{entry, Version};
     use git_testtools::hex_to_id;
 
+    fn verify(index: git_index::File) -> git_index::File {
+        index.verify_integrity().unwrap();
+        index.verify_entries().unwrap();
+        index
+            .verify_extensions(false, git_index::verify::extensions::no_find)
+            .unwrap();
+        index
+    }
+
     fn loose_file(name: &str) -> git_index::File {
         let path = git_testtools::fixture_path(Path::new("loose_index").join(name).with_extension("git-index"));
-        git_index::File::at(path, git_index::decode::Options::default()).unwrap()
+        let file = git_index::File::at(path, git_index::decode::Options::default()).unwrap();
+        verify(file)
     }
     fn file(name: &str) -> git_index::File {
-        git_index::File::at(crate::fixture_path(name), git_index::decode::Options::default()).unwrap()
+        let file = git_index::File::at(crate::fixture_path(name), git_index::decode::Options::default()).unwrap();
+        verify(file)
     }
     fn file_opt(name: &str, opts: git_index::decode::Options) -> git_index::File {
-        git_index::File::at(crate::fixture_path(name), opts).unwrap()
+        let file = git_index::File::at(crate::fixture_path(name), opts).unwrap();
+        verify(file)
     }
 
     #[test]
@@ -34,7 +47,24 @@ mod init {
             assert!(entry.flags.is_empty());
             assert_eq!(entry.mode, entry::Mode::FILE);
             assert_eq!(entry.path(&file.state), "a");
+
+            let tree = file.tree().unwrap();
+            assert_eq!(tree.num_entries, 1);
+            assert_eq!(tree.id, hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"));
+            assert!(tree.name.is_empty());
+            assert!(tree.children.is_empty());
         }
+    }
+    #[test]
+    fn read_v2_empty() {
+        let file = file("V2_empty");
+        assert_eq!(file.version(), Version::V2);
+        assert_eq!(file.entries().len(), 0);
+        let tree = file.tree().unwrap();
+        assert_eq!(tree.num_entries, 0);
+        assert!(tree.name.is_empty());
+        assert!(tree.children.is_empty());
+        assert_eq!(tree.id, hex_to_id("4b825dc642cb6eb9a060e54bf8d69288fbee4904"));
     }
 
     #[test]
@@ -50,6 +80,17 @@ mod init {
             assert_eq!(e.mode, entry::Mode::FILE);
             assert_eq!(e.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"))
         }
+
+        let tree = file.tree().unwrap();
+        assert_eq!(tree.id, hex_to_id("c9b29c3168d8e677450cc650238b23d9390801fb"));
+        assert_eq!(tree.num_entries, 6);
+        assert!(tree.name.is_empty());
+        assert_eq!(tree.children.len(), 1);
+
+        let tree = &tree.children[0];
+        assert_eq!(tree.id, hex_to_id("765b32c65d38f04c4f287abda055818ec0f26912"));
+        assert_eq!(tree.num_entries, 3);
+        assert_eq!(tree.name.as_bstr(), "d");
     }
 
     fn find_shared_index_for(index: impl AsRef<Path>) -> PathBuf {
@@ -76,6 +117,8 @@ mod init {
     fn read_v2_split_index() {
         let file = file("v2_split_index");
         assert_eq!(file.version(), Version::V2);
+
+        assert!(file.link().is_some());
     }
 
     #[test]
@@ -103,24 +146,32 @@ mod init {
     fn read_reuc_extension() {
         let file = loose_file("REUC");
         assert_eq!(file.version(), Version::V2);
+
+        assert!(file.resolve_undo().is_some());
     }
 
     #[test]
     fn read_untr_extension() {
         let file = loose_file("UNTR");
         assert_eq!(file.version(), Version::V2);
+
+        assert!(file.untracked().is_some());
     }
 
     #[test]
     fn read_untr_extension_with_oids() {
         let file = loose_file("UNTR-with-oids");
         assert_eq!(file.version(), Version::V2);
+
+        assert!(file.untracked().is_some());
     }
 
     #[test]
     fn read_fsmn_v1() {
         let file = loose_file("FSMN");
         assert_eq!(file.version(), Version::V2);
+
+        assert!(file.fs_monitor().is_some());
     }
 
     #[test]

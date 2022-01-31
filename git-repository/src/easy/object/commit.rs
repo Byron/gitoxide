@@ -20,8 +20,7 @@ mod error {
 
 pub use error::Error;
 
-use crate::bstr::BStr;
-use crate::easy;
+use crate::{bstr::BStr, easy};
 
 impl<'repo> Commit<'repo> {
     /// Parse the commits message into a [`MessageRef`][git_object::commit::MessageRef], after decoding the entire commit object.

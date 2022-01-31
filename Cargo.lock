@@ -1251,6 +1251,7 @@ dependencies = [
  "git-bitmap",
  "git-features 0.19.1",
  "git-hash 0.9.1",
+ "git-object 0.17.0",
  "git-testtools",
  "memmap2",
  "quick-error",

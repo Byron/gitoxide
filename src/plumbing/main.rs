@@ -84,10 +84,11 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, _err| {
+                move |_progress, out, err| {
                     core::index::information(
                         index_path,
                         out,
+                        err,
                         core::index::information::Options {
                             index: core::index::Options { object_hash, format },
                             extension_details: !no_details,
@@ -103,6 +104,16 @@ pub fn main() -> Result<()> {
                 None,
                 move |_progress, out, _err| {
                     core::index::entries(index_path, out, core::index::Options { object_hash, format })
+                },
+            ),
+            index::Subcommands::Verify => prepare_and_run(
+                "index-verify",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| {
+                    core::index::verify(index_path, out, core::index::Options { object_hash, format })
                 },
             ),
         },
