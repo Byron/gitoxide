@@ -17,6 +17,15 @@ pub mod verify {
     quick_error! {
         #[derive(Debug)]
         pub enum Error {
+            MissingTreeDirectory { parent_id: git_hash::ObjectId, entry_id: git_hash::ObjectId, name: BString } {
+                display("The entry {} at path '{}' in parent tree {} wasn't found in the nodes children, making it incomplete", entry_id, name, parent_id)
+            }
+            TreeNodeNotFound { oid: git_hash::ObjectId } {
+                display("The tree with id {} wasn't found in the object database", oid)
+            }
+            TreeNodeChildcountMismatch { oid: git_hash::ObjectId, expected_childcount: usize, actual_childcount: usize } {
+                display("The tree with id {} should have {} children, but its cached representation had {} of them", oid, expected_childcount, actual_childcount)
+            }
             RootWithName { name: BString } {
                 display("The root tree was named '{}', even though it should be empty", name)
             }
@@ -31,23 +40,25 @@ pub mod verify {
 }
 
 impl Tree {
-    pub fn verify(&self) -> Result<(), verify::Error> {
-        fn verify_recursive(parent_id: git_hash::ObjectId, children: &[Tree]) -> Result<Option<u32>, verify::Error> {
+    pub fn verify<F>(&self, use_find: bool, mut find: F) -> Result<(), verify::Error>
+    where
+        F: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<git_object::TreeRefIter<'a>>,
+    {
+        fn verify_recursive<F>(
+            parent_id: git_hash::ObjectId,
+            children: &[Tree],
+            mut find_buf: Option<&mut Vec<u8>>,
+            find: &mut F,
+        ) -> Result<Option<u32>, verify::Error>
+        where
+            F: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<git_object::TreeRefIter<'a>>,
+        {
             if children.is_empty() {
                 return Ok(None);
             }
             let mut entries = 0;
             let mut prev = None::<&Tree>;
             for child in children {
-                let actual_num_entries = verify_recursive(child.id, &child.children)?;
-                if let Some(actual) = actual_num_entries {
-                    if actual > child.num_entries {
-                        return Err(verify::Error::EntriesCount {
-                            actual,
-                            expected: child.num_entries,
-                        });
-                    }
-                }
                 entries += child.num_entries;
                 if let Some(prev) = prev {
                     if prev.name.cmp(&child.name) != Ordering::Less {
@@ -60,6 +71,43 @@ impl Tree {
                 }
                 prev = Some(child);
             }
+            if let Some(buf) = find_buf.as_mut() {
+                let tree_entries =
+                    find(&parent_id, *buf).ok_or_else(|| verify::Error::TreeNodeNotFound { oid: parent_id })?;
+                let mut num_entries = 0;
+                for entry in tree_entries
+                    .filter_map(Result::ok)
+                    .filter(|e| e.mode == git_object::tree::EntryMode::Tree)
+                {
+                    children
+                        .binary_search_by(|e| e.name.as_bstr().cmp(&entry.filename))
+                        .map_err(|_| verify::Error::MissingTreeDirectory {
+                            parent_id,
+                            entry_id: entry.oid.to_owned(),
+                            name: entry.filename.to_owned(),
+                        })?;
+                    num_entries += 1;
+                }
+
+                if num_entries != children.len() {
+                    return Err(verify::Error::TreeNodeChildcountMismatch {
+                        oid: parent_id,
+                        expected_childcount: num_entries,
+                        actual_childcount: children.len(),
+                    });
+                }
+            }
+            for child in children {
+                let actual_num_entries = verify_recursive(child.id, &child.children, find_buf.as_deref_mut(), find)?;
+                if let Some(actual) = actual_num_entries {
+                    if actual > child.num_entries {
+                        return Err(verify::Error::EntriesCount {
+                            actual,
+                            expected: child.num_entries,
+                        });
+                    }
+                }
+            }
             Ok(entries.into())
         }
 
@@ -69,7 +117,8 @@ impl Tree {
             });
         }
 
-        let declared_entries = verify_recursive(self.id, &self.children)?;
+        let mut buf = Vec::new();
+        let declared_entries = verify_recursive(self.id, &self.children, use_find.then(|| &mut buf), &mut find)?;
         if let Some(actual) = declared_entries {
             if actual > self.num_entries {
                 return Err(verify::Error::EntriesCount {
