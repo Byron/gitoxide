@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.11 (2022-01-31)
 
 ### New Features
 
@@ -22,8 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 2 calendar days.
- - 3 days passed between releases.
+ - 6 commits contributed to the release over the course of 7 calendar days.
+ - 7 days passed between releases.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#319](https://github.com/Byron/gitoxide/issues/319)
 
@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **[#319](https://github.com/Byron/gitoxide/issues/319)**
+    - update changelog prior to release ([`858ec8c`](https://github.com/Byron/gitoxide/commit/858ec8cc25f18c435465baee762def3013743f0b))
     - Adjust docs ([`38c201c`](https://github.com/Byron/gitoxide/commit/38c201c505ce2ea4257cdd0255713154745a330c))
     - An example to illustrate the problem ([`c47e8f8`](https://github.com/Byron/gitoxide/commit/c47e8f8ee8ea79f8f654f6c28e54e0b0b1fff1b6))
  * **Uncategorized**

@@ -40,7 +40,7 @@ git-tempfile = { version ="^1.0.0", path = "../git-tempfile" }
 git-lock = { version ="^1.0.0", path = "../git-lock" }
 git-validate = { version ="^0.5.3", path = "../git-validate" }
 
-git-config = { version = "^0.1.10", path = "../git-config" }
+git-config = { version = "^0.1.11", path = "../git-config" }
 git-odb = { version = "^0.26.0", path = "../git-odb" }
 git-hash = { version = "^0.9.1", path = "../git-hash" }
 git-object = { version = "^0.17.0", path = "../git-object" }
