@@ -1,11 +1,11 @@
-use bstr::ByteSlice;
-use git_hash::ObjectId;
 use std::cmp::Ordering;
 
-use crate::util::split_at_pos;
+use bstr::ByteSlice;
+use git_hash::ObjectId;
+
 use crate::{
     extension::{Signature, Tree},
-    util::split_at_byte_exclusive,
+    util::{split_at_byte_exclusive, split_at_pos},
 };
 
 pub const SIGNATURE: Signature = *b"TREE";
@@ -72,15 +72,14 @@ impl Tree {
                 prev = Some(child);
             }
             if let Some(buf) = find_buf.as_mut() {
-                let tree_entries =
-                    find(&parent_id, *buf).ok_or_else(|| verify::Error::TreeNodeNotFound { oid: parent_id })?;
+                let tree_entries = find(&parent_id, *buf).ok_or(verify::Error::TreeNodeNotFound { oid: parent_id })?;
                 let mut num_entries = 0;
                 for entry in tree_entries
                     .filter_map(Result::ok)
                     .filter(|e| e.mode == git_object::tree::EntryMode::Tree)
                 {
                     children
-                        .binary_search_by(|e| e.name.as_bstr().cmp(&entry.filename))
+                        .binary_search_by(|e| e.name.as_bstr().cmp(entry.filename))
                         .map_err(|_| verify::Error::MissingTreeDirectory {
                             parent_id,
                             entry_id: entry.oid.to_owned(),
@@ -98,6 +97,8 @@ impl Tree {
                 }
             }
             for child in children {
+                // This is actually needed here as it's a mut ref, which isn't copy. We do a re-borrow here.
+                #[allow(clippy::needless_option_as_deref)]
                 let actual_num_entries = verify_recursive(child.id, &child.children, find_buf.as_deref_mut(), find)?;
                 if let Some(actual) = actual_num_entries {
                     if actual > child.num_entries {

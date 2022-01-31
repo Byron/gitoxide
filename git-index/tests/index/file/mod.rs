@@ -1,7 +1,7 @@
 mod init {
-    use bstr::ByteSlice;
     use std::path::{Path, PathBuf};
 
+    use bstr::ByteSlice;
     use git_index::{entry, Version};
     use git_testtools::hex_to_id;
 

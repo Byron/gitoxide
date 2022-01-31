@@ -1,5 +1,6 @@
-use crate::State;
 use std::cmp::Ordering;
+
+use crate::State;
 
 pub mod entries {
     use bstr::BString;
@@ -16,8 +17,9 @@ pub mod entries {
 }
 
 pub mod extensions {
-    use crate::extension;
     use quick_error::quick_error;
+
+    use crate::extension;
 
     pub fn no_find<'a>(_: &git_hash::oid, _: &'a mut Vec<u8>) -> Option<git_object::TreeRefIter<'a>> {
         None

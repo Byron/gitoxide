@@ -150,8 +150,9 @@ mod access {
 }
 
 mod _impls {
-    use crate::{Entry, State};
     use std::cmp::Ordering;
+
+    use crate::{Entry, State};
 
     impl Entry {
         pub fn cmp(&self, other: &Self, state: &State) -> Ordering {

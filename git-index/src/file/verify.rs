@@ -1,5 +1,6 @@
-use crate::File;
 use std::sync::atomic::AtomicBool;
+
+use crate::File;
 
 mod error {
     use quick_error::quick_error;
