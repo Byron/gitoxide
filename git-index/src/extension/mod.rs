@@ -29,6 +29,7 @@ pub struct Link {
     pub bitmaps: Option<link::Bitmaps>,
 }
 
+#[allow(dead_code)]
 pub struct UntrackedCache {
     /// Something identifying the location and machine that this cache is for.
     /// Should the repository be copied to a different machine, the entire cache can immediately be invalidated.
@@ -45,6 +46,7 @@ pub struct UntrackedCache {
     directories: Vec<untracked_cache::Directory>,
 }
 
+#[allow(dead_code)]
 pub struct FsMonitor {
     token: fs_monitor::Token,
     /// if a bit is true, the resepctive entry is NOT valid as per the fs monitor.
