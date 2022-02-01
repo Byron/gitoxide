@@ -1264,7 +1264,7 @@ name = "git-lock"
 version = "1.0.1"
 dependencies = [
  "fastrand",
- "git-tempfile 1.0.4",
+ "git-tempfile 1.0.5",
  "quick-error",
  "tempfile",
 ]
@@ -1276,7 +1276,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24c6c0e6c2d893be08d8e10e61d01fbbbcfb8647d0dafc9ebdc6a8ee51bcf0b2"
 dependencies = [
  "fastrand",
- "git-tempfile 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-tempfile 1.0.4",
  "quick-error",
 ]
 
@@ -1367,7 +1367,7 @@ dependencies = [
  "git-features 0.17.0",
  "git-hash 0.8.0",
  "git-object 0.15.1",
- "git-tempfile 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-tempfile 1.0.4",
  "git-traverse 0.10.1",
  "itoa 0.4.8",
  "parking_lot",
@@ -1391,7 +1391,7 @@ dependencies = [
  "git-hash 0.9.1",
  "git-object 0.17.0",
  "git-odb 0.26.0",
- "git-tempfile 1.0.4",
+ "git-tempfile 1.0.5",
  "git-testtools",
  "git-traverse 0.12.0",
  "memmap2",
@@ -1487,7 +1487,7 @@ dependencies = [
  "git-hash 0.8.0",
  "git-lock 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "git-object 0.15.1",
- "git-tempfile 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-tempfile 1.0.4",
  "git-validate 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "nom",
  "os_str_bytes 3.1.0",
@@ -1504,7 +1504,7 @@ dependencies = [
  "git-lock 1.0.1",
  "git-object 0.17.0",
  "git-odb 0.26.0",
- "git-tempfile 1.0.4",
+ "git-tempfile 1.0.5",
  "git-testtools",
  "git-validate 0.5.3",
  "memmap2",
@@ -1534,7 +1534,7 @@ dependencies = [
  "git-pack 0.16.0",
  "git-protocol 0.14.0",
  "git-ref 0.11.0",
- "git-tempfile 1.0.4",
+ "git-tempfile 1.0.5",
  "git-testtools",
  "git-transport 0.15.0",
  "git-traverse 0.12.0",
@@ -1549,8 +1549,10 @@ dependencies = [
 [[package]]
 name = "git-tempfile"
 version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d701b3a4486bb5fa204214d3bb1d703aa3652fbadc963cbd37370646d2975d7"
 dependencies = [
- "dashmap 4.0.2",
+ "dashmap 5.0.0",
  "libc",
  "once_cell",
  "signal-hook",
@@ -1560,11 +1562,9 @@ dependencies = [
 
 [[package]]
 name = "git-tempfile"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d701b3a4486bb5fa204214d3bb1d703aa3652fbadc963cbd37370646d2975d7"
+version = "1.0.5"
 dependencies = [
- "dashmap 5.0.0",
+ "dashmap 4.0.2",
  "libc",
  "once_cell",
  "signal-hook",
