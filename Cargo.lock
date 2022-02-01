@@ -1384,7 +1384,7 @@ dependencies = [
  "bytesize",
  "clru",
  "common_macros",
- "dashmap 5.0.0",
+ "dashmap 4.0.2",
  "git-chunk",
  "git-diff 0.13.0",
  "git-features 0.19.1",
@@ -1564,7 +1564,7 @@ dependencies = [
 name = "git-tempfile"
 version = "1.0.4"
 dependencies = [
- "dashmap 5.0.0",
+ "dashmap 4.0.2",
  "libc",
  "once_cell",
  "signal-hook",
@@ -3036,7 +3036,7 @@ name = "traversal"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "dashmap 5.0.0",
+ "dashmap 4.0.2",
  "git-repository",
  "git2",
  "rayon",
