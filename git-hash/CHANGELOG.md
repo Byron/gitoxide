@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.9.2 (2022-02-01)
 
 A automated maintenance release without impact to the public API.
 
@@ -13,7 +13,7 @@ A automated maintenance release without impact to the public API.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release over the course of 7 calendar days.
+ - 2 commits contributed to the release over the course of 7 calendar days.
  - 8 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -25,6 +25,7 @@ A automated maintenance release without impact to the public API.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - update changelogs prior to git-pack release ([`b7e3a4a`](https://github.com/Byron/gitoxide/commit/b7e3a4afdd6417a38aadad35c7f584617e7b47fa))
     - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
 </details>
 

@@ -1,6 +1,6 @@
 [package]
 name = "git-pack"
-version = "0.16.0"
+version = "0.16.1"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
@@ -34,9 +34,9 @@ all-features = true
 
 [dependencies]
 git-features = { version = "^0.19.1", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib"] }
-git-hash = { version = "^0.9.1", path = "../git-hash" }
+git-hash = { version = "^0.9.2", path = "../git-hash" }
 git-chunk = { version = "^0.3.0", path = "../git-chunk" }
-git-object = { version = "^0.17.0", path = "../git-object" }
+git-object = { version = "^0.17.1", path = "../git-object" }
 git-traverse = { version = "^0.12.0", path = "../git-traverse" }
 git-diff = { version = "^0.13.0", path = "../git-diff" }
 git-tempfile = { version ="^1.0.0", path = "../git-tempfile" }

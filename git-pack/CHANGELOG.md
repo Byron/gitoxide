@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.16.1 (2022-02-01)
 
 ### Bug Fixes
 
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 7 calendar days.
+ - 3 commits contributed to the release over the course of 7 calendar days.
  - 8 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - update changelogs prior to git-pack release ([`b7e3a4a`](https://github.com/Byron/gitoxide/commit/b7e3a4afdd6417a38aadad35c7f584617e7b47fa))
     - downgrade dashmap to 4.0 to avoid unsoundness. ([`d9451e8`](https://github.com/Byron/gitoxide/commit/d9451e8d7fc39c252042f9d2447061262c16ae7a))
     - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
 </details>
@@ -37,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/>
 <csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
+<csr-id-e0b8636f96e4bfe1bc72b5aa6ad4c4c8538ff92c/>
+<csr-id-c800fdd331e6d7a0b8d756ba822915259f26e9e8/>
 
 ### Refactor
 
@@ -434,6 +437,8 @@ A maintenance release to properly dealing with previously breaking changes in `g
 <csr-id-d8fe8141e80a9e9a433b5e1a072b850325c806c8/>
 <csr-id-faf6f813927720c5adf62102f9ce46606ff2617c/>
 <csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/>
+<csr-id-71c628d46088ab455b54eb2330d24dcff96c911d/>
+<csr-id-8fe461281842b58aa11437445637c6e587bedd63/>
 
 This release contains bugfixes and features, but is considered breaking as `git-traverse`
 signalled a breaking change which is one of our dependencies.

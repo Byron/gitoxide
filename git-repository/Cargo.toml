@@ -42,10 +42,10 @@ git-validate = { version ="^0.5.3", path = "../git-validate" }
 
 git-config = { version = "^0.1.11", path = "../git-config" }
 git-odb = { version = "^0.26.0", path = "../git-odb" }
-git-hash = { version = "^0.9.1", path = "../git-hash" }
-git-object = { version = "^0.17.0", path = "../git-object" }
+git-hash = { version = "^0.9.2", path = "../git-hash" }
+git-object = { version = "^0.17.1", path = "../git-object" }
 git-actor = { version = "^0.8.0", path = "../git-actor" }
-git-pack = { version = "^0.16.0", path = "../git-pack", features = ["object-cache-dynamic"] }
+git-pack = { version = "^0.16.1", path = "../git-pack", features = ["object-cache-dynamic"] }
 
 git-url = { version = "^0.3.5", path = "../git-url", optional = true }
 git-traverse = { version = "^0.12.0", path = "../git-traverse" }

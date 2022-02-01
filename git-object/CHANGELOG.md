@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.17.1 (2022-02-01)
 
 A automated maintenance release without impact to the public API.
 
@@ -17,7 +17,7 @@ A automated maintenance release without impact to the public API.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 4 calendar days.
+ - 3 commits contributed to the release over the course of 4 calendar days.
  - 8 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#293](https://github.com/Byron/gitoxide/issues/293)
@@ -31,12 +31,14 @@ A automated maintenance release without impact to the public API.
  * **[#293](https://github.com/Byron/gitoxide/issues/293)**
     - Fix tree-entry-ordering implementation ([`ea169a6`](https://github.com/Byron/gitoxide/commit/ea169a6dbbba30d9464570cb86e5c990fcaf9ae8))
  * **Uncategorized**
+    - update changelogs prior to git-pack release ([`b7e3a4a`](https://github.com/Byron/gitoxide/commit/b7e3a4afdd6417a38aadad35c7f584617e7b47fa))
     - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
 </details>
 
 ## 0.17.0 (2022-01-23)
 
 <csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
+<csr-id-322b2901382192d3b4ac0fbae32381a9abb49fa9/>
 
 ### Chore
 
@@ -764,6 +766,9 @@ or generally trying to figure out what changed between commits.
 
 ## v0.3.0 (2020-08-12)
 
+<csr-id-5d57c1f7e3b9a84f7b46a4378015572155f3104b/>
+<csr-id-3b9d66c932075feb08cdf2967f7698daef9fd3ff/>
+
 ### Refactor
 
  - <csr-id-5d57c1f7e3b9a84f7b46a4378015572155f3104b/> Use borrowed::Id in trees for full type safety
@@ -865,6 +870,8 @@ or generally trying to figure out what changed between commits.
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
 
 ## v0.1.0 (2020-07-12)
+
+<csr-id-ec3be19c8d007565b814b4757f17811ec0e9de2c/>
 
 ### Refactor
 

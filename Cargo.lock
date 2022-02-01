@@ -1126,7 +1126,7 @@ dependencies = [
  "bstr",
  "git-chunk",
  "git-features 0.19.1",
- "git-hash 0.9.1",
+ "git-hash 0.9.2",
  "git-testtools",
  "memmap2",
  "serde",
@@ -1173,8 +1173,8 @@ dependencies = [
 name = "git-diff"
 version = "0.13.0"
 dependencies = [
- "git-hash 0.9.1",
- "git-object 0.17.0",
+ "git-hash 0.9.2",
+ "git-object 0.17.1",
  "git-odb 0.26.0",
  "git-testtools",
  "git-traverse 0.12.0",
@@ -1209,7 +1209,7 @@ dependencies = [
  "crossbeam-channel",
  "crossbeam-utils",
  "flate2",
- "git-hash 0.9.1",
+ "git-hash 0.9.2",
  "jwalk",
  "num_cpus",
  "parking_lot",
@@ -1233,7 +1233,7 @@ dependencies = [
 
 [[package]]
 name = "git-hash"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "hex",
  "quick-error",
@@ -1250,8 +1250,8 @@ dependencies = [
  "filetime",
  "git-bitmap",
  "git-features 0.19.1",
- "git-hash 0.9.1",
- "git-object 0.17.0",
+ "git-hash 0.9.2",
+ "git-object 0.17.1",
  "git-testtools",
  "memmap2",
  "quick-error",
@@ -1298,13 +1298,13 @@ dependencies = [
 
 [[package]]
 name = "git-object"
-version = "0.17.0"
+version = "0.17.1"
 dependencies = [
  "bstr",
  "btoi",
  "git-actor 0.8.0",
  "git-features 0.19.1",
- "git-hash 0.9.1",
+ "git-hash 0.9.2",
  "git-testtools",
  "git-validate 0.5.3",
  "hex",
@@ -1340,9 +1340,9 @@ dependencies = [
  "filetime",
  "git-actor 0.8.0",
  "git-features 0.19.1",
- "git-hash 0.9.1",
- "git-object 0.17.0",
- "git-pack 0.16.0",
+ "git-hash 0.9.2",
+ "git-object 0.17.1",
+ "git-pack 0.16.1",
  "git-testtools",
  "parking_lot",
  "pretty_assertions",
@@ -1378,7 +1378,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.16.0"
+version = "0.16.1"
 dependencies = [
  "bstr",
  "bytesize",
@@ -1388,8 +1388,8 @@ dependencies = [
  "git-chunk",
  "git-diff 0.13.0",
  "git-features 0.19.1",
- "git-hash 0.9.1",
- "git-object 0.17.0",
+ "git-hash 0.9.2",
+ "git-object 0.17.1",
  "git-odb 0.26.0",
  "git-tempfile 1.0.5",
  "git-testtools",
@@ -1412,7 +1412,7 @@ dependencies = [
  "bstr",
  "futures-io",
  "futures-lite",
- "git-hash 0.9.1",
+ "git-hash 0.9.2",
  "git-odb 0.26.0",
  "hex",
  "maybe-async",
@@ -1465,7 +1465,7 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "git-features 0.19.1",
- "git-hash 0.9.1",
+ "git-hash 0.9.2",
  "git-packetline 0.12.3",
  "git-testtools",
  "git-transport 0.15.0",
@@ -1500,9 +1500,9 @@ version = "0.11.0"
 dependencies = [
  "git-actor 0.8.0",
  "git-features 0.19.1",
- "git-hash 0.9.1",
+ "git-hash 0.9.2",
  "git-lock 1.0.1",
- "git-object 0.17.0",
+ "git-object 0.17.1",
  "git-odb 0.26.0",
  "git-tempfile 1.0.5",
  "git-testtools",
@@ -1526,12 +1526,12 @@ dependencies = [
  "git-config",
  "git-diff 0.13.0",
  "git-features 0.19.1",
- "git-hash 0.9.1",
+ "git-hash 0.9.2",
  "git-index",
  "git-lock 1.0.1",
- "git-object 0.17.0",
+ "git-object 0.17.1",
  "git-odb 0.26.0",
- "git-pack 0.16.0",
+ "git-pack 0.16.1",
  "git-protocol 0.14.0",
  "git-ref 0.11.0",
  "git-tempfile 1.0.5",
@@ -1579,7 +1579,7 @@ dependencies = [
  "bstr",
  "crc",
  "fs_extra",
- "git-hash 0.9.1",
+ "git-hash 0.9.2",
  "nom",
  "once_cell",
  "parking_lot",
@@ -1617,8 +1617,8 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "git-features 0.19.1",
- "git-hash 0.9.1",
- "git-pack 0.16.0",
+ "git-hash 0.9.2",
+ "git-pack 0.16.1",
  "git-packetline 0.12.3",
  "git-url 0.3.5",
  "maybe-async",
@@ -1643,8 +1643,8 @@ dependencies = [
 name = "git-traverse"
 version = "0.12.0"
 dependencies = [
- "git-hash 0.9.1",
- "git-object 0.17.0",
+ "git-hash 0.9.2",
+ "git-object 0.17.1",
  "git-odb 0.26.0",
  "git-testtools",
  "quick-error",
@@ -1747,7 +1747,7 @@ dependencies = [
  "futures-lite",
  "git-commitgraph",
  "git-config",
- "git-pack 0.16.0",
+ "git-pack 0.16.1",
  "git-repository",
  "git-url 0.3.5",
  "itertools",
