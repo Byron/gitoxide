@@ -2,6 +2,10 @@
 
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
+use nom::AsChar;
+#[cfg(not(target_os = "windows"))]
+use pwd::Passwd;
+use quick_error::quick_error;
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
 
@@ -29,7 +33,7 @@ use serde::{Serialize, Serializer};
 /// ```
 /// # use std::borrow::Cow;
 /// # use git_config::values::normalize_str;
-/// assert_eq!(normalize_str("hello world"), Cow::Borrowed(b"hello world".into()));
+/// assert_eq!(normalize_str("hello world"), Cow::Borrowed(b"hello world".as_slice()));
 /// ```
 ///
 /// Fully quoted values are optimized to not need allocations.
@@ -37,7 +41,7 @@ use serde::{Serialize, Serializer};
 /// ```
 /// # use std::borrow::Cow;
 /// # use git_config::values::normalize_str;
-/// assert_eq!(normalize_str("\"hello world\""), Cow::Borrowed(b"hello world".into()));
+/// assert_eq!(normalize_str("\"hello world\""), Cow::Borrowed(b"hello world".as_slice()));
 /// ```
 ///
 /// Quoted values are unwrapped as an owned variant.
@@ -145,6 +149,7 @@ pub enum Value<'a> {
     Boolean(Boolean<'a>),
     Integer(Integer),
     Color(Color),
+    Path(Path<'a>),
     /// If a value does not match from any of the other variants, then this
     /// variant will be matched. As a result, conversion from a `str`-like item
     /// will never fail.
@@ -162,6 +167,7 @@ impl Value<'_> {
     }
 }
 
+// TODO may be remove str handling if not used
 impl<'a> From<&'a str> for Value<'a> {
     fn from(s: &'a str) -> Self {
         if let Ok(bool) = Boolean::try_from(s) {
@@ -237,6 +243,7 @@ impl From<&Value<'_>> for Vec<u8> {
             Value::Boolean(b) => b.into(),
             Value::Integer(i) => i.into(),
             Value::Color(c) => c.into(),
+            Value::Path(p) => p.value.to_vec(),
             Value::Other(o) => o.to_vec(),
         }
     }
@@ -250,6 +257,7 @@ impl Display for Value<'_> {
             Value::Boolean(b) => b.fmt(f),
             Value::Integer(i) => i.fmt(f),
             Value::Color(c) => c.fmt(f),
+            Value::Path(_p) => todo!(),
             Value::Other(o) => match std::str::from_utf8(o) {
                 Ok(v) => v.fmt(f),
                 Err(_) => write!(f, "{:?}", o),
@@ -270,6 +278,106 @@ impl Serialize for Value<'_> {
             Value::Color(c) => c.serialize(serializer),
             Value::Other(i) => i.serialize(serializer),
         }
+    }
+}
+
+quick_error! {
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    pub enum PathError {
+        Missing {what: &'static str} {
+            display("{} is missing", what)
+        }
+        Utf8Conversion(err: git_features::path::Utf8Error) {
+            display("Ill-formed UTF-8")
+            from()
+        }
+        Username(err: std::str::Utf8Error) {
+            display("Ill-formed UTF-8")
+            source(err)
+            from()
+        }
+        Pwd {
+            display("User home info missing")
+        }
+        Unsupported {
+            display("Not available on this platform")
+        }
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[allow(missing_docs)]
+pub struct Path<'a> {
+    pub value: Cow<'a, [u8]>,
+}
+
+impl<'a> TryFrom<Cow<'a, [u8]>> for Path<'a> {
+    type Error = PathError;
+
+    fn try_from(c: Cow<'a, [u8]>) -> Result<Self, Self::Error> {
+        Self::interpolate(c, None)
+    }
+}
+
+impl Path<'_> {
+    pub fn interpolate<'a>(
+        val: Cow<'a, [u8]>,
+        git_install_dir: Option<&'a std::path::Path>,
+    ) -> Result<Path<'a>, PathError> {
+        if val.is_empty() {
+            return Err(PathError::Missing { what: "path" });
+        }
+
+        const PREFIX: &[u8] = b"%(prefix)/";
+        const SLASH: u8 = b'/';
+        if val.starts_with(PREFIX) {
+            let mut expanded = git_features::path::into_bytes(git_install_dir.ok_or(PathError::Missing {
+                what: "git install dir",
+            })?)?
+            .into_owned();
+            let (_prefix, val) = val.split_at(PREFIX.len() - 1);
+            expanded.extend(val);
+            Ok(Path {
+                value: Cow::Owned(expanded),
+            })
+        } else if val.starts_with(b"~/") {
+            let path = dirs::home_dir().ok_or(PathError::Missing { what: "home dir" })?;
+            let mut expanded = git_features::path::into_bytes(path)?.into_owned();
+            let (_prefix, val) = val.split_at(SLASH.len());
+            expanded.extend(val);
+            let expanded = git_features::path::convert::to_unix_separators(Cow::Owned(expanded));
+            Ok(Path { value: expanded })
+        } else if val.starts_with(b"~") && val.contains(&SLASH) {
+            Self::interpolate_user(val, SLASH)
+        } else {
+            Ok(Path { value: val })
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    fn interpolate_user(_val: Cow<[u8]>, _slash: u8) -> Result<Path, PathError> {
+        Err(PathError::Unsupported)
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    fn interpolate_user(val: Cow<[u8]>, slash: u8) -> Result<Path, PathError> {
+        let (_prefix, val) = val.split_at(slash.len());
+        let i = val
+            .iter()
+            .position(|&e| e == slash)
+            .ok_or(PathError::Missing { what: "/" })?;
+        let (username, val) = val.split_at(i);
+        let username = std::str::from_utf8(username)?;
+        let home = Passwd::from_name(username)
+            .map_err(|_| PathError::Pwd)?
+            .ok_or(PathError::Missing { what: "pwd user info" })?
+            .dir;
+        let mut expanded = home.as_bytes().to_owned();
+        expanded.extend(val);
+        Ok(Path {
+            value: Cow::Owned(expanded),
+        })
     }
 }
 
@@ -1388,5 +1496,90 @@ mod color_attribute {
         assert!(ColorAttribute::from_str("").is_err());
         assert!(ColorAttribute::from_str("no").is_err());
         assert!(ColorAttribute::from_str("no-").is_err());
+    }
+}
+
+#[cfg(test)]
+mod path {
+    use super::PathError;
+    use super::{Path, TryFrom};
+    use std::borrow::Cow;
+
+    #[test]
+    fn not_interpolated() {
+        let path = &b"/foo/bar"[..];
+        let borrowed_path = Cow::Borrowed(path);
+        assert_eq!(
+            Path::try_from(borrowed_path).unwrap(),
+            Path {
+                value: Cow::Borrowed(path)
+            }
+        );
+    }
+
+    #[test]
+    fn empty_is_error() {
+        assert!(matches!(
+            Path::try_from(Cow::Borrowed("".as_bytes())),
+            Err(PathError::Missing { what: "path" })
+        ));
+    }
+
+    #[test]
+    fn prefix_interpolated() {
+        let val = Cow::Borrowed(&b"%(prefix)/foo/bar"[..]);
+        let git_install_dir = "/tmp/git";
+        let expected = format!("{}/foo/bar", git_install_dir);
+        assert_eq!(
+            Path::interpolate(val, Some(std::path::Path::new(git_install_dir))).unwrap(),
+            Path {
+                value: Cow::Borrowed(expected.as_bytes())
+            }
+        );
+    }
+
+    #[test]
+    fn tilde_interpolated() {
+        let path = &b"~/foo/bar"[..];
+        let borrowed_path = Cow::Borrowed(path);
+        let home = dirs::home_dir()
+            .expect("empty home")
+            .to_str()
+            .expect("invalid unicode")
+            .to_owned();
+        #[cfg(target_os = "windows")]
+        let mut home = home.replace("\\", "/");
+        let expected = format!("{}/foo/bar", home);
+        assert_eq!(
+            Path::try_from(borrowed_path).unwrap(),
+            Path {
+                value: Cow::Borrowed(expected.as_bytes())
+            }
+        );
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn user_interpolated() {
+        assert!(matches!(
+            Path::try_from(Cow::Borrowed(&b"~baz/foo/bar"[..])),
+            Err(PathError::Unsupported)
+        ));
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    #[test]
+    fn user_interpolated() {
+        let user = std::env::var("USER").unwrap();
+        let path = format!("~{}/foo/bar", user);
+        let borrowed_path = Cow::Borrowed(path.as_bytes());
+        let home = std::env::var("HOME").unwrap();
+        let expected = format!("{}/foo/bar", home);
+        assert_eq!(
+            Path::try_from(borrowed_path).unwrap(),
+            Path {
+                value: Cow::Borrowed(expected.as_bytes())
+            }
+        );
     }
 }

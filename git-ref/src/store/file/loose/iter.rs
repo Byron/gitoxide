@@ -50,24 +50,24 @@ impl Iterator for SortedLoosePaths {
                         .and_then(|prefix| full_path.file_name().map(|name| (prefix, name)))
                     {
                         match git_features::path::os_str_into_bytes(name) {
-                            Some(name) => {
+                            Ok(name) => {
                                 if !name.starts_with(prefix) {
                                     continue;
                                 }
                             }
-                            None => continue, // TODO: silently skipping ill-formed UTF-8 on windows - maybe this can be better?
+                            Err(_) => continue, // TODO: silently skipping ill-formed UTF-8 on windows - maybe this can be better?
                         }
                     }
                     let full_name = full_path
                         .strip_prefix(&self.base)
                         .expect("prefix-stripping cannot fail as prefix is our root");
                     let full_name = match git_features::path::into_bytes(full_name) {
-                        Some(name) => {
+                        Ok(name) => {
                             #[cfg(windows)]
                             let name = git_features::path::convert::to_unix_separators(name);
                             name.into_owned()
                         }
-                        None => continue, // TODO: silently skipping ill-formed UTF-8 on windows here, maybe there are better ways?
+                        Err(_) => continue, // TODO: silently skipping ill-formed UTF-8 on windows here, maybe there are better ways?
                     };
 
                     if git_validate::reference::name_partial(full_name.as_bstr()).is_ok() {
@@ -203,7 +203,7 @@ impl file::Store {
                     .map(|p| {
                         git_features::path::into_bytes(PathBuf::from(p))
                             .map(|p| BString::from(p.into_owned()))
-                            .ok_or_else(|| {
+                            .map_err(|_| {
                                 std::io::Error::new(
                                     std::io::ErrorKind::InvalidInput,
                                     "prefix contains ill-formed UTF-8",

@@ -20,6 +20,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
             color = brightgreen red \
             bold
             other = hello world
+            location = ~/tmp
     "#;
 
     let file = GitConfig::try_from(config)?;
@@ -70,6 +71,20 @@ fn get_value_for_all_provided_values() -> crate::Result {
     assert_eq!(
         file.value::<Value>("core", None, "other")?,
         Value::Other(Cow::Borrowed(b"hello world"))
+    );
+
+    let home = dirs::home_dir()
+        .expect("empty home dir")
+        .to_str()
+        .expect("invalid unicode")
+        .to_owned();
+    #[cfg(target_os = "windows")]
+    let mut home = home.replace("\\", "/");
+    assert_eq!(
+        file.value::<git_config::values::Path>("core", None, "location")?,
+        git_config::values::Path {
+            value: Cow::Borrowed(format!("{}/tmp", home).as_bytes())
+        }
     );
 
     Ok(())
