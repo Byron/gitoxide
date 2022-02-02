@@ -45,19 +45,24 @@ use std::{
     path::{Path, PathBuf},
 };
 
+#[derive(Debug)]
+#[allow(missing_docs)]
+pub struct Utf8Error;
+
 /// Like [`into_bytes()`], but takes `OsStr` as input for a lossless, but fallible, conversion.
-pub fn os_str_into_bytes(path: &OsStr) -> Option<&[u8]> {
-    into_bytes(Cow::Borrowed(path.as_ref())).map(|p| match p {
-        Cow::Borrowed(p) => p,
+pub fn os_str_into_bytes(path: &OsStr) -> Result<&[u8], Utf8Error> {
+    let path = into_bytes(Cow::Borrowed(path.as_ref()))?;
+    match path {
+        Cow::Borrowed(path) => Ok(path),
         Cow::Owned(_) => unreachable!("borrowed cows stay borrowed"),
-    })
+    }
 }
 
 /// Convert the given path either into its raw bytes on unix or its UTF8 encoded counterpart on windows.
 ///
 /// On windows, if the source Path contains ill-formed, lone surrogates, the UTF-8 conversion will fail
-/// causing `None` to be returned.
-pub fn into_bytes<'a>(path: impl Into<Cow<'a, Path>>) -> Option<Cow<'a, [u8]>> {
+/// causing `Utf8Error` to be returned.
+pub fn into_bytes<'a>(path: impl Into<Cow<'a, Path>>) -> Result<Cow<'a, [u8]>, Utf8Error> {
     let path = path.into();
     let utf8_bytes = match path {
         Cow::Owned(path) => Cow::Owned({
@@ -67,7 +72,7 @@ pub fn into_bytes<'a>(path: impl Into<Cow<'a, Path>>) -> Option<Cow<'a, [u8]>> {
                 path.into_os_string().into_vec()
             };
             #[cfg(not(unix))]
-            let p: Vec<_> = path.into_os_string().into_string().ok()?.into();
+            let p: Vec<_> = path.into_os_string().into_string().map_err(|_| Utf8Error)?.into();
             p
         }),
         Cow::Borrowed(path) => Cow::Borrowed({
@@ -77,11 +82,11 @@ pub fn into_bytes<'a>(path: impl Into<Cow<'a, Path>>) -> Option<Cow<'a, [u8]>> {
                 path.as_os_str().as_bytes()
             };
             #[cfg(not(unix))]
-            let p = path.to_str()?.as_bytes();
+            let p = path.to_str().ok_or(Utf8Error)?.as_bytes();
             p
         }),
     };
-    Some(utf8_bytes)
+    Ok(utf8_bytes)
 }
 
 /// Similar to [`into_bytes()`] but panics if malformed surrogates are encountered on windows.
