@@ -61,10 +61,7 @@ impl<'repo> Head<'repo> {
     /// Returns the id the head points to, which isn't possible on unborn heads.
     pub fn id(&self) -> Option<easy::Oid<'repo>> {
         match &self.kind {
-            Kind::Symbolic(r) => r
-                .target
-                .as_id()
-                .map(|oid| oid.to_owned().attach(self.handle)),
+            Kind::Symbolic(r) => r.target.as_id().map(|oid| oid.to_owned().attach(self.handle)),
             Kind::Detached { peeled, target } => (*peeled)
                 .unwrap_or_else(|| target.to_owned())
                 .attach(self.handle)
@@ -161,13 +158,9 @@ pub mod peel {
             Some(match &mut self.kind {
                 Kind::Unborn(_name) => return None,
                 Kind::Detached {
-                    peeled: Some(peeled),
-                    ..
+                    peeled: Some(peeled), ..
                 } => Ok((*peeled).attach(self.handle)),
-                Kind::Detached {
-                    peeled: None,
-                    target,
-                } => {
+                Kind::Detached { peeled: None, target } => {
                     match target
                         .attach(self.handle)
                         .object()
@@ -200,14 +193,12 @@ pub mod peel {
         /// more object to follow, transform the id into a commit if possible and return that.
         ///
         /// Returns an error if the head is unborn or if it doesn't point to a commit.
-        pub fn peel_to_commit_in_place(
-            &mut self,
-        ) -> Result<easy::Commit<'repo>, peel_to_commit::Error> {
-            let id =
-                self.peel_to_id_in_place()
-                    .ok_or_else(|| peel_to_commit::Error::Unborn {
-                        name: self.referent_name().expect("unborn").to_owned(),
-                    })??;
+        pub fn peel_to_commit_in_place(&mut self) -> Result<easy::Commit<'repo>, peel_to_commit::Error> {
+            let id = self
+                .peel_to_id_in_place()
+                .ok_or_else(|| peel_to_commit::Error::Unborn {
+                    name: self.referent_name().expect("unborn").to_owned(),
+                })??;
             id.object()
                 .map_err(|err| peel_to_commit::Error::Peel(Error::FindExistingObject(err)))
                 .and_then(|object| object.try_into_commit().map_err(Into::into))
@@ -219,22 +210,15 @@ pub mod peel {
             Some(match self.kind {
                 Kind::Unborn(_name) => return None,
                 Kind::Detached {
-                    peeled: Some(peeled),
-                    ..
+                    peeled: Some(peeled), ..
                 } => Ok(peeled.attach(self.handle)),
-                Kind::Detached {
-                    peeled: None,
-                    target,
-                } => target
+                Kind::Detached { peeled: None, target } => target
                     .attach(self.handle)
                     .object()
                     .map_err(Into::into)
                     .and_then(|obj| obj.peel_tags_to_end().map_err(Into::into))
                     .map(|obj| obj.id.attach(self.handle)),
-                Kind::Symbolic(r) => r
-                    .attach(self.handle)
-                    .peel_to_id_in_place()
-                    .map_err(Into::into),
+                Kind::Symbolic(r) => r.attach(self.handle).peel_to_id_in_place().map_err(Into::into),
             })
         }
     }
