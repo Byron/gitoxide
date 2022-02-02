@@ -31,6 +31,12 @@ impl<'repo> Commit<'repo> {
     pub fn message_raw(&self) -> Result<&'_ BStr, git_object::decode::Error> {
         Ok(self.decode()?.message)
     }
+    /// Decode the commit and obtain the time at which the commit was created.
+    ///
+    /// For the time at which it was authored, refer to `.decode()?.author.time`.
+    pub fn time(&self) -> Result<git_actor::Time, git_object::decode::Error> {
+        Ok(self.decode()?.committer.time)
+    }
 
     /// Decode the entire commit object and return it for accessing all commit information.
     ///
