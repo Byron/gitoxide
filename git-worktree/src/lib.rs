@@ -5,13 +5,13 @@ use git_hash::oid;
 use git_object::bstr::ByteSlice;
 use quick_error::quick_error;
 use std::convert::TryFrom;
-use std::fs;
-use std::fs::create_dir_all;
+use std::fs::{create_dir_all, OpenOptions};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 #[cfg(unix)]
-use std::os::unix::fs::PermissionsExt;
+use std::os::unix::fs::OpenOptionsExt;
 
 quick_error! {
     #[derive(Debug)]
@@ -57,12 +57,15 @@ where
         match entry.mode {
             git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {
                 let obj = find(&entry.id, &mut buf).ok_or_else(|| Error::NotFound(entry.id, path.to_path_buf()))?;
-                std::fs::write(&dest, obj.data)?;
+                let mut options = OpenOptions::new();
+                options.write(true).create_new(true);
+                #[cfg(unix)]
                 if entry.mode == git_index::entry::Mode::FILE_EXECUTABLE {
-                    #[cfg(unix)]
-                    fs::set_permissions(&dest, fs::Permissions::from_mode(0o777))?;
+                    options.mode(0o777);
                 }
-                let met = std::fs::symlink_metadata(&dest)?;
+                let mut file = options.open(&dest)?;
+                file.write_all(obj.data)?;
+                let met = file.metadata()?;
                 let ctime = met
                     .created()
                     .map_or(Ok(Duration::from_secs(0)), |x| x.duration_since(std::time::UNIX_EPOCH));
