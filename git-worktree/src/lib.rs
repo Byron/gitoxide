@@ -7,7 +7,7 @@ use quick_error::quick_error;
 use std::convert::TryFrom;
 use std::fs;
 use std::fs::create_dir_all;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 #[cfg(unix)]
@@ -16,23 +16,23 @@ use std::os::unix::fs::PermissionsExt;
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        Utf8Error(err: git_object::bstr::Utf8Error) {
+        Utf8(err: git_object::bstr::Utf8Error) {
             from()
             display("Could not convert path to UTF8: {}", err)
         }
-        TimeError(err: std::time::SystemTimeError) {
+        Time(err: std::time::SystemTimeError) {
             from()
             display("Could not read file time in proper format: {}", err)
         }
-        ToU32Error(err: std::num::TryFromIntError) {
+        U32Conversion(err: std::num::TryFromIntError) {
             from()
             display("Could not convert seconds to u32: {}", err)
         }
-        IoError(err: std::io::Error) {
+        Io(err: std::io::Error) {
             from()
             display("IO error while writing blob or reading file metadata or changing filetype: {}", err)
         }
-        FindOidError(oid: git_hash::ObjectId, path: std::path::PathBuf) {
+        NotFound(oid: git_hash::ObjectId, path: PathBuf) {
             display("unable to read sha1 file of {} ({})", path.display(), oid.to_hex())
         }
     }
@@ -56,7 +56,7 @@ where
         create_dir_all(dest.parent().expect("entry paths are never empty"))?;
         match entry.mode {
             git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {
-                let obj = find(&entry.id, &mut buf).ok_or_else(|| Error::FindOidError(entry.id, path.to_path_buf()))?;
+                let obj = find(&entry.id, &mut buf).ok_or_else(|| Error::NotFound(entry.id, path.to_path_buf()))?;
                 std::fs::write(&dest, obj.data)?;
                 if entry.mode == git_index::entry::Mode::FILE_EXECUTABLE {
                     #[cfg(unix)]
@@ -72,7 +72,7 @@ where
                 entry_time.push((ctime?, mtime?, i));
             }
             git_index::entry::Mode::SYMLINK => {
-                let obj = find(&entry.id, &mut buf).unwrap();
+                let obj = find(&entry.id, &mut buf).ok_or_else(|| Error::NotFound(entry.id, path.to_path_buf()))?;
                 let linked_to = obj.data.to_path()?;
                 if opts.symlinks {
                     #[cfg(unix)]
