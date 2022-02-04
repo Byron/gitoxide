@@ -66,6 +66,11 @@ impl File {
         git_hash::oid::from_bytes_unchecked(&self.data[start..][..self.hash_len])
     }
 
+    /// TODO
+    pub fn lookup_abbrev(&self, _id: impl AsRef<git_hash::oid>, _hex_len: usize) -> Option<EntryIndex> {
+        todo!()
+    }
+
     /// Find the index ranging from 0 to [File::num_objects()] that belongs to data associated with `id`, or `None` if it wasn't found.
     ///
     /// Use this index for finding additional information via [`File::pack_id_and_pack_offset_at_index()`].
