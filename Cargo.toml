@@ -117,6 +117,7 @@ members = [
     "git-index",
     "git-bitmap",
     "git-worktree",
+    "git-rev",
     "git-packetline",
     "git-transport",
     "git-protocol",
