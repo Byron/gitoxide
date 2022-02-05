@@ -24,6 +24,6 @@ Reserve the name for a necessary crate of the `gitoxide` project.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Add git-rev crate ([`9381c5d`](https://github.com/Byron/gitoxide/commit/9381c5de5e68c599af3178440fd6af3e28e770c5))
+    - Rename git-rev to git-revision ([`2e939c9`](https://github.com/Byron/gitoxide/commit/2e939c973ab3635a946317af08f37c4e23450f18))
 </details>
 
