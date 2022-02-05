@@ -1547,7 +1547,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-rev"
+name = "git-revision"
 version = "0.0.0"
 
 [[package]]

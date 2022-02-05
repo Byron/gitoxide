@@ -89,7 +89,7 @@ Follow linked crate name for detailed status. Please note that all crates follow
   * [git-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-index)
   * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
 * **idea**
-  * [git-rev](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-rev)
+  * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
   * [git-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-worktree)
   * [git-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tui)
   * [git-bundle](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bundle)

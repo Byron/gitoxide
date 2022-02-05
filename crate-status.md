@@ -211,7 +211,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * manage multiple worktrees
 * deal with exclude specifications, like .gitignore and other exclude files.
  
-### git-rev
+### git-revision
 * find specifications for revisions (like `git name-rev`)
 * parse specifications into revisions (like `git rev-parse`)
 

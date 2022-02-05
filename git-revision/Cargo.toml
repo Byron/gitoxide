@@ -1,5 +1,5 @@
 [package]
-name = "git-rev"
+name = "git-revision"
 version = "0.0.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
