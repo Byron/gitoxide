@@ -84,8 +84,7 @@ The library powering the command-line interface.
    
 ### git-actor
 
-* **local-time-support**
-   - Make `Signature` initializers using the local time (with UTC offset) available.
+Documented in [its documnetation](https://docs.rs/git-actor).
 
 ### git-features
 

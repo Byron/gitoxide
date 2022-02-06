@@ -877,6 +877,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
+name = "document-features"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7b262786be72873f218389b0164de3c646a91f9e3627790df5b70f7d157920b"
+
+[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1095,6 +1101,7 @@ version = "0.8.0"
 dependencies = [
  "bstr",
  "btoi",
+ "document-features",
  "git-features 0.19.1",
  "git-testtools",
  "itoa 1.0.1",

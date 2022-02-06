@@ -13,10 +13,9 @@ doctest = false
 
 [features]
 serde1 = ["serde", "bstr/serde1"]
-local-time-support = ["git-features/time"]
 
-[package.metadata.docs.rs]
-all-features = true
+## Make `Signature` initializers use the local time (with UTC offset) available.
+local-time-support = ["git-features/time"]
 
 [dependencies]
 git-features = { version = "^0.19.1", path = "../git-features", optional = true }
@@ -27,6 +26,12 @@ nom = { version = "7", default-features = false, features = ["std"]}
 itoa = "1.0.1"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 
+document-features = { version = "0.1", optional = true }
+
 [dev-dependencies]
 pretty_assertions = "1.0.0"
 git-testtools = { path = "../tests/tools"}
+
+[package.metadata.docs.rs]
+features = ["document-features"]
+all-features = true
