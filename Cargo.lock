@@ -1471,6 +1471,7 @@ dependencies = [
  "async-trait",
  "bstr",
  "btoi",
+ "document-features",
  "futures-io",
  "futures-lite",
  "git-features 0.19.1",
