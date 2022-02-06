@@ -1628,6 +1628,7 @@ dependencies = [
  "blocking",
  "bstr",
  "curl",
+ "document-features",
  "futures-io",
  "futures-lite",
  "git-features 0.19.1",
