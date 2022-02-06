@@ -1759,6 +1759,7 @@ dependencies = [
  "async-trait",
  "blocking",
  "bytesize",
+ "document-features",
  "fs-err",
  "futures-io",
  "futures-lite",

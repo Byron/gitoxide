@@ -50,27 +50,7 @@ There are **convenience features**, which combine common choices of the above in
 
 ### gitoxide-core
 
-The library powering the command-line interface.
-
-* **organize**
-    * **provides the 'organize' command**
-        * Includes `jwalk` to find repositories quickly in order to move into a directory structure automatically.
-    * **provides the 'find' command**
-        * discover all git repositories within a directory. Particularly useful with [skim][skim].
-* **estimate-hours**
-    * Derive the amount of time invested akin to [git-hours].
-* _mutually exclusive_    
-  - if both are set, _blocking-client_ will take precedence.
-  - **blocking-client**
-    - If set, the client used to connect to git servers will use a blocking API. It supports more transports and is what most would want.
-  - **async-client**
-    - The client to connect to git servers will be async, while supporting only the 'git' transport itself. It's the most limited and can be seen as example
-      on how to use custom transports for custom servers.
-* **local-time-support**
-    - Functions dealing with time may include the local timezone offset, not just UTC with the offset being zero.
-
-[skim]: https://github.com/lotabout/skim
-[git-hours]: https://github.com/kimmobrunfeldt/git-hours
+Documented in [its documentation](https://docs.rs/gitoxide-core).
 
 ### git-pack
 

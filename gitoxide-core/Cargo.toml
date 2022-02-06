@@ -13,18 +13,28 @@ test = false
 
 [features]
 default = []
-## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "serde_json", "serde"]
 
-# async or blocking tooling
+#! ### Tools
+## Discover all git repositories within a directory. Particularly useful with [skim](https://github.com/lotabout/skim).
+organize = ["git-url", "jwalk"]
+## Derive the amount of time invested into a git repository akin to [git-hours](https://github.com/kimmobrunfeldt/git-hours).
+estimate-hours = ["itertools", "rayon", "fs-err"]
+
+#! ### Mutually Exclusive Networking
+#! If both are set, _blocking-client_ will take precedence, allowing `--all-features` to be used.
+
+## If set, the client used to connect to git servers will use a blocking API. It supports more transports and is what most would want.
 blocking-client = ["git-repository/blocking-network-client"]
+## The client to connect to git servers will be async, while supporting only the 'git' transport itself.
+## It's the most limited and can be seen as example on how to use custom transports for custom servers.
 async-client = ["git-repository/async-network-client", "async-trait", "futures-io", "async-net", "async-io", "futures-lite", "blocking"]
 
+#! ### Other
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "serde_json", "serde"]
+## Functions dealing with time may include the local timezone offset, not just UTC with the offset being zero.
 local-time-support = ["git-repository/local-time-support"]
 
-# tools
-organize = ["git-url", "jwalk"]
-estimate-hours = ["itertools", "rayon", "fs-err"]
 
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
@@ -56,5 +66,7 @@ rayon = { version = "1.5.0", optional = true }
 itertools = { version = "0.10.1", optional = true }
 fs-err = { version = "2.6.0", optional = true }
 
+document-features = { version = "0.1.0", optional = true }
+
 [package.metadata.docs.rs]
-features = ["blocking-client", "organize", "estimate-hours", "serde1"]
+features = ["document-features", "blocking-client", "organize", "estimate-hours", "serde1"]
