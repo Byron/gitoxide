@@ -27,32 +27,52 @@ doctest = false
 [features]
 default = ["max"]
 
-max = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client",
-       "prodash-render-line", "prodash-render-tui",
-       "prodash/render-line-autoconfigure" ]
-
-lean = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client",
-        "prodash-render-line" ]
-lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-async-client",
-              "prodash-render-line"]
-
-small = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash/progress-log", "atty"]
-
-gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
-gitoxide-core-blocking-client = ["gitoxide-core/blocking-client"]
-gitoxide-core-async-client = ["gitoxide-core/async-client", "futures-lite"]
-http-client-curl = ["git-transport-for-configuration-only/http-client-curl"]
+## Makes the crate execute as fast as possible by supporting parallel computation of otherwise long-running functions
+## as well as fast, hardware accelerated hashing, along with a faster zlib backend.
+## If disabled, the binary will be visibly smaller.
 fast = ["git-features/parallel", "git-features/fast-sha1", "git-features/zlib-ng-compat"]
 
-pretty-cli = [
-    "gitoxide-core/serde1",
-    "prodash/progress-tree",
-    "prodash/progress-tree-log",
-    "prodash/local-time",
-    "gitoxide-core/local-time-support",
-    "env_logger" ]
+## Use `clap` 3.0 to build the prettiest, best documented and most user-friendly CLI at the expense of binary size.
+## Provides a terminal user interface for detailed and exhaustive progress.
+## Provides a line renderer for leaner progress display, without the need for a full-blown TUI.
+pretty-cli = [ "gitoxide-core/serde1", "prodash/progress-tree", "prodash/progress-tree-log", "prodash/local-time", "gitoxide-core/local-time-support", "env_logger" ]
 
+## The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
+## that appears after a short duration.
 prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-crossterm", "atty", "crosstermion"]
+
+
+#! ### Convenience Features
+#! These combine common choices of the above features to represent typical builds
+
+## *fast* + *prodash-render-tui-crossterm* + *prodash-render-line-crossterm* + *http* + *gitoxide-core-tools* + *client-networking*
+max = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line", "prodash-render-tui", "prodash/render-line-autoconfigure" ]
+
+## *fast* + *prodash-render-line-crossterm* + *gitoxide-core-tools* + *client-networking*.
+lean = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line" ]
+## fast* + *prodash-render-line-crossterm* + *gitoxide-core-tools* + *client-async-networking*.
+## Due to async client-networking not being implemented for most transports, this one supports only the 'git' transport.
+## It uses, however, a fully asynchronous networking implementation which can serve a real-world example on how to implement custom async transports.
+lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-async-client", "prodash-render-line"]
+
+## As small as it can possibly be, no threading, no fast sha1, log based progress only, rust based zlib implementation.
+## no networking, local operations only.
+small = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash/progress-log", "atty"]
+
+#! ### `gitoxide-core` Configuration
+
+##  A way to enable all `gitoxide-core` tools found in `gix tools`
+gitoxide-core-tools = ["gitoxide-core/organize", "gitoxide-core/estimate-hours"]
+
+#! #### Mutually Exclusive Networking
+#! If both are set a compile error is triggered. This also means that `cargo … --all-features` will fail.
+
+## Use blocking client networking.
+gitoxide-core-blocking-client = ["gitoxide-core/blocking-client"]
+## Support synchronous 'http' and 'https' transports (e.g. for clone, fetch and push) at the expense of compile times and binary size.
+http-client-curl = ["git-transport-for-configuration-only/http-client-curl"]
+## Use async client networking.
+gitoxide-core-async-client = ["gitoxide-core/async-client", "futures-lite"]
 
 # internal
 prodash-render-tui = ["prodash/render-tui", "prodash/render-tui-crossterm", "prodash/progress-tree", "futures-lite"]
@@ -74,6 +94,8 @@ atty = { version = "0.2.14", optional = true, default-features = false }
 env_logger = { version = "0.9.0", optional = true, default-features = false, features = ["humantime", "termcolor", "atty"] }
 crosstermion = { version = "0.9.0", optional = true, default-features = false }
 futures-lite = { version = "1.12.0", optional = true, default-features = false, features = ["std"] }
+
+document-features = { version = "0.1.0", optional = true }
 
 [profile.dev.package]
 git-object = { opt-level = 3 }
@@ -140,3 +162,6 @@ members = [
 exclude = ["cargo-smart-release/tests/fixtures/tri-depth-workspace/a",
            "cargo-smart-release/tests/fixtures/tri-depth-workspace/b",
            "cargo-smart-release/tests/fixtures/tri-depth-workspace/c"]
+
+[package.metadata.docs.rs]
+features = ["document-features", "max"]

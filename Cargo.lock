@@ -1741,6 +1741,7 @@ dependencies = [
  "atty",
  "clap 3.0.13",
  "crosstermion",
+ "document-features",
  "env_logger",
  "futures-lite",
  "git-features 0.19.1",
