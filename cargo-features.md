@@ -62,53 +62,7 @@ Documented in [its documentation](https://docs.rs/git-actor).
 
 ### git-features
 
-A crate to help controlling which capabilities are available from the top-level crate that uses `gitoxide-core` or any other
-`gitoxide` crate that uses `git-features`.
-All feature toggles are additive.
-
-* **progress**
-    * Provide traits and utilities for providing progress information. These can then be rendered using facilities provided by
-      the `prodash` crate.
-* **parallel**
-    * Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
-      where it makes sense.
-    * As caches are likely to be used and instantiated per thread, more memory will be used on top of the costs for threads.
-    * The `threading` module will contain thread-safe primitives for shared ownership and mutation, otherwise these will be their single threaded counterparts.
-        * This way, single-threaded applications don't have to pay for threaded primitives.
-* **crc32**
-    * provide a proven and fast `crc32` implementation.
-* **io-pipe**
-    * an in-memory unidirectional pipe using `bytes` as efficient transfer mechanism
-* **zlib**
-    * Enable the usage of zlib related utilities to compress or decompress data.
-    * By default it uses a pure rust implementation which is slower than the **zlib-ng-compat** version, but might be relevant if you prefer a pure-rust build
-      and reduced performance is acceptable. Note that a competitive Zlib implementation is critical to `gitoxide's` performance.
-    * Additional backends are supported, each of which overriding the default Rust backend.
-      * _mutually-exclusive_
-       * **zlib-ng-compat**
-         * Use a C-based backend which can compress and decompress significantly faster.
-      * **cloudflare-zlib**
-         * Another incarnation of a faster-than-normal zlib backend.
-      * **_zlib-rust-backend_**
-         * available for completeness even though it's the default - it may be chosen for more maintainable feature flags.
-    
-* **walkdir**
-    * Makes facilities of the `walkdir` crate partially available.
-    * In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.
-* _mutually-exclusive_
-    * **fast-sha1**
-        * a multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on
-          CPUs that support it, like AMD Ryzen or Intel Core i3, as well as Apple Silicon like M1.
-        * Takes precedence over `rustsha1` if both are specified.
-        * A fast SHA1 implementation is critical to `gitoxide's` performance
-    * **rustsha1**
-        * A standard and well performing pure Rust implementation of Sha1. Will significantly slow down various git operations.
-
-* **cache-efficiency-debug**
-    * Caches implement this by default, which costs nothing unless this feature is enabled
-    * Count cache hits and misses and print that debug information on drop
-* **time**
-    * Make the `time` module available with access to the local time as configured by the system.
+Documented in [its documentation](https://docs.rs/git-features).
      
 ### git-packetline
 

@@ -12,16 +12,55 @@ doctest = false
 test = false
 
 [features]
+
 default = []
+## Provide traits and utilities for providing progress information. These can then be rendered
+## using facilities of the `prodash` crate.
 progress = ["prodash"]
+
+## Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
+## where it makes sense.
+## As caches are likely to be used and instantiated per thread, more memory will be used on top of the costs for threads.
+## The `threading` module will contain thread-safe primitives for shared ownership and mutation, otherwise these will be their single threaded counterparts.
+## This way, single-threaded applications don't have to pay for threaded primitives.
 parallel = ["crossbeam-utils", "crossbeam-channel", "num_cpus", "jwalk", "parking_lot"]
-fast-sha1 = ["sha-1"]
-rustsha1 = ["sha1_smol"]
+#* an in-memory unidirectional pipe using `bytes` as efficient transfer mechanism.
 io-pipe = ["bytes"]
+## provide a proven and fast `crc32` implementation.
 crc32 = ["crc32fast"]
+
+#! ### Mutually Exclusive ZLIB
+
+## Enable the usage of zlib related utilities to compress or decompress data.
+## By default it uses a pure rust implementation which is slower than the **zlib-ng-compat** version, but might be relevant if you prefer a pure-rust build
+## and reduced performance is acceptable. Note that a competitive Zlib implementation is critical to `gitoxide's` object database performance.
+## Additional backends are supported, each of which overriding the default Rust backend.
 zlib = ["flate2", "flate2/rust_backend", "quick-error"]
+## Use a C-based backend which can compress and decompress significantly faster.
 zlib-ng-compat = ["flate2/zlib-ng-compat"]
+## available for completeness even though it's the default - it may be chosen for more specific feature flag names, instead of a bare `zlib`.
 zlib-rust-backend = ["flate2/rust_backend"]
+
+#! ### Mutually Exclusive SHA1
+## A fast SHA1 implementation is critical to `gitoxide's` object database performance
+## A multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on
+## CPUs that support it, like AMD Ryzen or Intel Core i3, as well as Apple Silicon like M1.
+## Takes precedence over `rustsha1` if both are specified.
+fast-sha1 = ["sha-1"]
+## A standard and well performing pure Rust implementation of Sha1. Will significantly slow down various git operations.
+rustsha1 = ["sha1_smol"]
+
+#! ### Optional Dependencies
+#!
+#! - **`time`** - make the `time` module available with access to the local time as configured by the system.
+#! - **`walkdir`**
+#!     - Makes facilities of the `walkdir` crate partially available.
+#!     - In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.
+
+#! ### Other
+
+## Count cache hits and misses and print that debug information on drop.
+## Caches implement this by default, which costs nothing unless this feature is enabled
 cache-efficiency-debug = []
 
 [[test]]
@@ -78,10 +117,13 @@ bytes = { version = "1.0.0", optional = true }
 flate2 = { version = "1.0.17", optional = true, default-features = false }
 quick-error = { version = "2.0.0", optional = true }
 
-# time module
+# time
 time = { version = "0.3.2", optional = true, default-features = false, features = ["local-offset"] }
 
+document-features = { version = "0.1.0", optional = true }
+
 [package.metadata.docs.rs]
+features = ["document-features"]
 all-features = true
 
 # Assembly doesn't yet compile on MSVC on windows, but does on GNU, see https://github.com/RustCrypto/asm-hashes/issues/17
