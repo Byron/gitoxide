@@ -37,6 +37,7 @@ pub mod conventional {
             "chore" => "Chore",
             "test" => "Test",
             "refactor" => "Refactor",
+            "other" => "Other",
             "style" => "Style",
             _unknown => return None,
         })
