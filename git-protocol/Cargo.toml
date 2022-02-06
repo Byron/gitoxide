@@ -12,6 +12,7 @@ include = ["src/**/*", "CHANGELOG.md", "!**/tests/**/*"]
 doctest = false
 
 [features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "bstr/serde1", "git-transport/serde1", "git-hash/serde1"]
 blocking-client = ["git-transport/blocking-client", "maybe-async/is_sync"]
 async-client = ["git-transport/async-client", "async-trait", "futures-io", "futures-lite"]

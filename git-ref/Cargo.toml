@@ -13,6 +13,7 @@ doctest = false
 test = true
 
 [features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "git-hash/serde1", "git-actor/serde1", "git-object/serde1"]
 internal-testing-git-features-parallel = ["git-features/parallel"] # test sorted parallel loose file traversal
 

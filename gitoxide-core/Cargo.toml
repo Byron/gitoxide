@@ -13,6 +13,7 @@ test = false
 
 [features]
 default = []
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "serde_json", "serde"]
 
 # async or blocking tooling

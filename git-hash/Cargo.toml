@@ -13,6 +13,7 @@ doctest = false
 test = false
 
 [features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde"]
 
 [dependencies]

@@ -12,6 +12,7 @@ include = ["src/**/*"]
 doctest = false
 
 [features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "bstr/serde1"]
 
 ## Make `Signature` initializers use the local time (with UTC offset) available.

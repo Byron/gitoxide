@@ -12,6 +12,7 @@ include = ["src/**/*"]
 doctest = false
 
 [features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "bstr/serde1", "smallvec/serde", "git-hash/serde1", "git-actor/serde1"]
 verbose-object-parsing-errors = ["nom/std"]
 

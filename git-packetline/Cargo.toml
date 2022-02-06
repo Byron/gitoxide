@@ -13,6 +13,7 @@ doctest = false
 
 [features]
 default = []
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "bstr/serde1"]
 async-io = ["futures-io", "futures-lite", "pin-project-lite"]
 blocking-io = []

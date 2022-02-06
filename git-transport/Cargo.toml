@@ -13,6 +13,7 @@ doctest = false
 
 [features]
 default = []
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde"]
 http-client-curl = ["curl", "base64", "git-features/io-pipe", "blocking-client"]
 blocking-client = ["git-packetline/blocking-io"]
