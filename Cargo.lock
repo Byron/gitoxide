@@ -1533,6 +1533,7 @@ dependencies = [
  "anyhow",
  "byte-unit",
  "clru",
+ "document-features",
  "git-actor 0.8.1",
  "git-config",
  "git-diff 0.13.0",

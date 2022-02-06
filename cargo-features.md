@@ -148,23 +148,7 @@ Documented in [its documentation](https://docs.rs/git-object).
   
 ### git-repository
 
-* **unstable**
-  - Re-export stability tier 2 crates for convenience and make `Repository` struct fields with types from these crates publicly accessible.
-  - Doing so is less stable than the stability tier 1 that `git-repository` is a member of.
-* **local-time-support**
-  - Functions dealing with time may include the local timezone offset, not just UTC with the offset being zero.
-* **async/blocking-network-client**
-  - Make `git-protocol` available along with an async or blocking client.
-  - **blocking-transport-http** 
-     - Stacks with `protocol-blocking-client` to provide support for HTTP/S
-
-The following toggles can be used to reduce dependencies.
-
-* **local**
-  - Provide additional non-networked functionality 
-* **network**
-  - Provide networked functionality
-* **one-stop-shop** = _local_ + _network_
+Documented in [its documentation](https://docs.rs/git-repository).
 
 ### Serialization Support
 

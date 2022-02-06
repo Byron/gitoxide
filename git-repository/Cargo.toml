@@ -13,26 +13,45 @@ doctest = false
 test = true
 
 [features]
+
 default = ["max-performance", "one-stop-shop"]
-unstable = ["git-index"]
+
+# enable when https://github.com/RustCrypto/asm-hashes/issues/17 is fixed
+# max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-features/fast-sha1", "git-pack/pack-cache-lru-static", "git-pack/pack-cache-lru-dynamic"]
+
+#! ### Mutually Exclusive Client
+#! Either `async-*` or `blocking-*` versions of these toggles may be enabled at a time.
+
+## Make `git-protocol` available along with an async client.
+async-network-client = ["git-protocol/async-client"]
+## Make `git-protocol` available along with a blocking client.
+blocking-network-client = ["git-protocol/blocking-client"]
+## Stacks with `blocking-network-client` to provide support for HTTP/S, and implies blocking networking as a whole.
+blocking-http-transport = ["git-transport/http-client-curl"]
+
+#! ### Reducing dependencies
+#! The following toggles can be left disabled to save on dependencies.
+
+## Provide additional non-networked functionality like `git-url` and `git-diff`.
+local = [ "git-url", "git-diff" ]
+## Turns on access to all stable features that are unrelated to networking.
+one-stop-shop = [ "local", "local-time-support" ]
+
+#! ### Other
+
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["git-pack/serde1", "git-object/serde1", "git-protocol/serde1", "git-transport/serde1", "git-ref/serde1", "git-odb/serde1", "git-index/serde1"]
-# enable when https://github.com/RustCrypto/asm-hashes/issues/17 is fixed
-# max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-features/fast-sha1"]
+## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
+## **Note** that
 max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-pack/pack-cache-lru-static", "git-pack/pack-cache-lru-dynamic"]
+## Functions dealing with time may include the local timezone offset, not just UTC with the offset being zero.
 local-time-support = ["git-actor/local-time-support"]
-async-network-client = ["git-protocol/async-client"]
-blocking-network-client = ["git-protocol/blocking-client"]
-blocking-http-transport = ["git-transport/http-client-curl"]
+## Re-export stability tier 2 crates for convenience and make `Repository` struct fields with types from these crates publicly accessible.
+## Doing so is less stable than the stability tier 1 that `git-repository` is a member of.
+unstable = ["git-index"]
+## Print debugging information about usage of object database caches, useful for tuning cache sizes.
 cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
-local = [
-    "git-url",
-    "git-diff",
-]
-one-stop-shop = [
-    "local",
-    "local-time-support"
-]
+
 
 
 [dependencies]
@@ -64,8 +83,14 @@ clru = "0.5.0"
 byte-unit = "4.0.13"
 log = "0.4.14"
 
+document-features = { version = "0.1.0", optional = true }
+
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
 signal-hook = { version = "0.3.9", default-features = false }
 anyhow = "1"
 tempfile = "3.2.0"
+
+[package.metadata.docs.rs]
+features = ["document-features", "max-performance", "one-stop-shop", "unstable", "blocking-network-client"]
+

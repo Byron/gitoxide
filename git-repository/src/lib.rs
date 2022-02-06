@@ -104,6 +104,11 @@
 //!   * [`transport`][protocol::transport]
 //!     * [`packetline`][protocol::transport::packetline]
 //!
+//! ## Feature Flags
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 #![deny(missing_docs, unsafe_code, rust_2018_idioms)]
 
 use std::path::PathBuf;
