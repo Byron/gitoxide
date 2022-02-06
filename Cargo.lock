@@ -1393,6 +1393,7 @@ dependencies = [
  "clru",
  "common_macros",
  "dashmap 4.0.2",
+ "document-features",
  "git-chunk",
  "git-diff 0.13.0",
  "git-features 0.19.1",

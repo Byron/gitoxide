@@ -12,11 +12,17 @@ include = ["src/**/*", "CHANGELOG.md"]
 doctest = false
 
 [features]
+
+## Provide a fixed-size allocation-free LRU cache for packs. It's useful if caching is desired while keeping the memory footprint
+## for the LRU-cache itself low.
 pack-cache-lru-static = ["uluru"]
+## Provide a hash-map based LRU cache whose eviction is based a memory cap calculated from object data.
 pack-cache-lru-dynamic = ["clru"]
+## If set, select algorithms may additionally use a full-object cache which is queried before the pack itself.
 object-cache-dynamic = ["clru"]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "git-object/serde1"]
+
 internal-testing-git-features-parallel = ["git-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
@@ -29,9 +35,6 @@ required-features = ["internal-testing-git-features-parallel"]
 name = "single-threaded"
 path = "tests/pack-single-threaded.rs"
 required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
-
-[package.metadata.docs.rs]
-all-features = true
 
 [dependencies]
 git-features = { version = "^0.19.1", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib"] }
@@ -52,6 +55,7 @@ thiserror = "1.0.26"
 uluru = { version = "3.0.0", optional = true }
 clru = { version = "0.5.0", optional = true }
 dashmap = "4.0.0" # # Wait for https://github.com/xacrimon/dashmap/issues/167 before upgrade (for performance)
+document-features = { version = "0.1.0", optional = true }
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools"}
@@ -59,3 +63,8 @@ git-odb = { path = "../git-odb" }
 tempfile = "3.1.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 common_macros = "0.1.1"
+
+[package.metadata.docs.rs]
+features = ["document-features"]
+all-features = true
+
