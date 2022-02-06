@@ -1,5 +1,10 @@
 //! This crate provides types for [read-only git objects][crate::ObjectRef] backed by bytes provided in git's serialization format
 //! as well as [mutable versions][Object] of these. Both types of objects can be encoded.
+//! ## Feature Flags
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 

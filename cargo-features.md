@@ -84,7 +84,7 @@ The library powering the command-line interface.
    
 ### git-actor
 
-Documented in [its documnetation](https://docs.rs/git-actor).
+Documented in [its documentation](https://docs.rs/git-actor).
 
 ### git-features
 
@@ -178,11 +178,7 @@ be selected.
     
 ### git-object
 
-* **verbose-object-parsing-errors**
-  - When parsing objects by default errors will only be available on the granularity of success or failure, and with the above flag enabled
-    details information about the error location will be collected.
-  - Use it in applications which expect broken or invalid objects or for debugging purposes. Incorrectly formatted objects aren't at all
-    common otherwise.
+Documented in [its documentation](https://docs.rs/git-object).
   
 ### git-repository
 
