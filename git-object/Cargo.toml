@@ -22,7 +22,7 @@ all-features = true
 git-features = { version = "^0.19.1", path = "../git-features", features = ["rustsha1"] }
 git-hash = { version = "^0.9.2", path = "../git-hash" }
 git-validate = { version ="^0.5.3", path = "../git-validate" }
-git-actor = { version = "^0.8.0", path = "../git-actor" }
+git-actor = { version = "^0.8.1", path = "../git-actor" }
 
 btoi = "0.4.2"
 itoa = "1.0.1"
