@@ -138,15 +138,7 @@ All feature toggles are additive.
      
 ### git-packetline
 
-By default, all IO related capabilities will be missing unless one of the following is chosen.
-
-* _mutually exclusive_
-    - Specifying both causes a compile error, preventing the use of `--all-features`.
-  * **blocking-io**
-    * If set, all IO will become blocking. The same types will be used preventing side-by-side usage of blocking and non-blocking IO
-  * **async-io**
-    * Implement IO traits from `futures-io` 
-    
+Documented in [its documentation](https://docs.rs/git-packetline).
 
 ### git-transport
 

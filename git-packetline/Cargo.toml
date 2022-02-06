@@ -12,11 +12,20 @@ include = ["src/**/*", "CHANGELOG.md"]
 doctest = false
 
 [features]
+#! By default, all IO related capabilities will be missing unless one of the following is chosen.
 default = []
+
+#! ### _Mutually exclusive_
+#! Specifying both causes a compile error, preventing the use of `--all-features`.
+
+## If set, all IO will become blocking. The same types will be used preventing side-by-side usage of blocking and non-blocking IO.
+blocking-io = []
+## Implement IO traits from `futures-io`.
+async-io = ["futures-io", "futures-lite", "pin-project-lite"]
+
+#! ### Other
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "bstr/serde1"]
-async-io = ["futures-io", "futures-lite", "pin-project-lite"]
-blocking-io = []
 
 [[test]]
 name = "async-packetline"
@@ -41,8 +50,13 @@ futures-io = { version = "0.3.16", optional = true }
 futures-lite = { version  = "1.12.0", optional = true }
 pin-project-lite = { version = "0.2.6", optional = true }
 
+document-features = { version = "0.1", optional = true }
+
 [dev-dependencies]
 git-odb = { path = "../git-odb" }
 git-hash = { path = "../git-hash" }
 async-std = { version = "1.9.0", features = ["attributes"] }
 maybe-async = "0.2.6"
+
+[package.metadata.docs.rs]
+features = ["document-features"]
