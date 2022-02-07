@@ -2,6 +2,7 @@
 set -eu -o pipefail
 
 git init -q
+git config commit.gpgsign false
 
 touch a
 echo "Test Vals" > a

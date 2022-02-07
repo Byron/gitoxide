@@ -33,7 +33,7 @@ quick_error! {
             display("IO error while writing blob or reading file metadata or changing filetype: {}", err)
         }
         NotFound(oid: git_hash::ObjectId, path: PathBuf) {
-            display("unable to read sha1 file of {} ({})", path.display(), oid.to_hex())
+            display("unable find object of {} ({})", path.display(), oid.to_hex())
         }
     }
 }
@@ -68,10 +68,10 @@ where
                 let met = file.metadata()?;
                 let ctime = met
                     .created()
-                    .map_or(Ok(Duration::from_secs(0)), |x| x.duration_since(std::time::UNIX_EPOCH));
+                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH));
                 let mtime = met
                     .modified()
-                    .map_or(Ok(Duration::from_secs(0)), |x| x.duration_since(std::time::UNIX_EPOCH));
+                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH));
                 entry_time.push((ctime?, mtime?, i));
             }
             git_index::entry::Mode::SYMLINK => {
@@ -94,10 +94,10 @@ where
                 let met = std::fs::symlink_metadata(&dest)?;
                 let ctime = met
                     .created()
-                    .map_or(Ok(Duration::from_secs(0)), |x| x.duration_since(std::time::UNIX_EPOCH));
+                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH));
                 let mtime = met
                     .modified()
-                    .map_or(Ok(Duration::from_secs(0)), |x| x.duration_since(std::time::UNIX_EPOCH));
+                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH));
                 entry_time.push((ctime?, mtime?, i));
             }
             git_index::entry::Mode::DIR => todo!(),
