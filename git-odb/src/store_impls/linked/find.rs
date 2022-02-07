@@ -9,7 +9,7 @@ use crate::{
     store_impls::{compound, linked},
 };
 
-impl crate::pack::Find for linked::Store {
+impl git_pack::Find for linked::Store {
     type Error = compound::find::Error;
 
     /// Return true if the given object `id` is contained in the store.

@@ -1,4 +1,10 @@
 //! This crate provides ways of identifying an actor within the git repository both in shared/mutable and mutable variants.
+//!
+//! ## Feature Flags
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 use bstr::{BStr, BString};

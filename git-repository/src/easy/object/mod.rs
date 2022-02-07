@@ -21,6 +21,18 @@ pub mod peel;
 ///
 pub mod tree;
 
+///
+pub mod try_into {
+    #[derive(thiserror::Error, Debug)]
+    #[allow(missing_docs)]
+    #[error("Object named {id} was supposed to be of kind {expected}, but was kind {actual}.")]
+    pub struct Error {
+        pub actual: git_object::Kind,
+        pub expected: git_object::Kind,
+        pub id: git_hash::ObjectId,
+    }
+}
+
 impl DetachedObject {
     /// Infuse this owned object with an [`easy::Handle`].
     pub fn attach(self, handle: &easy::Handle) -> Object<'_> {
@@ -60,13 +72,21 @@ impl<'repo> Object<'repo> {
     }
 
     /// Transform this object into a commit, or return it as part of the `Err` if it is no commit.
-    pub fn try_into_commit(self) -> Result<Commit<'repo>, Self> {
-        self.try_into()
+    pub fn try_into_commit(self) -> Result<Commit<'repo>, try_into::Error> {
+        self.try_into().map_err(|this: Self| try_into::Error {
+            id: this.id,
+            actual: this.kind,
+            expected: git_object::Kind::Commit,
+        })
     }
 
     /// Transform this object into a tree, or return it as part of the `Err` if it is no tree.
-    pub fn try_into_tree(self) -> Result<Tree<'repo>, Self> {
-        self.try_into()
+    pub fn try_into_tree(self) -> Result<Tree<'repo>, try_into::Error> {
+        self.try_into().map_err(|this: Self| try_into::Error {
+            id: this.id,
+            actual: this.kind,
+            expected: git_object::Kind::Tree,
+        })
     }
 }
 

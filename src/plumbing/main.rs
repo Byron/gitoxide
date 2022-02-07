@@ -15,7 +15,7 @@ use gitoxide_core::pack::verify;
 #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 use crate::plumbing::options::remote;
 use crate::{
-    plumbing::options::{commitgraph, pack, repo, Args, Subcommands},
+    plumbing::options::{commitgraph, index, pack, repo, Args, Subcommands},
     shared::pretty::prepare_and_run,
 };
 
@@ -73,6 +73,50 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        Subcommands::Index(index::Platform {
+            object_hash,
+            index_path,
+            cmd,
+        }) => match cmd {
+            index::Subcommands::Info { no_details } => prepare_and_run(
+                "index-entries",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, err| {
+                    core::index::information(
+                        index_path,
+                        out,
+                        err,
+                        core::index::information::Options {
+                            index: core::index::Options { object_hash, format },
+                            extension_details: !no_details,
+                        },
+                    )
+                },
+            ),
+            index::Subcommands::Entries => prepare_and_run(
+                "index-entries",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| {
+                    core::index::entries(index_path, out, core::index::Options { object_hash, format })
+                },
+            ),
+            index::Subcommands::Verify => prepare_and_run(
+                "index-verify",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| {
+                    core::index::verify(index_path, out, core::index::Options { object_hash, format })
+                },
+            ),
+        },
         Subcommands::Repository(subcommands) => match subcommands {
             repo::Subcommands::Verify {
                 args:

@@ -37,6 +37,13 @@ impl Kind {
 }
 
 impl<'repo> Head<'repo> {
+    /// Returns the name of this references, always `HEAD`.
+    pub fn name(&self) -> FullNameRef<'static> {
+        // TODO: use a statically checked version of this when available.
+        use std::convert::TryFrom;
+        FullNameRef::try_from("HEAD").expect("HEAD is valid")
+    }
+
     /// Returns the full reference name of this head if it is not detached, or `None` otherwise.
     pub fn referent_name(&self) -> Option<FullNameRef<'_>> {
         Some(match &self.kind {
@@ -49,9 +56,7 @@ impl<'repo> Head<'repo> {
     pub fn is_detached(&self) -> bool {
         matches!(self.kind, Kind::Detached { .. })
     }
-}
 
-impl<'repo> Head<'repo> {
     // TODO: tests
     /// Returns the id the head points to, which isn't possible on unborn heads.
     pub fn id(&self) -> Option<easy::Oid<'repo>> {
@@ -66,6 +71,10 @@ impl<'repo> Head<'repo> {
     }
 
     /// Force transforming this instance into the symbolic reference that it points to, or panic if it is unborn or detached.
+    ///
+    /// # Panics
+    ///
+    /// If this isn't actually a head pointing to a symbolic reference.
     pub fn into_referent(self) -> easy::Reference<'repo> {
         match self.kind {
             Kind::Symbolic(r) => r.attach(self.handle),
@@ -73,7 +82,6 @@ impl<'repo> Head<'repo> {
         }
     }
 }
-
 ///
 pub mod log {
     use std::convert::TryFrom;
@@ -117,6 +125,22 @@ pub mod peel {
     }
     pub use error::Error;
 
+    mod peel_to_commit {
+        use crate::easy;
+
+        /// The error returned by [Head::peel_to_commit_in_place()][super::Head::peel_to_commit_in_place()].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error(transparent)]
+            Peel(#[from] super::Error),
+            #[error("Branch '{name}' does not have any commits")]
+            Unborn { name: git_ref::FullName },
+            #[error(transparent)]
+            ObjectKind(#[from] easy::object::try_into::Error),
+        }
+    }
+
     impl<'repo> Head<'repo> {
         // TODO: tests
         /// Peel this instance to make obtaining its final target id possible, while returning an error on unborn heads.
@@ -126,7 +150,7 @@ pub mod peel {
         }
 
         // TODO: tests
-        /// Follow the symbolic reference of this head until its target object and peel it by following tag objects there is no
+        /// Follow the symbolic reference of this head until its target object and peel it by following tag objects until there is no
         /// more object to follow, and return that object id.
         ///
         /// Returns `None` if the head is unborn.
@@ -161,6 +185,23 @@ pub mod peel {
                     peeled
                 }
             })
+        }
+
+        // TODO: tests
+        // TODO: something similar in `easy::Reference`
+        /// Follow the symbolic reference of this head until its target object and peel it by following tag objects until there is no
+        /// more object to follow, transform the id into a commit if possible and return that.
+        ///
+        /// Returns an error if the head is unborn or if it doesn't point to a commit.
+        pub fn peel_to_commit_in_place(&mut self) -> Result<easy::Commit<'repo>, peel_to_commit::Error> {
+            let id = self
+                .peel_to_id_in_place()
+                .ok_or_else(|| peel_to_commit::Error::Unborn {
+                    name: self.referent_name().expect("unborn").to_owned(),
+                })??;
+            id.object()
+                .map_err(|err| peel_to_commit::Error::Peel(Error::FindExistingObject(err)))
+                .and_then(|object| object.try_into_commit().map_err(Into::into))
         }
 
         /// Consume this instance and transform it into the final object that it points to, or `None` if the `HEAD`

@@ -26,7 +26,7 @@ impl Support {
         additional_title: impl AsRef<str>,
     ) -> io::Result<()> {
         if !self.bat.found {
-            log::info!(
+            log::warn!(
                 "Would want to use 'bat' for colored preview of '{}', but it wasn't available in the PATH.",
                 path.display()
             );

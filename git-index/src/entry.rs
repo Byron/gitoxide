@@ -31,8 +31,11 @@ pub(crate) mod at_rest {
         pub struct Flags: u16 {
             /// A portion of a the flags that encodes the length of the path that follows.
             const PATH_LEN = 0x0fff;
+            const STAGE_MASK = 0x3000;
             /// If set, there is more extended flags past this one
             const EXTENDED = 0x4000;
+            /// If set, the entry be assumed to match with the version on the working tree, as a way to avoid `lstat()`  checks.
+            const ASSUME_VALID = 0x8000;
         }
     }
 
@@ -52,8 +55,19 @@ pub(crate) mod at_rest {
 
     impl Flags {
         pub fn to_memory(self) -> super::Flags {
-            super::Flags::from_bits((self & Flags::PATH_LEN).bits as u32)
+            super::Flags::from_bits((self & (Flags::PATH_LEN | Flags::STAGE_MASK | Flags::ASSUME_VALID)).bits as u32)
                 .expect("PATHLEN is part of memory representation")
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn flags_from_bits_with_conflict() {
+            let input = 0b1110_0010_1000_1011;
+            assert_eq!(Flags::from_bits(input).unwrap().bits, input);
         }
     }
 }
@@ -61,8 +75,11 @@ pub(crate) mod at_rest {
 bitflags! {
     /// In-memory flags
     pub struct Flags: u32 {
+        const STAGE_MASK = 0x3000;
         // TODO: could we use the pathlen ourselves to save 8 bytes? And how to handle longer paths than that? 0 as sentinel maybe?
         const PATH_LEN = 0x0fff;
+        /// If set, the entry be assumed to match with the version on the working tree, as a way to avoid `lstat()`  checks.
+        const ASSUME_VALID = 1 << 15;
         const UPDATE = 1 << 16;
         const REMOVE = 1 << 17;
         const UPTODATE = 1 << 18;
@@ -88,11 +105,23 @@ bitflags! {
     }
 }
 
+impl Flags {
+    pub fn stage(&self) -> u32 {
+        (*self & Flags::STAGE_MASK).bits >> 12
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Time {
+    /// The amount of seconds elapsed since EPOCH
     pub secs: u32,
+    /// The amount of nanoseconds elapsed in the current second, ranging from 0 to 999.999.999 .
     pub nsecs: u32,
 }
 
+#[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Stat {
     pub mtime: Time,
     pub ctime: Time,
@@ -112,6 +141,28 @@ mod access {
     impl Entry {
         pub fn path<'a>(&self, state: &'a State) -> &'a BStr {
             (&state.path_backing[self.path.clone()]).as_bstr()
+        }
+
+        pub fn stage(&self) -> u32 {
+            self.flags.stage()
+        }
+    }
+}
+
+mod _impls {
+    use std::cmp::Ordering;
+
+    use crate::{Entry, State};
+
+    impl Entry {
+        pub fn cmp(&self, other: &Self, state: &State) -> Ordering {
+            let lhs = self.path(state);
+            let rhs = other.path(state);
+            let common_len = lhs.len().min(rhs.len());
+            lhs[..common_len]
+                .cmp(&rhs[..common_len])
+                .then_with(|| lhs.len().cmp(&rhs.len()))
+                .then_with(|| self.stage().cmp(&other.stage()))
         }
     }
 }

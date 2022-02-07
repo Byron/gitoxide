@@ -10,6 +10,7 @@ pub fn init(directory: Option<PathBuf>) -> Result<git_repository::Path> {
 pub mod verify {
     use std::{path::PathBuf, sync::atomic::AtomicBool};
 
+    use git_repository as git;
     use git_repository::Progress;
 
     use crate::{pack, OutputFormat};
@@ -42,7 +43,7 @@ pub mod verify {
     ) -> anyhow::Result<()> {
         let repo = git_repository::open(repo)?;
         #[cfg_attr(not(feature = "serde1"), allow(unused))]
-        let outcome = repo.objects.verify_integrity(
+        let mut outcome = repo.objects.verify_integrity(
             progress,
             should_interrupt,
             git_repository::odb::pack::index::verify::integrity::Options {
@@ -53,6 +54,17 @@ pub mod verify {
                 make_pack_lookup_cache: || git_repository::odb::pack::cache::Never,
             },
         )?;
+        // TODO: make this work for indices in multiple workspaces, once we have workspace support
+        if let Some(index) = repo.load_index().transpose()? {
+            index.verify_integrity()?;
+            index.verify_entries()?;
+            index.verify_extensions(true, {
+                use git::odb::FindExt;
+                let handle = repo.objects.to_handle();
+                move |oid, buf: &mut Vec<u8>| handle.find_tree_iter(oid, buf).ok()
+            })?;
+            outcome.progress.info(format!("Index at '{}' OK", index.path.display()));
+        }
         match output_statistics {
             Some(OutputFormat::Human) => writeln!(out, "Human output is currently unsupported, use JSON instead")?,
             #[cfg(feature = "serde1")]

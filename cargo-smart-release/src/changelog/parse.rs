@@ -245,7 +245,14 @@ fn parse_conventional_to_next_section_title(
         "fix", "add", "feat", "revert", "remove", "change", "docs", "perf", "refactor", "other", "style",
     ]
     .iter()
-    .find(|kind| title.starts_with(section::segment::conventional::as_headline(*kind).unwrap_or(*kind)))
+    .find(|kind| {
+        let headline = section::segment::conventional::as_headline(*kind).unwrap_or(*kind);
+        let common_len = headline.len().min(title.len());
+        title
+            .get(..common_len)
+            .and_then(|t| headline.get(..common_len).map(|h| t.eq_ignore_ascii_case(h)))
+            .unwrap_or(false)
+    })
     .expect("BUG: this list needs an update too if new kinds of conventional messages are added");
 
     let mut conventional = section::segment::Conventional {

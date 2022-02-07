@@ -1,6 +1,6 @@
 [package]
 name = "git-tempfile"
-version = "1.0.3"
+version = "1.0.6"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A tempfile implementation with a global registry to assure cleanup"
@@ -15,7 +15,7 @@ test = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dashmap = "5.0.0"
+dashmap = "5.1.0"
 once_cell = { version = "1.8.0", default-features = false, features = ["race", "std"] }
 signal-hook = { version = "0.3.9", default-features = false }
 signal-hook-registry = "1.4.0"

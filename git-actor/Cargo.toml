@@ -1,6 +1,6 @@
 [package]
 name = "git-actor"
-version = "0.8.0"
+version = "0.8.1"
 description = "A way to identify git actors"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/gitoxide"
@@ -12,14 +12,14 @@ include = ["src/**/*"]
 doctest = false
 
 [features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "bstr/serde1"]
+
+## Make `Signature` initializers use the local time (with UTC offset) available.
 local-time-support = ["git-features/time"]
 
-[package.metadata.docs.rs]
-all-features = true
-
 [dependencies]
-git-features = { version = "^0.19.0", path = "../git-features", optional = true }
+git-features = { version = "^0.19.1", path = "../git-features", optional = true }
 quick-error = "2.0.0"
 btoi = "0.4.2"
 bstr = { version = "0.2.13", default-features = false, features = ["std"]}
@@ -27,6 +27,12 @@ nom = { version = "7", default-features = false, features = ["std"]}
 itoa = "1.0.1"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 
+document-features = { version = "0.1", optional = true }
+
 [dev-dependencies]
 pretty_assertions = "1.0.0"
 git-testtools = { path = "../tests/tools"}
+
+[package.metadata.docs.rs]
+features = ["document-features"]
+all-features = true
