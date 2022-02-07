@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+Fixes a potential deadlock in in an interrupt handler attempting to cleanup tempfiles.
+
+### Chore
+
+ - <csr-id-25209454d3f7e27e12e8ddca92e43b1ff01d58aa/> upgrade dashmap to 5.1.0 (with security fix)
+
+### Bug Fixes
+
+ - <csr-id-81ed5f5e7a3634f0fab681ca59e40099f0118f75/> Assure interrupt based tempfile cleanup can't deadlock.
+
+   We do this by using the `try_entry()` API provided by the most recent
+   dashmap, at the cost of potentially trying to access a lot of indices
+   that don't exist in the map anymore. The cost of this are expected
+   to be low though especially since interrupts are the uncommmon case.
+   
+   A side-effect of this is that tempfiles that are currently being
+   removed for writing to them, for example, won't be cleaned up.
+   
+   It will be up to the code running after the interrupt, if the case
+   at all, to deal with the tempfile, which is what it does anyway.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 5 days passed between releases.
+ - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#328](https://github.com/Byron/gitoxide/issues/328)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#328](https://github.com/Byron/gitoxide/issues/328)**
+    - Assure interrupt based tempfile cleanup can't deadlock ([`81ed5f5`](https://github.com/Byron/gitoxide/commit/81ed5f5e7a3634f0fab681ca59e40099f0118f75))
+ * **Uncategorized**
+    - upgrade dashmap to 5.1.0 (with security fix) ([`2520945`](https://github.com/Byron/gitoxide/commit/25209454d3f7e27e12e8ddca92e43b1ff01d58aa))
+</details>
+
 ## 1.0.5 (2022-02-01)
 
 ### Bug Fixes
@@ -17,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 7 calendar days.
+ - 3 commits contributed to the release over the course of 7 calendar days.
  - 8 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -29,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-tempfile v1.0.5 ([`d811154`](https://github.com/Byron/gitoxide/commit/d81115473cf04f5c3ae25b657b88c3f049451227))
     - downgrade dashmap to 4.0 to avoid unsoundness. ([`d9451e8`](https://github.com/Byron/gitoxide/commit/d9451e8d7fc39c252042f9d2447061262c16ae7a))
     - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
 </details>
