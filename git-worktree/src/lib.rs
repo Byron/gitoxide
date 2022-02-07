@@ -84,7 +84,7 @@ pub mod index {
             find: &mut Find,
             root: &std::path::Path,
             index::checkout::Options { symlinks }: index::checkout::Options,
-            mut buf: &mut Vec<u8>,
+            buf: &mut Vec<u8>,
         ) -> Result<(), index::checkout::Error>
         where
             Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_object::BlobRef<'a>>,
@@ -94,7 +94,7 @@ pub mod index {
 
             match entry.mode {
                 git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {
-                    let obj = find(&entry.id, &mut buf)
+                    let obj = find(&entry.id, buf)
                         .ok_or_else(|| index::checkout::Error::ObjectNotFound(entry.id, root.to_path_buf()))?;
                     let mut options = OpenOptions::new();
                     options.write(true).create_new(true);
@@ -116,7 +116,7 @@ pub mod index {
                     update_fstat(entry, ctime, mtime)?;
                 }
                 git_index::entry::Mode::SYMLINK => {
-                    let obj = find(&entry.id, &mut buf)
+                    let obj = find(&entry.id, buf)
                         .ok_or_else(|| index::checkout::Error::ObjectNotFound(entry.id, root.to_path_buf()))?;
                     let symlink_destination = obj.data.to_path()?;
                     if symlinks {

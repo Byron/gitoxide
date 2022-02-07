@@ -24,10 +24,7 @@ mod checkout {
 
     #[test]
     fn symlinks_become_files_if_disabled() -> crate::Result {
-        let opts = index::checkout::Options {
-            symlinks: false,
-            ..Default::default()
-        };
+        let opts = index::checkout::Options { symlinks: false };
         let (source_tree, destination) = setup_fixture_with_options(opts)?;
 
         assert_equality(&source_tree, &destination, opts.symlinks)?;
@@ -90,7 +87,7 @@ mod checkout {
         Ok((source_tree, destination))
     }
 
-    fn stripped_prefix(prefix: impl AsRef<Path>, source_files: &Vec<PathBuf>) -> Vec<&Path> {
+    fn stripped_prefix(prefix: impl AsRef<Path>, source_files: &[PathBuf]) -> Vec<&Path> {
         source_files.iter().flat_map(|p| p.strip_prefix(&prefix)).collect()
     }
 }
