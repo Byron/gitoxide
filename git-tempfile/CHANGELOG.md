@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 1.0.6 (2022-02-07)
+
+<csr-id-25209454d3f7e27e12e8ddca92e43b1ff01d58aa/>
 
 Fixes a potential deadlock in in an interrupt handler attempting to cleanup tempfiles.
 
@@ -16,7 +18,7 @@ Fixes a potential deadlock in in an interrupt handler attempting to cleanup temp
 ### Bug Fixes
 
  - <csr-id-81ed5f5e7a3634f0fab681ca59e40099f0118f75/> Assure interrupt based tempfile cleanup can't deadlock.
-
+   
    We do this by using the `try_entry()` API provided by the most recent
    dashmap, at the cost of potentially trying to access a lot of indices
    that don't exist in the map anymore. The cost of this are expected
@@ -32,7 +34,7 @@ Fixes a potential deadlock in in an interrupt handler attempting to cleanup temp
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 5 days passed between releases.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#328](https://github.com/Byron/gitoxide/issues/328)
@@ -44,6 +46,7 @@ Fixes a potential deadlock in in an interrupt handler attempting to cleanup temp
 <details><summary>view details</summary>
 
  * **[#328](https://github.com/Byron/gitoxide/issues/328)**
+    - Prepare changelog ([`8e92494`](https://github.com/Byron/gitoxide/commit/8e924948dfa366d3d39227b63053c7ff00a5382a))
     - Assure interrupt based tempfile cleanup can't deadlock ([`81ed5f5`](https://github.com/Byron/gitoxide/commit/81ed5f5e7a3634f0fab681ca59e40099f0118f75))
  * **Uncategorized**
     - upgrade dashmap to 5.1.0 (with security fix) ([`2520945`](https://github.com/Byron/gitoxide/commit/25209454d3f7e27e12e8ddca92e43b1ff01d58aa))
