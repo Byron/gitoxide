@@ -54,6 +54,7 @@ pub mod index {
         let root = path.as_ref();
         let mut buf = Vec::new();
         for (entry, entry_path) in index.entries_mut_with_paths() {
+            // TODO: write test for that
             if entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
                 continue;
             }

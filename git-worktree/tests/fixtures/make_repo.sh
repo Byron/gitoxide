@@ -4,17 +4,14 @@ set -eu -o pipefail
 git init -q
 git config commit.gpgsign false
 
-touch a
-echo "Test Vals" > a
-touch b
-touch c
-touch executable.sh
-chmod +x executable.sh
+touch empty
+echo "content" > executable
+chmod +x executable
 
-mkdir d
-touch d/a
-echo "Subdir" > d/a
-ln -sf d/a sa
+mkdir dir
+echo "other content" > dir/content
+mkdir dir/sub-dir
+(cd dir/sub-dir && ln -sf ../content symlink)
 
 git add -A
 git commit -m "Commit"
