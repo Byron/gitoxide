@@ -67,7 +67,7 @@ impl File {
     }
 
     /// TODO
-    pub fn lookup_abbrev(&self, _id: impl AsRef<git_hash::oid>, _hex_len: usize) -> Option<EntryIndex> {
+    pub fn lookup_prefix(&self, _id: impl AsRef<git_hash::oid>, _hex_len: usize) -> Option<EntryIndex> {
         todo!()
     }
 

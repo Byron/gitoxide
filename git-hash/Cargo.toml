@@ -21,5 +21,8 @@ quick-error = "2.0.0"
 hex = "0.4.2"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 
+[dev-dependencies]
+git-testtools = { path = "../tests/tools"}
+
 [package.metadata.docs.rs]
 all-features = true

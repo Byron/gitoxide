@@ -2,6 +2,46 @@ use std::{borrow::Borrow, convert::TryInto, fmt, ops::Deref};
 
 use crate::{borrowed::oid, Kind, SIZE_OF_SHA1_DIGEST};
 
+/// An partial owned hash possibly identifying an object uniquely,
+/// whose non-prefix bytes are zeroed.
+#[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Prefix {
+    inner: ObjectId,
+    prefix_len: usize,
+}
+
+impl Prefix {
+    /// TODO: docs
+    pub fn from_id(id: impl AsRef<oid>, hex_len: usize) -> Self {
+        let id = id.as_ref();
+        assert!(
+            hex_len <= id.kind().len_in_hex(),
+            "hex_len must not be larger than the maximum hex len of the input id"
+        );
+        let prefix = match id.kind() {
+            Kind::Sha1 => {
+                let mut b = [0u8; 20];
+                let copy_len = (hex_len + 1) / 2;
+                b[..copy_len].copy_from_slice(&id.as_bytes()[..copy_len]);
+                if hex_len % 2 == 1 {
+                    b[hex_len / 2] &= 0xf0;
+                }
+                ObjectId::Sha1(b)
+            }
+        };
+        Prefix {
+            inner: prefix,
+            prefix_len: hex_len,
+        }
+    }
+
+    /// TODO: docs
+    pub fn prefix(&self) -> &oid {
+        &self.inner
+    }
+}
+
 /// An owned hash identifying objects, most commonly Sha1
 #[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
