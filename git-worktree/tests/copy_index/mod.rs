@@ -1,11 +1,12 @@
-use crate::{dir_structure, fixture_path};
+use std::fs;
+#[cfg(unix)]
+use std::os::unix::prelude::MetadataExt;
+
 use git_object::bstr::ByteSlice;
 use git_odb::FindExt;
 use git_worktree::index;
-use std::fs;
 
-#[cfg(unix)]
-use std::os::unix::prelude::MetadataExt;
+use crate::{dir_structure, fixture_path};
 
 #[test]
 fn test_copy_index() -> crate::Result<()> {

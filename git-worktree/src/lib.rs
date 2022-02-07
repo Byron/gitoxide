@@ -64,14 +64,18 @@ pub mod index {
     }
 
     pub(crate) mod entry {
-        use crate::index;
+        use std::{
+            convert::TryInto,
+            fs::{create_dir_all, OpenOptions},
+            io::Write,
+            time::Duration,
+        };
+
         use git_hash::oid;
         use git_index::Entry;
         use git_object::bstr::{BStr, ByteSlice};
-        use std::convert::TryInto;
-        use std::fs::{create_dir_all, OpenOptions};
-        use std::io::Write;
-        use std::time::Duration;
+
+        use crate::index;
 
         pub fn checkout<Find>(
             entry: &mut Entry,

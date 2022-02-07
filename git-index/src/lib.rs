@@ -12,8 +12,9 @@ pub(crate) mod extension;
 pub mod entry;
 
 mod access {
-    use crate::{Entry, State, Version};
     use bstr::{BStr, ByteSlice};
+
+    use crate::{Entry, State, Version};
 
     impl State {
         pub fn version(&self) -> Version {
