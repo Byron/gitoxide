@@ -31,10 +31,6 @@ mod access {
                 (e, path)
             })
         }
-
-        pub fn entries_mut(&mut self) -> &mut [Entry] {
-            &mut self.entries
-        }
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::{dir_structure, fixture_path};
 use git_object::bstr::ByteSlice;
 use git_odb::FindExt;
-use git_worktree::{copy_index, Options};
+use git_worktree::index;
 use std::fs;
 
 #[cfg(unix)]
@@ -16,11 +16,11 @@ fn test_copy_index() -> crate::Result<()> {
     let output = output_dir.path();
     let odb_handle = git_odb::at(path_git.join("objects"))?;
 
-    copy_index(
+    index::checkout(
         &mut file,
         &output,
         move |oid, buf| odb_handle.find_blob(oid, buf).ok(),
-        Options::default(),
+        index::checkout::Options::default(),
     )?;
 
     let repo_files = dir_structure(&path);
@@ -61,11 +61,14 @@ fn test_copy_index_without_symlinks() -> crate::Result<()> {
     let output = output_dir.path();
     let odb_handle = git_odb::at(path_git.join("objects"))?;
 
-    copy_index(
+    index::checkout(
         &mut file,
         &output,
         move |oid, buf| odb_handle.find_blob(oid, buf).ok(),
-        Options { symlinks: false },
+        index::checkout::Options {
+            symlinks: false,
+            ..Default::default()
+        },
     )?;
 
     let repo_files = dir_structure(&path);
