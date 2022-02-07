@@ -1,9 +1,10 @@
 #![forbid(unsafe_code, rust_2018_idioms)]
 
 use git_hash::oid;
+use git_index::Entry;
 use git_object::bstr::ByteSlice;
 use quick_error::quick_error;
-use std::convert::TryFrom;
+use std::convert::TryInto;
 use std::fs::{create_dir_all, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -46,13 +47,12 @@ where
 {
     let path = path.as_ref();
     let mut buf = Vec::new();
-    let mut entry_time = Vec::new(); // Entries whose timestamps have to be updated
-    for (i, entry) in index.entries().iter().enumerate() {
+    for (entry, entry_path) in index.entries_mut_with_paths() {
         if entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
             continue;
         }
-        let entry_path = entry.path(index).to_path()?;
-        let dest = path.join(entry_path);
+
+        let dest = path.join(entry_path.to_path()?); // TODO: try to use os_str_bytes to avoid UTF8 conversion. Put that into git-ref too
         create_dir_all(dest.parent().expect("entry paths are never empty"))?;
 
         match entry.mode {
@@ -70,11 +70,12 @@ where
                 let met = file.metadata()?;
                 let ctime = met
                     .created()
-                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH));
+                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
                 let mtime = met
                     .modified()
-                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH));
-                entry_time.push((ctime?, mtime?, i));
+                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
+
+                update_fstat(entry, ctime, mtime)?;
             }
             git_index::entry::Mode::SYMLINK => {
                 let obj = find(&entry.id, &mut buf).ok_or_else(|| Error::NotFound(entry.id, path.to_path_buf()))?;
@@ -96,25 +97,26 @@ where
                 let met = std::fs::symlink_metadata(&dest)?;
                 let ctime = met
                     .created()
-                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH));
+                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
                 let mtime = met
                     .modified()
-                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH));
-                entry_time.push((ctime?, mtime?, i));
+                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
+                update_fstat(entry, ctime, mtime)?;
             }
             git_index::entry::Mode::DIR => todo!(),
             git_index::entry::Mode::COMMIT => todo!(),
             _ => unreachable!(),
         }
     }
-    let entries = index.entries_mut();
-    for (ctime, mtime, i) in entry_time {
-        let stat = &mut entries[i].stat;
-        stat.mtime.secs = u32::try_from(mtime.as_secs())?;
-        stat.mtime.nsecs = mtime.subsec_nanos();
-        stat.ctime.secs = u32::try_from(ctime.as_secs())?;
-        stat.ctime.nsecs = ctime.subsec_nanos();
-    }
+    Ok(())
+}
+
+fn update_fstat(entry: &mut Entry, ctime: Duration, mtime: Duration) -> Result<(), Error> {
+    let stat = &mut entry.stat;
+    stat.mtime.secs = mtime.as_secs().try_into()?;
+    stat.mtime.nsecs = mtime.subsec_nanos();
+    stat.ctime.secs = ctime.as_secs().try_into()?;
+    stat.ctime.nsecs = ctime.subsec_nanos();
     Ok(())
 }
 

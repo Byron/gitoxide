@@ -14,9 +14,10 @@ doctest = false
 
 [dependencies]
 git-index = { version = "^0.1.0", path = "../git-index" }
-quick-error = "2.0.1"
 git-hash = { version = "^0.9.0", path = "../git-hash" }
 git-object = { version = "^0.17.0", path = "../git-object" }
+
+quick-error = "2.0.1"
 
 [dev-dependencies]
 git-odb = { path = "../git-odb" }
