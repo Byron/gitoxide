@@ -1,5 +1,4 @@
 #![forbid(unsafe_code, rust_2018_idioms)]
-//! Git Worktree
 
 use git_hash::oid;
 use git_object::bstr::ByteSlice;
@@ -9,9 +8,6 @@ use std::fs::{create_dir_all, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-
-#[cfg(unix)]
-use std::os::unix::fs::OpenOptionsExt;
 
 quick_error! {
     #[derive(Debug)]
@@ -39,21 +35,26 @@ quick_error! {
 }
 
 /// Copy index to `path`
-pub fn copy_index<P, Find>(state: &mut git_index::State, path: P, mut find: Find, opts: Options) -> Result<(), Error>
+pub fn copy_index<Find>(
+    index: &mut git_index::State,
+    path: impl AsRef<Path>,
+    mut find: Find,
+    opts: Options,
+) -> Result<(), Error>
 where
-    P: AsRef<Path>,
     Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_object::BlobRef<'a>>,
 {
     let path = path.as_ref();
     let mut buf = Vec::new();
     let mut entry_time = Vec::new(); // Entries whose timestamps have to be updated
-    for (i, entry) in state.entries().iter().enumerate() {
+    for (i, entry) in index.entries().iter().enumerate() {
         if entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
             continue;
         }
-        let entry_path = entry.path(state).to_path()?;
+        let entry_path = entry.path(index).to_path()?;
         let dest = path.join(entry_path);
         create_dir_all(dest.parent().expect("entry paths are never empty"))?;
+
         match entry.mode {
             git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {
                 let obj = find(&entry.id, &mut buf).ok_or_else(|| Error::NotFound(entry.id, path.to_path_buf()))?;
@@ -61,6 +62,7 @@ where
                 options.write(true).create_new(true);
                 #[cfg(unix)]
                 if entry.mode == git_index::entry::Mode::FILE_EXECUTABLE {
+                    use std::os::unix::fs::OpenOptionsExt;
                     options.mode(0o777);
                 }
                 let mut file = options.open(&dest)?;
@@ -105,7 +107,7 @@ where
             _ => unreachable!(),
         }
     }
-    let entries = state.entries_mut();
+    let entries = index.entries_mut();
     for (ctime, mtime, i) in entry_time {
         let stat = &mut entries[i].stat;
         stat.mtime.secs = u32::try_from(mtime.as_secs())?;
