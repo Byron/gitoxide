@@ -85,6 +85,7 @@ fn load_one<'a>(
     has_delta_paths: bool,
     prev_path_and_buf: Option<(Range<usize>, &mut Vec<u8>)>,
 ) -> Option<(Entry, &'a [u8])> {
+    let first_byte_of_entry = data.as_ptr() as usize;
     let (ctime_secs, data) = read_u32(data)?;
     let (ctime_nsecs, data) = read_u32(data)?;
     let (mtime_secs, data) = read_u32(data)?;
@@ -129,11 +130,12 @@ fn load_one<'a>(
             split_at_byte_exclusive(data, 0)?
         } else {
             let path_len = (flags.bits() & entry::Flags::PATH_LEN.bits()) as usize;
-            split_at_pos(data, path_len)?
+            let (path, data) = split_at_pos(data, path_len)?;
+            (path, skip_padding(data, first_byte_of_entry))
         };
 
         path_backing.extend_from_slice(path);
-        skip_padding(data)
+        data
     };
     let path_range = start..path_backing.len();
 
@@ -165,8 +167,11 @@ fn load_one<'a>(
 }
 
 #[inline]
-fn skip_padding(data: &[u8]) -> &[u8] {
-    let skip = data.iter().take_while(|b| **b == 0).count();
+fn skip_padding(data: &[u8], first_byte_of_entry: usize) -> &[u8] {
+    let current_offset = data.as_ptr() as usize;
+    let c_padding = (current_offset - first_byte_of_entry + 8) & !7;
+    let skip = (first_byte_of_entry + c_padding) - current_offset;
+
     &data[skip..]
 }
 

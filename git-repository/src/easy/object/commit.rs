@@ -20,7 +20,7 @@ mod error {
 
 pub use error::Error;
 
-use crate::bstr::BStr;
+use crate::{bstr::BStr, easy};
 
 impl<'repo> Commit<'repo> {
     /// Parse the commits message into a [`MessageRef`][git_object::commit::MessageRef], after decoding the entire commit object.
@@ -30,6 +30,12 @@ impl<'repo> Commit<'repo> {
     /// Decode the entire commit object in full and return the raw message bytes.
     pub fn message_raw(&self) -> Result<&'_ BStr, git_object::decode::Error> {
         Ok(self.decode()?.message)
+    }
+    /// Decode the commit and obtain the time at which the commit was created.
+    ///
+    /// For the time at which it was authored, refer to `.decode()?.author.time`.
+    pub fn time(&self) -> Result<git_actor::Time, git_object::decode::Error> {
+        Ok(self.decode()?.committer.time)
     }
 
     /// Decode the entire commit object and return it for accessing all commit information.
@@ -46,10 +52,7 @@ impl<'repo> Commit<'repo> {
         let tree_id = self.tree_id().ok_or(Error::Decode)?;
         match self.handle.find_object(tree_id)?.try_into_tree() {
             Ok(tree) => Ok(tree),
-            Err(obj) => Err(Error::ObjectKind {
-                actual: obj.kind,
-                expected: git_object::Kind::Tree,
-            }),
+            Err(easy::object::try_into::Error { actual, expected, .. }) => Err(Error::ObjectKind { actual, expected }),
         }
     }
 

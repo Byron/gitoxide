@@ -1,5 +1,5 @@
 #![deny(unsafe_code, missing_docs, rust_2018_idioms)]
-#![allow(missing_docs, dead_code)]
+#![allow(missing_docs)]
 
 use std::{ops::Range, path::PathBuf};
 
@@ -7,29 +7,15 @@ use filetime::FileTime;
 
 pub mod file;
 
-pub(crate) mod extension;
+pub mod extension;
 
 pub mod entry;
 
-mod access {
-    use crate::{Entry, State, Version};
-
-    impl State {
-        pub fn version(&self) -> Version {
-            self.version
-        }
-
-        pub fn entries(&self) -> &[Entry] {
-            &self.entries
-        }
-
-        pub fn entries_mut(&mut self) -> &mut [Entry] {
-            &mut self.entries
-        }
-    }
-}
+mod access;
 
 pub mod decode;
+
+pub mod verify;
 
 /// All known versions of a git index file.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -69,12 +55,14 @@ pub struct State {
     ///
     /// Note that on platforms that only have a precisions of a second for this time, we will treat all entries with the
     /// same timestamp as this as potentially changed, checking more thoroughly if a change actually happened.
+    #[allow(dead_code)]
     timestamp: FileTime,
     version: Version,
     entries: Vec<Entry>,
     /// A memory area keeping all index paths, in full length, independently of the index version.
     path_backing: Vec<u8>,
     /// True if one entry in the index has a special marker mode
+    #[allow(dead_code)]
     is_sparse: bool,
 
     // Extensions

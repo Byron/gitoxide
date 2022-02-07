@@ -8,6 +8,7 @@ use crate::{
 
 pub type Paths = Vec<ResolvePath>;
 
+#[allow(dead_code)]
 pub struct ResolvePath {
     /// relative to the root of the repository, or what would be stored in the index
     name: BString,
@@ -16,6 +17,7 @@ pub struct ResolvePath {
     stages: [Option<Stage>; 3],
 }
 
+#[allow(dead_code)]
 pub struct Stage {
     mode: u32,
     id: ObjectId,

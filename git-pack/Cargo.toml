@@ -1,6 +1,6 @@
 [package]
 name = "git-pack"
-version = "0.16.0"
+version = "0.16.1"
 repository = "https://github.com/Byron/gitoxide"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
@@ -12,10 +12,17 @@ include = ["src/**/*", "CHANGELOG.md"]
 doctest = false
 
 [features]
+
+## Provide a fixed-size allocation-free LRU cache for packs. It's useful if caching is desired while keeping the memory footprint
+## for the LRU-cache itself low.
 pack-cache-lru-static = ["uluru"]
+## Provide a hash-map based LRU cache whose eviction is based a memory cap calculated from object data.
 pack-cache-lru-dynamic = ["clru"]
+## If set, select algorithms may additionally use a full-object cache which is queried before the pack itself.
 object-cache-dynamic = ["clru"]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "git-object/serde1"]
+
 internal-testing-git-features-parallel = ["git-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
@@ -29,14 +36,11 @@ name = "single-threaded"
 path = "tests/pack-single-threaded.rs"
 required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
-[package.metadata.docs.rs]
-all-features = true
-
 [dependencies]
-git-features = { version = "^0.19.0", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib"] }
-git-hash = { version = "^0.9.0", path = "../git-hash" }
-git-chunk = { version ="^0.2.0", path = "../git-chunk" }
-git-object = { version = "^0.17.0", path = "../git-object" }
+git-features = { version = "^0.19.1", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib"] }
+git-hash = { version = "^0.9.2", path = "../git-hash" }
+git-chunk = { version = "^0.3.0", path = "../git-chunk" }
+git-object = { version = "^0.17.1", path = "../git-object" }
 git-traverse = { version = "^0.12.0", path = "../git-traverse" }
 git-diff = { version = "^0.13.0", path = "../git-diff" }
 git-tempfile = { version ="^1.0.0", path = "../git-tempfile" }
@@ -50,7 +54,8 @@ parking_lot = { version = "0.11.0", default-features = false }
 thiserror = "1.0.26"
 uluru = { version = "3.0.0", optional = true }
 clru = { version = "0.5.0", optional = true }
-dashmap = "5.0.0"
+dashmap = "5.1.0"
+document-features = { version = "0.1.0", optional = true }
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools"}
@@ -58,3 +63,8 @@ git-odb = { path = "../git-odb" }
 tempfile = "3.1.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 common_macros = "0.1.1"
+
+[package.metadata.docs.rs]
+features = ["document-features"]
+all-features = true
+

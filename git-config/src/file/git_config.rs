@@ -463,6 +463,72 @@ impl<'event> GitConfig<'event> {
             .collect()
     }
 
+    /// Get all sections that match the `section_name`, returning all matching section header along with their body.
+    ///
+    /// An empty `Vec` is returned if there is no section with `section_name`.
+    ///
+    /// # Example
+    ///
+    /// Provided the following config:
+    /// ```plain
+    /// [url "ssh://git@github.com/"]
+    ///     insteadOf = https://github.com/
+    /// [url "ssh://git@bitbucket.org"]
+    ///     insteadOf = https://bitbucket.org/
+    /// ```
+    /// Calling this method will yield all section bodies and their header:
+    ///
+    /// ```rust
+    /// use git_config::file::{GitConfig, GitConfigError};
+    /// use git_config::parser::Key;
+    /// use std::borrow::Cow;
+    /// use std::convert::TryFrom;
+    /// use nom::AsBytes;
+    ///
+    /// let input = r#"
+    /// [url "ssh://git@github.com/"]
+    ///    insteadOf = https://github.com/
+    /// [url "ssh://git@bitbucket.org"]
+    ///    insteadOf = https://bitbucket.org/
+    /// "#;
+    /// let config = GitConfig::try_from(input).unwrap();
+    /// let url = config.sections_by_name_with_header("url");
+    /// assert_eq!(url.len(), 2);
+    ///
+    /// for (i, (header, body)) in url.iter().enumerate() {
+    ///     let url = header.subsection_name.as_ref();
+    ///     let instead_of = body.value(&Key::from("insteadOf"));
+    ///
+    ///     // todo(unstable-order): the order is not always the same, so `i` cannot be used here
+    ///     if instead_of.as_ref().unwrap().as_ref().as_bytes().eq("https://github.com/".as_bytes()) {
+    ///         assert_eq!(instead_of.unwrap().as_ref(), "https://github.com/".as_bytes());
+    ///         assert_eq!(url.unwrap().as_ref(), "ssh://git@github.com/");
+    ///     } else {
+    ///         assert_eq!(instead_of.unwrap().as_ref(), "https://bitbucket.org/".as_bytes());
+    ///         assert_eq!(url.unwrap().as_ref(), "ssh://git@bitbucket.org");
+    ///     }
+    /// }
+    /// ```
+    pub fn sections_by_name_with_header<'lookup>(
+        &self,
+        section_name: &'lookup str,
+    ) -> Vec<(&ParsedSectionHeader<'event>, &SectionBody<'event>)> {
+        self.get_section_ids_by_name(section_name)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|id| {
+                (
+                    self.section_headers
+                        .get(&id)
+                        .expect("section doesn't have a section header??"),
+                    self.sections
+                        .get(&id)
+                        .expect("section doesn't have id from from lookup"),
+                )
+            })
+            .collect()
+    }
+
     /// Adds a new section to config. If a subsection name was provided, then
     /// the generated header will use the modern subsection syntax. Returns a
     /// reference to the new section for immediate editing.

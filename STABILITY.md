@@ -21,6 +21,9 @@ Please note that this guide isn't stable itself and may be adjusted to fit chang
   - A crate version whose _major_ version is 0.
 - _release version_
   - A crate version whose _major_ version is 1 or higher.
+- _initial development phase_ (IDP)
+  - The phase of development leading up to producing a crate with a major version of 1 or greater, as per `semver`.
+  - Not to be confused with the term _pre-release_, which is used to indicate any release version prior to an actual release, like `1.1.0-beta.1`.
 
 ## Tiers
 
@@ -83,9 +86,9 @@ The following schematic helps to visualize what follows.
     └─────────────────────────────────────────────┘
 ```
 
-### Tier 3: pre-release crates
+### Tier 3: IDP crates
 
-Pre-release crates is marked with major version number zero, for example `0.1.4` and lives in stability tier 3 _(->ST3)_.
+Crates in initial development are marked with the major version number zero, for example `0.1.4` and live in stability tier 3 _(->ST3)_.
 
 It's acceptable to let each breaking change be immediately followed by a minor version release.
 
@@ -123,19 +126,19 @@ Minor version updates for new features can be released when needed assuming ther
 The MSRV is automatically assumed to be the latest stable version for all crates with the following exception: `git-repository` and all it's dependencies must
 adhere to an MSRV, as validated by the `msrv.yml` GitHub workflow.
 
-Increasing the MSRV is considered a breaking change and warrants a major version bump itself for stable crates and a minor version bump for pre-release crates.
+Increasing the MSRV is considered a breaking change and warrants a major version bump itself for stable crates and a minor version bump for IDP crates.
 
 Please let us know if you have other requirement and we see if we can provide stability guarantees for it or reduce the MSRV to a given version.
 
-## Transitioning from pre-release to release crates
+## Transitioning from IDP to production crates
 
-How do we avoid staying in pre-release mode forever?
+How do we avoid staying in the initial development phase (IDP) forever?
 
 There is a couple of questions to ask and answer positively:
 
 - _Does the crate fulfill its intended purpose well enough?_
 - _Do the dependent workspace crates fulfill their intended purposes well enough?_
-- _Do they hide types and functionality of lower-tier workspace crates and external pre-release crates?_
+- _Do they hide types and functionality of lower-tier workspace crates and external IDP crates?_
 
 For plumbing crates, the intended purpose is narrow which would allow them to transition earlier. For plumbing crates, if in doubt or fear of future requirements
 especially if dependent crates are still early in development, prefer to release them anyway and live with requirements of _ST2_.

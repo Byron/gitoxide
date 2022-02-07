@@ -53,12 +53,12 @@ cargo install cargo-smart-release
 * [x] avoid making any releases if there are no changes
 * [x] avoid bumping versions if the current version isn't released, allowing you to control the version by editing the cargo manifest
 * [x] [conventional] commit message drive changelog scaffolding and to automatically derive the crate version to publish
-* [x] automatically release dependent workspace pre-release crates along with the desired one if they changed since their last release
+* [x] automatically release dependent workspace IDP crates along with the desired one if they changed since their last release
 * [x] automatically adjust manifest versions and update manifests of crates which use those whose versions were incremented
 * [x] conservatively bump downstream workspace crates in the light of breaking changes, even though these won't be published, making downstream breakage impossible
 * [x] use git tags to know if a crate changed at all, skipping publishes if there is no code change at all
 * [ ] it's _too eager_ to release and there should be a way to control patch releases.
-* [ ] Handle pre-release versions and meta-data as per the [stability guide].
+* [ ] Handle pre-release versions, like 1.0.0-beta.1
 * [ ] Support other remote names than 'origin' - currently the latter name is assumed. Fix by getting the remote of the currently checked out branch.
 * [ ] handle version specifications correctly [(tables vs values)](https://github.com/Byron/cargo-release/blob/master/src/cargo.rs#L179:L207)
 * [ ] handle all version comparators correctly (see [here](https://github.com/Byron/cargo-release/blob/master/src/version.rs#L192:L226) for how it's done)
@@ -104,4 +104,3 @@ Special thanks go to [git-cliff] which gave me the nudge needed to want to write
 [cargo-release]: https://github.com/sunng87/cargo-release/issues/224
 [git-cliff]: https://github.com/orhun/git-cliff
 [rustup]: https://rustup.rs/
-[stability guide]: https://github.com/Byron/gitoxide/blob/stability/STABILITY.md

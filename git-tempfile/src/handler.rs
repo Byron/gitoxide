@@ -1,5 +1,6 @@
 //!
-use crate::{SignalHandlerMode, REGISTER, SIGNAL_HANDLER_MODE};
+use crate::{SignalHandlerMode, NEXT_MAP_INDEX, REGISTER, SIGNAL_HANDLER_MODE};
+use std::sync::atomic::Ordering;
 
 /// Remove all tempfiles still registered on our global registry.
 ///
@@ -8,14 +9,19 @@ use crate::{SignalHandlerMode, REGISTER, SIGNAL_HANDLER_MODE};
 /// We are usign lock-free datastructures and sprinkle in `std::mem::forget` to avoid deallocating.
 pub fn cleanup_tempfiles() {
     let current_pid = std::process::id();
-    for mut tempfile in REGISTER.iter_mut() {
-        if tempfile
-            .as_ref()
-            .map_or(false, |tf| tf.owning_process_id == current_pid)
-        {
-            if let Some(tempfile) = tempfile.take() {
-                tempfile.drop_without_deallocation();
-            }
+    let one_past_last_index = NEXT_MAP_INDEX.load(Ordering::SeqCst);
+    for idx in 0..one_past_last_index {
+        if let Some(entry) = REGISTER.try_entry(idx) {
+            entry.and_modify(|tempfile| {
+                if tempfile
+                    .as_ref()
+                    .map_or(false, |tf| tf.owning_process_id == current_pid)
+                {
+                    if let Some(tempfile) = tempfile.take() {
+                        tempfile.drop_without_deallocation();
+                    }
+                }
+            });
         }
     }
 }

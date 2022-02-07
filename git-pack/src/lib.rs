@@ -12,6 +12,11 @@
 //!
 //! When traversing all objects in a pack, a _delta tree acceleration structure_ can be built from pack data or an index
 //! in order to decompress packs in parallel and without any waste.
+//! ## Feature Flags
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 
 ///
 pub mod bundle;

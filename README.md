@@ -42,6 +42,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] **verify** - assure that a commit-graph is consistent
     * **repository**
       * **verify** - validate a whole repository, for now only the object database.
+    * **index**
+      * [x] **entries** - show detailed entry information for human or machine consumption (via JSON)
+      * [x] **info** - display general information about the index itself, with detailed extension information by default
     * **remote**
       * [ref-list](https://asciinema.org/a/359320) - list all (or given) references from a remote at the given URL
 
@@ -61,7 +64,7 @@ Follow linked crate name for detailed status. Please note that all crates follow
 * **Stability Tier 2**
   - [git-tempfile](https://github.com/Byron/gitoxide/blob/main/git-tempfile/README.md)
 
-### In Development/Pre-Release
+### Initial Development
 * **usable**
   * [git-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-actor)
   * [git-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-hash)
@@ -86,6 +89,7 @@ Follow linked crate name for detailed status. Please note that all crates follow
   * [git-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-index)
   * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
 * **idea**
+  * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
   * [git-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-worktree)
   * [git-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tui)
   * [git-bundle](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bundle)
@@ -224,6 +228,10 @@ For additional details, also take a look at the [collaboration guide].
 - [Getting into Gitoxide](https://youtube.com/playlist?list=PLMHbQxe1e9MkEmuj9csczEK1O06l0Npy5)
    - Get an introduction to `gitoxide` itself which should be a good foundation for any contribution, but isn't a requirement for contributions either.
 
+#### Other Media
+
+- [Rustacean Station Podcast](https://rustacean-station.org/episode/055-sebastian-thiel/)
+
 ## Roadmap
 
 ### Features for 1.0
@@ -231,15 +239,18 @@ For additional details, also take a look at the [collaboration guide].
 Provide a CLI to for the most basic user journey:
 
 * [x] initialize a repository
-* [ ] clone a repository
+* clone a repository
+   - [ ] bare
+   - [ ] with working tree
 * [ ] create a commit
 * [ ] add a remote
 * [ ] push
-  * [ ] create (thin) pack
+  * [x] create (thin) pack
 
 ### Ideas for Examples
 
 * [ ] `gix tool open-remote` open the URL of the remote, possibly after applying known transformations to go from `ssh` to `https`.
+* [ ] `tix` as example implementation of `tig`, displaying a version of the commit graph, useful for practicing how highly responsive GUIs can be made.
 * [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
   as well. What would an MVP look like? Maybe even something that could ship with gitoxide. See [this go implementation as example](https://github.com/filhodanuvem/gitql).
 * [ ] A truly awesome history rewriter which makes it easy to understand what happened while avoiding all pitfalls. Think BFG, but more awesome, if that's possible.

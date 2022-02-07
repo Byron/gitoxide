@@ -124,7 +124,7 @@ mod impls {
 
     impl<S> crate::Find for Cache<S>
     where
-        S: crate::pack::Find,
+        S: git_pack::Find,
     {
         type Error = S::Error;
 
@@ -137,9 +137,9 @@ mod impls {
         }
     }
 
-    impl<S> crate::pack::Find for Cache<S>
+    impl<S> git_pack::Find for Cache<S>
     where
-        S: crate::pack::Find,
+        S: git_pack::Find,
     {
         type Error = S::Error;
 

@@ -9,7 +9,7 @@ use crate::store::handle;
 mod error {
     use crate::{loose, pack};
 
-    /// Returned by [`Handle::try_find()`][crate::pack::Find::try_find()]
+    /// Returned by [`Handle::try_find()`][git_pack::Find::try_find()]
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -27,7 +27,7 @@ pub use error::Error;
 
 use crate::store::types::PackId;
 
-impl<S> crate::pack::Find for super::Handle<S>
+impl<S> git_pack::Find for super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
 {
@@ -302,5 +302,21 @@ where
                     .expect("BUG: index must always be present, must not be unloaded or overwritten"),
             );
         }
+    }
+}
+
+impl<S> crate::Find for super::Handle<S>
+where
+    S: Deref<Target = super::Store> + Clone,
+    Self: git_pack::Find,
+{
+    type Error = <Self as git_pack::Find>::Error;
+
+    fn contains(&self, id: impl AsRef<oid>) -> bool {
+        git_pack::Find::contains(self, id)
+    }
+
+    fn try_find<'a>(&self, id: impl AsRef<oid>, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, Self::Error> {
+        git_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))
     }
 }

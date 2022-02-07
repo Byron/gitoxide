@@ -2,6 +2,11 @@
 //! [`connect()`] to establish a connection given a repository URL.
 //!
 //! All git transports are supported, including `ssh`, `git`, `http` and `https`, as well as local repository paths.
+//! ## Feature Flags
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 

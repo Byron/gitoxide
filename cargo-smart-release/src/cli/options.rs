@@ -115,7 +115,7 @@ pub enum SubCommands {
         #[clap(long, help_heading = Some("CUSTOMIZATION"))]
         no_auto_publish_of_stable_crates: bool,
 
-        /// Do not force pre-release version requirements to be updated in dependent crates on patch update, forcing
+        /// Do not force 0.X version requirements to be updated in dependent crates on patch update, forcing
         /// an update of the lower bound.
         ///
         /// It's best to look at this issue for a deeper understanding: https://github.com/Byron/gitoxide/issues/194

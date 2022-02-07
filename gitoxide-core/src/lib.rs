@@ -1,3 +1,8 @@
+//! ## Feature Flags
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
 #![cfg_attr(feature = "async-client", allow(unused))]
@@ -40,6 +45,7 @@ pub mod net;
 pub mod commitgraph;
 #[cfg(feature = "estimate-hours")]
 pub mod hours;
+pub mod index;
 #[cfg(feature = "organize")]
 pub mod organize;
 pub mod pack;

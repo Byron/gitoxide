@@ -8,6 +8,11 @@
 //!
 //! Thus all features provided here commonly have a 'cheap' base implementation, with the option to pull in
 //! counterparts with higher performance.
+//! ## Feature Flags
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 
 ///
 pub mod cache;
