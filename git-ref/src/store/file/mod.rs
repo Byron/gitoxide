@@ -1,4 +1,9 @@
-use std::path::PathBuf;
+use crate::{store::WriteReflog, Namespace};
+
+use crate::bstr::BStr;
+
+use std::borrow::Cow;
+use std::path::{Path, PathBuf};
 
 use git_features::threading::{MutableOnDemand, OwnShared};
 
@@ -47,15 +52,13 @@ pub struct Transaction<'s> {
     packed_refs: transaction::PackedRefs,
 }
 
-pub(in crate::store_impl::file) fn path_to_name(path: impl Into<PathBuf>) -> git_object::bstr::BString {
-    use os_str_bytes::OsStringBytes;
-    let path = path.into().into_raw_vec();
+pub(in crate::store_impl::file) fn path_to_name<'a>(path: impl Into<Cow<'a, Path>>) -> Cow<'a, BStr> {
+    let path = git_features::path::to_bytes_transient(path.into());
+
     #[cfg(windows)]
-    let path = {
-        use git_object::bstr::ByteSlice;
-        path.replace(b"\\", b"/")
-    };
-    path.into()
+    let path = git_features::path::bytes::backslash_to_slash(path);
+
+    git_features::path::bytes::to_bstr(path)
 }
 
 ///
@@ -89,5 +92,3 @@ pub mod packed;
 
 mod raw_ext;
 pub use raw_ext::ReferenceExt;
-
-use crate::{store::WriteReflog, Namespace};

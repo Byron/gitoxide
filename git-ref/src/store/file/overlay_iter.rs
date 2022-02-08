@@ -204,7 +204,7 @@ impl file::Store {
             packed: match packed {
                 Some(packed) => Some(
                     packed
-                        .iter_prefixed(packed_prefix)
+                        .iter_prefixed(packed_prefix.into_owned())
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
                         .peekable(),
                 ),
