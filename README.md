@@ -116,7 +116,7 @@ Our [stability guide] helps to judge how much churn can be expected when dependi
 
 ### Download a Binary Release
 
-Using `cargo quickinstall`, one is able to fetch [binary releases][releases]. You can install it via `cargo install quickinstall`, assuming 
+Using `cargo quickinstall`, one is able to fetch [binary releases][releases]. You can install it via `cargo install cargo-quickinstall`, assuming 
 the [rust toolchain][rustup] is present.
 
 Then install gitoxide with `cargo quickinstall gitoxide`.
@@ -131,7 +131,8 @@ on your needs, for _Linux_, _MacOS_ and _Windows_.
 `cargo` is the Rust package manager which can easily be obtained through [rustup]. With it, you can build your own binary
 effortlessly and for your particular CPU for additional performance gains.
 
-The minimum required cargo version is _the latest stable_ release, but may run on older stable releases as well.
+The minimum supported Rust version is [documented in the CI configuration](https://github.com/Byron/gitoxide/blob/main/.github/workflows/msrv.yml#L23),
+the latest stable one will work as well.
 
 ```
 # The default installation, 'max'
