@@ -121,6 +121,16 @@ curl -LSfs https://raw.githubusercontent.com/Byron/gitoxide/main/ci/install.sh |
     sh -s -- --git Byron/gitoxide --crate gix-max-termion
 ```
 
+If the above fails [surprisingly like this](https://github.com/Byron/gitoxide/issues/330), consider using `cargo quickinstall` instead.
+Note, however, that it requires `cargo` to be present (see [rustup]).
+
+```shell
+cargo install quickinstall
+cargo quickinstall gitoxide
+```
+
+The above will automatically install from source if pre-built binaries are not available for your platform.
+
 See the [releases section][releases] for manual installation and various alternative builds that are _slimmer_ or _smaller_, depending
 on your needs, for _Linux_, _MacOS_ and _Windows_.
 
@@ -128,7 +138,7 @@ on your needs, for _Linux_, _MacOS_ and _Windows_.
 
 ### From Source via Cargo
 
-`cargo` is the Rust package manager which can easily be obtained through [rustup][rustup]. With it, you can build your own binary
+`cargo` is the Rust package manager which can easily be obtained through [rustup]. With it, you can build your own binary
 effortlessly and for your particular CPU for additional performance gains.
 
 The minimum required cargo version is _the latest stable_ release, but may run on older stable releases as well.
