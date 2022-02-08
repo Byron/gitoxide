@@ -16,7 +16,7 @@ pub mod prefix {
     use quick_error::quick_error;
 
     quick_error! {
-        /// TODO:
+        /// The error returned by [Prefix::try_from_id()][super::Prefix::try_from_id()].
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {
@@ -38,23 +38,23 @@ impl Prefix {
     pub fn try_from_id(id: impl AsRef<oid>, hex_len: usize) -> Result<Self, prefix::Error> {
         let id = id.as_ref();
         if hex_len > id.kind().len_in_hex() {
-            return Err(prefix::Error::TooLong {
+            Err(prefix::Error::TooLong {
                 object_kind: id.kind(),
                 hex_len,
-            });
+            })
         } else if hex_len < 4 {
-            return Err(prefix::Error::TooShort { hex_len });
-        }
+            Err(prefix::Error::TooShort { hex_len })
+        } else {
+            let mut prefix = ObjectId::null(id.kind());
+            let b = prefix.as_mut_slice();
+            let copy_len = (hex_len + 1) / 2;
+            b[..copy_len].copy_from_slice(&id.as_bytes()[..copy_len]);
+            if hex_len % 2 == 1 {
+                b[hex_len / 2] &= 0xf0;
+            }
 
-        let mut prefix = ObjectId::null(id.kind());
-        let b = prefix.as_mut_slice();
-        let copy_len = (hex_len + 1) / 2;
-        b[..copy_len].copy_from_slice(&id.as_bytes()[..copy_len]);
-        if hex_len % 2 == 1 {
-            b[hex_len / 2] &= 0xf0;
+            Ok(Prefix { bytes: prefix, hex_len })
         }
-
-        Ok(Prefix { bytes: prefix, hex_len })
     }
 
     /// Returns the prefix as object id.

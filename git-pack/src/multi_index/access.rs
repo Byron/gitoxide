@@ -68,7 +68,7 @@ impl File {
     }
 
     /// TODO
-    pub fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Option<PrefixLookupResult> {
+    pub fn lookup_prefix(&self, _prefix: git_hash::Prefix) -> Option<PrefixLookupResult> {
         todo!()
     }
 
