@@ -8,20 +8,18 @@ mod prefix {
             let oid_hex = "abcdefabcdefabcdefabcdefabcdefabcdefabcd";
             let oid = hex_to_id(oid_hex);
 
-            assert_eq!(git_hash::Prefix::from_id(oid, 0).prefix(), ObjectId::null(oid.kind()));
+            assert_eq!(git_hash::Prefix::from_id(oid, 0).as_oid(), ObjectId::null(oid.kind()));
 
-            for prefix_len in 1..oid.kind().len_in_hex() {
-                let mut expected = String::from(&oid_hex[..prefix_len]);
-                let num_of_zeros = oid.kind().len_in_hex() - prefix_len;
+            for hex_len in 1..oid.kind().len_in_hex() {
+                let mut expected = String::from(&oid_hex[..hex_len]);
+                let num_of_zeros = oid.kind().len_in_hex() - hex_len;
                 expected.extend(std::iter::repeat('0').take(num_of_zeros));
-                assert_eq!(
-                    git_hash::Prefix::from_id(oid, prefix_len).prefix().to_hex().to_string(),
-                    expected,
-                    "{}",
-                    prefix_len
-                );
+                let prefix = git_hash::Prefix::from_id(oid, hex_len);
+                assert_eq!(prefix.as_oid().to_hex().to_string(), expected, "{}", hex_len);
+                assert_eq!(prefix.hex_len(), hex_len);
             }
         }
+
         #[test]
         #[should_panic]
         fn panics_if_hex_len_is_longer_than_oid_len_in_hex() {

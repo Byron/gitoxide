@@ -7,38 +7,46 @@ use crate::{borrowed::oid, Kind, SIZE_OF_SHA1_DIGEST};
 #[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Prefix {
-    inner: ObjectId,
-    prefix_len: usize,
+    bytes: ObjectId,
+    hex_len: usize,
 }
 
 impl Prefix {
-    /// TODO: docs
+    /// Create a new instance by taking a full `id` as input and truncating it to `hex_len`.
+    ///
+    /// For instance, with `hex_len` of 7 the resulting prefix is 3.5 bytes, or 3 bytes and 4 bits
+    /// wide, with all other bytes and bits set to zero.
     pub fn from_id(id: impl AsRef<oid>, hex_len: usize) -> Self {
         let id = id.as_ref();
         assert!(
             hex_len <= id.kind().len_in_hex(),
             "hex_len must not be larger than the maximum hex len of the input id"
         );
-        let prefix = match id.kind() {
-            Kind::Sha1 => {
-                let mut b = [0u8; 20];
-                let copy_len = (hex_len + 1) / 2;
-                b[..copy_len].copy_from_slice(&id.as_bytes()[..copy_len]);
-                if hex_len % 2 == 1 {
-                    b[hex_len / 2] &= 0xf0;
-                }
-                ObjectId::Sha1(b)
-            }
-        };
-        Prefix {
-            inner: prefix,
-            prefix_len: hex_len,
+
+        let mut prefix = ObjectId::null(id.kind());
+        let b = prefix.as_mut_slice();
+        let copy_len = (hex_len + 1) / 2;
+        b[..copy_len].copy_from_slice(&id.as_bytes()[..copy_len]);
+        if hex_len % 2 == 1 {
+            b[hex_len / 2] &= 0xf0;
         }
+
+        Prefix { bytes: prefix, hex_len }
     }
 
-    /// TODO: docs
-    pub fn prefix(&self) -> &oid {
-        &self.inner
+    /// Returns the prefix as object id.
+    ///
+    /// Note that it may be deceptive to use given that it looks like a full
+    /// object id, even though its post-prefix bytes/bits are set to zero.
+    pub fn as_oid(&self) -> &oid {
+        &self.bytes
+    }
+
+    /// Return the amount of hexadecimal characters that are set in the prefix.
+    ///
+    /// This gives the prefix a granularity of 4 bits.
+    pub fn hex_len(&self) -> usize {
+        self.hex_len
     }
 }
 
