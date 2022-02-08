@@ -11,17 +11,40 @@ pub struct Prefix {
     hex_len: usize,
 }
 
+///
+pub mod prefix {
+    use quick_error::quick_error;
+
+    quick_error! {
+        /// TODO:
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            TooShort { hex_len: usize } {
+                display("The minimum hex length of a short object id is 4, got {}", hex_len)
+            }
+            TooLong { object_kind: crate::Kind, hex_len: usize } {
+                display("An object of kind {} cannot be larger than {} in hex, but {} was requested", object_kind, object_kind.len_in_hex(), hex_len)
+            }
+        }
+    }
+}
+
 impl Prefix {
     /// Create a new instance by taking a full `id` as input and truncating it to `hex_len`.
     ///
     /// For instance, with `hex_len` of 7 the resulting prefix is 3.5 bytes, or 3 bytes and 4 bits
     /// wide, with all other bytes and bits set to zero.
-    pub fn from_id(id: impl AsRef<oid>, hex_len: usize) -> Self {
+    pub fn try_from_id(id: impl AsRef<oid>, hex_len: usize) -> Result<Self, prefix::Error> {
         let id = id.as_ref();
-        assert!(
-            hex_len <= id.kind().len_in_hex(),
-            "hex_len must not be larger than the maximum hex len of the input id"
-        );
+        if hex_len > id.kind().len_in_hex() {
+            return Err(prefix::Error::TooLong {
+                object_kind: id.kind(),
+                hex_len,
+            });
+        } else if hex_len < 4 {
+            return Err(prefix::Error::TooShort { hex_len });
+        }
 
         let mut prefix = ObjectId::null(id.kind());
         let b = prefix.as_mut_slice();
@@ -31,7 +54,7 @@ impl Prefix {
             b[hex_len / 2] &= 0xf0;
         }
 
-        Prefix { bytes: prefix, hex_len }
+        Ok(Prefix { bytes: prefix, hex_len })
     }
 
     /// Returns the prefix as object id.

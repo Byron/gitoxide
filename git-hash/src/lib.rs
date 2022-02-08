@@ -11,7 +11,7 @@ use std::{convert::TryFrom, str::FromStr};
 pub use borrowed::oid;
 
 mod owned;
-pub use owned::{ObjectId, Prefix};
+pub use owned::{prefix, ObjectId, Prefix};
 
 #[allow(missing_docs)]
 pub mod decode {

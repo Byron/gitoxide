@@ -8,23 +8,32 @@ mod prefix {
             let oid_hex = "abcdefabcdefabcdefabcdefabcdefabcdefabcd";
             let oid = hex_to_id(oid_hex);
 
-            assert_eq!(git_hash::Prefix::from_id(oid, 0).as_oid(), ObjectId::null(oid.kind()));
-
-            for hex_len in 1..oid.kind().len_in_hex() {
+            for hex_len in 4..oid.kind().len_in_hex() {
                 let mut expected = String::from(&oid_hex[..hex_len]);
                 let num_of_zeros = oid.kind().len_in_hex() - hex_len;
                 expected.extend(std::iter::repeat('0').take(num_of_zeros));
-                let prefix = git_hash::Prefix::from_id(oid, hex_len);
+                let prefix = git_hash::Prefix::try_from_id(oid, hex_len).unwrap();
                 assert_eq!(prefix.as_oid().to_hex().to_string(), expected, "{}", hex_len);
                 assert_eq!(prefix.hex_len(), hex_len);
             }
         }
 
         #[test]
-        #[should_panic]
-        fn panics_if_hex_len_is_longer_than_oid_len_in_hex() {
+        fn errors_if_hex_len_is_longer_than_oid_len_in_hex() {
             let kind = Kind::Sha1;
-            git_hash::Prefix::from_id(ObjectId::null(kind), kind.len_in_hex() + 1);
+            assert!(matches!(
+                git_hash::Prefix::try_from_id(ObjectId::null(kind), kind.len_in_hex() + 1),
+                Err(git_hash::prefix::Error::TooLong { .. })
+            ));
+        }
+
+        #[test]
+        fn errors_if_hex_len_is_too_short() {
+            let kind = Kind::Sha1;
+            assert!(matches!(
+                git_hash::Prefix::try_from_id(ObjectId::null(kind), 3),
+                Err(git_hash::prefix::Error::TooShort { .. })
+            ));
         }
     }
 }

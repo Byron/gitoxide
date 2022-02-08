@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use crate::index::PrefixLookupResult;
 use crate::{
     data,
     multi_index::{EntryIndex, File, PackIndex, Version},
@@ -67,7 +68,7 @@ impl File {
     }
 
     /// TODO
-    pub fn lookup_prefix(&self, _id: impl AsRef<git_hash::oid>, _hex_len: usize) -> Option<EntryIndex> {
+    pub fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Option<PrefixLookupResult> {
         todo!()
     }
 

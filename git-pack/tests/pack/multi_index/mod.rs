@@ -16,15 +16,23 @@ mod access {
     use std::path::PathBuf;
 
     #[test]
-    fn lookup_abbrev() {
+    #[ignore]
+    fn lookup_with_ambiguity() {}
+
+    #[test]
+    fn lookup_prefix() {
         let (file, _path) = multi_index();
 
         for (idx, entry) in file.iter().enumerate() {
             let hex_len = (idx % file.object_hash().len_in_hex()).min(7);
             let hex_oid = entry.oid.to_hex_with_len(hex_len).to_string();
             assert_eq!(hex_oid.len(), hex_len);
-            let _oid_prefix = git_hash::Prefix::from_id(&entry.oid, hex_len);
-            // file.lookup_prefix(oid_prefix, hex_len).expect("non-ambiguous")
+            let oid_prefix = git_hash::Prefix::try_from_id(&entry.oid, hex_len);
+            let entry_index = file
+                .lookup_prefix(oid_prefix)
+                .expect("object found")
+                .expect("non-ambiguous");
+            assert_eq!(file.oid_at_index(entry_index), entry.oid);
         }
     }
 
