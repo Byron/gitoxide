@@ -116,20 +116,10 @@ Our [stability guide] helps to judge how much churn can be expected when dependi
 
 ### Download a Binary Release
 
-```sh
-curl -LSfs https://raw.githubusercontent.com/Byron/gitoxide/main/ci/install.sh | \
-    sh -s -- --git Byron/gitoxide --crate gix-max-termion
-```
+Using `cargo quickinstall`, one is able to fetch [binary releases][releases]. You can install it via `cargo install quickinstall`, assuming 
+the [rust toolchain][rustup] is present.
 
-If the above fails [surprisingly like this](https://github.com/Byron/gitoxide/issues/330), consider using `cargo quickinstall` instead.
-Note, however, that it requires `cargo` to be present (see [rustup]).
-
-```shell
-cargo install quickinstall
-cargo quickinstall gitoxide
-```
-
-The above will automatically install from source if pre-built binaries are not available for your platform.
+Then install gitoxide with `cargo quickinstall gitoxide`.
 
 See the [releases section][releases] for manual installation and various alternative builds that are _slimmer_ or _smaller_, depending
 on your needs, for _Linux_, _MacOS_ and _Windows_.
