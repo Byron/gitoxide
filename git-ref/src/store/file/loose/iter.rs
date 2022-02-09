@@ -6,7 +6,6 @@ use std::{
 
 use git_features::fs::walkdir::DirEntryIter;
 use git_object::bstr::ByteSlice;
-use os_str_bytes::OsStrBytes;
 
 use crate::{
     store_impl::file::{self, loose::Reference},
@@ -51,20 +50,27 @@ impl Iterator for SortedLoosePaths {
                         .as_deref()
                         .and_then(|prefix| full_path.file_name().map(|name| (prefix, name)))
                     {
+                        // TODO: should we eagerly convert here to remove the os-str-bytes dependency?
+                        use os_str_bytes::OsStrBytes;
                         if !name.to_raw_bytes().starts_with(&prefix.to_raw_bytes()) {
                             continue;
                         }
                     }
                     let full_name = full_path
                         .strip_prefix(&self.base)
-                        .expect("prefix-stripping cannot fail as prefix is our root")
-                        .to_raw_bytes();
-                    #[cfg(windows)]
-                    let full_name: Vec<u8> = full_name.into_owned().replace(b"\\", b"/");
+                        .expect("prefix-stripping cannot fail as prefix is our root");
+                    let full_name = match git_features::path::into_bytes(full_name) {
+                        Some(name) => {
+                            #[cfg(windows)]
+                            let name = git_features::path::convert::to_unix_separators(name);
+                            name.into_owned()
+                        }
+                        None => continue, // TODO: silently skipping ill-formed UTF-8 here, maybe there are better ways?
+                    };
 
                     if git_validate::reference::name_partial(full_name.as_bstr()).is_ok() {
                         #[cfg(not(windows))]
-                        let name = FullName(full_name.into_owned().into());
+                        let name = FullName(full_name.into());
                         #[cfg(windows)]
                         let name = FullName(full_name.into());
                         return Some(Ok((full_path, name)));
