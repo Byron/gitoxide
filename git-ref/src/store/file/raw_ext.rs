@@ -162,7 +162,7 @@ impl ReferenceExt for Reference {
                 Target::Symbolic(full_name) => match store.try_find_packed(full_name.to_partial(), packed) {
                     Ok(Some(next)) => Some(Ok(next)),
                     Ok(None) => Some(Err(file::find::existing::Error::NotFound(
-                        full_name.to_path().into_owned(),
+                        full_name.to_path().to_owned(),
                     ))),
                     Err(err) => Some(Err(file::find::existing::Error::Find(err))),
                 },

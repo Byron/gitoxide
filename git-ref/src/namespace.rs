@@ -1,11 +1,9 @@
 use std::{
-    borrow::Cow,
     convert::TryInto,
     path::{Path, PathBuf},
 };
 
 use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
-use os_str_bytes::OsStrBytes;
 
 use crate::{Namespace, PartialNameRef};
 
@@ -19,17 +17,20 @@ impl Namespace {
         self.0.as_ref()
     }
     /// Return ourselves as a path for use within the filesystem.
-    pub fn to_path(&self) -> Cow<'_, Path> {
-        self.0.to_path().expect("UTF-8 conversion succeeds").into()
+    pub fn to_path(&self) -> &Path {
+        git_features::path::from_byte_slice_or_panic_on_windows(&self.0)
     }
     /// Append the given `prefix` to this namespace so it becomes usable for prefixed iteration.
     pub fn into_namespaced_prefix(mut self, prefix: impl AsRef<Path>) -> PathBuf {
-        self.0.push_str(prefix.as_ref().to_raw_bytes());
-        #[cfg(windows)]
-        let path = self.0.replace(b"/", b"\\").into_path_buf();
-        #[cfg(not(windows))]
-        let path = self.0.replace(b"\\", b"/").into_path_buf();
-        path.expect("UTF-8 conversion succeeds")
+        self.0
+            .push_str(git_features::path::into_bytes_or_panic_on_windows(prefix.as_ref()));
+        git_features::path::from_byte_vec_or_panic_on_windows(
+            git_features::path::convert::to_native_separators({
+                let v: Vec<_> = self.0.into();
+                v
+            })
+            .into_owned(),
+        )
     }
 }
 

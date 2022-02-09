@@ -78,7 +78,7 @@ impl file::Store {
 impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into its log name
     pub(crate) fn reflog_path(&self, name: FullNameRef<'_>) -> PathBuf {
-        self.reflog_path_inner(&name.to_path())
+        self.reflog_path_inner(name.to_path())
     }
 }
 

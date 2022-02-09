@@ -8,7 +8,7 @@ use std::{
 use crate::{
     file::{loose, path_to_name},
     store_impl::{file, packed},
-    FullName, Namespace, Reference,
+    BString, FullName, Namespace, Reference,
 };
 
 /// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise
@@ -163,8 +163,12 @@ impl file::Store {
                     ),
                     None => None,
                 },
-                loose: loose::iter::SortedLoosePaths::at_root_with_names(self.refs_dir(), self.base.to_owned(), None)
-                    .peekable(),
+                loose: loose::iter::SortedLoosePaths::at_root_with_filename_prefix(
+                    self.refs_dir(),
+                    self.base.to_owned(),
+                    None,
+                )
+                .peekable(),
                 buf: Vec::new(),
                 namespace: None,
             }),
@@ -195,7 +199,7 @@ impl file::Store {
     fn iter_prefixed_unvalidated<'s, 'p>(
         &'s self,
         prefix: impl AsRef<Path>,
-        loose_root_and_filename_prefix: (Option<PathBuf>, Option<OsString>),
+        loose_root_and_filename_prefix: (Option<PathBuf>, Option<BString>),
         packed: Option<&'p packed::Buffer>,
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         let packed_prefix = path_to_name(prefix.as_ref());
@@ -204,13 +208,13 @@ impl file::Store {
             packed: match packed {
                 Some(packed) => Some(
                     packed
-                        .iter_prefixed(packed_prefix)
+                        .iter_prefixed(packed_prefix.into_owned())
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
                         .peekable(),
                 ),
                 None => None,
             },
-            loose: loose::iter::SortedLoosePaths::at_root_with_names(
+            loose: loose::iter::SortedLoosePaths::at_root_with_filename_prefix(
                 loose_root_and_filename_prefix
                     .0
                     .unwrap_or_else(|| self.base.join(prefix)),
@@ -255,8 +259,6 @@ mod error {
         }
     }
 }
-
-use std::ffi::OsString;
 
 pub use error::Error;
 use git_features::threading::OwnShared;

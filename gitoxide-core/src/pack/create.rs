@@ -126,8 +126,6 @@ where
         Box<dyn Iterator<Item = Result<ObjectId, input_iteration::Error>> + Send>,
     ) = match input {
         None => {
-            use git::bstr::ByteSlice;
-            use os_str_bytes::OsStrBytes;
             let mut progress = progress.add_child("traversing");
             progress.init(None, progress::count("commits"));
             let tips = tips
@@ -135,7 +133,7 @@ where
                     let easy = repo.to_easy();
                     move |tip| {
                         ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else(|_| {
-                            easy.find_reference(tip.as_ref().to_raw_bytes().as_bstr())
+                            easy.find_reference(tip.as_ref())
                                 .map_err(anyhow::Error::from)
                                 .and_then(|r| r.into_fully_peeled_id().map(|oid| oid.detach()).map_err(Into::into))
                         })

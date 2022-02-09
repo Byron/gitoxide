@@ -53,6 +53,7 @@ rustsha1 = ["sha1_smol"]
 #! ### Optional Dependencies
 #!
 #! - **`time`** - make the `time` module available with access to the local time as configured by the system.
+#! - **`bstr`** - make bstr utilities available in the `path` modules, which itself is gated by the `path` feature.
 #! - **`walkdir`**
 #!     - Makes facilities of the `walkdir` crate partially available.
 #!     - In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.
@@ -88,6 +89,11 @@ name = "pipe"
 path = "tests/pipe.rs"
 required-features = ["io-pipe"]
 
+[[test]]
+name = "path"
+path = "tests/path.rs"
+required-features = ["bstr"]
+
 [dependencies]
 git-hash = { version = "^0.9.1", path = "../git-hash" }
 
@@ -120,7 +126,14 @@ quick-error = { version = "2.0.0", optional = true }
 # time
 time = { version = "0.3.2", optional = true, default-features = false, features = ["local-offset"] }
 
+
+# path
+bstr = { version = "0.2.17", optional = true }
+
 document-features = { version = "0.1.0", optional = true }
+
+[dev-dependencies]
+bstr = "0.2.15"
 
 [package.metadata.docs.rs]
 features = ["document-features"]

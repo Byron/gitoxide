@@ -5,7 +5,6 @@ use std::{
 };
 
 pub use error::Error;
-use git_object::bstr::ByteSlice;
 
 use crate::{
     file,
@@ -133,7 +132,7 @@ impl file::Store {
                             None => relative_path,
                             Some(namespace) => namespace.to_owned().into_namespaced_prefix(relative_path),
                         });
-                        let full_name = PartialNameRef((*full_name).as_bstr().into());
+                        let full_name = PartialNameRef(full_name.into_owned().into());
                         if let Some(packed_ref) = packed.try_find(full_name)? {
                             let mut res: Reference = packed_ref.into();
                             if let Some(namespace) = &self.namespace {
@@ -149,7 +148,7 @@ impl file::Store {
         };
         Ok(Some({
             let full_name = path_to_name(&relative_path);
-            loose::Reference::try_from_path(FullName(full_name), &contents)
+            loose::Reference::try_from_path(FullName(full_name.into_owned()), &contents)
                 .map(Into::into)
                 .map(|mut r: Reference| {
                     if let Some(namespace) = &self.namespace {
@@ -255,7 +254,7 @@ pub mod existing {
                 .map_err(|err| Error::Find(find::Error::RefnameValidation(err.into())))?;
             match self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed) {
                 Ok(Some(r)) => Ok(r),
-                Ok(None) => Err(Error::NotFound(path.to_partial_path().into_owned())),
+                Ok(None) => Err(Error::NotFound(path.to_partial_path().to_owned())),
                 Err(err) => Err(err.into()),
             }
         }

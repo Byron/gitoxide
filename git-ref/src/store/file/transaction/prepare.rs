@@ -53,7 +53,7 @@ impl<'s> Transaction<'s> {
         let lock = match &mut change.update.change {
             Change::Delete { expected, .. } => {
                 let lock = git_lock::Marker::acquire_to_hold_resource(
-                    store.reference_path(&relative_path),
+                    store.reference_path(relative_path),
                     lock_fail_mode,
                     Some(store.base.to_owned()),
                 )
@@ -98,7 +98,7 @@ impl<'s> Transaction<'s> {
             }
             Change::Update { expected, new, .. } => {
                 let mut lock = git_lock::File::acquire_to_update_resource(
-                    store.reference_path(&relative_path),
+                    store.reference_path(relative_path),
                     lock_fail_mode,
                     Some(store.base.to_owned()),
                 )

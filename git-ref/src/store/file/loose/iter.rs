@@ -1,30 +1,28 @@
 use std::{
-    ffi::OsString,
     io::Read,
     path::{Path, PathBuf},
 };
 
 use git_features::fs::walkdir::DirEntryIter;
 use git_object::bstr::ByteSlice;
-use os_str_bytes::OsStrBytes;
 
 use crate::{
     store_impl::file::{self, loose::Reference},
-    FullName,
+    BString, FullName,
 };
 
 /// An iterator over all valid loose reference paths as seen from a particular base directory.
 pub(in crate::store_impl::file) struct SortedLoosePaths {
     pub(crate) base: PathBuf,
-    filename_prefix: Option<OsString>,
+    filename_prefix: Option<BString>,
     file_walk: DirEntryIter,
 }
 
 impl SortedLoosePaths {
-    pub fn at_root_with_names(
+    pub fn at_root_with_filename_prefix(
         path: impl AsRef<Path>,
         base: impl Into<PathBuf>,
-        filename_prefix: Option<OsString>,
+        filename_prefix: Option<BString>,
     ) -> Self {
         let file_walk = git_features::fs::walkdir_sorted_new(path).into_iter();
         SortedLoosePaths {
@@ -51,20 +49,30 @@ impl Iterator for SortedLoosePaths {
                         .as_deref()
                         .and_then(|prefix| full_path.file_name().map(|name| (prefix, name)))
                     {
-                        if !name.to_raw_bytes().starts_with(&prefix.to_raw_bytes()) {
-                            continue;
+                        match git_features::path::os_str_into_bytes(name) {
+                            Some(name) => {
+                                if !name.starts_with(prefix) {
+                                    continue;
+                                }
+                            }
+                            None => continue, // TODO: silently skipping ill-formed UTF-8 on windows - maybe this can be better?
                         }
                     }
                     let full_name = full_path
                         .strip_prefix(&self.base)
-                        .expect("prefix-stripping cannot fail as prefix is our root")
-                        .to_raw_bytes();
-                    #[cfg(windows)]
-                    let full_name: Vec<u8> = full_name.into_owned().replace(b"\\", b"/");
+                        .expect("prefix-stripping cannot fail as prefix is our root");
+                    let full_name = match git_features::path::into_bytes(full_name) {
+                        Some(name) => {
+                            #[cfg(windows)]
+                            let name = git_features::path::convert::to_unix_separators(name);
+                            name.into_owned()
+                        }
+                        None => continue, // TODO: silently skipping ill-formed UTF-8 on windows here, maybe there are better ways?
+                    };
 
                     if git_validate::reference::name_partial(full_name.as_bstr()).is_ok() {
                         #[cfg(not(windows))]
-                        let name = FullName(full_name.into_owned().into());
+                        let name = FullName(full_name.into());
                         #[cfg(windows)]
                         let name = FullName(full_name.into());
                         return Some(Ok((full_path, name)));
@@ -90,7 +98,7 @@ impl Loose {
     /// path to which resulting reference names should be relative to.
     pub fn at_root(root: impl AsRef<Path>, base: impl Into<PathBuf>) -> Self {
         Loose {
-            ref_paths: SortedLoosePaths::at_root_with_names(root, base, None),
+            ref_paths: SortedLoosePaths::at_root_with_filename_prefix(root, base, None),
             buf: Vec::new(),
         }
     }
@@ -100,10 +108,10 @@ impl Loose {
     pub fn at_root_with_filename_prefix(
         root: impl AsRef<Path>,
         base: impl Into<PathBuf>,
-        prefix: Option<OsString>,
+        prefix: Option<BString>,
     ) -> Self {
         Loose {
-            ref_paths: SortedLoosePaths::at_root_with_names(root, base, prefix),
+            ref_paths: SortedLoosePaths::at_root_with_filename_prefix(root, base, prefix),
             buf: Vec::new(),
         }
     }
@@ -170,7 +178,7 @@ impl file::Store {
         &self,
         base: &Path,
         prefix: &Path,
-    ) -> std::io::Result<(PathBuf, Option<OsString>)> {
+    ) -> std::io::Result<(PathBuf, Option<BString>)> {
         if prefix.is_absolute() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
@@ -190,7 +198,19 @@ impl file::Store {
         } else {
             Ok((
                 base.parent().expect("a parent is always there unless empty").to_owned(),
-                base.file_name().map(ToOwned::to_owned),
+                base.file_name()
+                    .map(ToOwned::to_owned)
+                    .map(|p| {
+                        git_features::path::into_bytes(PathBuf::from(p))
+                            .map(|p| BString::from(p.into_owned()))
+                            .ok_or_else(|| {
+                                std::io::Error::new(
+                                    std::io::ErrorKind::InvalidInput,
+                                    "prefix contains ill-formed UTF-8",
+                                )
+                            })
+                    })
+                    .transpose()?,
             ))
         }
     }

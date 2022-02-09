@@ -3,7 +3,6 @@ pub mod index_names {
     use std::path::{Path, PathBuf};
 
     use git_object::bstr::{BString, ByteSlice};
-    use os_str_bytes::OsStrBytes;
 
     /// The ID used for the index-names chunk.
     pub const ID: git_chunk::Id = *b"PNAM";
@@ -35,11 +34,11 @@ pub mod index_names {
             let null_byte_pos = chunk.find_byte(b'\0').ok_or(decode::Error::MissingNullByte)?;
 
             let path = &chunk[..null_byte_pos];
-            let path = Path::from_raw_bytes(path)
-                .map_err(|_| decode::Error::PathEncoding {
+            let path = git_features::path::from_byte_slice(path)
+                .ok_or_else(|| decode::Error::PathEncoding {
                     path: BString::from(path),
                 })?
-                .into_owned();
+                .to_owned();
 
             if let Some(previous) = out.last() {
                 if previous >= &path {

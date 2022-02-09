@@ -19,6 +19,7 @@ serde1 = ["serde", "bstr/serde1"]
 
 [dependencies]
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
+git-features = { version = "^0.19.1", path = "../git-features" }
 quick-error = "2.0.0"
 url = "2.1.1"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }

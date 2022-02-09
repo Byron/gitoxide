@@ -84,6 +84,12 @@
 * **when to use shared ownership**
   - Use `git_features::threading::OwnShared` particularly when shared resources supposed to be used by thread-local handles. Going through a wrapper for shared ownership is fast
     and won't be the bottleneck, as it's only about 16% slower than going through a shared reference on a single core.
+* **Path encoding**
+  - For `git`, paths are just bytes no matter on which platform. We assume that on windows its path handling goes through some abstraction layer like `MSYS2`
+    which avoids it to seeing UTF-16 encoded paths (and writing them). Thus it should be safe to assume `git`s path encoding is byte oriented.
+  - Assuming UTF8-ish bytes in paths produced by `git` even on windows due to `MSYS2`, we use `os_str_bytes` to convert these back into `OsStr` and derivatives like `Path`
+    as needed even though it might not always be the case depending on the actual encoding used by `MSYS2` or other abstraction layers, or avoiding to use std types altogether
+    using our own instead.
     
 ## Sha256
 

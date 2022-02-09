@@ -16,8 +16,10 @@ doctest = false
 git-index = { version = "^0.1.0", path = "../git-index" }
 git-hash = { version = "^0.9.0", path = "../git-hash" }
 git-object = { version = "^0.17.0", path = "../git-object" }
+git-features = { version = "^0.19.1", path = "../git-features" }
 
 quick-error = "2.0.1"
+bstr = { version = "0.2.13", default-features = false }
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }

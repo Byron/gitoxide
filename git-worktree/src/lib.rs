@@ -4,6 +4,7 @@ pub mod index {
     use git_hash::oid;
 
     pub mod checkout {
+        use bstr::BString;
         use quick_error::quick_error;
 
         #[derive(Clone, Copy)]
@@ -20,10 +21,8 @@ pub mod index {
         quick_error! {
             #[derive(Debug)]
             pub enum Error {
-                PathToUtf8(err: git_object::bstr::Utf8Error) {
-                    from()
-                    source(err)
-                    display("Could not convert path to UTF8")
+                IllformedUtf8{ path: BString } {
+                    display("Could not convert path to UTF8: {}", path)
                 }
                 Time(err: std::time::SystemTimeError) {
                     from()
@@ -35,7 +34,7 @@ pub mod index {
                     source(err)
                     display("IO error while writing blob or reading file metadata or changing filetype")
                 }
-                ObjectNotFound(oid: git_hash::ObjectId, path: std::path::PathBuf) {
+                ObjectNotFound{ oid: git_hash::ObjectId, path: std::path::PathBuf } {
                     display("object {} for checkout at {} not found in object database", oid.to_hex(), path.display())
                 }
             }
@@ -72,9 +71,9 @@ pub mod index {
             time::Duration,
         };
 
+        use bstr::BStr;
         use git_hash::oid;
         use git_index::Entry;
-        use git_object::bstr::{BStr, ByteSlice};
 
         use crate::index;
 
@@ -89,13 +88,19 @@ pub mod index {
         where
             Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_object::BlobRef<'a>>,
         {
-            let dest = root.join(entry_path.to_path()?); // TODO: try to use os_str_bytes to avoid UTF8 conversion. Put that into git-ref too
+            let dest = root.join(git_features::path::from_byte_slice(entry_path).ok_or_else(|| {
+                index::checkout::Error::IllformedUtf8 {
+                    path: entry_path.to_owned(),
+                }
+            })?);
             create_dir_all(dest.parent().expect("entry paths are never empty"))?; // TODO: can this be avoided to create dirs when needed only?
 
             match entry.mode {
                 git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {
-                    let obj = find(&entry.id, buf)
-                        .ok_or_else(|| index::checkout::Error::ObjectNotFound(entry.id, root.to_path_buf()))?;
+                    let obj = find(&entry.id, buf).ok_or_else(|| index::checkout::Error::ObjectNotFound {
+                        oid: entry.id,
+                        path: root.to_path_buf(),
+                    })?;
                     let mut options = OpenOptions::new();
                     options.write(true).create_new(true);
                     #[cfg(unix)]
@@ -116,9 +121,12 @@ pub mod index {
                     update_fstat(entry, ctime, mtime)?;
                 }
                 git_index::entry::Mode::SYMLINK => {
-                    let obj = find(&entry.id, buf)
-                        .ok_or_else(|| index::checkout::Error::ObjectNotFound(entry.id, root.to_path_buf()))?;
-                    let symlink_destination = obj.data.to_path()?;
+                    let obj = find(&entry.id, buf).ok_or_else(|| index::checkout::Error::ObjectNotFound {
+                        oid: entry.id,
+                        path: root.to_path_buf(),
+                    })?;
+                    let symlink_destination = git_features::path::from_byte_slice(obj.data)
+                        .ok_or_else(|| index::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
                     if symlinks {
                         #[cfg(unix)]
                         std::os::unix::fs::symlink(symlink_destination, &dest)?;
