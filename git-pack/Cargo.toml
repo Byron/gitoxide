@@ -37,7 +37,7 @@ path = "tests/pack-single-threaded.rs"
 required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
 [dependencies]
-git-features = { version = "^0.19.1", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib", "path"] }
+git-features = { version = "^0.19.1", path = "../git-features", features = ["crc32", "rustsha1", "progress", "zlib"] }
 git-hash = { version = "^0.9.2", path = "../git-hash" }
 git-chunk = { version = "^0.3.0", path = "../git-chunk" }
 git-object = { version = "^0.17.1", path = "../git-object" }

@@ -24,7 +24,6 @@ pub mod interrupt;
 #[cfg(feature = "io-pipe")]
 pub mod io;
 pub mod parallel;
-#[cfg(feature = "path")]
 pub mod path;
 #[cfg(feature = "progress")]
 pub mod progress;

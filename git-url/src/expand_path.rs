@@ -27,10 +27,8 @@ quick_error! {
     /// The error used by [`parse()`], [`with()`] and [`expand_path()`].
     #[derive(Debug)]
     pub enum Error {
-        Utf8(err: bstr::Utf8Error) {
-            display("UTF8 conversion on non-unix system failed")
-            from()
-            source(err)
+        IllformedUtf8{path: BString} {
+            display("UTF8 conversion on non-unix system failed for path: {}", path)
         }
         MissingHome(user: Option<BString>) {
             display("Home directory could not be obtained for {}", match user {Some(user) => format!("user '{}'", user), None => "current user".into()})
@@ -108,7 +106,8 @@ pub fn with(
     fn make_relative(path: &Path) -> PathBuf {
         path.components().skip(1).collect()
     }
-    let path = path.to_path()?;
+    let path =
+        git_features::path::from_byte_slice(path).ok_or_else(|| Error::IllformedUtf8 { path: path.to_owned() })?;
     Ok(match user {
         Some(user) => home_for_user(user)
             .ok_or_else(|| Error::MissingHome(user.to_owned().into()))?

@@ -64,11 +64,6 @@ rustsha1 = ["sha1_smol"]
 ## Caches implement this by default, which costs nothing unless this feature is enabled
 cache-efficiency-debug = []
 
-## Provide path conversion capabilities to handle git's byte-based path with unspecified encoding and turn them into `Path/PathBuf` respectively
-## without meddling with the encoding too much.
-## Using these capabilities won't mean conversions won't go wrong, but it means they can be fixed in a central place.
-path = []
-
 [[test]]
 name = "hash"
 path = "tests/hash.rs"
@@ -97,7 +92,7 @@ required-features = ["io-pipe"]
 [[test]]
 name = "path"
 path = "tests/path.rs"
-required-features = ["path", "bstr"]
+required-features = ["bstr"]
 
 [dependencies]
 git-hash = { version = "^0.9.1", path = "../git-hash" }

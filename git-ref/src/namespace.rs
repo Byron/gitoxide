@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     convert::TryInto,
     path::{Path, PathBuf},
 };
@@ -18,8 +17,8 @@ impl Namespace {
         self.0.as_ref()
     }
     /// Return ourselves as a path for use within the filesystem.
-    pub fn to_path(&self) -> Cow<'_, Path> {
-        self.0.to_path().expect("UTF-8 conversion succeeds").into()
+    pub fn to_path(&self) -> &Path {
+        git_features::path::from_byte_slice_or_panic_on_windows(&self.0)
     }
     /// Append the given `prefix` to this namespace so it becomes usable for prefixed iteration.
     pub fn into_namespaced_prefix(mut self, prefix: impl AsRef<Path>) -> PathBuf {

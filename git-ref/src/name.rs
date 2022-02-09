@@ -1,6 +1,5 @@
 use std::ffi::OsStr;
 use std::{
-    borrow::Cow,
     convert::{Infallible, TryFrom},
     path::Path,
 };
@@ -14,10 +13,8 @@ pub type Error = git_validate::reference::name::Error;
 
 impl<'a> FullNameRef<'a> {
     /// Convert this name into the relative path identifying the reference location.
-    // TODO: use custom `Path` type instead, as this isn't really a path. See ref iteration with prefix for
-    //       similar comment.
-    pub fn to_path(self) -> Cow<'a, Path> {
-        self.0.to_path().expect("UTF-8 conversion always succeeds").into()
+    pub fn to_path(self) -> &'a Path {
+        git_features::path::from_byte_slice_or_panic_on_windows(&self.0)
     }
 
     /// Return ourselves as byte string which is a valid refname
@@ -29,8 +26,8 @@ impl<'a> FullNameRef<'a> {
 impl<'a> PartialNameRef<'a> {
     /// Convert this name into the relative path possibly identifying the reference location.
     /// Note that it may be only a partial path though.
-    pub fn to_partial_path(&'a self) -> Cow<'a, Path> {
-        self.0.to_path().expect("UTF-8 conversion always succeeds").into()
+    pub fn to_partial_path(&'a self) -> &'a Path {
+        git_features::path::from_byte_slice_or_panic_on_windows(self.0.as_ref())
     }
 
     /// Provide the name as binary string which is known to be a valid partial ref name.

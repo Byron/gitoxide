@@ -139,7 +139,7 @@ impl<'s> Transaction<'s> {
             };
             if take_lock_and_delete {
                 let lock = change.lock.take().expect("lock must still be present in delete mode");
-                let reference_path = self.store.reference_path(change.update.name.to_path().as_ref());
+                let reference_path = self.store.reference_path(change.update.name.to_path());
                 if let Err(err) = std::fs::remove_file(reference_path) {
                     if err.kind() != std::io::ErrorKind::NotFound {
                         return Err(Error::DeleteReference {

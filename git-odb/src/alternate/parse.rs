@@ -22,14 +22,13 @@ pub(crate) fn content(input: &[u8]) -> Result<Vec<PathBuf>, Error> {
             continue;
         }
         out.push(
-            if line.starts_with(b"\"") {
+            git_features::path::from_bstr(if line.starts_with(b"\"") {
                 unquote::ansi_c(line)?
             } else {
                 Cow::Borrowed(line)
-            }
-            .to_path()
-            .map(ToOwned::to_owned)
-            .map_err(|_| Error::PathConversion(line.to_vec()))?,
+            })
+            .ok_or_else(|| Error::PathConversion(line.to_vec()))?
+            .into_owned(),
         )
     }
     Ok(out)

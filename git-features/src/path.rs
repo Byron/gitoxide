@@ -104,8 +104,28 @@ pub fn from_byte_slice(input: &[u8]) -> Option<&Path> {
     Some(p)
 }
 
+/// Similar to [`from_byte_slice()`], but takes either borrowed or owned `input`.
+pub fn from_bytes<'a>(input: impl Into<Cow<'a, [u8]>>) -> Option<Cow<'a, Path>> {
+    let input = input.into();
+    match input {
+        Cow::Borrowed(input) => from_byte_slice(input).map(Cow::Borrowed),
+        Cow::Owned(input) => from_byte_vec(input).map(Cow::Owned),
+    }
+}
+
+/// Similar to [`from_byte_slice()`], but takes either borrowed or owned `input` as bstr.
+#[cfg(feature = "bstr")]
+pub fn from_bstr<'a>(input: impl Into<Cow<'a, bstr::BStr>>) -> Option<Cow<'a, Path>> {
+    let input = input.into();
+    match input {
+        Cow::Borrowed(input) => from_byte_slice(input).map(Cow::Borrowed),
+        Cow::Owned(input) => from_byte_vec(input).map(Cow::Owned),
+    }
+}
+
 /// Similar to [`from_byte_slice()`], but takes and produces owned data.
-pub fn from_byte_vec(input: Vec<u8>) -> Option<PathBuf> {
+pub fn from_byte_vec(input: impl Into<Vec<u8>>) -> Option<PathBuf> {
+    let input = input.into();
     #[cfg(unix)]
     let p = {
         use std::os::unix::ffi::OsStringExt;
@@ -117,8 +137,13 @@ pub fn from_byte_vec(input: Vec<u8>) -> Option<PathBuf> {
 }
 
 /// Similar to [`from_byte_vec()`], but will panic if there is ill-formed UTF-8 in the `input`.
-pub fn from_byte_vec_or_panic_on_windows(input: Vec<u8>) -> PathBuf {
+pub fn from_byte_vec_or_panic_on_windows(input: impl Into<Vec<u8>>) -> PathBuf {
     from_byte_vec(input).expect("well-formed UTF-8 on windows")
+}
+
+/// Similar to [`from_byte_slice()`], but will panic if there is ill-formed UTF-8 in the `input`.
+pub fn from_byte_slice_or_panic_on_windows(input: &[u8]) -> &Path {
+    from_byte_slice(input).expect("well-formed UTF-8 on windows")
 }
 
 /// Methods to handle paths as bytes and do conversions between them.

@@ -1676,6 +1676,7 @@ name = "git-url"
 version = "0.3.5"
 dependencies = [
  "bstr",
+ "git-features 0.19.1",
  "home",
  "quick-error",
  "serde",
@@ -1717,6 +1718,8 @@ dependencies = [
 name = "git-worktree"
 version = "0.0.0"
 dependencies = [
+ "bstr",
+ "git-features 0.19.1",
  "git-hash 0.9.2",
  "git-index",
  "git-object 0.17.1",
@@ -1776,6 +1779,7 @@ dependencies = [
  "futures-lite",
  "git-commitgraph",
  "git-config",
+ "git-features 0.19.1",
  "git-pack 0.16.1",
  "git-repository",
  "git-url 0.3.5",

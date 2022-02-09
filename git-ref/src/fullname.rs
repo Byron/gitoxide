@@ -1,4 +1,4 @@
-use std::{borrow::Cow, convert::TryFrom, path::Path};
+use std::{convert::TryFrom, path::Path};
 
 use git_object::bstr::{BStr, BString, ByteSlice};
 
@@ -74,8 +74,8 @@ impl FullName {
     }
 
     /// Convert this name into the relative path, lossily, identifying the reference location relative to a repository
-    pub fn to_path(&self) -> Cow<'_, Path> {
-        self.0.to_path().expect("UTF-8 conversion always succeeds").into()
+    pub fn to_path(&self) -> &Path {
+        git_features::path::from_byte_slice_or_panic_on_windows(&self.0)
     }
 
     /// Dissolve this instance and return the buffer.

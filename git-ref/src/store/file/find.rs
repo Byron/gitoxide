@@ -254,7 +254,7 @@ pub mod existing {
                 .map_err(|err| Error::Find(find::Error::RefnameValidation(err.into())))?;
             match self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed) {
                 Ok(Some(r)) => Ok(r),
-                Ok(None) => Err(Error::NotFound(path.to_partial_path().into_owned())),
+                Ok(None) => Err(Error::NotFound(path.to_partial_path().to_owned())),
                 Err(err) => Err(err.into()),
             }
         }
