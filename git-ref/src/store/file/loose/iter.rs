@@ -51,7 +51,7 @@ impl Iterator for SortedLoosePaths {
                     {
                         match git_features::path::os_str_into_bytes(name) {
                             Some(name) => {
-                                if !name.starts_with(&prefix) {
+                                if !name.starts_with(prefix) {
                                     continue;
                                 }
                             }
