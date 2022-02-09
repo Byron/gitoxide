@@ -44,7 +44,7 @@ use std::path::{Path, PathBuf};
 use std::borrow::Cow;
 use std::ffi::OsStr;
 
-/// Like [`to_bytes()`], but takes `OsStr` as input for a lossless, but fallible, conversion.
+/// Like [`into_bytes()`], but takes `OsStr` as input for a lossless, but fallible, conversion.
 pub fn os_str_into_bytes(path: &OsStr) -> Option<&[u8]> {
     into_bytes(Cow::Borrowed(path.as_ref())).map(|p| match p {
         Cow::Borrowed(p) => p,

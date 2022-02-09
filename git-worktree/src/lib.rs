@@ -125,11 +125,8 @@ pub mod index {
                         oid: entry.id,
                         path: root.to_path_buf(),
                     })?;
-                    let symlink_destination = git_features::path::from_byte_slice(&obj.data).ok_or_else(|| {
-                        index::checkout::Error::IllformedUtf8 {
-                            path: obj.data.clone().into(),
-                        }
-                    })?;
+                    let symlink_destination = git_features::path::from_byte_slice(obj.data)
+                        .ok_or_else(|| index::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
                     if symlinks {
                         #[cfg(unix)]
                         std::os::unix::fs::symlink(symlink_destination, &dest)?;

@@ -14,7 +14,7 @@ pub type Error = git_validate::reference::name::Error;
 impl<'a> FullNameRef<'a> {
     /// Convert this name into the relative path identifying the reference location.
     pub fn to_path(self) -> &'a Path {
-        git_features::path::from_byte_slice_or_panic_on_windows(&self.0)
+        git_features::path::from_byte_slice_or_panic_on_windows(self.0)
     }
 
     /// Return ourselves as byte string which is a valid refname
