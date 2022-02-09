@@ -12,7 +12,7 @@ mod prefix {
                 let mut expected = String::from(&oid_hex[..hex_len]);
                 let num_of_zeros = oid.kind().len_in_hex() - hex_len;
                 expected.extend(std::iter::repeat('0').take(num_of_zeros));
-                let prefix = git_hash::Prefix::try_from_id(oid, hex_len).unwrap();
+                let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
                 assert_eq!(prefix.as_oid().to_hex().to_string(), expected, "{}", hex_len);
                 assert_eq!(prefix.hex_len(), hex_len);
             }
@@ -22,7 +22,7 @@ mod prefix {
         fn errors_if_hex_len_is_longer_than_oid_len_in_hex() {
             let kind = Kind::Sha1;
             assert!(matches!(
-                git_hash::Prefix::try_from_id(ObjectId::null(kind), kind.len_in_hex() + 1),
+                git_hash::Prefix::new(ObjectId::null(kind), kind.len_in_hex() + 1),
                 Err(git_hash::prefix::Error::TooLong { .. })
             ));
         }
@@ -31,7 +31,7 @@ mod prefix {
         fn errors_if_hex_len_is_too_short() {
             let kind = Kind::Sha1;
             assert!(matches!(
-                git_hash::Prefix::try_from_id(ObjectId::null(kind), 3),
+                git_hash::Prefix::new(ObjectId::null(kind), 3),
                 Err(git_hash::prefix::Error::TooShort { .. })
             ));
         }

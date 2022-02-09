@@ -35,7 +35,7 @@ impl Prefix {
     ///
     /// For instance, with `hex_len` of 7 the resulting prefix is 3.5 bytes, or 3 bytes and 4 bits
     /// wide, with all other bytes and bits set to zero.
-    pub fn try_from_id(id: impl AsRef<oid>, hex_len: usize) -> Result<Self, prefix::Error> {
+    pub fn new(id: impl AsRef<oid>, hex_len: usize) -> Result<Self, prefix::Error> {
         let id = id.as_ref();
         if hex_len > id.kind().len_in_hex() {
             Err(prefix::Error::TooLong {
