@@ -42,6 +42,15 @@
 use std::path::Path;
 
 use std::borrow::Cow;
+use std::ffi::OsStr;
+
+/// Like [`to_bytes()`], but takes `OsStr` as input for a lossless, but fallible, conversion.
+pub fn os_str_to_bytes(path: &OsStr) -> Option<&[u8]> {
+    to_bytes(Cow::Borrowed(path.as_ref())).map(|p| match p {
+        Cow::Borrowed(p) => p,
+        Cow::Owned(_) => unreachable!("borrowed cows stay borrowed"),
+    })
+}
 
 /// Convert the given path either into its raw bytes on unix or its UTF8 encoded counterpart on windows.
 ///
@@ -79,10 +88,9 @@ pub fn to_bytes<'a>(path: impl Into<Cow<'a, Path>>) -> Option<Cow<'a, [u8]>> {
 /// On windows, the input is required to be valid UTF-8, which is guaranteed if we wrote it before. There are some potential
 /// git versions and windows installation which produce mal-formed UTF-16 if certain emojies are in the path. It's as rare as
 /// it sounds, but possible.
-pub fn from_bytes(input: &[u8]) -> Option<&Path> {
+pub fn from_byte_slice(input: &[u8]) -> Option<&Path> {
     #[cfg(unix)]
     let p = {
-        use std::ffi::OsStr;
         use std::os::unix::ffi::OsStrExt;
         OsStr::from_bytes(input).as_ref()
     };
