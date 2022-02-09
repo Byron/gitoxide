@@ -3,15 +3,28 @@ mod bytes {
     use git_features::path;
 
     #[test]
-    fn backslash_to_slash() {
+    fn assure_unix_separators() {
         assert_eq!(
-            path::bytes::backslash_to_slash(b"no-backslash".as_ref()).as_bstr(),
+            path::convert::to_unix_separators(b"no-backslash".as_ref()).as_bstr(),
             "no-backslash"
         );
 
         assert_eq!(
-            path::bytes::backslash_to_slash(b"\\a\\b\\\\".as_ref()).as_bstr(),
+            path::convert::to_unix_separators(b"\\a\\b\\\\".as_ref()).as_bstr(),
             "/a/b//"
+        );
+    }
+
+    #[test]
+    fn assure_windows_separators() {
+        assert_eq!(
+            path::convert::to_windows_separators(b"no-backslash".as_ref()).as_bstr(),
+            "no-backslash"
+        );
+
+        assert_eq!(
+            path::convert::to_windows_separators(b"/a/b//".as_ref()).as_bstr(),
+            "\\a\\b\\\\"
         );
     }
 }

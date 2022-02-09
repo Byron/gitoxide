@@ -39,14 +39,14 @@
 //! Callers may `.expect()` on the result to indicate they don't wish to handle this special and rare case. Note that servers should not
 //! ever get into a code-path which does panic though.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use std::borrow::Cow;
 use std::ffi::OsStr;
 
 /// Like [`to_bytes()`], but takes `OsStr` as input for a lossless, but fallible, conversion.
-pub fn os_str_to_bytes(path: &OsStr) -> Option<&[u8]> {
-    to_bytes(Cow::Borrowed(path.as_ref())).map(|p| match p {
+pub fn os_str_into_bytes(path: &OsStr) -> Option<&[u8]> {
+    into_bytes(Cow::Borrowed(path.as_ref())).map(|p| match p {
         Cow::Borrowed(p) => p,
         Cow::Owned(_) => unreachable!("borrowed cows stay borrowed"),
     })
@@ -56,7 +56,7 @@ pub fn os_str_to_bytes(path: &OsStr) -> Option<&[u8]> {
 ///
 /// On windows, if the source Path contains ill-formed, lone surrogates, the UTF-8 conversion will fail
 /// causing `None` to be returned.
-pub fn to_bytes<'a>(path: impl Into<Cow<'a, Path>>) -> Option<Cow<'a, [u8]>> {
+pub fn into_bytes<'a>(path: impl Into<Cow<'a, Path>>) -> Option<Cow<'a, [u8]>> {
     let path = path.into();
     let utf8_bytes = match path {
         Cow::Owned(path) => Cow::Owned({
@@ -99,28 +99,58 @@ pub fn from_byte_slice(input: &[u8]) -> Option<&Path> {
     Some(p)
 }
 
+/// Similar to [`from_byte_slice()`], but takes and produces owned data.
+pub fn from_byte_vec(input: Vec<u8>) -> Option<PathBuf> {
+    #[cfg(unix)]
+    let p = {
+        use std::os::unix::ffi::OsStringExt;
+        std::ffi::OsString::from_vec(input).into()
+    };
+    #[cfg(not(unix))]
+    let p = PathBuf::from(String::from_utf8(input).ok()?);
+    Some(p)
+}
+
 /// Methods to handle paths as bytes and do conversions between them.
-pub mod bytes {
+pub mod convert {
     use std::borrow::Cow;
 
-    /// Find backslashes and replace them with slashes, which typically resembles a unix path.
-    ///
-    /// No other transformation is performed, the caller must check other invariants.
-    pub fn backslash_to_slash<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, [u8]> {
+    fn replace<'a>(path: impl Into<Cow<'a, [u8]>>, find: u8, replace: u8) -> Cow<'a, [u8]> {
         let path = path.into();
-        if !path.contains(&b'\\') {
+        if !path.contains(&find) {
             return path;
         }
         let mut path = path.into_owned();
-        for b in path.iter_mut().filter(|b| **b == b'\\') {
-            *b = b'/';
+        for b in path.iter_mut().filter(|b| **b == find) {
+            *b = replace;
         }
         path.into()
     }
 
+    /// Replaces windows path separators with slashes.
+    pub fn to_native_separators<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, [u8]> {
+        #[cfg(not(windows))]
+        let p = to_unix_separators(path);
+        #[cfg(windows)]
+        let p = to_windows_separators(path);
+        p
+    }
+
+    /// Replaces windows path separators with slashes.
+    pub fn to_unix_separators<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, [u8]> {
+        replace(path, b'\\', b'/')
+    }
+
+    /// Find backslashes and replace them with slashes, which typically resembles a unix path.
+    ///
+    /// No other transformation is performed, the caller must check other invariants.
+    pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, [u8]> {
+        replace(path, b'/', b'\\')
+    }
+
     /// Obtain a `BStr` compatible `Cow` from one that is bytes.
     #[cfg(feature = "bstr")]
-    pub fn to_bstr(path: Cow<'_, [u8]>) -> Cow<'_, bstr::BStr> {
+    pub fn into_bstr(path: Cow<'_, [u8]>) -> Cow<'_, bstr::BStr> {
         match path {
             Cow::Owned(p) => Cow::Owned(p.into()),
             Cow::Borrowed(p) => Cow::Borrowed(p.into()),

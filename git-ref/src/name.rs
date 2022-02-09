@@ -73,7 +73,7 @@ impl<'a> TryFrom<&'a OsStr> for PartialNameRef<'a> {
     type Error = Error;
 
     fn try_from(v: &'a OsStr) -> Result<Self, Self::Error> {
-        let v = git_features::path::os_str_to_bytes(v)
+        let v = git_features::path::os_str_into_bytes(v)
             .ok_or_else(|| Error::Tag(git_validate::tag::name::Error::InvalidByte("<unknown encoding>".into())))?;
         Ok(PartialNameRef(
             git_validate::reference::name_partial(v.as_bstr())?.into(),
