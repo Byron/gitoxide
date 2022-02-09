@@ -53,7 +53,7 @@ pub struct Transaction<'s> {
 }
 
 pub(in crate::store_impl::file) fn path_to_name<'a>(path: impl Into<Cow<'a, Path>>) -> Cow<'a, BStr> {
-    let path = git_features::path::to_bytes_transient(path.into());
+    let path = git_features::path::to_bytes(path.into()).expect("valid UTF-8 conversion - fixing this needs something like FullNameOS to represent ill-formed names read from disk");
 
     #[cfg(windows)]
     let path = git_features::path::bytes::backslash_to_slash(path);
