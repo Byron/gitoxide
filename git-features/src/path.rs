@@ -38,12 +38,10 @@
 //! Even though the error only exists on older windows versions, we will represent it in the type system through fallible function calls.
 //! Callers may `.expect()` on the result to indicate they don't wish to handle this special and rare case. Note that servers should not
 //! ever get into a code-path which does panic though.
-//!
-//! ### Open Questions
-//!
-//! - Should we provide
-use std::borrow::Cow;
+
 use std::path::Path;
+
+use std::borrow::Cow;
 
 /// Convert the given path either into its raw bytes on unix or its UTF8 encoded counterpart on windows.
 ///
@@ -74,6 +72,23 @@ pub fn to_bytes<'a>(path: impl Into<Cow<'a, Path>>) -> Option<Cow<'a, [u8]>> {
         }),
     };
     Some(utf8_bytes)
+}
+
+/// Given `input` bytes, produce a `Path` from them ignoring encoding entirely if on unix.
+///
+/// On windows, the input is required to be valid UTF-8, which is guaranteed if we wrote it before. There are some potential
+/// git versions and windows installation which produce mal-formed UTF-16 if certain emojies are in the path. It's as rare as
+/// it sounds, but possible.
+pub fn from_bytes(input: &[u8]) -> Option<&Path> {
+    #[cfg(unix)]
+    let p = {
+        use std::ffi::OsStr;
+        use std::os::unix::ffi::OsStrExt;
+        OsStr::from_bytes(input).as_ref()
+    };
+    #[cfg(not(unix))]
+    let p = Path::new(std::str::from_utf8(input).ok()?);
+    Some(p)
 }
 
 /// Methods to handle paths as bytes and do conversions between them.
