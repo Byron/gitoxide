@@ -36,7 +36,6 @@ git-tempfile = { version ="^1.0.0", path = "../git-tempfile" }
 quick-error = "2.0.0"
 nom = { version = "7", default-features = false, features = ["std"]}
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
-os_str_bytes = "6.0.0"
 
 # packed refs
 memmap2 = "0.5.0"
