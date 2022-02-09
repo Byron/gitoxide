@@ -5,7 +5,6 @@ use std::{
 };
 
 pub use error::Error;
-use git_object::bstr::ByteSlice;
 
 use crate::{
     file,
@@ -133,7 +132,7 @@ impl file::Store {
                             None => relative_path,
                             Some(namespace) => namespace.to_owned().into_namespaced_prefix(relative_path),
                         });
-                        let full_name = PartialNameRef((*full_name).as_bstr().into());
+                        let full_name = PartialNameRef(full_name.into_owned().into());
                         if let Some(packed_ref) = packed.try_find(full_name)? {
                             let mut res: Reference = packed_ref.into();
                             if let Some(namespace) = &self.namespace {

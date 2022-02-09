@@ -83,6 +83,11 @@ pub fn into_bytes<'a>(path: impl Into<Cow<'a, Path>>) -> Option<Cow<'a, [u8]>> {
     Some(utf8_bytes)
 }
 
+/// Similar to [`into_bytes()`] but panics if malformed surrogates are encountered on windows.
+pub fn into_bytes_or_panic_on_windows<'a>(path: impl Into<Cow<'a, Path>>) -> Cow<'a, [u8]> {
+    into_bytes(path).expect("prefix path doesn't contain ill-formed UTF-8")
+}
+
 /// Given `input` bytes, produce a `Path` from them ignoring encoding entirely if on unix.
 ///
 /// On windows, the input is required to be valid UTF-8, which is guaranteed if we wrote it before. There are some potential
@@ -111,20 +116,35 @@ pub fn from_byte_vec(input: Vec<u8>) -> Option<PathBuf> {
     Some(p)
 }
 
+/// Similar to [`from_byte_vec()`], but will panic if there is ill-formed UTF-8 in the `input`.
+pub fn from_byte_vec_or_panic_on_windows(input: Vec<u8>) -> PathBuf {
+    from_byte_vec(input).expect("well-formed UTF-8 on windows")
+}
+
 /// Methods to handle paths as bytes and do conversions between them.
 pub mod convert {
     use std::borrow::Cow;
 
     fn replace<'a>(path: impl Into<Cow<'a, [u8]>>, find: u8, replace: u8) -> Cow<'a, [u8]> {
         let path = path.into();
-        if !path.contains(&find) {
-            return path;
+        match path {
+            Cow::Owned(mut path) => {
+                for b in path.iter_mut().filter(|b| **b == find) {
+                    *b = replace;
+                }
+                path.into()
+            }
+            Cow::Borrowed(path) => {
+                if !path.contains(&find) {
+                    return path.into();
+                }
+                let mut path = path.to_owned();
+                for b in path.iter_mut().filter(|b| **b == find) {
+                    *b = replace;
+                }
+                path.into()
+            }
         }
-        let mut path = path.into_owned();
-        for b in path.iter_mut().filter(|b| **b == find) {
-            *b = replace;
-        }
-        path.into()
     }
 
     /// Replaces windows path separators with slashes.
