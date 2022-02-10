@@ -68,8 +68,32 @@ impl File {
     }
 
     /// TODO
-    pub fn lookup_prefix(&self, _prefix: git_hash::Prefix) -> Option<PrefixLookupResult> {
-        todo!()
+    pub fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Option<PrefixLookupResult> {
+        let prefix_oid = prefix.as_oid();
+        let first_byte = prefix_oid.first_byte() as usize;
+        let mut upper_bound = self.fan[first_byte];
+        let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };
+
+        // Bisect using indices
+        let mut candidate = None;
+        while lower_bound < upper_bound {
+            let mid = (lower_bound + upper_bound) / 2;
+            let mid_sha = self.oid_at_index(mid);
+            candidate = Some(mid);
+
+            use std::cmp::Ordering::*;
+            match prefix_oid.cmp(mid_sha) {
+                Less => upper_bound = mid,
+                Equal if prefix.hex_len() == prefix_oid.kind().len_in_hex() => return Some(Ok(mid)),
+                Equal => break,
+                Greater => lower_bound = mid + 1,
+            }
+        }
+
+        let candidate = candidate?;
+        prefix
+            .matches_candidate(self.oid_at_index(candidate))
+            .then(|| Ok(candidate))
     }
 
     /// Find the index ranging from 0 to [File::num_objects()] that belongs to data associated with `id`, or `None` if it wasn't found.

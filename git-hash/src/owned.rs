@@ -71,6 +71,23 @@ impl Prefix {
     pub fn hex_len(&self) -> usize {
         self.hex_len
     }
+
+    /// Provided with candidate id which is a full hash, determine if this prefix fully matches
+    /// the corresponding part in the candidate id.
+    pub fn matches_candidate(&self, candidate: &oid) -> bool {
+        let common_len = self.hex_len / 2;
+
+        if !(self.bytes.as_bytes()[..common_len] == candidate.as_bytes()[..common_len]) {
+            return false;
+        }
+
+        if self.hex_len % 2 == 1 {
+            let half_byte_idx = self.hex_len / 2;
+            self.bytes.as_bytes()[half_byte_idx] == (candidate.as_bytes()[half_byte_idx] & 0xf0)
+        } else {
+            true
+        }
+    }
 }
 
 /// An owned hash identifying objects, most commonly Sha1
