@@ -83,15 +83,11 @@ impl File {
                 Less => upper_bound = mid,
                 Equal => {
                     let next = mid + 1;
-                    if next < self.num_objects {
-                        if prefix.cmp_candidate(self.oid_at_index(next)).is_eq() {
-                            return Some(Err(()));
-                        }
+                    if next < self.num_objects && prefix.cmp_candidate(self.oid_at_index(next)).is_eq() {
+                        return Some(Err(()));
                     }
-                    if mid != 0 {
-                        if prefix.cmp_candidate(self.oid_at_index(mid - 1)).is_eq() {
-                            return Some(Err(()));
-                        }
+                    if mid != 0 && prefix.cmp_candidate(self.oid_at_index(mid - 1)).is_eq() {
+                        return Some(Err(()));
                     }
                     return Some(Ok(mid));
                 }
