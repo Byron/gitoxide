@@ -880,9 +880,9 @@ checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
 name = "document-features"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7b262786be72873f218389b0164de3c646a91f9e3627790df5b70f7d157920b"
+checksum = "b0145598eea78b706096d9d2c574031ce2fd988daac32f44338a62897bf9e520"
 
 [[package]]
 name = "either"
