@@ -1,5 +1,29 @@
 mod prefix {
-    mod from_id {
+    mod cmp_candidate {
+        use git_testtools::hex_to_id;
+
+        #[test]
+        fn it_detects_inequality() {
+            let prefix = git_hash::Prefix::new(hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3"), 7).unwrap();
+            assert!(prefix
+                .cmp_candidate(&hex_to_id("a920bbb055e1efb9080592a409d3975738b6efb3"))
+                .is_le());
+            assert!(prefix
+                .cmp_candidate(&hex_to_id("b920bbf055e1efb9080592a409d3975738b6efb3"))
+                .is_gt());
+        }
+
+        #[test]
+        fn it_detects_equality() {
+            let id = hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3");
+            let prefix = git_hash::Prefix::new(id, 7).unwrap();
+            assert!(prefix.cmp_candidate(&id).is_eq());
+            assert!(prefix
+                .cmp_candidate(&hex_to_id("b920bbbfffffffffffffffffffffffffffffffff"))
+                .is_eq());
+        }
+    }
+    mod new {
         use git_hash::{Kind, ObjectId};
         use git_testtools::hex_to_id;
 
@@ -15,6 +39,7 @@ mod prefix {
                 let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
                 assert_eq!(prefix.as_oid().to_hex().to_string(), expected, "{}", hex_len);
                 assert_eq!(prefix.hex_len(), hex_len);
+                assert!(prefix.cmp_candidate(&oid).is_eq());
             }
         }
 

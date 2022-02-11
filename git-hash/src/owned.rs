@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::{borrow::Borrow, convert::TryInto, fmt, ops::Deref};
 
 use crate::{borrowed::oid, Kind, SIZE_OF_SHA1_DIGEST};
@@ -72,21 +73,19 @@ impl Prefix {
         self.hex_len
     }
 
-    /// Provided with candidate id which is a full hash, determine if this prefix fully matches
-    /// the corresponding part in the candidate id.
-    pub fn matches_candidate(&self, candidate: &oid) -> bool {
+    /// Provided with candidate id which is a full hash, determine how this prefix compares to it,
+    /// only looking at the prefix bytes, ignoring everything behind that.
+    pub fn cmp_candidate(&self, candidate: &oid) -> Ordering {
         let common_len = self.hex_len / 2;
 
-        if !(self.bytes.as_bytes()[..common_len] == candidate.as_bytes()[..common_len]) {
-            return false;
-        }
-
-        if self.hex_len % 2 == 1 {
-            let half_byte_idx = self.hex_len / 2;
-            self.bytes.as_bytes()[half_byte_idx] == (candidate.as_bytes()[half_byte_idx] & 0xf0)
-        } else {
-            true
-        }
+        self.bytes.as_bytes()[..common_len]
+            .cmp(&candidate.as_bytes()[..common_len])
+            .then(if self.hex_len % 2 == 1 {
+                let half_byte_idx = self.hex_len / 2;
+                self.bytes.as_bytes()[half_byte_idx].cmp(&(candidate.as_bytes()[half_byte_idx] & 0xf0))
+            } else {
+                Ordering::Equal
+            })
     }
 }
 
