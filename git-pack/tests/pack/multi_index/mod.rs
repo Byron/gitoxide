@@ -41,6 +41,13 @@ mod access {
     }
 
     #[test]
+    fn lookup_missing() {
+        let (file, _path) = multi_index();
+        let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
+        assert!(file.lookup_prefix(prefix).is_none());
+    }
+
+    #[test]
     fn general() {
         let (file, path) = multi_index();
 

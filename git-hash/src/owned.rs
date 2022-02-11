@@ -75,7 +75,7 @@ impl Prefix {
 
     /// Provided with candidate id which is a full hash, determine how this prefix compares to it,
     /// only looking at the prefix bytes, ignoring everything behind that.
-    pub fn cmp_candidate(&self, candidate: &oid) -> Ordering {
+    pub fn cmp_oid(&self, candidate: &oid) -> Ordering {
         let common_len = self.hex_len / 2;
 
         self.bytes.as_bytes()[..common_len]

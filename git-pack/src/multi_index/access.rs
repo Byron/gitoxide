@@ -67,7 +67,10 @@ impl File {
         git_hash::oid::from_bytes_unchecked(&self.data[start..][..self.hash_len])
     }
 
-    /// TODO
+    /// Given a `prefix`, find an object that matches it uniquely within this index and return `Some(Ok(entry_index))`.
+    /// If there is more than one object matching the object `Some(Err(())` is returned.
+    ///
+    /// Finally, if no object matches the index, the return value is `None`.
     pub fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Option<PrefixLookupResult> {
         let first_byte = prefix.as_oid().first_byte() as usize;
         let mut upper_bound = self.fan[first_byte];
@@ -79,14 +82,14 @@ impl File {
             let mid_sha = self.oid_at_index(mid);
 
             use std::cmp::Ordering::*;
-            match prefix.cmp_candidate(mid_sha) {
+            match prefix.cmp_oid(mid_sha) {
                 Less => upper_bound = mid,
                 Equal => {
                     let next = mid + 1;
-                    if next < self.num_objects && prefix.cmp_candidate(self.oid_at_index(next)).is_eq() {
+                    if next < self.num_objects && prefix.cmp_oid(self.oid_at_index(next)).is_eq() {
                         return Some(Err(()));
                     }
-                    if mid != 0 && prefix.cmp_candidate(self.oid_at_index(mid - 1)).is_eq() {
+                    if mid != 0 && prefix.cmp_oid(self.oid_at_index(mid - 1)).is_eq() {
                         return Some(Err(()));
                     }
                     return Some(Ok(mid));
