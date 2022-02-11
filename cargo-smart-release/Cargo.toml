@@ -35,7 +35,7 @@ log = "0.4.14"
 toml_edit = "0.13.0"
 semver = "1.0.4"
 crates-index = "0.18.1"
-cargo_toml = "0.10.2"
+cargo_toml = "0.11.4"
 nom = { version = "7", default-features = false, features = ["std"]}
 git-conventional = "0.11.1"
 time = "0.3.2"
