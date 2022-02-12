@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::path::{Path, PathBuf};
 
 use crate::index::PrefixLookupResult;
@@ -86,10 +87,10 @@ impl File {
                 Less => upper_bound = mid,
                 Equal => {
                     let next = mid + 1;
-                    if next < self.num_objects && prefix.cmp_oid(self.oid_at_index(next)).is_eq() {
+                    if next < self.num_objects && prefix.cmp_oid(self.oid_at_index(next)) == Ordering::Equal {
                         return Some(Err(()));
                     }
-                    if mid != 0 && prefix.cmp_oid(self.oid_at_index(mid - 1)).is_eq() {
+                    if mid != 0 && prefix.cmp_oid(self.oid_at_index(mid - 1)) == Ordering::Equal {
                         return Some(Err(()));
                     }
                     return Some(Ok(mid));

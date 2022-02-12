@@ -20,15 +20,17 @@ mod prefix {
         fn it_detects_equality() {
             let id = hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3");
             let prefix = git_hash::Prefix::new(id, 7).unwrap();
-            assert!(prefix.cmp_oid(&id).is_eq());
-            assert!(prefix
-                .cmp_oid(&hex_to_id("b920bbbfffffffffffffffffffffffffffffffff"))
-                .is_eq());
+            assert_eq!(prefix.cmp_oid(&id), Ordering::Equal);
+            assert_eq!(
+                prefix.cmp_oid(&hex_to_id("b920bbbfffffffffffffffffffffffffffffffff")),
+                Ordering::Equal
+            );
         }
     }
     mod new {
         use git_hash::{Kind, ObjectId};
         use git_testtools::hex_to_id;
+        use std::cmp::Ordering;
 
         #[test]
         fn various_valid_inputs() {
@@ -42,7 +44,7 @@ mod prefix {
                 let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
                 assert_eq!(prefix.as_oid().to_hex().to_string(), expected, "{}", hex_len);
                 assert_eq!(prefix.hex_len(), hex_len);
-                assert!(prefix.cmp_oid(&oid).is_eq());
+                assert_eq!(prefix.cmp_oid(&oid), Ordering::Equal);
             }
         }
 
