@@ -46,7 +46,8 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all --bins --tests --examples
+          # For now, just the pure Rust version as libz has trouble with cmake.exe not finding a vs studio
+          args: --all --bins --tests --examples --no-default-features --features small
       - name: "Test (crossterm)"
         uses: actions-rs/cargo@v1
         with:
