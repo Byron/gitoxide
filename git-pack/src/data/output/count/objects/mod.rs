@@ -1,6 +1,6 @@
+use hash_hasher::HashedSet;
 use std::{
     cell::RefCell,
-    collections::HashSet,
     sync::{atomic::AtomicBool, Arc},
 };
 
@@ -118,7 +118,7 @@ where
     Oid: Into<ObjectId>,
     IterErr: std::error::Error,
 {
-    let seen_objs = RefCell::new(HashSet::<ObjectId, cache::object::State>::default());
+    let seen_objs = RefCell::new(HashedSet::<ObjectId>::default());
 
     let (mut buf1, mut buf2) = (Vec::new(), Vec::new());
     expand::this(
