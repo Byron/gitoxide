@@ -72,6 +72,8 @@ impl File {
     /// If there is more than one object matching the object `Some(Err(())` is returned.
     ///
     /// Finally, if no object matches the index, the return value is `None`.
+    // NOTE: pretty much the same things as in `index::File::lookup`, change things there
+    //       as well.
     pub fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Option<PrefixLookupResult> {
         let first_byte = prefix.as_oid().first_byte() as usize;
         let mut upper_bound = self.fan[first_byte];
