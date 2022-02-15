@@ -149,7 +149,6 @@ pub enum Value<'a> {
     Boolean(Boolean<'a>),
     Integer(Integer),
     Color(Color),
-    Path(Path<'a>),
     /// If a value does not match from any of the other variants, then this
     /// variant will be matched. As a result, conversion from a `str`-like item
     /// will never fail.
@@ -243,7 +242,6 @@ impl From<&Value<'_>> for Vec<u8> {
             Value::Boolean(b) => b.into(),
             Value::Integer(i) => i.into(),
             Value::Color(c) => c.into(),
-            Value::Path(p) => p.value.to_vec(),
             Value::Other(o) => o.to_vec(),
         }
     }
@@ -257,7 +255,6 @@ impl Display for Value<'_> {
             Value::Boolean(b) => b.fmt(f),
             Value::Integer(i) => i.fmt(f),
             Value::Color(c) => c.fmt(f),
-            Value::Path(_p) => todo!(),
             Value::Other(o) => match std::str::from_utf8(o) {
                 Ok(v) => v.fmt(f),
                 Err(_) => write!(f, "{:?}", o),
@@ -283,21 +280,22 @@ impl Serialize for Value<'_> {
 
 quick_error! {
     #[derive(Debug)]
+    /// The error returned by [`Path::interpolate()`].
     #[allow(missing_docs)]
     pub enum PathError {
-        Missing {what: &'static str} {
+        Missing { what: &'static str } {
             display("{} is missing", what)
         }
         Utf8Conversion(err: git_features::path::Utf8Error) {
-            display("Ill-formed UTF-8")
+            display("Ill-formed UTF-8 in git install dir or home dir")
             from()
         }
-        Username(err: std::str::Utf8Error) {
-            display("Ill-formed UTF-8")
+        UsernameConversion(err: std::str::Utf8Error) {
+            display("Ill-formed UTF-8 in username")
             source(err)
             from()
         }
-        Pwd {
+        PwdFileQuery {
             display("User home info missing")
         }
         Unsupported {
@@ -370,7 +368,7 @@ impl Path<'_> {
         let (username, val) = val.split_at(i);
         let username = std::str::from_utf8(username)?;
         let home = Passwd::from_name(username)
-            .map_err(|_| PathError::Pwd)?
+            .map_err(|_| PathError::PwdFileQuery)?
             .ok_or(PathError::Missing { what: "pwd user info" })?
             .dir;
         let mut expanded = home.as_bytes().to_owned();
