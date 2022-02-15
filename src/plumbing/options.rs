@@ -89,6 +89,14 @@ pub mod pack {
             /// Possible values are "none" and "tree-traversal". Default is "none".
             expansion: Option<core::pack::create::ObjectExpansion>,
 
+            #[clap(long, default_value_t = 3, requires = "nondeterministic-count")]
+            /// The amount of threads to use when counting and the `--nondeterminisitc-count` flag is set, defaulting
+            /// to the globally configured threads.
+            ///
+            /// Use it to have different trade-offs between counting performance and cost in terms of CPU, as the scaling
+            /// here is everything but linear. The effectiveness of each core seems to be no more than 30%.
+            counting_threads: usize,
+
             #[clap(long)]
             /// if set, the counting phase may be accelerated using multithreading.
             ///

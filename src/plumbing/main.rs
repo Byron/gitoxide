@@ -158,6 +158,7 @@ pub fn main() -> Result<()> {
                 nondeterministic_count,
                 tips,
                 pack_cache_size_mb,
+                counting_threads,
                 object_cache_size_mb,
                 output_directory,
             } => {
@@ -183,7 +184,7 @@ pub fn main() -> Result<()> {
                         let context = core::pack::create::Context {
                             thread_limit,
                             thin,
-                            nondeterministic_count,
+                            nondeterministic_thread_count: nondeterministic_count.then(|| counting_threads),
                             pack_cache_size_in_bytes: pack_cache_size_mb.unwrap_or(0) * 1_000_000,
                             object_cache_size_in_bytes: object_cache_size_mb.unwrap_or(0) * 1_000_000,
                             statistics: if statistics { Some(format) } else { None },
