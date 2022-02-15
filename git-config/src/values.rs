@@ -5,7 +5,7 @@ use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 use nom::AsChar;
 #[cfg(not(target_os = "windows"))]
 use pwd::Passwd;
-use quick_error::quick_error;
+use quick_error::{quick_error, ResultExt};
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
 
@@ -286,9 +286,9 @@ quick_error! {
         Missing { what: &'static str } {
             display("{} is missing", what)
         }
-        Utf8Conversion(err: git_features::path::Utf8Error) {
-            display("Ill-formed UTF-8 in git install dir or home dir")
-            from()
+        Utf8Conversion(what: &'static str, err: git_features::path::Utf8Error) {
+            display("Ill-formed UTF-8 in {}", what)
+            context(what: &'static str, err: git_features::path::Utf8Error) -> (what, err)
         }
         UsernameConversion(err: std::str::Utf8Error) {
             display("Ill-formed UTF-8 in username")
@@ -323,7 +323,6 @@ impl<'a> TryFrom<Cow<'a, [u8]>> for Path<'a> {
 }
 
 impl Path<'_> {
-
     /// Interpolates path value
     ///
     /// Path value can be given a string that begins with `~/` or `~user/` or `%(prefix)/`
@@ -348,7 +347,8 @@ impl Path<'_> {
         if path.starts_with(PREFIX) {
             let mut expanded = git_features::path::into_bytes(git_install_dir.ok_or(PathError::Missing {
                 what: "git install dir",
-            })?)?
+            })?)
+            .context("git install dir")?
             .into_owned();
             let (_prefix, val) = path.split_at(PREFIX.len() - 1);
             expanded.extend(val);
@@ -357,7 +357,9 @@ impl Path<'_> {
             })
         } else if path.starts_with(b"~/") {
             let home_path = dirs::home_dir().ok_or(PathError::Missing { what: "home dir" })?;
-            let mut expanded = git_features::path::into_bytes(home_path)?.into_owned();
+            let mut expanded = git_features::path::into_bytes(home_path)
+                .context("home dir")?
+                .into_owned();
             let (_prefix, val) = path.split_at(SLASH.len());
             expanded.extend(val);
             let expanded = git_features::path::convert::to_unix_separators(expanded);
