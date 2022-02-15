@@ -46,7 +46,8 @@ use std::{
 };
 
 #[derive(Debug)]
-#[allow(missing_docs)]
+/// The error type returned by [`into_bytes()`] which would otherwise return `OsString`,
+/// which is not an error.
 pub struct Utf8Error;
 
 /// Like [`into_bytes()`], but takes `OsStr` as input for a lossless, but fallible, conversion.

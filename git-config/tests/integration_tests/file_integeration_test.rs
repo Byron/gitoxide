@@ -79,7 +79,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
         .expect("invalid unicode")
         .to_owned();
     #[cfg(target_os = "windows")]
-    let mut home = home.replace("\\", "/");
+    let home = home.replace("\\", "/");
     assert_eq!(
         file.value::<git_config::values::Path>("core", None, "location")?,
         git_config::values::Path {

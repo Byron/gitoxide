@@ -304,6 +304,9 @@ quick_error! {
     }
 }
 
+/// Any value that can be interpreted as a file path.
+///
+/// Git represents file paths as byte arrays, modeled here as owned or borrowed byte sequences.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
 pub struct Path<'a> {
@@ -313,43 +316,56 @@ pub struct Path<'a> {
 impl<'a> TryFrom<Cow<'a, [u8]>> for Path<'a> {
     type Error = PathError;
 
+    #[inline]
     fn try_from(c: Cow<'a, [u8]>) -> Result<Self, Self::Error> {
         Self::interpolate(c, None)
     }
 }
 
 impl Path<'_> {
+
+    /// Interpolates path value
+    ///
+    /// Path value can be given a string that begins with `~/` or `~user/` or `%(prefix)/`
+    ///  - `~/` is expanded to the value of `$HOME` on unix based systems. On windows, `SHGetKnownFolderPath` is used.
+    /// See also [dirs](https://crates.io/crates/dirs).
+    ///  - `~user/` to the specified user’s home directory, e.g `~alice` might get expanded to `/home/alice` on linux.
+    /// The interpolation uses `getpwnam` sys call and is therefore not available on windows. See also [pwd](https://crates.io/crates/pwd).
+    ///  - `%(prefix)/` is expanded to the location where gitoxide is installed. This location is not known at compile time and therefore need to be
+    /// optionally provided by the caller through `git_install_dir`.
+    ///
+    /// Any other, non-empty path value is returned unchanged and error is returned in case of an empty path value.
     pub fn interpolate<'a>(
-        val: Cow<'a, [u8]>,
+        path: Cow<'a, [u8]>,
         git_install_dir: Option<&'a std::path::Path>,
     ) -> Result<Path<'a>, PathError> {
-        if val.is_empty() {
+        if path.is_empty() {
             return Err(PathError::Missing { what: "path" });
         }
 
         const PREFIX: &[u8] = b"%(prefix)/";
         const SLASH: u8 = b'/';
-        if val.starts_with(PREFIX) {
+        if path.starts_with(PREFIX) {
             let mut expanded = git_features::path::into_bytes(git_install_dir.ok_or(PathError::Missing {
                 what: "git install dir",
             })?)?
             .into_owned();
-            let (_prefix, val) = val.split_at(PREFIX.len() - 1);
+            let (_prefix, val) = path.split_at(PREFIX.len() - 1);
             expanded.extend(val);
             Ok(Path {
                 value: Cow::Owned(expanded),
             })
-        } else if val.starts_with(b"~/") {
-            let path = dirs::home_dir().ok_or(PathError::Missing { what: "home dir" })?;
-            let mut expanded = git_features::path::into_bytes(path)?.into_owned();
-            let (_prefix, val) = val.split_at(SLASH.len());
+        } else if path.starts_with(b"~/") {
+            let home_path = dirs::home_dir().ok_or(PathError::Missing { what: "home dir" })?;
+            let mut expanded = git_features::path::into_bytes(home_path)?.into_owned();
+            let (_prefix, val) = path.split_at(SLASH.len());
             expanded.extend(val);
-            let expanded = git_features::path::convert::to_unix_separators(Cow::Owned(expanded));
+            let expanded = git_features::path::convert::to_unix_separators(expanded);
             Ok(Path { value: expanded })
-        } else if val.starts_with(b"~") && val.contains(&SLASH) {
-            Self::interpolate_user(val, SLASH)
+        } else if path.starts_with(b"~") && path.contains(&SLASH) {
+            Self::interpolate_user(path, SLASH)
         } else {
-            Ok(Path { value: val })
+            Ok(Path { value: path })
         }
     }
 
@@ -1546,7 +1562,7 @@ mod path {
             .expect("invalid unicode")
             .to_owned();
         #[cfg(target_os = "windows")]
-        let mut home = home.replace("\\", "/");
+        let home = home.replace("\\", "/");
         let expected = format!("{}/foo/bar", home);
         assert_eq!(
             Path::try_from(borrowed_path).unwrap(),
