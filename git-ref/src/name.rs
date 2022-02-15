@@ -1,6 +1,6 @@
-use std::ffi::OsStr;
 use std::{
     convert::{Infallible, TryFrom},
+    ffi::OsStr,
     path::Path,
 };
 

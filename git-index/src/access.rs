@@ -1,5 +1,6 @@
-use crate::{extension, Entry, State, Version};
 use bstr::{BStr, ByteSlice};
+
+use crate::{extension, Entry, State, Version};
 
 impl State {
     pub fn version(&self) -> Version {

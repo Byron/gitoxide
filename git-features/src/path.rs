@@ -39,10 +39,11 @@
 //! Callers may `.expect()` on the result to indicate they don't wish to handle this special and rare case. Note that servers should not
 //! ever get into a code-path which does panic though.
 
-use std::path::{Path, PathBuf};
-
-use std::borrow::Cow;
-use std::ffi::OsStr;
+use std::{
+    borrow::Cow,
+    ffi::OsStr,
+    path::{Path, PathBuf},
+};
 
 /// Like [`into_bytes()`], but takes `OsStr` as input for a lossless, but fallible, conversion.
 pub fn os_str_into_bytes(path: &OsStr) -> Option<&[u8]> {

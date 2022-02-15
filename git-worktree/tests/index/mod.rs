@@ -5,11 +5,11 @@ mod checkout {
         fs,
         path::{Path, PathBuf},
     };
-    use tempfile::TempDir;
 
     use git_object::bstr::ByteSlice;
     use git_odb::FindExt;
     use git_worktree::index;
+    use tempfile::TempDir;
 
     use crate::fixture_path;
 

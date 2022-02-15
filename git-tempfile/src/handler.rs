@@ -1,6 +1,7 @@
 //!
-use crate::{SignalHandlerMode, NEXT_MAP_INDEX, REGISTER, SIGNAL_HANDLER_MODE};
 use std::sync::atomic::Ordering;
+
+use crate::{SignalHandlerMode, NEXT_MAP_INDEX, REGISTER, SIGNAL_HANDLER_MODE};
 
 /// Remove all tempfiles still registered on our global registry.
 ///

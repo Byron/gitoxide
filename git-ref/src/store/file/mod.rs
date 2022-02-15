@@ -1,11 +1,11 @@
-use crate::{store::WriteReflog, Namespace};
-
-use crate::bstr::BStr;
-
-use std::borrow::Cow;
-use std::path::{Path, PathBuf};
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+};
 
 use git_features::threading::{MutableOnDemand, OwnShared};
+
+use crate::{bstr::BStr, store::WriteReflog, Namespace};
 
 /// A store for reference which uses plain files.
 ///
