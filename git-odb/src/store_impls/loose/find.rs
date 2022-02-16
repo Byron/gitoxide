@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::{fs, io::Read, path::PathBuf};
 
 use git_features::zlib;
@@ -23,6 +24,10 @@ pub enum Error {
     },
 }
 
+/// A way to indicate if a lookup, despite successful, was ambiguous or yielded exactly
+/// one result in the particular index.
+pub type PrefixLookupResult = Result<git_hash::ObjectId, ()>;
+
 /// Object lookup
 impl Store {
     const OPEN_ACTION: &'static str = "open";
@@ -31,6 +36,38 @@ impl Store {
     pub fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool {
         debug_assert_eq!(self.object_hash, id.as_ref().kind());
         hash_path(id.as_ref(), self.path.clone()).is_file()
+    }
+
+    #[allow(missing_docs)] // TODO: docs
+    pub fn lookup_prefix(
+        &self,
+        prefix: git_hash::Prefix,
+    ) -> Result<Option<PrefixLookupResult>, crate::loose::iter::Error> {
+        let single_directory_iter = crate::loose::Iter {
+            inner: git_features::fs::walkdir_new(&self.path.join(prefix.as_oid().to_hex_with_len(2).to_string()))
+                .min_depth(1)
+                .max_depth(1)
+                .follow_links(false)
+                .into_iter(),
+            hash_hex_len: prefix.as_oid().kind().len_in_hex(),
+        };
+        let mut candidate = None;
+        for oid in single_directory_iter {
+            let oid = match oid {
+                Ok(oid) => oid,
+                Err(err) => match err.io_error() {
+                    Some(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+                    None | Some(_) => return Err(err),
+                },
+            };
+            if prefix.cmp_oid(&oid) == Ordering::Equal {
+                if candidate.is_some() {
+                    return Ok(Some(Err(())));
+                }
+                candidate = Some(oid);
+            }
+        }
+        Ok(candidate.map(Ok))
     }
 
     /// Return the object identified by the given [`ObjectId`][git_hash::ObjectId] if present in this database,

@@ -28,7 +28,7 @@ pub fn object_ids() -> Vec<git_hash::ObjectId> {
 fn iter() {
     let mut oids = ldb().iter().map(Result::unwrap).collect::<Vec<_>>();
     oids.sort();
-    assert_eq!(oids, object_ids())
+    assert_eq!(oids, object_ids());
 }
 pub fn locate_oid(id: git_hash::ObjectId, buf: &mut Vec<u8>) -> git_object::Data<'_> {
     ldb().try_find(id, buf).expect("read success").expect("id present")
@@ -72,7 +72,70 @@ mod write {
     }
 }
 
-mod locate {
+mod contains {
+    use crate::store::loose::ldb;
+
+    #[test]
+    fn iterable_objects_are_contained() {
+        let store = ldb();
+        for oid in store.iter().map(Result::unwrap) {
+            assert!(store.contains(oid));
+        }
+    }
+}
+
+mod lookup_prefix {
+    use crate::store::loose::ldb;
+    use git_testtools::{fixture_path, hex_to_id};
+
+    #[test]
+    fn returns_none_for_prefixes_without_any_match() {
+        let store = ldb();
+        let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
+        assert!(store.lookup_prefix(prefix).unwrap().is_none());
+    }
+
+    #[test]
+    fn returns_some_err_for_prefixes_with_more_than_one_match() {
+        let objects_dir = git_testtools::tempfile::tempdir().unwrap();
+        git_testtools::copy_recursively_into_existing_dir(fixture_path("objects"), &objects_dir).unwrap();
+        std::fs::write(
+            objects_dir
+                .path()
+                .join("37")
+                .join("d4ffffffffffffffffffffffffffffffffffff"),
+            b"fake",
+        )
+        .unwrap();
+        let store = git_odb::loose::Store::at(objects_dir.path(), git_hash::Kind::Sha1);
+        let prefix = git_hash::Prefix::new(hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"), 4).unwrap();
+        assert_eq!(
+            store.lookup_prefix(prefix).unwrap(),
+            Some(Err(())),
+            "there are two objects with that prefix"
+        );
+    }
+
+    #[test]
+    fn iterable_objects_can_be_looked_up_with_varying_prefix_lengths() {
+        let store = ldb();
+        let hex_lengths = &[4, 7, 40];
+        for (index, oid) in store.iter().map(Result::unwrap).enumerate() {
+            let hex_len = hex_lengths[index % hex_lengths.len()];
+            let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
+            assert_eq!(
+                store
+                    .lookup_prefix(prefix)
+                    .unwrap()
+                    .expect("object exists")
+                    .expect("unambiguous"),
+                oid
+            );
+        }
+    }
+}
+
+mod find {
     use git_object::{bstr::ByteSlice, tree::EntryMode, BlobRef, CommitRef, Kind, TagRef, TreeRef};
 
     use crate::{
@@ -80,14 +143,14 @@ mod locate {
         store::loose::{ldb, locate_oid, signature},
     };
 
-    fn locate<'a>(hex: &str, buf: &'a mut Vec<u8>) -> git_object::Data<'a> {
+    fn find<'a>(hex: &str, buf: &'a mut Vec<u8>) -> git_object::Data<'a> {
         locate_oid(hex_to_id(hex), buf)
     }
 
     #[test]
     fn tag() -> Result<(), Box<dyn std::error::Error>> {
         let mut buf = Vec::new();
-        let o = locate("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9", &mut buf);
+        let o = find("722fe60ad4f0276d5a8121970b5bb9dccdad4ef9", &mut buf);
         assert_eq!(o.kind, Kind::Tag);
         assert_eq!(o.data.len(), 1024);
         let expected = TagRef {
@@ -125,7 +188,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     #[test]
     fn commit() -> Result<(), Box<dyn std::error::Error>> {
         let mut buf = Vec::new();
-        let o = locate("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec", &mut buf);
+        let o = find("ffa700b4aca13b80cb6b98a078e7c96804f8e0ec", &mut buf);
         assert_eq!(o.kind, Kind::Commit);
         assert_eq!(o.data.len(), 1084);
         let expected = CommitRef {
@@ -145,7 +208,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     #[test]
     fn blob_data() -> Result<(), Box<dyn std::error::Error>> {
         let mut buf = Vec::new();
-        let o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980", &mut buf);
+        let o = find("37d4e6c5c48ba0d245164c4e10d5f41140cab980", &mut buf);
         assert_eq!(o.data.as_bstr(), b"hi there\n".as_bstr());
         Ok(())
     }
@@ -153,7 +216,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     #[test]
     fn blob() -> Result<(), Box<dyn std::error::Error>> {
         let mut buf = Vec::new();
-        let o = locate("37d4e6c5c48ba0d245164c4e10d5f41140cab980", &mut buf);
+        let o = find("37d4e6c5c48ba0d245164c4e10d5f41140cab980", &mut buf);
         assert_eq!(
             o.decode()?.as_blob().expect("blob"),
             &BlobRef {
@@ -173,7 +236,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     #[test]
     fn blob_big() -> Result<(), Box<dyn std::error::Error>> {
         let mut buf = Vec::new();
-        let o = locate("a706d7cd20fc8ce71489f34b50cf01011c104193", &mut buf);
+        let o = find("a706d7cd20fc8ce71489f34b50cf01011c104193", &mut buf);
         assert_eq!(
             o.decode()?.as_blob().expect("blob").data.len(),
             o.data.len(),
@@ -193,7 +256,7 @@ cjHJZXWmV4CcRfmLsXzU8s2cR9A0DBvOxhPD1TlKC2JhBFXigjuL9U4Rbq9tdegB
     #[test]
     fn tree() -> Result<(), Box<dyn std::error::Error>> {
         let mut buf = Vec::new();
-        let o = locate("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f", &mut buf);
+        let o = find("6ba2a0ded519f737fd5b8d5ccfb141125ef3176f", &mut buf);
         assert_eq!(o.kind, Kind::Tree);
         assert_eq!(o.data.len(), 66);
 
