@@ -3,12 +3,7 @@ use git_features::fs;
 use crate::store_impls::loose;
 
 /// Returned by [`loose::Store::iter()`]
-#[derive(thiserror::Error, Debug)]
-#[allow(missing_docs)]
-pub enum Error {
-    #[error(transparent)]
-    WalkDir(#[from] fs::walkdir::Error),
-}
+pub type Error = git_features::fs::walkdir::Error;
 
 impl loose::Iter {
     fn path_to_id(
@@ -38,7 +33,7 @@ impl loose::Iter {
                     }
                 }
             }
-            Err(err) => return Some(Err(err.into())),
+            Err(err) => return Some(Err(err)),
         };
         None
     }
