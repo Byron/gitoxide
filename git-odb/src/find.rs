@@ -1,3 +1,7 @@
+/// A way to indicate if a lookup, despite successful, was ambiguous or yielded exactly
+/// one result in the particular index.
+pub type PrefixLookupResult = Result<git_hash::ObjectId, ()>;
+
 ///
 pub mod existing {
     use git_hash::ObjectId;

@@ -27,6 +27,16 @@ pub use error::Error;
 
 use crate::store::types::PackId;
 
+impl<S> super::Handle<S>
+where
+    S: Deref<Target = super::Store> + Clone,
+{
+    #[allow(missing_docs)] // TODO: docs
+    pub fn lookup_prefix(&self, _prefix: git_hash::Prefix) -> Result<Option<crate::find::PrefixLookupResult>, Error> {
+        todo!()
+    }
+}
+
 impl<S> git_pack::Find for super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,

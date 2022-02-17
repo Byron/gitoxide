@@ -24,10 +24,6 @@ pub enum Error {
     },
 }
 
-/// A way to indicate if a lookup, despite successful, was ambiguous or yielded exactly
-/// one result in the particular index.
-pub type PrefixLookupResult = Result<git_hash::ObjectId, ()>;
-
 /// Object lookup
 impl Store {
     const OPEN_ACTION: &'static str = "open";
@@ -48,7 +44,7 @@ impl Store {
     pub fn lookup_prefix(
         &self,
         prefix: git_hash::Prefix,
-    ) -> Result<Option<PrefixLookupResult>, crate::loose::iter::Error> {
+    ) -> Result<Option<crate::find::PrefixLookupResult>, crate::loose::iter::Error> {
         let single_directory_iter = crate::loose::Iter {
             inner: git_features::fs::walkdir_new(&self.path.join(prefix.as_oid().to_hex_with_len(2).to_string()))
                 .min_depth(1)
