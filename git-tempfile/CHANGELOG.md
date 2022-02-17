@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-c863ea5b34fa9ee3dac21c1f85587da16045f8d8/> do not install signal handlers by default.
+   
+   The previous behaviour is meant to be convenient for the casual
+   user even though it
+   ends up being surprising when used in applications that install
+   their own signal handlers and need more control over how the program
+   shuts down.
+   
+   This is now fixed by **requiring an explicit `setup()`** call before
+   the first tempfile is created, which makes it a breaking change.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release over the course of 9 calendar days.
+ - 10 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#336](https://github.com/Byron/gitoxide/issues/336)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - Use hash_hasher based hash state for better keys/less collisions ([`814de07`](https://github.com/Byron/gitoxide/commit/814de079f4226f42efa49ad334a348bce67184e4))
+ * **[#336](https://github.com/Byron/gitoxide/issues/336)**
+    - do not install signal handlers by default ([`c863ea5`](https://github.com/Byron/gitoxide/commit/c863ea5b34fa9ee3dac21c1f85587da16045f8d8))
+ * **Uncategorized**
+    - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
+</details>
+
 ## 1.0.6 (2022-02-07)
 
 <csr-id-25209454d3f7e27e12e8ddca92e43b1ff01d58aa/>
@@ -34,7 +72,7 @@ Fixes a potential deadlock in in an interrupt handler attempting to cleanup temp
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 5 days passed between releases.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#328](https://github.com/Byron/gitoxide/issues/328)
@@ -49,6 +87,7 @@ Fixes a potential deadlock in in an interrupt handler attempting to cleanup temp
     - Prepare changelog ([`8e92494`](https://github.com/Byron/gitoxide/commit/8e924948dfa366d3d39227b63053c7ff00a5382a))
     - Assure interrupt based tempfile cleanup can't deadlock ([`81ed5f5`](https://github.com/Byron/gitoxide/commit/81ed5f5e7a3634f0fab681ca59e40099f0118f75))
  * **Uncategorized**
+    - Release git-tempfile v1.0.6 ([`bd3f8ee`](https://github.com/Byron/gitoxide/commit/bd3f8ee28b51fa556a0f37c9bd62569f0ce7d49d))
     - upgrade dashmap to 5.1.0 (with security fix) ([`2520945`](https://github.com/Byron/gitoxide/commit/25209454d3f7e27e12e8ddca92e43b1ff01d58aa))
 </details>
 
