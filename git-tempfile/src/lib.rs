@@ -1,19 +1,19 @@
 //! git-style registered tempfiles that are removed upon typical termination signals.
 //!
-//! This crate installs signal handlers the first time its facilities are used.
-//! These are powered by [`signal-hook`] to get notified when the application is told to shut down
-//! using signals to assure these are deleted. The deletion is filtered by process id to allow forks to have their own
+//! To register signal handlers in a typical application that doesn't have its own, call
+//! [`git_tempfile::setup(Default::default())`][setup()] before creating the first tempfile.
+//!
+//! Signal handlers are powered by [`signal-hook`] to get notified when the application is told to shut down
+//! to assure tempfiles are deleted. The deletion is filtered by process id to allow forks to have their own
 //! set of tempfiles that won't get deleted when the parent process exits.
 //!
-//! As typical handlers for `TERMination` are installed on first use and effectively overriding the defaults, we install
-//! default handlers to restore this behaviour. Whether or not to do that can be controlled using [`force_setup()`].
+//! ### Initial Setup
 //!
-//! # Note
+//! As no handlers for `TERMination` are installed, it is required to call [`setup()`] before creating the first tempfile.
+//! This also allows to control how `git-tempfiles` integrates with other handlers under application control.
 //!
-//! Applications setting their own signal handlers on termination to abort the process probably want to be called after the ones of this crate
-//! can call [`force_setup()`] before installing their own handlers.
-//! By default, our signal handlers will emulate the default behaviour and abort the process after cleaning temporary files.
-//! For full control the application can also prevent our handler to be installed and call it themselves from their own signal handlers.
+//! As a general rule of thumb, use `Default::default()` as argument to emulate the default behaviour and
+//! abort the process after cleaning temporary files. Read more about options in [SignalHandlerMode].
 //!
 //! # Limitations
 //!
@@ -47,7 +47,7 @@ use forksafe::ForksafeTempfile;
 pub mod handle;
 use crate::handle::{Closed, Writable};
 
-static SIGNAL_HANDLER_MODE: AtomicUsize = AtomicUsize::new(SignalHandlerMode::default() as usize);
+static SIGNAL_HANDLER_MODE: AtomicUsize = AtomicUsize::new(SignalHandlerMode::None as usize);
 static NEXT_MAP_INDEX: AtomicUsize = AtomicUsize::new(0);
 static REGISTER: Lazy<DashMap<usize, Option<ForksafeTempfile>>> = Lazy::new(|| {
     let mode = SIGNAL_HANDLER_MODE.load(std::sync::atomic::Ordering::SeqCst);
@@ -80,19 +80,20 @@ pub enum SignalHandlerMode {
     DeleteTempfilesOnTermination = 1,
     /// Delete all remaining registered tempfiles on termination and emulate the default handler behaviour.
     ///
-    /// This is the default, which leads to the process to be aborted.
+    /// This typically leads to the process being aborted.
     DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour = 2,
 }
 
-impl SignalHandlerMode {
+impl Default for SignalHandlerMode {
     /// By default we will emulate the default behaviour and abort the process.
     ///
     /// While testing, we will not abort the process.
-    const fn default() -> Self {
-        #[cfg(not(test))]
-        return SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour;
-        #[cfg(test)]
-        return SignalHandlerMode::DeleteTempfilesOnTermination;
+    fn default() -> Self {
+        if cfg!(test) {
+            SignalHandlerMode::DeleteTempfilesOnTermination
+        } else {
+            SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour
+        }
     }
 }
 
@@ -180,12 +181,26 @@ pub fn mark_at(
     Handle::<Closed>::at(path, directory, cleanup)
 }
 
-/// Explicitly (instead of lazily) initialize signal handlers and other state to keep track of tempfiles.
-/// Only has an effect the first time it is called and furthermore allows to set the `mode` in which signal handlers
-/// are installed.
+/// Initialize signal handlers and other state to keep track of tempfiles, and **must be called before the first tempfile is created**,
+/// allowing to set the `mode` in which signal handlers are installed.
 ///
-/// This is required if the application wants to install their own signal handlers _after_ the ones defined here.
-pub fn force_setup(mode: SignalHandlerMode) {
+/// Only has an effect the first time it is called.
+///
+/// Note that it is possible to not call this function and instead call [handler::cleanup_tempfiles()][crate::handler::cleanup_tempfiles()]
+/// from a handler under the applications control.
+pub fn setup(mode: SignalHandlerMode) {
     SIGNAL_HANDLER_MODE.store(mode as usize, std::sync::atomic::Ordering::SeqCst);
     Lazy::force(&REGISTER);
+}
+
+/// DO NOT USE - use [`setup()`] instead.
+///
+/// Indeed this is merely the old name of `setup()`, which is now a required part of configuring git-tempfile.
+#[deprecated(
+    since = "2.0.0",
+    note = "call setup(…) instead, this function will be removed in the next major release"
+)]
+#[doc(hidden)]
+pub fn force_setup(mode: SignalHandlerMode) {
+    setup(mode)
 }

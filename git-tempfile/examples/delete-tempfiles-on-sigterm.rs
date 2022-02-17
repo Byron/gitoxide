@@ -6,6 +6,7 @@ use std::{
 use git_tempfile::{AutoRemove, ContainingDirectory};
 
 fn main() -> std::io::Result<()> {
+    git_tempfile::setup(Default::default());
     let filepath = PathBuf::new().join("tempfile.ext");
     let _tempfile = git_tempfile::mark_at(&filepath, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
     assert!(filepath.is_file(), "a tempfile was created");

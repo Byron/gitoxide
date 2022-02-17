@@ -47,7 +47,7 @@ mod init {
         }
 
         // This means that they won't setup a handler allowing us to call them right before we actually abort.
-        git_tempfile::force_setup(git_tempfile::SignalHandlerMode::None);
+        git_tempfile::setup(git_tempfile::SignalHandlerMode::None);
 
         Ok(())
     }

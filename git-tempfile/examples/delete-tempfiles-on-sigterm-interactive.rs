@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use git_tempfile::{AutoRemove, ContainingDirectory};
 
 fn main() -> std::io::Result<()> {
+    git_tempfile::setup(Default::default());
     let filepath = PathBuf::new().join("writable-tempfile.ext");
     let markerpath = PathBuf::new().join("marker.ext");
     let _tempfile = git_tempfile::writable_at(&filepath, ContainingDirectory::Exists, AutoRemove::Tempfile)?;
