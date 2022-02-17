@@ -1,6 +1,6 @@
 [package]
 name = "cargo-smart-release"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/gitoxide"
 description = "Cargo subcommand for fearlessly releasing crates in workspaces."
@@ -26,7 +26,7 @@ test = false
 cache-efficiency-debug = ["git-repository/cache-efficiency-debug"]
 
 [dependencies]
-git-repository = { version = "^0.14.0", path = "../git-repository", features = ["unstable"] }
+git-repository = { version = "^0.15.0", path = "../git-repository", features = ["unstable"] }
 anyhow = "1.0.42"
 clap = { version = "3.0.0", features = ["derive", "cargo"] }
 env_logger = { version = "0.9.0", default-features = false, features = ["humantime", "termcolor", "atty"] }

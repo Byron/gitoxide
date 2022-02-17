@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.0.0 (2022-02-17)
 
 ### Bug Fixes (BREAKING)
 
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 9 calendar days.
+ - 4 commits contributed to the release over the course of 9 calendar days.
  - 10 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#336](https://github.com/Byron/gitoxide/issues/336)
@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#298](https://github.com/Byron/gitoxide/issues/298)**
     - Use hash_hasher based hash state for better keys/less collisions ([`814de07`](https://github.com/Byron/gitoxide/commit/814de079f4226f42efa49ad334a348bce67184e4))
  * **[#336](https://github.com/Byron/gitoxide/issues/336)**
+    - update changelog ([`2cfbe9c`](https://github.com/Byron/gitoxide/commit/2cfbe9ce81f611c0b541b9c0fd4fffd2d99dfa0a))
     - do not install signal handlers by default ([`c863ea5`](https://github.com/Byron/gitoxide/commit/c863ea5b34fa9ee3dac21c1f85587da16045f8d8))
  * **Uncategorized**
     - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))

@@ -363,7 +363,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-smart-release"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1184,7 +1184,7 @@ version = "0.13.0"
 dependencies = [
  "git-hash 0.9.2",
  "git-object 0.17.1",
- "git-odb 0.26.0",
+ "git-odb 0.27.0",
  "git-testtools",
  "git-traverse 0.12.0",
  "quick-error",
@@ -1273,22 +1273,22 @@ dependencies = [
 [[package]]
 name = "git-lock"
 version = "1.0.1"
-dependencies = [
- "fastrand",
- "git-tempfile 1.0.6",
- "quick-error",
- "tempfile",
-]
-
-[[package]]
-name = "git-lock"
-version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24c6c0e6c2d893be08d8e10e61d01fbbbcfb8647d0dafc9ebdc6a8ee51bcf0b2"
 dependencies = [
  "fastrand",
- "git-tempfile 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-tempfile 1.0.6",
  "quick-error",
+]
+
+[[package]]
+name = "git-lock"
+version = "2.0.0"
+dependencies = [
+ "fastrand",
+ "git-tempfile 2.0.0",
+ "quick-error",
+ "tempfile",
 ]
 
 [[package]]
@@ -1345,7 +1345,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.26.0"
+version = "0.27.0"
 dependencies = [
  "arc-swap",
  "btoi",
@@ -1354,7 +1354,7 @@ dependencies = [
  "git-features 0.19.1",
  "git-hash 0.9.2",
  "git-object 0.17.1",
- "git-pack 0.16.1",
+ "git-pack 0.17.0",
  "git-testtools",
  "parking_lot 0.12.0",
  "pretty_assertions",
@@ -1379,7 +1379,7 @@ dependencies = [
  "git-features 0.17.0",
  "git-hash 0.8.0",
  "git-object 0.15.1",
- "git-tempfile 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-tempfile 1.0.6",
  "git-traverse 0.10.1",
  "itoa 0.4.8",
  "parking_lot 0.11.2",
@@ -1390,7 +1390,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.16.1"
+version = "0.17.0"
 dependencies = [
  "bstr",
  "bytesize",
@@ -1403,8 +1403,8 @@ dependencies = [
  "git-features 0.19.1",
  "git-hash 0.9.2",
  "git-object 0.17.1",
- "git-odb 0.26.0",
- "git-tempfile 1.0.6",
+ "git-odb 0.27.0",
+ "git-tempfile 2.0.0",
  "git-testtools",
  "git-traverse 0.12.0",
  "hash_hasher",
@@ -1427,7 +1427,7 @@ dependencies = [
  "futures-io",
  "futures-lite",
  "git-hash 0.9.2",
- "git-odb 0.26.0",
+ "git-odb 0.27.0",
  "hex",
  "maybe-async",
  "pin-project-lite",
@@ -1500,9 +1500,9 @@ dependencies = [
  "git-actor 0.6.0",
  "git-features 0.17.0",
  "git-hash 0.8.0",
- "git-lock 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-lock 1.0.1",
  "git-object 0.15.1",
- "git-tempfile 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-tempfile 1.0.6",
  "git-validate 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "nom",
  "os_str_bytes 3.1.0",
@@ -1511,15 +1511,15 @@ dependencies = [
 
 [[package]]
 name = "git-ref"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "git-actor 0.8.1",
  "git-features 0.19.1",
  "git-hash 0.9.2",
- "git-lock 1.0.1",
+ "git-lock 2.0.0",
  "git-object 0.17.1",
- "git-odb 0.26.0",
- "git-tempfile 1.0.6",
+ "git-odb 0.27.0",
+ "git-tempfile 2.0.0",
  "git-testtools",
  "git-validate 0.5.3",
  "memmap2",
@@ -1531,7 +1531,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "anyhow",
  "byte-unit",
@@ -1543,13 +1543,13 @@ dependencies = [
  "git-features 0.19.1",
  "git-hash 0.9.2",
  "git-index",
- "git-lock 1.0.1",
+ "git-lock 2.0.0",
  "git-object 0.17.1",
- "git-odb 0.26.0",
- "git-pack 0.16.1",
+ "git-odb 0.27.0",
+ "git-pack 0.17.0",
  "git-protocol 0.14.0",
- "git-ref 0.11.0",
- "git-tempfile 1.0.6",
+ "git-ref 0.12.0",
+ "git-tempfile 2.0.0",
  "git-testtools",
  "git-transport 0.15.0",
  "git-traverse 0.12.0",
@@ -1568,6 +1568,8 @@ version = "0.0.0"
 [[package]]
 name = "git-tempfile"
 version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf6d78c8a68ab3ba1cd42684dbe0233e81a28301321c4a66417285e47cd79c6b"
 dependencies = [
  "dashmap 5.1.0",
  "libc",
@@ -1579,9 +1581,7 @@ dependencies = [
 
 [[package]]
 name = "git-tempfile"
-version = "1.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf6d78c8a68ab3ba1cd42684dbe0233e81a28301321c4a66417285e47cd79c6b"
+version = "2.0.0"
 dependencies = [
  "dashmap 5.1.0",
  "libc",
@@ -1638,7 +1638,7 @@ dependencies = [
  "futures-lite",
  "git-features 0.19.1",
  "git-hash 0.9.2",
- "git-pack 0.16.1",
+ "git-pack 0.17.0",
  "git-packetline 0.12.3",
  "git-url 0.3.5",
  "maybe-async",
@@ -1665,7 +1665,7 @@ version = "0.12.0"
 dependencies = [
  "git-hash 0.9.2",
  "git-object 0.17.1",
- "git-odb 0.26.0",
+ "git-odb 0.27.0",
  "git-testtools",
  "quick-error",
 ]
@@ -1726,7 +1726,7 @@ dependencies = [
  "git-hash 0.9.2",
  "git-index",
  "git-object 0.17.1",
- "git-odb 0.26.0",
+ "git-odb 0.27.0",
  "git-testtools",
  "quick-error",
  "tempfile",
@@ -1783,7 +1783,7 @@ dependencies = [
  "git-commitgraph",
  "git-config",
  "git-features 0.19.1",
- "git-pack 0.16.1",
+ "git-pack 0.17.0",
  "git-repository",
  "git-url 0.3.5",
  "itertools",
@@ -2066,7 +2066,7 @@ dependencies = [
  "git-actor 0.6.0",
  "git-features 0.17.0",
  "git-hash 0.8.0",
- "git-lock 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "git-lock 1.0.1",
  "git-object 0.15.1",
  "git-odb 0.23.0",
  "git-pack 0.13.0",
