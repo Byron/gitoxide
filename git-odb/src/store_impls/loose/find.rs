@@ -38,7 +38,13 @@ impl Store {
         hash_path(id.as_ref(), self.path.clone()).is_file()
     }
 
-    #[allow(missing_docs)] // TODO: docs
+    /// Given a `prefix`, find an object that matches it uniquely within this loose object
+    /// database as `Ok(Some(Ok(<oid>)))`.
+    /// If there is more than one object matching the object `Ok(Some(Err(()))` is returned.
+    ///
+    /// Finally, if no object matches, the return value is `Ok(None)`.
+    ///
+    /// The outer `Result` is to indicate errors during file system traversal.
     pub fn lookup_prefix(
         &self,
         prefix: git_hash::Prefix,
