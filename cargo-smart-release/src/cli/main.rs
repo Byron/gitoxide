@@ -5,6 +5,7 @@ use options::{Args, SubCommands};
 use cargo_smart_release::command;
 
 fn main() -> anyhow::Result<()> {
+    git_repository::interrupt::init_handler(|| {})?;
     let args: Args = Args::parse();
     match args.subcommands {
         SubCommands::Changelog {
