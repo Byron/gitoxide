@@ -7,6 +7,30 @@ fn db() -> git_odb::Handle {
     git_odb::at(fixture_path("objects")).expect("valid object path")
 }
 
+/// indices, multi-pack-index, loose odb
+fn db_with_all_object_sources() -> crate::Result<(git_odb::Handle, tempfile::TempDir)> {
+    let objects_dir = git_testtools::tempfile::tempdir()?;
+    git_testtools::copy_recursively_into_existing_dir(fixture_path("objects"), &objects_dir)?;
+
+    let multi_pack_index = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(objects_dir.path().join("pack/multi-pack-index"))?;
+    git_odb::pack::multi_index::File::write_from_index_paths(
+        vec![
+            fixture_path("objects/pack/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx"),
+            fixture_path("objects/pack/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx"),
+        ],
+        multi_pack_index,
+        git_features::progress::Discard,
+        &std::sync::atomic::AtomicBool::default(),
+        git_odb::pack::multi_index::write::Options {
+            object_hash: git_hash::Kind::Sha1,
+        },
+    )?;
+    Ok((git_odb::at(objects_dir.path())?, objects_dir))
+}
+
 #[test]
 fn multi_index_access() -> crate::Result {
     let dir = git_testtools::scripted_fixture_repo_writable("make_repo_multi_index.sh")?;
@@ -355,6 +379,57 @@ fn lookup() {
     );
 }
 
+mod lookup_prefix {
+    use crate::store::dynamic::db_with_all_object_sources;
+
+    #[test]
+    #[should_panic]
+    fn returns_none_for_prefixes_without_any_match() {
+        let (handle, _tmp) = db_with_all_object_sources().unwrap();
+        let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
+        assert!(handle.lookup_prefix(prefix).unwrap().is_none());
+    }
+
+    // #[test]
+    // fn returns_some_err_for_prefixes_with_more_than_one_match() {
+    //     let objects_dir = git_testtools::tempfile::tempdir().unwrap();
+    //     git_testtools::copy_recursively_into_existing_dir(fixture_path("objects"), &objects_dir).unwrap();
+    //     std::fs::write(
+    //         objects_dir
+    //             .path()
+    //             .join("37")
+    //             .join("d4ffffffffffffffffffffffffffffffffffff"),
+    //         b"fake",
+    //     )
+    //     .unwrap();
+    //     let store = git_odb::loose::Store::at(objects_dir.path(), git_hash::Kind::Sha1);
+    //     let prefix = git_hash::Prefix::new(hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"), 4).unwrap();
+    //     assert_eq!(
+    //         store.lookup_prefix(prefix).unwrap(),
+    //         Some(Err(())),
+    //         "there are two objects with that prefix"
+    //     );
+    // }
+
+    // #[test]
+    // fn iterable_objects_can_be_looked_up_with_varying_prefix_lengths() {
+    //     let store = ldb();
+    //     let hex_lengths = &[4, 7, 40];
+    //     for (index, oid) in store.iter().map(Result::unwrap).enumerate() {
+    //         let hex_len = hex_lengths[index % hex_lengths.len()];
+    //         let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
+    //         assert_eq!(
+    //             store
+    //                 .lookup_prefix(prefix)
+    //                 .unwrap()
+    //                 .expect("object exists")
+    //                 .expect("unambiguous"),
+    //             oid
+    //         );
+    //     }
+    // }
+}
+
 #[test]
 fn missing_objects_triggers_everything_is_loaded() {
     let handle = db();
@@ -401,8 +476,8 @@ fn missing_objects_triggers_everything_is_loaded() {
 }
 
 #[test]
-fn a_bunch_of_loose_and_packed_objects() -> crate::Result {
-    let db = db();
+fn iterate_over_a_bunch_of_loose_and_packed_objects() -> crate::Result {
+    let (db, _tmp) = db_with_all_object_sources()?;
     let iter = db.iter()?;
     assert_eq!(
         iter.size_hint(),
