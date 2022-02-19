@@ -343,9 +343,9 @@ impl<'event> GitConfig<'event> {
     /// assert_eq!(
     ///     a_value,
     ///     vec![
-    ///         Boolean::True(TrueVariant::Explicit(Cow::Borrowed("true"))),
+    ///         Boolean::True(TrueVariant::Explicit(Cow::Borrowed("true".as_bytes()))),
     ///         Boolean::True(TrueVariant::Implicit),
-    ///         Boolean::False(Cow::Borrowed("false")),
+    ///         Boolean::False(Cow::Borrowed("false".as_bytes())),
     ///     ]
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish

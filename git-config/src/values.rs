@@ -162,41 +162,10 @@ impl Value<'_> {
     }
 }
 
-// TODO may be remove str handling if not used
-impl<'a> From<&'a str> for Value<'a> {
-    fn from(s: &'a str) -> Self {
-        if let Ok(bool) = Boolean::try_from(s) {
-            return Self::Boolean(bool);
-        }
-
-        if let Ok(int) = Integer::from_str(s) {
-            return Self::Integer(int);
-        }
-
-        if let Ok(color) = Color::from_str(s) {
-            return Self::Color(color);
-        }
-
-        Self::Other(Cow::Borrowed(s.as_bytes()))
-    }
-}
-
 impl<'a> From<&'a [u8]> for Value<'a> {
     #[inline]
     fn from(s: &'a [u8]) -> Self {
-        // All parsable values must be utf-8 valid
-        if let Ok(s) = std::str::from_utf8(s) {
-            Self::from(s)
-        } else {
-            Self::Other(Cow::Borrowed(s))
-        }
-    }
-}
-
-impl From<String> for Value<'_> {
-    #[inline]
-    fn from(s: String) -> Self {
-        Self::from(s.into_bytes())
+        Self::Other(Cow::Borrowed(s))
     }
 }
 
@@ -526,7 +495,7 @@ impl<'a> From<Cow<'a, [u8]>> for Path<'a> {
 #[allow(missing_docs)]
 pub enum Boolean<'a> {
     True(TrueVariant<'a>),
-    False(Cow<'a, str>),
+    False(Cow<'a, [u8]>),
 }
 
 impl Boolean<'_> {
@@ -549,15 +518,6 @@ impl Boolean<'_> {
     }
 }
 
-impl<'a> TryFrom<&'a str> for Boolean<'a> {
-    type Error = ();
-
-    #[inline]
-    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        Self::try_from(value.as_bytes())
-    }
-}
-
 impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
     type Error = ();
 
@@ -572,18 +532,10 @@ impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
             || value.eq_ignore_ascii_case(b"zero")
             || value == b"\"\""
         {
-            return Ok(Self::False(std::str::from_utf8(value).unwrap().into()));
+            return Ok(Self::False(value.into()));
         }
 
         Err(())
-    }
-}
-
-impl TryFrom<String> for Boolean<'_> {
-    type Error = String;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        Self::try_from(value.into_bytes()).map_err(|v| String::from_utf8(v).unwrap())
     }
 }
 
@@ -597,7 +549,7 @@ impl TryFrom<Vec<u8>> for Boolean<'_> {
             || value.eq_ignore_ascii_case(b"zero")
             || value == b"\"\""
         {
-            return Ok(Self::False(Cow::Owned(String::from_utf8(value).unwrap())));
+            return Ok(Self::False(Cow::Owned(value)));
         }
 
         TrueVariant::try_from(value).map(Self::True)
@@ -619,7 +571,8 @@ impl Display for Boolean<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Boolean::True(v) => v.fmt(f),
-            Boolean::False(v) => write!(f, "{}", v),
+            // TODO is debug format ok?
+            Boolean::False(v) => write!(f, "{:?}", v),
         }
     }
 }
@@ -639,7 +592,7 @@ impl<'a, 'b: 'a> From<&'b Boolean<'a>> for &'a [u8] {
     fn from(b: &'b Boolean) -> Self {
         match b {
             Boolean::True(t) => t.into(),
-            Boolean::False(f) => f.as_bytes(),
+            Boolean::False(f) => f,
         }
     }
 }
@@ -677,18 +630,9 @@ impl Serialize for Boolean<'_> {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
 pub enum TrueVariant<'a> {
-    Explicit(Cow<'a, str>),
+    Explicit(Cow<'a, [u8]>),
     /// For values defined without a `= <value>`.
     Implicit,
-}
-
-impl<'a> TryFrom<&'a str> for TrueVariant<'a> {
-    type Error = ();
-
-    #[inline]
-    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        Self::try_from(value.as_bytes())
-    }
 }
 
 impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
@@ -700,21 +644,12 @@ impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(std::str::from_utf8(value).unwrap().into()))
+            Ok(Self::Explicit(value.into()))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
             Err(())
         }
-    }
-}
-
-impl TryFrom<String> for TrueVariant<'_> {
-    type Error = String;
-
-    #[inline]
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        Self::try_from(value.into_bytes()).map_err(|v| String::from_utf8(v).unwrap())
     }
 }
 
@@ -727,7 +662,7 @@ impl TryFrom<Vec<u8>> for TrueVariant<'_> {
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(Cow::Owned(String::from_utf8(value).unwrap())))
+            Ok(Self::Explicit(Cow::Owned(value)))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
@@ -739,7 +674,8 @@ impl TryFrom<Vec<u8>> for TrueVariant<'_> {
 impl Display for TrueVariant<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Self::Explicit(v) = self {
-            write!(f, "{}", v)
+            // TODO is debug format ok?
+            write!(f, "{:?}", v)
         } else {
             Ok(())
         }
@@ -750,7 +686,7 @@ impl<'a, 'b: 'a> From<&'b TrueVariant<'a>> for &'a [u8] {
     #[inline]
     fn from(t: &'b TrueVariant<'a>) -> Self {
         match t {
-            TrueVariant::Explicit(e) => e.as_bytes(),
+            TrueVariant::Explicit(e) => e,
             TrueVariant::Implicit => &[],
         }
     }
@@ -820,10 +756,12 @@ impl Serialize for Integer {
     }
 }
 
-impl FromStr for Integer {
-    type Err = String;
+impl TryFrom<&[u8]> for Integer {
+    type Error = ();
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    #[inline]
+    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
+        let s = std::str::from_utf8(s).map_err(|_| ())?;
         if let Ok(value) = s.parse() {
             return Ok(Self { value, suffix: None });
         }
@@ -831,7 +769,7 @@ impl FromStr for Integer {
         // Assume we have a prefix at this point.
 
         if s.len() <= 1 {
-            return Err(s.to_string());
+            return Err(());
         }
 
         let (number, suffix) = s.split_at(s.len() - 1);
@@ -841,17 +779,8 @@ impl FromStr for Integer {
                 suffix: Some(suffix),
             })
         } else {
-            Err(s.to_string())
+            Err(())
         }
-    }
-}
-
-impl TryFrom<&[u8]> for Integer {
-    type Error = ();
-
-    #[inline]
-    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
     }
 }
 
@@ -1028,18 +957,12 @@ impl Serialize for Color {
     }
 }
 
-/// Discriminating enum for [`Color`] parsing.
-pub enum ColorParseError {
-    /// Too many primary colors were provided.
-    TooManyColorValues,
-    /// An invalid color value or attribute was provided.
-    InvalidColorOption,
-}
+impl TryFrom<&[u8]> for Color {
+    type Error = ();
 
-impl FromStr for Color {
-    type Err = ColorParseError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    #[inline]
+    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
+        let s = std::str::from_utf8(s).map_err(|_| ())?;
         enum ColorItem {
             Value(ColorValue),
             Attr(ColorAttribute),
@@ -1067,25 +990,16 @@ impl FromStr for Color {
                         } else if new_self.background.is_none() {
                             new_self.background = Some(v);
                         } else {
-                            return Err(ColorParseError::TooManyColorValues);
+                            return Err(());
                         }
                     }
                     ColorItem::Attr(a) => new_self.attributes.push(a),
                 },
-                Err(_) => return Err(ColorParseError::InvalidColorOption),
+                Err(_) => return Err(()),
             }
         }
 
         Ok(new_self)
-    }
-}
-
-impl TryFrom<&[u8]> for Color {
-    type Error = ();
-
-    #[inline]
-    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
     }
 }
 
@@ -1426,33 +1340,49 @@ mod normalize {
 #[cfg(test)]
 mod boolean {
     use super::{Boolean, TrueVariant, TryFrom};
+    use nom::AsBytes;
 
     #[test]
     fn from_str_false() {
-        assert_eq!(Boolean::try_from("no"), Ok(Boolean::False("no".into())));
-        assert_eq!(Boolean::try_from("off"), Ok(Boolean::False("off".into())));
-        assert_eq!(Boolean::try_from("false"), Ok(Boolean::False("false".into())));
-        assert_eq!(Boolean::try_from("zero"), Ok(Boolean::False("zero".into())));
-        assert_eq!(Boolean::try_from("\"\""), Ok(Boolean::False("\"\"".into())));
+        assert_eq!(
+            Boolean::try_from("no".as_bytes()),
+            Ok(Boolean::False("no".as_bytes().into()))
+        );
+        assert_eq!(
+            Boolean::try_from("off".as_bytes()),
+            Ok(Boolean::False("off".as_bytes().into()))
+        );
+        assert_eq!(
+            Boolean::try_from("false".as_bytes()),
+            Ok(Boolean::False("false".as_bytes().into()))
+        );
+        assert_eq!(
+            Boolean::try_from("zero".as_bytes()),
+            Ok(Boolean::False("zero".as_bytes().into()))
+        );
+        assert_eq!(
+            Boolean::try_from("\"\"".as_bytes()),
+            Ok(Boolean::False("\"\"".as_bytes().into()))
+        );
     }
 
     #[test]
     fn from_str_true() {
         assert_eq!(
-            Boolean::try_from("yes"),
-            Ok(Boolean::True(TrueVariant::Explicit("yes".into())))
+            Boolean::try_from("yes".as_bytes()),
+            Ok(Boolean::True(TrueVariant::Explicit("yes".as_bytes().into())))
         );
         assert_eq!(
-            Boolean::try_from("on"),
-            Ok(Boolean::True(TrueVariant::Explicit("on".into())))
+            Boolean::try_from("on".as_bytes()),
+            Ok(Boolean::True(TrueVariant::Explicit("on".as_bytes().into())))
         );
         assert_eq!(
-            Boolean::try_from("true"),
-            Ok(Boolean::True(TrueVariant::Explicit("true".into())))
+            Boolean::try_from("true".as_bytes()),
+            Ok(Boolean::True(TrueVariant::Explicit("true".as_bytes().into())))
         );
         assert_eq!(
-            Boolean::try_from("one"),
-            Ok(Boolean::True(TrueVariant::Explicit("one".into())))
+            Boolean::try_from("one".as_bytes()),
+            Ok(Boolean::True(TrueVariant::Explicit("one".as_bytes().into())))
         );
     }
 
@@ -1460,29 +1390,34 @@ mod boolean {
     fn ignores_case() {
         // Random subset
         for word in &["no", "yes", "off", "true", "zero"] {
-            let first: bool = Boolean::try_from(*word).unwrap().into();
-            let second: bool = Boolean::try_from(&*word.to_uppercase()).unwrap().into();
+            let first: bool = Boolean::try_from(word.as_bytes()).unwrap().into();
+            let second: bool = Boolean::try_from(&*word.to_uppercase().as_bytes()).unwrap().into();
             assert_eq!(first, second);
         }
     }
 
     #[test]
     fn from_str_err() {
-        assert!(Boolean::try_from("yesn't").is_err());
-        assert!(Boolean::try_from("yesno").is_err());
+        assert!(Boolean::try_from("yesn't".as_bytes()).is_err());
+        assert!(Boolean::try_from("yesno".as_bytes()).is_err());
     }
 }
 
 #[cfg(test)]
 mod integer {
-    use super::{FromStr, Integer, IntegerSuffix};
+    use super::{Integer, IntegerSuffix};
+    use nom::AsBytes;
+    use std::convert::TryFrom;
 
     #[test]
     fn from_str_no_suffix() {
-        assert_eq!(Integer::from_str("1").unwrap(), Integer { value: 1, suffix: None });
+        assert_eq!(
+            Integer::try_from("1".as_bytes()).unwrap(),
+            Integer { value: 1, suffix: None }
+        );
 
         assert_eq!(
-            Integer::from_str("-1").unwrap(),
+            Integer::try_from("-1".as_bytes()).unwrap(),
             Integer {
                 value: -1,
                 suffix: None
@@ -1493,7 +1428,7 @@ mod integer {
     #[test]
     fn from_str_with_suffix() {
         assert_eq!(
-            Integer::from_str("1k").unwrap(),
+            Integer::try_from("1k".as_bytes()).unwrap(),
             Integer {
                 value: 1,
                 suffix: Some(IntegerSuffix::Kibi),
@@ -1501,7 +1436,7 @@ mod integer {
         );
 
         assert_eq!(
-            Integer::from_str("1m").unwrap(),
+            Integer::try_from("1m".as_bytes()).unwrap(),
             Integer {
                 value: 1,
                 suffix: Some(IntegerSuffix::Mebi),
@@ -1509,7 +1444,7 @@ mod integer {
         );
 
         assert_eq!(
-            Integer::from_str("1g").unwrap(),
+            Integer::try_from("1g".as_bytes()).unwrap(),
             Integer {
                 value: 1,
                 suffix: Some(IntegerSuffix::Gibi),
@@ -1519,13 +1454,13 @@ mod integer {
 
     #[test]
     fn invalid_from_str() {
-        assert!(Integer::from_str("").is_err());
-        assert!(Integer::from_str("-").is_err());
-        assert!(Integer::from_str("k").is_err());
-        assert!(Integer::from_str("m").is_err());
-        assert!(Integer::from_str("g").is_err());
-        assert!(Integer::from_str("123123123123123123123123").is_err());
-        assert!(Integer::from_str("gg").is_err());
+        assert!(Integer::try_from("".as_bytes()).is_err());
+        assert!(Integer::try_from("-".as_bytes()).is_err());
+        assert!(Integer::try_from("k".as_bytes()).is_err());
+        assert!(Integer::try_from("m".as_bytes()).is_err());
+        assert!(Integer::try_from("g".as_bytes()).is_err());
+        assert!(Integer::try_from("123123123123123123123123".as_bytes()).is_err());
+        assert!(Integer::try_from("gg".as_bytes()).is_err());
     }
 }
 
