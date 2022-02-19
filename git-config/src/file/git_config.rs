@@ -277,7 +277,7 @@ impl<'event> GitConfig<'event> {
     ///
     /// ```
     /// # use git_config::file::{GitConfig, GitConfigError};
-    /// # use git_config::values::{Integer, Value, Boolean};
+    /// # use git_config::values::{Integer, Boolean};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"
@@ -326,7 +326,7 @@ impl<'event> GitConfig<'event> {
     ///
     /// ```
     /// # use git_config::file::{GitConfig, GitConfigError};
-    /// # use git_config::values::{Integer, Value, Boolean, TrueVariant};
+    /// # use git_config::values::{Integer, Bytes, Boolean, TrueVariant};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"
@@ -349,8 +349,8 @@ impl<'event> GitConfig<'event> {
     ///     ]
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value: Vec<Value> = git_config.multi_value("core", None, "c")?;
-    /// assert_eq!(c_value, vec![Value::Other(Cow::Borrowed(b"g"))]);
+    /// let c_value: Vec<Bytes> = git_config.multi_value("core", None, "c")?;
+    /// assert_eq!(c_value, vec![Bytes { value: Cow::Borrowed(b"g") }]);
     /// # Ok::<(), GitConfigError>(())
     /// ```
     ///
@@ -436,7 +436,7 @@ impl<'event> GitConfig<'event> {
     ///
     /// ```
     /// # use git_config::file::{GitConfig, GitConfigError};
-    /// # use git_config::values::{Integer, Value, Boolean, TrueVariant};
+    /// # use git_config::values::{Integer, Boolean, TrueVariant};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"
@@ -2094,15 +2094,20 @@ mod get_value {
     use std::error::Error;
 
     use super::{Cow, GitConfig, TryFrom};
-    use crate::values::{Boolean, TrueVariant, Value};
+    use crate::values::{Boolean, Bytes, TrueVariant};
 
     #[test]
     fn single_section() -> Result<(), Box<dyn Error>> {
         let config = GitConfig::try_from("[core]\na=b\nc").unwrap();
-        let first_value: Value = config.value("core", None, "a")?;
+        let first_value: Bytes = config.value("core", None, "a")?;
         let second_value: Boolean = config.value("core", None, "c")?;
 
-        assert_eq!(first_value, Value::Other(Cow::Borrowed(b"b")));
+        assert_eq!(
+            first_value,
+            Bytes {
+                value: Cow::Borrowed(b"b")
+            }
+        );
         assert_eq!(second_value, Boolean::True(TrueVariant::Implicit));
 
         Ok(())
@@ -2122,8 +2127,13 @@ mod get_value {
         "#;
 
         let config = GitConfig::try_from(config).unwrap();
-        let value = config.value::<Value>("remote", Some("origin"), "url").unwrap();
-        assert_eq!(value, Value::Other(Cow::Borrowed(b"git@github.com:Byron/gitoxide.git")));
+        let value = config.value::<Bytes>("remote", Some("origin"), "url").unwrap();
+        assert_eq!(
+            value,
+            Bytes {
+                value: Cow::Borrowed(b"git@github.com:Byron/gitoxide.git")
+            }
+        );
     }
 }
 
