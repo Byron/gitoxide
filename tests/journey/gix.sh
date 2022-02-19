@@ -21,6 +21,13 @@ title "git-tempfile crate"
       expect_run $WITH_FAILURE test -e "$TEMPFILE"
     }
   )
+
+  (when "running the example program to help assure there cannot be deadlocks"
+    ABORTED=134
+    it "succeeds as it won't deadlock" && {
+      expect_run $ABORTED cargo run --release --example try-deadlock-on-cleanup -- 5
+    }
+  )
 )
 
 title "git-tempfile crate"
