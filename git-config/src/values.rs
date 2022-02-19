@@ -146,9 +146,8 @@ pub enum Value<'a> {
     Integer(Integer),
     Color(Color),
     /// If a value does not match from any of the other variants, then this
-    /// variant will be matched. As a result, conversion from a `str`-like item
-    /// will never fail.
-    Other(Cow<'a, [u8]>),
+    /// variant will be matched.
+    Bytes(Cow<'a, [u8]>),
 }
 
 impl Value<'_> {
@@ -165,7 +164,7 @@ impl Value<'_> {
 impl<'a> From<&'a [u8]> for Value<'a> {
     #[inline]
     fn from(s: &'a [u8]) -> Self {
-        Self::Other(Cow::Borrowed(s))
+        Self::Bytes(Cow::Borrowed(s))
     }
 }
 
@@ -179,7 +178,7 @@ impl From<Vec<u8>> for Value<'_> {
             return Self::Color(color);
         }
 
-        Boolean::try_from(s).map_or_else(|v| Self::Other(Cow::Owned(v)), Self::Boolean)
+        Boolean::try_from(s).map_or_else(|v| Self::Bytes(Cow::Owned(v)), Self::Boolean)
     }
 }
 
@@ -207,7 +206,7 @@ impl From<&Value<'_>> for Vec<u8> {
             Value::Boolean(b) => b.into(),
             Value::Integer(i) => i.into(),
             Value::Color(c) => c.into(),
-            Value::Other(o) => o.to_vec(),
+            Value::Bytes(o) => o.to_vec(),
         }
     }
 }
@@ -220,7 +219,7 @@ impl Display for Value<'_> {
             Value::Boolean(b) => b.fmt(f),
             Value::Integer(i) => i.fmt(f),
             Value::Color(c) => c.fmt(f),
-            Value::Other(o) => match std::str::from_utf8(o) {
+            Value::Bytes(o) => match std::str::from_utf8(o) {
                 Ok(v) => v.fmt(f),
                 Err(_) => write!(f, "{:?}", o),
             },
@@ -238,7 +237,7 @@ impl Serialize for Value<'_> {
             Value::Boolean(b) => b.serialize(serializer),
             Value::Integer(i) => i.serialize(serializer),
             Value::Color(c) => c.serialize(serializer),
-            Value::Other(i) => i.serialize(serializer),
+            Value::Bytes(i) => i.serialize(serializer),
         }
     }
 }

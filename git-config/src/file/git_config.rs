@@ -350,7 +350,7 @@ impl<'event> GitConfig<'event> {
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish
     /// let c_value: Vec<Value> = git_config.multi_value("core", None, "c")?;
-    /// assert_eq!(c_value, vec![Value::Other(Cow::Borrowed(b"g"))]);
+    /// assert_eq!(c_value, vec![Value::Bytes(Cow::Borrowed(b"g"))]);
     /// # Ok::<(), GitConfigError>(())
     /// ```
     ///
@@ -2102,7 +2102,7 @@ mod get_value {
         let first_value: Value = config.value("core", None, "a")?;
         let second_value: Boolean = config.value("core", None, "c")?;
 
-        assert_eq!(first_value, Value::Other(Cow::Borrowed(b"b")));
+        assert_eq!(first_value, Value::Bytes(Cow::Borrowed(b"b")));
         assert_eq!(second_value, Boolean::True(TrueVariant::Implicit));
 
         Ok(())
@@ -2123,7 +2123,7 @@ mod get_value {
 
         let config = GitConfig::try_from(config).unwrap();
         let value = config.value::<Value>("remote", Some("origin"), "url").unwrap();
-        assert_eq!(value, Value::Other(Cow::Borrowed(b"git@github.com:Byron/gitoxide.git")));
+        assert_eq!(value, Value::Bytes(Cow::Borrowed(b"git@github.com:Byron/gitoxide.git")));
     }
 }
 

@@ -74,7 +74,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
 
     assert_eq!(
         file.value::<Value>("core", None, "other")?,
-        Value::Other(Cow::Borrowed(b"hello world"))
+        Value::Bytes(Cow::Borrowed(b"hello world"))
     );
 
     let actual = file.value::<git_config::values::Path>("core", None, "location")?;
