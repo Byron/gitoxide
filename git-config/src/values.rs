@@ -298,8 +298,8 @@ quick_error! {
         PwdFileQuery {
             display("User home info missing")
         }
-        Unsupported {
-            display("Not available on this platform")
+        UserInterpolationUnsupported {
+            display("User interpolation is not available on this platform")
         }
     }
 }
@@ -308,9 +308,23 @@ quick_error! {
 ///
 /// Git represents file paths as byte arrays, modeled here as owned or borrowed byte sequences.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-#[allow(missing_docs)]
 pub struct Path<'a> {
+    /// The interpolated path
     pub value: Cow<'a, [u8]>,
+}
+
+impl<'a> std::ops::Deref for Path<'a> {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.value.as_ref()
+    }
+}
+
+impl<'a> AsRef<[u8]> for Path<'a> {
+    fn as_ref(&self) -> &[u8] {
+        self.value.as_ref()
+    }
 }
 
 impl<'a> TryFrom<Cow<'a, [u8]>> for Path<'a> {
@@ -373,7 +387,7 @@ impl Path<'_> {
 
     #[cfg(target_os = "windows")]
     fn interpolate_user(_val: Cow<[u8]>, _slash: u8) -> Result<Path, PathError> {
-        Err(PathError::Unsupported)
+        Err(PathError::UserInterpolationUnsupported)
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -1524,12 +1538,11 @@ mod path {
     #[test]
     fn not_interpolated() {
         let path = &b"/foo/bar"[..];
-        let borrowed_path = Cow::Borrowed(path);
-        assert_eq!(
-            Path::try_from(borrowed_path).unwrap(),
-            Path {
-                value: Cow::Borrowed(path)
-            }
+        let actual = Path::try_from(Cow::Borrowed(path)).unwrap();
+        assert_eq!(&*actual, path);
+        assert!(
+            matches!(&actual.value, Cow::Borrowed(_)),
+            "it does not unnecessarily copy values"
         );
     }
 
@@ -1547,17 +1560,24 @@ mod path {
         let git_install_dir = "/tmp/git";
         let expected = format!("{}/foo/bar", git_install_dir);
         assert_eq!(
-            Path::interpolate(val, Some(std::path::Path::new(git_install_dir))).unwrap(),
-            Path {
-                value: Cow::Borrowed(expected.as_bytes())
-            }
+            &*Path::interpolate(val, Some(std::path::Path::new(git_install_dir))).unwrap(),
+            expected.as_bytes()
+        );
+    }
+
+    #[test]
+    fn disabled_prefix_interpoldation() {
+        let path = &b"./%(prefix)/foo/bar"[..];
+        let git_install_dir = "/tmp/git";
+        assert_eq!(
+            &*Path::interpolate(Cow::Borrowed(path), Some(std::path::Path::new(git_install_dir))).unwrap(),
+            path
         );
     }
 
     #[test]
     fn tilde_interpolated() {
         let path = &b"~/foo/bar"[..];
-        let borrowed_path = Cow::Borrowed(path);
         let home = dirs::home_dir()
             .expect("empty home")
             .to_str()
@@ -1567,10 +1587,8 @@ mod path {
         let home = home.replace("\\", "/");
         let expected = format!("{}/foo/bar", home);
         assert_eq!(
-            Path::try_from(borrowed_path).unwrap(),
-            Path {
-                value: Cow::Borrowed(expected.as_bytes())
-            }
+            Path::try_from(Cow::Borrowed(path)).unwrap().as_ref(),
+            expected.as_bytes()
         );
     }
 
@@ -1579,7 +1597,7 @@ mod path {
     fn user_interpolated() {
         assert!(matches!(
             Path::try_from(Cow::Borrowed(&b"~baz/foo/bar"[..])),
-            Err(PathError::Unsupported)
+            Err(PathError::UserInterpolationUnsupported)
         ));
     }
 
@@ -1588,14 +1606,11 @@ mod path {
     fn user_interpolated() {
         let user = std::env::var("USER").unwrap();
         let path = format!("~{}/foo/bar", user);
-        let borrowed_path = Cow::Borrowed(path.as_bytes());
         let home = std::env::var("HOME").unwrap();
         let expected = format!("{}/foo/bar", home);
         assert_eq!(
-            Path::try_from(borrowed_path).unwrap(),
-            Path {
-                value: Cow::Borrowed(expected.as_bytes())
-            }
+            &*Path::try_from(Cow::Borrowed(path.as_bytes())).unwrap(),
+            expected.as_bytes()
         );
     }
 }
