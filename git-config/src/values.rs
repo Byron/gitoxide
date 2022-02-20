@@ -2,7 +2,6 @@
 
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
-use nom::AsChar;
 #[cfg(not(target_os = "windows"))]
 use pwd::Passwd;
 use quick_error::{quick_error, ResultExt};
@@ -381,13 +380,13 @@ impl<'a> Path<'a> {
     }
 
     #[cfg(target_os = "windows")]
-    fn interpolate_user(self) -> Result<Self, PathError> {
+    fn interpolate_user(self) -> Result<Cow<'a, std::path::Path>, PathError> {
         Err(PathError::UserInterpolationUnsupported)
     }
 
     #[cfg(not(target_os = "windows"))]
     fn interpolate_user(self) -> Result<Cow<'a, std::path::Path>, PathError> {
-        let (_prefix, val) = self.split_at('/'.len());
+        let (_prefix, val) = self.split_at("/".len());
         let i = val
             .iter()
             .position(|&e| e == b'/')
