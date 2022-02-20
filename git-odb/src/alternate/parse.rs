@@ -27,7 +27,7 @@ pub(crate) fn content(input: &[u8]) -> Result<Vec<PathBuf>, Error> {
             } else {
                 Cow::Borrowed(line)
             })
-            .ok_or_else(|| Error::PathConversion(line.to_vec()))?
+            .map_err(|_| Error::PathConversion(line.to_vec()))?
             .into_owned(),
         )
     }

@@ -35,7 +35,7 @@ pub mod index_names {
 
             let path = &chunk[..null_byte_pos];
             let path = git_features::path::from_byte_slice(path)
-                .ok_or_else(|| decode::Error::PathEncoding {
+                .map_err(|_| decode::Error::PathEncoding {
                     path: BString::from(path),
                 })?
                 .to_owned();
