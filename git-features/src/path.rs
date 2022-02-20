@@ -46,9 +46,16 @@ use std::{
 };
 
 #[derive(Debug)]
-/// The error type returned by [`into_bytes()`] which would otherwise return `OsString`,
-/// which is not an error.
+/// The error type returned by [`into_bytes()`] and others may suffer from failed conversions from or to bytes.
 pub struct Utf8Error;
+
+impl std::fmt::Display for Utf8Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Could not convert to UTF8 or from UTF8 due to ill-formed input")
+    }
+}
+
+impl std::error::Error for Utf8Error {}
 
 /// Like [`into_bytes()`], but takes `OsStr` as input for a lossless, but fallible, conversion.
 pub fn os_str_into_bytes(path: &OsStr) -> Result<&[u8], Utf8Error> {
@@ -100,19 +107,19 @@ pub fn into_bytes_or_panic_on_windows<'a>(path: impl Into<Cow<'a, Path>>) -> Cow
 /// On windows, the input is required to be valid UTF-8, which is guaranteed if we wrote it before. There are some potential
 /// git versions and windows installation which produce mal-formed UTF-16 if certain emojies are in the path. It's as rare as
 /// it sounds, but possible.
-pub fn from_byte_slice(input: &[u8]) -> Option<&Path> {
+pub fn from_byte_slice(input: &[u8]) -> Result<&Path, Utf8Error> {
     #[cfg(unix)]
     let p = {
         use std::os::unix::ffi::OsStrExt;
         OsStr::from_bytes(input).as_ref()
     };
     #[cfg(not(unix))]
-    let p = Path::new(std::str::from_utf8(input).ok()?);
-    Some(p)
+    let p = Path::new(std::str::from_utf8(input).map_err(|_| Utf8Error)?);
+    Ok(p)
 }
 
 /// Similar to [`from_byte_slice()`], but takes either borrowed or owned `input`.
-pub fn from_bytes<'a>(input: impl Into<Cow<'a, [u8]>>) -> Option<Cow<'a, Path>> {
+pub fn from_bytes<'a>(input: impl Into<Cow<'a, [u8]>>) -> Result<Cow<'a, Path>, Utf8Error> {
     let input = input.into();
     match input {
         Cow::Borrowed(input) => from_byte_slice(input).map(Cow::Borrowed),
@@ -122,7 +129,7 @@ pub fn from_bytes<'a>(input: impl Into<Cow<'a, [u8]>>) -> Option<Cow<'a, Path>> 
 
 /// Similar to [`from_byte_slice()`], but takes either borrowed or owned `input` as bstr.
 #[cfg(feature = "bstr")]
-pub fn from_bstr<'a>(input: impl Into<Cow<'a, bstr::BStr>>) -> Option<Cow<'a, Path>> {
+pub fn from_bstr<'a>(input: impl Into<Cow<'a, bstr::BStr>>) -> Result<Cow<'a, Path>, Utf8Error> {
     let input = input.into();
     match input {
         Cow::Borrowed(input) => from_byte_slice(input).map(Cow::Borrowed),
@@ -131,7 +138,7 @@ pub fn from_bstr<'a>(input: impl Into<Cow<'a, bstr::BStr>>) -> Option<Cow<'a, Pa
 }
 
 /// Similar to [`from_byte_slice()`], but takes and produces owned data.
-pub fn from_byte_vec(input: impl Into<Vec<u8>>) -> Option<PathBuf> {
+pub fn from_byte_vec(input: impl Into<Vec<u8>>) -> Result<PathBuf, Utf8Error> {
     let input = input.into();
     #[cfg(unix)]
     let p = {
@@ -139,8 +146,8 @@ pub fn from_byte_vec(input: impl Into<Vec<u8>>) -> Option<PathBuf> {
         std::ffi::OsString::from_vec(input).into()
     };
     #[cfg(not(unix))]
-    let p = PathBuf::from(String::from_utf8(input).ok()?);
-    Some(p)
+    let p = PathBuf::from(String::from_utf8(input).map_err(|_| Utf8Error)?);
+    Ok(p)
 }
 
 /// Similar to [`from_byte_vec()`], but will panic if there is ill-formed UTF-8 in the `input`.
