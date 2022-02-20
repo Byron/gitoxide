@@ -83,7 +83,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
     assert_eq!(
         file.value::<git_config::values::Path>("core", None, "location")?,
         git_config::values::Path {
-            value: Cow::Borrowed(format!("{}/tmp", home).as_bytes())
+            value: Cow::Owned(format!("{}/tmp", home).into_bytes())
         }
     );
 
