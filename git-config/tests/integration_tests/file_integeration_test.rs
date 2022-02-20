@@ -86,12 +86,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
         "~/tmp".as_bytes(),
         "no interpolation occours when querying a path due to lack of context"
     );
-    assert_eq!(
-        actual.interpolate(None).unwrap(),
-        git_config::values::Path {
-            value: Cow::Owned(format!("{}/tmp", home).into_bytes())
-        }
-    );
+    assert_eq!(actual.interpolate(None).unwrap(), Path::new(&format!("{}/tmp", home)));
 
     Ok(())
 }

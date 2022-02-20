@@ -289,6 +289,7 @@ quick_error! {
         Utf8Conversion(what: &'static str, err: git_features::path::Utf8Error) {
             display("Ill-formed UTF-8 in {}", what)
             context(what: &'static str, err: git_features::path::Utf8Error) -> (what, err)
+            source(err)
         }
         UsernameConversion(err: std::str::Utf8Error) {
             display("Ill-formed UTF-8 in username")
@@ -334,10 +335,10 @@ impl<'a> From<Cow<'a, [u8]>> for Path<'a> {
     }
 }
 
-impl Path<'_> {
-    /// Interpolates path value
+impl<'a> Path<'a> {
+    /// Interpolates this path into a file system path.
     ///
-    /// Path value can be given a string that begins with `~/` or `~user/` or `%(prefix)/`
+    /// If this path starts with `~/` or `~user/` or `%(prefix)/`
     ///  - `~/` is expanded to the value of `$HOME` on unix based systems. On windows, `SHGetKnownFolderPath` is used.
     /// See also [dirs](https://crates.io/crates/dirs).
     ///  - `~user/` to the specified user’s home directory, e.g `~alice` might get expanded to `/home/alice` on linux.
@@ -346,51 +347,50 @@ impl Path<'_> {
     /// optionally provided by the caller through `git_install_dir`.
     ///
     /// Any other, non-empty path value is returned unchanged and error is returned in case of an empty path value.
-    pub fn interpolate(self, git_install_dir: Option<&std::path::Path>) -> Result<Self, PathError> {
+    pub fn interpolate(self, git_install_dir: Option<&std::path::Path>) -> Result<Cow<'a, std::path::Path>, PathError> {
         if self.is_empty() {
             return Err(PathError::Missing { what: "path" });
         }
 
         const PREFIX: &[u8] = b"%(prefix)/";
-        const SLASH: u8 = b'/';
         if self.starts_with(PREFIX) {
             let mut expanded = git_features::path::into_bytes(git_install_dir.ok_or(PathError::Missing {
                 what: "git install dir",
             })?)
             .context("git install dir")?
             .into_owned();
-            let (_prefix, val) = self.split_at(PREFIX.len() - 1);
+            let (_prefix, val) = self.split_at(PREFIX.len() - "/".len());
             expanded.extend(val);
-            Ok(Path {
-                value: Cow::Owned(expanded),
-            })
+            Ok(git_features::path::from_byte_vec(expanded)
+                .context("prefix-expanded path")?
+                .into())
         } else if self.starts_with(b"~/") {
             let home_path = dirs::home_dir().ok_or(PathError::Missing { what: "home dir" })?;
             let mut expanded = git_features::path::into_bytes(home_path)
                 .context("home dir")?
                 .into_owned();
-            let (_prefix, val) = self.split_at(SLASH.len());
+            let (_prefix, val) = self.split_at("~".len());
             expanded.extend(val);
             let expanded = git_features::path::convert::to_unix_separators(expanded);
-            Ok(Path { value: expanded })
-        } else if self.starts_with(b"~") && self.contains(&SLASH) {
-            self.interpolate_user(SLASH)
+            Ok(git_features::path::from_bytes(expanded).context("tilde expanded path")?)
+        } else if self.starts_with(b"~") && self.contains(&b'/') {
+            self.interpolate_user()
         } else {
-            Ok(self)
+            Ok(git_features::path::from_bytes(self.value).context("unexpanded path")?)
         }
     }
 
     #[cfg(target_os = "windows")]
-    fn interpolate_user(self, _slash: u8) -> Result<Self, PathError> {
+    fn interpolate_user(self) -> Result<Self, PathError> {
         Err(PathError::UserInterpolationUnsupported)
     }
 
     #[cfg(not(target_os = "windows"))]
-    fn interpolate_user(self, slash: u8) -> Result<Self, PathError> {
-        let (_prefix, val) = self.split_at(slash.len());
+    fn interpolate_user(self) -> Result<Cow<'a, std::path::Path>, PathError> {
+        let (_prefix, val) = self.split_at('/'.len());
         let i = val
             .iter()
-            .position(|&e| e == slash)
+            .position(|&e| e == b'/')
             .ok_or(PathError::Missing { what: "/" })?;
         let (username, val) = val.split_at(i);
         let username = std::str::from_utf8(username)?;
@@ -400,9 +400,9 @@ impl Path<'_> {
             .dir;
         let mut expanded = home.as_bytes().to_owned();
         expanded.extend(val);
-        Ok(Path {
-            value: Cow::Owned(expanded),
-        })
+        Ok(git_features::path::from_byte_vec(expanded)
+            .context("tilded user expanded path")?
+            .into())
     }
 }
 
@@ -1553,24 +1553,24 @@ mod path {
     fn prefix_interpolated() {
         let val = Cow::Borrowed(&b"%(prefix)/foo/bar"[..]);
         let git_install_dir = "/tmp/git";
-        let expected = format!("{}/foo/bar", git_install_dir);
+        let expected = &std::path::PathBuf::from(format!("{}/foo/bar", git_install_dir));
         assert_eq!(
             &*Path::from(val)
                 .interpolate(Some(std::path::Path::new(git_install_dir)))
                 .unwrap(),
-            expected.as_bytes()
+            expected
         );
     }
 
     #[test]
     fn disabled_prefix_interpoldation() {
-        let path = &b"./%(prefix)/foo/bar"[..];
+        let path = "./%(prefix)/foo/bar";
         let git_install_dir = "/tmp/git";
         assert_eq!(
-            &*Path::from(Cow::Borrowed(path))
+            &*Path::from(Cow::Borrowed(path.as_bytes()))
                 .interpolate(Some(std::path::Path::new(git_install_dir)))
                 .unwrap(),
-            path
+            std::path::Path::new(path)
         );
     }
 
@@ -1587,7 +1587,7 @@ mod path {
         let expected = format!("{}/foo/bar", home);
         assert_eq!(
             Path::from(Cow::Borrowed(path)).interpolate(None).unwrap().as_ref(),
-            expected.as_bytes()
+            std::path::Path::new(&expected)
         );
     }
 
@@ -1609,7 +1609,7 @@ mod path {
         let expected = format!("{}/foo/bar", home);
         assert_eq!(
             &*Path::from(Cow::Borrowed(path.as_bytes())).interpolate(None).unwrap(),
-            expected.as_bytes()
+            std::path::Path::new(&expected)
         );
     }
 }
