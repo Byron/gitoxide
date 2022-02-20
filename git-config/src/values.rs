@@ -327,12 +327,10 @@ impl<'a> AsRef<[u8]> for Path<'a> {
     }
 }
 
-impl<'a> TryFrom<Cow<'a, [u8]>> for Path<'a> {
-    type Error = PathError;
-
+impl<'a> From<Cow<'a, [u8]>> for Path<'a> {
     #[inline]
-    fn try_from(c: Cow<'a, [u8]>) -> Result<Self, Self::Error> {
-        Self::interpolate(c, None)
+    fn from(value: Cow<'a, [u8]>) -> Self {
+        Path { value }
     }
 }
 
@@ -348,51 +346,48 @@ impl Path<'_> {
     /// optionally provided by the caller through `git_install_dir`.
     ///
     /// Any other, non-empty path value is returned unchanged and error is returned in case of an empty path value.
-    pub fn interpolate<'a>(
-        path: Cow<'a, [u8]>,
-        git_install_dir: Option<&'a std::path::Path>,
-    ) -> Result<Path<'a>, PathError> {
-        if path.is_empty() {
+    pub fn interpolate(self, git_install_dir: Option<&std::path::Path>) -> Result<Self, PathError> {
+        if self.is_empty() {
             return Err(PathError::Missing { what: "path" });
         }
 
         const PREFIX: &[u8] = b"%(prefix)/";
         const SLASH: u8 = b'/';
-        if path.starts_with(PREFIX) {
+        if self.starts_with(PREFIX) {
             let mut expanded = git_features::path::into_bytes(git_install_dir.ok_or(PathError::Missing {
                 what: "git install dir",
             })?)
             .context("git install dir")?
             .into_owned();
-            let (_prefix, val) = path.split_at(PREFIX.len() - 1);
+            let (_prefix, val) = self.split_at(PREFIX.len() - 1);
             expanded.extend(val);
             Ok(Path {
                 value: Cow::Owned(expanded),
             })
-        } else if path.starts_with(b"~/") {
+        } else if self.starts_with(b"~/") {
             let home_path = dirs::home_dir().ok_or(PathError::Missing { what: "home dir" })?;
             let mut expanded = git_features::path::into_bytes(home_path)
                 .context("home dir")?
                 .into_owned();
-            let (_prefix, val) = path.split_at(SLASH.len());
+            let (_prefix, val) = self.split_at(SLASH.len());
             expanded.extend(val);
             let expanded = git_features::path::convert::to_unix_separators(expanded);
             Ok(Path { value: expanded })
-        } else if path.starts_with(b"~") && path.contains(&SLASH) {
-            Self::interpolate_user(path, SLASH)
+        } else if self.starts_with(b"~") && self.contains(&SLASH) {
+            self.interpolate_user(SLASH)
         } else {
-            Ok(Path { value: path })
+            Ok(self)
         }
     }
 
     #[cfg(target_os = "windows")]
-    fn interpolate_user(_val: Cow<[u8]>, _slash: u8) -> Result<Path, PathError> {
+    fn interpolate_user(self, _slash: u8) -> Result<Self, PathError> {
         Err(PathError::UserInterpolationUnsupported)
     }
 
     #[cfg(not(target_os = "windows"))]
-    fn interpolate_user(val: Cow<[u8]>, slash: u8) -> Result<Path, PathError> {
-        let (_prefix, val) = val.split_at(slash.len());
+    fn interpolate_user(self, slash: u8) -> Result<Self, PathError> {
+        let (_prefix, val) = self.split_at(slash.len());
         let i = val
             .iter()
             .position(|&e| e == slash)
@@ -1549,7 +1544,7 @@ mod path {
     #[test]
     fn empty_is_error() {
         assert!(matches!(
-            Path::try_from(Cow::Borrowed("".as_bytes())),
+            Path::from(Cow::Borrowed("".as_bytes())).interpolate(None),
             Err(PathError::Missing { what: "path" })
         ));
     }
@@ -1560,7 +1555,9 @@ mod path {
         let git_install_dir = "/tmp/git";
         let expected = format!("{}/foo/bar", git_install_dir);
         assert_eq!(
-            &*Path::interpolate(val, Some(std::path::Path::new(git_install_dir))).unwrap(),
+            &*Path::from(val)
+                .interpolate(Some(std::path::Path::new(git_install_dir)))
+                .unwrap(),
             expected.as_bytes()
         );
     }
@@ -1570,7 +1567,9 @@ mod path {
         let path = &b"./%(prefix)/foo/bar"[..];
         let git_install_dir = "/tmp/git";
         assert_eq!(
-            &*Path::interpolate(Cow::Borrowed(path), Some(std::path::Path::new(git_install_dir))).unwrap(),
+            &*Path::from(Cow::Borrowed(path))
+                .interpolate(Some(std::path::Path::new(git_install_dir)))
+                .unwrap(),
             path
         );
     }
@@ -1587,7 +1586,7 @@ mod path {
         let home = home.replace("\\", "/");
         let expected = format!("{}/foo/bar", home);
         assert_eq!(
-            Path::try_from(Cow::Borrowed(path)).unwrap().as_ref(),
+            Path::from(Cow::Borrowed(path)).interpolate(None).unwrap().as_ref(),
             expected.as_bytes()
         );
     }
@@ -1596,7 +1595,7 @@ mod path {
     #[test]
     fn user_interpolated() {
         assert!(matches!(
-            Path::try_from(Cow::Borrowed(&b"~baz/foo/bar"[..])),
+            Path::from(Cow::Borrowed(&b"~baz/foo/bar"[..])).interpolate(None),
             Err(PathError::UserInterpolationUnsupported)
         ));
     }
@@ -1609,7 +1608,7 @@ mod path {
         let home = std::env::var("HOME").unwrap();
         let expected = format!("{}/foo/bar", home);
         assert_eq!(
-            &*Path::try_from(Cow::Borrowed(path.as_bytes())).unwrap(),
+            &*Path::from(Cow::Borrowed(path.as_bytes())).interpolate(None).unwrap(),
             expected.as_bytes()
         );
     }

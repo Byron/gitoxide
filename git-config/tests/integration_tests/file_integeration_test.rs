@@ -80,8 +80,14 @@ fn get_value_for_all_provided_values() -> crate::Result {
         .to_owned();
     #[cfg(target_os = "windows")]
     let home = home.replace("\\", "/");
+    let actual = file.value::<git_config::values::Path>("core", None, "location")?;
     assert_eq!(
-        file.value::<git_config::values::Path>("core", None, "location")?,
+        &*actual,
+        "~/tmp".as_bytes(),
+        "no interpolation occours when querying a path due to lack of context"
+    );
+    assert_eq!(
+        actual.interpolate(None).unwrap(),
         git_config::values::Path {
             value: Cow::Owned(format!("{}/tmp", home).into_bytes())
         }
