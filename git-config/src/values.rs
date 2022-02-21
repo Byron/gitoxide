@@ -375,8 +375,8 @@ pub mod path {
                 .map_err(|_| interpolate::Error::PwdFileQuery)?
                 .ok_or(interpolate::Error::Missing { what: "pwd user info" })?
                 .dir;
-            let path_past_user_prefix =
-                git_features::path::from_byte_slice(&path_with_leading_slash["/".len()..]).context("path past ~user/")?;
+            let path_past_user_prefix = git_features::path::from_byte_slice(&path_with_leading_slash["/".len()..])
+                .context("path past ~user/")?;
             Ok(std::path::PathBuf::from(home).join(path_past_user_prefix).into())
         }
     }
