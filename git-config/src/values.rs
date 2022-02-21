@@ -635,7 +635,7 @@ impl Serialize for Boolean<'_> {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
 pub enum TrueVariant<'a> {
-    Explicit(Cow<'a, [u8]>),
+    Explicit(Cow<'a, str>),
     /// For values defined without a `= <value>`.
     Implicit,
 }
@@ -649,7 +649,7 @@ impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(value.into()))
+            Ok(Self::Explicit(std::str::from_utf8(value).unwrap().into()))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
@@ -667,7 +667,7 @@ impl TryFrom<Vec<u8>> for TrueVariant<'_> {
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(Cow::Owned(value)))
+            Ok(Self::Explicit(Cow::Owned(String::from_utf8(value).unwrap())))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
@@ -680,7 +680,7 @@ impl Display for TrueVariant<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Self::Explicit(v) = self {
             // TODO is debug format ok?
-            write!(f, "{:?}", v)
+            write!(f, "{}", v)
         } else {
             Ok(())
         }
@@ -691,7 +691,7 @@ impl<'a, 'b: 'a> From<&'b TrueVariant<'a>> for &'a [u8] {
     #[inline]
     fn from(t: &'b TrueVariant<'a>) -> Self {
         match t {
-            TrueVariant::Explicit(e) => e,
+            TrueVariant::Explicit(e) => e.as_bytes(),
             TrueVariant::Implicit => &[],
         }
     }
@@ -1360,19 +1360,19 @@ mod boolean {
     fn from_str_true() {
         assert_eq!(
             Boolean::try_from(b("yes")),
-            Ok(Boolean::True(TrueVariant::Explicit(b("yes").into())))
+            Ok(Boolean::True(TrueVariant::Explicit("yes".into())))
         );
         assert_eq!(
             Boolean::try_from(b("on")),
-            Ok(Boolean::True(TrueVariant::Explicit(b("on").into())))
+            Ok(Boolean::True(TrueVariant::Explicit("on".into())))
         );
         assert_eq!(
             Boolean::try_from(b("true")),
-            Ok(Boolean::True(TrueVariant::Explicit(b("true").into())))
+            Ok(Boolean::True(TrueVariant::Explicit("true".into())))
         );
         assert_eq!(
             Boolean::try_from(b("one")),
-            Ok(Boolean::True(TrueVariant::Explicit(b("one").into())))
+            Ok(Boolean::True(TrueVariant::Explicit("one".into())))
         );
     }
 
