@@ -138,6 +138,11 @@ pub fn normalize_str(input: &str) -> Cow<'_, [u8]> {
     normalize_bytes(input.as_bytes())
 }
 
+/// Converts string to byte slice
+fn b(s: &str) -> &[u8] {
+    s.as_bytes()
+}
+
 /// Fully enumerated valid types that a `git-config` value can be.
 #[allow(missing_docs)]
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -353,6 +358,7 @@ pub mod path {
     mod interpolate_tests {
         use std::borrow::Cow;
 
+        use crate::values::b;
         use crate::values::{path::interpolate::Error, Path};
 
         #[test]
@@ -369,7 +375,7 @@ pub mod path {
         #[test]
         fn empty_path_is_error() {
             assert!(matches!(
-                Path::from(Cow::Borrowed("".as_bytes())).interpolate(None),
+                Path::from(Cow::Borrowed(b(""))).interpolate(None),
                 Err(Error::Missing { what: "path" })
             ));
         }
@@ -403,7 +409,7 @@ pub mod path {
             let path = "./%(prefix)/foo/bar";
             let git_install_dir = "/tmp/git";
             assert_eq!(
-                Path::from(Cow::Borrowed(path.as_bytes()))
+                Path::from(Cow::Borrowed(b(path)))
                     .interpolate(Some(std::path::Path::new(git_install_dir)))
                     .unwrap(),
                 std::path::Path::new(path)
@@ -445,7 +451,7 @@ pub mod path {
                 let path = format!("{}{}{}", specific_user_home, std::path::MAIN_SEPARATOR, path_suffix);
                 let expected = format!("{}{}{}", home, std::path::MAIN_SEPARATOR, path_suffix);
                 assert_eq!(
-                    Path::from(Cow::Borrowed(path.as_bytes())).interpolate(None).unwrap(),
+                    Path::from(Cow::Borrowed(b(&path))).interpolate(None).unwrap(),
                     std::path::Path::new(&expected),
                     "it keeps path separators as is"
                 );
@@ -1339,49 +1345,34 @@ mod normalize {
 #[cfg(test)]
 mod boolean {
     use super::{Boolean, TrueVariant, TryFrom};
-    use nom::AsBytes;
+    use crate::values::b;
 
     #[test]
     fn from_str_false() {
-        assert_eq!(
-            Boolean::try_from("no".as_bytes()),
-            Ok(Boolean::False("no".as_bytes().into()))
-        );
-        assert_eq!(
-            Boolean::try_from("off".as_bytes()),
-            Ok(Boolean::False("off".as_bytes().into()))
-        );
-        assert_eq!(
-            Boolean::try_from("false".as_bytes()),
-            Ok(Boolean::False("false".as_bytes().into()))
-        );
-        assert_eq!(
-            Boolean::try_from("zero".as_bytes()),
-            Ok(Boolean::False("zero".as_bytes().into()))
-        );
-        assert_eq!(
-            Boolean::try_from("\"\"".as_bytes()),
-            Ok(Boolean::False("\"\"".as_bytes().into()))
-        );
+        assert_eq!(Boolean::try_from(b("no")), Ok(Boolean::False(b("no").into())));
+        assert_eq!(Boolean::try_from(b("off")), Ok(Boolean::False(b("off").into())));
+        assert_eq!(Boolean::try_from(b("false")), Ok(Boolean::False(b("false").into())));
+        assert_eq!(Boolean::try_from(b("zero")), Ok(Boolean::False(b("zero").into())));
+        assert_eq!(Boolean::try_from(b("\"\"")), Ok(Boolean::False(b("\"\"").into())));
     }
 
     #[test]
     fn from_str_true() {
         assert_eq!(
-            Boolean::try_from("yes".as_bytes()),
-            Ok(Boolean::True(TrueVariant::Explicit("yes".as_bytes().into())))
+            Boolean::try_from(b("yes")),
+            Ok(Boolean::True(TrueVariant::Explicit(b("yes").into())))
         );
         assert_eq!(
-            Boolean::try_from("on".as_bytes()),
-            Ok(Boolean::True(TrueVariant::Explicit("on".as_bytes().into())))
+            Boolean::try_from(b("on")),
+            Ok(Boolean::True(TrueVariant::Explicit(b("on").into())))
         );
         assert_eq!(
-            Boolean::try_from("true".as_bytes()),
-            Ok(Boolean::True(TrueVariant::Explicit("true".as_bytes().into())))
+            Boolean::try_from(b("true")),
+            Ok(Boolean::True(TrueVariant::Explicit(b("true").into())))
         );
         assert_eq!(
-            Boolean::try_from("one".as_bytes()),
-            Ok(Boolean::True(TrueVariant::Explicit("one".as_bytes().into())))
+            Boolean::try_from(b("one")),
+            Ok(Boolean::True(TrueVariant::Explicit(b("one").into())))
         );
     }
 
@@ -1389,34 +1380,31 @@ mod boolean {
     fn ignores_case() {
         // Random subset
         for word in &["no", "yes", "off", "true", "zero"] {
-            let first: bool = Boolean::try_from(word.as_bytes()).unwrap().into();
-            let second: bool = Boolean::try_from(&*word.to_uppercase().as_bytes()).unwrap().into();
+            let first: bool = Boolean::try_from(b(word)).unwrap().into();
+            let second: bool = Boolean::try_from(b(&*word.to_uppercase())).unwrap().into();
             assert_eq!(first, second);
         }
     }
 
     #[test]
     fn from_str_err() {
-        assert!(Boolean::try_from("yesn't".as_bytes()).is_err());
-        assert!(Boolean::try_from("yesno".as_bytes()).is_err());
+        assert!(Boolean::try_from(b("yesn't")).is_err());
+        assert!(Boolean::try_from(b("yesno")).is_err());
     }
 }
 
 #[cfg(test)]
 mod integer {
     use super::{Integer, IntegerSuffix};
-    use nom::AsBytes;
+    use crate::values::b;
     use std::convert::TryFrom;
 
     #[test]
     fn from_str_no_suffix() {
-        assert_eq!(
-            Integer::try_from("1".as_bytes()).unwrap(),
-            Integer { value: 1, suffix: None }
-        );
+        assert_eq!(Integer::try_from(b("1")).unwrap(), Integer { value: 1, suffix: None });
 
         assert_eq!(
-            Integer::try_from("-1".as_bytes()).unwrap(),
+            Integer::try_from(b("-1")).unwrap(),
             Integer {
                 value: -1,
                 suffix: None
@@ -1427,7 +1415,7 @@ mod integer {
     #[test]
     fn from_str_with_suffix() {
         assert_eq!(
-            Integer::try_from("1k".as_bytes()).unwrap(),
+            Integer::try_from(b("1k")).unwrap(),
             Integer {
                 value: 1,
                 suffix: Some(IntegerSuffix::Kibi),
@@ -1435,7 +1423,7 @@ mod integer {
         );
 
         assert_eq!(
-            Integer::try_from("1m".as_bytes()).unwrap(),
+            Integer::try_from(b("1m")).unwrap(),
             Integer {
                 value: 1,
                 suffix: Some(IntegerSuffix::Mebi),
@@ -1443,7 +1431,7 @@ mod integer {
         );
 
         assert_eq!(
-            Integer::try_from("1g".as_bytes()).unwrap(),
+            Integer::try_from(b("1g")).unwrap(),
             Integer {
                 value: 1,
                 suffix: Some(IntegerSuffix::Gibi),
@@ -1453,13 +1441,13 @@ mod integer {
 
     #[test]
     fn invalid_from_str() {
-        assert!(Integer::try_from("".as_bytes()).is_err());
-        assert!(Integer::try_from("-".as_bytes()).is_err());
-        assert!(Integer::try_from("k".as_bytes()).is_err());
-        assert!(Integer::try_from("m".as_bytes()).is_err());
-        assert!(Integer::try_from("g".as_bytes()).is_err());
-        assert!(Integer::try_from("123123123123123123123123".as_bytes()).is_err());
-        assert!(Integer::try_from("gg".as_bytes()).is_err());
+        assert!(Integer::try_from(b("")).is_err());
+        assert!(Integer::try_from(b("-")).is_err());
+        assert!(Integer::try_from(b("k")).is_err());
+        assert!(Integer::try_from(b("m")).is_err());
+        assert!(Integer::try_from(b("g")).is_err());
+        assert!(Integer::try_from(b("123123123123123123123123")).is_err());
+        assert!(Integer::try_from(b("gg")).is_err());
     }
 }
 
