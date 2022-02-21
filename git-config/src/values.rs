@@ -1,5 +1,6 @@
 //! Rust containers for valid `git-config` types.
 
+use std::path::PathBuf;
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
 #[cfg(not(target_os = "windows"))]
@@ -352,26 +353,20 @@ impl<'a> Path<'a> {
         }
 
         const PREFIX: &[u8] = b"%(prefix)/";
+        const USER_HOME: &[u8] = b"~/";
         if self.starts_with(PREFIX) {
-            let mut expanded = git_features::path::into_bytes(git_install_dir.ok_or(PathError::Missing {
+            let git_install_dir = git_install_dir.ok_or(PathError::Missing {
                 what: "git install dir",
-            })?)
-            .context("git install dir")?
-            .into_owned();
-            let (_prefix, val) = self.split_at(PREFIX.len() - "/".len());
-            expanded.extend(val);
-            Ok(git_features::path::from_byte_vec(expanded)
-                .context("prefix-expanded path")?
-                .into())
-        } else if self.starts_with(b"~/") {
+            })?;
+            let (_prefix, path_without_trailing_slash) = self.split_at(PREFIX.len());
+            let path_without_trailing_slash =
+                git_features::path::from_byte_vec(path_without_trailing_slash).context("path past %(prefix)")?;
+            Ok(git_install_dir.join(path_without_trailing_slash).into())
+        } else if self.starts_with(USER_HOME) {
             let home_path = dirs::home_dir().ok_or(PathError::Missing { what: "home dir" })?;
-            let mut expanded = git_features::path::into_bytes(home_path)
-                .context("home dir")?
-                .into_owned();
-            let (_prefix, val) = self.split_at("~".len());
-            expanded.extend(val);
-            let expanded = git_features::path::convert::to_unix_separators(expanded);
-            Ok(git_features::path::from_bytes(expanded).context("tilde expanded path")?)
+            let (_prefix, val) = self.split_at(USER_HOME.len());
+            let val = git_features::path::from_bytes(val).context("path past ~/")?;
+            Ok(home_path.join(val).into())
         } else if self.starts_with(b"~") && self.contains(&b'/') {
             self.interpolate_user()
         } else {
@@ -391,17 +386,15 @@ impl<'a> Path<'a> {
             .iter()
             .position(|&e| e == b'/')
             .ok_or(PathError::Missing { what: "/" })?;
-        let (username, val) = val.split_at(i);
+        let (username, path_with_leading_slash) = val.split_at(i);
         let username = std::str::from_utf8(username)?;
         let home = Passwd::from_name(username)
             .map_err(|_| PathError::PwdFileQuery)?
             .ok_or(PathError::Missing { what: "pwd user info" })?
             .dir;
-        let mut expanded = home.as_bytes().to_owned();
-        expanded.extend(val);
-        Ok(git_features::path::from_byte_vec(expanded)
-            .context("tilded user expanded path")?
-            .into())
+        let path_past_user_prefix =
+            git_features::path::from_byte_slice(&path_with_leading_slash[1..]).context("path past ~user/")?;
+        Ok(PathBuf::from(home).join(path_past_user_prefix).into())
     }
 }
 
@@ -1550,19 +1543,26 @@ mod path {
 
     #[test]
     fn prefix_interpolated() {
-        let val = Cow::Borrowed(&b"%(prefix)/foo/bar"[..]);
-        let git_install_dir = "/tmp/git";
-        let expected = &std::path::PathBuf::from(format!("{}/foo/bar", git_install_dir));
-        assert_eq!(
-            &*Path::from(val)
-                .interpolate(Some(std::path::Path::new(git_install_dir)))
-                .unwrap(),
-            expected
-        );
+        for git_install_dir in &["/tmp/git", "C:\\git"] {
+            for (val, expected) in &[
+                (&b"%(prefix)/foo/bar"[..], "foo/bar"),
+                (b"%(prefix)/foo\\bar", "foo\\bar"),
+            ] {
+                let expected =
+                    &std::path::PathBuf::from(format!("{}{}{}", git_install_dir, std::path::MAIN_SEPARATOR, expected));
+                assert_eq!(
+                    &*Path::from(Cow::Borrowed(*val))
+                        .interpolate(Some(std::path::Path::new(git_install_dir)))
+                        .unwrap(),
+                    expected,
+                    "prefix interpolation keeps separators as they are"
+                );
+            }
+        }
     }
 
     #[test]
-    fn disabled_prefix_interpoldation() {
+    fn disabled_prefix_interpolation() {
         let path = "./%(prefix)/foo/bar";
         let git_install_dir = "/tmp/git";
         assert_eq!(
@@ -1576,17 +1576,15 @@ mod path {
     #[test]
     fn tilde_interpolated() {
         let path = &b"~/foo/bar"[..];
-        let home = dirs::home_dir()
-            .expect("empty home")
-            .to_str()
-            .expect("invalid unicode")
-            .to_owned();
-        #[cfg(target_os = "windows")]
-        let home = home.replace("\\", "/");
-        let expected = format!("{}/foo/bar", home);
+        let expected = format!(
+            "{}{}foo/bar",
+            dirs::home_dir().expect("empty home").display(),
+            std::path::MAIN_SEPARATOR
+        );
         assert_eq!(
             Path::from(Cow::Borrowed(path)).interpolate(None).unwrap().as_ref(),
-            std::path::Path::new(&expected)
+            std::path::Path::new(&expected),
+            "note that path separators are not turned into slashes as we work with `std::path::Path`"
         );
     }
 
@@ -1603,12 +1601,17 @@ mod path {
     #[test]
     fn user_interpolated() {
         let user = std::env::var("USER").unwrap();
-        let path = format!("~{}/foo/bar", user);
         let home = std::env::var("HOME").unwrap();
-        let expected = format!("{}/foo/bar", home);
-        assert_eq!(
-            &*Path::from(Cow::Borrowed(path.as_bytes())).interpolate(None).unwrap(),
-            std::path::Path::new(&expected)
-        );
+        let specific_user_home = format!("~{}", user);
+
+        for path_suffix in &["foo/bar", "foo\\bar", ""] {
+            let path = format!("{}{}{}", specific_user_home, std::path::MAIN_SEPARATOR, path_suffix);
+            let expected = format!("{}{}{}", home, std::path::MAIN_SEPARATOR, path_suffix);
+            assert_eq!(
+                &*Path::from(Cow::Borrowed(path.as_bytes())).interpolate(None).unwrap(),
+                std::path::Path::new(&expected),
+                "it keeps path separators as is"
+            );
+        }
     }
 }

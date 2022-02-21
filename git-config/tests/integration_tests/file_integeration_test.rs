@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::{borrow::Cow, convert::TryFrom, path::Path};
 
 use git_config::{file::GitConfig, values::*};
@@ -73,20 +74,14 @@ fn get_value_for_all_provided_values() -> crate::Result {
         Value::Other(Cow::Borrowed(b"hello world"))
     );
 
-    let home = dirs::home_dir()
-        .expect("empty home dir")
-        .to_str()
-        .expect("invalid unicode")
-        .to_owned();
-    #[cfg(target_os = "windows")]
-    let home = home.replace("\\", "/");
     let actual = file.value::<git_config::values::Path>("core", None, "location")?;
     assert_eq!(
         &*actual,
         "~/tmp".as_bytes(),
-        "no interpolation occours when querying a path due to lack of context"
+        "no interpolation occurs when querying a path due to lack of context"
     );
-    assert_eq!(actual.interpolate(None).unwrap(), Path::new(&format!("{}/tmp", home)));
+    let expected = PathBuf::from(format!("{}/tmp", dirs::home_dir().expect("empty home dir").display()));
+    assert_eq!(actual.interpolate(None).unwrap(), expected);
 
     Ok(())
 }
