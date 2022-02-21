@@ -1,4 +1,8 @@
-use std::{borrow::Cow, convert::TryFrom, path::Path};
+use std::{
+    borrow::Cow,
+    convert::TryFrom,
+    path::{Path, PathBuf},
+};
 
 use git_config::{file::GitConfig, values::*};
 
@@ -20,6 +24,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
             color = brightgreen red \
             bold
             other = hello world
+            location = ~/tmp
     "#;
 
     let file = GitConfig::try_from(config)?;
@@ -71,6 +76,15 @@ fn get_value_for_all_provided_values() -> crate::Result {
         file.value::<Value>("core", None, "other")?,
         Value::Other(Cow::Borrowed(b"hello world"))
     );
+
+    let actual = file.value::<git_config::values::Path>("core", None, "location")?;
+    assert_eq!(
+        &*actual,
+        "~/tmp".as_bytes(),
+        "no interpolation occurs when querying a path due to lack of context"
+    );
+    let expected = PathBuf::from(format!("{}/tmp", dirs::home_dir().expect("empty home dir").display()));
+    assert_eq!(actual.interpolate(None).unwrap(), expected);
 
     Ok(())
 }

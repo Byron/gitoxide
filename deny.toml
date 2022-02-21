@@ -39,6 +39,7 @@ allow = [
     "Apache-2.0",
     "BSD-3-Clause",
     "MIT",
+    "CC-PDDC",
 ]
 # Lint level for licenses considered copyleft
 copyleft = "allow"

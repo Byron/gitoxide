@@ -88,7 +88,7 @@ pub mod index {
         where
             Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_object::BlobRef<'a>>,
         {
-            let dest = root.join(git_features::path::from_byte_slice(entry_path).ok_or_else(|| {
+            let dest = root.join(git_features::path::from_byte_slice(entry_path).map_err(|_| {
                 index::checkout::Error::IllformedUtf8 {
                     path: entry_path.to_owned(),
                 }
@@ -126,7 +126,7 @@ pub mod index {
                         path: root.to_path_buf(),
                     })?;
                     let symlink_destination = git_features::path::from_byte_slice(obj.data)
-                        .ok_or_else(|| index::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
+                        .map_err(|_| index::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
                     if symlinks {
                         #[cfg(unix)]
                         std::os::unix::fs::symlink(symlink_destination, &dest)?;

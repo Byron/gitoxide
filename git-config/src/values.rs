@@ -29,7 +29,7 @@ use serde::{Serialize, Serializer};
 /// ```
 /// # use std::borrow::Cow;
 /// # use git_config::values::normalize_str;
-/// assert_eq!(normalize_str("hello world"), Cow::Borrowed(b"hello world".into()));
+/// assert_eq!(normalize_str("hello world"), Cow::Borrowed(b"hello world".as_slice()));
 /// ```
 ///
 /// Fully quoted values are optimized to not need allocations.
@@ -37,7 +37,7 @@ use serde::{Serialize, Serializer};
 /// ```
 /// # use std::borrow::Cow;
 /// # use git_config::values::normalize_str;
-/// assert_eq!(normalize_str("\"hello world\""), Cow::Borrowed(b"hello world".into()));
+/// assert_eq!(normalize_str("\"hello world\""), Cow::Borrowed(b"hello world".as_slice()));
 /// ```
 ///
 /// Quoted values are unwrapped as an owned variant.
@@ -162,6 +162,7 @@ impl Value<'_> {
     }
 }
 
+// TODO may be remove str handling if not used
 impl<'a> From<&'a str> for Value<'a> {
     fn from(s: &'a str) -> Self {
         if let Ok(bool) = Boolean::try_from(s) {
@@ -270,6 +271,248 @@ impl Serialize for Value<'_> {
             Value::Color(c) => c.serialize(serializer),
             Value::Other(i) => i.serialize(serializer),
         }
+    }
+}
+
+///
+pub mod path {
+    use std::borrow::Cow;
+
+    #[cfg(not(target_os = "windows"))]
+    use pwd::Passwd;
+    use quick_error::ResultExt;
+
+    use crate::values::Path;
+
+    pub mod interpolate {
+        use quick_error::quick_error;
+
+        quick_error! {
+            #[derive(Debug)]
+            /// The error returned by [`Path::interpolate()`].
+            #[allow(missing_docs)]
+            pub enum Error {
+                Missing { what: &'static str } {
+                    display("{} is missing", what)
+                }
+                Utf8Conversion(what: &'static str, err: git_features::path::Utf8Error) {
+                    display("Ill-formed UTF-8 in {}", what)
+                    context(what: &'static str, err: git_features::path::Utf8Error) -> (what, err)
+                    source(err)
+                }
+                UsernameConversion(err: std::str::Utf8Error) {
+                    display("Ill-formed UTF-8 in username")
+                    source(err)
+                    from()
+                }
+                PwdFileQuery {
+                    display("User home info missing")
+                }
+                UserInterpolationUnsupported {
+                    display("User interpolation is not available on this platform")
+                }
+            }
+        }
+    }
+
+    impl<'a> Path<'a> {
+        /// Interpolates this path into a file system path.
+        ///
+        /// If this path starts with `~/` or `~user/` or `%(prefix)/`
+        ///  - `~/` is expanded to the value of `$HOME` on unix based systems. On windows, `SHGetKnownFolderPath` is used.
+        /// See also [dirs](https://crates.io/crates/dirs).
+        ///  - `~user/` to the specified user’s home directory, e.g `~alice` might get expanded to `/home/alice` on linux.
+        /// The interpolation uses `getpwnam` sys call and is therefore not available on windows. See also [pwd](https://crates.io/crates/pwd).
+        ///  - `%(prefix)/` is expanded to the location where gitoxide is installed. This location is not known at compile time and therefore need to be
+        /// optionally provided by the caller through `git_install_dir`.
+        ///
+        /// Any other, non-empty path value is returned unchanged and error is returned in case of an empty path value.
+        pub fn interpolate(
+            self,
+            git_install_dir: Option<&std::path::Path>,
+        ) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
+            if self.is_empty() {
+                return Err(interpolate::Error::Missing { what: "path" });
+            }
+
+            const PREFIX: &[u8] = b"%(prefix)/";
+            const USER_HOME: &[u8] = b"~/";
+            if self.starts_with(PREFIX) {
+                let git_install_dir = git_install_dir.ok_or(interpolate::Error::Missing {
+                    what: "git install dir",
+                })?;
+                let (_prefix, path_without_trailing_slash) = self.split_at(PREFIX.len());
+                let path_without_trailing_slash =
+                    git_features::path::from_byte_vec(path_without_trailing_slash).context("path past %(prefix)")?;
+                Ok(git_install_dir.join(path_without_trailing_slash).into())
+            } else if self.starts_with(USER_HOME) {
+                let home_path = dirs::home_dir().ok_or(interpolate::Error::Missing { what: "home dir" })?;
+                let (_prefix, val) = self.split_at(USER_HOME.len());
+                let val = git_features::path::from_bytes(val).context("path past ~/")?;
+                Ok(home_path.join(val).into())
+            } else if self.starts_with(b"~") && self.contains(&b'/') {
+                self.interpolate_user()
+            } else {
+                Ok(git_features::path::from_bytes(self.value).context("unexpanded path")?)
+            }
+        }
+
+        #[cfg(target_os = "windows")]
+        fn interpolate_user(self) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
+            Err(interpolate::Error::UserInterpolationUnsupported)
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        fn interpolate_user(self) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
+            let (_prefix, val) = self.split_at("/".len());
+            let i = val
+                .iter()
+                .position(|&e| e == b'/')
+                .ok_or(interpolate::Error::Missing { what: "/" })?;
+            let (username, path_with_leading_slash) = val.split_at(i);
+            let username = std::str::from_utf8(username)?;
+            let home = Passwd::from_name(username)
+                .map_err(|_| interpolate::Error::PwdFileQuery)?
+                .ok_or(interpolate::Error::Missing { what: "pwd user info" })?
+                .dir;
+            let path_past_user_prefix = git_features::path::from_byte_slice(&path_with_leading_slash["/".len()..])
+                .context("path past ~user/")?;
+            Ok(std::path::PathBuf::from(home).join(path_past_user_prefix).into())
+        }
+    }
+
+    #[cfg(test)]
+    mod interpolate_tests {
+        use std::borrow::Cow;
+
+        use crate::values::{path::interpolate::Error, Path};
+
+        #[test]
+        fn no_interpolation_for_paths_without_tilde_or_prefix() {
+            let path = &b"/foo/bar"[..];
+            let actual = Path::from(Cow::Borrowed(path));
+            assert_eq!(&*actual, path);
+            assert!(
+                matches!(&actual.value, Cow::Borrowed(_)),
+                "it does not unnecessarily copy values"
+            );
+        }
+
+        #[test]
+        fn empty_path_is_error() {
+            assert!(matches!(
+                Path::from(Cow::Borrowed("".as_bytes())).interpolate(None),
+                Err(Error::Missing { what: "path" })
+            ));
+        }
+
+        #[test]
+        fn prefix_substitutes_git_install_dir() {
+            for git_install_dir in &["/tmp/git", "C:\\git"] {
+                for (val, expected) in &[
+                    (&b"%(prefix)/foo/bar"[..], "foo/bar"),
+                    (b"%(prefix)/foo\\bar", "foo\\bar"),
+                ] {
+                    let expected = &std::path::PathBuf::from(format!(
+                        "{}{}{}",
+                        git_install_dir,
+                        std::path::MAIN_SEPARATOR,
+                        expected
+                    ));
+                    assert_eq!(
+                        &*Path::from(Cow::Borrowed(*val))
+                            .interpolate(Some(std::path::Path::new(git_install_dir)))
+                            .unwrap(),
+                        expected,
+                        "prefix interpolation keeps separators as they are"
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn prefix_substitution_skipped_with_dot_slash() {
+            let path = "./%(prefix)/foo/bar";
+            let git_install_dir = "/tmp/git";
+            assert_eq!(
+                Path::from(Cow::Borrowed(path.as_bytes()))
+                    .interpolate(Some(std::path::Path::new(git_install_dir)))
+                    .unwrap(),
+                std::path::Path::new(path)
+            );
+        }
+
+        #[test]
+        fn tilde_substitutes_current_user() {
+            let path = &b"~/foo/bar"[..];
+            let expected = format!(
+                "{}{}foo/bar",
+                dirs::home_dir().expect("empty home").display(),
+                std::path::MAIN_SEPARATOR
+            );
+            assert_eq!(
+                Path::from(Cow::Borrowed(path)).interpolate(None).unwrap().as_ref(),
+                std::path::Path::new(&expected),
+                "note that path separators are not turned into slashes as we work with `std::path::Path`"
+            );
+        }
+
+        #[cfg(target_os = "windows")]
+        #[test]
+        fn tilde_with_given_user_is_unsupported_on_windows() {
+            assert!(matches!(
+                Path::from(Cow::Borrowed(&b"~baz/foo/bar"[..])).interpolate(None),
+                Err(Error::UserInterpolationUnsupported)
+            ));
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        #[test]
+        fn tilde_with_given_user() {
+            let user = std::env::var("USER").unwrap();
+            let home = std::env::var("HOME").unwrap();
+            let specific_user_home = format!("~{}", user);
+
+            for path_suffix in &["foo/bar", "foo\\bar", ""] {
+                let path = format!("{}{}{}", specific_user_home, std::path::MAIN_SEPARATOR, path_suffix);
+                let expected = format!("{}{}{}", home, std::path::MAIN_SEPARATOR, path_suffix);
+                assert_eq!(
+                    Path::from(Cow::Borrowed(path.as_bytes())).interpolate(None).unwrap(),
+                    std::path::Path::new(&expected),
+                    "it keeps path separators as is"
+                );
+            }
+        }
+    }
+}
+
+/// Any value that can be interpreted as a file path.
+///
+/// Git represents file paths as byte arrays, modeled here as owned or borrowed byte sequences.
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct Path<'a> {
+    /// The path string, un-interpolated
+    pub value: Cow<'a, [u8]>,
+}
+
+impl<'a> std::ops::Deref for Path<'a> {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.value.as_ref()
+    }
+}
+
+impl<'a> AsRef<[u8]> for Path<'a> {
+    fn as_ref(&self) -> &[u8] {
+        self.value.as_ref()
+    }
+}
+
+impl<'a> From<Cow<'a, [u8]>> for Path<'a> {
+    #[inline]
+    fn from(value: Cow<'a, [u8]>) -> Self {
+        Path { value }
     }
 }
 
