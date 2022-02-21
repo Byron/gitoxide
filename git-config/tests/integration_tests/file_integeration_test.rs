@@ -1,5 +1,8 @@
-use std::path::PathBuf;
-use std::{borrow::Cow, convert::TryFrom, path::Path};
+use std::{
+    borrow::Cow,
+    convert::TryFrom,
+    path::{Path, PathBuf},
+};
 
 use git_config::{file::GitConfig, values::*};
 

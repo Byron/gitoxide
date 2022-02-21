@@ -276,12 +276,13 @@ impl Serialize for Value<'_> {
 
 ///
 pub mod path {
-    use crate::values::Path;
+    use std::borrow::Cow;
+
     #[cfg(not(target_os = "windows"))]
     use pwd::Passwd;
     use quick_error::ResultExt;
-    use std::borrow::Cow;
-    use std::path::PathBuf;
+
+    use crate::values::Path;
 
     pub mod interpolate {
         use quick_error::quick_error;
@@ -358,7 +359,7 @@ pub mod path {
 
         #[cfg(target_os = "windows")]
         fn interpolate_user(self) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
-            Err(interpolate::ErrorUserInterpolationUnsupported)
+            Err(interpolate::Error::UserInterpolationUnsupported)
         }
 
         #[cfg(not(target_os = "windows"))]
@@ -376,14 +377,15 @@ pub mod path {
                 .dir;
             let path_past_user_prefix =
                 git_features::path::from_byte_slice(&path_with_leading_slash[1..]).context("path past ~user/")?;
-            Ok(PathBuf::from(home).join(path_past_user_prefix).into())
+            Ok(std::path::PathBuf::from(home).join(path_past_user_prefix).into())
         }
     }
 
     #[cfg(test)]
     mod tests {
-        use crate::values::{path::interpolate::Error, Path};
         use std::borrow::Cow;
+
+        use crate::values::{path::interpolate::Error, Path};
 
         #[test]
         fn not_interpolated() {
@@ -460,7 +462,7 @@ pub mod path {
         fn user_interpolated() {
             assert!(matches!(
                 Path::from(Cow::Borrowed(&b"~baz/foo/bar"[..])).interpolate(None),
-                Err(path::interpolate::ErrorUserInterpolationUnsupported)
+                Err(path::interpolate::Error::UserInterpolationUnsupported)
             ));
         }
 
