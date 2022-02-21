@@ -1,5 +1,6 @@
 /// A way to indicate if a lookup, despite successful, was ambiguous or yielded exactly
 /// one result in the particular index.
+// TODO: find better name, ambiguous with git_pack::index::PrefixLookupResult (entry_index inside)
 pub type PrefixLookupResult = Result<git_hash::ObjectId, ()>;
 
 ///

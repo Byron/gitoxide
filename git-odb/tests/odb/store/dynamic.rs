@@ -381,53 +381,43 @@ fn lookup() {
 
 mod lookup_prefix {
     use crate::store::dynamic::db_with_all_object_sources;
+    use git_testtools::hex_to_id;
 
     #[test]
-    #[should_panic]
     fn returns_none_for_prefixes_without_any_match() {
         let (handle, _tmp) = db_with_all_object_sources().unwrap();
         let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
         assert!(handle.lookup_prefix(prefix).unwrap().is_none());
     }
 
-    // #[test]
-    // fn returns_some_err_for_prefixes_with_more_than_one_match() {
-    //     let objects_dir = git_testtools::tempfile::tempdir().unwrap();
-    //     git_testtools::copy_recursively_into_existing_dir(fixture_path("objects"), &objects_dir).unwrap();
-    //     std::fs::write(
-    //         objects_dir
-    //             .path()
-    //             .join("37")
-    //             .join("d4ffffffffffffffffffffffffffffffffffff"),
-    //         b"fake",
-    //     )
-    //     .unwrap();
-    //     let store = git_odb::loose::Store::at(objects_dir.path(), git_hash::Kind::Sha1);
-    //     let prefix = git_hash::Prefix::new(hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"), 4).unwrap();
-    //     assert_eq!(
-    //         store.lookup_prefix(prefix).unwrap(),
-    //         Some(Err(())),
-    //         "there are two objects with that prefix"
-    //     );
-    // }
+    #[test]
+    fn returns_some_err_for_prefixes_with_more_than_one_match() {
+        let (store, _tmp) = db_with_all_object_sources().unwrap();
+        let prefix = git_hash::Prefix::new(hex_to_id("a7065b5e971a6d8b55875d8cf634a3a37202ab23"), 4).unwrap();
+        assert_eq!(
+            store.lookup_prefix(prefix).unwrap(),
+            Some(Err(())),
+            "there are two objects with that prefix"
+        );
+    }
 
-    // #[test]
-    // fn iterable_objects_can_be_looked_up_with_varying_prefix_lengths() {
-    //     let store = ldb();
-    //     let hex_lengths = &[4, 7, 40];
-    //     for (index, oid) in store.iter().map(Result::unwrap).enumerate() {
-    //         let hex_len = hex_lengths[index % hex_lengths.len()];
-    //         let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
-    //         assert_eq!(
-    //             store
-    //                 .lookup_prefix(prefix)
-    //                 .unwrap()
-    //                 .expect("object exists")
-    //                 .expect("unambiguous"),
-    //             oid
-    //         );
-    //     }
-    // }
+    #[test]
+    fn iterable_objects_can_be_looked_up_with_varying_prefix_lengths() {
+        let (store, _tmp) = db_with_all_object_sources().unwrap();
+        let hex_lengths = &[5, 7, 40];
+        for (index, oid) in store.iter().unwrap().map(Result::unwrap).enumerate() {
+            let hex_len = hex_lengths[index % hex_lengths.len()];
+            let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
+            assert_eq!(
+                store
+                    .lookup_prefix(prefix)
+                    .unwrap()
+                    .expect("object exists")
+                    .expect("unambiguous"),
+                oid
+            );
+        }
+    }
 }
 
 #[test]

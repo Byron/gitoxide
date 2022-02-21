@@ -138,6 +138,15 @@ pub(crate) mod index_lookup {
             }
         }
 
+        #[allow(missing_docs)] // TODO: docs
+        pub(crate) fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Option<crate::find::PrefixLookupResult> {
+            let res = match &self.file {
+                handle::SingleOrMultiIndex::Single { index, .. } => index.lookup_prefix(prefix),
+                handle::SingleOrMultiIndex::Multi { index, .. } => index.lookup_prefix(prefix),
+            }?;
+            Some(res.map(|entry_index| self.oid_at_index(entry_index).to_owned()))
+        }
+
         /// See if the oid is contained in this index, and return its full id for lookup possibly alongside its data file if already
         /// loaded.
         /// Also return the index itself as it's needed to resolve intra-pack ref-delta objects. They are a possibility even though
