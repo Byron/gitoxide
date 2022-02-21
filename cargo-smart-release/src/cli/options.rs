@@ -1,9 +1,7 @@
-use clap::AppSettings;
-
 #[derive(clap::Parser)]
-#[clap(setting = AppSettings::SubcommandRequired)]
-#[clap(setting = AppSettings::DisableHelpSubcommand)]
-#[clap(setting = AppSettings::DisableVersionFlag)]
+#[clap(subcommand_required = true)]
+#[clap(disable_help_subcommand = true)]
+#[clap(disable_version_flag = true)]
 #[clap(bin_name = "cargo")]
 /// Release workspace crates fearlessly.
 ///

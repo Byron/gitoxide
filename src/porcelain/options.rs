@@ -1,10 +1,8 @@
 use std::{ffi::OsString, path::PathBuf};
 
-use clap::AppSettings;
-
 #[derive(Debug, clap::Parser)]
 #[clap(about = "The rusty git", version = clap::crate_version!())]
-#[clap(setting = AppSettings::SubcommandRequired)]
+#[clap(subcommand_required = true)]
 pub struct Args {
     /// Do not display verbose messages and progress information
     #[clap(long, short = 'q')]
@@ -44,7 +42,7 @@ pub enum Subcommands {
 
 #[cfg(feature = "gitoxide-core-tools")]
 #[derive(Debug, clap::Subcommand)]
-#[clap(setting = AppSettings::SubcommandRequired)]
+#[clap(subcommand_required = true)]
 #[clap(visible_alias = "t")]
 pub enum ToolCommands {
     /// Find all repositories in a given directory.

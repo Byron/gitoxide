@@ -1,4 +1,4 @@
-error: 'ein tools' requires a subcommand, but one was not provided
+error: 'ein tools' requires a subcommand but one was not provided
 
 USAGE:
     ein tools <SUBCOMMAND>

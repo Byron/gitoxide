@@ -1,9 +1,9 @@
-use clap::AppSettings;
 use gitoxide_core as core;
 
 #[derive(Debug, clap::Parser)]
 #[clap(name = "gix-plumbing", about = "The git underworld", version = clap::crate_version!())]
-#[clap(setting = AppSettings::SubcommandRequiredElseHelp)]
+#[clap(subcommand_required = true)]
+#[clap(arg_required_else_help = true)]
 pub struct Args {
     #[clap(long, short = 't')]
     /// The amount of threads to use for some operations.
