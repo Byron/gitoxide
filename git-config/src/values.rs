@@ -500,7 +500,7 @@ impl<'a> From<Cow<'a, [u8]>> for Path<'a> {
 #[allow(missing_docs)]
 pub enum Boolean<'a> {
     True(TrueVariant<'a>),
-    False(Cow<'a, [u8]>),
+    False(Cow<'a, str>),
 }
 
 impl Boolean<'_> {
@@ -537,7 +537,7 @@ impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
             || value.eq_ignore_ascii_case(b"zero")
             || value == b"\"\""
         {
-            return Ok(Self::False(value.into()));
+            return Ok(Self::False(std::str::from_utf8(value).unwrap().into()));
         }
 
         Err(())
@@ -554,7 +554,7 @@ impl TryFrom<Vec<u8>> for Boolean<'_> {
             || value.eq_ignore_ascii_case(b"zero")
             || value == b"\"\""
         {
-            return Ok(Self::False(Cow::Owned(value)));
+            return Ok(Self::False(Cow::Owned(String::from_utf8(value).unwrap())));
         }
 
         TrueVariant::try_from(value).map(Self::True)
@@ -577,7 +577,7 @@ impl Display for Boolean<'_> {
         match self {
             Boolean::True(v) => v.fmt(f),
             // TODO is debug format ok?
-            Boolean::False(v) => write!(f, "{:?}", v),
+            Boolean::False(v) => write!(f, "{}", v),
         }
     }
 }
@@ -597,7 +597,7 @@ impl<'a, 'b: 'a> From<&'b Boolean<'a>> for &'a [u8] {
     fn from(b: &'b Boolean) -> Self {
         match b {
             Boolean::True(t) => t.into(),
-            Boolean::False(f) => f,
+            Boolean::False(f) => f.as_bytes(),
         }
     }
 }
@@ -1349,11 +1349,11 @@ mod boolean {
 
     #[test]
     fn from_str_false() {
-        assert_eq!(Boolean::try_from(b("no")), Ok(Boolean::False(b("no").into())));
-        assert_eq!(Boolean::try_from(b("off")), Ok(Boolean::False(b("off").into())));
-        assert_eq!(Boolean::try_from(b("false")), Ok(Boolean::False(b("false").into())));
-        assert_eq!(Boolean::try_from(b("zero")), Ok(Boolean::False(b("zero").into())));
-        assert_eq!(Boolean::try_from(b("\"\"")), Ok(Boolean::False(b("\"\"").into())));
+        assert_eq!(Boolean::try_from(b("no")), Ok(Boolean::False("no".into())));
+        assert_eq!(Boolean::try_from(b("off")), Ok(Boolean::False("off".into())));
+        assert_eq!(Boolean::try_from(b("false")), Ok(Boolean::False("false".into())));
+        assert_eq!(Boolean::try_from(b("zero")), Ok(Boolean::False("zero".into())));
+        assert_eq!(Boolean::try_from(b("\"\"")), Ok(Boolean::False("\"\"".into())));
     }
 
     #[test]

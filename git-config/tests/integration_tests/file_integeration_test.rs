@@ -31,7 +31,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
 
     assert_eq!(
         file.value::<Boolean>("core", None, "bool-explicit")?,
-        Boolean::False(Cow::Borrowed("false".as_bytes()))
+        Boolean::False(Cow::Borrowed("false"))
     );
 
     assert_eq!(
@@ -111,7 +111,7 @@ fn get_value_looks_up_all_sections_before_failing() -> crate::Result {
 
     assert_eq!(
         file.value::<Boolean>("core", None, "bool-explicit")?,
-        Boolean::False(Cow::Borrowed("false".as_bytes()))
+        Boolean::False(Cow::Borrowed("false"))
     );
 
     Ok(())

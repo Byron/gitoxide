@@ -345,7 +345,7 @@ impl<'event> GitConfig<'event> {
     ///     vec![
     ///         Boolean::True(TrueVariant::Explicit(Cow::Borrowed("true"))),
     ///         Boolean::True(TrueVariant::Implicit),
-    ///         Boolean::False(Cow::Borrowed("false".as_bytes())),
+    ///         Boolean::False(Cow::Borrowed("false")),
     ///     ]
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish
