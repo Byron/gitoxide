@@ -382,13 +382,13 @@ pub mod path {
     }
 
     #[cfg(test)]
-    mod tests {
+    mod interpolate_tests {
         use std::borrow::Cow;
 
         use crate::values::{path::interpolate::Error, Path};
 
         #[test]
-        fn not_interpolated() {
+        fn no_interpolation_for_paths_without_tilde_or_prefix() {
             let path = &b"/foo/bar"[..];
             let actual = Path::from(Cow::Borrowed(path));
             assert_eq!(&*actual, path);
@@ -399,7 +399,7 @@ pub mod path {
         }
 
         #[test]
-        fn empty_is_error() {
+        fn empty_path_is_error() {
             assert!(matches!(
                 Path::from(Cow::Borrowed("".as_bytes())).interpolate(None),
                 Err(Error::Missing { what: "path" })
@@ -407,7 +407,7 @@ pub mod path {
         }
 
         #[test]
-        fn prefix_interpolated() {
+        fn prefix_substitutes_git_install_dir() {
             for git_install_dir in &["/tmp/git", "C:\\git"] {
                 for (val, expected) in &[
                     (&b"%(prefix)/foo/bar"[..], "foo/bar"),
@@ -431,7 +431,7 @@ pub mod path {
         }
 
         #[test]
-        fn disabled_prefix_interpolation() {
+        fn prefix_substitution_skipped_with_dot_slash() {
             let path = "./%(prefix)/foo/bar";
             let git_install_dir = "/tmp/git";
             assert_eq!(
@@ -443,7 +443,7 @@ pub mod path {
         }
 
         #[test]
-        fn tilde_interpolated() {
+        fn tilde_substitutes_current_user() {
             let path = &b"~/foo/bar"[..];
             let expected = format!(
                 "{}{}foo/bar",
@@ -459,16 +459,16 @@ pub mod path {
 
         #[cfg(target_os = "windows")]
         #[test]
-        fn user_interpolated() {
+        fn tilde_with_given_user_is_unsupported_on_windows() {
             assert!(matches!(
                 Path::from(Cow::Borrowed(&b"~baz/foo/bar"[..])).interpolate(None),
-                Err(path::interpolate::Error::UserInterpolationUnsupported)
+                Err(Error::UserInterpolationUnsupported)
             ));
         }
 
         #[cfg(not(target_os = "windows"))]
         #[test]
-        fn user_interpolated() {
+        fn tilde_with_given_user() {
             let user = std::env::var("USER").unwrap();
             let home = std::env::var("HOME").unwrap();
             let specific_user_home = format!("~{}", user);
