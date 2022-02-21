@@ -376,7 +376,7 @@ pub mod path {
                 .ok_or(interpolate::Error::Missing { what: "pwd user info" })?
                 .dir;
             let path_past_user_prefix =
-                git_features::path::from_byte_slice(&path_with_leading_slash[1..]).context("path past ~user/")?;
+                git_features::path::from_byte_slice(&path_with_leading_slash["/".len()..]).context("path past ~user/")?;
             Ok(std::path::PathBuf::from(home).join(path_past_user_prefix).into())
         }
     }
@@ -435,7 +435,7 @@ pub mod path {
             let path = "./%(prefix)/foo/bar";
             let git_install_dir = "/tmp/git";
             assert_eq!(
-                &*Path::from(Cow::Borrowed(path.as_bytes()))
+                Path::from(Cow::Borrowed(path.as_bytes()))
                     .interpolate(Some(std::path::Path::new(git_install_dir)))
                     .unwrap(),
                 std::path::Path::new(path)
@@ -477,7 +477,7 @@ pub mod path {
                 let path = format!("{}{}{}", specific_user_home, std::path::MAIN_SEPARATOR, path_suffix);
                 let expected = format!("{}{}{}", home, std::path::MAIN_SEPARATOR, path_suffix);
                 assert_eq!(
-                    &*Path::from(Cow::Borrowed(path.as_bytes())).interpolate(None).unwrap(),
+                    Path::from(Cow::Borrowed(path.as_bytes())).interpolate(None).unwrap(),
                     std::path::Path::new(&expected),
                     "it keeps path separators as is"
                 );
@@ -491,7 +491,7 @@ pub mod path {
 /// Git represents file paths as byte arrays, modeled here as owned or borrowed byte sequences.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Path<'a> {
-    /// The interpolated path
+    /// The path string, un-interpolated
     pub value: Cow<'a, [u8]>,
 }
 
