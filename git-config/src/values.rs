@@ -576,7 +576,6 @@ impl Display for Boolean<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Boolean::True(v) => v.fmt(f),
-            // TODO is debug format ok?
             Boolean::False(v) => write!(f, "{}", v),
         }
     }
@@ -679,7 +678,6 @@ impl TryFrom<Vec<u8>> for TrueVariant<'_> {
 impl Display for TrueVariant<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Self::Explicit(v) = self {
-            // TODO is debug format ok?
             write!(f, "{}", v)
         } else {
             Ok(())
