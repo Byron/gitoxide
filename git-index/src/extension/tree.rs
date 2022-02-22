@@ -159,11 +159,15 @@ pub fn one_recursive(data: &[u8], hash_len: usize) -> Option<(Tree, &[u8])> {
     let mut subtrees = Vec::with_capacity(subtree_count);
     for _ in 0..subtree_count {
         let (tree, rest) = one_recursive(data, hash_len)?;
-        match subtrees.binary_search_by(|t: &Tree| t.name.cmp(&tree.name)) {
-            Ok(_existing_index) => return None,
-            Err(insert_position) => subtrees.insert(insert_position, tree),
-        }
+        subtrees.push(tree);
         data = rest;
+    }
+
+    subtrees.sort_by(|a, b| a.name.cmp(&b.name));
+    let num_trees = subtrees.len();
+    subtrees.dedup_by(|a, b| a.name == b.name);
+    if num_trees != subtrees.len() {
+        return None;
     }
 
     Some((
