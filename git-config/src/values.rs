@@ -143,47 +143,25 @@ fn b(s: &str) -> &[u8] {
     s.as_bytes()
 }
 
-/// Fully enumerated valid types that a `git-config` value can be.
-#[allow(missing_docs)]
+/// Any string value
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub enum Value<'a> {
-    Boolean(Boolean<'a>),
-    Integer(Integer),
-    Color(Color),
-    /// If a value does not match from any of the other variants, then this
-    /// variant will be matched.
-    Bytes(Cow<'a, [u8]>),
-}
-
-impl Value<'_> {
-    /// Generates a byte representation of the value. This should be used when
-    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
-    /// guaranteed.
-    #[inline]
-    #[must_use]
-    pub fn to_vec(&self) -> Vec<u8> {
-        self.into()
-    }
+pub struct Value<'a> {
+    /// bytes
+    pub value: Cow<'a, [u8]>,
 }
 
 impl<'a> From<&'a [u8]> for Value<'a> {
     #[inline]
     fn from(s: &'a [u8]) -> Self {
-        Self::Bytes(Cow::Borrowed(s))
+        Self {
+            value: Cow::Borrowed(s),
+        }
     }
 }
 
 impl From<Vec<u8>> for Value<'_> {
     fn from(s: Vec<u8>) -> Self {
-        if let Ok(int) = Integer::try_from(s.as_ref()) {
-            return Self::Integer(int);
-        }
-
-        if let Ok(color) = Color::try_from(s.as_ref()) {
-            return Self::Color(color);
-        }
-
-        Boolean::try_from(s).map_or_else(|v| Self::Bytes(Cow::Owned(v)), Self::Boolean)
+        Self { value: Cow::Owned(s) }
     }
 }
 
@@ -193,41 +171,6 @@ impl<'a> From<Cow<'a, [u8]>> for Value<'a> {
         match c {
             Cow::Borrowed(c) => Self::from(c),
             Cow::Owned(c) => Self::from(c),
-        }
-    }
-}
-
-impl From<Value<'_>> for Vec<u8> {
-    #[inline]
-    fn from(v: Value) -> Self {
-        v.into()
-    }
-}
-
-impl From<&Value<'_>> for Vec<u8> {
-    #[inline]
-    fn from(v: &Value) -> Self {
-        match v {
-            Value::Boolean(b) => b.into(),
-            Value::Integer(i) => i.into(),
-            Value::Color(c) => c.into(),
-            Value::Bytes(o) => o.to_vec(),
-        }
-    }
-}
-
-impl Display for Value<'_> {
-    /// Note that this is a best-effort attempt at printing a `Value`. If there
-    /// are non UTF-8 values in your config, this will _NOT_ render as read.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Value::Boolean(b) => b.fmt(f),
-            Value::Integer(i) => i.fmt(f),
-            Value::Color(c) => c.fmt(f),
-            Value::Bytes(o) => match std::str::from_utf8(o) {
-                Ok(v) => v.fmt(f),
-                Err(_) => write!(f, "{:?}", o),
-            },
         }
     }
 }

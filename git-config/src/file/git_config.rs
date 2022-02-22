@@ -277,7 +277,7 @@ impl<'event> GitConfig<'event> {
     ///
     /// ```
     /// # use git_config::file::{GitConfig, GitConfigError};
-    /// # use git_config::values::{Integer, Value, Boolean};
+    /// # use git_config::values::{Integer, Boolean};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"
@@ -350,7 +350,7 @@ impl<'event> GitConfig<'event> {
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish
     /// let c_value: Vec<Value> = git_config.multi_value("core", None, "c")?;
-    /// assert_eq!(c_value, vec![Value::Bytes(Cow::Borrowed(b"g"))]);
+    /// assert_eq!(c_value, vec![Value { value: Cow::Borrowed(b"g") }]);
     /// # Ok::<(), GitConfigError>(())
     /// ```
     ///
@@ -436,7 +436,7 @@ impl<'event> GitConfig<'event> {
     ///
     /// ```
     /// # use git_config::file::{GitConfig, GitConfigError};
-    /// # use git_config::values::{Integer, Value, Boolean, TrueVariant};
+    /// # use git_config::values::{Integer, Boolean, TrueVariant};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"
@@ -2102,7 +2102,12 @@ mod get_value {
         let first_value: Value = config.value("core", None, "a")?;
         let second_value: Boolean = config.value("core", None, "c")?;
 
-        assert_eq!(first_value, Value::Bytes(Cow::Borrowed(b"b")));
+        assert_eq!(
+            first_value,
+            Value {
+                value: Cow::Borrowed(b"b")
+            }
+        );
         assert_eq!(second_value, Boolean::True(TrueVariant::Implicit));
 
         Ok(())
@@ -2123,7 +2128,12 @@ mod get_value {
 
         let config = GitConfig::try_from(config).unwrap();
         let value = config.value::<Value>("remote", Some("origin"), "url").unwrap();
-        assert_eq!(value, Value::Bytes(Cow::Borrowed(b"git@github.com:Byron/gitoxide.git")));
+        assert_eq!(
+            value,
+            Value {
+                value: Cow::Borrowed(b"git@github.com:Byron/gitoxide.git")
+            }
+        );
     }
 }
 
