@@ -77,16 +77,26 @@ pub mod pretty {
         crate::shared::init_env_logger(false);
 
         match (verbose, progress) {
-            (false, false) => run(progress::DoOrDiscard::from(None), &mut stdout(), &mut stderr()),
+            (false, false) => {
+                let stdout = stdout();
+                let mut stdout_lock = stdout.lock();
+                let stderr = stderr();
+                let mut stderr_lock = stderr.lock();
+                run(progress::DoOrDiscard::from(None), &mut stdout_lock, &mut stderr_lock)
+            }
             (true, false) => {
                 let progress = crate::shared::progress_tree();
                 let sub_progress = progress.add_child(name);
                 #[cfg(not(feature = "prodash-render-line"))]
                 {
+                    let stdout = stdout();
+                    let mut stdout_lock = stdout.lock();
+                    let stderr = stderr();
+                    let mut stderr_lock = stderr.lock();
                     run(
                         progress::DoOrDiscard::from(Some(sub_progress)),
-                        &mut stdout(),
-                        &mut stderr(),
+                        &mut stdout_lock,
+                        &mut stderr_lock,
                     )
                 }
                 #[cfg(feature = "prodash-render-line")]
