@@ -1,6 +1,6 @@
 use std::{convert::TryInto, ops::Deref};
 
-use git_hash::oid;
+use git_hash::{oid, ObjectId};
 use git_object::Data;
 use git_pack::{cache::DecodeEntry, data::entry::Location};
 
@@ -25,6 +25,7 @@ mod error {
         LoadPack(#[from] std::io::Error),
     }
 }
+use crate::find::PrefixLookupResult;
 pub use error::Error;
 
 use crate::store::types::PackId;
@@ -38,29 +39,17 @@ where
         let mut candidate: Option<git_hash::ObjectId> = None;
         loop {
             let snapshot = self.snapshot.borrow();
-            {
-                for index in snapshot.indices.iter() {
-                    match (index.lookup_prefix(prefix), candidate) {
-                        (Some(Ok(oid)), Some(candidate)) if candidate != oid => return Ok(Some(Err(()))),
-                        (Some(Ok(_)), Some(_)) | (None, None) | (None, Some(_)) => continue,
-                        (Some(Err(())), _) => return Ok(Some(Err(()))),
-                        (Some(Ok(oid)), None) => {
-                            candidate = Some(oid);
-                            continue;
-                        }
-                    }
+            for index in snapshot.indices.iter() {
+                let lookup_result = index.lookup_prefix(prefix);
+                if !check_candidate(lookup_result, &mut candidate) {
+                    return Ok(Some(Err(())));
                 }
             }
 
             for lodb in snapshot.loose_dbs.iter() {
-                match (lodb.lookup_prefix(prefix)?, candidate) {
-                    (Some(Ok(oid)), Some(candidate)) if candidate != oid => return Ok(Some(Err(()))),
-                    (Some(Ok(_)), Some(_)) | (None, None) | (None, Some(_)) => continue,
-                    (Some(Err(())), _) => return Ok(Some(Err(()))),
-                    (Some(Ok(oid)), None) => {
-                        candidate = Some(oid);
-                        continue;
-                    }
+                let lookup_result = lodb.lookup_prefix(prefix)?;
+                if !check_candidate(lookup_result, &mut candidate) {
+                    return Ok(Some(Err(())));
                 }
             }
 
@@ -70,6 +59,18 @@ where
                     *self.snapshot.borrow_mut() = new_snapshot;
                 }
                 None => return Ok(candidate.map(Ok)),
+            }
+        }
+
+        fn check_candidate(lookup_result: Option<PrefixLookupResult>, candidate: &mut Option<ObjectId>) -> bool {
+            match (lookup_result, &*candidate) {
+                (Some(Ok(oid)), Some(candidate)) if *candidate != oid => false,
+                (Some(Ok(_)), Some(_)) | (None, None) | (None, Some(_)) => true,
+                (Some(Err(())), _) => false,
+                (Some(Ok(oid)), None) => {
+                    *candidate = Some(oid);
+                    true
+                }
             }
         }
     }
@@ -86,14 +87,12 @@ where
         let id = id.as_ref();
         let mut snapshot = self.snapshot.borrow_mut();
         loop {
-            {
-                for (idx, index) in snapshot.indices.iter().enumerate() {
-                    if index.contains(id) {
-                        if idx != 0 {
-                            snapshot.indices.swap(0, idx);
-                        }
-                        return true;
+            for (idx, index) in snapshot.indices.iter().enumerate() {
+                if index.contains(id) {
+                    if idx != 0 {
+                        snapshot.indices.swap(0, idx);
                     }
+                    return true;
                 }
             }
 
