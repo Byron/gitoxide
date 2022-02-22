@@ -146,12 +146,12 @@ fn b(s: &str) -> &[u8] {
 
 /// Any string value
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct Bytes<'a> {
+pub struct String<'a> {
     /// bytes
     pub value: Cow<'a, [u8]>,
 }
 
-impl<'a> From<&'a [u8]> for Bytes<'a> {
+impl<'a> From<&'a [u8]> for String<'a> {
     #[inline]
     fn from(s: &'a [u8]) -> Self {
         Self {
@@ -160,13 +160,13 @@ impl<'a> From<&'a [u8]> for Bytes<'a> {
     }
 }
 
-impl From<Vec<u8>> for Bytes<'_> {
+impl From<Vec<u8>> for String<'_> {
     fn from(s: Vec<u8>) -> Self {
         Self { value: Cow::Owned(s) }
     }
 }
 
-impl<'a> From<Cow<'a, [u8]>> for Bytes<'a> {
+impl<'a> From<Cow<'a, [u8]>> for String<'a> {
     #[inline]
     fn from(c: Cow<'a, [u8]>) -> Self {
         match c {
@@ -512,7 +512,7 @@ impl TryFrom<Vec<u8>> for Boolean<'_> {
             || value.eq_ignore_ascii_case(b"zero")
             || value == b"\"\""
         {
-            return Ok(Self::False(Cow::Owned(String::from_utf8(value)?)));
+            return Ok(Self::False(Cow::Owned(std::string::String::from_utf8(value)?)));
         }
 
         TrueVariant::try_from(value).map(Self::True)
@@ -624,7 +624,7 @@ impl TryFrom<Vec<u8>> for TrueVariant<'_> {
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(Cow::Owned(String::from_utf8(value)?)))
+            Ok(Self::Explicit(Cow::Owned(std::string::String::from_utf8(value)?)))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
