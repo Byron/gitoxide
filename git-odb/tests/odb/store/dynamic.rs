@@ -383,33 +383,56 @@ mod lookup_prefix {
     use crate::store::dynamic::db_with_all_object_sources;
     use git_testtools::hex_to_id;
 
+    fn assert_all_indices_loaded(handle: &git_odb::Handle, num_refreshes: usize, open_reachable_indices: usize) {
+        assert_eq!(
+            handle.store_ref().metrics(),
+            git_odb::store::Metrics {
+                num_handles: 1,
+                num_refreshes,
+                open_reachable_indices,
+                known_reachable_indices: 2,
+                open_reachable_packs: 0,
+                known_packs: 3,
+                unused_slots: 30,
+                loose_dbs: 1,
+                unreachable_indices: 0,
+                unreachable_packs: 0
+            },
+            "all indices must be loaded and searched to assure unambiguous object ids"
+        );
+    }
+
     #[test]
     fn returns_none_for_prefixes_without_any_match() {
         let (handle, _tmp) = db_with_all_object_sources().unwrap();
         let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
         assert!(handle.lookup_prefix(prefix).unwrap().is_none());
+        assert_all_indices_loaded(&handle, 2, 2);
     }
 
     #[test]
     fn returns_some_err_for_prefixes_with_more_than_one_match() {
-        let (store, _tmp) = db_with_all_object_sources().unwrap();
+        let (handle, _tmp) = db_with_all_object_sources().unwrap();
         let prefix = git_hash::Prefix::new(hex_to_id("a7065b5e971a6d8b55875d8cf634a3a37202ab23"), 4).unwrap();
         assert_eq!(
-            store.lookup_prefix(prefix).unwrap(),
+            handle.lookup_prefix(prefix).unwrap(),
             Some(Err(())),
             "there are two objects with that prefix"
         );
+        assert_all_indices_loaded(&handle, 1, 1);
     }
 
     #[test]
     fn iterable_objects_can_be_looked_up_with_varying_prefix_lengths() {
-        let (store, _tmp) = db_with_all_object_sources().unwrap();
+        let (mut handle, _tmp) = db_with_all_object_sources().unwrap();
+        handle.refresh.never();
+
         let hex_lengths = &[5, 7, 40];
-        for (index, oid) in store.iter().unwrap().map(Result::unwrap).enumerate() {
+        for (index, oid) in handle.iter().unwrap().map(Result::unwrap).enumerate() {
             let hex_len = hex_lengths[index % hex_lengths.len()];
             let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
             assert_eq!(
-                store
+                handle
                     .lookup_prefix(prefix)
                     .unwrap()
                     .expect("object exists")
@@ -417,6 +440,7 @@ mod lookup_prefix {
                 oid
             );
         }
+        assert_all_indices_loaded(&handle, 1, 2);
     }
 }
 

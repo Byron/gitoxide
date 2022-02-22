@@ -53,7 +53,7 @@ where
                 }
             }
 
-            match self.store.load_one_index(self.refresh_mode, snapshot.marker)? {
+            match self.store.load_one_index(self.refresh, snapshot.marker)? {
                 Some(new_snapshot) => {
                     drop(snapshot);
                     *self.snapshot.borrow_mut() = new_snapshot;
@@ -102,7 +102,7 @@ where
                 }
             }
 
-            match self.store.load_one_index(self.refresh_mode, snapshot.marker) {
+            match self.store.load_one_index(self.refresh, snapshot.marker) {
                 Ok(Some(new_snapshot)) => {
                     *snapshot = new_snapshot;
                 }
@@ -139,7 +139,7 @@ where
                                 }
                                 None => {
                                     // The pack wasn't available anymore so we are supposed to try another round with a fresh index
-                                    match self.store.load_one_index(self.refresh_mode, snapshot.marker)? {
+                                    match self.store.load_one_index(self.refresh, snapshot.marker)? {
                                         Some(new_snapshot) => {
                                             *snapshot = new_snapshot;
                                             continue 'outer;
@@ -199,7 +199,7 @@ where
                 }
             }
 
-            match self.store.load_one_index(self.refresh_mode, snapshot.marker)? {
+            match self.store.load_one_index(self.refresh, snapshot.marker)? {
                 Some(new_snapshot) => {
                     *snapshot = new_snapshot;
                 }
@@ -234,7 +234,7 @@ where
                                 }
                                 None => {
                                     // The pack wasn't available anymore so we are supposed to try another round with a fresh index
-                                    match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
+                                    match self.store.load_one_index(self.refresh, snapshot.marker).ok()? {
                                         Some(new_snapshot) => {
                                             *snapshot = new_snapshot;
                                             continue 'outer;
@@ -270,7 +270,7 @@ where
                 }
             }
 
-            match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
+            match self.store.load_one_index(self.refresh, snapshot.marker).ok()? {
                 Some(new_snapshot) => {
                     *snapshot = new_snapshot;
                 }
@@ -295,7 +295,7 @@ where
                 }
             }
 
-            match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
+            match self.store.load_one_index(self.refresh, snapshot.marker).ok()? {
                 Some(new_snapshot) => {
                     drop(snapshot);
                     *self.snapshot.borrow_mut() = new_snapshot;

@@ -240,7 +240,7 @@ impl super::Store {
         let token = self.register_handle();
         super::Handle {
             store: self.clone(),
-            refresh_mode: RefreshMode::default(),
+            refresh: RefreshMode::default(),
             token: Some(token),
             snapshot: RefCell::new(self.collect_snapshot()),
         }
@@ -253,7 +253,7 @@ impl super::Store {
         let token = self.register_handle();
         super::Handle {
             store: self.clone(),
-            refresh_mode: Default::default(),
+            refresh: Default::default(),
             token: Some(token),
             snapshot: RefCell::new(self.collect_snapshot()),
         }
@@ -299,12 +299,12 @@ where
     /// More recently, however, this doesn't always have to be the case due to sparse checkouts and other ways to only have a
     /// limited amount of objects available locally.
     pub fn refresh_never(&mut self) {
-        self.refresh_mode = RefreshMode::Never;
+        self.refresh = RefreshMode::Never;
     }
 
     /// Return the current refresh mode.
     pub fn refresh_mode(&mut self) -> RefreshMode {
-        self.refresh_mode
+        self.refresh
     }
 }
 
@@ -326,7 +326,7 @@ where
     fn clone(&self) -> Self {
         super::Handle {
             store: self.store.clone(),
-            refresh_mode: self.refresh_mode,
+            refresh: self.refresh,
             token: {
                 let token = self.store.register_handle();
                 match self.token.as_ref().expect("token is always set here ") {
