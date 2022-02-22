@@ -243,6 +243,7 @@ The git staging area.
     * [x] FSMN file system monitor cache V1 and V2
     * [x] 'link' base indices to take information from, split index
     * [x] 'sdir' sparse directory entries - marker
+  * [x] verification of entries and extensions as well as checksum
 * `stat` update
     * [ ] optional threaded `stat` based on thread_cost (aka preload)
 * [ ] handling of `.gitignore` and system file exclude configuration
