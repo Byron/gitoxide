@@ -1,5 +1,6 @@
 //! Rust containers for valid `git-config` types.
 
+use quick_error::quick_error;
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
 #[cfg(feature = "serde")]
@@ -145,12 +146,12 @@ fn b(s: &str) -> &[u8] {
 
 /// Any string value
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct Value<'a> {
+pub struct Bytes<'a> {
     /// bytes
     pub value: Cow<'a, [u8]>,
 }
 
-impl<'a> From<&'a [u8]> for Value<'a> {
+impl<'a> From<&'a [u8]> for Bytes<'a> {
     #[inline]
     fn from(s: &'a [u8]) -> Self {
         Self {
@@ -159,13 +160,13 @@ impl<'a> From<&'a [u8]> for Value<'a> {
     }
 }
 
-impl From<Vec<u8>> for Value<'_> {
+impl From<Vec<u8>> for Bytes<'_> {
     fn from(s: Vec<u8>) -> Self {
         Self { value: Cow::Owned(s) }
     }
 }
 
-impl<'a> From<Cow<'a, [u8]>> for Value<'a> {
+impl<'a> From<Cow<'a, [u8]>> for Bytes<'a> {
     #[inline]
     fn from(c: Cow<'a, [u8]>) -> Self {
         match c {
@@ -182,10 +183,7 @@ impl Serialize for Value<'_> {
         S: serde::Serializer,
     {
         match self {
-            Value::Boolean(b) => b.serialize(serializer),
-            Value::Integer(i) => i.serialize(serializer),
-            Value::Color(c) => c.serialize(serializer),
-            Value::Bytes(i) => i.serialize(serializer),
+            Value(i) => i.serialize(serializer),
         }
     }
 }
@@ -466,8 +464,25 @@ impl Boolean<'_> {
     }
 }
 
+quick_error! {
+    #[derive(Debug, PartialEq)]
+    /// The error returned when creating `Boolean` from byte string.
+    #[allow(missing_docs)]
+    pub enum BooleanError {
+        Utf8Conversion(err: std::str::Utf8Error) {
+            display("Ill-formed UTF-8")
+            source(err)
+            from()
+            from(err: std::string::FromUtf8Error) -> (err.utf8_error())
+        }
+        InvalidFormat {
+            display("Invalid argument format")
+        }
+    }
+}
+
 impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
-    type Error = ();
+    type Error = BooleanError;
 
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
         if let Ok(v) = TrueVariant::try_from(value) {
@@ -480,15 +495,15 @@ impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
             || value.eq_ignore_ascii_case(b"zero")
             || value == b"\"\""
         {
-            return Ok(Self::False(std::str::from_utf8(value).unwrap().into()));
+            return Ok(Self::False(std::str::from_utf8(value)?.into()));
         }
 
-        Err(())
+        Err(BooleanError::InvalidFormat)
     }
 }
 
 impl TryFrom<Vec<u8>> for Boolean<'_> {
-    type Error = Vec<u8>;
+    type Error = BooleanError;
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         if value.eq_ignore_ascii_case(b"no")
@@ -497,7 +512,7 @@ impl TryFrom<Vec<u8>> for Boolean<'_> {
             || value.eq_ignore_ascii_case(b"zero")
             || value == b"\"\""
         {
-            return Ok(Self::False(Cow::Owned(String::from_utf8(value).unwrap())));
+            return Ok(Self::False(Cow::Owned(String::from_utf8(value)?)));
         }
 
         TrueVariant::try_from(value).map(Self::True)
@@ -505,11 +520,11 @@ impl TryFrom<Vec<u8>> for Boolean<'_> {
 }
 
 impl<'a> TryFrom<Cow<'a, [u8]>> for Boolean<'a> {
-    type Error = ();
+    type Error = BooleanError;
     fn try_from(c: Cow<'a, [u8]>) -> Result<Self, Self::Error> {
         match c {
             Cow::Borrowed(c) => Self::try_from(c),
-            Cow::Owned(c) => Self::try_from(c).map_err(|_| ()),
+            Cow::Owned(c) => Self::try_from(c),
         }
     }
 }
@@ -583,7 +598,7 @@ pub enum TrueVariant<'a> {
 }
 
 impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
-    type Error = ();
+    type Error = BooleanError;
 
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
         if value.eq_ignore_ascii_case(b"yes")
@@ -591,17 +606,17 @@ impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(std::str::from_utf8(value).unwrap().into()))
+            Ok(Self::Explicit(std::str::from_utf8(value)?.into()))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
-            Err(())
+            Err(BooleanError::InvalidFormat)
         }
     }
 }
 
 impl TryFrom<Vec<u8>> for TrueVariant<'_> {
-    type Error = Vec<u8>;
+    type Error = BooleanError;
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         if value.eq_ignore_ascii_case(b"yes")
@@ -609,11 +624,11 @@ impl TryFrom<Vec<u8>> for TrueVariant<'_> {
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(Cow::Owned(String::from_utf8(value).unwrap())))
+            Ok(Self::Explicit(Cow::Owned(String::from_utf8(value)?)))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
-            Err(value)
+            Err(BooleanError::InvalidFormat)
         }
     }
 }
@@ -702,12 +717,34 @@ impl Serialize for Integer {
     }
 }
 
+quick_error! {
+    #[derive(Debug)]
+    /// The error returned when creating `Integer` from byte string.
+    #[allow(missing_docs)]
+    pub enum IntegerError {
+        Utf8Conversion(err: std::str::Utf8Error) {
+            display("Ill-formed UTF-8")
+            source(err)
+            from()
+        }
+        MissingPrefix {
+            display("Missing prefix")
+        }
+        InvalidFormat {
+            display("Invalid argument format")
+        }
+        InvalidSuffix {
+            display("Invalid suffix")
+        }
+    }
+}
+
 impl TryFrom<&[u8]> for Integer {
-    type Error = ();
+    type Error = IntegerError;
 
     #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        let s = std::str::from_utf8(s).map_err(|_| ())?;
+        let s = std::str::from_utf8(s)?;
         if let Ok(value) = s.parse() {
             return Ok(Self { value, suffix: None });
         }
@@ -715,7 +752,7 @@ impl TryFrom<&[u8]> for Integer {
         // Assume we have a prefix at this point.
 
         if s.len() <= 1 {
-            return Err(());
+            return Err(IntegerError::MissingPrefix);
         }
 
         let (number, suffix) = s.split_at(s.len() - 1);
@@ -725,13 +762,13 @@ impl TryFrom<&[u8]> for Integer {
                 suffix: Some(suffix),
             })
         } else {
-            Err(())
+            Err(IntegerError::InvalidFormat)
         }
     }
 }
 
 impl TryFrom<Vec<u8>> for Integer {
-    type Error = ();
+    type Error = IntegerError;
 
     #[inline]
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
@@ -740,13 +777,13 @@ impl TryFrom<Vec<u8>> for Integer {
 }
 
 impl TryFrom<Cow<'_, [u8]>> for Integer {
-    type Error = ();
+    type Error = IntegerError;
 
     #[inline]
     fn try_from(c: Cow<'_, [u8]>) -> Result<Self, Self::Error> {
         match c {
             Cow::Borrowed(c) => Self::try_from(c),
-            Cow::Owned(c) => Self::try_from(c).map_err(|_| ()),
+            Cow::Owned(c) => Self::try_from(c),
         }
     }
 }
@@ -815,7 +852,7 @@ impl Serialize for IntegerSuffix {
 }
 
 impl FromStr for IntegerSuffix {
-    type Err = ();
+    type Err = IntegerError;
 
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -823,22 +860,22 @@ impl FromStr for IntegerSuffix {
             "k" => Ok(Self::Kibi),
             "m" => Ok(Self::Mebi),
             "g" => Ok(Self::Gibi),
-            _ => Err(()),
+            _ => Err(IntegerError::InvalidSuffix),
         }
     }
 }
 
 impl TryFrom<&[u8]> for IntegerSuffix {
-    type Error = ();
+    type Error = IntegerError;
 
     #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
+        Self::from_str(std::str::from_utf8(s)?)
     }
 }
 
 impl TryFrom<Vec<u8>> for IntegerSuffix {
-    type Error = ();
+    type Error = IntegerError;
 
     #[inline]
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
@@ -903,12 +940,31 @@ impl Serialize for Color {
     }
 }
 
+quick_error! {
+    #[derive(Debug, PartialEq)]
+    ///
+    #[allow(missing_docs)]
+    pub enum ColorError {
+        Utf8Conversion(err: std::str::Utf8Error) {
+            display("Ill-formed UTF-8")
+            source(err)
+            from()
+        }
+        InvalidColorItem {
+            display("Invalid color item")
+        }
+        InvalidFormat {
+            display("Invalid argument format")
+        }
+    }
+}
+
 impl TryFrom<&[u8]> for Color {
-    type Error = ();
+    type Error = ColorError;
 
     #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        let s = std::str::from_utf8(s).map_err(|_| ())?;
+        let s = std::str::from_utf8(s)?;
         enum ColorItem {
             Value(ColorValue),
             Attr(ColorAttribute),
@@ -936,12 +992,12 @@ impl TryFrom<&[u8]> for Color {
                         } else if new_self.background.is_none() {
                             new_self.background = Some(v);
                         } else {
-                            return Err(());
+                            return Err(ColorError::InvalidColorItem);
                         }
                     }
                     ColorItem::Attr(a) => new_self.attributes.push(a),
                 },
-                Err(_) => return Err(()),
+                Err(_) => return Err(ColorError::InvalidColorItem),
             }
         }
 
@@ -950,7 +1006,7 @@ impl TryFrom<&[u8]> for Color {
 }
 
 impl TryFrom<Vec<u8>> for Color {
-    type Error = ();
+    type Error = ColorError;
 
     #[inline]
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
@@ -959,13 +1015,13 @@ impl TryFrom<Vec<u8>> for Color {
 }
 
 impl TryFrom<Cow<'_, [u8]>> for Color {
-    type Error = ();
+    type Error = ColorError;
 
     #[inline]
     fn try_from(c: Cow<'_, [u8]>) -> Result<Self, Self::Error> {
         match c {
             Cow::Borrowed(c) => Self::try_from(c),
-            Cow::Owned(c) => Self::try_from(c).map_err(|_| ()),
+            Cow::Owned(c) => Self::try_from(c),
         }
     }
 }
@@ -1049,7 +1105,7 @@ impl Serialize for ColorValue {
 }
 
 impl FromStr for ColorValue {
-    type Err = ();
+    type Err = ColorError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut s = s;
@@ -1062,7 +1118,7 @@ impl FromStr for ColorValue {
 
         match s {
             "normal" if !bright => return Ok(Self::Normal),
-            "normal" if bright => return Err(()),
+            "normal" if bright => return Err(ColorError::InvalidFormat),
             "black" if !bright => return Ok(Self::Black),
             "black" if bright => return Ok(Self::BrightBlack),
             "red" if !bright => return Ok(Self::Red),
@@ -1100,16 +1156,16 @@ impl FromStr for ColorValue {
             }
         }
 
-        Err(())
+        Err(ColorError::InvalidFormat)
     }
 }
 
 impl TryFrom<&[u8]> for ColorValue {
-    type Error = ();
+    type Error = ColorError;
 
     #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
+        Self::from_str(std::str::from_utf8(s)?)
     }
 }
 
@@ -1184,7 +1240,7 @@ impl Serialize for ColorAttribute {
 }
 
 impl FromStr for ColorAttribute {
-    type Err = ();
+    type Err = ColorError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let inverted = s.starts_with("no");
@@ -1213,17 +1269,17 @@ impl FromStr for ColorAttribute {
             "italic" if inverted => Ok(Self::NoItalic),
             "strike" if !inverted => Ok(Self::Strike),
             "strike" if inverted => Ok(Self::NoStrike),
-            _ => Err(()),
+            _ => Err(ColorError::InvalidFormat),
         }
     }
 }
 
 impl TryFrom<&[u8]> for ColorAttribute {
-    type Error = ();
+    type Error = ColorError;
 
     #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        Self::from_str(std::str::from_utf8(s).map_err(|_| ())?).map_err(|_| ())
+        Self::from_str(std::str::from_utf8(s)?)
     }
 }
 
