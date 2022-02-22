@@ -140,18 +140,19 @@ pub fn normalize_str(input: &str) -> Cow<'_, [u8]> {
 }
 
 /// Converts string to byte slice
+#[cfg(test)]
 fn b(s: &str) -> &[u8] {
     s.as_bytes()
 }
 
 /// Any string value
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct String<'a> {
+pub struct Bytes<'a> {
     /// bytes
     pub value: Cow<'a, [u8]>,
 }
 
-impl<'a> From<&'a [u8]> for String<'a> {
+impl<'a> From<&'a [u8]> for Bytes<'a> {
     #[inline]
     fn from(s: &'a [u8]) -> Self {
         Self {
@@ -160,30 +161,18 @@ impl<'a> From<&'a [u8]> for String<'a> {
     }
 }
 
-impl From<Vec<u8>> for String<'_> {
+impl From<Vec<u8>> for Bytes<'_> {
     fn from(s: Vec<u8>) -> Self {
         Self { value: Cow::Owned(s) }
     }
 }
 
-impl<'a> From<Cow<'a, [u8]>> for String<'a> {
+impl<'a> From<Cow<'a, [u8]>> for Bytes<'a> {
     #[inline]
     fn from(c: Cow<'a, [u8]>) -> Self {
         match c {
             Cow::Borrowed(c) => Self::from(c),
             Cow::Owned(c) => Self::from(c),
-        }
-    }
-}
-
-#[cfg(feature = "serde")]
-impl Serialize for Value<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        match self {
-            Value(i) => i.serialize(serializer),
         }
     }
 }
@@ -469,12 +458,6 @@ quick_error! {
     /// The error returned when creating `Boolean` from byte string.
     #[allow(missing_docs)]
     pub enum BooleanError {
-        Utf8Conversion(err: std::str::Utf8Error) {
-            display("Ill-formed UTF-8")
-            source(err)
-            from()
-            from(err: std::string::FromUtf8Error) -> (err.utf8_error())
-        }
         InvalidFormat {
             display("Invalid argument format")
         }
@@ -495,7 +478,9 @@ impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
             || value.eq_ignore_ascii_case(b"zero")
             || value == b"\"\""
         {
-            return Ok(Self::False(std::str::from_utf8(value)?.into()));
+            return Ok(Self::False(
+                std::str::from_utf8(value).expect("value is already validated").into(),
+            ));
         }
 
         Err(BooleanError::InvalidFormat)
@@ -512,7 +497,9 @@ impl TryFrom<Vec<u8>> for Boolean<'_> {
             || value.eq_ignore_ascii_case(b"zero")
             || value == b"\"\""
         {
-            return Ok(Self::False(Cow::Owned(std::string::String::from_utf8(value)?)));
+            return Ok(Self::False(Cow::Owned(
+                std::string::String::from_utf8(value).expect("value is already validated"),
+            )));
         }
 
         TrueVariant::try_from(value).map(Self::True)
@@ -606,7 +593,9 @@ impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(std::str::from_utf8(value)?.into()))
+            Ok(Self::Explicit(
+                std::str::from_utf8(value).expect("value is already validated").into(),
+            ))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
@@ -624,7 +613,9 @@ impl TryFrom<Vec<u8>> for TrueVariant<'_> {
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(Cow::Owned(std::string::String::from_utf8(value)?)))
+            Ok(Self::Explicit(Cow::Owned(
+                std::string::String::from_utf8(value).expect("value is already validated"),
+            )))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
