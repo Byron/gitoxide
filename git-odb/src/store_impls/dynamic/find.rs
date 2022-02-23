@@ -25,7 +25,8 @@ mod error {
         LoadPack(#[from] std::io::Error),
     }
 }
-use crate::find::PrefixLookupResult;
+use crate::find::{PotentialPrefix, PrefixLookupResult};
+use crate::Find;
 pub use error::Error;
 
 use crate::store::types::PackId;
@@ -34,6 +35,26 @@ impl<S> super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
 {
+    #[allow(missing_docs)] // TODO: docs
+    pub fn disambiguate_prefix(&self, mut p: PotentialPrefix) -> Result<Option<git_hash::Prefix>, Error> {
+        let max_hex_len = p.id().kind().len_in_hex();
+        if p.hex_len() == max_hex_len {
+            return Ok(self.contains(p.id()).then(|| p.to_prefix()));
+        }
+
+        while p.hex_len() != max_hex_len {
+            let res = self.lookup_prefix(p.to_prefix())?;
+            match res {
+                Some(Ok(_id)) => return Ok(Some(p.to_prefix())),
+                Some(Err(())) => {
+                    p.inc_hex_len();
+                    continue;
+                }
+                None => return Ok(None),
+            }
+        }
+        Ok(Some(p.to_prefix()))
+    }
     /// Find the only object matching `prefix` and return it as `Ok(Some(Ok(<ObjectId>)))`, or return `Ok(Some(Err(()))`
     /// if multiple different objects with the same prefix were found.
     ///

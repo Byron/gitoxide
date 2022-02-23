@@ -3,6 +3,40 @@
 // TODO: find better name, ambiguous with git_pack::index::PrefixLookupResult (entry_index inside)
 pub type PrefixLookupResult = Result<git_hash::ObjectId, ()>;
 
+#[derive(Debug, Copy, Clone)]
+#[allow(missing_docs)]
+pub struct PotentialPrefix {
+    id: git_hash::ObjectId,
+    hex_len: usize,
+}
+
+impl PotentialPrefix {
+    #[allow(missing_docs)] // TODO: docs
+    pub fn new(id: impl Into<git_hash::ObjectId>, hex_len: usize) -> Result<Self, git_hash::prefix::Error> {
+        let id = id.into();
+        git_hash::Prefix::new(&id, hex_len)?;
+        Ok(PotentialPrefix { id, hex_len })
+    }
+
+    /// Transform ourselves into a `Prefix` with our current hex lengths.
+    pub fn to_prefix(&self) -> git_hash::Prefix {
+        git_hash::Prefix::new(self.id, self.hex_len).expect("our hex-len to always be in bounds")
+    }
+
+    pub(crate) fn inc_hex_len(&mut self) {
+        self.hex_len += 1;
+        assert!(self.hex_len <= self.id.kind().len_in_hex());
+    }
+
+    pub(crate) fn id(&self) -> &git_hash::oid {
+        &self.id
+    }
+
+    pub(crate) fn hex_len(&self) -> usize {
+        self.hex_len
+    }
+}
+
 ///
 pub mod existing {
     use git_hash::ObjectId;

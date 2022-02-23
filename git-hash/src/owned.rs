@@ -87,6 +87,11 @@ impl Prefix {
                 Ordering::Equal
             })
     }
+
+    #[allow(missing_docs)] // TODO: docs
+    pub fn from_hex(_hex: &str) -> Self {
+        todo!()
+    }
 }
 
 /// An owned hash identifying objects, most commonly Sha1
