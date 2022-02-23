@@ -34,7 +34,17 @@ impl<S> super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
 {
-    #[allow(missing_docs)] // TODO: docs
+    /// Find the only object matching `prefix` and return it as `Ok(Some(Ok(<ObjectId>)))`, or return `Ok(Some(Err(()))`
+    /// if multiple different objects with the same prefix were found.
+    ///
+    /// Return `Ok(None)` if no object matched the `prefix`.
+    ///
+    /// ### Performance Note
+    ///
+    /// - Unless the handles refresh mode is set to `Never`, each lookup will trigger a refresh of the object databases files
+    ///   on disk if the prefix doesn't lead to ambiguous results.
+    /// - Since all objects need to be examined to assure non-amiguous return values, after calling this method all indices will
+    ///   be loaded.
     pub fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Result<Option<crate::find::PrefixLookupResult>, Error> {
         let mut candidate: Option<git_hash::ObjectId> = None;
         loop {

@@ -138,7 +138,7 @@ pub(crate) mod index_lookup {
             }
         }
 
-        #[allow(missing_docs)] // TODO: docs
+        /// Call `lookup_prefix(…)` on either index or multi-index, and transform matches into an object id.
         pub(crate) fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Option<crate::find::PrefixLookupResult> {
             let res = match &self.file {
                 handle::SingleOrMultiIndex::Single { index, .. } => index.lookup_prefix(prefix),
