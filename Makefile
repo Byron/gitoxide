@@ -64,10 +64,8 @@ clippy: ## Run cargo clippy on all crates
 	cargo clippy --all --no-default-features --features small
 	cargo clippy --all --no-default-features --features lean-async --tests
 
-check-msrv: ## Check the minimal support rust version for packages that use it
-	rustc --version
-	cargo check --package git-repository
-	cargo check --package git-repository --no-default-features --features async-network-client
+check-msrv: ## run cargo msrv to validate the current msrv requirements, similar to what CI does
+	cd git-repository && cargo msrv verify
 
 check: ## Build all code in suitable configurations
 	cargo check --all
@@ -272,6 +270,11 @@ stress-commitgraph: release-lean $(commit_graphs)
 .PHONY: bench-git-config
 bench-git-config:
 	cd git-config && cargo bench
+
+check-msrv-on-ci: ## Check the minimal support rust version for currently installed Rust version
+	rustc --version
+	cargo check --package git-repository
+	cargo check --package git-repository --no-default-features --features async-network-client
 
 ##@ Maintenance
 

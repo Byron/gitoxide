@@ -22,4 +22,4 @@ jobs:
           profile: minimal
           toolchain: "1.52.0"
           override: true
-      - run: make check-msrv
+      - run: make check-msrv-on-ci
