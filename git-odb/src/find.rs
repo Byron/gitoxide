@@ -3,15 +3,18 @@
 // TODO: find better name, ambiguous with git_pack::index::PrefixLookupResult (entry_index inside)
 pub type PrefixLookupResult = Result<git_hash::ObjectId, ()>;
 
+/// A potentially ambiguous prefix for use with `Handle::disambiguate_prefix()`.
 #[derive(Debug, Copy, Clone)]
-#[allow(missing_docs)]
 pub struct PotentialPrefix {
     id: git_hash::ObjectId,
     hex_len: usize,
 }
 
 impl PotentialPrefix {
-    #[allow(missing_docs)] // TODO: docs
+    /// Create a new potentially ambiguous prefix from an `id` and the desired minimal `hex_len`.
+    ///
+    /// It is considered ambiguous until it's disambiguated by validating that there is only a single object
+    /// matching this prefix.
     pub fn new(id: impl Into<git_hash::ObjectId>, hex_len: usize) -> Result<Self, git_hash::prefix::Error> {
         let id = id.into();
         git_hash::Prefix::new(&id, hex_len)?;

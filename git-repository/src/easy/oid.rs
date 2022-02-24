@@ -28,7 +28,7 @@ impl<'repo> Oid<'repo> {
         self.handle.try_find_object(self.inner)
     }
 
-    #[allow(missing_docs)] // TODO: docs
+    /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`.
     pub fn prefix(&self) -> Result<git_hash::Prefix, prefix::Error> {
         // let hex_len = self.handle.config.get_int("core.abbrev")?;
         Ok(self

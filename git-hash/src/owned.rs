@@ -88,9 +88,9 @@ impl Prefix {
             })
     }
 
-    #[allow(missing_docs)] // TODO: docs
+    /// Create an instance from the given hexadecimal prefix, e.g. `35e77c16` would yield a `Prefix` with `hex_len()` = 8.
     pub fn from_hex(_hex: &str) -> Self {
-        todo!()
+        todo!("Prefix::from_hex()")
     }
 }
 

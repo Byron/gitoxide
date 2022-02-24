@@ -35,25 +35,26 @@ impl<S> super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
 {
-    #[allow(missing_docs)] // TODO: docs
-    pub fn disambiguate_prefix(&self, mut p: PotentialPrefix) -> Result<Option<git_hash::Prefix>, Error> {
-        let max_hex_len = p.id().kind().len_in_hex();
-        if p.hex_len() == max_hex_len {
-            return Ok(self.contains(p.id()).then(|| p.to_prefix()));
+    /// Given a prefix `candidate` with an object id and an initial `hex_len`, check if it only matches a single
+    /// object within the entire object database and increment its `hex_len` by one until it is unambiguous.
+    pub fn disambiguate_prefix(&self, mut candidate: PotentialPrefix) -> Result<Option<git_hash::Prefix>, Error> {
+        let max_hex_len = candidate.id().kind().len_in_hex();
+        if candidate.hex_len() == max_hex_len {
+            return Ok(self.contains(candidate.id()).then(|| candidate.to_prefix()));
         }
 
-        while p.hex_len() != max_hex_len {
-            let res = self.lookup_prefix(p.to_prefix())?;
+        while candidate.hex_len() != max_hex_len {
+            let res = self.lookup_prefix(candidate.to_prefix())?;
             match res {
-                Some(Ok(_id)) => return Ok(Some(p.to_prefix())),
+                Some(Ok(_id)) => return Ok(Some(candidate.to_prefix())),
                 Some(Err(())) => {
-                    p.inc_hex_len();
+                    candidate.inc_hex_len();
                     continue;
                 }
                 None => return Ok(None),
             }
         }
-        Ok(Some(p.to_prefix()))
+        Ok(Some(candidate.to_prefix()))
     }
     /// Find the only object matching `prefix` and return it as `Ok(Some(Ok(<ObjectId>)))`, or return `Ok(Some(Err(()))`
     /// if multiple different objects with the same prefix were found.
