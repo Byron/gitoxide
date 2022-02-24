@@ -50,14 +50,6 @@ fast-sha1 = ["sha-1"]
 ## A standard and well performing pure Rust implementation of Sha1. Will significantly slow down various git operations.
 rustsha1 = ["sha1_smol"]
 
-#! ### Optional Dependencies
-#!
-#! - **`time`** - make the `time` module available with access to the local time as configured by the system.
-#! - **`bstr`** - make bstr utilities available in the `path` modules, which itself is gated by the `path` feature.
-#! - **`walkdir`**
-#!     - Makes facilities of the `walkdir` crate partially available.
-#!     - In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.
-
 #! ### Other
 
 ## Count cache hits and misses and print that debug information on drop.
@@ -95,6 +87,8 @@ path = "tests/path.rs"
 required-features = ["bstr"]
 
 [dependencies]
+#! ### Optional Dependencies
+
 git-hash = { version = "^0.9.1", path = "../git-hash" }
 
 
@@ -106,6 +100,8 @@ num_cpus = { version = "1.13.0", optional = true }
 parking_lot = { version = "0.12.0", default-features = false, optional = true }
 
 jwalk = { version = "0.6.0", optional = true }
+## Makes facilities of the `walkdir` crate partially available.
+## In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.
 walkdir = { version = "2.3.1", optional = true } # used when parallel is off
 
 # hashing and 'fast-sha1' feature
@@ -123,11 +119,12 @@ bytes = { version = "1.0.0", optional = true }
 flate2 = { version = "1.0.17", optional = true, default-features = false }
 quick-error = { version = "2.0.0", optional = true }
 
-# time
+## make the `time` module available with access to the local time as configured by the system.
 time = { version = "0.3.2", optional = true, default-features = false, features = ["local-offset"] }
 
 
 # path
+## make bstr utilities available in the `path` modules, which itself is gated by the `path` feature.
 bstr = { version = "0.2.17", optional = true }
 
 document-features = { version = "0.2.0", optional = true }
