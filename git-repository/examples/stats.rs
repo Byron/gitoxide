@@ -10,8 +10,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "Repo: {}",
         repo.work_tree.as_deref().unwrap_or(repo.git_dir()).display()
     );
-    let handle = repo.to_easy();
-    let commit_ids = handle
+    let repo = repo.to_easy();
+    let commit_ids = repo
         .head()?
         .into_fully_peeled_id()
         .ok_or_else(|| "There are no commits - nothing to do here.")??
@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let tree = commit.tree()?;
 
-    let mut delegate = visit::Tree::new(handle.clone());
+    let mut delegate = visit::Tree::new(repo.clone());
     tree.traverse().breadthfirst(&mut delegate)?;
     let _files = tree.traverse().breadthfirst.files()?;
 
@@ -43,16 +43,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // let num_branches = handle.branches()?;
     // let num_branches = handle.branches.remote("origin")?;
-    let num_branches = handle.references()?.prefixed("refs/heads/")?.count();
-    let num_remote_branches = handle.references()?.prefixed("refs/remotes/")?.count();
-    let num_tags = handle.references()?.prefixed("refs/tags/")?.count();
-    let broken_refs = handle
+    let num_branches = repo.references()?.prefixed("refs/heads/")?.count();
+    let num_remote_branches = repo.references()?.prefixed("refs/remotes/")?.count();
+    let num_tags = repo.references()?.prefixed("refs/tags/")?.count();
+    let broken_refs = repo
         .references()?
         .all()?
         .filter_map(Result::ok)
         .filter_map(|r: Reference| r.into_fully_peeled_id().err())
         .count();
-    let inaccessible_refs = handle.references()?.all()?.filter(Result::is_err).count();
+    let inaccessible_refs = repo.references()?.all()?.filter(Result::is_err).count();
 
     println!("num local branches: {}", num_branches);
     println!("num remote branches: {}", num_remote_branches);

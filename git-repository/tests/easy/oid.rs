@@ -1,3 +1,17 @@
+use git_repository::prelude::ObjectIdExt;
+use git_testtools::hex_to_id;
+use std::cmp::Ordering;
+
+#[test]
+fn prefix() -> crate::Result {
+    let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_easy();
+    let id = hex_to_id("288e509293165cb5630d08f4185bdf2445bf6170").attach(&repo);
+    let prefix = id.prefix()?;
+    assert_eq!(prefix.cmp_oid(&id), Ordering::Equal);
+    assert_eq!(prefix.hex_len(), 7, "preconfigured via core.abbrev");
+    Ok(())
+}
+
 mod ancestors {
     use git_traverse::commit;
 

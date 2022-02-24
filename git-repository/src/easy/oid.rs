@@ -27,6 +27,32 @@ impl<'repo> Oid<'repo> {
     pub fn try_object(&self) -> Result<Option<Object<'repo>>, find::OdbError> {
         self.handle.try_find_object(self.inner)
     }
+
+    #[allow(missing_docs)] // TODO: docs
+    pub fn prefix(&self) -> Result<git_hash::Prefix, prefix::Error> {
+        // let hex_len = self.handle.config.get_int("core.abbrev")?;
+        Ok(self
+            .handle
+            .objects
+            .disambiguate_prefix(git_odb::find::PotentialPrefix::new(self.inner, 7)?)
+            .map_err(|err| crate::easy::object::find::existing::OdbError::Find(err))?
+            .ok_or_else(|| crate::easy::object::find::existing::OdbError::NotFound { oid: self.inner })?)
+    }
+}
+
+///
+mod prefix {
+    /// Returned by [`Oid::prefix()`][super::Oid::prefix()].
+    #[derive(thiserror::Error, Debug)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        FindExisting(#[from] crate::easy::object::find::existing::OdbError),
+        #[error(transparent)]
+        Config(#[from] git_config::parser::ParserOrIoError<'static>),
+        #[error(transparent)]
+        Prefix(#[from] git_hash::prefix::Error),
+    }
 }
 
 impl<'repo> Deref for Oid<'repo> {
