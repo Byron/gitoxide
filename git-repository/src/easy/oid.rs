@@ -35,8 +35,8 @@ impl<'repo> Oid<'repo> {
             .handle
             .objects
             .disambiguate_prefix(git_odb::find::PotentialPrefix::new(self.inner, 7)?)
-            .map_err(|err| crate::easy::object::find::existing::OdbError::Find(err))?
-            .ok_or_else(|| crate::easy::object::find::existing::OdbError::NotFound { oid: self.inner })?)
+            .map_err(crate::easy::object::find::existing::OdbError::Find)?
+            .ok_or(crate::easy::object::find::existing::OdbError::NotFound { oid: self.inner })?)
     }
 }
 
