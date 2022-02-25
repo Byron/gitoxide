@@ -60,7 +60,7 @@ pub mod verify {
             index.verify_entries()?;
             index.verify_extensions(true, {
                 use git::odb::FindExt;
-                let objects = repo.objects.clone();
+                let objects = repo.objects;
                 move |oid, buf: &mut Vec<u8>| objects.find_tree_iter(oid, buf).ok()
             })?;
             outcome.progress.info(format!("Index at '{}' OK", index.path.display()));
