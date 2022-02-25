@@ -64,7 +64,7 @@ impl<'repo> Deref for Oid<'repo> {
 }
 
 impl<'repo> Oid<'repo> {
-    pub(crate) fn from_id(id: impl Into<ObjectId>, handle: &'repo easy::Handle) -> Self {
+    pub(crate) fn from_id(id: impl Into<ObjectId>, handle: &'repo easy::Repository) -> Self {
         Oid {
             inner: id.into(),
             handle,
@@ -79,7 +79,7 @@ impl<'repo> Oid<'repo> {
 
 /// A platform to traverse commit ancestors, also referred to as commit history.
 pub struct Ancestors<'repo> {
-    handle: &'repo easy::Handle,
+    handle: &'repo easy::Repository,
     tips: Box<dyn Iterator<Item = ObjectId>>,
     sorting: git_traverse::commit::Sorting,
     parents: git_traverse::commit::Parents,
@@ -149,7 +149,7 @@ pub mod ancestors {
 
     /// The iterator returned by [`Ancestors::all()`].
     pub struct Iter<'a, 'repo> {
-        handle: &'repo easy::Handle,
+        handle: &'repo easy::Repository,
         inner: Box<dyn Iterator<Item = Result<git_hash::ObjectId, git_traverse::commit::ancestors::Error>> + 'a>,
     }
 

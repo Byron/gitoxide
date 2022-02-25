@@ -18,7 +18,7 @@ use crate::{
 const DEFAULT_LOCK_MODE: git_lock::acquire::Fail = git_lock::acquire::Fail::Immediately;
 
 /// Obtain and alter references comfortably
-impl easy::Handle {
+impl easy::Repository {
     /// Create a lightweight tag with given `name` (and without `refs/tags/` prefix) pointing to the given `target`, and return it as reference.
     ///
     /// It will be created with `constraint` which is most commonly to [only create it][PreviousValue::MustNotExist]

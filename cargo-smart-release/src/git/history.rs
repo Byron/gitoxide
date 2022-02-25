@@ -28,7 +28,7 @@ pub enum SegmentScope {
     EntireHistory,
 }
 
-pub fn collect(handle: &git::easy::Handle) -> anyhow::Result<Option<commit::History>> {
+pub fn collect(handle: &git::easy::Repository) -> anyhow::Result<Option<commit::History>> {
     let mut handle = handle.clone();
     handle.object_cache_size(64 * 1024);
     let reference = match handle.head()?.peeled()?.kind {

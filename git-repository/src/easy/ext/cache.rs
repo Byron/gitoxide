@@ -1,7 +1,7 @@
 use crate::easy;
 
 /// Configure how caches are used to speed up various git repository operations
-impl easy::Handle {
+impl easy::Repository {
     /// Sets the amount of space used at most for caching most recently accessed fully decoded objects, to `Some(bytes)`,
     /// or `None` to deactivate it entirely.
     ///

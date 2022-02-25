@@ -9,7 +9,7 @@ use crate::{
 
 impl<'repo> Tree<'repo> {
     /// Obtain a tree instance by handing in all components that it is made up of.
-    pub fn from_data(id: impl Into<ObjectId>, data: Vec<u8>, handle: &'repo easy::Handle) -> Self {
+    pub fn from_data(id: impl Into<ObjectId>, data: Vec<u8>, handle: &'repo easy::Repository) -> Self {
         Tree {
             id: id.into(),
             data,

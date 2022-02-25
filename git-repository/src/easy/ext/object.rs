@@ -14,7 +14,7 @@ use crate::{
 };
 
 /// Methods related to object creation.
-impl easy::Handle {
+impl easy::Repository {
     /// Find the object with `id` in the object database or return an error if it could not be found.
     ///
     /// There are various legitimate reasons for an object to not be present, which is why

@@ -8,9 +8,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let repo = git::discover(".")?;
     println!(
         "Repo: {}",
-        repo.work_tree.as_deref().unwrap_or(repo.git_dir()).display()
+        repo.work_tree().as_deref().unwrap_or(repo.git_dir()).display()
     );
-    let repo = repo.to_easy();
     let commit_ids = repo
         .head()?
         .into_fully_peeled_id()
@@ -78,11 +77,11 @@ mod visit {
         pub num_blobs_exec: usize,
         pub num_submodules: usize,
         pub num_bytes: u64,
-        pub repo: git::easy::Handle,
+        pub repo: git::easy::Repository,
     }
 
     impl Tree {
-        pub fn new(repo: git::easy::Handle) -> Self {
+        pub fn new(repo: git::easy::Repository) -> Self {
             Tree {
                 num_trees: 0,
                 num_links: 0,

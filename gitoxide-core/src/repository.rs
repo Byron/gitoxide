@@ -43,7 +43,7 @@ pub mod verify {
     ) -> anyhow::Result<()> {
         let repo = git_repository::open(repo)?;
         #[cfg_attr(not(feature = "serde1"), allow(unused))]
-        let mut outcome = repo.objects.verify_integrity(
+        let mut outcome = repo.objects.store_ref().verify_integrity(
             progress,
             should_interrupt,
             git_repository::odb::pack::index::verify::integrity::Options {
@@ -60,8 +60,8 @@ pub mod verify {
             index.verify_entries()?;
             index.verify_extensions(true, {
                 use git::odb::FindExt;
-                let handle = repo.objects.to_handle();
-                move |oid, buf: &mut Vec<u8>| handle.find_tree_iter(oid, buf).ok()
+                let objects = repo.objects.clone();
+                move |oid, buf: &mut Vec<u8>| objects.find_tree_iter(oid, buf).ok()
             })?;
             outcome.progress.info(format!("Index at '{}' OK", index.path.display()));
         }

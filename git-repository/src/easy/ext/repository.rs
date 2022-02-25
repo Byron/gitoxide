@@ -1,7 +1,7 @@
 use crate::easy;
 
 /// The catch-all of extension traits.
-impl easy::Handle {
+impl easy::Repository {
     // TODO: actual implementation
     /// Return the committer as configured by this repository, which is determined by…
     ///

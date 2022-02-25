@@ -116,7 +116,7 @@ pub fn create<W>(
 where
     W: std::io::Write,
 {
-    let repo = git::discover(repository_path)?;
+    let repo = git::discover(repository_path)?.into_sync();
     progress.init(Some(2), progress::steps());
     let tips = tips.into_iter();
     let make_cancellation_err = || anyhow!("Cancelled by user");
@@ -129,7 +129,7 @@ where
             progress.init(None, progress::count("commits"));
             let tips = tips
                 .map({
-                    let easy = repo.to_easy();
+                    let easy = repo.to_thread_local();
                     move |tip| {
                         ObjectId::from_hex(&Vec::from_os_str_lossy(tip.as_ref())).or_else(|_| {
                             easy.find_reference(tip.as_ref())

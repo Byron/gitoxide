@@ -2,8 +2,8 @@ mod set_namespace {
     use git_repository as git;
     use git_repository::refs::transaction::PreviousValue;
 
-    fn easy_repo_rw() -> crate::Result<(git::easy::Handle, tempfile::TempDir)> {
-        crate::repo_rw("make_references_repo.sh").map(|(r, d)| (r.to_easy(), d))
+    fn easy_repo_rw() -> crate::Result<(git::easy::Repository, tempfile::TempDir)> {
+        crate::repo_rw("make_references_repo.sh").map(|(r, d)| (r.to_thread_local(), d))
     }
 
     #[test]
@@ -84,8 +84,8 @@ mod iter_references {
     use git_repository as git;
     use git_testtools::hex_to_id;
 
-    fn repo() -> crate::Result<git::easy::Handle> {
-        crate::repo("make_references_repo.sh").map(|r| r.to_easy())
+    fn repo() -> crate::Result<git::easy::Repository> {
+        crate::repo("make_references_repo.sh").map(|r| r.to_thread_local())
     }
 
     #[test]

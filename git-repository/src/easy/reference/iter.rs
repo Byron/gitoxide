@@ -10,14 +10,14 @@ use crate::easy;
 #[must_use = "Iterators should be obtained from this iterator platform"]
 pub struct Platform<'r> {
     pub(crate) platform: git_ref::file::iter::Platform<'r>,
-    pub(crate) handle: &'r easy::Handle,
+    pub(crate) handle: &'r easy::Repository,
 }
 
 /// An iterator over references, with or without filter.
 pub struct Iter<'r> {
     inner: git_ref::file::iter::LooseThenPacked<'r, 'r>,
     peel: bool,
-    handle: &'r easy::Handle,
+    handle: &'r easy::Repository,
 }
 
 impl<'r> Platform<'r> {

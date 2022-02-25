@@ -1,7 +1,7 @@
 use git_repository::easy;
 
 mod commit {
-    use git_repository::easy::{Commit, Handle};
+    use git_repository::easy::{Commit, Repository};
     use git_testtools::hex_to_id;
 
     use crate::basic_repo;
@@ -28,7 +28,7 @@ mod commit {
         Ok(())
     }
 
-    fn head_commit(handle: &Handle) -> Commit<'_> {
+    fn head_commit(handle: &Repository) -> Commit<'_> {
         handle
             .head()
             .unwrap()

@@ -9,7 +9,7 @@ use crate::version::BumpSpec;
 pub struct Context {
     pub root: Utf8PathBuf,
     pub meta: Metadata,
-    pub repo: git::easy::Handle,
+    pub repo: git::easy::Repository,
     pub crate_names: Vec<String>,
     pub crates_index: crate::crates_index::Index,
     pub history: Option<crate::commit::History>,
@@ -26,7 +26,7 @@ impl Context {
     ) -> anyhow::Result<Self> {
         let meta = cargo_metadata::MetadataCommand::new().exec()?;
         let root = meta.workspace_root.clone();
-        let repo = git::discover(&root)?.to_easy().apply_environment();
+        let repo = git::discover(&root)?.apply_environment();
         let crates_index = crate::crates_index::Index::new_cargo_default()?;
         let history = (force_history_segmentation
             || matches!(bump, BumpSpec::Auto)

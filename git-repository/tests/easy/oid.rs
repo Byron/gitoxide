@@ -4,7 +4,7 @@ use std::cmp::Ordering;
 
 #[test]
 fn prefix() -> crate::Result {
-    let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_easy();
+    let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_thread_local();
     let id = hex_to_id("288e509293165cb5630d08f4185bdf2445bf6170").attach(&repo);
     let prefix = id.prefix()?;
     assert_eq!(prefix.cmp_oid(&id), Ordering::Equal);
@@ -17,7 +17,7 @@ mod ancestors {
 
     #[test]
     fn all() -> crate::Result {
-        let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_easy();
+        let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_thread_local();
         let head = repo.head()?.into_fully_peeled_id().expect("born")?;
         let commits_graph_order = head.ancestors().all().collect::<Result<Vec<_>, _>>()?;
         assert_eq!(commits_graph_order.len(), 4, "need a specific amount of commits");

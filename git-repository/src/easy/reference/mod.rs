@@ -37,7 +37,7 @@ impl<'repo> Reference<'repo> {
 }
 
 impl<'repo> Reference<'repo> {
-    pub(crate) fn from_ref(reference: git_ref::Reference, handle: &'repo easy::Handle) -> Self {
+    pub(crate) fn from_ref(reference: git_ref::Reference, handle: &'repo easy::Repository) -> Self {
         Reference {
             inner: reference,
             handle,

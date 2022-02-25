@@ -176,12 +176,13 @@ pub enum Path {
     Repository(PathBuf),
 }
 
-/// A instance with access to everything a git repository entails, best imagined as container for _most_ for system resources required
-/// to interact with a `git` repository which are loaded in once the instance is created.
+/// An instance with access to everything a git repository entails, best imagined as container implementing `Sync + Send` for _most_
+/// for system resources required to interact with a `git` repository which are loaded in once the instance is created.
 ///
-/// The main difference to the [`easy::Handle`] is that this type is `Sync`, and thus can be referenced into a threaded context for creation
-/// of thread-local handles.
-pub struct Repository {
+/// Use this type to reference it in a threaded context for creation the creation of thread-local [`Repositories`][crate::easy::Repository].
+///
+/// Note that it isn't very useful until it is converted into a thread-local repository with `to_thread_local()`.
+pub struct SyncRepository {
     /// A store for references to point at objects
     pub refs: RefStore,
     /// A store for objects that contain data
@@ -223,21 +224,21 @@ impl Kind {
 }
 
 /// See [Repository::discover()].
-pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::discover::Error> {
-    Repository::discover(directory)
+pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<easy::Repository, repository::discover::Error> {
+    SyncRepository::discover(directory).map(|r| r.to_thread_local())
 }
 
 /// See [Repository::init()].
-pub fn init(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::init::Error> {
-    Repository::init(directory, Kind::WorkTree)
+pub fn init(directory: impl AsRef<std::path::Path>) -> Result<easy::Repository, repository::init::Error> {
+    SyncRepository::init(directory, Kind::WorkTree).map(|r| r.to_thread_local())
 }
 
 /// See [Repository::init()].
-pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::init::Error> {
-    Repository::init(directory, Kind::Bare)
+pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<easy::Repository, repository::init::Error> {
+    SyncRepository::init(directory, Kind::Bare).map(|r| r.to_thread_local())
 }
 
 /// See [Repository::open()].
-pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<Repository, repository::open::Error> {
-    Repository::open(directory)
+pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<easy::Repository, repository::open::Error> {
+    SyncRepository::open(directory).map(|r| r.to_thread_local())
 }

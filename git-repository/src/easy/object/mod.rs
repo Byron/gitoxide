@@ -35,7 +35,7 @@ pub mod try_into {
 
 impl DetachedObject {
     /// Infuse this owned object with an [`easy::Handle`].
-    pub fn attach(self, handle: &easy::Handle) -> Object<'_> {
+    pub fn attach(self, handle: &easy::Repository) -> Object<'_> {
         Object {
             id: self.id,
             kind: self.kind,
@@ -46,7 +46,12 @@ impl DetachedObject {
 }
 
 impl<'repo> Object<'repo> {
-    pub(crate) fn from_data(id: impl Into<ObjectId>, kind: Kind, data: Vec<u8>, handle: &'repo easy::Handle) -> Self {
+    pub(crate) fn from_data(
+        id: impl Into<ObjectId>,
+        kind: Kind,
+        data: Vec<u8>,
+        handle: &'repo easy::Repository,
+    ) -> Self {
         Object {
             id: id.into(),
             kind,

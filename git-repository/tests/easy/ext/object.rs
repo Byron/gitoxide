@@ -2,7 +2,7 @@ mod write_object {
     #[test]
     fn empty_tree() -> crate::Result {
         let tmp = tempfile::tempdir()?;
-        let repo = git_repository::init_bare(&tmp)?.to_easy();
+        let repo = git_repository::init_bare(&tmp)?;
         let oid = repo.write_object(&git_repository::objs::TreeRef::empty())?;
         assert_eq!(
             oid,
@@ -74,7 +74,7 @@ mod commit {
     #[test]
     fn parent_in_initial_commit_causes_failure() {
         let tmp = tempfile::tempdir().unwrap();
-        let repo = git::init(&tmp).unwrap().to_easy();
+        let repo = git::init(&tmp).unwrap();
         let empty_tree_id = repo.write_object(&git::objs::Tree::empty()).unwrap().detach();
         let author = git::actor::Signature::empty();
         let err = repo
@@ -97,7 +97,7 @@ mod commit {
     #[test]
     fn single_line_initial_commit_empty_tree_ref_nonexisting() -> crate::Result {
         let tmp = tempfile::tempdir()?;
-        let repo = git::init(&tmp)?.to_easy();
+        let repo = git::init(&tmp)?;
         let empty_tree_id = repo.write_object(&git::objs::Tree::empty())?;
         let author = git::actor::Signature::empty();
         let commit_id = repo.commit(

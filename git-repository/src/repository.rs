@@ -1,7 +1,7 @@
 mod access {
-    use crate::{easy, Kind, Repository};
+    use crate::{easy, Kind, SyncRepository};
 
-    impl Repository {
+    impl SyncRepository {
         /// Return the kind of repository, either bare or one with a work tree.
         pub fn kind(&self) -> Kind {
             match self.work_tree {
@@ -11,27 +11,8 @@ mod access {
         }
 
         /// Add thread-local state to an easy-to-use handle for the most convenient API.
-        pub fn to_easy(&self) -> easy::Handle {
+        pub fn to_thread_local(&self) -> easy::Repository {
             self.into()
-        }
-
-        // TODO: tests
-        /// Load the index file of this repository's workspace, if present.
-        ///
-        /// Note that it is loaded into memory each time this method is called, but also is independent of the workspace.
-        #[cfg(feature = "git-index")]
-        pub fn load_index(&self) -> Option<Result<git_index::File, git_index::file::init::Error>> {
-            // TODO: choose better/correct options
-            let opts = git_index::decode::Options {
-                object_hash: self.object_hash,
-                thread_limit: None,
-                min_extension_block_in_bytes_for_threading: 1024 * 256,
-            };
-            match git_index::File::at(self.git_dir().join("index"), opts) {
-                Ok(index) => Some(Ok(index)),
-                Err(git_index::file::init::Error::Io(err)) if err.kind() == std::io::ErrorKind::NotFound => None,
-                Err(err) => Some(Err(err)),
-            }
         }
     }
 }
@@ -41,12 +22,12 @@ mod from_path {
 
     use crate::Path;
 
-    impl TryFrom<crate::Path> for crate::Repository {
+    impl TryFrom<crate::Path> for crate::SyncRepository {
         type Error = crate::open::Error;
 
         fn try_from(value: Path) -> Result<Self, Self::Error> {
             let (git_dir, worktree_dir) = value.into_repository_and_work_tree_directories();
-            crate::Repository::open_from_paths(git_dir, worktree_dir, Default::default())
+            crate::SyncRepository::open_from_paths(git_dir, worktree_dir, Default::default())
         }
     }
 }
@@ -61,7 +42,7 @@ pub mod open {
     };
     use git_features::threading::OwnShared;
 
-    use crate::Repository;
+    use crate::SyncRepository;
 
     /// The options used in [`Repository::open_opts
     #[derive(Default)]
@@ -78,8 +59,8 @@ pub mod open {
         }
 
         /// Open a repository at `path` with the options set so far.
-        pub fn open(self, path: impl Into<std::path::PathBuf>) -> Result<Repository, Error> {
-            Repository::open_opts(path, self)
+        pub fn open(self, path: impl Into<std::path::PathBuf>) -> Result<SyncRepository, Error> {
+            SyncRepository::open_opts(path, self)
         }
     }
 
@@ -97,7 +78,7 @@ pub mod open {
         UnsupportedObjectFormat { name: crate::bstr::BString },
     }
 
-    impl Repository {
+    impl SyncRepository {
         /// Open a git repository at the given `path`, possibly expanding it to `path/.git` if `path` is a work tree dir.
         pub fn open(path: impl Into<std::path::PathBuf>) -> Result<Self, Error> {
             Self::open_opts(path, Options::default())
@@ -115,7 +96,7 @@ pub mod open {
             };
             let (git_dir, worktree_dir) =
                 crate::Path::from_dot_git_dir(path, kind).into_repository_and_work_tree_directories();
-            Repository::open_from_paths(git_dir, worktree_dir, options)
+            SyncRepository::open_from_paths(git_dir, worktree_dir, options)
         }
 
         pub(in crate::repository) fn open_from_paths(
@@ -151,7 +132,7 @@ pub mod open {
                 git_hash::Kind::Sha1
             };
 
-            Ok(crate::Repository {
+            Ok(crate::SyncRepository {
                 objects: OwnShared::new(git_odb::Store::at_opts(
                     git_dir.join("objects"),
                     git_odb::store::init::Options {
@@ -187,7 +168,7 @@ pub mod open {
 pub mod init {
     use std::{convert::TryInto, path::Path};
 
-    use crate::Repository;
+    use crate::SyncRepository;
 
     /// The error returned by [`Repository::init()`].
     #[derive(Debug, thiserror::Error)]
@@ -199,7 +180,7 @@ pub mod init {
         Open(#[from] crate::open::Error),
     }
 
-    impl Repository {
+    impl SyncRepository {
         /// Create a repository with work-tree within `directory`, creating intermediate directories as needed.
         ///
         /// Fails without action if there is already a `.git` repository inside of `directory`, but
@@ -212,9 +193,9 @@ pub mod init {
 }
 
 mod location {
-    use crate::Repository;
+    use crate::SyncRepository;
 
-    impl Repository {
+    impl SyncRepository {
         /// The path to the `.git` directory itself, or equivalent if this is a bare repository.
         pub fn path(&self) -> &std::path::Path {
             self.git_dir()
@@ -243,7 +224,7 @@ mod location {
 pub mod discover {
     use std::{convert::TryInto, path::Path};
 
-    use crate::{path::discover, Repository};
+    use crate::{path::discover, SyncRepository};
 
     /// The error returned by [`Repository::discover()`].
     #[derive(Debug, thiserror::Error)]
@@ -255,7 +236,7 @@ pub mod discover {
         Open(#[from] crate::open::Error),
     }
 
-    impl Repository {
+    impl SyncRepository {
         /// Try to open a git repository in `directory` and search upwards through its parents until one is found.
         pub fn discover(directory: impl AsRef<Path>) -> Result<Self, Error> {
             let path = discover::existing(directory)?;
@@ -265,9 +246,9 @@ pub mod discover {
 }
 
 mod impls {
-    use crate::Repository;
+    use crate::SyncRepository;
 
-    impl std::fmt::Debug for Repository {
+    impl std::fmt::Debug for SyncRepository {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             write!(
                 f,
@@ -278,8 +259,8 @@ mod impls {
         }
     }
 
-    impl PartialEq<Repository> for Repository {
-        fn eq(&self, other: &Repository) -> bool {
+    impl PartialEq<SyncRepository> for SyncRepository {
+        fn eq(&self, other: &SyncRepository) -> bool {
             self.git_dir() == other.git_dir() && self.work_tree == other.work_tree
         }
     }
