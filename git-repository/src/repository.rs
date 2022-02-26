@@ -10,7 +10,7 @@ mod access {
             }
         }
 
-        /// Add thread-local state to an easy-to-use handle for the most convenient API.
+        /// Add thread-local state to an easy-to-use thread-local repository for the most convenient API.
         pub fn to_thread_local(&self) -> easy::Repository {
             self.into()
         }

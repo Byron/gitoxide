@@ -225,20 +225,20 @@ impl Kind {
 
 /// See [Repository::discover()].
 pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<easy::Repository, repository::discover::Error> {
-    SyncRepository::discover(directory).map(|r| r.to_thread_local())
+    SyncRepository::discover(directory).map(Into::into)
 }
 
 /// See [Repository::init()].
 pub fn init(directory: impl AsRef<std::path::Path>) -> Result<easy::Repository, repository::init::Error> {
-    SyncRepository::init(directory, Kind::WorkTree).map(|r| r.to_thread_local())
+    SyncRepository::init(directory, Kind::WorkTree).map(Into::into)
 }
 
 /// See [Repository::init()].
 pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<easy::Repository, repository::init::Error> {
-    SyncRepository::init(directory, Kind::Bare).map(|r| r.to_thread_local())
+    SyncRepository::init(directory, Kind::Bare).map(Into::into)
 }
 
 /// See [Repository::open()].
 pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<easy::Repository, repository::open::Error> {
-    SyncRepository::open(directory).map(|r| r.to_thread_local())
+    SyncRepository::open(directory).map(Into::into)
 }
