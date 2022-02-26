@@ -1,15 +1,7 @@
 use std::{cell::RefCell, path::PathBuf};
 
+use crate::head;
 use git_hash::ObjectId;
-
-use crate::easy;
-pub mod commit;
-pub mod head;
-pub mod object;
-pub mod oid;
-pub mod reference;
-pub mod repository;
-pub mod tag;
 
 /// The head reference, as created from looking at `.git/HEAD`, able to represent all of its possible states.
 ///
@@ -17,15 +9,15 @@ pub mod tag;
 pub struct Head<'repo> {
     /// One of various possible states for the HEAD reference
     pub kind: head::Kind,
-    handle: &'repo easy::Repository,
+    pub(crate) handle: &'repo crate::Repository,
 }
 
 /// An [ObjectId] with access to a repository.
 #[derive(Clone, Copy)]
-pub struct Oid<'r> {
+pub struct Id<'r> {
     /// The actual object id
-    inner: ObjectId,
-    handle: &'r easy::Repository,
+    pub(crate) inner: ObjectId,
+    pub(crate) handle: &'r crate::Repository,
 }
 
 /// A decoded object with a reference to its owning repository.
@@ -41,7 +33,7 @@ pub struct Object<'repo> {
     pub kind: git_object::Kind,
     /// The fully decoded object data
     pub data: Vec<u8>,
-    handle: &'repo easy::Repository,
+    pub(crate) handle: &'repo crate::Repository,
 }
 
 impl<'a> Drop for Object<'a> {
@@ -58,7 +50,7 @@ pub struct Tree<'repo> {
     pub id: ObjectId,
     /// The fully decoded tree data
     pub data: Vec<u8>,
-    handle: &'repo easy::Repository,
+    pub(crate) handle: &'repo crate::Repository,
 }
 
 impl<'a> Drop for Tree<'a> {
@@ -75,7 +67,7 @@ pub struct Commit<'repo> {
     pub id: ObjectId,
     /// The fully decoded commit data
     pub data: Vec<u8>,
-    handle: &'repo easy::Repository,
+    pub(crate) handle: &'repo crate::Repository,
 }
 
 impl<'a> Drop for Commit<'a> {
@@ -103,7 +95,7 @@ pub struct DetachedObject {
 pub struct Reference<'r> {
     /// The actual reference data
     pub inner: git_ref::Reference,
-    pub(crate) handle: &'r easy::Repository,
+    pub(crate) handle: &'r crate::Repository,
 }
 
 /// A thread-local handle to interact with a repository from a single thread.
@@ -117,11 +109,12 @@ pub struct Repository {
     pub refs: crate::RefStore,
     /// A way to access objects.
     pub objects: crate::OdbHandle,
-    work_tree: Option<PathBuf>,
+
+    pub(crate) work_tree: Option<PathBuf>,
     /// The kind of hash that is used or should be used for object ids
-    object_hash: git_hash::Kind,
+    pub(crate) object_hash: git_hash::Kind,
     /// Access to all repository configuration, must be hidden as there is a lot figure out.
-    config: crate::Config,
+    pub(crate) config: crate::Config,
     /// A free-list of re-usable object backing buffers
-    bufs: RefCell<Vec<Vec<u8>>>,
+    pub(crate) bufs: RefCell<Vec<Vec<u8>>>,
 }

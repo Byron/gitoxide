@@ -1,9 +1,7 @@
 //!
 
-use crate::easy;
-
 /// Internal
-impl easy::Repository {
+impl crate::Repository {
     #[inline]
     pub(crate) fn free_buf(&self) -> Vec<u8> {
         self.bufs.borrow_mut().pop().unwrap_or_default()
@@ -22,7 +20,7 @@ impl easy::Repository {
 }
 
 /// Everything else
-impl easy::Repository {
+impl crate::Repository {
     // TODO: actual implementation
     /// Return the committer as configured by this repository, which is determined by…
     ///
@@ -42,10 +40,10 @@ impl easy::Repository {
 }
 
 mod init {
-    use crate::{easy, sync};
+    use crate::sync;
     use std::cell::RefCell;
 
-    impl easy::Repository {
+    impl crate::Repository {
         pub(crate) fn from_refs_and_objects(
             refs: crate::RefStore,
             objects: crate::OdbHandle,
@@ -53,7 +51,7 @@ mod init {
             work_tree: Option<std::path::PathBuf>,
             config: crate::Config,
         ) -> Self {
-            easy::Repository {
+            crate::Repository {
                 bufs: RefCell::new(Vec::with_capacity(4)),
                 object_hash,
                 work_tree,

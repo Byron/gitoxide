@@ -3,13 +3,11 @@ use std::ops::Deref;
 
 use git_hash::{oid, ObjectId};
 
-use crate::{
-    easy,
-    easy::{object::find, Object, Oid},
-};
+use crate::object::find;
+use crate::{Id, Object};
 
 /// An [object id][ObjectId] infused with `Easy`.
-impl<'repo> Oid<'repo> {
+impl<'repo> Id<'repo> {
     /// Find the [`Object`] associated with this object id, and consider it an error if it doesn't exist.
     ///
     /// # Note
@@ -35,8 +33,8 @@ impl<'repo> Oid<'repo> {
             .handle
             .objects
             .disambiguate_prefix(git_odb::find::PotentialPrefix::new(self.inner, 7)?)
-            .map_err(crate::easy::object::find::existing::OdbError::Find)?
-            .ok_or(crate::easy::object::find::existing::OdbError::NotFound { oid: self.inner })?)
+            .map_err(crate::object::find::existing::OdbError::Find)?
+            .ok_or(crate::object::find::existing::OdbError::NotFound { oid: self.inner })?)
     }
 }
 
@@ -47,7 +45,7 @@ mod prefix {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        FindExisting(#[from] crate::easy::object::find::existing::OdbError),
+        FindExisting(#[from] crate::object::find::existing::OdbError),
         #[error(transparent)]
         Config(#[from] git_config::parser::ParserOrIoError<'static>),
         #[error(transparent)]
@@ -55,7 +53,7 @@ mod prefix {
     }
 }
 
-impl<'repo> Deref for Oid<'repo> {
+impl<'repo> Deref for Id<'repo> {
     type Target = oid;
 
     fn deref(&self) -> &Self::Target {
@@ -63,9 +61,9 @@ impl<'repo> Deref for Oid<'repo> {
     }
 }
 
-impl<'repo> Oid<'repo> {
-    pub(crate) fn from_id(id: impl Into<ObjectId>, handle: &'repo easy::Repository) -> Self {
-        Oid {
+impl<'repo> Id<'repo> {
+    pub(crate) fn from_id(id: impl Into<ObjectId>, handle: &'repo crate::Repository) -> Self {
+        Id {
             inner: id.into(),
             handle,
         }
@@ -79,7 +77,7 @@ impl<'repo> Oid<'repo> {
 
 /// A platform to traverse commit ancestors, also referred to as commit history.
 pub struct Ancestors<'repo> {
-    handle: &'repo easy::Repository,
+    handle: &'repo crate::Repository,
     tips: Box<dyn Iterator<Item = ObjectId>>,
     sorting: git_traverse::commit::Sorting,
     parents: git_traverse::commit::Parents,
@@ -89,13 +87,10 @@ pub struct Ancestors<'repo> {
 pub mod ancestors {
     use git_odb::Find;
 
-    use crate::{
-        easy,
-        easy::{oid::Ancestors, Oid},
-        ext::ObjectIdExt,
-    };
+    use crate::id::Ancestors;
+    use crate::{ext::ObjectIdExt, Id};
 
-    impl<'repo> Oid<'repo> {
+    impl<'repo> Id<'repo> {
         /// Obtain a platform for traversing ancestors of this commit.
         pub fn ancestors(&self) -> Ancestors<'repo> {
             Ancestors {
@@ -149,12 +144,12 @@ pub mod ancestors {
 
     /// The iterator returned by [`Ancestors::all()`].
     pub struct Iter<'a, 'repo> {
-        handle: &'repo easy::Repository,
+        handle: &'repo crate::Repository,
         inner: Box<dyn Iterator<Item = Result<git_hash::ObjectId, git_traverse::commit::ancestors::Error>> + 'a>,
     }
 
     impl<'a, 'repo> Iterator for Iter<'a, 'repo> {
-        type Item = Result<Oid<'repo>, git_traverse::commit::ancestors::Error>;
+        type Item = Result<Id<'repo>, git_traverse::commit::ancestors::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
             self.inner.next().map(|res| res.map(|oid| oid.attach(self.handle)))
@@ -167,65 +162,65 @@ mod impls {
 
     use git_hash::{oid, ObjectId};
 
-    use crate::easy::{DetachedObject, Object, Oid};
+    use crate::{DetachedObject, Id, Object};
     // Eq, Hash, Ord, PartialOrd,
 
-    impl<'a> std::hash::Hash for Oid<'a> {
+    impl<'a> std::hash::Hash for Id<'a> {
         fn hash<H: Hasher>(&self, state: &mut H) {
             self.inner.hash(state)
         }
     }
 
-    impl<'a> PartialOrd<Oid<'a>> for Oid<'a> {
-        fn partial_cmp(&self, other: &Oid<'a>) -> Option<Ordering> {
+    impl<'a> PartialOrd<Id<'a>> for Id<'a> {
+        fn partial_cmp(&self, other: &Id<'a>) -> Option<Ordering> {
             self.inner.partial_cmp(&other.inner)
         }
     }
 
-    impl<'repo> PartialEq<Oid<'repo>> for Oid<'repo> {
-        fn eq(&self, other: &Oid<'repo>) -> bool {
+    impl<'repo> PartialEq<Id<'repo>> for Id<'repo> {
+        fn eq(&self, other: &Id<'repo>) -> bool {
             self.inner == other.inner
         }
     }
 
-    impl<'repo> PartialEq<ObjectId> for Oid<'repo> {
+    impl<'repo> PartialEq<ObjectId> for Id<'repo> {
         fn eq(&self, other: &ObjectId) -> bool {
             &self.inner == other
         }
     }
 
-    impl<'repo> PartialEq<oid> for Oid<'repo> {
+    impl<'repo> PartialEq<oid> for Id<'repo> {
         fn eq(&self, other: &oid) -> bool {
             self.inner == other
         }
     }
 
-    impl<'repo> PartialEq<Object<'repo>> for Oid<'repo> {
+    impl<'repo> PartialEq<Object<'repo>> for Id<'repo> {
         fn eq(&self, other: &Object<'repo>) -> bool {
             self.inner == other.id
         }
     }
 
-    impl<'repo> PartialEq<DetachedObject> for Oid<'repo> {
+    impl<'repo> PartialEq<DetachedObject> for Id<'repo> {
         fn eq(&self, other: &DetachedObject) -> bool {
             self.inner == other.id
         }
     }
 
-    impl<'repo> std::fmt::Debug for Oid<'repo> {
+    impl<'repo> std::fmt::Debug for Id<'repo> {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             self.inner.fmt(f)
         }
     }
 
-    impl<'repo> AsRef<oid> for Oid<'repo> {
+    impl<'repo> AsRef<oid> for Id<'repo> {
         fn as_ref(&self) -> &oid {
             &self.inner
         }
     }
 
-    impl<'repo> From<Oid<'repo>> for ObjectId {
-        fn from(v: Oid<'repo>) -> Self {
+    impl<'repo> From<Id<'repo>> for ObjectId {
+        fn from(v: Id<'repo>) -> Self {
             v.inner
         }
     }
@@ -238,7 +233,7 @@ mod tests {
     #[test]
     fn size_of_oid() {
         assert_eq!(
-            std::mem::size_of::<Oid<'_>>(),
+            std::mem::size_of::<Id<'_>>(),
             32,
             "size of oid shouldn't change without notice"
         )

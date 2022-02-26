@@ -106,7 +106,7 @@ mod commit {
             &author.to_ref(),
             "initial",
             empty_tree_id,
-            git::easy::commit::NO_PARENT_IDS,
+            git::commit::NO_PARENT_IDS,
         )?;
         assert_eq!(
             commit_id,

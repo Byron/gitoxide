@@ -5,7 +5,7 @@ use std::path::PathBuf;
 /// An instance with access to everything a git repository entails, best imagined as container implementing `Sync + Send` for _most_
 /// for system resources required to interact with a `git` repository which are loaded in once the instance is created.
 ///
-/// Use this type to reference it in a threaded context for creation the creation of a thread-local [`Repositories`][crate::easy::Repository].
+/// Use this type to reference it in a threaded context for creation the creation of a thread-local [`Repositories`][crate::Repository].
 ///
 /// Note that this type purposefully isn't very useful until it is converted into a thread-local repository with `to_thread_local()`,
 /// it's merely meant to be able to exist in a `Sync` context.
@@ -28,7 +28,7 @@ pub struct Handle {
 
 mod access {
     use crate::sync;
-    use crate::{easy, Kind};
+    use crate::Kind;
 
     impl sync::Handle {
         /// Return the kind of repository, either bare or one with a work tree.
@@ -40,7 +40,7 @@ mod access {
         }
 
         /// Add thread-local state to an easy-to-use thread-local repository for the most convenient API.
-        pub fn to_thread_local(&self) -> easy::Repository {
+        pub fn to_thread_local(&self) -> crate::Repository {
             self.into()
         }
     }

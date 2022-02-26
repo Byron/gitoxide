@@ -16,7 +16,7 @@
 //! Most extensions to existing objects provide an `obj_with_extension.attach(&repo).an_easier_version_of_a_method()` or `repo.to_easy()`
 //! method to hide all complex arguments and trade a little control for a lot of convenience.
 //!
-//! When starting out, use [`easy::Handle`] and migrate to the more detailed method signatures to
+//! When starting out, use [`sync::Handle`] and migrate to the more detailed method signatures to
 //! squeeze out the last inkling of performance if it really does make a difference.
 //!
 //! ## Object-Access Performance
@@ -28,17 +28,17 @@
 //! On miss, the object is looked up and if ia pack is hit, there is a small fixed-size cache for delta-base objects.
 //!
 //! In scenarios where the same objects are accessed multiple times, an object cache can be useful and is to be configured specifically
-//! using the [`object_cache_size(…)`][easy::Handle::object_cache_size()] method.
+//! using the [`object_cache_size(…)`][sync::Handle::object_cache_size()] method.
 //!
 //! Use the `cache-efficiency-debug` cargo feature to learn how efficient the cache actually is - it's easy to end up with lowered
 //! performance if the cache is not hit in 50% of the time.
 //!
 //! Environment variables can also be used for configuration if the application is calling
-//! [`apply_environment()`][easy::Handle::apply_environment()] on their `Easy*` accordingly.
+//! [`apply_environment()`][sync::Handle::apply_environment()] on their `Easy*` accordingly.
 //!
 //! ### Shortcomings & Limitations
 //!
-//! - Only a single `easy::Object` or derivatives can be held in memory at a time, _per `Easy*`_.
+//! - Only a single `crate::object` or derivatives can be held in memory at a time, _per `Easy*`_.
 //! - Changes made to the configuration, packs, and alternates aren't picked up automatically, but the current object store
 //!   needs a manual refresh.
 //!
@@ -124,7 +124,6 @@ use git_features::threading::OwnShared;
 pub use git_features::{parallel, progress, progress::Progress, threading};
 pub use git_hash as hash;
 #[doc(inline)]
-pub use git_hash::{oid, ObjectId};
 #[cfg(all(feature = "unstable", feature = "git-index"))]
 pub use git_index as index;
 pub use git_lock as lock;
@@ -144,6 +143,7 @@ pub use git_url as url;
 #[doc(inline)]
 #[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url::Url;
+pub use hash::{oid, ObjectId};
 
 pub mod interrupt;
 
@@ -180,7 +180,17 @@ pub enum Path {
 }
 
 ///
-pub mod easy;
+mod types;
+
+pub use types::{Commit, DetachedObject, Head, Id, Object, Reference, Repository, Tree};
+
+pub mod commit;
+pub mod head;
+pub mod id;
+pub mod object;
+pub mod reference;
+mod repository;
+pub mod tag;
 
 /// The kind of `Repository`
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -199,21 +209,21 @@ impl Kind {
 }
 
 /// See [Repository::discover()].
-pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<easy::Repository, sync::discover::Error> {
+pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, sync::discover::Error> {
     sync::Handle::discover(directory).map(Into::into)
 }
 
 /// See [Repository::init()].
-pub fn init(directory: impl AsRef<std::path::Path>) -> Result<easy::Repository, sync::init::Error> {
+pub fn init(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, sync::init::Error> {
     sync::Handle::init(directory, Kind::WorkTree).map(Into::into)
 }
 
 /// See [Repository::init()].
-pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<easy::Repository, sync::init::Error> {
+pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, sync::init::Error> {
     sync::Handle::init(directory, Kind::Bare).map(Into::into)
 }
 
 /// See [Repository::open()].
-pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<easy::Repository, sync::open::Error> {
+pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repository, sync::open::Error> {
     sync::Handle::open(directory).map(Into::into)
 }

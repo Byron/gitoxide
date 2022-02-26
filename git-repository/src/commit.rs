@@ -4,18 +4,16 @@
 pub const NO_PARENT_IDS: [git_hash::ObjectId; 0] = [];
 
 mod error {
-    use crate::easy;
-
-    /// The error returned by [`commit(…)`][easy::Handle::commit()].
+    /// The error returned by [`commit(…)`][sync::Handle::commit()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
         ReferenceNameValidation(#[from] git_ref::name::Error),
         #[error(transparent)]
-        WriteObject(#[from] easy::object::write::Error),
+        WriteObject(#[from] crate::object::write::Error),
         #[error(transparent)]
-        ReferenceEdit(#[from] easy::reference::edit::Error),
+        ReferenceEdit(#[from] crate::reference::edit::Error),
     }
 }
 pub use error::Error;

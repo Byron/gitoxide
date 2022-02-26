@@ -1,8 +1,8 @@
-use crate::{easy, sync};
+use crate::sync;
 
-impl Clone for easy::Repository {
+impl Clone for crate::Repository {
     fn clone(&self) -> Self {
-        easy::Repository::from_refs_and_objects(
+        crate::Repository::from_refs_and_objects(
             self.refs.clone(),
             self.objects.clone(),
             self.object_hash,
@@ -12,7 +12,7 @@ impl Clone for easy::Repository {
     }
 }
 
-impl std::fmt::Debug for easy::Repository {
+impl std::fmt::Debug for crate::Repository {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -23,15 +23,15 @@ impl std::fmt::Debug for easy::Repository {
     }
 }
 
-impl PartialEq<easy::Repository> for easy::Repository {
-    fn eq(&self, other: &easy::Repository) -> bool {
+impl PartialEq<crate::Repository> for crate::Repository {
+    fn eq(&self, other: &crate::Repository) -> bool {
         self.git_dir() == other.git_dir() && self.work_tree == other.work_tree
     }
 }
 
-impl From<&sync::Handle> for easy::Repository {
+impl From<&sync::Handle> for crate::Repository {
     fn from(repo: &sync::Handle) -> Self {
-        easy::Repository::from_refs_and_objects(
+        crate::Repository::from_refs_and_objects(
             repo.refs.clone(),
             repo.objects.to_handle().into(),
             repo.object_hash,
@@ -41,9 +41,9 @@ impl From<&sync::Handle> for easy::Repository {
     }
 }
 
-impl From<sync::Handle> for easy::Repository {
+impl From<sync::Handle> for crate::Repository {
     fn from(repo: sync::Handle) -> Self {
-        easy::Repository::from_refs_and_objects(
+        crate::Repository::from_refs_and_objects(
             repo.refs,
             repo.objects.to_handle().into(),
             repo.object_hash,
@@ -53,8 +53,8 @@ impl From<sync::Handle> for easy::Repository {
     }
 }
 
-impl From<easy::Repository> for sync::Handle {
-    fn from(r: easy::Repository) -> Self {
+impl From<crate::Repository> for sync::Handle {
+    fn from(r: crate::Repository) -> Self {
         sync::Handle {
             refs: r.refs,
             objects: r.objects.into_inner().store(),

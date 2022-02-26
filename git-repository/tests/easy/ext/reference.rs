@@ -2,7 +2,7 @@ mod set_namespace {
     use git_repository as git;
     use git_repository::refs::transaction::PreviousValue;
 
-    fn easy_repo_rw() -> crate::Result<(git::easy::Repository, tempfile::TempDir)> {
+    fn easy_repo_rw() -> crate::Result<(git::Repository, tempfile::TempDir)> {
         crate::repo_rw("make_references_repo.sh").map(|(r, d)| (r.to_thread_local(), d))
     }
 
@@ -84,7 +84,7 @@ mod iter_references {
     use git_repository as git;
     use git_testtools::hex_to_id;
 
-    fn repo() -> crate::Result<git::easy::Repository> {
+    fn repo() -> crate::Result<git::Repository> {
         crate::repo("make_references_repo.sh").map(|r| r.to_thread_local())
     }
 
@@ -195,7 +195,7 @@ mod head {
         let repo = crate::basic_repo()?;
         let head = repo.head()?;
         match &head.kind {
-            git::easy::head::Kind::Symbolic(r) => {
+            git::head::Kind::Symbolic(r) => {
                 assert_eq!(
                     r.target.as_id().map(ToOwned::to_owned),
                     Some(hex_to_id("3189cd3cb0af8586c39a838aa3e54fd72a872a41"))

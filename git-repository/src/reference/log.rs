@@ -4,7 +4,7 @@ use git_object::commit::MessageRef;
 use crate::bstr::{BStr, BString, ByteVec};
 use git_ref::file::ReferenceExt;
 
-use crate::easy::Reference;
+use crate::Reference;
 
 impl<'repo> Reference<'repo> {
     /// Return a platform for obtaining iterators over reference logs.

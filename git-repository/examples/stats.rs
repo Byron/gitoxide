@@ -2,7 +2,7 @@
 
 use git_odb::FindExt;
 use git_repository as git;
-use git_repository::easy::Reference;
+use git_repository::Reference;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let repo = git::discover(".")?;
@@ -77,11 +77,11 @@ mod visit {
         pub num_blobs_exec: usize,
         pub num_submodules: usize,
         pub num_bytes: u64,
-        pub repo: git::easy::Repository,
+        pub repo: git::Repository,
     }
 
     impl Tree {
-        pub fn new(repo: git::easy::Repository) -> Self {
+        pub fn new(repo: git::Repository) -> Self {
             Tree {
                 num_trees: 0,
                 num_links: 0,

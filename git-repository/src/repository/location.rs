@@ -1,6 +1,4 @@
-use crate::easy;
-
-impl easy::Repository {
+impl crate::Repository {
     /// Return the work tree containing all checked out files, if there is one.
     pub fn work_tree(&self) -> Option<&std::path::Path> {
         self.work_tree.as_deref()

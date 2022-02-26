@@ -7,24 +7,20 @@ use git_ref::{
     FullName,
 };
 
-use crate::{
-    easy,
-    easy::{commit, object, tag, Object, Oid, Reference},
-    ext::ObjectIdExt,
-};
+use crate::{commit, ext::ObjectIdExt, object, tag, Id, Object, Reference};
 
 /// Methods related to object creation.
-impl easy::Repository {
+impl crate::Repository {
     /// Find the object with `id` in the object database or return an error if it could not be found.
     ///
     /// There are various legitimate reasons for an object to not be present, which is why
-    /// [`try_find_object(…)`][easy::Handle::try_find_object()] might be preferable instead.
+    /// [`try_find_object(…)`][sync::Handle::try_find_object()] might be preferable instead.
     ///
     /// # Important
     ///
     /// As a shared buffer is written to back the object data, the returned `ObjectRef` will prevent other
     /// `find_object()` operations from succeeding while alive.
-    /// To bypass this limit, clone this `easy::Handle` instance.
+    /// To bypass this limit, clone this `sync::Handle` instance.
     ///
     /// # Performance Note
     ///
@@ -43,7 +39,7 @@ impl easy::Repository {
     ///
     /// As a shared buffer is written to back the object data, the returned `ObjectRef` will prevent other
     /// `try_find_object()` operations from succeeding while alive.
-    /// To bypass this limit, clone this `easy::Handle` instance.
+    /// To bypass this limit, clone this `sync::Handle` instance.
     pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::OdbError> {
         let state = self;
         let id = id.into();
@@ -60,7 +56,7 @@ impl easy::Repository {
     }
 
     /// Write the given object into the object database and return its object id.
-    pub fn write_object(&self, object: impl git_object::WriteTo) -> Result<Oid<'_>, object::write::Error> {
+    pub fn write_object(&self, object: impl git_object::WriteTo) -> Result<Id<'_>, object::write::Error> {
         use git_odb::Write;
 
         let state = self;
@@ -117,7 +113,7 @@ impl easy::Repository {
         message: impl AsRef<str>,
         tree: impl Into<ObjectId>,
         parents: impl IntoIterator<Item = impl Into<ObjectId>>,
-    ) -> Result<Oid<'_>, commit::Error>
+    ) -> Result<Id<'_>, commit::Error>
     where
         Name: TryInto<FullName, Error = E>,
         commit::Error: From<E>,
@@ -147,7 +143,7 @@ impl easy::Repository {
                     log: LogChange {
                         mode: RefLog::AndReference,
                         force_create_reflog: false,
-                        message: crate::easy::reference::log::message(
+                        message: crate::reference::log::message(
                             "commit",
                             commit.message.as_ref(),
                             commit.parents.len(),

@@ -3,9 +3,8 @@ use git_hash::ObjectId;
 use git_ref::FullNameRef;
 
 use crate::{
-    easy,
-    easy::Head,
     ext::{ObjectIdExt, ReferenceExt},
+    Head,
 };
 
 /// Represents the kind of `HEAD` reference.
@@ -30,8 +29,8 @@ pub enum Kind {
 }
 
 impl Kind {
-    /// Attach this instance with an [access][easy::Handle] reference to produce a [`Head`].
-    pub fn attach(self, handle: &easy::Repository) -> Head<'_> {
+    /// Attach this instance with an [access][sync::Handle] reference to produce a [`Head`].
+    pub fn attach(self, handle: &crate::Repository) -> Head<'_> {
         Head { kind: self, handle }
     }
 }
@@ -59,7 +58,7 @@ impl<'repo> Head<'repo> {
 
     // TODO: tests
     /// Returns the id the head points to, which isn't possible on unborn heads.
-    pub fn id(&self) -> Option<easy::Oid<'repo>> {
+    pub fn id(&self) -> Option<crate::Id<'repo>> {
         match &self.kind {
             Kind::Symbolic(r) => r.target.as_id().map(|oid| oid.to_owned().attach(self.handle)),
             Kind::Detached { peeled, target } => (*peeled)
@@ -75,7 +74,7 @@ impl<'repo> Head<'repo> {
     /// # Panics
     ///
     /// If this isn't actually a head pointing to a symbolic reference.
-    pub fn into_referent(self) -> easy::Reference<'repo> {
+    pub fn into_referent(self) -> crate::Reference<'repo> {
         match self.kind {
             Kind::Symbolic(r) => r.attach(self.handle),
             _ => panic!("BUG: Expected head to be a born symbolic reference"),
@@ -88,7 +87,7 @@ pub mod log {
 
     use git_ref::FullNameRef;
 
-    use crate::easy::Head;
+    use crate::Head;
 
     impl<'repo> Head<'repo> {
         /// Return a platform for obtaining iterators on the reference log associated with the `HEAD` reference.
@@ -105,13 +104,12 @@ pub mod log {
 ///
 pub mod peel {
     use crate::{
-        easy,
-        easy::{head::Kind, Head},
         ext::{ObjectIdExt, ReferenceExt},
+        Head,
     };
 
     mod error {
-        use crate::easy::{object, reference};
+        use crate::{object, reference};
 
         /// The error returned by [Head::peel_to_id_in_place()][super::Head::peel_to_id_in_place()] and [Head::into_fully_peeled_id()][super::Head::into_fully_peeled_id()].
         #[derive(Debug, thiserror::Error)]
@@ -123,10 +121,11 @@ pub mod peel {
             PeelReference(#[from] reference::peel::Error),
         }
     }
+    use crate::head::Kind;
     pub use error::Error;
 
     mod peel_to_commit {
-        use crate::easy;
+        use crate::object;
 
         /// The error returned by [Head::peel_to_commit_in_place()][super::Head::peel_to_commit_in_place()].
         #[derive(Debug, thiserror::Error)]
@@ -137,7 +136,7 @@ pub mod peel {
             #[error("Branch '{name}' does not have any commits")]
             Unborn { name: git_ref::FullName },
             #[error(transparent)]
-            ObjectKind(#[from] easy::object::try_into::Error),
+            ObjectKind(#[from] object::try_into::Error),
         }
     }
 
@@ -154,7 +153,7 @@ pub mod peel {
         /// more object to follow, and return that object id.
         ///
         /// Returns `None` if the head is unborn.
-        pub fn peel_to_id_in_place(&mut self) -> Option<Result<easy::Oid<'repo>, Error>> {
+        pub fn peel_to_id_in_place(&mut self) -> Option<Result<crate::Id<'repo>, Error>> {
             Some(match &mut self.kind {
                 Kind::Unborn(_name) => return None,
                 Kind::Detached {
@@ -188,12 +187,12 @@ pub mod peel {
         }
 
         // TODO: tests
-        // TODO: something similar in `easy::Reference`
+        // TODO: something similar in `crate::Reference`
         /// Follow the symbolic reference of this head until its target object and peel it by following tag objects until there is no
         /// more object to follow, transform the id into a commit if possible and return that.
         ///
         /// Returns an error if the head is unborn or if it doesn't point to a commit.
-        pub fn peel_to_commit_in_place(&mut self) -> Result<easy::Commit<'repo>, peel_to_commit::Error> {
+        pub fn peel_to_commit_in_place(&mut self) -> Result<crate::Commit<'repo>, peel_to_commit::Error> {
             let id = self
                 .peel_to_id_in_place()
                 .ok_or_else(|| peel_to_commit::Error::Unborn {
@@ -206,7 +205,7 @@ pub mod peel {
 
         /// Consume this instance and transform it into the final object that it points to, or `None` if the `HEAD`
         /// reference is yet to be born.
-        pub fn into_fully_peeled_id(self) -> Option<Result<easy::Oid<'repo>, Error>> {
+        pub fn into_fully_peeled_id(self) -> Option<Result<crate::Id<'repo>, Error>> {
             Some(match self.kind {
                 Kind::Unborn(_name) => return None,
                 Kind::Detached {

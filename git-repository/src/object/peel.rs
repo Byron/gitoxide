@@ -1,17 +1,15 @@
 //!
-use crate::easy::{
-    object,
-    object::{peel, Kind},
-    Object,
-};
+use crate::object;
+use crate::object::{peel, Kind};
+use crate::Object;
 
 ///
 pub mod to_kind {
     mod error {
 
-        use crate::easy::object;
+        use crate::object;
 
-        /// The error returned by [`Object::peel_to_kind()`][crate::easy::Object::peel_to_kind()].
+        /// The error returned by [`Object::peel_to_kind()`][crate::Object::peel_to_kind()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {

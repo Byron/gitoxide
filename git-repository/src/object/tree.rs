@@ -2,14 +2,12 @@ use git_hash::ObjectId;
 use git_object::{bstr::BStr, TreeRefIter};
 use git_odb::FindExt;
 
-use crate::{
-    easy,
-    easy::{object::find, Tree},
-};
+use crate::object::find;
+use crate::Tree;
 
 impl<'repo> Tree<'repo> {
     /// Obtain a tree instance by handing in all components that it is made up of.
-    pub fn from_data(id: impl Into<ObjectId>, data: Vec<u8>, handle: &'repo easy::Repository) -> Self {
+    pub fn from_data(id: impl Into<ObjectId>, data: Vec<u8>, handle: &'repo crate::Repository) -> Self {
         Tree {
             id: id.into(),
             data,

@@ -1,7 +1,5 @@
-use git_repository::easy;
-
 mod commit {
-    use git_repository::easy::{Commit, Repository};
+    use git_repository::{Commit, Repository};
     use git_testtools::hex_to_id;
 
     use crate::basic_repo;
@@ -45,7 +43,7 @@ mod commit {
 #[test]
 fn object_ref_size_in_memory() {
     assert_eq!(
-        std::mem::size_of::<easy::Object<'_>>(),
+        std::mem::size_of::<git_repository::Object<'_>>(),
         56,
         "the size of this structure should not changed unexpectedly"
     )
@@ -54,7 +52,7 @@ fn object_ref_size_in_memory() {
 #[test]
 fn oid_size_in_memory() {
     assert_eq!(
-        std::mem::size_of::<easy::Oid<'_>>(),
+        std::mem::size_of::<git_repository::Id<'_>>(),
         32,
         "the size of this structure should not changed unexpectedly"
     )

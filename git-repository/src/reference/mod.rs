@@ -3,10 +3,7 @@
 use git_odb::pack::Find;
 use git_ref::file::ReferenceExt;
 
-use crate::{
-    easy,
-    easy::{Oid, Reference},
-};
+use crate::{Id, Reference};
 
 pub mod iter;
 
@@ -37,7 +34,7 @@ impl<'repo> Reference<'repo> {
 }
 
 impl<'repo> Reference<'repo> {
-    pub(crate) fn from_ref(reference: git_ref::Reference, handle: &'repo easy::Repository) -> Self {
+    pub(crate) fn from_ref(reference: git_ref::Reference, handle: &'repo crate::Repository) -> Self {
         Reference {
             inner: reference,
             handle,
@@ -45,7 +42,7 @@ impl<'repo> Reference<'repo> {
     }
 
     /// Returns the attached id we point to, or panic if this is a symbolic ref.
-    pub fn id(&self) -> easy::Oid<'repo> {
+    pub fn id(&self) -> crate::Id<'repo> {
         match self.inner.target {
             git_ref::Target::Symbolic(_) => panic!("BUG: tries to obtain object id from symbolic target"),
             git_ref::Target::Peeled(oid) => oid.to_owned().attach(self.handle),
@@ -56,7 +53,7 @@ impl<'repo> Reference<'repo> {
     /// to the end of the chain, and return it.
     ///
     /// This is useful to learn where this reference is ulitmately pointing to.
-    pub fn peel_to_id_in_place(&mut self) -> Result<Oid<'repo>, peel::Error> {
+    pub fn peel_to_id_in_place(&mut self) -> Result<Id<'repo>, peel::Error> {
         let handle = &self.handle;
         let oid = self.inner.peel_to_id_in_place(&handle.refs, |oid, buf| {
             handle
@@ -64,11 +61,11 @@ impl<'repo> Reference<'repo> {
                 .try_find(oid, buf)
                 .map(|po| po.map(|(o, _l)| (o.kind, o.data)))
         })?;
-        Ok(Oid::from_id(oid, handle))
+        Ok(Id::from_id(oid, handle))
     }
 
     /// Similar to [`peel_to_id_in_place()`][Reference::peel_to_id_in_place()], but consumes this instance.
-    pub fn into_fully_peeled_id(mut self) -> Result<Oid<'repo>, peel::Error> {
+    pub fn into_fully_peeled_id(mut self) -> Result<Id<'repo>, peel::Error> {
         self.peel_to_id_in_place()
     }
 }
