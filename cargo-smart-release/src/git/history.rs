@@ -9,7 +9,7 @@ use cargo_metadata::Package;
 use git_repository as git;
 use git_repository::{
     bstr::ByteSlice,
-    easy::head,
+    head,
     prelude::{ObjectIdExt, ReferenceExt},
 };
 
@@ -28,7 +28,7 @@ pub enum SegmentScope {
     EntireHistory,
 }
 
-pub fn collect(handle: &git::easy::Repository) -> anyhow::Result<Option<commit::History>> {
+pub fn collect(handle: &git::Repository) -> anyhow::Result<Option<commit::History>> {
     let mut handle = handle.clone();
     handle.object_cache_size(64 * 1024);
     let reference = match handle.head()?.peeled()?.kind {
@@ -236,10 +236,10 @@ fn add_item_if_package_changed<'a>(
         Filter::Slow(ref components) => {
             let mut repo = ctx.repo.clone();
             repo.object_cache_size(1024 * 1024);
-            let current = git::easy::Tree::from_data(item.id, data_by_tree_id[&item.tree_id].to_owned(), &ctx.repo)
+            let current = git::Tree::from_data(item.id, data_by_tree_id[&item.tree_id].to_owned(), &ctx.repo)
                 .lookup_path(components.iter().copied())?;
             let parent = match item.parent_tree_id {
-                Some(tree_id) => git::easy::Tree::from_data(tree_id, data_by_tree_id[&tree_id].to_owned(), &ctx.repo)
+                Some(tree_id) => git::Tree::from_data(tree_id, data_by_tree_id[&tree_id].to_owned(), &ctx.repo)
                     .lookup_path(components.iter().copied())?,
                 None => None,
             };

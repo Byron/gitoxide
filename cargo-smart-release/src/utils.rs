@@ -50,7 +50,7 @@ pub fn is_pre_release_version(semver: &Version) -> bool {
     semver.major == 0
 }
 
-pub fn is_top_level_package(manifest_path: &Utf8Path, handle: &git::easy::Repository) -> bool {
+pub fn is_top_level_package(manifest_path: &Utf8Path, handle: &git::Repository) -> bool {
     manifest_path
         .strip_prefix(handle.work_tree().as_ref().expect("repo with working tree"))
         .map_or(false, |p| p.components().count() == 1)
@@ -97,7 +97,7 @@ pub fn package_by_id<'a>(meta: &'a Metadata, id: &PackageId) -> &'a Package {
         .expect("workspace members are in packages")
 }
 
-pub fn tag_prefix<'p>(package: &'p Package, handle: &git::easy::Repository) -> Option<&'p str> {
+pub fn tag_prefix<'p>(package: &'p Package, handle: &git::Repository) -> Option<&'p str> {
     if is_top_level_package(&package.manifest_path, handle) {
         None
     } else {
@@ -105,7 +105,7 @@ pub fn tag_prefix<'p>(package: &'p Package, handle: &git::easy::Repository) -> O
     }
 }
 
-pub fn tag_name(package: &Package, version: &semver::Version, handle: &git::easy::Repository) -> String {
+pub fn tag_name(package: &Package, version: &semver::Version, handle: &git::Repository) -> String {
     tag_name_inner(tag_prefix(package, handle), version)
 }
 

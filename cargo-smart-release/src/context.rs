@@ -9,7 +9,7 @@ use crate::version::BumpSpec;
 pub struct Context {
     pub root: Utf8PathBuf,
     pub meta: Metadata,
-    pub repo: git::easy::Repository,
+    pub repo: git::Repository,
     pub crate_names: Vec<String>,
     pub crates_index: crate::crates_index::Index,
     pub history: Option<crate::commit::History>,

@@ -22,7 +22,7 @@ impl Section {
     pub fn from_history_segment(
         package: &Package,
         segment: &commit::history::Segment<'_>,
-        handle: &git::easy::Repository,
+        handle: &git::Repository,
         selection: section::segment::Selection,
         prev_segment: Option<&commit::history::Segment<'_>>,
     ) -> Self {
@@ -158,7 +158,7 @@ impl Section {
     }
 }
 
-fn segment_head_time(segment: &commit::history::Segment<'_>, handle: &git::easy::Repository) -> OffsetDateTime {
+fn segment_head_time(segment: &commit::history::Segment<'_>, handle: &git::Repository) -> OffsetDateTime {
     let time = segment
         .head
         .peeled

@@ -5,7 +5,7 @@ use cargo_metadata::{camino::Utf8Path, Package};
 use git_repository as git;
 use git_repository::{
     bstr::{BStr, ByteSlice},
-    easy::object,
+    object,
     refs::FullNameRef,
 };
 
