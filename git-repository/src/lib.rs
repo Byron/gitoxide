@@ -119,6 +119,7 @@ use std::path::PathBuf;
 pub use git_actor as actor;
 #[cfg(all(feature = "unstable", feature = "git-diff"))]
 pub use git_diff as diff;
+use git_features::threading::OwnShared;
 #[cfg(feature = "unstable")]
 pub use git_features::{parallel, progress, progress::Progress, threading};
 pub use git_hash as hash;
@@ -166,6 +167,8 @@ pub use sync::{discover, init, open};
 pub type RefStore = git_ref::file::Store;
 /// A handle for finding objects in an object database, abstracting away caches for thread-local use.
 pub type OdbHandle = git_odb::Handle;
+/// A way to access git configuration
+pub(crate) type Config = OwnShared<git_config::file::GitConfig<'static>>;
 
 /// A repository path which either points to a work tree or the `.git` repository itself.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]

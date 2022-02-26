@@ -12,6 +12,7 @@ mod init {
             objects: crate::OdbHandle,
             object_hash: git_hash::Kind,
             work_tree: Option<std::path::PathBuf>,
+            config: crate::Config,
         ) -> Self {
             easy::Repository {
                 bufs: RefCell::new(Vec::with_capacity(4)),
@@ -28,6 +29,7 @@ mod init {
                     }
                 },
                 refs,
+                config,
             }
         }
 
@@ -93,6 +95,7 @@ mod impls {
                 self.objects.clone(),
                 self.object_hash,
                 self.work_tree.clone(),
+                self.config.clone(),
             )
         }
     }
@@ -121,6 +124,7 @@ mod impls {
                 repo.objects.to_handle().into(),
                 repo.object_hash,
                 repo.work_tree.clone(),
+                repo.config.clone(),
             )
         }
     }
@@ -132,6 +136,7 @@ mod impls {
                 repo.objects.to_handle().into(),
                 repo.object_hash,
                 repo.work_tree,
+                repo.config,
             )
         }
     }
@@ -143,6 +148,7 @@ mod impls {
                 objects: r.objects.into_inner().store(),
                 work_tree: r.work_tree,
                 object_hash: r.object_hash,
+                config: r.config,
             }
         }
     }

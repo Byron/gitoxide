@@ -23,7 +23,7 @@ pub struct Handle {
     // TODO: git-config should be here - it's read a lot but not written much in must applications, so shouldn't be in `State`.
     //       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
     //       packs are refreshed. This would be `git_config::fs::Config` when ready.
-    // pub(crate) config: git_config::file::GitConfig<'static>,
+    pub(crate) config: crate::Config,
 }
 
 mod access {
@@ -181,6 +181,7 @@ pub mod open {
                 ),
                 work_tree: worktree_dir,
                 object_hash,
+                config: config.into(),
             })
         }
     }

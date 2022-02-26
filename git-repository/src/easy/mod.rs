@@ -124,6 +124,8 @@ pub struct Repository {
     work_tree: Option<PathBuf>,
     /// The kind of hash that is used or should be used for object ids
     object_hash: git_hash::Kind,
+    /// Access to all repository configuration, must be hidden as there is a lot figure out.
+    config: crate::Config,
     /// A free-list of re-usable object backing buffers
     bufs: RefCell<Vec<Vec<u8>>>,
 }
