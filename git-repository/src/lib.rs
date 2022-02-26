@@ -234,10 +234,6 @@ mod config {
     pub mod open {
         pub type Error = git_config::parser::ParserOrIoError<'static>;
     }
-    ///
-    pub mod query {
-        pub type Error = git_config::file::GitConfigError<'static>;
-    }
 }
 
 ///
