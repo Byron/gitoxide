@@ -173,7 +173,7 @@ pub(crate) type Config = OwnShared<git_config::file::GitConfig<'static>>;
 /// A repository path which either points to a work tree or the `.git` repository itself.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Path {
-    /// The currently checked out or nascent work tree of a git repository.
+    /// The currently checked out or nascent work tree of a git repositore
     WorkTree(PathBuf),
     /// The git repository itself
     Repository(PathBuf),
@@ -181,11 +181,6 @@ pub enum Path {
 
 ///
 pub mod easy;
-
-///
-pub mod commit;
-///
-pub mod reference;
 
 /// The kind of `Repository`
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]

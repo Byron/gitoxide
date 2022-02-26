@@ -147,7 +147,7 @@ impl easy::Repository {
                     log: LogChange {
                         mode: RefLog::AndReference,
                         force_create_reflog: false,
-                        message: crate::reference::log::message(
+                        message: crate::easy::reference::log::message(
                             "commit",
                             commit.message.as_ref(),
                             commit.parents.len(),

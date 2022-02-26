@@ -1,6 +1,17 @@
+//!
 use git_object::commit::MessageRef;
 
 use crate::bstr::{BStr, BString, ByteVec};
+use git_ref::file::ReferenceExt;
+
+use crate::easy::Reference;
+
+impl<'repo> Reference<'repo> {
+    /// Return a platform for obtaining iterators over reference logs.
+    pub fn log_iter(&self) -> git_ref::file::log::iter::Platform<'_, '_> {
+        self.inner.log_iter(&self.handle.refs)
+    }
+}
 
 /// Generate a message typical for git commit logs based on the given `operation`, commit `message` and `num_parents` of the commit.
 pub fn message(operation: &str, message: &BStr, num_parents: usize) -> BString {

@@ -16,7 +16,7 @@ pub use errors::{edit, find, peel};
 
 use crate::ext::ObjectIdExt;
 
-pub mod logs;
+pub mod log;
 
 /// Access
 impl<'repo> Reference<'repo> {

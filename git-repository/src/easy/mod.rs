@@ -3,10 +3,6 @@ use std::{cell::RefCell, path::PathBuf};
 use git_hash::ObjectId;
 
 use crate::easy;
-
-pub(crate) mod ext;
-
-pub mod borrow;
 pub mod commit;
 pub mod head;
 pub mod object;
