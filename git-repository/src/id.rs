@@ -47,7 +47,7 @@ mod prefix {
         #[error(transparent)]
         FindExisting(#[from] crate::object::find::existing::OdbError),
         #[error(transparent)]
-        Config(#[from] git_config::parser::ParserOrIoError<'static>),
+        Config(#[from] crate::config::open::Error),
         #[error(transparent)]
         Prefix(#[from] git_hash::prefix::Error),
     }

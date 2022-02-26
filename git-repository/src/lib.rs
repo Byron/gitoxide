@@ -229,6 +229,18 @@ pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repositor
 pub mod open;
 
 ///
+mod config {
+    ///
+    pub mod open {
+        pub type Error = git_config::parser::ParserOrIoError<'static>;
+    }
+    ///
+    pub mod query {
+        pub type Error = git_config::file::GitConfigError<'static>;
+    }
+}
+
+///
 pub mod init {
     use std::{convert::TryInto, path::Path};
 

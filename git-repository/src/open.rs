@@ -31,7 +31,7 @@ impl Options {
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    Config(#[from] git_config::parser::ParserOrIoError<'static>),
+    Config(#[from] crate::config::open::Error),
     #[error(transparent)]
     NotARepository(#[from] crate::path::is::Error),
     #[error(transparent)]

@@ -82,6 +82,8 @@ mod trait_impls;
 
 mod cache;
 
+mod config;
+
 mod reference;
 
 mod object;
