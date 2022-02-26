@@ -3,7 +3,7 @@
 use crate::easy;
 
 mod init {
-    use crate::easy;
+    use crate::{easy, sync};
     use std::cell::RefCell;
 
     impl easy::Repository {
@@ -32,7 +32,7 @@ mod init {
         }
 
         /// Convert this instance into a [`SyncRepository`] by dropping all thread-local data.
-        pub fn into_sync(self) -> crate::SyncRepository {
+        pub fn into_sync(self) -> sync::Handle {
             self.into()
         }
     }
@@ -84,7 +84,7 @@ mod location {
 }
 
 mod impls {
-    use crate::easy;
+    use crate::{easy, sync};
 
     impl Clone for easy::Repository {
         fn clone(&self) -> Self {
@@ -114,8 +114,8 @@ mod impls {
         }
     }
 
-    impl From<&crate::SyncRepository> for easy::Repository {
-        fn from(repo: &crate::SyncRepository) -> Self {
+    impl From<&sync::Handle> for easy::Repository {
+        fn from(repo: &sync::Handle) -> Self {
             easy::Repository::from_refs_and_objects(
                 repo.refs.clone(),
                 repo.objects.to_handle().into(),
@@ -125,8 +125,8 @@ mod impls {
         }
     }
 
-    impl From<crate::SyncRepository> for easy::Repository {
-        fn from(repo: crate::SyncRepository) -> Self {
+    impl From<sync::Handle> for easy::Repository {
+        fn from(repo: sync::Handle) -> Self {
             easy::Repository::from_refs_and_objects(
                 repo.refs,
                 repo.objects.to_handle().into(),
@@ -136,9 +136,9 @@ mod impls {
         }
     }
 
-    impl From<easy::Repository> for crate::SyncRepository {
+    impl From<easy::Repository> for sync::Handle {
         fn from(r: easy::Repository) -> Self {
-            crate::SyncRepository {
+            sync::Handle {
                 refs: r.refs,
                 objects: r.objects.into_inner().store(),
                 work_tree: r.work_tree,

@@ -1,15 +1,16 @@
-use git_repository::{easy::Repository, SyncRepository};
+use git_repository::easy::Repository;
+use git_repository::sync::Handle;
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-fn repo(name: &str) -> crate::Result<SyncRepository> {
+fn repo(name: &str) -> crate::Result<Handle> {
     let repo_path = git_testtools::scripted_fixture_repo_read_only(name)?;
-    Ok(SyncRepository::open(repo_path)?)
+    Ok(Handle::open(repo_path)?)
 }
 
-fn repo_rw(name: &str) -> crate::Result<(SyncRepository, tempfile::TempDir)> {
+fn repo_rw(name: &str) -> crate::Result<(Handle, tempfile::TempDir)> {
     let repo_path = git_testtools::scripted_fixture_repo_writable(name)?;
-    Ok((SyncRepository::discover(repo_path.path())?, repo_path))
+    Ok((Handle::discover(repo_path.path())?, repo_path))
 }
 
 fn easy_repo_rw(name: &str) -> crate::Result<(Repository, tempfile::TempDir)> {
