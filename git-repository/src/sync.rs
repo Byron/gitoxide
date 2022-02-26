@@ -187,7 +187,7 @@ pub mod open {
     }
 
     fn config_bool(config: &GitConfig<'_>, key: &str, default: bool) -> bool {
-        let (section, key) = key.split_once(".").expect("valid section.key format");
+        let (section, key) = key.split_once('.').expect("valid section.key format");
         config
             .value::<Boolean<'_>>(section, None, key)
             .map_or(default, |b| matches!(b, Boolean::True(_)))

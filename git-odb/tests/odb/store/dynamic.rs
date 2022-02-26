@@ -546,9 +546,9 @@ fn missing_objects_triggers_everything_is_loaded() {
     );
 
     let mut buf = Vec::new();
-    assert!(!handle
+    assert!(handle
         .find(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), &mut buf)
-        .is_ok());
+        .is_err());
 
     assert_eq!(
         handle.store_ref().metrics(),
