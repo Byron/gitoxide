@@ -1,16 +1,16 @@
-use git_repository::sync::Handle;
 use git_repository::Repository;
+use git_repository::ThreadSafeRepository;
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-fn repo(name: &str) -> crate::Result<Handle> {
+fn repo(name: &str) -> crate::Result<ThreadSafeRepository> {
     let repo_path = git_testtools::scripted_fixture_repo_read_only(name)?;
-    Ok(Handle::open(repo_path)?)
+    Ok(ThreadSafeRepository::open(repo_path)?)
 }
 
-fn repo_rw(name: &str) -> crate::Result<(Handle, tempfile::TempDir)> {
+fn repo_rw(name: &str) -> crate::Result<(ThreadSafeRepository, tempfile::TempDir)> {
     let repo_path = git_testtools::scripted_fixture_repo_writable(name)?;
-    Ok((Handle::discover(repo_path.path())?, repo_path))
+    Ok((ThreadSafeRepository::discover(repo_path.path())?, repo_path))
 }
 
 fn easy_repo_rw(name: &str) -> crate::Result<(Repository, tempfile::TempDir)> {

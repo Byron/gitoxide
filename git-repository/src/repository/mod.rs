@@ -40,7 +40,6 @@ impl crate::Repository {
 }
 
 mod init {
-    use crate::sync;
     use std::cell::RefCell;
 
     impl crate::Repository {
@@ -71,7 +70,7 @@ mod init {
         }
 
         /// Convert this instance into a [`SyncRepository`] by dropping all thread-local data.
-        pub fn into_sync(self) -> sync::Handle {
+        pub fn into_sync(self) -> crate::ThreadSafeRepository {
             self.into()
         }
     }
@@ -86,3 +85,5 @@ mod cache;
 mod reference;
 
 mod object;
+
+mod thread_safe;

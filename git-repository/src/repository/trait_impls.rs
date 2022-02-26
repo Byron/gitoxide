@@ -1,5 +1,3 @@
-use crate::sync;
-
 impl Clone for crate::Repository {
     fn clone(&self) -> Self {
         crate::Repository::from_refs_and_objects(
@@ -29,8 +27,8 @@ impl PartialEq<crate::Repository> for crate::Repository {
     }
 }
 
-impl From<&sync::Handle> for crate::Repository {
-    fn from(repo: &sync::Handle) -> Self {
+impl From<&crate::ThreadSafeRepository> for crate::Repository {
+    fn from(repo: &crate::ThreadSafeRepository) -> Self {
         crate::Repository::from_refs_and_objects(
             repo.refs.clone(),
             repo.objects.to_handle().into(),
@@ -41,8 +39,8 @@ impl From<&sync::Handle> for crate::Repository {
     }
 }
 
-impl From<sync::Handle> for crate::Repository {
-    fn from(repo: sync::Handle) -> Self {
+impl From<crate::ThreadSafeRepository> for crate::Repository {
+    fn from(repo: crate::ThreadSafeRepository) -> Self {
         crate::Repository::from_refs_and_objects(
             repo.refs,
             repo.objects.to_handle().into(),
@@ -53,9 +51,9 @@ impl From<sync::Handle> for crate::Repository {
     }
 }
 
-impl From<crate::Repository> for sync::Handle {
+impl From<crate::Repository> for crate::ThreadSafeRepository {
     fn from(r: crate::Repository) -> Self {
-        sync::Handle {
+        crate::ThreadSafeRepository {
             refs: r.refs,
             objects: r.objects.into_inner().store(),
             work_tree: r.work_tree,

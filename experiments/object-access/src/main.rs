@@ -1,7 +1,7 @@
 use std::{path::Path, sync::Arc, time::Instant};
 
 use anyhow::anyhow;
-use git_repository::sync::Handle;
+use git_repository::ThreadSafeRepository;
 use git_repository::{hash::ObjectId, odb, threading::OwnShared};
 
 use crate::odb::Cache;
@@ -342,7 +342,7 @@ fn do_parallel_git2(hashes: &[ObjectId], git_dir: &Path, mode: AccessMode) -> an
 
 fn do_gitoxide<C>(
     hashes: &[ObjectId],
-    repo: &Handle,
+    repo: &ThreadSafeRepository,
     new_cache: impl Fn() -> C + Send + Sync + 'static,
 ) -> anyhow::Result<u64>
 where
@@ -366,7 +366,7 @@ enum AccessMode {
 
 fn do_gitoxide_in_parallel_sync<C>(
     hashes: &[ObjectId],
-    repo: &Handle,
+    repo: &ThreadSafeRepository,
     new_cache: impl Fn() -> C + Send + Clone + Sync + 'static,
     mode: AccessMode,
 ) -> anyhow::Result<u64>
@@ -408,7 +408,7 @@ where
 #[cfg(feature = "radicle-nightly")]
 fn do_link_git_in_parallel<C>(
     hashes: &[ObjectId],
-    repo: &Handle,
+    repo: &ThreadSafeRepository,
     new_cache: impl Fn() -> C + Sync + Send,
     mode: AccessMode,
 ) -> anyhow::Result<u64>

@@ -11,13 +11,14 @@
 //!
 //! The method signatures are still complex and may require various arguments for configuration and cache control.
 //!
-//! ## Easy-Mode
+//! Most extensions to existing objects provide an `obj_with_extension.attach(&repo).an_easier_version_of_a_method()` for simpler
+//! call signatures.
 //!
-//! Most extensions to existing objects provide an `obj_with_extension.attach(&repo).an_easier_version_of_a_method()` or `repo.to_easy()`
-//! method to hide all complex arguments and trade a little control for a lot of convenience.
+//! ## ThreadSafe Mode
 //!
-//! When starting out, use [`sync::Handle`] and migrate to the more detailed method signatures to
-//! squeeze out the last inkling of performance if it really does make a difference.
+//! By default, the [`Repository`] isn't `Sync` and thus can't be used in certain contexts which require the `Sync` trait.
+//!
+//! To help with this, convert it with `.to_sync()` into a [`ThreadSafeRepository`].
 //!
 //! ## Object-Access Performance
 //!
@@ -159,10 +160,6 @@ pub mod prelude {
 ///
 pub mod path;
 
-///
-pub mod sync;
-pub use sync::{discover, init, open};
-
 /// The standard type for a store to handle git references.
 pub type RefStore = git_ref::file::Store;
 /// A handle for finding objects in an object database, abstracting away caches for thread-local use.
@@ -182,7 +179,7 @@ pub enum Path {
 ///
 mod types;
 
-pub use types::{Commit, DetachedObject, Head, Id, Object, Reference, Repository, Tree};
+pub use types::{Commit, DetachedObject, Head, Id, Object, Reference, Repository, ThreadSafeRepository, Tree};
 
 pub mod commit;
 pub mod head;
@@ -209,21 +206,75 @@ impl Kind {
 }
 
 /// See [Repository::discover()].
-pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, sync::discover::Error> {
-    sync::Handle::discover(directory).map(Into::into)
+pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, discover::Error> {
+    ThreadSafeRepository::discover(directory).map(Into::into)
 }
 
 /// See [Repository::init()].
-pub fn init(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, sync::init::Error> {
-    sync::Handle::init(directory, Kind::WorkTree).map(Into::into)
+pub fn init(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, init::Error> {
+    ThreadSafeRepository::init(directory, Kind::WorkTree).map(Into::into)
 }
 
 /// See [Repository::init()].
-pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, sync::init::Error> {
-    sync::Handle::init(directory, Kind::Bare).map(Into::into)
+pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, init::Error> {
+    ThreadSafeRepository::init(directory, Kind::Bare).map(Into::into)
 }
 
 /// See [Repository::open()].
-pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repository, sync::open::Error> {
-    sync::Handle::open(directory).map(Into::into)
+pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repository, open::Error> {
+    ThreadSafeRepository::open(directory).map(Into::into)
+}
+
+///
+pub mod open;
+
+///
+pub mod init {
+    use std::{convert::TryInto, path::Path};
+
+    /// The error returned by [`Repository::init()`].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Init(#[from] crate::path::create::Error),
+        #[error(transparent)]
+        Open(#[from] crate::open::Error),
+    }
+
+    impl crate::ThreadSafeRepository {
+        /// Create a repository with work-tree within `directory`, creating intermediate directories as needed.
+        ///
+        /// Fails without action if there is already a `.git` repository inside of `directory`, but
+        /// won't mind if the `directory` otherwise is non-empty.
+        pub fn init(directory: impl AsRef<Path>, kind: crate::Kind) -> Result<Self, Error> {
+            let path = crate::path::create::into(directory.as_ref(), kind)?;
+            Ok(path.try_into()?)
+        }
+    }
+}
+
+///
+pub mod discover {
+    use std::{convert::TryInto, path::Path};
+
+    use crate::path::discover;
+
+    /// The error returned by [`Repository::discover()`].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Discover(#[from] discover::existing::Error),
+        #[error(transparent)]
+        Open(#[from] crate::open::Error),
+    }
+
+    impl crate::ThreadSafeRepository {
+        /// Try to open a git repository in `directory` and search upwards through its parents until one is found.
+        pub fn discover(directory: impl AsRef<Path>) -> Result<Self, Error> {
+            let path = discover::existing(directory)?;
+            Ok(path.try_into()?)
+        }
+    }
 }

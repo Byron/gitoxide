@@ -118,3 +118,27 @@ pub struct Repository {
     /// A free-list of re-usable object backing buffers
     pub(crate) bufs: RefCell<Vec<Vec<u8>>>,
 }
+
+/// An instance with access to everything a git repository entails, best imagined as container implementing `Sync + Send` for _most_
+/// for system resources required to interact with a `git` repository which are loaded in once the instance is created.
+///
+/// Use this type to reference it in a threaded context for creation the creation of a thread-local [`Repositories`][crate::Repository].
+///
+/// Note that this type purposefully isn't very useful until it is converted into a thread-local repository with `to_thread_local()`,
+/// it's merely meant to be able to exist in a `Sync` context.
+pub struct ThreadSafeRepository {
+    /// A store for references to point at objects
+    pub refs: crate::RefStore,
+    /// A store for objects that contain data
+    #[cfg(feature = "unstable")]
+    pub objects: git_features::threading::OwnShared<git_odb::Store>,
+    #[cfg(not(feature = "unstable"))]
+    pub(crate) objects: git_features::threading::OwnShared<git_odb::Store>,
+    /// The path to the worktree at which to find checked out files
+    pub work_tree: Option<PathBuf>,
+    pub(crate) object_hash: git_hash::Kind,
+    // TODO: git-config should be here - it's read a lot but not written much in must applications, so shouldn't be in `State`.
+    //       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
+    //       packs are refreshed. This would be `git_config::fs::Config` when ready.
+    pub(crate) config: crate::Config,
+}
