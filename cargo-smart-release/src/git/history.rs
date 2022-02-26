@@ -28,8 +28,8 @@ pub enum SegmentScope {
     EntireHistory,
 }
 
-pub fn collect(handle: &git::Repository) -> anyhow::Result<Option<commit::History>> {
-    let mut handle = handle.clone();
+pub fn collect(repo: &git::Repository) -> anyhow::Result<Option<commit::History>> {
+    let mut handle = repo.clone();
     handle.object_cache_size(64 * 1024);
     let reference = match handle.head()?.peeled()?.kind {
         head::Kind::Detached { .. } => bail!("Refusing to operate on a detached head."),

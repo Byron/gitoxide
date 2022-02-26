@@ -42,7 +42,7 @@ mod location {
 
         /// Return the path to the repository itself, containing objects, references, configuration, and more.
         ///
-        /// Synonymous to [`path()`][Repository::path()].
+        /// Synonymous to [`path()`][crate::ThreadSafeRepository::path()].
         pub fn git_dir(&self) -> &std::path::Path {
             self.refs.base()
         }

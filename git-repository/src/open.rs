@@ -26,7 +26,7 @@ impl Options {
     }
 }
 
-/// The error returned by [`Repository::open()`].
+/// The error returned by [`crate::open()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {

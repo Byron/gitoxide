@@ -40,8 +40,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("num submodules: {}", delegate.num_submodules);
     println!("total size in bytes: {}\n", delegate.num_bytes);
 
-    // let num_branches = handle.branches()?;
-    // let num_branches = handle.branches.remote("origin")?;
+    // let num_branches = repo.branches()?;
+    // let num_branches = repo.branches.remote("origin")?;
     let num_branches = repo.references()?.prefixed("refs/heads/")?.count();
     let num_remote_branches = repo.references()?.prefixed("refs/remotes/")?.count();
     let num_tags = repo.references()?.prefixed("refs/tags/")?.count();

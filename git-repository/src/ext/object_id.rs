@@ -10,8 +10,8 @@ pub trait ObjectIdExt: Sealed {
     where
         Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<git_object::CommitRefIter<'a>>;
 
-    /// Infuse this object id with an [`sync::Handle`].
-    fn attach(self, handle: &crate::Repository) -> crate::Id<'_>;
+    /// Infuse this object id `repo` access.
+    fn attach(self, repo: &crate::Repository) -> crate::Id<'_>;
 }
 
 impl Sealed for ObjectId {}
@@ -24,7 +24,7 @@ impl ObjectIdExt for ObjectId {
         Ancestors::new(Some(self), ancestors::State::default(), find)
     }
 
-    fn attach(self, handle: &crate::Repository) -> crate::Id<'_> {
-        crate::Id::from_id(self, handle)
+    fn attach(self, repo: &crate::Repository) -> crate::Id<'_> {
+        crate::Id::from_id(self, repo)
     }
 }

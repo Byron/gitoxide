@@ -43,13 +43,13 @@ impl<'repo> Object<'repo> {
                         .expect("commit")
                         .tree_id()
                         .expect("valid commit");
-                    let access = self.handle;
+                    let access = self.repo;
                     drop(self);
                     self = access.find_object(tree_id)?;
                 }
                 Kind::Tag => {
                     let target_id = self.to_tag_ref_iter().target_id().expect("valid tag");
-                    let access = self.handle;
+                    let access = self.repo;
                     drop(self);
                     self = access.find_object(target_id)?;
                 }
@@ -74,7 +74,7 @@ impl<'repo> Object<'repo> {
                 Kind::Commit | Kind::Tree | Kind::Blob => break Ok(self),
                 Kind::Tag => {
                     let target_id = self.to_tag_ref_iter().target_id().expect("valid tag");
-                    let access = self.handle;
+                    let access = self.repo;
                     drop(self);
                     self = access.find_object(target_id)?;
                 }

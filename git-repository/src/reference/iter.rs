@@ -8,14 +8,14 @@ use git_ref::file::ReferenceExt;
 #[must_use = "Iterators should be obtained from this iterator platform"]
 pub struct Platform<'r> {
     pub(crate) platform: git_ref::file::iter::Platform<'r>,
-    pub(crate) handle: &'r crate::Repository,
+    pub(crate) repo: &'r crate::Repository,
 }
 
 /// An iterator over references, with or without filter.
 pub struct Iter<'r> {
     inner: git_ref::file::iter::LooseThenPacked<'r, 'r>,
     peel: bool,
-    handle: &'r crate::Repository,
+    repo: &'r crate::Repository,
 }
 
 impl<'r> Platform<'r> {
@@ -27,7 +27,7 @@ impl<'r> Platform<'r> {
         Ok(Iter {
             inner: self.platform.all()?,
             peel: false,
-            handle: self.handle,
+            repo: self.repo,
         })
     }
 
@@ -40,7 +40,7 @@ impl<'r> Platform<'r> {
         Ok(Iter {
             inner: self.platform.prefixed(prefix)?,
             peel: false,
-            handle: self.handle,
+            repo: self.repo,
         })
     }
 }
@@ -68,7 +68,7 @@ impl<'r> Iterator for Iter<'r> {
             res.map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
                 .and_then(|mut r| {
                     if self.peel {
-                        let handle = &self.handle;
+                        let handle = &self.repo;
                         r.peel_to_id_in_place(&handle.refs, |oid, buf| {
                             handle
                                 .objects
@@ -81,7 +81,7 @@ impl<'r> Iterator for Iter<'r> {
                         Ok(r)
                     }
                 })
-                .map(|r| crate::Reference::from_ref(r, self.handle))
+                .map(|r| crate::Reference::from_ref(r, self.repo))
         })
     }
 }
@@ -97,5 +97,5 @@ pub mod init {
     }
 }
 
-/// The error returned by [references()][sync::Handle::references()].
+/// The error returned by [references()][crate::Repository::references()].
 pub type Error = git_ref::packed::buffer::open::Error;

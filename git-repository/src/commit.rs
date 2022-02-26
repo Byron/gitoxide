@@ -4,7 +4,7 @@
 pub const NO_PARENT_IDS: [git_hash::ObjectId; 0] = [];
 
 mod error {
-    /// The error returned by [`commit(…)`][sync::Handle::commit()].
+    /// The error returned by [`commit(…)`][crate::Repository::commit()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

@@ -69,7 +69,7 @@ mod init {
             }
         }
 
-        /// Convert this instance into a [`SyncRepository`] by dropping all thread-local data.
+        /// Convert this instance into a [`ThreadSafeRepository`][crate::ThreadSafeRepository] by dropping all thread-local data.
         pub fn into_sync(self) -> crate::ThreadSafeRepository {
             self.into()
         }

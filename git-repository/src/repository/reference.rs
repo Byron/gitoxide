@@ -46,7 +46,7 @@ impl crate::Repository {
                 target: id.into(),
                 peeled: None,
             },
-            handle: self,
+            repo: self,
         })
     }
 
@@ -187,7 +187,7 @@ impl crate::Repository {
     /// Find the reference with the given partial or full `name`, like `main`, `HEAD`, `heads/branch` or `origin/other`,
     /// or return an error if it wasn't found.
     ///
-    /// Consider [`try_find_reference(…)`][sync::Handle::try_find_reference()] if the reference might not exist
+    /// Consider [`try_find_reference(…)`][crate::Repository::try_find_reference()] if the reference might not exist
     /// without that being considered an error.
     pub fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_>, reference::find::existing::Error>
     where
@@ -200,19 +200,19 @@ impl crate::Repository {
 
     /// Return a platform for iterating references.
     ///
-    /// Common kinds of iteration are [all][crate::Reference::iter::Platform::all()] or [prefixed][crate::Reference::iter::Platform::prefixed()]
+    /// Common kinds of iteration are [all][crate::reference::iter::Platform::all()] or [prefixed][crate::reference::iter::Platform::prefixed()]
     /// references.
     pub fn references(&self) -> Result<crate::reference::iter::Platform<'_>, crate::reference::iter::Error> {
         Ok(crate::reference::iter::Platform {
             platform: self.refs.iter()?,
-            handle: self,
+            repo: self,
         })
     }
 
     /// Try to find the reference named `name`, like `main`, `heads/branch`, `HEAD` or `origin/other`, and return it.
     ///
     /// Otherwise return `None` if the reference wasn't found.
-    /// If the reference is expected to exist, use [`find_reference()`][sync::Handle::find_reference()].
+    /// If the reference is expected to exist, use [`find_reference()`][crate::Repository::find_reference()].
     pub fn try_find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_>>, reference::find::Error>
     where
         Name: TryInto<PartialNameRef<'a>, Error = E>,

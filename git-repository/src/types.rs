@@ -9,7 +9,7 @@ use git_hash::ObjectId;
 pub struct Head<'repo> {
     /// One of various possible states for the HEAD reference
     pub kind: head::Kind,
-    pub(crate) handle: &'repo crate::Repository,
+    pub(crate) repo: &'repo crate::Repository,
 }
 
 /// An [ObjectId] with access to a repository.
@@ -17,7 +17,7 @@ pub struct Head<'repo> {
 pub struct Id<'r> {
     /// The actual object id
     pub(crate) inner: ObjectId,
-    pub(crate) handle: &'r crate::Repository,
+    pub(crate) repo: &'r crate::Repository,
 }
 
 /// A decoded object with a reference to its owning repository.
@@ -33,12 +33,12 @@ pub struct Object<'repo> {
     pub kind: git_object::Kind,
     /// The fully decoded object data
     pub data: Vec<u8>,
-    pub(crate) handle: &'repo crate::Repository,
+    pub(crate) repo: &'repo crate::Repository,
 }
 
 impl<'a> Drop for Object<'a> {
     fn drop(&mut self) {
-        self.handle.reuse_buffer(&mut self.data);
+        self.repo.reuse_buffer(&mut self.data);
     }
 }
 
@@ -50,12 +50,12 @@ pub struct Tree<'repo> {
     pub id: ObjectId,
     /// The fully decoded tree data
     pub data: Vec<u8>,
-    pub(crate) handle: &'repo crate::Repository,
+    pub(crate) repo: &'repo crate::Repository,
 }
 
 impl<'a> Drop for Tree<'a> {
     fn drop(&mut self) {
-        self.handle.reuse_buffer(&mut self.data);
+        self.repo.reuse_buffer(&mut self.data);
     }
 }
 
@@ -67,12 +67,12 @@ pub struct Commit<'repo> {
     pub id: ObjectId,
     /// The fully decoded commit data
     pub data: Vec<u8>,
-    pub(crate) handle: &'repo crate::Repository,
+    pub(crate) repo: &'repo crate::Repository,
 }
 
 impl<'a> Drop for Commit<'a> {
     fn drop(&mut self) {
-        self.handle.reuse_buffer(&mut self.data);
+        self.repo.reuse_buffer(&mut self.data);
     }
 }
 
@@ -95,7 +95,7 @@ pub struct DetachedObject {
 pub struct Reference<'r> {
     /// The actual reference data
     pub inner: git_ref::Reference,
-    pub(crate) handle: &'r crate::Repository,
+    pub(crate) repo: &'r crate::Repository,
 }
 
 /// A thread-local handle to interact with a repository from a single thread.

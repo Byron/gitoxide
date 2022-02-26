@@ -14,7 +14,7 @@ impl crate::Repository {
     /// Find the object with `id` in the object database or return an error if it could not be found.
     ///
     /// There are various legitimate reasons for an object to not be present, which is why
-    /// [`try_find_object(…)`][sync::Handle::try_find_object()] might be preferable instead.
+    /// [`try_find_object(…)`][crate::Repository::try_find_object()] might be preferable instead.
     ///
     /// # Important
     ///

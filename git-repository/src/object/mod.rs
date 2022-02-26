@@ -31,13 +31,13 @@ pub mod try_into {
 }
 
 impl DetachedObject {
-    /// Infuse this owned object with an [`sync::Handle`].
-    pub fn attach(self, handle: &crate::Repository) -> Object<'_> {
+    /// Infuse this owned object with `repo` access.
+    pub fn attach(self, repo: &crate::Repository) -> Object<'_> {
         Object {
             id: self.id,
             kind: self.kind,
             data: self.data,
-            handle,
+            repo,
         }
     }
 }
@@ -47,13 +47,13 @@ impl<'repo> Object<'repo> {
         id: impl Into<ObjectId>,
         kind: Kind,
         data: Vec<u8>,
-        handle: &'repo crate::Repository,
+        repo: &'repo crate::Repository,
     ) -> Self {
         Object {
             id: id.into(),
             kind,
             data,
-            handle,
+            repo,
         }
     }
 

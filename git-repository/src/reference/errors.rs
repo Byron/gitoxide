@@ -1,6 +1,6 @@
 ///
 pub mod edit {
-    /// The error returned by [edit_references(…)][crate::sync::Handle::edit_references()], and others
+    /// The error returned by [edit_references(…)][crate::Repository::edit_references()], and others
     /// which ultimately create a reference.
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
@@ -32,7 +32,7 @@ pub mod peel {
 pub mod find {
     ///
     pub mod existing {
-        /// The error returned by [find_reference(…)][crate::sync::Handle::find_reference()], and others.
+        /// The error returned by [find_reference(…)][crate::Repository::find_reference()], and others.
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
@@ -43,7 +43,7 @@ pub mod find {
         }
     }
 
-    /// The error returned by [try_find_reference(…)][crate::sync::Handle::try_find_reference()].
+    /// The error returned by [try_find_reference(…)][crate::Repository::try_find_reference()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

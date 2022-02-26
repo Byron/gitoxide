@@ -34,18 +34,15 @@ impl<'repo> Reference<'repo> {
 }
 
 impl<'repo> Reference<'repo> {
-    pub(crate) fn from_ref(reference: git_ref::Reference, handle: &'repo crate::Repository) -> Self {
-        Reference {
-            inner: reference,
-            handle,
-        }
+    pub(crate) fn from_ref(reference: git_ref::Reference, repo: &'repo crate::Repository) -> Self {
+        Reference { inner: reference, repo }
     }
 
     /// Returns the attached id we point to, or panic if this is a symbolic ref.
     pub fn id(&self) -> crate::Id<'repo> {
         match self.inner.target {
             git_ref::Target::Symbolic(_) => panic!("BUG: tries to obtain object id from symbolic target"),
-            git_ref::Target::Peeled(oid) => oid.to_owned().attach(self.handle),
+            git_ref::Target::Peeled(oid) => oid.to_owned().attach(self.repo),
         }
     }
 
@@ -54,7 +51,7 @@ impl<'repo> Reference<'repo> {
     ///
     /// This is useful to learn where this reference is ulitmately pointing to.
     pub fn peel_to_id_in_place(&mut self) -> Result<Id<'repo>, peel::Error> {
-        let handle = &self.handle;
+        let handle = &self.repo;
         let oid = self.inner.peel_to_id_in_place(&handle.refs, |oid, buf| {
             handle
                 .objects

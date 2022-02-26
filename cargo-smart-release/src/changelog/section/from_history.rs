@@ -22,12 +22,12 @@ impl Section {
     pub fn from_history_segment(
         package: &Package,
         segment: &commit::history::Segment<'_>,
-        handle: &git::Repository,
+        repo: &git::Repository,
         selection: section::segment::Selection,
         prev_segment: Option<&commit::history::Segment<'_>>,
     ) -> Self {
-        let date_time = segment_head_time(segment, handle);
-        let prev_date_time = prev_segment.map(|segment| segment_head_time(segment, handle));
+        let date_time = segment_head_time(segment, repo);
+        let prev_date_time = prev_segment.map(|segment| segment_head_time(segment, repo));
 
         let mut segments = Vec::new();
         let history = &segment.history;
@@ -133,8 +133,7 @@ impl Section {
 
         let version = crate::git::try_strip_tag_path(segment.head.name.to_ref())
             .map(|tag_name| {
-                let package_name =
-                    (!is_top_level_package(&package.manifest_path, handle)).then(|| package.name.as_str());
+                let package_name = (!is_top_level_package(&package.manifest_path, repo)).then(|| package.name.as_str());
                 changelog::Version::Semantic(
                     utils::parse_possibly_prefixed_tag_version(package_name, tag_name)
                         .expect("here we always have a valid version as it passed a filter when creating it"),
@@ -158,12 +157,12 @@ impl Section {
     }
 }
 
-fn segment_head_time(segment: &commit::history::Segment<'_>, handle: &git::Repository) -> OffsetDateTime {
+fn segment_head_time(segment: &commit::history::Segment<'_>, repo: &git::Repository) -> OffsetDateTime {
     let time = segment
         .head
         .peeled
         .expect("all refs here are peeled")
-        .attach(handle)
+        .attach(repo)
         .object()
         .expect("object exists")
         .to_commit_ref()

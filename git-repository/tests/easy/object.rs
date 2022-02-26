@@ -26,9 +26,8 @@ mod commit {
         Ok(())
     }
 
-    fn head_commit(handle: &Repository) -> Commit<'_> {
-        handle
-            .head()
+    fn head_commit(repo: &Repository) -> Commit<'_> {
+        repo.head()
             .unwrap()
             // TODO: Add something like peel_to_commit() to cut the chain, deal with unborn as Error
             .into_fully_peeled_id()

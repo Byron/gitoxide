@@ -29,13 +29,13 @@
 //! On miss, the object is looked up and if ia pack is hit, there is a small fixed-size cache for delta-base objects.
 //!
 //! In scenarios where the same objects are accessed multiple times, an object cache can be useful and is to be configured specifically
-//! using the [`object_cache_size(…)`][sync::Handle::object_cache_size()] method.
+//! using the [`object_cache_size(…)`][crate::Repository::object_cache_size()] method.
 //!
 //! Use the `cache-efficiency-debug` cargo feature to learn how efficient the cache actually is - it's easy to end up with lowered
 //! performance if the cache is not hit in 50% of the time.
 //!
 //! Environment variables can also be used for configuration if the application is calling
-//! [`apply_environment()`][sync::Handle::apply_environment()] on their `Easy*` accordingly.
+//! [`apply_environment()`][crate::Repository::apply_environment()] on their `Easy*` accordingly.
 //!
 //! ### Shortcomings & Limitations
 //!
@@ -205,22 +205,22 @@ impl Kind {
     }
 }
 
-/// See [Repository::discover()].
+/// See [ThreadSafeRepository::discover()], but returns a [`Repository`] instead.
 pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, discover::Error> {
     ThreadSafeRepository::discover(directory).map(Into::into)
 }
 
-/// See [Repository::init()].
+/// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
 pub fn init(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, init::Error> {
     ThreadSafeRepository::init(directory, Kind::WorkTree).map(Into::into)
 }
 
-/// See [Repository::init()].
+/// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
 pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, init::Error> {
     ThreadSafeRepository::init(directory, Kind::Bare).map(Into::into)
 }
 
-/// See [Repository::open()].
+/// See [ThreadSafeRepository::open()], but returns a [`Repository`] instead.
 pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repository, open::Error> {
     ThreadSafeRepository::open(directory).map(Into::into)
 }
@@ -232,7 +232,7 @@ pub mod open;
 pub mod init {
     use std::{convert::TryInto, path::Path};
 
-    /// The error returned by [`Repository::init()`].
+    /// The error returned by [`crate::init()`].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -260,7 +260,7 @@ pub mod discover {
 
     use crate::path::discover;
 
-    /// The error returned by [`Repository::discover()`].
+    /// The error returned by [`crate::discover()`].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

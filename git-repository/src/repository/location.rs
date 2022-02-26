@@ -1,4 +1,9 @@
 impl crate::Repository {
+    /// The path to the `.git` directory itself, or equivalent if this is a bare repository.
+    pub fn path(&self) -> &std::path::Path {
+        self.git_dir()
+    }
+
     /// Return the work tree containing all checked out files, if there is one.
     pub fn work_tree(&self) -> Option<&std::path::Path> {
         self.work_tree.as_deref()
@@ -14,7 +19,7 @@ impl crate::Repository {
 
     /// Return the path to the repository itself, containing objects, references, configuration, and more.
     ///
-    /// Synonymous to [`path()`][Repository::path()].
+    /// Synonymous to [`path()`][crate::Repository::path()].
     pub fn git_dir(&self) -> &std::path::Path {
         self.refs.base()
     }

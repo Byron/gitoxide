@@ -14,7 +14,7 @@ impl<'repo> Id<'repo> {
     ///
     /// There can only be one `ObjectRef` per `Easy`. To increase that limit, clone the `Easy`.
     pub fn object(&self) -> Result<Object<'repo>, find::existing::OdbError> {
-        self.handle.find_object(self.inner)
+        self.repo.find_object(self.inner)
     }
 
     /// Try to find the [`Object`] associated with this object id, and return `None` if it's not available locally.
@@ -23,14 +23,14 @@ impl<'repo> Id<'repo> {
     ///
     /// There can only be one `ObjectRef` per `Easy`. To increase that limit, clone the `Easy`.
     pub fn try_object(&self) -> Result<Option<Object<'repo>>, find::OdbError> {
-        self.handle.try_find_object(self.inner)
+        self.repo.try_find_object(self.inner)
     }
 
     /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`.
     pub fn prefix(&self) -> Result<git_hash::Prefix, prefix::Error> {
         // let hex_len = self.handle.config.get_int("core.abbrev")?;
         Ok(self
-            .handle
+            .repo
             .objects
             .disambiguate_prefix(git_odb::find::PotentialPrefix::new(self.inner, 7)?)
             .map_err(crate::object::find::existing::OdbError::Find)?
@@ -62,11 +62,8 @@ impl<'repo> Deref for Id<'repo> {
 }
 
 impl<'repo> Id<'repo> {
-    pub(crate) fn from_id(id: impl Into<ObjectId>, handle: &'repo crate::Repository) -> Self {
-        Id {
-            inner: id.into(),
-            handle,
-        }
+    pub(crate) fn from_id(id: impl Into<ObjectId>, repo: &'repo crate::Repository) -> Self {
+        Id { inner: id.into(), repo }
     }
 
     /// Turn this instance into its bare [ObjectId].
@@ -77,7 +74,7 @@ impl<'repo> Id<'repo> {
 
 /// A platform to traverse commit ancestors, also referred to as commit history.
 pub struct Ancestors<'repo> {
-    handle: &'repo crate::Repository,
+    repo: &'repo crate::Repository,
     tips: Box<dyn Iterator<Item = ObjectId>>,
     sorting: git_traverse::commit::Sorting,
     parents: git_traverse::commit::Parents,
@@ -94,7 +91,7 @@ pub mod ancestors {
         /// Obtain a platform for traversing ancestors of this commit.
         pub fn ancestors(&self) -> Ancestors<'repo> {
             Ancestors {
-                handle: self.handle,
+                repo: self.repo,
                 tips: Box::new(Some(self.inner).into_iter()),
                 sorting: Default::default(),
                 parents: Default::default(),
@@ -115,19 +112,19 @@ pub mod ancestors {
             self
         }
 
-        /// Return an iterator to traverse all commits in the history of the commit the parent [Oid] is pointing to.
+        /// Return an iterator to traverse all commits in the history of the commit the parent [Id] is pointing to.
         pub fn all(&mut self) -> Iter<'_, 'repo> {
             let tips = std::mem::replace(&mut self.tips, Box::new(None.into_iter()));
             let parents = self.parents;
             let sorting = self.sorting;
             Iter {
-                handle: self.handle,
+                repo: self.repo,
                 inner: Box::new(
                     git_traverse::commit::Ancestors::new(
                         tips,
                         git_traverse::commit::ancestors::State::default(),
                         move |oid, buf| {
-                            self.handle
+                            self.repo
                                 .objects
                                 .try_find(oid, buf)
                                 .ok()
@@ -144,7 +141,7 @@ pub mod ancestors {
 
     /// The iterator returned by [`Ancestors::all()`].
     pub struct Iter<'a, 'repo> {
-        handle: &'repo crate::Repository,
+        repo: &'repo crate::Repository,
         inner: Box<dyn Iterator<Item = Result<git_hash::ObjectId, git_traverse::commit::ancestors::Error>> + 'a>,
     }
 
@@ -152,7 +149,7 @@ pub mod ancestors {
         type Item = Result<Id<'repo>, git_traverse::commit::ancestors::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
-            self.inner.next().map(|res| res.map(|oid| oid.attach(self.handle)))
+            self.inner.next().map(|res| res.map(|oid| oid.attach(self.repo)))
         }
     }
 }
