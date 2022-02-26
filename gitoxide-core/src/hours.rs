@@ -45,7 +45,7 @@ where
     P: Progress,
 {
     let repo = git_repository::discover(working_dir)?;
-    let handle = repo.to_easy().apply_environment();
+    let handle = repo.clone().apply_environment();
     let commit_id = repo
         .refs
         .find(refname.to_string_lossy().as_ref())?

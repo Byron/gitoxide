@@ -128,7 +128,7 @@ mod with_io {
                             .collect()
                     }
                     git_transport::Protocol::V2 => {
-                        let supported_features = server_capabilities
+                        let supported_features: Vec<_> = server_capabilities
                             .iter()
                             .find_map(|c| {
                                 if c.name() == Command::Fetch.as_str().as_bytes().as_bstr() {
@@ -137,7 +137,7 @@ mod with_io {
                                     None
                                 }
                             })
-                            .unwrap_or_else(Vec::new);
+                            .unwrap_or_default();
                         self.all_features(version)
                             .iter()
                             .copied()

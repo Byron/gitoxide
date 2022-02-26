@@ -24,7 +24,7 @@ fn main() -> anyhow::Result<()> {
         let directory = args
             .nth(1)
             .ok_or_else(|| anyhow!("First argument is the .git directory to work in"))?;
-        let repo = git_repository::discover(directory)?;
+        let repo = git_repository::discover(directory)?.into_sync();
         let name = args.next().unwrap_or_else(|| "HEAD".into());
         let commit_id = repo
             .refs
@@ -33,7 +33,7 @@ fn main() -> anyhow::Result<()> {
             .to_owned();
         (repo, commit_id)
     };
-    let db = repo.to_easy().objects;
+    let db = repo.to_thread_local().objects;
 
     let start = Instant::now();
     let all_commits = commit_id

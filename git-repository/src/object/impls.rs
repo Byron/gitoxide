@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 
-use crate::easy::{object, Commit, DetachedObject, Object, Tree};
+use crate::object;
+use crate::{Commit, DetachedObject, Object, Tree};
 
 impl<'repo> std::fmt::Debug for Object<'repo> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -30,11 +31,11 @@ impl<'repo> TryFrom<Object<'repo>> for Commit<'repo> {
     type Error = Object<'repo>;
 
     fn try_from(mut value: Object<'repo>) -> Result<Self, Self::Error> {
-        let handle = value.handle;
+        let handle = value.repo;
         match value.kind {
             object::Kind::Commit => Ok(Commit {
                 id: value.id,
-                handle,
+                repo: handle,
                 data: steal_from_freelist(&mut value.data),
             }),
             _ => Err(value),
@@ -46,11 +47,11 @@ impl<'repo> TryFrom<Object<'repo>> for Tree<'repo> {
     type Error = Object<'repo>;
 
     fn try_from(mut value: Object<'repo>) -> Result<Self, Self::Error> {
-        let handle = value.handle;
+        let handle = value.repo;
         match value.kind {
             object::Kind::Tree => Ok(Tree {
                 id: value.id,
-                handle,
+                repo: handle,
                 data: steal_from_freelist(&mut value.data),
             }),
             _ => Err(value),

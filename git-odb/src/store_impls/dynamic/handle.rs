@@ -138,6 +138,15 @@ pub(crate) mod index_lookup {
             }
         }
 
+        /// Call `lookup_prefix(…)` on either index or multi-index, and transform matches into an object id.
+        pub(crate) fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Option<crate::find::PrefixLookupResult> {
+            let res = match &self.file {
+                handle::SingleOrMultiIndex::Single { index, .. } => index.lookup_prefix(prefix),
+                handle::SingleOrMultiIndex::Multi { index, .. } => index.lookup_prefix(prefix),
+            }?;
+            Some(res.map(|entry_index| self.oid_at_index(entry_index).to_owned()))
+        }
+
         /// See if the oid is contained in this index, and return its full id for lookup possibly alongside its data file if already
         /// loaded.
         /// Also return the index itself as it's needed to resolve intra-pack ref-delta objects. They are a possibility even though
@@ -231,7 +240,7 @@ impl super::Store {
         let token = self.register_handle();
         super::Handle {
             store: self.clone(),
-            refresh_mode: RefreshMode::default(),
+            refresh: RefreshMode::default(),
             token: Some(token),
             snapshot: RefCell::new(self.collect_snapshot()),
         }
@@ -244,7 +253,7 @@ impl super::Store {
         let token = self.register_handle();
         super::Handle {
             store: self.clone(),
-            refresh_mode: Default::default(),
+            refresh: Default::default(),
             token: Some(token),
             snapshot: RefCell::new(self.collect_snapshot()),
         }
@@ -290,12 +299,12 @@ where
     /// More recently, however, this doesn't always have to be the case due to sparse checkouts and other ways to only have a
     /// limited amount of objects available locally.
     pub fn refresh_never(&mut self) {
-        self.refresh_mode = RefreshMode::Never;
+        self.refresh = RefreshMode::Never;
     }
 
     /// Return the current refresh mode.
     pub fn refresh_mode(&mut self) -> RefreshMode {
-        self.refresh_mode
+        self.refresh
     }
 }
 
@@ -317,7 +326,7 @@ where
     fn clone(&self) -> Self {
         super::Handle {
             store: self.store.clone(),
-            refresh_mode: self.refresh_mode,
+            refresh: self.refresh,
             token: {
                 let token = self.store.register_handle();
                 match self.token.as_ref().expect("token is always set here ") {

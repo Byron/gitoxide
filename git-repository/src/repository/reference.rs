@@ -8,17 +8,12 @@ use git_ref::{
     FullName, PartialNameRef, Target,
 };
 
-use crate::{
-    bstr::BString,
-    easy,
-    easy::{reference, Reference},
-    ext::ReferenceExt,
-};
+use crate::{bstr::BString, ext::ReferenceExt, reference, Reference};
 
 const DEFAULT_LOCK_MODE: git_lock::acquire::Fail = git_lock::acquire::Fail::Immediately;
 
 /// Obtain and alter references comfortably
-impl easy::Handle {
+impl crate::Repository {
     /// Create a lightweight tag with given `name` (and without `refs/tags/` prefix) pointing to the given `target`, and return it as reference.
     ///
     /// It will be created with `constraint` which is most commonly to [only create it][PreviousValue::MustNotExist]
@@ -45,13 +40,13 @@ impl easy::Handle {
         )?;
         assert_eq!(edits.len(), 1, "reference splits should ever happen");
         let edit = edits.pop().expect("exactly one item");
-        Ok(easy::Reference {
+        Ok(crate::Reference {
             inner: git_ref::Reference {
                 name: edit.name,
                 target: id.into(),
                 peeled: None,
             },
-            handle: self,
+            repo: self,
         })
     }
 
@@ -172,16 +167,16 @@ impl easy::Handle {
 
     /// Return the repository head, an abstraction to help dealing with the `HEAD` reference.
     ///
-    /// The `HEAD` reference can be in various states, for more information, the documentation of [`Head`][easy::Head].
-    pub fn head(&self) -> Result<easy::Head<'_>, reference::find::existing::Error> {
+    /// The `HEAD` reference can be in various states, for more information, the documentation of [`Head`][crate::Head].
+    pub fn head(&self) -> Result<crate::Head<'_>, reference::find::existing::Error> {
         let head = self.find_reference("HEAD")?;
         Ok(match head.inner.target {
             Target::Symbolic(branch) => match self.find_reference(branch.to_partial()) {
-                Ok(r) => easy::head::Kind::Symbolic(r.detach()),
-                Err(reference::find::existing::Error::NotFound) => easy::head::Kind::Unborn(branch),
+                Ok(r) => crate::head::Kind::Symbolic(r.detach()),
+                Err(reference::find::existing::Error::NotFound) => crate::head::Kind::Unborn(branch),
                 Err(err) => return Err(err),
             },
-            Target::Peeled(target) => easy::head::Kind::Detached {
+            Target::Peeled(target) => crate::head::Kind::Detached {
                 target,
                 peeled: head.inner.peeled,
             },
@@ -192,7 +187,7 @@ impl easy::Handle {
     /// Find the reference with the given partial or full `name`, like `main`, `HEAD`, `heads/branch` or `origin/other`,
     /// or return an error if it wasn't found.
     ///
-    /// Consider [`try_find_reference(…)`][easy::Handle::try_find_reference()] if the reference might not exist
+    /// Consider [`try_find_reference(…)`][crate::Repository::try_find_reference()] if the reference might not exist
     /// without that being considered an error.
     pub fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_>, reference::find::existing::Error>
     where
@@ -205,19 +200,19 @@ impl easy::Handle {
 
     /// Return a platform for iterating references.
     ///
-    /// Common kinds of iteration are [all][easy::reference::iter::Platform::all()] or [prefixed][easy::reference::iter::Platform::prefixed()]
+    /// Common kinds of iteration are [all][crate::reference::iter::Platform::all()] or [prefixed][crate::reference::iter::Platform::prefixed()]
     /// references.
-    pub fn references(&self) -> Result<easy::reference::iter::Platform<'_>, easy::reference::iter::Error> {
-        Ok(easy::reference::iter::Platform {
+    pub fn references(&self) -> Result<crate::reference::iter::Platform<'_>, crate::reference::iter::Error> {
+        Ok(crate::reference::iter::Platform {
             platform: self.refs.iter()?,
-            handle: self,
+            repo: self,
         })
     }
 
     /// Try to find the reference named `name`, like `main`, `heads/branch`, `HEAD` or `origin/other`, and return it.
     ///
     /// Otherwise return `None` if the reference wasn't found.
-    /// If the reference is expected to exist, use [`find_reference()`][easy::Handle::find_reference()].
+    /// If the reference is expected to exist, use [`find_reference()`][crate::Repository::find_reference()].
     pub fn try_find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_>>, reference::find::Error>
     where
         Name: TryInto<PartialNameRef<'a>, Error = E>,

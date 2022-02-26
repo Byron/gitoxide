@@ -1,9 +1,23 @@
+use git_repository::prelude::ObjectIdExt;
+use git_testtools::hex_to_id;
+use std::cmp::Ordering;
+
+#[test]
+fn prefix() -> crate::Result {
+    let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_thread_local();
+    let id = hex_to_id("288e509293165cb5630d08f4185bdf2445bf6170").attach(&repo);
+    let prefix = id.prefix()?;
+    assert_eq!(prefix.cmp_oid(&id), Ordering::Equal);
+    assert_eq!(prefix.hex_len(), 7, "preconfigured via core.abbrev");
+    Ok(())
+}
+
 mod ancestors {
     use git_traverse::commit;
 
     #[test]
     fn all() -> crate::Result {
-        let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_easy();
+        let repo = crate::repo("make_repo_with_fork_and_dates.sh")?.to_thread_local();
         let head = repo.head()?.into_fully_peeled_id().expect("born")?;
         let commits_graph_order = head.ancestors().all().collect::<Result<Vec<_>, _>>()?;
         assert_eq!(commits_graph_order.len(), 4, "need a specific amount of commits");

@@ -11,7 +11,7 @@ where
 {
     pub(crate) store: S,
     /// Defines what happens when there is no more indices to load.
-    pub refresh_mode: RefreshMode,
+    pub refresh: RefreshMode,
 
     pub(crate) token: Option<handle::Mode>,
     snapshot: RefCell<load_index::Snapshot>,
@@ -32,6 +32,13 @@ pub enum RefreshMode {
 impl Default for RefreshMode {
     fn default() -> Self {
         RefreshMode::AfterAllIndicesLoaded
+    }
+}
+
+impl RefreshMode {
+    /// Set this refresh mode to never refresh.
+    pub fn never(&mut self) {
+        *self = RefreshMode::Never;
     }
 }
 

@@ -4,10 +4,7 @@ use std::convert::TryInto;
 use git_hash::ObjectId;
 pub use git_object::Kind;
 
-use crate::{
-    easy,
-    easy::{Commit, DetachedObject, Object, Tree},
-};
+use crate::{Commit, DetachedObject, Object, Tree};
 
 mod errors;
 pub(crate) mod cache {
@@ -34,24 +31,29 @@ pub mod try_into {
 }
 
 impl DetachedObject {
-    /// Infuse this owned object with an [`easy::Handle`].
-    pub fn attach(self, handle: &easy::Handle) -> Object<'_> {
+    /// Infuse this owned object with `repo` access.
+    pub fn attach(self, repo: &crate::Repository) -> Object<'_> {
         Object {
             id: self.id,
             kind: self.kind,
             data: self.data,
-            handle,
+            repo,
         }
     }
 }
 
 impl<'repo> Object<'repo> {
-    pub(crate) fn from_data(id: impl Into<ObjectId>, kind: Kind, data: Vec<u8>, handle: &'repo easy::Handle) -> Self {
+    pub(crate) fn from_data(
+        id: impl Into<ObjectId>,
+        kind: Kind,
+        data: Vec<u8>,
+        repo: &'repo crate::Repository,
+    ) -> Self {
         Object {
             id: id.into(),
             kind,
             data,
-            handle,
+            repo,
         }
     }
 

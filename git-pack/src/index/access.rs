@@ -1,5 +1,7 @@
+use std::cmp::Ordering;
 use std::mem::size_of;
 
+use crate::index::PrefixLookupResult;
 use crate::{
     data,
     index::{self, EntryIndex, FAN_LEN},
@@ -116,6 +118,8 @@ impl index::File {
 
     /// Returns the `index` of the given hash for use with the [`oid_at_index()`][index::File::oid_at_index()],
     /// [`pack_offset_at_index()`][index::File::pack_offset_at_index()] or [`crc32_at_index()`][index::File::crc32_at_index()].
+    // NOTE: pretty much the same things as in `multi_index::File::lookup`, change things there
+    //       as well.
     pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<EntryIndex> {
         let id = id.as_ref();
         let first_byte = id.first_byte() as usize;
@@ -130,6 +134,41 @@ impl index::File {
             match id.cmp(mid_sha) {
                 Less => upper_bound = mid,
                 Equal => return Some(mid),
+                Greater => lower_bound = mid + 1,
+            }
+        }
+        None
+    }
+
+    /// Given a `prefix`, find an object that matches it uniquely within this index and return `Some(Ok(entry_index))`.
+    /// If there is more than one object matching the object `Some(Err(())` is returned.
+    ///
+    /// Finally, if no object matches the index, the return value is `None`.
+    // NOTE: pretty much the same things as in `index::File::lookup`, change things there
+    //       as well.
+    pub fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Option<PrefixLookupResult> {
+        let first_byte = prefix.as_oid().first_byte() as usize;
+        let mut upper_bound = self.fan[first_byte];
+        let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };
+
+        // Bisect using indices
+        while lower_bound < upper_bound {
+            let mid = (lower_bound + upper_bound) / 2;
+            let mid_sha = self.oid_at_index(mid);
+
+            use std::cmp::Ordering::*;
+            match prefix.cmp_oid(mid_sha) {
+                Less => upper_bound = mid,
+                Equal => {
+                    let next = mid + 1;
+                    if next < self.num_objects && prefix.cmp_oid(self.oid_at_index(next)) == Ordering::Equal {
+                        return Some(Err(()));
+                    }
+                    if mid != 0 && prefix.cmp_oid(self.oid_at_index(mid - 1)) == Ordering::Equal {
+                        return Some(Err(()));
+                    }
+                    return Some(Ok(mid));
+                }
                 Greater => lower_bound = mid + 1,
             }
         }

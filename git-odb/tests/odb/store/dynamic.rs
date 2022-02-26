@@ -7,6 +7,30 @@ fn db() -> git_odb::Handle {
     git_odb::at(fixture_path("objects")).expect("valid object path")
 }
 
+/// indices, multi-pack-index, loose odb
+fn db_with_all_object_sources() -> crate::Result<(git_odb::Handle, tempfile::TempDir)> {
+    let objects_dir = git_testtools::tempfile::tempdir()?;
+    git_testtools::copy_recursively_into_existing_dir(fixture_path("objects"), &objects_dir)?;
+
+    let multi_pack_index = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(objects_dir.path().join("pack/multi-pack-index"))?;
+    git_odb::pack::multi_index::File::write_from_index_paths(
+        vec![
+            fixture_path("objects/pack/pack-a2bf8e71d8c18879e499335762dd95119d93d9f1.idx"),
+            fixture_path("objects/pack/pack-c0438c19fb16422b6bbcce24387b3264416d485b.idx"),
+        ],
+        multi_pack_index,
+        git_features::progress::Discard,
+        &std::sync::atomic::AtomicBool::default(),
+        git_odb::pack::multi_index::write::Options {
+            object_hash: git_hash::Kind::Sha1,
+        },
+    )?;
+    Ok((git_odb::at(objects_dir.path())?, objects_dir))
+}
+
 #[test]
 fn multi_index_access() -> crate::Result {
     let dir = git_testtools::scripted_fixture_repo_writable("make_repo_multi_index.sh")?;
@@ -355,6 +379,150 @@ fn lookup() {
     );
 }
 
+fn assert_all_indices_loaded(handle: &git_odb::Handle, num_refreshes: usize, open_reachable_indices: usize) {
+    assert_eq!(
+        handle.store_ref().metrics(),
+        git_odb::store::Metrics {
+            num_handles: 1,
+            num_refreshes,
+            open_reachable_indices,
+            known_reachable_indices: 2,
+            open_reachable_packs: 0,
+            known_packs: 3,
+            unused_slots: 30,
+            loose_dbs: 1,
+            unreachable_indices: 0,
+            unreachable_packs: 0
+        },
+        "all indices must be loaded and searched to assure unambiguous object ids"
+    );
+}
+
+mod disambiguate_prefix {
+    use crate::store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources};
+    use git_odb::find::PotentialPrefix;
+    use git_testtools::hex_to_id;
+    use std::cmp::Ordering;
+
+    #[test]
+    fn unambiguous_hex_lengths_yield_prefixes_of_exactly_the_given_length() {
+        let (mut handle, _tmp) = db_with_all_object_sources().unwrap();
+        handle.refresh.never();
+
+        let hex_lengths = &[5, 7, 40];
+        for (index, oid) in handle.iter().unwrap().map(Result::unwrap).enumerate() {
+            let hex_len = hex_lengths[index % hex_lengths.len()];
+            let prefix = handle
+                .disambiguate_prefix(PotentialPrefix::new(oid, hex_len).unwrap())
+                .unwrap()
+                .expect("object exists");
+            assert_eq!(prefix.hex_len(), hex_len);
+            assert_eq!(prefix.cmp_oid(&oid), Ordering::Equal);
+        }
+        assert_all_indices_loaded(&handle, 1, 2);
+    }
+
+    #[test]
+    fn returns_disambiguated_prefixes_when_needed() {
+        let (handle, _tmp) = db_with_all_object_sources().unwrap();
+        let id = hex_to_id("a7065b5e971a6d8b55875d8cf634a3a37202ab23");
+        let prefix = handle
+            .disambiguate_prefix(PotentialPrefix::new(id, 4).unwrap())
+            .unwrap()
+            .expect("object exists");
+
+        assert_eq!(prefix.hex_len(), 5, "the hex_len was increased to disambiguate");
+        assert_eq!(prefix.cmp_oid(&id), Ordering::Equal);
+        assert_all_indices_loaded(&handle, 2, 2);
+    }
+
+    #[test]
+    fn no_work_is_done_for_unambiguous_potential_prefixes() {
+        let (handle, _tmp) = db_with_all_object_sources().unwrap();
+        let id = hex_to_id("a7065b5e971a6d8b55875d8cf634a3a37202ab23");
+        let potential_prefix = PotentialPrefix::new(id, 40).unwrap();
+        assert!(
+            handle
+                .disambiguate_prefix(potential_prefix)
+                .unwrap()
+                .expect("object exists")
+                == potential_prefix.to_prefix(),
+        );
+
+        assert_eq!(
+            handle.store_ref().metrics(),
+            git_odb::store::Metrics {
+                num_handles: 1,
+                num_refreshes: 1,
+                open_reachable_indices: 1,
+                known_reachable_indices: 2,
+                known_packs: 3,
+                unused_slots: 30,
+                loose_dbs: 1,
+                ..Default::default()
+            },
+            "early bailout, without doing any real work except for a contains() check"
+        );
+    }
+
+    #[test]
+    fn returns_none_if_id_does_not_exist() {
+        let (handle, _tmp) = db_with_all_object_sources().unwrap();
+        let null = git_hash::ObjectId::null(git_hash::Kind::Sha1);
+        assert!(handle
+            .disambiguate_prefix(PotentialPrefix::new(null, 7).unwrap())
+            .unwrap()
+            .is_none());
+        assert_all_indices_loaded(&handle, 2, 2);
+    }
+}
+
+mod lookup_prefix {
+    use crate::store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources};
+    use git_testtools::hex_to_id;
+
+    #[test]
+    fn returns_none_for_prefixes_without_any_match() {
+        let (handle, _tmp) = db_with_all_object_sources().unwrap();
+        let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
+        assert!(handle.lookup_prefix(prefix).unwrap().is_none());
+        assert_all_indices_loaded(&handle, 2, 2);
+    }
+
+    #[test]
+    fn returns_some_err_for_prefixes_with_more_than_one_match() {
+        let (handle, _tmp) = db_with_all_object_sources().unwrap();
+        let prefix = git_hash::Prefix::new(hex_to_id("a7065b5e971a6d8b55875d8cf634a3a37202ab23"), 4).unwrap();
+        assert_eq!(
+            handle.lookup_prefix(prefix).unwrap(),
+            Some(Err(())),
+            "there are two objects with that prefix"
+        );
+        assert_all_indices_loaded(&handle, 1, 1);
+    }
+
+    #[test]
+    fn iterable_objects_can_be_looked_up_with_varying_prefix_lengths() {
+        let (mut handle, _tmp) = db_with_all_object_sources().unwrap();
+        handle.refresh.never();
+
+        let hex_lengths = &[5, 7, 40];
+        for (index, oid) in handle.iter().unwrap().map(Result::unwrap).enumerate() {
+            let hex_len = hex_lengths[index % hex_lengths.len()];
+            let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
+            assert_eq!(
+                handle
+                    .lookup_prefix(prefix)
+                    .unwrap()
+                    .expect("object exists")
+                    .expect("unambiguous"),
+                oid
+            );
+        }
+        assert_all_indices_loaded(&handle, 1, 2);
+    }
+}
+
 #[test]
 fn missing_objects_triggers_everything_is_loaded() {
     let handle = db();
@@ -378,9 +546,9 @@ fn missing_objects_triggers_everything_is_loaded() {
     );
 
     let mut buf = Vec::new();
-    assert!(!handle
+    assert!(handle
         .find(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), &mut buf)
-        .is_ok());
+        .is_err());
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -401,8 +569,8 @@ fn missing_objects_triggers_everything_is_loaded() {
 }
 
 #[test]
-fn a_bunch_of_loose_and_packed_objects() -> crate::Result {
-    let db = db();
+fn iterate_over_a_bunch_of_loose_and_packed_objects() -> crate::Result {
+    let (db, _tmp) = db_with_all_object_sources()?;
     let iter = db.iter()?;
     assert_eq!(
         iter.size_hint(),

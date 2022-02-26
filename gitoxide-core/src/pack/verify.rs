@@ -4,8 +4,7 @@ use anyhow::{anyhow, Context as AnyhowContext, Result};
 use bytesize::ByteSize;
 use git_repository as git;
 use git_repository::{
-    easy::object,
-    odb,
+    object, odb,
     odb::{pack, pack::index},
     Progress,
 };

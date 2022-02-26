@@ -99,6 +99,10 @@ impl Version {
     }
 }
 
+/// A way to indicate if a lookup, despite successful, was ambiguous or yielded exactly
+/// one result in the particular index.
+pub type PrefixLookupResult = Result<EntryIndex, ()>;
+
 /// The type for referring to indices of an entry within the index file.
 pub type EntryIndex = u32;
 

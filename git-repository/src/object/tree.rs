@@ -2,18 +2,16 @@ use git_hash::ObjectId;
 use git_object::{bstr::BStr, TreeRefIter};
 use git_odb::FindExt;
 
-use crate::{
-    easy,
-    easy::{object::find, Tree},
-};
+use crate::object::find;
+use crate::Tree;
 
 impl<'repo> Tree<'repo> {
     /// Obtain a tree instance by handing in all components that it is made up of.
-    pub fn from_data(id: impl Into<ObjectId>, data: Vec<u8>, handle: &'repo easy::Handle) -> Self {
+    pub fn from_data(id: impl Into<ObjectId>, data: Vec<u8>, repo: &'repo crate::Repository) -> Self {
         Tree {
             id: id.into(),
             data,
-            handle,
+            repo,
         }
     }
     // TODO: move implementation to git-object, tests.
@@ -42,7 +40,7 @@ impl<'repo> Tree<'repo> {
                         return Ok(Some(entry.into()));
                     } else {
                         let next_id = entry.oid.to_owned();
-                        let handle = self.handle;
+                        let handle = self.repo;
                         drop(entry);
                         drop(self);
                         self = match handle.find_object(next_id)?.try_into_tree() {
@@ -104,7 +102,7 @@ impl<'a, 'repo> Traversal<'a, 'repo> {
         git_traverse::tree::breadthfirst(
             root,
             state,
-            |oid, buf| self.root.handle.objects.find_tree_iter(oid, buf).ok(),
+            |oid, buf| self.root.repo.objects.find_tree_iter(oid, buf).ok(),
             delegate,
         )
     }

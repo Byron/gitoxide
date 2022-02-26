@@ -100,7 +100,7 @@ document-features = { version = "0.2.0", optional = true }
 [profile.dev.package]
 git-object = { opt-level = 3 }
 git-ref = { opt-level = 3 }
-git-pack = { opt-level = 3 }
+#git-pack = { opt-level = 3 }
 git-hash = { opt-level = 3 }
 git-actor = { opt-level = 3 }
 git-config = { opt-level = 3 }

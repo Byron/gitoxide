@@ -1,7 +1,5 @@
-use crate::easy;
-
 /// Configure how caches are used to speed up various git repository operations
-impl easy::Handle {
+impl crate::Repository {
     /// Sets the amount of space used at most for caching most recently accessed fully decoded objects, to `Some(bytes)`,
     /// or `None` to deactivate it entirely.
     ///
@@ -15,7 +13,7 @@ impl easy::Handle {
         match bytes {
             Some(bytes) => self
                 .objects
-                .set_object_cache(move || Box::new(easy::object::cache::MemoryCappedHashmap::new(bytes))),
+                .set_object_cache(move || Box::new(crate::object::cache::MemoryCappedHashmap::new(bytes))),
             None => self.objects.unset_object_cache(),
         }
     }

@@ -37,7 +37,7 @@ where
             None => {
                 let new_snapshot = self
                     .store
-                    .load_one_index(self.refresh_mode, snapshot.marker)?
+                    .load_one_index(self.refresh, snapshot.marker)?
                     .expect("there is always at least one ODB, and this code runs only once for initialization");
                 *snapshot = new_snapshot;
                 snapshot.loose_dbs[0].write_stream(kind, size, from)?

@@ -2,7 +2,7 @@ use std::{convert::TryInto, process::Command};
 
 use anyhow::bail;
 use cargo_metadata::Package;
-use git_repository::{bstr::ByteSlice, easy::Oid, refs, refs::transaction::PreviousValue};
+use git_repository::{bstr::ByteSlice, refs, refs::transaction::PreviousValue, Id};
 
 use super::{tag_name, Options};
 use crate::utils::will;
@@ -12,7 +12,7 @@ pub(in crate::command::release_impl) fn commit_changes(
     dry_run: bool,
     empty_commit_possible: bool,
     ctx: &crate::Context,
-) -> anyhow::Result<Option<Oid<'_>>> {
+) -> anyhow::Result<Option<Id<'_>>> {
     // TODO: replace with gitoxide one day
     let mut cmd = Command::new("git");
     cmd.arg("commit").arg("-am").arg(message.as_ref());
@@ -33,7 +33,7 @@ pub(in crate::command::release_impl) fn commit_changes(
 pub(in crate::command::release_impl) fn create_version_tag<'repo>(
     publishee: &Package,
     new_version: &semver::Version,
-    commit_id: Option<Oid<'repo>>,
+    commit_id: Option<Id<'repo>>,
     tag_message: Option<String>,
     ctx: &'repo crate::Context,
     Options { dry_run, skip_tag, .. }: Options,

@@ -7,7 +7,7 @@ use std::{
 
 use anyhow::bail;
 use cargo_metadata::{camino::Utf8PathBuf, Package};
-use git_repository::{easy::Oid, lock::File};
+use git_repository::{lock::File, Id};
 use semver::{Version, VersionReq};
 
 use super::{cargo, git, Context, Options};
@@ -20,7 +20,7 @@ use crate::{
 };
 
 pub struct Outcome<'repo, 'meta> {
-    pub commit_id: Option<Oid<'repo>>,
+    pub commit_id: Option<Id<'repo>>,
     pub section_by_package: BTreeMap<&'meta str, changelog::Section>,
 }
 

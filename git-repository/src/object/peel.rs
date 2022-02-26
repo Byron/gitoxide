@@ -1,17 +1,15 @@
 //!
-use crate::easy::{
-    object,
-    object::{peel, Kind},
-    Object,
-};
+use crate::object;
+use crate::object::{peel, Kind};
+use crate::Object;
 
 ///
 pub mod to_kind {
     mod error {
 
-        use crate::easy::object;
+        use crate::object;
 
-        /// The error returned by [`Object::peel_to_kind()`][crate::easy::Object::peel_to_kind()].
+        /// The error returned by [`Object::peel_to_kind()`][crate::Object::peel_to_kind()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
@@ -45,13 +43,13 @@ impl<'repo> Object<'repo> {
                         .expect("commit")
                         .tree_id()
                         .expect("valid commit");
-                    let access = self.handle;
+                    let access = self.repo;
                     drop(self);
                     self = access.find_object(tree_id)?;
                 }
                 Kind::Tag => {
                     let target_id = self.to_tag_ref_iter().target_id().expect("valid tag");
-                    let access = self.handle;
+                    let access = self.repo;
                     drop(self);
                     self = access.find_object(target_id)?;
                 }
@@ -76,7 +74,7 @@ impl<'repo> Object<'repo> {
                 Kind::Commit | Kind::Tree | Kind::Blob => break Ok(self),
                 Kind::Tag => {
                     let target_id = self.to_tag_ref_iter().target_id().expect("valid tag");
-                    let access = self.handle;
+                    let access = self.repo;
                     drop(self);
                     self = access.find_object(target_id)?;
                 }

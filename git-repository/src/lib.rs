@@ -11,13 +11,14 @@
 //!
 //! The method signatures are still complex and may require various arguments for configuration and cache control.
 //!
-//! ## Easy-Mode
+//! Most extensions to existing objects provide an `obj_with_extension.attach(&repo).an_easier_version_of_a_method()` for simpler
+//! call signatures.
 //!
-//! Most extensions to existing objects provide an `obj_with_extension.attach(&repo).an_easier_version_of_a_method()` or `repo.to_easy()`
-//! method to hide all complex arguments and trade a little control for a lot of convenience.
+//! ## ThreadSafe Mode
 //!
-//! When starting out, use [`easy::Handle`] and migrate to the more detailed method signatures to
-//! squeeze out the last inkling of performance if it really does make a difference.
+//! By default, the [`Repository`] isn't `Sync` and thus can't be used in certain contexts which require the `Sync` trait.
+//!
+//! To help with this, convert it with `.to_sync()` into a [`ThreadSafeRepository`].
 //!
 //! ## Object-Access Performance
 //!
@@ -28,17 +29,17 @@
 //! On miss, the object is looked up and if ia pack is hit, there is a small fixed-size cache for delta-base objects.
 //!
 //! In scenarios where the same objects are accessed multiple times, an object cache can be useful and is to be configured specifically
-//! using the [`object_cache_size(…)`][easy::Handle::object_cache_size()] method.
+//! using the [`object_cache_size(…)`][crate::Repository::object_cache_size()] method.
 //!
 //! Use the `cache-efficiency-debug` cargo feature to learn how efficient the cache actually is - it's easy to end up with lowered
 //! performance if the cache is not hit in 50% of the time.
 //!
 //! Environment variables can also be used for configuration if the application is calling
-//! [`apply_environment()`][easy::Handle::apply_environment()] on their `Easy*` accordingly.
+//! [`apply_environment()`][crate::Repository::apply_environment()] on their `Easy*` accordingly.
 //!
 //! ### Shortcomings & Limitations
 //!
-//! - Only a single `easy::Object` or derivatives can be held in memory at a time, _per `Easy*`_.
+//! - Only a single `crate::object` or derivatives can be held in memory at a time, _per `Easy*`_.
 //! - Changes made to the configuration, packs, and alternates aren't picked up automatically, but the current object store
 //!   needs a manual refresh.
 //!
@@ -119,11 +120,11 @@ use std::path::PathBuf;
 pub use git_actor as actor;
 #[cfg(all(feature = "unstable", feature = "git-diff"))]
 pub use git_diff as diff;
+use git_features::threading::OwnShared;
 #[cfg(feature = "unstable")]
 pub use git_features::{parallel, progress, progress::Progress, threading};
 pub use git_hash as hash;
 #[doc(inline)]
-pub use git_hash::{oid, ObjectId};
 #[cfg(all(feature = "unstable", feature = "git-index"))]
 pub use git_index as index;
 pub use git_lock as lock;
@@ -143,6 +144,7 @@ pub use git_url as url;
 #[doc(inline)]
 #[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url::Url;
+pub use hash::{oid, ObjectId};
 
 pub mod interrupt;
 
@@ -158,53 +160,34 @@ pub mod prelude {
 ///
 pub mod path;
 
-mod repository;
-use git_features::threading::OwnShared;
-pub use repository::{discover, init, open};
-
 /// The standard type for a store to handle git references.
 pub type RefStore = git_ref::file::Store;
 /// A handle for finding objects in an object database, abstracting away caches for thread-local use.
 pub type OdbHandle = git_odb::Handle;
+/// A way to access git configuration
+pub(crate) type Config = OwnShared<git_config::file::GitConfig<'static>>;
 
 /// A repository path which either points to a work tree or the `.git` repository itself.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Path {
-    /// The currently checked out or nascent work tree of a git repository.
+    /// The currently checked out or nascent work tree of a git repositore
     WorkTree(PathBuf),
     /// The git repository itself
     Repository(PathBuf),
 }
 
-/// A instance with access to everything a git repository entails, best imagined as container for _most_ for system resources required
-/// to interact with a `git` repository which are loaded in once the instance is created.
 ///
-/// The main difference to the [`easy::Handle`] is that this type is `Sync`, and thus can be referenced into a threaded context for creation
-/// of thread-local handles.
-pub struct Repository {
-    /// A store for references to point at objects
-    pub refs: RefStore,
-    /// A store for objects that contain data
-    #[cfg(feature = "unstable")]
-    pub objects: OwnShared<git_odb::Store>,
-    #[cfg(not(feature = "unstable"))]
-    pub(crate) objects: OwnShared<git_odb::Store>,
-    /// The path to the worktree at which to find checked out files
-    pub work_tree: Option<PathBuf>,
-    pub(crate) object_hash: git_hash::Kind,
-    // TODO: git-config should be here - it's read a lot but not written much in must applications, so shouldn't be in `State`.
-    //       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
-    //       packs are refreshed. This would be `git_config::fs::Config` when ready.
-    // pub(crate) config: git_config::file::GitConfig<'static>,
-}
+mod types;
 
-///
-pub mod easy;
+pub use types::{Commit, DetachedObject, Head, Id, Object, Reference, Repository, ThreadSafeRepository, Tree};
 
-///
 pub mod commit;
-///
+pub mod head;
+pub mod id;
+pub mod object;
 pub mod reference;
+mod repository;
+pub mod tag;
 
 /// The kind of `Repository`
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -222,22 +205,76 @@ impl Kind {
     }
 }
 
-/// See [Repository::discover()].
-pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::discover::Error> {
-    Repository::discover(directory)
+/// See [ThreadSafeRepository::discover()], but returns a [`Repository`] instead.
+pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, discover::Error> {
+    ThreadSafeRepository::discover(directory).map(Into::into)
 }
 
-/// See [Repository::init()].
-pub fn init(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::init::Error> {
-    Repository::init(directory, Kind::WorkTree)
+/// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
+pub fn init(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, init::Error> {
+    ThreadSafeRepository::init(directory, Kind::WorkTree).map(Into::into)
 }
 
-/// See [Repository::init()].
-pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<Repository, repository::init::Error> {
-    Repository::init(directory, Kind::Bare)
+/// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
+pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, init::Error> {
+    ThreadSafeRepository::init(directory, Kind::Bare).map(Into::into)
 }
 
-/// See [Repository::open()].
-pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<Repository, repository::open::Error> {
-    Repository::open(directory)
+/// See [ThreadSafeRepository::open()], but returns a [`Repository`] instead.
+pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repository, open::Error> {
+    ThreadSafeRepository::open(directory).map(Into::into)
+}
+
+///
+pub mod open;
+
+///
+pub mod init {
+    use std::{convert::TryInto, path::Path};
+
+    /// The error returned by [`crate::init()`].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Init(#[from] crate::path::create::Error),
+        #[error(transparent)]
+        Open(#[from] crate::open::Error),
+    }
+
+    impl crate::ThreadSafeRepository {
+        /// Create a repository with work-tree within `directory`, creating intermediate directories as needed.
+        ///
+        /// Fails without action if there is already a `.git` repository inside of `directory`, but
+        /// won't mind if the `directory` otherwise is non-empty.
+        pub fn init(directory: impl AsRef<Path>, kind: crate::Kind) -> Result<Self, Error> {
+            let path = crate::path::create::into(directory.as_ref(), kind)?;
+            Ok(path.try_into()?)
+        }
+    }
+}
+
+///
+pub mod discover {
+    use std::{convert::TryInto, path::Path};
+
+    use crate::path::discover;
+
+    /// The error returned by [`crate::discover()`].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Discover(#[from] discover::existing::Error),
+        #[error(transparent)]
+        Open(#[from] crate::open::Error),
+    }
+
+    impl crate::ThreadSafeRepository {
+        /// Try to open a git repository in `directory` and search upwards through its parents until one is found.
+        pub fn discover(directory: impl AsRef<Path>) -> Result<Self, Error> {
+            let path = discover::existing(directory)?;
+            Ok(path.try_into()?)
+        }
+    }
 }

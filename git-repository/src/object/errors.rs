@@ -1,7 +1,7 @@
 ///
 pub mod conversion {
 
-    /// The error returned by [`easy::Object::try_to_()`][crate::easy::Object::try_to_commit_ref()].
+    /// The error returned by [`crate::object::try_to_()`][crate::Object::try_to_commit_ref()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

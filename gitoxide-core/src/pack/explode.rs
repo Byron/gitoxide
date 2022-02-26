@@ -7,9 +7,8 @@ use std::{
 
 use anyhow::{anyhow, Result};
 use git_repository::{
-    easy::object,
     hash::ObjectId,
-    objs, odb,
+    object, objs, odb,
     odb::{loose, pack, Write},
     Progress,
 };

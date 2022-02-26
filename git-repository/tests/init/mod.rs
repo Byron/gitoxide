@@ -5,7 +5,7 @@ mod bare {
         let repo = git_repository::init_bare(tmp.path()).unwrap();
         assert_eq!(repo.kind(), git_repository::Kind::Bare);
         assert!(
-            repo.work_tree.is_none(),
+            repo.work_tree().is_none(),
             "a worktree isn't present in bare repositories"
         );
         assert_eq!(
@@ -34,11 +34,7 @@ mod non_bare {
         let tmp = tempfile::tempdir()?;
         let repo = git_repository::init(tmp.path())?;
         assert_eq!(repo.kind(), git_repository::Kind::WorkTree);
-        assert_eq!(
-            repo.work_tree.as_deref(),
-            Some(tmp.path()),
-            "there is a work tree by default"
-        );
+        assert_eq!(repo.work_tree(), Some(tmp.path()), "there is a work tree by default");
         assert_eq!(
             repo.git_dir(),
             tmp.path().join(".git"),
@@ -46,7 +42,7 @@ mod non_bare {
         );
         assert_eq!(git_repository::open(repo.git_dir())?, repo);
         assert_eq!(
-            git_repository::open(repo.work_tree.as_ref().expect("non-bare repo"))?,
+            git_repository::open(repo.work_tree().as_ref().expect("non-bare repo"))?,
             repo
         );
         Ok(())

@@ -1,6 +1,6 @@
 use std::{convert::TryInto, ops::Deref};
 
-use git_hash::oid;
+use git_hash::{oid, ObjectId};
 use git_object::Data;
 use git_pack::{cache::DecodeEntry, data::entry::Location};
 
@@ -15,6 +15,8 @@ mod error {
     pub enum Error {
         #[error("An error occurred while obtaining an object from the loose object store")]
         Loose(#[from] loose::find::Error),
+        #[error("An error occurred looking up a prefix which requires iteration")]
+        LooseWalkDir(#[from] loose::iter::Error),
         #[error("An error occurred while obtaining an object from the packed object store")]
         Pack(#[from] pack::data::decode_entry::Error),
         #[error(transparent)]
@@ -23,9 +25,88 @@ mod error {
         LoadPack(#[from] std::io::Error),
     }
 }
+use crate::find::{PotentialPrefix, PrefixLookupResult};
+use crate::Find;
 pub use error::Error;
 
 use crate::store::types::PackId;
+
+impl<S> super::Handle<S>
+where
+    S: Deref<Target = super::Store> + Clone,
+{
+    /// Given a prefix `candidate` with an object id and an initial `hex_len`, check if it only matches a single
+    /// object within the entire object database and increment its `hex_len` by one until it is unambiguous.
+    pub fn disambiguate_prefix(&self, mut candidate: PotentialPrefix) -> Result<Option<git_hash::Prefix>, Error> {
+        let max_hex_len = candidate.id().kind().len_in_hex();
+        if candidate.hex_len() == max_hex_len {
+            return Ok(self.contains(candidate.id()).then(|| candidate.to_prefix()));
+        }
+
+        while candidate.hex_len() != max_hex_len {
+            let res = self.lookup_prefix(candidate.to_prefix())?;
+            match res {
+                Some(Ok(_id)) => return Ok(Some(candidate.to_prefix())),
+                Some(Err(())) => {
+                    candidate.inc_hex_len();
+                    continue;
+                }
+                None => return Ok(None),
+            }
+        }
+        Ok(Some(candidate.to_prefix()))
+    }
+    /// Find the only object matching `prefix` and return it as `Ok(Some(Ok(<ObjectId>)))`, or return `Ok(Some(Err(()))`
+    /// if multiple different objects with the same prefix were found.
+    ///
+    /// Return `Ok(None)` if no object matched the `prefix`.
+    ///
+    /// ### Performance Note
+    ///
+    /// - Unless the handles refresh mode is set to `Never`, each lookup will trigger a refresh of the object databases files
+    ///   on disk if the prefix doesn't lead to ambiguous results.
+    /// - Since all objects need to be examined to assure non-amiguous return values, after calling this method all indices will
+    ///   be loaded.
+    pub fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Result<Option<crate::find::PrefixLookupResult>, Error> {
+        let mut candidate: Option<git_hash::ObjectId> = None;
+        loop {
+            let snapshot = self.snapshot.borrow();
+            for index in snapshot.indices.iter() {
+                let lookup_result = index.lookup_prefix(prefix);
+                if !check_candidate(lookup_result, &mut candidate) {
+                    return Ok(Some(Err(())));
+                }
+            }
+
+            for lodb in snapshot.loose_dbs.iter() {
+                let lookup_result = lodb.lookup_prefix(prefix)?;
+                if !check_candidate(lookup_result, &mut candidate) {
+                    return Ok(Some(Err(())));
+                }
+            }
+
+            match self.store.load_one_index(self.refresh, snapshot.marker)? {
+                Some(new_snapshot) => {
+                    drop(snapshot);
+                    *self.snapshot.borrow_mut() = new_snapshot;
+                }
+                None => return Ok(candidate.map(Ok)),
+            }
+        }
+
+        fn check_candidate(lookup_result: Option<PrefixLookupResult>, candidate: &mut Option<ObjectId>) -> bool {
+            match (lookup_result, &*candidate) {
+                (Some(Ok(oid)), Some(candidate)) if *candidate != oid => false,
+                (Some(Ok(_)), Some(_)) | (None, None) | (None, Some(_)) => true,
+                (Some(Err(())), _) => false,
+                (Some(Ok(oid)), None) => {
+                    *candidate = Some(oid);
+                    true
+                }
+            }
+        }
+    }
+}
 
 impl<S> git_pack::Find for super::Handle<S>
 where
@@ -36,16 +117,14 @@ where
     // TODO: probably make this method fallible, but that would mean its own error type.
     fn contains(&self, id: impl AsRef<oid>) -> bool {
         let id = id.as_ref();
+        let mut snapshot = self.snapshot.borrow_mut();
         loop {
-            let mut snapshot = self.snapshot.borrow_mut();
-            {
-                for (idx, index) in snapshot.indices.iter().enumerate() {
-                    if index.contains(id) {
-                        if idx != 0 {
-                            snapshot.indices.swap(0, idx);
-                        }
-                        return true;
+            for (idx, index) in snapshot.indices.iter().enumerate() {
+                if index.contains(id) {
+                    if idx != 0 {
+                        snapshot.indices.swap(0, idx);
                     }
+                    return true;
                 }
             }
 
@@ -55,10 +134,9 @@ where
                 }
             }
 
-            match self.store.load_one_index(self.refresh_mode, snapshot.marker) {
+            match self.store.load_one_index(self.refresh, snapshot.marker) {
                 Ok(Some(new_snapshot)) => {
-                    drop(snapshot);
-                    *self.snapshot.borrow_mut() = new_snapshot;
+                    *snapshot = new_snapshot;
                 }
                 Ok(None) => return false, // nothing more to load, or our refresh mode doesn't allow disk refreshes
                 Err(_) => return false, // something went wrong, nothing we can communicate here with this trait. TODO: Maybe that should change?
@@ -73,8 +151,8 @@ where
         pack_cache: &mut impl DecodeEntry,
     ) -> Result<Option<(Data<'a>, Option<Location>)>, Self::Error> {
         let id = id.as_ref();
+        let mut snapshot = self.snapshot.borrow_mut();
         'outer: loop {
-            let mut snapshot = self.snapshot.borrow_mut();
             {
                 let marker = snapshot.marker;
                 for (idx, index) in snapshot.indices.iter_mut().enumerate() {
@@ -93,10 +171,9 @@ where
                                 }
                                 None => {
                                     // The pack wasn't available anymore so we are supposed to try another round with a fresh index
-                                    match self.store.load_one_index(self.refresh_mode, snapshot.marker)? {
+                                    match self.store.load_one_index(self.refresh, snapshot.marker)? {
                                         Some(new_snapshot) => {
-                                            drop(snapshot);
-                                            *self.snapshot.borrow_mut() = new_snapshot;
+                                            *snapshot = new_snapshot;
                                             continue 'outer;
                                         }
                                         None => {
@@ -154,10 +231,9 @@ where
                 }
             }
 
-            match self.store.load_one_index(self.refresh_mode, snapshot.marker)? {
+            match self.store.load_one_index(self.refresh, snapshot.marker)? {
                 Some(new_snapshot) => {
-                    drop(snapshot);
-                    *self.snapshot.borrow_mut() = new_snapshot;
+                    *snapshot = new_snapshot;
                 }
                 None => return Ok(None),
             }
@@ -170,8 +246,8 @@ where
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
         );
         let id = id.as_ref();
+        let mut snapshot = self.snapshot.borrow_mut();
         'outer: loop {
-            let mut snapshot = self.snapshot.borrow_mut();
             {
                 let marker = snapshot.marker;
                 for (idx, index) in snapshot.indices.iter_mut().enumerate() {
@@ -190,10 +266,9 @@ where
                                 }
                                 None => {
                                     // The pack wasn't available anymore so we are supposed to try another round with a fresh index
-                                    match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
+                                    match self.store.load_one_index(self.refresh, snapshot.marker).ok()? {
                                         Some(new_snapshot) => {
-                                            drop(snapshot);
-                                            *self.snapshot.borrow_mut() = new_snapshot;
+                                            *snapshot = new_snapshot;
                                             continue 'outer;
                                         }
                                         None => {
@@ -227,10 +302,9 @@ where
                 }
             }
 
-            match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
+            match self.store.load_one_index(self.refresh, snapshot.marker).ok()? {
                 Some(new_snapshot) => {
-                    drop(snapshot);
-                    *self.snapshot.borrow_mut() = new_snapshot;
+                    *snapshot = new_snapshot;
                 }
                 None => return None,
             }
@@ -253,7 +327,7 @@ where
                 }
             }
 
-            match self.store.load_one_index(self.refresh_mode, snapshot.marker).ok()? {
+            match self.store.load_one_index(self.refresh, snapshot.marker).ok()? {
                 Some(new_snapshot) => {
                     drop(snapshot);
                     *self.snapshot.borrow_mut() = new_snapshot;
@@ -269,9 +343,9 @@ where
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
         );
         let pack_id = PackId::from_intrinsic_pack_id(location.pack_id);
+        let mut snapshot = self.snapshot.borrow_mut();
+        let marker = snapshot.marker;
         loop {
-            let mut snapshot = self.snapshot.borrow_mut();
-            let marker = snapshot.marker;
             {
                 for index in snapshot.indices.iter_mut() {
                     if let Some(possibly_pack) = index.pack(pack_id) {
@@ -279,7 +353,7 @@ where
                             Some(pack) => pack,
                             None => {
                                 let pack = self.store.load_pack(pack_id, marker).ok()?.expect(
-                                "BUG: pack must exist from previous call to locaion_by_oid() and must not be unloaded",
+                                "BUG: pack must exist from previous call to location_by_oid() and must not be unloaded",
                             );
                                 *possibly_pack = Some(pack);
                                 possibly_pack.as_deref().expect("just put it in")
