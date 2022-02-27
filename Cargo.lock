@@ -1315,6 +1315,7 @@ dependencies = [
  "atoi",
  "bitflags",
  "bstr",
+ "document-features",
  "filetime",
  "git-bitmap",
  "git-features 0.19.1",
