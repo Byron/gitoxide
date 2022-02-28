@@ -17,7 +17,7 @@ mod checkout {
     #[test]
     fn allow_symlinks() -> crate::Result {
         let opts = opts_with_symlink(true);
-        if !git_worktree::fs::Context::from_probing_cwd().symlink {
+        if !git_worktree::fs::Context::probe(std::env::current_dir()?).symlink {
             eprintln!("IGNORING symlink test on file system without symlink support");
             // skip if symlinks aren't supported anyway.
             return Ok(());

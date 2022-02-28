@@ -1,3 +1,5 @@
+use std::path::Path;
+
 /// Common knowledge about the worktree that is needed across most interactions with the work tree
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -20,45 +22,40 @@ pub struct Context {
 }
 
 impl Context {
-    /// try to determine all values in this context by probing them in the current working directory, which should be on the file system
-    /// the git repository is located on.
+    /// try to determine all values in this context by probing them in the given `directory`, which
+    /// should be on the file system the git repository is located on.
     ///
     /// All errors are ignored and interpreted on top of the default for the platform the binary is compiled for.
-    pub fn from_probing_cwd() -> Self {
+    pub fn probe(directory: impl AsRef<std::path::Path>) -> Self {
+        let root = directory.as_ref();
         let ctx = Context::default();
         Context {
-            symlink: Self::probe_symlink().unwrap_or(ctx.symlink),
+            symlink: Self::probe_symlink(root).unwrap_or(ctx.symlink),
             ..ctx
         }
     }
 
-    fn probe_symlink() -> Option<bool> {
-        let src_path = "__link_src_file";
-        std::fs::File::options()
-            .create_new(true)
-            .write(true)
-            .open(src_path)
-            .ok()?;
-        let link_path = "__file_link";
-        if symlink::symlink_file(src_path, link_path).is_err() {
-            std::fs::remove_file(src_path).ok();
-            return None;
+    fn probe_symlink(root: &Path) -> std::io::Result<bool> {
+        let src_path = root.join("__link_src_file");
+        std::fs::File::options().create_new(true).write(true).open(&src_path)?;
+        let link_path = root.join("__file_link");
+        if symlink::symlink_file(&src_path, &link_path).is_err() {
+            std::fs::remove_file(&src_path)?;
+            return Ok(false);
         }
         let cleanup_all = || {
-            std::fs::remove_file(src_path).ok();
-            symlink::remove_symlink_file(link_path)
-                .or_else(|_| std::fs::remove_file(link_path))
-                .ok();
+            let res = std::fs::remove_file(&src_path);
+            symlink::remove_symlink_file(&link_path)
+                .or_else(|_| std::fs::remove_file(&link_path))
+                .and(res)
         };
 
-        let res = Some(
-            std::fs::symlink_metadata(link_path)
-                .map_err(|_| cleanup_all())
-                .ok()?
-                .is_symlink(),
-        );
-        cleanup_all();
-        res
+        let res = std::fs::symlink_metadata(&link_path)
+            .or_else(|err| cleanup_all().and(Err(err)))?
+            .is_symlink();
+
+        cleanup_all()?;
+        Ok(res)
     }
 }
 

@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+mod fs;
 mod index;
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
