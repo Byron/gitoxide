@@ -109,17 +109,14 @@ pub(crate) mod entry {
                     use std::os::unix::fs::OpenOptionsExt;
                     options.mode(0o777);
                 }
-                let mut file = options.open(&dest)?;
-                file.write_all(obj.data)?;
-                let met = file.metadata()?;
-                let ctime = met
-                    .created()
-                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
-                let mtime = met
-                    .modified()
-                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
 
-                update_fstat(entry, ctime, mtime)?;
+                {
+                    let mut file = options.open(&dest)?;
+                    file.write_all(obj.data)?;
+                    // NOTE: we don't call `file.sync_all()` here knowing that some filesystems don't handle this well.
+                    //       revisit this once there is a bug to fix.
+                }
+                update_fstat(entry, dest.symlink_metadata()?)?;
             }
             git_index::entry::Mode::SYMLINK => {
                 let obj = find(&entry.id, buf).ok_or_else(|| index::checkout::Error::ObjectNotFound {
@@ -128,28 +125,14 @@ pub(crate) mod entry {
                 })?;
                 let symlink_destination = git_features::path::from_byte_slice(obj.data)
                     .map_err(|_| index::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
+
                 if symlink {
-                    #[cfg(unix)]
-                    std::os::unix::fs::symlink(symlink_destination, &dest)?;
-                    #[cfg(windows)]
-                    if dest.exists() {
-                        if dest.is_file() {
-                            std::os::windows::fs::symlink_file(symlink_destination, &dest)?;
-                        } else {
-                            std::os::windows::fs::symlink_dir(symlink_destination, &dest)?;
-                        }
-                    }
+                    symlink::symlink_auto(symlink_destination, &dest)?;
                 } else {
                     std::fs::write(&dest, obj.data)?;
                 }
-                let met = std::fs::symlink_metadata(&dest)?;
-                let ctime = met
-                    .created()
-                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
-                let mtime = met
-                    .modified()
-                    .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
-                update_fstat(entry, ctime, mtime)?;
+
+                update_fstat(entry, std::fs::symlink_metadata(&dest)?)?;
             }
             git_index::entry::Mode::DIR => todo!(),
             git_index::entry::Mode::COMMIT => todo!(),
@@ -158,7 +141,14 @@ pub(crate) mod entry {
         Ok(())
     }
 
-    fn update_fstat(entry: &mut Entry, ctime: Duration, mtime: Duration) -> Result<(), index::checkout::Error> {
+    fn update_fstat(entry: &mut Entry, meta: std::fs::Metadata) -> Result<(), index::checkout::Error> {
+        let ctime = meta
+            .created()
+            .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
+        let mtime = meta
+            .modified()
+            .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;
+
         let stat = &mut entry.stat;
         stat.mtime.secs = mtime
             .as_secs()
