@@ -8,7 +8,7 @@ fn from_probing_cwd() {
         .unwrap()
         .filter_map(Result::ok)
         .filter(|e| e.file_name().to_str() != Some("config"))
-        .map(|e| e.path().to_owned())
+        .map(|e| e.path())
         .collect();
     assert_eq!(
         entries.len(),
