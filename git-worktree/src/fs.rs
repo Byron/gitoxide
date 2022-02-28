@@ -22,22 +22,37 @@ pub struct Context {
 }
 
 impl Context {
-    /// try to determine all values in this context by probing them in the given `directory`, which
+    /// try to determine all values in this context by probing them in the given `git_dir`, which
     /// should be on the file system the git repository is located on.
+    /// `git_dir` is a typical git repository, expected to be populated with the typical files like `config`.
     ///
     /// All errors are ignored and interpreted on top of the default for the platform the binary is compiled for.
-    pub fn probe(directory: impl AsRef<std::path::Path>) -> Self {
-        let root = directory.as_ref();
+    pub fn probe(git_dir: impl AsRef<std::path::Path>) -> Self {
+        let root = git_dir.as_ref();
         let ctx = Context::default();
         Context {
             symlink: Self::probe_symlink(root).unwrap_or(ctx.symlink),
+            ignore_case: Self::probe_ignore_case(root).unwrap_or(ctx.ignore_case),
             ..ctx
         }
     }
 
+    fn probe_ignore_case(git_dir: &Path) -> std::io::Result<bool> {
+        std::fs::metadata(git_dir.join("cOnFiG")).map(|_| true).or_else(|err| {
+            if err.kind() == std::io::ErrorKind::NotFound {
+                Ok(false)
+            } else {
+                Err(err)
+            }
+        })
+    }
+
     fn probe_symlink(root: &Path) -> std::io::Result<bool> {
         let src_path = root.join("__link_src_file");
-        std::fs::File::options().create_new(true).write(true).open(&src_path)?;
+        std::fs::OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(&src_path)?;
         let link_path = root.join("__file_link");
         if symlink::symlink_file(&src_path, &link_path).is_err() {
             std::fs::remove_file(&src_path)?;

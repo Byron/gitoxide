@@ -1,10 +1,13 @@
 #[test]
 fn from_probing_cwd() {
     let dir = tempfile::tempdir().unwrap();
-    let _ctx = git_worktree::fs::Context::probe(dir.path());
+    std::fs::File::create(dir.path().join("config")).unwrap();
+    let ctx = git_worktree::fs::Context::probe(dir.path());
+    dbg!(ctx);
     let entries: Vec<_> = std::fs::read_dir(dir.path())
         .unwrap()
         .filter_map(Result::ok)
+        .filter(|e| e.file_name().to_str() != Some("config"))
         .map(|e| e.path().to_owned())
         .collect();
     assert_eq!(
