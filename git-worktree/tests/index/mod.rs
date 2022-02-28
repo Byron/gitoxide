@@ -17,7 +17,7 @@ mod checkout {
     #[test]
     fn allow_symlinks() -> crate::Result {
         let opts = opts_with_symlink(true);
-        if !git_worktree::fs::Context::probe(std::env::current_dir()?.join("..").join(".git")).symlink {
+        if !git_worktree::fs::Capabilities::probe(std::env::current_dir()?.join("..").join(".git")).symlink {
             eprintln!("IGNORING symlink test on file system without symlink support");
             // skip if symlinks aren't supported anyway.
             return Ok(());
@@ -30,7 +30,7 @@ mod checkout {
 
     fn opts_with_symlink(symlink: bool) -> Options {
         index::checkout::Options {
-            fs: git_worktree::fs::Context {
+            fs: git_worktree::fs::Capabilities {
                 symlink,
                 ..Default::default()
             },

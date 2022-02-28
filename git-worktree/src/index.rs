@@ -7,7 +7,7 @@ pub mod checkout {
     #[derive(Default, Clone, Copy)]
     pub struct Options {
         /// capabilities of the file system
-        pub fs: crate::fs::Context,
+        pub fs: crate::fs::Capabilities,
         /// If true, we assume no file to exist in the target directory, and want exclusive access to it.
         /// This should be enabled when cloning.
         pub destination_is_initially_empty: bool,
@@ -81,7 +81,12 @@ pub(crate) mod entry {
         find: &mut Find,
         root: &std::path::Path,
         index::checkout::Options {
-            fs: crate::fs::Context { symlink, .. },
+            fs:
+                crate::fs::Capabilities {
+                    symlink,
+                    executable_bit,
+                    ..
+                },
             ..
         }: index::checkout::Options,
         buf: &mut Vec<u8>,
@@ -103,20 +108,18 @@ pub(crate) mod entry {
                     path: root.to_path_buf(),
                 })?;
                 let mut options = OpenOptions::new();
-                options.write(true).create_new(true);
+                options.create_new(true).write(true);
                 #[cfg(unix)]
-                if entry.mode == git_index::entry::Mode::FILE_EXECUTABLE {
+                if executable_bit && entry.mode == git_index::entry::Mode::FILE_EXECUTABLE {
                     use std::os::unix::fs::OpenOptionsExt;
                     options.mode(0o777);
                 }
 
-                {
-                    let mut file = options.open(&dest)?;
-                    file.write_all(obj.data)?;
-                    // NOTE: we don't call `file.sync_all()` here knowing that some filesystems don't handle this well.
-                    //       revisit this once there is a bug to fix.
-                }
-                update_fstat(entry, dest.symlink_metadata()?)?;
+                let mut file = options.open(&dest)?;
+                file.write_all(obj.data)?;
+                // NOTE: we don't call `file.sync_all()` here knowing that some filesystems don't handle this well.
+                //       revisit this once there is a bug to fix.
+                update_fstat(entry, file.metadata()?)?;
             }
             git_index::entry::Mode::SYMLINK => {
                 let obj = find(&entry.id, buf).ok_or_else(|| index::checkout::Error::ObjectNotFound {
