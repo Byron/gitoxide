@@ -9,32 +9,33 @@ mod checkout {
     use git_object::bstr::ByteSlice;
     use git_odb::FindExt;
     use git_worktree::index;
+    use git_worktree::index::checkout::Options;
     use tempfile::TempDir;
 
     use crate::fixture_path;
 
     #[test]
     fn allow_symlinks() -> crate::Result {
-        let opts = index::checkout::Options {
-            fs: git_worktree::fs::Context {
-                symlink: true,
-                ..Default::default()
-            },
-        };
+        let opts = opts_with_symlink(true);
         let (source_tree, destination) = setup_fixture_with_options(opts, "make_mixed_without_submodules")?;
 
         assert_equality(&source_tree, &destination, opts.fs.symlink)?;
         Ok(())
     }
 
-    #[test]
-    fn symlinks_become_files_if_disabled() -> crate::Result {
-        let opts = index::checkout::Options {
+    fn opts_with_symlink(symlink: bool) -> Options {
+        index::checkout::Options {
             fs: git_worktree::fs::Context {
-                symlink: false,
+                symlink,
                 ..Default::default()
             },
-        };
+            destination_is_initially_empty: true,
+        }
+    }
+
+    #[test]
+    fn symlinks_become_files_if_disabled() -> crate::Result {
+        let opts = opts_with_symlink(false);
         let (source_tree, destination) = setup_fixture_with_options(opts, "make_mixed_without_submodules")?;
 
         assert_equality(&source_tree, &destination, opts.fs.symlink)?;

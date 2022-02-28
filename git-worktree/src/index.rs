@@ -8,6 +8,9 @@ pub mod checkout {
     pub struct Options {
         /// capabilities of the file system
         pub fs: crate::fs::Context,
+        /// If true, we assume no file to exist in the target directory, and want exclusive access to it.
+        /// This should be enabled when cloning.
+        pub destination_is_initially_empty: bool,
     }
 
     quick_error! {
@@ -42,6 +45,9 @@ pub fn checkout<Find>(
 where
     Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_object::BlobRef<'a>>,
 {
+    if !options.destination_is_initially_empty {
+        todo!("non-clone logic isn't implemented or vetted yet");
+    }
     let root = path.as_ref();
     let mut buf = Vec::new();
     for (entry, entry_path) in index.entries_mut_with_paths() {
@@ -76,6 +82,7 @@ pub(crate) mod entry {
         root: &std::path::Path,
         index::checkout::Options {
             fs: crate::fs::Context { symlink, .. },
+            ..
         }: index::checkout::Options,
         buf: &mut Vec<u8>,
     ) -> Result<(), index::checkout::Error>
