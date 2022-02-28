@@ -16,16 +16,12 @@ fn repo_rw(name: &str) -> crate::Result<(git_repository::Repository, tempfile::T
     ))
 }
 
-fn easy_repo_rw(name: &str) -> crate::Result<(Repository, tempfile::TempDir)> {
-    repo_rw(name).map(|(repo, dir)| (repo.into(), dir))
-}
-
 fn basic_repo() -> crate::Result<Repository> {
     repo("make_basic_repo.sh").map(|r| r.to_thread_local())
 }
 
 fn basic_rw_repo() -> crate::Result<(Repository, tempfile::TempDir)> {
-    easy_repo_rw("make_basic_repo.sh")
+    repo_rw("make_basic_repo.sh")
 }
 
 mod discover;
