@@ -8,9 +8,12 @@ fn repo(name: &str) -> crate::Result<ThreadSafeRepository> {
     Ok(ThreadSafeRepository::open(repo_path)?)
 }
 
-fn repo_rw(name: &str) -> crate::Result<(ThreadSafeRepository, tempfile::TempDir)> {
+fn repo_rw(name: &str) -> crate::Result<(git_repository::Repository, tempfile::TempDir)> {
     let repo_path = git_testtools::scripted_fixture_repo_writable(name)?;
-    Ok((ThreadSafeRepository::discover(repo_path.path())?, repo_path))
+    Ok((
+        ThreadSafeRepository::discover(repo_path.path())?.to_thread_local(),
+        repo_path,
+    ))
 }
 
 fn easy_repo_rw(name: &str) -> crate::Result<(Repository, tempfile::TempDir)> {

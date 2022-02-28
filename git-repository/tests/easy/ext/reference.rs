@@ -3,7 +3,7 @@ mod set_namespace {
     use git_repository::refs::transaction::PreviousValue;
 
     fn easy_repo_rw() -> crate::Result<(git::Repository, tempfile::TempDir)> {
-        crate::repo_rw("make_references_repo.sh").map(|(r, d)| (r.to_thread_local(), d))
+        crate::repo_rw("make_references_repo.sh")
     }
 
     #[test]

@@ -1,4 +1,5 @@
 //!
+use std::convert::TryInto;
 use std::ops::Deref;
 
 use git_hash::{oid, ObjectId};
@@ -28,11 +29,22 @@ impl<'repo> Id<'repo> {
 
     /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`.
     pub fn prefix(&self) -> Result<git_hash::Prefix, prefix::Error> {
-        // let hex_len = self.handle.config.get_int("core.abbrev")?;
+        let hex_len = self.repo.config_int("core.abbrev", 8);
+        let hex_len = hex_len.try_into().map_err(|_| prefix::Error::ConfigValue {
+            actual: hex_len,
+            max_range: self.inner.kind().len_in_hex(),
+            err: None,
+        })?;
+        let prefix =
+            git_odb::find::PotentialPrefix::new(self.inner, hex_len).map_err(|err| prefix::Error::ConfigValue {
+                actual: hex_len as i64,
+                max_range: self.inner.kind().len_in_hex(),
+                err: Some(err),
+            })?;
         Ok(self
             .repo
             .objects
-            .disambiguate_prefix(git_odb::find::PotentialPrefix::new(self.inner, 7)?)
+            .disambiguate_prefix(prefix)
             .map_err(crate::object::find::existing::OdbError::Find)?
             .ok_or(crate::object::find::existing::OdbError::NotFound { oid: self.inner })?)
     }
@@ -46,10 +58,13 @@ mod prefix {
     pub enum Error {
         #[error(transparent)]
         FindExisting(#[from] crate::object::find::existing::OdbError),
-        #[error(transparent)]
-        Config(#[from] crate::config::open::Error),
-        #[error(transparent)]
-        Prefix(#[from] git_hash::prefix::Error),
+        #[error("core.abbrev length was {}, but needs to be between 4 and {}", .actual, .max_range)]
+        ConfigValue {
+            #[source]
+            err: Option<git_hash::prefix::Error>,
+            actual: i64,
+            max_range: usize,
+        },
     }
 }
 
