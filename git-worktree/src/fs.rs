@@ -33,6 +33,7 @@ impl Context {
         Context {
             symlink: Self::probe_symlink(root).unwrap_or(ctx.symlink),
             ignore_case: Self::probe_ignore_case(root).unwrap_or(ctx.ignore_case),
+            precompose_unicode: Self::probe_precompose_unicode(root).unwrap_or(ctx.precompose_unicode),
             ..ctx
         }
     }
@@ -47,6 +48,20 @@ impl Context {
         })
     }
 
+    fn probe_precompose_unicode(root: &Path) -> std::io::Result<bool> {
+        let precomposed = "ä";
+        let decomposed = "a\u{308}";
+
+        let precomposed = root.join(precomposed);
+        std::fs::OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(&precomposed)?;
+        let res = root.join(decomposed).symlink_metadata().map(|_| true);
+        std::fs::remove_file(precomposed)?;
+        res
+    }
+
     fn probe_symlink(root: &Path) -> std::io::Result<bool> {
         let src_path = root.join("__link_src_file");
         std::fs::OpenOptions::new()
@@ -58,19 +73,13 @@ impl Context {
             std::fs::remove_file(&src_path)?;
             return Ok(false);
         }
-        let cleanup_all = || {
-            let res = std::fs::remove_file(&src_path);
-            symlink::remove_symlink_file(&link_path)
-                .or_else(|_| std::fs::remove_file(&link_path))
-                .and(res)
-        };
 
-        let res = std::fs::symlink_metadata(&link_path)
-            .or_else(|err| cleanup_all().and(Err(err)))?
-            .is_symlink();
-
-        cleanup_all()?;
-        Ok(res)
+        let res = std::fs::symlink_metadata(&link_path).map(|m| m.is_symlink());
+        let cleanup = std::fs::remove_file(&src_path);
+        symlink::remove_symlink_file(&link_path)
+            .or_else(|_| std::fs::remove_file(&link_path))
+            .and(cleanup)?;
+        res
     }
 }
 
