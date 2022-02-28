@@ -17,6 +17,11 @@ mod checkout {
     #[test]
     fn allow_symlinks() -> crate::Result {
         let opts = opts_with_symlink(true);
+        if !git_worktree::fs::Context::from_probing_cwd().symlink {
+            eprintln!("IGNORING symlink test on file system without symlink support");
+            // skip if symlinks aren't supported anyway.
+            return Ok(());
+        };
         let (source_tree, destination) = setup_fixture_with_options(opts, "make_mixed_without_submodules")?;
 
         assert_equality(&source_tree, &destination, opts.fs.symlink)?;

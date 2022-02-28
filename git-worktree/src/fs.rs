@@ -19,6 +19,49 @@ pub struct Context {
     pub symlink: bool,
 }
 
+impl Context {
+    /// try to determine all values in this context by probing them in the current working directory, which should be on the file system
+    /// the git repository is located on.
+    ///
+    /// All errors are ignored and interpreted on top of the default for the platform the binary is compiled for.
+    pub fn from_probing_cwd() -> Self {
+        let ctx = Context::default();
+        Context {
+            symlink: Self::probe_symlink().unwrap_or(ctx.symlink),
+            ..ctx
+        }
+    }
+
+    fn probe_symlink() -> Option<bool> {
+        let src_path = "__link_src_file";
+        std::fs::File::options()
+            .create_new(true)
+            .write(true)
+            .open(src_path)
+            .ok()?;
+        let link_path = "__file_link";
+        if symlink::symlink_file(src_path, link_path).is_err() {
+            std::fs::remove_file(src_path).ok();
+            return None;
+        }
+        let cleanup_all = || {
+            std::fs::remove_file(src_path).ok();
+            symlink::remove_symlink_file(link_path)
+                .or_else(|_| std::fs::remove_file(link_path))
+                .ok();
+        };
+
+        let res = Some(
+            std::fs::symlink_metadata(link_path)
+                .map_err(|_| cleanup_all())
+                .ok()?
+                .is_symlink(),
+        );
+        cleanup_all();
+        res
+    }
+}
+
 #[cfg(windows)]
 impl Default for Context {
     fn default() -> Self {

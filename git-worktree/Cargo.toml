@@ -28,6 +28,7 @@ quick-error = "2.0.1"
 bstr = { version = "0.2.13", default-features = false }
 
 document-features = { version = "0.2.0", optional = true }
+symlink = "0.1.0"
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
