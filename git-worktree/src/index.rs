@@ -4,15 +4,10 @@ pub mod checkout {
     use bstr::BString;
     use quick_error::quick_error;
 
-    #[derive(Clone, Copy)]
+    #[derive(Default, Clone, Copy)]
     pub struct Options {
-        pub symlinks: bool,
-    }
-
-    impl Default for Options {
-        fn default() -> Self {
-            Options { symlinks: true }
-        }
+        /// capabilities of the file system
+        pub fs: crate::fs::Context,
     }
 
     quick_error! {
@@ -79,7 +74,9 @@ pub(crate) mod entry {
         entry_path: &BStr,
         find: &mut Find,
         root: &std::path::Path,
-        index::checkout::Options { symlinks }: index::checkout::Options,
+        index::checkout::Options {
+            fs: crate::fs::Context { symlink, .. },
+        }: index::checkout::Options,
         buf: &mut Vec<u8>,
     ) -> Result<(), index::checkout::Error>
     where
@@ -124,7 +121,7 @@ pub(crate) mod entry {
                 })?;
                 let symlink_destination = git_features::path::from_byte_slice(obj.data)
                     .map_err(|_| index::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
-                if symlinks {
+                if symlink {
                     #[cfg(unix)]
                     std::os::unix::fs::symlink(symlink_destination, &dest)?;
                     #[cfg(windows)]

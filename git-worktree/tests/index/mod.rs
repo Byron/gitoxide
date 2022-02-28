@@ -15,19 +15,29 @@ mod checkout {
 
     #[test]
     fn allow_symlinks() -> crate::Result {
-        let opts = Default::default();
-        let (source_tree, destination) = setup_fixture_with_options(opts)?;
+        let opts = index::checkout::Options {
+            fs: git_worktree::fs::Context {
+                symlink: true,
+                ..Default::default()
+            },
+        };
+        let (source_tree, destination) = setup_fixture_with_options(opts, "make_mixed_without_submodules")?;
 
-        assert_equality(&source_tree, &destination, opts.symlinks)?;
+        assert_equality(&source_tree, &destination, opts.fs.symlink)?;
         Ok(())
     }
 
     #[test]
     fn symlinks_become_files_if_disabled() -> crate::Result {
-        let opts = index::checkout::Options { symlinks: false };
-        let (source_tree, destination) = setup_fixture_with_options(opts)?;
+        let opts = index::checkout::Options {
+            fs: git_worktree::fs::Context {
+                symlink: false,
+                ..Default::default()
+            },
+        };
+        let (source_tree, destination) = setup_fixture_with_options(opts, "make_mixed_without_submodules")?;
 
-        assert_equality(&source_tree, &destination, opts.symlinks)?;
+        assert_equality(&source_tree, &destination, opts.fs.symlink)?;
 
         Ok(())
     }
@@ -71,8 +81,11 @@ mod checkout {
         files
     }
 
-    fn setup_fixture_with_options(opts: git_worktree::index::checkout::Options) -> crate::Result<(PathBuf, TempDir)> {
-        let source_tree = fixture_path("make_repo");
+    fn setup_fixture_with_options(
+        opts: git_worktree::index::checkout::Options,
+        name: &str,
+    ) -> crate::Result<(PathBuf, TempDir)> {
+        let source_tree = fixture_path(name);
         let git_dir = source_tree.join(".git");
         let mut index = git_index::File::at(git_dir.join("index"), Default::default())?;
         let odb = git_odb::at(git_dir.join("objects"))?;
