@@ -323,8 +323,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
       * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
   * [ ] All mutations are multi-process safe and this is tested and configurable (i.e. abort or wait if lock is encountered)
 * **Easy** (_porcelain_)
-  * **oid**
-    * [ ] short hashes with detection of ambiguity.
+  * **Id**
+    * [x] short hashes with detection of ambiguity.
   * **objects**
     * [x] lookup
     * [x] peel to object kind
@@ -337,6 +337,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
       * [ ] shallow
       * [ ] namespaces support
   * [ ] sparse checkout support
+  * [ ] `git describe` like functionality
   * [ ] execute hooks
   * [ ] .gitignore handling
   * [ ] checkout/stage conversions clean + smudge as in .gitattributes
