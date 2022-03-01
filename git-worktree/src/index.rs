@@ -108,7 +108,7 @@ pub(crate) mod entry {
                     path: root.to_path_buf(),
                 })?;
                 let mut options = OpenOptions::new();
-                options.create_new(true).write(true);
+                options.create(true).write(true);
                 #[cfg(unix)]
                 if executable_bit && entry.mode == git_index::entry::Mode::FILE_EXECUTABLE {
                     use std::os::unix::fs::OpenOptionsExt;
