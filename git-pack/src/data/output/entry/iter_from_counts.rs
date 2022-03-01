@@ -56,7 +56,6 @@ where
     );
     let (chunk_size, thread_limit, _) =
         parallel::optimize_chunk_size_and_thread_limit(chunk_size, Some(counts.len()), thread_limit, None);
-    let chunks = util::ChunkRanges::new(chunk_size, counts.len());
     {
         let progress = Arc::new(parking_lot::Mutex::new(progress.add_child("resolving")));
         progress.lock().init(None, git_features::progress::count("counts"));
@@ -64,23 +63,13 @@ where
         let start = std::time::Instant::now();
         parallel::in_parallel_if(
             || enough_counts_present,
-            chunks.clone(),
+            counts.chunks_mut(chunk_size),
             thread_limit,
             |_n| Vec::<u8>::new(),
             {
                 let progress = Arc::clone(&progress);
-                let counts = &counts;
                 let db = db.clone();
-                move |chunk_range, buf| {
-                    let chunk = {
-                        let c = &counts[chunk_range];
-                        let mut_ptr = c.as_ptr() as *mut output::Count;
-                        // SAFETY: We know that 'chunks' is only non-overlapping slices, and this function owns `counts`.
-                        #[allow(unsafe_code)]
-                        unsafe {
-                            std::slice::from_raw_parts_mut(mut_ptr, c.len())
-                        }
-                    };
+                move |chunk, buf| {
                     let chunk_size = chunk.len();
                     for count in chunk {
                         use crate::data::output::count::PackLocation::*;
@@ -135,8 +124,10 @@ where
             index
         }
     };
+
     let counts = Arc::new(counts);
     let progress = Arc::new(parking_lot::Mutex::new(progress));
+    let chunks = util::ChunkRanges::new(chunk_size, counts.len());
 
     parallel::reduce::Stepwise::new(
         chunks.enumerate(),
