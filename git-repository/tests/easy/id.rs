@@ -10,6 +10,7 @@ fn prefix() -> crate::Result {
     assert_eq!(prefix.cmp_oid(&id), Ordering::Equal);
     assert_eq!(prefix.hex_len(), 8, "preconfigured via core.abbrev default value");
 
+    // TODO: do this in-memory (with or without writing to disk)
     assert!(
         std::process::Command::new("git")
             .current_dir(worktree_dir.path())

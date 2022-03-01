@@ -15,6 +15,17 @@ impl<'repo> From<Object<'repo>> for DetachedObject {
     }
 }
 
+impl<'repo> From<Commit<'repo>> for Object<'repo> {
+    fn from(mut r: Commit<'repo>) -> Self {
+        Object {
+            id: r.id,
+            kind: git_object::Kind::Commit,
+            data: steal_from_freelist(&mut r.data),
+            repo: r.repo,
+        }
+    }
+}
+
 impl<'repo> AsRef<[u8]> for Object<'repo> {
     fn as_ref(&self) -> &[u8] {
         &self.data

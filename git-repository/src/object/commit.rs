@@ -22,6 +22,12 @@ mod error {
 pub use error::Error;
 
 impl<'repo> Commit<'repo> {
+    /// Turn this objects id into a shortened id with a length in hex as configured by `core.abbrev`.
+    pub fn short_id(&self) -> Result<git_hash::Prefix, crate::id::prefix::Error> {
+        use crate::ext::ObjectIdExt;
+        self.id.attach(self.repo).prefix()
+    }
+
     /// Parse the commits message into a [`MessageRef`][git_object::commit::MessageRef], after decoding the entire commit object.
     pub fn message(&self) -> Result<git_object::commit::MessageRef<'_>, git_object::decode::Error> {
         Ok(self.decode()?.message())

@@ -51,8 +51,8 @@ impl<'repo> Id<'repo> {
 }
 
 ///
-mod prefix {
-    /// Returned by [`Oid::prefix()`][super::Oid::prefix()].
+pub mod prefix {
+    /// Returned by [`Id::prefix()`][super::Id::prefix()].
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]
     pub enum Error {

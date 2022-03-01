@@ -1,19 +1,29 @@
 mod commit {
     use git_repository::{Commit, Repository};
     use git_testtools::hex_to_id;
+    use std::cmp::Ordering;
 
     use crate::basic_repo;
 
     #[test]
-    fn tree() {
-        let handle = basic_repo().unwrap();
+    fn short_id() -> crate::Result {
+        let handle = basic_repo()?;
+        let commit = head_commit(&handle);
+        assert_eq!(commit.short_id()?.cmp_oid(&commit.id), Ordering::Equal);
+        Ok(())
+    }
+
+    #[test]
+    fn tree() -> crate::Result {
+        let handle = basic_repo()?;
         let commit = head_commit(&handle);
 
-        assert_eq!(commit.tree().unwrap().id, commit.tree_id().expect("id present"));
+        assert_eq!(commit.tree()?.id, commit.tree_id().expect("id present"));
         assert_eq!(
             commit.tree_id(),
             Some(hex_to_id("21d3ba9a26b790a4858d67754ae05d04dfce4d0c"))
-        )
+        );
+        Ok(())
     }
 
     #[test]
@@ -27,15 +37,7 @@ mod commit {
     }
 
     fn head_commit(repo: &Repository) -> Commit<'_> {
-        repo.head()
-            .unwrap()
-            // TODO: Add something like peel_to_commit() to cut the chain, deal with unborn as Error
-            .into_fully_peeled_id()
-            .expect("born")
-            .unwrap()
-            .object()
-            .unwrap()
-            .into_commit()
+        repo.head().unwrap().peel_to_commit_in_place().unwrap()
     }
 }
 

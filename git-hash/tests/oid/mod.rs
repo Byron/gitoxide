@@ -14,17 +14,19 @@ mod prefix {
                 prefix.cmp_oid(&hex_to_id("b920bbf055e1efb9080592a409d3975738b6efb3")),
                 Ordering::Less
             );
+            assert_eq!(prefix.to_string(), "b920bbb");
         }
 
         #[test]
         fn it_detects_equality() {
-            let id = hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3");
-            let prefix = git_hash::Prefix::new(id, 7).unwrap();
+            let id = hex_to_id("a920bbb055e1efb9080592a409d3975738b6efb3");
+            let prefix = git_hash::Prefix::new(id, 6).unwrap();
             assert_eq!(prefix.cmp_oid(&id), Ordering::Equal);
             assert_eq!(
-                prefix.cmp_oid(&hex_to_id("b920bbbfffffffffffffffffffffffffffffffff")),
+                prefix.cmp_oid(&hex_to_id("a920bbffffffffffffffffffffffffffffffffff")),
                 Ordering::Equal
             );
+            assert_eq!(prefix.to_string(), "a920bb");
         }
     }
     mod new {
