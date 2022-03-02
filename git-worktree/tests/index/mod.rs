@@ -14,27 +14,6 @@ mod checkout {
 
     use crate::fixture_path;
 
-    fn probe_gitoxide_dir() -> crate::Result<Capabilities> {
-        Ok(git_worktree::fs::Capabilities::probe(
-            std::env::current_dir()?.join("..").join(".git"),
-        ))
-    }
-
-    fn opts_with_symlink(symlink: bool) -> index::checkout::Options {
-        index::checkout::Options {
-            fs: git_worktree::fs::Capabilities {
-                symlink,
-                ..Default::default()
-            },
-            destination_is_initially_empty: true,
-            ..Default::default()
-        }
-    }
-
-    fn paths<'a>(p: impl IntoIterator<Item = &'a str>) -> Vec<PathBuf> {
-        p.into_iter().map(PathBuf::from).collect()
-    }
-
     #[test]
     fn symlinks_become_files_if_disabled() -> crate::Result {
         let opts = opts_with_symlink(false);
@@ -204,5 +183,26 @@ mod checkout {
 
     fn stripped_prefix(prefix: impl AsRef<Path>, source_files: &[PathBuf]) -> Vec<&Path> {
         source_files.iter().flat_map(|p| p.strip_prefix(&prefix)).collect()
+    }
+
+    fn probe_gitoxide_dir() -> crate::Result<Capabilities> {
+        Ok(git_worktree::fs::Capabilities::probe(
+            std::env::current_dir()?.join("..").join(".git"),
+        ))
+    }
+
+    fn opts_with_symlink(symlink: bool) -> index::checkout::Options {
+        index::checkout::Options {
+            fs: git_worktree::fs::Capabilities {
+                symlink,
+                ..Default::default()
+            },
+            destination_is_initially_empty: true,
+            ..Default::default()
+        }
+    }
+
+    fn paths<'a>(p: impl IntoIterator<Item = &'a str>) -> Vec<PathBuf> {
+        p.into_iter().map(PathBuf::from).collect()
     }
 }
