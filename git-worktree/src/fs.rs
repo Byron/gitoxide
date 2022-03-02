@@ -55,7 +55,7 @@ impl Capabilities {
     }
 
     #[cfg(not(unix))]
-    fn probe_file_mode(root: &Path) -> std::io::Result<bool> {
+    fn probe_file_mode(_root: &Path) -> std::io::Result<bool> {
         Ok(false)
     }
 

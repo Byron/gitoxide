@@ -87,6 +87,7 @@ pub fn checkout<Find>(
 where
     Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_object::BlobRef<'a>>,
 {
+    use std::io::ErrorKind::AlreadyExists;
     let root = path.as_ref();
     let mut buf = Vec::new();
     let mut collisions = Vec::new();
@@ -100,9 +101,17 @@ where
         match res {
             Ok(()) => {}
             // TODO: use ::IsDirectory as well when stabilized instead of raw_os_error()
+            #[cfg(windows)]
             Err(index::checkout::Error::Io(err))
-                if err.kind() == std::io::ErrorKind::AlreadyExists || err.raw_os_error() == Some(21) =>
+                if err.kind() == AlreadyExists || err.kind() == std::io::ErrorKind::PermissionDenied =>
             {
+                collisions.push(Collision {
+                    path: entry_path.into(),
+                    error_kind: err.kind(),
+                });
+            }
+            #[cfg(not(windows))]
+            Err(index::checkout::Error::Io(err)) if err.kind() == AlreadyExists || err.raw_os_error() == Some(21) => {
                 // We are here because a file existed or was blocked by a directory which shouldn't be possible unless
                 // we are on a file insensitive file system.
                 collisions.push(Collision {
@@ -136,6 +145,7 @@ pub(crate) mod entry {
 
     use crate::index;
 
+    #[cfg_attr(not(unix), allow(unused_variables))]
     pub fn checkout<Find>(
         entry: &mut Entry,
         entry_path: &BStr,

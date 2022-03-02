@@ -84,24 +84,30 @@ mod checkout {
         let (source_tree, destination, _index, outcome) =
             checkout_index_in_tmp_dir(opts, "make_ignorecase_collisions").unwrap();
 
+        let error_kind = ErrorKind::AlreadyExists;
+        #[cfg(windows)]
+        let error_kind_dir = ErrorKind::PermissionDenied;
+        #[cfg(not(windows))]
+        let error_kind_dir = error_kind;
+
         assert_eq!(
             outcome.collisions,
             vec![
                 Collision {
                     path: "FILE_x".into(),
-                    error_kind: ErrorKind::AlreadyExists,
+                    error_kind,
                 },
                 Collision {
                     path: "d".into(),
-                    error_kind: ErrorKind::AlreadyExists,
+                    error_kind: error_kind_dir,
                 },
                 Collision {
                     path: "file_X".into(),
-                    error_kind: ErrorKind::AlreadyExists,
+                    error_kind,
                 },
                 Collision {
                     path: "file_x".into(),
-                    error_kind: ErrorKind::AlreadyExists,
+                    error_kind,
                 },
             ],
             "these files couldn't be checked out"
