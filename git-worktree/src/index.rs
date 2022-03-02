@@ -1,16 +1,35 @@
 use git_hash::oid;
 
+use crate::{index, index::checkout::Collision};
+
 pub mod checkout {
     use bstr::BString;
     use quick_error::quick_error;
+
+    #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct Collision {
+        /// the path that collided with something already present on disk.
+        pub path: BString,
+        /// The io error we encountered when checking out `path`.
+        pub error_kind: std::io::ErrorKind,
+    }
+
+    pub struct Outcome {
+        pub collisions: Vec<Collision>,
+    }
 
     #[derive(Clone, Copy)]
     pub struct Options {
         /// capabilities of the file system
         pub fs: crate::fs::Capabilities,
         /// If true, we assume no file to exist in the target directory, and want exclusive access to it.
-        /// This should be enabled when cloning.
+        /// This should be enabled when cloning to avoid checks for freshness of files. This also enables
+        /// detection of collisions based on whether or not exclusive file creation succeeds or fails.
         pub destination_is_initially_empty: bool,
+        /// If true, default false, try to checkout as much as possible and don't abort on first error which isn't
+        /// due to a conflict.
+        /// The operation will never fail, but count the encountered errors instead along with their paths.
+        pub keep_going: bool,
         /// If true, a files creation time is taken into consideration when checking if a file changed.
         /// Can be set to false in case other tools alter the creation time in ways that interfere with our operation.
         ///
@@ -29,6 +48,7 @@ pub mod checkout {
             Options {
                 fs: Default::default(),
                 destination_is_initially_empty: false,
+                keep_going: false,
                 trust_ctime: true,
                 check_stat: true,
             }
@@ -63,24 +83,43 @@ pub fn checkout<Find>(
     path: impl AsRef<std::path::Path>,
     mut find: Find,
     options: checkout::Options,
-) -> Result<(), checkout::Error>
+) -> Result<checkout::Outcome, checkout::Error>
 where
     Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_object::BlobRef<'a>>,
 {
-    if !options.destination_is_initially_empty {
-        todo!("non-clone logic isn't implemented or vetted yet");
-    }
     let root = path.as_ref();
     let mut buf = Vec::new();
+    let mut collisions = Vec::new();
     for (entry, entry_path) in index.entries_mut_with_paths() {
         // TODO: write test for that
         if entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
             continue;
         }
 
-        entry::checkout(entry, entry_path, &mut find, root, options, &mut buf)?;
+        let res = entry::checkout(entry, entry_path, &mut find, root, options, &mut buf);
+        match res {
+            Ok(()) => {}
+            // TODO: use ::IsDirectory as well when stabilized instead of raw_os_error()
+            Err(index::checkout::Error::Io(err))
+                if err.kind() == std::io::ErrorKind::AlreadyExists || err.raw_os_error() == Some(21) =>
+            {
+                // We are here because a file existed or was blocked by a directory which shouldn't be possible unless
+                // we are on a file insensitive file system.
+                collisions.push(Collision {
+                    path: entry_path.into(),
+                    error_kind: err.kind(),
+                });
+            }
+            Err(err) => {
+                if options.keep_going {
+                    todo!("keep going")
+                } else {
+                    return Err(err);
+                }
+            }
+        }
     }
-    Ok(())
+    Ok(checkout::Outcome { collisions })
 }
 
 pub(crate) mod entry {
@@ -109,6 +148,7 @@ pub(crate) mod entry {
                     executable_bit,
                     ..
                 },
+            destination_is_initially_empty,
             ..
         }: index::checkout::Options,
         buf: &mut Vec<u8>,
@@ -130,7 +170,10 @@ pub(crate) mod entry {
                     path: root.to_path_buf(),
                 })?;
                 let mut options = OpenOptions::new();
-                options.create(true).write(true);
+                options
+                    .create_new(destination_is_initially_empty)
+                    .create(!destination_is_initially_empty)
+                    .write(true);
                 #[cfg(unix)]
                 if executable_bit && entry.mode == git_index::entry::Mode::FILE_EXECUTABLE {
                     use std::os::unix::fs::OpenOptionsExt;
@@ -151,6 +194,8 @@ pub(crate) mod entry {
                 let symlink_destination = git_features::path::from_byte_slice(obj.data)
                     .map_err(|_| index::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
 
+                // TODO: how to deal with mode changes? Maybe this info can be passed once we check for whether
+                // a checkout is needed at all.
                 if symlink {
                     symlink::symlink_auto(symlink_destination, &dest)?;
                 } else {

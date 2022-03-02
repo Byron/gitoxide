@@ -3,13 +3,13 @@ mod checkout {
     use std::os::unix::prelude::MetadataExt;
     use std::{
         fs,
+        io::ErrorKind,
         path::{Path, PathBuf},
     };
 
     use git_object::bstr::ByteSlice;
     use git_odb::FindExt;
-    use git_worktree::fs::Capabilities;
-    use git_worktree::index;
+    use git_worktree::{fs::Capabilities, index, index::checkout::Collision};
     use tempfile::TempDir;
 
     use crate::fixture_path;
@@ -34,9 +34,11 @@ mod checkout {
     #[test]
     fn symlinks_become_files_if_disabled() -> crate::Result {
         let opts = opts_with_symlink(false);
-        let (source_tree, destination, _index) = checkout_index_in_tmp_dir(opts, "make_mixed_without_submodules")?;
+        let (source_tree, destination, _index, outcome) =
+            checkout_index_in_tmp_dir(opts, "make_mixed_without_submodules")?;
 
         assert_equality(&source_tree, &destination, opts.fs.symlink)?;
+        assert!(outcome.collisions.is_empty());
 
         Ok(())
     }
@@ -49,9 +51,11 @@ mod checkout {
             // skip if symlinks aren't supported anyway.
             return Ok(());
         };
-        let (source_tree, destination, _index) = checkout_index_in_tmp_dir(opts, "make_mixed_without_submodules")?;
+        let (source_tree, destination, _index, outcome) =
+            checkout_index_in_tmp_dir(opts, "make_mixed_without_submodules")?;
 
         assert_equality(&source_tree, &destination, opts.fs.symlink)?;
+        assert!(outcome.collisions.is_empty());
         Ok(())
     }
 
@@ -62,11 +66,12 @@ mod checkout {
             return;
         }
         let opts = opts_with_symlink(true);
-        let (source_tree, destination, index) = checkout_index_in_tmp_dir(opts, "make_ignorecase_collisions").unwrap();
-        assert_eq!(index.entries().len(), 2, "there is just one colliding item");
+        let (source_tree, destination, index, outcome) =
+            checkout_index_in_tmp_dir(opts, "make_ignorecase_collisions").unwrap();
 
         let num_files = assert_equality(&source_tree, &destination, opts.fs.symlink).unwrap();
         assert_eq!(num_files, index.entries().len(), "it checks out all files");
+        assert!(outcome.collisions.is_empty());
     }
 
     #[test]
@@ -76,21 +81,44 @@ mod checkout {
             return;
         }
         let opts = opts_with_symlink(true);
-        let (source_tree, destination, index) = checkout_index_in_tmp_dir(opts, "make_ignorecase_collisions").unwrap();
-        assert_eq!(index.entries().len(), 2, "there is just one colliding item");
+        let (source_tree, destination, _index, outcome) =
+            checkout_index_in_tmp_dir(opts, "make_ignorecase_collisions").unwrap();
+
+        assert_eq!(
+            outcome.collisions,
+            vec![
+                Collision {
+                    path: "FILE_x".into(),
+                    error_kind: ErrorKind::AlreadyExists,
+                },
+                Collision {
+                    path: "d".into(),
+                    error_kind: ErrorKind::AlreadyExists,
+                },
+                Collision {
+                    path: "file_X".into(),
+                    error_kind: ErrorKind::AlreadyExists,
+                },
+                Collision {
+                    path: "file_x".into(),
+                    error_kind: ErrorKind::AlreadyExists,
+                },
+            ],
+            "these files couldn't be checked out"
+        );
 
         let source_files = dir_structure(&source_tree);
         assert_eq!(
             stripped_prefix(&source_tree, &source_files),
-            vec![PathBuf::from("a")],
-            "the source also only contains the first created file"
+            vec![PathBuf::from("d"), PathBuf::from("file_x")],
+            "plenty of collisions prevent a checkout"
         );
 
         let dest_files = dir_structure(&destination);
         assert_eq!(
             stripped_prefix(&destination, &dest_files),
-            vec![PathBuf::from("A")],
-            "it only creates the first file of a collision"
+            vec![PathBuf::from("D/B"), PathBuf::from("D/C"), PathBuf::from("FILE_X")],
+            "we checkout files in order and generally handle collision detection differently, hence the difference"
         );
     }
 
@@ -138,20 +166,25 @@ mod checkout {
     fn checkout_index_in_tmp_dir(
         opts: index::checkout::Options,
         name: &str,
-    ) -> crate::Result<(PathBuf, TempDir, git_index::File)> {
+    ) -> crate::Result<(
+        PathBuf,
+        TempDir,
+        git_index::File,
+        git_worktree::index::checkout::Outcome,
+    )> {
         let source_tree = fixture_path(name);
         let git_dir = source_tree.join(".git");
         let mut index = git_index::File::at(git_dir.join("index"), Default::default())?;
         let odb = git_odb::at(git_dir.join("objects"))?;
         let destination = tempfile::tempdir()?;
 
-        index::checkout(
+        let outcome = index::checkout(
             &mut index,
             &destination,
             move |oid, buf| odb.find_blob(oid, buf).ok(),
             opts,
         )?;
-        Ok((source_tree, destination, index))
+        Ok((source_tree, destination, index, outcome))
     }
 
     fn stripped_prefix(prefix: impl AsRef<Path>, source_files: &[PathBuf]) -> Vec<&Path> {
