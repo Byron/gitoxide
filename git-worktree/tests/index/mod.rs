@@ -31,6 +31,10 @@ mod checkout {
         }
     }
 
+    fn paths<'a>(p: impl IntoIterator<Item = &'a str>) -> Vec<PathBuf> {
+        p.into_iter().map(PathBuf::from).collect()
+    }
+
     #[test]
     fn symlinks_become_files_if_disabled() -> crate::Result {
         let opts = opts_with_symlink(false);
@@ -76,11 +80,12 @@ mod checkout {
 
     #[test]
     fn collisions_are_detected_on_a_case_sensitive_filesystem() {
-        if !probe_gitoxide_dir().unwrap().ignore_case {
+        let fs_caps = probe_gitoxide_dir().unwrap();
+        if !fs_caps.ignore_case {
             eprintln!("Skipping case-insensitive testing on what would be a case-senstive file system");
             return;
         }
-        let opts = opts_with_symlink(true);
+        let opts = opts_with_symlink(fs_caps.symlink);
         let (source_tree, destination, _index, outcome) =
             checkout_index_in_tmp_dir(opts, "make_ignorecase_collisions").unwrap();
 
@@ -109,6 +114,10 @@ mod checkout {
                     path: "file_x".into(),
                     error_kind,
                 },
+                Collision {
+                    path: "x".into(),
+                    error_kind,
+                },
             ],
             "these files couldn't be checked out"
         );
@@ -116,14 +125,14 @@ mod checkout {
         let source_files = dir_structure(&source_tree);
         assert_eq!(
             stripped_prefix(&source_tree, &source_files),
-            vec![PathBuf::from("d"), PathBuf::from("file_x")],
+            paths(["d", "file_x", "link-to-X", "x"]),
             "plenty of collisions prevent a checkout"
         );
 
         let dest_files = dir_structure(&destination);
         assert_eq!(
             stripped_prefix(&destination, &dest_files),
-            vec![PathBuf::from("D/B"), PathBuf::from("D/C"), PathBuf::from("FILE_X")],
+            paths(["D/B", "D/C", "FILE_X", "X", "link-to-X"]),
             "we checkout files in order and generally handle collision detection differently, hence the difference"
         );
     }
