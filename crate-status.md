@@ -84,9 +84,10 @@
 * **dynamic store**
     * [x] auto-refresh of on-disk state
     * [x] handles alternates
-    * [ ] multi-pack indices
+    * [x] multi-pack indices
     * [x] perfect scaling with cores
     * [x] support for pack caches, object caches and MRU for best per-thread performance.
+    * [x] prefix/short-id lookup
 * **sink**
     * [x] write objects and obtain id
 * **alternates**
@@ -325,6 +326,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 * **Easy** (_porcelain_)
   * **Id**
     * [x] short hashes with detection of ambiguity.
+       * [ ] solve the [birthday paradox](https://git-scm.com/docs/git-describe#_examples) and make default hex-len depend on the amount of objects.
   * **objects**
     * [x] lookup
     * [x] peel to object kind

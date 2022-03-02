@@ -8,7 +8,7 @@ fn prefix() -> crate::Result {
     let id = hex_to_id("288e509293165cb5630d08f4185bdf2445bf6170").attach(&repo);
     let prefix = id.prefix()?;
     assert_eq!(prefix.cmp_oid(&id), Ordering::Equal);
-    assert_eq!(prefix.hex_len(), 8, "preconfigured via core.abbrev default value");
+    assert_eq!(prefix.hex_len(), 7, "preconfigured via core.abbrev default value");
 
     // TODO: do this in-memory (with or without writing to disk)
     assert!(

@@ -29,7 +29,7 @@ impl<'repo> Id<'repo> {
 
     /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`.
     pub fn prefix(&self) -> Result<git_hash::Prefix, prefix::Error> {
-        let hex_len = self.repo.config_int("core.abbrev", 8);
+        let hex_len = self.repo.config_int("core.abbrev", 7);
         let hex_len = hex_len.try_into().map_err(|_| prefix::Error::ConfigValue {
             actual: hex_len,
             max_range: self.inner.kind().len_in_hex(),
