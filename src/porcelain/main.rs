@@ -13,7 +13,7 @@ use crate::{
 };
 
 pub fn main() -> Result<()> {
-    let args: Args = Args::parse();
+    let args: Args = Args::parse_from(git_repository::env::args_os());
     let should_interrupt = Arc::new(AtomicBool::new(false));
     git_repository::interrupt::init_handler({
         let should_interrupt = Arc::clone(&should_interrupt);

@@ -46,7 +46,7 @@ pub mod async_util {
 }
 
 pub fn main() -> Result<()> {
-    let args: Args = Args::parse();
+    let args: Args = Args::parse_from(git_repository::env::args_os());
     let thread_limit = args.threads;
     let verbose = args.verbose;
     let format = args.format;

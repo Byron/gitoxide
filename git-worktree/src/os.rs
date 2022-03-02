@@ -26,23 +26,3 @@ pub fn create_symlink(original: &Path, link: &Path) -> io::Result<()> {
         symlink_file(original, link)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn io_err_if_symlink_target_is_a_file() {
-        let dir = tempfile::tempdir().unwrap();
-        let a = dir.path().join("a");
-        let b = dir.path().join("b");
-
-        std::fs::write(&a, &[]).unwrap();
-        std::fs::write(&b, &[]).unwrap();
-
-        assert_eq!(
-            create_symlink(&a, &b).unwrap_err().kind(),
-            std::io::ErrorKind::AlreadyExists
-        );
-    }
-}

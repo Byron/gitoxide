@@ -323,6 +323,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
   * [x] initialize
       * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
   * [ ] All mutations are multi-process safe and this is tested and configurable (i.e. abort or wait if lock is encountered)
+* support for unicode-precomposition of command-line arguments (needs explicit use in parent application)
 * **Easy** (_porcelain_)
   * **Id**
     * [x] short hashes with detection of ambiguity.

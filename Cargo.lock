@@ -1617,6 +1617,7 @@ dependencies = [
  "signal-hook",
  "tempfile",
  "thiserror",
+ "unicode-normalization",
 ]
 
 [[package]]
