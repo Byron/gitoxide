@@ -68,6 +68,20 @@ mod checkout {
         let (source_tree, destination, _index, outcome) =
             checkout_index_in_tmp_dir(opts, "make_ignorecase_collisions").unwrap();
 
+        let source_files = dir_structure(&source_tree);
+        assert_eq!(
+            stripped_prefix(&source_tree, &source_files),
+            paths(["d", "file_x", "link-to-X", "x"]),
+            "plenty of collisions prevent a checkout"
+        );
+
+        let dest_files = dir_structure(&destination);
+        assert_eq!(
+            stripped_prefix(&destination, &dest_files),
+            paths(["D/B", "D/C", "FILE_X", "X", "link-to-X"]),
+            "we checkout files in order and generally handle collision detection differently, hence the difference"
+        );
+
         let error_kind = ErrorKind::AlreadyExists;
         #[cfg(windows)]
         let error_kind_dir = ErrorKind::PermissionDenied;
@@ -99,20 +113,6 @@ mod checkout {
                 },
             ],
             "these files couldn't be checked out"
-        );
-
-        let source_files = dir_structure(&source_tree);
-        assert_eq!(
-            stripped_prefix(&source_tree, &source_files),
-            paths(["d", "file_x", "link-to-X", "x"]),
-            "plenty of collisions prevent a checkout"
-        );
-
-        let dest_files = dir_structure(&destination);
-        assert_eq!(
-            stripped_prefix(&destination, &dest_files),
-            paths(["D/B", "D/C", "FILE_X", "X", "link-to-X"]),
-            "we checkout files in order and generally handle collision detection differently, hence the difference"
         );
     }
 

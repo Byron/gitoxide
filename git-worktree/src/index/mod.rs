@@ -31,7 +31,6 @@ where
         let res = entry::checkout(entry, entry_path, &mut find, root, options, &mut buf);
         match res {
             Ok(()) => {}
-            // TODO: use ::IsDirectory as well when stabilized instead of raw_os_error()
             #[cfg(windows)]
             Err(index::checkout::Error::Io(err))
                 if err.kind() == AlreadyExists || err.kind() == std::io::ErrorKind::PermissionDenied =>
@@ -41,6 +40,7 @@ where
                     error_kind: err.kind(),
                 });
             }
+            // TODO: use ::IsDirectory as well when stabilized instead of raw_os_error()
             #[cfg(not(windows))]
             Err(index::checkout::Error::Io(err)) if err.kind() == AlreadyExists || err.raw_os_error() == Some(21) => {
                 // We are here because a file existed or was blocked by a directory which shouldn't be possible unless
