@@ -175,7 +175,11 @@ fn find_speed() -> crate::Result {
     let packed = store.open_packed_buffer()?.expect("packed-refs present");
     let start = std::time::Instant::now();
     let mut num_refs = 0;
-    for r in packed.iter()?.take(10_000) {
+    #[cfg(windows)]
+    let count = 500;
+    #[cfg(not(windows))]
+    let count = 10_000;
+    for r in packed.iter()?.take(count) {
         num_refs += 1;
         let r = r?;
         assert_eq!(
