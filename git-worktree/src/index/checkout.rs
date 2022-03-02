@@ -21,6 +21,11 @@ pub struct Options {
     /// This should be enabled when cloning to avoid checks for freshness of files. This also enables
     /// detection of collisions based on whether or not exclusive file creation succeeds or fails.
     pub destination_is_initially_empty: bool,
+    /// If true, default false, worktree entries on disk will be overwritten with content from the index
+    /// even if they appear to be changed. When creating directories that clash with existing worktree entries,
+    /// these will try to delete the existing entry.
+    /// This is similar in behaviour as `git checkout --force`.
+    pub overwrite_existing: bool,
     /// If true, default false, try to checkout as much as possible and don't abort on first error which isn't
     /// due to a conflict.
     /// The operation will never fail, but count the encountered errors instead along with their paths.
@@ -46,6 +51,7 @@ impl Default for Options {
             keep_going: false,
             trust_ctime: true,
             check_stat: true,
+            overwrite_existing: false,
         }
     }
 }

@@ -36,7 +36,9 @@ where
             path: entry_path.to_owned(),
         }
     })?);
-    create_dir_all(dest.parent().expect("entry paths are never empty"))?; // TODO: can this be avoided to create dirs when needed only?
+
+    let dest_dir = dest.parent().expect("entry paths are never empty");
+    create_dir_all(dest_dir)?; // TODO: can this be avoided to create dirs when needed only?
 
     match entry.mode {
         git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {
@@ -72,7 +74,7 @@ where
             // TODO: how to deal with mode changes? Maybe this info can be passed once we check for whether
             // a checkout is needed at all.
             if symlink {
-                symlink::symlink_auto(symlink_destination, &dest)?;
+                crate::os::create_symlink(symlink_destination, &dest)?;
             } else {
                 std::fs::write(&dest, obj.data)?;
             }

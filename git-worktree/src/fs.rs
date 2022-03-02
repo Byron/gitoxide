@@ -90,14 +90,14 @@ impl Capabilities {
             .write(true)
             .open(&src_path)?;
         let link_path = root.join("__file_link");
-        if symlink::symlink_file(&src_path, &link_path).is_err() {
+        if crate::os::create_symlink(&src_path, &link_path).is_err() {
             std::fs::remove_file(&src_path)?;
             return Ok(false);
         }
 
         let res = std::fs::symlink_metadata(&link_path).map(|m| m.is_symlink());
         let cleanup = std::fs::remove_file(&src_path);
-        symlink::remove_symlink_file(&link_path)
+        crate::os::remove_symlink(&link_path)
             .or_else(|_| std::fs::remove_file(&link_path))
             .and(cleanup)?;
         res
