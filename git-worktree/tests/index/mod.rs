@@ -27,6 +27,7 @@ mod checkout {
                 ..Default::default()
             },
             destination_is_initially_empty: true,
+            ..Default::default()
         }
     }
 

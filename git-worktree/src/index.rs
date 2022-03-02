@@ -4,13 +4,35 @@ pub mod checkout {
     use bstr::BString;
     use quick_error::quick_error;
 
-    #[derive(Default, Clone, Copy)]
+    #[derive(Clone, Copy)]
     pub struct Options {
         /// capabilities of the file system
         pub fs: crate::fs::Capabilities,
         /// If true, we assume no file to exist in the target directory, and want exclusive access to it.
         /// This should be enabled when cloning.
         pub destination_is_initially_empty: bool,
+        /// If true, a files creation time is taken into consideration when checking if a file changed.
+        /// Can be set to false in case other tools alter the creation time in ways that interfere with our operation.
+        ///
+        /// Default true.
+        pub trust_ctime: bool,
+        /// If true, all stat fields will be used when checking for up-to-date'ness of the entry. Otherwise
+        /// nano-second parts of mtime and ctime,uid, gid, inode and device number won't be used, leaving only
+        /// the whole-second part of ctime and mtime and the file size to be checked.
+        ///
+        /// Default true.
+        pub check_stat: bool,
+    }
+
+    impl Default for Options {
+        fn default() -> Self {
+            Options {
+                fs: Default::default(),
+                destination_is_initially_empty: false,
+                trust_ctime: true,
+                check_stat: true,
+            }
+        }
     }
 
     quick_error! {
