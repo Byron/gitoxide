@@ -78,7 +78,11 @@ pub fn main() -> Result<()> {
             index_path,
             cmd,
         }) => match cmd {
-            index::Subcommands::CheckoutExclusive { directory, repository } => prepare_and_run(
+            index::Subcommands::CheckoutExclusive {
+                directory,
+                empty_files,
+                repository,
+            } => prepare_and_run(
                 "index-checkout",
                 verbose,
                 progress,
@@ -90,7 +94,10 @@ pub fn main() -> Result<()> {
                         directory,
                         repository,
                         progress,
-                        core::index::Options { object_hash, format },
+                        core::index::checkout_exclusive::Options {
+                            index: core::index::Options { object_hash, format },
+                            empty_files,
+                        },
                     )
                 },
             ),

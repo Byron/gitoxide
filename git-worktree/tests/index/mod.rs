@@ -173,7 +173,14 @@ mod checkout {
         let odb = git_odb::at(git_dir.join("objects"))?;
         let destination = tempfile::tempdir()?;
 
-        let outcome = index::checkout(&mut index)?;
+        let outcome = index::checkout(
+            &mut index,
+            &destination,
+            move |oid, buf| odb.find_blob(oid, buf).ok(),
+            &mut progress::Discard,
+            &mut progress::Discard,
+            opts,
+        )?;
         Ok((source_tree, destination, index, outcome))
     }
 

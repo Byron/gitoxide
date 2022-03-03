@@ -101,12 +101,23 @@ fn parse_file(index_path: impl AsRef<Path>, object_hash: git::hash::Kind) -> any
     .map_err(Into::into)
 }
 
+pub mod checkout_exclusive {
+    pub struct Options {
+        pub index: super::Options,
+        /// If true, all files will be written with zero bytes despite having made an ODB lookup.
+        pub empty_files: bool,
+    }
+}
+
 pub fn checkout_exclusive(
     index_path: impl AsRef<Path>,
     dest_directory: impl AsRef<Path>,
     repo: Option<PathBuf>,
     mut progress: impl Progress,
-    Options { object_hash, .. }: Options,
+    checkout_exclusive::Options {
+        index: Options { object_hash, .. },
+        empty_files,
+    }: checkout_exclusive::Options,
 ) -> anyhow::Result<()> {
     let repo = repo
         .map(|dir| git_repository::discover(dir).map(|r| r.apply_environment()))
@@ -124,7 +135,7 @@ pub fn checkout_exclusive(
     let mut index = parse_file(index_path, object_hash)?;
 
     let mut num_skipped = 0;
-    let maybe_symlink_mode = if repo.is_some() {
+    let maybe_symlink_mode = if !empty_files && repo.is_some() {
         git::index::entry::Mode::DIR
     } else {
         git::index::entry::Mode::SYMLINK
@@ -161,7 +172,18 @@ pub fn checkout_exclusive(
         Some(repo) => git::worktree::index::checkout(
             &mut index,
             dest_directory,
-            |oid, buf| repo.objects.find_blob(oid, buf).ok(),
+            |oid, buf| {
+                repo.objects.find_blob(oid, buf).ok();
+                if empty_files {
+                    // We always want to query the ODB here…
+                    repo.objects.find_blob(oid, buf).ok();
+                    buf.clear();
+                    // …but write nothing
+                    Some(git::objs::BlobRef { data: buf })
+                } else {
+                    repo.objects.find_blob(oid, buf).ok()
+                }
+            },
             &mut files,
             &mut bytes,
             opts,
