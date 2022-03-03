@@ -369,6 +369,10 @@ pub mod index {
         },
         /// Checkout the index into a directory with exclusive write access, similar to what would happen during clone.
         CheckoutExclusive {
+            /// The path to `.git` repository from which objects can be obtained to write the actual files referenced
+            /// in the index. Use this measure the impact on extracting objects on overall performance.
+            #[clap(long, short = 'r')]
+            repository: Option<PathBuf>,
             /// The directory into which to write all index entries.
             directory: PathBuf,
         },

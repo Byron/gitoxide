@@ -1,8 +1,8 @@
 use anyhow::bail;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use git_repository as git;
-use git_repository::Progress;
+use git_repository::{odb::FindExt, Progress};
 
 pub struct Options {
     pub object_hash: git::hash::Kind,
@@ -104,9 +104,14 @@ fn parse_file(index_path: impl AsRef<Path>, object_hash: git::hash::Kind) -> any
 pub fn checkout_exclusive(
     index_path: impl AsRef<Path>,
     dest_directory: impl AsRef<Path>,
+    repo: Option<PathBuf>,
     mut progress: impl Progress,
     Options { object_hash, .. }: Options,
 ) -> anyhow::Result<()> {
+    let repo = repo
+        .map(|dir| git_repository::discover(dir).map(|r| r.apply_environment()))
+        .transpose()?;
+
     let dest_directory = dest_directory.as_ref();
     if dest_directory.exists() {
         bail!(
@@ -119,9 +124,14 @@ pub fn checkout_exclusive(
     let mut index = parse_file(index_path, object_hash)?;
 
     let mut num_skipped = 0;
+    let maybe_symlink_mode = if repo.is_some() {
+        git::index::entry::Mode::DIR
+    } else {
+        git::index::entry::Mode::SYMLINK
+    };
     for entry in index.entries_mut().iter_mut().filter(|e| {
         e.mode
-            .contains(git::index::entry::Mode::DIR | git::index::entry::Mode::SYMLINK | git::index::entry::Mode::COMMIT)
+            .contains(maybe_symlink_mode | git::index::entry::Mode::DIR | git::index::entry::Mode::COMMIT)
     }) {
         entry.flags.insert(git::index::entry::Flags::SKIP_WORKTREE);
         num_skipped += 1;
@@ -147,21 +157,35 @@ pub fn checkout_exclusive(
     bytes.init(Some(entries_for_checkout), git::progress::bytes());
 
     let start = std::time::Instant::now();
-    git::worktree::index::checkout(
-        &mut index,
-        dest_directory,
-        |_, buf| {
-            buf.clear();
-            Some(git::objs::BlobRef { data: buf })
-        },
-        &mut files,
-        &mut bytes,
-        opts,
-    )?;
+    match &repo {
+        Some(repo) => git::worktree::index::checkout(
+            &mut index,
+            dest_directory,
+            |oid, buf| repo.objects.find_blob(oid, buf).ok(),
+            &mut files,
+            &mut bytes,
+            opts,
+        ),
+        None => git::worktree::index::checkout(
+            &mut index,
+            dest_directory,
+            |_, buf| {
+                buf.clear();
+                Some(git::objs::BlobRef { data: buf })
+            },
+            &mut files,
+            &mut bytes,
+            opts,
+        ),
+    }?;
 
     files.show_throughput(start);
     bytes.show_throughput(start);
 
-    progress.done(format!("Created {} empty files", entries_for_checkout));
+    progress.done(format!(
+        "Created {} {} files",
+        entries_for_checkout,
+        repo.is_none().then(|| "empty").unwrap_or_default()
+    ));
     Ok(())
 }
