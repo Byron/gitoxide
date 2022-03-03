@@ -7,6 +7,7 @@ mod checkout {
         path::{Path, PathBuf},
     };
 
+    use git_features::progress;
     use git_object::bstr::ByteSlice;
     use git_odb::FindExt;
     use git_worktree::{fs::Capabilities, index, index::checkout::Collision};
@@ -176,6 +177,8 @@ mod checkout {
             &mut index,
             &destination,
             move |oid, buf| odb.find_blob(oid, buf).ok(),
+            &mut progress::Discard,
+            &mut progress::Discard,
             opts,
         )?;
         Ok((source_tree, destination, index, outcome))

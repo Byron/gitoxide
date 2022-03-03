@@ -27,7 +27,7 @@ pub fn checkout<Find>(
         ..
     }: index::checkout::Options,
     buf: &mut Vec<u8>,
-) -> Result<(), index::checkout::Error>
+) -> Result<usize, index::checkout::Error>
 where
     Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_object::BlobRef<'a>>,
 {
@@ -40,7 +40,7 @@ where
     let dest_dir = dest.parent().expect("entry paths are never empty");
     create_dir_all(dest_dir)?; // TODO: can this be avoided to create dirs when needed only?
 
-    match entry.mode {
+    let object_size = match entry.mode {
         git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {
             let obj = find(&entry.id, buf).ok_or_else(|| index::checkout::Error::ObjectNotFound {
                 oid: entry.id,
@@ -62,6 +62,7 @@ where
             // NOTE: we don't call `file.sync_all()` here knowing that some filesystems don't handle this well.
             //       revisit this once there is a bug to fix.
             update_fstat(entry, file.metadata()?)?;
+            obj.data.len()
         }
         git_index::entry::Mode::SYMLINK => {
             let obj = find(&entry.id, buf).ok_or_else(|| index::checkout::Error::ObjectNotFound {
@@ -80,12 +81,13 @@ where
             }
 
             update_fstat(entry, std::fs::symlink_metadata(&dest)?)?;
+            obj.data.len()
         }
         git_index::entry::Mode::DIR => todo!(),
         git_index::entry::Mode::COMMIT => todo!(),
         _ => unreachable!(),
-    }
-    Ok(())
+    };
+    Ok(object_size)
 }
 
 fn update_fstat(entry: &mut Entry, meta: std::fs::Metadata) -> Result<(), index::checkout::Error> {

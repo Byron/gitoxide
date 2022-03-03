@@ -1,3 +1,5 @@
+use git_features::progress;
+use git_features::progress::Progress;
 use git_hash::oid;
 
 use crate::{index, index::checkout::Collision};
@@ -9,6 +11,8 @@ pub fn checkout<Find>(
     index: &mut git_index::State,
     path: impl AsRef<std::path::Path>,
     mut find: Find,
+    files: &mut impl Progress,
+    bytes: &mut impl Progress,
     options: checkout::Options,
 ) -> Result<checkout::Outcome, checkout::Error>
 where
@@ -22,15 +26,21 @@ where
     let root = path.as_ref();
     let mut buf = Vec::new();
     let mut collisions = Vec::new();
+
+    files.init(Some(index.entries().len()), progress::count("files"));
+    bytes.init(Some(index.entries().len()), progress::bytes());
+
     for (entry, entry_path) in index.entries_mut_with_paths() {
         // TODO: write test for that
         if entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
+            files.inc();
             continue;
         }
 
         let res = entry::checkout(entry, entry_path, &mut find, root, options, &mut buf);
+        files.inc();
         match res {
-            Ok(()) => {}
+            Ok(object_size) => bytes.inc_by(object_size),
             #[cfg(windows)]
             Err(index::checkout::Error::Io(err))
                 if err.kind() == AlreadyExists || err.kind() == std::io::ErrorKind::PermissionDenied =>
