@@ -10,6 +10,9 @@ impl State {
     pub fn entries(&self) -> &[Entry] {
         &self.entries
     }
+    pub fn entries_mut(&mut self) -> &mut [Entry] {
+        &mut self.entries
+    }
     pub fn entries_mut_with_paths(&mut self) -> impl Iterator<Item = (&mut Entry, &BStr)> {
         let paths = &self.path_backing;
         self.entries.iter_mut().map(move |e| {

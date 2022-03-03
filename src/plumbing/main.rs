@@ -78,6 +78,21 @@ pub fn main() -> Result<()> {
             index_path,
             cmd,
         }) => match cmd {
+            index::Subcommands::CheckoutExclusive { directory } => prepare_and_run(
+                "index-checkout",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |progress, _out, _err| {
+                    core::index::checkout_exclusive(
+                        index_path,
+                        directory,
+                        progress,
+                        core::index::Options { object_hash, format },
+                    )
+                },
+            ),
             index::Subcommands::Info { no_details } => prepare_and_run(
                 "index-entries",
                 verbose,

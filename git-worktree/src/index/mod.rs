@@ -1,4 +1,3 @@
-use git_features::progress;
 use git_features::progress::Progress;
 use git_hash::oid;
 
@@ -26,9 +25,6 @@ where
     let root = path.as_ref();
     let mut buf = Vec::new();
     let mut collisions = Vec::new();
-
-    files.init(Some(index.entries().len()), progress::count("files"));
-    bytes.init(Some(index.entries().len()), progress::bytes());
 
     for (entry, entry_path) in index.entries_mut_with_paths() {
         // TODO: write test for that

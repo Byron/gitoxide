@@ -1,6 +1,8 @@
+use anyhow::bail;
 use std::path::Path;
 
 use git_repository as git;
+use git_repository::Progress;
 
 pub struct Options {
     pub object_hash: git::hash::Kind,
@@ -97,4 +99,69 @@ fn parse_file(index_path: impl AsRef<Path>, object_hash: git::hash::Kind) -> any
         },
     )
     .map_err(Into::into)
+}
+
+pub fn checkout_exclusive(
+    index_path: impl AsRef<Path>,
+    dest_directory: impl AsRef<Path>,
+    mut progress: impl Progress,
+    Options { object_hash, .. }: Options,
+) -> anyhow::Result<()> {
+    let dest_directory = dest_directory.as_ref();
+    if dest_directory.exists() {
+        bail!(
+            "Refusing to checkout index into existing directory '{}' - remove it and try again",
+            dest_directory.display()
+        )
+    }
+    std::fs::create_dir_all(dest_directory)?;
+
+    let mut index = parse_file(index_path, object_hash)?;
+
+    let mut num_skipped = 0;
+    for entry in index.entries_mut().iter_mut().filter(|e| {
+        e.mode
+            .contains(git::index::entry::Mode::DIR | git::index::entry::Mode::SYMLINK | git::index::entry::Mode::COMMIT)
+    }) {
+        entry.flags.insert(git::index::entry::Flags::SKIP_WORKTREE);
+        num_skipped += 1;
+    }
+    if num_skipped > 0 {
+        progress.info(format!("Skipping {} DIR/SYMLINK/COMMIT entries", num_skipped));
+    }
+
+    let opts = git::worktree::index::checkout::Options {
+        fs: git::worktree::fs::Capabilities::probe(dest_directory),
+
+        // TODO: turn the two following flags into an enum
+        destination_is_initially_empty: true,
+        overwrite_existing: false,
+        ..Default::default()
+    };
+
+    let mut files = progress.add_child("checkout");
+    let mut bytes = progress.add_child("writing");
+
+    let entries_for_checkout = index.entries().len() - num_skipped;
+    files.init(Some(entries_for_checkout), git::progress::count("files"));
+    bytes.init(Some(entries_for_checkout), git::progress::bytes());
+
+    let start = std::time::Instant::now();
+    git::worktree::index::checkout(
+        &mut index,
+        dest_directory,
+        |_, buf| {
+            buf.clear();
+            Some(git::objs::BlobRef { data: buf })
+        },
+        &mut files,
+        &mut bytes,
+        opts,
+    )?;
+
+    files.show_throughput(start);
+    bytes.show_throughput(start);
+
+    progress.done(format!("Created {} empty files", entries_for_checkout));
+    Ok(())
 }

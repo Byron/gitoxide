@@ -88,6 +88,7 @@
 //! * [`actor`]
 //! * [`bstr`][bstr]
 //! * [`index`]
+//! * [`worktree`]
 //! * [`objs`]
 //! * [`odb`]
 //!   * [`pack`][odb::pack]
@@ -144,6 +145,8 @@ pub use git_url as url;
 #[doc(inline)]
 #[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url::Url;
+#[cfg(all(feature = "unstable", feature = "git-worktree"))]
+pub use git_worktree as worktree;
 pub use hash::{oid, ObjectId};
 
 pub mod interrupt;

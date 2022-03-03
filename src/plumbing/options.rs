@@ -206,11 +206,9 @@ pub mod pack {
             sink_compress: bool,
 
             /// The '.pack' or '.idx' file to explode into loose objects
-            #[clap(parse(from_os_str))]
             pack_path: PathBuf,
 
             /// The path into which all objects should be written. Commonly '.git/objects'
-            #[clap(parse(from_os_str))]
             object_path: Option<PathBuf>,
         },
         /// Verify the integrity of a pack, index or multi-index file
@@ -219,7 +217,6 @@ pub mod pack {
             args: VerifyOptions,
 
             /// The '.pack', '.idx' or 'multi-pack-index' file to validate.
-            #[clap(parse(from_os_str))]
             path: PathBuf,
         },
     }
@@ -316,7 +313,6 @@ pub mod pack {
                 /// The folder into which to place the pack and the generated index file
                 ///
                 /// If unset, only informational output will be provided to standard output.
-                #[clap(parse(from_os_str))]
                 directory: Option<PathBuf>,
             },
         }
@@ -371,6 +367,11 @@ pub mod index {
             #[clap(long)]
             no_details: bool,
         },
+        /// Checkout the index into a directory with exclusive write access, similar to what would happen during clone.
+        CheckoutExclusive {
+            /// The directory into which to write all index entries.
+            directory: PathBuf,
+        },
     }
 }
 
@@ -383,7 +384,6 @@ pub mod commitgraph {
         /// Verify the integrity of a commit graph
         Verify {
             /// The path to '.git/objects/info/', '.git/objects/info/commit-graphs/', or '.git/objects/info/commit-graph' to validate.
-            #[clap(parse(from_os_str))]
             path: PathBuf,
             /// output statistical information about the pack
             #[clap(long, short = 's')]
