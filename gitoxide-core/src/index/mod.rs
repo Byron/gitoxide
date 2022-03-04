@@ -165,7 +165,7 @@ pub fn checkout_exclusive(
 
     let entries_for_checkout = index.entries().len() - num_skipped;
     files.init(Some(entries_for_checkout), git::progress::count("files"));
-    bytes.init(Some(entries_for_checkout), git::progress::bytes());
+    bytes.init(None, git::progress::bytes());
 
     let start = std::time::Instant::now();
     match &repo {
