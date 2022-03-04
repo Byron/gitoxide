@@ -1626,6 +1626,10 @@ name = "git-revision"
 version = "0.0.0"
 
 [[package]]
+name = "git-submodule"
+version = "0.0.0"
+
+[[package]]
 name = "git-tempfile"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
