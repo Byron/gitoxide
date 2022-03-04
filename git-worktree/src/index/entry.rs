@@ -69,7 +69,7 @@ where
             // TODO: how to deal with mode changes? Maybe this info can be passed once we check for whether
             // a checkout is needed at all.
             if symlink {
-                crate::os::create_symlink(symlink_destination, &dest)?;
+                crate::os::create_symlink(symlink_destination, dest)?;
             } else {
                 std::fs::write(&dest, obj.data)?;
             }
