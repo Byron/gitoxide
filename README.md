@@ -48,6 +48,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] **info** - display general information about the index itself, with detailed extension information by default
          * [x] detailed information about the TREE extension
          * [ ] …other extensions details aren't implemented yet
+      * [x] **checkout-exclusive** - a predecessor of `git worktree`, providing flexible options to evaluate checkout performance from an index and/or an object database.
     * **remote**
       * [ref-list](https://asciinema.org/a/359320) - list all (or given) references from a remote at the given URL
 
