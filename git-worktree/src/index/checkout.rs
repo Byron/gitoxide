@@ -1,5 +1,23 @@
 use bstr::BString;
 use quick_error::quick_error;
+use std::path::PathBuf;
+
+/// A cache for directory creation to reduce the amount of stat calls when creating
+/// directories safely, that is without following symlinks that might be on the way.
+///
+/// As a special case, it offers a 'prefix' which (by itself) is assumed to exist and may contain symlinks.
+/// Everything past that prefix boundary must not contain a symlink.
+///
+/// For this to work, it remembers the last 'good' path to a directory and assumes that all components of it
+/// are still valid, too.
+/// As directories are created, the cache will be adjusted to reflect the latest seen directory.
+///
+/// The caching is only useful if consecutive calls to create a directory are using a sorted list of entries.
+#[allow(unused)]
+pub(crate) struct DirCache {
+    /// the most recent known cached that we know is valid.
+    valid: PathBuf,
+}
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Collision {
