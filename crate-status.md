@@ -209,6 +209,12 @@ Check out the [performance discussion][git-traverse-performance] as well.
 
 ### git-worktree
 * handle the working tree/checkout
+  - [x] checkout an index of files, executables and symlinks just as fast as git
+     - [x] forbid symlinks in directories
+     - [ ] handle submodules
+     - [ ] handle sparse directories
+     - [ ] handle sparse index
+     - [ ] linear scaling with multi-threading up to IO saturation
 * manage multiple worktrees
 * deal with exclude specifications, like .gitignore and other exclude files.
  
