@@ -24,7 +24,10 @@ where
 
     use std::io::ErrorKind::AlreadyExists;
     let dir = dir.into();
+
     let mut path_cache = PathCache::new(dir.clone());
+    path_cache.unlink_on_collision = options.overwrite_existing;
+
     let mut buf = Vec::new();
     let mut collisions = Vec::new();
 

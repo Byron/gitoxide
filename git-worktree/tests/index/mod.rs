@@ -48,6 +48,7 @@ mod checkout {
                 .unwrap();
             assert!(path.parent().unwrap().is_dir(), "directory is still present");
             assert!(!path.exists(), "it won't create the file");
+            assert_eq!(cache.test_mkdir_calls, 1);
         }
 
         #[test]
@@ -59,14 +60,24 @@ mod checkout {
             std::fs::write(tmp.path().join("file-in-dir"), &[]).unwrap();
 
             for dirname in &["link-to-dir", "file-in-dir"] {
+                cache.unlink_on_collision = false;
+                let relative_path = format!("{}/file", dirname);
                 assert_eq!(
                     cache
-                        .append_relative_path_assure_leading_dir(format!("{}/file", dirname), Mode::FILE)
+                        .append_relative_path_assure_leading_dir(&relative_path, Mode::FILE)
                         .unwrap_err()
                         .kind(),
                     std::io::ErrorKind::AlreadyExists
                 );
+                cache.unlink_on_collision = true;
+
+                let path = cache
+                    .append_relative_path_assure_leading_dir(&relative_path, Mode::FILE)
+                    .unwrap();
+                assert!(path.parent().unwrap().is_dir(), "directory was forcefully created");
+                assert!(!path.exists());
             }
+            assert_eq!(cache.test_mkdir_calls, 4);
         }
 
         fn new_cache() -> (PathCache, TempDir) {

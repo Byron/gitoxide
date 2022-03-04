@@ -27,6 +27,9 @@ pub struct PathCache {
     /// The amount of path components of 'valid' beyond the roots components. If `root` has 2, and this is 2, `valid` has 4 components.
     valid_components: usize,
 
+    /// If there is a symlink or a file in our path, try to unlink it before creating the directory.
+    pub unlink_on_collision: bool,
+
     /// just for testing
     #[cfg(debug_assertions)]
     pub test_mkdir_calls: usize,
@@ -46,7 +49,9 @@ mod cache {
                 valid_relative: PathBuf::with_capacity(128),
                 valid_components: 0,
                 root,
+                #[cfg(debug_assertions)]
                 test_mkdir_calls: 0,
+                unlink_on_collision: false,
             }
         }
 
@@ -90,11 +95,28 @@ mod cache {
                 self.valid_relative.push(comp);
                 self.valid_components += 1;
                 if components.peek().is_some() || target_is_dir {
-                    self.test_mkdir_calls += 1;
+                    #[cfg(debug_assertions)]
+                    {
+                        self.test_mkdir_calls += 1;
+                    }
                     match std::fs::create_dir(&self.valid) {
                         Ok(()) => {}
                         Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => {
-                            if !self.valid.symlink_metadata()?.is_dir() {
+                            let meta = self.valid.symlink_metadata()?;
+                            if !meta.is_dir() {
+                                if self.unlink_on_collision {
+                                    if meta.is_symlink() {
+                                        symlink::remove_symlink_auto(&self.valid)?;
+                                    } else {
+                                        std::fs::remove_file(&self.valid)?;
+                                    }
+                                    #[cfg(debug_assertions)]
+                                    {
+                                        self.test_mkdir_calls += 1;
+                                    }
+                                    std::fs::create_dir(&self.valid)?;
+                                    continue;
+                                }
                                 return Err(err);
                             }
                         }
