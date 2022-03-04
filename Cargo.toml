@@ -30,7 +30,7 @@ default = ["max"]
 ## Makes the crate execute as fast as possible by supporting parallel computation of otherwise long-running functions
 ## as well as fast, hardware accelerated hashing, along with a faster zlib backend.
 ## If disabled, the binary will be visibly smaller.
-fast = ["git-features/parallel", "git-features/fast-sha1", "git-features/zlib-ng-compat"]
+fast = ["git-features/parallel", "git-features/fast-sha1", "git-features/zlib-ng-compat", "git-repository/max-performance"]
 
 ## Use `clap` 3.0 to build the prettiest, best documented and most user-friendly CLI at the expense of binary size.
 ## Provides a terminal user interface for detailed and exhaustive progress.

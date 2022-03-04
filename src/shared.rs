@@ -49,7 +49,7 @@ pub mod pretty {
     use std::io::{stderr, stdout};
 
     use anyhow::Result;
-    use git_repository::progress;
+    use git_features::progress;
 
     use crate::shared::ProgressRange;
 
