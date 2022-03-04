@@ -22,6 +22,8 @@ pub struct PathCache {
     root: PathBuf,
     /// the most recent known cached that we know is valid.
     valid: PathBuf,
+    /// The relative portion of `valid` that was added previously.
+    valid_relative: PathBuf,
     /// The amount of path components of 'valid' beyond the roots components. If `root` has 2, and this is 2, `valid` has 4 components.
     valid_components: usize,
 }
@@ -37,6 +39,7 @@ mod cache {
             let root = root.into();
             PathCache {
                 valid: root.clone(),
+                valid_relative: PathBuf::with_capacity(128),
                 valid_components: 0,
                 root,
             }
@@ -63,14 +66,27 @@ mod cache {
                 "can only handle file-like items right now"
             );
 
+            let mut components = relative.components().peekable();
+            let mut existing_components = self.valid_relative.components();
+            let mut matching_components = 0;
+            while let (Some(existing_comp), Some(new_comp)) = (existing_components.next(), components.peek()) {
+                if existing_comp == *new_comp {
+                    components.next();
+                    matching_components += 1;
+                } else {
+                    break;
+                }
+            }
+
             // TODO: handle valid state properly, handle _mode.
-            for _ in 0..self.valid_components {
+            for _ in 0..self.valid_components - matching_components {
                 self.valid.pop();
             }
 
-            self.valid_components = 0;
-            for component in relative.iter() {
-                self.valid.push(component);
+            self.valid_components = matching_components;
+            for comp in components {
+                self.valid.push(comp);
+                self.valid_relative.push(comp);
                 self.valid_components += 1;
             }
 
