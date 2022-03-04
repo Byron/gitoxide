@@ -6,7 +6,10 @@ use std::path::PathBuf;
 /// directories safely, that is without following symlinks that might be on the way.
 ///
 /// As a special case, it offers a 'prefix' which (by itself) is assumed to exist and may contain symlinks.
-/// Everything past that prefix boundary must not contain a symlink.
+/// Everything past that prefix boundary must not contain a symlink. We do this by allowing any input path.
+///
+/// Another added benefit is its ability to store the path of full path of the entry to which leading directories
+/// are to be created to avoid allocating memory.
 ///
 /// For this to work, it remembers the last 'good' path to a directory and assumes that all components of it
 /// are still valid, too.
@@ -14,9 +17,69 @@ use std::path::PathBuf;
 ///
 /// The caching is only useful if consecutive calls to create a directory are using a sorted list of entries.
 #[allow(unused)]
-pub(crate) struct DirCache {
+pub struct PathCache {
+    /// The prefix/root for all paths we handle.
+    root: PathBuf,
     /// the most recent known cached that we know is valid.
     valid: PathBuf,
+    /// The amount of path components of 'valid' beyond the roots components. If `root` has 2, and this is 2, `valid` has 4 components.
+    valid_components: usize,
+}
+
+mod cache {
+    use super::PathCache;
+    use std::path::{Path, PathBuf};
+
+    impl PathCache {
+        /// Create a new instance with `root` being the base for all future paths we handle, assuming it to be valid which includes
+        /// symbolic links to be included in it as well.
+        pub fn new(root: impl Into<PathBuf>) -> Self {
+            let root = root.into();
+            PathCache {
+                valid: root.clone(),
+                valid_components: 0,
+                root,
+            }
+        }
+
+        /// Append the `relative` path to the root directory the cache contains and efficiently create leading directories
+        /// unless `mode` indicates `relative` points to a directory itself in which case the entire resulting path is created as directory.
+        ///
+        /// The full path to `relative` will be returned for use on the file system.
+        pub fn append_relative_path_assure_leading_dir(
+            &mut self,
+            relative: &Path,
+            mode: git_index::entry::Mode,
+        ) -> std::io::Result<&Path> {
+            debug_assert!(
+                relative.is_relative(),
+                "only index paths are handled correctly here, must be relative"
+            );
+            assert!(
+                (git_index::entry::Mode::SYMLINK
+                    | git_index::entry::Mode::FILE
+                    | git_index::entry::Mode::FILE_EXECUTABLE)
+                    .contains(mode),
+                "can only handle file-like items right now"
+            );
+
+            // TODO: handle valid state properly, handle _mode.
+            for _ in 0..self.valid_components {
+                self.valid.pop();
+            }
+
+            self.valid_components = 0;
+            for component in relative.iter() {
+                self.valid.push(component);
+                self.valid_components += 1;
+            }
+
+            if self.valid_components > 1 {
+                std::fs::create_dir_all(self.valid.parent().expect("directory"))?;
+            }
+            Ok(&self.valid)
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]

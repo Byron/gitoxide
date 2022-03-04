@@ -16,15 +16,13 @@ mod checkout {
     use crate::fixture_path;
 
     #[test]
-    fn symlinks_become_files_if_disabled() -> crate::Result {
+    fn symlinks_become_files_if_disabled() {
         let opts = opts_with_symlink(false);
         let (source_tree, destination, _index, outcome) =
-            checkout_index_in_tmp_dir(opts, "make_mixed_without_submodules")?;
+            checkout_index_in_tmp_dir(opts, "make_mixed_without_submodules").unwrap();
 
-        assert_equality(&source_tree, &destination, opts.fs.symlink)?;
+        assert_equality(&source_tree, &destination, opts.fs.symlink).unwrap();
         assert!(outcome.collisions.is_empty());
-
-        Ok(())
     }
 
     #[test]
@@ -175,7 +173,7 @@ mod checkout {
 
         let outcome = index::checkout(
             &mut index,
-            &destination,
+            destination.path(),
             move |oid, buf| odb.find_blob(oid, buf).ok(),
             &mut progress::Discard,
             &mut progress::Discard,

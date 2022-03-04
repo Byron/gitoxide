@@ -1,6 +1,7 @@
 use git_features::progress::Progress;
 use git_hash::oid;
 
+use crate::index::checkout::PathCache;
 use crate::{index, index::checkout::Collision};
 
 pub mod checkout;
@@ -8,7 +9,7 @@ pub(crate) mod entry;
 
 pub fn checkout<Find>(
     index: &mut git_index::State,
-    path: impl AsRef<std::path::Path>,
+    dir: impl Into<std::path::PathBuf>,
     mut find: Find,
     files: &mut impl Progress,
     bytes: &mut impl Progress,
@@ -22,7 +23,8 @@ where
     }
 
     use std::io::ErrorKind::AlreadyExists;
-    let root = path.as_ref();
+    let dir = dir.into();
+    let mut path_cache = PathCache::new(dir.clone());
     let mut buf = Vec::new();
     let mut collisions = Vec::new();
 
@@ -33,7 +35,7 @@ where
             continue;
         }
 
-        let res = entry::checkout(entry, entry_path, &mut find, root, options, &mut buf);
+        let res = entry::checkout(entry, entry_path, &mut find, &mut path_cache, options, &mut buf);
         files.inc();
         match res {
             Ok(object_size) => bytes.inc_by(object_size),
