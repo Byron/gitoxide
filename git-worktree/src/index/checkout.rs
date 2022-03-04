@@ -26,6 +26,10 @@ pub struct PathCache {
     valid_relative: PathBuf,
     /// The amount of path components of 'valid' beyond the roots components. If `root` has 2, and this is 2, `valid` has 4 components.
     valid_components: usize,
+
+    /// just for testing
+    #[cfg(debug_assertions)]
+    pub test_mkdir_calls: usize,
 }
 
 mod cache {
@@ -42,6 +46,7 @@ mod cache {
                 valid_relative: PathBuf::with_capacity(128),
                 valid_components: 0,
                 root,
+                test_mkdir_calls: 0,
             }
         }
 
@@ -51,19 +56,13 @@ mod cache {
         /// The full path to `relative` will be returned for use on the file system.
         pub fn append_relative_path_assure_leading_dir(
             &mut self,
-            relative: &Path,
+            relative: impl AsRef<Path>,
             mode: git_index::entry::Mode,
         ) -> std::io::Result<&Path> {
+            let relative = relative.as_ref();
             debug_assert!(
                 relative.is_relative(),
                 "only index paths are handled correctly here, must be relative"
-            );
-            assert!(
-                (git_index::entry::Mode::SYMLINK
-                    | git_index::entry::Mode::FILE
-                    | git_index::entry::Mode::FILE_EXECUTABLE)
-                    .contains(mode),
-                "can only handle file-like items right now"
             );
 
             let mut components = relative.components().peekable();
@@ -84,15 +83,26 @@ mod cache {
             }
 
             self.valid_components = matching_components;
-            for comp in components {
+
+            let target_is_dir = mode == git_index::entry::Mode::COMMIT || mode == git_index::entry::Mode::DIR;
+            while let Some(comp) = components.next() {
                 self.valid.push(comp);
                 self.valid_relative.push(comp);
                 self.valid_components += 1;
+                if components.peek().is_some() || target_is_dir {
+                    self.test_mkdir_calls += 1;
+                    match std::fs::create_dir(&self.valid) {
+                        Ok(()) => {}
+                        Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => {
+                            if !self.valid.symlink_metadata()?.is_dir() {
+                                return Err(err);
+                            }
+                        }
+                        Err(err) => return Err(err),
+                    }
+                }
             }
 
-            if self.valid_components > 1 {
-                std::fs::create_dir_all(self.valid.parent().expect("directory"))?;
-            }
             Ok(&self.valid)
         }
     }
