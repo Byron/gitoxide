@@ -221,6 +221,11 @@ Check out the [performance discussion][git-traverse-performance] as well.
 ### git-revision
 * find specifications for revisions (like `git name-rev`)
 * parse specifications into revisions (like `git rev-parse`)
+ 
+### git-submodule
+
+* CRUD for submodules
+* try to handle with all the nifty interactions and be a little more comfortable than what git offers, lay a foundation for smarter git submodules.
 
 ### git-bitmap
 
