@@ -351,15 +351,24 @@ pub mod repo {
     pub mod tree {
         #[derive(Debug, clap::Subcommand)]
         pub enum Subcommands {
+            /// Print entries in a given tree
             Entries {
                 /// Traverse the entire tree and its subtrees respectively, not only this tree.
                 #[clap(long, short = 'r')]
                 recursive: bool,
 
-                /// Provide the files size as well. This is expensive as the object is decoded entirely.
+                /// Provide files size as well. This is expensive as the object is decoded entirely.
                 #[clap(long, short = 'e')]
                 extended: bool,
 
+                /// The tree to traverse, or the tree at `HEAD` if unspecified.
+                treeish: Option<String>,
+            },
+            /// Provide information about a tree.
+            Info {
+                /// Provide files size as well. This is expensive as the object is decoded entirely.
+                #[clap(long, short = 'e')]
+                extended: bool,
                 /// The tree to traverse, or the tree at `HEAD` if unspecified.
                 treeish: Option<String>,
             },

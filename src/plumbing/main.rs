@@ -154,16 +154,20 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
+                move |_progress, out, _err| {
+                    core::repository::tree::entries(repository, treeish.as_deref(), recursive, extended, format, out)
+                },
+            ),
+            repo::Subcommands::Tree {
+                cmd: repo::tree::Subcommands::Info { treeish, extended },
+            } => prepare_and_run(
+                "repository-tree-info",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
                 move |_progress, out, err| {
-                    core::repository::tree::entries(
-                        repository,
-                        treeish.as_deref(),
-                        recursive,
-                        extended,
-                        format,
-                        out,
-                        err,
-                    )
+                    core::repository::tree::info(repository, treeish.as_deref(), extended, format, out, err)
                 },
             ),
             repo::Subcommands::Verify {
