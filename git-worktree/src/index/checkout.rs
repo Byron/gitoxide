@@ -138,8 +138,16 @@ pub struct Collision {
     pub error_kind: std::io::ErrorKind,
 }
 
+pub struct ErrorRecord {
+    /// the path that that errored on disk
+    pub path: BString,
+    /// The io error we encountered when checking out `path`.
+    pub err: Box<dyn std::error::Error + Send + Sync>,
+}
+
 pub struct Outcome {
     pub collisions: Vec<Collision>,
+    pub errors: Vec<ErrorRecord>,
 }
 
 #[derive(Clone, Copy)]
@@ -157,7 +165,7 @@ pub struct Options {
     pub overwrite_existing: bool,
     /// If true, default false, try to checkout as much as possible and don't abort on first error which isn't
     /// due to a conflict.
-    /// The operation will never fail, but count the encountered errors instead along with their paths.
+    /// The checkout operation will never fail, but count the encountered errors instead along with their paths.
     pub keep_going: bool,
     /// If true, a files creation time is taken into consideration when checking if a file changed.
     /// Can be set to false in case other tools alter the creation time in ways that interfere with our operation.

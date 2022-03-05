@@ -87,6 +87,7 @@ mod checkout {
         }
     }
 
+    use bstr::ByteVec;
     #[cfg(unix)]
     use std::os::unix::prelude::MetadataExt;
     use std::{
@@ -128,6 +129,39 @@ mod checkout {
         assert_equality(&source_tree, &destination, opts.fs.symlink)?;
         assert!(outcome.collisions.is_empty());
         Ok(())
+    }
+
+    #[test]
+    fn keep_going_collects_results() {
+        let mut opts = opts_with_symlink(true);
+        opts.keep_going = true;
+        let mut count = 0;
+        let (_source_tree, destination, _index, outcome) =
+            checkout_index_in_tmp_dir_prep_dest(opts, "make_mixed_without_submodules", |_id| {
+                if count < 2 {
+                    count += 1;
+                    false
+                } else {
+                    true
+                }
+            })
+            .unwrap();
+
+        assert_eq!(
+            stripped_prefix(&destination, &dir_structure(&destination)),
+            paths(["empty", "executable"]),
+            "some files could not be created"
+        );
+
+        assert!(outcome.collisions.is_empty());
+        assert_eq!(
+            outcome
+                .errors
+                .into_iter()
+                .map(|r| Vec::from(r.path).into_path_buf_lossy())
+                .collect::<Vec<_>>(),
+            paths(["dir/content", "dir/sub-dir/symlink"])
+        );
     }
 
     #[test]
@@ -254,6 +288,19 @@ mod checkout {
         git_index::File,
         git_worktree::index::checkout::Outcome,
     )> {
+        checkout_index_in_tmp_dir_prep_dest(opts, name, |_d| true)
+    }
+
+    fn checkout_index_in_tmp_dir_prep_dest(
+        opts: index::checkout::Options,
+        name: &str,
+        mut allow_return_object: impl FnMut(&git_hash::oid) -> bool,
+    ) -> crate::Result<(
+        PathBuf,
+        TempDir,
+        git_index::File,
+        git_worktree::index::checkout::Outcome,
+    )> {
         let source_tree = fixture_path(name);
         let git_dir = source_tree.join(".git");
         let mut index = git_index::File::at(git_dir.join("index"), Default::default())?;
@@ -263,7 +310,13 @@ mod checkout {
         let outcome = index::checkout(
             &mut index,
             destination.path(),
-            move |oid, buf| odb.find_blob(oid, buf).ok(),
+            move |oid, buf| {
+                if allow_return_object(oid) {
+                    odb.find_blob(oid, buf).ok()
+                } else {
+                    None
+                }
+            },
             &mut progress::Discard,
             &mut progress::Discard,
             opts,

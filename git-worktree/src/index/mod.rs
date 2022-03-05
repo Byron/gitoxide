@@ -1,8 +1,8 @@
 use git_features::progress::Progress;
 use git_hash::oid;
 
+use crate::index;
 use crate::index::checkout::PathCache;
-use crate::{index, index::checkout::Collision};
 
 pub mod checkout;
 pub(crate) mod entry;
@@ -28,6 +28,7 @@ where
 
     let mut buf = Vec::new();
     let mut collisions = Vec::new();
+    let mut errors = Vec::new();
 
     for (entry, entry_path) in index.entries_mut_with_paths() {
         // TODO: write test for that
@@ -44,7 +45,7 @@ where
             Err(index::checkout::Error::Io(err))
                 if err.kind() == AlreadyExists || err.kind() == std::io::ErrorKind::PermissionDenied =>
             {
-                collisions.push(Collision {
+                collisions.push(checkout::Collision {
                     path: entry_path.into(),
                     error_kind: err.kind(),
                 });
@@ -54,19 +55,22 @@ where
             Err(index::checkout::Error::Io(err)) if err.kind() == AlreadyExists || err.raw_os_error() == Some(21) => {
                 // We are here because a file existed or was blocked by a directory which shouldn't be possible unless
                 // we are on a file insensitive file system.
-                collisions.push(Collision {
+                collisions.push(checkout::Collision {
                     path: entry_path.into(),
                     error_kind: err.kind(),
                 });
             }
             Err(err) => {
                 if options.keep_going {
-                    todo!("keep going")
+                    errors.push(checkout::ErrorRecord {
+                        path: entry_path.into(),
+                        err: Box::new(err),
+                    })
                 } else {
                     return Err(err);
                 }
             }
         }
     }
-    Ok(checkout::Outcome { collisions })
+    Ok(checkout::Outcome { collisions, errors })
 }
