@@ -73,8 +73,8 @@ fn get_value_for_all_provided_values() -> crate::Result {
     );
 
     assert_eq!(
-        file.value::<String>("core", None, "other")?,
-        String {
+        file.value::<Bytes>("core", None, "other")?,
+        Bytes {
             value: Cow::Borrowed(b"hello world")
         }
     );
