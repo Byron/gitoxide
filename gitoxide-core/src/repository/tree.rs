@@ -8,12 +8,16 @@ use git_repository::prelude::ObjectIdExt;
 
 mod entries {
     use git_repository as git;
+    use std::collections::VecDeque;
 
+    use crate::repository::tree::format_entry;
+    use git::bstr::{BStr, BString};
     use git::hash::oid;
-    use git::objs::{bstr::BStr, tree::EntryRef};
+    use git::objs::tree::EntryRef;
     use git::traverse::tree::visit::Action;
+    use git_repository::bstr::{ByteSlice, ByteVec};
 
-    pub struct Traverse {
+    pub struct Traverse<'a> {
         pub num_trees: usize,
         pub num_links: usize,
         pub num_blobs: usize,
@@ -21,10 +25,13 @@ mod entries {
         pub num_submodules: usize,
         pub num_bytes: u64,
         pub repo: git::Repository,
+        pub out: &'a mut dyn std::io::Write,
+        path: BString,
+        path_deque: VecDeque<BString>,
     }
 
-    impl Traverse {
-        pub fn new(repo: git::Repository) -> Self {
+    impl<'a> Traverse<'a> {
+        pub fn new(repo: git::Repository, out: &'a mut dyn std::io::Write) -> Self {
             Traverse {
                 num_trees: 0,
                 num_links: 0,
@@ -33,6 +40,9 @@ mod entries {
                 num_submodules: 0,
                 num_bytes: 0,
                 repo,
+                out,
+                path: BString::default(),
+                path_deque: VecDeque::new(),
             }
         }
 
@@ -41,16 +51,40 @@ mod entries {
                 self.num_bytes += obj.data.len() as u64;
             }
         }
+
+        fn pop_element(&mut self) {
+            if let Some(pos) = self.path.rfind_byte(b'/') {
+                self.path.resize(pos, 0);
+            } else {
+                self.path.clear();
+            }
+        }
+
+        fn push_element(&mut self, name: &BStr) {
+            if !self.path.is_empty() {
+                self.path.push(b'/');
+            }
+            self.path.push_str(name);
+        }
     }
 
-    impl git::traverse::tree::Visit for Traverse {
-        fn pop_front_tracked_path_and_set_current(&mut self) {}
+    impl<'a> git::traverse::tree::Visit for Traverse<'a> {
+        fn pop_front_tracked_path_and_set_current(&mut self) {
+            self.path = self.path_deque.pop_front().expect("every parent is set only once");
+        }
 
-        fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
+        fn push_back_tracked_path_component(&mut self, component: &BStr) {
+            self.push_element(component);
+            self.path_deque.push_back(self.path.clone());
+        }
 
-        fn push_path_component(&mut self, _component: &BStr) {}
+        fn push_path_component(&mut self, component: &BStr) {
+            self.push_element(component);
+        }
 
-        fn pop_path_component(&mut self) {}
+        fn pop_path_component(&mut self) {
+            self.pop_element()
+        }
 
         fn visit_tree(&mut self, _entry: &EntryRef<'_>) -> Action {
             self.num_trees += 1;
@@ -59,6 +93,7 @@ mod entries {
 
         fn visit_nontree(&mut self, entry: &EntryRef<'_>) -> Action {
             use git::objs::tree::EntryMode::*;
+            format_entry(&mut *self.out, entry, self.path.as_bstr(), None).ok();
             match entry.mode {
                 Commit => self.num_submodules += 1,
                 Blob => {
@@ -103,12 +138,15 @@ pub fn entries(
     };
 
     if recursive {
+        let mut delegate = entries::Traverse::new(tree_repo, out);
+        tree.traverse().breadthfirst(&mut delegate)?;
     } else {
         for entry in tree.iter() {
             let entry = entry?;
             format_entry(
                 &mut *out,
                 &entry.inner,
+                entry.inner.filename,
                 extended
                     .then(|| entry.id().object().map(|o| o.data.len()))
                     .transpose()?,
@@ -116,15 +154,27 @@ pub fn entries(
         }
     }
 
-    let mut delegate = entries::Traverse::new(tree_repo);
-    tree.traverse().breadthfirst(&mut delegate)?;
     Ok(())
 }
 
 fn format_entry(
-    mut _out: impl io::Write,
-    _entry: &git::objs::tree::EntryRef<'_>,
+    mut out: impl io::Write,
+    entry: &git::objs::tree::EntryRef<'_>,
+    filename: &git::bstr::BStr,
     _size: Option<usize>,
 ) -> std::io::Result<()> {
-    todo!()
+    use git::objs::tree::EntryMode::*;
+    writeln!(
+        out,
+        "{} {} {}",
+        match entry.mode {
+            Tree => "TREE",
+            Blob => "BLOB",
+            BlobExecutable => " EXE",
+            Link => "LINK",
+            Commit => "SUBM",
+        },
+        entry.oid,
+        filename
+    )
 }
