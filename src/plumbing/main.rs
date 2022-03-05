@@ -89,11 +89,12 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
-                move |progress, _out, _err| {
+                move |progress, _out, err| {
                     core::index::checkout_exclusive(
                         index_path,
                         directory,
                         repository,
+                        err,
                         progress,
                         core::index::checkout_exclusive::Options {
                             index: core::index::Options { object_hash, format },

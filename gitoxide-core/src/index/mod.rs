@@ -115,6 +115,7 @@ pub fn checkout_exclusive(
     index_path: impl AsRef<Path>,
     dest_directory: impl AsRef<Path>,
     repo: Option<PathBuf>,
+    mut err: impl std::io::Write,
     mut progress: impl Progress,
     checkout_exclusive::Options {
         index: Options { object_hash, .. },
@@ -218,9 +219,15 @@ pub fn checkout_exclusive(
         let mut messages = Vec::new();
         if !errors.is_empty() {
             messages.push(format!("kept going through {} errors(s)", errors.len()));
+            for error in errors {
+                writeln!(err, "{}: {}", error.path, error.err).ok();
+            }
         }
         if !collisions.is_empty() {
             messages.push(format!("encountered {} collision(s)", collisions.len()));
+            for col in collisions {
+                writeln!(err, "{}: collision ({:?})", col.path, col.error_kind).ok();
+            }
         }
         bail!(
             "One or more errors occurred - checkout is incomplete: {}",
