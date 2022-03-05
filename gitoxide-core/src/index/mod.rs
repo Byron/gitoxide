@@ -2,6 +2,7 @@ use anyhow::bail;
 use std::path::{Path, PathBuf};
 
 use git_repository as git;
+use git_repository::worktree::index::checkout;
 use git_repository::{odb::FindExt, Progress};
 
 pub struct Options {
@@ -106,6 +107,7 @@ pub mod checkout_exclusive {
         pub index: super::Options,
         /// If true, all files will be written with zero bytes despite having made an ODB lookup.
         pub empty_files: bool,
+        pub keep_going: bool,
     }
 }
 
@@ -117,6 +119,7 @@ pub fn checkout_exclusive(
     checkout_exclusive::Options {
         index: Options { object_hash, .. },
         empty_files,
+        keep_going,
     }: checkout_exclusive::Options,
 ) -> anyhow::Result<()> {
     let repo = repo
@@ -157,6 +160,7 @@ pub fn checkout_exclusive(
         // TODO: turn the two following flags into an enum
         destination_is_initially_empty: true,
         overwrite_existing: false,
+        keep_going,
         ..Default::default()
     };
 
@@ -168,7 +172,7 @@ pub fn checkout_exclusive(
     bytes.init(None, git::progress::bytes());
 
     let start = std::time::Instant::now();
-    match &repo {
+    let checkout::Outcome { errors, collisions } = match &repo {
         Some(repo) => git::worktree::index::checkout(
             &mut index,
             dest_directory,
@@ -209,5 +213,19 @@ pub fn checkout_exclusive(
         entries_for_checkout,
         repo.is_none().then(|| "empty").unwrap_or_default()
     ));
+
+    if !(collisions.is_empty() && errors.is_empty()) {
+        let mut messages = Vec::new();
+        if !errors.is_empty() {
+            messages.push(format!("kept going through {} errors(s)", errors.len()));
+        }
+        if !collisions.is_empty() {
+            messages.push(format!("encountered {} collision(s)", collisions.len()));
+        }
+        bail!(
+            "One or more errors occurred - checkout is incomplete: {}",
+            messages.join(", ")
+        );
+    }
     Ok(())
 }

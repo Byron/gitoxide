@@ -413,6 +413,9 @@ pub mod index {
             /// in the index. Use this measure the impact on extracting objects on overall performance.
             #[clap(long, short = 'r')]
             repository: Option<PathBuf>,
+            /// Ignore errors and keep checking out as many files as possible, and report all errors at the end of the operation.
+            #[clap(long, short = 'k')]
+            keep_going: bool,
             /// Enable to query the object database yet write only empty files. This is useful to measure the overhead of ODB query
             /// compared to writing the bytes to disk.
             #[clap(long, short = 'e', requires = "repository")]

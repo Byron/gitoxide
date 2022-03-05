@@ -82,6 +82,7 @@ pub fn main() -> Result<()> {
                 directory,
                 empty_files,
                 repository,
+                keep_going,
             } => prepare_and_run(
                 "index-checkout",
                 verbose,
@@ -97,6 +98,7 @@ pub fn main() -> Result<()> {
                         core::index::checkout_exclusive::Options {
                             index: core::index::Options { object_hash, format },
                             empty_files,
+                            keep_going,
                         },
                     )
                 },
