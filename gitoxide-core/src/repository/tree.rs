@@ -1,4 +1,5 @@
 use anyhow::bail;
+use std::borrow::Cow;
 use std::io;
 use std::path::PathBuf;
 
@@ -12,7 +13,6 @@ mod entries {
 
     use crate::repository::tree::format_entry;
     use git::bstr::{BStr, BString};
-    use git::hash::oid;
     use git::objs::tree::EntryRef;
     use git::traverse::tree::visit::Action;
     use git_repository::bstr::{ByteSlice, ByteVec};
@@ -24,14 +24,14 @@ mod entries {
         pub num_blobs_exec: usize,
         pub num_submodules: usize,
         pub num_bytes: u64,
-        pub repo: git::Repository,
-        pub out: &'a mut dyn std::io::Write,
+        repo: Option<git::Repository>,
+        out: &'a mut dyn std::io::Write,
         path: BString,
         path_deque: VecDeque<BString>,
     }
 
     impl<'a> Traverse<'a> {
-        pub fn new(repo: git::Repository, out: &'a mut dyn std::io::Write) -> Self {
+        pub fn new(repo: Option<git::Repository>, out: &'a mut dyn std::io::Write) -> Self {
             Traverse {
                 num_trees: 0,
                 num_links: 0,
@@ -43,12 +43,6 @@ mod entries {
                 out,
                 path: BString::default(),
                 path_deque: VecDeque::new(),
-            }
-        }
-
-        pub(crate) fn count_bytes(&mut self, oid: &oid) {
-            if let Ok(obj) = self.repo.find_object(oid) {
-                self.num_bytes += obj.data.len() as u64;
             }
         }
 
@@ -93,17 +87,19 @@ mod entries {
 
         fn visit_nontree(&mut self, entry: &EntryRef<'_>) -> Action {
             use git::objs::tree::EntryMode::*;
-            format_entry(&mut *self.out, entry, self.path.as_bstr(), None).ok();
+            let size = self
+                .repo
+                .as_ref()
+                .and_then(|repo| repo.find_object(entry.oid).map(|o| o.data.len()).ok());
+            format_entry(&mut *self.out, entry, self.path.as_bstr(), size).ok();
+            if let Some(size) = size {
+                self.num_bytes += size as u64;
+            }
+
             match entry.mode {
                 Commit => self.num_submodules += 1,
-                Blob => {
-                    self.count_bytes(entry.oid);
-                    self.num_blobs += 1
-                }
-                BlobExecutable => {
-                    self.count_bytes(entry.oid);
-                    self.num_blobs_exec += 1
-                }
+                Blob => self.num_blobs += 1,
+                BlobExecutable => self.num_blobs_exec += 1,
                 Link => self.num_links += 1,
                 Tree => unreachable!("BUG"),
             }
@@ -126,8 +122,7 @@ pub fn entries(
     }
 
     let tree_repo = git::open(repository)?;
-    let mut repo = tree_repo.clone().apply_environment();
-    repo.object_cache_size(128 * 1024);
+    let repo = tree_repo.clone().apply_environment();
 
     let tree = match treeish {
         Some(hex) => git::hash::ObjectId::from_hex(hex.as_bytes())
@@ -138,7 +133,7 @@ pub fn entries(
     };
 
     if recursive {
-        let mut delegate = entries::Traverse::new(tree_repo, out);
+        let mut delegate = entries::Traverse::new(extended.then(|| tree_repo), out);
         tree.traverse().breadthfirst(&mut delegate)?;
     } else {
         for entry in tree.iter() {
@@ -161,12 +156,12 @@ fn format_entry(
     mut out: impl io::Write,
     entry: &git::objs::tree::EntryRef<'_>,
     filename: &git::bstr::BStr,
-    _size: Option<usize>,
+    size: Option<usize>,
 ) -> std::io::Result<()> {
     use git::objs::tree::EntryMode::*;
     writeln!(
         out,
-        "{} {} {}",
+        "{} {}{} {}",
         match entry.mode {
             Tree => "TREE",
             Blob => "BLOB",
@@ -175,6 +170,7 @@ fn format_entry(
             Commit => "SUBM",
         },
         entry.oid,
+        size.map(|s| Cow::Owned(format!(" {}", s))).unwrap_or("".into()),
         filename
     )
 }
