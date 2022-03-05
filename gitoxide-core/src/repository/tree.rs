@@ -149,7 +149,7 @@ pub fn entries(
     format: OutputFormat,
     out: &mut dyn io::Write,
 ) -> anyhow::Result<()> {
-    if format == OutputFormat::Json {
+    if format != OutputFormat::Human {
         bail!("Only human output format is supported at the moment");
     }
 
@@ -179,7 +179,7 @@ pub fn entries(
 fn treeish_to_tree<'repo>(treeish: Option<&str>, repo: &'repo git::Repository) -> anyhow::Result<Tree<'repo>> {
     Ok(match treeish {
         Some(hex) => git::hash::ObjectId::from_hex(hex.as_bytes())
-            .map(|id| id.attach(&repo))?
+            .map(|id| id.attach(repo))?
             .object()?
             .try_into_tree()?,
         None => repo.head()?.peel_to_commit_in_place()?.tree()?,
@@ -204,7 +204,7 @@ fn format_entry(
             Commit => "SUBM",
         },
         entry.oid,
-        size.map(|s| Cow::Owned(format!(" {}", s))).unwrap_or("".into()),
+        size.map(|s| Cow::Owned(format!(" {}", s))).unwrap_or_else(|| "".into()),
         filename
     )
 }
