@@ -47,7 +47,10 @@ impl crate::Repository {
                     }
                 };
                 this.objects.set_pack_cache(new_pack_cache);
+            } else {
+                this.objects.unset_pack_cache();
             }
+
             if let Some(bytes) = parse_bytes_from_var("GITOXIDE_OBJECT_CACHE_MEMORY") {
                 this.objects
                     .set_object_cache(move || Box::new(git_pack::cache::object::MemoryCappedHashmap::new(bytes)));
