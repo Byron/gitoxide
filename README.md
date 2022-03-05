@@ -42,6 +42,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] **verify** - assure that a commit-graph is consistent
     * **repository**
       * **verify** - validate a whole repository, for now only the object database.
+      * **tree**
+         * [x] **entries** - list tree entries for a single tree or recursively
+         * [x] **info** - display tree statistics
     * **index**
       * [x] **entries** - show detailed entry information for human or machine consumption (via JSON)
       * [x] **verify** - check the index for consistency
