@@ -138,16 +138,9 @@ pub struct Collision {
     pub error_kind: std::io::ErrorKind,
 }
 
-pub struct ErrorRecord {
-    /// the path that that errored on disk
-    pub path: BString,
-    /// The io error we encountered when checking out `path`.
-    pub err: Box<dyn std::error::Error + Send + Sync>,
-}
-
 pub struct Outcome {
     pub collisions: Vec<Collision>,
-    pub errors: Vec<ErrorRecord>,
+    pub errors: usize,
 }
 
 #[derive(Clone, Copy)]

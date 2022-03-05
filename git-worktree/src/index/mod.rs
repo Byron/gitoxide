@@ -28,7 +28,7 @@ where
 
     let mut buf = Vec::new();
     let mut collisions = Vec::new();
-    let mut errors = Vec::new();
+    let mut errors = 0;
 
     for (entry, entry_path) in index.entries_mut_with_paths() {
         // TODO: write test for that
@@ -55,6 +55,7 @@ where
             Err(index::checkout::Error::Io(err)) if err.kind() == AlreadyExists || err.raw_os_error() == Some(21) => {
                 // We are here because a file existed or was blocked by a directory which shouldn't be possible unless
                 // we are on a file insensitive file system.
+                files.fail(format!("{}: collided ({:?})", entry_path, err.kind()));
                 collisions.push(checkout::Collision {
                     path: entry_path.into(),
                     error_kind: err.kind(),
@@ -62,10 +63,8 @@ where
             }
             Err(err) => {
                 if options.keep_going {
-                    errors.push(checkout::ErrorRecord {
-                        path: entry_path.into(),
-                        err: Box::new(err),
-                    })
+                    files.fail(format!("{}: {}", entry_path, err));
+                    errors += 1;
                 } else {
                     return Err(err);
                 }
