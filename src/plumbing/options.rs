@@ -59,8 +59,7 @@ pub enum Subcommands {
     /// Subcommands for interacting with a worktree index, typically at .git/index
     Index(index::Platform),
     /// Subcommands for interacting with entire git repositories
-    #[clap(subcommand)]
-    Repository(repo::Subcommands),
+    Repository(repo::Platform),
 }
 
 ///
@@ -323,6 +322,17 @@ pub mod pack {
 pub mod repo {
     use std::path::PathBuf;
 
+    #[derive(Debug, clap::Parser)]
+    pub struct Platform {
+        /// The repository to access.
+        #[clap(short = 'r', long, default_value = ".")]
+        pub repository: PathBuf,
+
+        /// Subcommands
+        #[clap(subcommand)]
+        pub cmd: Subcommands,
+    }
+
     #[derive(Debug, clap::Subcommand)]
     #[clap(alias = "repo")]
     pub enum Subcommands {
@@ -330,9 +340,30 @@ pub mod repo {
         Verify {
             #[clap(flatten)]
             args: super::pack::VerifyOptions,
-            #[clap(short = 'r', long, default_value = ".")]
-            repository: PathBuf,
         },
+        /// Interact with tree objects.
+        Tree {
+            #[clap(subcommand)]
+            cmd: tree::Subcommands,
+        },
+    }
+
+    pub mod tree {
+        #[derive(Debug, clap::Subcommand)]
+        pub enum Subcommands {
+            Entries {
+                /// Traverse the entire tree and its subtrees respectively, not only this tree.
+                #[clap(long, short = 'r')]
+                recursive: bool,
+
+                /// Provide the files size as well. This is expensive as the object is decoded entirely.
+                #[clap(long, short = 'e')]
+                extended: bool,
+
+                /// The tree to traverse, or the tree at `HEAD` if unspecified.
+                treeish: Option<String>,
+            },
+        }
     }
 }
 

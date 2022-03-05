@@ -140,7 +140,32 @@ pub fn main() -> Result<()> {
                 },
             ),
         },
-        Subcommands::Repository(subcommands) => match subcommands {
+        Subcommands::Repository(repo::Platform { repository, cmd }) => match cmd {
+            repo::Subcommands::Tree {
+                cmd:
+                    repo::tree::Subcommands::Entries {
+                        treeish,
+                        recursive,
+                        extended,
+                    },
+            } => prepare_and_run(
+                "repository-tree-entries",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, err| {
+                    core::repository::tree::entries(
+                        repository,
+                        treeish.as_deref(),
+                        recursive,
+                        extended,
+                        format,
+                        out,
+                        err,
+                    )
+                },
+            ),
             repo::Subcommands::Verify {
                 args:
                     pack::VerifyOptions {
@@ -149,7 +174,6 @@ pub fn main() -> Result<()> {
                         decode,
                         re_encode,
                     },
-                repository,
             } => prepare_and_run(
                 "repository-verify",
                 verbose,

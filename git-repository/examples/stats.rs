@@ -1,11 +1,8 @@
-#![allow(unused)]
-
-use git_odb::FindExt;
 use git_repository as git;
 use git_repository::Reference;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let repo = git::discover(".")?;
+    let repo = git::discover(".")?.apply_environment();
     println!(
         "Repo: {}",
         repo.work_tree().as_deref().unwrap_or(repo.git_dir()).display()
@@ -63,8 +60,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 mod visit {
-    use std::process::id;
-
     use git_hash::oid;
     use git_object::{bstr::BStr, tree::EntryRef};
     use git_repository as git;
@@ -102,13 +97,13 @@ mod visit {
     impl git_traverse::tree::Visit for Tree {
         fn pop_front_tracked_path_and_set_current(&mut self) {}
 
-        fn push_back_tracked_path_component(&mut self, component: &BStr) {}
+        fn push_back_tracked_path_component(&mut self, _component: &BStr) {}
 
-        fn push_path_component(&mut self, component: &BStr) {}
+        fn push_path_component(&mut self, _component: &BStr) {}
 
         fn pop_path_component(&mut self) {}
 
-        fn visit_tree(&mut self, entry: &EntryRef<'_>) -> Action {
+        fn visit_tree(&mut self, _entry: &EntryRef<'_>) -> Action {
             self.num_trees += 1;
             Action::Continue
         }
