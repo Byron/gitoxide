@@ -215,10 +215,13 @@ pub fn checkout_exclusive(
         repo.is_none().then(|| "empty").unwrap_or_default()
     ));
 
-    if !(collisions.is_empty() && errors == 0) {
+    if !(collisions.is_empty() && errors.is_empty()) {
         let mut messages = Vec::new();
-        if errors != 0 {
-            messages.push(format!("kept going through {} errors(s)", errors));
+        if !errors.is_empty() {
+            messages.push(format!("kept going through {} errors(s)", errors.len()));
+            for record in errors {
+                writeln!(err, "{}: {}", record.path, record.error).ok();
+            }
         }
         if !collisions.is_empty() {
             messages.push(format!("encountered {} collision(s)", collisions.len()));

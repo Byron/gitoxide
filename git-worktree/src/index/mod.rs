@@ -2,7 +2,7 @@ use git_features::progress::Progress;
 use git_hash::oid;
 
 use crate::index;
-use crate::index::checkout::PathCache;
+use crate::index::checkout::{ErrorRecord, PathCache};
 
 pub mod checkout;
 pub(crate) mod entry;
@@ -28,7 +28,7 @@ where
 
     let mut buf = Vec::new();
     let mut collisions = Vec::new();
-    let mut errors = 0;
+    let mut errors = Vec::new();
 
     for (entry, entry_path) in index.entries_mut_with_paths() {
         // TODO: write test for that
@@ -64,7 +64,10 @@ where
             Err(err) => {
                 if options.keep_going {
                     files.fail(format!("{}: {}", entry_path, err));
-                    errors += 1;
+                    errors.push(ErrorRecord {
+                        path: entry_path.into(),
+                        error: Box::new(err),
+                    });
                 } else {
                     return Err(err);
                 }

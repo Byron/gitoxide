@@ -138,9 +138,16 @@ pub struct Collision {
     pub error_kind: std::io::ErrorKind,
 }
 
+pub struct ErrorRecord {
+    /// the path that encountered the error.
+    pub path: BString,
+    /// The error
+    pub error: Box<dyn std::error::Error + Send + Sync + 'static>,
+}
+
 pub struct Outcome {
     pub collisions: Vec<Collision>,
-    pub errors: usize,
+    pub errors: Vec<ErrorRecord>,
 }
 
 #[derive(Clone, Copy)]

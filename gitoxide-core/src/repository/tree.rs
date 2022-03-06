@@ -114,6 +114,7 @@ mod entries {
     }
 }
 
+#[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
 pub fn info(
     repository: PathBuf,
     treeish: Option<&str>,
