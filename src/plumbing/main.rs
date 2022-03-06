@@ -12,6 +12,7 @@ use clap::Parser;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
+use crate::plumbing::options::pack::multi_index;
 #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 use crate::plumbing::options::remote;
 use crate::{
@@ -376,8 +377,8 @@ pub fn main() -> Result<()> {
                 },
             )
             .map(|_| ()),
-            pack::Subcommands::MultiIndex(subcommands) => match subcommands {
-                pack::multi_index::Subcommands::Verify { multi_index_path } => prepare_and_run(
+            pack::Subcommands::MultiIndex(multi_index::Platform { multi_index_path, cmd }) => match cmd {
+                pack::multi_index::Subcommands::Verify => prepare_and_run(
                     "pack-multi-index-verify",
                     verbose,
                     progress,
@@ -391,10 +392,7 @@ pub fn main() -> Result<()> {
                         )
                     },
                 ),
-                pack::multi_index::Subcommands::Create {
-                    output_path,
-                    index_paths,
-                } => prepare_and_run(
+                pack::multi_index::Subcommands::Create { index_paths } => prepare_and_run(
                     "pack-multi-index-create",
                     verbose,
                     progress,
@@ -403,7 +401,7 @@ pub fn main() -> Result<()> {
                     move |progress, _out, _err| {
                         core::pack::multi_index::create(
                             index_paths,
-                            output_path,
+                            multi_index_path,
                             progress,
                             &git_repository::interrupt::IS_INTERRUPTED,
                             object_hash,

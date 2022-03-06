@@ -74,8 +74,7 @@ pub mod pack {
         #[clap(subcommand)]
         Index(index::Subcommands),
         /// Subcommands for interacting with multi-pack indices (named "multi-pack-index")
-        #[clap(subcommand)]
-        MultiIndex(multi_index::Subcommands),
+        MultiIndex(multi_index::Platform),
         /// Create a new pack with a set of objects.
         Create {
             #[clap(long, short = 'r')]
@@ -255,22 +254,26 @@ pub mod pack {
     pub mod multi_index {
         use std::path::PathBuf;
 
+        #[derive(Debug, clap::Parser)]
+        pub struct Platform {
+            /// The path to the index file.
+            #[clap(short = 'i', long, default_value = ".git/objects/packs/multi-pack-index")]
+            pub multi_index_path: PathBuf,
+
+            /// Subcommands
+            #[clap(subcommand)]
+            pub cmd: Subcommands,
+        }
+
         #[derive(Debug, clap::Subcommand)]
         pub enum Subcommands {
             /// Verify a multi-index quickly without inspecting objects themselves
-            Verify {
-                /// The path to the multi-pack-index to verify.
-                multi_index_path: PathBuf,
-            },
-            /// Create a multi-pack index from one or more pack index files
+            Verify,
+            /// Create a multi-pack index from one or more pack index files, overwriting possibloy existing files.
             Create {
-                /// The path to which the multi-index file should be written, overwriting any possibly existing file.
+                /// Paths to the pack index files to read (with .idx extension).
                 ///
                 /// Note for the multi-index to be useful, it should be side-by-side with the supplied `.idx` files.
-                #[clap(long, short = 'o')]
-                output_path: PathBuf,
-
-                /// Paths to the pack index files to read (with .idx extension).
                 #[clap(required = true)]
                 index_paths: Vec<PathBuf>,
             },
