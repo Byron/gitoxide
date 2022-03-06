@@ -248,7 +248,7 @@ commit_graphs = \
 stress: ## Run various algorithms on big repositories
 	$(MAKE) -j3 $(linux_repo) $(rust_repo) release-lean
 	time ./target/release/gix --verbose pack verify --re-encode $(linux_repo)/objects/pack/*.idx
-	time ./target/release/gix --verbose pack multi-index create $(linux_repo)/objects/pack/*.idx -o $(linux_repo)/objects/pack/multi-pack-index
+	time ./target/release/gix --verbose pack multi-index -i $(linux_repo)/objects/pack/multi-pack-index create $(linux_repo)/objects/pack/*.idx
 	time ./target/release/gix --verbose pack verify $(linux_repo)/objects/pack/multi-pack-index
 	rm -Rf out; mkdir out && time ./target/release/gix --verbose pack index create -p $(linux_repo)/objects/pack/*.pack out/
 	time ./target/release/gix --verbose pack verify out/*.idx
