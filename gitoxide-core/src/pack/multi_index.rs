@@ -1,3 +1,4 @@
+use anyhow::bail;
 use std::{io::BufWriter, path::PathBuf, sync::atomic::AtomicBool};
 
 use crate::OutputFormat;
@@ -66,5 +67,16 @@ pub fn info(
             object_hash: file.object_hash().to_string(),
         },
     )?;
+    Ok(())
+}
+
+pub fn entries(multi_index_path: PathBuf, format: OutputFormat, mut out: impl std::io::Write) -> anyhow::Result<()> {
+    if format != OutputFormat::Human {
+        bail!("Only human format is supported right now");
+    }
+    let file = git::odb::pack::multi_index::File::at(&multi_index_path)?;
+    for entry in file.iter() {
+        writeln!(out, "{} {} {}", entry.oid, entry.pack_index, entry.pack_offset)?;
+    }
     Ok(())
 }

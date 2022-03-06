@@ -267,6 +267,8 @@ pub mod pack {
 
         #[derive(Debug, clap::Subcommand)]
         pub enum Subcommands {
+            /// Display all entries of a multi-index: <oid> <pack-id> <pack-offset>
+            Entries,
             /// Print general information about a multi-index file
             Info,
             /// Verify a multi-index quickly without inspecting objects themselves

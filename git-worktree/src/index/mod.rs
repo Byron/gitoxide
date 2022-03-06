@@ -63,7 +63,6 @@ where
             }
             Err(err) => {
                 if options.keep_going {
-                    files.fail(format!("{}: {}", entry_path, err));
                     errors.push(ErrorRecord {
                         path: entry_path.into(),
                         error: Box::new(err),

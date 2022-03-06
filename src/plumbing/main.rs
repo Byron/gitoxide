@@ -378,6 +378,14 @@ pub fn main() -> Result<()> {
             )
             .map(|_| ()),
             pack::Subcommands::MultiIndex(multi_index::Platform { multi_index_path, cmd }) => match cmd {
+                pack::multi_index::Subcommands::Entries => prepare_and_run(
+                    "pack-multi-index-entries",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    core::pack::multi_index::PROGRESS_RANGE,
+                    move |_progress, out, _err| core::pack::multi_index::entries(multi_index_path, format, out),
+                ),
                 pack::multi_index::Subcommands::Info => prepare_and_run(
                     "pack-multi-index-info",
                     verbose,
