@@ -120,8 +120,8 @@ pub fn info(
     treeish: Option<&str>,
     extended: bool,
     format: OutputFormat,
-    out: &mut dyn io::Write,
-    err: &mut dyn io::Write,
+    out: impl io::Write,
+    mut err: impl io::Write,
 ) -> anyhow::Result<()> {
     if format == OutputFormat::Human {
         writeln!(err, "Only JSON is implemented - using that instead")?;
@@ -148,7 +148,7 @@ pub fn entries(
     recursive: bool,
     extended: bool,
     format: OutputFormat,
-    out: &mut dyn io::Write,
+    mut out: impl io::Write,
 ) -> anyhow::Result<()> {
     if format != OutputFormat::Human {
         bail!("Only human output format is supported at the moment");
@@ -158,13 +158,13 @@ pub fn entries(
     let tree = treeish_to_tree(treeish, &repo)?;
 
     if recursive {
-        let mut delegate = entries::Traverse::new(extended.then(|| &repo), out.into());
+        let mut delegate = entries::Traverse::new(extended.then(|| &repo), Some(&mut out));
         tree.traverse().breadthfirst(&mut delegate)?;
     } else {
         for entry in tree.iter() {
             let entry = entry?;
             format_entry(
-                &mut *out,
+                &mut out,
                 &entry.inner,
                 entry.inner.filename,
                 extended

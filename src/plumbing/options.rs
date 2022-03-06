@@ -257,7 +257,7 @@ pub mod pack {
         #[derive(Debug, clap::Parser)]
         pub struct Platform {
             /// The path to the index file.
-            #[clap(short = 'i', long, default_value = ".git/objects/packs/multi-pack-index")]
+            #[clap(short = 'i', long, default_value = ".git/objects/pack/multi-pack-index")]
             pub multi_index_path: PathBuf,
 
             /// Subcommands
@@ -267,6 +267,8 @@ pub mod pack {
 
         #[derive(Debug, clap::Subcommand)]
         pub enum Subcommands {
+            /// Print general information about a multi-index file
+            Info,
             /// Verify a multi-index quickly without inspecting objects themselves
             Verify,
             /// Create a multi-pack index from one or more pack index files, overwriting possibloy existing files.
