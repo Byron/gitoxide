@@ -1,5 +1,4 @@
 use bstr::BString;
-use quick_error::quick_error;
 use std::path::PathBuf;
 
 /// A cache for directory creation to reduce the amount of stat calls when creating
@@ -192,25 +191,17 @@ impl Default for Options {
         }
     }
 }
-
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        IllformedUtf8{ path: BString } {
-            display("Could not convert path to UTF8: {}", path)
-        }
-        Time(err: std::time::SystemTimeError) {
-            from()
-            source(err)
-            display("The clock was off when reading file related metadata after updating a file on disk")
-        }
-        Io(err: std::io::Error) {
-            from()
-            source(err)
-            display("IO error while writing blob or reading file metadata or changing filetype")
-        }
-        ObjectNotFound{ oid: git_hash::ObjectId, path: std::path::PathBuf } {
-            display("object {} for checkout at {} not found in object database", oid.to_hex(), path.display())
-        }
-    }
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Could not convert path to UTF8: {}", .path)]
+    IllformedUtf8 { path: BString },
+    #[error("The clock was off when reading file related metadata after updating a file on disk")]
+    Time(#[from] std::time::SystemTimeError),
+    #[error("IO error while writing blob or reading file metadata or changing filetype")]
+    Io(#[from] std::io::Error),
+    #[error("object {} for checkout at {} not found in object database", .oid.to_hex(), .path.display())]
+    ObjectNotFound {
+        oid: git_hash::ObjectId,
+        path: std::path::PathBuf,
+    },
 }

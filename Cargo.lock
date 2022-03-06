@@ -1793,10 +1793,10 @@ dependencies = [
  "git-object 0.17.1",
  "git-odb 0.27.0",
  "git-testtools",
- "quick-error",
  "serde",
  "symlink",
  "tempfile",
+ "thiserror",
  "walkdir",
 ]
 
