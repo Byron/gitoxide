@@ -50,6 +50,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * **tree**
          * [x] **entries** - list tree entries for a single tree or recursively
          * [x] **info** - display tree statistics
+      * **odb**
+         * [x] **info** - display odb statistics
+         * [x] **entries** - display all object ids in the object database
     * **index**
       * [x] **entries** - show detailed entry information for human or machine consumption (via JSON)
       * [x] **verify** - check the index for consistency

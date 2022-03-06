@@ -145,35 +145,57 @@ pub fn main() -> Result<()> {
             ),
         },
         Subcommands::Repository(repo::Platform { repository, cmd }) => match cmd {
-            repo::Subcommands::Tree {
-                cmd:
-                    repo::tree::Subcommands::Entries {
-                        treeish,
-                        recursive,
-                        extended,
+            repo::Subcommands::Odb { cmd } => match cmd {
+                repo::odb::Subcommands::Entries => prepare_and_run(
+                    "repository-odb-entries",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |_progress, out, _err| core::repository::odb::entries(repository, format, out),
+                ),
+                repo::odb::Subcommands::Info => prepare_and_run(
+                    "repository-odb-info",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |_progress, out, err| core::repository::odb::info(repository, format, out, err),
+                ),
+            },
+            repo::Subcommands::Tree { cmd } => match cmd {
+                repo::tree::Subcommands::Entries {
+                    treeish,
+                    recursive,
+                    extended,
+                } => prepare_and_run(
+                    "repository-tree-entries",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |_progress, out, _err| {
+                        core::repository::tree::entries(
+                            repository,
+                            treeish.as_deref(),
+                            recursive,
+                            extended,
+                            format,
+                            out,
+                        )
                     },
-            } => prepare_and_run(
-                "repository-tree-entries",
-                verbose,
-                progress,
-                progress_keep_open,
-                None,
-                move |_progress, out, _err| {
-                    core::repository::tree::entries(repository, treeish.as_deref(), recursive, extended, format, out)
-                },
-            ),
-            repo::Subcommands::Tree {
-                cmd: repo::tree::Subcommands::Info { treeish, extended },
-            } => prepare_and_run(
-                "repository-tree-info",
-                verbose,
-                progress,
-                progress_keep_open,
-                None,
-                move |_progress, out, err| {
-                    core::repository::tree::info(repository, treeish.as_deref(), extended, format, out, err)
-                },
-            ),
+                ),
+                repo::tree::Subcommands::Info { treeish, extended } => prepare_and_run(
+                    "repository-tree-info",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |_progress, out, err| {
+                        core::repository::tree::info(repository, treeish.as_deref(), extended, format, out, err)
+                    },
+                ),
+            },
             repo::Subcommands::Verify {
                 args:
                     pack::VerifyOptions {

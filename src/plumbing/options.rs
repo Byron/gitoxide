@@ -353,6 +353,21 @@ pub mod repo {
             #[clap(subcommand)]
             cmd: tree::Subcommands,
         },
+        /// Interact with the object database.
+        Odb {
+            #[clap(subcommand)]
+            cmd: odb::Subcommands,
+        },
+    }
+
+    pub mod odb {
+        #[derive(Debug, clap::Subcommand)]
+        pub enum Subcommands {
+            /// Print all object names.
+            Entries,
+            /// Provide general information about the object database.
+            Info,
+        }
     }
 
     pub mod tree {
