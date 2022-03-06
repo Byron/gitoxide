@@ -4,7 +4,7 @@ use git_hash::{oid, ObjectId};
 use git_object::Data;
 use git_pack::{cache::DecodeEntry, data::entry::Location};
 
-use crate::store::handle;
+use crate::store::{handle, load_index};
 
 mod error {
     use crate::{loose, pack};
@@ -23,6 +23,32 @@ mod error {
         LoadIndex(#[from] crate::store::load_index::Error),
         #[error(transparent)]
         LoadPack(#[from] std::io::Error),
+        #[error("The base object {} could not be found but is required to decode {}", .base_id, .id)]
+        DeltaBaseMissing {
+            /// the id of the base object which failed to lookup
+            base_id: git_hash::ObjectId,
+            /// The original object to lookup
+            id: git_hash::ObjectId,
+        },
+        #[error("An error occurred when looking up a ref delta base object {} to decode {}", .base_id, .id)]
+        DeltaBaseLookup {
+            #[source]
+            err: Box<Self>,
+            /// the id of the base object which failed to lookup
+            base_id: git_hash::ObjectId,
+            /// The original object to lookup
+            id: git_hash::ObjectId,
+        },
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn error_size() {
+            assert_eq!(std::mem::size_of::<Error>(), 88, "should not grow without us noticing");
+        }
     }
 }
 use crate::find::{PotentialPrefix, PrefixLookupResult};
@@ -106,6 +132,171 @@ where
             }
         }
     }
+
+    fn try_find_cached_inner<'a>(
+        &self,
+        id: &oid,
+        buffer: &'a mut Vec<u8>,
+        pack_cache: &mut impl DecodeEntry,
+        snapshot: &mut load_index::Snapshot,
+    ) -> Result<Option<(Data<'a>, Option<Location>)>, Error> {
+        'outer: loop {
+            {
+                let marker = snapshot.marker;
+                for (idx, index) in snapshot.indices.iter_mut().enumerate() {
+                    if let Some(handle::index_lookup::Outcome {
+                        object_index: handle::IndexForObjectInPack { pack_id, pack_offset },
+                        index_file,
+                        pack: possibly_pack,
+                    }) = index.lookup(id)
+                    {
+                        let pack = match possibly_pack {
+                            Some(pack) => pack,
+                            None => match self.store.load_pack(pack_id, marker)? {
+                                Some(pack) => {
+                                    *possibly_pack = Some(pack);
+                                    possibly_pack.as_deref().expect("just put it in")
+                                }
+                                None => {
+                                    // The pack wasn't available anymore so we are supposed to try another round with a fresh index
+                                    match self.store.load_one_index(self.refresh, snapshot.marker)? {
+                                        Some(new_snapshot) => {
+                                            *snapshot = new_snapshot;
+                                            continue 'outer;
+                                        }
+                                        None => {
+                                            // nothing new in the index, kind of unexpected to not have a pack but to also
+                                            // to have no new index yet. We set the new index before removing any slots, so
+                                            // this should be observable.
+                                            return Ok(None);
+                                        }
+                                    }
+                                }
+                            },
+                        };
+                        let entry = pack.entry(pack_offset);
+                        let header_size = entry.header_size();
+                        let res = match pack.decode_entry(
+                            entry,
+                            buffer,
+                            |id, _out| {
+                                index_file
+                                    .pack_offset_by_id(id)
+                                    .map(|pack_offset| git_pack::data::ResolvedBase::InPack(pack.entry(pack_offset)))
+                            },
+                            pack_cache,
+                        ) {
+                            Ok(r) => Ok((
+                                git_object::Data {
+                                    kind: r.kind,
+                                    data: buffer.as_slice(),
+                                },
+                                Some(git_pack::data::entry::Location {
+                                    pack_id: pack.id,
+                                    pack_offset,
+                                    entry_size: r.compressed_size + header_size,
+                                }),
+                            )),
+                            Err(git_pack::data::decode_entry::Error::DeltaBaseUnresolved(base_id)) => {
+                                // special case, and we just allocate here to make it work. It's an actual delta-ref object
+                                // which is sent by some servers that points to an object outside of the pack we are looking
+                                // at right now. With the complexities of loading packs, we go into recursion here. Git itself
+                                // doesn't do a cycle check, and we won't either but limit the recursive depth.
+                                // The whole ordeal isn't efficient due to memory allocation and later mem-copying when trying again.
+                                let mut buf = Vec::new();
+                                let obj_kind = self
+                                    .try_find_cached_inner(&base_id, &mut buf, pack_cache, snapshot)
+                                    .map_err(|err| Error::DeltaBaseLookup {
+                                        err: Box::new(err),
+                                        base_id,
+                                        id: id.to_owned(),
+                                    })?
+                                    .ok_or_else(|| Error::DeltaBaseMissing {
+                                        base_id,
+                                        id: id.to_owned(),
+                                    })?
+                                    .0
+                                    .kind;
+                                let index = &mut snapshot.indices[idx];
+                                let handle::index_lookup::Outcome {
+                                    object_index:
+                                        handle::IndexForObjectInPack {
+                                            pack_id: _,
+                                            pack_offset,
+                                        },
+                                    index_file,
+                                    pack: possibly_pack,
+                                } = index.lookup(id).expect("to find the object again in snapshot");
+                                let pack = possibly_pack
+                                    .as_ref()
+                                    .expect("pack to still be available like just now");
+                                let entry = pack.entry(pack_offset);
+                                let header_size = entry.header_size();
+                                pack.decode_entry(
+                                    entry,
+                                    buffer,
+                                    |id, out| {
+                                        index_file
+                                            .pack_offset_by_id(id)
+                                            .map(|pack_offset| {
+                                                git_pack::data::ResolvedBase::InPack(pack.entry(pack_offset))
+                                            })
+                                            .or_else(|| {
+                                                (id == base_id).then(|| {
+                                                    out.resize(buf.len(), 0);
+                                                    out.copy_from_slice(buf.as_slice());
+                                                    git_pack::data::ResolvedBase::OutOfPack {
+                                                        kind: obj_kind,
+                                                        end: out.len(),
+                                                    }
+                                                })
+                                            })
+                                    },
+                                    pack_cache,
+                                )
+                                .map(move |r| {
+                                    (
+                                        git_object::Data {
+                                            kind: r.kind,
+                                            data: buffer.as_slice(),
+                                        },
+                                        Some(git_pack::data::entry::Location {
+                                            pack_id: pack.id,
+                                            pack_offset,
+                                            entry_size: r.compressed_size + header_size,
+                                        }),
+                                    )
+                                })
+                            }
+                            Err(err) => Err(err),
+                        }?;
+
+                        if idx != 0 {
+                            snapshot.indices.swap(0, idx);
+                        }
+                        return Ok(Some(res));
+                    }
+                }
+            }
+
+            for lodb in snapshot.loose_dbs.iter() {
+                // TODO: remove this double-lookup once the borrow checker allows it.
+                if lodb.contains(id) {
+                    return lodb
+                        .try_find(id, buffer)
+                        .map(|obj| obj.map(|obj| (obj, None)))
+                        .map_err(Into::into);
+                }
+            }
+
+            match self.store.load_one_index(self.refresh, snapshot.marker)? {
+                Some(new_snapshot) => {
+                    *snapshot = new_snapshot;
+                }
+                None => return Ok(None),
+            }
+        }
+    }
 }
 
 impl<S> git_pack::Find for super::Handle<S>
@@ -152,92 +343,7 @@ where
     ) -> Result<Option<(Data<'a>, Option<Location>)>, Self::Error> {
         let id = id.as_ref();
         let mut snapshot = self.snapshot.borrow_mut();
-        'outer: loop {
-            {
-                let marker = snapshot.marker;
-                for (idx, index) in snapshot.indices.iter_mut().enumerate() {
-                    if let Some(handle::index_lookup::Outcome {
-                        object_index: handle::IndexForObjectInPack { pack_id, pack_offset },
-                        index_file,
-                        pack: possibly_pack,
-                    }) = index.lookup(id)
-                    {
-                        let pack = match possibly_pack {
-                            Some(pack) => pack,
-                            None => match self.store.load_pack(pack_id, marker)? {
-                                Some(pack) => {
-                                    *possibly_pack = Some(pack);
-                                    possibly_pack.as_deref().expect("just put it in")
-                                }
-                                None => {
-                                    // The pack wasn't available anymore so we are supposed to try another round with a fresh index
-                                    match self.store.load_one_index(self.refresh, snapshot.marker)? {
-                                        Some(new_snapshot) => {
-                                            *snapshot = new_snapshot;
-                                            continue 'outer;
-                                        }
-                                        None => {
-                                            // nothing new in the index, kind of unexpected to not have a pack but to also
-                                            // to have no new index yet. We set the new index before removing any slots, so
-                                            // this should be observable.
-                                            return Ok(None);
-                                        }
-                                    }
-                                }
-                            },
-                        };
-                        let entry = pack.entry(pack_offset);
-                        let header_size = entry.header_size();
-                        let res = pack
-                            .decode_entry(
-                                entry,
-                                buffer,
-                                |id, _out| {
-                                    index_file.pack_offset_by_id(id).map(|pack_offset| {
-                                        git_pack::data::ResolvedBase::InPack(pack.entry(pack_offset))
-                                    })
-                                },
-                                pack_cache,
-                            )
-                            .map(move |r| {
-                                (
-                                    git_object::Data {
-                                        kind: r.kind,
-                                        data: buffer.as_slice(),
-                                    },
-                                    Some(git_pack::data::entry::Location {
-                                        pack_id: pack.id,
-                                        pack_offset,
-                                        entry_size: r.compressed_size + header_size,
-                                    }),
-                                )
-                            })?;
-
-                        if idx != 0 {
-                            snapshot.indices.swap(0, idx);
-                        }
-                        return Ok(Some(res));
-                    }
-                }
-            }
-
-            for lodb in snapshot.loose_dbs.iter() {
-                // TODO: remove this double-lookup once the borrow checker allows it.
-                if lodb.contains(id) {
-                    return lodb
-                        .try_find(id, buffer)
-                        .map(|obj| obj.map(|obj| (obj, None)))
-                        .map_err(Into::into);
-                }
-            }
-
-            match self.store.load_one_index(self.refresh, snapshot.marker)? {
-                Some(new_snapshot) => {
-                    *snapshot = new_snapshot;
-                }
-                None => return Ok(None),
-            }
-        }
+        self.try_find_cached_inner(id, buffer, pack_cache, &mut snapshot)
     }
 
     fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
