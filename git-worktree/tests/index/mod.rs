@@ -312,9 +312,9 @@ mod checkout {
             destination.path(),
             move |oid, buf| {
                 if allow_return_object(oid) {
-                    odb.find_blob(oid, buf).ok()
+                    odb.find_blob(oid, buf)
                 } else {
-                    None
+                    Err(git_odb::find::existing_object::Error::NotFound { oid: oid.to_owned() })
                 }
             },
             &mut progress::Discard,

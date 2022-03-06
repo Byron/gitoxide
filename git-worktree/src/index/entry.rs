@@ -8,7 +8,7 @@ use crate::index;
 use crate::index::checkout::PathCache;
 
 #[cfg_attr(not(unix), allow(unused_variables))]
-pub fn checkout<Find>(
+pub fn checkout<Find, E>(
     entry: &mut Entry,
     entry_path: &BStr,
     find: &mut Find,
@@ -23,9 +23,10 @@ pub fn checkout<Find>(
         ..
     }: index::checkout::Options,
     buf: &mut Vec<u8>,
-) -> Result<usize, index::checkout::Error>
+) -> Result<usize, index::checkout::Error<E>>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_object::BlobRef<'a>>,
+    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
+    E: std::error::Error + Send + Sync + 'static,
 {
     let dest = cache.append_relative_path_assure_leading_dir(
         git_features::path::from_byte_slice(entry_path).map_err(|_| index::checkout::Error::IllformedUtf8 {
@@ -36,7 +37,8 @@ where
 
     let object_size = match entry.mode {
         git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {
-            let obj = find(&entry.id, buf).ok_or_else(|| index::checkout::Error::ObjectNotFound {
+            let obj = find(&entry.id, buf).map_err(|err| index::checkout::Error::Find {
+                err,
                 oid: entry.id,
                 path: dest.to_path_buf(),
             })?;
@@ -59,7 +61,8 @@ where
             obj.data.len()
         }
         git_index::entry::Mode::SYMLINK => {
-            let obj = find(&entry.id, buf).ok_or_else(|| index::checkout::Error::ObjectNotFound {
+            let obj = find(&entry.id, buf).map_err(|err| index::checkout::Error::Find {
+                err,
                 oid: entry.id,
                 path: dest.to_path_buf(),
             })?;
@@ -84,7 +87,10 @@ where
     Ok(object_size)
 }
 
-fn update_fstat(entry: &mut Entry, meta: std::fs::Metadata) -> Result<(), index::checkout::Error> {
+fn update_fstat<E>(entry: &mut Entry, meta: std::fs::Metadata) -> Result<(), index::checkout::Error<E>>
+where
+    E: std::error::Error + Send + Sync + 'static,
+{
     let ctime = meta
         .created()
         .map_or(Ok(Duration::default()), |x| x.duration_since(std::time::UNIX_EPOCH))?;

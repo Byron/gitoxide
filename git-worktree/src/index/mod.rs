@@ -7,16 +7,17 @@ use crate::index::checkout::{ErrorRecord, PathCache};
 pub mod checkout;
 pub(crate) mod entry;
 
-pub fn checkout<Find>(
+pub fn checkout<Find, E>(
     index: &mut git_index::State,
     dir: impl Into<std::path::PathBuf>,
     mut find: Find,
     files: &mut impl Progress,
     bytes: &mut impl Progress,
     options: checkout::Options,
-) -> Result<checkout::Outcome, checkout::Error>
+) -> Result<checkout::Outcome, checkout::Error<E>>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_object::BlobRef<'a>>,
+    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
+    E: std::error::Error + Send + Sync + 'static,
 {
     if !options.destination_is_initially_empty {
         todo!("deal with non-clone checkouts")

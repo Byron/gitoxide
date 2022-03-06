@@ -181,12 +181,12 @@ pub fn checkout_exclusive(
                 repo.objects.find_blob(oid, buf).ok();
                 if empty_files {
                     // We always want to query the ODB here…
-                    repo.objects.find_blob(oid, buf).ok();
+                    repo.objects.find_blob(oid, buf)?;
                     buf.clear();
                     // …but write nothing
-                    Some(git::objs::BlobRef { data: buf })
+                    Ok(git::objs::BlobRef { data: buf })
                 } else {
-                    repo.objects.find_blob(oid, buf).ok()
+                    repo.objects.find_blob(oid, buf)
                 }
             },
             &mut files,
@@ -198,7 +198,7 @@ pub fn checkout_exclusive(
             dest_directory,
             |_, buf| {
                 buf.clear();
-                Some(git::objs::BlobRef { data: buf })
+                Ok(git::objs::BlobRef { data: buf })
             },
             &mut files,
             &mut bytes,
