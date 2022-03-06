@@ -12,6 +12,12 @@ where
     pub(crate) store: S,
     /// Defines what happens when there is no more indices to load.
     pub refresh: RefreshMode,
+    /// The maximum recursion depth for resolving ref-delta base objects, that is objects referring to other objects within
+    /// a pack.
+    /// Recursive loops are possible only in purposefully crafted packs.
+    /// This value doesn't have to be huge as in typical scenarios, these kind of objects are rare and chains supposedly are
+    /// even more rare.
+    pub max_recursion_depth: usize,
 
     pub(crate) token: Option<handle::Mode>,
     snapshot: RefCell<load_index::Snapshot>,

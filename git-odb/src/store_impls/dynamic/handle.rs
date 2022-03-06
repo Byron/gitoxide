@@ -114,6 +114,11 @@ pub(crate) mod index_lookup {
             })
         }
 
+        /// Returns true if this is a multi-pack index
+        pub(crate) fn is_multi_pack(&self) -> bool {
+            matches!(&self.file, handle::SingleOrMultiIndex::Multi { .. })
+        }
+
         /// Return true if the given object id exists in this index
         pub(crate) fn contains(&self, object_id: &oid) -> bool {
             match &self.file {
@@ -221,6 +226,9 @@ impl super::Store {
 
 /// Handle creation
 impl super::Store {
+    /// The amount of times a ref-delta base can be followed when multi-indices are involved.
+    pub const INITIAL_MAX_RECURSION_DEPTH: usize = 32;
+
     /// Create a new cache filled with a handle to this store, if this store is supporting shared ownership.
     ///
     /// Note that the actual type of `OwnShared` depends on the `parallel` feature toggle of the `git-features` crate.
@@ -243,6 +251,7 @@ impl super::Store {
             refresh: RefreshMode::default(),
             token: Some(token),
             snapshot: RefCell::new(self.collect_snapshot()),
+            max_recursion_depth: Self::INITIAL_MAX_RECURSION_DEPTH,
         }
     }
 
@@ -256,6 +265,7 @@ impl super::Store {
             refresh: Default::default(),
             token: Some(token),
             snapshot: RefCell::new(self.collect_snapshot()),
+            max_recursion_depth: Self::INITIAL_MAX_RECURSION_DEPTH,
         }
     }
 
@@ -336,6 +346,7 @@ where
                 .into()
             },
             snapshot: RefCell::new(self.store.collect_snapshot()),
+            max_recursion_depth: self.max_recursion_depth,
         }
     }
 }

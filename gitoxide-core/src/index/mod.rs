@@ -211,7 +211,7 @@ pub fn checkout_exclusive(
 
     progress.done(format!(
         "Created {} {} files",
-        entries_for_checkout,
+        entries_for_checkout.saturating_sub(errors.len() + collisions.len()),
         repo.is_none().then(|| "empty").unwrap_or_default()
     ));
 

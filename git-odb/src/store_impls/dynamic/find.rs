@@ -23,6 +23,20 @@ mod error {
         LoadIndex(#[from] crate::store::load_index::Error),
         #[error(transparent)]
         LoadPack(#[from] std::io::Error),
+        #[error("Object {} referred to its base object {} by its id but it's not within a multi-index", .id, .base_id)]
+        ThinPackAtRest {
+            /// the id of the base object which lived outside of the multi-index
+            base_id: git_hash::ObjectId,
+            /// The original object to lookup
+            id: git_hash::ObjectId,
+        },
+        #[error("Reached recursion limit of {} while resolving ref delta bases for {}", .max_depth, .id)]
+        DeltaBaseRecursionLimit {
+            /// the maximum recursion depth we encountered.
+            max_depth: usize,
+            /// The original object to lookup
+            id: git_hash::ObjectId,
+        },
         #[error("The base object {} could not be found but is required to decode {}", .base_id, .id)]
         DeltaBaseMissing {
             /// the id of the base object which failed to lookup
@@ -39,6 +53,25 @@ mod error {
             /// The original object to lookup
             id: git_hash::ObjectId,
         },
+    }
+
+    #[derive(Copy, Clone)]
+    pub(crate) struct DeltaBaseRecursion<'a> {
+        pub depth: usize,
+        pub original_id: &'a git_hash::oid,
+    }
+
+    impl<'a> DeltaBaseRecursion<'a> {
+        pub fn new(id: &'a git_hash::oid) -> Self {
+            Self {
+                original_id: id,
+                depth: 0,
+            }
+        }
+        pub fn inc_depth(mut self) -> Self {
+            self.depth += 1;
+            self
+        }
     }
 
     #[cfg(test)]
@@ -135,11 +168,20 @@ where
 
     fn try_find_cached_inner<'a>(
         &self,
-        id: &oid,
+        id: &git_hash::oid,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl DecodeEntry,
         snapshot: &mut load_index::Snapshot,
+        recursion: Option<error::DeltaBaseRecursion<'_>>,
     ) -> Result<Option<(Data<'a>, Option<Location>)>, Error> {
+        if let Some(r) = recursion {
+            if r.depth >= self.max_recursion_depth {
+                return Err(Error::DeltaBaseRecursionLimit {
+                    max_depth: self.max_recursion_depth,
+                    id: r.original_id.to_owned(),
+                });
+            }
+        }
         'outer: loop {
             {
                 let marker = snapshot.marker;
@@ -197,7 +239,17 @@ where
                                     entry_size: r.compressed_size + header_size,
                                 }),
                             )),
-                            Err(git_pack::data::decode_entry::Error::DeltaBaseUnresolved(base_id)) => {
+                            Err(git_pack::data::decode_entry::Error::DeltaBaseUnresolved(base_id))
+                                if index.is_multi_pack() =>
+                            {
+                                // Only with multi-pack indices it's allowed to jump to refer to other packs within this
+                                // multi-pack. Otherwise this would consistute a thin pack which is only allowed in transit.
+                                let _base_must_exist_in_multi_index =
+                                    index.lookup(&base_id).ok_or_else(|| Error::ThinPackAtRest {
+                                        base_id,
+                                        id: id.to_owned(),
+                                    })?;
+
                                 // special case, and we just allocate here to make it work. It's an actual delta-ref object
                                 // which is sent by some servers that points to an object outside of the pack we are looking
                                 // at right now. With the complexities of loading packs, we go into recursion here. Git itself
@@ -205,7 +257,15 @@ where
                                 // The whole ordeal isn't efficient due to memory allocation and later mem-copying when trying again.
                                 let mut buf = Vec::new();
                                 let obj_kind = self
-                                    .try_find_cached_inner(&base_id, &mut buf, pack_cache, snapshot)
+                                    .try_find_cached_inner(
+                                        &base_id,
+                                        &mut buf,
+                                        pack_cache,
+                                        snapshot,
+                                        recursion
+                                            .map(|r| r.inc_depth())
+                                            .or_else(|| error::DeltaBaseRecursion::new(id).into()),
+                                    )
                                     .map_err(|err| Error::DeltaBaseLookup {
                                         err: Box::new(err),
                                         base_id,
@@ -343,7 +403,7 @@ where
     ) -> Result<Option<(Data<'a>, Option<Location>)>, Self::Error> {
         let id = id.as_ref();
         let mut snapshot = self.snapshot.borrow_mut();
-        self.try_find_cached_inner(id, buffer, pack_cache, &mut snapshot)
+        self.try_find_cached_inner(id, buffer, pack_cache, &mut snapshot, None)
     }
 
     fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
