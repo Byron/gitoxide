@@ -16,7 +16,7 @@
 //! | ------------- | --------------------------------------------------- | ----------------- |
 //! | [`GitConfig`] | Accelerated wrapper for reading and writing values. | On some reads[^1] |
 //! | [`Parser`]    | Syntactic event emitter for `git-config` files.     | Yes               |
-//! | [`Value`]     | Wrappers for `git-config` value types.              | Yes               |
+//! | [`values`]    | Wrappers for `git-config` value types.              | Yes               |
 //!
 //! This crate also exposes efficient value normalization which unescapes
 //! characters and removes quotes through the `normalize_*` family of functions,
@@ -44,7 +44,6 @@
 //! [INI file format]: https://en.wikipedia.org/wiki/INI_file
 //! [`GitConfig`]: crate::file::GitConfig
 //! [`Parser`]: crate::parser::Parser
-//! [`Value`]: crate::values::Value
 //! [`values`]: crate::values
 //! [`nom`]: https://github.com/Geal/nom
 
