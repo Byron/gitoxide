@@ -239,22 +239,18 @@ where
                                     entry_size: r.compressed_size + header_size,
                                 }),
                             )),
-                            Err(git_pack::data::decode_entry::Error::DeltaBaseUnresolved(base_id))
-                                if index.is_multi_pack() =>
-                            {
+                            Err(git_pack::data::decode_entry::Error::DeltaBaseUnresolved(base_id)) => {
                                 // Only with multi-pack indices it's allowed to jump to refer to other packs within this
-                                // multi-pack. Otherwise this would consistute a thin pack which is only allowed in transit.
-                                let _base_must_exist_in_multi_index =
-                                    index.lookup(&base_id).ok_or_else(|| Error::ThinPackAtRest {
-                                        base_id,
-                                        id: id.to_owned(),
-                                    })?;
+                                // multi-pack. Otherwise this would constitute a thin pack which is only allowed in transit.
+                                // However, if we somehow end up with that, we will resolve it safely, even though we could
+                                // avoid handling this case and error instead.
 
-                                // special case, and we just allocate here to make it work. It's an actual delta-ref object
+                                // Since this is a special case, we just allocate here to make it work. It's an actual delta-ref object
                                 // which is sent by some servers that points to an object outside of the pack we are looking
                                 // at right now. With the complexities of loading packs, we go into recursion here. Git itself
                                 // doesn't do a cycle check, and we won't either but limit the recursive depth.
-                                // The whole ordeal isn't efficient due to memory allocation and later mem-copying when trying again.
+                                // The whole ordeal isn't as efficient as it could be due to memory allocation and
+                                // later mem-copying when trying again.
                                 let mut buf = Vec::new();
                                 let obj_kind = self
                                     .try_find_cached_inner(

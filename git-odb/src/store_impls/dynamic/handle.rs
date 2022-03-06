@@ -114,11 +114,6 @@ pub(crate) mod index_lookup {
             })
         }
 
-        /// Returns true if this is a multi-pack index
-        pub(crate) fn is_multi_pack(&self) -> bool {
-            matches!(&self.file, handle::SingleOrMultiIndex::Multi { .. })
-        }
-
         /// Return true if the given object id exists in this index
         pub(crate) fn contains(&self, object_id: &oid) -> bool {
             match &self.file {
