@@ -303,7 +303,7 @@ title "gix pack"
           (with 'multiple pack indices'
             (sandbox
               it "creates a multi-index successfully" && {
-                expect_run $SUCCESSFULLY "$exe_plumbing" pack multi-index create $fixtures/packs/pack-*.idx -o multi-pack-index
+                expect_run $SUCCESSFULLY "$exe_plumbing" pack multi-index -i multi-pack-index create $fixtures/packs/pack-*.idx
               }
             )
           )
@@ -461,12 +461,12 @@ title "gix pack"
       (sandbox
         MULTI_PACK_INDEX=multi-pack-index
         cp $fixtures/packs/pack-* .
-        $exe_plumbing pack multi-index create *.idx -o $MULTI_PACK_INDEX
+        $exe_plumbing pack multi-index -i $MULTI_PACK_INDEX create *.idx
 
         (when "using fast validation via 'pack multi-index verify'"
           it "verifies the pack index successfully and with desired output" && {
             WITH_SNAPSHOT="$snapshot/fast-index-success" \
-            expect_run $SUCCESSFULLY "$exe_plumbing" pack multi-index verify "$MULTI_PACK_INDEX"
+            expect_run $SUCCESSFULLY "$exe_plumbing" pack multi-index -i "$MULTI_PACK_INDEX" verify
           }
         )
 

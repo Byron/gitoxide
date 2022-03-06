@@ -52,6 +52,15 @@ pub use error::Error;
 use crate::store::types::{Generation, IndexAndPacks, MutableIndexAndPack, SlotMapIndex};
 
 impl super::Store {
+    /// Load all indices, refreshing from disk only if needed.
+    pub(crate) fn load_all_indices(&self) -> Result<Snapshot, Error> {
+        let mut snapshot = self.collect_snapshot();
+        while let Some(new_snapshot) = self.load_one_index(RefreshMode::Never, snapshot.marker)? {
+            snapshot = new_snapshot
+        }
+        Ok(snapshot)
+    }
+
     /// If `None` is returned, there is new indices and the caller should give up. This is a possibility even if it's allowed to refresh
     /// as here might be no change to pick up.
     pub(crate) fn load_one_index(

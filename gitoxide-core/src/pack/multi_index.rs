@@ -35,10 +35,11 @@ pub fn create(
     Ok(())
 }
 
+#[cfg(feature = "serde1")]
 mod info {
     use std::path::PathBuf;
 
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
+    #[derive(serde::Serialize)]
     pub struct Statistics {
         pub path: PathBuf,
         pub num_objects: u32,
@@ -47,26 +48,29 @@ mod info {
     }
 }
 
+#[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
 pub fn info(
     multi_index_path: PathBuf,
     format: OutputFormat,
     out: impl std::io::Write,
     mut err: impl std::io::Write,
 ) -> anyhow::Result<()> {
-    let file = git::odb::pack::multi_index::File::at(&multi_index_path)?;
     if format == OutputFormat::Human {
         writeln!(err, "Defaulting to JSON as human format isn't implemented").ok();
     }
     #[cfg(feature = "serde1")]
-    serde_json::to_writer_pretty(
-        out,
-        &info::Statistics {
-            path: multi_index_path,
-            num_objects: file.num_objects(),
-            index_names: file.index_names().to_vec(),
-            object_hash: file.object_hash().to_string(),
-        },
-    )?;
+    {
+        let file = git::odb::pack::multi_index::File::at(&multi_index_path)?;
+        serde_json::to_writer_pretty(
+            out,
+            &info::Statistics {
+                path: multi_index_path,
+                num_objects: file.num_objects(),
+                index_names: file.index_names().to_vec(),
+                object_hash: file.object_hash().to_string(),
+            },
+        )?;
+    }
     Ok(())
 }
 

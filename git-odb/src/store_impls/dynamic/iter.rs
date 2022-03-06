@@ -2,11 +2,7 @@ use std::{ops::Deref, option::Option::None, sync::Arc, vec::IntoIter};
 
 use git_hash::ObjectId;
 
-use crate::{
-    loose,
-    store::{handle, RefreshMode},
-    store_impls::dynamic,
-};
+use crate::{loose, store::handle, store_impls::dynamic};
 
 enum State {
     Pack {
@@ -32,10 +28,7 @@ pub struct AllObjects {
 impl AllObjects {
     /// Create a new iterator from a dynamic store, which will be forced to load all indices eagerly and in the current thread.
     pub fn new(db: &dynamic::Store) -> Result<Self, crate::store::load_index::Error> {
-        let mut snapshot = db.collect_snapshot();
-        while let Some(new_snapshot) = db.load_one_index(RefreshMode::Never, snapshot.marker)? {
-            snapshot = new_snapshot
-        }
+        let snapshot = db.load_all_indices()?;
 
         let packed_objects = snapshot
             .indices

@@ -122,6 +122,8 @@ fn multi_index_access() -> crate::Result {
         },
         "everything seems to remain as it was, even though we moved our multi-index to a new slot and removed the old one"
     );
+
+    assert_eq!(handle.store_ref().structure()?.len(), 2);
     Ok(())
 }
 
@@ -186,6 +188,7 @@ fn multi_index_keep_open() -> crate::Result {
         git_odb::pack::Find::entry_by_location(&stable_handle, &location).is_some(),
         "the entry can still be found even though the location is invalid"
     );
+    assert_eq!(handle.store_ref().structure()?.len(), 2);
     Ok(())
 }
 
@@ -301,6 +304,8 @@ fn contains() {
         },
         "if no refreshes are allowed, there is no additional refresh"
     );
+
+    assert_eq!(handle.store_ref().structure().unwrap().len(), 4);
 }
 
 #[test]
