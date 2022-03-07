@@ -67,8 +67,8 @@ clippy: ## Run cargo clippy on all crates
 check-msrv: ## run cargo msrv to validate the current msrv requirements, similar to what CI does
 	cd git-repository && cargo msrv verify
 
-check-win: ## see that windows compiles, provided the x86_64-pc-windows-msvc target and cargo-xwinbuild are present.
-	cargo xwinbuild --target x86_64-pc-windows-msvc  --no-default-features --features small
+check-win: ## see that windows compiles, provided the x86_64-pc-windows-msvc target and cargo-xwin are present.
+	cargo xwin build --target x86_64-pc-windows-msvc  --no-default-features --features small
 
 check: ## Build all code in suitable configurations
 	cargo check --all
