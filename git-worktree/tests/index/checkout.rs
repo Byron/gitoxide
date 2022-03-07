@@ -139,9 +139,14 @@ fn accidental_writes_through_symlinks_are_prevented_if_overwriting_is_forbidden(
             ]
         );
     } else {
-        let expected = ["A-dir/a", "A-file", "FAKE-DIR", "FAKE-FILE", "fake-dir/b", "fake-file"];
-        assert_eq!(stripped_prefix(&source_tree, &source_files), paths(expected));
-        assert_eq!(stripped_prefix(&destination, &worktree_files), paths(expected));
+        assert_eq!(
+            stripped_prefix(&source_tree, &source_files),
+            paths(["A-dir/a", "A-file", "FAKE-FILE", "fake-dir/b", "fake-file"])
+        );
+        assert_eq!(
+            stripped_prefix(&destination, &worktree_files),
+            paths(["A-dir/a", "A-file", "FAKE-DIR", "FAKE-FILE", "fake-dir/b", "fake-file"])
+        );
         assert!(outcome.collisions.is_empty());
     };
 }
