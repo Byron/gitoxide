@@ -152,7 +152,6 @@ fn accidental_writes_through_symlinks_are_prevented_if_overwriting_is_forbidden(
 }
 
 #[test]
-#[ignore] // TODO: needs recursive directory deletion
 fn writes_through_symlinks_are_prevented_even_if_overwriting_is_allowed() {
     let mut opts = opts_from_probe();
     // with overwrite mode
@@ -166,7 +165,11 @@ fn writes_through_symlinks_are_prevented_even_if_overwriting_is_allowed() {
     if opts.fs.ignore_case {
         assert_eq!(
             stripped_prefix(&source_tree, &source_files),
+            paths(["A-dir/a", "A-file", "fake-dir/b", "fake-file"]),
+        );
+        assert_eq!(
             stripped_prefix(&destination, &worktree_files),
+            paths(["A-dir/a", "A-file", "FAKE-DIR", "FAKE-FILE"]),
         );
         assert!(outcome.collisions.is_empty());
     } else {

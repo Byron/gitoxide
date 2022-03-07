@@ -118,7 +118,7 @@ fn try_write_or_unlink<T>(
         match op(path) {
             Ok(res) => Ok(res),
             Err(err) if os::indicates_collision(&err) => {
-                try_unlink_anything_non_recursive(path, &std::fs::symlink_metadata(path)?)?;
+                try_unlink_path_recursively(path, &std::fs::symlink_metadata(path)?)?;
                 op(path)
             }
             Err(err) => Err(err),
@@ -128,9 +128,9 @@ fn try_write_or_unlink<T>(
     }
 }
 
-fn try_unlink_anything_non_recursive(path: &Path, path_meta: &std::fs::Metadata) -> std::io::Result<()> {
+fn try_unlink_path_recursively(path: &Path, path_meta: &std::fs::Metadata) -> std::io::Result<()> {
     if path_meta.is_dir() {
-        std::fs::remove_dir(path)
+        std::fs::remove_dir_all(path)
     } else if path_meta.is_symlink() {
         symlink::remove_symlink_auto(path)
     } else {
