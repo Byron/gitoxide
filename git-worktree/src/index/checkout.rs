@@ -93,34 +93,48 @@ mod cache {
                 self.valid.push(comp);
                 self.valid_relative.push(comp);
                 self.valid_components += 1;
-                if components.peek().is_some() || target_is_dir {
-                    #[cfg(debug_assertions)]
-                    {
-                        self.test_mkdir_calls += 1;
-                    }
-                    match std::fs::create_dir(&self.valid) {
-                        Ok(()) => {}
-                        Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => {
-                            let meta = self.valid.symlink_metadata()?;
-                            if !meta.is_dir() {
-                                if self.unlink_on_collision {
-                                    if meta.is_symlink() {
-                                        symlink::remove_symlink_auto(&self.valid)?;
-                                    } else {
-                                        std::fs::remove_file(&self.valid)?;
-                                    }
-                                    #[cfg(debug_assertions)]
-                                    {
-                                        self.test_mkdir_calls += 1;
-                                    }
-                                    std::fs::create_dir(&self.valid)?;
-                                    continue;
-                                }
-                                return Err(err);
-                            }
+                let res = (|| {
+                    if components.peek().is_some() || target_is_dir {
+                        #[cfg(debug_assertions)]
+                        {
+                            self.test_mkdir_calls += 1;
                         }
-                        Err(err) => return Err(err),
+                        match std::fs::create_dir(&self.valid) {
+                            Ok(()) => Ok(()),
+                            Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => {
+                                let meta = self.valid.symlink_metadata()?;
+                                if !meta.is_dir() {
+                                    if self.unlink_on_collision {
+                                        if meta.is_symlink() {
+                                            symlink::remove_symlink_auto(&self.valid)?;
+                                        } else {
+                                            std::fs::remove_file(&self.valid)?;
+                                        }
+                                        #[cfg(debug_assertions)]
+                                        {
+                                            self.test_mkdir_calls += 1;
+                                        }
+                                        std::fs::create_dir(&self.valid)?;
+                                        Ok(())
+                                    } else {
+                                        Err(err)
+                                    }
+                                } else {
+                                    Ok(())
+                                }
+                            }
+                            Err(err) => Err(err),
+                        }
+                    } else {
+                        Ok(())
                     }
+                })();
+
+                if let Err(err) = res {
+                    self.valid.pop();
+                    self.valid_relative.pop();
+                    self.valid_components -= 1;
+                    return Err(err);
                 }
             }
 

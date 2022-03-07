@@ -51,7 +51,6 @@ mod cache {
     }
 
     #[test]
-    #[ignore]
     fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() {
         let (mut cache, tmp) = new_cache();
         let forbidden = tmp.path().join("forbidden");
@@ -69,15 +68,25 @@ mod cache {
                     .kind(),
                 std::io::ErrorKind::AlreadyExists
             );
+        }
+        assert_eq!(
+            cache.test_mkdir_calls, 2,
+            "it tries to create each directory once, but it's a file"
+        );
+        cache.test_mkdir_calls = 0;
+        for dirname in &["link-to-dir", "file-in-dir"] {
             cache.unlink_on_collision = true;
-
+            let relative_path = format!("{}/file", dirname);
             let path = cache
                 .append_relative_path_assure_leading_dir(&relative_path, Mode::FILE)
                 .unwrap();
             assert!(path.parent().unwrap().is_dir(), "directory was forcefully created");
             assert!(!path.exists());
         }
-        assert_eq!(cache.test_mkdir_calls, 4);
+        assert_eq!(
+            cache.test_mkdir_calls, 4,
+            "like before, but it unlinks what's there and tries again"
+        );
     }
 
     fn new_cache() -> (PathCache, TempDir) {
