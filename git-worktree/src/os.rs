@@ -31,7 +31,10 @@ pub fn create_symlink(original: &Path, link: &Path) -> io::Result<()> {
 #[cfg(not(windows))]
 pub fn indicates_collision(err: &std::io::Error) -> bool {
     // TODO: use ::IsDirectory as well when stabilized instead of raw_os_error(), and ::FileSystemLoop respectively
-    err.kind() == AlreadyExists || err.raw_os_error() == Some(21) || err.raw_os_error() == Some(62)
+    err.kind() == AlreadyExists
+        || err.raw_os_error() == Some(21)
+        || err.raw_os_error() == Some(62) // no-follow on symlnk on mac-os
+        || err.raw_os_error() == Some(40) // no-follow on symlnk on ubuntu
 }
 
 #[cfg(windows)]
