@@ -44,6 +44,7 @@ where
                 path: dest.to_path_buf(),
             })?;
 
+            #[cfg_attr(not(unix), allow(unused_mut))]
             let mut options = open_options(dest, destination_is_initially_empty, overwrite_existing);
             let needs_executable_bit = executable_bit && entry.mode == git_index::entry::Mode::FILE_EXECUTABLE;
             #[cfg(unix)]

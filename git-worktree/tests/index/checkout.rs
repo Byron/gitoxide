@@ -96,7 +96,6 @@ mod cache {
     }
 }
 
-use bstr::ByteVec;
 #[cfg(unix)]
 use std::os::unix::prelude::MetadataExt;
 use std::{
@@ -286,20 +285,38 @@ fn keep_going_collects_results() {
     .unwrap();
 
     assert_eq!(
+        outcome
+            .errors
+            .iter()
+            .map(
+                |r| r.error.to_string()[.."object 4f41554f6e0045ef53848fc0c3f33b6a9abc24a9 for checkout at ".len()]
+                    .to_owned()
+            )
+            .collect::<Vec<_>>(),
+        [
+            "4f41554f6e0045ef53848fc0c3f33b6a9abc24a9",
+            "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        ]
+        .iter()
+        .map(|id| format!("object {} for checkout at ", id))
+        .collect::<Vec<_>>()
+    );
+    assert_eq!(
+        outcome
+            .errors
+            .iter()
+            .map(|r| r.path.to_path_lossy().into_owned())
+            .collect::<Vec<_>>(),
+        paths(["dir/content", "empty"])
+    );
+
+    assert_eq!(
         stripped_prefix(&destination, &dir_structure(&destination)),
         paths(["dir/sub-dir/symlink", "executable"]),
         "some files could not be created"
     );
 
     assert!(outcome.collisions.is_empty());
-    assert_eq!(
-        outcome
-            .errors
-            .into_iter()
-            .map(|r| Vec::from(r.path).into_path_buf_lossy())
-            .collect::<Vec<_>>(),
-        paths(["dir/content", "empty"])
-    );
 }
 
 #[test]
