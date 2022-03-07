@@ -20,6 +20,7 @@ pub fn checkout<Find, E>(
             ..
         },
         destination_is_initially_empty,
+        overwrite_existing,
         ..
     }: index::checkout::Options,
     buf: &mut Vec<u8>,
@@ -42,11 +43,7 @@ where
                 oid: entry.id,
                 path: dest.to_path_buf(),
             })?;
-            let mut options = OpenOptions::new();
-            options
-                .create_new(destination_is_initially_empty)
-                .create(!destination_is_initially_empty)
-                .write(true);
+            let mut options = open_options(destination_is_initially_empty, overwrite_existing);
             #[cfg(unix)]
             if executable_bit && entry.mode == git_index::entry::Mode::FILE_EXECUTABLE {
                 use std::os::unix::fs::OpenOptionsExt;
@@ -72,9 +69,15 @@ where
             // TODO: how to deal with mode changes? Maybe this info can be passed once we check for whether
             // a checkout is needed at all.
             if symlink {
+                // TODO: handle 'overwrite_existing' mode, which checks for 'exists' errors and unlinks existing files
+                //       or directories or symlinks. Doing this shouldn't invalidate the cache as it's only valid till
+                //       our parent anyway, but it may invalidate caches in other threads without their knowledge.
+                //       collisions with overwrite mode must be handled with great care in parallel mode.
                 crate::os::create_symlink(symlink_destination, dest)?;
             } else {
-                std::fs::write(&dest, obj.data)?;
+                open_options(destination_is_initially_empty, overwrite_existing)
+                    .open(&dest)?
+                    .write_all(obj.data)?;
             }
 
             update_fstat(entry, std::fs::symlink_metadata(&dest)?)?;
@@ -85,6 +88,15 @@ where
         _ => unreachable!(),
     };
     Ok(object_size)
+}
+
+fn open_options(destination_is_initially_empty: bool, overwrite_existing: bool) -> OpenOptions {
+    let mut options = OpenOptions::new();
+    options
+        .create_new(destination_is_initially_empty && !overwrite_existing)
+        .create(!destination_is_initially_empty || overwrite_existing)
+        .write(true);
+    options
 }
 
 fn update_fstat<E>(entry: &mut Entry, meta: std::fs::Metadata) -> Result<(), index::checkout::Error<E>>

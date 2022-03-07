@@ -81,7 +81,6 @@ mod cache {
                 }
             }
 
-            // TODO: handle valid state properly, handle _mode.
             for _ in 0..self.valid_components - matching_components {
                 self.valid.pop();
             }
