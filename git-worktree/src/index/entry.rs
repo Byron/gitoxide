@@ -132,7 +132,7 @@ fn try_unlink_path_recursively(path: &Path, path_meta: &std::fs::Metadata) -> st
     if path_meta.is_dir() {
         std::fs::remove_dir_all(path)
     } else if path_meta.is_symlink() {
-        symlink::remove_symlink_auto(path)
+        os::remove_symlink(path)
     } else {
         std::fs::remove_file(path)
     }

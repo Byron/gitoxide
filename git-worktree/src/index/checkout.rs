@@ -36,6 +36,7 @@ pub struct PathCache {
 
 mod cache {
     use super::PathCache;
+    use crate::os;
     use std::path::{Path, PathBuf};
 
     impl PathCache {
@@ -106,7 +107,7 @@ mod cache {
                                 if !meta.is_dir() {
                                     if self.unlink_on_collision {
                                         if meta.is_symlink() {
-                                            symlink::remove_symlink_auto(&self.valid)?;
+                                            os::remove_symlink(&self.valid)?;
                                         } else {
                                             std::fs::remove_file(&self.valid)?;
                                         }

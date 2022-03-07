@@ -14,7 +14,12 @@ pub fn remove_symlink(path: &Path) -> io::Result<()> {
 
 #[cfg(windows)]
 pub fn remove_symlink(path: &Path) -> io::Result<()> {
-    symlink::remove_symlink_auto(path)
+    let meta = std::fs::metadata(path)?;
+    if meta.is_dir() {
+        std::fs::remove_dir(path)
+    } else {
+        std::fs::remove_file(path)
+    }
 }
 
 #[cfg(windows)]
