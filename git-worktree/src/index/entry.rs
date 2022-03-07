@@ -30,12 +30,11 @@ where
     Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
     E: std::error::Error + Send + Sync + 'static,
 {
-    let dest = cache.append_relative_path_assure_leading_dir(
+    let dest_relative =
         git_features::path::from_byte_slice(entry_path).map_err(|_| index::checkout::Error::IllformedUtf8 {
             path: entry_path.to_owned(),
-        })?,
-        entry.mode,
-    )?;
+        })?;
+    let dest = cache.append_relative_path_assure_leading_dir(dest_relative, entry.mode)?;
 
     let object_size = match entry.mode {
         git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {

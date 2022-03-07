@@ -147,6 +147,49 @@ fn accidental_writes_through_symlinks_are_prevented_if_overwriting_is_forbidden(
 }
 
 #[test]
+#[ignore]
+fn writes_through_symlinks_are_prevented_even_if_overwriting_is_allowed() {
+    let mut opts = opts_with_symlink(true);
+    // with overwrite mode
+    opts.overwrite_existing = true;
+    let (source_tree, destination, _index, outcome) =
+        checkout_index_in_tmp_dir(opts, "make_dangerous_symlink").unwrap();
+
+    let source_files = dir_structure(&source_tree);
+    let worktree_files = dir_structure(&destination);
+
+    let fs_caps = probe_gitoxide_dir().unwrap();
+    if fs_caps.ignore_case {
+        assert_eq!(
+            stripped_prefix(&source_tree, &source_files),
+            paths(["A-dir/a", "A-file", "fake-dir/b", "fake-file"])
+        );
+        assert_eq!(
+            stripped_prefix(&destination, &worktree_files),
+            paths(["A-dir/a", "A-file", "FAKE-DIR", "FAKE-FILE"])
+        );
+        assert_eq!(
+            outcome.collisions,
+            vec![
+                Collision {
+                    path: "fake-dir/b".into(),
+                    error_kind: AlreadyExists
+                },
+                Collision {
+                    path: "fake-file".into(),
+                    error_kind: AlreadyExists
+                }
+            ]
+        );
+    } else {
+        let expected = ["A-dir/a", "A-file", "FAKE-DIR", "FAKE-FILE", "fake-dir/b", "fake-file"];
+        assert_eq!(stripped_prefix(&source_tree, &source_files), paths(expected));
+        assert_eq!(stripped_prefix(&destination, &worktree_files), paths(expected));
+        assert!(outcome.collisions.is_empty());
+    };
+}
+
+#[test]
 fn symlinks_become_files_if_disabled() -> crate::Result {
     let opts = opts_with_symlink(false);
     let (source_tree, destination, _index, outcome) = checkout_index_in_tmp_dir(opts, "make_mixed_without_submodules")?;
