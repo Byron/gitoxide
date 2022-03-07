@@ -119,11 +119,11 @@ fn accidental_writes_through_symlinks_are_prevented_if_overwriting_is_forbidden(
     if fs_caps.ignore_case {
         assert_eq!(
             stripped_prefix(&source_tree, &source_files),
-            paths(["A-dir/a", "A-file", "fake-dir/b", "fake-file"])
+            paths(["A-dir/a", "A-file", "FAKE-DIR", "fake-file"])
         );
         assert_eq!(
             stripped_prefix(&destination, &worktree_files),
-            paths(["A-dir/a", "A-file", "FAKE-FILE"])
+            paths(["A-dir/a", "A-file", "FAKE-DIR", "FAKE-FILE"])
         );
         assert_eq!(
             outcome.collisions,
@@ -139,14 +139,9 @@ fn accidental_writes_through_symlinks_are_prevented_if_overwriting_is_forbidden(
             ]
         );
     } else {
-        assert_eq!(
-            stripped_prefix(&source_tree, &source_files),
-            paths(["A-dir/a", "A-file", "FAKE-FILE", "fake-dir/b", "fake-file"])
-        );
-        assert_eq!(
-            stripped_prefix(&destination, &worktree_files),
-            paths(["A-dir/a", "A-file", "FAKE-DIR", "FAKE-FILE", "fake-dir/b", "fake-file"])
-        );
+        let expected = ["A-dir/a", "A-file", "FAKE-DIR", "FAKE-FILE", "fake-dir/b", "fake-file"];
+        assert_eq!(stripped_prefix(&source_tree, &source_files), paths(expected));
+        assert_eq!(stripped_prefix(&destination, &worktree_files), paths(expected));
         assert!(outcome.collisions.is_empty());
     };
 }
@@ -318,7 +313,7 @@ pub fn dir_structure<P: AsRef<std::path::Path>>(path: P) -> Vec<std::path::PathB
         .into_iter()
         .filter_entry(|e| e.path() == path || !e.file_name().to_string_lossy().starts_with('.'))
         .flatten()
-        .filter_map(|e| (!e.path().is_dir()).then(|| e.path().to_path_buf()))
+        .filter_map(|e| (!e.path().symlink_metadata().map_or(true, |m| m.is_dir())).then(|| e.path().to_path_buf()))
         .collect();
     files.sort();
     files
