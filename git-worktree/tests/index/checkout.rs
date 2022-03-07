@@ -119,7 +119,7 @@ fn accidental_writes_through_symlinks_are_prevented_if_overwriting_is_forbidden(
     if fs_caps.ignore_case {
         assert_eq!(
             stripped_prefix(&source_tree, &source_files),
-            paths(["A-dir/a", "A-file", "FAKE-DIR", "fake-file"])
+            paths(["A-dir/a", "A-file", "fake-dir/b", "fake-file"])
         );
         assert_eq!(
             stripped_prefix(&destination, &worktree_files),
@@ -206,17 +206,19 @@ fn keep_going_collects_results() {
 
 #[test]
 fn no_case_related_collisions_on_case_sensitive_filesystem() {
-    if probe_gitoxide_dir().unwrap().ignore_case {
-        eprintln!("Skipping case-sensitive testing on what would be a case-insenstive file system");
+    let fs_caps = probe_gitoxide_dir().unwrap();
+    if fs_caps.ignore_case {
+        eprintln!("Skipping case-sensitive testing on what would be a case-insensitive file system");
         return;
     }
-    let opts = opts_with_symlink(true);
+    let mut opts = opts_with_symlink(true);
+    opts.fs = fs_caps;
     let (source_tree, destination, index, outcome) =
         checkout_index_in_tmp_dir(opts, "make_ignorecase_collisions").unwrap();
 
+    assert!(outcome.collisions.is_empty());
     let num_files = assert_equality(&source_tree, &destination, opts.fs.symlink).unwrap();
     assert_eq!(num_files, index.entries().len(), "it checks out all files");
-    assert!(outcome.collisions.is_empty());
 }
 
 #[test]
@@ -345,7 +347,7 @@ fn checkout_index_in_tmp_dir_prep_dest(
     let git_dir = source_tree.join(".git");
     let mut index = git_index::File::at(git_dir.join("index"), Default::default())?;
     let odb = git_odb::at(git_dir.join("objects"))?;
-    let destination = tempfile::tempdir()?;
+    let destination = tempfile::tempdir_in(std::env::current_dir()?)?;
 
     let outcome = index::checkout(
         &mut index,
