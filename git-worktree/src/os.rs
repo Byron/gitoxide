@@ -15,7 +15,6 @@ pub fn remove_symlink(path: &Path) -> io::Result<()> {
 // TODO: use the `symlink` crate once it can delete directory symlinks
 #[cfg(windows)]
 pub fn remove_symlink(path: &Path) -> io::Result<()> {
-    dbg!(path, std::fs::symlink_metadata(path), std::fs::metadata(path));
     if let Ok(meta) = std::fs::metadata(path) {
         if meta.is_file() {
             std::fs::remove_file(path) // this removes the link itself

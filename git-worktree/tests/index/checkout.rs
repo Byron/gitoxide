@@ -235,7 +235,8 @@ fn overwriting_files_and_lone_directories_works() {
     );
 
     let symlink = destination.path().join("dir/sub-dir/symlink");
-    assert!(std::fs::symlink_metadata(&symlink).unwrap().is_symlink(),);
+    // on windows, git won't create symlinks as its probe won't detect the capability, even though we do.
+    assert_eq!(std::fs::symlink_metadata(&symlink).unwrap().is_symlink(), cfg!(unix));
     assert_eq!(std::fs::read(symlink).unwrap(), b"other content");
 }
 
@@ -290,16 +291,17 @@ fn keep_going_collects_results() {
             .iter()
             .map(|r| r.path.to_path_lossy().into_owned())
             .collect::<Vec<_>>(),
-        paths(if opts.fs.symlink {
+        paths(if cfg!(unix) {
             ["dir/content", "empty"]
         } else {
-            ["dir/content", "dir/sub-dir/symlink"] // not actually a symlink anymore
+            // not actually a symlink anymore, even though symlinks are supported but git think differently.
+            ["dir/content", "dir/sub-dir/symlink"]
         })
     );
 
     assert_eq!(
         stripped_prefix(&destination, &dir_structure(&destination)),
-        paths(if opts.fs.symlink {
+        paths(if cfg!(unix) {
             ["dir/sub-dir/symlink", "executable"]
         } else {
             ["empty", "executable"]
