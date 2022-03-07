@@ -50,7 +50,10 @@ where
         // Symlinks always have to be delayed on windows as they have to point to something that exists on creation.
         // And even if not, there is a distinction between file and directory symlinks, hence we have to check what the target is
         // before creating it.
-        if cfg!(windows) && entry.mode == git_index::entry::Mode::SYMLINK {
+        // And to keep things sane, we just do the same on non-windows as well which is similar to what git does and adds some safety
+        // around writing through symlinks (even though we handle this).
+        // This also means that we prefer content in files over symlinks in case of collisions, which probably is for the better, too.
+        if entry.mode == git_index::entry::Mode::SYMLINK {
             // if entry.mode == git_index::entry::Mode::SYMLINK {
             delayed.push((entry, entry_path));
             continue;

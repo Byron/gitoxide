@@ -83,6 +83,7 @@ mod cache {
 
             for _ in 0..self.valid_components - matching_components {
                 self.valid.pop();
+                self.valid_relative.pop();
             }
 
             self.valid_components = matching_components;
