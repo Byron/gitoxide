@@ -12,6 +12,13 @@ pub use tempfile;
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
 
+pub fn run_git(working_dir: &Path, args: &[&str]) -> std::io::Result<std::process::ExitStatus> {
+    std::process::Command::new("git")
+        .current_dir(working_dir)
+        .args(args)
+        .status()
+}
+
 pub fn hex_to_id(hex: &str) -> git_hash::ObjectId {
     git_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
 }

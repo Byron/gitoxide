@@ -12,11 +12,7 @@ fn prefix() -> crate::Result {
 
     // TODO: do this in-memory (with or without writing to disk)
     assert!(
-        std::process::Command::new("git")
-            .current_dir(worktree_dir.path())
-            .args(["config", "--int", "core.abbrev", "5"])
-            .status()?
-            .success(),
+        git_testtools::run_git(worktree_dir.path(), &["config", "--int", "core.abbrev", "5"])?.success(),
         "set core abbrev value successfully"
     );
 
