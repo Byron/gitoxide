@@ -56,7 +56,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: install
-          args: "gitoxide cargo-smart-release"
+          args: "--locked gitoxide cargo-smart-release" # for now, lock it so we avoid libz-sys 1.1.4 related breakage
 
   lint:
     runs-on: ubuntu-latest
