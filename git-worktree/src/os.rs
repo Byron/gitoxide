@@ -1,4 +1,5 @@
 use std::io;
+use std::io::ErrorKind::AlreadyExists;
 use std::path::Path;
 
 #[cfg(not(windows))]
@@ -25,4 +26,15 @@ pub fn create_symlink(original: &Path, link: &Path) -> io::Result<()> {
     } else {
         symlink_file(original, link)
     }
+}
+
+#[cfg(not(windows))]
+pub fn indicates_collision(err: &std::io::Error) -> bool {
+    // TODO: use ::IsDirectory as well when stabilized instead of raw_os_error(), and ::FileSystemLoop respectively
+    err.kind() == AlreadyExists || err.raw_os_error() == Some(21) || err.raw_os_error() == Some(62)
+}
+
+#[cfg(windows)]
+pub fn indicates_collision(err: &std::io::Error) -> bool {
+    err.kind() == AlreadyExists || err.kind() == std::io::ErrorKind::PermissionDenied
 }

@@ -116,7 +116,7 @@ use crate::fixture_path;
 
 #[test]
 fn accidental_writes_through_symlinks_are_prevented_if_overwriting_is_forbidden() {
-    let mut opts = opts_with_symlink(true);
+    let mut opts = opts_from_probe();
     // without overwrite mode, everything is safe.
     opts.overwrite_existing = false;
     let (source_tree, destination, _index, outcome) =
@@ -125,8 +125,7 @@ fn accidental_writes_through_symlinks_are_prevented_if_overwriting_is_forbidden(
     let source_files = dir_structure(&source_tree);
     let worktree_files = dir_structure(&destination);
 
-    let fs_caps = probe_gitoxide_dir().unwrap();
-    if fs_caps.ignore_case {
+    if opts.fs.ignore_case {
         assert_eq!(
             stripped_prefix(&source_tree, &source_files),
             stripped_prefix(&destination, &worktree_files),
@@ -153,9 +152,9 @@ fn accidental_writes_through_symlinks_are_prevented_if_overwriting_is_forbidden(
 }
 
 #[test]
-#[ignore]
+#[ignore] // TODO: needs recursive directory deletion
 fn writes_through_symlinks_are_prevented_even_if_overwriting_is_allowed() {
-    let mut opts = opts_with_symlink(true);
+    let mut opts = opts_from_probe();
     // with overwrite mode
     opts.overwrite_existing = true;
     let (source_tree, destination, _index, outcome) =
@@ -164,29 +163,12 @@ fn writes_through_symlinks_are_prevented_even_if_overwriting_is_allowed() {
     let source_files = dir_structure(&source_tree);
     let worktree_files = dir_structure(&destination);
 
-    let fs_caps = probe_gitoxide_dir().unwrap();
-    if fs_caps.ignore_case {
+    if opts.fs.ignore_case {
         assert_eq!(
             stripped_prefix(&source_tree, &source_files),
-            paths(["A-dir/a", "A-file", "fake-dir/b", "fake-file"])
-        );
-        assert_eq!(
             stripped_prefix(&destination, &worktree_files),
-            paths(["A-dir/a", "A-file", "FAKE-DIR", "FAKE-FILE"])
         );
-        assert_eq!(
-            outcome.collisions,
-            vec![
-                Collision {
-                    path: "fake-dir/b".into(),
-                    error_kind: AlreadyExists
-                },
-                Collision {
-                    path: "fake-file".into(),
-                    error_kind: AlreadyExists
-                }
-            ]
-        );
+        assert!(outcome.collisions.is_empty());
     } else {
         let expected = ["A-dir/a", "A-file", "FAKE-DIR", "FAKE-FILE", "fake-dir/b", "fake-file"];
         assert_eq!(stripped_prefix(&source_tree, &source_files), paths(expected));
@@ -196,8 +178,69 @@ fn writes_through_symlinks_are_prevented_even_if_overwriting_is_allowed() {
 }
 
 #[test]
+fn overwriting_files_and_lone_directories_works() {
+    let mut opts = opts_from_probe();
+    opts.overwrite_existing = true;
+    opts.destination_is_initially_empty = false;
+    let (_source_tree, destination, _index, outcome) = checkout_index_in_tmp_dir_opts(
+        opts,
+        "make_mixed_without_submodules",
+        |_| true,
+        |d| {
+            let empty = d.join("empty");
+            symlink::symlink_dir(d.join(".."), &empty)?; // empty is symlink to the directory above
+            std::fs::write(d.join("executable"), b"foo")?; // executable is regular file and has different content
+            let dir = d.join("dir");
+            std::fs::create_dir(&dir)?;
+            std::fs::create_dir(dir.join("content"))?; // 'content' is a directory now
+
+            let dir = dir.join("sub-dir");
+            std::fs::create_dir(&dir)?;
+
+            symlink::symlink_dir(empty, dir.join("symlink"))?; // 'symlink' is a symlink to another file
+            Ok(())
+        },
+    )
+    .unwrap();
+
+    assert!(outcome.collisions.is_empty());
+
+    assert_eq!(
+        stripped_prefix(&destination, &dir_structure(&destination)),
+        paths(["dir/content", "dir/sub-dir/symlink", "empty", "executable"])
+    );
+    let meta = std::fs::symlink_metadata(destination.path().join("empty")).unwrap();
+    assert!(meta.is_file(), "'empty' is now a file");
+    assert_eq!(meta.len(), 0, "'empty' is indeed empty");
+
+    let exe = destination.path().join("executable");
+    assert_eq!(
+        std::fs::read(&exe).unwrap(),
+        b"content",
+        "'exe' has the correct content"
+    );
+
+    let meta = std::fs::symlink_metadata(exe).unwrap();
+    assert!(meta.is_file());
+    if opts.fs.executable_bit {
+        #[cfg(unix)]
+        assert_eq!(meta.mode() & 0o700, 0o700, "the executable bit is set where supported");
+    }
+
+    assert_eq!(
+        std::fs::read(destination.path().join("dir/content")).unwrap(),
+        b"other content"
+    );
+
+    let symlink = destination.path().join("dir/sub-dir/symlink");
+    assert!(std::fs::symlink_metadata(&symlink).unwrap().is_symlink(),);
+    assert_eq!(std::fs::read(symlink).unwrap(), b"other content");
+}
+
+#[test]
 fn symlinks_become_files_if_disabled() -> crate::Result {
-    let opts = opts_with_symlink(false);
+    let mut opts = opts_from_probe();
+    opts.fs.symlink = false;
     let (source_tree, destination, _index, outcome) = checkout_index_in_tmp_dir(opts, "make_mixed_without_submodules")?;
 
     assert_equality(&source_tree, &destination, opts.fs.symlink)?;
@@ -206,35 +249,38 @@ fn symlinks_become_files_if_disabled() -> crate::Result {
 }
 
 #[test]
-fn allow_symlinks() -> crate::Result {
-    let opts = opts_with_symlink(true);
-    if !probe_gitoxide_dir()?.symlink {
-        eprintln!("IGNORING symlink test on file system without symlink support");
-        // skip if symlinks aren't supported anyway.
-        return Ok(());
-    };
-    let (source_tree, destination, _index, outcome) = checkout_index_in_tmp_dir(opts, "make_mixed_without_submodules")?;
+fn allow_or_disallow_symlinks() -> crate::Result {
+    let mut opts = opts_from_probe();
+    for allowed in &[false, true] {
+        opts.fs.symlink = *allowed;
+        let (source_tree, destination, _index, outcome) =
+            checkout_index_in_tmp_dir(opts, "make_mixed_without_submodules")?;
 
-    assert_equality(&source_tree, &destination, opts.fs.symlink)?;
-    assert!(outcome.collisions.is_empty());
+        assert_equality(&source_tree, &destination, opts.fs.symlink)?;
+        assert!(outcome.collisions.is_empty());
+    }
     Ok(())
 }
 
 #[test]
 fn keep_going_collects_results() {
-    let mut opts = opts_with_symlink(true);
+    let mut opts = opts_from_probe();
     opts.keep_going = true;
     let mut count = 0;
-    let (_source_tree, destination, _index, outcome) =
-        checkout_index_in_tmp_dir_prep_dest(opts, "make_mixed_without_submodules", |_id| {
+    let (_source_tree, destination, _index, outcome) = checkout_index_in_tmp_dir_opts(
+        opts,
+        "make_mixed_without_submodules",
+        |_id| {
             if count < 2 {
                 count += 1;
                 false
             } else {
                 true
             }
-        })
-        .unwrap();
+        },
+        |_| Ok(()),
+    )
+    .unwrap();
 
     assert_eq!(
         stripped_prefix(&destination, &dir_structure(&destination)),
@@ -255,13 +301,11 @@ fn keep_going_collects_results() {
 
 #[test]
 fn no_case_related_collisions_on_case_sensitive_filesystem() {
-    let fs_caps = probe_gitoxide_dir().unwrap();
-    if fs_caps.ignore_case {
+    let opts = opts_from_probe();
+    if opts.fs.ignore_case {
         eprintln!("Skipping case-sensitive testing on what would be a case-insensitive file system");
         return;
     }
-    let mut opts = opts_with_symlink(true);
-    opts.fs = fs_caps;
     let (source_tree, destination, index, outcome) =
         checkout_index_in_tmp_dir(opts, "make_ignorecase_collisions").unwrap();
 
@@ -272,12 +316,11 @@ fn no_case_related_collisions_on_case_sensitive_filesystem() {
 
 #[test]
 fn collisions_are_detected_on_a_case_sensitive_filesystem() {
-    let fs_caps = probe_gitoxide_dir().unwrap();
-    if !fs_caps.ignore_case {
+    let opts = opts_from_probe();
+    if !opts.fs.ignore_case {
         eprintln!("Skipping case-insensitive testing on what would be a case-senstive file system");
         return;
     }
-    let opts = opts_with_symlink(fs_caps.symlink);
     let (source_tree, destination, _index, outcome) =
         checkout_index_in_tmp_dir(opts, "make_ignorecase_collisions").unwrap();
 
@@ -379,13 +422,14 @@ fn checkout_index_in_tmp_dir(
     git_index::File,
     git_worktree::index::checkout::Outcome,
 )> {
-    checkout_index_in_tmp_dir_prep_dest(opts, name, |_d| true)
+    checkout_index_in_tmp_dir_opts(opts, name, |_d| true, |_| Ok(()))
 }
 
-fn checkout_index_in_tmp_dir_prep_dest(
+fn checkout_index_in_tmp_dir_opts(
     opts: index::checkout::Options,
     name: &str,
     mut allow_return_object: impl FnMut(&git_hash::oid) -> bool,
+    prep_dest: impl Fn(&Path) -> std::io::Result<()>,
 ) -> crate::Result<(
     PathBuf,
     TempDir,
@@ -397,6 +441,7 @@ fn checkout_index_in_tmp_dir_prep_dest(
     let mut index = git_index::File::at(git_dir.join("index"), Default::default())?;
     let odb = git_odb::at(git_dir.join("objects"))?;
     let destination = tempfile::tempdir_in(std::env::current_dir()?)?;
+    prep_dest(destination.path())?;
 
     let outcome = index::checkout(
         &mut index,
@@ -425,12 +470,9 @@ fn probe_gitoxide_dir() -> crate::Result<Capabilities> {
     ))
 }
 
-fn opts_with_symlink(symlink: bool) -> index::checkout::Options {
+fn opts_from_probe() -> index::checkout::Options {
     index::checkout::Options {
-        fs: git_worktree::fs::Capabilities {
-            symlink,
-            ..Default::default()
-        },
+        fs: probe_gitoxide_dir().unwrap(),
         destination_is_initially_empty: true,
         ..Default::default()
     }

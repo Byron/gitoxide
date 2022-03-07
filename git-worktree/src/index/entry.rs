@@ -5,8 +5,8 @@ use bstr::BStr;
 use git_hash::oid;
 use git_index::Entry;
 
-use crate::index;
 use crate::index::checkout::PathCache;
+use crate::{index, os};
 
 #[cfg_attr(not(unix), allow(unused_variables))]
 pub fn checkout<Find, E>(
@@ -45,14 +45,26 @@ where
             })?;
 
             let mut options = open_options(dest, destination_is_initially_empty, overwrite_existing);
+            let needs_executable_bit = executable_bit && entry.mode == git_index::entry::Mode::FILE_EXECUTABLE;
             #[cfg(unix)]
-            if executable_bit && entry.mode == git_index::entry::Mode::FILE_EXECUTABLE {
+            if needs_executable_bit && destination_is_initially_empty {
                 use std::os::unix::fs::OpenOptionsExt;
+                // Note that these only work if the file was newly created, but won't if it's already
+                // existing, possibly without the executable bit set. Thus we do this only if the file is new.
                 options.mode(0o777);
             }
 
-            let mut file = options.open(&dest)?;
+            let mut file = try_write_or_unlink(dest, overwrite_existing, |p| options.open(p))?;
             file.write_all(obj.data)?;
+
+            // For possibly existing, overwritten files, we must change the file mode explicitly.
+            #[cfg(unix)]
+            if needs_executable_bit && !destination_is_initially_empty {
+                use std::os::unix::fs::PermissionsExt;
+                let mut perm = std::fs::symlink_metadata(&dest)?.permissions();
+                perm.set_mode(0o777);
+                std::fs::set_permissions(&dest, perm)?;
+            }
             // NOTE: we don't call `file.sync_all()` here knowing that some filesystems don't handle this well.
             //       revisit this once there is a bug to fix.
             update_fstat(entry, file.metadata()?)?;
@@ -74,11 +86,14 @@ where
                 //       or directories or symlinks. Doing this shouldn't invalidate the cache as it's only valid till
                 //       our parent anyway, but it may invalidate caches in other threads without their knowledge.
                 //       collisions with overwrite mode must be handled with great care in parallel mode.
-                crate::os::create_symlink(symlink_destination, dest)?;
+                try_write_or_unlink(dest, overwrite_existing, |p| {
+                    crate::os::create_symlink(symlink_destination, p)
+                })?;
             } else {
-                open_options(dest, destination_is_initially_empty, overwrite_existing)
-                    .open(&dest)?
-                    .write_all(obj.data)?;
+                try_write_or_unlink(dest, overwrite_existing, |p| {
+                    open_options(p, destination_is_initially_empty, overwrite_existing).open(&dest)
+                })?
+                .write_all(obj.data)?;
             }
 
             update_fstat(entry, std::fs::symlink_metadata(&dest)?)?;
@@ -89,6 +104,38 @@ where
         _ => unreachable!(),
     };
     Ok(object_size)
+}
+
+/// Note that this works only because we assume to not race ourselves when symlinks are involved, and we do this by
+/// delaying symlink creation to the end and will always do that sequentially.
+/// It's still possible to fall for a race if other actors create symlinks in our path, but that's nothing to defend against.
+fn try_write_or_unlink<T>(
+    path: &Path,
+    overwrite_existing: bool,
+    op: impl Fn(&Path) -> std::io::Result<T>,
+) -> std::io::Result<T> {
+    if overwrite_existing {
+        match op(path) {
+            Ok(res) => Ok(res),
+            Err(err) if os::indicates_collision(&err) => {
+                try_unlink_anything_non_recursive(path, &std::fs::symlink_metadata(path)?)?;
+                op(path)
+            }
+            Err(err) => Err(err),
+        }
+    } else {
+        op(path)
+    }
+}
+
+fn try_unlink_anything_non_recursive(path: &Path, path_meta: &std::fs::Metadata) -> std::io::Result<()> {
+    if path_meta.is_dir() {
+        std::fs::remove_dir(path)
+    } else if path_meta.is_symlink() {
+        symlink::remove_symlink_auto(path)
+    } else {
+        std::fs::remove_file(path)
+    }
 }
 
 /// This is a debug assertion as we expect the machinery calling this to prevent this possibility in the first place
