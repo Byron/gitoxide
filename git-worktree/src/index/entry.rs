@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::{convert::TryInto, fs::OpenOptions, io::Write, time::Duration};
 
 use bstr::BStr;
@@ -43,7 +44,8 @@ where
                 oid: entry.id,
                 path: dest.to_path_buf(),
             })?;
-            let mut options = open_options(destination_is_initially_empty, overwrite_existing);
+
+            let mut options = open_options(dest, destination_is_initially_empty, overwrite_existing);
             #[cfg(unix)]
             if executable_bit && entry.mode == git_index::entry::Mode::FILE_EXECUTABLE {
                 use std::os::unix::fs::OpenOptionsExt;
@@ -75,7 +77,7 @@ where
                 //       collisions with overwrite mode must be handled with great care in parallel mode.
                 crate::os::create_symlink(symlink_destination, dest)?;
             } else {
-                open_options(destination_is_initially_empty, overwrite_existing)
+                open_options(dest, destination_is_initially_empty, overwrite_existing)
                     .open(&dest)?
                     .write_all(obj.data)?;
             }
@@ -90,12 +92,37 @@ where
     Ok(object_size)
 }
 
-fn open_options(destination_is_initially_empty: bool, overwrite_existing: bool) -> OpenOptions {
+/// This is a debug assertion as we expect the machinery calling this to prevent this possibility in the first place
+fn debug_assert_dest_is_no_symlink(path: &Path) {
+    #[cfg(debug_assertions)]
+    {
+        if let Ok(meta) = path.metadata() {
+            debug_assert!(
+                !meta.is_symlink(),
+                "BUG: should not ever allow to overwrite/write-into the target of a symbolic link: {}",
+                path.display()
+            );
+        }
+    }
+}
+
+fn open_options(path: &Path, destination_is_initially_empty: bool, overwrite_existing: bool) -> OpenOptions {
+    if overwrite_existing || !destination_is_initially_empty {
+        debug_assert_dest_is_no_symlink(path);
+    }
     let mut options = OpenOptions::new();
     options
         .create_new(destination_is_initially_empty && !overwrite_existing)
         .create(!destination_is_initially_empty || overwrite_existing)
         .write(true);
+    #[cfg(unix)]
+    {
+        /// Make sure that it's impossible to follow through to the target of symlinks.
+        /// Note that this will still follow symlinks in the path, which is what we assume
+        /// has been checked separately.
+        use std::os::unix::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NOFOLLOW);
+    }
     options
 }
 
