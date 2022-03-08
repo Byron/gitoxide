@@ -22,28 +22,3 @@ mod trait_impls {
         }
     }
 }
-
-pub struct Chunks<I> {
-    pub size: usize,
-    pub iter: I,
-}
-
-impl<I, Item> Iterator for Chunks<I>
-where
-    I: Iterator<Item = Item>,
-{
-    type Item = Vec<Item>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let mut res = Vec::with_capacity(self.size);
-        let mut items_left = self.size;
-        for item in &mut self.iter {
-            res.push(item);
-            items_left -= 1;
-            if items_left == 0 {
-                break;
-            }
-        }
-        (!res.is_empty()).then(|| res)
-    }
-}

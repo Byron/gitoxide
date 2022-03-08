@@ -61,8 +61,8 @@ where
         thread_limit,
         None,
     );
-    let chunks = util::Chunks {
-        iter: objects_ids,
+    let chunks = git_features::util::Chunks {
+        inner: objects_ids,
         size: chunk_size,
     };
     let seen_objs = dashmap::DashSet::<ObjectId, HashBuildHasher>::default();
