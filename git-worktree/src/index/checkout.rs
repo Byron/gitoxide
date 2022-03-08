@@ -158,6 +158,8 @@ pub struct ErrorRecord {
 pub struct Outcome {
     /// The amount of files updated, or created.
     pub files_updated: usize,
+    /// The amount of bytes written to disk,
+    pub bytes_written: u64,
     pub collisions: Vec<Collision>,
     pub errors: Vec<ErrorRecord>,
 }

@@ -47,6 +47,7 @@ where
     let chunk::Outcome {
         mut collisions,
         mut errors,
+        mut bytes_written,
         delayed,
     } = if num_threads == 1 {
         chunk::process(
@@ -58,13 +59,15 @@ where
     };
 
     for (entry, entry_path) in delayed {
-        chunk::checkout_entry_handle_result(entry, entry_path, &mut errors, &mut collisions, &mut ctx)?;
+        bytes_written +=
+            chunk::checkout_entry_handle_result(entry, entry_path, &mut errors, &mut collisions, &mut ctx)? as u64;
     }
 
     Ok(checkout::Outcome {
         files_updated: ctx.num_files.load(Ordering::Relaxed),
         collisions,
         errors,
+        bytes_written,
     })
 }
 
@@ -81,6 +84,7 @@ mod chunk {
         pub collisions: Vec<checkout::Collision>,
         pub errors: Vec<checkout::ErrorRecord>,
         pub delayed: Vec<(&'a mut git_index::Entry, &'a BStr)>,
+        pub bytes_written: u64,
     }
 
     pub struct Context<'a, P1, P2, Find> {
@@ -106,9 +110,9 @@ mod chunk {
         P2: Progress,
     {
         let mut delayed = Vec::new();
-
         let mut collisions = Vec::new();
         let mut errors = Vec::new();
+        let mut bytes_written = 0;
 
         for (entry, entry_path) in entries_with_paths {
             // TODO: write test for that
@@ -128,9 +132,11 @@ mod chunk {
                 continue;
             }
 
-            checkout_entry_handle_result(entry, entry_path, &mut errors, &mut collisions, ctx)?;
+            bytes_written += checkout_entry_handle_result(entry, entry_path, &mut errors, &mut collisions, ctx)? as u64;
         }
+
         Ok(Outcome {
+            bytes_written,
             errors,
             collisions,
             delayed,
@@ -151,7 +157,7 @@ mod chunk {
             options,
             num_files,
         }: &mut Context<'_, P1, P2, Find>,
-    ) -> Result<(), checkout::Error<E>>
+    ) -> Result<usize, checkout::Error<E>>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
         E: std::error::Error + Send + Sync + 'static,
@@ -162,7 +168,10 @@ mod chunk {
         files.inc();
         num_files.fetch_add(1, Ordering::SeqCst);
         match res {
-            Ok(object_size) => bytes.inc_by(object_size),
+            Ok(object_size) => {
+                bytes.inc_by(object_size);
+                Ok(object_size)
+            }
             Err(index::checkout::Error::Io(err)) if os::indicates_collision(&err) => {
                 // We are here because a file existed or was blocked by a directory which shouldn't be possible unless
                 // we are on a file insensitive file system.
@@ -171,6 +180,7 @@ mod chunk {
                     path: entry_path.into(),
                     error_kind: err.kind(),
                 });
+                Ok(0)
             }
             Err(err) => {
                 if options.keep_going {
@@ -178,11 +188,11 @@ mod chunk {
                         path: entry_path.into(),
                         error: Box::new(err),
                     });
+                    Ok(0)
                 } else {
                     return Err(err);
                 }
             }
-        };
-        Ok(())
+        }
     }
 }
