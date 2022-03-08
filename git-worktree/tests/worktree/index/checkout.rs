@@ -270,7 +270,7 @@ fn allow_or_disallow_symlinks() -> crate::Result {
 fn keep_going_collects_results() {
     let mut opts = opts_from_probe();
     opts.keep_going = true;
-    let mut count = AtomicUsize::default();
+    let count = AtomicUsize::default();
     let (_source_tree, destination, _index, outcome) = checkout_index_in_tmp_dir_opts(
         opts,
         "make_mixed_without_submodules",
@@ -454,10 +454,7 @@ fn checkout_index_in_tmp_dir_opts(
     let source_tree = fixture_path(name);
     let git_dir = source_tree.join(".git");
     let mut index = git_index::File::at(git_dir.join("index"), Default::default())?;
-    let odb = git_odb::at(git_dir.join("objects"))?
-        .into_inner()
-        .into_arc()
-        .to_cache_arc();
+    let odb = git_odb::at(git_dir.join("objects"))?.into_inner().into_arc()?;
     let destination = tempfile::tempdir_in(std::env::current_dir()?)?;
     prep_dest(destination.path())?;
 

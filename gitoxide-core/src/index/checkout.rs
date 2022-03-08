@@ -68,24 +68,29 @@ pub fn checkout_exclusive(
     bytes.init(None, git::progress::bytes());
 
     let start = std::time::Instant::now();
+    let no_repo = repo.is_none();
     let checkout::Outcome {
         errors,
         collisions,
         files_updated,
-    } = match &repo {
+        bytes_written,
+    } = match repo {
         Some(repo) => git::worktree::index::checkout(
             &mut index,
             dest_directory,
-            |oid, buf| {
-                repo.objects.find_blob(oid, buf).ok();
-                if empty_files {
-                    // We always want to query the ODB here…
-                    repo.objects.find_blob(oid, buf)?;
-                    buf.clear();
-                    // …but write nothing
-                    Ok(git::objs::BlobRef { data: buf })
-                } else {
-                    repo.objects.find_blob(oid, buf)
+            {
+                let objects = repo.objects.into_arc()?;
+                move |oid, buf| {
+                    objects.find_blob(oid, buf).ok();
+                    if empty_files {
+                        // We always want to query the ODB here…
+                        objects.find_blob(oid, buf)?;
+                        buf.clear();
+                        // …but write nothing
+                        Ok(git::objs::BlobRef { data: buf })
+                    } else {
+                        objects.find_blob(oid, buf)
+                    }
                 }
             },
             &mut files,
@@ -111,9 +116,9 @@ pub fn checkout_exclusive(
     bytes.show_throughput(start);
 
     progress.done(format!(
-        "Created {} {} files{}",
+        "Created {} {} files{} ({})",
         files_updated,
-        repo.is_none().then(|| "empty").unwrap_or_default(),
+        no_repo.then(|| "empty").unwrap_or_default(),
         should_interrupt
             .load(Ordering::Relaxed)
             .then(|| {
@@ -123,6 +128,9 @@ pub fn checkout_exclusive(
                 )
             })
             .unwrap_or_default(),
+        git_features::progress::bytes()
+            .unwrap()
+            .display(bytes_written as usize, None, None)
     ));
 
     if !(collisions.is_empty() && errors.is_empty()) {

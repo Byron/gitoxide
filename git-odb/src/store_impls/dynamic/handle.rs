@@ -1,3 +1,5 @@
+use std::convert::{TryFrom, TryInto};
+use std::rc::Rc;
 use std::{
     cell::RefCell,
     ops::Deref,
@@ -321,6 +323,39 @@ where
         if let Some(token) = self.token.take() {
             self.store.remove_handle(token)
         }
+    }
+}
+
+impl TryFrom<&super::Store> for super::Store {
+    type Error = std::io::Error;
+
+    fn try_from(s: &super::Store) -> Result<Self, Self::Error> {
+        super::Store::at_opts(
+            s.path(),
+            crate::store::init::Options {
+                slots: crate::store::init::Slots::Given(s.files.len().try_into().expect("BUG: too many slots")),
+                object_hash: Default::default(),
+                use_multi_pack_index: false,
+            },
+        )
+    }
+}
+
+impl super::Handle<Rc<super::Store>> {
+    /// Convert a ref counted store into one that is ref-counted and thread-safe, by creating a new Store.
+    pub fn into_arc(self) -> std::io::Result<super::Handle<Arc<super::Store>>> {
+        let store = Arc::new(super::Store::try_from(self.store_ref())?);
+        let mut cache = store.to_handle_arc();
+        cache.refresh = self.refresh;
+        cache.max_recursion_depth = self.max_recursion_depth;
+        Ok(cache)
+    }
+}
+
+impl super::Handle<Arc<super::Store>> {
+    /// Convert a ref counted store into one that is ref-counted and thread-safe, by creating a new Store
+    pub fn into_arc(self) -> std::io::Result<super::Handle<Arc<super::Store>>> {
+        Ok(self)
     }
 }
 

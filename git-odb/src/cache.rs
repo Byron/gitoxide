@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use std::{
     cell::RefCell,
     ops::{Deref, DerefMut},
@@ -15,6 +16,27 @@ pub type NewPackCacheFn = dyn Fn() -> Box<PackCache> + Send + Sync + 'static;
 pub type ObjectCache = dyn git_pack::cache::Object + Send + 'static;
 /// A constructor for boxed object caches.
 pub type NewObjectCacheFn = dyn Fn() -> Box<ObjectCache> + Send + Sync + 'static;
+
+impl Cache<crate::store::Handle<Rc<crate::Store>>> {
+    /// Convert this cache's handle into one that keeps its store in an arc. This creates an entirely new store,
+    /// so should be done early to avoid unnecessary work (and mappings).
+    pub fn into_arc(self) -> std::io::Result<Cache<crate::store::Handle<Arc<crate::Store>>>> {
+        let inner = self.inner.into_arc()?;
+        Ok(Cache {
+            inner,
+            new_pack_cache: self.new_pack_cache,
+            new_object_cache: self.new_object_cache,
+            pack_cache: self.pack_cache,
+            object_cache: self.object_cache,
+        })
+    }
+}
+impl Cache<crate::store::Handle<Arc<crate::Store>>> {
+    /// No op, as we are containing an arc handle already.
+    pub fn into_arc(self) -> std::io::Result<Cache<crate::store::Handle<Arc<crate::Store>>>> {
+        Ok(self)
+    }
+}
 
 impl<S> Cache<S> {
     /// Dissolve this instance, discard all caches, and return the inner implementation.
