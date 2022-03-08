@@ -37,7 +37,7 @@ where
         options,
         num_files: &num_files,
     };
-    let (_chunk_size, _, _num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
+    let (_chunk_size, _, num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
         100,
         index.entries().len().into(),
         options.thread_limit,
@@ -48,10 +48,14 @@ where
         mut collisions,
         mut errors,
         delayed,
-    } = chunk::process(
-        interrupt::Iter::new(index.entries_mut_with_paths(), should_interrupt),
-        &mut ctx,
-    )?;
+    } = if num_threads == 1 {
+        chunk::process(
+            interrupt::Iter::new(index.entries_mut_with_paths(), should_interrupt),
+            &mut ctx,
+        )?
+    } else {
+        todo!("in parallel")
+    };
 
     for (entry, entry_path) in delayed {
         chunk::checkout_entry_handle_result(entry, entry_path, &mut errors, &mut collisions, &mut ctx)?;

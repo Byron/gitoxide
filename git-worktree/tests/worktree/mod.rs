@@ -1,9 +1,8 @@
-use std::path::{Path, PathBuf};
-
 mod fs;
 mod index;
 
-type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
+use std::path::{Path, PathBuf};
+pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub fn fixture_path(name: &str) -> PathBuf {
     let dir =

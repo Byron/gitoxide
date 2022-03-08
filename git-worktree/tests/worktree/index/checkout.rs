@@ -489,7 +489,7 @@ fn opts_from_probe() -> index::checkout::Options {
     index::checkout::Options {
         fs: probe_gitoxide_dir().unwrap(),
         destination_is_initially_empty: true,
-        thread_limit: Some(1),
+        thread_limit: git_features::parallel::num_threads(None).into(),
         ..Default::default()
     }
 }
