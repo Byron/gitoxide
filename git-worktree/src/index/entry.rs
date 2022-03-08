@@ -139,17 +139,18 @@ fn try_unlink_path_recursively(path: &Path, path_meta: &std::fs::Metadata) -> st
     }
 }
 
+#[cfg(not(debug_assertions))]
+fn debug_assert_dest_is_no_symlink(_path: &Path) {}
+
 /// This is a debug assertion as we expect the machinery calling this to prevent this possibility in the first place
+#[cfg(debug_assertions)]
 fn debug_assert_dest_is_no_symlink(path: &Path) {
-    #[cfg(debug_assertions)]
-    {
-        if let Ok(meta) = path.metadata() {
-            debug_assert!(
-                !meta.is_symlink(),
-                "BUG: should not ever allow to overwrite/write-into the target of a symbolic link: {}",
-                path.display()
-            );
-        }
+    if let Ok(meta) = path.metadata() {
+        debug_assert!(
+            !meta.is_symlink(),
+            "BUG: should not ever allow to overwrite/write-into the target of a symbolic link: {}",
+            path.display()
+        );
     }
 }
 

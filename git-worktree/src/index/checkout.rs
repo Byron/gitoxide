@@ -101,7 +101,7 @@ mod cache {
                             self.test_mkdir_calls += 1;
                         }
                         match std::fs::create_dir(&self.valid) {
-                            Ok(()) => Ok(()),
+                            Ok(()) => {}
                             Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => {
                                 let meta = self.valid.symlink_metadata()?;
                                 if !meta.is_dir() {
@@ -116,19 +116,15 @@ mod cache {
                                             self.test_mkdir_calls += 1;
                                         }
                                         std::fs::create_dir(&self.valid)?;
-                                        Ok(())
                                     } else {
-                                        Err(err)
+                                        return Err(err);
                                     }
-                                } else {
-                                    Ok(())
                                 }
                             }
-                            Err(err) => Err(err),
+                            Err(err) => return Err(err),
                         }
-                    } else {
-                        Ok(())
                     }
+                    Ok(())
                 })();
 
                 if let Err(err) = res {
