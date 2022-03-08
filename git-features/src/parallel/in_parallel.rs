@@ -13,7 +13,8 @@ pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl Fn
 /// Runs `f` with a scope to be used for spawning threads that will not outlive the function call.
 /// That way it's possible to handle threads without needing the 'static lifetime for data they interact with.
 ///
-/// Note that the threads should not rely on actual parallelism as threading might be turned off entirely.
+/// Note that the threads should not rely on actual parallelism as threading might be turned off entirely, hence should not
+/// connect each other with channels as deadlock would occour in single-threaded mode.
 pub fn threads<'env, F, R>(f: F) -> std::thread::Result<R>
 where
     F: FnOnce(&crossbeam_utils::thread::Scope<'env>) -> R,

@@ -4,15 +4,54 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
+/// A wrapper for an inner iterator which will check for interruptions on each iteration, stopping the iteration when
+/// that is requested.
+pub struct Iter<'a, I> {
+    /// The actual iterator to yield elements from.
+    pub inner: I,
+    should_interrupt: &'a AtomicBool,
+}
+
+impl<'a, I> Iter<'a, I>
+where
+    I: Iterator,
+{
+    /// Create a new iterator over `inner` which checks for interruptions on each iteration on `should_interrupt`.
+    ///
+    /// Note that this means the consumer of the iterator data should also be able to access `should_interrupt` and
+    /// consider it when producing the final result to avoid claiming success even though the operation is only partially
+    /// complete.
+    pub fn new(inner: I, should_interrupt: &'a AtomicBool) -> Self {
+        Iter {
+            inner,
+            should_interrupt,
+        }
+    }
+}
+
+impl<'a, I> Iterator for Iter<'a, I>
+where
+    I: Iterator,
+{
+    type Item = I::Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.should_interrupt.load(Ordering::Relaxed) {
+            return None;
+        }
+        self.inner.next()
+    }
+}
+
 /// A wrapper for an inner iterator which will check for interruptions on each iteration.
-pub struct Iter<'a, I, EFN> {
+pub struct IterWithErr<'a, I, EFN> {
     /// The actual iterator to yield elements from.
     pub inner: I,
     make_err: Option<EFN>,
     should_interrupt: &'a AtomicBool,
 }
 
-impl<'a, I, EFN, E> Iter<'a, I, EFN>
+impl<'a, I, EFN, E> IterWithErr<'a, I, EFN>
 where
     I: Iterator,
     EFN: FnOnce() -> E,
@@ -20,7 +59,7 @@ where
     /// Create a new iterator over `inner` which checks for interruptions on each iteration and cals `make_err()` to
     /// signal an interruption happened, causing no further items to be iterated from that point on.
     pub fn new(inner: I, make_err: EFN, should_interrupt: &'a AtomicBool) -> Self {
-        Iter {
+        IterWithErr {
             inner,
             make_err: Some(make_err),
             should_interrupt,
@@ -28,7 +67,7 @@ where
     }
 }
 
-impl<'a, I, EFN, E> Iterator for Iter<'a, I, EFN>
+impl<'a, I, EFN, E> Iterator for IterWithErr<'a, I, EFN>
 where
     I: Iterator,
     EFN: FnOnce() -> E,

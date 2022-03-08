@@ -62,7 +62,7 @@ pub use init::init_handler;
 /// A wrapper for an inner iterator which will check for interruptions on each iteration.
 pub struct Iter<I, EFN> {
     /// The actual iterator to yield elements from.
-    inner: git_features::interrupt::Iter<'static, I, EFN>,
+    inner: git_features::interrupt::IterWithErr<'static, I, EFN>,
 }
 
 impl<I, EFN, E> Iter<I, EFN>
@@ -74,7 +74,7 @@ where
     /// signal an interruption happened, causing no further items to be iterated from that point on.
     pub fn new(inner: I, make_err: EFN) -> Self {
         Iter {
-            inner: git_features::interrupt::Iter::new(inner, make_err, &IS_INTERRUPTED),
+            inner: git_features::interrupt::IterWithErr::new(inner, make_err, &IS_INTERRUPTED),
         }
     }
 
