@@ -80,13 +80,7 @@ where
             let symlink_destination = git_features::path::from_byte_slice(obj.data)
                 .map_err(|_| index::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
 
-            // TODO: how to deal with mode changes? Maybe this info can be passed once we check for whether
-            // a checkout is needed at all.
             if symlink {
-                // TODO: handle 'overwrite_existing' mode, which checks for 'exists' errors and unlinks existing files
-                //       or directories or symlinks. Doing this shouldn't invalidate the cache as it's only valid till
-                //       our parent anyway, but it may invalidate caches in other threads without their knowledge.
-                //       collisions with overwrite mode must be handled with great care in parallel mode.
                 try_write_or_unlink(dest, overwrite_existing, |p| {
                     crate::os::create_symlink(symlink_destination, p)
                 })?;
