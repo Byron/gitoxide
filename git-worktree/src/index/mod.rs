@@ -1,4 +1,5 @@
 use git_features::interrupt;
+use git_features::parallel::in_parallel;
 use git_features::progress::Progress;
 use git_hash::oid;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -19,43 +20,67 @@ pub fn checkout<Find, E>(
     options: checkout::Options,
 ) -> Result<checkout::Outcome, checkout::Error<E>>
 where
-    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
+    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E> + Send + Clone,
     E: std::error::Error + Send + Sync + 'static,
 {
     let num_files = AtomicUsize::default();
+    let dir = dir.into();
 
     let mut ctx = chunk::Context {
         buf: Vec::new(),
         path_cache: {
-            let mut cache = PathCache::new(dir.into());
+            let mut cache = PathCache::new(dir.clone());
             cache.unlink_on_collision = options.overwrite_existing;
             cache
         },
         files,
         bytes,
-        find,
+        find: find.clone(),
         options,
         num_files: &num_files,
     };
-    let (_chunk_size, _, num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
+    let (chunk_size, thread_limit, num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
         100,
         index.entries().len().into(),
         options.thread_limit,
         None,
     );
 
+    let entries_with_paths = interrupt::Iter::new(index.entries_mut_with_paths(), should_interrupt);
     let chunk::Outcome {
         mut collisions,
         mut errors,
         mut bytes_written,
         delayed,
     } = if num_threads == 1 {
-        chunk::process(
-            interrupt::Iter::new(index.entries_mut_with_paths(), should_interrupt),
-            &mut ctx,
-        )?
+        chunk::process(entries_with_paths, &mut ctx)?
     } else {
-        todo!("in parallel")
+        dbg!(thread_limit, num_threads, chunk_size);
+        in_parallel(
+            git_features::util::Chunks {
+                inner: entries_with_paths,
+                size: chunk_size,
+            },
+            thread_limit,
+            move |_| {
+                (
+                    Vec::<u8>::new(), // object buffer
+                    {
+                        let mut cache = PathCache::new(dir.clone());
+                        cache.unlink_on_collision = options.overwrite_existing;
+                        cache
+                    },
+                    find.clone(),
+                )
+            },
+            |_chunk, (_buf, _path_cache, _find)| {
+                // chunk::process(chunk, )
+                Ok::<_, ()>(())
+            },
+            git_features::parallel::reduce::IdentityWithResult::default(),
+        )
+        .ok();
+        todo!()
     };
 
     for (entry, entry_path) in delayed {

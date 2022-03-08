@@ -109,7 +109,7 @@ use git_object::bstr::ByteSlice;
 use git_odb::FindExt;
 use git_worktree::{fs::Capabilities, index, index::checkout::Collision};
 use std::io::ErrorKind::AlreadyExists;
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use tempfile::TempDir;
 
 use crate::fixture_path;
@@ -270,13 +270,14 @@ fn allow_or_disallow_symlinks() -> crate::Result {
 fn keep_going_collects_results() {
     let mut opts = opts_from_probe();
     opts.keep_going = true;
-    let mut count = 0;
+    let mut count = AtomicUsize::default();
     let (_source_tree, destination, _index, outcome) = checkout_index_in_tmp_dir_opts(
         opts,
         "make_mixed_without_submodules",
         |_id| {
-            if count < 2 {
-                count += 1;
+            if let Ok(_) = count.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |current| {
+                (current < 2).then(|| current + 1)
+            }) {
                 false
             } else {
                 true
@@ -442,7 +443,7 @@ fn checkout_index_in_tmp_dir(
 fn checkout_index_in_tmp_dir_opts(
     opts: index::checkout::Options,
     name: &str,
-    mut allow_return_object: impl FnMut(&git_hash::oid) -> bool,
+    mut allow_return_object: impl FnMut(&git_hash::oid) -> bool + Send + Clone,
     prep_dest: impl Fn(&Path) -> std::io::Result<()>,
 ) -> crate::Result<(
     PathBuf,
@@ -453,7 +454,10 @@ fn checkout_index_in_tmp_dir_opts(
     let source_tree = fixture_path(name);
     let git_dir = source_tree.join(".git");
     let mut index = git_index::File::at(git_dir.join("index"), Default::default())?;
-    let odb = git_odb::at(git_dir.join("objects"))?;
+    let odb = git_odb::at(git_dir.join("objects"))?
+        .into_inner()
+        .into_arc()
+        .to_cache_arc();
     let destination = tempfile::tempdir_in(std::env::current_dir()?)?;
     prep_dest(destination.path())?;
 
