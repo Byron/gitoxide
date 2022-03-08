@@ -4,6 +4,7 @@ use anyhow::bail;
 use git::{odb::FindExt, worktree::index::checkout, Progress};
 use git_repository as git;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::AtomicBool;
 
 pub fn checkout_exclusive(
     index_path: impl AsRef<Path>,
@@ -11,6 +12,7 @@ pub fn checkout_exclusive(
     repo: Option<PathBuf>,
     mut err: impl std::io::Write,
     mut progress: impl Progress,
+    should_interrupt: &AtomicBool,
     index::checkout_exclusive::Options {
         index: Options { object_hash, .. },
         empty_files,
@@ -84,6 +86,7 @@ pub fn checkout_exclusive(
             },
             &mut files,
             &mut bytes,
+            should_interrupt,
             opts,
         ),
         None => git::worktree::index::checkout(
@@ -95,6 +98,7 @@ pub fn checkout_exclusive(
             },
             &mut files,
             &mut bytes,
+            should_interrupt,
             opts,
         ),
     }?;

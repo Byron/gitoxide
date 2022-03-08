@@ -1,6 +1,8 @@
 use bstr::BStr;
+use git_features::interrupt;
 use git_features::progress::Progress;
 use git_hash::oid;
+use std::sync::atomic::AtomicBool;
 
 use crate::index::checkout::{ErrorRecord, PathCache};
 use crate::{index, os};
@@ -14,6 +16,7 @@ pub fn checkout<Find, E>(
     find: Find,
     files: &mut impl Progress,
     bytes: &mut impl Progress,
+    should_interrupt: &AtomicBool,
     options: checkout::Options,
 ) -> Result<checkout::Outcome, checkout::Error<E>>
 where
@@ -35,8 +38,14 @@ where
         find,
         options,
     };
+    let (chunk_size, _, num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
+        100,
+        index.entries().len().into(),
+        options.thread_limit,
+        None,
+    );
 
-    for (entry, entry_path) in index.entries_mut_with_paths() {
+    for (entry, entry_path) in interrupt::Iter::new(index.entries_mut_with_paths(), should_interrupt) {
         // TODO: write test for that
         if entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
             ctx.files.inc();

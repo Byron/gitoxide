@@ -164,6 +164,10 @@ pub struct Outcome {
 pub struct Options {
     /// capabilities of the file system
     pub fs: crate::fs::Capabilities,
+    /// If set, don't use more than this amount of threads.
+    /// Otherwise, usually use as many threads as there are logical cores.
+    /// A value of 0 is interpreted as no-limit
+    pub thread_limit: Option<usize>,
     /// If true, we assume no file to exist in the target directory, and want exclusive access to it.
     /// This should be enabled when cloning to avoid checks for freshness of files. This also enables
     /// detection of collisions based on whether or not exclusive file creation succeeds or fails.
@@ -194,6 +198,7 @@ impl Default for Options {
     fn default() -> Self {
         Options {
             fs: Default::default(),
+            thread_limit: None,
             destination_is_initially_empty: false,
             keep_going: false,
             trust_ctime: true,

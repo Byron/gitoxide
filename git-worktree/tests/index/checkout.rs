@@ -109,6 +109,7 @@ use git_object::bstr::ByteSlice;
 use git_odb::FindExt;
 use git_worktree::{fs::Capabilities, index, index::checkout::Collision};
 use std::io::ErrorKind::AlreadyExists;
+use std::sync::atomic::AtomicBool;
 use tempfile::TempDir;
 
 use crate::fixture_path;
@@ -468,6 +469,7 @@ fn checkout_index_in_tmp_dir_opts(
         },
         &mut progress::Discard,
         &mut progress::Discard,
+        &AtomicBool::default(),
         opts,
     )?;
     Ok((source_tree, destination, index, outcome))

@@ -10,7 +10,7 @@ mod stepped {
         receive_result: std::sync::mpsc::Receiver<Reduce::Input>,
         /// `join()` will be called on these guards to assure every thread tries to send through a closed channel. When
         /// that happens, they break out of their loops.
-        _threads: Vec<std::thread::JoinHandle<()>>,
+        threads: Vec<std::thread::JoinHandle<()>>,
         /// The reducer is called only in the thread using the iterator, dropping it has no side effects.
         reducer: Option<Reduce>,
     }
@@ -21,7 +21,7 @@ mod stepped {
             drop(std::mem::replace(&mut self.receive_result, sink));
 
             let mut last_err = None;
-            for handle in std::mem::take(&mut self._threads) {
+            for handle in std::mem::take(&mut self.threads) {
                 if let Err(err) = handle.join() {
                     last_err = Some(err);
                 };
@@ -82,7 +82,7 @@ mod stepped {
                 receive_result
             };
             Stepwise {
-                _threads: threads,
+                threads,
                 receive_result,
                 reducer: Some(reducer),
             }

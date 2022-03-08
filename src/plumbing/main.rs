@@ -97,6 +97,7 @@ pub fn main() -> Result<()> {
                         repository,
                         err,
                         progress,
+                        &should_interrupt,
                         core::index::checkout_exclusive::Options {
                             index: core::index::Options { object_hash, format },
                             empty_files,
