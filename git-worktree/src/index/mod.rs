@@ -2,7 +2,7 @@ use bstr::BStr;
 use git_features::interrupt;
 use git_features::progress::Progress;
 use git_hash::oid;
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use crate::index::checkout::{ErrorRecord, PathCache};
 use crate::{index, os};
@@ -28,6 +28,7 @@ where
 
     let mut delayed = Vec::new();
 
+    let num_files = AtomicUsize::default();
     let mut ctx = Context {
         buf: Vec::new(),
         collisions: Vec::new(),
@@ -37,8 +38,9 @@ where
         bytes,
         find,
         options,
+        num_files: &num_files,
     };
-    let (chunk_size, _, num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
+    let (_chunk_size, _, _num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
         100,
         index.entries().len().into(),
         options.thread_limit,
@@ -72,6 +74,7 @@ where
     }
 
     Ok(checkout::Outcome {
+        files_updated: ctx.num_files.load(Ordering::Relaxed),
         collisions: ctx.collisions,
         errors: ctx.errors,
     })
@@ -86,6 +89,7 @@ struct Context<'a, P1, P2, Find> {
     options: checkout::Options,
     errors: Vec<ErrorRecord>,
     collisions: Vec<checkout::Collision>,
+    num_files: &'a AtomicUsize,
 }
 
 fn checkout_entry_handle_result<Find, E, P1, P2>(
@@ -100,6 +104,7 @@ fn checkout_entry_handle_result<Find, E, P1, P2>(
         options,
         errors,
         collisions,
+        num_files,
     }: &mut Context<'_, P1, P2, Find>,
 ) -> Result<(), checkout::Error<E>>
 where
@@ -110,6 +115,7 @@ where
 {
     let res = entry::checkout(entry, entry_path, find, path_cache, *options, buf);
     files.inc();
+    num_files.fetch_add(1, Ordering::SeqCst);
     match res {
         Ok(object_size) => bytes.inc_by(object_size),
         Err(index::checkout::Error::Io(err)) if os::indicates_collision(&err) => {

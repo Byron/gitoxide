@@ -4,7 +4,7 @@ use anyhow::bail;
 use git::{odb::FindExt, worktree::index::checkout, Progress};
 use git_repository as git;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 pub fn checkout_exclusive(
     index_path: impl AsRef<Path>,
@@ -68,7 +68,11 @@ pub fn checkout_exclusive(
     bytes.init(None, git::progress::bytes());
 
     let start = std::time::Instant::now();
-    let checkout::Outcome { errors, collisions } = match &repo {
+    let checkout::Outcome {
+        errors,
+        collisions,
+        files_updated,
+    } = match &repo {
         Some(repo) => git::worktree::index::checkout(
             &mut index,
             dest_directory,
@@ -107,9 +111,18 @@ pub fn checkout_exclusive(
     bytes.show_throughput(start);
 
     progress.done(format!(
-        "Created {} {} files",
-        entries_for_checkout.saturating_sub(errors.len() + collisions.len()),
-        repo.is_none().then(|| "empty").unwrap_or_default()
+        "Created {} {} files{}",
+        files_updated,
+        repo.is_none().then(|| "empty").unwrap_or_default(),
+        should_interrupt
+            .load(Ordering::Relaxed)
+            .then(|| {
+                format!(
+                    " of {}",
+                    entries_for_checkout.saturating_sub(errors.len() + collisions.len())
+                )
+            })
+            .unwrap_or_default(),
     ));
 
     if !(collisions.is_empty() && errors.is_empty()) {
