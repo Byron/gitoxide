@@ -130,19 +130,23 @@ fn accidental_writes_through_symlinks_are_prevented_if_overwriting_is_forbidden(
             stripped_prefix(&source_tree, &source_files),
             stripped_prefix(&destination, &worktree_files),
         );
-        assert_eq!(
-            outcome.collisions,
-            vec![
-                Collision {
-                    path: "FAKE-DIR".into(),
-                    error_kind: AlreadyExists
-                },
-                Collision {
-                    path: "FAKE-FILE".into(),
-                    error_kind: AlreadyExists
-                }
-            ]
-        );
+        if multi_threaded() {
+            assert_eq!(outcome.collisions.len(), 2);
+        } else {
+            assert_eq!(
+                outcome.collisions,
+                vec![
+                    Collision {
+                        path: "FAKE-DIR".into(),
+                        error_kind: AlreadyExists
+                    },
+                    Collision {
+                        path: "FAKE-FILE".into(),
+                        error_kind: AlreadyExists
+                    }
+                ]
+            );
+        }
     } else {
         let expected = ["A-dir/a", "A-file", "FAKE-DIR", "FAKE-FILE", "fake-dir/b", "fake-file"];
         assert_eq!(stripped_prefix(&source_tree, &source_files), paths(expected));
@@ -309,15 +313,19 @@ fn keep_going_collects_results() {
         );
     }
 
-    assert_eq!(
-        stripped_prefix(&destination, &dir_structure(&destination)),
-        paths(if cfg!(unix) {
-            ["dir/sub-dir/symlink", "executable"]
-        } else {
-            ["empty", "executable"]
-        }),
-        "some files could not be created"
-    );
+    if multi_threaded() {
+        assert_eq!(dir_structure(&destination).len(), 2);
+    } else {
+        assert_eq!(
+            stripped_prefix(&destination, &dir_structure(&destination)),
+            paths(if cfg!(unix) {
+                ["dir/sub-dir/symlink", "executable"]
+            } else {
+                ["empty", "executable"]
+            }),
+            "some files could not be created"
+        );
+    }
 
     assert!(outcome.collisions.is_empty());
 }
