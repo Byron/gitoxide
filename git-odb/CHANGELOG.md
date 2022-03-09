@@ -5,10 +5,102 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- fixes a race condition around the first initialization of an ODB, which could leave the loosing
+  thread without any packs are loose databases.
+- Adds support for lookups by prefix.
+
+### New Features
+
+ - <csr-id-996bfb3061fd9ee2cf38c93f39e0d4c7c6163386/> loose::Store::lookup_prefix(…)
+
+### Bug Fixes
+
+ - <csr-id-9c14de391a1a9f1055922164d1757c9aa9720807/> support Rust 1.52
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 30 commits contributed to the release over the course of 44 calendar days.
+ - 44 days passed between releases.
+ - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 5 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - docs ([`a45f378`](https://github.com/Byron/gitoxide/commit/a45f3789696078848e2e96ddb8a55570c941dd53))
+    - Implement ODB::disambiguate_prefix(…) ([`7d4d281`](https://github.com/Byron/gitoxide/commit/7d4d2818395cfe0c31117f8736471d4a707e3feb))
+    - Add missing docs ([`c7cd4ab`](https://github.com/Byron/gitoxide/commit/c7cd4ab9a2ba2674be2dcd97a16f549e14679149))
+    - refactor ([`4455af3`](https://github.com/Byron/gitoxide/commit/4455af376a583fe524855d9199faa0a374b2ab31))
+    - refactor ([`fe87704`](https://github.com/Byron/gitoxide/commit/fe87704d037ae4cef5d48abd7dfc152f37a43c97))
+    - lookup_prefix for ODB ([`a4ccd18`](https://github.com/Byron/gitoxide/commit/a4ccd18fb3662f9fa38f73693abe9364c77df3d3))
+    - base for testing git_odb::Handle::lookup_prefix() ([`6244c06`](https://github.com/Byron/gitoxide/commit/6244c06900a1c66b2d62bd12015aaae86ac1c842))
+    - basics for ODB lookup prefix ([`5c228e1`](https://github.com/Byron/gitoxide/commit/5c228e1596b0ace28a1261ca271c3f1d93eb3970))
+    - add docs to `loose::Store::lookup_prefix(…)` ([`9fa4817`](https://github.com/Byron/gitoxide/commit/9fa4817f24ad1d31e20da92e307c853cdae758c1))
+    - upgrade parking_lot and cargo_toml ([`f95c1a0`](https://github.com/Byron/gitoxide/commit/f95c1a0d9c19bcc6feb9b8739a09d86f9970a0e0))
+    - loose::Store::lookup_prefix(…) ([`996bfb3`](https://github.com/Byron/gitoxide/commit/996bfb3061fd9ee2cf38c93f39e0d4c7c6163386))
+    - simplify error of loose::Iter ([`622abd7`](https://github.com/Byron/gitoxide/commit/622abd756c4d950076974e91dbe1a144b61ca3b1))
+    - support Rust 1.52 ([`9c14de3`](https://github.com/Byron/gitoxide/commit/9c14de391a1a9f1055922164d1757c9aa9720807))
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - fix the first race-condition around initialization in ODB ([`a891315`](https://github.com/Byron/gitoxide/commit/a89131517fd4805211c4037396d9411ee41363d1))
+    - conversions from Rc to arc for Handle ([`c19331e`](https://github.com/Byron/gitoxide/commit/c19331e001e587e4fca74f3e9fec28a7df922c0a))
+    - less restrictive ref-delta-base resolution ([`917480b`](https://github.com/Byron/gitoxide/commit/917480b6626363555ba818c8e1c4e18cb944aa40))
+    - more safety around recursion and invariants when resolving ref-deltas ([`dddb4a5`](https://github.com/Byron/gitoxide/commit/dddb4a51f417ff84a53da64959ad668ab26ebd93))
+    - allow delta base objects to be out-of-pack in general odb ([`d4f1590`](https://github.com/Byron/gitoxide/commit/d4f1590a6afe25fbd6659002c420098c57e1824a))
+    - elaborate odb info and simple entries printing ([`0f65282`](https://github.com/Byron/gitoxide/commit/0f65282fd2719234f745473e33bd42637be5fd3b))
+    - a first sketch of access odb information using a sub-command ([`89b628a`](https://github.com/Byron/gitoxide/commit/89b628ab5b833a34f0b426b3a399bb182e63f3f4))
+ * **[#329](https://github.com/Byron/gitoxide/issues/329)**
+    - Document all features related to serde1 ([`72b97f2`](https://github.com/Byron/gitoxide/commit/72b97f2ae4dc7642b160f183c6d5df4502dc186f))
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - Adapt to changes in git_features::path to deal with Result ([`bba4c68`](https://github.com/Byron/gitoxide/commit/bba4c680c627a418efbd25f14bd168df19b8dedd))
+ * **[#333](https://github.com/Byron/gitoxide/issues/333)**
+    - Use git_features::path everywhere where there is a path conversion ([`2e1437c`](https://github.com/Byron/gitoxide/commit/2e1437cb0b5dc77f2317881767f71eaf9b009ebf))
+ * **Uncategorized**
+    - thanks clippy ([`4618f8a`](https://github.com/Byron/gitoxide/commit/4618f8aa7648c0553a8e1b023fceb6738654e38b))
+    - Release git-tempfile v2.0.0, safety bump 6 crates ([`90b1c42`](https://github.com/Byron/gitoxide/commit/90b1c42d5487904a9f329362d185b035d0ddb975))
+    - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
+    - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
+    - Release git-hash v0.9.2, git-object v0.17.1, git-pack v0.16.1 ([`0db19b8`](https://github.com/Byron/gitoxide/commit/0db19b8deaf11a4d4cbc03fa3ae40eea104bc302))
+    - Implement `git_odb::Find` for `git_odb::Handle` ([`3522aef`](https://github.com/Byron/gitoxide/commit/3522aef37bcaa285e14d7a84cdca67321f9125bb))
+    - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
+</details>
+
 ## 0.26.0 (2022-01-23)
 
 <csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/>
 <csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
+
+### Refactor
+
+ - <csr-id-e0b8636f96e4bfe1bc72b5aa6ad4c4c8538ff92c/> replace bare u32 `data::Id` typedef
+
+### Other
+
+ - <csr-id-2d6960f886c1165f0bdb6f2d653388e1e0b57a2d/> try LRU-like contains implementation
+   Which unfortunately isn't really faster at all even though it totally
+   should be.
+ - <csr-id-424c9b3a2b467f5a1e339700257cd4ab72e2e692/> Try to make Handle usable for pack creation
+   It's nearly there, but for some reason the boxed dyn traits don't get to
+   be Send even though it's specified.
+ - <csr-id-b1c82a7959fba1541642fc8dfae46b27848f2ba3/> :Find for Arc and Rc
+ - <csr-id-9235106986e14551a28693bfe4ea92f046c65406/> :Find implementation for linked::Store
+
+### Chore
+
+ - <csr-id-c800fdd331e6d7a0b8d756ba822915259f26e9e8/> remove unused dependencies
 
 ### New Features
 
@@ -73,10 +165,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 163 commits contributed to the release over the course of 51 calendar days.
+ - 162 commits contributed to the release over the course of 51 calendar days.
  - 55 days passed between releases.
- - 24 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 6 unique issues were worked on: [#260](https://github.com/Byron/gitoxide/issues/260), [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298)
+ - 23 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 5 unique issues were worked on: [#260](https://github.com/Byron/gitoxide/issues/260), [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293)
 
 ### Thanks Clippy
 
@@ -243,16 +335,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - cleanup and unify `verify_integrity()` method signature ([`91d0476`](https://github.com/Byron/gitoxide/commit/91d047658b114f372735116c9d8e6962a3873137))
  * **[#293](https://github.com/Byron/gitoxide/issues/293)**
     - refactor ([`9b28b18`](https://github.com/Byron/gitoxide/commit/9b28b18262c763608d60fba65e91fcb9ca3ddb3e))
- * **[#298](https://github.com/Byron/gitoxide/issues/298)**
-    - support Rust 1.52 ([`9c14de3`](https://github.com/Byron/gitoxide/commit/9c14de391a1a9f1055922164d1757c9aa9720807))
  * **Uncategorized**
+    - Release git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`42ebb53`](https://github.com/Byron/gitoxide/commit/42ebb536cd6086f096b8422291776c9720fa0948))
     - Release git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`1b76119`](https://github.com/Byron/gitoxide/commit/1b76119259b8168aeb99cbbec233f7ddaa2d7d2c))
     - Release git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`8f57c29`](https://github.com/Byron/gitoxide/commit/8f57c297d7d6ed68cf51415ea7ede4bf9263326e))
     - Release git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`d78aab7`](https://github.com/Byron/gitoxide/commit/d78aab7b9c4b431d437ac70a0ef96263acb64e46))
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepare changelogs for release ([`674ec73`](https://github.com/Byron/gitoxide/commit/674ec73b0816baa2c63b4ef1b40b7a41849c5e95))
     - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
-    - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
     - Release git-chunk v0.2.0, safety bump 4 crates ([`b792fab`](https://github.com/Byron/gitoxide/commit/b792fabf9f5f93ab906ac5a5bb3e4f01c179290a))
     - refactor ([`c09a44d`](https://github.com/Byron/gitoxide/commit/c09a44db8e2bf6f45ebcd7423ab7438308557c49))
     - thanks clippy ([`bf4694c`](https://github.com/Byron/gitoxide/commit/bf4694c895ac7e73f22e6424808269b91f17003f))
@@ -268,7 +358,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Maintenance release due, which isn't really required but one now has to be careful what's committed at once.
 
-### refactor (BREAKING)
+### Refactor (BREAKING)
 
  - move loose header manipulation from git-pack to git-object
 
@@ -862,6 +952,11 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
 ## v0.12.0 (2021-04-30)
 
+### Other
+
+ - <csr-id-747a13e9a1fe5200c53055dd961507c9fef667e1/> :borrowed::Object => git-odb::data::Object
+ - <csr-id-4c77e4c97641ab3b02b56aaa702a7d2ca5bced7c/> :Db::init() with a few tests
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -1041,6 +1136,17 @@ A maintenance release to properly dealing with previously breaking changes in `g
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 8 times to make code idiomatic. 
 
 ## v0.10.0 (2021-04-08)
+
+### Other
+
+ - <csr-id-d53c4b0f91f1b29769c9430f2d1c0bcab1170c75/> add link to simplified/polonius version in the docs
+ - <csr-id-b317200b72096573d511d229c6e61e74e7ba14db/> Only check alternates for objects not found in packs or loose
+   This matches the behavior of git.
+ - <csr-id-eaae9c1bc723209d793eb93f5587fa2604d5cd92/> Avoid double-lookup in packs without polonius
+   Split object lookup into two steps: looking up the object index, and
+   looking up the object itself given the index. This avoids passing in the
+   buffer (and thus looking like an unconditional borrow to non-polonius)
+   until we're committed to returning from the loop.
 
 ### Commit Statistics
 
@@ -1288,6 +1394,14 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
 ## v0.4.2 (2020-11-18)
 
+### Other
+
+ - <csr-id-13159eb972ed78ce4ebee2313b288023cec91c47/> try to get rid of tree-traversal Boxed error…
+   …which really complicates things downstream as these now have to deal
+   with another type argument, or of to try to turn it into a Box anyway.
+   
+   The latter seems to be…troubling so I can't make it compile.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -1393,6 +1507,11 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
 ## v0.4.1 (2020-09-18)
 
+### Other
+
+ - <csr-id-0092c256b3bfaf2818566540e660cdefcf68d246/> See if tree compaction saves considerable amounts of memory
+   No, it's not worth it.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -1480,6 +1599,16 @@ A maintenance release to properly dealing with previously breaking changes in `g
 </details>
 
 ## v0.3.0 (2020-08-12)
+
+### Refactor
+
+ - <csr-id-5d57c1f7e3b9a84f7b46a4378015572155f3104b/> Use borrowed::Id in trees for full type safety
+
+### Other
+
+ - <csr-id-9945eba749afb020e0deaaa5bb01fda6ff9ccd84/> try to use a customized version of just pieces of Miniz-oxide
+ - <csr-id-cfd8a25f9125c48afe4b66eab6b6ecf71097c486/> fanout table, but slowly I get it :D
+ - <csr-id-1525f36d29574699d2fcb16b70678121030fd109/> discard idea of making traversal even more generic
 
 ### Commit Statistics
 
@@ -1919,6 +2048,15 @@ A maintenance release to properly dealing with previously breaking changes in `g
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 5 times to make code idiomatic. 
 
 ## v0.1.0 (2020-07-12)
+
+### Refactor
+
+ - <csr-id-47ca6ab2ff0cbf8801d0a82cebbbeb8c4f62cdae/> a simpler implementation to skip the header
+
+### Other
+
+ - <csr-id-4ff21686c32a6edc84ea041c3040f33ae24f9519/> first silly attempt to randomly remove an allocation
+ - <csr-id-91c8fc1f0c50af55d7cb233bbe813c6d12fe11bc/> get rid of failure crate in favor of quick-error
 
 ### Commit Statistics
 
