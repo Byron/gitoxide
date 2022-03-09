@@ -17,6 +17,7 @@ pub fn checkout_exclusive(
         index: Options { object_hash, .. },
         empty_files,
         keep_going,
+        thread_limit,
     }: index::checkout_exclusive::Options,
 ) -> anyhow::Result<()> {
     let repo = repo
@@ -57,6 +58,7 @@ pub fn checkout_exclusive(
         destination_is_initially_empty: true,
         overwrite_existing: false,
         keep_going,
+        thread_limit,
         ..Default::default()
     };
 

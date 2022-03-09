@@ -102,6 +102,7 @@ pub fn main() -> Result<()> {
                             index: core::index::Options { object_hash, format },
                             empty_files,
                             keep_going,
+                            thread_limit,
                         },
                     )
                 },

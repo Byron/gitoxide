@@ -29,6 +29,10 @@ pub mod checkout_exclusive {
         /// If true, all files will be written with zero bytes despite having made an ODB lookup.
         pub empty_files: bool,
         pub keep_going: bool,
+        /// If set, don't use more than this amount of threads.
+        /// Otherwise, usually use as many threads as there are logical cores.
+        /// A value of 0 is interpreted as no-limit
+        pub thread_limit: Option<usize>,
     }
 }
 
