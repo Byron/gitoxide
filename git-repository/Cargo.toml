@@ -82,7 +82,7 @@ git-worktree = { version ="^0.0.0", path = "../git-worktree", optional = true }
 signal-hook = { version = "0.3.9", default-features = false }
 thiserror = "1.0.26"
 clru = "0.5.0"
-byte-unit = "4.0.13"
+byte-unit = "=4.0.13" # this version is the last with edition 2018, needed for msrv
 log = "0.4.14"
 
 document-features = { version = "0.2.0", optional = true }
