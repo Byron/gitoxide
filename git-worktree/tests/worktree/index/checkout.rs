@@ -332,10 +332,10 @@ fn no_case_related_collisions_on_case_sensitive_filesystem() {
 }
 
 #[test]
-fn collisions_are_detected_on_a_case_sensitive_filesystem() {
+fn collisions_are_detected_on_a_case_insensitive_filesystem() {
     let opts = opts_from_probe();
     if !opts.fs.ignore_case {
-        eprintln!("Skipping case-insensitive testing on what would be a case-senstive file system");
+        eprintln!("Skipping case-insensitive testing on what would be a case-sensitive file system");
         return;
     }
     let (source_tree, destination, _index, outcome) =
@@ -349,11 +349,20 @@ fn collisions_are_detected_on_a_case_sensitive_filesystem() {
     );
 
     let dest_files = dir_structure(&destination);
-    assert_eq!(
-        stripped_prefix(&destination, &dest_files),
-        paths(["D/B", "D/C", "FILE_X", "X", "link-to-X"]),
-        "we checkout files in order and generally handle collision detection differently, hence the difference"
-    );
+    let multi_threaded = git_features::parallel::num_threads(None) > 1;
+    if multi_threaded {
+        assert_eq!(
+            dest_files.len(),
+            5,
+            "can only assert on number as it's racily creating files so unclear which one clashes"
+        );
+    } else {
+        assert_eq!(
+            stripped_prefix(&destination, &dest_files),
+            paths(["D/B", "D/C", "FILE_X", "X", "link-to-X"]),
+            "we checkout files in order and generally handle collision detection differently, hence the difference"
+        );
+    }
 
     let error_kind = ErrorKind::AlreadyExists;
     #[cfg(windows)]
@@ -361,32 +370,40 @@ fn collisions_are_detected_on_a_case_sensitive_filesystem() {
     #[cfg(not(windows))]
     let error_kind_dir = error_kind;
 
-    assert_eq!(
-        sort_when_threaded(outcome.collisions),
-        sort_when_threaded(vec![
-            Collision {
-                path: "FILE_x".into(),
-                error_kind,
-            },
-            Collision {
-                path: "d".into(),
-                error_kind: error_kind_dir,
-            },
-            Collision {
-                path: "file_X".into(),
-                error_kind,
-            },
-            Collision {
-                path: "file_x".into(),
-                error_kind,
-            },
-            Collision {
-                path: "x".into(),
-                error_kind,
-            },
-        ]),
-        "these files couldn't be checked out"
-    );
+    if multi_threaded {
+        assert_eq!(
+            outcome.collisions.len(),
+            5,
+            "can only assert on number as it's racily creating files so unclear which one clashes"
+        );
+    } else {
+        assert_eq!(
+            outcome.collisions,
+            vec![
+                Collision {
+                    path: "FILE_x".into(),
+                    error_kind,
+                },
+                Collision {
+                    path: "d".into(),
+                    error_kind: error_kind_dir,
+                },
+                Collision {
+                    path: "file_X".into(),
+                    error_kind,
+                },
+                Collision {
+                    path: "file_x".into(),
+                    error_kind,
+                },
+                Collision {
+                    path: "x".into(),
+                    error_kind,
+                },
+            ],
+            "these files couldn't be checked out"
+        );
+    }
 }
 
 fn assert_equality(source_tree: &Path, destination: &TempDir, allow_symlinks: bool) -> crate::Result<usize> {
