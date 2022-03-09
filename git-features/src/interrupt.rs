@@ -77,10 +77,7 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         self.make_err.as_ref()?;
         if self.should_interrupt.load(Ordering::Relaxed) {
-            return match self.make_err.take() {
-                Some(f) => Some(Err(f())),
-                None => None,
-            };
+            return self.make_err.take().map(|f| Err(f()));
         }
         match self.inner.next() {
             Some(next) => Some(Ok(next)),

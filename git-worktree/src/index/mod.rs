@@ -279,7 +279,7 @@ mod chunk {
                     });
                     Ok(0)
                 } else {
-                    return Err(err);
+                    Err(err)
                 }
             }
         }
