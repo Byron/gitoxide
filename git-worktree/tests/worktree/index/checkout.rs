@@ -288,17 +288,19 @@ fn keep_going_collects_results() {
     .unwrap();
 
     assert_eq!(
-        outcome
-            .errors
-            .iter()
-            .map(|r| r.path.to_path_lossy().into_owned())
-            .collect::<Vec<_>>(),
-        paths(if cfg!(unix) {
+        sort_when_threaded(
+            outcome
+                .errors
+                .iter()
+                .map(|r| r.path.to_path_lossy().into_owned())
+                .collect()
+        ),
+        sort_when_threaded(paths(if cfg!(unix) {
             ["dir/content", "empty"]
         } else {
             // not actually a symlink anymore, even though symlinks are supported but git think differently.
             ["dir/content", "dir/sub-dir/symlink"]
-        })
+        }))
     );
 
     assert_eq!(
@@ -360,8 +362,8 @@ fn collisions_are_detected_on_a_case_sensitive_filesystem() {
     let error_kind_dir = error_kind;
 
     assert_eq!(
-        outcome.collisions,
-        vec![
+        sort_when_threaded(outcome.collisions),
+        sort_when_threaded(vec![
             Collision {
                 path: "FILE_x".into(),
                 error_kind,
@@ -382,7 +384,7 @@ fn collisions_are_detected_on_a_case_sensitive_filesystem() {
                 path: "x".into(),
                 error_kind,
             },
-        ],
+        ]),
         "these files couldn't be checked out"
     );
 }
@@ -497,4 +499,14 @@ fn opts_from_probe() -> index::checkout::Options {
 
 fn paths<'a>(p: impl IntoIterator<Item = &'a str>) -> Vec<PathBuf> {
     p.into_iter().map(PathBuf::from).collect()
+}
+
+fn sort_when_threaded<T>(mut p: Vec<T>) -> Vec<T>
+where
+    T: Ord,
+{
+    if git_features::parallel::num_threads(None) > 1 {
+        p.sort()
+    }
+    p
 }

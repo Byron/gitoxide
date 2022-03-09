@@ -53,7 +53,6 @@ where
     } = if num_threads == 1 {
         chunk::process(entries_with_paths, files, bytes, &mut ctx)?
     } else {
-        dbg!(thread_limit, num_threads, chunk_size);
         in_parallel(
             git_features::util::Chunks {
                 inner: entries_with_paths,
@@ -81,10 +80,14 @@ where
                 }
             },
             |chunk, (files, bytes, ctx)| chunk::process(chunk.into_iter(), files, bytes, ctx),
-            git_features::parallel::reduce::IdentityWithResult::default(),
-        )
-        .ok();
-        todo!()
+            chunk::Reduce {
+                files,
+                bytes,
+                num_files: &num_files,
+                aggregate: Default::default(),
+                marker: Default::default(),
+            },
+        )?
     };
 
     for (entry, entry_path) in delayed {
@@ -116,6 +119,58 @@ mod chunk {
     use crate::index::{checkout, checkout::PathCache, entry};
     use crate::{index, os};
 
+    mod reduce {
+        use crate::index::checkout;
+        use git_features::progress::Progress;
+        use std::marker::PhantomData;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        pub struct Reduce<'a, 'entry, P1, P2, E> {
+            pub files: &'a mut P1,
+            pub bytes: &'a mut P2,
+            pub num_files: &'a AtomicUsize,
+            pub aggregate: super::Outcome<'entry>,
+            pub marker: PhantomData<E>,
+        }
+
+        impl<'a, 'entry, P1, P2, E> git_features::parallel::Reduce for Reduce<'a, 'entry, P1, P2, E>
+        where
+            P1: Progress,
+            P2: Progress,
+            E: std::error::Error + Send + Sync + 'static,
+        {
+            type Input = Result<super::Outcome<'entry>, checkout::Error<E>>;
+            type FeedProduce = ();
+            type Output = super::Outcome<'entry>;
+            type Error = checkout::Error<E>;
+
+            fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
+                let item = item?;
+                let super::Outcome {
+                    bytes_written,
+                    delayed,
+                    errors,
+                    collisions,
+                } = item;
+                self.aggregate.bytes_written += bytes_written;
+                self.aggregate.delayed.extend(delayed);
+                self.aggregate.errors.extend(errors);
+                self.aggregate.collisions.extend(collisions);
+
+                self.bytes.set(self.aggregate.bytes_written as usize);
+                self.files.set(self.num_files.load(Ordering::Relaxed));
+
+                Ok(())
+            }
+
+            fn finalize(self) -> Result<Self::Output, Self::Error> {
+                Ok(self.aggregate)
+            }
+        }
+    }
+    pub use reduce::Reduce;
+
+    #[derive(Default)]
     pub struct Outcome<'a> {
         pub collisions: Vec<checkout::Collision>,
         pub errors: Vec<checkout::ErrorRecord>,
