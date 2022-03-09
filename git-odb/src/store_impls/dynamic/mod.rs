@@ -136,7 +136,7 @@ pub mod structure {
         pub fn structure(&self) -> Result<Vec<Record>, load_index::Error> {
             let index = self.index.load();
             if !index.is_initialized() {
-                self.consolidate_with_disk_state(false /*load one new index*/)?;
+                self.consolidate_with_disk_state(true, false /*load one new index*/)?;
             }
             let index = self.index.load();
             let mut res: Vec<_> = index

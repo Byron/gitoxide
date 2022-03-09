@@ -101,7 +101,7 @@ impl super::Store {
     {
         let mut index = self.index.load();
         if !index.is_initialized() {
-            self.consolidate_with_disk_state(false)?;
+            self.consolidate_with_disk_state(true, false)?;
             index = self.index.load();
             assert!(
                 index.is_initialized(),

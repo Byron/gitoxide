@@ -70,7 +70,7 @@ impl super::Store {
     ) -> Result<Option<Snapshot>, Error> {
         let index = self.index.load();
         if !index.is_initialized() {
-            return self.consolidate_with_disk_state(false /*load one new index*/);
+            return self.consolidate_with_disk_state(true /* needs_init */, false /*load one new index*/);
         }
 
         if marker.generation != index.generation || marker.state_id != index.state_id() {
@@ -86,7 +86,7 @@ impl super::Store {
                 match refresh_mode {
                     RefreshMode::Never => Ok(None),
                     RefreshMode::AfterAllIndicesLoaded => {
-                        self.consolidate_with_disk_state(true /*load one new index*/)
+                        self.consolidate_with_disk_state(false /* needs init */, true /*load one new index*/)
                     }
                 }
             }
@@ -166,7 +166,11 @@ impl super::Store {
 
     /// refresh and possibly clear out our existing data structures, causing all pack ids to be invalidated.
     /// `load_new_index` is an optimization to at least provide one newly loaded pack after refreshing the slot map.
-    pub(crate) fn consolidate_with_disk_state(&self, load_new_index: bool) -> Result<Option<Snapshot>, Error> {
+    pub(crate) fn consolidate_with_disk_state(
+        &self,
+        needs_init: bool,
+        load_new_index: bool,
+    ) -> Result<Option<Snapshot>, Error> {
         let index = self.index.load();
         let previous_index_state = Arc::as_ptr(&index) as usize;
 
@@ -182,6 +186,15 @@ impl super::Store {
         }
 
         let was_uninitialized = !index.is_initialized();
+
+        // We might not be able to detect by pointer if the state changed, as this itself is racy. So we keep track of double-initialization
+        // using a flag, which means that if `needs_init` was true we saw the index uninitialized once, but now that we are here it's
+        // initialized meaning that somebody was faster and we couldn't detect it by comparisons to the index.
+        // If so, make sure we collect the snapshot instead of returning None in case nothing actually changed, which is likely with a
+        // race like this.
+        if !was_uninitialized && needs_init {
+            return Ok(Some(self.collect_snapshot()));
+        }
         self.num_disk_state_consolidation.fetch_add(1, Ordering::Relaxed);
 
         let db_paths: Vec<_> = std::iter::once(objects_directory.to_owned())
