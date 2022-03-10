@@ -1,3 +1,4 @@
+use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
 use git_config::file::GitConfig;
@@ -30,13 +31,20 @@ where
 {
     progress.init(None, progress::count("filesystem items"));
     fn is_repository(path: &Path) -> Option<git_repository::Kind> {
-        if !(path.is_dir() && path.ends_with(".git")) {
+        // Can be git dir or worktree checkout (file)
+        if path.file_name() != Some(OsStr::new(".git")) {
             return None;
         }
-        if path.join("HEAD").is_file() && path.join("config").is_file() {
-            git_repository::path::is::git(path).ok()
+
+        if path.is_dir() {
+            if path.join("HEAD").is_file() && path.join("config").is_file() {
+                git_repository::path::is::git(path).ok()
+            } else {
+                None
+            }
         } else {
-            None
+            // git files are always worktrees
+            Some(git_repository::Kind::WorkTree)
         }
     }
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
