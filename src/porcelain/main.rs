@@ -63,7 +63,7 @@ pub fn main() -> Result<()> {
                     },
                 )
             }
-            crate::porcelain::options::ToolCommands::Find { root } => {
+            crate::porcelain::options::ToolCommands::Find { root, debug } => {
                 use gitoxide_core::organize;
                 prepare_and_run(
                     "find",
@@ -76,6 +76,7 @@ pub fn main() -> Result<()> {
                             root.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
                             out,
                             git_features::progress::DoOrDiscard::from(progress),
+                            debug,
                         )
                     },
                 )

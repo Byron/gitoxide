@@ -47,6 +47,12 @@ pub enum Subcommands {
 pub enum ToolCommands {
     /// Find all repositories in a given directory.
     Find {
+        /// If set, print additional information to help understand why the traversal is slow.
+        ///
+        /// Typically it will encounter too many paths without a git repository, forcing a lot
+        /// of additional paths to be searched unnecessarily.
+        #[clap(long, short = 'd')]
+        debug: bool,
         /// The directory in which to find all git repositories.
         ///
         /// Defaults to the current working directory.

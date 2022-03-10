@@ -23,6 +23,7 @@ enum RepoKind {
 fn find_git_repository_workdirs<P: Progress>(
     root: impl AsRef<Path>,
     mut progress: P,
+    debug: bool,
 ) -> impl Iterator<Item = (PathBuf, RepoKind)>
 where
     <P as Progress>::SubProgress: Sync,
@@ -64,7 +65,10 @@ where
     #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
     let walk = walk.parallelism(jwalk::Parallelism::RayonNewPool(4));
 
-    walk.process_read_dir(move |_depth, _path, _read_dir_state, siblings| {
+    walk.process_read_dir(move |_depth, path, _read_dir_state, siblings| {
+        if debug {
+            eprintln!("{}", path.display());
+        }
         let mut found_any_repo = false;
         let mut found_bare_repo = false;
         for entry in siblings.iter_mut().flatten() {
@@ -74,7 +78,7 @@ where
                 entry.client_state = State { is_repo: true, is_bare };
                 entry.read_children_path = None;
 
-                found_any_repo = !is_bare;
+                found_any_repo = true;
                 found_bare_repo = is_bare;
             }
         }
@@ -212,11 +216,14 @@ pub fn discover<P: Progress>(
     source_dir: impl AsRef<Path>,
     mut out: impl std::io::Write,
     mut progress: P,
+    debug: bool,
 ) -> anyhow::Result<()>
 where
     <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
 {
-    for (git_workdir, _kind) in find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories")) {
+    for (git_workdir, _kind) in
+        find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories"), debug)
+    {
         writeln!(&mut out, "{}", git_workdir.display())?;
     }
     Ok(())
@@ -233,7 +240,9 @@ where
 {
     let mut num_errors = 0usize;
     let destination = destination.as_ref().canonicalize()?;
-    for (path_to_move, kind) in find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories")) {
+    for (path_to_move, kind) in
+        find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories"), false)
+    {
         if let Err(err) = handle(mode, kind, &path_to_move, &destination, &mut progress) {
             progress.fail(format!(
                 "Error when handling directory {:?}: {}",
