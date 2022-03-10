@@ -1383,6 +1383,9 @@ dependencies = [
 [[package]]
 name = "git-revision"
 version = "0.0.0"
+dependencies = [
+ "git-testtools",
+]
 
 [[package]]
 name = "git-submodule"
