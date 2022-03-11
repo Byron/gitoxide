@@ -2,9 +2,9 @@ use std::path::Path;
 use std::{convert::TryInto, fs::OpenOptions, io::Write, time::Duration};
 
 use bstr::BStr;
-use close_file::Closable;
 use git_hash::oid;
 use git_index::Entry;
+use io_close::Close;
 
 use crate::index::checkout::PathCache;
 use crate::{index, os};
@@ -70,7 +70,7 @@ where
             // NOTE: we don't call `file.sync_all()` here knowing that some filesystems don't handle this well.
             //       revisit this once there is a bug to fix.
             update_fstat(entry, file.metadata()?)?;
-            file.close().map_err(|err| err.unwrap() /* misnomer, won't panic */)?;
+            file.close()?;
             obj.data.len()
         }
         git_index::entry::Mode::SYMLINK => {
@@ -91,8 +91,7 @@ where
                     open_options(p, destination_is_initially_empty, overwrite_existing).open(&dest)
                 })?;
                 file.write_all(obj.data)?;
-                file.close()
-                    .map_err(|err| err.unwrap() /* misnomer for 'into inner' */)?;
+                file.close()?;
             }
 
             update_fstat(entry, std::fs::symlink_metadata(&dest)?)?;
