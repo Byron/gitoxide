@@ -2,6 +2,7 @@ use std::path::Path;
 use std::{convert::TryInto, fs::OpenOptions, io::Write, time::Duration};
 
 use bstr::BStr;
+use close_file::Closable;
 use git_hash::oid;
 use git_index::Entry;
 
@@ -69,6 +70,7 @@ where
             // NOTE: we don't call `file.sync_all()` here knowing that some filesystems don't handle this well.
             //       revisit this once there is a bug to fix.
             update_fstat(entry, file.metadata()?)?;
+            // file.close()?;
             obj.data.len()
         }
         git_index::entry::Mode::SYMLINK => {
@@ -85,10 +87,11 @@ where
                     crate::os::create_symlink(symlink_destination, p)
                 })?;
             } else {
-                try_write_or_unlink(dest, overwrite_existing, |p| {
+                let mut file = try_write_or_unlink(dest, overwrite_existing, |p| {
                     open_options(p, destination_is_initially_empty, overwrite_existing).open(&dest)
-                })?
-                .write_all(obj.data)?;
+                })?;
+                file.write_all(obj.data)?;
+                file.close()?;
             }
 
             update_fstat(entry, std::fs::symlink_metadata(&dest)?)?;
