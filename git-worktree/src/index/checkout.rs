@@ -219,8 +219,6 @@ pub enum Error<E: std::error::Error + Send + Sync + 'static> {
     Time(#[from] std::time::SystemTimeError),
     #[error("IO error while writing blob or reading file metadata or changing filetype")]
     Io(#[from] std::io::Error),
-    #[error(transparent)]
-    FileClose(#[from] close_file::CloseError),
     #[error("object {} for checkout at {} could not be retrieved from object database", .oid.to_hex(), .path.display())]
     Find {
         #[source]

@@ -70,7 +70,7 @@ where
             // NOTE: we don't call `file.sync_all()` here knowing that some filesystems don't handle this well.
             //       revisit this once there is a bug to fix.
             update_fstat(entry, file.metadata()?)?;
-            // file.close()?;
+            file.close().map_err(|err| err.unwrap() /* misnomer, won't panic */)?;
             obj.data.len()
         }
         git_index::entry::Mode::SYMLINK => {
@@ -91,7 +91,8 @@ where
                     open_options(p, destination_is_initially_empty, overwrite_existing).open(&dest)
                 })?;
                 file.write_all(obj.data)?;
-                file.close()?;
+                file.close()
+                    .map_err(|err| err.unwrap() /* misnomer for 'into inner' */)?;
             }
 
             update_fstat(entry, std::fs::symlink_metadata(&dest)?)?;
