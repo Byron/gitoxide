@@ -47,7 +47,7 @@ where
     crossbeam_utils::thread::scope(move |s| {
         let receive_result = {
             let (send_input, receive_input) = crossbeam_channel::bounded::<I>(num_threads);
-            let (send_result, receive_result) = std::sync::mpsc::sync_channel::<O>(num_threads);
+            let (send_result, receive_result) = crossbeam_channel::bounded::<O>(num_threads);
             for thread_id in 0..num_threads {
                 s.spawn({
                     let send_result = send_result.clone();
