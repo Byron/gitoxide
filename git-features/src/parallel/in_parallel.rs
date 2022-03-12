@@ -34,8 +34,8 @@ where
 pub fn in_parallel<I, S, O, R>(
     input: impl Iterator<Item = I> + Send,
     thread_limit: Option<usize>,
-    new_thread_state: impl Fn(usize) -> S + Send + Clone,
-    consume: impl Fn(I, &mut S) -> O + Send + Clone,
+    new_thread_state: impl FnMut(usize) -> S + Send + Clone,
+    consume: impl FnMut(I, &mut S) -> O + Send + Clone,
     mut reducer: R,
 ) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
 where
@@ -52,8 +52,8 @@ where
                 s.spawn({
                     let send_result = send_result.clone();
                     let receive_input = receive_input.clone();
-                    let new_thread_state = new_thread_state.clone();
-                    let consume = consume.clone();
+                    let mut new_thread_state = new_thread_state.clone();
+                    let mut consume = consume.clone();
                     move |_| {
                         let mut state = new_thread_state(thread_id);
                         for item in receive_input {
@@ -81,3 +81,21 @@ where
     })
     .unwrap()
 }
+
+// #[allow(missing_docs)] // TODO: docs
+// pub fn in_parallel_with_mut_slice<I, S, O, E, Produce, FinalResult>(
+//     input: &mut [I],
+//     thread_limit: Option<usize>,
+//     new_thread_state: impl Fn(usize) -> S + Send + Clone,
+//     consume: impl Fn(I, &mut S) -> Result<O, E> + Send + Clone,
+//     finalize: impl FnMut(&mut [I], Produce) -> FinalResult,
+// ) -> Result<I, E>
+// where
+//     I: Send,
+//     O: Send,
+//     E: Send,
+//     Produce: Iterator<Item = O>,
+// {
+//     let num_threads = num_threads(thread_limit);
+//     crossbeam_utils::thread::scope(move |s| todo!()).unwrap()
+// }

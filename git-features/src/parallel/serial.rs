@@ -72,8 +72,8 @@ pub use not_parallel::{join, threads, Scope, ScopedJoinHandle};
 pub fn in_parallel<I, S, O, R>(
     input: impl Iterator<Item = I>,
     _thread_limit: Option<usize>,
-    new_thread_state: impl Fn(usize) -> S,
-    consume: impl Fn(I, &mut S) -> O,
+    new_thread_state: impl FnMut(usize) -> S,
+    consume: impl FnMut(I, &mut S) -> O,
     mut reducer: R,
 ) -> Result<<R as Reduce>::Output, <R as Reduce>::Error>
 where
