@@ -154,12 +154,15 @@ the latest stable one will work as well.
 # The default installation, 'max'
 cargo install gitoxide
 
-# On linux, it's a little faster to compile the termion version, which also results in slightly smaller binaries
-cargo install gitoxide --no-default-features --features max-termion
-
 # For smaller binaries and even faster build times that are traded for a less fancy CLI implementation, use `lean`
 # or `lean-termion` respectively.
 cargo install gitoxide --no-default-features --features lean
+```
+
+The following installs the latest unpublished release directly from git:
+
+```sh
+cargo install --git https://github.com/Byron/gitoxide  gitoxide
 ```
 
 [releases]: https://github.com/Byron/gitoxide/releases 
