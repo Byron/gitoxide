@@ -35,7 +35,7 @@
 #[cfg(feature = "parallel")]
 mod in_parallel;
 #[cfg(feature = "parallel")]
-pub use in_parallel::{in_parallel, join, threads};
+pub use in_parallel::{in_parallel, in_parallel_with_mut_slice, join, threads};
 
 mod serial;
 #[cfg(not(feature = "parallel"))]

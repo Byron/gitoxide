@@ -1,4 +1,5 @@
 use crate::parallel::{num_threads, Reduce};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Runs `left` and `right` in parallel, returning their output when both are done.
 pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
@@ -82,20 +83,76 @@ where
     .unwrap()
 }
 
-// #[allow(missing_docs)] // TODO: docs
-// pub fn in_parallel_with_mut_slice<I, S, O, E, Produce, FinalResult>(
-//     input: &mut [I],
-//     thread_limit: Option<usize>,
-//     new_thread_state: impl Fn(usize) -> S + Send + Clone,
-//     consume: impl Fn(I, &mut S) -> Result<O, E> + Send + Clone,
-//     finalize: impl FnMut(&mut [I], Produce) -> FinalResult,
-// ) -> Result<I, E>
-// where
-//     I: Send,
-//     O: Send,
-//     E: Send,
-//     Produce: Iterator<Item = O>,
-// {
-//     let num_threads = num_threads(thread_limit);
-//     crossbeam_utils::thread::scope(move |s| todo!()).unwrap()
-// }
+#[allow(missing_docs)] // TODO: docs
+pub fn in_parallel_with_mut_slice<I, S, O, E, FinalResult>(
+    input: &mut [I],
+    thread_limit: Option<usize>,
+    new_thread_state: impl FnMut(usize) -> S + Send + Clone,
+    consume: impl FnMut(&mut I, &mut S) -> Result<O, E> + Send + Clone,
+    mut periodic: impl FnMut() -> std::time::Duration + Send,
+    mut finalize: impl FnMut(&[I], Vec<O>) -> Result<FinalResult, E>,
+) -> Result<FinalResult, E>
+where
+    I: Send,
+    O: Send,
+    E: Send,
+{
+    let num_threads = num_threads(thread_limit);
+    let input = &*input; // downgrade to immutable
+    let results: Vec<parking_lot::Mutex<Option<Result<O, E>>>> = (0..input.len()).map(|_| Default::default()).collect();
+    let stop_periodic = &AtomicBool::default();
+
+    crossbeam_utils::thread::scope({
+        let results = &results;
+        move |s| {
+            s.spawn({
+                move |_| loop {
+                    if stop_periodic.load(Ordering::Relaxed) {
+                        break;
+                    }
+
+                    std::thread::sleep(periodic());
+                }
+            });
+
+            let threads: Vec<_> = (0..num_threads)
+                .map(|n| {
+                    s.spawn({
+                        let mut new_thread_state = new_thread_state.clone();
+                        let mut _consume = consume.clone();
+                        move |_| {
+                            let _state = new_thread_state(n);
+                            let mut item = 0;
+                            while let Some(res) = &results.get(num_threads * item + n) {
+                                item += 1;
+                                if let Some(mut guard) = res.try_lock() {
+                                    match guard.as_mut() {
+                                        Some(_) => {
+                                            // somebody stole our work, assume all future work is done, too
+                                            return;
+                                        }
+                                        None => {
+                                            todo!("make input mutable and consume/process")
+                                        }
+                                    }
+                                }
+                            }
+                            // TODO: work-stealing logic once we are out of bounds. Pose as prior thread and walk backwards.
+                        }
+                    })
+                })
+                .collect();
+            for thread in threads {
+                thread.join().expect("must not panic");
+            }
+
+            stop_periodic.store(true, Ordering::Relaxed);
+        }
+    })
+    .unwrap();
+    let mut unwrapped_results = Vec::with_capacity(results.len());
+    for res in results {
+        unwrapped_results.push(res.into_inner().expect("result obtained, item processed")?);
+    }
+    finalize(input, unwrapped_results)
+}
