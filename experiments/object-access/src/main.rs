@@ -103,19 +103,6 @@ fn main() -> anyhow::Result<()> {
         objs_per_sec(elapsed)
     );
 
-    #[cfg(feature = "radicle-nightly")]
-    {
-        let start = Instant::now();
-        do_link_git_in_parallel(&hashes, &repo, || odb::pack::cache::Never, AccessMode::ObjectExists)?;
-        let elapsed = start.elapsed();
-        println!(
-            "parallel radicle-link-git : confirmed {} objects exists in {:?} ({:0.0} objects/s)",
-            hashes.len(),
-            elapsed,
-            objs_per_sec(elapsed)
-        );
-    }
-
     let start = Instant::now();
     let (object_store, bytes) = do_new_gitoxide_store_in_parallel(
         &hashes,
@@ -189,19 +176,6 @@ fn main() -> anyhow::Result<()> {
         elapsed,
         objs_per_sec(elapsed)
     );
-
-    #[cfg(feature = "radicle-nightly")]
-    {
-        let start = Instant::now();
-        let bytes = do_link_git_in_parallel(&hashes, &repo, odb::pack::cache::Never::default, AccessMode::ObjectData)?;
-        let elapsed = start.elapsed();
-        println!(
-            "parallel radicle-link-git (uncached): confirmed {} bytes in {:?} ({:0.0} objects/s)",
-            bytes,
-            elapsed,
-            objs_per_sec(elapsed)
-        );
-    }
 
     let start = Instant::now();
     let bytes = do_gitoxide_in_parallel_sync(
@@ -395,47 +369,6 @@ where
                 AccessMode::ObjectExists => {
                     use git_repository::prelude::Find;
                     assert!(objects.contains(hash), "each traversed object exists");
-                }
-            }
-            Ok(())
-        },
-    )?;
-
-    Ok(bytes.load(std::sync::atomic::Ordering::Acquire))
-}
-
-/// A fully sync implementation but with interior mutability
-#[cfg(feature = "radicle-nightly")]
-fn do_link_git_in_parallel<C>(
-    hashes: &[ObjectId],
-    repo: &ThreadSafeRepository,
-    new_cache: impl Fn() -> C + Sync + Send,
-    mode: AccessMode,
-) -> anyhow::Result<u64>
-where
-    C: odb::pack::cache::DecodeEntry,
-{
-    use std::iter::FromIterator;
-
-    use rayon::prelude::*;
-    let bytes = std::sync::atomic::AtomicU64::default();
-    let repo = link_git::odb::Odb {
-        loose: link_git::odb::backend::Loose::at(repo.objects_dir()),
-        packed: link_git::odb::backend::Packed {
-            index: link_git::odb::index::Shared::from_iter(link_git::odb::index::discover(repo.git_dir())?),
-            data: link_git::odb::window::Large::default(),
-        },
-    };
-    hashes.par_iter().try_for_each_init::<_, _, _, anyhow::Result<_>>(
-        || (Vec::new(), new_cache()),
-        |(buf, cache), hash| {
-            match mode {
-                AccessMode::ObjectData => {
-                    let obj = repo.find(hash, buf, cache)?.expect("exists");
-                    bytes.fetch_add(obj.data.len() as u64, std::sync::atomic::Ordering::Relaxed);
-                }
-                AccessMode::ObjectExists => {
-                    assert!(repo.contains(hash), "each traversed object exists");
                 }
             }
             Ok(())
