@@ -1,4 +1,4 @@
-use git_features::parallel::in_parallel;
+use git_features::parallel::in_parallel_with_mut_slice_in_chunks;
 use git_features::progress::Progress;
 use git_features::{interrupt, progress};
 use git_hash::oid;
@@ -44,20 +44,23 @@ where
         None,
     );
 
-    let entries_with_paths = interrupt::Iter::new(index.entries_mut_with_paths(), should_interrupt);
     let chunk::Outcome {
         mut collisions,
         mut errors,
         mut bytes_written,
         delayed,
     } = if num_threads == 1 {
-        chunk::process(entries_with_paths, files, bytes, &mut ctx)?
+        chunk::process(
+            interrupt::Iter::new(index.entries_mut_with_paths(), should_interrupt).map(|mut t| &mut t),
+            files,
+            bytes,
+            &mut ctx,
+        )?
     } else {
-        in_parallel(
-            git_features::iter::Chunks {
-                inner: entries_with_paths,
-                size: chunk_size,
-            },
+        let mut entries: Vec<_> = index.entries_mut_with_paths().collect();
+        let results = in_parallel_with_mut_slice_in_chunks(
+            entries.as_mut_slice(),
+            chunk_size,
             thread_limit,
             {
                 let num_files = &num_files;
@@ -80,14 +83,12 @@ where
                 }
             },
             |chunk, (files, bytes, ctx)| chunk::process(chunk.into_iter(), files, bytes, ctx),
-            chunk::Reduce {
-                files,
-                bytes,
-                num_files: &num_files,
-                aggregate: Default::default(),
-                marker: Default::default(),
+            || {
+                files.set(num_files.load(Ordering::Relaxed));
+                (!should_interrupt.load(Ordering::Relaxed)).then(|| std::time::Duration::from_millis(50))
             },
-        )?
+        )?;
+        todo!("aggregate");
     };
 
     for (entry, entry_path) in delayed {
@@ -189,7 +190,7 @@ mod chunk {
     }
 
     pub fn process<'entry, Find, E>(
-        entries_with_paths: impl Iterator<Item = (&'entry mut git_index::Entry, &'entry BStr)>,
+        entries_with_paths: impl Iterator<Item = &'entry mut (&'entry mut git_index::Entry, &'entry BStr)>,
         files: &mut impl Progress,
         bytes: &mut impl Progress,
         ctx: &mut Context<'_, Find>,
@@ -217,7 +218,7 @@ mod chunk {
             // around writing through symlinks (even though we handle this).
             // This also means that we prefer content in files over symlinks in case of collisions, which probably is for the better, too.
             if entry.mode == git_index::entry::Mode::SYMLINK {
-                delayed.push((entry, entry_path));
+                delayed.push((&mut **entry, *entry_path));
                 continue;
             }
 
