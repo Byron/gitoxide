@@ -55,34 +55,9 @@ mod not_parallel {
             Ok(self.result)
         }
     }
-
-    #[allow(missing_docs)] // TODO: docs
-    pub fn in_parallel_with_mut_slice_in_chunks<I, S, O, E>(
-        input: &mut [I],
-        chunk_size: usize,
-        _thread_limit: Option<usize>,
-        mut new_thread_state: impl FnMut(usize) -> S + Send + Clone,
-        mut consume: impl FnMut(&mut [I], &mut S) -> Result<O, E> + Send + Clone,
-        mut periodic: impl FnMut() -> Option<std::time::Duration> + Send,
-    ) -> Result<Vec<O>, E>
-    where
-        I: Send + Sync,
-        O: Send,
-        E: Send,
-    {
-        let mut results = Vec::with_capacity(input.chunks(chunk_size).count());
-        let mut state = new_thread_state(0);
-        for chunk in input.chunks_mut(chunk_size) {
-            results.push(consume(chunk, &mut state));
-            if periodic().is_none() {
-                break;
-            }
-        }
-        results.into_iter().collect()
-    }
 }
 #[cfg(not(feature = "parallel"))]
-pub use not_parallel::{in_parallel_with_mut_slice_in_chunks, join, threads, Scope, ScopedJoinHandle};
+pub use not_parallel::{join, threads, Scope, ScopedJoinHandle};
 
 /// Read items from `input` and `consume` them in a single thread, producing an output to be collected by a `reducer`,
 /// whose task is to aggregate these outputs into the final result returned by this function.

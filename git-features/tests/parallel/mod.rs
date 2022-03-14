@@ -25,32 +25,6 @@ impl parallel::Reduce for Adder {
 }
 
 #[test]
-fn in_parallel_with_mut_slice_in_chunks() {
-    let num_items = 33;
-    let mut called_periodic = false;
-    let mut input: Vec<_> = std::iter::repeat(0).take(num_items).collect();
-    let _ = parallel::in_parallel_with_mut_slice_in_chunks(
-        &mut input,
-        8,
-        None,
-        |_| (),
-        |chunk, _state| {
-            for item in chunk.iter_mut() {
-                *item += 1;
-            }
-            Ok::<_, ()>(())
-        },
-        || {
-            called_periodic = true;
-            Some(std::time::Duration::from_millis(10))
-        },
-    )
-    .unwrap();
-    assert!(called_periodic);
-    assert_eq!(input, std::iter::repeat(1).take(num_items).collect::<Vec<_>>());
-}
-
-#[test]
 fn in_parallel() {
     let res = parallel::in_parallel(
         std::iter::from_fn(|| Some(1)).take(100),
