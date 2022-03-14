@@ -172,9 +172,9 @@ where
                                 .ceil() as usize;
                             let orig_thread_id = thread_id; // original identity of the thread
                             let mut dir = Direction::new(thread_id, num_threads);
+                            let mut stole = 0;
                             while fuel != 0 && chunks_left.load(Ordering::SeqCst) != 0 {
                                 (thread_id, dir) = pick_new_identity(thread_id, orig_thread_id, num_threads, dir);
-                                fuel -= 1;
                                 for chunk_index in (thread_id..num_chunks).step_by(num_threads).rev() {
                                     if stop_everything.load(Ordering::Relaxed) {
                                         break;
@@ -184,9 +184,11 @@ where
                                         Some(mut guard) => match &mut *guard {
                                             Some(_) => {
                                                 // somebody stole our work, continue trying
+                                                fuel -= 1;
                                                 break;
                                             }
                                             res @ None => {
+                                                stole += 1;
                                                 let chunk = input_chunk_mut(input, chunk_size, chunk_index);
                                                 let result = consume(chunk, &mut state);
 
@@ -200,7 +202,10 @@ where
                                                 }
                                             }
                                         },
-                                        None => break, // a work stealing currently processes our chunk
+                                        None => {
+                                            fuel -= 1;
+                                            break;
+                                        } // a work stealing currently processes our chunk
                                     };
                                 }
                             }
@@ -255,34 +260,28 @@ fn input_chunk_mut<I>(input: &[I], chunk_size: usize, chunk_index: usize) -> &mu
 
 #[derive(Copy, Clone)]
 enum Direction {
-    Up,
-    Down,
+    Inc,
+    Dec,
 }
 
 impl Direction {
     fn new(identity: usize, num_threads: usize) -> Self {
         if (identity as f32 / num_threads as f32) < 0.5 {
             // this could also be `nanorand`
-            Direction::Up
+            Direction::Inc
         } else {
-            Direction::Down
+            Direction::Dec
         }
     }
 }
 
 fn pick_new_identity(identity: usize, orig_identity: usize, num_threads: usize, dir: Direction) -> (usize, Direction) {
-    let (identity, dir) = if identity == 0 {
-        (orig_identity, Direction::Up)
-    } else if identity == num_threads - 1 {
-        (orig_identity, Direction::Down)
-    } else {
-        (identity, dir)
-    };
-
-    let identity = match dir {
-        Direction::Up => identity + 1,
-        Direction::Down => identity - 1,
-    };
-
-    (identity, dir)
+    match (identity, dir) {
+        (0, Direction::Dec) => pick_new_identity(orig_identity, orig_identity, num_threads, Direction::Inc),
+        (val, Direction::Inc) if val == num_threads - 1 => {
+            pick_new_identity(orig_identity, orig_identity, num_threads, Direction::Dec)
+        }
+        (val, Direction::Dec) => (val - 1, Direction::Dec),
+        (val, Direction::Inc) => (val + 1, Direction::Inc),
+    }
 }
