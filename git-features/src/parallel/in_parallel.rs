@@ -1,6 +1,6 @@
 use crate::parallel::{num_threads, Reduce};
 use std::panic::resume_unwind;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Runs `left` and `right` in parallel, returning their output when both are done.
 pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
@@ -88,28 +88,25 @@ where
 }
 
 #[allow(missing_docs)] // TODO: docs
-pub fn in_parallel_with_mut_slice_in_chunks<I, S, O, E>(
+pub fn in_parallel_with_mut_slice<I, S, E>(
     input: &mut [I],
-    chunk_size: usize,
     thread_limit: Option<usize>,
     new_thread_state: impl FnMut(usize) -> S + Send + Clone,
-    consume: impl FnMut(&mut [I], &mut S) -> Result<O, E> + Send + Clone,
+    consume: impl FnMut(&mut I, &mut S) -> Result<(), E> + Send + Clone,
     mut periodic: impl FnMut() -> Option<std::time::Duration> + Send,
-) -> Result<Vec<O>, E>
+) -> Result<Vec<S>, E>
 where
     I: Send + Sync,
-    O: Send + Sync,
     E: Send + Sync,
+    S: Send,
 {
     let num_threads = num_threads(thread_limit);
-    let num_chunks = ((input.len() / chunk_size) + if input.len() % chunk_size == 0 { 0 } else { 1 }).max(1);
+    let num_items = input.len();
     let input = &*input; // downgrade to immutable
-    let results: Vec<Option<Result<O, E>>> = std::iter::repeat_with(Default::default).take(num_chunks).collect();
+    let mut results = Vec::with_capacity(num_threads);
     let stop_everything = &AtomicBool::default();
-    let chunks_left = &AtomicUsize::new(num_chunks);
 
     crossbeam_utils::thread::scope({
-        let results = &results;
         move |s| {
             s.spawn({
                 move |_| loop {
@@ -127,7 +124,6 @@ where
                 }
             });
 
-            dbg!(chunk_size, num_chunks, num_threads);
             let threads: Vec<_> = (0..num_threads)
                 .map(|thread_id| {
                     s.spawn({
@@ -135,86 +131,48 @@ where
                         let mut consume = consume.clone();
                         move |_| {
                             let mut state = new_thread_state(thread_id);
-                            for chunk_index in (thread_id..num_chunks).step_by(num_threads) {
+                            for input_index in (thread_id..num_items).step_by(num_threads) {
                                 if stop_everything.load(Ordering::Relaxed) {
                                     break;
                                 }
-                                let res = result_mut(results, chunk_index);
-                                match res {
-                                    Some(_) => {
-                                        unreachable!("BUG: shouldn't happen, there is no work stealing");
-                                    }
-                                    res @ None => {
-                                        let chunk = input_chunk_mut(input, chunk_size, chunk_index);
-                                        let result = consume(chunk, &mut state);
-
-                                        chunks_left.fetch_sub(1, Ordering::SeqCst);
-                                        let abort = result.is_err();
-                                        *res = Some(result);
-
-                                        if abort {
-                                            stop_everything.store(true, Ordering::Relaxed);
-                                            return;
-                                        }
-                                    }
+                                let item = slice_item_mut(input, input_index);
+                                if let Err(err) = consume(item, &mut state) {
+                                    stop_everything.store(true, Ordering::Relaxed);
+                                    return Err(err);
                                 }
                             }
+                            Ok(state)
                         }
                     })
                 })
                 .collect();
             for thread in threads {
-                if let Err(err) = thread.join() {
-                    // a panic happened, stop the world gracefully (even though we panic later)
-                    stop_everything.store(true, Ordering::Relaxed);
-                    resume_unwind(err);
+                match thread.join() {
+                    Ok(res) => {
+                        results.push(res?);
+                    }
+                    Err(err) => {
+                        // a panic happened, stop the world gracefully (even though we panic later)
+                        stop_everything.store(true, Ordering::Relaxed);
+                        resume_unwind(err);
+                    }
                 }
             }
 
             stop_everything.store(true, Ordering::Relaxed);
+            Ok(results)
         }
     })
-    .expect("no panic");
-
-    let mut peeled_results = Vec::with_capacity(results.len());
-    let mut expect_early_bailout = false;
-    for res in results {
-        match res {
-            Some(res) => peeled_results.push(res?),
-            None => {
-                expect_early_bailout = true;
-            }
-        }
-    }
-    assert!(
-        !expect_early_bailout,
-        "BUG: we shouldn't be here - a thread computation failed and we should have found it and aborted early"
-    );
-    Ok(peeled_results)
+    .expect("no panic")
 }
 
-fn result_mut<T>(input: &[T], index: usize) -> &mut T {
+fn slice_item_mut<T>(input: &[T], index: usize) -> &mut T {
     let item = &input[index];
     let mut_ptr = item as *const _ as *mut _;
-    // SAFETY: We know that 'chunks' is only non-overlapping slices due to the way we address them
+    // SAFETY: We know that 'item' is only non-overlapping slices due to the way we address them
     // AND lock their results, and results are parallel to that.
     #[allow(unsafe_code)]
     unsafe {
         &mut *mut_ptr
-    }
-}
-
-fn input_chunk_mut<T>(input: &[T], chunk_size: usize, chunk_index: usize) -> &mut [T] {
-    let chunk_range = {
-        let start = chunk_size * chunk_index;
-        start..(start + chunk_size).min(input.len())
-    };
-    let c = &input[chunk_range];
-    let mut_ptr = c.as_ptr() as *mut _;
-    // SAFETY: We know that 'chunks' is only non-overlapping slices due to the way we address them
-    // AND lock their results.
-    #[allow(unsafe_code)]
-    unsafe {
-        std::slice::from_raw_parts_mut(mut_ptr, c.len())
     }
 }

@@ -29,15 +29,12 @@ fn in_parallel_with_mut_slice_in_chunks() {
     let num_items = 33;
     let mut called_periodic = false;
     let mut input: Vec<_> = std::iter::repeat(0).take(num_items).collect();
-    let _ = parallel::in_parallel_with_mut_slice_in_chunks(
+    let _ = parallel::in_parallel_with_mut_slice(
         &mut input,
-        8,
         None,
         |_| (),
-        |chunk, _state| {
-            for item in chunk.iter_mut() {
-                *item += 1;
-            }
+        |item, _state| {
+            *item += 1;
             Ok::<_, ()>(())
         },
         || {

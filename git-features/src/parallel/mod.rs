@@ -35,11 +35,11 @@
 #[cfg(feature = "parallel")]
 mod in_parallel;
 #[cfg(feature = "parallel")]
-pub use in_parallel::{in_parallel, in_parallel_with_mut_slice_in_chunks, join, threads};
+pub use in_parallel::{in_parallel, in_parallel_with_mut_slice, join, threads};
 
 mod serial;
 #[cfg(not(feature = "parallel"))]
-pub use serial::{in_parallel, in_parallel_with_mut_slice_in_chunks, join, threads};
+pub use serial::{in_parallel, in_parallel_with_mut_slice, join, threads};
 
 mod in_order;
 pub use in_order::{InOrderIter, SequenceId};

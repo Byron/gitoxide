@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use git_features::parallel::in_parallel_with_mut_slice_in_chunks;
+use git_features::parallel::in_parallel_with_mut_slice;
 use git_features::progress::Progress;
 use git_features::{interrupt, progress};
 use git_hash::oid;
@@ -38,7 +38,7 @@ where
         options,
         num_files: &num_files,
     };
-    let (chunk_size, thread_limit, num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
+    let (_chunk_size, thread_limit, num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
         100,
         index.entries().len().into(),
         options.thread_limit,
@@ -52,6 +52,7 @@ where
         mut bytes_written,
         delayed,
     } = if num_threads == 1 {
+        let mut out = chunk::Outcome::default();
         chunk::process(
             interrupt::Iter::new(index.entries_mut().into_iter(), should_interrupt).map(|e| {
                 let path = (&paths[e.path.clone()]).as_bstr();
@@ -59,12 +60,13 @@ where
             }),
             files,
             bytes,
+            &mut out,
             &mut ctx,
-        )? // TODO: put paths back
+        )?; // TODO: put paths back
+        out
     } else {
-        let results = in_parallel_with_mut_slice_in_chunks(
+        let results = in_parallel_with_mut_slice(
             index.entries_mut(),
-            chunk_size,
             thread_limit,
             {
                 let num_files = &num_files;
@@ -72,6 +74,7 @@ where
                     (
                         progress::Discard,
                         progress::Discard,
+                        chunk::Outcome::default(),
                         chunk::Context {
                             find: find.clone(),
                             path_cache: {
@@ -86,14 +89,15 @@ where
                     )
                 }
             },
-            |chunk, (files, bytes, ctx)| {
+            |item, (files, bytes, out, ctx)| {
                 chunk::process(
-                    chunk.into_iter().map(|e| {
+                    std::iter::once(item).map(|e| {
                         let path = (&paths[e.path.clone()]).as_bstr();
                         (e, path)
                     }),
                     files,
                     bytes,
+                    out,
                     ctx,
                 )
             },
@@ -103,7 +107,7 @@ where
             },
         )?; // TODO: put paths back in all cases
 
-        chunk::aggregate(results)
+        chunk::aggregate(results.into_iter().map(|t| t.2))
     };
 
     for (mut entry, entry_path) in delayed {
@@ -141,7 +145,7 @@ mod chunk {
         use std::marker::PhantomData;
         use std::sync::atomic::{AtomicUsize, Ordering};
 
-        pub struct Reduce<'a, P1, P2, E> {
+        pub(crate) struct Reduce<'a, P1, P2, E> {
             pub files: &'a mut P1,
             pub bytes: &'a mut P2,
             pub num_files: &'a AtomicUsize,
@@ -184,9 +188,8 @@ mod chunk {
             }
         }
     }
-    pub use reduce::Reduce;
 
-    pub(crate) fn aggregate(items: Vec<Outcome>) -> Outcome {
+    pub(crate) fn aggregate(items: impl IntoIterator<Item = Outcome>) -> Outcome {
         let mut acc = Outcome::default();
         for item in items {
             let Outcome {
@@ -225,17 +228,18 @@ mod chunk {
         entries_with_paths: impl Iterator<Item = (&'entry mut git_index::Entry, &'path BStr)>,
         files: &mut impl Progress,
         bytes: &mut impl Progress,
+        Outcome {
+            bytes_written,
+            errors,
+            collisions,
+            delayed,
+        }: &mut Outcome,
         ctx: &mut Context<'_, Find>,
-    ) -> Result<Outcome, checkout::Error<E>>
+    ) -> Result<(), checkout::Error<E>>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let mut delayed = Vec::new();
-        let mut collisions = Vec::new();
-        let mut errors = Vec::new();
-        let mut bytes_written = 0;
-
         for (entry, entry_path) in entries_with_paths {
             // TODO: write test for that
             if entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
@@ -254,17 +258,11 @@ mod chunk {
                 continue;
             }
 
-            bytes_written +=
-                checkout_entry_handle_result(entry, entry_path, &mut errors, &mut collisions, files, bytes, ctx)?
-                    as u64;
+            *bytes_written +=
+                checkout_entry_handle_result(entry, entry_path, errors, collisions, files, bytes, ctx)? as u64;
         }
 
-        Ok(Outcome {
-            bytes_written,
-            errors,
-            collisions,
-            delayed,
-        })
+        Ok(())
     }
 
     pub fn checkout_entry_handle_result<Find, E>(
