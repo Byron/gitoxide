@@ -106,7 +106,7 @@ where
     let input = &*input; // downgrade to immutable
     let results: Vec<parking_lot::Mutex<Option<Result<O, E>>>> =
         std::iter::repeat_with(Default::default).take(num_chunks).collect();
-    let stop_periodic = &AtomicBool::default();
+    let stop_everything = &AtomicBool::default();
     let chunks_left = &AtomicUsize::new(num_chunks);
 
     crossbeam_utils::thread::scope({
@@ -114,7 +114,7 @@ where
         move |s| {
             s.spawn({
                 move |_| loop {
-                    if stop_periodic.load(Ordering::Relaxed) {
+                    if stop_everything.load(Ordering::Relaxed) {
                         break;
                     }
 
@@ -130,6 +130,9 @@ where
                         move |_| {
                             let mut state = new_thread_state(thread_id);
                             for chunk_index in (thread_id..num_chunks).step_by(num_threads) {
+                                if stop_everything.load(Ordering::Relaxed) {
+                                    break;
+                                }
                                 let res = &results[chunk_index];
                                 match res.try_lock() {
                                     Some(mut guard) => match &mut *guard {
@@ -146,6 +149,7 @@ where
                                             *res = Some(result);
 
                                             if abort {
+                                                stop_everything.store(true, Ordering::Relaxed);
                                                 return;
                                             }
                                         }
@@ -166,6 +170,9 @@ where
                                 (thread_id, dir) = pick_new_identity(thread_id, orig_thread_id, num_threads, dir);
                                 fuel -= 1;
                                 for chunk_index in (thread_id..num_chunks).step_by(num_threads).rev() {
+                                    if stop_everything.load(Ordering::Relaxed) {
+                                        break;
+                                    }
                                     let res = &results[chunk_index];
                                     match res.try_lock() {
                                         Some(mut guard) => match &mut *guard {
@@ -182,6 +189,7 @@ where
                                                 *res = Some(result);
 
                                                 if abort {
+                                                    stop_everything.store(true, Ordering::Relaxed);
                                                     return;
                                                 }
                                             }
@@ -196,12 +204,12 @@ where
                 .collect();
             for thread in threads {
                 if let Err(err) = thread.join() {
-                    stop_periodic.store(true, Ordering::Relaxed);
+                    stop_everything.store(true, Ordering::Relaxed);
                     resume_unwind(err);
                 }
             }
 
-            stop_periodic.store(true, Ordering::Relaxed);
+            stop_everything.store(true, Ordering::Relaxed);
         }
     })
     .expect("no panic");
