@@ -44,6 +44,7 @@ where
         options.thread_limit,
         None,
     );
+    let chunk_size = chunk_size.min(100);
     let paths = index.take_paths_backing();
 
     let chunk::Outcome {
