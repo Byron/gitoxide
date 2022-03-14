@@ -62,7 +62,7 @@ where
             &mut ctx,
         )? // TODO: put paths back
     } else {
-        let _results = in_parallel_with_mut_slice_in_chunks(
+        let results = in_parallel_with_mut_slice_in_chunks(
             index.entries_mut(),
             chunk_size,
             thread_limit,
@@ -103,13 +103,13 @@ where
             },
         )?; // TODO: put paths back in all cases
 
-        todo!("aggregate");
+        chunk::aggregate(results)
     };
 
-    for (entry, entry_path) in delayed {
+    for (mut entry, entry_path) in delayed {
         bytes_written += chunk::checkout_entry_handle_result(
-            entry,
-            entry_path,
+            &mut entry,
+            entry_path.as_bstr(),
             &mut errors,
             &mut collisions,
             files,
@@ -127,7 +127,7 @@ where
 }
 
 mod chunk {
-    use bstr::BStr;
+    use bstr::{BStr, BString};
     use git_features::progress::Progress;
     use git_hash::oid;
     use std::sync::atomic::{AtomicUsize, Ordering};
@@ -141,23 +141,23 @@ mod chunk {
         use std::marker::PhantomData;
         use std::sync::atomic::{AtomicUsize, Ordering};
 
-        pub struct Reduce<'a, 'entry, 'path, P1, P2, E> {
+        pub struct Reduce<'a, P1, P2, E> {
             pub files: &'a mut P1,
             pub bytes: &'a mut P2,
             pub num_files: &'a AtomicUsize,
-            pub aggregate: super::Outcome<'entry, 'path>,
+            pub aggregate: super::Outcome,
             pub marker: PhantomData<E>,
         }
 
-        impl<'a, 'entry, 'path, P1, P2, E> git_features::parallel::Reduce for Reduce<'a, 'entry, 'path, P1, P2, E>
+        impl<'a, P1, P2, E> git_features::parallel::Reduce for Reduce<'a, P1, P2, E>
         where
             P1: Progress,
             P2: Progress,
             E: std::error::Error + Send + Sync + 'static,
         {
-            type Input = Result<super::Outcome<'entry, 'path>, checkout::Error<E>>;
+            type Input = Result<super::Outcome, checkout::Error<E>>;
             type FeedProduce = ();
-            type Output = super::Outcome<'entry, 'path>;
+            type Output = super::Outcome;
             type Error = checkout::Error<E>;
 
             fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
@@ -186,11 +186,28 @@ mod chunk {
     }
     pub use reduce::Reduce;
 
+    pub(crate) fn aggregate(items: Vec<Outcome>) -> Outcome {
+        let mut acc = Outcome::default();
+        for item in items {
+            let Outcome {
+                bytes_written,
+                delayed,
+                errors,
+                collisions,
+            } = item;
+            acc.bytes_written += bytes_written;
+            acc.delayed.extend(delayed);
+            acc.errors.extend(errors);
+            acc.collisions.extend(collisions);
+        }
+        acc
+    }
+
     #[derive(Default)]
-    pub struct Outcome<'a, 'b> {
+    pub struct Outcome {
         pub collisions: Vec<checkout::Collision>,
         pub errors: Vec<checkout::ErrorRecord>,
-        pub delayed: Vec<(&'a mut git_index::Entry, &'b BStr)>,
+        pub delayed: Vec<(git_index::Entry, BString)>,
         pub bytes_written: u64,
     }
 
@@ -209,7 +226,7 @@ mod chunk {
         files: &mut impl Progress,
         bytes: &mut impl Progress,
         ctx: &mut Context<'_, Find>,
-    ) -> Result<Outcome<'entry, 'path>, checkout::Error<E>>
+    ) -> Result<Outcome, checkout::Error<E>>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
         E: std::error::Error + Send + Sync + 'static,
@@ -233,7 +250,7 @@ mod chunk {
             // around writing through symlinks (even though we handle this).
             // This also means that we prefer content in files over symlinks in case of collisions, which probably is for the better, too.
             if entry.mode == git_index::entry::Mode::SYMLINK {
-                delayed.push((entry, entry_path));
+                delayed.push((entry.to_owned(), entry_path.to_owned()));
                 continue;
             }
 
