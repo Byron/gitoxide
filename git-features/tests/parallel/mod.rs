@@ -42,7 +42,7 @@ fn in_parallel_with_mut_slice_in_chunks() {
         },
         || {
             called_periodic = true;
-            std::time::Duration::from_millis(10)
+            Some(std::time::Duration::from_millis(10))
         },
     )
     .unwrap();

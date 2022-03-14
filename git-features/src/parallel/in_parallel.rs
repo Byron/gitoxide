@@ -94,7 +94,7 @@ pub fn in_parallel_with_mut_slice_in_chunks<I, S, O, E>(
     thread_limit: Option<usize>,
     new_thread_state: impl FnMut(usize) -> S + Send + Clone,
     consume: impl FnMut(&mut [I], &mut S) -> Result<O, E> + Send + Clone,
-    mut periodic: impl FnMut() -> std::time::Duration + Send,
+    mut periodic: impl FnMut() -> Option<std::time::Duration> + Send,
 ) -> Result<Vec<O>, E>
 where
     I: Send + Sync,
@@ -118,7 +118,13 @@ where
                         break;
                     }
 
-                    std::thread::sleep(periodic());
+                    match periodic() {
+                        Some(duration) => std::thread::sleep(duration),
+                        None => {
+                            stop_everything.store(true, Ordering::Relaxed);
+                            break;
+                        }
+                    }
                 }
             });
 
@@ -204,6 +210,7 @@ where
                 .collect();
             for thread in threads {
                 if let Err(err) = thread.join() {
+                    // a panic happened, stop the world gracefully (even though we panic later)
                     stop_everything.store(true, Ordering::Relaxed);
                     resume_unwind(err);
                 }

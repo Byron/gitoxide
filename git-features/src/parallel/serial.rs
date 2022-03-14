@@ -63,7 +63,7 @@ mod not_parallel {
         _thread_limit: Option<usize>,
         mut new_thread_state: impl FnMut(usize) -> S + Send + Clone,
         mut consume: impl FnMut(&mut [I], &mut S) -> Result<O, E> + Send + Clone,
-        mut periodic: impl FnMut() -> std::time::Duration + Send,
+        mut periodic: impl FnMut() -> Option<std::time::Duration> + Send,
     ) -> Result<Vec<O>, E>
     where
         I: Send + Sync,
@@ -74,7 +74,9 @@ mod not_parallel {
         let mut state = new_thread_state(0);
         for chunk in input.chunks_mut(chunk_size) {
             results.push(consume(chunk, &mut state));
-            periodic();
+            if periodic().is_none() {
+                break;
+            }
         }
         results.into_iter().collect()
     }
