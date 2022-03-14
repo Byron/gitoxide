@@ -54,7 +54,7 @@ where
         chunk::process(entries_with_paths, files, bytes, &mut ctx)?
     } else {
         in_parallel(
-            git_features::util::Chunks {
+            git_features::iter::Chunks {
                 inner: entries_with_paths,
                 size: chunk_size,
             },

@@ -61,7 +61,7 @@ where
         thread_limit,
         None,
     );
-    let chunks = git_features::util::Chunks {
+    let chunks = git_features::iter::Chunks {
         inner: objects_ids,
         size: chunk_size,
     };

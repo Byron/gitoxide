@@ -37,7 +37,7 @@ pub mod zlib;
 pub mod time;
 
 ///
-pub mod util {
+pub mod iter {
     /// An iterator over chunks of input, producing `Vec<Item>` with a size of `size`, with the last chunk being the remainder and thus
     /// potentially smaller than `size`.
     pub struct Chunks<I> {
