@@ -1,4 +1,5 @@
 //!
+use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
 /// The error returned by [`git()`].
@@ -18,8 +19,9 @@ pub enum Error {
 /// Returns true if the given `git_dir` seems to be a bare repository.
 ///
 /// Please note that repositories without any file in their work tree will also appear bare.
-pub fn bare(git_dir: impl AsRef<Path>) -> bool {
-    !git_dir.as_ref().join("index").exists()
+pub fn bare(git_dir_candidate: impl AsRef<Path>) -> bool {
+    let git_dir = git_dir_candidate.as_ref();
+    !(git_dir.join("index").exists() || (git_dir.file_name() == Some(OsStr::new(".git")) && git_dir.is_file()))
 }
 
 /// What constitutes a valid git repository, and what's yet to be implemented, returning the guessed repository kind
