@@ -98,14 +98,13 @@ pub fn in_parallel_with_mut_slice_in_chunks<I, S, O, E>(
 ) -> Result<Vec<O>, E>
 where
     I: Send + Sync,
-    O: Send,
-    E: Send,
+    O: Send + Sync,
+    E: Send + Sync,
 {
     let num_threads = num_threads(thread_limit);
     let num_chunks = ((input.len() / chunk_size) + if input.len() % chunk_size == 0 { 0 } else { 1 }).max(1);
     let input = &*input; // downgrade to immutable
-    let results: Vec<parking_lot::Mutex<Option<Result<O, E>>>> =
-        std::iter::repeat_with(Default::default).take(num_chunks).collect();
+    let results: Vec<Option<Result<O, E>>> = std::iter::repeat_with(Default::default).take(num_chunks).collect();
     let stop_everything = &AtomicBool::default();
     let chunks_left = &AtomicUsize::new(num_chunks);
 
@@ -128,8 +127,9 @@ where
                 }
             });
 
+            dbg!(chunk_size, num_chunks, num_threads);
             let threads: Vec<_> = (0..num_threads)
-                .map(|mut thread_id| {
+                .map(|thread_id| {
                     s.spawn({
                         let mut new_thread_state = new_thread_state.clone();
                         let mut consume = consume.clone();
@@ -139,74 +139,24 @@ where
                                 if stop_everything.load(Ordering::Relaxed) {
                                     break;
                                 }
-                                let res = &results[chunk_index];
-                                match res.try_lock() {
-                                    Some(mut guard) => match &mut *guard {
-                                        Some(_) => {
-                                            // somebody stole our work and finished it
-                                            break;
-                                        }
-                                        res @ None => {
-                                            let chunk = input_chunk_mut(input, chunk_size, chunk_index);
-                                            let result = consume(chunk, &mut state);
-
-                                            chunks_left.fetch_sub(1, Ordering::SeqCst);
-                                            let abort = result.is_err();
-                                            *res = Some(result);
-
-                                            if abort {
-                                                stop_everything.store(true, Ordering::Relaxed);
-                                                return;
-                                            }
-                                        }
-                                    },
-                                    None => break, // a work stealing currently processes our chunk
-                                };
-                            }
-
-                            // Each work-stealer can change identity N/2 times under best conditions.
-                            // This way, stealers will make space for other threads that finish and maybe that leads
-                            // to a better distribution of chunks tried to steal.
-                            let mut fuel = ((chunks_left.load(Ordering::Relaxed) as f32 / num_chunks as f32)
-                                * num_threads as f32)
-                                .ceil() as usize;
-                            let orig_thread_id = thread_id; // original identity of the thread
-                            let mut dir = Direction::new(thread_id, num_threads);
-                            let mut stole = 0;
-                            while fuel != 0 && chunks_left.load(Ordering::SeqCst) != 0 {
-                                (thread_id, dir) = pick_new_identity(thread_id, orig_thread_id, num_threads, dir);
-                                for chunk_index in (thread_id..num_chunks).step_by(num_threads).rev() {
-                                    if stop_everything.load(Ordering::Relaxed) {
-                                        break;
+                                let res = result_mut(results, chunk_index);
+                                match res {
+                                    Some(_) => {
+                                        unreachable!("BUG: shouldn't happen, there is no work stealing");
                                     }
-                                    let res = &results[chunk_index];
-                                    match res.try_lock() {
-                                        Some(mut guard) => match &mut *guard {
-                                            Some(_) => {
-                                                // somebody stole our work, continue trying
-                                                fuel -= 1;
-                                                break;
-                                            }
-                                            res @ None => {
-                                                stole += 1;
-                                                let chunk = input_chunk_mut(input, chunk_size, chunk_index);
-                                                let result = consume(chunk, &mut state);
+                                    res @ None => {
+                                        let chunk = input_chunk_mut(input, chunk_size, chunk_index);
+                                        let result = consume(chunk, &mut state);
 
-                                                chunks_left.fetch_sub(1, Ordering::SeqCst);
-                                                let abort = result.is_err();
-                                                *res = Some(result);
+                                        chunks_left.fetch_sub(1, Ordering::SeqCst);
+                                        let abort = result.is_err();
+                                        *res = Some(result);
 
-                                                if abort {
-                                                    stop_everything.store(true, Ordering::Relaxed);
-                                                    return;
-                                                }
-                                            }
-                                        },
-                                        None => {
-                                            fuel -= 1;
-                                            break;
-                                        } // a work stealing currently processes our chunk
-                                    };
+                                        if abort {
+                                            stop_everything.store(true, Ordering::Relaxed);
+                                            return;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -229,7 +179,7 @@ where
     let mut peeled_results = Vec::with_capacity(results.len());
     let mut expect_early_bailout = false;
     for res in results {
-        match res.into_inner() {
+        match res {
             Some(res) => peeled_results.push(res?),
             None => {
                 expect_early_bailout = true;
@@ -243,7 +193,18 @@ where
     Ok(peeled_results)
 }
 
-fn input_chunk_mut<I>(input: &[I], chunk_size: usize, chunk_index: usize) -> &mut [I] {
+fn result_mut<T>(input: &[T], index: usize) -> &mut T {
+    let item = &input[index];
+    let mut_ptr = item as *const _ as *mut _;
+    // SAFETY: We know that 'chunks' is only non-overlapping slices due to the way we address them
+    // AND lock their results, and results are parallel to that.
+    #[allow(unsafe_code)]
+    unsafe {
+        &mut *mut_ptr
+    }
+}
+
+fn input_chunk_mut<T>(input: &[T], chunk_size: usize, chunk_index: usize) -> &mut [T] {
     let chunk_range = {
         let start = chunk_size * chunk_index;
         start..(start + chunk_size).min(input.len())
@@ -255,33 +216,5 @@ fn input_chunk_mut<I>(input: &[I], chunk_size: usize, chunk_index: usize) -> &mu
     #[allow(unsafe_code)]
     unsafe {
         std::slice::from_raw_parts_mut(mut_ptr, c.len())
-    }
-}
-
-#[derive(Copy, Clone)]
-enum Direction {
-    Inc,
-    Dec,
-}
-
-impl Direction {
-    fn new(identity: usize, num_threads: usize) -> Self {
-        if (identity as f32 / num_threads as f32) < 0.5 {
-            // this could also be `nanorand`
-            Direction::Inc
-        } else {
-            Direction::Dec
-        }
-    }
-}
-
-fn pick_new_identity(identity: usize, orig_identity: usize, num_threads: usize, dir: Direction) -> (usize, Direction) {
-    match (identity, dir) {
-        (0, Direction::Dec) => pick_new_identity(orig_identity, orig_identity, num_threads, Direction::Inc),
-        (val, Direction::Inc) if val == num_threads - 1 => {
-            pick_new_identity(orig_identity, orig_identity, num_threads, Direction::Dec)
-        }
-        (val, Direction::Dec) => (val - 1, Direction::Dec),
-        (val, Direction::Inc) => (val + 1, Direction::Inc),
     }
 }
