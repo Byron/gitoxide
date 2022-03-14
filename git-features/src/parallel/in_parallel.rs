@@ -1,5 +1,5 @@
 use crate::parallel::{num_threads, Reduce};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 /// Runs `left` and `right` in parallel, returning their output when both are done.
 pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
@@ -84,23 +84,26 @@ where
 }
 
 #[allow(missing_docs)] // TODO: docs
-pub fn in_parallel_with_mut_slice<I, S, O, E, FinalResult>(
+pub fn in_parallel_with_mut_slice_in_chunks<I, S, O, E>(
     input: &mut [I],
+    chunk_size: usize,
     thread_limit: Option<usize>,
     new_thread_state: impl FnMut(usize) -> S + Send + Clone,
-    consume: impl FnMut(&mut I, &mut S) -> Result<O, E> + Send + Clone,
+    consume: impl FnMut(&mut [I], &mut S) -> Result<O, E> + Send + Clone,
     mut periodic: impl FnMut() -> std::time::Duration + Send,
-    mut finalize: impl FnMut(&[I], Vec<O>) -> Result<FinalResult, E>,
-) -> Result<FinalResult, E>
+) -> Result<Vec<O>, E>
 where
-    I: Send,
+    I: Send + Sync,
     O: Send,
     E: Send,
 {
     let num_threads = num_threads(thread_limit);
+    let num_chunks = ((input.len() / chunk_size) + if input.len() % chunk_size == 0 { 0 } else { 1 }).max(1);
     let input = &*input; // downgrade to immutable
-    let results: Vec<parking_lot::Mutex<Option<Result<O, E>>>> = (0..input.len()).map(|_| Default::default()).collect();
+    let results: Vec<parking_lot::Mutex<Option<Result<O, E>>>> =
+        std::iter::repeat_with(Default::default).take(num_chunks).collect();
     let stop_periodic = &AtomicBool::default();
+    let chunks_left = &AtomicUsize::new(num_chunks);
 
     crossbeam_utils::thread::scope({
         let results = &results;
@@ -119,23 +122,43 @@ where
                 .map(|n| {
                     s.spawn({
                         let mut new_thread_state = new_thread_state.clone();
-                        let mut _consume = consume.clone();
+                        let mut consume = consume.clone();
                         move |_| {
-                            let _state = new_thread_state(n);
-                            let mut item = 0;
-                            while let Some(res) = &results.get(num_threads * item + n) {
-                                item += 1;
+                            let mut state = new_thread_state(n);
+                            let mut chunk_index = n;
+                            while let Some(res) = &results.get(chunk_index) {
                                 if let Some(mut guard) = res.try_lock() {
-                                    match guard.as_mut() {
+                                    match &mut *guard {
                                         Some(_) => {
-                                            // somebody stole our work, assume all future work is done, too
-                                            return;
+                                            // somebody stole our work, enter work-stealing mode.
+                                            break;
                                         }
-                                        None => {
-                                            todo!("make input mutable and consume/process")
+                                        res @ None => {
+                                            let chunk_range = {
+                                                let start = chunk_size * chunk_index;
+                                                start..(start + chunk_size).min(input.len())
+                                            };
+                                            let chunk = {
+                                                let c = &input[chunk_range];
+                                                let mut_ptr = c.as_ptr() as *mut _;
+                                                // SAFETY: We know that 'chunks' is only non-overlapping slices due to the way we address them
+                                                // AND lock their results.
+                                                #[allow(unsafe_code)]
+                                                unsafe {
+                                                    std::slice::from_raw_parts_mut(mut_ptr, c.len())
+                                                }
+                                            };
+                                            let result = consume(chunk, &mut state);
+                                            chunks_left.fetch_sub(1, Ordering::SeqCst);
+                                            let abort = result.is_err();
+                                            *res = Some(result);
+                                            if abort {
+                                                return;
+                                            }
                                         }
                                     }
                                 }
+                                chunk_index += num_threads;
                             }
                             // TODO: work-stealing logic once we are out of bounds. Pose as prior thread and walk backwards.
                         }
@@ -150,9 +173,20 @@ where
         }
     })
     .unwrap();
+
     let mut unwrapped_results = Vec::with_capacity(results.len());
+    let mut expect_early_bailout = false;
     for res in results {
-        unwrapped_results.push(res.into_inner().expect("result obtained, item processed")?);
+        match res.into_inner() {
+            Some(res) => unwrapped_results.push(res?),
+            None => {
+                expect_early_bailout = true;
+            }
+        }
     }
-    finalize(input, unwrapped_results)
+    assert!(
+        !expect_early_bailout,
+        "BUG: we shouldn't be here - a thread computation failed and we should have found it and aborted early"
+    );
+    Ok(unwrapped_results)
 }
