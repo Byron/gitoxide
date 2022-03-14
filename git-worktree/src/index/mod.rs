@@ -1,3 +1,4 @@
+use bstr::ByteSlice;
 use git_features::parallel::in_parallel_with_mut_slice_in_chunks;
 use git_features::progress::Progress;
 use git_features::{interrupt, progress};
@@ -43,6 +44,7 @@ where
         options.thread_limit,
         None,
     );
+    let paths = index.take_paths_backing();
 
     let chunk::Outcome {
         mut collisions,
@@ -51,15 +53,17 @@ where
         delayed,
     } = if num_threads == 1 {
         chunk::process(
-            interrupt::Iter::new(index.entries_mut_with_paths(), should_interrupt).map(|mut t| &mut t),
+            interrupt::Iter::new(index.entries_mut().into_iter(), should_interrupt).map(|e| {
+                let path = (&paths[e.path.clone()]).as_bstr();
+                (e, path)
+            }),
             files,
             bytes,
             &mut ctx,
-        )?
+        )? // TODO: put paths back
     } else {
-        let mut entries: Vec<_> = index.entries_mut_with_paths().collect();
-        let results = in_parallel_with_mut_slice_in_chunks(
-            entries.as_mut_slice(),
+        let _results = in_parallel_with_mut_slice_in_chunks(
+            index.entries_mut(),
             chunk_size,
             thread_limit,
             {
@@ -82,12 +86,23 @@ where
                     )
                 }
             },
-            |chunk, (files, bytes, ctx)| chunk::process(chunk.into_iter(), files, bytes, ctx),
+            |chunk, (files, bytes, ctx)| {
+                chunk::process(
+                    chunk.into_iter().map(|e| {
+                        let path = (&paths[e.path.clone()]).as_bstr();
+                        (e, path)
+                    }),
+                    files,
+                    bytes,
+                    ctx,
+                )
+            },
             || {
                 files.set(num_files.load(Ordering::Relaxed));
                 (!should_interrupt.load(Ordering::Relaxed)).then(|| std::time::Duration::from_millis(50))
             },
-        )?;
+        )?; // TODO: put paths back in all cases
+
         todo!("aggregate");
     };
 
@@ -126,23 +141,23 @@ mod chunk {
         use std::marker::PhantomData;
         use std::sync::atomic::{AtomicUsize, Ordering};
 
-        pub struct Reduce<'a, 'entry, P1, P2, E> {
+        pub struct Reduce<'a, 'entry, 'path, P1, P2, E> {
             pub files: &'a mut P1,
             pub bytes: &'a mut P2,
             pub num_files: &'a AtomicUsize,
-            pub aggregate: super::Outcome<'entry>,
+            pub aggregate: super::Outcome<'entry, 'path>,
             pub marker: PhantomData<E>,
         }
 
-        impl<'a, 'entry, P1, P2, E> git_features::parallel::Reduce for Reduce<'a, 'entry, P1, P2, E>
+        impl<'a, 'entry, 'path, P1, P2, E> git_features::parallel::Reduce for Reduce<'a, 'entry, 'path, P1, P2, E>
         where
             P1: Progress,
             P2: Progress,
             E: std::error::Error + Send + Sync + 'static,
         {
-            type Input = Result<super::Outcome<'entry>, checkout::Error<E>>;
+            type Input = Result<super::Outcome<'entry, 'path>, checkout::Error<E>>;
             type FeedProduce = ();
-            type Output = super::Outcome<'entry>;
+            type Output = super::Outcome<'entry, 'path>;
             type Error = checkout::Error<E>;
 
             fn feed(&mut self, item: Self::Input) -> Result<Self::FeedProduce, Self::Error> {
@@ -172,10 +187,10 @@ mod chunk {
     pub use reduce::Reduce;
 
     #[derive(Default)]
-    pub struct Outcome<'a> {
+    pub struct Outcome<'a, 'b> {
         pub collisions: Vec<checkout::Collision>,
         pub errors: Vec<checkout::ErrorRecord>,
-        pub delayed: Vec<(&'a mut git_index::Entry, &'a BStr)>,
+        pub delayed: Vec<(&'a mut git_index::Entry, &'b BStr)>,
         pub bytes_written: u64,
     }
 
@@ -189,12 +204,12 @@ mod chunk {
         pub num_files: &'a AtomicUsize,
     }
 
-    pub fn process<'entry, Find, E>(
-        entries_with_paths: impl Iterator<Item = &'entry mut (&'entry mut git_index::Entry, &'entry BStr)>,
+    pub fn process<'entry, 'path, Find, E>(
+        entries_with_paths: impl Iterator<Item = (&'entry mut git_index::Entry, &'path BStr)>,
         files: &mut impl Progress,
         bytes: &mut impl Progress,
         ctx: &mut Context<'_, Find>,
-    ) -> Result<Outcome<'entry>, checkout::Error<E>>
+    ) -> Result<Outcome<'entry, 'path>, checkout::Error<E>>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
         E: std::error::Error + Send + Sync + 'static,
@@ -218,7 +233,7 @@ mod chunk {
             // around writing through symlinks (even though we handle this).
             // This also means that we prefer content in files over symlinks in case of collisions, which probably is for the better, too.
             if entry.mode == git_index::entry::Mode::SYMLINK {
-                delayed.push((&mut **entry, *entry_path));
+                delayed.push((entry, entry_path));
                 continue;
             }
 

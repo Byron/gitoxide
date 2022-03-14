@@ -20,6 +20,12 @@ impl State {
             (e, path)
         })
     }
+    pub fn take_paths_backing(&mut self) -> Vec<u8> {
+        std::mem::take(&mut self.path_backing)
+    }
+    pub fn set_path_backing(&mut self, paths: Vec<u8>) {
+        self.path_backing = paths;
+    }
     pub fn tree(&self) -> Option<&extension::Tree> {
         self.tree.as_ref()
     }

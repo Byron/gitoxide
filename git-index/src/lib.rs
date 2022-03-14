@@ -40,7 +40,7 @@ pub struct Entry {
     pub id: git_hash::ObjectId,
     pub flags: entry::Flags,
     pub mode: entry::Mode,
-    path: Range<usize>,
+    pub path: Range<usize>,
 }
 
 /// An index file whose state was read from a file on disk.
