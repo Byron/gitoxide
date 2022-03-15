@@ -1,4 +1,5 @@
 use crate::parallel::{num_threads, Reduce};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Runs `left` and `right` in parallel, returning their output when both are done.
 pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {
@@ -79,5 +80,86 @@ where
         }
         reducer.finalize()
     })
-    .unwrap()
+    .expect("no panic")
+}
+
+/// An experiment to have fine-grained per-item parallelization with built-in aggregation via thread state.
+/// This is only good for operations where near-random access isn't detremental, so it's not usually great
+/// for file-io as it won't make use of sorted inputs well.
+// TODO: better docs
+pub fn in_parallel_with_slice<I, S, E>(
+    input: &[I],
+    thread_limit: Option<usize>,
+    new_thread_state: impl FnMut(usize) -> S + Send + Clone,
+    consume: impl FnMut(&I, &mut S) -> Result<(), E> + Send + Clone,
+    mut periodic: impl FnMut() -> Option<std::time::Duration> + Send,
+) -> Result<Vec<S>, E>
+where
+    I: Send + Sync,
+    E: Send + Sync,
+    S: Send,
+{
+    let num_threads = num_threads(thread_limit);
+    let num_items = input.len();
+    let mut results = Vec::with_capacity(num_threads);
+    let stop_everything = &AtomicBool::default();
+
+    crossbeam_utils::thread::scope({
+        move |s| {
+            s.spawn({
+                move |_| loop {
+                    if stop_everything.load(Ordering::Relaxed) {
+                        break;
+                    }
+
+                    match periodic() {
+                        Some(duration) => std::thread::sleep(duration),
+                        None => {
+                            stop_everything.store(true, Ordering::Relaxed);
+                            break;
+                        }
+                    }
+                }
+            });
+
+            let threads: Vec<_> = (0..num_threads)
+                .map(|thread_id| {
+                    s.spawn({
+                        let mut new_thread_state = new_thread_state.clone();
+                        let mut consume = consume.clone();
+                        move |_| {
+                            let mut state = new_thread_state(thread_id);
+                            for input_index in (thread_id..num_items).step_by(num_threads) {
+                                if stop_everything.load(Ordering::Relaxed) {
+                                    break;
+                                }
+                                let item = &input[input_index];
+                                if let Err(err) = consume(item, &mut state) {
+                                    stop_everything.store(true, Ordering::Relaxed);
+                                    return Err(err);
+                                }
+                            }
+                            Ok(state)
+                        }
+                    })
+                })
+                .collect();
+            for thread in threads {
+                match thread.join() {
+                    Ok(res) => {
+                        results.push(res?);
+                    }
+                    Err(err) => {
+                        // a panic happened, stop the world gracefully (even though we panic later)
+                        stop_everything.store(true, Ordering::Relaxed);
+                        std::panic::resume_unwind(err);
+                    }
+                }
+            }
+
+            stop_everything.store(true, Ordering::Relaxed);
+            Ok(results)
+        }
+    })
+    .expect("no panic")
 }

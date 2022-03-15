@@ -55,9 +55,36 @@ mod not_parallel {
             Ok(self.result)
         }
     }
+
+    /// An experiment to have fine-grained per-item parallelization with built-in aggregation via thread state.
+    /// This is only good for operations where near-random access isn't detremental, so it's not usually great
+    /// for file-io as it won't make use of sorted inputs well.
+    // TODO: better docs
+    pub fn in_parallel_with_slice<I, S, E>(
+        input: &[I],
+        _thread_limit: Option<usize>,
+        mut new_thread_state: impl FnMut(usize) -> S + Send + Clone,
+        mut consume: impl FnMut(&I, &mut S) -> Result<(), E> + Send + Clone,
+        mut periodic: impl FnMut() -> Option<std::time::Duration> + Send,
+    ) -> Result<Vec<S>, E>
+    where
+        I: Send + Sync,
+        S: Send,
+        E: Send,
+    {
+        let mut state = new_thread_state(0);
+        for item in input {
+            consume(item, &mut state)?;
+            if periodic().is_none() {
+                break;
+            }
+        }
+        Ok(vec![state])
+    }
 }
+
 #[cfg(not(feature = "parallel"))]
-pub use not_parallel::{join, threads, Scope, ScopedJoinHandle};
+pub use not_parallel::{in_parallel_with_slice, join, threads, Scope, ScopedJoinHandle};
 
 /// Read items from `input` and `consume` them in a single thread, producing an output to be collected by a `reducer`,
 /// whose task is to aggregate these outputs into the final result returned by this function.

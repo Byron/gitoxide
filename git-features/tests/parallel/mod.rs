@@ -38,6 +38,32 @@ fn in_parallel() {
 }
 
 #[test]
+fn in_parallel_with_mut_slice_in_chunks() {
+    let num_items = 33;
+    let mut called_periodic = false;
+    let input: Vec<_> = std::iter::repeat(1).take(num_items).collect();
+    let counts = parallel::in_parallel_with_slice(
+        &input,
+        None,
+        |_| 0usize,
+        |item, acc| {
+            *acc += *item;
+            Ok::<_, ()>(())
+        },
+        || {
+            called_periodic = true;
+            Some(std::time::Duration::from_millis(10))
+        },
+    )
+    .unwrap();
+    assert!(called_periodic);
+    assert_eq!(
+        counts.iter().sum::<usize>(),
+        std::iter::repeat(1).take(num_items).sum::<usize>()
+    );
+}
+
+#[test]
 fn stepped_reduce_next() {
     let mut iter = parallel::reduce::Stepwise::new(
         std::iter::from_fn(|| Some(1)).take(100),

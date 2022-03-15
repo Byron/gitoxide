@@ -124,6 +124,9 @@ where
         let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
         let object_progress = OwnShared::new(Mutable::new(object_progress));
 
+        // TODO: this could be faster using the `in_parallel_with_slice()` as it will a root item per thread,
+        //       allowing threads to be more busy overall. This, however, needs some refactorings to allow operation
+        //       on a single item efficiently while providing real-time feedback.
         let num_objects = self.num_items();
         in_parallel_if(
             should_run_in_parallel,
