@@ -86,6 +86,7 @@ where
 /// An experiment to have fine-grained per-item parallelization with built-in aggregation via thread state.
 /// This is only good for operations where near-random access isn't detremental, so it's not usually great
 /// for file-io as it won't make use of sorted inputs well.
+/// Note that `periodic` is not guaranteed to be called in case other threads come up first and finish too fast.
 // TODO: better docs
 pub fn in_parallel_with_slice<I, S, E>(
     input: &[I],

@@ -40,7 +40,6 @@ fn in_parallel() {
 #[test]
 fn in_parallel_with_mut_slice_in_chunks() {
     let num_items = 33;
-    let mut called_periodic = false;
     let input: Vec<_> = std::iter::repeat(1).take(num_items).collect();
     let counts = parallel::in_parallel_with_slice(
         &input,
@@ -50,13 +49,9 @@ fn in_parallel_with_mut_slice_in_chunks() {
             *acc += *item;
             Ok::<_, ()>(())
         },
-        || {
-            called_periodic = true;
-            Some(std::time::Duration::from_millis(10))
-        },
+        || Some(std::time::Duration::from_millis(10)),
     )
     .unwrap();
-    assert!(called_periodic);
     assert_eq!(
         counts.iter().sum::<usize>(),
         std::iter::repeat(1).take(num_items).sum::<usize>()
