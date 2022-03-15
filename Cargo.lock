@@ -1384,7 +1384,11 @@ dependencies = [
 name = "git-revision"
 version = "0.0.0"
 dependencies = [
+ "git-hash",
+ "git-object",
+ "git-repository",
  "git-testtools",
+ "quick-error",
 ]
 
 [[package]]

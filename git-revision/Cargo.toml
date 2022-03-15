@@ -11,6 +11,11 @@ edition = "2018"
 doctest = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+git-hash = { version = "^0.9.1", path = "../git-hash" }
+git-object = { version = "^0.17.0", path = "../git-object" }
+quick-error = "2.0.0"
+
+[dev-dependencies]
 git-testtools = { path = "../tests/tools" }
+git-repository = { version = "^0.15.0", path = "../git-repository", default-features = false }
