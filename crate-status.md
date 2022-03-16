@@ -300,7 +300,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
         * [x] boolean
         * [x] integer
         * [x] color
-        * [ ] path (incl. resolution)
+        * [x] path (incl. resolution)
         * [ ] include
         * [ ] includeIf
 * [x] write
