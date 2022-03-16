@@ -1389,6 +1389,7 @@ dependencies = [
  "git-repository",
  "git-testtools",
  "quick-error",
+ "serde",
 ]
 
 [[package]]

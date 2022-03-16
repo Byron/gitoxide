@@ -10,11 +10,16 @@ edition = "2018"
 [lib]
 doctest = false
 
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = [ "serde", "git-hash/serde1", "git-object/serde1" ]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
 git-hash = { version = "^0.9.1", path = "../git-hash" }
 git-object = { version = "^0.17.0", path = "../git-object" }
 quick-error = "2.0.0"
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
