@@ -18,7 +18,7 @@ mod outcome_format {
             dirty_suffix: None,
             long: false,
         };
-        assert_eq!(outcome.is_exact_match(), true);
+        assert!(outcome.is_exact_match());
         assert_eq!(outcome.to_string(), "main");
         assert_eq!(outcome.long().to_string(), "main-0-gb920bbb");
 
@@ -28,6 +28,7 @@ mod outcome_format {
 
         outcome.dirty_suffix = None;
         outcome.depth = 42;
+        assert!(!outcome.is_exact_match());
         assert_eq!(outcome.short().to_string(), "main-42-gb920bbb");
 
         outcome.dirty_suffix = Some("dirty".into());

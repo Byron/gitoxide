@@ -58,6 +58,7 @@ pub mod describe {
     pub type Error = ();
 }
 
+#[allow(clippy::result_unit_err)]
 pub fn describe<'a>(
     _commit: &oid,
     _hex_len: usize,
