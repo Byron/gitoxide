@@ -39,14 +39,14 @@ pub fn decode(data: &[u8]) -> Result<(Vec, &[u8]), decode::Error> {
         Vec {
             num_bits,
             bits: buf,
-            rlw: rlw as usize,
+            rlw: rlw.into(),
         },
         data,
     ))
 }
 
 mod access {
-    use std::convert::TryInto;
+    use std::convert::{TryFrom, TryInto};
 
     use super::Vec;
 
@@ -56,7 +56,7 @@ mod access {
         ///
         /// The index is sequential like in any other vector.
         pub fn for_each_set_bit(&self, mut f: impl FnMut(usize) -> Option<()>) -> Option<()> {
-            let mut index = 0;
+            let mut index = 0usize;
             let mut iter = self.bits.iter();
             while let Some(word) = iter.next() {
                 if rlw_runbit_is_set(word) {
@@ -66,7 +66,7 @@ mod access {
                         index += 1;
                     }
                 } else {
-                    index += rlw_running_len_bits(word);
+                    index += usize::try_from(rlw_running_len_bits(word)).ok()?;
                 }
 
                 for _ in 0..rlw_literal_words(word) {
@@ -91,18 +91,18 @@ mod access {
     }
 
     #[inline]
-    fn rlw_running_len_bits(w: &u64) -> usize {
+    fn rlw_running_len_bits(w: &u64) -> u64 {
         rlw_running_len(w) * 64
     }
 
     #[inline]
-    fn rlw_running_len(w: &u64) -> usize {
-        (w >> 1) as usize & RLW_LARGEST_RUNNING_COUNT
+    fn rlw_running_len(w: &u64) -> u64 {
+        (w >> 1) & RLW_LARGEST_RUNNING_COUNT
     }
 
     #[inline]
-    fn rlw_literal_words(w: &u64) -> usize {
-        (w >> (1 + RLW_RUNNING_BITS)) as usize
+    fn rlw_literal_words(w: &u64) -> u64 {
+        w >> (1 + RLW_RUNNING_BITS)
     }
 
     #[inline]
@@ -110,8 +110,8 @@ mod access {
         w & 1 == 1
     }
 
-    const RLW_RUNNING_BITS: usize = 32;
-    const RLW_LARGEST_RUNNING_COUNT: usize = (1 << RLW_RUNNING_BITS) - 1;
+    const RLW_RUNNING_BITS: u64 = 4 * 8;
+    const RLW_LARGEST_RUNNING_COUNT: u64 = (1 << RLW_RUNNING_BITS) - 1;
 }
 
 /// A growable collection of u64 that are seen as stream of individual bits.
@@ -120,5 +120,5 @@ pub struct Vec {
     num_bits: u32,
     bits: std::vec::Vec<u64>,
     /// RLW is an offset into the `bits` buffer, so `1` translates into &bits\[1] essentially.
-    rlw: usize,
+    rlw: u64,
 }
