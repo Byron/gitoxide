@@ -1177,10 +1177,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "git-ignore"
-version = "0.0.0"
-
-[[package]]
 name = "git-index"
 version = "0.1.0"
 dependencies = [
