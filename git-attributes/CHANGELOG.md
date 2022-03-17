@@ -13,7 +13,7 @@ Initial release with no content.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#301](https://github.com/Byron/gitoxide/issues/301)
 
@@ -25,5 +25,7 @@ Initial release with no content.
 
  * **[#301](https://github.com/Byron/gitoxide/issues/301)**
     - Name-crates for git-ignore and git-attributes handling ([`2e04a49`](https://github.com/Byron/gitoxide/commit/2e04a4934a42cc2bb90334cf75e4af2ab394cffa))
+ * **Uncategorized**
+    - Release git-ignore v0.0.0, git-attributes v0.0.0 ([`c128f27`](https://github.com/Byron/gitoxide/commit/c128f27df83be2473bd1788cc58118ca4c5ba407))
 </details>
 
