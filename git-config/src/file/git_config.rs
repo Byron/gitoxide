@@ -123,10 +123,11 @@ pub mod from_paths {
     use crate::parser;
     use crate::values::path::interpolate;
     use quick_error::quick_error;
+    use std::borrow::Cow;
 
     quick_error! {
         #[derive(Debug)]
-        /// The error returned by [`GitConfig::from_paths()` and `GitConfig::from_env_paths()`].
+        /// The error returned by [`GitConfig::from_paths()`][super::GitConfig::from_paths()] and [`GitConfig::from_env_paths()`][super::GitConfig::from_env_paths()].
         #[allow(missing_docs)]
         pub enum Error {
             ParserOrIoError(err: parser::ParserOrIoError<'static>) {
@@ -142,12 +143,22 @@ pub mod from_paths {
         }
     }
 
-    /// Options when loading git config
+    /// Options when loading git config using [`GitConfig::from_paths()`][super::GitConfig::from_paths()].
+    #[derive(Clone)]
     pub struct Options<'a> {
-        /// the location where gitoxide is installed
-        pub git_install_dir: Option<&'a std::path::Path>,
-        /// max_depth of nested includes to follow
+        /// the location where gitoxide or git is installed
+        pub git_install_dir: Option<Cow<'a, std::path::Path>>,
+        /// The maximum length of the file include chain built by following nested includes.
         pub max_depth: u8,
+    }
+
+    impl<'a> Default for Options<'a> {
+        fn default() -> Self {
+            Options {
+                git_install_dir: None,
+                max_depth: 10,
+            }
+        }
     }
 }
 
@@ -205,7 +216,7 @@ impl<'event> GitConfig<'event> {
                         let mut paths = vec![];
                         for path_value in path_values {
                             let interpolated_path =
-                                values::Path::from(path_value).interpolate(options.git_install_dir)?;
+                                values::Path::from(path_value).interpolate(options.git_install_dir.as_deref())?;
                             let path = if interpolated_path.is_relative() {
                                 config_file_path
                                     .parent()
@@ -1736,11 +1747,7 @@ mod from_paths_tests {
         let config_path = dir.path().join("config");
 
         let paths = vec![config_path];
-        let options = from_paths::Options {
-            git_install_dir: None,
-            max_depth: 10,
-        };
-        let error = GitConfig::from_paths(paths, &options).unwrap_err();
+        let error = GitConfig::from_paths(paths, &Default::default()).unwrap_err();
         assert!(
             matches!(error,  Error::ParserOrIoError(ParserOrIoError::Io(io_error)) if io_error.kind() == io::ErrorKind::NotFound)
         );
@@ -1753,11 +1760,7 @@ mod from_paths_tests {
         fs::write(config_path.as_path(), b"[core]\nboolean = true").expect("Unable to write config file");
 
         let paths = vec![config_path];
-        let options = from_paths::Options {
-            git_install_dir: None,
-            max_depth: 10,
-        };
-        let config = GitConfig::from_paths(paths, &options).unwrap();
+        let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
 
         assert_eq!(
             config.get_raw_value("core", None, "boolean"),
@@ -1816,11 +1819,7 @@ mod from_paths_tests {
         )
         .unwrap();
 
-        let options = from_paths::Options {
-            git_install_dir: None,
-            max_depth: 10,
-        };
-        let config = GitConfig::from_paths(vec![c_path], &options).unwrap();
+        let config = GitConfig::from_paths(vec![c_path], &Default::default()).unwrap();
 
         assert_eq!(
             config.get_raw_value("core", None, "c"),
@@ -1847,8 +1846,13 @@ mod from_paths_tests {
     }
 
     #[test]
-    fn nested_include_has_max_depth_10() {
+    fn nested_include_respects_max_depth() {
         let dir = tempdir().unwrap();
+        let max_depth = 3;
+        let options = from_paths::Options {
+            git_install_dir: None,
+            max_depth,
+        };
         let path = dir.path().join("0");
         fs::write(
             path.as_path(),
@@ -1863,9 +1867,9 @@ mod from_paths_tests {
         )
         .unwrap();
 
-        for i in 1..11 {
-            let path = dir.path().join(&i.to_string());
-            let prev_path = dir.path().join(&(i - 1).to_string());
+        for (i, prev_i) in (1..=max_depth).zip(0..max_depth) {
+            let path = dir.path().join(i.to_string());
+            let prev_path = dir.path().join(prev_i.to_string());
             fs::write(
                 path.as_path(),
                 format!(
@@ -1880,17 +1884,13 @@ mod from_paths_tests {
             .unwrap();
         }
 
-        let options = from_paths::Options {
-            git_install_dir: None,
-            max_depth: 10,
-        };
-        let config = GitConfig::from_paths(vec![dir.path().join("9")], &options).unwrap();
+        let config = GitConfig::from_paths(vec![dir.path().join((max_depth - 1).to_string())], &options).unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "i"),
             Ok(Cow::<[u8]>::Borrowed(b"true"))
         );
 
-        let config = GitConfig::from_paths(vec![dir.path().join("10")], &options).unwrap();
+        let config = GitConfig::from_paths(vec![dir.path().join(max_depth.to_string())], &options).unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "i"),
             Ok(Cow::<[u8]>::Borrowed(b"false"))
@@ -1939,11 +1939,7 @@ mod from_paths_tests {
         )
         .unwrap();
 
-        let options = from_paths::Options {
-            git_install_dir: None,
-            max_depth: 10,
-        };
-        let config = GitConfig::from_paths(vec![c_path], &options).unwrap();
+        let config = GitConfig::from_paths(vec![c_path], &Default::default()).unwrap();
 
         assert_eq!(config.get_raw_value("core", None, "c"), Ok(Cow::<[u8]>::Borrowed(b"1")));
 
@@ -1975,11 +1971,7 @@ mod from_paths_tests {
         fs::write(d_path.as_path(), b"[core]\na = false").expect("Unable to write config file");
 
         let paths = vec![a_path, b_path, c_path, d_path];
-        let options = from_paths::Options {
-            git_install_dir: None,
-            max_depth: 10,
-        };
-        let config = GitConfig::from_paths(paths, &options).unwrap();
+        let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
 
         assert_eq!(
             config.get_raw_value("core", None, "a"),
@@ -2013,11 +2005,7 @@ mod from_paths_tests {
         fs::write(c_path.as_path(), b"[core]\nkey = c").expect("Unable to write config file");
 
         let paths = vec![a_path, b_path, c_path];
-        let options = from_paths::Options {
-            git_install_dir: None,
-            max_depth: 10,
-        };
-        let config = GitConfig::from_paths(paths, &options).unwrap();
+        let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
 
         assert_eq!(
             config.get_raw_multi_value("core", None, "key").unwrap(),
