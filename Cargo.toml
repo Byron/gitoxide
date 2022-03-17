@@ -149,6 +149,7 @@ members = [
     "git-tempfile",
     "git-lock",
     "git-attributes",
+    "git-pathspec",
     "git-repository",
     "gitoxide-core",
     "git-tui",

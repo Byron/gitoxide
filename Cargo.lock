@@ -1295,6 +1295,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-pathspec"
+version = "0.0.0"
+
+[[package]]
 name = "git-protocol"
 version = "0.14.0"
 dependencies = [

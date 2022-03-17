@@ -213,6 +213,11 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [ ] parse git-attributes files
 * [ ] create an attributes stack, ideally one that includes 'ignored' status from .gitignore files.
 
+### git-pathspec
+
+* [ ] parse
+* [ ] check for match
+
 ### git-worktree
 * handle the working tree/checkout
   - [x] checkout an index of files, executables and symlinks just as fast as git
