@@ -148,6 +148,8 @@ members = [
     "git-odb",
     "git-tempfile",
     "git-lock",
+    "git-ignore",
+    "git-attributes",
     "git-repository",
     "gitoxide-core",
     "git-tui",

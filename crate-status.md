@@ -206,6 +206,15 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [ ] general purpose `accept(…)` for servers
 * [x] API documentation
     * [ ] Some examples
+     
+### git-ignore
+
+* [ ] parse git-ignore files
+ 
+### git-attributes
+
+* [ ] parse git-attributes files
+* [ ] create an attributes stack, ideally one that includes 'ignored' status from .gitignore files.
 
 ### git-worktree
 * handle the working tree/checkout

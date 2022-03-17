@@ -1071,6 +1071,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-attributes"
+version = "0.0.0"
+
+[[package]]
 name = "git-bitmap"
 version = "0.0.1"
 dependencies = [
@@ -1171,6 +1175,10 @@ dependencies = [
  "quick-error",
  "serde",
 ]
+
+[[package]]
+name = "git-ignore"
+version = "0.0.0"
 
 [[package]]
 name = "git-index"
