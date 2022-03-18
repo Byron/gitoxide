@@ -48,3 +48,30 @@ impl<'a> Display for Outcome<'a> {
 }
 
 pub type Error = ();
+
+pub(crate) mod function {
+    use super::{Error, Outcome};
+    use git_hash::{oid, ObjectId};
+    use git_object::bstr::BStr;
+    use std::borrow::Cow;
+    use std::collections::HashMap;
+
+    #[allow(clippy::result_unit_err)]
+    pub fn describe<'a>(
+        commit: &oid,
+        hex_len: usize,
+        name_set: &HashMap<ObjectId, Cow<'a, BStr>>,
+    ) -> Result<Option<Outcome<'a>>, Error> {
+        if let Some(name) = name_set.get(commit) {
+            return Ok(Some(Outcome {
+                name: name.to_owned(),
+                id: commit.to_owned(),
+                hex_len,
+                depth: 0,
+                long: false,
+                dirty_suffix: None,
+            }));
+        }
+        todo!("actually search for it")
+    }
+}
