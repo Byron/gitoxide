@@ -47,24 +47,29 @@ impl<'a> Display for Outcome<'a> {
     }
 }
 
-pub type Error = ();
-
 pub(crate) mod function {
-    use super::{Error, Outcome};
+    use super::Outcome;
     use git_hash::{oid, ObjectId};
     use git_object::bstr::BStr;
+    use git_object::CommitRefIter;
     use std::borrow::Cow;
-    use std::collections::HashMap;
+    use std::collections::{HashMap, VecDeque};
+    use std::iter::FromIterator;
 
     #[allow(clippy::result_unit_err)]
-    pub fn describe<'a>(
+    pub fn describe<'a, Find, E>(
         commit: &oid,
+        find: Find,
         hex_len: usize,
         name_set: &HashMap<ObjectId, Cow<'a, BStr>>,
-    ) -> Result<Option<Outcome<'a>>, Error> {
+    ) -> Result<Option<Outcome<'a>>, E>
+    where
+        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
+        E: std::error::Error + Send + Sync + 'static,
+    {
         if let Some(name) = name_set.get(commit) {
             return Ok(Some(Outcome {
-                name: name.to_owned(),
+                name: name.clone(),
                 id: commit.to_owned(),
                 hex_len,
                 depth: 0,
@@ -72,6 +77,39 @@ pub(crate) mod function {
                 dirty_suffix: None,
             }));
         }
+        let mut queue = VecDeque::from_iter(Some(commit.to_owned()));
+        let mut candidates = Vec::new();
+        let mut seen_commits = 0;
+        let mut gave_up_on_commit = None;
+        let mut seen = hash_hasher::HashedSet::default();
+
+        const MAX_CANDIDATES: usize = std::mem::size_of::<usize>() * 8;
+        while let Some(commit) = queue.pop_front() {
+            seen_commits += 1;
+            assert!(seen.insert(commit), "BUG: shouldn't ever see dupes here");
+            if let Some(name) = name_set.get(&commit) {
+                if candidates.len() < MAX_CANDIDATES {
+                    candidates.push(Candidate {
+                        name: name.clone(),
+                        depth: seen_commits - 1,
+                        identity_bit: 1 << candidates.len(),
+                        order: candidates.len(),
+                    });
+                } else {
+                    gave_up_on_commit = Some(commit);
+                    break;
+                }
+            }
+        }
         todo!("actually search for it")
+    }
+
+    struct Candidate<'a> {
+        name: Cow<'a, BStr>,
+        depth: usize,
+        /// A single bit identifying this candidate uniquely in a bitset
+        identity_bit: usize,
+        /// The order at which we found the candidate, first one has order = 0
+        order: usize,
     }
 }

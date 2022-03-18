@@ -1388,6 +1388,7 @@ dependencies = [
  "git-object",
  "git-repository",
  "git-testtools",
+ "hash_hasher",
  "quick-error",
  "serde",
 ]

@@ -1,4 +1,5 @@
 use git_object::bstr::ByteSlice;
+use git_repository::odb::FindExt;
 use git_revision::describe;
 use git_testtools::hex_to_id;
 use std::borrow::Cow;
@@ -49,6 +50,7 @@ fn typical_usecases() {
     let hex_len = 7;
     let res = git_revision::describe(
         &commit.id,
+        |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "shouldn't be called")),
         hex_len,
         &vec![(commit.id, name.clone())].into_iter().collect(),
     )
@@ -70,6 +72,7 @@ fn typical_usecases() {
     let name = Cow::Borrowed(b"at-c5".as_bstr());
     let res = git_revision::describe(
         &commit.id,
+        |id, buf| repo.objects.find_commit_iter(id, buf),
         hex_len,
         &vec![(hex_to_id("efd9a841189668f1bab5b8ebade9cd0a1b139a37"), name.clone())]
             .into_iter()
