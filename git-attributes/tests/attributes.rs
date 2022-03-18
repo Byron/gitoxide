@@ -11,7 +11,7 @@ mod parse {
                 actual,
                 vec![
                     ("*.[oa]".into(), Mode::NO_SUB_DIR, 2),
-                    ("*.html".into(), Mode::NO_SUB_DIR, 5),
+                    ("*.html".into(), Mode::NO_SUB_DIR | Mode::ENDS_WITH, 5),
                     ("foo.html".into(), Mode::NO_SUB_DIR | Mode::NEGATIVE, 8),
                     ("/*".into(), Mode::empty(), 11),
                     ("/foo".into(), Mode::NEGATIVE, 12),
@@ -30,6 +30,32 @@ mod parse {
                     (r"windows".into(), Mode::NO_SUB_DIR, 2),
                     (r"last".into(), Mode::NO_SUB_DIR, 3)
                 ]
+            );
+        }
+
+        #[test]
+        fn mark_ends_with_pattern_specifically() {
+            assert_eq!(
+                git_attributes::parse::ignore(br"*literal").next(),
+                Some((r"*literal".into(), Mode::NO_SUB_DIR | Mode::ENDS_WITH, 1))
+            );
+            assert_eq!(
+                git_attributes::parse::ignore(br"**literal").next(),
+                Some((r"**literal".into(), Mode::NO_SUB_DIR, 1)),
+                "double-asterisk won't allow for fast comparisons"
+            );
+            assert_eq!(
+                git_attributes::parse::ignore(br"*litera[l]").next(),
+                Some((r"*litera[l]".into(), Mode::NO_SUB_DIR, 1))
+            );
+            assert_eq!(
+                git_attributes::parse::ignore(br"*litera?").next(),
+                Some((r"*litera?".into(), Mode::NO_SUB_DIR, 1))
+            );
+            assert_eq!(
+                git_attributes::parse::ignore(br"*litera\?").next(),
+                Some((r"*litera\?".into(), Mode::NO_SUB_DIR, 1)),
+                "for now we don't handle escapes properly like git seems to do"
             );
         }
 

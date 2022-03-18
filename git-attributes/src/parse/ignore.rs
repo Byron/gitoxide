@@ -24,7 +24,7 @@ impl<'a> Iterator for Iter<'a> {
         }
         let mut lines = self.cursor.lines_with_terminator();
         let mut res = None;
-        let mut offset = 0;
+        let mut offset = 0; // TODO: prefer `lines()` with `into_bytes()` instead.
         for mut line in lines.by_ref() {
             self.line_no += 1;
             offset += line.len();
@@ -51,6 +51,9 @@ impl<'a> Iterator for Iter<'a> {
             }
             if !line.contains(&b'/') {
                 mode |= ignore::pattern::Mode::NO_SUB_DIR;
+            }
+            if line.first() == Some(&b'*') && line[1..].find_byteset(br"*?[\").is_none() {
+                mode |= ignore::pattern::Mode::ENDS_WITH;
             }
             res = Some((line, mode, self.line_no));
             break;
