@@ -40,15 +40,13 @@ pub mod parse {
                 }
                 let mut lines = self.cursor.lines();
                 let res = None;
-                while let Some(line) = lines.next() {
+                for line in lines.by_ref() {
                     if line.starts_with(b"#") {
                         continue;
                     }
                     todo!("handle escapes and trim trailing non-escaped whitespace")
                 }
-                if let Some(next_line) = lines.next() {
-                    self.cursor = next_line.as_bstr();
-                }
+                self.cursor = lines.next().unwrap_or(&[]).as_bstr();
                 res
             }
         }
