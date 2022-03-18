@@ -6,9 +6,11 @@ pub mod ignore {
 
         bitflags! {
             pub struct Mode: u32 {
-                const NO_DIR = 1 << 0;
+                /// The pattern does not contain a sub-directory and - it doesn't contain slashes after removing the trailing one.
+                const NO_SUB_DIR = 1 << 0;
                 // TODO: find a much better name!
                 const ENDS_WITH = 1 << 1;
+                /// The pattern must match a directory, and not a file.
                 const MUST_BE_DIR = 1 << 2;
                 const NEGATIVE = 1 << 3;
             }
@@ -45,17 +47,26 @@ pub mod parse {
                     if line.is_empty() {
                         continue;
                     };
-                    if line.starts_with(b"#") {
+                    if line.first() == Some(&b'#') {
                         continue;
-                    } else if line.starts_with(b"\\#") {
-                        line = &line[1..];
-                    } else if line.starts_with(b"!") {
+                    } else if line.first() == Some(&b'!') {
                         mode |= ignore::pattern::Mode::NEGATIVE;
                         line = &line[1..];
-                    } else if line.starts_with(b"\\!") {
-                        line = &line[1..];
+                    } else if line.first() == Some(&b'\\') {
+                        let second = line.get(1);
+                        if second == Some(&b'!') || second == Some(&b'#') {
+                            line = &line[1..];
+                        }
                     }
-                    res = Some((truncate_non_escaped_trailing_spaces(line), mode));
+                    let mut line = truncate_non_escaped_trailing_spaces(line);
+                    if line.last() == Some(&b'/') {
+                        mode |= ignore::pattern::Mode::MUST_BE_DIR;
+                        line.pop();
+                    }
+                    if !line.contains(&b'/') {
+                        mode |= ignore::pattern::Mode::NO_SUB_DIR;
+                    }
+                    res = Some((line, mode));
                 }
                 self.cursor = lines.next().unwrap_or(&[]).as_bstr();
                 res
