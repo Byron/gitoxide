@@ -1,15 +1,15 @@
 use crate::ignore;
-use bstr::{BStr, BString, ByteSlice};
+use bstr::{BString, ByteSlice};
 
 pub struct Iter<'a> {
-    cursor: &'a BStr,
+    lines: bstr::Lines<'a>,
     line_no: usize,
 }
 
 impl<'a> Iter<'a> {
     pub fn new(buf: &'a [u8]) -> Self {
         Iter {
-            cursor: buf.as_bstr(),
+            lines: buf.lines(),
             line_no: 0,
         }
     }
@@ -19,16 +19,9 @@ impl<'a> Iterator for Iter<'a> {
     type Item = (BString, ignore::pattern::Mode, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.cursor.is_empty() {
-            return None;
-        }
-        let mut lines = self.cursor.lines_with_terminator();
         let mut res = None;
-        let mut offset = 0; // TODO: prefer `lines()` with `into_bytes()` instead.
-        for mut line in lines.by_ref() {
+        for mut line in self.lines.by_ref() {
             self.line_no += 1;
-            offset += line.len();
-            line = trim_newline(line);
             let mut mode = ignore::pattern::Mode::empty();
             if line.is_empty() {
                 continue;
@@ -58,20 +51,8 @@ impl<'a> Iterator for Iter<'a> {
             res = Some((line, mode, self.line_no));
             break;
         }
-        self.cursor = &self.cursor[offset..];
         res
     }
-}
-
-#[inline]
-fn trim_newline(mut line: &[u8]) -> &[u8] {
-    if line.last_byte() == Some(b'\n') {
-        line = &line[..line.len() - 1];
-        if line.last_byte() == Some(b'\r') {
-            line = &line[..line.len() - 1];
-        }
-    }
-    line
 }
 
 /// We always copy just because that's ultimately needed anyway, not because we always have to.
