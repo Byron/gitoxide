@@ -1,6 +1,37 @@
 mod parse {
     mod ignore {
         use git_attributes::ignore::pattern::Mode;
+        use git_testtools::fixture_path;
+
+        #[test]
+        fn line_numbers_are_counted_correctly() {
+            let ignore = std::fs::read(fixture_path("ignore/various.txt")).unwrap();
+            let actual: Vec<_> = git_attributes::parse::ignore(&ignore).collect();
+            assert_eq!(
+                actual,
+                vec![
+                    ("*.[oa]".into(), Mode::NO_SUB_DIR, 2),
+                    ("*.html".into(), Mode::NO_SUB_DIR, 5),
+                    ("foo.html".into(), Mode::NO_SUB_DIR | Mode::NEGATIVE, 8),
+                    ("/*".into(), Mode::empty(), 11),
+                    ("/foo".into(), Mode::NEGATIVE, 12),
+                    ("/foo/*".into(), Mode::empty(), 13),
+                    ("/foo/bar".into(), Mode::NEGATIVE, 14)
+                ]
+            );
+        }
+
+        #[test]
+        fn line_endings_can_be_windows_or_unix() {
+            assert_eq!(
+                git_attributes::parse::ignore(b"unix\nwindows\r\nlast").collect::<Vec<_>>(),
+                vec![
+                    (r"unix".into(), Mode::NO_SUB_DIR, 1),
+                    (r"windows".into(), Mode::NO_SUB_DIR, 2),
+                    (r"last".into(), Mode::NO_SUB_DIR, 3)
+                ]
+            );
+        }
 
         #[test]
         fn comments_are_ignored() {
