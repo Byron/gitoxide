@@ -140,6 +140,10 @@ pub mod from_paths {
                 source(err)
                 from()
             }
+            MaxAllowedDepth {
+                display("The maximum allowed length of the file include chain built by following nested includes is exceeded")
+                from()
+            }
         }
     }
 
@@ -148,15 +152,15 @@ pub mod from_paths {
     pub struct Options<'a> {
         /// the location where gitoxide or git is installed
         pub git_install_dir: Option<Cow<'a, std::path::Path>>,
-        /// The maximum length of the file include chain built by following nested includes.
-        pub max_depth: u8,
+        /// The maximum allowed length of the file include chain built by following nested includes where top level is depth = 1.
+        pub max_allowed_depth: u8,
     }
 
     impl<'a> Default for Options<'a> {
         fn default() -> Self {
             Options {
                 git_install_dir: None,
-                max_depth: 10,
+                max_allowed_depth: 10,
             }
         }
     }
@@ -202,8 +206,8 @@ impl<'event> GitConfig<'event> {
             depth: u8,
             options: &from_paths::Options,
         ) -> Result<(), from_paths::Error> {
-            if depth >= options.max_depth {
-                return Ok(());
+            if depth > options.max_allowed_depth + 1 {
+                return Err(from_paths::Error::MaxAllowedDepth);
             }
             for config_file_path in paths.iter() {
                 let other = GitConfig::open(config_file_path)?;
@@ -244,7 +248,7 @@ impl<'event> GitConfig<'event> {
             Ok(())
         }
 
-        from_paths_recursive(paths, &mut seen, &mut config, 0, &options)?;
+        from_paths_recursive(paths, &mut seen, &mut config, 1, &options)?;
 
         Ok(config)
     }
@@ -274,7 +278,6 @@ impl<'event> GitConfig<'event> {
             // These two are supposed to share the same scope and override
             // rather than append according to git-config(1) documentation.
             if let Ok(xdg_config_home) = env::var("XDG_CONFIG_HOME") {
-                // TODO make sure the path exists, as git does
                 paths.push(PathBuf::from(xdg_config_home).join("git/config"));
             } else if let Ok(home) = env::var("HOME") {
                 paths.push(PathBuf::from(home).join(".config/git/config"));
@@ -1848,12 +1851,7 @@ mod from_paths_tests {
     #[test]
     fn nested_include_respects_max_depth() {
         let dir = tempdir().unwrap();
-        let max_depth = 3;
-        let options = from_paths::Options {
-            git_install_dir: None,
-            max_depth,
-        };
-        let path = dir.path().join("0");
+        let path = dir.path().join("1");
         fs::write(
             path.as_path(),
             format!(
@@ -1867,7 +1865,11 @@ mod from_paths_tests {
         )
         .unwrap();
 
-        for (i, prev_i) in (1..=max_depth).zip(0..max_depth) {
+        // 3 includes 2
+        // 2 includes 1
+        // 1 has no includes
+        let three = 3u8;
+        for (i, prev_i) in (2..=three).zip(1..three) {
             let path = dir.path().join(i.to_string());
             let prev_path = dir.path().join(prev_i.to_string());
             fs::write(
@@ -1884,17 +1886,40 @@ mod from_paths_tests {
             .unwrap();
         }
 
-        let config = GitConfig::from_paths(vec![dir.path().join((max_depth - 1).to_string())], &options).unwrap();
+        // with default max_allowed_depth of 10 and 3 levels of includes, last level is read
+        let options = from_paths::Options::default();
+        let config = GitConfig::from_paths(vec![dir.path().join((three).to_string())], &options).unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "i"),
             Ok(Cow::<[u8]>::Borrowed(b"true"))
         );
 
-        let config = GitConfig::from_paths(vec![dir.path().join(max_depth.to_string())], &options).unwrap();
+        // with max_allowed_depth of 3 and 3 levels of includes, last level is read
+        let options = from_paths::Options {
+            git_install_dir: None,
+            max_allowed_depth: 3,
+        };
+        let config = GitConfig::from_paths(vec![dir.path().join((three).to_string())], &options).unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "i"),
-            Ok(Cow::<[u8]>::Borrowed(b"false"))
+            Ok(Cow::<[u8]>::Borrowed(b"true"))
         );
+
+        // with max_allowed_depth of 2 and 3 levels of includes, max_allowed_depth is passed and error is returned
+        let options = from_paths::Options {
+            git_install_dir: None,
+            max_allowed_depth: 2,
+        };
+        let config = GitConfig::from_paths(vec![dir.path().join(three.to_string())], &options);
+        assert!(matches!(config.unwrap_err(), from_paths::Error::MaxAllowedDepth));
+
+        // with max_allowed_depth of 0 and 3 levels of includes, max_allowed_depth is passed and error is returned
+        let options = from_paths::Options {
+            git_install_dir: None,
+            max_allowed_depth: 0,
+        };
+        let config = GitConfig::from_paths(vec![dir.path().join(three.to_string())], &options);
+        assert!(matches!(config.unwrap_err(), from_paths::Error::MaxAllowedDepth));
     }
 
     #[test]
