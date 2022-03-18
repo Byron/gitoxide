@@ -2,6 +2,14 @@ use git_attributes::ignore::pattern::Mode;
 use git_testtools::fixture_path;
 
 #[test]
+fn byte_order_marks_are_no_patterns() {
+    assert_eq!(
+        git_attributes::parse::ignore("\u{feff}hello".as_bytes()).next(),
+        Some((r"hello".into(), Mode::NO_SUB_DIR, 1))
+    );
+}
+
+#[test]
 fn line_numbers_are_counted_correctly() {
     let ignore = std::fs::read(fixture_path("ignore/various.txt")).unwrap();
     let actual: Vec<_> = git_attributes::parse::ignore(&ignore).collect();

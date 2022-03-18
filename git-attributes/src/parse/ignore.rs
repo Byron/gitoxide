@@ -8,8 +8,9 @@ pub struct Iter<'a> {
 
 impl<'a> Iter<'a> {
     pub fn new(buf: &'a [u8]) -> Self {
+        let bom = unicode_bom::Bom::from(buf);
         Iter {
-            lines: buf.lines(),
+            lines: buf[bom.len()..].lines(),
             line_no: 0,
         }
     }
