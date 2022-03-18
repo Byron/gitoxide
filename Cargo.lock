@@ -1073,6 +1073,11 @@ dependencies = [
 [[package]]
 name = "git-attributes"
 version = "0.0.0"
+dependencies = [
+ "bitflags",
+ "bstr",
+ "git-testtools",
+]
 
 [[package]]
 name = "git-bitmap"
