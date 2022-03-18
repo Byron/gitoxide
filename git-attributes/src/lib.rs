@@ -25,16 +25,20 @@ pub mod parse {
 
         pub struct Iter<'a> {
             cursor: &'a BStr,
+            line_no: usize,
         }
 
         impl<'a> Iter<'a> {
             pub fn new(buf: &'a [u8]) -> Self {
-                Iter { cursor: buf.as_bstr() }
+                Iter {
+                    cursor: buf.as_bstr(),
+                    line_no: 0,
+                }
             }
         }
 
         impl<'a> Iterator for Iter<'a> {
-            type Item = (BString, ignore::pattern::Mode);
+            type Item = (BString, ignore::pattern::Mode, usize);
 
             fn next(&mut self) -> Option<Self::Item> {
                 if self.cursor.is_empty() {
@@ -43,6 +47,7 @@ pub mod parse {
                 let mut lines = self.cursor.lines();
                 let mut res = None;
                 for mut line in lines.by_ref() {
+                    self.line_no += 1;
                     let mut mode = ignore::pattern::Mode::empty();
                     if line.is_empty() {
                         continue;
@@ -66,7 +71,7 @@ pub mod parse {
                     if !line.contains(&b'/') {
                         mode |= ignore::pattern::Mode::NO_SUB_DIR;
                     }
-                    res = Some((line, mode));
+                    res = Some((line, mode, self.line_no));
                 }
                 self.cursor = lines.next().unwrap_or(&[]).as_bstr();
                 res
