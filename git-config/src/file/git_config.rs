@@ -140,9 +140,8 @@ pub mod from_paths {
                 source(err)
                 from()
             }
-            MaxAllowedDepth {
-                display("The maximum allowed length of the file include chain built by following nested includes is exceeded")
-                from()
+            IncludeDepthExceeded { max_depth: u8 } {
+                display("The maximum allowed length {} of the file include chain built by following nested includes is exceeded", max_depth)
             }
         }
     }
@@ -153,14 +152,16 @@ pub mod from_paths {
         /// the location where gitoxide or git is installed
         pub git_install_dir: Option<Cow<'a, std::path::Path>>,
         /// The maximum allowed length of the file include chain built by following nested includes where top level is depth = 1.
-        pub max_allowed_depth: u8,
+        pub max_depth: u8,
+        pub error_on_max_depth_exceeded: bool,
     }
 
     impl<'a> Default for Options<'a> {
         fn default() -> Self {
             Options {
                 git_install_dir: None,
-                max_allowed_depth: 10,
+                max_depth: 10,
+                error_on_max_depth_exceeded: true,
             }
         }
     }
@@ -206,43 +207,51 @@ impl<'event> GitConfig<'event> {
             depth: u8,
             options: &from_paths::Options,
         ) -> Result<(), from_paths::Error> {
-            if depth > options.max_allowed_depth + 1 {
-                return Err(from_paths::Error::MaxAllowedDepth);
+            if depth > options.max_depth {
+                return if options.error_on_max_depth_exceeded {
+                    Err(from_paths::Error::IncludeDepthExceeded {
+                        max_depth: options.max_depth,
+                    })
+                } else {
+                    Ok(())
+                };
             }
             for config_file_path in paths.iter() {
                 let other = GitConfig::open(config_file_path)?;
-                let mut section_ids: Vec<_> = other.section_headers.keys().collect();
-                section_ids.sort();
-                for section_id in section_ids {
-                    let section_header = &other.section_headers[section_id];
-                    if section_header.name.0 == "include" {
-                        let path_values = other.sections[section_id].values(&Key::from("path"));
-                        let mut paths = vec![];
-                        for path_value in path_values {
-                            let interpolated_path =
-                                values::Path::from(path_value).interpolate(options.git_install_dir.as_deref())?;
-                            let path = if interpolated_path.is_relative() {
-                                config_file_path
-                                    .parent()
-                                    .expect("path is a config file which naturally lives in a directory")
-                                    .join(interpolated_path)
-                            } else {
-                                interpolated_path.into()
-                            };
-                            if let Ok(path) = path.canonicalize() {
-                                if seen.insert(path.clone()) {
-                                    paths.push(path);
-                                }
+                let mut section_indices: Vec<_> = other.section_headers.keys().collect();
+                // header keys are numeric and ascend in insertion order, hence sorting them gives the order
+                // in which they appear in the config file.
+                section_indices.sort();
+                for section_index in section_indices {
+                    let section_header = &other.section_headers[section_index];
+                    config.push_section(
+                        section_header.name.0.to_owned(),
+                        section_header.subsection_name.to_owned(),
+                        other.sections[section_index].clone(),
+                    );
+                    if section_header.name.0 != "include" {
+                        continue;
+                    }
+                    let path_values = other.sections[section_index].values(&Key::from("path"));
+                    let mut paths = vec![];
+                    for path_value in path_values {
+                        let interpolated_path =
+                            values::Path::from(path_value).interpolate(options.git_install_dir.as_deref())?;
+                        let path = if interpolated_path.is_relative() {
+                            config_file_path
+                                .parent()
+                                .expect("path is a config file which naturally lives in a directory")
+                                .join(interpolated_path)
+                        } else {
+                            interpolated_path.into()
+                        };
+                        if let Ok(path) = path.canonicalize() {
+                            if seen.insert(path.clone()) {
+                                paths.push(path);
                             }
                         }
-                        from_paths_recursive(paths, seen, config, depth + 1, options)?;
-                    } else {
-                        config.push_section(
-                            section_header.name.0.to_owned(),
-                            section_header.subsection_name.to_owned(),
-                            other.sections[section_id].clone(),
-                        );
                     }
+                    from_paths_recursive(paths, seen, config, depth + 1, options)?;
                 }
             }
             Ok(())
@@ -1851,75 +1860,102 @@ mod from_paths_tests {
     #[test]
     fn nested_include_respects_max_depth() {
         let dir = tempdir().unwrap();
-        let path = dir.path().join("1");
-        fs::write(
-            path.as_path(),
-            format!(
-                "
-                [core]
-                  i = true 
-                [include]
-                  path = {}",
-                to_backslash_escaped_string(&path)
-            ),
-        )
-        .unwrap();
 
-        // 3 includes 2
-        // 2 includes 1
-        // 1 has no includes
-        let three = 3u8;
-        for (i, prev_i) in (2..=three).zip(1..three) {
+        // 1 includes 2
+        // 2 includes 3
+        // 3 includes 4
+        // 4 has no includes
+        let four = 4u8;
+        for (i, next_i) in (1..four).zip(2..=four) {
             let path = dir.path().join(i.to_string());
-            let prev_path = dir.path().join(prev_i.to_string());
+            let next_path = dir.path().join(next_i.to_string());
             fs::write(
                 path.as_path(),
                 format!(
                     "
                     [core]
-                      i = false 
+                      i = {i} 
                     [include]
                       path = {}",
-                    to_backslash_escaped_string(&prev_path)
+                    to_backslash_escaped_string(&next_path),
                 ),
             )
             .unwrap();
         }
 
-        // with default max_allowed_depth of 10 and 3 levels of includes, last level is read
+        fs::write(
+            dir.path().join("4"),
+            "
+                    [core]
+                      i = 4",
+        )
+        .unwrap();
+
         let options = from_paths::Options::default();
-        let config = GitConfig::from_paths(vec![dir.path().join((three).to_string())], &options).unwrap();
+        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options).unwrap();
         assert_eq!(
-            config.get_raw_value("core", None, "i"),
-            Ok(Cow::<[u8]>::Borrowed(b"true"))
+            config.get_raw_multi_value("core", None, "i").unwrap(),
+            vec![
+                Cow::Borrowed(b"1"),
+                Cow::Borrowed(b"2"),
+                Cow::Borrowed(b"3"),
+                Cow::Borrowed(b"4")
+            ]
         );
 
-        // with max_allowed_depth of 3 and 3 levels of includes, last level is read
+        // with max_allowed_depth of 1 and 4 levels of includes and error_on_max_depth_exceeded: false, max_allowed_depth is exceeded and the value of level 1 is returned
+        // this is equivalent to running git with --no-includes option
         let options = from_paths::Options {
-            git_install_dir: None,
-            max_allowed_depth: 3,
+            max_depth: 1,
+            error_on_max_depth_exceeded: false,
+            ..Default::default()
         };
-        let config = GitConfig::from_paths(vec![dir.path().join((three).to_string())], &options).unwrap();
-        assert_eq!(
-            config.get_raw_value("core", None, "i"),
-            Ok(Cow::<[u8]>::Borrowed(b"true"))
-        );
+        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options).unwrap();
+        assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"1")));
 
-        // with max_allowed_depth of 2 and 3 levels of includes, max_allowed_depth is passed and error is returned
-        let options = from_paths::Options {
-            git_install_dir: None,
-            max_allowed_depth: 2,
-        };
-        let config = GitConfig::from_paths(vec![dir.path().join(three.to_string())], &options);
-        assert!(matches!(config.unwrap_err(), from_paths::Error::MaxAllowedDepth));
+        // with default max_allowed_depth of 10 and 4 levels of includes, last level is read
+        let options = from_paths::Options::default();
+        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options).unwrap();
+        assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"4")));
 
-        // with max_allowed_depth of 0 and 3 levels of includes, max_allowed_depth is passed and error is returned
+        // with max_allowed_depth of 4 and 4 levels of includes, last level is read
         let options = from_paths::Options {
-            git_install_dir: None,
-            max_allowed_depth: 0,
+            max_depth: 4,
+            ..Default::default()
         };
-        let config = GitConfig::from_paths(vec![dir.path().join(three.to_string())], &options);
-        assert!(matches!(config.unwrap_err(), from_paths::Error::MaxAllowedDepth));
+        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options).unwrap();
+        assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"4")));
+
+        // with max_allowed_depth of 2 and 4 levels of includes, max_allowed_depth is exceeded and error is returned
+        let options = from_paths::Options {
+            max_depth: 2,
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options);
+        assert!(matches!(
+            config.unwrap_err(),
+            from_paths::Error::IncludeDepthExceeded { max_depth: 2 }
+        ));
+
+        // with max_allowed_depth of 2 and 4 levels of includes and error_on_max_depth_exceeded: false , max_allowed_depth is exceeded and the value of level 2 is returned
+        let options = from_paths::Options {
+            max_depth: 2,
+            error_on_max_depth_exceeded: false,
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options).unwrap();
+        assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"2")));
+
+        // with max_allowed_depth of 0 and 4 levels of includes, max_allowed_depth is exceeded and error is returned
+        let options = from_paths::Options {
+            max_depth: 0,
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options);
+        assert!(matches!(
+            config.unwrap_err(),
+            from_paths::Error::IncludeDepthExceeded { max_depth: 0 }
+        ));
     }
 
     #[test]
@@ -2029,7 +2065,13 @@ mod from_paths_tests {
         let c_path = dir.path().join("c");
         fs::write(c_path.as_path(), b"[core]\nkey = c").expect("Unable to write config file");
 
-        let paths = vec![a_path, b_path, c_path];
+        let d_path = dir.path().join("d");
+        fs::write(d_path.as_path(), b"[include]\npath = d_path").expect("Unable to write config file");
+
+        let e_path = dir.path().join("e");
+        fs::write(e_path.as_path(), b"[include]\npath = e_path").expect("Unable to write config file");
+
+        let paths = vec![a_path, b_path, c_path, d_path, e_path];
         let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
 
         assert_eq!(
@@ -2037,7 +2079,12 @@ mod from_paths_tests {
             vec![Cow::Borrowed(b"a"), Cow::Borrowed(b"b"), Cow::Borrowed(b"c")]
         );
 
-        assert_eq!(config.len(), 3);
+        assert_eq!(
+            config.get_raw_multi_value("include", None, "path").unwrap(),
+            vec![Cow::Borrowed(b"d_path"), Cow::Borrowed(b"e_path")]
+        );
+
+        assert_eq!(config.len(), 5);
     }
 }
 
