@@ -53,6 +53,7 @@
             * [x] pack only changed objects as derived from input
             * [x] base object compression
             * [ ] delta compression
+               * [ ] respect the `delta=false` attribute
             * [x] create 'thin' pack, i.e. deltas that are based on objects the other side has.
             * [x] parallel implementation that scales perfectly
         * [x] entries to pack data iterator
@@ -209,9 +210,10 @@ Check out the [performance discussion][git-traverse-performance] as well.
      
 ### git-attributes
 
-* [ ] parse git-ignore files (aka git-attributes without the attributes or negation)
+* [x] parse git-ignore files (aka git-attributes without the attributes or negation)
 * [ ] parse git-attributes files
 * [ ] create an attributes stack, ideally one that includes 'ignored' status from .gitignore files.
+   * [ ] support for built-in `binary` macro for `-text -diff -merge`
 
 ### git-pathspec
 
@@ -226,6 +228,15 @@ Check out the [performance discussion][git-traverse-performance] as well.
      - [ ] handle sparse directories
      - [ ] handle sparse index
      - [ ] linear scaling with multi-threading up to IO saturation
+  - supported attributes to affect working tree and index contents
+     - [ ] eol
+     - [ ] working-tree-encoding
+     - …more
+  - **filtering** 
+     - [ ] `text`
+     - [ ] `ident`
+     - [ ] filter processes
+     - [ ] single-invocation clean/smudge filters
 * manage multiple worktrees
 * deal with exclude specifications, like .gitignore and other exclude files.
  
@@ -384,6 +395,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 
 ### git-bundle
 * [ ] create a bundle from an archive
+   * [ ] respect `export-ignore` and `export-subst`
 * [ ] extract a branch from a bundle into a repository
 * [ ] API documentation
     * [ ] Some examples
