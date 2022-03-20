@@ -99,55 +99,14 @@ pub mod pretty {
                 }
                 #[cfg(feature = "prodash-render-line")]
                 {
-                    enum Event<T> {
-                        UiDone,
-                        ComputationFailed,
-                        ComputationDone(Result<T>, Vec<u8>),
-                    }
                     use crate::shared::{self, STANDARD_RANGE};
-                    let (tx, rx) = std::sync::mpsc::sync_channel::<Event<T>>(1);
-                    let ui_handle =
-                        shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
-                    std::thread::spawn({
-                        let tx = tx.clone();
-                        move || loop {
-                            std::thread::sleep(std::time::Duration::from_millis(500));
-                            if git_repository::interrupt::is_triggered() {
-                                tx.send(Event::UiDone).ok();
-                                break;
-                            }
-                        }
-                    });
-                    let join_handle = std::thread::spawn(move || {
-                        let mut out = Vec::<u8>::new();
-                        let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                            run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut stderr())
-                        }));
-                        match res {
-                            Ok(res) => tx.send(Event::ComputationDone(res, out)).ok(),
-                            Err(err) => {
-                                tx.send(Event::ComputationFailed).ok();
-                                std::panic::resume_unwind(err)
-                            }
-                        }
-                    });
-                    match rx.recv()? {
-                        Event::UiDone => {
-                            ui_handle.shutdown_and_wait();
-                            drop(join_handle);
-                            Err(anyhow::anyhow!("Operation cancelled by user"))
-                        }
-                        Event::ComputationDone(res, out) => {
-                            ui_handle.shutdown_and_wait();
-                            join_handle.join().ok();
-                            std::io::Write::write_all(&mut stdout(), &out)?;
-                            res
-                        }
-                        Event::ComputationFailed => match join_handle.join() {
-                            Ok(_) => unreachable!("The thread has panicked and unwrap is expected to show it"),
-                            Err(err) => std::panic::resume_unwind(err),
-                        },
-                    }
+                    let handle = shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
+
+                    let mut out = Vec::<u8>::new();
+                    let res = run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut stderr());
+                    handle.shutdown_and_wait();
+                    std::io::Write::write_all(&mut stdout(), &out)?;
+                    res
                 }
             }
             #[cfg(not(feature = "prodash-render-tui"))]
