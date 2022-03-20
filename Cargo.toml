@@ -35,7 +35,7 @@ fast = ["git-features/parallel", "git-features/fast-sha1", "git-features/zlib-ng
 ## Use `clap` 3.0 to build the prettiest, best documented and most user-friendly CLI at the expense of binary size.
 ## Provides a terminal user interface for detailed and exhaustive progress.
 ## Provides a line renderer for leaner progress display, without the need for a full-blown TUI.
-pretty-cli = [ "gitoxide-core/serde1", "prodash/progress-tree", "prodash/progress-tree-log", "prodash/local-time", "gitoxide-core/local-time-support", "env_logger" ]
+pretty-cli = [ "gitoxide-core/serde1", "prodash/progress-tree", "prodash/progress-tree-log", "prodash/local-time", "gitoxide-core/local-time-support", "env_logger/humantime", "env_logger/termcolor", "env_logger/atty" ]
 
 ## The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
 ## that appears after a short duration.
@@ -57,7 +57,7 @@ lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-async-
 
 ## As small as it can possibly be, no threading, no fast sha1, log based progress only, rust based zlib implementation.
 ## no networking, local operations only.
-small = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash/progress-log", "atty", "env_logger"]
+small = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash-render-line", "atty"  ]
 
 #! ### `gitoxide-core` Configuration
 
@@ -91,7 +91,7 @@ git-transport-for-configuration-only = { package = "git-transport", optional = t
 clap = { version = "3.0.0", features = ["derive", "cargo"] }
 prodash = { version = "19.0.0", optional = true, default-features = false }
 atty = { version = "0.2.14", optional = true, default-features = false }
-env_logger = { version = "0.9.0", optional = true, default-features = false, features = ["humantime", "termcolor", "atty"] }
+env_logger = { version = "0.9.0", default-features = false }
 crosstermion = { version = "0.9.0", optional = true, default-features = false }
 futures-lite = { version = "1.12.0", optional = true, default-features = false, features = ["std"] }
 

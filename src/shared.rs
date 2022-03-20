@@ -8,7 +8,6 @@ pub const STANDARD_RANGE: ProgressRange = 2..=2;
 
 /// If verbose is true, the env logger will be forcibly set to 'info' logging level. Otherwise env logging facilities
 /// will just be initialized.
-#[cfg(feature = "env_logger")]
 #[allow(unused)] // Squelch warning because it's used in porcelain as well and we can't know that at compile time
 pub fn init_env_logger() {
     if cfg!(feature = "small") {
@@ -59,13 +58,7 @@ pub mod pretty {
         progress: bool,
         #[cfg_attr(not(feature = "prodash-render-tui"), allow(unused_variables))] progress_keep_open: bool,
         #[cfg_attr(not(feature = "prodash-render-line"), allow(unused_variables))] range: impl Into<Option<ProgressRange>>,
-        #[cfg(not(any(feature = "prodash-render-line", feature = "prodash-render-tui")))] run: impl FnOnce(
-            progress::DoOrDiscard<prodash::progress::Log>,
-            &mut dyn std::io::Write,
-            &mut dyn std::io::Write,
-        )
-            -> Result<T>,
-        #[cfg(any(feature = "prodash-render-line", feature = "prodash-render-tui"))] run: impl FnOnce(
+        run: impl FnOnce(
                 progress::DoOrDiscard<prodash::tree::Item>,
                 &mut dyn std::io::Write,
                 &mut dyn std::io::Write,
@@ -87,27 +80,15 @@ pub mod pretty {
             (true, false) => {
                 let progress = crate::shared::progress_tree();
                 let sub_progress = progress.add_child(name);
-                #[cfg(not(feature = "prodash-render-line"))]
-                {
-                    let stdout = stdout();
-                    let mut stdout_lock = stdout.lock();
-                    run(
-                        progress::DoOrDiscard::from(Some(sub_progress)),
-                        &mut stdout_lock,
-                        &mut stderr(),
-                    )
-                }
-                #[cfg(feature = "prodash-render-line")]
-                {
-                    use crate::shared::{self, STANDARD_RANGE};
-                    let handle = shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
 
-                    let mut out = Vec::<u8>::new();
-                    let res = run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut stderr());
-                    handle.shutdown_and_wait();
-                    std::io::Write::write_all(&mut stdout(), &out)?;
-                    res
-                }
+                use crate::shared::{self, STANDARD_RANGE};
+                let handle = shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
+
+                let mut out = Vec::<u8>::new();
+                let res = run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut stderr());
+                handle.shutdown_and_wait();
+                std::io::Write::write_all(&mut stdout(), &out)?;
+                res
             }
             #[cfg(not(feature = "prodash-render-tui"))]
             (true, true) | (false, true) => {
