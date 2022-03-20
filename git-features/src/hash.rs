@@ -135,7 +135,7 @@ pub fn bytes(
         progress.inc_by(out.len());
         hasher.update(out);
         if should_interrupt.load(std::sync::atomic::Ordering::SeqCst) {
-            return Err(std::io::ErrorKind::Interrupted.into());
+            return Err(std::io::Error::new(std::io::ErrorKind::Other, "Interrupted"));
         }
     }
 

@@ -105,7 +105,7 @@ where
 {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         if self.should_interrupt.load(Ordering::Relaxed) {
-            return Err(io::ErrorKind::Interrupted.into());
+            return Err(std::io::Error::new(std::io::ErrorKind::Other, "Interrupted"));
         }
         self.inner.read(buf)
     }
