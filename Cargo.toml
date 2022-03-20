@@ -57,7 +57,7 @@ lean-async = ["fast", "pretty-cli", "gitoxide-core-tools", "gitoxide-core-async-
 
 ## As small as it can possibly be, no threading, no fast sha1, log based progress only, rust based zlib implementation.
 ## no networking, local operations only.
-small = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash/progress-log", "atty"]
+small = ["pretty-cli", "git-features/rustsha1", "git-features/zlib-rust-backend", "prodash/progress-log", "atty", "env_logger"]
 
 #! ### `gitoxide-core` Configuration
 
@@ -89,7 +89,7 @@ git-repository = { version = "^0.15.0", path = "git-repository", default-feature
 git-transport-for-configuration-only = { package = "git-transport", optional = true, version = "^0.15.0", path = "git-transport" }
 
 clap = { version = "3.0.0", features = ["derive", "cargo"] }
-prodash = { version = "18.0.0", optional = true, default-features = false }
+prodash = { version = "19.0.0", optional = true, default-features = false }
 atty = { version = "0.2.14", optional = true, default-features = false }
 env_logger = { version = "0.9.0", optional = true, default-features = false, features = ["humantime", "termcolor", "atty"] }
 crosstermion = { version = "0.9.0", optional = true, default-features = false }

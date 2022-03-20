@@ -33,12 +33,12 @@ pub mod async_util {
         range: impl Into<Option<ProgressRange>>,
     ) -> (Option<prodash::render::line::JoinHandle>, Option<prodash::tree::Item>) {
         use crate::shared::{self, STANDARD_RANGE};
-        crate::shared::init_env_logger(false);
+        crate::shared::init_env_logger();
 
         if verbose {
             let progress = crate::shared::progress_tree();
             let sub_progress = progress.add_child(name);
-            let ui_handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE));
+            let ui_handle = shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
             (Some(ui_handle), Some(sub_progress))
         } else {
             (None, None)
@@ -425,11 +425,7 @@ pub fn main() -> Result<()> {
                     progress_keep_open,
                     core::pack::multi_index::PROGRESS_RANGE,
                     move |progress, _out, _err| {
-                        core::pack::multi_index::verify(
-                            multi_index_path,
-                            progress,
-                            &git_repository::interrupt::IS_INTERRUPTED,
-                        )
+                        core::pack::multi_index::verify(multi_index_path, progress, &should_interrupt)
                     },
                 ),
                 pack::multi_index::Subcommands::Create { index_paths } => prepare_and_run(
@@ -443,7 +439,7 @@ pub fn main() -> Result<()> {
                             index_paths,
                             multi_index_path,
                             progress,
-                            &git_repository::interrupt::IS_INTERRUPTED,
+                            &should_interrupt,
                             object_hash,
                         )
                     },

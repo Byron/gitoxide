@@ -2224,9 +2224,9 @@ dependencies = [
 
 [[package]]
 name = "prodash"
-version = "18.0.2"
+version = "19.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ffc7d8b2f87fc3eb2bc6a3cee54f81eee83446ebb125f33c91df58ba1c00e30"
+checksum = "e50ab4909ddda71d476684a3c1e442da1f05bf3784fc8aff726be79548d02845"
 dependencies = [
  "async-io",
  "atty",

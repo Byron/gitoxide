@@ -10,8 +10,8 @@ pub const STANDARD_RANGE: ProgressRange = 2..=2;
 /// will just be initialized.
 #[cfg(feature = "env_logger")]
 #[allow(unused)] // Squelch warning because it's used in porcelain as well and we can't know that at compile time
-pub fn init_env_logger(verbose: bool) {
-    if verbose {
+pub fn init_env_logger() {
+    if cfg!(feature = "small") {
         env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
             .format_module_path(false)
             .init();
@@ -21,7 +21,7 @@ pub fn init_env_logger(verbose: bool) {
 }
 
 #[cfg(feature = "prodash-render-line")]
-pub fn progress_tree() -> prodash::Tree {
+pub fn progress_tree() -> std::sync::Arc<prodash::Tree> {
     prodash::TreeOptions {
         message_buffer_capacity: 200,
         ..Default::default()
@@ -74,7 +74,7 @@ pub mod pretty {
             + std::panic::UnwindSafe
             + 'static,
     ) -> Result<T> {
-        crate::shared::init_env_logger(false);
+        crate::shared::init_env_logger();
 
         match (verbose, progress) {
             (false, false) => {
@@ -91,12 +91,10 @@ pub mod pretty {
                 {
                     let stdout = stdout();
                     let mut stdout_lock = stdout.lock();
-                    let stderr = stderr();
-                    let mut stderr_lock = stderr.lock();
                     run(
                         progress::DoOrDiscard::from(Some(sub_progress)),
                         &mut stdout_lock,
-                        &mut stderr_lock,
+                        &mut stderr(),
                     )
                 }
                 #[cfg(feature = "prodash-render-line")]
@@ -108,7 +106,8 @@ pub mod pretty {
                     }
                     use crate::shared::{self, STANDARD_RANGE};
                     let (tx, rx) = std::sync::mpsc::sync_channel::<Event<T>>(1);
-                    let ui_handle = shared::setup_line_renderer_range(progress, range.into().unwrap_or(STANDARD_RANGE));
+                    let ui_handle =
+                        shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
                     std::thread::spawn({
                         let tx = tx.clone();
                         move || loop {
@@ -119,8 +118,6 @@ pub mod pretty {
                             }
                         }
                     });
-                    // LIMITATION: This will hang if the thread panics as no message is send and the renderer thread will wait forever.
-                    // `catch_unwind` can't be used as a parking lot mutex is not unwind safe, coming from prodash.
                     let join_handle = std::thread::spawn(move || {
                         let mut out = Vec::<u8>::new();
                         let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
@@ -171,11 +168,11 @@ pub mod pretty {
                 let sub_progress = progress.add_child(name);
                 let render_tui = prodash::render::tui(
                     stdout(),
-                    progress,
+                    std::sync::Arc::downgrade(&progress),
                     prodash::render::tui::Options {
                         title: "gitoxide".into(),
                         frames_per_second: shared::DEFAULT_FRAME_RATE,
-                        stop_if_empty_progress: !progress_keep_open,
+                        stop_if_progress_missing: !progress_keep_open,
                         throughput: true,
                         ..Default::default()
                     },
@@ -219,12 +216,12 @@ pub mod pretty {
 #[allow(unused)]
 #[cfg(feature = "prodash-render-line")]
 pub fn setup_line_renderer_range(
-    progress: prodash::Tree,
+    progress: &std::sync::Arc<prodash::Tree>,
     levels: std::ops::RangeInclusive<prodash::progress::key::Level>,
 ) -> prodash::render::line::JoinHandle {
     prodash::render::line(
         std::io::stderr(),
-        progress,
+        std::sync::Arc::downgrade(progress),
         prodash::render::line::Options {
             level_filter: Some(levels),
             frames_per_second: DEFAULT_FRAME_RATE,
