@@ -78,21 +78,16 @@ pub(crate) mod function {
             }));
         }
         let mut buf = Vec::new();
-        // TODO: what if there is no committer?
-        let commit_time = find(commit, &mut buf)?
-            .committer()
-            .map(|c| c.time.seconds_since_unix_epoch)
-            .unwrap_or_default();
-        let mut queue = VecDeque::from_iter(Some((commit.to_owned(), commit_time)));
+
+        let mut queue = VecDeque::from_iter(Some(commit.to_owned()));
         let mut candidates = Vec::new();
         let mut seen_commits = 0;
         let mut gave_up_on_commit = None;
         let mut seen = hash_hasher::HashedMap::default();
         seen.insert(commit.to_owned(), 0u32);
-        let mut parent_buf = Vec::new();
 
         const MAX_CANDIDATES: usize = std::mem::size_of::<Flags>() * 8;
-        while let Some((commit, _commit_time)) = queue.pop_front() {
+        while let Some(commit) = queue.pop_front() {
             seen_commits += 1;
             if let Some(name) = name_set.get(&commit) {
                 if candidates.len() < MAX_CANDIDATES {
@@ -122,36 +117,21 @@ pub(crate) mod function {
             for token in commit_iter {
                 match token {
                     Ok(git_object::commit::ref_iter::Token::Tree { .. }) => continue,
-                    Ok(git_object::commit::ref_iter::Token::Parent { id }) => {
-                        let mut parent = find(id.as_ref(), &mut parent_buf)?;
-
-                        // TODO: figure out if not having a date is a hard error.
-                        let parent_commit_date = parent
-                            .committer()
-                            .map(|committer| committer.time.seconds_since_unix_epoch)
-                            .unwrap_or_default();
-
-                        let at = match queue.binary_search_by(|e| e.1.cmp(&parent_commit_date).reverse()) {
-                            Ok(pos) => pos,
-                            Err(pos) => pos,
-                        };
-                        match seen.entry(id) {
-                            hash_map::Entry::Vacant(entry) => {
-                                entry.insert(flags);
-                                queue.insert(at, (id, parent_commit_date))
-                            }
-                            hash_map::Entry::Occupied(mut entry) => {
-                                *entry.get_mut() |= flags;
-                            }
+                    Ok(git_object::commit::ref_iter::Token::Parent { id }) => match seen.entry(id) {
+                        hash_map::Entry::Vacant(entry) => {
+                            entry.insert(flags);
+                            queue.push_back(id);
                         }
-                    }
+                        hash_map::Entry::Occupied(mut entry) => {
+                            *entry.get_mut() |= flags;
+                        }
+                    },
                     Ok(_unused_token) => break,
-                    Err(err) => todo!("return a decode error"),
+                    Err(_err) => todo!("return a decode error"),
                 }
             }
         }
-        dbg!(candidates);
-        todo!("actually search for it")
+        todo!("return candidate")
     }
 
     type Flags = u32;
