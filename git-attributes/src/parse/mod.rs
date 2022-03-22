@@ -1,7 +1,7 @@
 pub mod ignore;
 
-pub mod attributes {}
+pub mod attribute;
 
-pub fn ignore(buf: &[u8]) -> ignore::Iter<'_> {
-    ignore::Iter::new(buf)
+pub fn ignore(buf: &[u8]) -> ignore::Lines<'_> {
+    ignore::Lines::new(buf)
 }

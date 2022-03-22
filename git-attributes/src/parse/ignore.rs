@@ -1,22 +1,22 @@
 use crate::ignore;
 use bstr::{BString, ByteSlice};
 
-pub struct Iter<'a> {
+pub struct Lines<'a> {
     lines: bstr::Lines<'a>,
     line_no: usize,
 }
 
-impl<'a> Iter<'a> {
+impl<'a> Lines<'a> {
     pub fn new(buf: &'a [u8]) -> Self {
         let bom = unicode_bom::Bom::from(buf);
-        Iter {
+        Lines {
             lines: buf[bom.len()..].lines(),
             line_no: 0,
         }
     }
 }
 
-impl<'a> Iterator for Iter<'a> {
+impl<'a> Iterator for Lines<'a> {
     type Item = (BString, ignore::pattern::Mode, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
