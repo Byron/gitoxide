@@ -20,40 +20,46 @@ impl<'a> Iterator for Iter<'a> {
     type Item = (BString, ignore::pattern::Mode, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut res = None;
-        for mut line in self.lines.by_ref() {
+        for line in self.lines.by_ref() {
             self.line_no += 1;
-            let mut mode = ignore::pattern::Mode::empty();
-            if line.is_empty() {
-                continue;
-            };
-            if line.first() == Some(&b'#') {
-                continue;
-            } else if line.first() == Some(&b'!') {
-                mode |= ignore::pattern::Mode::NEGATIVE;
-                line = &line[1..];
-            } else if line.first() == Some(&b'\\') {
-                let second = line.get(1);
-                if second == Some(&b'!') || second == Some(&b'#') {
-                    line = &line[1..];
-                }
+            match parse_line(line) {
+                None => continue,
+                Some((line, flags)) => return Some((line, flags, self.line_no)),
             }
-            let mut line = truncate_non_escaped_trailing_spaces(line);
-            if line.last() == Some(&b'/') {
-                mode |= ignore::pattern::Mode::MUST_BE_DIR;
-                line.pop();
-            }
-            if !line.contains(&b'/') {
-                mode |= ignore::pattern::Mode::NO_SUB_DIR;
-            }
-            if line.first() == Some(&b'*') && line[1..].find_byteset(br"*?[\").is_none() {
-                mode |= ignore::pattern::Mode::ENDS_WITH;
-            }
-            res = Some((line, mode, self.line_no));
-            break;
         }
-        res
+        None
     }
+}
+
+#[inline]
+fn parse_line(mut line: &[u8]) -> Option<(BString, ignore::pattern::Mode)> {
+    let mut mode = ignore::pattern::Mode::empty();
+    if line.is_empty() {
+        return None;
+    };
+    if line.first() == Some(&b'#') {
+        return None;
+    } else if line.first() == Some(&b'!') {
+        mode |= ignore::pattern::Mode::NEGATIVE;
+        line = &line[1..];
+    } else if line.first() == Some(&b'\\') {
+        let second = line.get(1);
+        if second == Some(&b'!') || second == Some(&b'#') {
+            line = &line[1..];
+        }
+    }
+    let mut line = truncate_non_escaped_trailing_spaces(line);
+    if line.last() == Some(&b'/') {
+        mode |= ignore::pattern::Mode::MUST_BE_DIR;
+        line.pop();
+    }
+    if !line.contains(&b'/') {
+        mode |= ignore::pattern::Mode::NO_SUB_DIR;
+    }
+    if line.first() == Some(&b'*') && line[1..].find_byteset(br"*?[\").is_none() {
+        mode |= ignore::pattern::Mode::ENDS_WITH;
+    }
+    Some((line, mode))
 }
 
 /// We always copy just because that's ultimately needed anyway, not because we always have to.
