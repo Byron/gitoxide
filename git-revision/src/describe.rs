@@ -108,7 +108,7 @@ pub(crate) mod function {
             let flags = seen[&commit];
             for candidate in candidates
                 .iter_mut()
-                .filter(|c| !((flags & c.identity_bit) == c.identity_bit))
+                .filter(|c| (flags & c.identity_bit) != c.identity_bit)
             {
                 candidate.commits_in_its_future += 1;
             }
