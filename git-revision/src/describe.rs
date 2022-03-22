@@ -53,7 +53,7 @@ pub(crate) mod function {
     use git_object::bstr::BStr;
     use git_object::CommitRefIter;
     use std::borrow::Cow;
-    use std::collections::{HashMap, VecDeque};
+    use std::collections::{hash_map, HashMap, VecDeque};
     use std::iter::FromIterator;
 
     #[allow(clippy::result_unit_err)]
@@ -77,32 +77,40 @@ pub(crate) mod function {
                 dirty_suffix: None,
             }));
         }
-        type Flags = usize;
-        let mut queue = VecDeque::from_iter(Some((commit.to_owned(), 0 as Flags)));
+        let mut buf = Vec::new();
+        // TODO: what if there is no committer?
+        let commit_time = find(commit, &mut buf)?
+            .committer()
+            .map(|c| c.time.seconds_since_unix_epoch)
+            .unwrap_or_default();
+        let mut queue = VecDeque::from_iter(Some((commit.to_owned(), commit_time)));
         let mut candidates = Vec::new();
         let mut seen_commits = 0;
         let mut gave_up_on_commit = None;
-        let mut seen = hash_hasher::HashedSet::default();
-        let mut buf = Vec::new();
+        let mut seen = hash_hasher::HashedMap::default();
+        seen.insert(commit.to_owned(), 0u32);
+        let mut parent_buf = Vec::new();
 
         const MAX_CANDIDATES: usize = std::mem::size_of::<Flags>() * 8;
-        while let Some((commit, flags)) = queue.pop_front() {
+        while let Some((commit, _commit_time)) = queue.pop_front() {
             seen_commits += 1;
-            assert!(seen.insert(commit), "BUG: shouldn't ever see dupes here");
             if let Some(name) = name_set.get(&commit) {
                 if candidates.len() < MAX_CANDIDATES {
+                    let identity_bit = 1 << candidates.len();
                     candidates.push(Candidate {
                         name: name.clone(),
                         commits_in_its_future: seen_commits - 1,
-                        identity_bit: 1 << candidates.len(),
+                        identity_bit,
                         order: candidates.len(),
                     });
+                    *seen.get_mut(&commit).expect("inserted") |= identity_bit;
                 } else {
                     gave_up_on_commit = Some(commit);
                     break;
                 }
             }
 
+            let flags = seen[&commit];
             for candidate in candidates
                 .iter_mut()
                 .filter(|c| !((flags & c.identity_bit) == c.identity_bit))
@@ -115,29 +123,44 @@ pub(crate) mod function {
                 match token {
                     Ok(git_object::commit::ref_iter::Token::Tree { .. }) => continue,
                     Ok(git_object::commit::ref_iter::Token::Parent { id }) => {
-                        let mut parent = find(id.as_ref(), &mut buf)?;
+                        let mut parent = find(id.as_ref(), &mut parent_buf)?;
 
                         // TODO: figure out if not having a date is a hard error.
-                        let parent_committer_date = parent
+                        let parent_commit_date = parent
                             .committer()
-                            .map(|committer| committer.time.time)
+                            .map(|committer| committer.time.seconds_since_unix_epoch)
                             .unwrap_or_default();
 
-                        // queue.binary_search_by_key()
+                        let at = match queue.binary_search_by(|e| e.1.cmp(&parent_commit_date).reverse()) {
+                            Ok(pos) => pos,
+                            Err(pos) => pos,
+                        };
+                        match seen.entry(id) {
+                            hash_map::Entry::Vacant(entry) => {
+                                entry.insert(flags);
+                                queue.insert(at, (id, parent_commit_date))
+                            }
+                            hash_map::Entry::Occupied(mut entry) => {
+                                *entry.get_mut() |= flags;
+                            }
+                        }
                     }
                     Ok(_unused_token) => break,
                     Err(err) => todo!("return a decode error"),
                 }
             }
         }
+        dbg!(candidates);
         todo!("actually search for it")
     }
 
+    type Flags = u32;
+    #[derive(Debug)]
     struct Candidate<'a> {
         name: Cow<'a, BStr>,
-        commits_in_its_future: usize,
+        commits_in_its_future: Flags,
         /// A single bit identifying this candidate uniquely in a bitset
-        identity_bit: usize,
+        identity_bit: Flags,
         /// The order at which we found the candidate, first one has order = 0
         order: usize,
     }
