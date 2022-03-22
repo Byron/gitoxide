@@ -104,7 +104,14 @@ where
             },
         )
         .ok_or_else(|| anyhow!("An error occurred when decoding commits - one commit could not be parsed"))?;
-    all_commits.sort_by(|a, b| a.email.cmp(&b.email).then(a.time.time.cmp(&b.time.time).reverse()));
+    all_commits.sort_by(|a, b| {
+        a.email.cmp(&b.email).then(
+            a.time
+                .seconds_since_unix_epoch
+                .cmp(&b.time.seconds_since_unix_epoch)
+                .reverse(),
+        )
+    });
     if all_commits.is_empty() {
         bail!("No commits to process");
     }
@@ -185,7 +192,8 @@ fn estimate_hours(commits: &[actor::Signature]) -> WorkByEmail {
         + commits.iter().rev().tuple_windows().fold(
             0_f32,
             |hours, (cur, next): (&actor::Signature, &actor::Signature)| {
-                let change_in_minutes = (next.time.time - cur.time.time) as f32 / MINUTES_PER_HOUR;
+                let change_in_minutes =
+                    (next.time.seconds_since_unix_epoch - cur.time.seconds_since_unix_epoch) as f32 / MINUTES_PER_HOUR;
                 if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
                     hours + change_in_minutes as f32 / MINUTES_PER_HOUR
                 } else {
