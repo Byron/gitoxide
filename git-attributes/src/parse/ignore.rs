@@ -32,7 +32,7 @@ impl<'a> Iterator for Lines<'a> {
 }
 
 #[inline]
-fn parse_line(mut line: &[u8]) -> Option<(BString, ignore::pattern::Mode)> {
+pub(crate) fn parse_line(mut line: &[u8]) -> Option<(BString, ignore::pattern::Mode)> {
     let mut mode = ignore::pattern::Mode::empty();
     if line.is_empty() {
         return None;
