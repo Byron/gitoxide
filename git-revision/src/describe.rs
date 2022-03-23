@@ -7,13 +7,34 @@ use std::fmt::{Display, Formatter};
 pub struct Outcome<'a> {
     pub name: Cow<'a, BStr>,
     pub id: git_hash::ObjectId,
+    pub depth: u32,
+}
+
+impl<'a> Outcome<'a> {
+    pub fn into_format(self, hex_len: usize) -> Format<'a> {
+        Format {
+            name: self.name,
+            id: self.id,
+            hex_len,
+            depth: self.depth,
+            long: false,
+            dirty_suffix: None,
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Format<'a> {
+    pub name: Cow<'a, BStr>,
+    pub id: git_hash::ObjectId,
     pub hex_len: usize,
-    pub depth: usize,
+    pub depth: u32,
     pub long: bool,
     pub dirty_suffix: Option<String>,
 }
 
-impl<'a> Outcome<'a> {
+impl<'a> Format<'a> {
     pub fn is_exact_match(&self) -> bool {
         self.depth == 0
     }
@@ -27,7 +48,7 @@ impl<'a> Outcome<'a> {
     }
 }
 
-impl<'a> Display for Outcome<'a> {
+impl<'a> Display for Format<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         if !self.long && self.is_exact_match() {
             self.name.fmt(f)?;
@@ -60,7 +81,6 @@ pub(crate) mod function {
     pub fn describe<'a, Find, E>(
         commit: &oid,
         mut find: Find,
-        hex_len: usize,
         name_set: &HashMap<ObjectId, Cow<'a, BStr>>,
     ) -> Result<Option<Outcome<'a>>, E>
     where
@@ -71,10 +91,7 @@ pub(crate) mod function {
             return Ok(Some(Outcome {
                 name: name.clone(),
                 id: commit.to_owned(),
-                hex_len,
                 depth: 0,
-                long: false,
-                dirty_suffix: None,
             }));
         }
         let mut buf = Vec::new();
@@ -82,7 +99,7 @@ pub(crate) mod function {
         let mut queue = VecDeque::from_iter(Some(commit.to_owned()));
         let mut candidates = Vec::new();
         let mut seen_commits = 0;
-        let mut gave_up_on_commit = None;
+        let mut _gave_up_on_commit = None;
         let mut seen = hash_hasher::HashedMap::default();
         seen.insert(commit.to_owned(), 0u32);
 
@@ -100,7 +117,7 @@ pub(crate) mod function {
                     });
                     *seen.get_mut(&commit).expect("inserted") |= identity_bit;
                 } else {
-                    gave_up_on_commit = Some(commit);
+                    _gave_up_on_commit = Some(commit);
                     break;
                 }
             }
@@ -131,10 +148,25 @@ pub(crate) mod function {
                 }
             }
         }
-        todo!("return candidate")
+
+        if candidates.is_empty() {
+            return Ok(None);
+        }
+
+        candidates.sort_by(|a, b| {
+            a.commits_in_its_future
+                .cmp(&b.commits_in_its_future)
+                .then_with(|| a.order.cmp(&b.order))
+        });
+        Ok(candidates.into_iter().next().map(|c| Outcome {
+            name: c.name,
+            id: commit.to_owned(),
+            depth: c.commits_in_its_future,
+        }))
     }
 
     type Flags = u32;
+
     #[derive(Debug)]
     struct Candidate<'a> {
         name: Cow<'a, BStr>,
