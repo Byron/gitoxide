@@ -1,25 +1,38 @@
 use bstr::{BStr, BString};
 use git_attributes::ignore::pattern::Mode;
 use git_attributes::{ignore, parse};
+use git_testtools::fixture_path;
 
 #[test]
-#[ignore]
 fn byte_order_marks_are_no_patterns() {
-    git_attributes::parse("\u{feff}hello".as_bytes()).next();
-    todo!();
+    assert_eq!(line("\u{feff}hello"), (r"hello".into(), Mode::NO_SUB_DIR, vec![], 1));
 }
 
 #[test]
-#[ignore]
 fn line_numbers_are_counted_correctly() {
-    todo!()
+    let ignore = std::fs::read(fixture_path("attributes/various.txt")).unwrap();
+    assert_eq!(
+        try_lines(&String::from_utf8(ignore).unwrap()).unwrap(),
+        vec![
+            (r"*.[oa]".into(), Mode::NO_SUB_DIR, vec![], 2),
+            (r"*.html".into(), Mode::NO_SUB_DIR | Mode::ENDS_WITH, vec![], 5),
+            (r"!foo.html".into(), Mode::NO_SUB_DIR, vec![], 8),
+            (r"#a/path".into(), Mode::empty(), vec![], 10),
+            (r"/*".into(), Mode::empty(), vec![], 11),
+        ]
+    );
 }
 
 #[test]
-#[ignore]
 fn line_endings_can_be_windows_or_unix() {
-    let _ = git_attributes::parse(b"unix\nwindows\r\nlast").collect::<Vec<_>>();
-    todo!()
+    assert_eq!(
+        try_lines("unix\nwindows\r\nlast").unwrap(),
+        vec![
+            (r"unix".into(), Mode::NO_SUB_DIR, vec![], 1),
+            (r"windows".into(), Mode::NO_SUB_DIR, vec![], 2),
+            (r"last".into(), Mode::NO_SUB_DIR, vec![], 3)
+        ]
+    );
 }
 
 #[test]
@@ -28,16 +41,28 @@ fn comment_lines_are_ignored() {
 }
 
 #[test]
-#[ignore]
-fn comment_cannot_be_escaped_like_gitignore() {
-    assert_eq!(line(r"\#hello"), (r"\#hello".into(), Mode::empty(), vec![], 0));
+fn comment_can_be_escaped_like_gitignore() {
+    assert_eq!(
+        line(r"\#hello"),
+        (r"#hello".into(), Mode::NO_SUB_DIR, vec![], 1),
+        "undocumented, but definitely works"
+    );
+}
+
+#[test]
+fn esclamation_marks_must_be_escaped_or_error_unlike_gitignore() {
+    assert_eq!(line(r"\!hello"), (r"!hello".into(), Mode::NO_SUB_DIR, vec![], 1));
+    assert!(matches!(
+        try_line(r"!hello"),
+        Err(parse::attribute::Error::PatternNegation { line_number: 1, .. })
+    ));
 }
 
 #[test]
 #[ignore]
-fn backslashes_before_hashes_are_part_of_the_path() {
-    git_attributes::parse(br"\#hello").next();
-    todo!();
+fn attributes_are_parsed_behind_various_whitespace_characters() {
+    // see https://github.com/git/git/blob/master/attr.c#L280:L280
+    todo!()
 }
 
 type ExpandedAttribute<'a> = (
@@ -47,11 +72,22 @@ type ExpandedAttribute<'a> = (
     usize,
 );
 
+fn try_line(input: &str) -> Result<ExpandedAttribute, parse::attribute::Error> {
+    let mut lines = git_attributes::parse(input.as_bytes());
+    let res = expand(lines.next().unwrap())?;
+    assert!(lines.next().is_none(), "expected only one line");
+    Ok(res)
+}
+
 fn line(input: &str) -> ExpandedAttribute {
     let mut lines = git_attributes::parse(input.as_bytes());
     let res = expand(lines.next().unwrap()).unwrap();
     assert!(lines.next().is_none(), "expected only one line");
     res
+}
+
+fn try_lines(input: &str) -> Result<Vec<ExpandedAttribute>, parse::attribute::Error> {
+    git_attributes::parse(input.as_bytes()).map(|l| expand(l)).collect()
 }
 
 fn expand(

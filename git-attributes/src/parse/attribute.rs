@@ -14,6 +14,7 @@ mod error {
         }
     }
 }
+use crate::ignore;
 pub use error::Error;
 
 pub struct Lines<'a> {
@@ -60,7 +61,17 @@ impl<'a> Iterator for Lines<'a> {
             self.line_no += 1;
             match parse_line(line) {
                 None => continue,
-                Some(res) => return Some(res.map(|(line, flags, attrs)| (line, flags, attrs, self.line_no))),
+                Some(Ok((pattern, flags, attrs))) => {
+                    return Some(if flags.contains(ignore::pattern::Mode::NEGATIVE) {
+                        Err(Error::PatternNegation {
+                            line: line.into(),
+                            line_number: self.line_no,
+                        })
+                    } else {
+                        Ok((pattern, flags, attrs, self.line_no))
+                    })
+                }
+                Some(Err(err)) => return Some(Err(err)),
             }
         }
         None

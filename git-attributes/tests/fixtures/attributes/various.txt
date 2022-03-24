@@ -1,0 +1,11 @@
+# no attribute for now
+*.[oa]
+
+# comment
+*.html
+
+# other comment  
+\!foo.html
+
+\#a/path
+/*
