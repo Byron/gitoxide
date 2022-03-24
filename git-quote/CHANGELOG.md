@@ -7,4 +7,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-An empty crate without any content to reserve the name for the gitoxide project.
+Initial release with ansi_c unquoting capability.
