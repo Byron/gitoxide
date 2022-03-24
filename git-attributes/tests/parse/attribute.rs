@@ -87,7 +87,7 @@ fn line(input: &str) -> ExpandedAttribute {
 }
 
 fn try_lines(input: &str) -> Result<Vec<ExpandedAttribute>, parse::attribute::Error> {
-    git_attributes::parse(input.as_bytes()).map(|l| expand(l)).collect()
+    git_attributes::parse(input.as_bytes()).map(expand).collect()
 }
 
 fn expand(
