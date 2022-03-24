@@ -94,7 +94,10 @@ pub(crate) mod function {
                 depth: 0,
             }));
         }
+
         let mut buf = Vec::new();
+        let mut parent_buf = Vec::new();
+        let mut parents = Vec::new();
 
         let mut queue = VecDeque::from_iter(Some(commit.to_owned()));
         let mut candidates = Vec::new();
@@ -131,21 +134,37 @@ pub(crate) mod function {
             }
 
             let commit_iter = find(&commit, &mut buf)?;
+            parents.clear();
             for token in commit_iter {
                 match token {
                     Ok(git_object::commit::ref_iter::Token::Tree { .. }) => continue,
-                    Ok(git_object::commit::ref_iter::Token::Parent { id }) => match seen.entry(id) {
-                        hash_map::Entry::Vacant(entry) => {
-                            entry.insert(flags);
-                            queue.push_back(id);
+                    Ok(git_object::commit::ref_iter::Token::Parent { id: parent_id }) => {
+                        match seen.entry(parent_id) {
+                            hash_map::Entry::Vacant(entry) => {
+                                let mut parent = find(&parent_id, &mut parent_buf)?;
+                                // TODO: figure out if not having a date is a hard error.
+                                let parent_commit_date = parent
+                                    .committer()
+                                    .map(|committer| committer.time.seconds_since_unix_epoch)
+                                    .unwrap_or_default();
+
+                                entry.insert(flags);
+                                parents.push((parent_id, parent_commit_date));
+                            }
+                            hash_map::Entry::Occupied(mut entry) => {
+                                *entry.get_mut() |= flags;
+                            }
                         }
-                        hash_map::Entry::Occupied(mut entry) => {
-                            *entry.get_mut() |= flags;
-                        }
-                    },
+                    }
                     Ok(_unused_token) => break,
                     Err(_err) => todo!("return a decode error"),
                 }
+            }
+
+            if !parents.is_empty() {
+                parents.sort_by(|a, b| a.1.cmp(&b.1).reverse());
+                seen.extend(parents.iter().map(|e| (e.0, flags)));
+                queue.extend(parents.iter().map(|e| e.0));
             }
         }
 
