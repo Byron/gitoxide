@@ -1077,6 +1077,7 @@ version = "0.0.0"
 dependencies = [
  "bitflags",
  "bstr",
+ "git-quote",
  "git-testtools",
  "quick-error",
  "serde",

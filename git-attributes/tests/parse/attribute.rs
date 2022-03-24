@@ -6,6 +6,10 @@ use git_testtools::fixture_path;
 #[test]
 fn byte_order_marks_are_no_patterns() {
     assert_eq!(line("\u{feff}hello"), (r"hello".into(), Mode::NO_SUB_DIR, vec![], 1));
+    assert_eq!(
+        line("\u{feff}\"hello\""),
+        (r"hello".into(), Mode::NO_SUB_DIR, vec![], 1)
+    );
 }
 
 #[test]

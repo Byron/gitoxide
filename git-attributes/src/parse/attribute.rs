@@ -11,6 +11,11 @@ mod error {
             PatternNegation { line_number: usize, line: BString } {
                 display("Line {} has a negative pattern, for literal characters use \\!: {}", line_number, line)
             }
+            Unquote(err: git_quote::ansi_c::undo::Error) {
+                display("Could not unquote attributes line")
+                from()
+                source(err)
+            }
         }
     }
 }
@@ -27,9 +32,9 @@ pub struct Iter<'a> {
 }
 
 impl<'a> Iter<'a> {
-    pub fn new(attrs: &'a [u8]) -> Self {
+    pub fn new(attrs: &'a BStr) -> Self {
         Iter {
-            attrs: attrs.as_bstr().split_str(b" "),
+            attrs: attrs.split_str(b" "),
         }
     }
 }
@@ -83,13 +88,18 @@ fn parse_line(line: &[u8]) -> Option<Result<(BString, crate::ignore::pattern::Mo
         return None;
     }
 
+    let line = line.as_bstr();
     let (line, attrs): (Cow<'_, _>, _) = if line.starts_with(b"\"") {
-        todo!("unquote, need length of consumed bytes to know where attrs start")
+        let (unquoted, consumed) = match git_quote::ansi_c::undo(line) {
+            Ok(res) => res,
+            Err(err) => return Some(Err(err.into())),
+        };
+        (unquoted, &line[consumed..])
     } else {
         let mut tokens = line.splitn(2, |n| *n == b' ');
         (
-            tokens.next().expect("at least a line").into(),
-            tokens.next().unwrap_or_default(),
+            tokens.next().expect("at least a line").as_bstr().into(),
+            tokens.next().unwrap_or_default().as_bstr(),
         )
     };
 
