@@ -28,23 +28,25 @@ use std::{borrow::Cow, io::Read};
 
 use bstr::{BStr, BString, ByteSlice};
 
-/// Unquote the given ansi-c quoted `input` string.
+/// Unquote the given ansi-c quoted `input` string, returning it and all of the consumed bytes.
 ///
 /// The `input` is returned unaltered if it doesn't start with a `"` character to indicate
-/// quotation, otherwise a new unqoted string will always be allocated.
+/// quotation, otherwise a new unquoted string will always be allocated.
+/// The amount of consumed bytes allow to pass strings that start with a quote, and skip all quoted text for additional processing
 ///
 /// See [the tests][tests] for quotation examples.
 ///
 /// [tests]: https://github.com/Byron/gitoxide/blob/e355b4ad133075152312816816af5ce72cf79cff/git-odb/src/alternate/unquote.rs#L110-L118
-pub fn undo(input: &BStr) -> Result<Cow<'_, BStr>, undo::Error> {
+pub fn undo(input: &BStr) -> Result<(Cow<'_, BStr>, usize), undo::Error> {
     if !input.starts_with(b"\"") {
-        return Ok(input.into());
+        return Ok((input.into(), input.len()));
     }
     if input.len() < 2 {
         return Err(undo::Error::new("Input must be surrounded by double quotes", input));
     }
     let original = input.as_bstr();
     let mut input = &input[1..];
+    let mut consumed = 1;
     let mut out = BString::default();
     fn consume_one_past(input: &mut &BStr, position: usize) -> Result<u8, undo::Error> {
         *input = input
@@ -59,10 +61,12 @@ pub fn undo(input: &BStr) -> Result<Cow<'_, BStr>, undo::Error> {
         match input.find_byteset(b"\"\\") {
             Some(position) => {
                 out.extend_from_slice(&input[..position]);
+                consumed += position + 1;
                 match input[position] {
                     b'"' => break,
                     b'\\' => {
                         let next = consume_one_past(&mut input, position)?;
+                        consumed += 1;
                         match next {
                             b'n' => out.push(b'\n'),
                             b'r' => out.push(b'\r'),
@@ -88,6 +92,7 @@ pub fn undo(input: &BStr) -> Result<Cow<'_, BStr>, undo::Error> {
                                 let byte = btoi::btou_radix(&buf, 8).map_err(|e| undo::Error::new(e, original))?;
                                 out.push(byte);
                                 input = &input[2..];
+                                consumed += 2;
                             }
                             _ => {
                                 return Err(undo::Error::UnsupportedEscapeByte {
@@ -102,9 +107,10 @@ pub fn undo(input: &BStr) -> Result<Cow<'_, BStr>, undo::Error> {
             }
             None => {
                 out.extend_from_slice(input);
+                consumed += input.len();
                 break;
             }
         }
     }
-    Ok(out.into())
+    Ok((out.into(), consumed))
 }
