@@ -133,6 +133,7 @@ members = [
     "git-features",
     "git-commitgraph",
     "git-chunk",
+    "git-quote",
     "git-object",
     "git-diff",
     "git-traverse",

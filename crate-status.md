@@ -214,6 +214,12 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [ ] parse git-attributes files
 * [ ] create an attributes stack, ideally one that includes 'ignored' status from .gitignore files.
    * [ ] support for built-in `binary` macro for `-text -diff -merge`
+    
+### git-quote
+
+* **ansi-c**
+  * [x] quote
+  * [ ] unquote
 
 ### git-pathspec
 
