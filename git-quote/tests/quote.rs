@@ -1,13 +1,14 @@
 mod ansi_c {
     mod undo {
         use bstr::ByteSlice;
+        use git_quote::ansi_c;
 
         macro_rules! test {
             ($name:ident, $input:literal, $expected:literal) => {
                 #[test]
                 fn $name() {
                     assert_eq!(
-                        git_quote::ansi_c::undo($input.as_bytes().as_bstr()).expect("valid input"),
+                        ansi_c::undo($input.as_bytes().as_bstr()).expect("valid input"),
                         std::borrow::Cow::Borrowed($expected.as_bytes().as_bstr())
                     );
                 }
@@ -25,5 +26,18 @@ mod ansi_c {
             r#""\346\277\261\351\207\216\t\347\264\224""#,
             "濱野\t純"
         );
+        test!(
+            exclamation_and_tilde_survive_an_escape_with_double_escaping,
+            r#""\\!\\#hello there/file.ext""#,
+            r"\!\#hello there/file.ext"
+        );
+
+        #[test]
+        fn out_of_quote_characters_can_be_passed_and_will_not_be_consumed() {
+            assert_eq!(
+                ansi_c::undo(br#""hello there" out of quote"#.as_bstr()).expect("valid input"),
+                std::borrow::Cow::Borrowed(b"hello there".as_bstr())
+            );
+        }
     }
 }
