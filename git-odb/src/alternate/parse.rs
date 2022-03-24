@@ -2,8 +2,6 @@ use std::{borrow::Cow, path::PathBuf};
 
 use git_object::bstr::ByteSlice;
 
-use crate::alternate::unquote;
-
 /// Returned as part of [`crate::alternate::Error::Parse`]
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
@@ -11,7 +9,7 @@ pub enum Error {
     #[error("Could not obtain an object path for the alternate directory '{}'", String::from_utf8_lossy(.0))]
     PathConversion(Vec<u8>),
     #[error("Could not unquote alternate path")]
-    Unquote(#[from] unquote::Error),
+    Unquote(#[from] git_quote::ansi_c::undo::Error),
 }
 
 pub(crate) fn content(input: &[u8]) -> Result<Vec<PathBuf>, Error> {
@@ -23,7 +21,7 @@ pub(crate) fn content(input: &[u8]) -> Result<Vec<PathBuf>, Error> {
         }
         out.push(
             git_features::path::from_bstr(if line.starts_with(b"\"") {
-                unquote::ansi_c(line)?
+                git_quote::ansi_c::undo(line)?
             } else {
                 Cow::Borrowed(line)
             })

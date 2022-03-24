@@ -1241,13 +1241,13 @@ name = "git-odb"
 version = "0.27.0"
 dependencies = [
  "arc-swap",
- "btoi",
  "filetime",
  "git-actor",
  "git-features",
  "git-hash",
  "git-object",
  "git-pack",
+ "git-quote",
  "git-testtools",
  "parking_lot 0.12.0",
  "pretty_assertions",
@@ -1331,7 +1331,7 @@ dependencies = [
 
 [[package]]
 name = "git-quote"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bstr",
  "btoi",

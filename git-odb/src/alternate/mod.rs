@@ -20,8 +20,6 @@ use std::{fs, io, path::PathBuf};
 
 ///
 pub mod parse;
-///
-pub mod unquote;
 
 /// Returned by [`resolve()`]
 #[derive(thiserror::Error, Debug)]
