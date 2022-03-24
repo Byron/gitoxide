@@ -21,7 +21,7 @@ pub(crate) fn content(input: &[u8]) -> Result<Vec<PathBuf>, Error> {
         }
         out.push(
             git_features::path::from_bstr(if line.starts_with(b"\"") {
-                git_quote::ansi_c::undo(line)?
+                git_quote::ansi_c::undo(line)?.0
             } else {
                 Cow::Borrowed(line)
             })
