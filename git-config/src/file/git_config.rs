@@ -8,7 +8,7 @@ use std::{
 
 use crate::{
     file::{
-        error::{GitConfigError, GitConfigFromEnvError},
+        error::GitConfigError,
         section::{MutableSection, SectionBody},
         value::{EntryData, MutableMultiValue, MutableValue},
         Index, Size,
@@ -169,6 +169,48 @@ pub mod from_paths {
     }
 }
 
+pub mod from_env {
+    use super::from_paths;
+    use crate::values::path::interpolate;
+    use quick_error::quick_error;
+
+    quick_error! {
+        #[derive(Debug)]
+        /// Represents the errors that may occur when calling [`GitConfig::from_env`].
+        ///
+        /// [`GitConfig::from_env`]: crate::file::GitConfig::from_env
+        #[allow(missing_docs)]
+        pub enum Error {
+            /// `GIT_CONFIG_COUNT` was not a positive integer
+            ParseError (err: String) {
+                display("GIT_CONFIG_COUNT was not a positive integer: {}", err)
+            }
+            /// `GIT_CONFIG_KEY_<n>` was not set.
+            InvalidKeyId (key_id: usize) {
+                display("GIT_CONFIG_KEY_{} was not set.", key_id)
+            }
+            /// An key at `GIT_CONFIG_KEY_<n>` was found, but it wasn't a valid string.
+            InvalidKeyValue (key_id: usize, key_val: String) {
+                display("GIT_CONFIG_KEY_{} was set to an invalid value: {}", key_id, key_val)
+            }
+            /// `GIT_CONFIG_VALUE_<n>` was not set.
+            InvalidValueId (value_id: usize) {
+                display("GIT_CONFIG_VALUE_{} was not set.", value_id)
+            }
+            PathInterpolationError (err: interpolate::Error) {
+                display("Could not interpolate path.")
+                source(err)
+                from()
+            }
+            FromPathsError (err: from_paths::Error) {
+                display("Could not load config from a file")
+                source(err)
+                from()
+            }
+        }
+    }
+}
+
 impl<'event> GitConfig<'event> {
     /// Constructs an empty `git-config` file.
     #[inline]
@@ -319,10 +361,10 @@ impl<'event> GitConfig<'event> {
     /// there was an invalid key value pair.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
-    pub fn from_env(options: &from_paths::Options) -> Result<Option<Self>, GitConfigFromEnvError> {
+    pub fn from_env(options: &from_paths::Options) -> Result<Option<Self>, from_env::Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
-            Ok(v) => v.parse().map_err(|_| GitConfigFromEnvError::ParseError(v))?,
+            Ok(v) => v.parse().map_err(|_| from_env::Error::ParseError(v))?,
             Err(_) => return Ok(None),
         };
 
@@ -330,9 +372,8 @@ impl<'event> GitConfig<'event> {
         let mut paths = vec![];
 
         for i in 0..count {
-            let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| GitConfigFromEnvError::InvalidKeyId(i))?;
-            let value =
-                env::var(format!("GIT_CONFIG_VALUE_{}", i)).map_err(|_| GitConfigFromEnvError::InvalidValueId(i))?;
+            let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| from_env::Error::InvalidKeyId(i))?;
+            let value = env::var(format!("GIT_CONFIG_VALUE_{}", i)).map_err(|_| from_env::Error::InvalidValueId(i))?;
             if let Some((section, maybe_subsection)) = key.split_once('.') {
                 let (subsection, key) = if let Some((subsection, key)) = maybe_subsection.rsplit_once('.') {
                     (Some(subsection), key)
@@ -364,10 +405,9 @@ impl<'event> GitConfig<'event> {
                             .interpolate(options.git_install_dir.as_deref())
                             .map(|path| PathBuf::from(path))
                     })
-                    .collect::<Result<Vec<_>, _>>()
-                    .unwrap();
+                    .collect::<Result<Vec<_>, _>>()?;
             } else {
-                return Err(GitConfigFromEnvError::InvalidKeyValue(i, key.to_string()));
+                return Err(from_env::Error::InvalidKeyValue(i, key.to_string()));
             }
         }
 
@@ -375,7 +415,7 @@ impl<'event> GitConfig<'event> {
         if config.is_empty() {
             Ok(None)
         } else {
-            let config = config.resolve_includes(paths, options).unwrap();
+            let config = config.resolve_includes(paths, options)?;
             Ok(Some(config))
         }
     }
@@ -2212,14 +2252,14 @@ mod from_paths_tests {
 pub mod from_env_paths {}
 
 #[cfg(test)]
-mod from_env {
+mod from_env_tests {
     use std::{env, fs};
 
     use crate::file::from_paths::Options;
     use serial_test::serial;
     use tempfile::tempdir;
 
-    use super::{Cow, GitConfig, GitConfigFromEnvError};
+    use super::{from_env, Cow, GitConfig};
 
     struct Env {
         altered_vars: Vec<&'static str>,
@@ -2267,7 +2307,7 @@ mod from_env {
     fn parse_error_with_invalid_count() {
         let _env = Env::new().set("GIT_CONFIG_COUNT", "invalid");
         let err = GitConfig::from_env(&Options::default()).unwrap_err();
-        assert!(matches!(err, GitConfigFromEnvError::ParseError(_)));
+        assert!(matches!(err, from_env::Error::ParseError(_)));
     }
 
     #[test]
