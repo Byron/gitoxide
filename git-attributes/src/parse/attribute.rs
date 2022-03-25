@@ -11,6 +11,9 @@ mod error {
             PatternNegation { line_number: usize, line: BString } {
                 display("Line {} has a negative pattern, for literal characters use \\!: {}", line_number, line)
             }
+            AttributeName { line_number: usize, attribute: BString } {
+                display("Line {} has non-ascii characters or starts with '-': {}", line_number, attribute)
+            }
             Unquote(err: git_quote::ansi_c::undo::Error) {
                 display("Could not unquote attributes line")
                 from()
@@ -29,12 +32,52 @@ pub struct Lines<'a> {
 
 pub struct Iter<'a> {
     attrs: bstr::Fields<'a>,
+    line_no: usize,
 }
 
 impl<'a> Iter<'a> {
-    pub fn new(attrs: &'a BStr) -> Self {
-        Iter { attrs: attrs.fields() }
+    pub fn new(attrs: &'a BStr, line_no: usize) -> Self {
+        Iter {
+            attrs: attrs.fields(),
+            line_no,
+        }
     }
+
+    fn parse_attr(&self, attr: &'a [u8]) -> Result<(&'a BStr, crate::State<'a>), Error> {
+        let mut tokens = attr.splitn(2, |b| *b == b'=');
+        let attr = tokens.next().expect("attr itself").as_bstr();
+        let possibly_value = tokens.next();
+        let (attr, state) = if attr.first() == Some(&b'-') {
+            (&attr[1..], crate::State::Unset)
+        } else if attr.first() == Some(&b'!') {
+            (&attr[1..], crate::State::Unspecified)
+        } else {
+            (
+                attr,
+                possibly_value
+                    .map(|v| crate::State::Value(v.as_bstr()))
+                    .unwrap_or(crate::State::Set),
+            )
+        };
+        if !attr_valid(attr) {
+            return Err(Error::AttributeName {
+                line_number: self.line_no,
+                attribute: attr.into(),
+            });
+        }
+        Ok((attr, state))
+    }
+}
+
+fn attr_valid(attr: &BStr) -> bool {
+    if attr.first() == Some(&b'-') {
+        return false;
+    }
+
+    attr.bytes().all(|b| match b {
+        b'-' | b'.' | b'_' | b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' => true,
+        _ => false,
+    })
 }
 
 impl<'a> Iterator for Iter<'a> {
@@ -42,27 +85,8 @@ impl<'a> Iterator for Iter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let attr = self.attrs.next().filter(|a| !a.is_empty())?;
-        parse_attr(attr).into()
+        self.parse_attr(attr).into()
     }
-}
-
-fn parse_attr(attr: &[u8]) -> Result<(&BStr, crate::State<'_>), Error> {
-    let mut tokens = attr.splitn(2, |b| *b == b'=');
-    let attr = tokens.next().expect("attr itself").as_bstr();
-    let possibly_value = tokens.next();
-    let (attr, state) = if attr.first() == Some(&b'-') {
-        (&attr[1..], crate::State::Unset)
-    } else if attr.first() == Some(&b'!') {
-        (&attr[1..], crate::State::Unspecified)
-    } else {
-        (
-            attr,
-            possibly_value
-                .map(|v| crate::State::Value(v.as_bstr()))
-                .unwrap_or(crate::State::Set),
-        )
-    };
-    Ok((attr, state))
 }
 
 impl<'a> Lines<'a> {
@@ -85,7 +109,7 @@ impl<'a> Iterator for Lines<'a> {
             if line.first() == Some(&b'#') {
                 continue;
             }
-            match parse_line(line) {
+            match parse_line(line, self.line_no) {
                 None => continue,
                 Some(Ok((pattern, flags, attrs))) => {
                     return Some(if flags.contains(ignore::pattern::Mode::NEGATIVE) {
@@ -104,7 +128,10 @@ impl<'a> Iterator for Lines<'a> {
     }
 }
 
-fn parse_line(line: &BStr) -> Option<Result<(BString, crate::ignore::pattern::Mode, Iter<'_>), Error>> {
+fn parse_line(
+    line: &BStr,
+    line_number: usize,
+) -> Option<Result<(BString, crate::ignore::pattern::Mode, Iter<'_>), Error>> {
     if line.is_empty() {
         return None;
     }
@@ -122,7 +149,7 @@ fn parse_line(line: &BStr) -> Option<Result<(BString, crate::ignore::pattern::Mo
     };
 
     let (pattern, flags) = super::ignore::parse_line(line.as_ref())?;
-    Ok((pattern, flags, Iter::new(attrs))).into()
+    Ok((pattern, flags, Iter::new(attrs, line_number))).into()
 }
 
 const BLANKS: &[u8] = b" \t\r";

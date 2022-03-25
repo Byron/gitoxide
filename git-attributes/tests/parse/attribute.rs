@@ -101,6 +101,28 @@ fn custom_macros_can_be_defined() {
 }
 
 #[test]
+fn attribute_names_must_not_begin_with_dash_and_must_be_ascii_only() {
+    assert!(matches!(
+        try_line(r"p !-a"),
+        Err(parse::attribute::Error::AttributeName { line_number: 1, .. })
+    ));
+    assert!(
+        matches!(
+            try_line(r#"p !!a"#),
+            Err(parse::attribute::Error::AttributeName { line_number: 1, .. })
+        ),
+        "exclamation marks aren't allowed either"
+    );
+    assert!(
+        matches!(
+            try_line(r#"p 你好"#),
+            Err(parse::attribute::Error::AttributeName { line_number: 1, .. })
+        ),
+        "nor is utf-8 encoded characters - gitoxide could consider to relax this when established"
+    );
+}
+
+#[test]
 fn attributes_are_parsed_behind_various_whitespace_characters() {
     assert_eq!(
         line(r#"p a b"#),
