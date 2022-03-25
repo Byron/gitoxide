@@ -5,9 +5,18 @@ use std::borrow::Cow;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
     /// A pattern to match paths against
-    Pattern(BString),
+    Pattern(BString, crate::ignore::pattern::Mode),
     /// The name of the macro to define, always a valid attribute name
     Macro(BString),
+}
+
+impl Kind {
+    fn is_negative_pattern(&self) -> bool {
+        match self {
+            Kind::Pattern(_, flags) => flags.contains(crate::ignore::pattern::Mode::NEGATIVE),
+            Kind::Macro(_) => false,
+        }
+    }
 }
 
 mod error {
@@ -31,7 +40,6 @@ mod error {
         }
     }
 }
-use crate::ignore;
 pub use error::Error;
 
 pub struct Lines<'a> {
@@ -68,24 +76,25 @@ impl<'a> Iter<'a> {
                     .unwrap_or(crate::State::Set),
             )
         };
-        if !attr_valid(attr) {
-            return Err(Error::AttributeName {
-                line_number: self.line_no,
-                attribute: attr.into(),
-            });
-        }
-        Ok((attr, state))
+        Ok((check_attr(attr, self.line_no)?, state))
     }
 }
 
-fn attr_valid(attr: &BStr) -> bool {
-    if attr.first() == Some(&b'-') {
-        return false;
+fn check_attr(attr: &BStr, line_number: usize) -> Result<&BStr, Error> {
+    fn attr_valid(attr: &BStr) -> bool {
+        if attr.first() == Some(&b'-') {
+            return false;
+        }
+
+        attr.bytes().all(|b| {
+            matches!(b, 
+        b'-' | b'.' | b'_' | b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9')
+        })
     }
 
-    attr.bytes().all(|b| {
-        matches!(b, 
-        b'-' | b'.' | b'_' | b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9')
+    attr_valid(attr).then(|| attr).ok_or_else(|| Error::AttributeName {
+        line_number,
+        attribute: attr.into(),
     })
 }
 
@@ -109,9 +118,12 @@ impl<'a> Lines<'a> {
 }
 
 impl<'a> Iterator for Lines<'a> {
-    type Item = Result<(Kind, crate::ignore::pattern::Mode, Iter<'a>, usize), Error>;
+    type Item = Result<(Kind, Iter<'a>, usize), Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        fn skip_blanks(line: &BStr) -> &BStr {
+            line.find_not_byteset(BLANKS).map(|pos| &line[pos..]).unwrap_or(line)
+        }
         for line in self.lines.by_ref() {
             self.line_no += 1;
             let line = skip_blanks(line.into());
@@ -120,14 +132,14 @@ impl<'a> Iterator for Lines<'a> {
             }
             match parse_line(line, self.line_no) {
                 None => continue,
-                Some(Ok((pattern, flags, attrs))) => {
-                    return Some(if flags.contains(ignore::pattern::Mode::NEGATIVE) {
+                Some(Ok((kind, attrs))) => {
+                    return Some(if kind.is_negative_pattern() {
                         Err(Error::PatternNegation {
                             line: line.into(),
                             line_number: self.line_no,
                         })
                     } else {
-                        Ok((pattern, flags, attrs, self.line_no))
+                        Ok((kind, attrs, self.line_no))
                     })
                 }
                 Some(Err(err)) => return Some(Err(err)),
@@ -137,10 +149,7 @@ impl<'a> Iterator for Lines<'a> {
     }
 }
 
-fn parse_line(
-    line: &BStr,
-    line_number: usize,
-) -> Option<Result<(Kind, crate::ignore::pattern::Mode, Iter<'_>), Error>> {
+fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>), Error>> {
     if line.is_empty() {
         return None;
     }
@@ -157,12 +166,14 @@ fn parse_line(
             .unwrap_or((line.into(), [].as_bstr()))
     };
 
-    let (pattern, flags) = super::ignore::parse_line(line.as_ref())?;
-    Ok((Kind::Pattern(pattern), flags, Iter::new(attrs, line_number))).into()
+    let kind = match line.strip_prefix(b"[attr]") {
+        Some(macro_name) => match check_attr(macro_name.into(), line_number).map(|m| Kind::Macro(m.into())) {
+            Ok(kind) => kind,
+            Err(err) => return Some(Err(err)),
+        },
+        None => super::ignore::parse_line(line.as_ref()).map(|(p, f)| Kind::Pattern(p, f))?,
+    };
+    Ok((kind, Iter::new(attrs, line_number))).into()
 }
 
 const BLANKS: &[u8] = b" \t\r";
-
-fn skip_blanks(line: &BStr) -> &BStr {
-    line.find_not_byteset(BLANKS).map(|pos| &line[pos..]).unwrap_or(line)
-}
