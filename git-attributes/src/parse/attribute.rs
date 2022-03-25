@@ -28,14 +28,12 @@ pub struct Lines<'a> {
 }
 
 pub struct Iter<'a> {
-    attrs: bstr::Split<'a>,
+    attrs: bstr::Fields<'a>,
 }
 
 impl<'a> Iter<'a> {
     pub fn new(attrs: &'a BStr) -> Self {
-        Iter {
-            attrs: attrs.split_str(b" "),
-        }
+        Iter { attrs: attrs.fields() }
     }
 }
 
@@ -43,8 +41,8 @@ impl<'a> Iterator for Iter<'a> {
     type Item = Result<(&'a BStr, crate::State<'a>), Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let _attr = self.attrs.next().filter(|a| !a.is_empty())?;
-        todo!("parse attribute")
+        let attr = self.attrs.next().filter(|a| !a.is_empty())?;
+        Some(Ok((attr.as_bstr(), crate::State::Set)))
     }
 }
 
@@ -64,6 +62,7 @@ impl<'a> Iterator for Lines<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         for line in self.lines.by_ref() {
             self.line_no += 1;
+            let line = skip_blanks(line.into());
             if line.first() == Some(&b'#') {
                 continue;
             }
@@ -86,12 +85,11 @@ impl<'a> Iterator for Lines<'a> {
     }
 }
 
-fn parse_line(line: &[u8]) -> Option<Result<(BString, crate::ignore::pattern::Mode, Iter<'_>), Error>> {
+fn parse_line(line: &BStr) -> Option<Result<(BString, crate::ignore::pattern::Mode, Iter<'_>), Error>> {
     if line.is_empty() {
         return None;
     }
 
-    let line = line.as_bstr();
     let (line, attrs): (Cow<'_, _>, _) = if line.starts_with(b"\"") {
         let (unquoted, consumed) = match git_quote::ansi_c::undo(line) {
             Ok(res) => res,
@@ -99,13 +97,17 @@ fn parse_line(line: &[u8]) -> Option<Result<(BString, crate::ignore::pattern::Mo
         };
         (unquoted, &line[consumed..])
     } else {
-        let mut tokens = line.splitn(2, |n| *n == b' ');
-        (
-            tokens.next().expect("at least a line").as_bstr().into(),
-            tokens.next().unwrap_or_default().as_bstr(),
-        )
+        line.find_byteset(BLANKS)
+            .map(|pos| (line[..pos].as_bstr().into(), line[pos..].as_bstr()))
+            .unwrap_or((line.into(), [].as_bstr()))
     };
 
     let (pattern, flags) = super::ignore::parse_line(line.as_ref())?;
     Ok((pattern, flags, Iter::new(attrs))).into()
+}
+
+const BLANKS: &[u8] = b" \t\r";
+
+fn skip_blanks(line: &BStr) -> &BStr {
+    line.find_not_byteset(BLANKS).map(|pos| &line[pos..]).unwrap_or(line)
 }

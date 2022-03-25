@@ -1,6 +1,6 @@
-use bstr::{BStr, BString};
+use bstr::{BStr, BString, ByteSlice};
 use git_attributes::ignore::pattern::Mode;
-use git_attributes::{ignore, parse};
+use git_attributes::{ignore, parse, State};
 use git_testtools::fixture_path;
 
 #[test]
@@ -43,6 +43,16 @@ fn line_endings_can_be_windows_or_unix() {
 fn comment_lines_are_ignored() {
     assert!(git_attributes::parse(b"# hello world").next().is_none());
     assert!(git_attributes::parse(b"# \"hello world\"").next().is_none());
+    assert!(
+        git_attributes::parse(b" \t\r# \"hello world\"").next().is_none(),
+        "also behind leading whitespace"
+    );
+}
+
+#[test]
+fn leading_whitespace_is_ignored() {
+    assert_eq!(line(" \r\tp"), (r"p".into(), Mode::NO_SUB_DIR, vec![], 1));
+    assert_eq!(line(" \r\t\"p\""), (r"p".into(), Mode::NO_SUB_DIR, vec![], 1));
 }
 
 #[test]
@@ -56,7 +66,7 @@ fn comment_can_be_escaped_like_gitignore_or_quoted() {
 }
 
 #[test]
-fn esclamation_marks_must_be_escaped_or_error_unlike_gitignore() {
+fn exclamation_marks_must_be_escaped_or_error_unlike_gitignore() {
     assert_eq!(line(r"\!hello"), (r"!hello".into(), Mode::NO_SUB_DIR, vec![], 1));
     assert!(matches!(
         try_line(r"!hello"),
@@ -72,7 +82,7 @@ fn esclamation_marks_must_be_escaped_or_error_unlike_gitignore() {
     assert_eq!(
         line(r#""\\!hello""#),
         (r"!hello".into(), Mode::NO_SUB_DIR, vec![], 1),
-        "…and must be escaped"
+        "…and must be double-escaped, once to get through quote, then to get through parse ignore line"
     );
 }
 
@@ -86,9 +96,48 @@ fn invalid_escapes_in_quotes_are_an_error() {
 
 #[test]
 #[ignore]
+fn custom_macros_can_be_defined() {
+    todo!("name validation, leave rejecting them based on location to the caller")
+}
+
+#[test]
 fn attributes_are_parsed_behind_various_whitespace_characters() {
-    // see https://github.com/git/git/blob/master/attr.c#L280:L280
-    todo!()
+    assert_eq!(
+        line(r#"p a b"#),
+        ("p".into(), Mode::NO_SUB_DIR, vec![set("a"), set("b")], 1),
+        "behind space"
+    );
+    assert_eq!(
+        line(r#""p" a b"#),
+        ("p".into(), Mode::NO_SUB_DIR, vec![set("a"), set("b")], 1),
+        "behind space"
+    );
+    assert_eq!(
+        line("p\ta\tb"),
+        ("p".into(), Mode::NO_SUB_DIR, vec![set("a"), set("b")], 1),
+        "behind tab"
+    );
+    assert_eq!(
+        line("\"p\"\ta\tb"),
+        ("p".into(), Mode::NO_SUB_DIR, vec![set("a"), set("b")], 1),
+        "behind tab"
+    );
+    assert_eq!(
+        line("p \t a \t b"),
+        ("p".into(), Mode::NO_SUB_DIR, vec![set("a"), set("b")], 1),
+        "behind a mix of space and tab"
+    );
+    assert_eq!(
+        line("\"p\" \t a \t b"),
+        ("p".into(), Mode::NO_SUB_DIR, vec![set("a"), set("b")], 1),
+        "behind a mix of space and tab"
+    );
+}
+
+#[test]
+fn trailing_whitespace_in_attributes_is_ignored() {
+    assert_eq!(line("p a \r\t"), ("p".into(), Mode::NO_SUB_DIR, vec![set("a")], 1),);
+    assert_eq!(line("\"p\" a \r\t"), ("p".into(), Mode::NO_SUB_DIR, vec![set("a")], 1),);
 }
 
 type ExpandedAttribute<'a> = (
@@ -97,6 +146,10 @@ type ExpandedAttribute<'a> = (
     Vec<(&'a BStr, git_attributes::State<'a>)>,
     usize,
 );
+
+fn set(attr: &str) -> (&BStr, State) {
+    (attr.as_bytes().as_bstr(), State::Set)
+}
 
 fn try_line(input: &str) -> Result<ExpandedAttribute, parse::attribute::Error> {
     let mut lines = git_attributes::parse(input.as_bytes());
