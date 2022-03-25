@@ -10,15 +10,6 @@ pub enum Kind {
     Macro(BString),
 }
 
-impl Kind {
-    fn is_negative_pattern(&self) -> bool {
-        match self {
-            Kind::Pattern(_, flags) => flags.contains(crate::ignore::pattern::Mode::NEGATIVE),
-            Kind::Macro(_) => false,
-        }
-    }
-}
-
 mod error {
     use bstr::BString;
     use quick_error::quick_error;
@@ -132,24 +123,14 @@ impl<'a> Iterator for Lines<'a> {
             }
             match parse_line(line, self.line_no) {
                 None => continue,
-                Some(Ok((kind, attrs))) => {
-                    return Some(if kind.is_negative_pattern() {
-                        Err(Error::PatternNegation {
-                            line: line.into(),
-                            line_number: self.line_no,
-                        })
-                    } else {
-                        Ok((kind, attrs, self.line_no))
-                    })
-                }
-                Some(Err(err)) => return Some(Err(err)),
+                Some(res) => return Some(res),
             }
         }
         None
     }
 }
 
-fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>), Error>> {
+fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>, usize), Error>> {
     if line.is_empty() {
         return None;
     }
@@ -166,14 +147,25 @@ fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>)
             .unwrap_or((line.into(), [].as_bstr()))
     };
 
-    let kind = match line.strip_prefix(b"[attr]") {
-        Some(macro_name) => match check_attr(macro_name.into(), line_number).map(|m| Kind::Macro(m.into())) {
-            Ok(kind) => kind,
-            Err(err) => return Some(Err(err)),
-        },
-        None => super::ignore::parse_line(line.as_ref()).map(|(p, f)| Kind::Pattern(p, f))?,
+    let kind_res = match line.strip_prefix(b"[attr]") {
+        Some(macro_name) => check_attr(macro_name.into(), line_number).map(|m| Kind::Macro(m.into())),
+        None => {
+            let (pattern, flags) = super::ignore::parse_line(line.as_ref())?;
+            if flags.contains(crate::ignore::pattern::Mode::NEGATIVE) {
+                Err(Error::PatternNegation {
+                    line: line.into_owned(),
+                    line_number,
+                })
+            } else {
+                Ok(Kind::Pattern(pattern, flags))
+            }
+        }
     };
-    Ok((kind, Iter::new(attrs, line_number))).into()
+    let kind = match kind_res {
+        Ok(kind) => kind,
+        Err(err) => return Some(Err(err)),
+    };
+    Ok((kind, Iter::new(attrs, line_number), line_number)).into()
 }
 
 const BLANKS: &[u8] = b" \t\r";
