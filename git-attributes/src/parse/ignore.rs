@@ -22,6 +22,9 @@ impl<'a> Iterator for Lines<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         for line in self.lines.by_ref() {
             self.line_no += 1;
+            if line.first() == Some(&b'#') {
+                continue;
+            }
             match parse_line(line) {
                 None => continue,
                 Some((line, flags)) => return Some((line, flags, self.line_no)),
@@ -37,9 +40,7 @@ pub(crate) fn parse_line(mut line: &[u8]) -> Option<(BString, ignore::pattern::M
     if line.is_empty() {
         return None;
     };
-    if line.first() == Some(&b'#') {
-        return None;
-    } else if line.first() == Some(&b'!') {
+    if line.first() == Some(&b'!') {
         mode |= ignore::pattern::Mode::NEGATIVE;
         line = &line[1..];
     } else if line.first() == Some(&b'\\') {

@@ -42,15 +42,17 @@ fn line_endings_can_be_windows_or_unix() {
 #[test]
 fn comment_lines_are_ignored() {
     assert!(git_attributes::parse(b"# hello world").next().is_none());
+    assert!(git_attributes::parse(b"# \"hello world\"").next().is_none());
 }
 
 #[test]
-fn comment_can_be_escaped_like_gitignore() {
+fn comment_can_be_escaped_like_gitignore_or_quoted() {
     assert_eq!(
         line(r"\#hello"),
         (r"#hello".into(), Mode::NO_SUB_DIR, vec![], 1),
         "undocumented, but definitely works"
     );
+    assert_eq!(line("\"# hello\""), (r"# hello".into(), Mode::NO_SUB_DIR, vec![], 1));
 }
 
 #[test]
@@ -60,6 +62,26 @@ fn esclamation_marks_must_be_escaped_or_error_unlike_gitignore() {
         try_line(r"!hello"),
         Err(parse::attribute::Error::PatternNegation { line_number: 1, .. })
     ));
+    assert!(
+        matches!(
+            try_line(r#""!hello""#),
+            Err(parse::attribute::Error::PatternNegation { line_number: 1, .. }),
+        ),
+        "even in quotes they trigger…"
+    );
+    assert_eq!(
+        line(r#""\\!hello""#),
+        (r"!hello".into(), Mode::NO_SUB_DIR, vec![], 1),
+        "…and must be escaped"
+    );
+}
+
+#[test]
+fn invalid_escapes_in_quotes_are_an_error() {
+    assert!(matches!(
+        try_line(r#""\!hello""#),
+        Err(parse::attribute::Error::Unquote(_)),
+    ),);
 }
 
 #[test]
@@ -85,7 +107,7 @@ fn try_line(input: &str) -> Result<ExpandedAttribute, parse::attribute::Error> {
 
 fn line(input: &str) -> ExpandedAttribute {
     let mut lines = git_attributes::parse(input.as_bytes());
-    let res = expand(lines.next().unwrap()).unwrap();
+    let res = expand(lines.next().expect("single line")).unwrap();
     assert!(lines.next().is_none(), "expected only one line");
     res
 }

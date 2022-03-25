@@ -64,6 +64,9 @@ impl<'a> Iterator for Lines<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         for line in self.lines.by_ref() {
             self.line_no += 1;
+            if line.first() == Some(&b'#') {
+                continue;
+            }
             match parse_line(line) {
                 None => continue,
                 Some(Ok((pattern, flags, attrs))) => {
