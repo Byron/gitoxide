@@ -18,11 +18,15 @@ fn line_numbers_are_counted_correctly() {
     assert_eq!(
         try_lines(&String::from_utf8(ignore).unwrap()).unwrap(),
         vec![
-            (pattern(r"*.[oa]", Mode::NO_SUB_DIR), vec![], 2),
-            (pattern(r"*.html", Mode::NO_SUB_DIR | Mode::ENDS_WITH), vec![], 5),
-            (pattern(r"!foo.html", Mode::NO_SUB_DIR), vec![], 8),
-            (pattern(r"#a/path", Mode::empty()), vec![], 10),
-            (pattern(r"/*", Mode::empty()), vec![], 11),
+            (pattern(r"*.[oa]", Mode::NO_SUB_DIR), vec![set("c")], 2),
+            (
+                pattern(r"*.html", Mode::NO_SUB_DIR | Mode::ENDS_WITH),
+                vec![set("a"), value("b", "c")],
+                5
+            ),
+            (pattern(r"!foo.html", Mode::NO_SUB_DIR), vec![set("x")], 8),
+            (pattern(r"#a/path", Mode::empty()), vec![unset("a")], 10),
+            (pattern(r"/*", Mode::empty()), vec![unspecified("b")], 11),
         ]
     );
 }

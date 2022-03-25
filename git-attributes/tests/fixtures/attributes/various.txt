@@ -1,11 +1,11 @@
-# no attribute for now
-*.[oa]
+    # no attribute for now
+*.[oa] c
 
 # comment
-*.html
+"*.html" a    b=c
 
 # other comment  
-\!foo.html
+\!foo.html x
 
-\#a/path
-/*
+\#a/path -a
+/* !b
