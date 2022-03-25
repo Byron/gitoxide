@@ -83,9 +83,9 @@ fn attr_valid(attr: &BStr) -> bool {
         return false;
     }
 
-    attr.bytes().all(|b| match b {
-        b'-' | b'.' | b'_' | b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' => true,
-        _ => false,
+    attr.bytes().all(|b| {
+        matches!(b, 
+        b'-' | b'.' | b'_' | b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9')
     })
 }
 
