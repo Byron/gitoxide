@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::{
     borrow::Cow,
     collections::{HashMap, VecDeque},
@@ -120,6 +119,7 @@ pub struct GitConfig<'event> {
 }
 
 pub mod from_paths {
+    use crate::file::GitConfig;
     use crate::parser;
     use crate::values::path::interpolate;
     use quick_error::quick_error;
@@ -154,6 +154,7 @@ pub mod from_paths {
         /// The maximum allowed length of the file include chain built by following nested includes where top level is depth = 1.
         pub max_depth: u8,
         pub error_on_max_depth_exceeded: bool,
+        pub config: GitConfig<'a>,
     }
 
     impl<'a> Default for Options<'a> {
@@ -162,6 +163,7 @@ pub mod from_paths {
                 git_install_dir: None,
                 max_depth: 10,
                 error_on_max_depth_exceeded: true,
+                config: GitConfig::default(),
             }
         }
     }
@@ -197,12 +199,17 @@ impl<'event> GitConfig<'event> {
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-FILES
     #[inline]
     pub fn from_paths(paths: Vec<PathBuf>, options: &from_paths::Options) -> Result<Self, from_paths::Error> {
-        let mut config = Self::new();
-        let mut seen = HashSet::new();
+        let config = Self::new();
+        config.resolve_includes(paths, options)
+    }
 
+    pub fn resolve_includes(
+        mut self,
+        paths: Vec<PathBuf>,
+        options: &from_paths::Options,
+    ) -> Result<Self, from_paths::Error> {
         fn from_paths_recursive(
             paths: Vec<PathBuf>,
-            seen: &mut HashSet<PathBuf>,
             config: &mut GitConfig,
             depth: u8,
             options: &from_paths::Options,
@@ -246,20 +253,18 @@ impl<'event> GitConfig<'event> {
                             interpolated_path.into()
                         };
                         if let Ok(path) = path.canonicalize() {
-                            if seen.insert(path.clone()) {
-                                paths.push(path);
-                            }
+                            paths.push(path);
                         }
                     }
-                    from_paths_recursive(paths, seen, config, depth + 1, options)?;
+                    from_paths_recursive(paths, config, depth + 1, options)?;
                 }
             }
             Ok(())
         }
 
-        from_paths_recursive(paths, &mut seen, &mut config, 1, &options)?;
+        from_paths_recursive(paths, &mut self, 1, &options)?;
 
-        Ok(config)
+        Ok(self)
     }
 
     /// Constructs a `git-config` from the default cascading sequence.
@@ -314,7 +319,7 @@ impl<'event> GitConfig<'event> {
     /// there was an invalid key value pair.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
-    pub fn from_env() -> Result<Option<Self>, GitConfigFromEnvError> {
+    pub fn from_env(options: &from_paths::Options) -> Result<Option<Self>, GitConfigFromEnvError> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
             Ok(v) => v.parse().map_err(|_| GitConfigFromEnvError::ParseError(v))?,
@@ -322,6 +327,7 @@ impl<'event> GitConfig<'event> {
         };
 
         let mut config = Self::new();
+        let mut paths = vec![];
 
         for i in 0..count {
             let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| GitConfigFromEnvError::InvalidKeyId(i))?;
@@ -349,6 +355,17 @@ impl<'event> GitConfig<'event> {
                     Cow::<str>::Owned(key.to_string()).into(),
                     Cow::Owned(value.into_bytes()),
                 );
+
+                paths = section
+                    .values(&Key::from("path"))
+                    .iter()
+                    .map(|val| {
+                        values::Path::from(val.clone())
+                            .interpolate(options.git_install_dir.as_deref())
+                            .map(|path| PathBuf::from(path))
+                    })
+                    .collect::<Result<Vec<_>, _>>()
+                    .unwrap();
             } else {
                 return Err(GitConfigFromEnvError::InvalidKeyValue(i, key.to_string()));
             }
@@ -358,6 +375,7 @@ impl<'event> GitConfig<'event> {
         if config.is_empty() {
             Ok(None)
         } else {
+            let config = config.resolve_includes(paths, options).unwrap();
             Ok(Some(config))
         }
     }
@@ -1959,6 +1977,108 @@ mod from_paths_tests {
     }
 
     #[test]
+    fn visits_same_path_twice_when_max_depth_is_not_reached() {
+        let dir = tempdir().unwrap();
+
+        let a_path = dir.path().join("a");
+        let b_path = dir.path().join("b");
+
+        fs::write(
+            a_path.as_path(),
+            format!(
+                "
+            [core]
+              b = true
+            [include]
+              path = {}
+            [core]
+              b = true
+            [include]
+              path = {}",
+                to_backslash_escaped_string(&b_path),
+                to_backslash_escaped_string(&b_path)
+            ),
+        )
+        .unwrap();
+
+        fs::write(
+            b_path.as_path(),
+            format!(
+                "
+            [core]
+              b = false"
+            ),
+        )
+        .unwrap();
+
+        let config = GitConfig::from_paths(vec![a_path], &Default::default()).unwrap();
+        assert_eq!(
+            config.get_raw_value("core", None, "b"),
+            Ok(Cow::<[u8]>::Borrowed(b"false"))
+        );
+    }
+
+    #[test]
+    fn handles_cycle() {
+        let dir = tempdir().unwrap();
+
+        let a_path = dir.path().join("a");
+        let b_path = dir.path().join("b");
+
+        fs::write(
+            a_path.as_path(),
+            format!(
+                "
+            [core]
+              b = 0
+            [include]
+              path = {}",
+                to_backslash_escaped_string(&b_path),
+            ),
+        )
+        .unwrap();
+
+        fs::write(
+            b_path.as_path(),
+            format!(
+                "
+            [core]
+              b = 1
+            [include]
+              path = {}",
+                to_backslash_escaped_string(&a_path),
+            ),
+        )
+        .unwrap();
+
+        let options = from_paths::Options {
+            max_depth: 4,
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![a_path.clone()], &options);
+        assert!(matches!(
+            config.unwrap_err(),
+            from_paths::Error::IncludeDepthExceeded { max_depth: 4 }
+        ));
+
+        let options = from_paths::Options {
+            max_depth: 4,
+            error_on_max_depth_exceeded: false,
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![a_path], &options).unwrap();
+        assert_eq!(
+            config.get_raw_multi_value("core", None, "b").unwrap(),
+            vec![
+                Cow::Borrowed(b"0"),
+                Cow::Borrowed(b"1"),
+                Cow::Borrowed(b"0"),
+                Cow::Borrowed(b"1")
+            ]
+        );
+    }
+
+    #[test]
     fn nested_include() {
         let dir = tempdir().unwrap();
 
@@ -2093,9 +2213,11 @@ pub mod from_env_paths {}
 
 #[cfg(test)]
 mod from_env {
-    use std::env;
+    use std::{env, fs};
 
+    use crate::file::from_paths::Options;
     use serial_test::serial;
+    use tempfile::tempdir;
 
     use super::{Cow, GitConfig, GitConfigFromEnvError};
 
@@ -2128,7 +2250,7 @@ mod from_env {
     #[test]
     #[serial]
     fn empty_without_relevant_environment() {
-        let config = GitConfig::from_env().unwrap();
+        let config = GitConfig::from_env(&Options::default()).unwrap();
         assert!(config.is_none());
     }
 
@@ -2136,7 +2258,7 @@ mod from_env {
     #[serial]
     fn empty_with_zero_count() {
         let _env = Env::new().set("GIT_CONFIG_COUNT", "0");
-        let config = GitConfig::from_env().unwrap();
+        let config = GitConfig::from_env(&Options::default()).unwrap();
         assert!(config.is_none());
     }
 
@@ -2144,7 +2266,7 @@ mod from_env {
     #[serial]
     fn parse_error_with_invalid_count() {
         let _env = Env::new().set("GIT_CONFIG_COUNT", "invalid");
-        let err = GitConfig::from_env().unwrap_err();
+        let err = GitConfig::from_env(&Options::default()).unwrap_err();
         assert!(matches!(err, GitConfigFromEnvError::ParseError(_)));
     }
 
@@ -2156,7 +2278,7 @@ mod from_env {
             .set("GIT_CONFIG_KEY_0", "core.key")
             .set("GIT_CONFIG_VALUE_0", "value");
 
-        let config = GitConfig::from_env().unwrap().unwrap();
+        let config = GitConfig::from_env(&Options::default()).unwrap().unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "key"),
             Ok(Cow::<[u8]>::Borrowed(b"value"))
@@ -2177,11 +2299,36 @@ mod from_env {
             .set("GIT_CONFIG_KEY_2", "core.c")
             .set("GIT_CONFIG_VALUE_2", "c");
 
-        let config = GitConfig::from_env().unwrap().unwrap();
+        let config = GitConfig::from_env(&Options::default()).unwrap().unwrap();
 
         assert_eq!(config.get_raw_value("core", None, "a"), Ok(Cow::<[u8]>::Borrowed(b"a")));
         assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"b")));
         assert_eq!(config.get_raw_value("core", None, "c"), Ok(Cow::<[u8]>::Borrowed(b"c")));
+        assert_eq!(config.len(), 3);
+    }
+
+    #[test]
+    #[serial]
+    fn follows_includes() {
+        let dir = tempdir().unwrap();
+        let a_path = dir.path().join("a");
+        fs::write(&a_path, "[core]\nkey = changed").unwrap();
+        let path_str = a_path.to_string_lossy().to_string();
+        let path_str = Box::leak(path_str.into_boxed_str());
+
+        let _env = Env::new()
+            .set("GIT_CONFIG_COUNT", "2")
+            .set("GIT_CONFIG_KEY_0", "core.key")
+            .set("GIT_CONFIG_VALUE_0", "value")
+            .set("GIT_CONFIG_KEY_1", "include.path")
+            .set("GIT_CONFIG_VALUE_1", path_str);
+
+        let config = GitConfig::from_env(&Options::default()).unwrap().unwrap();
+
+        assert_eq!(
+            config.get_raw_value("core", None, "key"),
+            Ok(Cow::<[u8]>::Borrowed(b"changed"))
+        );
         assert_eq!(config.len(), 3);
     }
 }
