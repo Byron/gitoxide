@@ -20,6 +20,6 @@ pub mod ignore;
 
 pub mod parse;
 
-pub fn parse(buf: &[u8]) -> parse::attribute::Lines<'_> {
-    parse::attribute::Lines::new(buf)
+pub fn parse(buf: &[u8]) -> parse::Lines<'_> {
+    parse::Lines::new(buf)
 }

@@ -1,6 +1,15 @@
 use bstr::{BStr, BString, ByteSlice};
 use std::borrow::Cow;
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub enum Kind {
+    /// A pattern to match paths against
+    Pattern(BString),
+    /// The name of the macro to define, always a valid attribute name
+    Macro(BString),
+}
+
 mod error {
     use bstr::BString;
     use quick_error::quick_error;
@@ -100,7 +109,7 @@ impl<'a> Lines<'a> {
 }
 
 impl<'a> Iterator for Lines<'a> {
-    type Item = Result<(BString, crate::ignore::pattern::Mode, Iter<'a>, usize), Error>;
+    type Item = Result<(Kind, crate::ignore::pattern::Mode, Iter<'a>, usize), Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         for line in self.lines.by_ref() {
@@ -131,7 +140,7 @@ impl<'a> Iterator for Lines<'a> {
 fn parse_line(
     line: &BStr,
     line_number: usize,
-) -> Option<Result<(BString, crate::ignore::pattern::Mode, Iter<'_>), Error>> {
+) -> Option<Result<(Kind, crate::ignore::pattern::Mode, Iter<'_>), Error>> {
     if line.is_empty() {
         return None;
     }
@@ -149,7 +158,7 @@ fn parse_line(
     };
 
     let (pattern, flags) = super::ignore::parse_line(line.as_ref())?;
-    Ok((pattern, flags, Iter::new(attrs, line_number))).into()
+    Ok((Kind::Pattern(pattern), flags, Iter::new(attrs, line_number))).into()
 }
 
 const BLANKS: &[u8] = b" \t\r";
