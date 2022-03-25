@@ -135,6 +135,47 @@ fn attributes_are_parsed_behind_various_whitespace_characters() {
 }
 
 #[test]
+fn attributes_come_in_different_flavors_due_to_prefixes() {
+    assert_eq!(
+        line(r#"p set -unset !unspecified -set"#),
+        (
+            "p".into(),
+            Mode::NO_SUB_DIR,
+            vec![set("set"), unset("unset"), unspecified("unspecified"), unset("set")],
+            1
+        ),
+        "the parser doesn't care about double-mentions either"
+    );
+}
+
+#[test]
+fn attributes_can_have_values() {
+    assert_eq!(
+        line(r#"p a=one b=2 c=你好 "#),
+        (
+            "p".into(),
+            Mode::NO_SUB_DIR,
+            vec![value("a", "one"), value("b", "2"), value("c", "你好")],
+            1
+        ),
+        "only non-whitespace ascii values are allowed, no escaping or anything fancy is possible there"
+    );
+}
+
+#[test]
+fn attributes_see_state_adjustments_over_value_assignments() {
+    assert_eq!(
+        line(r#"p set -unset=a !unspecified=b"#),
+        (
+            "p".into(),
+            Mode::NO_SUB_DIR,
+            vec![set("set"), unset("unset"), unspecified("unspecified")],
+            1
+        )
+    );
+}
+
+#[test]
 fn trailing_whitespace_in_attributes_is_ignored() {
     assert_eq!(line("p a \r\t"), ("p".into(), Mode::NO_SUB_DIR, vec![set("a")], 1),);
     assert_eq!(line("\"p\" a \r\t"), ("p".into(), Mode::NO_SUB_DIR, vec![set("a")], 1),);
@@ -149,6 +190,18 @@ type ExpandedAttribute<'a> = (
 
 fn set(attr: &str) -> (&BStr, State) {
     (attr.as_bytes().as_bstr(), State::Set)
+}
+
+fn unset(attr: &str) -> (&BStr, State) {
+    (attr.as_bytes().as_bstr(), State::Unset)
+}
+
+fn unspecified(attr: &str) -> (&BStr, State) {
+    (attr.as_bytes().as_bstr(), State::Unspecified)
+}
+
+fn value<'a, 'b>(attr: &'a str, value: &'b str) -> (&'a BStr, State<'b>) {
+    (attr.as_bytes().as_bstr(), State::Value(value.as_bytes().as_bstr()))
 }
 
 fn try_line(input: &str) -> Result<ExpandedAttribute, parse::attribute::Error> {

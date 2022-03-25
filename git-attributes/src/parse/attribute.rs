@@ -42,8 +42,27 @@ impl<'a> Iterator for Iter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let attr = self.attrs.next().filter(|a| !a.is_empty())?;
-        Some(Ok((attr.as_bstr(), crate::State::Set)))
+        parse_attr(attr).into()
     }
+}
+
+fn parse_attr(attr: &[u8]) -> Result<(&BStr, crate::State<'_>), Error> {
+    let mut tokens = attr.splitn(2, |b| *b == b'=');
+    let attr = tokens.next().expect("attr itself").as_bstr();
+    let possibly_value = tokens.next();
+    let (attr, state) = if attr.first() == Some(&b'-') {
+        (&attr[1..], crate::State::Unset)
+    } else if attr.first() == Some(&b'!') {
+        (&attr[1..], crate::State::Unspecified)
+    } else {
+        (
+            attr,
+            possibly_value
+                .map(|v| crate::State::Value(v.as_bstr()))
+                .unwrap_or(crate::State::Set),
+        )
+    };
+    Ok((attr, state))
 }
 
 impl<'a> Lines<'a> {
