@@ -21,7 +21,10 @@ mod error {
                 display("Line {} has a negative pattern, for literal characters use \\!: {}", line_number, line)
             }
             AttributeName { line_number: usize, attribute: BString } {
-                display("Line {} has non-ascii characters or starts with '-': {}", line_number, attribute)
+                display("Attribute in line {} has non-ascii characters or starts with '-': {}", line_number, attribute)
+            }
+            MacroName { line_number: usize, macro_name: BString } {
+                display("Macro in line {} has non-ascii characters or starts with '-': {}", line_number, macro_name)
             }
             Unquote(err: git_quote::ansi_c::undo::Error) {
                 display("Could not unquote attributes line")
@@ -148,7 +151,15 @@ fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>,
     };
 
     let kind_res = match line.strip_prefix(b"[attr]") {
-        Some(macro_name) => check_attr(macro_name.into(), line_number).map(|m| Kind::Macro(m.into())),
+        Some(macro_name) => check_attr(macro_name.into(), line_number)
+            .map(|m| Kind::Macro(m.into()))
+            .map_err(|err| match err {
+                Error::AttributeName { line_number, attribute } => Error::MacroName {
+                    line_number,
+                    macro_name: attribute,
+                },
+                _ => unreachable!("BUG: check_attr() must only return attribute errors"),
+            }),
         None => {
             let (pattern, flags) = super::ignore::parse_line(line.as_ref())?;
             if flags.contains(crate::ignore::pattern::Mode::NEGATIVE) {

@@ -117,11 +117,11 @@ fn custom_macros_can_be_differentiated() {
 fn custom_macros_must_be_valid_attribute_names() {
     assert!(matches!(
         try_line(r"[attr]-prefixdash"),
-        Err(parse::Error::AttributeName { line_number: 1, .. })
+        Err(parse::Error::MacroName { line_number: 1, .. })
     ));
     assert!(matches!(
         try_line(r"[attr]你好"),
-        Err(parse::Error::AttributeName { line_number: 1, .. })
+        Err(parse::Error::MacroName { line_number: 1, .. })
     ));
 }
 

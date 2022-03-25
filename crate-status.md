@@ -211,7 +211,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
 ### git-attributes
 
 * [x] parse git-ignore files (aka git-attributes without the attributes or negation)
-* [ ] parse git-attributes files
+* [x] parse git-attributes files
 * [ ] create an attributes stack, ideally one that includes 'ignored' status from .gitignore files.
    * [ ] support for built-in `binary` macro for `-text -diff -merge`
     
