@@ -1128,6 +1128,7 @@ dependencies = [
  "serde_derive",
  "serial_test",
  "tempfile",
+ "unicode-bom",
 ]
 
 [[package]]

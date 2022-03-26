@@ -149,11 +149,13 @@ pub mod from_paths {
     /// Options when loading git config using [`GitConfig::from_paths()`][super::GitConfig::from_paths()].
     #[derive(Clone)]
     pub struct Options<'a> {
-        /// the location where gitoxide or git is installed
+        /// The location where gitoxide or git is installed
         pub git_install_dir: Option<Cow<'a, std::path::Path>>,
         /// The maximum allowed length of the file include chain built by following nested includes where top level is depth = 1.
         pub max_depth: u8,
+        /// When max depth is exceeded, while following nested included, returns an error if true or unit if false   
         pub error_on_max_depth_exceeded: bool,
+        /// Initial `GitConfig` (possibly empty) that gets new sections, originating from the included config files
         pub config: GitConfig<'a>,
     }
 
@@ -197,11 +199,13 @@ pub mod from_env {
             InvalidValueId (value_id: usize) {
                 display("GIT_CONFIG_VALUE_{} was not set.", value_id)
             }
+            /// Could not interpolate path while loading a config file.
             PathInterpolationError (err: interpolate::Error) {
                 display("Could not interpolate path.")
                 source(err)
                 from()
             }
+            /// Could not load config from a file
             FromPathsError (err: from_paths::Error) {
                 display("Could not load config from a file")
                 source(err)
@@ -245,7 +249,7 @@ impl<'event> GitConfig<'event> {
         config.resolve_includes(paths, options)
     }
 
-    pub fn resolve_includes(
+    pub(crate) fn resolve_includes(
         mut self,
         paths: Vec<PathBuf>,
         options: &from_paths::Options,
@@ -403,7 +407,7 @@ impl<'event> GitConfig<'event> {
                     .map(|val| {
                         values::Path::from(val.clone())
                             .interpolate(options.git_install_dir.as_deref())
-                            .map(|path| PathBuf::from(path))
+                            .map(|path| path.into_owned())
                     })
                     .collect::<Result<Vec<_>, _>>()?;
             } else {
@@ -2261,25 +2265,25 @@ mod from_env_tests {
 
     use super::{from_env, Cow, GitConfig};
 
-    struct Env {
-        altered_vars: Vec<&'static str>,
+    struct Env<'a> {
+        altered_vars: Vec<&'a str>,
     }
 
-    impl Env {
+    impl<'a> Env<'a> {
         fn new() -> Self {
             Env {
                 altered_vars: Vec::new(),
             }
         }
 
-        fn set(mut self, var: &'static str, value: &'static str) -> Self {
+        fn set(mut self, var: &'a str, value: &'a str) -> Self {
             env::set_var(var, value);
             self.altered_vars.push(var);
             self
         }
     }
 
-    impl Drop for Env {
+    impl<'a> Drop for Env<'a> {
         fn drop(&mut self) {
             for var in &self.altered_vars {
                 env::remove_var(var);
@@ -2353,8 +2357,7 @@ mod from_env_tests {
         let dir = tempdir().unwrap();
         let a_path = dir.path().join("a");
         fs::write(&a_path, "[core]\nkey = changed").unwrap();
-        let path_str = a_path.to_string_lossy().to_string();
-        let path_str = Box::leak(path_str.into_boxed_str());
+        let path_str = a_path.to_str().unwrap();
 
         let _env = Env::new()
             .set("GIT_CONFIG_COUNT", "2")
