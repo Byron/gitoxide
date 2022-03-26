@@ -31,25 +31,24 @@ fn empty_lines_and_comments_are_ignored() {
 #[ignore]
 fn valid_entries() {
     assert_eq!(
-        line("proper name <commit-email>"),
+        line(" \t proper name   <commit-email>"),
         Entry::change_name_by_email("proper name", "commit-email")
     );
     assert_eq!(
-        line("<proper email> <commit-email>"),
+        line("  <proper email>   <commit-email>  \t "),
         Entry::change_email_by_email("proper email", "commit-email")
     );
     assert_eq!(
-        line("proper name <proper email> <commit-email>"),
+        line("  proper name \t  <proper email> \t <commit-email>"),
         Entry::change_name_and_email_by_email("proper name", "proper email", "commit-email")
     );
     assert_eq!(
-        line("proper name <proper email> commit name <commit-email>"),
+        line(" proper name  <proper email>\tcommit name\t<commit-email>\t"),
         Entry::change_name_and_email_by_name_and_email("proper name", "proper email", "commit name", "commit-email")
     );
 }
 
 fn line(input: &str) -> Entry<'_> {
-    let mut lines = git_mailmap::parse(&input.as_bytes());
-    let res = lines.next().expect("single line").unwrap();
-    res
+    let mut lines = git_mailmap::parse(input.as_bytes());
+    lines.next().expect("single line").unwrap()
 }
