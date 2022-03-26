@@ -44,20 +44,22 @@ impl<'a> Iterator for Lines<'a> {
                 Some(b) if *b == b'#' => continue,
                 Some(_) => {}
             }
-            let line = line.trim();
-            if line.is_empty() {
-                continue;
-            }
+            let line = match line.as_bstr().find_not_byteset(BLANKS) {
+                None => continue,
+                Some(pos) => &line[pos..],
+            };
             return parse_line(line.into(), self.line_no).into();
         }
         None
     }
 }
 
+const BLANKS: &[u8] = b" \t\r";
+
 fn parse_line(line: &BStr, line_number: usize) -> Result<Entry<'_>, Error> {
     let (name1, email1, rest) = parse_name_and_email(line, line_number)?;
     let (name2, email2, rest) = parse_name_and_email(rest, line_number)?;
-    if !rest.trim().is_empty() {
+    if !trim(rest).is_empty() {
         return Err(Error::UnconsumedInput {
             line_number,
             line: line.into(),
@@ -90,7 +92,7 @@ fn parse_name_and_email(
                 line: line.into(),
                 message: "Missing closing bracket '>' in email".into(),
             })?;
-            let email = email[..closing_bracket].trim().as_bstr();
+            let email = trim(&email[..closing_bracket]);
             if email.is_empty() {
                 return Err(Error::Malformed {
                     line_number,
@@ -98,10 +100,15 @@ fn parse_name_and_email(
                     message: "Email must not be empty".into(),
                 });
             }
-            let name = line[..start_bracket].trim().as_bstr();
+            let name = trim(&line[..start_bracket]);
             let rest = line[start_bracket + closing_bracket + 2..].as_bstr();
             Ok(((!name.is_empty()).then(|| name), Some(email), rest))
         }
         None => Ok((None, None, line)),
     }
+}
+
+fn trim(line: &[u8]) -> &BStr {
+    // TODO: without str, use byteset find
+    std::str::from_utf8(line).unwrap().trim().as_bytes().as_bstr()
 }
