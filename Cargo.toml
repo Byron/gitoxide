@@ -142,6 +142,7 @@ members = [
     "git-worktree",
     "git-revision",
     "git-packetline",
+    "git-mailmap",
     "git-submodule",
     "git-transport",
     "git-protocol",

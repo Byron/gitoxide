@@ -1217,6 +1217,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-mailmap"
+version = "0.0.0"
+
+[[package]]
 name = "git-object"
 version = "0.17.1"
 dependencies = [

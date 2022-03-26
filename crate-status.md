@@ -220,6 +220,11 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * **ansi-c**
   * [x] quote
   * [ ] unquote
+  * 
+### git-mailmap
+
+* [ ] parsing
+* [ ] lookup and mapping of author names
 
 ### git-pathspec
 
