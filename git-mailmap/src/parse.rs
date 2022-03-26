@@ -6,10 +6,10 @@ mod error {
         #[derive(Debug)]
         pub enum Error {
             UnconsumedInput { line_number: usize, line: BString } {
-                display("Line {} has too many names or emails: {}", line_number, line)
+                display("Line {} has too many names or emails, or none at all: {}", line_number, line)
             }
-            Malformed { line_number: usize, line: BString } {
-                display("Line {} is malformed, an email address lacks the closing '>' bracket: {}", line_number, line)
+            Malformed { line_number: usize, line: BString, message: String } {
+                display("{}: {:?}: {}", line_number, line, message)
             }
         }
     }
@@ -40,11 +40,14 @@ impl<'a> Iterator for Lines<'a> {
         for line in self.lines.by_ref() {
             self.line_no += 1;
             match line.first() {
-                None => return None,
-                Some(b) if *b == b'#' => return None,
+                None => continue,
+                Some(b) if *b == b'#' => continue,
                 Some(_) => {}
             }
-
+            let line = line.trim();
+            if line.is_empty() {
+                continue;
+            }
             return parse_line(line.into(), self.line_no).into();
         }
         None
@@ -71,7 +74,7 @@ fn parse_line(line: &BStr, line_number: usize) -> Result<Entry<'_>, Error> {
         (Some(proper_name), Some(proper_email), Some(commit_name), Some(commit_email)) => {
             Entry::change_name_and_email_by_name_and_email(proper_name, proper_email, commit_name, commit_email)
         }
-        _ => todo!(),
+        _ => unreachable!("{:?}", line),
     })
 }
 
@@ -79,5 +82,26 @@ fn parse_name_and_email(
     line: &BStr,
     line_number: usize,
 ) -> Result<(Option<&'_ BStr>, Option<&'_ BStr>, &'_ BStr), Error> {
-    todo!()
+    match line.find_byte(b'<') {
+        Some(start_bracket) => {
+            let email = &line[start_bracket + 1..];
+            let closing_bracket = email.find_byte(b'>').ok_or_else(|| Error::Malformed {
+                line_number,
+                line: line.into(),
+                message: "Missing closing bracket '>' in email".into(),
+            })?;
+            let email = email[..closing_bracket].trim().as_bstr();
+            if email.is_empty() {
+                return Err(Error::Malformed {
+                    line_number,
+                    line: line.into(),
+                    message: "Email must not be empty".into(),
+                });
+            }
+            let name = line[..start_bracket].trim().as_bstr();
+            let rest = line[start_bracket + closing_bracket + 2..].as_bstr();
+            Ok(((!name.is_empty()).then(|| name), Some(email), rest))
+        }
+        None => Ok((None, None, line)),
+    }
 }

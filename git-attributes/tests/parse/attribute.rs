@@ -267,10 +267,7 @@ fn try_line(input: &str) -> Result<ExpandedAttribute, parse::Error> {
 }
 
 fn line(input: &str) -> ExpandedAttribute {
-    let mut lines = git_attributes::parse(input.as_bytes());
-    let res = expand(lines.next().expect("single line")).unwrap();
-    assert!(lines.next().is_none(), "expected only one line");
-    res
+    try_line(input).unwrap()
 }
 
 fn try_lines(input: &str) -> Result<Vec<ExpandedAttribute>, parse::Error> {
