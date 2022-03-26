@@ -11,8 +11,8 @@ fn byte_order_marks_are_no_patterns() {
 
 #[test]
 fn line_numbers_are_counted_correctly() {
-    let ignore = std::fs::read(fixture_path("ignore/various.txt")).unwrap();
-    let actual: Vec<_> = git_attributes::parse::ignore(&ignore).collect();
+    let input = std::fs::read(fixture_path("ignore/various.txt")).unwrap();
+    let actual: Vec<_> = git_attributes::parse::ignore(&input).collect();
     assert_eq!(
         actual,
         vec![
@@ -66,8 +66,9 @@ fn mark_ends_with_pattern_specifically() {
 }
 
 #[test]
-fn comments_are_ignored() {
+fn comments_are_ignored_as_well_as_empty_ones() {
     assert!(git_attributes::parse::ignore(b"# hello world").next().is_none());
+    assert!(git_attributes::parse::ignore(b"\n\r\n\t\t   \n").next().is_none());
 }
 
 #[test]
