@@ -1,4 +1,5 @@
-#![forbid(unsafe_code, rust_2018_idioms)]
+#![forbid(unsafe_code)]
+#![deny(rust_2018_idioms)]
 
 use bstr::BStr;
 
@@ -12,6 +13,7 @@ mod entry;
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry<'a> {
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     /// The name to map to.
     canonical_name: Option<&'a BStr>,
     /// The email map to.

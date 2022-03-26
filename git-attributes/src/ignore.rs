@@ -2,6 +2,7 @@ pub mod pattern {
     use bitflags::bitflags;
 
     bitflags! {
+        #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
         pub struct Mode: u32 {
             /// The pattern does not contain a sub-directory and - it doesn't contain slashes after removing the trailing one.
             const NO_SUB_DIR = 1 << 0;

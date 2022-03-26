@@ -1,4 +1,5 @@
-#![forbid(unsafe_code, rust_2018_idioms)]
+#![forbid(unsafe_code)]
+#![deny(rust_2018_idioms)]
 
 use bstr::BStr;
 
@@ -11,6 +12,7 @@ pub enum State<'a> {
     Unset,
     /// The attribute is set to the given value, which followed the `=` sign.
     /// Note that values can be empty.
+    #[cfg_attr(feature = "serde1", serde(borrow))]
     Value(&'a BStr),
     /// The attribute isn't mentioned with a given path or is explicitly set to `Unspecified` using the `!` sign.
     Unspecified,
