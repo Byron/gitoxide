@@ -240,14 +240,14 @@ impl<'event> GitConfig<'event> {
         for path in paths {
             let mut config = Self::open(&path)?;
             config.resolve_includes(&path, options)?;
-            target.merge(config);
+            target.append(config);
         }
         Ok(target)
     }
 
     // TODO: add note indicating that probably a lot if not all information about the original files is currently lost,
     //       so can't be written back. This will probably change a lot during refactor, so it's not too important now.
-    fn merge(&mut self, mut other: Self) {
+    fn append(&mut self, mut other: Self) {
         let mut section_indices: Vec<_> = other.section_headers.keys().cloned().collect();
         // header keys are numeric and ascend in insertion order, hence sorting them gives the order
         // in which they appear in the config file.
@@ -306,7 +306,7 @@ impl<'event> GitConfig<'event> {
             for config_path in paths_to_include {
                 let mut include_config = GitConfig::open(&config_path)?;
                 resolve_includes_recursive(&mut include_config, &config_path, depth + 1, options)?;
-                target_config.merge(include_config);
+                target_config.append(include_config);
             }
             Ok(())
         }
