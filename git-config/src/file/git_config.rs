@@ -33,14 +33,14 @@ use crate::{
 /// words, it's possible that a section may have an ID of 3 but the next section
 /// has an ID of 5.
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
-pub(super) struct SectionId(usize);
+pub struct SectionId(pub usize);
 
 /// Internal data structure for the section id lookup tree used by
 /// [`GitConfig`]. Note that order in Vec matters as it represents the order
 /// of section ids with the matched section and name, and is used for precedence
 /// management.
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub(super) enum LookupTreeNode<'a> {
+pub enum LookupTreeNode<'a> {
     Terminal(Vec<SectionId>),
     NonTerminal(HashMap<Cow<'a, str>, Vec<SectionId>>),
 }
@@ -104,18 +104,18 @@ pub struct GitConfig<'event> {
     /// Section name and subsection name to section id lookup tree. This is
     /// effectively a n-tree (opposed to a binary tree) that can have a height
     /// of at most three (including an implicit root node).
-    pub(super) section_lookup_tree: HashMap<SectionHeaderName<'event>, Vec<LookupTreeNode<'event>>>,
+    pub section_lookup_tree: HashMap<SectionHeaderName<'event>, Vec<LookupTreeNode<'event>>>,
     /// SectionId to section mapping. The value of this HashMap contains actual
     /// events.
     ///
     /// This indirection with the SectionId as the key is critical to flexibly
     /// supporting `git-config` sections, as duplicated keys are permitted.
-    pub(super) sections: HashMap<SectionId, SectionBody<'event>>,
-    section_headers: HashMap<SectionId, ParsedSectionHeader<'event>>,
+    pub sections: HashMap<SectionId, SectionBody<'event>>,
+    pub section_headers: HashMap<SectionId, ParsedSectionHeader<'event>>,
     /// Internal monotonically increasing counter for section ids.
-    section_id_counter: usize,
+    pub section_id_counter: usize,
     /// Section order for output ordering.
-    section_order: VecDeque<SectionId>,
+    pub section_order: VecDeque<SectionId>,
 }
 
 pub mod from_paths {
