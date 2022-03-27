@@ -1920,15 +1920,18 @@ mod parse {
             [core]
                 a = 1
         ";
-        let bytes_with_gb18030_bom = b"\x84\x31\x95\x33
+        let bytes_with_gb18030_bom = "\u{feff}
             [core]
                 a = 1
         ";
 
-        assert_eq!(parse_from_bytes(bytes), parse_from_bytes(bytes_with_gb18030_bom));
+        assert_eq!(
+            parse_from_bytes(bytes),
+            parse_from_bytes(bytes_with_gb18030_bom.as_bytes())
+        );
         assert_eq!(
             parse_from_bytes_owned(bytes),
-            parse_from_bytes_owned(bytes_with_gb18030_bom)
+            parse_from_bytes_owned(bytes_with_gb18030_bom.as_bytes())
         );
     }
 }
