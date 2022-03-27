@@ -246,7 +246,7 @@ impl<'event> GitConfig<'event> {
     ) -> Result<Self, from_paths::Error> {
         fn from_paths_recursive(
             paths: Vec<PathBuf>,
-            config: &mut GitConfig,
+            target_config: &mut GitConfig,
             depth: u8,
             options: &from_paths::Options,
         ) -> Result<(), from_paths::Error> {
@@ -267,12 +267,12 @@ impl<'event> GitConfig<'event> {
                 section_indices.sort();
                 for section_index in section_indices {
                     let section_header = &other.section_headers[section_index];
-                    config.push_section(
+                    target_config.push_section(
                         section_header.name.0.to_owned(),
                         section_header.subsection_name.to_owned(),
                         other.sections[section_index].clone(),
                     );
-                    if section_header.name.0 != "include" {
+                    if section_header.subsection_name.is_some() || section_header.name.0 != "include" {
                         continue;
                     }
                     let path_values = other.sections[section_index].values(&Key::from("path"));
@@ -292,7 +292,7 @@ impl<'event> GitConfig<'event> {
                             paths.push(path);
                         }
                     }
-                    from_paths_recursive(paths, config, depth + 1, options)?;
+                    from_paths_recursive(paths, target_config, depth + 1, options)?;
                 }
             }
             Ok(())
@@ -407,7 +407,6 @@ impl<'event> GitConfig<'event> {
         if config.is_empty() {
             Ok(None)
         } else {
-            dbg!(&include_paths);
             let config = config.resolve_includes(include_paths, options)?;
             Ok(Some(config))
         }
@@ -1849,12 +1848,20 @@ mod from_paths_tests {
         .unwrap();
 
         let b_path = dir.path().join("b");
-        let relative_b_path = std::path::PathBuf::from("b");
+        let relative_b_path: std::path::PathBuf = "b".into();
         fs::write(
             b_path.as_path(),
             "
             [diff]
               renames = true",
+        )
+        .unwrap();
+        let c_path = dir.path().join("c");
+        fs::write(
+            c_path.as_path(),
+            "
+            [diff]
+              renames = invalid",
         )
         .unwrap();
 
@@ -1873,11 +1880,14 @@ mod from_paths_tests {
               path = {}
               path = {}
               path = {}
+            [include.ignore]
+              path = {}
             [http]
 	          sslVerify = false",
                 non_existing_path,
                 non_canonical_path_a,
-                relative_b_path.as_path().to_str().unwrap()
+                relative_b_path.as_path().to_str().unwrap(),
+                c_path.display()
             ),
         )
         .unwrap();
