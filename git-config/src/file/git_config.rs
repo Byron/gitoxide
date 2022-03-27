@@ -119,7 +119,6 @@ pub struct GitConfig<'event> {
 }
 
 pub mod from_paths {
-    use crate::file::GitConfig;
     use crate::parser;
     use crate::values::path::interpolate;
     use quick_error::quick_error;
@@ -153,10 +152,11 @@ pub mod from_paths {
         pub git_install_dir: Option<Cow<'a, std::path::Path>>,
         /// The maximum allowed length of the file include chain built by following nested includes where top level is depth = 1.
         pub max_depth: u8,
-        /// When max depth is exceeded, while following nested included, returns an error if true or unit if false   
+        /// When max depth is exceeded while following nested included, return an error if true or silently stop following
+        /// includes.
+        ///
+        /// Setting this value to false allows to read configuration with cycles, which otherwise always results in an error.
         pub error_on_max_depth_exceeded: bool,
-        /// Initial `GitConfig` (possibly empty) that gets new sections, originating from the included config files
-        pub config: GitConfig<'a>,
     }
 
     impl<'a> Default for Options<'a> {
@@ -165,7 +165,6 @@ pub mod from_paths {
                 git_install_dir: None,
                 max_depth: 10,
                 error_on_max_depth_exceeded: true,
-                config: GitConfig::default(),
             }
         }
     }
@@ -178,34 +177,26 @@ pub mod from_env {
 
     quick_error! {
         #[derive(Debug)]
-        /// Represents the errors that may occur when calling [`GitConfig::from_env`].
-        ///
-        /// [`GitConfig::from_env`]: crate::file::GitConfig::from_env
+        /// Represents the errors that may occur when calling [`GitConfig::from_env`][crate::file::GitConfig::from_env()].
         #[allow(missing_docs)]
         pub enum Error {
-            /// `GIT_CONFIG_COUNT` was not a positive integer
             ParseError (err: String) {
                 display("GIT_CONFIG_COUNT was not a positive integer: {}", err)
             }
-            /// `GIT_CONFIG_KEY_<n>` was not set.
             InvalidKeyId (key_id: usize) {
                 display("GIT_CONFIG_KEY_{} was not set.", key_id)
             }
-            /// An key at `GIT_CONFIG_KEY_<n>` was found, but it wasn't a valid string.
             InvalidKeyValue (key_id: usize, key_val: String) {
                 display("GIT_CONFIG_KEY_{} was set to an invalid value: {}", key_id, key_val)
             }
-            /// `GIT_CONFIG_VALUE_<n>` was not set.
             InvalidValueId (value_id: usize) {
                 display("GIT_CONFIG_VALUE_{} was not set.", value_id)
             }
-            /// Could not interpolate path while loading a config file.
             PathInterpolationError (err: interpolate::Error) {
-                display("Could not interpolate path.")
+                display("Could not interpolate path while loading a config file.")
                 source(err)
                 from()
             }
-            /// Could not load config from a file
             FromPathsError (err: from_paths::Error) {
                 display("Could not load config from a file")
                 source(err)
