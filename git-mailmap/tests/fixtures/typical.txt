@@ -1,0 +1,8 @@
+# from the mailmap docs
+
+Joe R. Developer <joe@example.com>
+Joe R. Developer <joe@example.com> Joe <bugs@example.com>
+
+Jane Doe <jane@example.com> <jane@laptop.(none)>
+Jane Doe <jane@example.com> <jane@desktop.(none)>
+Jane Doe <jane@example.com> Jane <bugs@example.com>

@@ -15,6 +15,27 @@ fn line_numbers_are_counted_correctly_in_errors() {
 }
 
 #[test]
+fn a_typical_mailmap() {
+    let input = std::fs::read(fixture_path("typical.txt")).unwrap();
+    let actual = git_mailmap::parse(&input).map(Result::unwrap).collect::<Vec<_>>();
+    assert_eq!(
+        actual,
+        vec![
+            Entry::change_name_by_email("Joe R. Developer", "joe@example.com"),
+            Entry::change_name_and_email_by_name_and_email(
+                "Joe R. Developer",
+                "joe@example.com",
+                "Joe",
+                "bugs@example.com"
+            ),
+            Entry::change_name_and_email_by_email("Jane Doe", "jane@example.com", "jane@laptop.(none)"),
+            Entry::change_name_and_email_by_email("Jane Doe", "jane@example.com", "jane@desktop.(none)"),
+            Entry::change_name_and_email_by_name_and_email("Jane Doe", "jane@example.com", "Jane", "bugs@example.com"),
+        ]
+    );
+}
+
+#[test]
 fn empty_lines_and_comments_are_ignored() {
     assert!(git_mailmap::parse(b"# comment").next().is_none());
     assert!(git_mailmap::parse(b"\n\r\n\t\t   \n").next().is_none());
