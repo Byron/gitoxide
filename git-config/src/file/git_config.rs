@@ -150,7 +150,7 @@ pub mod from_paths {
     pub struct Options<'a> {
         /// The location where gitoxide or git is installed
         pub git_install_dir: Option<Cow<'a, std::path::Path>>,
-        /// The maximum allowed length of the file include chain built by following nested includes where top level is depth = 1.
+        /// The maximum allowed length of the file include chain built by following nested includes where base level is depth = 0.
         pub max_depth: u8,
         /// When max depth is exceeded while following nested included, return an error if true or silently stop following
         /// includes.
@@ -236,21 +236,44 @@ impl<'event> GitConfig<'event> {
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-FILES
     #[inline]
     pub fn from_paths(paths: Vec<PathBuf>, options: &from_paths::Options) -> Result<Self, from_paths::Error> {
-        Self::new().resolve_includes(paths, options)
+        let mut target = Self::new();
+        for path in paths {
+            let mut config = Self::open(&path)?;
+            config.resolve_includes(&path, options)?;
+            target.merge(config);
+        }
+        Ok(target)
+    }
+
+    // TODO: add note indicating that probably a lot if not all information about the original files is currently lost,
+    //       so can't be written back. This will probably change a lot during refactor, so it's not too important now.
+    fn merge(&mut self, mut other: Self) {
+        let mut section_indices: Vec<_> = other.section_headers.keys().cloned().collect();
+        // header keys are numeric and ascend in insertion order, hence sorting them gives the order
+        // in which they appear in the config file.
+        section_indices.sort();
+        for section_index in section_indices {
+            let section_header = other.section_headers.remove(&section_index).expect("present");
+            self.push_section(
+                section_header.name.0,
+                section_header.subsection_name,
+                other.sections.remove(&section_index).expect("present"),
+            );
+        }
     }
 
     pub(crate) fn resolve_includes(
-        mut self,
-        paths: Vec<PathBuf>,
+        &mut self,
+        config_path: &std::path::Path,
         options: &from_paths::Options,
-    ) -> Result<Self, from_paths::Error> {
-        fn from_paths_recursive(
-            paths: Vec<PathBuf>,
+    ) -> Result<(), from_paths::Error> {
+        fn resolve_includes_recursive(
             target_config: &mut GitConfig,
+            target_config_path: &std::path::Path,
             depth: u8,
             options: &from_paths::Options,
         ) -> Result<(), from_paths::Error> {
-            if depth > options.max_depth {
+            if depth == options.max_depth {
                 return if options.error_on_max_depth_exceeded {
                     Err(from_paths::Error::IncludeDepthExceeded {
                         max_depth: options.max_depth,
@@ -259,48 +282,36 @@ impl<'event> GitConfig<'event> {
                     Ok(())
                 };
             }
-            for config_file_path in paths {
-                let other = GitConfig::open(&config_file_path)?;
-                let mut section_indices: Vec<_> = other.section_headers.keys().collect();
-                // header keys are numeric and ascend in insertion order, hence sorting them gives the order
-                // in which they appear in the config file.
-                section_indices.sort();
-                for section_index in section_indices {
-                    let section_header = &other.section_headers[section_index];
-                    target_config.push_section(
-                        section_header.name.0.to_owned(),
-                        section_header.subsection_name.to_owned(),
-                        other.sections[section_index].clone(),
-                    );
-                    if section_header.subsection_name.is_some() || section_header.name.0 != "include" {
-                        continue;
-                    }
-                    let path_values = other.sections[section_index].values(&Key::from("path"));
-                    let mut paths = vec![];
-                    for path_value in path_values {
-                        let interpolated_path =
-                            values::Path::from(path_value).interpolate(options.git_install_dir.as_deref())?;
-                        let path = if interpolated_path.is_relative() {
-                            config_file_path
-                                .parent()
-                                .expect("path is a config file which naturally lives in a directory")
-                                .join(interpolated_path)
-                        } else {
-                            interpolated_path.into()
-                        };
-                        if let Ok(path) = path.canonicalize() {
-                            paths.push(path);
-                        }
-                    }
-                    from_paths_recursive(paths, target_config, depth + 1, options)?;
+
+            let mut paths_to_include = Vec::new();
+            for path in target_config
+                .multi_value::<values::Path>("include", None, "path")
+                .unwrap_or_default()
+            {
+                let path = path.interpolate(options.git_install_dir.as_deref())?;
+                let path: PathBuf = if path.is_relative() {
+                    target_config_path
+                        .parent()
+                        .expect("path is a config file which naturally lives in a directory")
+                        .join(path)
+                } else {
+                    path.into()
+                };
+
+                if path.is_file() {
+                    paths_to_include.push(path);
                 }
+            }
+
+            for config_path in paths_to_include {
+                let mut include_config = GitConfig::open(&config_path)?;
+                resolve_includes_recursive(&mut include_config, &config_path, depth + 1, options)?;
+                target_config.merge(include_config);
             }
             Ok(())
         }
 
-        from_paths_recursive(paths, &mut self, 1, &options)?;
-
-        Ok(self)
+        resolve_includes_recursive(self, config_path, 0, options)
     }
 
     /// Constructs a `git-config` from the default cascading sequence.
@@ -363,8 +374,6 @@ impl<'event> GitConfig<'event> {
         };
 
         let mut config = Self::new();
-        let mut include_paths = Vec::new();
-
         for i in 0..count {
             let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| from_env::Error::InvalidKeyId(i))?;
             let value = env::var(format!("GIT_CONFIG_VALUE_{}", i)).map_err(|_| from_env::Error::InvalidValueId(i))?;
@@ -386,14 +395,6 @@ impl<'event> GitConfig<'event> {
                     )
                 };
 
-                if subsection.is_none() && section_name == "include" && key == "path" {
-                    include_paths.push(
-                        values::Path::from(Cow::Borrowed(value.as_bytes()))
-                            .interpolate(options.git_install_dir.as_deref())?
-                            .into_owned(),
-                    );
-                }
-
                 section.push(
                     Cow::<str>::Owned(key.to_string()).into(),
                     Cow::Owned(value.into_bytes()),
@@ -407,7 +408,8 @@ impl<'event> GitConfig<'event> {
         if config.is_empty() {
             Ok(None)
         } else {
-            let config = config.resolve_includes(include_paths, options)?;
+            // TODO: what's the source path supposed to be? Can this be optional?
+            config.resolve_includes(std::path::Path::new("."), options)?;
             Ok(Some(config))
         }
     }
@@ -1789,7 +1791,6 @@ a"#,
 
 #[cfg(test)]
 mod from_paths_tests {
-    use std::path::PathBuf;
     use std::{fs, io};
 
     use crate::file::from_paths;
@@ -1799,8 +1800,8 @@ mod from_paths_tests {
     use crate::parser::ParserOrIoError;
 
     /// Escapes backslash when writing a path as string so that it is a valid windows path
-    fn to_backslash_escaped_string(path: &PathBuf) -> String {
-        path.as_path().to_str().unwrap().replace("\\", "\\\\")
+    fn to_backslash_escaped_string(path: &std::path::Path) -> String {
+        path.to_str().unwrap().replace('\\', "\\\\")
     }
 
     #[test]
@@ -1833,7 +1834,7 @@ mod from_paths_tests {
     }
 
     #[test]
-    fn multiple_include() {
+    fn multiple_includes() {
         let dir = tempdir().unwrap();
 
         let a_path = dir.path().join("a");
@@ -1865,7 +1866,7 @@ mod from_paths_tests {
         )
         .unwrap();
 
-        let a_path_string = to_backslash_escaped_string(&a_path.as_path().parent().unwrap().to_path_buf());
+        let a_path_string = to_backslash_escaped_string(a_path.parent().unwrap());
         let non_canonical_path_a = format!("{}/./a", a_path_string);
         let non_existing_path = "/dfgwfsghfdsfs";
         let c_path = dir.path().join("c");
@@ -1887,7 +1888,7 @@ mod from_paths_tests {
                 non_existing_path,
                 non_canonical_path_a,
                 relative_b_path.as_path().to_str().unwrap(),
-                c_path.display()
+                to_backslash_escaped_string(&c_path)
             ),
         )
         .unwrap();
@@ -1922,12 +1923,13 @@ mod from_paths_tests {
     fn nested_include_respects_max_depth() {
         let dir = tempdir().unwrap();
 
+        // 0 includes 1 - base level
         // 1 includes 2
         // 2 includes 3
         // 3 includes 4
         // 4 has no includes
-        let four = 4u8;
-        for (i, next_i) in (1..four).zip(2..=four) {
+        let max_depth = 4u8;
+        for (i, next_i) in (0..max_depth).zip(1..=max_depth) {
             let path = dir.path().join(i.to_string());
             let next_path = dir.path().join(next_i.to_string());
             fs::write(
@@ -1945,18 +1947,20 @@ mod from_paths_tests {
         }
 
         fs::write(
-            dir.path().join("4"),
+            dir.path().join(max_depth.to_string()),
             "
                     [core]
-                      i = 4",
+                      i = {}"
+                .replace("{}", &max_depth.to_string()),
         )
         .unwrap();
 
         let options = from_paths::Options::default();
-        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options).unwrap();
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
         assert_eq!(
             config.get_raw_multi_value("core", None, "i").unwrap(),
             vec![
+                Cow::Borrowed(b"0"),
                 Cow::Borrowed(b"1"),
                 Cow::Borrowed(b"2"),
                 Cow::Borrowed(b"3"),
@@ -1971,20 +1975,20 @@ mod from_paths_tests {
             error_on_max_depth_exceeded: false,
             ..Default::default()
         };
-        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options).unwrap();
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
         assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"1")));
 
         // with default max_allowed_depth of 10 and 4 levels of includes, last level is read
         let options = from_paths::Options::default();
-        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options).unwrap();
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
         assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"4")));
 
-        // with max_allowed_depth of 4 and 4 levels of includes, last level is read
+        // with max_allowed_depth of 5, the base and 4 levels of includes, last level is read
         let options = from_paths::Options {
-            max_depth: 4,
+            max_depth: 5,
             ..Default::default()
         };
-        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options).unwrap();
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
         assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"4")));
 
         // with max_allowed_depth of 2 and 4 levels of includes, max_allowed_depth is exceeded and error is returned
@@ -1992,7 +1996,7 @@ mod from_paths_tests {
             max_depth: 2,
             ..Default::default()
         };
-        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options);
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options);
         assert!(matches!(
             config.unwrap_err(),
             from_paths::Error::IncludeDepthExceeded { max_depth: 2 }
@@ -2004,7 +2008,7 @@ mod from_paths_tests {
             error_on_max_depth_exceeded: false,
             ..Default::default()
         };
-        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options).unwrap();
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
         assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"2")));
 
         // with max_allowed_depth of 0 and 4 levels of includes, max_allowed_depth is exceeded and error is returned
@@ -2012,7 +2016,7 @@ mod from_paths_tests {
             max_depth: 0,
             ..Default::default()
         };
-        let config = GitConfig::from_paths(vec![dir.path().join("1")], &options);
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options);
         assert!(matches!(
             config.unwrap_err(),
             from_paths::Error::IncludeDepthExceeded { max_depth: 0 }
@@ -2046,11 +2050,9 @@ mod from_paths_tests {
 
         fs::write(
             b_path.as_path(),
-            format!(
-                "
+            "
             [core]
-              b = false"
-            ),
+              b = false",
         )
         .unwrap();
 
@@ -2116,7 +2118,8 @@ mod from_paths_tests {
                 Cow::Borrowed(b"0"),
                 Cow::Borrowed(b"1"),
                 Cow::Borrowed(b"0"),
-                Cow::Borrowed(b"1")
+                Cow::Borrowed(b"1"),
+                Cow::Borrowed(b"0"),
             ]
         );
     }
@@ -2250,9 +2253,6 @@ mod from_paths_tests {
         assert_eq!(config.len(), 5);
     }
 }
-
-#[cfg(test)]
-pub mod from_env_paths {}
 
 #[cfg(test)]
 mod from_env_tests {
