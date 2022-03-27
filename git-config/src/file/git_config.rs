@@ -236,8 +236,7 @@ impl<'event> GitConfig<'event> {
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-FILES
     #[inline]
     pub fn from_paths(paths: Vec<PathBuf>, options: &from_paths::Options) -> Result<Self, from_paths::Error> {
-        let config = Self::new();
-        config.resolve_includes(paths, options)
+        Self::new().resolve_includes(paths, options)
     }
 
     pub(crate) fn resolve_includes(
@@ -260,8 +259,8 @@ impl<'event> GitConfig<'event> {
                     Ok(())
                 };
             }
-            for config_file_path in paths.iter() {
-                let other = GitConfig::open(config_file_path)?;
+            for config_file_path in paths {
+                let other = GitConfig::open(&config_file_path)?;
                 let mut section_indices: Vec<_> = other.section_headers.keys().collect();
                 // header keys are numeric and ascend in insertion order, hence sorting them gives the order
                 // in which they appear in the config file.
@@ -364,43 +363,41 @@ impl<'event> GitConfig<'event> {
         };
 
         let mut config = Self::new();
-        let mut paths = vec![];
+        let mut include_paths = Vec::new();
 
         for i in 0..count {
             let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| from_env::Error::InvalidKeyId(i))?;
             let value = env::var(format!("GIT_CONFIG_VALUE_{}", i)).map_err(|_| from_env::Error::InvalidValueId(i))?;
-            if let Some((section, maybe_subsection)) = key.split_once('.') {
+            if let Some((section_name, maybe_subsection)) = key.split_once('.') {
                 let (subsection, key) = if let Some((subsection, key)) = maybe_subsection.rsplit_once('.') {
                     (Some(subsection), key)
                 } else {
                     (None, maybe_subsection)
                 };
 
-                let mut section = if let Ok(section) = config.section_mut(section, subsection) {
+                let mut section = if let Ok(section) = config.section_mut(section_name, subsection) {
                     section
                 } else {
                     // Need to have config own the section and subsection names
                     // else they get dropped at the end of the loop.
                     config.new_section(
-                        section.to_string(),
+                        section_name.to_string(),
                         subsection.map(|subsection| Cow::Owned(subsection.to_string())),
                     )
                 };
+
+                if subsection.is_none() && section_name == "include" && key == "path" {
+                    include_paths.push(
+                        values::Path::from(Cow::Borrowed(value.as_bytes()))
+                            .interpolate(options.git_install_dir.as_deref())?
+                            .into_owned(),
+                    );
+                }
 
                 section.push(
                     Cow::<str>::Owned(key.to_string()).into(),
                     Cow::Owned(value.into_bytes()),
                 );
-
-                paths = section
-                    .values(&Key::from("path"))
-                    .iter()
-                    .map(|val| {
-                        values::Path::from(val.clone())
-                            .interpolate(options.git_install_dir.as_deref())
-                            .map(|path| path.into_owned())
-                    })
-                    .collect::<Result<Vec<_>, _>>()?;
             } else {
                 return Err(from_env::Error::InvalidKeyValue(i, key.to_string()));
             }
@@ -410,7 +407,8 @@ impl<'event> GitConfig<'event> {
         if config.is_empty() {
             Ok(None)
         } else {
-            let config = config.resolve_includes(paths, options)?;
+            dbg!(&include_paths);
+            let config = config.resolve_includes(include_paths, options)?;
             Ok(Some(config))
         }
     }
@@ -2348,14 +2346,19 @@ mod from_env_tests {
         let dir = tempdir().unwrap();
         let a_path = dir.path().join("a");
         fs::write(&a_path, "[core]\nkey = changed").unwrap();
-        let path_str = a_path.to_str().unwrap();
+        let b_path = dir.path().join("b");
+        fs::write(&b_path, "[core]\nkey = invalid").unwrap();
 
         let _env = Env::new()
-            .set("GIT_CONFIG_COUNT", "2")
+            .set("GIT_CONFIG_COUNT", "4")
             .set("GIT_CONFIG_KEY_0", "core.key")
             .set("GIT_CONFIG_VALUE_0", "value")
             .set("GIT_CONFIG_KEY_1", "include.path")
-            .set("GIT_CONFIG_VALUE_1", path_str);
+            .set("GIT_CONFIG_VALUE_1", a_path.to_str().unwrap())
+            .set("GIT_CONFIG_KEY_2", "other.path")
+            .set("GIT_CONFIG_VALUE_2", b_path.to_str().unwrap())
+            .set("GIT_CONFIG_KEY_3", "include.origin.path")
+            .set("GIT_CONFIG_VALUE_3", b_path.to_str().unwrap());
 
         let config = GitConfig::from_env(&Options::default()).unwrap().unwrap();
 
@@ -2363,7 +2366,7 @@ mod from_env_tests {
             config.get_raw_value("core", None, "key"),
             Ok(Cow::<[u8]>::Borrowed(b"changed"))
         );
-        assert_eq!(config.len(), 3);
+        assert_eq!(config.len(), 5);
     }
 }
 
