@@ -142,6 +142,9 @@ pub mod from_paths {
             IncludeDepthExceeded { max_depth: u8 } {
                 display("The maximum allowed length {} of the file include chain built by following nested includes is exceeded", max_depth)
             }
+            MissingConfigPath {
+                display("Include paths from environment variables must not be relative.")
+            }
         }
     }
 
@@ -239,7 +242,7 @@ impl<'event> GitConfig<'event> {
         let mut target = Self::new();
         for path in paths {
             let mut config = Self::open(&path)?;
-            config.resolve_includes(&path, options)?;
+            config.resolve_includes(Some(&path), options)?;
             target.append(config);
         }
         Ok(target)
@@ -264,12 +267,12 @@ impl<'event> GitConfig<'event> {
 
     pub(crate) fn resolve_includes(
         &mut self,
-        config_path: &std::path::Path,
+        config_path: Option<&std::path::Path>,
         options: &from_paths::Options,
     ) -> Result<(), from_paths::Error> {
         fn resolve_includes_recursive(
             target_config: &mut GitConfig,
-            target_config_path: &std::path::Path,
+            target_config_path: Option<&Path>,
             depth: u8,
             options: &from_paths::Options,
         ) -> Result<(), from_paths::Error> {
@@ -291,6 +294,7 @@ impl<'event> GitConfig<'event> {
                 let path = path.interpolate(options.git_install_dir.as_deref())?;
                 let path: PathBuf = if path.is_relative() {
                     target_config_path
+                        .ok_or_else(|| from_paths::Error::MissingConfigPath)?
                         .parent()
                         .expect("path is a config file which naturally lives in a directory")
                         .join(path)
@@ -305,7 +309,7 @@ impl<'event> GitConfig<'event> {
 
             for config_path in paths_to_include {
                 let mut include_config = GitConfig::open(&config_path)?;
-                resolve_includes_recursive(&mut include_config, &config_path, depth + 1, options)?;
+                resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, options)?;
                 target_config.append(include_config);
             }
             Ok(())
@@ -408,8 +412,7 @@ impl<'event> GitConfig<'event> {
         if config.is_empty() {
             Ok(None)
         } else {
-            // TODO: what's the source path supposed to be? Can this be optional?
-            config.resolve_includes(std::path::Path::new("."), options)?;
+            config.resolve_includes(None, options)?;
             Ok(Some(config))
         }
     }
@@ -2258,6 +2261,7 @@ mod from_paths_tests {
 mod from_env_tests {
     use std::{env, fs};
 
+    use crate::file::from_paths;
     use crate::file::from_paths::Options;
     use serial_test::serial;
     use tempfile::tempdir;
@@ -2348,6 +2352,22 @@ mod from_env_tests {
         assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"b")));
         assert_eq!(config.get_raw_value("core", None, "c"), Ok(Cow::<[u8]>::Borrowed(b"c")));
         assert_eq!(config.len(), 3);
+    }
+
+    #[test]
+    #[serial]
+    fn no_relative_paths_in_includes_from_env_variables() {
+        let _env = Env::new()
+            .set("GIT_CONFIG_COUNT", "1")
+            .set("GIT_CONFIG_KEY_0", "include.path")
+            .set("GIT_CONFIG_VALUE_0", "some_git_config");
+
+        let config = GitConfig::from_env(&Options::default());
+
+        assert!(matches!(
+            config,
+            Err(from_env::Error::FromPathsError(from_paths::Error::MissingConfigPath))
+        ));
     }
 
     #[test]
