@@ -294,7 +294,7 @@ impl<'event> GitConfig<'event> {
                 let path = path.interpolate(options.git_install_dir.as_deref())?;
                 let path: PathBuf = if path.is_relative() {
                     target_config_path
-                        .ok_or_else(|| from_paths::Error::MissingConfigPath)?
+                        .ok_or(from_paths::Error::MissingConfigPath)?
                         .parent()
                         .expect("path is a config file which naturally lives in a directory")
                         .join(path)
