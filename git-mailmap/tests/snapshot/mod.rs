@@ -51,14 +51,59 @@ fn try_resolve() {
 }
 
 #[test]
-#[ignore]
 fn non_name_and_name_mappings_will_not_clash() {
-    // add mapping from email
-    // add mapping from name and email
-    // both should be accessible
+    let entries = vec![
+        // add mapping from email
+        git_mailmap::Entry {
+            new_name: Some("new-name".into()),
+            new_email: Some("new-email".into()),
+            old_name: None,
+            old_email: "old-email".into(),
+        },
+        // add mapping from name and email
+        git_mailmap::Entry {
+            new_name: Some("other-new-name".into()),
+            new_email: Some("other-new-email".into()),
+            old_name: Some("old-name".into()),
+            old_email: "old-email".into(),
+        },
+    ];
+    for entries in vec![entries.clone().into_iter().rev().collect::<Vec<_>>(), entries] {
+        let snapshot = Snapshot::new(entries);
 
-    // the same the other way around
-    todo!()
+        assert_eq!(
+            snapshot.try_resolve(&signature("replace-by-email", "old-email").to_ref()),
+            Some(signature("new-name", "new-email")),
+            "it can match by email only"
+        );
+        assert_eq!(
+            snapshot.try_resolve(&signature("old-name", "old-email").to_ref()),
+            Some(signature("other-new-name", "other-new-email")),
+            "it can match by email and name as well"
+        );
+    }
+}
+
+#[test]
+fn overwrite_entries() {
+    let snapshot = Snapshot::from_bytes(&fixture_bytes("overwrite.txt"));
+    assert_eq!(
+        snapshot.try_resolve(&signature("does not matter", "old-a-email").to_ref()),
+        Some(signature("A-overwritten", "old-a-email")),
+        "email only by email"
+    );
+
+    assert_eq!(
+        snapshot.try_resolve(&signature("to be replaced", "old-b-EMAIL").to_ref()),
+        Some(signature("B-overwritten", "new-b-email-overwritten")),
+        "name and email by email"
+    );
+
+    assert_eq!(
+        snapshot.try_resolve(&signature("old-c", "old-C-email").to_ref()),
+        Some(signature("C-overwritten", "new-c-email-overwritten")),
+        "name and email by name and email"
+    );
 }
 
 fn snapshot() -> Snapshot {

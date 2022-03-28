@@ -27,11 +27,11 @@ pub struct Snapshot {
 pub struct Entry<'a> {
     #[cfg_attr(feature = "serde1", serde(borrow))]
     /// The name to map to.
-    new_name: Option<&'a BStr>,
+    pub new_name: Option<&'a BStr>,
     /// The email map to.
-    new_email: Option<&'a BStr>,
+    pub new_email: Option<&'a BStr>,
     /// The name to look for and replace.
-    old_name: Option<&'a BStr>,
+    pub old_name: Option<&'a BStr>,
     /// The email to look for and replace.
-    old_email: &'a BStr,
+    pub old_email: &'a BStr,
 }
