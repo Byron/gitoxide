@@ -1221,6 +1221,7 @@ name = "git-mailmap"
 version = "0.0.0"
 dependencies = [
  "bstr",
+ "git-actor",
  "git-testtools",
  "quick-error",
  "serde",

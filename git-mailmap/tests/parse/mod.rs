@@ -1,9 +1,9 @@
 use git_mailmap::{parse, Entry};
-use git_testtools::fixture_path;
+use git_testtools::fixture_bytes;
 
 #[test]
 fn line_numbers_are_counted_correctly_in_errors() {
-    let input = std::fs::read(fixture_path("invalid.txt")).unwrap();
+    let input = fixture_bytes("invalid.txt");
     let mut actual = git_mailmap::parse(&input).collect::<Vec<_>>().into_iter();
     assert_eq!(actual.len(), 2);
 
@@ -16,7 +16,7 @@ fn line_numbers_are_counted_correctly_in_errors() {
 
 #[test]
 fn a_typical_mailmap() {
-    let input = std::fs::read(fixture_path("typical.txt")).unwrap();
+    let input = fixture_bytes("typical.txt");
     let actual = git_mailmap::parse(&input).map(Result::unwrap).collect::<Vec<_>>();
     assert_eq!(
         actual,

@@ -8,6 +8,10 @@ pub fn parse(buf: &[u8]) -> parse::Lines<'_> {
     parse::Lines::new(buf)
 }
 
+pub fn parse_ignore_errors(buf: &[u8]) -> impl Iterator<Item = Entry<'_>> {
+    parse(buf).filter_map(Result::ok)
+}
+
 mod entry;
 
 mod snapshot;
