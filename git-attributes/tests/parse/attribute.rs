@@ -1,7 +1,7 @@
 use bstr::{BStr, ByteSlice};
 use git_attributes::ignore::pattern::Mode;
 use git_attributes::{parse, State};
-use git_testtools::fixture_path;
+use git_testtools::fixture_bytes;
 
 #[test]
 fn byte_order_marks_are_no_patterns() {
@@ -14,7 +14,7 @@ fn byte_order_marks_are_no_patterns() {
 
 #[test]
 fn line_numbers_are_counted_correctly() {
-    let input = std::fs::read(fixture_path("attributes/various.txt")).unwrap();
+    let input = fixture_bytes("attributes/various.txt");
     assert_eq!(
         try_lines(&String::from_utf8(input).unwrap()).unwrap(),
         vec![

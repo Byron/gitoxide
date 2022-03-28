@@ -26,6 +26,9 @@ pub fn hex_to_id(hex: &str) -> git_hash::ObjectId {
 pub fn fixture_path(path: impl AsRef<Path>) -> PathBuf {
     PathBuf::from("tests").join("fixtures").join(path.as_ref())
 }
+pub fn fixture_bytes(path: impl AsRef<Path>) -> Vec<u8> {
+    std::fs::read(fixture_path(path.as_ref())).expect(&format!("File at '{}' not found", path.as_ref().display()))
+}
 pub fn scripted_fixture_repo_read_only(
     script_name: impl AsRef<Path>,
 ) -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
