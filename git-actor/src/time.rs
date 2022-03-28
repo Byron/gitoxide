@@ -12,6 +12,16 @@ impl From<i32> for Sign {
     }
 }
 
+impl Default for Time {
+    fn default() -> Self {
+        Time {
+            time: 0,
+            offset: 0,
+            sign: Sign::Plus,
+        }
+    }
+}
+
 impl Time {
     /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {

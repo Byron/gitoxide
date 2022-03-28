@@ -22,26 +22,12 @@ mod _ref {
 }
 
 mod convert {
-    use crate::{Sign, Signature, SignatureRef, Time};
-
-    impl Default for Signature {
-        fn default() -> Self {
-            Signature::empty()
-        }
-    }
+    use crate::{Signature, SignatureRef};
 
     impl Signature {
         /// An empty signature, similar to 'null'.
         pub fn empty() -> Self {
-            Signature {
-                name: Default::default(),
-                email: Default::default(),
-                time: Time {
-                    time: 0,
-                    offset: 0,
-                    sign: Sign::Plus,
-                },
-            }
+            Signature::default()
         }
 
         /// Borrow this instance as immutable
