@@ -9,3 +9,5 @@ B-overwritten <new-b-email-overwritten> <old-b-email>
 C <new-c-email> old-C <old-c-email>
 C-overwritten <new-c-email-overwritten> old-C <old-c-email>
 
+<new-d-email> <old-d-email>
+<new-d-email-overwritten> <old-d-email>

@@ -4,8 +4,11 @@ use git_actor::SignatureRef;
 use std::cmp::Ordering;
 use std::ops::Deref;
 
+/// A resolved signature with borrowed fields for a mapped `name` and/or `email`.
 pub struct ResolvedSignature<'a> {
+    /// The mapped name.
     pub name: Option<&'a BStr>,
+    /// The mapped email.
     pub email: Option<&'a BStr>,
 }
 
@@ -165,16 +168,24 @@ impl<'a> From<crate::Entry<'a>> for EmailEntry {
 }
 
 impl Snapshot {
+    /// Create a new snapshot from the given bytes buffer, ignoring all parse errors that may occour on a line-by-line basis.
+    ///
+    /// This is similar to what git does.
     pub fn from_bytes(buf: &[u8]) -> Self {
         Self::new(crate::parse_ignore_errors(buf))
     }
 
+    /// Create a new instance from `entries`.
+    ///
+    /// These can be obtained using [crate::parse()].
     pub fn new<'a>(entries: impl IntoIterator<Item = crate::Entry<'a>>) -> Self {
         let mut snapshot = Self::default();
         snapshot.merge(entries);
         snapshot
     }
 
+    /// Merge the given `entries` into this instance, possibly overwriting existing mappings with
+    /// new ones should they collide.
     pub fn merge<'a>(&mut self, entries: impl IntoIterator<Item = crate::Entry<'a>>) -> &mut Self {
         for entry in entries {
             let old_email: EncodedStringRef<'_> = entry.old_email.into();
@@ -195,6 +206,10 @@ impl Snapshot {
         self
     }
 
+    /// Try to resolve `signature` by its contained email and name and provide resolved/mapped names as reference.
+    /// Return `None` if no such mapping was found.
+    ///
+    /// This is the fastest possible lookup as there is no allocation.
     pub fn try_resolve_ref<'a>(&'a self, signature: &git_actor::SignatureRef<'_>) -> Option<ResolvedSignature<'a>> {
         let email: EncodedStringRef<'_> = signature.email.into();
         let pos = self
@@ -214,11 +229,19 @@ impl Snapshot {
         }
     }
 
+    /// Try to resolve `signature` by its contained email and name and provide resolved/mapped names as owned signature,
+    /// with the mapped name and/or email replaced accordingly.
+    ///
+    /// Return `None` if no such mapping was found.
     pub fn try_resolve(&self, signature: &git_actor::SignatureRef<'_>) -> Option<git_actor::Signature> {
         let new = self.try_resolve_ref(signature)?;
         enriched_signature(signature, new)
     }
 
+    /// Like [`try_resolve()`][Snapshot::try_resolve()], but always returns an owned signature, which might be a copy
+    /// of `signature` if no mapping was found.
+    ///
+    /// Note that this method will always allocate.
     pub fn resolve(&self, signature: &git_actor::SignatureRef<'_>) -> git_actor::Signature {
         self.try_resolve(signature).unwrap_or_else(|| signature.to_owned())
     }

@@ -54,19 +54,14 @@ fn try_resolve() {
 fn non_name_and_name_mappings_will_not_clash() {
     let entries = vec![
         // add mapping from email
-        git_mailmap::Entry {
-            new_name: Some("new-name".into()),
-            new_email: Some("new-email".into()),
-            old_name: None,
-            old_email: "old-email".into(),
-        },
+        git_mailmap::Entry::change_name_and_email_by_email("new-name", "new-email", "old-email"),
         // add mapping from name and email
-        git_mailmap::Entry {
-            new_name: Some("other-new-name".into()),
-            new_email: Some("other-new-email".into()),
-            old_name: Some("old-name".into()),
-            old_email: "old-email".into(),
-        },
+        git_mailmap::Entry::change_name_and_email_by_name_and_email(
+            "other-new-name",
+            "other-new-email",
+            "old-name",
+            "old-email",
+        ),
     ];
     for entries in vec![entries.clone().into_iter().rev().collect::<Vec<_>>(), entries] {
         let snapshot = Snapshot::new(entries);
@@ -103,6 +98,12 @@ fn overwrite_entries() {
         snapshot.try_resolve(&signature("old-c", "old-C-email").to_ref()),
         Some(signature("C-overwritten", "new-c-email-overwritten")),
         "name and email by name and email"
+    );
+
+    assert_eq!(
+        snapshot.try_resolve(&signature("unchanged", "old-d-email").to_ref()),
+        Some(signature("unchanged", "new-d-email-overwritten")),
+        "email by email"
     );
 }
 

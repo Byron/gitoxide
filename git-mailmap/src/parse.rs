@@ -3,7 +3,9 @@ mod error {
     use quick_error::quick_error;
 
     quick_error! {
+        /// The error returned by [`parse()`][crate::parse()].
         #[derive(Debug)]
+        #[allow(missing_docs)]
         pub enum Error {
             UnconsumedInput { line_number: usize, line: BString } {
                 display("Line {} has too many names or emails, or none at all: {}", line_number, line)
@@ -19,6 +21,7 @@ use crate::Entry;
 use bstr::{BStr, ByteSlice};
 pub use error::Error;
 
+/// An iterator to parse mailmap lines on-demand.
 pub struct Lines<'a> {
     lines: bstr::Lines<'a>,
     line_no: usize,

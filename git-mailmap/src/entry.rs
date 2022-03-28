@@ -1,6 +1,10 @@
 use crate::Entry;
 use bstr::BStr;
 
+/// Constructors indicating what kind of mapping is created.
+///
+/// Only these combinations of values are valid.
+#[allow(missing_docs)]
 impl<'a> Entry<'a> {
     pub fn change_name_by_email(proper_name: impl Into<&'a BStr>, commit_email: impl Into<&'a BStr>) -> Self {
         Entry {
