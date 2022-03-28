@@ -1803,7 +1803,7 @@ mod from_paths_tests {
     use crate::parser::ParserOrIoError;
 
     /// Escapes backslash when writing a path as string so that it is a valid windows path
-    fn to_backslash_escaped_string(path: &std::path::Path) -> String {
+    fn escape_backslashes(path: &std::path::Path) -> String {
         path.to_str().unwrap().replace('\\', "\\\\")
     }
 
@@ -1823,7 +1823,7 @@ mod from_paths_tests {
     fn single_path() {
         let dir = tempdir().unwrap();
         let config_path = dir.path().join("config");
-        fs::write(config_path.as_path(), b"[core]\nboolean = true").expect("Unable to write config file");
+        fs::write(config_path.as_path(), b"[core]\nboolean = true").unwrap();
 
         let paths = vec![config_path];
         let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
@@ -1860,16 +1860,16 @@ mod from_paths_tests {
               renames = true",
         )
         .unwrap();
-        let c_path = dir.path().join("c");
+        let ignore_path = dir.path().join("ignore");
         fs::write(
-            c_path.as_path(),
+            ignore_path.as_path(),
             "
             [diff]
               renames = invalid",
         )
         .unwrap();
 
-        let a_path_string = to_backslash_escaped_string(a_path.parent().unwrap());
+        let a_path_string = escape_backslashes(a_path.parent().unwrap());
         let non_canonical_path_a = format!("{}/./a", a_path_string);
         let non_existing_path = "/dfgwfsghfdsfs";
         let c_path = dir.path().join("c");
@@ -1891,7 +1891,7 @@ mod from_paths_tests {
                 non_existing_path,
                 non_canonical_path_a,
                 relative_b_path.as_path().to_str().unwrap(),
-                to_backslash_escaped_string(&c_path)
+                escape_backslashes(&ignore_path)
             ),
         )
         .unwrap();
@@ -1943,7 +1943,7 @@ mod from_paths_tests {
                       i = {i} 
                     [include]
                       path = {}",
-                    to_backslash_escaped_string(&next_path),
+                    escape_backslashes(&next_path),
                 ),
             )
             .unwrap();
@@ -2027,7 +2027,7 @@ mod from_paths_tests {
     }
 
     #[test]
-    fn visits_same_path_twice_when_max_depth_is_not_reached() {
+    fn config_files_are_included_unconditionally() {
         let dir = tempdir().unwrap();
 
         let a_path = dir.path().join("a");
@@ -2045,8 +2045,8 @@ mod from_paths_tests {
               b = true
             [include]
               path = {}",
-                to_backslash_escaped_string(&b_path),
-                to_backslash_escaped_string(&b_path)
+                escape_backslashes(&b_path),
+                escape_backslashes(&b_path)
             ),
         )
         .unwrap();
@@ -2067,7 +2067,7 @@ mod from_paths_tests {
     }
 
     #[test]
-    fn handles_cycle() {
+    fn include_path_cycles_are_detected() {
         let dir = tempdir().unwrap();
 
         let a_path = dir.path().join("a");
@@ -2081,7 +2081,7 @@ mod from_paths_tests {
               b = 0
             [include]
               path = {}",
-                to_backslash_escaped_string(&b_path),
+                escape_backslashes(&b_path),
             ),
         )
         .unwrap();
@@ -2094,7 +2094,7 @@ mod from_paths_tests {
               b = 1
             [include]
               path = {}",
-                to_backslash_escaped_string(&a_path),
+                escape_backslashes(&a_path),
             ),
         )
         .unwrap();
@@ -2150,7 +2150,7 @@ mod from_paths_tests {
               b = true
             [include]
               path = {}",
-                to_backslash_escaped_string(&a_path)
+                escape_backslashes(&a_path)
             ),
         )
         .unwrap();
@@ -2164,7 +2164,7 @@ mod from_paths_tests {
               c = 12
             [include]
               path = {}",
-                to_backslash_escaped_string(&b_path)
+                escape_backslashes(&b_path)
             ),
         )
         .unwrap();
@@ -2189,16 +2189,16 @@ mod from_paths_tests {
         let dir = tempdir().unwrap();
 
         let a_path = dir.path().join("a");
-        fs::write(a_path.as_path(), b"[core]\na = true").expect("Unable to write config file");
+        fs::write(a_path.as_path(), b"[core]\na = true").unwrap();
 
         let b_path = dir.path().join("b");
-        fs::write(b_path.as_path(), b"[core]\nb = true").expect("Unable to write config file");
+        fs::write(b_path.as_path(), b"[core]\nb = true").unwrap();
 
         let c_path = dir.path().join("c");
-        fs::write(c_path.as_path(), b"[core]\nc = true").expect("Unable to write config file");
+        fs::write(c_path.as_path(), b"[core]\nc = true").unwrap();
 
         let d_path = dir.path().join("d");
-        fs::write(d_path.as_path(), b"[core]\na = false").expect("Unable to write config file");
+        fs::write(d_path.as_path(), b"[core]\na = false").unwrap();
 
         let paths = vec![a_path, b_path, c_path, d_path];
         let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
@@ -2226,19 +2226,19 @@ mod from_paths_tests {
         let dir = tempdir().unwrap();
 
         let a_path = dir.path().join("a");
-        fs::write(a_path.as_path(), b"[core]\nkey = a").expect("Unable to write config file");
+        fs::write(a_path.as_path(), b"[core]\nkey = a").unwrap();
 
         let b_path = dir.path().join("b");
-        fs::write(b_path.as_path(), b"[core]\nkey = b").expect("Unable to write config file");
+        fs::write(b_path.as_path(), b"[core]\nkey = b").unwrap();
 
         let c_path = dir.path().join("c");
-        fs::write(c_path.as_path(), b"[core]\nkey = c").expect("Unable to write config file");
+        fs::write(c_path.as_path(), b"[core]\nkey = c").unwrap();
 
         let d_path = dir.path().join("d");
-        fs::write(d_path.as_path(), b"[include]\npath = d_path").expect("Unable to write config file");
+        fs::write(d_path.as_path(), b"[include]\npath = d_path").unwrap();
 
         let e_path = dir.path().join("e");
-        fs::write(e_path.as_path(), b"[include]\npath = e_path").expect("Unable to write config file");
+        fs::write(e_path.as_path(), b"[include]\npath = e_path").unwrap();
 
         let paths = vec![a_path, b_path, c_path, d_path, e_path];
         let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
@@ -2356,7 +2356,7 @@ mod from_env_tests {
 
     #[test]
     #[serial]
-    fn no_relative_paths_in_includes_from_env_variables() {
+    fn error_on_relative_paths_in_include_paths() {
         let _env = Env::new()
             .set("GIT_CONFIG_COUNT", "1")
             .set("GIT_CONFIG_KEY_0", "include.path")
@@ -2372,7 +2372,7 @@ mod from_env_tests {
 
     #[test]
     #[serial]
-    fn follows_includes() {
+    fn follow_include_paths() {
         let dir = tempdir().unwrap();
         let a_path = dir.path().join("a");
         fs::write(&a_path, "[core]\nkey = changed").unwrap();
