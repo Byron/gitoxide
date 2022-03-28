@@ -154,11 +154,11 @@ impl Snapshot {
 
     pub fn new<'a>(entries: impl IntoIterator<Item = crate::Entry<'a>>) -> Self {
         let mut snapshot = Self::default();
-        snapshot.extend(entries);
+        snapshot.merge(entries);
         snapshot
     }
 
-    pub fn extend<'a>(&mut self, entries: impl IntoIterator<Item = crate::Entry<'a>>) -> &mut Self {
+    pub fn merge<'a>(&mut self, entries: impl IntoIterator<Item = crate::Entry<'a>>) -> &mut Self {
         for entry in entries {
             let old_email: EncodedStringRef<'_> = entry.old_email.into();
             assert!(
@@ -207,7 +207,7 @@ fn enriched_signature(
     new_email: Option<&BString>,
     new_name: Option<&BString>,
 ) -> Option<Signature> {
-    let time = time.clone();
+    let time = *time;
     match (new_email, new_name) {
         (Some(new_email), Some(new_name)) => git_actor::Signature {
             email: new_email.to_owned(),
@@ -239,7 +239,7 @@ mod encoded_string {
     #[test]
     fn basic_ascii_case_folding() {
         assert_eq!(
-            EncodedString::Utf8("FooBar".into()).cmp_ref(EncodedStringRef::Utf8("foobar".into())),
+            EncodedString::Utf8("FooBar".into()).cmp_ref(EncodedStringRef::Utf8("foobar")),
             Ordering::Equal
         );
     }
@@ -247,7 +247,7 @@ mod encoded_string {
     #[test]
     fn no_advanced_unicode_folding() {
         assert_ne!(
-            EncodedString::Utf8("Masse".into()).cmp_ref(EncodedStringRef::Utf8("Maße".into())),
+            EncodedString::Utf8("Masse".into()).cmp_ref(EncodedStringRef::Utf8("Maße")),
             Ordering::Equal
         );
     }
@@ -259,7 +259,7 @@ mod encoded_string {
             Ordering::Equal
         );
         assert_ne!(
-            EncodedString::Unknown("Foo".into()).cmp_ref(EncodedStringRef::Utf8("foo".into())),
+            EncodedString::Unknown("Foo".into()).cmp_ref(EncodedStringRef::Utf8("foo")),
             Ordering::Equal
         );
         assert_ne!(
