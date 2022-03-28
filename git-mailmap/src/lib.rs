@@ -10,16 +10,24 @@ pub fn parse(buf: &[u8]) -> parse::Lines<'_> {
 
 mod entry;
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
+mod snapshot;
+
+#[derive(Default, Clone)]
+pub struct Snapshot {
+    /// Sorted by `old_email`
+    entries_by_old_email: Vec<snapshot::EmailEntry>,
+}
+
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy, Default)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Entry<'a> {
     #[cfg_attr(feature = "serde1", serde(borrow))]
     /// The name to map to.
-    canonical_name: Option<&'a BStr>,
+    new_name: Option<&'a BStr>,
     /// The email map to.
-    canonical_email: Option<&'a BStr>,
+    new_email: Option<&'a BStr>,
     /// The name to look for and replace.
-    commit_name: Option<&'a BStr>,
+    old_name: Option<&'a BStr>,
     /// The email to look for and replace.
-    commit_email: Option<&'a BStr>,
+    old_email: Option<&'a BStr>,
 }
