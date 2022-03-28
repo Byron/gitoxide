@@ -14,7 +14,7 @@ pub fn parse_ignore_errors(buf: &[u8]) -> impl Iterator<Item = Entry<'_>> {
 
 mod entry;
 
-mod snapshot;
+pub mod snapshot;
 
 #[derive(Default, Clone)]
 pub struct Snapshot {

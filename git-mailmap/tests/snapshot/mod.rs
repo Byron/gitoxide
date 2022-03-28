@@ -23,7 +23,7 @@ fn try_resolve() {
     assert_eq!(
         snapshot.try_resolve(&signature("Jane", "jane@desktop.(none)").to_ref()),
         Some(signature("Jane Doe", "jane@example.com")),
-        "fix name and email by email"
+        "fix name and email by other email"
     );
 
     assert_eq!(

@@ -1,8 +1,25 @@
 use crate::Snapshot;
 use bstr::{BStr, BString, ByteSlice};
-use git_actor::{Signature, SignatureRef};
+use git_actor::SignatureRef;
 use std::cmp::Ordering;
 use std::ops::Deref;
+
+pub struct ResolvedSignature<'a> {
+    pub name: Option<&'a BStr>,
+    pub email: Option<&'a BStr>,
+}
+
+impl<'a> ResolvedSignature<'a> {
+    fn try_new(new_email: Option<&'a BString>, new_name: Option<&'a BString>) -> Option<Self> {
+        match (new_email, new_name) {
+            (None, None) => None,
+            (new_email, new_name) => Some(ResolvedSignature {
+                email: new_email.map(|v| v.as_bstr()),
+                name: new_name.map(|v| v.as_bstr()),
+            }),
+        }
+    }
+}
 
 #[cfg_attr(test, derive(Debug))]
 #[derive(Clone)]
@@ -178,7 +195,7 @@ impl Snapshot {
         self
     }
 
-    pub fn try_resolve(&self, signature: &git_actor::SignatureRef<'_>) -> Option<git_actor::Signature> {
+    pub fn try_resolve_ref<'a>(&'a self, signature: &git_actor::SignatureRef<'_>) -> Option<ResolvedSignature<'a>> {
         let email: EncodedStringRef<'_> = signature.email.into();
         let pos = self
             .entries_by_old_email
@@ -191,10 +208,15 @@ impl Snapshot {
         match entry.entries_by_old_name.binary_search_by(|e| e.old_name.cmp_ref(name)) {
             Ok(pos) => {
                 let entry = &entry.entries_by_old_name[pos];
-                enriched_signature(signature, entry.new_email.as_ref(), entry.new_name.as_ref())
+                ResolvedSignature::try_new(entry.new_email.as_ref(), entry.new_name.as_ref())
             }
-            Err(_) => enriched_signature(signature, entry.new_email.as_ref(), entry.new_name.as_ref()),
+            Err(_) => ResolvedSignature::try_new(entry.new_email.as_ref(), entry.new_name.as_ref()),
         }
+    }
+
+    pub fn try_resolve(&self, signature: &git_actor::SignatureRef<'_>) -> Option<git_actor::Signature> {
+        let new = self.try_resolve_ref(signature)?;
+        enriched_signature(signature, new)
     }
 
     pub fn resolve(&self, signature: &git_actor::SignatureRef<'_>) -> git_actor::Signature {
@@ -204,11 +226,10 @@ impl Snapshot {
 
 fn enriched_signature(
     SignatureRef { name, email, time }: &SignatureRef<'_>,
-    new_email: Option<&BString>,
-    new_name: Option<&BString>,
-) -> Option<Signature> {
+    new: ResolvedSignature<'_>,
+) -> Option<git_actor::Signature> {
     let time = *time;
-    match (new_email, new_name) {
+    match (new.email, new.name) {
         (Some(new_email), Some(new_name)) => git_actor::Signature {
             email: new_email.to_owned(),
             name: new_name.to_owned(),
@@ -227,7 +248,7 @@ fn enriched_signature(
             time,
         }
         .into(),
-        (None, None) => None,
+        (None, None) => unreachable!("BUG: ResolvedSignatures don't exist here when nothing is set"),
     }
 }
 
