@@ -5,14 +5,14 @@ impl<'a> Entry<'a> {
     pub fn change_name_by_email(proper_name: impl Into<&'a BStr>, commit_email: impl Into<&'a BStr>) -> Self {
         Entry {
             new_name: Some(proper_name.into()),
-            old_email: Some(commit_email.into()),
+            old_email: commit_email.into(),
             ..Default::default()
         }
     }
     pub fn change_email_by_email(proper_email: impl Into<&'a BStr>, commit_email: impl Into<&'a BStr>) -> Self {
         Entry {
             new_email: Some(proper_email.into()),
-            old_email: Some(commit_email.into()),
+            old_email: commit_email.into(),
             ..Default::default()
         }
     }
@@ -24,7 +24,7 @@ impl<'a> Entry<'a> {
         Entry {
             new_name: Some(proper_name.into()),
             new_email: Some(proper_email.into()),
-            old_email: Some(commit_email.into()),
+            old_email: commit_email.into(),
             ..Default::default()
         }
     }
@@ -39,7 +39,7 @@ impl<'a> Entry<'a> {
             new_name: Some(proper_name.into()),
             new_email: Some(proper_email.into()),
             old_name: Some(commit_name.into()),
-            old_email: Some(commit_email.into()),
+            old_email: commit_email.into(),
         }
     }
 }

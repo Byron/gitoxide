@@ -33,5 +33,5 @@ pub struct Entry<'a> {
     /// The name to look for and replace.
     old_name: Option<&'a BStr>,
     /// The email to look for and replace.
-    old_email: Option<&'a BStr>,
+    old_email: &'a BStr,
 }
