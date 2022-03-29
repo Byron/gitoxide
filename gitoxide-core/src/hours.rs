@@ -9,6 +9,7 @@ use std::{
 };
 
 use anyhow::{anyhow, bail};
+use git_repository as git;
 use git_repository::{actor, bstr::BString, interrupt, objs, prelude::*, progress, refs::file::ReferenceExt, Progress};
 use itertools::Itertools;
 use rayon::prelude::*;
@@ -44,7 +45,7 @@ where
     W: io::Write,
     P: Progress,
 {
-    let repo = git_repository::discover(working_dir)?;
+    let repo = git::discover(working_dir)?;
     let handle = repo.clone().apply_environment();
     let commit_id = repo
         .refs
@@ -79,6 +80,7 @@ where
         commits
     };
 
+    let mailmap = repo.load_mailmap();
     let start = Instant::now();
     #[allow(clippy::redundant_closure)]
     let mut all_commits: Vec<actor::Signature> = all_commits
@@ -87,7 +89,7 @@ where
             objs::CommitRefIter::from_bytes(&commit_data)
                 .signatures()
                 .next()
-                .map(|author| actor::Signature::from(author))
+                .map(|author| mailmap.resolve(&author))
         })
         .try_fold(
             || Vec::new(),

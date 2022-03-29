@@ -19,6 +19,19 @@ impl crate::Repository {
     }
 
     // TODO: tests
+    /// Similar to [`load_mailmap_into()`][crate::Repository::load_mailmap_into()], but ignores all errors and returns at worst
+    /// an empty mailmap, e.g. if there is no mailmap or if there were errors loading them.
+    ///
+    /// This represents typical usage within git, which also works with what's there without considering a populated mailmap
+    /// a reason to abort an operation, considering it optional.
+    #[cfg(feature = "git-mailmap")]
+    pub fn load_mailmap(&self) -> git_mailmap::Snapshot {
+        let mut out = git_mailmap::Snapshot::default();
+        self.load_mailmap_into(&mut out).ok();
+        out
+    }
+
+    // TODO: tests
     /// Try to merge mailmaps from the following locations into `target`:
     ///
     /// - read the `.mailmap` file without following symlinks from the working tree, if present

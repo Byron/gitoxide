@@ -1,6 +1,6 @@
 use crate::OutputFormat;
 use git_repository as git;
-use git_repository::bstr::ByteSlice;
+#[cfg(feature = "serde1")]
 use git_repository::mailmap::Entry;
 use std::io;
 use std::path::PathBuf;
@@ -17,6 +17,7 @@ struct JsonEntry {
 #[cfg(feature = "serde1")]
 impl<'a> From<Entry<'a>> for JsonEntry {
     fn from(v: Entry<'a>) -> Self {
+        use git_repository::bstr::ByteSlice;
         JsonEntry {
             new_name: v.new_name().map(|s| s.to_str_lossy().into_owned()),
             new_email: v.new_email().map(|s| s.to_str_lossy().into_owned()),
@@ -29,7 +30,7 @@ impl<'a> From<Entry<'a>> for JsonEntry {
 pub fn entries(
     repository: PathBuf,
     format: OutputFormat,
-    out: impl io::Write,
+    #[cfg_attr(not(feature = "serde1"), allow(unused_variables))] out: impl io::Write,
     mut err: impl io::Write,
 ) -> anyhow::Result<()> {
     if format == OutputFormat::Human {
