@@ -130,8 +130,6 @@ pub use git_hash as hash;
 #[cfg(all(feature = "unstable", feature = "git-index"))]
 pub use git_index as index;
 pub use git_lock as lock;
-#[cfg(all(feature = "unstable", feature = "git-worktree"))]
-pub use git_mailmap as mailmap;
 pub use git_object as objs;
 pub use git_object::bstr;
 #[cfg(feature = "unstable")]
@@ -239,6 +237,27 @@ mod config {
     ///
     pub mod open {
         pub type Error = git_config::parser::ParserOrIoError<'static>;
+    }
+}
+
+///
+pub mod mailmap {
+    #[cfg(all(feature = "unstable", feature = "git-worktree"))]
+    pub use git_mailmap::*;
+
+    ///
+    pub mod load {
+        /// The error returned by [`crate::Repository::load_mailmap()`].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("A mailmap file could not be loaded from disk")]
+            Io(#[from] std::io::Error),
+            #[error("The configured mailmap.blob could not be parsed")]
+            BlobSpec(#[from] git_hash::decode::Error),
+            #[error(transparent)]
+            PathInterpolate(#[from] git_config::values::path::interpolate::Error),
+        }
     }
 }
 
