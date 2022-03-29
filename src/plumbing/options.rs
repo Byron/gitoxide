@@ -360,6 +360,19 @@ pub mod repo {
             #[clap(subcommand)]
             cmd: odb::Subcommands,
         },
+        /// Interact with the mailmap.
+        Mailmap {
+            #[clap(subcommand)]
+            cmd: mailmap::Subcommands,
+        },
+    }
+
+    pub mod mailmap {
+        #[derive(Debug, clap::Subcommand)]
+        pub enum Subcommands {
+            /// Print all entries in configured mailmaps, inform about errors as well.
+            Entries,
+        }
     }
 
     pub mod odb {

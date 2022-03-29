@@ -158,6 +158,16 @@ pub fn main() -> Result<()> {
             ),
         },
         Subcommands::Repository(repo::Platform { repository, cmd }) => match cmd {
+            repo::Subcommands::Mailmap { cmd } => match cmd {
+                repo::mailmap::Subcommands::Entries => prepare_and_run(
+                    "repository-mailmap-entries",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |_progress, out, err| core::repository::mailmap::entries(repository, format, out, err),
+                ),
+            },
             repo::Subcommands::Odb { cmd } => match cmd {
                 repo::odb::Subcommands::Entries => prepare_and_run(
                     "repository-odb-entries",

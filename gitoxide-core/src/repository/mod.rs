@@ -12,3 +12,5 @@ pub mod tree;
 pub mod verify;
 
 pub mod odb;
+
+pub mod mailmap;

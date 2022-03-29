@@ -49,7 +49,7 @@ impl crate::Repository {
                     self.head().ok().and_then(|mut head| {
                         let commit = head.peel_to_commit_in_place().ok()?;
                         let tree = commit.tree().ok()?;
-                        tree.lookup_path(".mailmap").ok()?.map(|e| e.oid)
+                        tree.lookup_path(std::iter::once(".mailmap")).ok()?.map(|e| e.oid)
                     })
                 });
             }
@@ -58,11 +58,15 @@ impl crate::Repository {
                     .read(true)
                     .open(root.join(".mailmap"))
                     .map_err(|e| {
-                        err.get_or_insert(e.into());
+                        if e.kind() != std::io::ErrorKind::NotFound {
+                            err.get_or_insert(e.into());
+                        }
                     })
                 {
                     buf.clear();
-                    std::io::copy(&mut file, &mut buf).map_err(|e| err.get_or_insert(e.into()));
+                    std::io::copy(&mut file, &mut buf)
+                        .map_err(|e| err.get_or_insert(e.into()))
+                        .ok();
                     target.merge(git_mailmap::parse_ignore_errors(&buf));
                 }
             }
@@ -91,7 +95,13 @@ impl crate::Repository {
             configured_path.and_then(|path| std::fs::File::open(path).map_err(|e| err.get_or_insert(e.into())).ok())
         {
             buf.clear();
-            std::io::copy(&mut file, &mut buf).map_err(|e| err.get_or_insert(e.into()));
+            std::io::copy(&mut file, &mut buf)
+                .map_err(|e| {
+                    if e.kind() != std::io::ErrorKind::NotFound {
+                        err.get_or_insert(e.into());
+                    }
+                })
+                .ok();
             target.merge(git_mailmap::parse_ignore_errors(&buf));
         }
 
