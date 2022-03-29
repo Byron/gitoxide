@@ -65,11 +65,25 @@ fn valid_entries() {
         Entry::change_name_and_email_by_name_and_email("proper name", "proper email", "commit name", "commit-email")
     );
 }
+
 #[test]
 fn error_if_there_is_just_a_name() {
     assert!(matches!(
         try_line("just a name"),
         Err(parse::Error::UnconsumedInput { line_number: 1, .. })
+    ));
+}
+
+#[test]
+fn error_if_there_is_just_an_email() {
+    assert!(matches!(
+        try_line("<email>"),
+        Err(parse::Error::Malformed { line_number: 1, .. })
+    ));
+
+    assert!(matches!(
+        try_line("   \t  <email>"),
+        Err(parse::Error::Malformed { line_number: 1, .. })
     ));
 }
 

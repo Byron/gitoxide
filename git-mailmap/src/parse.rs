@@ -77,7 +77,13 @@ fn parse_line(line: &BStr, line_number: usize) -> Result<Entry<'_>, Error> {
         (Some(proper_name), Some(proper_email), Some(commit_name), Some(commit_email)) => {
             Entry::change_name_and_email_by_name_and_email(proper_name, proper_email, commit_name, commit_email)
         }
-        _ => unreachable!("{:?}", line),
+        _ => {
+            return Err(Error::Malformed {
+                line_number,
+                line: line.into(),
+                message: "Emails without a name or email to map to are invalid".into(),
+            })
+        }
     })
 }
 
