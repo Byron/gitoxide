@@ -223,8 +223,8 @@ Check out the [performance discussion][git-traverse-performance] as well.
   * 
 ### git-mailmap
 
-* [ ] parsing
-* [ ] lookup and mapping of author names
+* [x] parsing
+* [x] lookup and mapping of author names
 
 ### git-pathspec
 
@@ -394,7 +394,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * [ ] support for different backends like `files` and `reftable`
   * [ ] worktrees
   * [ ] remotes with push and pull
-  * [ ] mailmap   
+  * [x] mailmap   
   * [ ] configuration
   * [ ] merging
   * [ ] stashing

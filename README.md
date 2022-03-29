@@ -45,6 +45,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
              * [x] support for thin packs (as needed for fetch/pull)
     * **commit-graph**
       * [x] **verify** - assure that a commit-graph is consistent
+    * **mailmap**
+      * [x] **verify** - check entries of a mailmap file for parse errors and display them
     * **repository**
       * **verify** - validate a whole repository, for now only the object database.
       * **tree**
@@ -53,6 +55,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * **odb**
          * [x] **info** - display odb statistics
          * [x] **entries** - display all object ids in the object database
+      * **mailmap**
+          * [x] **entries** - display all entries of the aggregated mailmap git would use for substitution
     * **index**
       * [x] **entries** - show detailed entry information for human or machine consumption (via JSON)
       * [x] **verify** - check the index for consistency
@@ -78,6 +82,12 @@ Follow linked crate name for detailed status. Please note that all crates follow
      
 * **Stability Tier 2**
   - [git-tempfile](https://github.com/Byron/gitoxide/blob/main/git-tempfile/README.md)
+   
+### Stabilization Candidates
+
+Crates that seem feature complete and need to see some more use before they can be released as 1.0.
+
+* [git-mailmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-mailmap)
 
 ### Initial Development
 * **usable**
@@ -108,7 +118,6 @@ Follow linked crate name for detailed status. Please note that all crates follow
   * [git-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-attributes)
   * [git-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-quote)
 * **idea**
-  * [git-mailmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-mailmap)
   * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)
   * [git-subomdule](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-submodule)
   * [git-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tui)
