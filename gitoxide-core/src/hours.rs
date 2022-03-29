@@ -66,7 +66,7 @@ where
         let commit_iter = interrupt::Iter::new(
             commit_id.ancestors(|oid, buf| {
                 progress.inc();
-                handle.objects.find(oid, buf).ok().map(|o| {
+                handle.objects.find(oid, buf).map(|o| {
                     commits.push(o.data.to_owned());
                     objs::CommitRefIter::from_bytes(o.data)
                 })

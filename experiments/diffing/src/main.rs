@@ -41,7 +41,7 @@ fn main() -> anyhow::Result<()> {
             let db = db
                 .to_cache()
                 .with_pack_cache(|| Box::new(odb::pack::cache::lru::StaticLinkedList::<64>::default()));
-            move |oid, buf| db.find_commit_iter(oid, buf).ok()
+            move |oid, buf| db.find_commit_iter(oid, buf)
         })
         .collect::<Result<Vec<_>, _>>()?;
     let num_diffs = all_commits.len();

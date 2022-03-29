@@ -135,10 +135,8 @@ mod changes {
 
             let head = head_of(db);
             commit::Ancestors::new(Some(head), commit::ancestors::State::default(), |oid, buf| {
-                db.try_find(oid, buf)
-                    .ok()
-                    .flatten()
-                    .and_then(|t| t.0.try_into_commit_iter())
+                use git_odb::FindExt;
+                db.find_commit_iter(oid, buf)
             })
             .collect::<Vec<_>>()
             .into_iter()

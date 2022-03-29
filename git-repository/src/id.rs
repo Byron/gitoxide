@@ -97,7 +97,7 @@ pub struct Ancestors<'repo> {
 
 ///
 pub mod ancestors {
-    use git_odb::Find;
+    use git_odb::FindExt;
 
     use crate::id::Ancestors;
     use crate::{ext::ObjectIdExt, Id};
@@ -138,14 +138,7 @@ pub mod ancestors {
                     git_traverse::commit::Ancestors::new(
                         tips,
                         git_traverse::commit::ancestors::State::default(),
-                        move |oid, buf| {
-                            self.repo
-                                .objects
-                                .try_find(oid, buf)
-                                .ok()
-                                .flatten()
-                                .and_then(|obj| obj.try_into_commit_iter())
-                        },
+                        move |oid, buf| self.repo.objects.find_commit_iter(oid, buf),
                     )
                     .sorting(sorting)
                     .parents(parents),

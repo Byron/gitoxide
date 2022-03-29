@@ -143,7 +143,7 @@ where
             let iter = Box::new(
                 traverse::commit::Ancestors::new(tips, traverse::commit::ancestors::State::default(), {
                     let handle = handle.clone();
-                    move |oid, buf| handle.find_commit_iter(oid, buf).ok().map(|t| t.0)
+                    move |oid, buf| handle.find_commit_iter(oid, buf).map(|t| t.0)
                 })
                 .map(|res| res.map_err(Into::into))
                 .inspect(move |_| progress.inc()),

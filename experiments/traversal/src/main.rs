@@ -37,7 +37,7 @@ fn main() -> anyhow::Result<()> {
 
     let start = Instant::now();
     let all_commits = commit_id
-        .ancestors(|oid, buf| db.find_commit_iter(oid, buf).ok())
+        .ancestors(|oid, buf| db.find_commit_iter(oid, buf))
         .collect::<Result<Vec<_>, _>>()?;
     let elapsed = start.elapsed();
     println!(
@@ -146,7 +146,7 @@ fn do_gitoxide_commit_graph_traversal<C>(
 where
     C: odb::pack::cache::DecodeEntry,
 {
-    let ancestors = tip.ancestors(|oid, buf| db.find_commit_iter(oid, buf).ok());
+    let ancestors = tip.ancestors(|oid, buf| db.find_commit_iter(oid, buf));
     let mut commits = 0;
     for commit_id in ancestors {
         let _ = commit_id?;
