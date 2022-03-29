@@ -57,8 +57,9 @@ pub mod ancestors {
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {
-            NotFound{oid: ObjectId} {
+            FindExisting{oid: ObjectId, err: Box<dyn std::error::Error + Send + Sync + 'static> } {
                 display("The commit {} could not be found", oid)
+                source(&**err)
             }
             ObjectDecode(err: git_object::decode::Error) {
                 display("An object could not be decoded")
@@ -100,10 +101,11 @@ pub mod ancestors {
         }
     }
 
-    impl<Find, StateMut> Ancestors<Find, fn(&oid) -> bool, StateMut>
+    impl<Find, StateMut, E> Ancestors<Find, fn(&oid) -> bool, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<CommitRefIter<'a>>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
         StateMut: BorrowMut<State>,
+        E: std::error::Error + Send + Sync + 'static,
     {
         /// Create a new instance.
         ///
@@ -122,11 +124,12 @@ pub mod ancestors {
         }
     }
 
-    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
+    impl<Find, Predicate, StateMut, E> Ancestors<Find, Predicate, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<CommitRefIter<'a>>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
         Predicate: FnMut(&oid) -> bool,
         StateMut: BorrowMut<State>,
+        E: std::error::Error + Send + Sync + 'static,
     {
         /// Create a new instance with commit filtering enabled.
         ///
@@ -170,11 +173,12 @@ pub mod ancestors {
         }
     }
 
-    impl<Find, Predicate, StateMut> Iterator for Ancestors<Find, Predicate, StateMut>
+    impl<Find, Predicate, StateMut, E> Iterator for Ancestors<Find, Predicate, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<CommitRefIter<'a>>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
         Predicate: FnMut(&oid) -> bool,
         StateMut: BorrowMut<State>,
+        E: std::error::Error + Send + Sync + 'static,
     {
         type Item = Result<ObjectId, Error>;
 
@@ -190,11 +194,12 @@ pub mod ancestors {
         }
     }
 
-    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
+    impl<Find, Predicate, StateMut, E> Ancestors<Find, Predicate, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<CommitRefIter<'a>>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
         Predicate: FnMut(&oid) -> bool,
         StateMut: BorrowMut<State>,
+        E: std::error::Error + Send + Sync + 'static,
     {
         fn next_by_commit_date(&mut self) -> Option<Result<ObjectId, Error>> {
             let state = self.state.borrow_mut();
@@ -203,7 +208,7 @@ pub mod ancestors {
 
             if let Some(oid) = res {
                 match (self.find)(&oid, &mut state.buf) {
-                    Some(mut commit_iter) => {
+                    Ok(mut commit_iter) => {
                         if let Some(Err(decode_tree_err)) = commit_iter.next() {
                             return Some(Err(decode_tree_err.into()));
                         }
@@ -211,7 +216,7 @@ pub mod ancestors {
                         for token in commit_iter {
                             match token {
                                 Ok(git_object::commit::ref_iter::Token::Parent { id }) => {
-                                    let parent = (self.find)(id.as_ref(), &mut state.parents_buf);
+                                    let parent = (self.find)(id.as_ref(), &mut state.parents_buf).ok();
 
                                     let parent_committer_date = parent
                                         .and_then(|mut parent| parent.committer().map(|committer| committer.time));
@@ -231,7 +236,7 @@ pub mod ancestors {
                             }
                         }
                     }
-                    None => return Some(Err(Error::NotFound { oid })),
+                    Err(err) => return Some(Err(Error::FindExisting { oid, err: err.into() })),
                 }
             }
 
@@ -251,18 +256,19 @@ pub mod ancestors {
         }
     }
 
-    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
+    impl<Find, Predicate, StateMut, E> Ancestors<Find, Predicate, StateMut>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<CommitRefIter<'a>>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
         Predicate: FnMut(&oid) -> bool,
         StateMut: BorrowMut<State>,
+        E: std::error::Error + Send + Sync + 'static,
     {
         fn next_by_topology(&mut self) -> Option<Result<ObjectId, Error>> {
             let state = self.state.borrow_mut();
             let res = state.next.pop_front();
             if let Some(oid) = res {
                 match (self.find)(&oid, &mut state.buf) {
-                    Some(mut commit_iter) => {
+                    Ok(mut commit_iter) => {
                         if let Some(Err(decode_tree_err)) = commit_iter.next() {
                             return Some(Err(decode_tree_err.into()));
                         }
@@ -282,7 +288,7 @@ pub mod ancestors {
                             }
                         }
                     }
-                    None => return Some(Err(Error::NotFound { oid })),
+                    Err(err) => return Some(Err(Error::FindExisting { oid, err: err.into() })),
                 }
             }
             res.map(Ok)
