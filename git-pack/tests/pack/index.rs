@@ -95,11 +95,15 @@ mod version {
 
         use git_features::progress;
         use git_odb::pack;
-        use git_pack::data::{input, EntryRange};
-        use git_pack::index;
+        use git_pack::{
+            data::{input, EntryRange},
+            index,
+        };
 
-        use crate::pack::INDEX_V2;
-        use crate::{fixture_path, pack::V2_PACKS_AND_INDICES};
+        use crate::{
+            fixture_path,
+            pack::{INDEX_V2, V2_PACKS_AND_INDICES},
+        };
 
         #[test]
         fn write_to_stream() -> Result<(), Box<dyn std::error::Error>> {

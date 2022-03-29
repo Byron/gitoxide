@@ -1,6 +1,4 @@
-use std::io;
-use std::io::ErrorKind::AlreadyExists;
-use std::path::Path;
+use std::{io, io::ErrorKind::AlreadyExists, path::Path};
 
 #[cfg(not(windows))]
 pub fn create_symlink(original: &Path, link: &Path) -> io::Result<()> {

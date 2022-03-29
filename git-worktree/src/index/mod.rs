@@ -1,8 +1,7 @@
-use git_features::parallel::in_parallel;
-use git_features::progress::Progress;
-use git_features::{interrupt, progress};
-use git_hash::oid;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+use git_features::{interrupt, parallel::in_parallel, progress, progress::Progress};
+use git_hash::oid;
 
 use crate::index::checkout::PathCache;
 
@@ -111,19 +110,27 @@ where
 }
 
 mod chunk {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
     use bstr::BStr;
     use git_features::progress::Progress;
     use git_hash::oid;
-    use std::sync::atomic::{AtomicUsize, Ordering};
 
-    use crate::index::{checkout, checkout::PathCache, entry};
-    use crate::{index, os};
+    use crate::{
+        index,
+        index::{checkout, checkout::PathCache, entry},
+        os,
+    };
 
     mod reduce {
-        use crate::index::checkout;
+        use std::{
+            marker::PhantomData,
+            sync::atomic::{AtomicUsize, Ordering},
+        };
+
         use git_features::progress::Progress;
-        use std::marker::PhantomData;
-        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        use crate::index::checkout;
 
         pub struct Reduce<'a, 'entry, P1, P2, E> {
             pub files: &'a mut P1,

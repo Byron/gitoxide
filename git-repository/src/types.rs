@@ -1,7 +1,8 @@
 use std::{cell::RefCell, path::PathBuf};
 
-use crate::head;
 use git_hash::ObjectId;
+
+use crate::head;
 
 /// The head reference, as created from looking at `.git/HEAD`, able to represent all of its possible states.
 ///

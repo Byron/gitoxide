@@ -1,5 +1,6 @@
-use bstr::BString;
 use std::path::PathBuf;
+
+use bstr::BString;
 
 /// A cache for directory creation to reduce the amount of stat calls when creating
 /// directories safely, that is without following symlinks that might be on the way.
@@ -35,9 +36,10 @@ pub struct PathCache {
 }
 
 mod cache {
+    use std::path::{Path, PathBuf};
+
     use super::PathCache;
     use crate::os;
-    use std::path::{Path, PathBuf};
 
     impl PathCache {
         /// Create a new instance with `root` being the base for all future paths we handle, assuming it to be valid which includes

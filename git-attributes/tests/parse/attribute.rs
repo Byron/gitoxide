@@ -1,6 +1,5 @@
 use bstr::{BStr, ByteSlice};
-use git_attributes::ignore::pattern::Mode;
-use git_attributes::{parse, State};
+use git_attributes::{ignore::pattern::Mode, parse, State};
 use git_testtools::fixture_bytes;
 
 #[test]

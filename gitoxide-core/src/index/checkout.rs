@@ -1,10 +1,16 @@
-use crate::index;
-use crate::index::{parse_file, Options};
+use std::{
+    path::{Path, PathBuf},
+    sync::atomic::{AtomicBool, Ordering},
+};
+
 use anyhow::bail;
 use git::{odb::FindExt, worktree::index::checkout, Progress};
 use git_repository as git;
-use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
+
+use crate::{
+    index,
+    index::{parse_file, Options},
+};
 
 pub fn checkout_exclusive(
     index_path: impl AsRef<Path>,

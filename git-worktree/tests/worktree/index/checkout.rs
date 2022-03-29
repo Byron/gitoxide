@@ -1,7 +1,8 @@
 mod cache {
+    use std::path::Path;
+
     use git_index::entry::Mode;
     use git_worktree::index::checkout::PathCache;
-    use std::path::Path;
     use tempfile::{tempdir, TempDir};
 
     #[test]
@@ -100,16 +101,15 @@ mod cache {
 use std::os::unix::prelude::MetadataExt;
 use std::{
     fs,
-    io::ErrorKind,
+    io::{ErrorKind, ErrorKind::AlreadyExists},
     path::{Path, PathBuf},
+    sync::atomic::{AtomicBool, AtomicUsize, Ordering},
 };
 
 use git_features::progress;
 use git_object::bstr::ByteSlice;
 use git_odb::FindExt;
 use git_worktree::{fs::Capabilities, index, index::checkout::Collision};
-use std::io::ErrorKind::AlreadyExists;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use tempfile::TempDir;
 
 use crate::fixture_path;

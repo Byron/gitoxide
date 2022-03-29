@@ -1,7 +1,8 @@
+use std::borrow::Cow;
+
 use git_object::bstr::ByteSlice;
 use git_revision::describe;
 use git_testtools::hex_to_id;
-use std::borrow::Cow;
 
 #[test]
 fn exact_match_with_dirty_and_long() {

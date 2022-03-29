@@ -1,13 +1,11 @@
-use std::path::Path;
-use std::{convert::TryInto, fs::OpenOptions, io::Write, time::Duration};
+use std::{convert::TryInto, fs::OpenOptions, io::Write, path::Path, time::Duration};
 
 use bstr::BStr;
 use git_hash::oid;
 use git_index::Entry;
 use io_close::Close;
 
-use crate::index::checkout::PathCache;
-use crate::{index, os};
+use crate::{index, index::checkout::PathCache, os};
 
 #[cfg_attr(not(unix), allow(unused_variables))]
 pub fn checkout<Find, E>(

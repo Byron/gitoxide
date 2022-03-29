@@ -1,8 +1,9 @@
-use crate::Snapshot;
+use std::{cmp::Ordering, ops::Deref};
+
 use bstr::{BStr, BString, ByteSlice};
 use git_actor::SignatureRef;
-use std::cmp::Ordering;
-use std::ops::Deref;
+
+use crate::Snapshot;
 
 /// A resolved signature with borrowed fields for a mapped `name` and/or `email`.
 pub struct ResolvedSignature<'a> {
@@ -311,8 +312,9 @@ fn enriched_signature(
 
 #[cfg(test)]
 mod encoded_string {
-    use crate::snapshot::{EncodedString, EncodedStringRef};
     use std::cmp::Ordering;
+
+    use crate::snapshot::{EncodedString, EncodedStringRef};
 
     #[test]
     fn basic_ascii_case_folding() {

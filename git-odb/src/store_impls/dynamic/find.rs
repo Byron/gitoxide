@@ -84,11 +84,13 @@ mod error {
         }
     }
 }
-use crate::find::{PotentialPrefix, PrefixLookupResult};
-use crate::Find;
 pub use error::Error;
 
-use crate::store::types::PackId;
+use crate::{
+    find::{PotentialPrefix, PrefixLookupResult},
+    store::types::PackId,
+    Find,
+};
 
 impl<S> super::Handle<S>
 where

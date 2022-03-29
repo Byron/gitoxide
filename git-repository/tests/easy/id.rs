@@ -1,6 +1,7 @@
+use std::cmp::Ordering;
+
 use git_repository::prelude::ObjectIdExt;
 use git_testtools::hex_to_id;
-use std::cmp::Ordering;
 
 #[test]
 fn prefix() -> crate::Result {

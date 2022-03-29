@@ -1,7 +1,8 @@
 mod prefix {
     mod cmp_oid {
-        use git_testtools::hex_to_id;
         use std::cmp::Ordering;
+
+        use git_testtools::hex_to_id;
 
         #[test]
         fn it_detects_inequality() {
@@ -30,9 +31,10 @@ mod prefix {
         }
     }
     mod new {
+        use std::cmp::Ordering;
+
         use git_hash::{Kind, ObjectId};
         use git_testtools::hex_to_id;
-        use std::cmp::Ordering;
 
         #[test]
         fn various_valid_inputs() {

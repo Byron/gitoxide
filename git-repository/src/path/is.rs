@@ -1,6 +1,8 @@
 //!
-use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+};
 
 /// The error returned by [`git()`].
 #[derive(Debug, thiserror::Error)]

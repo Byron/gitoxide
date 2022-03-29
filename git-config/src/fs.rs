@@ -7,8 +7,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::file::from_paths;
-use crate::file::{GitConfig, GitConfigError};
+use crate::file::{from_paths, GitConfig, GitConfigError};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum ConfigSource {

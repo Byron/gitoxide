@@ -1,5 +1,4 @@
-use crate::bstr::BStr;
-use crate::{Commit, Tree};
+use crate::{bstr::BStr, Commit, Tree};
 
 mod error {
     use crate::object;

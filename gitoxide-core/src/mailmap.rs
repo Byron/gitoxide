@@ -1,9 +1,9 @@
-use crate::OutputFormat;
+use std::{collections::HashSet, io::Write, path::Path};
+
 use anyhow::{bail, Context};
 use git_repository as git;
-use std::collections::HashSet;
-use std::io::Write;
-use std::path::Path;
+
+use crate::OutputFormat;
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 

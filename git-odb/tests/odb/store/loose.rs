@@ -85,8 +85,9 @@ mod contains {
 }
 
 mod lookup_prefix {
-    use crate::store::loose::ldb;
     use git_testtools::{fixture_path, hex_to_id};
+
+    use crate::store::loose::ldb;
 
     #[test]
     fn returns_none_for_prefixes_without_any_match() {

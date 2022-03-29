@@ -1,6 +1,9 @@
+use std::{
+    borrow::Cow,
+    fmt::{Display, Formatter},
+};
+
 use git_object::bstr::BStr;
-use std::borrow::Cow;
-use std::fmt::{Display, Formatter};
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Outcome<'a> {
@@ -67,13 +70,16 @@ impl<'a> Display for Format<'a> {
 }
 
 pub(crate) mod function {
-    use super::Outcome;
+    use std::{
+        borrow::Cow,
+        collections::{hash_map, HashMap, VecDeque},
+        iter::FromIterator,
+    };
+
     use git_hash::{oid, ObjectId};
-    use git_object::bstr::BStr;
-    use git_object::CommitRefIter;
-    use std::borrow::Cow;
-    use std::collections::{hash_map, HashMap, VecDeque};
-    use std::iter::FromIterator;
+    use git_object::{bstr::BStr, CommitRefIter};
+
+    use super::Outcome;
 
     #[allow(clippy::result_unit_err)]
     pub fn describe<'a, Find, E>(

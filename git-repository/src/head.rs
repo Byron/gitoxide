@@ -120,8 +120,9 @@ pub mod peel {
             PeelReference(#[from] reference::peel::Error),
         }
     }
-    use crate::head::Kind;
     pub use error::Error;
+
+    use crate::head::Kind;
 
     mod peel_to_commit {
         use crate::object;

@@ -2,8 +2,7 @@ use git_hash::ObjectId;
 use git_object::{bstr::BStr, TreeRefIter};
 use git_odb::FindExt;
 
-use crate::object::find;
-use crate::Tree;
+use crate::{object::find, Tree};
 
 impl<'repo> Tree<'repo> {
     /// Obtain a tree instance by handing in all components that it is made up of.

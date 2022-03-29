@@ -1,5 +1,7 @@
-use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+};
 
 use git_config::file::GitConfig;
 use git_repository::{objs::bstr::ByteSlice, progress, Progress};

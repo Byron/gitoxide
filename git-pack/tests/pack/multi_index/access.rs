@@ -1,6 +1,8 @@
-use super::multi_index;
-use git_testtools::hex_to_id;
 use std::path::PathBuf;
+
+use git_testtools::hex_to_id;
+
+use super::multi_index;
 
 #[test]
 fn lookup_with_ambiguity() {

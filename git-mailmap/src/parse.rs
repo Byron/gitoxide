@@ -17,9 +17,10 @@ mod error {
     }
 }
 
-use crate::Entry;
 use bstr::{BStr, ByteSlice};
 pub use error::Error;
+
+use crate::Entry;
 
 /// An iterator to parse mailmap lines on-demand.
 pub struct Lines<'a> {

@@ -1,6 +1,8 @@
-use crate::{oid, ObjectId, Prefix};
-use quick_error::quick_error;
 use std::cmp::Ordering;
+
+use quick_error::quick_error;
+
+use crate::{oid, ObjectId, Prefix};
 
 quick_error! {
     /// The error returned by [Prefix::try_from_id()][super::Prefix::try_from_id()].

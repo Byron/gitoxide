@@ -1,5 +1,4 @@
-use git_repository::Repository;
-use git_repository::ThreadSafeRepository;
+use git_repository::{Repository, ThreadSafeRepository};
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 

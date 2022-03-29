@@ -1,9 +1,10 @@
-use anyhow::bail;
 use std::{io::BufWriter, path::PathBuf, sync::atomic::AtomicBool};
 
-use crate::OutputFormat;
+use anyhow::bail;
 use git_repository as git;
 use git_repository::Progress;
+
+use crate::OutputFormat;
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 

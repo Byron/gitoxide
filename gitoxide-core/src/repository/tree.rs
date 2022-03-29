@@ -1,22 +1,23 @@
+use std::{borrow::Cow, io, path::PathBuf};
+
 use anyhow::bail;
-use std::borrow::Cow;
-use std::io;
-use std::path::PathBuf;
+use git_repository as git;
+use git_repository::{prelude::ObjectIdExt, Tree};
 
 use crate::OutputFormat;
-use git_repository as git;
-use git_repository::prelude::ObjectIdExt;
-use git_repository::Tree;
 
 mod entries {
-    use git_repository as git;
     use std::collections::VecDeque;
 
-    use crate::repository::tree::format_entry;
-    use git::bstr::{BStr, BString};
-    use git::objs::tree::EntryRef;
-    use git::traverse::tree::visit::Action;
+    use git::{
+        bstr::{BStr, BString},
+        objs::tree::EntryRef,
+        traverse::tree::visit::Action,
+    };
+    use git_repository as git;
     use git_repository::bstr::{ByteSlice, ByteVec};
+
+    use crate::repository::tree::format_entry;
 
     #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
     #[derive(Default)]

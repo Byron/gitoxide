@@ -1,11 +1,9 @@
 //!
-use std::convert::TryInto;
-use std::ops::Deref;
+use std::{convert::TryInto, ops::Deref};
 
 use git_hash::{oid, ObjectId};
 
-use crate::object::find;
-use crate::{Id, Object};
+use crate::{object::find, Id, Object};
 
 /// An [object id][ObjectId] infused with `Easy`.
 impl<'repo> Id<'repo> {
@@ -99,8 +97,7 @@ pub struct Ancestors<'repo> {
 pub mod ancestors {
     use git_odb::FindExt;
 
-    use crate::id::Ancestors;
-    use crate::{ext::ObjectIdExt, Id};
+    use crate::{ext::ObjectIdExt, id::Ancestors, Id};
 
     impl<'repo> Id<'repo> {
         /// Obtain a platform for traversing ancestors of this commit.

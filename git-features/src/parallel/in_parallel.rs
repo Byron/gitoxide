@@ -1,5 +1,6 @@
-use crate::parallel::{num_threads, Reduce};
 use std::sync::atomic::{AtomicBool, Ordering};
+
+use crate::parallel::{num_threads, Reduce};
 
 /// Runs `left` and `right` in parallel, returning their output when both are done.
 pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl FnOnce() -> O2 + Send) -> (O1, O2) {

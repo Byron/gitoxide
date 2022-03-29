@@ -1,9 +1,9 @@
+use std::borrow::Cow;
+
 use git_object::bstr::ByteSlice;
-use git_repository::odb::FindExt;
-use git_repository::Repository;
+use git_repository::{odb::FindExt, Repository};
 use git_revision::describe;
 use git_testtools::hex_to_id;
-use std::borrow::Cow;
 
 mod format;
 

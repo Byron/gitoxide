@@ -1,7 +1,8 @@
 mod commit {
+    use std::cmp::Ordering;
+
     use git_repository::{Commit, Repository};
     use git_testtools::hex_to_id;
-    use std::cmp::Ordering;
 
     use crate::basic_repo;
 

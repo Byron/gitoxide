@@ -1,12 +1,14 @@
-use crate::OutputFormat;
+use std::{io, path::PathBuf};
+
 use anyhow::bail;
 use git_repository as git;
-use std::io;
-use std::path::PathBuf;
+
+use crate::OutputFormat;
 
 mod info {
-    use git_repository::odb::store;
     use std::path::PathBuf;
+
+    use git_repository::odb::store;
 
     #[cfg_attr(feature = "serde1", derive(serde::Serialize))]
     pub struct Statistics {

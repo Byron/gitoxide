@@ -1,5 +1,6 @@
-use crate::Entry;
 use bstr::BStr;
+
+use crate::Entry;
 
 /// Acccess
 impl<'a> Entry<'a> {

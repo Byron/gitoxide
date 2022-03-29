@@ -1,7 +1,9 @@
 //!
-use crate::object;
-use crate::object::{peel, Kind};
-use crate::Object;
+use crate::{
+    object,
+    object::{peel, Kind},
+    Object,
+};
 
 ///
 pub mod to_kind {

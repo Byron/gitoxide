@@ -1,9 +1,10 @@
-use crate::OutputFormat;
+use std::{io, path::PathBuf};
+
 use git_repository as git;
 #[cfg(feature = "serde1")]
 use git_repository::mailmap::Entry;
-use std::io;
-use std::path::PathBuf;
+
+use crate::OutputFormat;
 
 #[cfg(feature = "serde1")]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize))]

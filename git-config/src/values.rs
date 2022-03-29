@@ -1,8 +1,8 @@
 //! Rust containers for valid `git-config` types.
 
-use quick_error::quick_error;
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
+use quick_error::quick_error;
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
 
@@ -288,8 +288,7 @@ pub mod path {
     mod interpolate_tests {
         use std::borrow::Cow;
 
-        use crate::values::b;
-        use crate::values::{path::interpolate::Error, Path};
+        use crate::values::{b, path::interpolate::Error, Path};
 
         #[test]
         fn no_interpolation_for_paths_without_tilde_or_prefix() {
@@ -1383,9 +1382,10 @@ mod boolean {
 
 #[cfg(test)]
 mod integer {
+    use std::convert::TryFrom;
+
     use super::{Integer, IntegerSuffix};
     use crate::values::b;
-    use std::convert::TryFrom;
 
     #[test]
     fn from_str_no_suffix() {

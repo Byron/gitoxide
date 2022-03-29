@@ -1,5 +1,6 @@
-use bstr::{BStr, BString, ByteSlice};
 use std::borrow::Cow;
+
+use bstr::{BStr, BString, ByteSlice};
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

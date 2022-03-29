@@ -1,5 +1,6 @@
-use crate::ignore;
 use bstr::{BString, ByteSlice};
+
+use crate::ignore;
 
 pub struct Lines<'a> {
     lines: bstr::Lines<'a>,

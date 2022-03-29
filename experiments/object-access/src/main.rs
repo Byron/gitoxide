@@ -1,8 +1,7 @@
 use std::{path::Path, sync::Arc, time::Instant};
 
 use anyhow::anyhow;
-use git_repository::ThreadSafeRepository;
-use git_repository::{hash::ObjectId, odb, threading::OwnShared};
+use git_repository::{hash::ObjectId, odb, threading::OwnShared, ThreadSafeRepository};
 
 use crate::odb::Cache;
 

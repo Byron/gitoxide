@@ -1,5 +1,4 @@
-use std::cmp::Ordering;
-use std::{fs, io::Read, path::PathBuf};
+use std::{cmp::Ordering, fs, io::Read, path::PathBuf};
 
 use git_features::zlib;
 

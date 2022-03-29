@@ -1,6 +1,8 @@
-use crate::index::{parse_file, Options};
-use git_repository as git;
 use std::path::Path;
+
+use git_repository as git;
+
+use crate::index::{parse_file, Options};
 
 pub fn entries(
     index_path: impl AsRef<Path>,

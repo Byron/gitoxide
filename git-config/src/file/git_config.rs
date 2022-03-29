@@ -119,10 +119,11 @@ pub struct GitConfig<'event> {
 }
 
 pub mod from_paths {
-    use crate::parser;
-    use crate::values::path::interpolate;
-    use quick_error::quick_error;
     use std::borrow::Cow;
+
+    use quick_error::quick_error;
+
+    use crate::{parser, values::path::interpolate};
 
     quick_error! {
         #[derive(Debug)]
@@ -174,9 +175,10 @@ pub mod from_paths {
 }
 
 pub mod from_env {
+    use quick_error::quick_error;
+
     use super::from_paths;
     use crate::values::path::interpolate;
-    use quick_error::quick_error;
 
     quick_error! {
         #[derive(Debug)]
@@ -1796,11 +1798,10 @@ a"#,
 mod from_paths_tests {
     use std::{fs, io};
 
-    use crate::file::from_paths;
     use tempfile::tempdir;
 
     use super::{from_paths::Error, Cow, GitConfig};
-    use crate::parser::ParserOrIoError;
+    use crate::{file::from_paths, parser::ParserOrIoError};
 
     /// Escapes backslash when writing a path as string so that it is a valid windows path
     fn escape_backslashes(path: &std::path::Path) -> String {
@@ -2261,12 +2262,11 @@ mod from_paths_tests {
 mod from_env_tests {
     use std::{env, fs};
 
-    use crate::file::from_paths;
-    use crate::file::from_paths::Options;
     use serial_test::serial;
     use tempfile::tempdir;
 
     use super::{from_env, Cow, GitConfig};
+    use crate::file::{from_paths, from_paths::Options};
 
     struct Env<'a> {
         altered_vars: Vec<&'a str>,

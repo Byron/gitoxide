@@ -1,10 +1,8 @@
-use std::cmp::Ordering;
-use std::mem::size_of;
+use std::{cmp::Ordering, mem::size_of};
 
-use crate::index::PrefixLookupResult;
 use crate::{
     data,
-    index::{self, EntryIndex, FAN_LEN},
+    index::{self, EntryIndex, PrefixLookupResult, FAN_LEN},
 };
 
 const N32_SIZE: usize = size_of::<u32>();

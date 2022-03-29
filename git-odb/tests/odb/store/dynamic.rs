@@ -404,10 +404,12 @@ fn assert_all_indices_loaded(handle: &git_odb::Handle, num_refreshes: usize, ope
 }
 
 mod disambiguate_prefix {
-    use crate::store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources};
+    use std::cmp::Ordering;
+
     use git_odb::find::PotentialPrefix;
     use git_testtools::hex_to_id;
-    use std::cmp::Ordering;
+
+    use crate::store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources};
 
     #[test]
     fn unambiguous_hex_lengths_yield_prefixes_of_exactly_the_given_length() {
@@ -483,8 +485,9 @@ mod disambiguate_prefix {
 }
 
 mod lookup_prefix {
-    use crate::store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources};
     use git_testtools::hex_to_id;
+
+    use crate::store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources};
 
     #[test]
     fn returns_none_for_prefixes_without_any_match() {

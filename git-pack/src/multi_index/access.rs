@@ -1,9 +1,11 @@
-use std::cmp::Ordering;
-use std::path::{Path, PathBuf};
+use std::{
+    cmp::Ordering,
+    path::{Path, PathBuf},
+};
 
-use crate::index::PrefixLookupResult;
 use crate::{
     data,
+    index::PrefixLookupResult,
     multi_index::{EntryIndex, File, PackIndex, Version},
 };
 

@@ -1,7 +1,6 @@
 use std::convert::TryFrom;
 
-use crate::object;
-use crate::{Commit, DetachedObject, Object, Tree};
+use crate::{object, Commit, DetachedObject, Object, Tree};
 
 impl<'repo> std::fmt::Debug for Object<'repo> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

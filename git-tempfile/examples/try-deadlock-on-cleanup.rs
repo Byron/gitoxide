@@ -1,10 +1,13 @@
-use std::path::Path;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
-use std::time::Duration;
+use std::{
+    path::Path,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+    time::Duration,
+};
 
-use git_tempfile::handle::Writable;
-use git_tempfile::{AutoRemove, ContainingDirectory, Handle};
+use git_tempfile::{handle::Writable, AutoRemove, ContainingDirectory, Handle};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let secs_to_run: usize = std::env::args()
