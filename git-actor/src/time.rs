@@ -23,6 +23,15 @@ impl Default for Time {
 }
 
 impl Time {
+    /// Create a new instance from seconds and offset.
+    pub fn new(seconds_since_unix_epoch: u32, offset_in_seconds: i32) -> Self {
+        Time {
+            seconds_since_unix_epoch,
+            offset_in_seconds,
+            sign: offset_in_seconds.into(),
+        }
+    }
+
     /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         let mut itoa = itoa::Buffer::new();
