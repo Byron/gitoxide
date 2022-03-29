@@ -106,6 +106,7 @@ pub(crate) mod function {
         let mut queue = VecDeque::from_iter(Some(commit.to_owned()));
         let mut candidates = Vec::new();
         let mut seen_commits = 0;
+        // TODO: actually use this
         let mut _gave_up_on_commit = None;
         let mut seen = hash_hasher::HashedMap::default();
         seen.insert(commit.to_owned(), 0u32);
@@ -171,6 +172,8 @@ pub(crate) mod function {
                 queue.extend(parents.iter().map(|e| e.0));
             }
         }
+
+        // TODO: something like finish_computation() - testing that might be possible when setting max-candidates to 1
 
         if candidates.is_empty() {
             return Ok(None);
