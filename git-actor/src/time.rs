@@ -15,8 +15,8 @@ impl From<i32> for Sign {
 impl Default for Time {
     fn default() -> Self {
         Time {
-            time: 0,
-            offset: 0,
+            seconds_since_unix_epoch: 0,
+            offset_in_seconds: 0,
             sign: Sign::Plus,
         }
     }
@@ -26,7 +26,7 @@ impl Time {
     /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         let mut itoa = itoa::Buffer::new();
-        out.write_all(itoa.format(self.time).as_bytes())?;
+        out.write_all(itoa.format(self.seconds_since_unix_epoch).as_bytes())?;
         out.write_all(SPACE)?;
         out.write_all(match self.sign {
             Sign::Plus => b"+",
@@ -36,7 +36,7 @@ impl Time {
         const ZERO: &[u8; 1] = b"0";
 
         const SECONDS_PER_HOUR: i32 = 60 * 60;
-        let offset = self.offset.abs();
+        let offset = self.offset_in_seconds.abs();
         let hours = offset / SECONDS_PER_HOUR;
         assert!(hours < 25, "offset is more than a day: {}", hours);
         let minutes = (offset - (hours * SECONDS_PER_HOUR)) / 60;
@@ -55,23 +55,23 @@ impl Time {
     pub fn size(&self) -> usize {
         // TODO: this is not year 2038 safe…but we also can't parse larger numbers (or represent them) anyway. It's a trap nonetheless
         //       that can be fixed by increasing the size to usize.
-        (if self.time >= 1_000_000_000 {
+        (if self.seconds_since_unix_epoch >= 1_000_000_000 {
             10
-        } else if self.time >= 100_000_000 {
+        } else if self.seconds_since_unix_epoch >= 100_000_000 {
             9
-        } else if self.time >= 10_000_000 {
+        } else if self.seconds_since_unix_epoch >= 10_000_000 {
             8
-        } else if self.time >= 1_000_000 {
+        } else if self.seconds_since_unix_epoch >= 1_000_000 {
             7
-        } else if self.time >= 100_000 {
+        } else if self.seconds_since_unix_epoch >= 100_000 {
             6
-        } else if self.time >= 10_000 {
+        } else if self.seconds_since_unix_epoch >= 10_000 {
             5
-        } else if self.time >= 1_000 {
+        } else if self.seconds_since_unix_epoch >= 1_000 {
             4
-        } else if self.time >= 100 {
+        } else if self.seconds_since_unix_epoch >= 100 {
             3
-        } else if self.time >= 10 {
+        } else if self.seconds_since_unix_epoch >= 10 {
             2
         } else {
             1

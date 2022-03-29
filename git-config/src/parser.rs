@@ -942,6 +942,7 @@ pub fn parse_from_str(input: &str) -> Result<Parser, Error> {
 /// data succeeding valid `git-config` data.
 #[allow(clippy::shadow_unrelated)]
 pub fn parse_from_bytes(input: &[u8]) -> Result<Parser, Error> {
+    let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
     let (i, frontmatter) = many0(alt((
         map(comment, Event::Comment),
@@ -950,7 +951,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser, Error> {
             newlines += counter;
             Event::Newline(Cow::Borrowed(newline))
         }),
-    )))(input)
+    )))(&input[bom.len()..])
     // I don't think this can panic. many0 errors if the child parser returns
     // a success where the input was not consumed, but alt will only return Ok
     // if one of its children succeed. However, all of it's children are
@@ -1012,6 +1013,7 @@ pub fn parse_from_bytes_owned(input: &[u8]) -> Result<Parser<'static>, Error<'st
     // accept cows instead, since we don't want to unnecessarily copy the frontmatter
     // events in a hypothetical parse_from_cow function.
     let mut newlines = 0;
+    let bom = unicode_bom::Bom::from(input);
     let (i, frontmatter) = many0(alt((
         map(comment, Event::Comment),
         map(take_spaces, |whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
@@ -1019,7 +1021,7 @@ pub fn parse_from_bytes_owned(input: &[u8]) -> Result<Parser<'static>, Error<'st
             newlines += counter;
             Event::Newline(Cow::Borrowed(newline))
         }),
-    )))(input)
+    )))(&input[bom.len()..])
     // I don't think this can panic. many0 errors if the child parser returns
     // a success where the input was not consumed, but alt will only return Ok
     // if one of its children succeed. However, all of it's children are
@@ -1904,6 +1906,32 @@ mod section {
                 },
                 0
             ))
+        );
+    }
+}
+
+#[cfg(test)]
+mod parse {
+    use crate::parser::{parse_from_bytes, parse_from_bytes_owned};
+
+    #[test]
+    fn parser_skips_bom() {
+        let bytes = b"
+            [core]
+                a = 1
+        ";
+        let bytes_with_gb18030_bom = "\u{feff}
+            [core]
+                a = 1
+        ";
+
+        assert_eq!(
+            parse_from_bytes(bytes),
+            parse_from_bytes(bytes_with_gb18030_bom.as_bytes())
+        );
+        assert_eq!(
+            parse_from_bytes_owned(bytes),
+            parse_from_bytes_owned(bytes_with_gb18030_bom.as_bytes())
         );
     }
 }

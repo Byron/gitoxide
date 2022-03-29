@@ -57,10 +57,10 @@ pub enum Sign {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Time {
-    /// time in seconds from epoch.
-    pub time: u32,
+    /// time in seconds since epoch.
+    pub seconds_since_unix_epoch: u32,
     /// time offset in seconds, may be negative to match the `sign` field.
-    pub offset: i32,
+    pub offset_in_seconds: i32,
     /// the sign of `offset`, used to encode `-0000` which would otherwise loose sign information.
     pub sign: Sign,
 }

@@ -117,8 +117,8 @@ fn signature(name: &str, email: &str) -> git_actor::Signature {
         email: email.into(),
         time: git_actor::Time {
             // marker
-            time: 42,
-            offset: 53,
+            seconds_since_unix_epoch: 42,
+            offset_in_seconds: 53,
             sign: git_actor::Sign::Minus,
         },
     }

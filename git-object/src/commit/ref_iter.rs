@@ -58,12 +58,10 @@ impl<'a> CommitRefIter<'a> {
     /// if not exactly two signatures were iterable.
     /// Errors are not the common case - if an error needs to be detectable, use this instance as iterator.
     pub fn signatures(&'a mut self) -> impl Iterator<Item = git_actor::SignatureRef<'_>> + 'a {
-        self.filter_map(Result::ok)
-            .skip_while(|t| !matches!(t, Token::Author { .. } | Token::Committer { .. }))
-            .filter_map(|t| match t {
-                Token::Author { signature } | Token::Committer { signature } => Some(signature),
-                _ => None,
-            })
+        self.filter_map(|t| match t {
+            Ok(Token::Author { signature }) | Ok(Token::Committer { signature }) => Some(signature),
+            _ => None,
+        })
     }
 
     /// Returns the committer signature if there is no decoding error.

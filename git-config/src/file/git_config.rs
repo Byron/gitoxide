@@ -8,15 +8,17 @@ use std::{
 
 use crate::{
     file::{
-        error::{GitConfigError, GitConfigFromEnvError},
+        error::GitConfigError,
         section::{MutableSection, SectionBody},
         value::{EntryData, MutableMultiValue, MutableValue},
         Index, Size,
     },
+    parser,
     parser::{
         parse_from_bytes, parse_from_path, parse_from_str, Error, Event, Key, ParsedSectionHeader, Parser,
-        ParserOrIoError, SectionHeaderName,
+        SectionHeaderName,
     },
+    values,
 };
 
 /// The section ID is a monotonically increasing ID used to refer to sections.
@@ -116,6 +118,97 @@ pub struct GitConfig<'event> {
     section_order: VecDeque<SectionId>,
 }
 
+pub mod from_paths {
+    use crate::parser;
+    use crate::values::path::interpolate;
+    use quick_error::quick_error;
+    use std::borrow::Cow;
+
+    quick_error! {
+        #[derive(Debug)]
+        /// The error returned by [`GitConfig::from_paths()`][super::GitConfig::from_paths()] and [`GitConfig::from_env_paths()`][super::GitConfig::from_env_paths()].
+        #[allow(missing_docs)]
+        pub enum Error {
+            ParserOrIoError(err: parser::ParserOrIoError<'static>) {
+                display("Could not read config")
+                source(err)
+                from()
+            }
+            Interpolate(err: interpolate::Error) {
+                display("Could not interpolate path")
+                source(err)
+                from()
+            }
+            IncludeDepthExceeded { max_depth: u8 } {
+                display("The maximum allowed length {} of the file include chain built by following nested includes is exceeded", max_depth)
+            }
+            MissingConfigPath {
+                display("Include paths from environment variables must not be relative.")
+            }
+        }
+    }
+
+    /// Options when loading git config using [`GitConfig::from_paths()`][super::GitConfig::from_paths()].
+    #[derive(Clone)]
+    pub struct Options<'a> {
+        /// The location where gitoxide or git is installed
+        pub git_install_dir: Option<Cow<'a, std::path::Path>>,
+        /// The maximum allowed length of the file include chain built by following nested includes where base level is depth = 0.
+        pub max_depth: u8,
+        /// When max depth is exceeded while following nested included, return an error if true or silently stop following
+        /// includes.
+        ///
+        /// Setting this value to false allows to read configuration with cycles, which otherwise always results in an error.
+        pub error_on_max_depth_exceeded: bool,
+    }
+
+    impl<'a> Default for Options<'a> {
+        fn default() -> Self {
+            Options {
+                git_install_dir: None,
+                max_depth: 10,
+                error_on_max_depth_exceeded: true,
+            }
+        }
+    }
+}
+
+pub mod from_env {
+    use super::from_paths;
+    use crate::values::path::interpolate;
+    use quick_error::quick_error;
+
+    quick_error! {
+        #[derive(Debug)]
+        /// Represents the errors that may occur when calling [`GitConfig::from_env`][crate::file::GitConfig::from_env()].
+        #[allow(missing_docs)]
+        pub enum Error {
+            ParseError (err: String) {
+                display("GIT_CONFIG_COUNT was not a positive integer: {}", err)
+            }
+            InvalidKeyId (key_id: usize) {
+                display("GIT_CONFIG_KEY_{} was not set.", key_id)
+            }
+            InvalidKeyValue (key_id: usize, key_val: String) {
+                display("GIT_CONFIG_KEY_{} was set to an invalid value: {}", key_id, key_val)
+            }
+            InvalidValueId (value_id: usize) {
+                display("GIT_CONFIG_VALUE_{} was not set.", value_id)
+            }
+            PathInterpolationError (err: interpolate::Error) {
+                display("Could not interpolate path while loading a config file.")
+                source(err)
+                from()
+            }
+            FromPathsError (err: from_paths::Error) {
+                display("Could not load config from a file")
+                source(err)
+                from()
+            }
+        }
+    }
+}
+
 impl<'event> GitConfig<'event> {
     /// Constructs an empty `git-config` file.
     #[inline]
@@ -131,7 +224,7 @@ impl<'event> GitConfig<'event> {
     /// Returns an error if there was an IO error or if the file wasn't a valid
     /// git-config file.
     #[inline]
-    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, ParserOrIoError<'static>> {
+    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, parser::ParserOrIoError<'static>> {
         parse_from_path(path).map(Self::from)
     }
 
@@ -145,28 +238,91 @@ impl<'event> GitConfig<'event> {
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-FILES
     #[inline]
-    pub fn from_paths(paths: &[&Path]) -> Result<Self, ParserOrIoError<'static>> {
-        let mut config = Self::new();
-
+    pub fn from_paths(paths: Vec<PathBuf>, options: &from_paths::Options) -> Result<Self, from_paths::Error> {
+        let mut target = Self::new();
         for path in paths {
-            let other = Self::open(path)?;
-            for (section_id, section_header) in other.section_headers {
-                config.push_section(
-                    section_header.name.0.to_owned(),
-                    section_header.subsection_name.to_owned(),
-                    other.sections[&section_id].clone(),
-                );
+            let mut config = Self::open(&path)?;
+            config.resolve_includes(Some(&path), options)?;
+            target.append(config);
+        }
+        Ok(target)
+    }
+
+    // TODO: add note indicating that probably a lot if not all information about the original files is currently lost,
+    //       so can't be written back. This will probably change a lot during refactor, so it's not too important now.
+    fn append(&mut self, mut other: Self) {
+        let mut section_indices: Vec<_> = other.section_headers.keys().cloned().collect();
+        // header keys are numeric and ascend in insertion order, hence sorting them gives the order
+        // in which they appear in the config file.
+        section_indices.sort();
+        for section_index in section_indices {
+            let section_header = other.section_headers.remove(&section_index).expect("present");
+            self.push_section(
+                section_header.name.0,
+                section_header.subsection_name,
+                other.sections.remove(&section_index).expect("present"),
+            );
+        }
+    }
+
+    pub(crate) fn resolve_includes(
+        &mut self,
+        config_path: Option<&std::path::Path>,
+        options: &from_paths::Options,
+    ) -> Result<(), from_paths::Error> {
+        fn resolve_includes_recursive(
+            target_config: &mut GitConfig,
+            target_config_path: Option<&Path>,
+            depth: u8,
+            options: &from_paths::Options,
+        ) -> Result<(), from_paths::Error> {
+            if depth == options.max_depth {
+                return if options.error_on_max_depth_exceeded {
+                    Err(from_paths::Error::IncludeDepthExceeded {
+                        max_depth: options.max_depth,
+                    })
+                } else {
+                    Ok(())
+                };
             }
+
+            let mut paths_to_include = Vec::new();
+            for path in target_config
+                .multi_value::<values::Path>("include", None, "path")
+                .unwrap_or_default()
+            {
+                let path = path.interpolate(options.git_install_dir.as_deref())?;
+                let path: PathBuf = if path.is_relative() {
+                    target_config_path
+                        .ok_or(from_paths::Error::MissingConfigPath)?
+                        .parent()
+                        .expect("path is a config file which naturally lives in a directory")
+                        .join(path)
+                } else {
+                    path.into()
+                };
+
+                if path.is_file() {
+                    paths_to_include.push(path);
+                }
+            }
+
+            for config_path in paths_to_include {
+                let mut include_config = GitConfig::open(&config_path)?;
+                resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, options)?;
+                target_config.append(include_config);
+            }
+            Ok(())
         }
 
-        Ok(config)
+        resolve_includes_recursive(self, config_path, 0, options)
     }
 
     /// Constructs a `git-config` from the default cascading sequence.
     /// This is neither zero-alloc nor zero-copy.
     ///
     /// See <https://git-scm.com/docs/git-config#FILES> for details.
-    pub fn from_env_paths() -> Result<Self, ParserOrIoError<'static>> {
+    pub fn from_env_paths(options: &from_paths::Options) -> Result<Self, from_paths::Error> {
         use std::env;
 
         let mut paths = vec![];
@@ -201,8 +357,7 @@ impl<'event> GitConfig<'event> {
             paths.push(PathBuf::from(git_dir).join("config"));
         }
 
-        let paths = paths.iter().map(PathBuf::as_path).collect::<Vec<&Path>>();
-        Self::from_paths(&paths)
+        Self::from_paths(paths, options)
     }
 
     /// Generates a config from the environment variables. This is neither
@@ -215,33 +370,31 @@ impl<'event> GitConfig<'event> {
     /// there was an invalid key value pair.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
-    pub fn from_env() -> Result<Option<Self>, GitConfigFromEnvError> {
+    pub fn from_env(options: &from_paths::Options) -> Result<Option<Self>, from_env::Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
-            Ok(v) => v.parse().map_err(|_| GitConfigFromEnvError::ParseError(v))?,
+            Ok(v) => v.parse().map_err(|_| from_env::Error::ParseError(v))?,
             Err(_) => return Ok(None),
         };
 
         let mut config = Self::new();
-
         for i in 0..count {
-            let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| GitConfigFromEnvError::InvalidKeyId(i))?;
-            let value =
-                env::var(format!("GIT_CONFIG_VALUE_{}", i)).map_err(|_| GitConfigFromEnvError::InvalidValueId(i))?;
-            if let Some((section, maybe_subsection)) = key.split_once('.') {
+            let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| from_env::Error::InvalidKeyId(i))?;
+            let value = env::var(format!("GIT_CONFIG_VALUE_{}", i)).map_err(|_| from_env::Error::InvalidValueId(i))?;
+            if let Some((section_name, maybe_subsection)) = key.split_once('.') {
                 let (subsection, key) = if let Some((subsection, key)) = maybe_subsection.rsplit_once('.') {
                     (Some(subsection), key)
                 } else {
                     (None, maybe_subsection)
                 };
 
-                let mut section = if let Ok(section) = config.section_mut(section, subsection) {
+                let mut section = if let Ok(section) = config.section_mut(section_name, subsection) {
                     section
                 } else {
                     // Need to have config own the section and subsection names
                     // else they get dropped at the end of the loop.
                     config.new_section(
-                        section.to_string(),
+                        section_name.to_string(),
                         subsection.map(|subsection| Cow::Owned(subsection.to_string())),
                     )
                 };
@@ -251,7 +404,7 @@ impl<'event> GitConfig<'event> {
                     Cow::Owned(value.into_bytes()),
                 );
             } else {
-                return Err(GitConfigFromEnvError::InvalidKeyValue(i, key.to_string()));
+                return Err(from_env::Error::InvalidKeyValue(i, key.to_string()));
             }
         }
 
@@ -259,6 +412,7 @@ impl<'event> GitConfig<'event> {
         if config.is_empty() {
             Ok(None)
         } else {
+            config.resolve_includes(None, options)?;
             Ok(Some(config))
         }
     }
@@ -1639,31 +1793,40 @@ a"#,
 }
 
 #[cfg(test)]
-mod from_paths {
+mod from_paths_tests {
     use std::{fs, io};
 
+    use crate::file::from_paths;
     use tempfile::tempdir;
 
-    use super::{Cow, GitConfig, ParserOrIoError};
+    use super::{from_paths::Error, Cow, GitConfig};
+    use crate::parser::ParserOrIoError;
+
+    /// Escapes backslash when writing a path as string so that it is a valid windows path
+    fn escape_backslashes(path: &std::path::Path) -> String {
+        path.to_str().unwrap().replace('\\', "\\\\")
+    }
 
     #[test]
     fn file_not_found() {
         let dir = tempdir().unwrap();
         let config_path = dir.path().join("config");
 
-        let paths = vec![config_path.as_path()];
-        let error = GitConfig::from_paths(&paths).unwrap_err();
-        assert!(matches!(error, ParserOrIoError::Io(io_error) if io_error.kind() == io::ErrorKind::NotFound));
+        let paths = vec![config_path];
+        let error = GitConfig::from_paths(paths, &Default::default()).unwrap_err();
+        assert!(
+            matches!(error,  Error::ParserOrIoError(ParserOrIoError::Io(io_error)) if io_error.kind() == io::ErrorKind::NotFound)
+        );
     }
 
     #[test]
     fn single_path() {
         let dir = tempdir().unwrap();
         let config_path = dir.path().join("config");
-        fs::write(config_path.as_path(), b"[core]\nboolean = true").expect("Unable to write config file");
+        fs::write(config_path.as_path(), b"[core]\nboolean = true").unwrap();
 
-        let paths = vec![config_path.as_path()];
-        let config = GitConfig::from_paths(&paths).unwrap();
+        let paths = vec![config_path];
+        let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
 
         assert_eq!(
             config.get_raw_value("core", None, "boolean"),
@@ -1674,24 +1837,375 @@ mod from_paths {
     }
 
     #[test]
+    fn multiple_includes() {
+        let dir = tempdir().unwrap();
+
+        let a_path = dir.path().join("a");
+        fs::write(
+            a_path.as_path(),
+            "
+            [core]
+              a = false
+              sslVerify = true
+              d = 41",
+        )
+        .unwrap();
+
+        let b_path = dir.path().join("b");
+        let relative_b_path: std::path::PathBuf = "b".into();
+        fs::write(
+            b_path.as_path(),
+            "
+            [diff]
+              renames = true",
+        )
+        .unwrap();
+        let ignore_path = dir.path().join("ignore");
+        fs::write(
+            ignore_path.as_path(),
+            "
+            [diff]
+              renames = invalid",
+        )
+        .unwrap();
+
+        let a_path_string = escape_backslashes(a_path.parent().unwrap());
+        let non_canonical_path_a = format!("{}/./a", a_path_string);
+        let non_existing_path = "/dfgwfsghfdsfs";
+        let c_path = dir.path().join("c");
+        fs::write(
+            c_path.as_path(),
+            format!(
+                "
+            [core]
+              c = 12
+              d = 42
+            [include]
+              path = {}
+              path = {}
+              path = {}
+            [include.ignore]
+              path = {}
+            [http]
+	          sslVerify = false",
+                non_existing_path,
+                non_canonical_path_a,
+                relative_b_path.as_path().to_str().unwrap(),
+                escape_backslashes(&ignore_path)
+            ),
+        )
+        .unwrap();
+
+        let config = GitConfig::from_paths(vec![c_path], &Default::default()).unwrap();
+
+        assert_eq!(
+            config.get_raw_value("core", None, "c"),
+            Ok(Cow::<[u8]>::Borrowed(b"12"))
+        );
+        assert_eq!(
+            config.get_raw_value("core", None, "d"),
+            Ok(Cow::<[u8]>::Borrowed(b"41"))
+        );
+        assert_eq!(
+            config.get_raw_value("http", None, "sslVerify"),
+            Ok(Cow::<[u8]>::Borrowed(b"false"))
+        );
+
+        assert_eq!(
+            config.get_raw_value("diff", None, "renames"),
+            Ok(Cow::<[u8]>::Borrowed(b"true"))
+        );
+
+        assert_eq!(
+            config.get_raw_value("core", None, "a"),
+            Ok(Cow::<[u8]>::Borrowed(b"false"))
+        );
+    }
+
+    #[test]
+    fn nested_include_respects_max_depth() {
+        let dir = tempdir().unwrap();
+
+        // 0 includes 1 - base level
+        // 1 includes 2
+        // 2 includes 3
+        // 3 includes 4
+        // 4 has no includes
+        let max_depth = 4u8;
+        for (i, next_i) in (0..max_depth).zip(1..=max_depth) {
+            let path = dir.path().join(i.to_string());
+            let next_path = dir.path().join(next_i.to_string());
+            fs::write(
+                path.as_path(),
+                format!(
+                    "
+                    [core]
+                      i = {i} 
+                    [include]
+                      path = {}",
+                    escape_backslashes(&next_path),
+                ),
+            )
+            .unwrap();
+        }
+
+        fs::write(
+            dir.path().join(max_depth.to_string()),
+            "
+                    [core]
+                      i = {}"
+                .replace("{}", &max_depth.to_string()),
+        )
+        .unwrap();
+
+        let options = from_paths::Options::default();
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
+        assert_eq!(
+            config.get_raw_multi_value("core", None, "i").unwrap(),
+            vec![
+                Cow::Borrowed(b"0"),
+                Cow::Borrowed(b"1"),
+                Cow::Borrowed(b"2"),
+                Cow::Borrowed(b"3"),
+                Cow::Borrowed(b"4")
+            ]
+        );
+
+        // with max_allowed_depth of 1 and 4 levels of includes and error_on_max_depth_exceeded: false, max_allowed_depth is exceeded and the value of level 1 is returned
+        // this is equivalent to running git with --no-includes option
+        let options = from_paths::Options {
+            max_depth: 1,
+            error_on_max_depth_exceeded: false,
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
+        assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"1")));
+
+        // with default max_allowed_depth of 10 and 4 levels of includes, last level is read
+        let options = from_paths::Options::default();
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
+        assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"4")));
+
+        // with max_allowed_depth of 5, the base and 4 levels of includes, last level is read
+        let options = from_paths::Options {
+            max_depth: 5,
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
+        assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"4")));
+
+        // with max_allowed_depth of 2 and 4 levels of includes, max_allowed_depth is exceeded and error is returned
+        let options = from_paths::Options {
+            max_depth: 2,
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options);
+        assert!(matches!(
+            config.unwrap_err(),
+            from_paths::Error::IncludeDepthExceeded { max_depth: 2 }
+        ));
+
+        // with max_allowed_depth of 2 and 4 levels of includes and error_on_max_depth_exceeded: false , max_allowed_depth is exceeded and the value of level 2 is returned
+        let options = from_paths::Options {
+            max_depth: 2,
+            error_on_max_depth_exceeded: false,
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
+        assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"2")));
+
+        // with max_allowed_depth of 0 and 4 levels of includes, max_allowed_depth is exceeded and error is returned
+        let options = from_paths::Options {
+            max_depth: 0,
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![dir.path().join("0")], &options);
+        assert!(matches!(
+            config.unwrap_err(),
+            from_paths::Error::IncludeDepthExceeded { max_depth: 0 }
+        ));
+    }
+
+    #[test]
+    fn config_files_are_included_unconditionally() {
+        let dir = tempdir().unwrap();
+
+        let a_path = dir.path().join("a");
+        let b_path = dir.path().join("b");
+
+        fs::write(
+            a_path.as_path(),
+            format!(
+                "
+            [core]
+              b = true
+            [include]
+              path = {}
+            [core]
+              b = true
+            [include]
+              path = {}",
+                escape_backslashes(&b_path),
+                escape_backslashes(&b_path)
+            ),
+        )
+        .unwrap();
+
+        fs::write(
+            b_path.as_path(),
+            "
+            [core]
+              b = false",
+        )
+        .unwrap();
+
+        let config = GitConfig::from_paths(vec![a_path], &Default::default()).unwrap();
+        assert_eq!(
+            config.get_raw_value("core", None, "b"),
+            Ok(Cow::<[u8]>::Borrowed(b"false"))
+        );
+    }
+
+    #[test]
+    fn include_path_cycles_are_detected() {
+        let dir = tempdir().unwrap();
+
+        let a_path = dir.path().join("a");
+        let b_path = dir.path().join("b");
+
+        fs::write(
+            a_path.as_path(),
+            format!(
+                "
+            [core]
+              b = 0
+            [include]
+              path = {}",
+                escape_backslashes(&b_path),
+            ),
+        )
+        .unwrap();
+
+        fs::write(
+            b_path.as_path(),
+            format!(
+                "
+            [core]
+              b = 1
+            [include]
+              path = {}",
+                escape_backslashes(&a_path),
+            ),
+        )
+        .unwrap();
+
+        let options = from_paths::Options {
+            max_depth: 4,
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![a_path.clone()], &options);
+        assert!(matches!(
+            config.unwrap_err(),
+            from_paths::Error::IncludeDepthExceeded { max_depth: 4 }
+        ));
+
+        let options = from_paths::Options {
+            max_depth: 4,
+            error_on_max_depth_exceeded: false,
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![a_path], &options).unwrap();
+        assert_eq!(
+            config.get_raw_multi_value("core", None, "b").unwrap(),
+            vec![
+                Cow::Borrowed(b"0"),
+                Cow::Borrowed(b"1"),
+                Cow::Borrowed(b"0"),
+                Cow::Borrowed(b"1"),
+                Cow::Borrowed(b"0"),
+            ]
+        );
+    }
+
+    #[test]
+    fn nested_include() {
+        let dir = tempdir().unwrap();
+
+        let a_path = dir.path().join("a");
+        fs::write(
+            a_path.as_path(),
+            "
+            [core]
+              a = false
+              c = 1",
+        )
+        .unwrap();
+
+        let b_path = dir.path().join("b");
+        fs::write(
+            b_path.as_path(),
+            format!(
+                "
+            [core]
+              b = true
+            [include]
+              path = {}",
+                escape_backslashes(&a_path)
+            ),
+        )
+        .unwrap();
+
+        let c_path = dir.path().join("c");
+        fs::write(
+            c_path.as_path(),
+            format!(
+                "
+            [core]
+              c = 12
+            [include]
+              path = {}",
+                escape_backslashes(&b_path)
+            ),
+        )
+        .unwrap();
+
+        let config = GitConfig::from_paths(vec![c_path], &Default::default()).unwrap();
+
+        assert_eq!(config.get_raw_value("core", None, "c"), Ok(Cow::<[u8]>::Borrowed(b"1")));
+
+        assert_eq!(
+            config.get_raw_value("core", None, "b"),
+            Ok(Cow::<[u8]>::Borrowed(b"true"))
+        );
+
+        assert_eq!(
+            config.get_raw_value("core", None, "a"),
+            Ok(Cow::<[u8]>::Borrowed(b"false"))
+        );
+    }
+
+    #[test]
     fn multiple_paths_single_value() {
         let dir = tempdir().unwrap();
 
         let a_path = dir.path().join("a");
-        fs::write(a_path.as_path(), b"[core]\na = true").expect("Unable to write config file");
+        fs::write(a_path.as_path(), b"[core]\na = true").unwrap();
 
         let b_path = dir.path().join("b");
-        fs::write(b_path.as_path(), b"[core]\nb = true").expect("Unable to write config file");
+        fs::write(b_path.as_path(), b"[core]\nb = true").unwrap();
 
         let c_path = dir.path().join("c");
-        fs::write(c_path.as_path(), b"[core]\nc = true").expect("Unable to write config file");
+        fs::write(c_path.as_path(), b"[core]\nc = true").unwrap();
 
-        let paths = vec![a_path.as_path(), b_path.as_path(), c_path.as_path()];
-        let config = GitConfig::from_paths(&paths).unwrap();
+        let d_path = dir.path().join("d");
+        fs::write(d_path.as_path(), b"[core]\na = false").unwrap();
+
+        let paths = vec![a_path, b_path, c_path, d_path];
+        let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
 
         assert_eq!(
             config.get_raw_value("core", None, "a"),
-            Ok(Cow::<[u8]>::Borrowed(b"true"))
+            Ok(Cow::<[u8]>::Borrowed(b"false"))
         );
 
         assert_eq!(
@@ -1704,7 +2218,7 @@ mod from_paths {
             Ok(Cow::<[u8]>::Borrowed(b"true"))
         );
 
-        assert_eq!(config.len(), 3);
+        assert_eq!(config.len(), 4);
     }
 
     #[test]
@@ -1712,56 +2226,67 @@ mod from_paths {
         let dir = tempdir().unwrap();
 
         let a_path = dir.path().join("a");
-        fs::write(a_path.as_path(), b"[core]\nkey = a").expect("Unable to write config file");
+        fs::write(a_path.as_path(), b"[core]\nkey = a").unwrap();
 
         let b_path = dir.path().join("b");
-        fs::write(b_path.as_path(), b"[core]\nkey = b").expect("Unable to write config file");
+        fs::write(b_path.as_path(), b"[core]\nkey = b").unwrap();
 
         let c_path = dir.path().join("c");
-        fs::write(c_path.as_path(), b"[core]\nkey = c").expect("Unable to write config file");
+        fs::write(c_path.as_path(), b"[core]\nkey = c").unwrap();
 
-        let paths = vec![a_path.as_path(), b_path.as_path(), c_path.as_path()];
-        let config = GitConfig::from_paths(&paths).unwrap();
+        let d_path = dir.path().join("d");
+        fs::write(d_path.as_path(), b"[include]\npath = d_path").unwrap();
+
+        let e_path = dir.path().join("e");
+        fs::write(e_path.as_path(), b"[include]\npath = e_path").unwrap();
+
+        let paths = vec![a_path, b_path, c_path, d_path, e_path];
+        let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
 
         assert_eq!(
             config.get_raw_multi_value("core", None, "key").unwrap(),
             vec![Cow::Borrowed(b"a"), Cow::Borrowed(b"b"), Cow::Borrowed(b"c")]
         );
 
-        assert_eq!(config.len(), 3);
+        assert_eq!(
+            config.get_raw_multi_value("include", None, "path").unwrap(),
+            vec![Cow::Borrowed(b"d_path"), Cow::Borrowed(b"e_path")]
+        );
+
+        assert_eq!(config.len(), 5);
     }
 }
 
 #[cfg(test)]
-pub mod from_env_paths {}
+mod from_env_tests {
+    use std::{env, fs};
 
-#[cfg(test)]
-mod from_env {
-    use std::env;
-
+    use crate::file::from_paths;
+    use crate::file::from_paths::Options;
     use serial_test::serial;
+    use tempfile::tempdir;
 
-    use super::{Cow, GitConfig, GitConfigFromEnvError};
+    use super::{from_env, Cow, GitConfig};
 
-    struct Env {
-        altered_vars: Vec<&'static str>,
+    struct Env<'a> {
+        altered_vars: Vec<&'a str>,
     }
 
-    impl Env {
+    impl<'a> Env<'a> {
         fn new() -> Self {
             Env {
                 altered_vars: Vec::new(),
             }
         }
 
-        fn set(mut self, var: &'static str, value: &'static str) -> Self {
+        fn set(mut self, var: &'a str, value: &'a str) -> Self {
             env::set_var(var, value);
             self.altered_vars.push(var);
             self
         }
     }
 
-    impl Drop for Env {
+    impl<'a> Drop for Env<'a> {
         fn drop(&mut self) {
             for var in &self.altered_vars {
                 env::remove_var(var);
@@ -1772,7 +2297,7 @@ mod from_env {
     #[test]
     #[serial]
     fn empty_without_relevant_environment() {
-        let config = GitConfig::from_env().unwrap();
+        let config = GitConfig::from_env(&Options::default()).unwrap();
         assert!(config.is_none());
     }
 
@@ -1780,7 +2305,7 @@ mod from_env {
     #[serial]
     fn empty_with_zero_count() {
         let _env = Env::new().set("GIT_CONFIG_COUNT", "0");
-        let config = GitConfig::from_env().unwrap();
+        let config = GitConfig::from_env(&Options::default()).unwrap();
         assert!(config.is_none());
     }
 
@@ -1788,8 +2313,8 @@ mod from_env {
     #[serial]
     fn parse_error_with_invalid_count() {
         let _env = Env::new().set("GIT_CONFIG_COUNT", "invalid");
-        let err = GitConfig::from_env().unwrap_err();
-        assert!(matches!(err, GitConfigFromEnvError::ParseError(_)));
+        let err = GitConfig::from_env(&Options::default()).unwrap_err();
+        assert!(matches!(err, from_env::Error::ParseError(_)));
     }
 
     #[test]
@@ -1800,7 +2325,7 @@ mod from_env {
             .set("GIT_CONFIG_KEY_0", "core.key")
             .set("GIT_CONFIG_VALUE_0", "value");
 
-        let config = GitConfig::from_env().unwrap().unwrap();
+        let config = GitConfig::from_env(&Options::default()).unwrap().unwrap();
         assert_eq!(
             config.get_raw_value("core", None, "key"),
             Ok(Cow::<[u8]>::Borrowed(b"value"))
@@ -1821,12 +2346,57 @@ mod from_env {
             .set("GIT_CONFIG_KEY_2", "core.c")
             .set("GIT_CONFIG_VALUE_2", "c");
 
-        let config = GitConfig::from_env().unwrap().unwrap();
+        let config = GitConfig::from_env(&Options::default()).unwrap().unwrap();
 
         assert_eq!(config.get_raw_value("core", None, "a"), Ok(Cow::<[u8]>::Borrowed(b"a")));
         assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"b")));
         assert_eq!(config.get_raw_value("core", None, "c"), Ok(Cow::<[u8]>::Borrowed(b"c")));
         assert_eq!(config.len(), 3);
+    }
+
+    #[test]
+    #[serial]
+    fn error_on_relative_paths_in_include_paths() {
+        let _env = Env::new()
+            .set("GIT_CONFIG_COUNT", "1")
+            .set("GIT_CONFIG_KEY_0", "include.path")
+            .set("GIT_CONFIG_VALUE_0", "some_git_config");
+
+        let config = GitConfig::from_env(&Options::default());
+
+        assert!(matches!(
+            config,
+            Err(from_env::Error::FromPathsError(from_paths::Error::MissingConfigPath))
+        ));
+    }
+
+    #[test]
+    #[serial]
+    fn follow_include_paths() {
+        let dir = tempdir().unwrap();
+        let a_path = dir.path().join("a");
+        fs::write(&a_path, "[core]\nkey = changed").unwrap();
+        let b_path = dir.path().join("b");
+        fs::write(&b_path, "[core]\nkey = invalid").unwrap();
+
+        let _env = Env::new()
+            .set("GIT_CONFIG_COUNT", "4")
+            .set("GIT_CONFIG_KEY_0", "core.key")
+            .set("GIT_CONFIG_VALUE_0", "value")
+            .set("GIT_CONFIG_KEY_1", "include.path")
+            .set("GIT_CONFIG_VALUE_1", a_path.to_str().unwrap())
+            .set("GIT_CONFIG_KEY_2", "other.path")
+            .set("GIT_CONFIG_VALUE_2", b_path.to_str().unwrap())
+            .set("GIT_CONFIG_KEY_3", "include.origin.path")
+            .set("GIT_CONFIG_VALUE_3", b_path.to_str().unwrap());
+
+        let config = GitConfig::from_env(&Options::default()).unwrap().unwrap();
+
+        assert_eq!(
+            config.get_raw_value("core", None, "key"),
+            Ok(Cow::<[u8]>::Borrowed(b"changed"))
+        );
+        assert_eq!(config.len(), 5);
     }
 }
 

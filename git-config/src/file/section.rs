@@ -283,7 +283,7 @@ impl<'event> SectionBody<'event> {
     }
 
     /// Retrieves all values that have the provided key name. This may return
-    /// an empty vec, which implies there was values with the provided key.
+    /// an empty vec, which implies there were no values with the provided key.
     #[must_use]
     pub fn values(&self, key: &Key) -> Vec<Cow<'event, [u8]>> {
         let mut values = vec![];

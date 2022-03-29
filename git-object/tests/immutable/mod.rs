@@ -29,8 +29,8 @@ fn signature(time: u32) -> git_actor::SignatureRef<'static> {
         name: b"Sebastian Thiel".as_bstr(),
         email: b"sebastian.thiel@icloud.com".as_bstr(),
         time: Time {
-            time,
-            offset: 28800,
+            seconds_since_unix_epoch: time,
+            offset_in_seconds: 28800,
             sign: Sign::Plus,
         },
     }
@@ -42,8 +42,8 @@ fn linus_signature(time: u32) -> git_actor::SignatureRef<'static> {
         name: b"Linus Torvalds".as_bstr(),
         email: b"torvalds@linux-foundation.org".as_bstr(),
         time: Time {
-            time,
-            offset: -25200,
+            seconds_since_unix_epoch: time,
+            offset_in_seconds: -25200,
             sign: Sign::Minus,
         },
     }

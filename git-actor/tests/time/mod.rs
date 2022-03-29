@@ -6,24 +6,24 @@ fn write_to() -> Result<(), Box<dyn std::error::Error>> {
     for (time, expected) in &[
         (
             Time {
-                time: 500,
-                offset: 9000,
+                seconds_since_unix_epoch: 500,
+                offset_in_seconds: 9000,
                 sign: Sign::Plus,
             },
             "500 +0230",
         ),
         (
             Time {
-                time: 189009009,
-                offset: 36000,
+                seconds_since_unix_epoch: 189009009,
+                offset_in_seconds: 36000,
                 sign: Sign::Minus,
             },
             "189009009 -1000",
         ),
         (
             Time {
-                time: 0,
-                offset: 0,
+                seconds_since_unix_epoch: 0,
+                offset_in_seconds: 0,
                 sign: Sign::Minus,
             },
             "0 -0000",

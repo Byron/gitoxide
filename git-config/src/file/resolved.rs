@@ -3,7 +3,8 @@ use std::{borrow::Cow, collections::HashMap, convert::TryFrom, path::Path};
 use super::{GitConfig, SectionId};
 use crate::{
     file::LookupTreeNode,
-    parser::{Key, ParserOrIoError, SectionHeaderName},
+    parser,
+    parser::{Key, SectionHeaderName},
 };
 
 enum ResolvedTreeNode<'event> {
@@ -30,7 +31,7 @@ impl ResolvedGitConfig<'static> {
     /// This returns an error if an IO error occurs, or if the file is not a
     /// valid `git-config` file.
     #[inline]
-    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, ParserOrIoError<'static>> {
+    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, parser::ParserOrIoError<'static>> {
         GitConfig::open(path.as_ref()).map(Self::from)
     }
 }
@@ -103,7 +104,7 @@ fn resolve_sections<'key, 'data>(
 }
 
 impl TryFrom<&Path> for ResolvedGitConfig<'static> {
-    type Error = ParserOrIoError<'static>;
+    type Error = parser::ParserOrIoError<'static>;
 
     #[inline]
     fn try_from(path: &Path) -> Result<Self, Self::Error> {

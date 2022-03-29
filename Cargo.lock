@@ -1128,6 +1128,7 @@ dependencies = [
  "serde_derive",
  "serial_test",
  "tempfile",
+ "unicode-bom",
 ]
 
 [[package]]
@@ -1407,6 +1408,15 @@ dependencies = [
 [[package]]
 name = "git-revision"
 version = "0.0.0"
+dependencies = [
+ "git-hash",
+ "git-object",
+ "git-repository",
+ "git-testtools",
+ "hash_hasher",
+ "quick-error",
+ "serde",
+]
 
 [[package]]
 name = "git-submodule"
