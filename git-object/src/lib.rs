@@ -93,6 +93,7 @@ pub struct CommitRef<'a> {
 
 /// Like [`CommitRef`][crate::CommitRef], but as `Iterator` to support (up to) entirely allocation free parsing.
 /// It's particularly useful to traverse the commit graph without ever allocating arrays for parents.
+#[derive(Copy, Clone)]
 pub struct CommitRefIter<'a> {
     data: &'a [u8],
     state: commit::ref_iter::State,
@@ -212,10 +213,8 @@ pub struct TreeRef<'a> {
 
 /// A directory snapshot containing files (blobs), directories (trees) and submodules (commits), lazily evaluated.
 #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct TreeRefIter<'a> {
     /// The directories and files contained in this tree.
-    #[cfg_attr(feature = "serde1", serde(borrow))]
     data: &'a [u8],
 }
 

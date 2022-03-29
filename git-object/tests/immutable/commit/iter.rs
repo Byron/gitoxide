@@ -112,6 +112,12 @@ fn signed_singleline() -> crate::Result {
             Token::Message(b"update tasks\n".as_bstr()),
         ]
     );
+    assert_eq!(
+        CommitRefIter::from_bytes(&fixture_bytes("commit", "signed-singleline.txt"))
+            .parent_ids()
+            .collect::<Vec<_>>(),
+        vec![hex_to_id("09d8d3a12e161a7f6afb522dbe8900a9c09bce06")]
+    );
     Ok(())
 }
 
@@ -151,6 +157,15 @@ fn mergetag() -> crate::Result {
             Token::Message(LONG_MESSAGE.as_bytes().as_bstr()),
         ]
     );
+    assert_eq!(
+        CommitRefIter::from_bytes(&fixture_bytes("commit", "mergetag.txt"))
+            .parent_ids()
+            .collect::<Vec<_>>(),
+        vec![
+            hex_to_id("44ebe016df3aad96e3be8f95ec52397728dd7701"),
+            hex_to_id("8d485da0ddee79d0e6713405694253d401e41b93")
+        ]
+    );
     Ok(())
 }
 
@@ -173,6 +188,12 @@ mod method {
                 .signatures()
                 .collect::<Vec<_>>(),
             vec![signature(1592437401), signature(1592437401)]
+        );
+        assert_eq!(
+            CommitRefIter::from_bytes(&fixture_bytes("commit", "unsigned.txt"))
+                .parent_ids()
+                .count(),
+            0
         );
         Ok(())
     }

@@ -17,6 +17,7 @@ pub(crate) enum SignatureKind {
     Committer,
 }
 
+#[derive(Copy, Clone)]
 pub(crate) enum State {
     Tree,
     Parents,
@@ -52,12 +53,22 @@ impl<'a> CommitRefIter<'a> {
         self.next().and_then(Result::ok).and_then(Token::try_into_id)
     }
 
+    /// Return all parent_ids as iterator.
+    ///
+    /// Parsing errors are ignored quietly.
+    pub fn parent_ids(self) -> impl Iterator<Item = git_hash::ObjectId> + 'a {
+        self.filter_map(|t| match t {
+            Ok(Token::Parent { id }) => Some(id),
+            _ => None,
+        })
+    }
+
     /// Returns all signatures, first the author, then the committer, if there is no decoding error.
     ///
     /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not
     /// if not exactly two signatures were iterable.
     /// Errors are not the common case - if an error needs to be detectable, use this instance as iterator.
-    pub fn signatures(&'a mut self) -> impl Iterator<Item = git_actor::SignatureRef<'_>> + 'a {
+    pub fn signatures(self) -> impl Iterator<Item = git_actor::SignatureRef<'a>> + 'a {
         self.filter_map(|t| match t {
             Ok(Token::Author { signature }) | Ok(Token::Committer { signature }) => Some(signature),
             _ => None,
