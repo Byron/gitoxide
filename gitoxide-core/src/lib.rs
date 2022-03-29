@@ -46,6 +46,7 @@ pub mod commitgraph;
 #[cfg(feature = "estimate-hours")]
 pub mod hours;
 pub mod index;
+pub mod mailmap;
 #[cfg(feature = "organize")]
 pub mod organize;
 pub mod pack;

@@ -12,6 +12,7 @@ use clap::Parser;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
+use crate::plumbing::options::mailmap;
 use crate::plumbing::options::pack::multi_index;
 #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 use crate::plumbing::options::remote;
@@ -74,6 +75,16 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        Subcommands::Mailmap(mailmap::Platform { path, cmd }) => match cmd {
+            mailmap::Subcommands::Verify => prepare_and_run(
+                "mailmap-verify",
+                verbose,
+                progress,
+                progress_keep_open,
+                core::mailmap::PROGRESS_RANGE,
+                move |_progress, out, _err| core::mailmap::verify(path, format, out),
+            ),
+        },
         Subcommands::Index(index::Platform {
             object_hash,
             index_path,
