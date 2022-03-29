@@ -1,4 +1,4 @@
-use crate::{bstr::BStr, Commit, Tree};
+use crate::{bstr::BStr, Commit, DetachedObject, Tree};
 
 mod error {
     use crate::object;
@@ -18,7 +18,25 @@ mod error {
     }
 }
 
+use crate::id::Ancestors;
+
 pub use error::Error;
+
+impl<'repo> Commit<'repo> {
+    /// Create an owned instance of this object, copying our data in the process.
+    pub fn detached(&self) -> DetachedObject {
+        DetachedObject {
+            id: self.id,
+            kind: git_object::Kind::Commit,
+            data: self.data.clone(),
+        }
+    }
+
+    /// Sever the connection to the `Repository` and turn this instance into a standalone object.
+    pub fn detach(self) -> DetachedObject {
+        self.into()
+    }
+}
 
 impl<'repo> Commit<'repo> {
     /// Turn this objects id into a shortened id with a length in hex as configured by `core.abbrev`.
@@ -51,6 +69,21 @@ impl<'repo> Commit<'repo> {
         git_object::CommitRef::from_bytes(&self.data)
     }
 
+    /// Return an iterator over tokens, representing this commit piece by piece.
+    pub fn iter(&self) -> git_object::CommitRefIter<'_> {
+        git_object::CommitRefIter::from_bytes(&self.data)
+    }
+
+    // TODO: tests
+    /// Decode this commits parent ids on the fly without allocating.
+    pub fn parent_ids(&self) -> impl Iterator<Item = crate::Id<'repo>> + '_ {
+        use crate::ext::ObjectIdExt;
+        let repo = self.repo;
+        git_object::CommitRefIter::from_bytes(&self.data)
+            .parent_ids()
+            .map(move |id| id.attach(repo))
+    }
+
     /// Parse the commit and return the the tree object it points to.
     pub fn tree(&self) -> Result<Tree<'repo>, Error> {
         let tree_id = self.tree_id().ok_or(Error::Decode)?;
@@ -63,5 +96,16 @@ impl<'repo> Commit<'repo> {
     /// Parse the commit and return the the tree id it points to.
     pub fn tree_id(&self) -> Option<git_hash::ObjectId> {
         git_object::CommitRefIter::from_bytes(&self.data).tree_id()
+    }
+
+    /// Return our id own id with connection to this repository.
+    pub fn id(&self) -> crate::Id<'repo> {
+        use crate::ext::ObjectIdExt;
+        self.id.attach(self.repo)
+    }
+
+    /// Obtain a platform for traversing ancestors of this commit.
+    pub fn ancestors(&self) -> Ancestors<'repo> {
+        self.id().ancestors()
     }
 }

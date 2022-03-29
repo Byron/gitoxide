@@ -94,7 +94,7 @@ impl<'repo> Object<'repo> {
 
 impl<'repo> Object<'repo> {
     /// Create an owned instance of this object, copying our data in the process.
-    pub fn to_owned(&self) -> DetachedObject {
+    pub fn detached(&self) -> DetachedObject {
         DetachedObject {
             id: self.id,
             kind: self.kind,
@@ -102,18 +102,7 @@ impl<'repo> Object<'repo> {
         }
     }
 
-    /// Turn this instance into an owned one, copying our data in the process.
-    pub fn into_owned(mut self) -> DetachedObject {
-        DetachedObject {
-            id: self.id,
-            kind: self.kind,
-            data: std::mem::take(&mut self.data),
-        }
-    }
-
-    /// Sever the connection to `Easy` and turn this instance into a standalone object.
-    ///
-    /// Note that the data buffer will be copied in the process.
+    /// Sever the connection to the `Repository` and turn this instance into a standalone object.
     pub fn detach(self) -> DetachedObject {
         self.into()
     }

@@ -9,18 +9,32 @@ impl<'repo> std::fmt::Debug for Object<'repo> {
 }
 
 impl<'repo> From<Object<'repo>> for DetachedObject {
-    fn from(r: Object<'repo>) -> Self {
-        r.into_owned()
+    fn from(mut v: Object<'repo>) -> Self {
+        DetachedObject {
+            id: v.id,
+            kind: v.kind,
+            data: std::mem::take(&mut v.data),
+        }
+    }
+}
+
+impl<'repo> From<Commit<'repo>> for DetachedObject {
+    fn from(mut v: Commit<'repo>) -> Self {
+        DetachedObject {
+            id: v.id,
+            kind: git_object::Kind::Commit,
+            data: std::mem::take(&mut v.data),
+        }
     }
 }
 
 impl<'repo> From<Commit<'repo>> for Object<'repo> {
-    fn from(mut r: Commit<'repo>) -> Self {
+    fn from(mut v: Commit<'repo>) -> Self {
         Object {
-            id: r.id,
+            id: v.id,
             kind: git_object::Kind::Commit,
-            data: steal_from_freelist(&mut r.data),
-            repo: r.repo,
+            data: steal_from_freelist(&mut v.data),
+            repo: v.repo,
         }
     }
 }
