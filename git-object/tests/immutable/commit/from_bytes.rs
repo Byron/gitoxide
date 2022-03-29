@@ -139,8 +139,8 @@ fn with_trailer() -> crate::Result {
         name: "Kim Altintop".into(),
         email: "kim@eagain.st".into(),
         time: Time {
-            time: 1631514803,
-            offset: 7200,
+            seconds_since_unix_epoch: 1631514803,
+            offset_in_seconds: 7200,
             sign: Sign::Plus,
         },
     };

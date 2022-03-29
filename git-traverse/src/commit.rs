@@ -217,7 +217,9 @@ pub mod ancestors {
                                         .and_then(|mut parent| parent.committer().map(|committer| committer.time));
 
                                     if let Some(parent_committer_date) = parent_committer_date {
-                                        state.parents_with_date.push((id, parent_committer_date.time));
+                                        state
+                                            .parents_with_date
+                                            .push((id, parent_committer_date.seconds_since_unix_epoch));
                                     }
 
                                     if matches!(self.parents, Parents::First) {

@@ -25,8 +25,8 @@ mod prepare_and_commit {
             name: "committer".into(),
             email: "committer@example.com".into(),
             time: Time {
-                time: 1234,
-                offset: 1800,
+                seconds_since_unix_epoch: 1234,
+                offset_in_seconds: 1800,
                 sign: Sign::Plus,
             },
         }

@@ -229,8 +229,8 @@ pub mod decode {
                             name: b"name".as_bstr(),
                             email: b"foo@example.com".as_bstr(),
                             time: Time {
-                                time: 1234567890,
-                                offset: 0,
+                                seconds_since_unix_epoch: 1234567890,
+                                offset_in_seconds: 0,
                                 sign: Sign::Minus
                             }
                         },
@@ -255,8 +255,8 @@ pub mod decode {
                         name: b"Sebastian Thiel".as_bstr(),
                         email: b"foo@example.com".as_bstr(),
                         time: Time {
-                            time: 1618030561,
-                            offset: 28800,
+                            seconds_since_unix_epoch: 1618030561,
+                            offset_in_seconds: 28800,
                             sign: Sign::Plus,
                         },
                     },

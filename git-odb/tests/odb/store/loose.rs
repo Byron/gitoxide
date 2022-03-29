@@ -288,8 +288,8 @@ fn signature(time: u32) -> git_actor::SignatureRef<'static> {
         name: b"Sebastian Thiel".as_bstr(),
         email: b"byronimo@gmail.com".as_bstr(),
         time: Time {
-            time,
-            offset: 7200,
+            seconds_since_unix_epoch: time,
+            offset_in_seconds: 7200,
             sign: Sign::Plus,
         },
     }

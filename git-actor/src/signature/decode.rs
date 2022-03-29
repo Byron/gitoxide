@@ -56,7 +56,11 @@ pub fn decode<'a, E: ParseError<&'a [u8]> + ContextError<&'a [u8]>>(
         SignatureRef {
             name: name.as_bstr(),
             email: email.as_bstr(),
-            time: Time { time, offset, sign },
+            time: Time {
+                seconds_since_unix_epoch: time,
+                offset_in_seconds: offset,
+                sign,
+            },
         },
     ))
 }
@@ -84,7 +88,11 @@ mod tests {
             SignatureRef {
                 name: name.as_bytes().as_bstr(),
                 email: email.as_bytes().as_bstr(),
-                time: Time { time, offset, sign },
+                time: Time {
+                    seconds_since_unix_epoch: time,
+                    offset_in_seconds: offset,
+                    sign,
+                },
             }
         }
 
