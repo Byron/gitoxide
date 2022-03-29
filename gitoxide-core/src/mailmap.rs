@@ -1,6 +1,7 @@
 use crate::OutputFormat;
 use anyhow::{bail, Context};
 use git_repository as git;
+use std::collections::HashSet;
 use std::io::Write;
 use std::path::Path;
 
@@ -17,6 +18,21 @@ pub fn verify(path: impl AsRef<Path>, format: OutputFormat, mut out: impl Write)
         err_count += 1;
         writeln!(out, "{}", err)?;
     }
+
+    let mut seen = HashSet::<(_, _)>::default();
+    for entry in git::mailmap::parse(&buf).filter_map(Result::ok) {
+        if !seen.insert((entry.old_email(), entry.old_name())) {
+            writeln!(
+                out,
+                "NOTE: entry ({:?}, {:?}) -> ({:?}, {:?}) is being overwritten",
+                entry.old_email(),
+                entry.old_name(),
+                entry.new_email(),
+                entry.new_name()
+            )?;
+        }
+    }
+
     if err_count == 0 {
         writeln!(out, "{} lines OK", git::mailmap::parse(&buf).count())?;
         Ok(())

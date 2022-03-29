@@ -467,7 +467,7 @@ pub mod mailmap {
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
-        /// Parse all entries in the mailmap and report malformed lines.
+        /// Parse all entries in the mailmap and report malformed lines or collisions.
         Verify,
     }
 }

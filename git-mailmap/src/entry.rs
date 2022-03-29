@@ -1,6 +1,26 @@
 use crate::Entry;
 use bstr::BStr;
 
+/// Acccess
+impl<'a> Entry<'a> {
+    /// The name to map to.
+    pub fn new_name(&self) -> Option<&'a BStr> {
+        self.new_name
+    }
+    /// The email map to.
+    pub fn new_email(&self) -> Option<&'a BStr> {
+        self.new_email
+    }
+    /// The name to look for and replace.
+    pub fn old_name(&self) -> Option<&'a BStr> {
+        self.old_name
+    }
+    /// The email to look for and replace.
+    pub fn old_email(&self) -> &'a BStr {
+        self.old_email
+    }
+}
+
 /// Constructors indicating what kind of mapping is created.
 ///
 /// Only these combinations of values are valid.
