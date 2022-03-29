@@ -41,7 +41,7 @@ one-stop-shop = [ "local", "local-time-support" ]
 #! ### Other
 
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["git-pack/serde1", "git-object/serde1", "git-protocol/serde1", "git-transport/serde1", "git-ref/serde1", "git-odb/serde1", "git-index/serde1"]
+serde1 = ["git-pack/serde1", "git-object/serde1", "git-protocol/serde1", "git-transport/serde1", "git-ref/serde1", "git-odb/serde1", "git-index/serde1", "git-mailmap/serde1"]
 ## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
 ## **Note** that
 max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-pack/pack-cache-lru-static", "git-pack/pack-cache-lru-dynamic"]

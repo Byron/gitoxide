@@ -96,11 +96,7 @@ impl crate::Repository {
         {
             buf.clear();
             std::io::copy(&mut file, &mut buf)
-                .map_err(|e| {
-                    if e.kind() != std::io::ErrorKind::NotFound {
-                        err.get_or_insert(e.into());
-                    }
-                })
+                .map_err(|e| err.get_or_insert(e.into()))
                 .ok();
             target.merge(git_mailmap::parse_ignore_errors(&buf));
         }

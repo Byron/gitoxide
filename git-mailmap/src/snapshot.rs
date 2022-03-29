@@ -32,6 +32,12 @@ enum EncodedString {
 }
 
 impl EncodedString {
+    fn as_bstr(&self) -> &BStr {
+        match self {
+            EncodedString::Utf8(v) => v.as_str().into(),
+            EncodedString::Unknown(v) => v.as_bstr(),
+        }
+    }
     fn cmp_ref(&self, other: EncodedStringRef<'_>) -> Ordering {
         match (self, other) {
             (EncodedString::Utf8(a), EncodedStringRef::Utf8(b)) => {
@@ -204,6 +210,34 @@ impl Snapshot {
             };
         }
         self
+    }
+
+    /// Transform our acceleration structure into a list of entries.
+    ///
+    /// Note that the order is different from how they were obtained initially, and are explicitly ordered by
+    /// (old_email, old_name).
+    pub fn entries(&self) -> Vec<crate::Entry<'_>> {
+        let mut out = Vec::with_capacity(self.entries_by_old_email.len());
+        for entry in &self.entries_by_old_email {
+            if entry.new_email.is_some() || entry.new_name.is_some() {
+                out.push(crate::Entry {
+                    new_name: entry.new_name.as_ref().map(|b| b.as_bstr()),
+                    new_email: entry.new_email.as_ref().map(|b| b.as_bstr()),
+                    old_name: None,
+                    old_email: entry.old_email.as_bstr(),
+                });
+            }
+
+            for name_entry in &entry.entries_by_old_name {
+                out.push(crate::Entry {
+                    new_name: name_entry.new_name.as_ref().map(|b| b.as_bstr()),
+                    new_email: name_entry.new_email.as_ref().map(|b| b.as_bstr()),
+                    old_name: name_entry.old_name.as_bstr().into(),
+                    old_email: entry.old_email.as_bstr(),
+                });
+            }
+        }
+        out
     }
 
     /// Try to resolve `signature` by its contained email and name and provide resolved/mapped names as reference.

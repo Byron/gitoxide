@@ -247,11 +247,11 @@ pub mod mailmap {
 
     ///
     pub mod load {
-        /// The error returned by [`crate::Repository::load_mailmap()`].
+        /// The error returned by [`crate::Repository::load_mailmap_into()`].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
-            #[error("A mailmap file could not be loaded from disk")]
+            #[error("The mailmap file declared in `mailmap.file` could not be read")]
             Io(#[from] std::io::Error),
             #[error("The configured mailmap.blob could not be parsed")]
             BlobSpec(#[from] git_hash::decode::Error),

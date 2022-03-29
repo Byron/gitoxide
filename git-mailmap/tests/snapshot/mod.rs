@@ -3,7 +3,7 @@ use git_testtools::fixture_bytes;
 
 #[test]
 fn try_resolve() {
-    let snapshot = snapshot();
+    let snapshot = Snapshot::from_bytes(&fixture_bytes("typical.txt"));
     assert_eq!(
         snapshot.try_resolve(&signature("Foo", "Joe@example.com").to_ref()),
         Some(signature("Joe R. Developer", "Joe@example.com")),
@@ -48,6 +48,8 @@ fn try_resolve() {
         "matched email, unmatched name"
     );
     assert_eq!(snapshot.resolve(&sig.to_ref()), sig);
+
+    assert_eq!(snapshot.entries().len(), 5);
 }
 
 #[test]
@@ -76,6 +78,8 @@ fn non_name_and_name_mappings_will_not_clash() {
             Some(signature("other-new-name", "other-new-email")),
             "it can match by email and name as well"
         );
+
+        assert_eq!(snapshot.entries().len(), 2);
     }
 }
 
@@ -105,10 +109,8 @@ fn overwrite_entries() {
         Some(signature("unchanged", "new-d-email-overwritten")),
         "email by email"
     );
-}
 
-fn snapshot() -> Snapshot {
-    Snapshot::from_bytes(&fixture_bytes("typical.txt"))
+    assert_eq!(snapshot.entries().len(), 4);
 }
 
 fn signature(name: &str, email: &str) -> git_actor::Signature {
