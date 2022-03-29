@@ -47,6 +47,21 @@ fn empty_lines_and_comments_are_ignored() {
 }
 
 #[test]
+fn windows_and_unix_line_endings_are_supported() {
+    let actual = git_mailmap::parse(b"a <a@example.com>\n<b-new><b-old>\r\nc <c@example.com>")
+        .map(Result::unwrap)
+        .collect::<Vec<_>>();
+    assert_eq!(
+        actual,
+        vec![
+            Entry::change_name_by_email("a", "a@example.com"),
+            Entry::change_email_by_email("b-new", "b-old"),
+            Entry::change_name_by_email("c", "c@example.com")
+        ]
+    );
+}
+
+#[test]
 fn valid_entries() {
     assert_eq!(
         line(" \t proper name   <commit-email>"),
