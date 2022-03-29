@@ -3,7 +3,6 @@ use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome<'a> {
     pub name: Cow<'a, BStr>,
     pub id: git_hash::ObjectId,
@@ -24,7 +23,6 @@ impl<'a> Outcome<'a> {
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Format<'a> {
     pub name: Cow<'a, BStr>,
     pub id: git_hash::ObjectId,
