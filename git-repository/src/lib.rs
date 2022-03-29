@@ -89,6 +89,7 @@
 //! * [`bstr`][bstr]
 //! * [`index`]
 //! * [`worktree`]
+//! * [`mailmap`]
 //! * [`objs`]
 //! * [`odb`]
 //!   * [`pack`][odb::pack]
@@ -129,6 +130,8 @@ pub use git_hash as hash;
 #[cfg(all(feature = "unstable", feature = "git-index"))]
 pub use git_index as index;
 pub use git_lock as lock;
+#[cfg(all(feature = "unstable", feature = "git-worktree"))]
+pub use git_mailmap as mailmap;
 pub use git_object as objs;
 pub use git_object::bstr;
 #[cfg(feature = "unstable")]
