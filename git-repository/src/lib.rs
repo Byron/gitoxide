@@ -257,6 +257,8 @@ pub mod mailmap {
             BlobSpec(#[from] git_hash::decode::Error),
             #[error(transparent)]
             PathInterpolate(#[from] git_config::values::path::interpolate::Error),
+            #[error("Could not find object configured in `mailmap.blob`")]
+            FindExisting(#[from] crate::object::find::existing::OdbError),
         }
     }
 }

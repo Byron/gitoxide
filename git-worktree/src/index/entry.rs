@@ -155,19 +155,11 @@ fn open_options(path: &Path, destination_is_initially_empty: bool, overwrite_exi
     if overwrite_existing || !destination_is_initially_empty {
         debug_assert_dest_is_no_symlink(path);
     }
-    let mut options = OpenOptions::new();
+    let mut options = git_features::fs::open_options_no_follow();
     options
         .create_new(destination_is_initially_empty && !overwrite_existing)
         .create(!destination_is_initially_empty || overwrite_existing)
         .write(true);
-    #[cfg(unix)]
-    {
-        /// Make sure that it's impossible to follow through to the target of symlinks.
-        /// Note that this will still follow symlinks in the path, which is what we assume
-        /// has been checked separately.
-        use std::os::unix::fs::OpenOptionsExt;
-        options.custom_flags(libc::O_NOFOLLOW);
-    }
     options
 }
 

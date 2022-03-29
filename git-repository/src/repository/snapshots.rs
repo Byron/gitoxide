@@ -21,36 +21,55 @@ impl crate::Repository {
     // TODO: tests
     /// Try to merge mailmaps from the following locations into `target`:
     ///
-    /// - read `HEAD:.mailmap` if this repository is bare (i.e. has no working tree), if the blob is not configured.
-    /// - OR read the `.mailmap` file without following symlinks from the working tree, if present
-    /// - AND read the mailmap as configured in `mailmap.blob`, if set.
-    /// - AND read the file as configured by `mailmap.file` if set.
+    /// - read the `.mailmap` file without following symlinks from the working tree, if present
+    /// - OR read `HEAD:.mailmap` if this repository is bare (i.e. has no working tree), if the `mailmap.blob` is not set.
+    /// - read the mailmap as configured in `mailmap.blob`, if set.
+    /// - read the file as configured by `mailmap.file`, following symlinks, if set.
     ///
     /// Only the first error will be reported, and as many source mailmaps will be merged into `target` as possible.
     /// Parsing errors will be ignored.
     #[cfg(feature = "git-mailmap")]
     pub fn load_mailmap_into(&self, target: &mut git_mailmap::Snapshot) -> Result<(), crate::mailmap::load::Error> {
         let mut err = None::<crate::mailmap::load::Error>;
-        self.config
+        let mut buf = Vec::new();
+        let mut blob_id = self
+            .config
             .get_raw_value("mailmap", None, "blob")
             .ok()
             .and_then(|spec| {
-                // TODO: actually resolve the spec when available
-                match git_hash::ObjectId::from_hex(spec.as_ref()) {
-                    Ok(id) => Some(id),
-                    Err(e) => {
-                        err.get_or_insert(e.into());
-                        None
-                    }
-                }
+                // TODO: actually resolve this as spec (once we can do that)
+                git_hash::ObjectId::from_hex(spec.as_ref())
+                    .map_err(|e| err.get_or_insert(e.into()))
+                    .ok()
             });
         match self.work_tree() {
             None => {
-                todo!("read blob")
+                // TODO: replace with ref-spec `HEAD:.mailmap` for less verbose way of getting the blob id
+                blob_id = blob_id.or_else(|| {
+                    self.head().ok().and_then(|mut head| {
+                        let commit = head.peel_to_commit_in_place().ok()?;
+                        let tree = commit.tree().ok()?;
+                        tree.lookup_path(".mailmap").ok()?.map(|e| e.oid)
+                    })
+                });
             }
             Some(root) => {
-                todo!("read mailmap file in tree")
+                if let Ok(mut file) = git_features::fs::open_options_no_follow()
+                    .read(true)
+                    .open(root.join(".mailmap"))
+                    .map_err(|e| {
+                        err.get_or_insert(e.into());
+                    })
+                {
+                    buf.clear();
+                    std::io::copy(&mut file, &mut buf).map_err(|e| err.get_or_insert(e.into()));
+                    target.merge(git_mailmap::parse_ignore_errors(&buf));
+                }
             }
+        }
+
+        if let Some(blob) = blob_id.and_then(|id| self.find_object(id).map_err(|e| err.get_or_insert(e.into())).ok()) {
+            target.merge(git_mailmap::parse_ignore_errors(&blob.data));
         }
 
         let configured_path = self
@@ -68,8 +87,12 @@ impl crate::Repository {
                 }
             });
 
-        if let Some(path) = configured_path {
-            todo!("read mailmap file as configured")
+        if let Some(mut file) =
+            configured_path.and_then(|path| std::fs::File::open(path).map_err(|e| err.get_or_insert(e.into())).ok())
+        {
+            buf.clear();
+            std::io::copy(&mut file, &mut buf).map_err(|e| err.get_or_insert(e.into()));
+            target.merge(git_mailmap::parse_ignore_errors(&buf));
         }
 
         err.map(Err).unwrap_or(Ok(()))
