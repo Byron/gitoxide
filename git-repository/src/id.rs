@@ -125,17 +125,18 @@ pub mod ancestors {
         }
 
         /// Return an iterator to traverse all commits in the history of the commit the parent [Id] is pointing to.
-        pub fn all(&mut self) -> Iter<'_, 'repo> {
+        pub fn all(&mut self) -> Iter<'repo> {
             let tips = std::mem::replace(&mut self.tips, Box::new(None.into_iter()));
             let parents = self.parents;
             let sorting = self.sorting;
+            let repo = self.repo;
             Iter {
-                repo: self.repo,
+                repo,
                 inner: Box::new(
                     git_traverse::commit::Ancestors::new(
                         tips,
                         git_traverse::commit::ancestors::State::default(),
-                        move |oid, buf| self.repo.objects.find_commit_iter(oid, buf),
+                        move |oid, buf| repo.objects.find_commit_iter(oid, buf),
                     )
                     .sorting(sorting)
                     .parents(parents),
@@ -145,12 +146,12 @@ pub mod ancestors {
     }
 
     /// The iterator returned by [`Ancestors::all()`].
-    pub struct Iter<'a, 'repo> {
+    pub struct Iter<'repo> {
         repo: &'repo crate::Repository,
-        inner: Box<dyn Iterator<Item = Result<git_hash::ObjectId, git_traverse::commit::ancestors::Error>> + 'a>,
+        inner: Box<dyn Iterator<Item = Result<git_hash::ObjectId, git_traverse::commit::ancestors::Error>> + 'repo>,
     }
 
-    impl<'a, 'repo> Iterator for Iter<'a, 'repo> {
+    impl<'repo> Iterator for Iter<'repo> {
         type Item = Result<Id<'repo>, git_traverse::commit::ancestors::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
