@@ -7,7 +7,7 @@ fn file_name() {
     assert_eq!(name.to_ref().file_name(), "main");
 }
 #[test]
-fn strip_prefix() {
+fn shorten_and_category() {
     for (input, expected, category) in [
         ("refs/tags/tag-name", "tag-name", Category::Tag),
         ("refs/heads/main", "main", Category::LocalBranch),
@@ -16,8 +16,8 @@ fn strip_prefix() {
     ] {
         let name: git_ref::FullName = input.try_into().unwrap();
         let category = Some(category);
-        assert_eq!(name.to_ref().strip_prefix(), expected);
-        assert_eq!(name.strip_prefix(), expected);
+        assert_eq!(name.to_ref().shorten(), expected);
+        assert_eq!(name.shorten(), expected);
         assert_eq!(name.category(), category);
         assert_eq!(name.to_ref().category(), category);
     }
@@ -25,7 +25,7 @@ fn strip_prefix() {
     let special = "HEAD";
     let name: git_ref::FullName = special.try_into().unwrap();
     assert_eq!(
-        name.strip_prefix(),
+        name.shorten(),
         special,
         "the whole name is returned if there is no prefix"
     );

@@ -109,8 +109,8 @@ impl FullName {
     /// Strip well-known prefixes from the name and return it.
     ///
     /// If there is no such prefix, the original name is returned.
-    pub fn strip_prefix(&self) -> &BStr {
-        self.to_ref().strip_prefix()
+    pub fn shorten(&self) -> &BStr {
+        self.to_ref().shorten()
     }
 
     /// Classify this name, or return `None` if it's unclassified.

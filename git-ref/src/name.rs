@@ -37,7 +37,7 @@ impl<'a> FullNameRef<'a> {
     /// Strip well-known prefixes from the name and return it.
     ///
     /// If there is no such prefix, the original name is returned.
-    pub fn strip_prefix(&self) -> &'a BStr {
+    pub fn shorten(&self) -> &'a BStr {
         let n = self.as_bstr();
         n.strip_prefix(b"refs/tags/")
             .or_else(|| n.strip_prefix(b"refs/heads/"))

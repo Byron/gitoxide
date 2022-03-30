@@ -15,6 +15,8 @@ use crate::ext::ObjectIdExt;
 
 pub mod log;
 
+pub use git_ref::{Category, Kind};
+
 /// Access
 impl<'repo> Reference<'repo> {
     /// Return the target to which this reference points to.
