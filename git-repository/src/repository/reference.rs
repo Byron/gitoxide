@@ -184,6 +184,22 @@ impl crate::Repository {
         .attach(self))
     }
 
+    /// Resolve the head, follow and peel its target and obtain its object id.
+    ///
+    /// Note that this may fail for various reasons, most notably because the repository
+    /// is freshly initialized and doesn't have any commits yet.
+    ///
+    /// Also note that the returned id is likely to point to a commit, but could also
+    /// point to a tree or blob. It won't, however, point to a tag as these are always peeled.
+    pub fn head_id(&self) -> Result<crate::Id<'_>, crate::reference::head_id::Error> {
+        let mut head = self.head()?;
+        head.peel_to_id_in_place()
+            .ok_or_else(|| crate::reference::head_id::Error::Unborn {
+                name: head.referent_name().expect("unborn").to_owned(),
+            })?
+            .map_err(Into::into)
+    }
+
     /// Find the reference with the given partial or full `name`, like `main`, `HEAD`, `heads/branch` or `origin/other`,
     /// or return an error if it wasn't found.
     ///

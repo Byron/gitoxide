@@ -45,7 +45,7 @@ mod tag {
     #[test]
     fn simple() -> crate::Result {
         let (repo, _keep) = crate::repo_rw("make_basic_repo.sh")?;
-        let current_head_id = repo.head()?.peeled()?.id().expect("born");
+        let current_head_id = repo.head_id()?;
         let message = "a multi\nline message";
         let tag_ref = repo.tag(
             "v1.0.0",

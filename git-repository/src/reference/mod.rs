@@ -8,8 +8,7 @@ use crate::{Id, Reference};
 pub mod iter;
 
 mod errors;
-
-pub use errors::{edit, find, peel};
+pub use errors::{edit, find, head_id, peel};
 
 use crate::ext::ObjectIdExt;
 

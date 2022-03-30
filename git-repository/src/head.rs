@@ -124,7 +124,8 @@ pub mod peel {
 
     use crate::head::Kind;
 
-    mod peel_to_commit {
+    ///
+    pub mod to_commit {
         use crate::object;
 
         /// The error returned by [Head::peel_to_commit_in_place()][super::Head::peel_to_commit_in_place()].
@@ -192,14 +193,12 @@ pub mod peel {
         /// more object to follow, transform the id into a commit if possible and return that.
         ///
         /// Returns an error if the head is unborn or if it doesn't point to a commit.
-        pub fn peel_to_commit_in_place(&mut self) -> Result<crate::Commit<'repo>, peel_to_commit::Error> {
-            let id = self
-                .peel_to_id_in_place()
-                .ok_or_else(|| peel_to_commit::Error::Unborn {
-                    name: self.referent_name().expect("unborn").to_owned(),
-                })??;
+        pub fn peel_to_commit_in_place(&mut self) -> Result<crate::Commit<'repo>, to_commit::Error> {
+            let id = self.peel_to_id_in_place().ok_or_else(|| to_commit::Error::Unborn {
+                name: self.referent_name().expect("unborn").to_owned(),
+            })??;
             id.object()
-                .map_err(|err| peel_to_commit::Error::Peel(Error::FindExistingObject(err)))
+                .map_err(|err| to_commit::Error::Peel(Error::FindExistingObject(err)))
                 .and_then(|object| object.try_into_commit().map_err(Into::into))
         }
 

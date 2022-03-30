@@ -29,6 +29,21 @@ pub mod peel {
 }
 
 ///
+pub mod head_id {
+    /// The error returned by [Repository::head_id(…)][crate::Repository::head_id()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Head(#[from] crate::reference::find::existing::Error),
+        #[error(transparent)]
+        PeelToId(#[from] crate::head::peel::Error),
+        #[error("Branch '{name}' does not have any commits")]
+        Unborn { name: git_ref::FullName },
+    }
+}
+
+///
 pub mod find {
     ///
     pub mod existing {
