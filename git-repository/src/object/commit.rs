@@ -42,7 +42,7 @@ impl<'repo> Commit<'repo> {
     /// Turn this objects id into a shortened id with a length in hex as configured by `core.abbrev`.
     pub fn short_id(&self) -> Result<git_hash::Prefix, crate::id::prefix::Error> {
         use crate::ext::ObjectIdExt;
-        self.id.attach(self.repo).prefix()
+        self.id.attach(self.repo).shorten()
     }
 
     /// Parse the commits message into a [`MessageRef`][git_object::commit::MessageRef]
