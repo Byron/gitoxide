@@ -57,12 +57,24 @@ impl<'r> Platform<'r> {
     }
 
     // TODO: tests
-    /// Return an iterator over all branches.
+    /// Return an iterator over all local branches.
     ///
     /// They are all prefixed with `refs/heads`.
-    pub fn branches(&self) -> Result<Iter<'_>, init::Error> {
+    pub fn local_branches(&self) -> Result<Iter<'_>, init::Error> {
         Ok(Iter {
             inner: self.platform.prefixed("refs/heads/")?,
+            peel: false,
+            repo: self.repo,
+        })
+    }
+
+    // TODO: tests
+    /// Return an iterator over all remote branches.
+    ///
+    /// They are all prefixed with `refs/remotes`.
+    pub fn remote_branches(&self) -> Result<Iter<'_>, init::Error> {
+        Ok(Iter {
+            inner: self.platform.prefixed("refs/remotes/")?,
             peel: false,
             repo: self.repo,
         })
