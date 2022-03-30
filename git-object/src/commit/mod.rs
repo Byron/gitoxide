@@ -52,6 +52,11 @@ impl<'a> CommitRef<'a> {
     pub fn message(&self) -> MessageRef<'a> {
         MessageRef::from_bytes(self.message)
     }
+
+    /// Returns the time at which this commit was created.
+    pub fn time(&self) -> git_actor::Time {
+        self.committer.time
+    }
 }
 
 impl Commit {
