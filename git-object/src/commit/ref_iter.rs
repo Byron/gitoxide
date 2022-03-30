@@ -77,7 +77,7 @@ impl<'a> CommitRefIter<'a> {
 
     /// Returns the committer signature if there is no decoding error.
     /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not.
-    pub fn committer(&mut self) -> Option<git_actor::SignatureRef<'_>> {
+    pub fn committer(mut self) -> Option<git_actor::SignatureRef<'a>> {
         self.find_map(|t| match t {
             Ok(Token::Committer { signature }) => Some(signature),
             _ => None,
@@ -86,7 +86,7 @@ impl<'a> CommitRefIter<'a> {
 
     /// Returns the author signature if there is no decoding error.
     /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not.
-    pub fn author(&mut self) -> Option<git_actor::SignatureRef<'_>> {
+    pub fn author(mut self) -> Option<git_actor::SignatureRef<'a>> {
         self.find_map(|t| match t {
             Ok(Token::Author { signature }) => Some(signature),
             _ => None,
@@ -95,7 +95,7 @@ impl<'a> CommitRefIter<'a> {
 
     /// Returns the message if there is no decoding error.
     /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not.
-    pub fn message(&mut self) -> Option<&'a BStr> {
+    pub fn message(mut self) -> Option<&'a BStr> {
         self.find_map(|t| match t {
             Ok(Token::Message(msg)) => Some(msg),
             _ => None,

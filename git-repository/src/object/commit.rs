@@ -45,26 +45,30 @@ impl<'repo> Commit<'repo> {
         self.id.attach(self.repo).prefix()
     }
 
-    /// Parse the commits message into a [`MessageRef`][git_object::commit::MessageRef], after decoding the entire commit object.
-    pub fn message(&self) -> Result<git_object::commit::MessageRef<'_>, git_object::decode::Error> {
-        Ok(self.decode()?.message())
+    /// Parse the commits message into a [`MessageRef`][git_object::commit::MessageRef]
+    pub fn message(&self) -> Result<git_object::commit::MessageRef<'_>, Error> {
+        Ok(git_object::commit::MessageRef::from_bytes(self.message_raw()?))
     }
     /// Decode the entire commit object in full and return the raw message bytes.
-    pub fn message_raw(&self) -> Result<&'_ BStr, git_object::decode::Error> {
-        Ok(self.decode()?.message)
+    pub fn message_raw(&self) -> Result<&'_ BStr, Error> {
+        git_object::CommitRefIter::from_bytes(&self.data)
+            .message()
+            .ok_or(Error::Decode)
     }
     /// Decode the commit and obtain the time at which the commit was created.
     ///
     /// For the time at which it was authored, refer to `.decode()?.author.time`.
-    pub fn time(&self) -> Result<git_actor::Time, git_object::decode::Error> {
-        Ok(self.decode()?.committer.time)
+    pub fn time(&self) -> Result<git_actor::Time, Error> {
+        Ok(self.committer()?.time)
     }
 
     /// Decode the entire commit object and return it for accessing all commit information.
     ///
-    /// Note that the returned commit object doesn't make object lookup easy but should be
+    /// It will allocate only if there are more than 2 parents.
+    ///
+    /// Note that the returned commit object does make lookup easy and should be
     /// used for successive calls to string-ish information to avoid decoding the object
-    /// unnecessarily.
+    /// more than once.
     pub fn decode(&self) -> Result<git_object::CommitRef<'_>, git_object::decode::Error> {
         git_object::CommitRef::from_bytes(&self.data)
     }
@@ -74,8 +78,22 @@ impl<'repo> Commit<'repo> {
         git_object::CommitRefIter::from_bytes(&self.data)
     }
 
-    // TODO: tests
+    /// Return the commits author.
+    pub fn author(&self) -> Result<git_actor::SignatureRef<'_>, Error> {
+        git_object::CommitRefIter::from_bytes(&self.data)
+            .author()
+            .ok_or(Error::Decode)
+    }
+
+    /// Return the commits committer.
+    pub fn committer(&self) -> Result<git_actor::SignatureRef<'_>, Error> {
+        git_object::CommitRefIter::from_bytes(&self.data)
+            .committer()
+            .ok_or(Error::Decode)
+    }
+
     /// Decode this commits parent ids on the fly without allocating.
+    // TODO: tests
     pub fn parent_ids(&self) -> impl Iterator<Item = crate::Id<'repo>> + '_ {
         use crate::ext::ObjectIdExt;
         let repo = self.repo;

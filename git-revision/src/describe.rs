@@ -145,7 +145,7 @@ pub(crate) mod function {
                     Ok(git_object::commit::ref_iter::Token::Parent { id: parent_id }) => {
                         match seen.entry(parent_id) {
                             hash_map::Entry::Vacant(entry) => {
-                                let mut parent = find(&parent_id, &mut parent_buf)?;
+                                let parent = find(&parent_id, &mut parent_buf)?;
                                 // TODO: figure out if not having a date is a hard error.
                                 let parent_commit_date = parent
                                     .committer()
