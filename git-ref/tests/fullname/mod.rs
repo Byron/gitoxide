@@ -7,7 +7,7 @@ fn file_name() {
 }
 #[test]
 fn strip_prefix() {
-    for (input, expected) in vec![
+    for (input, expected) in [
         ("refs/tags/tag-name", "tag-name"),
         ("refs/heads/main", "main"),
         ("refs/remotes/origin/main", "origin/main"),
