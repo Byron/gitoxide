@@ -245,7 +245,7 @@ mod summary {
             CommitRef {
                 tree: "tree".into(),
                 parents: Default::default(),
-                author: actor.clone(),
+                author: actor,
                 committer: actor,
                 encoding: None,
                 message: input.as_bstr(),

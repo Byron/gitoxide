@@ -151,7 +151,7 @@ fn with_trailer() -> crate::Result {
         CommitRef {
             tree: b"25a19c29c5e36884c1ad85d8faf23f1246b7961b".as_bstr(),
             parents: SmallVec::from(vec![b"699ae71105dddfcbb9711ed3a92df09e91a04e90".as_bstr()]),
-            author: kim.clone(),
+            author: kim,
             committer: kim,
             encoding: None,
             message: b"test: use gitoxide for link-git-protocol tests
