@@ -1,16 +1,6 @@
-use std::{
-    borrow::Cow,
-    convert::TryFrom,
-    path::{Path, PathBuf},
-};
+use std::{borrow::Cow, convert::TryFrom, path::PathBuf};
 
 use git_config::{file::GitConfig, values::*};
-
-#[test]
-fn parse_config_with_windows_line_endings_successfully() -> crate::Result {
-    GitConfig::open(Path::new("tests").join("fixtures").join("repo-config.crlf"))?;
-    Ok(())
-}
 
 /// Asserts we can cast into all variants of our type
 #[test]
