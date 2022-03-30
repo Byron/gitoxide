@@ -209,7 +209,7 @@ where
             for commit in commits {
                 let tree_id = db
                     .try_find(commit, &mut buf)?
-                    .and_then(|o| o.try_into_commit_iter().and_then(|mut c| c.tree_id()))
+                    .and_then(|o| o.try_into_commit_iter().and_then(|mut c| c.tree_id().ok()))
                     .expect("commit as starting point");
 
                 let mut count = Count { entries: 0, seen };

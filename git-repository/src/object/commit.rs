@@ -9,7 +9,7 @@ mod error {
         #[error(transparent)]
         FindExistingObject(#[from] object::find::existing::OdbError),
         #[error("The commit could not be decoded fully or partially")]
-        Decode,
+        Decode(#[from] git_object::decode::Error),
         #[error("Expected object of type {}, but got {}", .expected, .actual)]
         ObjectKind {
             expected: git_object::Kind,
@@ -46,14 +46,12 @@ impl<'repo> Commit<'repo> {
     }
 
     /// Parse the commits message into a [`MessageRef`][git_object::commit::MessageRef]
-    pub fn message(&self) -> Result<git_object::commit::MessageRef<'_>, Error> {
+    pub fn message(&self) -> Result<git_object::commit::MessageRef<'_>, git_object::decode::Error> {
         Ok(git_object::commit::MessageRef::from_bytes(self.message_raw()?))
     }
     /// Decode the entire commit object in full and return the raw message bytes.
-    pub fn message_raw(&self) -> Result<&'_ BStr, Error> {
-        git_object::CommitRefIter::from_bytes(&self.data)
-            .message()
-            .ok_or(Error::Decode)
+    pub fn message_raw(&self) -> Result<&'_ BStr, git_object::decode::Error> {
+        git_object::CommitRefIter::from_bytes(&self.data).message()
     }
     /// Decode the commit and obtain the time at which the commit was created.
     ///
@@ -79,17 +77,13 @@ impl<'repo> Commit<'repo> {
     }
 
     /// Return the commits author.
-    pub fn author(&self) -> Result<git_actor::SignatureRef<'_>, Error> {
-        git_object::CommitRefIter::from_bytes(&self.data)
-            .author()
-            .ok_or(Error::Decode)
+    pub fn author(&self) -> Result<git_actor::SignatureRef<'_>, git_object::decode::Error> {
+        git_object::CommitRefIter::from_bytes(&self.data).author()
     }
 
     /// Return the commits committer.
-    pub fn committer(&self) -> Result<git_actor::SignatureRef<'_>, Error> {
-        git_object::CommitRefIter::from_bytes(&self.data)
-            .committer()
-            .ok_or(Error::Decode)
+    pub fn committer(&self) -> Result<git_actor::SignatureRef<'_>, git_object::decode::Error> {
+        git_object::CommitRefIter::from_bytes(&self.data).committer()
     }
 
     /// Decode this commits parent ids on the fly without allocating.
@@ -104,7 +98,7 @@ impl<'repo> Commit<'repo> {
 
     /// Parse the commit and return the the tree object it points to.
     pub fn tree(&self) -> Result<Tree<'repo>, Error> {
-        let tree_id = self.tree_id().ok_or(Error::Decode)?;
+        let tree_id = self.tree_id()?;
         match self.repo.find_object(tree_id)?.try_into_tree() {
             Ok(tree) => Ok(tree),
             Err(crate::object::try_into::Error { actual, expected, .. }) => Err(Error::ObjectKind { actual, expected }),
@@ -112,7 +106,7 @@ impl<'repo> Commit<'repo> {
     }
 
     /// Parse the commit and return the the tree id it points to.
-    pub fn tree_id(&self) -> Option<git_hash::ObjectId> {
+    pub fn tree_id(&self) -> Result<git_hash::ObjectId, git_object::decode::Error> {
         git_object::CommitRefIter::from_bytes(&self.data).tree_id()
     }
 

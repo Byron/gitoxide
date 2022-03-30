@@ -32,7 +32,7 @@ pub struct Signature {
 /// A immutable signature is created by an actor at a certain time.
 ///
 /// Note that this is not a cryptographical signature.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy, Default)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct SignatureRef<'a> {
     /// The actor's name.

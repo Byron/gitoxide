@@ -118,7 +118,7 @@ impl ReferenceExt for Reference {
                         })?;
                     match kind {
                         git_object::Kind::Tag => {
-                            oid = git_object::TagRefIter::from_bytes(data).target_id().ok_or_else(|| {
+                            oid = git_object::TagRefIter::from_bytes(data).target_id().map_err(|_err| {
                                 peel::to_id::Error::NotFound {
                                     oid,
                                     name: self.name.0.clone(),

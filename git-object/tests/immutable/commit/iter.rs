@@ -25,7 +25,7 @@ fn newline_right_after_signature_multiline_header() -> crate::Result {
 #[test]
 fn signed_with_encoding() -> crate::Result {
     let input = fixture_bytes("commit", "signed-with-encoding.txt");
-    let mut iter = CommitRefIter::from_bytes(&input);
+    let iter = CommitRefIter::from_bytes(&input);
     assert_eq!(
         iter.collect::<Result<Vec<_>, _>>()?,
         vec![
@@ -47,8 +47,8 @@ fn signed_with_encoding() -> crate::Result {
         ]
     );
 
-    assert_eq!(iter.author(), Some(signature(1592448995)));
-    assert_eq!(iter.committer(), Some(signature(1592449083)));
+    assert_eq!(iter.author().ok(), Some(signature(1592448995)));
+    assert_eq!(iter.committer().ok(), Some(signature(1592449083)));
     Ok(())
 }
 
@@ -140,7 +140,7 @@ fn error_handling() -> crate::Result {
 #[test]
 fn mergetag() -> crate::Result {
     let input = fixture_bytes("commit", "mergetag.txt");
-    let mut iter = CommitRefIter::from_bytes(&input);
+    let iter = CommitRefIter::from_bytes(&input);
     assert_eq!(
         iter.collect::<Result<Vec<_>, _>>()?,
         vec![
@@ -170,7 +170,7 @@ fn mergetag() -> crate::Result {
             hex_to_id("8d485da0ddee79d0e6713405694253d401e41b93")
         ]
     );
-    assert_eq!(iter.message(), Some(LONG_MESSAGE.into()));
+    assert_eq!(iter.message().ok(), Some(LONG_MESSAGE.into()));
     Ok(())
 }
 
@@ -187,7 +187,7 @@ mod method {
         let input = fixture_bytes("commit", "unsigned.txt");
         let iter = CommitRefIter::from_bytes(&input);
         assert_eq!(
-            iter.clone().tree_id(),
+            iter.clone().tree_id().ok(),
             Some(hex_to_id("1b2dfb4ac5e42080b682fc676e9738c94ce6d54d"))
         );
         assert_eq!(
@@ -201,14 +201,14 @@ mod method {
     #[test]
     fn signatures() -> crate::Result {
         let input = fixture_bytes("commit", "unsigned.txt");
-        let mut iter = CommitRefIter::from_bytes(&input);
+        let iter = CommitRefIter::from_bytes(&input);
         assert_eq!(
             iter.signatures().collect::<Vec<_>>(),
             vec![signature(1592437401), signature(1592437401)]
         );
-        assert_eq!(iter.author(), Some(signature(1592437401)));
-        assert_eq!(iter.committer(), Some(signature(1592437401)));
-        assert_eq!(iter.committer(), None, "it's consuming");
+        assert_eq!(iter.author().ok(), Some(signature(1592437401)));
+        assert_eq!(iter.committer().ok(), Some(signature(1592437401)));
+        assert_eq!(iter.author().ok(), Some(signature(1592437401)), "it's not consuming");
         Ok(())
     }
 }

@@ -21,7 +21,7 @@ mod commit {
 
         assert_eq!(commit.tree()?.id, commit.tree_id().expect("id present"));
         assert_eq!(
-            commit.tree_id(),
+            commit.tree_id().ok(),
             Some(hex_to_id("21d3ba9a26b790a4858d67754ae05d04dfce4d0c"))
         );
         Ok(())

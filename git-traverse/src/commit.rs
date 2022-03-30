@@ -214,8 +214,8 @@ pub mod ancestors {
                                 Ok(git_object::commit::ref_iter::Token::Parent { id }) => {
                                     let parent = (self.find)(id.as_ref(), &mut state.parents_buf).ok();
 
-                                    let parent_committer_date =
-                                        parent.and_then(|parent| parent.committer().map(|committer| committer.time));
+                                    let parent_committer_date = parent
+                                        .and_then(|parent| parent.committer().ok().map(|committer| committer.time));
 
                                     if let Some(parent_committer_date) = parent_committer_date {
                                         state

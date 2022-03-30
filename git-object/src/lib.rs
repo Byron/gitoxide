@@ -253,6 +253,12 @@ pub mod decode {
         /// The owned type to be used for parse errors.
         pub type ParseErrorOwned = nom::error::VerboseError<BString>;
 
+        pub(crate) fn empty_error() -> Error {
+            Error {
+                inner: nom::error::VerboseError::<BString> { errors: Vec::new() },
+            }
+        }
+
         /// A type to indicate errors during parsing and to abstract away details related to `nom`.
         #[derive(Debug, Clone)]
         pub struct Error {
@@ -292,6 +298,10 @@ pub mod decode {
         /// The owned type to be used for parse errors, discards everything and is zero size
         pub type ParseErrorOwned = ();
 
+        pub(crate) fn empty_error() -> Error {
+            Error { inner: () }
+        }
+
         /// A type to indicate errors during parsing and to abstract away details related to `nom`.
         #[derive(Debug, Clone)]
         pub struct Error {
@@ -316,6 +326,7 @@ pub mod decode {
             }
         }
     }
+    pub(crate) use _decode::empty_error;
     pub use _decode::{Error, ParseError, ParseErrorOwned};
     impl std::error::Error for Error {}
 

@@ -89,7 +89,7 @@ where
             objs::CommitRefIter::from_bytes(&commit_data)
                 .signatures()
                 .next()
-                .map(|author| mailmap.resolve(&author))
+                .map(|author| mailmap.resolve(author))
         })
         .try_fold(
             || Vec::new(),

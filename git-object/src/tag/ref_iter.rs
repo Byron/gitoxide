@@ -39,9 +39,14 @@ impl<'a> TagRefIter<'a> {
     /// Errors are coerced into options, hiding whether there was an error or not. The caller should assume an error if they
     /// call the method as intended. Such a squelched error cannot be recovered unless the objects data is retrieved and parsed again.
     /// `next()`.
-    pub fn target_id(&mut self) -> Option<ObjectId> {
-        self.next().and_then(Result::ok).and_then(Token::into_id)
+    pub fn target_id(&mut self) -> Result<ObjectId, crate::decode::Error> {
+        let token = self.next().ok_or_else(missing_field)??;
+        Token::into_id(token).ok_or_else(missing_field)
     }
+}
+
+fn missing_field() -> crate::decode::Error {
+    crate::decode::empty_error()
 }
 
 impl<'a> TagRefIter<'a> {

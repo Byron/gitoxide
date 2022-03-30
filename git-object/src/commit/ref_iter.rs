@@ -49,8 +49,9 @@ impl<'a> CommitRefIter<'a> {
     /// Errors are coerced into options, hiding whether there was an error or not. The caller should assume an error if they
     /// call the method as intended. Such a squelched error cannot be recovered unless the objects data is retrieved and parsed again.
     /// `next()`.
-    pub fn tree_id(&mut self) -> Option<ObjectId> {
-        self.next().and_then(Result::ok).and_then(Token::try_into_id)
+    pub fn tree_id(&mut self) -> Result<ObjectId, crate::decode::Error> {
+        let tree_id = self.next().ok_or_else(missing_field)??;
+        Token::try_into_id(tree_id).ok_or_else(missing_field)
     }
 
     /// Return all parent_ids as iterator.
@@ -77,30 +78,41 @@ impl<'a> CommitRefIter<'a> {
 
     /// Returns the committer signature if there is no decoding error.
     /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not.
-    pub fn committer(mut self) -> Option<git_actor::SignatureRef<'a>> {
+    pub fn committer(mut self) -> Result<git_actor::SignatureRef<'a>, crate::decode::Error> {
         self.find_map(|t| match t {
-            Ok(Token::Committer { signature }) => Some(signature),
+            Ok(Token::Committer { signature }) => Some(Ok(signature)),
+            Err(err) => Some(Err(err)),
             _ => None,
         })
+        .ok_or_else(missing_field)?
     }
 
     /// Returns the author signature if there is no decoding error.
     /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not.
-    pub fn author(mut self) -> Option<git_actor::SignatureRef<'a>> {
+    pub fn author(mut self) -> Result<git_actor::SignatureRef<'a>, crate::decode::Error> {
         self.find_map(|t| match t {
-            Ok(Token::Author { signature }) => Some(signature),
+            Ok(Token::Author { signature }) => Some(Ok(signature)),
+            Err(err) => Some(Err(err)),
             _ => None,
         })
+        .ok_or_else(missing_field)?
     }
 
     /// Returns the message if there is no decoding error.
     /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not.
-    pub fn message(mut self) -> Option<&'a BStr> {
+    pub fn message(mut self) -> Result<&'a BStr, crate::decode::Error> {
         self.find_map(|t| match t {
-            Ok(Token::Message(msg)) => Some(msg),
+            Ok(Token::Message(msg)) => Some(Ok(msg)),
+            Err(err) => Some(Err(err)),
             _ => None,
         })
+        .transpose()
+        .map(|msg| msg.unwrap_or_default())
     }
+}
+
+fn missing_field() -> crate::decode::Error {
+    crate::decode::empty_error()
 }
 
 impl<'a> CommitRefIter<'a> {
