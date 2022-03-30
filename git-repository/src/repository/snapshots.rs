@@ -62,7 +62,7 @@ impl crate::Repository {
                     self.head().ok().and_then(|mut head| {
                         let commit = head.peel_to_commit_in_place().ok()?;
                         let tree = commit.tree().ok()?;
-                        tree.lookup_path(std::iter::once(".mailmap")).ok()?.map(|e| e.oid)
+                        tree.lookup_path(Some(".mailmap")).ok()?.map(|e| e.oid)
                     })
                 });
             }

@@ -9,9 +9,14 @@ impl crate::Repository {
         self.work_tree.as_deref()
     }
 
+    // TODO: tests
     /// The directory of the binary path of the current process.
     pub fn install_dir(&self) -> std::io::Result<std::path::PathBuf> {
-        std::env::current_exe()
+        std::env::current_exe().and_then(|exe| {
+            exe.parent()
+                .map(ToOwned::to_owned)
+                .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "no parent for current executable"))
+        })
     }
 
     /// Return the kind of repository, either bare or one with a work tree.
