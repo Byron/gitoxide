@@ -245,7 +245,7 @@ impl Snapshot {
     /// Return `None` if no such mapping was found.
     ///
     /// This is the fastest possible lookup as there is no allocation.
-    pub fn try_resolve_ref<'a>(&'a self, signature: &git_actor::SignatureRef<'_>) -> Option<ResolvedSignature<'a>> {
+    pub fn try_resolve_ref<'a>(&'a self, signature: git_actor::SignatureRef<'_>) -> Option<ResolvedSignature<'a>> {
         let email: EncodedStringRef<'_> = signature.email.into();
         let pos = self
             .entries_by_old_email
@@ -268,7 +268,7 @@ impl Snapshot {
     /// with the mapped name and/or email replaced accordingly.
     ///
     /// Return `None` if no such mapping was found.
-    pub fn try_resolve(&self, signature: &git_actor::SignatureRef<'_>) -> Option<git_actor::Signature> {
+    pub fn try_resolve(&self, signature: git_actor::SignatureRef<'_>) -> Option<git_actor::Signature> {
         let new = self.try_resolve_ref(signature)?;
         enriched_signature(signature, new)
     }
@@ -277,16 +277,15 @@ impl Snapshot {
     /// of `signature` if no mapping was found.
     ///
     /// Note that this method will always allocate.
-    pub fn resolve(&self, signature: &git_actor::SignatureRef<'_>) -> git_actor::Signature {
+    pub fn resolve(&self, signature: git_actor::SignatureRef<'_>) -> git_actor::Signature {
         self.try_resolve(signature).unwrap_or_else(|| signature.to_owned())
     }
 }
 
 fn enriched_signature(
-    SignatureRef { name, email, time }: &SignatureRef<'_>,
+    SignatureRef { name, email, time }: SignatureRef<'_>,
     new: ResolvedSignature<'_>,
 ) -> Option<git_actor::Signature> {
-    let time = *time;
     match (new.email, new.name) {
         (Some(new_email), Some(new_name)) => git_actor::Signature {
             email: new_email.to_owned(),

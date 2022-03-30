@@ -51,7 +51,7 @@ mod tag {
             "v1.0.0",
             &current_head_id,
             git_object::Kind::Commit,
-            Some(&repo.committer().to_ref()),
+            Some(repo.committer().to_ref()),
             message,
             git_ref::transaction::PreviousValue::MustNotExist,
         )?;
@@ -80,8 +80,8 @@ mod commit {
         let err = repo
             .commit(
                 "HEAD",
-                &author.to_ref(),
-                &author.to_ref(),
+                author.to_ref(),
+                author.to_ref(),
                 "initial",
                 empty_tree_id,
                 [empty_tree_id],
@@ -102,8 +102,8 @@ mod commit {
         let author = git::actor::Signature::empty();
         let commit_id = repo.commit(
             "HEAD",
-            &author.to_ref(),
-            &author.to_ref(),
+            author.to_ref(),
+            author.to_ref(),
             "initial",
             empty_tree_id,
             git::commit::NO_PARENT_IDS,
@@ -146,8 +146,8 @@ mod commit {
         let author = git::actor::Signature::empty();
         let first_commit_id = repo.commit(
             "HEAD",
-            &author.to_ref(),
-            &author.to_ref(),
+            author.to_ref(),
+            author.to_ref(),
             "hello there \r\n\nthe body",
             empty_tree_id,
             Some(parent),
@@ -176,8 +176,8 @@ mod commit {
 
         let second_commit_id = repo.commit(
             "refs/heads/new-branch",
-            &author.to_ref(),
-            &author.to_ref(),
+            author.to_ref(),
+            author.to_ref(),
             "committing into a new branch creates it",
             empty_tree_id,
             Some(first_commit_id),

@@ -77,7 +77,7 @@ impl crate::Repository {
         name: impl AsRef<str>,
         target: impl AsRef<oid>,
         target_kind: git_object::Kind,
-        tagger: Option<&git_actor::SignatureRef<'_>>,
+        tagger: Option<git_actor::SignatureRef<'_>>,
         message: impl AsRef<str>,
         constraint: PreviousValue,
     ) -> Result<Reference<'_>, tag::Error> {
@@ -108,8 +108,8 @@ impl crate::Repository {
     pub fn commit<Name, E>(
         &self,
         reference: Name,
-        author: &git_actor::SignatureRef<'_>,
-        committer: &git_actor::SignatureRef<'_>,
+        author: git_actor::SignatureRef<'_>,
+        committer: git_actor::SignatureRef<'_>,
         message: impl AsRef<str>,
         tree: impl Into<ObjectId>,
         parents: impl IntoIterator<Item = impl Into<ObjectId>>,
