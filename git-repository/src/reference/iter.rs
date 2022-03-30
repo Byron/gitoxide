@@ -43,6 +43,30 @@ impl<'r> Platform<'r> {
             repo: self.repo,
         })
     }
+
+    // TODO: tests
+    /// Return an iterator over all references that are tags.
+    ///
+    /// They are all prefixed with `refs/tags`.
+    pub fn tags(&self) -> Result<Iter<'_>, init::Error> {
+        Ok(Iter {
+            inner: self.platform.prefixed("refs/tags/")?,
+            peel: false,
+            repo: self.repo,
+        })
+    }
+
+    // TODO: tests
+    /// Return an iterator over all branches.
+    ///
+    /// They are all prefixed with `refs/heads`.
+    pub fn branches(&self) -> Result<Iter<'_>, init::Error> {
+        Ok(Iter {
+            inner: self.platform.prefixed("refs/heads/")?,
+            peel: false,
+            repo: self.repo,
+        })
+    }
 }
 
 impl<'r> Iter<'r> {

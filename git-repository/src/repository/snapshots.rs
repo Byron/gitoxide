@@ -55,7 +55,7 @@ impl crate::Repository {
                     .map_err(|e| err.get_or_insert(e.into()))
                     .ok()
             });
-        match self.work_tree() {
+        match self.work_dir() {
             None => {
                 // TODO: replace with ref-spec `HEAD:.mailmap` for less verbose way of getting the blob id
                 blob_id = blob_id.or_else(|| {
@@ -94,7 +94,7 @@ impl crate::Repository {
             .value::<git_config::values::Path<'_>>("mailmap", None, "file")
             .ok()
             .and_then(|path| {
-                let install_dir = self.install_directory().ok()?;
+                let install_dir = self.install_dir().ok()?;
                 match path.interpolate(Some(install_dir.as_path())) {
                     Ok(path) => Some(path),
                     Err(e) => {

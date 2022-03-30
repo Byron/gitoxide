@@ -5,12 +5,12 @@ impl crate::Repository {
     }
 
     /// Return the work tree containing all checked out files, if there is one.
-    pub fn work_tree(&self) -> Option<&std::path::Path> {
+    pub fn work_dir(&self) -> Option<&std::path::Path> {
         self.work_tree.as_deref()
     }
 
     /// The directory of the binary path of the current process.
-    pub fn install_directory(&self) -> std::io::Result<std::path::PathBuf> {
+    pub fn install_dir(&self) -> std::io::Result<std::path::PathBuf> {
         std::env::current_exe()
     }
 
