@@ -40,7 +40,7 @@ impl<'repo> Commit<'repo> {
 
 impl<'repo> Commit<'repo> {
     /// Turn this objects id into a shortened id with a length in hex as configured by `core.abbrev`.
-    pub fn short_id(&self) -> Result<git_hash::Prefix, crate::id::prefix::Error> {
+    pub fn short_id(&self) -> Result<git_hash::Prefix, crate::id::shorten::Error> {
         use crate::ext::ObjectIdExt;
         self.id.attach(self.repo).shorten()
     }

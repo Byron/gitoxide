@@ -26,15 +26,15 @@ impl<'repo> Id<'repo> {
     }
 
     /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`.
-    pub fn shorten(&self) -> Result<git_hash::Prefix, prefix::Error> {
+    pub fn shorten(&self) -> Result<git_hash::Prefix, shorten::Error> {
         let hex_len = self.repo.config_int("core.abbrev", 7);
-        let hex_len = hex_len.try_into().map_err(|_| prefix::Error::ConfigValue {
+        let hex_len = hex_len.try_into().map_err(|_| shorten::Error::ConfigValue {
             actual: hex_len,
             max_range: self.inner.kind().len_in_hex(),
             err: None,
         })?;
         let prefix =
-            git_odb::find::PotentialPrefix::new(self.inner, hex_len).map_err(|err| prefix::Error::ConfigValue {
+            git_odb::find::PotentialPrefix::new(self.inner, hex_len).map_err(|err| shorten::Error::ConfigValue {
                 actual: hex_len as i64,
                 max_range: self.inner.kind().len_in_hex(),
                 err: Some(err),
@@ -49,8 +49,8 @@ impl<'repo> Id<'repo> {
 }
 
 ///
-pub mod prefix {
-    /// Returned by [`Id::prefix()`][super::Id::prefix()].
+pub mod shorten {
+    /// Returned by [`Id::prefix()`][super::Id::shorten()].
     #[derive(thiserror::Error, Debug)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -166,6 +166,7 @@ mod impls {
     use git_hash::{oid, ObjectId};
 
     use crate::{DetachedObject, Id, Object};
+
     // Eq, Hash, Ord, PartialOrd,
 
     impl<'a> std::hash::Hash for Id<'a> {
