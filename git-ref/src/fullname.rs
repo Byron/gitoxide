@@ -105,6 +105,13 @@ impl FullName {
         }
         self
     }
+
+    /// Strip well-known prefixes from the name and return it.
+    ///
+    /// If there is no such prefix, the original name is returned.
+    pub fn strip_prefix(&self) -> &BStr {
+        self.to_ref().strip_prefix()
+    }
 }
 
 impl<'a> FullNameRef<'a> {

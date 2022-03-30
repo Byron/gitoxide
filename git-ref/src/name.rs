@@ -21,6 +21,19 @@ impl<'a> FullNameRef<'a> {
     pub fn as_bstr(&self) -> &'a BStr {
         self.0
     }
+
+    /// Strip well-known prefixes from the name and return it.
+    ///
+    /// If there is no such prefix, the original name is returned.
+    pub fn strip_prefix(&self) -> &'a BStr {
+        let n = self.as_bstr();
+        n.strip_prefix(b"refs/tags/")
+            .or_else(|| n.strip_prefix(b"refs/heads/"))
+            .or_else(|| n.strip_prefix(b"refs/remotes/"))
+            .or_else(|| n.strip_prefix(b"refs/"))
+            .map(|n| n.as_bstr())
+            .unwrap_or(n)
+    }
 }
 
 impl<'a> PartialNameRef<'a> {
