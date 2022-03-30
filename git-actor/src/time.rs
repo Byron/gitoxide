@@ -32,6 +32,11 @@ impl Time {
         }
     }
 
+    /// Return the passed seconds since epoch since this signature was made.
+    pub fn seconds(&self) -> u32 {
+        self.seconds_since_unix_epoch
+    }
+
     /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags.
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         let mut itoa = itoa::Buffer::new();
