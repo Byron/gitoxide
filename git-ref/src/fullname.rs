@@ -112,6 +112,11 @@ impl FullName {
     pub fn strip_prefix(&self) -> &BStr {
         self.to_ref().strip_prefix()
     }
+
+    /// Classify this name, or return `None` if it's unclassified.
+    pub fn category(&self) -> Option<crate::Category> {
+        self.to_ref().category()
+    }
 }
 
 impl<'a> FullNameRef<'a> {

@@ -118,6 +118,22 @@ pub enum Kind {
     Symbolic,
 }
 
+/// The various known categories of references.
+///
+/// This translates into a prefix containing all references of a given category.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub enum Category {
+    /// A tag in `refs/tags`
+    Tag,
+    /// A branch in `refs/heads`
+    LocalBranch,
+    /// A branch in `refs/remotes`
+    RemoteBranch,
+    /// A tag in `refs/notes`
+    Note,
+    // NOTE: when adding something here, add it to `kind()` and `strip_prefix()` too.
+}
+
 /// Denotes a ref target, equivalent to [`Kind`], but with mutable data.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Target {

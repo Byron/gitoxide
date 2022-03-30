@@ -1,3 +1,4 @@
+use git_ref::Category;
 use std::convert::TryInto;
 
 #[test]
@@ -7,15 +8,18 @@ fn file_name() {
 }
 #[test]
 fn strip_prefix() {
-    for (input, expected) in [
-        ("refs/tags/tag-name", "tag-name"),
-        ("refs/heads/main", "main"),
-        ("refs/remotes/origin/main", "origin/main"),
-        ("refs/notes/note-name", "notes/note-name"),
+    for (input, expected, category) in [
+        ("refs/tags/tag-name", "tag-name", Category::Tag),
+        ("refs/heads/main", "main", Category::LocalBranch),
+        ("refs/remotes/origin/main", "origin/main", Category::RemoteBranch),
+        ("refs/notes/note-name", "notes/note-name", Category::Note),
     ] {
         let name: git_ref::FullName = input.try_into().unwrap();
+        let category = Some(category);
         assert_eq!(name.to_ref().strip_prefix(), expected);
         assert_eq!(name.strip_prefix(), expected);
+        assert_eq!(name.category(), category);
+        assert_eq!(name.to_ref().category(), category);
     }
 
     let special = "HEAD";
@@ -25,7 +29,7 @@ fn strip_prefix() {
         special,
         "the whole name is returned if there is no prefix"
     );
-    assert_eq!(name.strip_prefix(), name.to_ref().strip_prefix());
+    assert_eq!(name.category(), None);
 }
 
 #[test]
