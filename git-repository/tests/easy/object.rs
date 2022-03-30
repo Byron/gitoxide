@@ -1,7 +1,6 @@
 mod commit {
     use std::cmp::Ordering;
 
-    use git_repository::{Commit, Repository};
     use git_testtools::hex_to_id;
 
     use crate::basic_repo;
@@ -9,7 +8,7 @@ mod commit {
     #[test]
     fn short_id() -> crate::Result {
         let handle = basic_repo()?;
-        let commit = head_commit(&handle);
+        let commit = handle.head_commit()?;
         assert_eq!(commit.short_id()?.cmp_oid(&commit.id), Ordering::Equal);
         Ok(())
     }
@@ -17,7 +16,7 @@ mod commit {
     #[test]
     fn tree() -> crate::Result {
         let handle = basic_repo()?;
-        let commit = head_commit(&handle);
+        let commit = handle.head_commit()?;
 
         assert_eq!(commit.tree()?.id, commit.tree_id().expect("id present"));
         assert_eq!(
@@ -30,15 +29,11 @@ mod commit {
     #[test]
     fn decode() -> crate::Result {
         let handle = basic_repo()?;
-        let commit = head_commit(&handle);
+        let commit = handle.head_commit()?;
         assert_eq!(commit.decode()?.message, commit.message_raw()?);
         assert_eq!(commit.decode()?.message(), commit.message()?);
         assert_eq!(commit.decode()?.message, "c2\n");
         Ok(())
-    }
-
-    fn head_commit(repo: &Repository) -> Commit<'_> {
-        repo.head().unwrap().peel_to_commit_in_place().unwrap()
     }
 }
 

@@ -184,7 +184,7 @@ impl crate::Repository {
         .attach(self))
     }
 
-    /// Resolve the head, follow and peel its target and obtain its object id.
+    /// Resolve the `HEAD` reference, follow and peel its target and obtain its object id.
     ///
     /// Note that this may fail for various reasons, most notably because the repository
     /// is freshly initialized and doesn't have any commits yet.
@@ -198,6 +198,15 @@ impl crate::Repository {
                 name: head.referent_name().expect("unborn").to_owned(),
             })?
             .map_err(Into::into)
+    }
+
+    /// Return the commit object the `HEAD` reference currently points to after peeling it fully.
+    ///
+    /// Note that this may fail for various reasons, most notably because the repository
+    /// is freshly initialized and doesn't have any commits yet. It could also fail if the
+    /// head does not point to a commit.
+    pub fn head_commit(&self) -> Result<crate::Commit<'_>, crate::reference::head_commit::Error> {
+        Ok(self.head()?.peel_to_commit_in_place()?)
     }
 
     /// Find the reference with the given partial or full `name`, like `main`, `HEAD`, `heads/branch` or `origin/other`,
