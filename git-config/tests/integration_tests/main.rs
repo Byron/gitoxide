@@ -6,5 +6,6 @@
 
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 
-mod file_integeration_test;
+mod git_config_integration_tests;
 mod parser_integration_tests;
+mod value_integeration_tests;
