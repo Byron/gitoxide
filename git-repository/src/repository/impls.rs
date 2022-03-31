@@ -12,12 +12,11 @@ impl Clone for crate::Repository {
 
 impl std::fmt::Debug for crate::Repository {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Repository(git = '{}', working_tree: {:?}",
-            self.git_dir().display(),
-            self.work_tree
-        )
+        f.debug_struct("Repository")
+            .field("kind", &self.kind())
+            .field("git_dir", &self.git_dir())
+            .field("work_dir", &self.work_dir())
+            .finish()
     }
 }
 

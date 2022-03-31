@@ -42,6 +42,19 @@ impl DetachedObject {
     }
 }
 
+impl std::fmt::Debug for DetachedObject {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use git_object::Kind::*;
+        let type_name = match self.kind {
+            Blob => "Blob",
+            Commit => "Commit",
+            Tree => "Tree",
+            Tag => "Tag",
+        };
+        write!(f, "{}({})", type_name, self.id)
+    }
+}
+
 impl<'repo> Object<'repo> {
     pub(crate) fn from_data(
         id: impl Into<ObjectId>,

@@ -125,3 +125,9 @@ impl<'repo> Commit<'repo> {
         self.id().ancestors()
     }
 }
+
+impl<'r> std::fmt::Debug for Commit<'r> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Commit({})", self.id)
+    }
+}

@@ -147,3 +147,9 @@ mod iter {
         }
     }
 }
+
+impl<'r> std::fmt::Debug for Tree<'r> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Tree({})", self.id)
+    }
+}

@@ -2,12 +2,6 @@ use std::convert::TryFrom;
 
 use crate::{object, Commit, DetachedObject, Object, Tree};
 
-impl<'repo> std::fmt::Debug for Object<'repo> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Debug::fmt(&self.id, f)
-    }
-}
-
 impl<'repo> From<Object<'repo>> for DetachedObject {
     fn from(mut v: Object<'repo>) -> Self {
         DetachedObject {
@@ -80,6 +74,19 @@ impl<'repo> TryFrom<Object<'repo>> for Tree<'repo> {
             }),
             _ => Err(value),
         }
+    }
+}
+
+impl<'r> std::fmt::Debug for Object<'r> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use git_object::Kind::*;
+        let type_name = match self.kind {
+            Blob => "Blob",
+            Commit => "Commit",
+            Tree => "Tree",
+            Tag => "Tag",
+        };
+        write!(f, "{}({})", type_name, self.id)
     }
 }
 
