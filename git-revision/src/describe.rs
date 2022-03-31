@@ -69,7 +69,28 @@ impl<'a> Display for Format<'a> {
     }
 }
 
+mod error {
+    use quick_error::quick_error;
+
+    quick_error! {
+        #[derive(Debug)]
+        pub enum Error {
+            Find { err: Box<dyn std::error::Error + Send + Sync + 'static>, oid: git_hash::ObjectId } {
+                display("Commit {} could not be found during graph traversal", oid.to_hex())
+                source(&**err)
+            }
+            Decode(err: git_object::decode::Error) {
+                display("A commit could not be decoded during traversal")
+                source(err)
+                from()
+            }
+        }
+    }
+}
+pub use error::Error;
+
 pub(crate) mod function {
+    use super::Error;
     use std::{
         borrow::Cow,
         collections::{hash_map, HashMap, VecDeque},
@@ -86,7 +107,7 @@ pub(crate) mod function {
         commit: &oid,
         mut find: Find,
         name_set: &HashMap<ObjectId, Cow<'a, BStr>>,
-    ) -> Result<Option<Outcome<'a>>, E>
+    ) -> Result<Option<Outcome<'a>>, Error>
     where
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
@@ -138,7 +159,10 @@ pub(crate) mod function {
                 candidate.commits_in_its_future += 1;
             }
 
-            let commit_iter = find(&commit, &mut buf)?;
+            let commit_iter = find(&commit, &mut buf).map_err(|err| Error::Find {
+                err: err.into(),
+                oid: commit.to_owned(),
+            })?;
             parents.clear();
             for token in commit_iter {
                 match token {
@@ -146,7 +170,10 @@ pub(crate) mod function {
                     Ok(git_object::commit::ref_iter::Token::Parent { id: parent_id }) => {
                         match seen.entry(parent_id) {
                             hash_map::Entry::Vacant(entry) => {
-                                let parent = find(&parent_id, &mut parent_buf)?;
+                                let parent = find(&parent_id, &mut parent_buf).map_err(|err| Error::Find {
+                                    err: err.into(),
+                                    oid: commit.to_owned(),
+                                })?;
                                 // TODO: figure out if not having a date is a hard error.
                                 let parent_commit_date = parent
                                     .committer()
@@ -162,7 +189,7 @@ pub(crate) mod function {
                         }
                     }
                     Ok(_unused_token) => break,
-                    Err(_err) => todo!("return a decode error"),
+                    Err(err) => return Err(err.into()),
                 }
             }
 
