@@ -1420,8 +1420,8 @@ dependencies = [
  "git-repository",
  "git-testtools",
  "hash_hasher",
- "quick-error",
  "serde",
+ "thiserror",
 ]
 
 [[package]]

@@ -69,25 +69,20 @@ impl<'a> Display for Format<'a> {
     }
 }
 
-mod error {
-    use quick_error::quick_error;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Find { err: Box<dyn std::error::Error + Send + Sync + 'static>, oid: git_hash::ObjectId } {
-                display("Commit {} could not be found during graph traversal", oid.to_hex())
-                source(&**err)
-            }
-            Decode(err: git_object::decode::Error) {
-                display("A commit could not be decoded during traversal")
-                source(err)
-                from()
-            }
-        }
-    }
+#[derive(Debug, thiserror::Error)]
+pub enum Error<E>
+where
+    E: std::error::Error + Send + Sync + 'static,
+{
+    #[error("Commit {} could not be found during graph traversal", .oid.to_hex())]
+    Find {
+        #[source]
+        err: E,
+        oid: git_hash::ObjectId,
+    },
+    #[error("A commit could not be decoded during traversal")]
+    Decode(#[from] git_object::decode::Error),
 }
-pub use error::Error;
 
 pub(crate) mod function {
     use super::Error;
@@ -107,7 +102,7 @@ pub(crate) mod function {
         commit: &oid,
         mut find: Find,
         name_set: &HashMap<ObjectId, Cow<'a, BStr>>,
-    ) -> Result<Option<Outcome<'a>>, Error>
+    ) -> Result<Option<Outcome<'a>>, Error<E>>
     where
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
@@ -160,7 +155,7 @@ pub(crate) mod function {
             }
 
             let commit_iter = find(&commit, &mut buf).map_err(|err| Error::Find {
-                err: err.into(),
+                err,
                 oid: commit.to_owned(),
             })?;
             parents.clear();
@@ -171,7 +166,7 @@ pub(crate) mod function {
                         match seen.entry(parent_id) {
                             hash_map::Entry::Vacant(entry) => {
                                 let parent = find(&parent_id, &mut parent_buf).map_err(|err| Error::Find {
-                                    err: err.into(),
+                                    err,
                                     oid: commit.to_owned(),
                                 })?;
                                 // TODO: figure out if not having a date is a hard error.

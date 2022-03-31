@@ -12,8 +12,8 @@
    * *use libgit2* test fixtures and cases where appropriate, or learn from them.
  * **safety first**
    * handle all errors, never `unwrap()`. If needed, `expect("why")`.
-   * provide an error chain and make it easy to understand what went wrong. We use `quick-error` for non-generic errors and `thiserror` when generalization is
-     needed.
+   * provide an error chain and make it easy to understand what went wrong. 
+   * We `thiserror` generally.
  * Adhere to the [stability guide](https://github.com/Byron/gitoxide/blob/main/STABILITY.md)
   
 ## General
