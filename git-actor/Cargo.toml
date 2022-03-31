@@ -22,7 +22,7 @@ local-time-support = ["git-features/time"]
 git-features = { version = "^0.19.1", path = "../git-features", optional = true }
 quick-error = "2.0.0"
 btoi = "0.4.2"
-bstr = { version = "0.2.13", default-features = false, features = ["std"]}
+bstr = { version = "0.2.13", default-features = false, features = ["std", "unicode"]}
 nom = { version = "7", default-features = false, features = ["std"]}
 itoa = "1.0.1"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}

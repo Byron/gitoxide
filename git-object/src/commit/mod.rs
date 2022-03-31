@@ -48,6 +48,20 @@ impl<'a> CommitRef<'a> {
         crate::commit::ExtraHeaders::new(self.extra_headers.iter().map(|(k, v)| (*k, v.as_ref())))
     }
 
+    /// Return the author, with whitespace trimmed.
+    ///
+    /// This is different from the `author` field which may contain whitespace.
+    pub fn author(&self) -> git_actor::SignatureRef<'a> {
+        self.author.trim()
+    }
+
+    /// Return the committer, with whitespace trimmed.
+    ///
+    /// This is different from the `committer` field which may contain whitespace.
+    pub fn committer(&self) -> git_actor::SignatureRef<'a> {
+        self.committer.trim()
+    }
+
     /// Returns a partially parsed message from which more information can be derived.
     pub fn message(&self) -> MessageRef<'a> {
         MessageRef::from_bytes(self.message)

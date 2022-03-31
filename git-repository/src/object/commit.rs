@@ -76,14 +76,18 @@ impl<'repo> Commit<'repo> {
         git_object::CommitRefIter::from_bytes(&self.data)
     }
 
-    /// Return the commits author.
+    /// Return the commits author, with surrounding whitespace trimmed.
     pub fn author(&self) -> Result<git_actor::SignatureRef<'_>, git_object::decode::Error> {
-        git_object::CommitRefIter::from_bytes(&self.data).author()
+        git_object::CommitRefIter::from_bytes(&self.data)
+            .author()
+            .map(|s| s.trim())
     }
 
-    /// Return the commits committer.
+    /// Return the commits committer. with surrounding whitespace trimmed.
     pub fn committer(&self) -> Result<git_actor::SignatureRef<'_>, git_object::decode::Error> {
-        git_object::CommitRefIter::from_bytes(&self.data).committer()
+        git_object::CommitRefIter::from_bytes(&self.data)
+            .committer()
+            .map(|s| s.trim())
     }
 
     /// Decode this commits parent ids on the fly without allocating.

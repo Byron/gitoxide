@@ -76,9 +76,13 @@ pub struct CommitRef<'a> {
     pub tree: &'a BStr,
     /// HEX hash of each parent commit. Empty for first commit in repository.
     pub parents: SmallVec<[&'a BStr; 2]>,
-    /// Who wrote this commit.
+    /// Who wrote this commit. Name and email might contain whitespace and are not trimmed to ensure round-tripping.
+    ///
+    /// Use the [`author()`][CommitRef::author()] method to received a trimmed version of it.
     pub author: git_actor::SignatureRef<'a>,
-    /// Who committed this commit.
+    /// Who committed this commit. Name and email might contain whitespace and are not trimmed to ensure round-tripping.
+    ///
+    /// Use the [`committer()`][CommitRef::committer()] method to received a trimmed version of it.
     ///
     /// This may be different from the `author` in case the author couldn't write to the repository themselves and
     /// is commonly encountered with contributed commits.

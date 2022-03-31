@@ -55,11 +55,19 @@ use bstr::ByteSlice;
 use git_actor::Signature;
 
 #[test]
+fn trim() {
+    let sig = git_actor::SignatureRef::from_bytes::<()>(b" \t hello there \t < \t email \t > 1 -0030").unwrap();
+    let sig = sig.trim();
+    assert_eq!(sig.name, "hello there");
+    assert_eq!(sig.email, "email");
+}
+
+#[test]
 fn round_trip() -> Result<(), Box<dyn std::error::Error>> {
     for input in &[
         &b"Sebastian Thiel <byronimo@gmail.com> 1 -0030"[..],
         ".. ☺️Sebastian 王知明 Thiel🙌 .. <byronimo@gmail.com> 1528473343 +0230".as_bytes(),
-        ".. whitespace  \t  is explicitly allowed    - unicode aware trimming must be done elsewhere <byronimo@gmail.com> 1528473343 +0230"
+        ".. whitespace  \t  is explicitly allowed    - unicode aware trimming must be done elsewhere  <byronimo@gmail.com> 1528473343 +0230"
             .as_bytes(),
     ] {
         let signature: Signature = git_actor::SignatureRef::from_bytes::<()>(input)?.into();

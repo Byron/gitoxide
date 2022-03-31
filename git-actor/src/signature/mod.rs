@@ -1,5 +1,6 @@
 mod _ref {
     use crate::{signature::decode, Signature, SignatureRef};
+    use bstr::ByteSlice;
 
     impl<'a> SignatureRef<'a> {
         /// Deserialize a signature from the given `data`.
@@ -15,6 +16,15 @@ mod _ref {
             Signature {
                 name: self.name.to_owned(),
                 email: self.email.to_owned(),
+                time: self.time,
+            }
+        }
+
+        /// Trim whitespace surrounding the name and email and return a new signature.
+        pub fn trim(&self) -> SignatureRef<'a> {
+            SignatureRef {
+                name: self.name.trim().as_bstr(),
+                email: self.email.trim().as_bstr(),
                 time: self.time,
             }
         }

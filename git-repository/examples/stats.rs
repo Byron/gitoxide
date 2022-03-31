@@ -5,10 +5,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut repo = git::discover(".")?.apply_environment();
     println!(
         "Repo: {}",
-        repo.work_dir()
-            .as_deref()
-            .unwrap_or(repo.git_dir())
-            .display()
+        repo.work_dir().as_deref().unwrap_or(repo.git_dir()).display()
     );
     let mut max_commit_size = 0;
     let mut avg_commit_size = 0;
