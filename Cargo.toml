@@ -143,6 +143,7 @@ members = [
     "git-revision",
     "git-packetline",
     "git-mailmap",
+    "git-note",
     "git-submodule",
     "git-transport",
     "git-protocol",

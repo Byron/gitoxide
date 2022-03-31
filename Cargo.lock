@@ -1230,6 +1230,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-note"
+version = "0.0.0"
+
+[[package]]
 name = "git-object"
 version = "0.17.1"
 dependencies = [

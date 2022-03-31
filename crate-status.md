@@ -220,7 +220,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * **ansi-c**
   * [x] quote
   * [ ] unquote
-  * 
+   
 ### git-mailmap
 
 * [x] parsing
@@ -230,6 +230,12 @@ Check out the [performance discussion][git-traverse-performance] as well.
 
 * [ ] parse
 * [ ] check for match
+
+### git-note
+
+A mechanism to associate metadata with any object, and keep revisions of it using git itself.
+
+* [ ] CRUD for git notes
 
 ### git-worktree
 * handle the working tree/checkout
@@ -333,8 +339,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
         * [x] boolean
         * [x] integer
         * [x] color
-        * [ ] path (incl. resolution)
-        * [ ] include
+        * [x] path (incl. resolution)
+        * [x] include
         * [ ] includeIf
 * [x] write
     * keep comments and whitespace, and only change lines that are affected by actual changes, to allow truly non-destructive editing
@@ -343,6 +349,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * [x] Some examples
 
 ### git-repository
+
 * [x] utilities for applications to make long running operations interruptible gracefully and to support timeouts in servers.
 * [ ] handle `core.repositoryFormatVersion` and extensions
 * [x] discovery
