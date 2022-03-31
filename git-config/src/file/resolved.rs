@@ -19,6 +19,7 @@ enum ResolvedTreeNode<'event> {
 /// not remember comments nor whitespace. Additionally, values are normalized
 /// upon creation, so it's not possible to retrieve the original value.
 #[allow(clippy::module_name_repetitions)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct ResolvedGitConfig<'data>(HashMap<SectionLookupTuple<'data>, HashMap<Key<'data>, Cow<'data, [u8]>>>);
 
 type SectionLookupTuple<'data> = (SectionHeaderName<'data>, Option<Cow<'data, str>>);
