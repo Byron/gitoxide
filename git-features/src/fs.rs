@@ -58,6 +58,7 @@ pub use self::walkdir::{walkdir_new, walkdir_sorted_new, WalkDir};
 ///
 /// Note: only effective on unix currently.
 pub fn open_options_no_follow() -> std::fs::OpenOptions {
+    #[cfg_attr(not(unix), allow(unused_mut))]
     let mut options = std::fs::OpenOptions::new();
     #[cfg(unix)]
     {
