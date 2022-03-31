@@ -14,7 +14,15 @@ pub struct ResolvedSignature<'a> {
 }
 
 impl<'a> ResolvedSignature<'a> {
-    fn try_new(new_email: Option<&'a BString>, new_name: Option<&'a BString>) -> Option<Self> {
+    fn try_new(
+        new_email: Option<&'a BString>,
+        matched_email: &'a BStr,
+        current_email: &'_ BStr,
+        new_name: Option<&'a BString>,
+    ) -> Option<Self> {
+        let new_email = new_email
+            .map(|n| n.as_bstr())
+            .or_else(|| (matched_email != current_email).then(|| matched_email));
         match (new_email, new_name) {
             (None, None) => None,
             (new_email, new_name) => Some(ResolvedSignature {
@@ -244,6 +252,10 @@ impl Snapshot {
     /// Try to resolve `signature` by its contained email and name and provide resolved/mapped names as reference.
     /// Return `None` if no such mapping was found.
     ///
+    /// Note that opposed to what git seems to do, we also normalize the case of email addresses to match the one
+    /// given in the mailmap. That is, if `Alex@example.com` is the current email, it will be matched and replaced with
+    /// `alex@example.com`. This leads to better mapping results and saves entries in the mailmap.
+    ///
     /// This is the fastest possible lookup as there is no allocation.
     pub fn try_resolve_ref<'a>(&'a self, signature: git_actor::SignatureRef<'_>) -> Option<ResolvedSignature<'a>> {
         let email: EncodedStringRef<'_> = signature.email.into();
@@ -257,10 +269,20 @@ impl Snapshot {
 
         match entry.entries_by_old_name.binary_search_by(|e| e.old_name.cmp_ref(name)) {
             Ok(pos) => {
-                let entry = &entry.entries_by_old_name[pos];
-                ResolvedSignature::try_new(entry.new_email.as_ref(), entry.new_name.as_ref())
+                let name_entry = &entry.entries_by_old_name[pos];
+                ResolvedSignature::try_new(
+                    name_entry.new_email.as_ref(),
+                    entry.old_email.as_bstr(),
+                    signature.email,
+                    name_entry.new_name.as_ref(),
+                )
             }
-            Err(_) => ResolvedSignature::try_new(entry.new_email.as_ref(), entry.new_name.as_ref()),
+            Err(_) => ResolvedSignature::try_new(
+                entry.new_email.as_ref(),
+                entry.old_email.as_bstr(),
+                signature.email,
+                entry.new_name.as_ref(),
+            ),
         }
     }
 

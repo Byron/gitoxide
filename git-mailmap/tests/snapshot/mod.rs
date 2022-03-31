@@ -6,8 +6,8 @@ fn try_resolve() {
     let snapshot = Snapshot::from_bytes(&fixture_bytes("typical.txt"));
     assert_eq!(
         snapshot.try_resolve(signature("Foo", "Joe@example.com").to_ref()),
-        Some(signature("Joe R. Developer", "Joe@example.com")),
-        "resolved signatures contain all original fields, but normalizes only what's in the mapping, lookup is case-insensitive"
+        Some(signature("Joe R. Developer", "joe@example.com")),
+        "resolved signatures contain all original fields, and normalize the email as well to match the one that it was looked up with"
     );
     assert_eq!(
         snapshot.try_resolve(signature("Joe", "bugs@example.com").to_ref()),
@@ -56,7 +56,7 @@ fn try_resolve() {
 fn non_name_and_name_mappings_will_not_clash() {
     let entries = vec![
         // add mapping from email
-        git_mailmap::Entry::change_name_and_email_by_email("new-name", "new-email", "old-email"),
+        git_mailmap::Entry::change_name_by_email("new-name", "old-email"),
         // add mapping from name and email
         git_mailmap::Entry::change_name_and_email_by_name_and_email(
             "other-new-name",
@@ -69,12 +69,12 @@ fn non_name_and_name_mappings_will_not_clash() {
         let snapshot = Snapshot::new(entries);
 
         assert_eq!(
-            snapshot.try_resolve(signature("replace-by-email", "old-email").to_ref()),
-            Some(signature("new-name", "new-email")),
-            "it can match by email only"
+            snapshot.try_resolve(signature("replace-by-email", "Old-Email").to_ref()),
+            Some(signature("new-name", "old-email")),
+            "it can match by email only, and the email is normalized"
         );
         assert_eq!(
-            snapshot.try_resolve(signature("old-name", "old-email").to_ref()),
+            snapshot.try_resolve(signature("old-name", "Old-Email").to_ref()),
             Some(signature("other-new-name", "other-new-email")),
             "it can match by email and name as well"
         );
