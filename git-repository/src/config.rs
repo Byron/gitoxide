@@ -26,6 +26,7 @@ pub(crate) struct Cache {
     pub object_hash: git_hash::Kind,
     /// If true, multi-pack indices, whether present or not, may be used by the object database.
     pub use_multi_pack_index: bool,
+    // TODO: make core.precomposeUnicode available as well.
 }
 
 mod cache {
