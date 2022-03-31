@@ -85,27 +85,13 @@ where
     #[allow(clippy::redundant_closure)]
     let mut all_commits: Vec<actor::Signature> = all_commits
         .into_par_iter()
-        .map(|commit_data: Vec<u8>| {
+        .filter_map(|commit_data: Vec<u8>| {
             objs::CommitRefIter::from_bytes(&commit_data)
-                .signatures()
-                .next()
-                .map(|author| mailmap.resolve(author))
+                .author()
+                .map(|author| mailmap.resolve(author.trim()))
+                .ok()
         })
-        .try_fold(
-            || Vec::new(),
-            |mut out: Vec<_>, item| {
-                out.push(item?);
-                Some(out)
-            },
-        )
-        .try_reduce(
-            || Vec::new(),
-            |mut out, vec| {
-                out.extend(vec.into_iter());
-                Some(out)
-            },
-        )
-        .ok_or_else(|| anyhow!("An error occurred when decoding commits - one commit could not be parsed"))?;
+        .collect::<Vec<_>>();
     all_commits.sort_by(|a, b| {
         a.email.cmp(&b.email).then(
             a.time
