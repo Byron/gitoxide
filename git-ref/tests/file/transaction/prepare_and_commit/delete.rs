@@ -374,7 +374,7 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
     let (_keep, store) = store_writable("make_packed_ref_repository_for_overlay.sh")?;
     let packed = store.open_packed_buffer()?.expect("packed-refs");
     let branch = store.find("newer-as-loose")?;
-    let branch_id = branch.target.as_id().map(ToOwned::to_owned).expect("peeled");
+    let branch_id = branch.target.try_id().map(ToOwned::to_owned).expect("peeled");
     assert_ne!(
         packed.find("newer-as-loose")?.target(),
         branch_id,

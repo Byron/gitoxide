@@ -14,7 +14,7 @@ impl<'a> TargetRef<'a> {
         }
     }
     /// Interpret this target as object id which maybe `None` if it is symbolic.
-    pub fn as_id(&self) -> Option<&oid> {
+    pub fn try_id(&self) -> Option<&oid> {
         match self {
             TargetRef::Symbolic(_) => None,
             TargetRef::Peeled(oid) => Some(oid),
@@ -28,7 +28,7 @@ impl<'a> TargetRef<'a> {
         }
     }
     /// Interpret this target as name of the reference it points to which maybe `None` if it an object id.
-    pub fn as_name(&self) -> Option<&BStr> {
+    pub fn try_name(&self) -> Option<&BStr> {
         match self {
             TargetRef::Symbolic(path) => Some(path.as_bstr()),
             TargetRef::Peeled(_) => None,
@@ -66,7 +66,7 @@ impl Target {
     }
 
     /// Interpret this target as object id which maybe `None` if it is symbolic.
-    pub fn as_id(&self) -> Option<&oid> {
+    pub fn try_id(&self) -> Option<&oid> {
         match self {
             Target::Symbolic(_) => None,
             Target::Peeled(oid) => Some(oid),
@@ -95,7 +95,7 @@ impl Target {
         }
     }
     /// Interpret this target as name of the reference it points to which maybe `None` if it an object id.
-    pub fn as_name(&self) -> Option<&BStr> {
+    pub fn try_name(&self) -> Option<&BStr> {
         match self {
             Target::Symbolic(name) => Some(name.as_bstr()),
             Target::Peeled(_) => None,

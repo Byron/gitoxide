@@ -108,7 +108,7 @@ impl ReferenceExt for Reference {
                     }
                 };
                 let mut buf = Vec::new();
-                let mut oid = self.target.as_id().expect("peeled ref").to_owned();
+                let mut oid = self.target.try_id().expect("peeled ref").to_owned();
                 let peeled_id = loop {
                     let (kind, data) = find(oid, &mut buf)
                         .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)?
