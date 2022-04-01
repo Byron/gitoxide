@@ -1332,6 +1332,7 @@ impl<'event> GitConfig<'event> {
             .get(&section_name)
             .ok_or(GitConfigError::SectionDoesNotExist(section_name))?;
         let mut maybe_ids = None;
+        let mut section_with_subsection_ids: Vec<SectionId> = Vec::new();
         // Don't simplify if and matches here -- the for loop currently needs
         // `n + 1` checks, while the if and matches will result in the for loop
         // needing `2n` checks.
@@ -1346,6 +1347,13 @@ impl<'event> GitConfig<'event> {
             for node in section_ids {
                 if let LookupTreeNode::Terminal(subsection_lookup) = node {
                     maybe_ids = Some(subsection_lookup);
+                    break;
+                }
+                if let LookupTreeNode::NonTerminal(subsection_lookup) = node {
+                    for ids in subsection_lookup.values() {
+                        section_with_subsection_ids.extend(ids);
+                    }
+                    maybe_ids = Some(&section_with_subsection_ids);
                     break;
                 }
             }
