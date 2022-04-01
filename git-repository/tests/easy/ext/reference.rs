@@ -126,7 +126,7 @@ mod iter_references {
                 .filter_map(Result::ok)
                 .map(|r| (
                     r.name().as_bstr().to_string(),
-                    r.target().as_id().map(ToOwned::to_owned)
+                    r.target().try_id().map(ToOwned::to_owned)
                 ))
                 .collect::<Vec<_>>(),
             vec![
@@ -158,7 +158,7 @@ mod iter_references {
                 .filter_map(Result::ok)
                 .map(|r| (
                     r.name().as_bstr().to_string(),
-                    r.target().as_id().map(ToOwned::to_owned)
+                    r.target().try_id().map(ToOwned::to_owned)
                 ))
                 .collect::<Vec<_>>(),
             vec![
@@ -197,7 +197,7 @@ mod head {
         match &head.kind {
             git::head::Kind::Symbolic(r) => {
                 assert_eq!(
-                    r.target.as_id().map(ToOwned::to_owned),
+                    r.target.try_id().map(ToOwned::to_owned),
                     Some(hex_to_id("3189cd3cb0af8586c39a838aa3e54fd72a872a41"))
                 );
             }
