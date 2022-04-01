@@ -5,11 +5,12 @@ use std::{
 
 use git_object::bstr::BStr;
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct Outcome<'a> {
-    pub name: Cow<'a, BStr>,
+#[derive(Debug, Clone)]
+pub struct Outcome<'name> {
+    pub name: Cow<'name, BStr>,
     pub id: git_hash::ObjectId,
     pub depth: u32,
+    pub name_by_oid: std::collections::HashMap<git_hash::ObjectId, Cow<'name, BStr>>,
 }
 
 impl<'a> Outcome<'a> {
@@ -69,6 +70,24 @@ impl<'a> Display for Format<'a> {
     }
 }
 
+type Flags = u32;
+const MAX_CANDIDATES: usize = std::mem::size_of::<Flags>() * 8;
+
+#[derive(Clone, Debug)]
+pub struct Options<'name> {
+    pub name_by_oid: std::collections::HashMap<git_hash::ObjectId, Cow<'name, BStr>>,
+    pub max_candidates: usize,
+}
+
+impl<'name> Default for Options<'name> {
+    fn default() -> Self {
+        Options {
+            max_candidates: MAX_CANDIDATES,
+            name_by_oid: Default::default(),
+        }
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error<E>
 where
@@ -88,30 +107,35 @@ pub(crate) mod function {
     use super::Error;
     use std::{
         borrow::Cow,
-        collections::{hash_map, HashMap, VecDeque},
+        collections::{hash_map, VecDeque},
         iter::FromIterator,
     };
 
-    use git_hash::{oid, ObjectId};
+    use crate::describe::{Flags, Options};
+    use git_hash::oid;
     use git_object::{bstr::BStr, CommitRefIter};
 
     use super::Outcome;
 
     #[allow(clippy::result_unit_err)]
-    pub fn describe<'a, Find, E>(
+    pub fn describe<'name, Find, E>(
         commit: &oid,
         mut find: Find,
-        name_set: &HashMap<ObjectId, Cow<'a, BStr>>,
-    ) -> Result<Option<Outcome<'a>>, Error<E>>
+        Options {
+            name_by_oid,
+            max_candidates,
+        }: Options<'name>,
+    ) -> Result<Option<Outcome<'name>>, Error<E>>
     where
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        if let Some(name) = name_set.get(commit) {
+        if let Some(name) = name_by_oid.get(commit) {
             return Ok(Some(Outcome {
                 name: name.clone(),
                 id: commit.to_owned(),
                 depth: 0,
+                name_by_oid,
             }));
         }
 
@@ -127,11 +151,10 @@ pub(crate) mod function {
         let mut seen = hash_hasher::HashedMap::default();
         seen.insert(commit.to_owned(), 0u32);
 
-        const MAX_CANDIDATES: usize = std::mem::size_of::<Flags>() * 8;
         while let Some(commit) = queue.pop_front() {
             seen_commits += 1;
-            if let Some(name) = name_set.get(&commit) {
-                if candidates.len() < MAX_CANDIDATES {
+            if let Some(name) = name_by_oid.get(&commit) {
+                if candidates.len() < max_candidates {
                     let identity_bit = 1 << candidates.len();
                     candidates.push(Candidate {
                         name: name.clone(),
@@ -162,27 +185,25 @@ pub(crate) mod function {
             for token in commit_iter {
                 match token {
                     Ok(git_object::commit::ref_iter::Token::Tree { .. }) => continue,
-                    Ok(git_object::commit::ref_iter::Token::Parent { id: parent_id }) => {
-                        match seen.entry(parent_id) {
-                            hash_map::Entry::Vacant(entry) => {
-                                let parent = find(&parent_id, &mut parent_buf).map_err(|err| Error::Find {
-                                    err,
-                                    oid: commit.to_owned(),
-                                })?;
-                                // TODO: figure out if not having a date is a hard error.
-                                let parent_commit_date = parent
-                                    .committer()
-                                    .map(|committer| committer.time.seconds_since_unix_epoch)
-                                    .unwrap_or_default();
+                    Ok(git_object::commit::ref_iter::Token::Parent { id: parent_id }) => match seen.entry(parent_id) {
+                        hash_map::Entry::Vacant(entry) => {
+                            let parent = find(&parent_id, &mut parent_buf).map_err(|err| Error::Find {
+                                err,
+                                oid: commit.to_owned(),
+                            })?;
 
-                                entry.insert(flags);
-                                parents.push((parent_id, parent_commit_date));
-                            }
-                            hash_map::Entry::Occupied(mut entry) => {
-                                *entry.get_mut() |= flags;
-                            }
+                            let parent_commit_date = parent
+                                .committer()
+                                .map(|committer| committer.time.seconds_since_unix_epoch)
+                                .unwrap_or_default();
+
+                            entry.insert(flags);
+                            parents.push((parent_id, parent_commit_date));
                         }
-                    }
+                        hash_map::Entry::Occupied(mut entry) => {
+                            *entry.get_mut() |= flags;
+                        }
+                    },
                     Ok(_unused_token) => break,
                     Err(err) => return Err(err.into()),
                 }
@@ -195,6 +216,10 @@ pub(crate) mod function {
             }
         }
 
+        if let Some(commit_id) = _gave_up_on_commit {
+            queue.push_front(commit_id);
+            // seen_commits -= 1; // TODO: make this necessary
+        }
         // TODO: something like finish_computation() - testing that might be possible when setting max-candidates to 1
 
         if candidates.is_empty() {
@@ -210,10 +235,9 @@ pub(crate) mod function {
             name: c.name,
             id: commit.to_owned(),
             depth: c.commits_in_its_future,
+            name_by_oid,
         }))
     }
-
-    type Flags = u32;
 
     #[derive(Debug)]
     struct Candidate<'a> {

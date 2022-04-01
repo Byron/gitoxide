@@ -10,6 +10,7 @@ fn exact_match_with_dirty_and_long() {
         name: Cow::Borrowed(b"main".as_bstr()),
         id: hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3"),
         depth: 0,
+        name_by_oid: Default::default(),
     }
     .into_format(7);
     assert!(format.is_exact_match());
