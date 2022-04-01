@@ -141,6 +141,8 @@ pub mod ancestors {
                     .sorting(sorting)
                     .parents(parents),
                 ),
+                is_shallow: None,
+                error_on_missing_commit: false,
             }
         }
     }
@@ -149,13 +151,50 @@ pub mod ancestors {
     pub struct Iter<'repo> {
         repo: &'repo crate::Repository,
         inner: Box<dyn Iterator<Item = Result<git_hash::ObjectId, git_traverse::commit::ancestors::Error>> + 'repo>,
+        error_on_missing_commit: bool,
+        // TODO: tests
+        /// After iteration this flag is true if the iteration was stopped prematurely due to missing parent commits.
+        /// Note that this flag won't be `Some` if any iteration error occours, which is the case if
+        /// [`error_on_missing_commit()`][Iter::error_on_missing_commit()] was called.
+        ///
+        /// This happens if a repository is a shallow clone.
+        /// Note that this value is `None` as long as the iteration isn't complete.
+        pub is_shallow: Option<bool>,
+    }
+
+    impl<'repo> Iter<'repo> {
+        // TODO: tests
+        /// Once invoked, the iteration will return an error if a commit cannot be found in the object database. This typicall happens
+        /// when operating on a shallow clone and thus is non-critical by default.
+        ///
+        /// Check the [`is_shallow`][Iter::is_shallow] field once the iteration ended otherwise to learn if a shallow commit graph
+        /// was encountered.
+        pub fn error_on_missing_commit(mut self) -> Self {
+            self.error_on_missing_commit = true;
+            self
+        }
     }
 
     impl<'repo> Iterator for Iter<'repo> {
         type Item = Result<Id<'repo>, git_traverse::commit::ancestors::Error>;
 
         fn next(&mut self) -> Option<Self::Item> {
-            self.inner.next().map(|res| res.map(|oid| oid.attach(self.repo)))
+            match self.inner.next() {
+                None => {
+                    self.is_shallow = Some(false);
+                    None
+                }
+                Some(Ok(oid)) => Some(Ok(oid.attach(self.repo))),
+                Some(Err(err @ git_traverse::commit::ancestors::Error::FindExisting { .. })) => {
+                    if self.error_on_missing_commit {
+                        Some(Err(err))
+                    } else {
+                        self.is_shallow = Some(true);
+                        None
+                    }
+                }
+                Some(Err(err)) => Some(Err(err)),
+            }
         }
     }
 }
