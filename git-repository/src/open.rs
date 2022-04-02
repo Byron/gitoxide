@@ -6,10 +6,65 @@ use git_config::{
 };
 use git_features::threading::OwnShared;
 
+/// A way to configure the usage of replacement objects, see `git replace`.
+pub enum ReplacementObjects {
+    /// Allow replacement objects and configure the ref prefix the standard environment variable `GIT_REPLACE_REF_BASE`,
+    /// or default to the standard `refs/replace/` prefix.
+    UseWithEnvironmentRefPrefixOrDefault {
+        /// If true, default true, a standard environment variable `GIT_NO_REPLACE_OBJECTS`
+        allow_disable_via_environment: bool,
+    },
+    /// Use replacement objects and configure the prefix yourself.
+    UseWithRefPrefix {
+        /// The ref prefix to use, like `refs/alternative/` - note the trailing slash.
+        prefix: PathBuf,
+        /// If true, default true, a standard environment variable `GIT_NO_REPLACE_OBJECTS`
+        allow_disable_via_environment: bool,
+    },
+    /// Do not use replacement objects at all.
+    Disable,
+}
+
+impl Default for ReplacementObjects {
+    fn default() -> Self {
+        ReplacementObjects::UseWithEnvironmentRefPrefixOrDefault {
+            allow_disable_via_environment: true,
+        }
+    }
+}
+
+impl ReplacementObjects {
+    fn refs_prefix(self) -> Option<PathBuf> {
+        use ReplacementObjects::*;
+        let is_disabled = |allow_env: bool| allow_env && std::env::var_os("GIT_NO_REPLACE_OBJECTS").is_some();
+        match self {
+            UseWithEnvironmentRefPrefixOrDefault {
+                allow_disable_via_environment,
+            } => {
+                if is_disabled(allow_disable_via_environment) {
+                    return None;
+                };
+                PathBuf::from(std::env::var("GIT_REPLACE_REF_BASE").unwrap_or_else(|_| "refs/replace/".into())).into()
+            }
+            UseWithRefPrefix {
+                prefix,
+                allow_disable_via_environment,
+            } => {
+                if is_disabled(allow_disable_via_environment) {
+                    return None;
+                };
+                prefix.into()
+            }
+            Disable => None,
+        }
+    }
+}
+
 /// The options used in [`Repository::open_opts
 #[derive(Default)]
 pub struct Options {
     object_store_slots: git_odb::store::init::Slots,
+    replacement_objects: ReplacementObjects,
 }
 
 impl Options {
@@ -17,6 +72,12 @@ impl Options {
     /// but should be controlled on the server.
     pub fn object_store_slots(mut self, slots: git_odb::store::init::Slots) -> Self {
         self.object_store_slots = slots;
+        self
+    }
+
+    /// Configure replacement objects, see the [`ReplacementObjects`] type for details.
+    pub fn replacement_objects(mut self, config: ReplacementObjects) -> Self {
+        self.replacement_objects = config;
         self
     }
 
@@ -64,7 +125,10 @@ impl crate::ThreadSafeRepository {
     pub(crate) fn open_from_paths(
         git_dir: PathBuf,
         mut worktree_dir: Option<PathBuf>,
-        Options { object_store_slots }: Options,
+        Options {
+            object_store_slots,
+            replacement_objects,
+        }: Options,
     ) -> Result<Self, Error> {
         let config = git_config::file::GitConfig::open(git_dir.join("config"))?;
         if worktree_dir.is_none() {
@@ -94,25 +158,46 @@ impl crate::ThreadSafeRepository {
             git_hash::Kind::Sha1
         };
 
+        let refs = crate::RefStore::at(
+            &git_dir,
+            if worktree_dir.is_none() {
+                git_ref::store::WriteReflog::Disable
+            } else {
+                git_ref::store::WriteReflog::Normal
+            },
+            object_hash,
+        );
+
+        let replacements = replacement_objects
+            .refs_prefix()
+            .and_then(|prefix| {
+                let platform = refs.iter().ok()?;
+                let iter = platform.prefixed(&prefix).ok()?;
+                let prefix = prefix.to_str()?;
+                let replacements = iter
+                    .filter_map(Result::ok)
+                    .filter_map(|r: git_ref::Reference| {
+                        let target = r.target.try_id()?.to_owned();
+                        let source =
+                            git_hash::ObjectId::from_hex(r.name.as_bstr().strip_prefix(prefix.as_bytes())?).ok()?;
+                        Some((source, target))
+                    })
+                    .collect::<Vec<_>>();
+                Some(replacements)
+            })
+            .unwrap_or_default();
+
         Ok(crate::ThreadSafeRepository {
             objects: OwnShared::new(git_odb::Store::at_opts(
                 git_dir.join("objects"),
-                Vec::new(), // TODO: actually read replacement refs
+                replacements,
                 git_odb::store::init::Options {
                     slots: object_store_slots,
                     object_hash,
                     use_multi_pack_index,
                 },
             )?),
-            refs: crate::RefStore::at(
-                git_dir,
-                if worktree_dir.is_none() {
-                    git_ref::store::WriteReflog::Disable
-                } else {
-                    git_ref::store::WriteReflog::Normal
-                },
-                object_hash,
-            ),
+            refs,
             work_tree: worktree_dir,
             object_hash,
             config: config.into(),
