@@ -89,6 +89,7 @@
     * [x] perfect scaling with cores
     * [x] support for pack caches, object caches and MRU for best per-thread performance.
     * [x] prefix/short-id lookup
+    * [x] object replacements (`git replace`)
 * **sink**
     * [x] write objects and obtain id
 * **alternates**
@@ -402,6 +403,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
   * [ ] worktrees
   * [ ] remotes with push and pull
   * [x] mailmap   
+  * [x] object replacements (`git replace`)
   * [ ] configuration
   * [ ] merging
   * [ ] stashing

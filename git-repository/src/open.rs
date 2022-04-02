@@ -75,6 +75,7 @@ impl Options {
         self
     }
 
+    // TODO: tests
     /// Configure replacement objects, see the [`ReplacementObjects`] type for details.
     pub fn replacement_objects(mut self, config: ReplacementObjects) -> Self {
         self.replacement_objects = config;
