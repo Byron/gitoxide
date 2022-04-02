@@ -272,6 +272,11 @@ impl<'event> GitConfig<'event> {
         config_path: Option<&std::path::Path>,
         options: &from_paths::Options,
     ) -> Result<(), from_paths::Error> {
+        // TODO
+        fn include_condition_is_true(_condition: &Cow<str>, _options: &from_paths::Options) -> bool {
+            false
+        }
+
         fn resolve_includes_recursive(
             target_config: &mut GitConfig,
             target_config_path: Option<&Path>,
@@ -289,10 +294,25 @@ impl<'event> GitConfig<'event> {
             }
 
             let mut paths_to_include = Vec::new();
-            for path in target_config
+
+            let mut include_paths = target_config
                 .multi_value::<values::Path>("include", None, "path")
-                .unwrap_or_default()
-            {
+                .unwrap_or_default();
+
+            for (header, body) in target_config.sections_by_name_with_header("includeIf") {
+                if let Some(condition) = &header.subsection_name {
+                    if include_condition_is_true(condition, options) {
+                        let paths: Vec<values::Path> = body
+                            .values(&Key::from("path"))
+                            .iter()
+                            .map(|path| values::Path::from(path.clone()))
+                            .collect();
+                        include_paths.extend(paths);
+                    }
+                }
+            }
+
+            for path in include_paths {
                 let path = path.interpolate(options.git_install_dir.as_deref())?;
                 let path: PathBuf = if path.is_relative() {
                     target_config_path
@@ -1332,7 +1352,6 @@ impl<'event> GitConfig<'event> {
             .get(&section_name)
             .ok_or(GitConfigError::SectionDoesNotExist(section_name))?;
         let mut maybe_ids = None;
-        let mut section_with_subsection_ids: Vec<SectionId> = Vec::new();
         // Don't simplify if and matches here -- the for loop currently needs
         // `n + 1` checks, while the if and matches will result in the for loop
         // needing `2n` checks.
@@ -1347,13 +1366,6 @@ impl<'event> GitConfig<'event> {
             for node in section_ids {
                 if let LookupTreeNode::Terminal(subsection_lookup) = node {
                     maybe_ids = Some(subsection_lookup);
-                    break;
-                }
-                if let LookupTreeNode::NonTerminal(subsection_lookup) = node {
-                    for ids in subsection_lookup.values() {
-                        section_with_subsection_ids.extend(ids);
-                    }
-                    maybe_ids = Some(&section_with_subsection_ids);
                     break;
                 }
             }

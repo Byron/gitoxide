@@ -952,37 +952,6 @@ mod get_raw_value {
             Ok(Cow::<[u8]>::Borrowed(b"c"))
         );
     }
-
-    #[test]
-    fn gets_values_for_section_across_subsections_without_specifying_them() {
-        let config = r#"
-            [includeIf "gitdir:/path/to/foo/.git"]
-                a=b
-                c=d
-            [core]
-                username=barr
-            [includeIf "gitdir:/path/to/foo/.git"]
-                a=e
-                x=y
-            "#;
-        let config = GitConfig::try_from(config).unwrap();
-        assert_eq!(
-            config.get_raw_multi_value("includeIf", None, "a"),
-            Ok(vec![Cow::<[u8]>::Borrowed(b"b"), Cow::<[u8]>::Borrowed(b"e")])
-        );
-        assert_eq!(
-            config.get_raw_value("includeIf", None, "c"),
-            Ok(Cow::<[u8]>::Borrowed(b"d"))
-        );
-        assert_eq!(
-            config.get_raw_value("includeIf", None, "x"),
-            Ok(Cow::<[u8]>::Borrowed(b"y"))
-        );
-        assert_eq!(
-            config.get_raw_value("core", None, "username"),
-            Ok(Cow::<[u8]>::Borrowed(b"barr"))
-        );
-    }
 }
 
 #[cfg(test)]
