@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-1be00cf9e00ce9428ffddb2c79b2373926069b13/> `Commit::short_id()`
+ - <csr-id-cb83beedd1aa389f6774e2296f79273e8c8f14f4/> git-hash::Prefix::from_id()
+   A way to obtain a prefix of an object id, with all non-prefix
+   bytes set to zero.
+
+### Bug Fixes
+
+ - <csr-id-d2e2ea0a9b9c5f756d8b02b4872e6950faa03b3e/> don't use panicking const fn just yet to not require rust 1.57
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 16 commits contributed to the release over the course of 70 calendar days.
+ - 70 days passed between releases.
+ - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - docs ([`a45f378`](https://github.com/Byron/gitoxide/commit/a45f3789696078848e2e96ddb8a55570c941dd53))
+    - Implement ODB::disambiguate_prefix(…) ([`7d4d281`](https://github.com/Byron/gitoxide/commit/7d4d2818395cfe0c31117f8736471d4a707e3feb))
+    - support MSRV ([`d09fd9b`](https://github.com/Byron/gitoxide/commit/d09fd9b37557f2dc199e8a4651c56b3b63423136))
+    - add documentation for lookup_prefix along with missing test ([`927b2ac`](https://github.com/Byron/gitoxide/commit/927b2ace875cdda63ce312eb7ad5329f2159608d))
+    - lookup_prefix() seems to work now ([`b558f11`](https://github.com/Byron/gitoxide/commit/b558f111520381e25a9500d3b2401fdd337db6f6))
+    - A stab at implementing lookup_prefix - to no avail ([`69cb6d1`](https://github.com/Byron/gitoxide/commit/69cb6d1dd6b8df74fee1ead1ce15bcf0b51d7232))
+    - refactor ([`cff6f9f`](https://github.com/Byron/gitoxide/commit/cff6f9fc90e58c409e367912d0b38860fae9a205))
+    - refactor ([`5bc548e`](https://github.com/Byron/gitoxide/commit/5bc548ed500045491012ab0a93bcbe13e78b0dc8))
+    - Prefix now validates all constraints and errors on violation ([`75efa79`](https://github.com/Byron/gitoxide/commit/75efa79f62efc29b343d2d2f53eaf001eef176df))
+    - refactor; add docs ([`837db62`](https://github.com/Byron/gitoxide/commit/837db626b88b08567c059f9f6687ad3124117ed3))
+    - git-hash::Prefix::from_id() ([`cb83bee`](https://github.com/Byron/gitoxide/commit/cb83beedd1aa389f6774e2296f79273e8c8f14f4))
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - `Commit::short_id()` ([`1be00cf`](https://github.com/Byron/gitoxide/commit/1be00cf9e00ce9428ffddb2c79b2373926069b13))
+ * **[#329](https://github.com/Byron/gitoxide/issues/329)**
+    - Document all features related to serde1 ([`72b97f2`](https://github.com/Byron/gitoxide/commit/72b97f2ae4dc7642b160f183c6d5df4502dc186f))
+ * **Uncategorized**
+    - make fmt ([`7cf3545`](https://github.com/Byron/gitoxide/commit/7cf354509b545f7e7c99e159b5989ddfbe86273d))
+    - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
+    - don't use panicking const fn just yet to not require rust 1.57 ([`d2e2ea0`](https://github.com/Byron/gitoxide/commit/d2e2ea0a9b9c5f756d8b02b4872e6950faa03b3e))
+</details>
+
 ## 0.9.2 (2022-02-01)
 
 A automated maintenance release without impact to the public API.
@@ -13,7 +63,7 @@ A automated maintenance release without impact to the public API.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 7 calendar days.
+ - 4 commits contributed to the release over the course of 18 calendar days.
  - 8 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -25,17 +75,59 @@ A automated maintenance release without impact to the public API.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-hash v0.9.2, git-object v0.17.1, git-pack v0.16.1 ([`0db19b8`](https://github.com/Byron/gitoxide/commit/0db19b8deaf11a4d4cbc03fa3ae40eea104bc302))
     - update changelogs prior to git-pack release ([`b7e3a4a`](https://github.com/Byron/gitoxide/commit/b7e3a4afdd6417a38aadad35c7f584617e7b47fa))
     - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
+    - thanks clippy ([`d8925f5`](https://github.com/Byron/gitoxide/commit/d8925f5bd7ac8ef2c98f0e57a1373e5ffba8ce23))
 </details>
 
 ## 0.9.1 (2022-01-23)
+
+### Changed (BREAKING)
+
+ - <csr-id-79dc0d5ba6fa31ddd5c075693ffdc6496c1eaded/> rename `oid::try_from()` to `try_from_bytes()`, add `from_bytes_unchecked()`
+   This change was done in the name of consistency, as `from_bytes()` is
+   used in many other git-* crates
+ - <csr-id-1b75541c00b8a18000336a8a7eceae5beba1058d/> Remove `Kind:Efrom_len_in_bytes()` from public API
+   It shouldn't be encouraged to assume the hash can be deduced from its
+   length, also git doesn't assume this.
+   
+   If that would happen, we would have other problems though, so let's hope
+   it doesn't happen nonetheless.
+ - <csr-id-b12ee8a97904e6e90b6c08ad9e6804ee969bff41/> Remove `ObjectId::null_sha1()` from public API
+   Use `Kind::Sha1.null()` instead if it's a value where the actual
+   repository object hash doesn't matter.
+ - <csr-id-eaf48bd75a3b778e31695257aedfbd008769f7bb/> rename `Kind::null()` to `null_ref()` and `Kind::null_owned()` to `null()`
+   This naming is consistent with typical Rust APIs and the naming used
+   throughout the git-* crates thus far.
+ - <csr-id-60a4eb5dd7f50949799c558a225146d442dcf936/> remove `Kind::new_sha1()` from public API
+ - <csr-id-c079fbe2099bd0ba43e811e987a80ae14e15e131/> Kind::from_len_in_bytes() is infallible
+ - <csr-id-2a799e662aa172c243b54d1df0dfc78501cb024f/> remove `ObjectId::from_20_bytes()` from public API
+   Use `ObjectId::from()` or `ObjectId::try_from()` instead.
+ - <csr-id-53c748d7f438f57e8119cdf04402bfeaa9f2a286/> remove various SHA1 specific hex utilities in favor of unspecific new ones
+   - removed `to_sha1_hex()`, use `oid::hex_to_buf()` and
+     `oid::hex_to_buf()` instead.
+   - remove `ObjectId::write_hex_to()` in favor of `oid::write_hex_to()`
+ - <csr-id-67652cb5cf01c45291d6e117c31290c585bab9d1/> `oid::null_sha1()` replaced with `Kind::null()`
+ - <csr-id-3363f1e61295810964ddb0c255eed87a87fe6539/> remove `ObjectId::from_borrowed_sha1()`
+ - <csr-id-75b901eff177dade43a28e770920a2b2206ded69/> remove `ObjectId::to_sha1_hex_string()`
+   Use `.to_hex().to_string()` instead.
+ - <csr-id-b596fa0dbbb3cc1d3ac386458ef52e2db9bca55c/> SIZE_OF_SHA1_DIGEST is now private
+   Replace it with your own constant derived from
+ - <csr-id-3373946d27c91169172e62a637a305ef1e5fbb9e/> rename `Kind::to_hex()` to `Kind::to_hex_with_len()`; add `Kind::to_hex()`
+   The latter prints the oid in full.
 
 ### New Features
 
  - <csr-id-bc89fc77354f7d8af6628364be18550c4a45c789/> Implement Display for hash kind
    This helps 'clap' and allows for a little more type-safety during
    declaration.
+ - <csr-id-84e26a7f3cbae31210e100880a48d3b3e6d04013/> Assign version numbers to `Kind` and implement `TryFrom<u8>`
+   This makes reading and writing the hash number easier for newer file
+   formats.
+ - <csr-id-ce673bfd9afee4a7872c6bcae1c39006b1747be7/> add `Kind::from_len_in_bytes()` const fn
+ - <csr-id-9a0d8b810050f2acabca988c5ab24ebe93a5d260/> `Kind::len_in_bytes()` method
+   It yields the amount of bytes needed to store the hash.
 
 ### Bug Fixes
 
@@ -45,10 +137,10 @@ A automated maintenance release without impact to the public API.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 3 calendar days.
- - 4 days passed between releases.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#298](https://github.com/Byron/gitoxide/issues/298)
+ - 24 commits contributed to the release over the course of 34 calendar days.
+ - 96 days passed between releases.
+ - 17 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 unique issues were worked on: [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#298](https://github.com/Byron/gitoxide/issues/298)
 
 ### Commit Details
 
@@ -56,12 +148,34 @@ A automated maintenance release without impact to the public API.
 
 <details><summary>view details</summary>
 
+ * **[#279](https://github.com/Byron/gitoxide/issues/279)**
+    - Basic multi-pack index creation ([`89428b2`](https://github.com/Byron/gitoxide/commit/89428b2936fb0169606a543cf531bddaacb8187c))
+    - multi-pack index writing complete with large-offset support ([`f7d5c7f`](https://github.com/Byron/gitoxide/commit/f7d5c7f815dbf52c668444b316ae2e1485463bcb))
+    - Assign version numbers to `Kind` and implement `TryFrom<u8>` ([`84e26a7`](https://github.com/Byron/gitoxide/commit/84e26a7f3cbae31210e100880a48d3b3e6d04013))
+    - rename `oid::try_from()` to `try_from_bytes()`, add `from_bytes_unchecked()` ([`79dc0d5`](https://github.com/Byron/gitoxide/commit/79dc0d5ba6fa31ddd5c075693ffdc6496c1eaded))
+    - Remove `Kind:Efrom_len_in_bytes()` from public API ([`1b75541`](https://github.com/Byron/gitoxide/commit/1b75541c00b8a18000336a8a7eceae5beba1058d))
+    - Remove `ObjectId::null_sha1()` from public API ([`b12ee8a`](https://github.com/Byron/gitoxide/commit/b12ee8a97904e6e90b6c08ad9e6804ee969bff41))
+    - rename `Kind::null()` to `null_ref()` and `Kind::null_owned()` to `null()` ([`eaf48bd`](https://github.com/Byron/gitoxide/commit/eaf48bd75a3b778e31695257aedfbd008769f7bb))
+    - remove `Kind::new_sha1()` from public API ([`60a4eb5`](https://github.com/Byron/gitoxide/commit/60a4eb5dd7f50949799c558a225146d442dcf936))
+    - Kind::from_len_in_bytes() is infallible ([`c079fbe`](https://github.com/Byron/gitoxide/commit/c079fbe2099bd0ba43e811e987a80ae14e15e131))
+    - refactor ([`7331e99`](https://github.com/Byron/gitoxide/commit/7331e99cb88df19f7b1e04b1468584e9c7c79913))
+    - remove `ObjectId::from_20_bytes()` from public API ([`2a799e6`](https://github.com/Byron/gitoxide/commit/2a799e662aa172c243b54d1df0dfc78501cb024f))
+    - fix docs ([`cd981e2`](https://github.com/Byron/gitoxide/commit/cd981e222af237c47fcfb74258de8fdfc04dfc1b))
+    - remove various SHA1 specific hex utilities in favor of unspecific new ones ([`53c748d`](https://github.com/Byron/gitoxide/commit/53c748d7f438f57e8119cdf04402bfeaa9f2a286))
+    - `oid::null_sha1()` replaced with `Kind::null()` ([`67652cb`](https://github.com/Byron/gitoxide/commit/67652cb5cf01c45291d6e117c31290c585bab9d1))
+    - remove `ObjectId::from_borrowed_sha1()` ([`3363f1e`](https://github.com/Byron/gitoxide/commit/3363f1e61295810964ddb0c255eed87a87fe6539))
+    - remove `ObjectId::to_sha1_hex_string()` ([`75b901e`](https://github.com/Byron/gitoxide/commit/75b901eff177dade43a28e770920a2b2206ded69))
+    - SIZE_OF_SHA1_DIGEST is now private ([`b596fa0`](https://github.com/Byron/gitoxide/commit/b596fa0dbbb3cc1d3ac386458ef52e2db9bca55c))
+    - rename `Kind::to_hex()` to `Kind::to_hex_with_len()`; add `Kind::to_hex()` ([`3373946`](https://github.com/Byron/gitoxide/commit/3373946d27c91169172e62a637a305ef1e5fbb9e))
+    - add `Kind::from_len_in_bytes()` const fn ([`ce673bf`](https://github.com/Byron/gitoxide/commit/ce673bfd9afee4a7872c6bcae1c39006b1747be7))
+    - `Kind::len_in_bytes()` method ([`9a0d8b8`](https://github.com/Byron/gitoxide/commit/9a0d8b810050f2acabca988c5ab24ebe93a5d260))
+ * **[#287](https://github.com/Byron/gitoxide/issues/287)**
+    - Very rough version of repository verification ([`80a4a7a`](https://github.com/Byron/gitoxide/commit/80a4a7add688d16376b9bf2ed7f1c7f655b7c912))
  * **[#298](https://github.com/Byron/gitoxide/issues/298)**
     - Implement Display for hash kind ([`bc89fc7`](https://github.com/Byron/gitoxide/commit/bc89fc77354f7d8af6628364be18550c4a45c789))
  * **Uncategorized**
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
-    - don't use panicking const fn just yet to not require rust 1.57 ([`d2e2ea0`](https://github.com/Byron/gitoxide/commit/d2e2ea0a9b9c5f756d8b02b4872e6950faa03b3e))
 </details>
 
 ## 0.9.0 (2022-01-19)
@@ -113,16 +227,9 @@ A automated maintenance release without impact to the public API.
 
 <csr-read-only-do-not-edit/>
 
- - 25 commits contributed to the release over the course of 30 calendar days.
- - 92 days passed between releases.
- - 16 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 3 unique issues were worked on: [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293)
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+ - 3 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#293](https://github.com/Byron/gitoxide/issues/293)
 
 ### Commit Details
 
@@ -130,35 +237,11 @@ A automated maintenance release without impact to the public API.
 
 <details><summary>view details</summary>
 
- * **[#279](https://github.com/Byron/gitoxide/issues/279)**
-    - Basic multi-pack index creation ([`89428b2`](https://github.com/Byron/gitoxide/commit/89428b2936fb0169606a543cf531bddaacb8187c))
-    - multi-pack index writing complete with large-offset support ([`f7d5c7f`](https://github.com/Byron/gitoxide/commit/f7d5c7f815dbf52c668444b316ae2e1485463bcb))
-    - Assign version numbers to `Kind` and implement `TryFrom<u8>` ([`84e26a7`](https://github.com/Byron/gitoxide/commit/84e26a7f3cbae31210e100880a48d3b3e6d04013))
-    - rename `oid::try_from()` to `try_from_bytes()`, add `from_bytes_unchecked()` ([`79dc0d5`](https://github.com/Byron/gitoxide/commit/79dc0d5ba6fa31ddd5c075693ffdc6496c1eaded))
-    - Remove `Kind:Efrom_len_in_bytes()` from public API ([`1b75541`](https://github.com/Byron/gitoxide/commit/1b75541c00b8a18000336a8a7eceae5beba1058d))
-    - Remove `ObjectId::null_sha1()` from public API ([`b12ee8a`](https://github.com/Byron/gitoxide/commit/b12ee8a97904e6e90b6c08ad9e6804ee969bff41))
-    - rename `Kind::null()` to `null_ref()` and `Kind::null_owned()` to `null()` ([`eaf48bd`](https://github.com/Byron/gitoxide/commit/eaf48bd75a3b778e31695257aedfbd008769f7bb))
-    - remove `Kind::new_sha1()` from public API ([`60a4eb5`](https://github.com/Byron/gitoxide/commit/60a4eb5dd7f50949799c558a225146d442dcf936))
-    - Kind::from_len_in_bytes() is infallible ([`c079fbe`](https://github.com/Byron/gitoxide/commit/c079fbe2099bd0ba43e811e987a80ae14e15e131))
-    - refactor ([`7331e99`](https://github.com/Byron/gitoxide/commit/7331e99cb88df19f7b1e04b1468584e9c7c79913))
-    - remove `ObjectId::from_20_bytes()` from public API ([`2a799e6`](https://github.com/Byron/gitoxide/commit/2a799e662aa172c243b54d1df0dfc78501cb024f))
-    - fix docs ([`cd981e2`](https://github.com/Byron/gitoxide/commit/cd981e222af237c47fcfb74258de8fdfc04dfc1b))
-    - remove various SHA1 specific hex utilities in favor of unspecific new ones ([`53c748d`](https://github.com/Byron/gitoxide/commit/53c748d7f438f57e8119cdf04402bfeaa9f2a286))
-    - `oid::null_sha1()` replaced with `Kind::null()` ([`67652cb`](https://github.com/Byron/gitoxide/commit/67652cb5cf01c45291d6e117c31290c585bab9d1))
-    - remove `ObjectId::from_borrowed_sha1()` ([`3363f1e`](https://github.com/Byron/gitoxide/commit/3363f1e61295810964ddb0c255eed87a87fe6539))
-    - remove `ObjectId::to_sha1_hex_string()` ([`75b901e`](https://github.com/Byron/gitoxide/commit/75b901eff177dade43a28e770920a2b2206ded69))
-    - SIZE_OF_SHA1_DIGEST is now private ([`b596fa0`](https://github.com/Byron/gitoxide/commit/b596fa0dbbb3cc1d3ac386458ef52e2db9bca55c))
-    - rename `Kind::to_hex()` to `Kind::to_hex_with_len()`; add `Kind::to_hex()` ([`3373946`](https://github.com/Byron/gitoxide/commit/3373946d27c91169172e62a637a305ef1e5fbb9e))
-    - add `Kind::from_len_in_bytes()` const fn ([`ce673bf`](https://github.com/Byron/gitoxide/commit/ce673bfd9afee4a7872c6bcae1c39006b1747be7))
-    - `Kind::len_in_bytes()` method ([`9a0d8b8`](https://github.com/Byron/gitoxide/commit/9a0d8b810050f2acabca988c5ab24ebe93a5d260))
- * **[#287](https://github.com/Byron/gitoxide/issues/287)**
-    - Very rough version of repository verification ([`80a4a7a`](https://github.com/Byron/gitoxide/commit/80a4a7add688d16376b9bf2ed7f1c7f655b7c912))
  * **[#293](https://github.com/Byron/gitoxide/issues/293)**
     - prepare changelogs for git-index and dependencies ([`f54bf4b`](https://github.com/Byron/gitoxide/commit/f54bf4bde92b892b6d425987a6a37e10319c4635))
  * **Uncategorized**
     - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
     - Better not have items within items in changelogs ([`6946125`](https://github.com/Byron/gitoxide/commit/69461254b1bfda5e60911164096e4a061e241296))
-    - thanks clippy ([`d8925f5`](https://github.com/Byron/gitoxide/commit/d8925f5bd7ac8ef2c98f0e57a1373e5ffba8ce23))
 </details>
 
 ## v0.8.0 (2021-10-19)

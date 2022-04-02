@@ -5,6 +5,88 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-e4d6685064ad2b433f8acd3a74b320bf0169a994/> Add `git_config::values::Path` for a typesafe git path
+   Add a `Path` type to the `git_config::values` which
+   can be interpolated according to gits own path interpolation
+   rules.
+ - <csr-id-61af06b905926849abce19677ff4b9ac05d625a3/> compatibility with Rust <1.53
+ - Respect `include.path` when reading configuration files
+ - Support for path interpolation
+
+### Refactor
+
+ - <csr-id-55c00d880535a1f8c37cb7d4405d39ff5a7654a0/> remove `git_config::values::Value`; use `Bytes` in its place.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 40 commits contributed to the release over the course of 58 calendar days.
+ - 59 days passed between releases.
+ - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#331](https://github.com/Byron/gitoxide/issues/331)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - minor refactor ([`2f0234c`](https://github.com/Byron/gitoxide/commit/2f0234c05d1a3e1e3b96dff9680189c67cb6c9ff))
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - minor refactor of tests ([`ebe551f`](https://github.com/Byron/gitoxide/commit/ebe551fc16a98d4101799b0d657b42f445f5b16e))
+    - refactor ([`845fe37`](https://github.com/Byron/gitoxide/commit/845fe373bf25de497f01209f4bed5132cc8eae65))
+    - refactor include path recursion logic ([`2862a07`](https://github.com/Byron/gitoxide/commit/2862a0718e3bc03e4edda60f1b359dd6068e8d1d))
+    - Ignore subsections when resolving include.path keys ([`baa300f`](https://github.com/Byron/gitoxide/commit/baa300f844eadf8db6ca5503a0b426235d4ee6fb))
+    - assure `from_env()` include paths only use paths of the correct key ([`0d84ce8`](https://github.com/Byron/gitoxide/commit/0d84ce8b229bcbbaa7ee1b3682bd3f374e803dff))
+    - remove unnecessary doc comments; remove unused field in Options ([`e94ded4`](https://github.com/Byron/gitoxide/commit/e94ded49d8913bd74aff556ee745e83c5dffc3ac))
+    - add TODO to not forget reworking the 'fs' module ([`0b032e4`](https://github.com/Byron/gitoxide/commit/0b032e44c1c124c80039e48cdf539e2bda68607c))
+    - use the same BOM bytes as in git-attributes ([`7204755`](https://github.com/Byron/gitoxide/commit/7204755a4e800dfc58cc667f4e751359badf548b))
+    - refactor ([`85be984`](https://github.com/Byron/gitoxide/commit/85be98437be80d8f79fbfbc032972e4395f19ef0))
+    - add from_paths::Options::default(); minor refactor ([`bcd038c`](https://github.com/Byron/gitoxide/commit/bcd038cccc197cca9012db268dd7502d05c88369))
+    - implement include.path support ([`a392988`](https://github.com/Byron/gitoxide/commit/a3929880e1639eba448aec15333dfaf08ac2dd28))
+    - fix docs ([`3e7ef3e`](https://github.com/Byron/gitoxide/commit/3e7ef3e6bb5915126da5486ef627e4edf6a727ff))
+    - more descriptive test names ([`049b243`](https://github.com/Byron/gitoxide/commit/049b2434dfbc97fa5734d852ebc8d07b18265e8a))
+    - turn PathError into path::interpolate::Error; refactor ([`27085e0`](https://github.com/Byron/gitoxide/commit/27085e0e7a1d5067cbc5a8083953446bc6926c5d))
+    - Work with std::path::* during interpolation ([`f0ff687`](https://github.com/Byron/gitoxide/commit/f0ff6879d0453be2fa2700f5a2432c3a5c830c31))
+    - Fix build ([`f6d9693`](https://github.com/Byron/gitoxide/commit/f6d969370b8ef05b3b29983dcd9f6fa11d6225f2))
+    - Make `Path::interpolate()` more useful by returning an actual `PathBuf` ([`86aa7b3`](https://github.com/Byron/gitoxide/commit/86aa7b3a98f933d9eff377fc426f37a22bf473be))
+    - Don't interpolate on Path creation due to missing context ([`a071ce8`](https://github.com/Byron/gitoxide/commit/a071ce8f49cd70802776effbd25777a4e65d036c))
+    - Add AsRef and Deref for values::Path; additional assertions ([`0666a35`](https://github.com/Byron/gitoxide/commit/0666a358b3b7aadda504979e543cc2058b478bfe))
+    - Add `git_config::values::Path` for a typesafe git path ([`e4d6685`](https://github.com/Byron/gitoxide/commit/e4d6685064ad2b433f8acd3a74b320bf0169a994))
+ * **Uncategorized**
+    - Refactor git_config tests. ([`714ef5c`](https://github.com/Byron/gitoxide/commit/714ef5c2cdea2af4026dba91119845ff68298d8d))
+    - make fmt ([`7cf3545`](https://github.com/Byron/gitoxide/commit/7cf354509b545f7e7c99e159b5989ddfbe86273d))
+    - Merge branch 'describe-rev' ([`77b7cd9`](https://github.com/Byron/gitoxide/commit/77b7cd9a7813aaa1a15d035ea42c1e3fe4eef8dd))
+    - thanks clippy ([`a87844a`](https://github.com/Byron/gitoxide/commit/a87844ab8b03357a52bea6a36002c8f1f1c3a5bb))
+    - Revert "Move tests out of git_config." ([`3cbe072`](https://github.com/Byron/gitoxide/commit/3cbe072b024848c0133b6800dc84e68f58eee621))
+    - Move tests out of git_config. ([`7fd8369`](https://github.com/Byron/gitoxide/commit/7fd83692411d8c5d392875c877f3f25985123f00))
+    - Relative include path from env is error. ([`e303466`](https://github.com/Byron/gitoxide/commit/e303466857484eab5110a11d90f482f32943f74a))
+    - Refactor and add skip bom when reading config. ([`2d5768d`](https://github.com/Byron/gitoxide/commit/2d5768dc9b40e0b830e0cc5aefb77f5e030bb8f8))
+    - Replace `GitConfigFromEnvError` with `from_env::Error`. ([`e1f8b52`](https://github.com/Byron/gitoxide/commit/e1f8b527067cb3dcc74a33c238ba4edfafa95789))
+    - Add path include to `from_env`. Follow duplicate include paths until max include depth is exceeded. ([`2295dc5`](https://github.com/Byron/gitoxide/commit/2295dc5c8fbbd6e27292dfd7a489ad0567421155))
+    - Return error when max allowed nested includes depth is passed. ([`9692694`](https://github.com/Byron/gitoxide/commit/969269475d76a3bad323a9cc6e5b9d0f436ddc37))
+    - remove `git_config::values::Value`; use `Bytes` in its place. ([`55c00d8`](https://github.com/Byron/gitoxide/commit/55c00d880535a1f8c37cb7d4405d39ff5a7654a0))
+    - Minor fixes ([`c72ca00`](https://github.com/Byron/gitoxide/commit/c72ca0098e4daa153186789143a192ed38e9656c))
+    - make fmt; fix build ([`ae4f122`](https://github.com/Byron/gitoxide/commit/ae4f122d191f1e4ee63bd11971fd61dfdd60bc8f))
+    - Use context in PathError. ([`3b55f25`](https://github.com/Byron/gitoxide/commit/3b55f257a7ff1b89eea6616d61dfd51d409c797b))
+    - Small refactoring and documentation. ([`fefb01b`](https://github.com/Byron/gitoxide/commit/fefb01b84f954700b19e010282c4b413de8e03d2))
+    - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
+    - compatibility with Rust <1.53 ([`61af06b`](https://github.com/Byron/gitoxide/commit/61af06b905926849abce19677ff4b9ac05d625a3))
+    - Merge branch 'index-verification' ([`ad3c803`](https://github.com/Byron/gitoxide/commit/ad3c8032cee02052ef3940d1d7c950270a0a299a))
+</details>
+
 ## 0.1.11 (2022-01-31)
 
 ### New Features
@@ -22,7 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 7 calendar days.
+ - 7 commits contributed to the release over the course of 7 calendar days.
  - 7 days passed between releases.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#319](https://github.com/Byron/gitoxide/issues/319)
@@ -38,6 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Adjust docs ([`38c201c`](https://github.com/Byron/gitoxide/commit/38c201c505ce2ea4257cdd0255713154745a330c))
     - An example to illustrate the problem ([`c47e8f8`](https://github.com/Byron/gitoxide/commit/c47e8f8ee8ea79f8f654f6c28e54e0b0b1fff1b6))
  * **Uncategorized**
+    - Release git-config v0.1.11 ([`a605b67`](https://github.com/Byron/gitoxide/commit/a605b67294773628590220600f5017c63911f620))
     - fix usage example in README.md ([`469406d`](https://github.com/Byron/gitoxide/commit/469406dc0d9fece4a06230ef0d8018846202f0ad))
     - implement a draft for subsection fetching ([`e822f56`](https://github.com/Byron/gitoxide/commit/e822f566dcff3f6c784c206dff2fbc5f82d543be))
     - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
@@ -53,9 +136,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release over the course of 51 calendar days.
+ - 6 commits contributed to the release over the course of 51 calendar days.
  - 55 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#266](https://github.com/Byron/gitoxide/issues/266)
 
 ### Thanks Clippy
@@ -77,7 +160,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Release git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`d78aab7`](https://github.com/Byron/gitoxide/commit/d78aab7b9c4b431d437ac70a0ef96263acb64e46))
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
-    - compatibility with Rust <1.53 ([`61af06b`](https://github.com/Byron/gitoxide/commit/61af06b905926849abce19677ff4b9ac05d625a3))
     - thanks clippy ([`7dd2313`](https://github.com/Byron/gitoxide/commit/7dd2313d980fe7c058319ae66d313b3097e3ae5f))
 </details>
 
@@ -412,6 +494,18 @@ lenfrom_envopen<csr-unknown/>
 </details>
 
 ## v0.1.0 (2021-03-12)
+
+### Other
+
+ - <csr-id-949622e461eb2116393ec6f4633ec0cb2e1695b5/> Include benches in crate to allow publishing to work
+ - <csr-id-bcacfc9bcf19a0339541b24e84de68d95291c62b/> remove clippy-cargo lint until there are no warnings
+   Please feel free to re-add once all other git-* crates have been
+   adjusted. It's interesting to see how a crate lint spills into the
+   workspace.
+   
+   Personally I am surprised that the keywords value is supposed
+   to repeat the crate name as it seems redundant.
+ - <csr-id-41f118d2aa560188fd3399d2390aa43794b0af75/> remove redundant lines from git-ignore file
 
 ### Commit Statistics
 

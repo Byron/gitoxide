@@ -5,18 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.19.1 (2022-01-23)
+## Unreleased
 
-A maintenance release thanks to upgrade to `prodash` 18.
+### New Features
+
+ - <csr-id-e4d6685064ad2b433f8acd3a74b320bf0169a994/> Add `git_config::values::Path` for a typesafe git path
+   Add a `Path` type to the `git_config::values` which
+   can be interpolated according to gits own path interpolation
+   rules.
+ - <csr-id-3c8581fc294c65c9eb42698969fe3263135a864e/> add new 'path' module for all path-related conversions
+   It's meant to unify all path and byte related handling to help assuring
+   encoding is handled correctly or at least similarly everywhere.
+ - <csr-id-15ff212b17087de93f259e366f4e4b821cfbc28e/> in-manifest and in-lib documentation of feature toggles
+
+### Bug Fixes
+
+ - <csr-id-234cd10ca55482ce1a840ce3244308d249895bcc/> Assure std::io::copy() doesn't hang when we cause an interrupt
+   The user can ask for interruptions which previously used the
+   error kind Interrupted. This however has special meaning and
+   usually means to retry.
+
+### New Features (BREAKING)
+
+ - <csr-id-8945d95f7fa88562d37ff67ac6e38bead73dd2df/> `interrupt::Iter`, rename `interrupt::Iter` -> `interrupt::IterWithError`
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
- - 4 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 36 commits contributed to the release over the course of 52 calendar days.
+ - 70 days passed between releases.
+ - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 6 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#366](https://github.com/Byron/gitoxide/issues/366)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -24,11 +50,121 @@ A maintenance release thanks to upgrade to `prodash` 18.
 
 <details><summary>view details</summary>
 
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - Use hash_hasher based hash state for better keys/less collisions ([`814de07`](https://github.com/Byron/gitoxide/commit/814de079f4226f42efa49ad334a348bce67184e4))
+    - upgrade parking_lot and cargo_toml ([`f95c1a0`](https://github.com/Byron/gitoxide/commit/f95c1a0d9c19bcc6feb9b8739a09d86f9970a0e0))
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - more stable testing of perviously racy test for new parallelization mechanism ([`0b4b90f`](https://github.com/Byron/gitoxide/commit/0b4b90fa498d9e07a55b72af2f799da4cd2da81f))
+    - Salvage an alternative parallelization approach which might be good for index-creation ([`7e76796`](https://github.com/Byron/gitoxide/commit/7e76796d5c2956961bd998286bec05fca1ba8fc4))
+    - refactor ([`f86eacc`](https://github.com/Byron/gitoxide/commit/f86eacc5cfaf6d88ead4f8dbd65989d32674c213))
+    - Use hopefully faster crossbeam channel to receive parallelized results ([`3b324b8`](https://github.com/Byron/gitoxide/commit/3b324b868d9d172038797f911eeebfcba8107865))
+    - switch index checkout to chunk-based operation ([`e5f6943`](https://github.com/Byron/gitoxide/commit/e5f69433e4a6cc7866b666e0baccfa32efb92a7f))
+    - add thread-count and chunk-size computation; interrupt capability ([`8cbe85d`](https://github.com/Byron/gitoxide/commit/8cbe85d135898826a91939726465a9e295c1e24b))
+    - `interrupt::Iter`, rename `interrupt::Iter` -> `interrupt::IterWithError` ([`8945d95`](https://github.com/Byron/gitoxide/commit/8945d95f7fa88562d37ff67ac6e38bead73dd2df))
+    - fix `interrupt::Iter` ([`0f0d390`](https://github.com/Byron/gitoxide/commit/0f0d390c475044a75e5db4dcd831d755e74aa3e9))
+ * **[#329](https://github.com/Byron/gitoxide/issues/329)**
+    - in-manifest and in-lib documentation of feature toggles ([`15ff212`](https://github.com/Byron/gitoxide/commit/15ff212b17087de93f259e366f4e4b821cfbc28e))
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - Remove Option return values in favor of Result ([`493dbae`](https://github.com/Byron/gitoxide/commit/493dbae434e8e4a939e90d03ec3f500744c0725a))
+    - Add `git_config::values::Path` for a typesafe git path ([`e4d6685`](https://github.com/Byron/gitoxide/commit/e4d6685064ad2b433f8acd3a74b320bf0169a994))
+ * **[#333](https://github.com/Byron/gitoxide/issues/333)**
+    - Use git_features::path everywhere where there is a path conversion ([`2e1437c`](https://github.com/Byron/gitoxide/commit/2e1437cb0b5dc77f2317881767f71eaf9b009ebf))
+    - Make real clear panics are only possible on windows ([`6b283dc`](https://github.com/Byron/gitoxide/commit/6b283dc7b9339fd65ea35f56eb29f121f571caf7))
+    - one usage of os_str_bytes down, along with some custom conversion code ([`1cc95ce`](https://github.com/Byron/gitoxide/commit/1cc95cefbd132a4277ec52c2147f7c81fea92d48))
+    - gitoxide-core without os-str-bytes ([`909aa14`](https://github.com/Byron/gitoxide/commit/909aa1402c82c3128052023613a297b213716e3d))
+    - Remove os_str_bytes from git-pack ([`86f6e50`](https://github.com/Byron/gitoxide/commit/86f6e5054ea11b7aeb9c85321913de090f71e3a1))
+    - Don't use os_str_ext in git-features; adapt git-ref ([`9258b7b`](https://github.com/Byron/gitoxide/commit/9258b7baf0895593c13a152ff9e6f52e036cebe1))
+    - add new 'path' module for all path-related conversions ([`3c8581f`](https://github.com/Byron/gitoxide/commit/3c8581fc294c65c9eb42698969fe3263135a864e))
+ * **[#366](https://github.com/Byron/gitoxide/issues/366)**
+    - the first possibly working version of loading a mailmap with multiple sources ([`98d745e`](https://github.com/Byron/gitoxide/commit/98d745e8080975a91cff1ce75e187258c851d3f4))
+    - cleanup bstr usage to not accidentally pull in unicode ([`8ff53af`](https://github.com/Byron/gitoxide/commit/8ff53af9876a5e35bcfd076124ad776e1b6ff331))
  * **Uncategorized**
+    - Merge branch 'svetli-n-refactor_git_config_tests' ([`babaa9f`](https://github.com/Byron/gitoxide/commit/babaa9f5725ab8cdf14e0c7e002c2e1de09de103))
+    - remove 'unused_mut' warning on windows ([`4733e6c`](https://github.com/Byron/gitoxide/commit/4733e6c6f5ea7d5afa4dd171bbba066cf5120ddc))
+    - make fmt ([`7cf3545`](https://github.com/Byron/gitoxide/commit/7cf354509b545f7e7c99e159b5989ddfbe86273d))
+    - Merge branch 'main' into mailmap ([`b2df941`](https://github.com/Byron/gitoxide/commit/b2df941feaf5ae9fa170fa49270189f3527f2eab))
+    - Commit to using 'unicode' feature of bstr as git-object wants it too ([`471fa62`](https://github.com/Byron/gitoxide/commit/471fa62b142ba744541d7472464d62826f5c6b93))
+    - Assure std::io::copy() doesn't hang when we cause an interrupt ([`234cd10`](https://github.com/Byron/gitoxide/commit/234cd10ca55482ce1a840ce3244308d249895bcc))
+    - Upgrade to prodash 19 ([`90c6c5a`](https://github.com/Byron/gitoxide/commit/90c6c5aec4015ff969d6e2514fa4d49873ee80f5))
+    - thanks clippy ([`07a4094`](https://github.com/Byron/gitoxide/commit/07a4094965ac1b4eb223da8e5ca5cc4a86c5f596))
+    - Merge branch 'short-id' ([`5849d5b`](https://github.com/Byron/gitoxide/commit/5849d5b326b83f98a16cf1d956c720c7f0fd4445))
+    - properly document optional features ([`572e57d`](https://github.com/Byron/gitoxide/commit/572e57d5796692764c5c9633969aad25a6f9221a))
+    - Small refactoring and documentation. ([`fefb01b`](https://github.com/Byron/gitoxide/commit/fefb01b84f954700b19e010282c4b413de8e03d2))
+    - upgrade document-features ([`c35e62e`](https://github.com/Byron/gitoxide/commit/c35e62e0da9ac1f7dcb863f5f9c69108c728d32e))
+    - thanks clippy ([`a8e9497`](https://github.com/Byron/gitoxide/commit/a8e9497caebf1c0e9faac537717cd86378f1acf6))
+    - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
+</details>
+
+## 0.19.1 (2022-01-23)
+
+A maintenance release thanks to upgrade to `prodash` 18.
+
+### Changed (BREAKING)
+
+ - <csr-id-61e5cfece4d8f405e35fc1957b00ce1da7526c26/> renamed `progress::Read::reader` -> `progress::Read::inner`
+
+### New Features
+
+ - <csr-id-cb7e4e784d615f9fa3d6fb9c36240f0592403358/> Add InOrderIter to 'parallel' module
+   This iterator makes possible identifies results using a sequence id
+   and returns only consecutive items.
+   
+   Use it to collect unordered results produced by threads.
+   It's advantage to collecting yourself and sorting is the potential
+   for a smaller memory footprint of in-flight results, one doesn't
+   have to collect them all for ordering, necessarily.
+ - <csr-id-ca095ed881db2a8f06a6b067dbaac17e923b0945/> Make a scope-like abstraction available
+   This allows more delicate threading control like is required for the
+   index.
+ - <csr-id-b8400ed80543d67a5895c975ba9b1fc28427411c/> decoding of variable int numbers.
+   It's here only so that we can share the code across crates, for now
+   without any feature toggles.
+ - <csr-id-0a749a22057b5513a8cefa0e26b0a9a268c769d3/> Add `progress::Write` to automatically pass bytes written to a progress instance
+
+### Chore
+
+ - <csr-id-361892ca15aa648802f6701ab6a5a30aedde3449/> update sha-1 dependency to 0.10
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 20 commits contributed to the release over the course of 45 calendar days.
+ - 55 days passed between releases.
+ - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 4 unique issues were worked on: [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#266](https://github.com/Byron/gitoxide/issues/266)**
+    - update sha-1 dependency to 0.10 ([`361892c`](https://github.com/Byron/gitoxide/commit/361892ca15aa648802f6701ab6a5a30aedde3449))
+    - remove slow/unnecessary threading utilities ([`269b7ef`](https://github.com/Byron/gitoxide/commit/269b7efc47bb1d6380b2059f63bd0c53fcd285de))
+ * **[#279](https://github.com/Byron/gitoxide/issues/279)**
+    - Add `progress::Write` to automatically pass bytes written to a progress instance ([`0a749a2`](https://github.com/Byron/gitoxide/commit/0a749a22057b5513a8cefa0e26b0a9a268c769d3))
+    - renamed `progress::Read::reader` -> `progress::Read::inner` ([`61e5cfe`](https://github.com/Byron/gitoxide/commit/61e5cfece4d8f405e35fc1957b00ce1da7526c26))
+    - Adjust to changes in git-hash and git-pack ([`0cae25b`](https://github.com/Byron/gitoxide/commit/0cae25b1bb3c902ec323f17a1d9743e42fe213d0))
+ * **[#287](https://github.com/Byron/gitoxide/issues/287)**
+    - upgrade to prodash 17 ([`47860b7`](https://github.com/Byron/gitoxide/commit/47860b7e2769260cfb8522ae455c491605093423))
+ * **[#293](https://github.com/Byron/gitoxide/issues/293)**
+    - fix docs ([`3f89b63`](https://github.com/Byron/gitoxide/commit/3f89b6336e79bc12bc31d40b74221e79a72d2b36))
+    - fix build ([`e3977fe`](https://github.com/Byron/gitoxide/commit/e3977fe033550bfd3297cdd674934e40476aa38b))
+    - Use InOrderIter from git-features ([`7721b5f`](https://github.com/Byron/gitoxide/commit/7721b5fc7cba86d785e0936fdfab2ea41163219f))
+    - Add InOrderIter to 'parallel' module ([`cb7e4e7`](https://github.com/Byron/gitoxide/commit/cb7e4e784d615f9fa3d6fb9c36240f0592403358))
+    - Make a scope-like abstraction available ([`ca095ed`](https://github.com/Byron/gitoxide/commit/ca095ed881db2a8f06a6b067dbaac17e923b0945))
+    - single and multi-threaded index tests ([`a22cb0f`](https://github.com/Byron/gitoxide/commit/a22cb0f1ead9a2f32e43eb2fb378281e592a4ed3))
+    - decoding of variable int numbers. ([`b8400ed`](https://github.com/Byron/gitoxide/commit/b8400ed80543d67a5895c975ba9b1fc28427411c))
+ * **Uncategorized**
+    - Release git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`d78aab7`](https://github.com/Byron/gitoxide/commit/d78aab7b9c4b431d437ac70a0ef96263acb64e46))
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepare changelogs for release ([`674ec73`](https://github.com/Byron/gitoxide/commit/674ec73b0816baa2c63b4ef1b40b7a41849c5e95))
     - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
     - upgrade to tui 0.17 and prodash 18 ([`eba101a`](https://github.com/Byron/gitoxide/commit/eba101a576ecb7bc0f63357d0dd81eb817b94be4))
+    - refactor ([`e7fbd9f`](https://github.com/Byron/gitoxide/commit/e7fbd9f3700496ad7bb7e71226c4d25429f0ccd5))
+    - thanks clippy ([`7dd2313`](https://github.com/Byron/gitoxide/commit/7dd2313d980fe7c058319ae66d313b3097e3ae5f))
 </details>
 
 ## 0.19.0 (2022-01-19)
@@ -59,16 +195,9 @@ A maintenance release thanks to upgrade to `prodash` 18.
 
 <csr-read-only-do-not-edit/>
 
- - 18 commits contributed to the release over the course of 41 calendar days.
- - 51 days passed between releases.
- - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 4 unique issues were worked on: [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293)
-
-### Thanks Clippy
-
-<csr-read-only-do-not-edit/>
-
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+ - 4 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#293](https://github.com/Byron/gitoxide/issues/293)
 
 ### Commit Details
 
@@ -76,29 +205,12 @@ A maintenance release thanks to upgrade to `prodash` 18.
 
 <details><summary>view details</summary>
 
- * **[#266](https://github.com/Byron/gitoxide/issues/266)**
-    - update sha-1 dependency to 0.10 ([`361892c`](https://github.com/Byron/gitoxide/commit/361892ca15aa648802f6701ab6a5a30aedde3449))
-    - remove slow/unnecessary threading utilities ([`269b7ef`](https://github.com/Byron/gitoxide/commit/269b7efc47bb1d6380b2059f63bd0c53fcd285de))
- * **[#279](https://github.com/Byron/gitoxide/issues/279)**
-    - Add `progress::Write` to automatically pass bytes written to a progress instance ([`0a749a2`](https://github.com/Byron/gitoxide/commit/0a749a22057b5513a8cefa0e26b0a9a268c769d3))
-    - renamed `progress::Read::reader` -> `progress::Read::inner` ([`61e5cfe`](https://github.com/Byron/gitoxide/commit/61e5cfece4d8f405e35fc1957b00ce1da7526c26))
-    - Adjust to changes in git-hash and git-pack ([`0cae25b`](https://github.com/Byron/gitoxide/commit/0cae25b1bb3c902ec323f17a1d9743e42fe213d0))
- * **[#287](https://github.com/Byron/gitoxide/issues/287)**
-    - upgrade to prodash 17 ([`47860b7`](https://github.com/Byron/gitoxide/commit/47860b7e2769260cfb8522ae455c491605093423))
  * **[#293](https://github.com/Byron/gitoxide/issues/293)**
     - prepare changelogs for git-index and dependencies ([`f54bf4b`](https://github.com/Byron/gitoxide/commit/f54bf4bde92b892b6d425987a6a37e10319c4635))
-    - fix docs ([`3f89b63`](https://github.com/Byron/gitoxide/commit/3f89b6336e79bc12bc31d40b74221e79a72d2b36))
-    - fix build ([`e3977fe`](https://github.com/Byron/gitoxide/commit/e3977fe033550bfd3297cdd674934e40476aa38b))
-    - Use InOrderIter from git-features ([`7721b5f`](https://github.com/Byron/gitoxide/commit/7721b5fc7cba86d785e0936fdfab2ea41163219f))
-    - Add InOrderIter to 'parallel' module ([`cb7e4e7`](https://github.com/Byron/gitoxide/commit/cb7e4e784d615f9fa3d6fb9c36240f0592403358))
-    - Make a scope-like abstraction available ([`ca095ed`](https://github.com/Byron/gitoxide/commit/ca095ed881db2a8f06a6b067dbaac17e923b0945))
-    - single and multi-threaded index tests ([`a22cb0f`](https://github.com/Byron/gitoxide/commit/a22cb0f1ead9a2f32e43eb2fb378281e592a4ed3))
-    - decoding of variable int numbers. ([`b8400ed`](https://github.com/Byron/gitoxide/commit/b8400ed80543d67a5895c975ba9b1fc28427411c))
  * **Uncategorized**
     - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
     - upgrade dependencies ([`968df47`](https://github.com/Byron/gitoxide/commit/968df4746729556dcf4f5039b1d1ed1a1da2705a))
-    - refactor ([`e7fbd9f`](https://github.com/Byron/gitoxide/commit/e7fbd9f3700496ad7bb7e71226c4d25429f0ccd5))
-    - thanks clippy ([`7dd2313`](https://github.com/Byron/gitoxide/commit/7dd2313d980fe7c058319ae66d313b3097e3ae5f))
+    - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
 </details>
 
 ## 0.18.0 (2021-11-29)
@@ -824,6 +936,11 @@ This release contains no functional changes.
 </details>
 
 ## v0.1.0 (2020-07-12)
+
+### Other
+
+ - <csr-id-ab6f98b905f13ed2a7c0c483f34fab63141fbc5b/> try-join with static typing works, but…
+   …seems like a lot of effort. Probably not worth continuing here
 
 ### Commit Statistics
 
