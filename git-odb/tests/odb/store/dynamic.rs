@@ -206,7 +206,6 @@ fn write() -> crate::Result {
 }
 
 #[test]
-#[ignore]
 fn object_replacement() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_replaced_history.sh").unwrap();
     let handle = git_odb::at(dir.join(".git/objects")).unwrap();

@@ -168,9 +168,9 @@ where
         }
     }
 
-    fn try_find_cached_inner<'a>(
-        &self,
-        id: &git_hash::oid,
+    fn try_find_cached_inner<'a, 'b>(
+        &'b self,
+        mut id: &'b git_hash::oid,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl DecodeEntry,
         snapshot: &mut load_index::Snapshot,
@@ -183,7 +183,16 @@ where
                     id: r.original_id.to_owned(),
                 });
             }
+        } else if !self.ignore_replacements {
+            if let Ok(pos) = self
+                .store
+                .replacements
+                .binary_search_by(|(map_this, _)| map_this.as_ref().cmp(id))
+            {
+                id = self.store.replacements[pos].1.as_ref();
+            }
         }
+
         'outer: loop {
             {
                 let marker = snapshot.marker;
