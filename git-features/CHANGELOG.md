@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 37 commits contributed to the release over the course of 54 calendar days.
+ - 38 commits contributed to the release over the course of 54 calendar days.
  - 72 days passed between releases.
  - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#366](https://github.com/Byron/gitoxide/issues/366)
@@ -80,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - the first possibly working version of loading a mailmap with multiple sources ([`98d745e`](https://github.com/Byron/gitoxide/commit/98d745e8080975a91cff1ce75e187258c851d3f4))
     - cleanup bstr usage to not accidentally pull in unicode ([`8ff53af`](https://github.com/Byron/gitoxide/commit/8ff53af9876a5e35bcfd076124ad776e1b6ff331))
  * **Uncategorized**
+    - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
     - Merge branch 'svetli-n-refactor_git_config_tests' ([`babaa9f`](https://github.com/Byron/gitoxide/commit/babaa9f5725ab8cdf14e0c7e002c2e1de09de103))
     - remove 'unused_mut' warning on windows ([`4733e6c`](https://github.com/Byron/gitoxide/commit/4733e6c6f5ea7d5afa4dd171bbba066cf5120ddc))
     - make fmt ([`7cf3545`](https://github.com/Byron/gitoxide/commit/7cf354509b545f7e7c99e159b5989ddfbe86273d))
