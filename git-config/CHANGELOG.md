@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.2.0 (2022-04-02)
+
+<csr-id-55c00d880535a1f8c37cb7d4405d39ff5a7654a0/>
 
 ### New Features
 
@@ -25,8 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 40 commits contributed to the release over the course of 58 calendar days.
- - 59 days passed between releases.
+ - 42 commits contributed to the release over the course of 60 calendar days.
+ - 60 days passed between releases.
  - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#331](https://github.com/Byron/gitoxide/issues/331)
 
@@ -45,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#298](https://github.com/Byron/gitoxide/issues/298)**
     - minor refactor ([`2f0234c`](https://github.com/Byron/gitoxide/commit/2f0234c05d1a3e1e3b96dff9680189c67cb6c9ff))
  * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - Update changelog prior to release ([`1d07934`](https://github.com/Byron/gitoxide/commit/1d079346e789b0acc9a4bdf7577b21c1c37b6106))
     - minor refactor of tests ([`ebe551f`](https://github.com/Byron/gitoxide/commit/ebe551fc16a98d4101799b0d657b42f445f5b16e))
     - refactor ([`845fe37`](https://github.com/Byron/gitoxide/commit/845fe373bf25de497f01209f4bed5132cc8eae65))
     - refactor include path recursion logic ([`2862a07`](https://github.com/Byron/gitoxide/commit/2862a0718e3bc03e4edda60f1b359dd6068e8d1d))
@@ -66,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Add AsRef and Deref for values::Path; additional assertions ([`0666a35`](https://github.com/Byron/gitoxide/commit/0666a358b3b7aadda504979e543cc2058b478bfe))
     - Add `git_config::values::Path` for a typesafe git path ([`e4d6685`](https://github.com/Byron/gitoxide/commit/e4d6685064ad2b433f8acd3a74b320bf0169a994))
  * **Uncategorized**
+    - derive PartialEq, Eq and Debug on ResolvedGitConfig ([`b2a88a5`](https://github.com/Byron/gitoxide/commit/b2a88a5af259ec07c51d873cac172bb60d7575aa))
     - Refactor git_config tests. ([`714ef5c`](https://github.com/Byron/gitoxide/commit/714ef5c2cdea2af4026dba91119845ff68298d8d))
     - make fmt ([`7cf3545`](https://github.com/Byron/gitoxide/commit/7cf354509b545f7e7c99e159b5989ddfbe86273d))
     - Merge branch 'describe-rev' ([`77b7cd9`](https://github.com/Byron/gitoxide/commit/77b7cd9a7813aaa1a15d035ea42c1e3fe4eef8dd))
@@ -494,6 +498,10 @@ lenfrom_envopen<csr-unknown/>
 </details>
 
 ## v0.1.0 (2021-03-12)
+
+<csr-id-949622e461eb2116393ec6f4633ec0cb2e1695b5/>
+<csr-id-bcacfc9bcf19a0339541b24e84de68d95291c62b/>
+<csr-id-41f118d2aa560188fd3399d2390aa43794b0af75/>
 
 ### Other
 

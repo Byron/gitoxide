@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.20.0 (2022-04-02)
 
 ### New Features
 
@@ -33,8 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 36 commits contributed to the release over the course of 52 calendar days.
- - 70 days passed between releases.
+ - 37 commits contributed to the release over the course of 54 calendar days.
+ - 72 days passed between releases.
  - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#366](https://github.com/Byron/gitoxide/issues/366)
 
@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#329](https://github.com/Byron/gitoxide/issues/329)**
     - in-manifest and in-lib documentation of feature toggles ([`15ff212`](https://github.com/Byron/gitoxide/commit/15ff212b17087de93f259e366f4e4b821cfbc28e))
  * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - Update changelog prior to release ([`1d07934`](https://github.com/Byron/gitoxide/commit/1d079346e789b0acc9a4bdf7577b21c1c37b6106))
     - Remove Option return values in favor of Result ([`493dbae`](https://github.com/Byron/gitoxide/commit/493dbae434e8e4a939e90d03ec3f500744c0725a))
     - Add `git_config::values::Path` for a typesafe git path ([`e4d6685`](https://github.com/Byron/gitoxide/commit/e4d6685064ad2b433f8acd3a74b320bf0169a994))
  * **[#333](https://github.com/Byron/gitoxide/issues/333)**
@@ -96,6 +97,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## 0.19.1 (2022-01-23)
+
+<csr-id-361892ca15aa648802f6701ab6a5a30aedde3449/>
 
 A maintenance release thanks to upgrade to `prodash` 18.
 
@@ -936,6 +939,8 @@ This release contains no functional changes.
 </details>
 
 ## v0.1.0 (2020-07-12)
+
+<csr-id-ab6f98b905f13ed2a7c0c483f34fab63141fbc5b/>
 
 ### Other
 

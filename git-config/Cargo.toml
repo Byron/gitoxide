@@ -1,6 +1,6 @@
 [package]
 name = "git-config"
-version = "0.1.11"
+version = "0.2.0"
 repository = "https://github.com/Byron/gitoxide"
 description = "A git-config file parser and editor from the gitoxide project"
 license = "MIT OR Apache-2.0"
@@ -14,7 +14,7 @@ include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 # serde = ["serde_crate"]
 
 [dependencies]
-git-features = { version = "^0.19.1", path = "../git-features"}
+git-features = { version = "^0.20.0", path = "../git-features"}
 dirs = "4"
 nom = { version = "7", default_features = false, features = [ "std" ] }
 memchr = "2"

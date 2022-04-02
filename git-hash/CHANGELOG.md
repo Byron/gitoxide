@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.9.3 (2022-04-02)
 
 ### New Features
 
@@ -22,10 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 16 commits contributed to the release over the course of 70 calendar days.
- - 70 days passed between releases.
+ - 17 commits contributed to the release over the course of 72 calendar days.
+ - 72 days passed between releases.
  - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 3 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329)
+ - 4 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331)
 
 ### Commit Details
 
@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `Commit::short_id()` ([`1be00cf`](https://github.com/Byron/gitoxide/commit/1be00cf9e00ce9428ffddb2c79b2373926069b13))
  * **[#329](https://github.com/Byron/gitoxide/issues/329)**
     - Document all features related to serde1 ([`72b97f2`](https://github.com/Byron/gitoxide/commit/72b97f2ae4dc7642b160f183c6d5df4502dc186f))
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - Update changelog prior to release ([`1d07934`](https://github.com/Byron/gitoxide/commit/1d079346e789b0acc9a4bdf7577b21c1c37b6106))
  * **Uncategorized**
     - make fmt ([`7cf3545`](https://github.com/Byron/gitoxide/commit/7cf354509b545f7e7c99e159b5989ddfbe86273d))
     - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
@@ -85,6 +87,12 @@ A automated maintenance release without impact to the public API.
 
 ### Changed (BREAKING)
 
+<csr-id-67652cb5cf01c45291d6e117c31290c585bab9d1/>
+<csr-id-3363f1e61295810964ddb0c255eed87a87fe6539/>
+<csr-id-75b901eff177dade43a28e770920a2b2206ded69/>
+<csr-id-b596fa0dbbb3cc1d3ac386458ef52e2db9bca55c/>
+<csr-id-3373946d27c91169172e62a637a305ef1e5fbb9e/>
+
  - <csr-id-79dc0d5ba6fa31ddd5c075693ffdc6496c1eaded/> rename `oid::try_from()` to `try_from_bytes()`, add `from_bytes_unchecked()`
    This change was done in the name of consistency, as `from_bytes()` is
    used in many other git-* crates
@@ -106,16 +114,8 @@ A automated maintenance release without impact to the public API.
    Use `ObjectId::from()` or `ObjectId::try_from()` instead.
  - <csr-id-53c748d7f438f57e8119cdf04402bfeaa9f2a286/> remove various SHA1 specific hex utilities in favor of unspecific new ones
    - removed `to_sha1_hex()`, use `oid::hex_to_buf()` and
-     `oid::hex_to_buf()` instead.
-   - remove `ObjectId::write_hex_to()` in favor of `oid::write_hex_to()`
- - <csr-id-67652cb5cf01c45291d6e117c31290c585bab9d1/> `oid::null_sha1()` replaced with `Kind::null()`
- - <csr-id-3363f1e61295810964ddb0c255eed87a87fe6539/> remove `ObjectId::from_borrowed_sha1()`
- - <csr-id-75b901eff177dade43a28e770920a2b2206ded69/> remove `ObjectId::to_sha1_hex_string()`
-   Use `.to_hex().to_string()` instead.
- - <csr-id-b596fa0dbbb3cc1d3ac386458ef52e2db9bca55c/> SIZE_OF_SHA1_DIGEST is now private
-   Replace it with your own constant derived from
- - <csr-id-3373946d27c91169172e62a637a305ef1e5fbb9e/> rename `Kind::to_hex()` to `Kind::to_hex_with_len()`; add `Kind::to_hex()`
-   The latter prints the oid in full.
+   `oid::hex_to_buf()` instead.
+- remove `ObjectId::write_hex_to()` in favor of `oid::write_hex_to()`
 
 ### New Features
 
@@ -177,6 +177,9 @@ A automated maintenance release without impact to the public API.
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
 </details>
+
+<csr-unknown>
+ oid::null_sha1() replaced with Kind::null() remove ObjectId::from_borrowed_sha1() remove ObjectId::to_sha1_hex_string()Use .to_hex().to_string() instead. SIZE_OF_SHA1_DIGEST is now privateReplace it with your own constant derived from rename Kind::to_hex() to Kind::to_hex_with_len(); add Kind::to_hex()The latter prints the oid in full.<csr-unknown/>
 
 ## 0.9.0 (2022-01-19)
 
