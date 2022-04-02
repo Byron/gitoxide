@@ -97,6 +97,7 @@ impl crate::ThreadSafeRepository {
         Ok(crate::ThreadSafeRepository {
             objects: OwnShared::new(git_odb::Store::at_opts(
                 git_dir.join("objects"),
+                Vec::new(), // TODO: actually read replacement refs
                 git_odb::store::init::Options {
                     slots: object_store_slots,
                     object_hash,

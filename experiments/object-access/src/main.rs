@@ -398,6 +398,7 @@ where
         Some(store) => store,
         None => OwnShared::new(odb::Store::at_opts(
             objects_dir,
+            Vec::new(),
             git_repository::odb::store::init::Options {
                 slots,
                 ..Default::default()

@@ -261,6 +261,8 @@ fn object_replacement() {
         vec![unrelated_mapping, (short_history_link, long_history_tip)],
         "one can query the list of replacements"
     );
+
+    // TODO: mapping to non-existing object (can happen if replace-refs are pushed but related history isn't fetched)
 }
 
 #[test]
