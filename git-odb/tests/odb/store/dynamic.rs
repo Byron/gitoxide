@@ -205,6 +205,27 @@ fn write() -> crate::Result {
 }
 
 #[test]
+fn object_replacement() {
+    let dir = git_testtools::scripted_fixture_repo_read_only("make_replaced_history.sh").unwrap();
+    let handle = git_odb::at(dir.join(".git/objects")).unwrap();
+    let mut buf = Vec::new();
+    let third_commit = handle
+        .find_commit(hex_to_id("434e5a872d6738d1fffd1e11e52a1840b73668c6"), &mut buf)
+        .unwrap();
+
+    let orphan_of_new_history = hex_to_id("0703c317e28068f39834ae61e7ab941b7d672322");
+    assert_eq!(
+        third_commit.parents().collect::<Vec<_>>(),
+        vec![orphan_of_new_history],
+        "no replacements are known by default, hence this is the replaced commit, not the replacement"
+    );
+
+    drop(third_commit);
+    let orphan = handle.find_commit(orphan_of_new_history, &mut buf).unwrap();
+    assert_eq!(orphan.parents.len(), 0);
+}
+
+#[test]
 fn contains() {
     let handle = db();
 
