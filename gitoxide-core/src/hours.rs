@@ -45,20 +45,18 @@ where
     W: io::Write,
     P: Progress,
 {
-    let repo = git::discover(working_dir)?;
-    let handle = repo.clone().apply_environment();
+    let repo = git::discover(working_dir)?.apply_environment();
     let commit_id = repo
         .refs
         .find(refname.to_string_lossy().as_ref())?
         .peel_to_id_in_place(&repo.refs, |oid, buf| {
-            handle
-                .objects
+            repo.objects
                 .try_find(oid, buf)
                 .map(|obj| obj.map(|obj| (obj.kind, obj.data)))
         })?
         .to_owned();
 
-    let all_commits = {
+    let (all_commits, is_shallow) = {
         let start = Instant::now();
         let mut progress = progress.add_child("Traverse commit graph");
         progress.init(None, progress::count("commits"));
@@ -66,18 +64,26 @@ where
         let commit_iter = interrupt::Iter::new(
             commit_id.ancestors(|oid, buf| {
                 progress.inc();
-                handle.objects.find(oid, buf).map(|o| {
+                repo.objects.find(oid, buf).map(|o| {
                     commits.push(o.data.to_owned());
                     objs::CommitRefIter::from_bytes(o.data)
                 })
             }),
             || anyhow!("Cancelled by user"),
         );
+        let mut is_shallow = false;
         for c in commit_iter {
-            c??;
+            match c? {
+                Ok(c) => c,
+                Err(git::traverse::commit::ancestors::Error::FindExisting { .. }) => {
+                    is_shallow = true;
+                    break;
+                }
+                Err(err) => return Err(err.into()),
+            };
         }
         progress.show_throughput(start);
-        commits
+        (commits, is_shallow)
     };
 
     let mailmap = repo.load_mailmap();
@@ -150,10 +156,11 @@ where
         .expect("at least one commit at this point");
     writeln!(
         out,
-        "total hours: {:.02}\ntotal 8h days: {:.02}\ntotal commits = {}\ntotal authors: {}",
+        "total hours: {:.02}\ntotal 8h days: {:.02}\ntotal commits = {}{}\ntotal authors: {}",
         total_hours,
         total_hours / HOURS_PER_WORKDAY,
         total_commits,
+        is_shallow.then(|| " (shallow)").unwrap_or_default(),
         num_authors
     )?;
     if !omit_unify_identities {

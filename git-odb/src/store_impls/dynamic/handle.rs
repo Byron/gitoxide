@@ -246,6 +246,7 @@ impl super::Store {
         super::Handle {
             store: self.clone(),
             refresh: RefreshMode::default(),
+            ignore_replacements: false,
             token: Some(token),
             snapshot: RefCell::new(self.collect_snapshot()),
             max_recursion_depth: Self::INITIAL_MAX_RECURSION_DEPTH,
@@ -260,6 +261,7 @@ impl super::Store {
         super::Handle {
             store: self.clone(),
             refresh: Default::default(),
+            ignore_replacements: false,
             token: Some(token),
             snapshot: RefCell::new(self.collect_snapshot()),
             max_recursion_depth: Self::INITIAL_MAX_RECURSION_DEPTH,
@@ -332,6 +334,7 @@ impl TryFrom<&super::Store> for super::Store {
     fn try_from(s: &super::Store) -> Result<Self, Self::Error> {
         super::Store::at_opts(
             s.path(),
+            s.replacements(),
             crate::store::init::Options {
                 slots: crate::store::init::Slots::Given(s.files.len().try_into().expect("BUG: too many slots")),
                 object_hash: Default::default(),
@@ -367,6 +370,7 @@ where
         super::Handle {
             store: self.store.clone(),
             refresh: self.refresh,
+            ignore_replacements: self.ignore_replacements,
             token: {
                 let token = self.store.register_handle();
                 match self.token.as_ref().expect("token is always set here ") {

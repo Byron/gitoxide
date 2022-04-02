@@ -79,7 +79,7 @@ mod peel {
         let mut head: Reference = store.find_loose("HEAD")?.into();
         let expected = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
         assert_eq!(head.peel_to_id_in_place(&store, peel::none)?, expected);
-        assert_eq!(head.target.as_id().map(ToOwned::to_owned), Some(expected));
+        assert_eq!(head.target.try_id().map(ToOwned::to_owned), Some(expected));
 
         let mut head = store.find("dt1")?;
         assert_eq!(head.peel_to_id_in_place(&store, peel::none)?, expected);
@@ -93,7 +93,7 @@ mod peel {
 
         let head = store.find("dt1")?;
         assert_eq!(
-            head.target.as_id().map(ToOwned::to_owned),
+            head.target.try_id().map(ToOwned::to_owned),
             Some(hex_to_id("4c3f4cce493d7beb45012e478021b5f65295e5a3"))
         );
         assert_eq!(
@@ -104,7 +104,7 @@ mod peel {
 
         let peeled = head.follow(&store).expect("a peeled ref for the object")?;
         assert_eq!(
-            peeled.target.as_id().map(ToOwned::to_owned),
+            peeled.target.try_id().map(ToOwned::to_owned),
             Some(hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03")),
             "packed refs are always peeled (at least the ones we choose to read)"
         );
@@ -192,8 +192,8 @@ mod parse {
                     let reference =
                         Reference::try_from_path("HEAD".try_into().expect("valid static name"), $input).unwrap();
                     assert_eq!(reference.kind(), $kind);
-                    assert_eq!(reference.target.to_ref().as_id(), $id);
-                    assert_eq!(reference.target.to_ref().as_name(), $ref);
+                    assert_eq!(reference.target.to_ref().try_id(), $id);
+                    assert_eq!(reference.target.to_ref().try_name(), $ref);
                 }
             };
         }

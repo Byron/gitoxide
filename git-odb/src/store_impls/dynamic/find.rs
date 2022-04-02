@@ -168,9 +168,9 @@ where
         }
     }
 
-    fn try_find_cached_inner<'a>(
-        &self,
-        id: &git_hash::oid,
+    fn try_find_cached_inner<'a, 'b>(
+        &'b self,
+        mut id: &'b git_hash::oid,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl DecodeEntry,
         snapshot: &mut load_index::Snapshot,
@@ -183,7 +183,16 @@ where
                     id: r.original_id.to_owned(),
                 });
             }
+        } else if !self.ignore_replacements {
+            if let Ok(pos) = self
+                .store
+                .replacements
+                .binary_search_by(|(map_this, _)| map_this.as_ref().cmp(id))
+            {
+                id = self.store.replacements[pos].1.as_ref();
+            }
         }
+
         'outer: loop {
             {
                 let marker = snapshot.marker;
@@ -409,6 +418,9 @@ where
             matches!(self.token.as_ref(), Some(handle::Mode::KeepDeletedPacksAvailable)),
             "BUG: handle must be configured to `prevent_pack_unload()` before using this method"
         );
+
+        assert!(self.store_ref().replacements.is_empty() || self.ignore_replacements, "Everything related to packing must not use replacements. These are not used here, but it should be turned off for good measure.");
+
         let id = id.as_ref();
         let mut snapshot = self.snapshot.borrow_mut();
         'outer: loop {

@@ -60,7 +60,7 @@ impl<'repo> Head<'repo> {
     /// Returns the id the head points to, which isn't possible on unborn heads.
     pub fn id(&self) -> Option<crate::Id<'repo>> {
         match &self.kind {
-            Kind::Symbolic(r) => r.target.as_id().map(|oid| oid.to_owned().attach(self.repo)),
+            Kind::Symbolic(r) => r.target.try_id().map(|oid| oid.to_owned().attach(self.repo)),
             Kind::Detached { peeled, target } => {
                 (*peeled).unwrap_or_else(|| target.to_owned()).attach(self.repo).into()
             }

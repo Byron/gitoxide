@@ -15,4 +15,9 @@ impl Store {
     pub fn use_multi_pack_index(&self) -> bool {
         self.use_multi_pack_index
     }
+
+    /// An iterator over replacements from object-ids `X` to `X-replaced` as `(X, X-replaced)`, sorted by the original id `X`.
+    pub fn replacements(&self) -> impl Iterator<Item = (git_hash::ObjectId, git_hash::ObjectId)> + '_ {
+        self.replacements.iter().cloned()
+    }
 }

@@ -80,7 +80,7 @@ mod location;
 
 mod snapshots;
 
-mod trait_impls;
+mod impls;
 
 mod cache;
 

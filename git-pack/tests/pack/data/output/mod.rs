@@ -34,7 +34,7 @@ fn db(kind: DbKind) -> crate::Result<git_odb::HandleArc> {
     let path: PathBuf = git_testtools::scripted_fixture_repo_read_only(name)?
         .join(".git")
         .join("objects");
-    git_odb::Store::at_opts(path, git_odb::store::init::Options::default())
+    git_odb::Store::at_opts(path, Vec::new(), git_odb::store::init::Options::default())
         .map_err(Into::into)
         .map(|store| {
             let mut cache = Arc::new(store).to_cache_arc();

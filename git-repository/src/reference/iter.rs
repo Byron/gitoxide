@@ -18,17 +18,23 @@ pub struct Iter<'r> {
     repo: &'r crate::Repository,
 }
 
+impl<'r> Iter<'r> {
+    fn new(repo: &'r crate::Repository, platform: git_ref::file::iter::LooseThenPacked<'r, 'r>) -> Self {
+        Iter {
+            inner: platform,
+            peel: false,
+            repo,
+        }
+    }
+}
+
 impl<'r> Platform<'r> {
     /// Return an iterator over all references in the repository.
     ///
     /// Even broken or otherwise unparsible or inaccessible references are returned and have to be handled by the caller on a
     /// case by case basis.
     pub fn all(&self) -> Result<Iter<'_>, init::Error> {
-        Ok(Iter {
-            inner: self.platform.all()?,
-            peel: false,
-            repo: self.repo,
-        })
+        Ok(Iter::new(self.repo, self.platform.all()?))
     }
 
     /// Return an iterator over all references that match the given `prefix`.
@@ -37,11 +43,7 @@ impl<'r> Platform<'r> {
     // TODO: Create a custom `Path` type that enforces the requirements of git naturally, this type is surprising possibly on windows
     //       and when not using a trailing '/' to signal directories.
     pub fn prefixed(&self, prefix: impl AsRef<Path>) -> Result<Iter<'_>, init::Error> {
-        Ok(Iter {
-            inner: self.platform.prefixed(prefix)?,
-            peel: false,
-            repo: self.repo,
-        })
+        Ok(Iter::new(self.repo, self.platform.prefixed(prefix)?))
     }
 
     // TODO: tests
@@ -49,11 +51,7 @@ impl<'r> Platform<'r> {
     ///
     /// They are all prefixed with `refs/tags`.
     pub fn tags(&self) -> Result<Iter<'_>, init::Error> {
-        Ok(Iter {
-            inner: self.platform.prefixed("refs/tags/")?,
-            peel: false,
-            repo: self.repo,
-        })
+        Ok(Iter::new(self.repo, self.platform.prefixed("refs/tags/")?))
     }
 
     // TODO: tests
@@ -61,11 +59,7 @@ impl<'r> Platform<'r> {
     ///
     /// They are all prefixed with `refs/heads`.
     pub fn local_branches(&self) -> Result<Iter<'_>, init::Error> {
-        Ok(Iter {
-            inner: self.platform.prefixed("refs/heads/")?,
-            peel: false,
-            repo: self.repo,
-        })
+        Ok(Iter::new(self.repo, self.platform.prefixed("refs/heads/")?))
     }
 
     // TODO: tests
@@ -73,11 +67,7 @@ impl<'r> Platform<'r> {
     ///
     /// They are all prefixed with `refs/remotes`.
     pub fn remote_branches(&self) -> Result<Iter<'_>, init::Error> {
-        Ok(Iter {
-            inner: self.platform.prefixed("refs/remotes/")?,
-            peel: false,
-            repo: self.repo,
-        })
+        Ok(Iter::new(self.repo, self.platform.prefixed("refs/remotes/")?))
     }
 }
 

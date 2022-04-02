@@ -100,6 +100,9 @@ pub struct Store {
     /// The source directory from which all content is loaded, and the central write lock for use when a directory refresh is needed.
     pub(crate) path: PathBuf,
 
+    /// A set of replacements that given a source OID return a destination OID. The vector is sorted.
+    pub(crate) replacements: Vec<(git_hash::ObjectId, git_hash::ObjectId)>,
+
     /// A list of indices keeping track of which slots are filled with data. These are usually, but not always, consecutive.
     pub(crate) index: ArcSwap<types::SlotMapIndex>,
 
@@ -123,12 +126,19 @@ pub struct Store {
 }
 
 /// Create a new cached handle to the object store with support for additional options.
-pub fn at_opts(objects_dir: impl Into<PathBuf>, options: store::init::Options) -> std::io::Result<Handle> {
-    let handle = OwnShared::new(Store::at_opts(objects_dir, options)?).to_handle();
+///
+/// `replacements` is an iterator over pairs of old and new object ids for replacement support.
+/// This means that when asking for object `X`, one will receive object `X-replaced` given an iterator like `Some((X, X-replaced))`.
+pub fn at_opts(
+    objects_dir: impl Into<PathBuf>,
+    replacements: impl IntoIterator<Item = (git_hash::ObjectId, git_hash::ObjectId)>,
+    options: store::init::Options,
+) -> std::io::Result<Handle> {
+    let handle = OwnShared::new(Store::at_opts(objects_dir, replacements, options)?).to_handle();
     Ok(Cache::from(handle))
 }
 
 /// Create a new cached handle to the object store.
 pub fn at(objects_dir: impl Into<PathBuf>) -> std::io::Result<Handle> {
-    at_opts(objects_dir, Default::default())
+    at_opts(objects_dir, Vec::new().into_iter(), Default::default())
 }

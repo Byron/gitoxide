@@ -206,6 +206,7 @@ where
         }
         let input_object_expansion = expansion.into();
         handle.prevent_pack_unload();
+        handle.ignore_replacements = true;
         let (mut counts, count_stats) = if may_use_multiple_threads {
             pack::data::output::count::objects(
                 handle.clone(),
