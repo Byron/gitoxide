@@ -19,6 +19,9 @@ where
     /// even more rare.
     pub max_recursion_depth: usize,
 
+    /// If true, replacements will not be performed even if these are available.
+    pub ignore_replacements: bool,
+
     pub(crate) token: Option<handle::Mode>,
     snapshot: RefCell<load_index::Snapshot>,
 }

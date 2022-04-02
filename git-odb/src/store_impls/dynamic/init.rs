@@ -63,8 +63,11 @@ impl Store {
     /// Note that the `slots` isn't used for packs, these are included with their multi-index or index respectively.
     /// For example, In a repository with 250m objects and geometric packing one would expect 27 index/pack pairs,
     /// or a single multi-pack index.
+    /// `replacements` is an iterator over pairs of old and new object ids for replacement support.
+    /// This means that when asking for object `X`, one will receive object `X-replaced` given an iterator like `Some((X, X-replaced))`.
     pub fn at_opts(
         objects_dir: impl Into<PathBuf>,
+        replacements: impl IntoIterator<Item = (git_hash::ObjectId, git_hash::ObjectId)>,
         Options {
             slots,
             object_hash,
@@ -97,8 +100,12 @@ impl Store {
                 "Cannot use more than 1^15 slots",
             ));
         }
+        let mut replacements: Vec<_> = replacements.into_iter().collect();
+        replacements.sort_by(|a, b| a.0.cmp(&b.0));
+
         Ok(Store {
             write: Default::default(),
+            replacements,
             path: objects_dir,
             files: Vec::from_iter(std::iter::repeat_with(MutableIndexAndPack::default).take(slot_count)),
             index: ArcSwap::new(Arc::new(SlotMapIndex::default())),

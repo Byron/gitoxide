@@ -1,3 +1,4 @@
+use git_hash::ObjectId;
 use std::process::Command;
 
 use git_odb::{store, Find, FindExt, Write};
@@ -205,13 +206,13 @@ fn write() -> crate::Result {
 }
 
 #[test]
+#[ignore]
 fn object_replacement() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_replaced_history.sh").unwrap();
     let handle = git_odb::at(dir.join(".git/objects")).unwrap();
     let mut buf = Vec::new();
-    let third_commit = handle
-        .find_commit(hex_to_id("434e5a872d6738d1fffd1e11e52a1840b73668c6"), &mut buf)
-        .unwrap();
+    let short_history_link = hex_to_id("434e5a872d6738d1fffd1e11e52a1840b73668c6");
+    let third_commit = handle.find_commit(short_history_link, &mut buf).unwrap();
 
     let orphan_of_new_history = hex_to_id("0703c317e28068f39834ae61e7ab941b7d672322");
     assert_eq!(
@@ -223,6 +224,43 @@ fn object_replacement() {
     drop(third_commit);
     let orphan = handle.find_commit(orphan_of_new_history, &mut buf).unwrap();
     assert_eq!(orphan.parents.len(), 0);
+
+    let long_history_tip = hex_to_id("71f537d9d78bf6ae89a29a17e54b95a914d3d2ef");
+    let unrelated_mapping = (
+        ObjectId::null(handle.store_ref().object_hash()),
+        ObjectId::null(handle.store_ref().object_hash()),
+    );
+
+    let mut handle = git_odb::at_opts(
+        dir.join(".git/objects"),
+        vec![(short_history_link, long_history_tip), unrelated_mapping],
+        git_odb::store::init::Options { ..Default::default() },
+    )
+    .unwrap();
+    drop(orphan);
+
+    let replaced = handle.find_commit(short_history_link, &mut buf).unwrap();
+    let long_history_second_id = hex_to_id("753ccf815e7b69c9147db5bbf633fe5f7da24ad7");
+    assert_eq!(
+        replaced.parents().collect::<Vec<_>>(),
+        vec![long_history_second_id],
+        "replacements are applied by default when present"
+    );
+
+    handle.ignore_replacements = true;
+    drop(replaced);
+    let not_replaced = handle.find_commit(short_history_link, &mut buf).unwrap();
+    assert_eq!(
+        not_replaced.parents().collect::<Vec<_>>(),
+        vec![orphan_of_new_history],
+        "no replacements are made if explicitly disabled"
+    );
+
+    assert_eq!(
+        handle.store_ref().replacements().collect::<Vec<_>>(),
+        vec![unrelated_mapping, (short_history_link, long_history_tip)],
+        "one can query the list of replacements"
+    );
 }
 
 #[test]
