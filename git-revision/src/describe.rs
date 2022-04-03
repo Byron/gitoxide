@@ -105,12 +105,13 @@ where
 
 pub(crate) mod function {
     use super::Error;
+    use hash_hasher::HashBuildHasher;
+    use std::collections::HashMap;
     use std::{
         borrow::Cow,
         collections::{hash_map, VecDeque},
         iter::FromIterator,
     };
-    use std::collections::HashMap;
 
     use crate::describe::{Flags, Options};
     use git_hash::oid;
@@ -176,43 +177,16 @@ pub(crate) mod function {
                 candidate.commits_in_its_future += 1;
             }
 
-            let commit_iter = find(&commit, &mut buf).map_err(|err| Error::Find {
-                err,
-                oid: commit.to_owned(),
-            })?;
-            parents.clear();
-            for token in commit_iter {
-                match token {
-                    Ok(git_object::commit::ref_iter::Token::Tree { .. }) => continue,
-                    Ok(git_object::commit::ref_iter::Token::Parent { id: parent_id }) => match seen.entry(parent_id) {
-                        hash_map::Entry::Vacant(entry) => {
-                            let parent = find(&parent_id, &mut parent_buf).map_err(|err| Error::Find {
-                                err,
-                                oid: commit.to_owned(),
-                            })?;
-
-                            let parent_commit_date = parent
-                                .committer()
-                                .map(|committer| committer.time.seconds_since_unix_epoch)
-                                .unwrap_or_default();
-
-                            entry.insert(flags);
-                            parents.push((parent_id, parent_commit_date));
-                        }
-                        hash_map::Entry::Occupied(mut entry) => {
-                            *entry.get_mut() |= flags;
-                        }
-                    },
-                    Ok(_unused_token) => break,
-                    Err(err) => return Err(err.into()),
-                }
-            }
-
-            if !parents.is_empty() {
-                parents.sort_by(|a, b| a.1.cmp(&b.1).reverse());
-                seen.extend(parents.iter().map(|e| (e.0, flags)));
-                queue.extend(parents.iter().map(|e| e.0));
-            }
+            parents_by_date_onto_queue_and_track_names(
+                &mut find,
+                &mut buf,
+                &mut parent_buf,
+                &mut parents,
+                &mut queue,
+                &mut seen,
+                &commit,
+                flags,
+            )?;
         }
 
         if candidates.is_empty() {
@@ -229,7 +203,15 @@ pub(crate) mod function {
             queue.push_front(commit_id);
         }
 
-        finish_depth_computation(queue, find, candidates.first_mut().expect("at least one candidate"))?;
+        finish_depth_computation(
+            queue,
+            find,
+            candidates.first_mut().expect("at least one candidate"),
+            seen,
+            buf,
+            parent_buf,
+            parents,
+        )?;
 
         Ok(candidates.into_iter().next().map(|c| Outcome {
             name: c.name,
@@ -239,18 +221,94 @@ pub(crate) mod function {
         }))
     }
 
+    fn parents_by_date_onto_queue_and_track_names<Find, E>(
+        find: &mut Find,
+        buf: &mut Vec<u8>,
+        parent_buf: &mut Vec<u8>,
+        parents: &mut Vec<(git_hash::ObjectId, Flags)>,
+        queue: &mut VecDeque<git_hash::ObjectId>,
+        seen: &mut HashMap<git_hash::ObjectId, Flags, HashBuildHasher>,
+        commit: &git_hash::oid,
+        commit_flags: Flags,
+    ) -> Result<(), Error<E>>
+    where
+        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        let commit_iter = find(&commit, buf).map_err(|err| Error::Find {
+            err,
+            oid: commit.to_owned(),
+        })?;
+        parents.clear();
+        for token in commit_iter {
+            match token {
+                Ok(git_object::commit::ref_iter::Token::Tree { .. }) => continue,
+                Ok(git_object::commit::ref_iter::Token::Parent { id: parent_id }) => match seen.entry(parent_id) {
+                    hash_map::Entry::Vacant(entry) => {
+                        let parent = find(&parent_id, parent_buf).map_err(|err| Error::Find {
+                            err,
+                            oid: commit.to_owned(),
+                        })?;
+
+                        let parent_commit_date = parent
+                            .committer()
+                            .map(|committer| committer.time.seconds_since_unix_epoch)
+                            .unwrap_or_default();
+
+                        entry.insert(commit_flags);
+                        parents.push((parent_id, parent_commit_date));
+                    }
+                    hash_map::Entry::Occupied(mut entry) => {
+                        *entry.get_mut() |= commit_flags;
+                    }
+                },
+                Ok(_unused_token) => break,
+                Err(err) => return Err(err.into()),
+            }
+        }
+
+        parents.sort_by(|a, b| a.1.cmp(&b.1).reverse());
+        queue.extend(parents.iter().map(|e| e.0));
+
+        Ok(())
+    }
+
     fn finish_depth_computation<'name, Find, E>(
         mut queue: VecDeque<git_hash::ObjectId>,
         mut find: Find,
         best_candidate: &mut Candidate<'name>,
-        flags_by_commit: HashMap<git_hash::ObjectId, Flags>
+        mut seen: hash_hasher::HashedMap<git_hash::ObjectId, Flags>,
+        mut buf: Vec<u8>,
+        mut parent_buf: Vec<u8>,
+        mut parents: Vec<(git_hash::ObjectId, Flags)>,
     ) -> Result<(), Error<E>>
     where
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
         while let Some(commit) = queue.pop_front() {
-            if
+            let flags = seen[&commit];
+            if (flags & best_candidate.identity_bit) == best_candidate.identity_bit {
+                if queue
+                    .iter()
+                    .all(|id| (seen[id] & best_candidate.identity_bit) == best_candidate.identity_bit)
+                {
+                    break;
+                }
+            } else {
+                best_candidate.commits_in_its_future += 1;
+            }
+
+            parents_by_date_onto_queue_and_track_names(
+                &mut find,
+                &mut buf,
+                &mut parent_buf,
+                &mut parents,
+                &mut queue,
+                &mut seen,
+                &commit,
+                flags,
+            )?;
         }
         Ok(())
     }
