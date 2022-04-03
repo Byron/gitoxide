@@ -110,6 +110,7 @@ pub(crate) mod function {
         collections::{hash_map, VecDeque},
         iter::FromIterator,
     };
+    use std::collections::HashMap;
 
     use crate::describe::{Flags, Options};
     use git_hash::oid;
@@ -117,7 +118,6 @@ pub(crate) mod function {
 
     use super::Outcome;
 
-    #[allow(clippy::result_unit_err)]
     pub fn describe<'name, Find, E>(
         commit: &oid,
         mut find: Find,
@@ -146,8 +146,7 @@ pub(crate) mod function {
         let mut queue = VecDeque::from_iter(Some(commit.to_owned()));
         let mut candidates = Vec::new();
         let mut seen_commits = 0;
-        // TODO: actually use this
-        let mut _gave_up_on_commit = None;
+        let mut gave_up_on_commit = None;
         let mut seen = hash_hasher::HashedMap::default();
         seen.insert(commit.to_owned(), 0u32);
 
@@ -164,7 +163,7 @@ pub(crate) mod function {
                     });
                     *seen.get_mut(&commit).expect("inserted") |= identity_bit;
                 } else {
-                    _gave_up_on_commit = Some(commit);
+                    gave_up_on_commit = Some(commit);
                     break;
                 }
             }
@@ -216,12 +215,6 @@ pub(crate) mod function {
             }
         }
 
-        if let Some(commit_id) = _gave_up_on_commit {
-            queue.push_front(commit_id);
-            // seen_commits -= 1; // TODO: make this necessary
-        }
-        // TODO: something like finish_computation() - testing that might be possible when setting max-candidates to 1
-
         if candidates.is_empty() {
             return Ok(None);
         }
@@ -231,12 +224,35 @@ pub(crate) mod function {
                 .cmp(&b.commits_in_its_future)
                 .then_with(|| a.order.cmp(&b.order))
         });
+
+        if let Some(commit_id) = gave_up_on_commit {
+            queue.push_front(commit_id);
+        }
+
+        finish_depth_computation(queue, find, candidates.first_mut().expect("at least one candidate"))?;
+
         Ok(candidates.into_iter().next().map(|c| Outcome {
             name: c.name,
             id: commit.to_owned(),
             depth: c.commits_in_its_future,
             name_by_oid,
         }))
+    }
+
+    fn finish_depth_computation<'name, Find, E>(
+        mut queue: VecDeque<git_hash::ObjectId>,
+        mut find: Find,
+        best_candidate: &mut Candidate<'name>,
+        flags_by_commit: HashMap<git_hash::ObjectId, Flags>
+    ) -> Result<(), Error<E>>
+    where
+        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        while let Some(commit) = queue.pop_front() {
+            if
+        }
+        Ok(())
     }
 
     #[derive(Debug)]

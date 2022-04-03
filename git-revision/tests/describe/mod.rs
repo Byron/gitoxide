@@ -22,7 +22,7 @@ fn option_none_if_no_tag_found() {
 
 #[test]
 #[ignore]
-fn running_out_of() {
+fn not_enough_candidates() {
     let repo = repo();
     let commit = repo.head_commit().unwrap();
 
