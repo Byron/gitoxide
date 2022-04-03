@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.18.0 (2022-04-03)
+
+### New Features
+
+ - <csr-id-a39bf71531ee0a6c8db082758d3212c805ce2bf0/> support for trimming of whitespace around name and email
+   It's separated from parsing to assure we can round-trip, but it's
+   made easy to obtain trimmed results using new methods.
+   
+   This high-level git-repository will also trim by default now.
+ - <csr-id-8f1b42b193098f6e116b3522a3df08d5d1b42a0a/> `CommitRef::time()`
+   A shortcut to allow for fluid retrival of the `committer.time`.
+ - <csr-id-c51a9252f8a038bf995d50cdbfc8356362020bbc/> `CommitRefIter::(author|committer)()`, better usability
+   The methods returning an iterator are now consuming, which allows
+   them to be nested by callers.
+ - <csr-id-91065cd790f559f4a661ecd9c2d2f649922682e3/> `CommitRefIter::parent_ids()`
+   Allocation-free parent retrieval.
+ - <csr-id-5c573bf9abfc10227d5a900100e84d7f8f6c0504/> in-manifest and in-lib feature documentation
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 17 commits contributed to the release over the course of 73 calendar days.
+ - 60 days passed between releases.
+ - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#329](https://github.com/Byron/gitoxide/issues/329), [#364](https://github.com/Byron/gitoxide/issues/364)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#329](https://github.com/Byron/gitoxide/issues/329)**
+    - in-manifest and in-lib feature documentation ([`5c573bf`](https://github.com/Byron/gitoxide/commit/5c573bf9abfc10227d5a900100e84d7f8f6c0504))
+    - Document all features related to serde1 ([`72b97f2`](https://github.com/Byron/gitoxide/commit/72b97f2ae4dc7642b160f183c6d5df4502dc186f))
+ * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - support for trimming of whitespace around name and email ([`a39bf71`](https://github.com/Byron/gitoxide/commit/a39bf71531ee0a6c8db082758d3212c805ce2bf0))
+    - `CommitRef::time()` ([`8f1b42b`](https://github.com/Byron/gitoxide/commit/8f1b42b193098f6e116b3522a3df08d5d1b42a0a))
+    - Full error handling for CommitRefIter ([`b94471a`](https://github.com/Byron/gitoxide/commit/b94471a0ced50204156cf5d4126c676f0258a5eb))
+    - More speedy access to author/committer ([`6129607`](https://github.com/Byron/gitoxide/commit/61296077cebaaf2eb939fa6082121304bc6cf39b))
+    - `CommitRefIter::(author|committer)()`, better usability ([`c51a925`](https://github.com/Byron/gitoxide/commit/c51a9252f8a038bf995d50cdbfc8356362020bbc))
+    - `CommitRefIter::parent_ids()` ([`91065cd`](https://github.com/Byron/gitoxide/commit/91065cd790f559f4a661ecd9c2d2f649922682e3))
+ * **Uncategorized**
+    - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
+    - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
+    - Merge branch 'svetli-n-refactor_git_config_tests' ([`babaa9f`](https://github.com/Byron/gitoxide/commit/babaa9f5725ab8cdf14e0c7e002c2e1de09de103))
+    - thanks clippy ([`3079e11`](https://github.com/Byron/gitoxide/commit/3079e114dc1d2552e023aa793dc10c28258b34da))
+    - adapt to breaking changes in git-actor ([`40c48c3`](https://github.com/Byron/gitoxide/commit/40c48c390eb796b427ebd516dde92e9538ce5fb7))
+    - upgrade document-features ([`c35e62e`](https://github.com/Byron/gitoxide/commit/c35e62e0da9ac1f7dcb863f5f9c69108c728d32e))
+    - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
+    - Release git-actor v0.8.1 ([`08fe550`](https://github.com/Byron/gitoxide/commit/08fe5508472f2eb209db8a5fc4e4942a9d7db93d))
+    - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
+</details>
+
 ## 0.17.1 (2022-02-01)
 
 A automated maintenance release without impact to the public API.
@@ -17,7 +78,7 @@ A automated maintenance release without impact to the public API.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 4 calendar days.
+ - 5 commits contributed to the release over the course of 4 calendar days.
  - 8 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#293](https://github.com/Byron/gitoxide/issues/293)
@@ -31,6 +92,7 @@ A automated maintenance release without impact to the public API.
  * **[#293](https://github.com/Byron/gitoxide/issues/293)**
     - Fix tree-entry-ordering implementation ([`ea169a6`](https://github.com/Byron/gitoxide/commit/ea169a6dbbba30d9464570cb86e5c990fcaf9ae8))
  * **Uncategorized**
+    - Release git-object v0.17.1, git-pack v0.16.1 ([`e959af8`](https://github.com/Byron/gitoxide/commit/e959af83fa92e8ed87edae6e2d1c6a797964c056))
     - Release git-hash v0.9.2, git-object v0.17.1, git-pack v0.16.1 ([`0db19b8`](https://github.com/Byron/gitoxide/commit/0db19b8deaf11a4d4cbc03fa3ae40eea104bc302))
     - update changelogs prior to git-pack release ([`b7e3a4a`](https://github.com/Byron/gitoxide/commit/b7e3a4afdd6417a38aadad35c7f584617e7b47fa))
     - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
@@ -66,7 +128,7 @@ A automated maintenance release without impact to the public API.
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 51 calendar days.
+ - 13 commits contributed to the release over the course of 51 calendar days.
  - 55 days passed between releases.
  - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279)
@@ -95,7 +157,6 @@ A automated maintenance release without impact to the public API.
     - Release git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`d78aab7`](https://github.com/Byron/gitoxide/commit/d78aab7b9c4b431d437ac70a0ef96263acb64e46))
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
-    - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
     - Merge branch 'oknozor-feat/traversal-sort-by-committer-date' ([`6add377`](https://github.com/Byron/gitoxide/commit/6add3773c64a9155c236a36bd002099c218882eb))
     - rename `commit::ref_iter::Token::into_id()` to `*::try_into_id()` ([`fda2a8d`](https://github.com/Byron/gitoxide/commit/fda2a8d2f5f8b7d80b4cc0177d08d6a061f1b8f1))
     - Add sorting mode to ancestor traversal  #270 ([`eb36a3d`](https://github.com/Byron/gitoxide/commit/eb36a3dda83a46ad59078a904f4e277f298a24e1))
@@ -195,6 +256,10 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
 This release greatly improves performance when decoding trees, a critical requirement when building packs
 or generally trying to figure out what changed between commits.
+
+### Other
+
+ - <csr-id-899c57927ce4ba2e1b5d8182f9e731c2a9094cba/> describe variants
 
 ### Performance
 
