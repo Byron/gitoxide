@@ -5,7 +5,95 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+<csr-id-51d1c686763b4c036ec2c3c15d7c3ebb48e208de/>
+
+A quality-of-life release which should make publishing of inter-dependent crates much more reliable.
+
+### New Features
+
+ - Wait for previously published crates explicitly to avoid running into publish failures due to the previously published crate not present 
+   even after 3 attempts.
+
+### Bug Fixes
+
+ - <csr-id-f9daba439e2d669c8b0a6bcac9ff50cbf9d80371/> improve headline parsing for git-conventional messages.
+   
+   It is now case-insensitive, which prevents it from getting tripped
+   up in some cases.
+ - <csr-id-1feb118e87f302d030ceca03ce8f8c22d40d7f03/> Don't pass judgement on usefulness of certain kinds of git-conventional messages.
+   
+   Previously we would intentionally avoid writing out information about
+   refactors or chores as they are not deemed useful in a changelog.
+   
+   However, this can be confusing for anyone but the original author.
+   
+   We now write them as seen.
+   
+   Future iterations on this may consider adding more options
+   to configure which sections should go into the changelog.
+
+### Refactor (BREAKING)
+
+ - <csr-id-bbc6efeceb26050973e1425e68a52e51b9df4572/> clarify different repository types much better
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 23 commits contributed to the release over the course of 69 calendar days.
+ - 69 days passed between releases.
+ - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 4 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#317](https://github.com/Byron/gitoxide/issues/317), [#318](https://github.com/Byron/gitoxide/issues/318), [#364](https://github.com/Byron/gitoxide/issues/364)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - fix docs; consistent naming of 'repo' ([`1f79bc3`](https://github.com/Byron/gitoxide/commit/1f79bc32ee3d7a70985b7bef830ccdd1dc762f05))
+    - adapt to changes in `git-repository' ([`16a1c36`](https://github.com/Byron/gitoxide/commit/16a1c360113b9bc910d5b0812384c3ab32cfc780))
+    - clarify different repository types much better ([`bbc6efe`](https://github.com/Byron/gitoxide/commit/bbc6efeceb26050973e1425e68a52e51b9df4572))
+    - upgrade parking_lot and cargo_toml ([`f95c1a0`](https://github.com/Byron/gitoxide/commit/f95c1a0d9c19bcc6feb9b8739a09d86f9970a0e0))
+ * **[#317](https://github.com/Byron/gitoxide/issues/317)**
+    - Fix broken link in README; clarify 'pre-release' ([`375cd12`](https://github.com/Byron/gitoxide/commit/375cd12281297ce476df5ff9b26402356ee0ffb0))
+    - Fix broken link in README; clarify 'pre-release' ([`1e2fa21`](https://github.com/Byron/gitoxide/commit/1e2fa21c3878a8c1c750d13a4ab44f6450280304))
+    - Disambiguate usage of pre-release in stability guide ([`498072e`](https://github.com/Byron/gitoxide/commit/498072ea42dca7b9d00bedba42829bdac92195b9))
+ * **[#318](https://github.com/Byron/gitoxide/issues/318)**
+    - Don't pass judgement on usefulness of certain kinds of git-conventional messages ([`1feb118`](https://github.com/Byron/gitoxide/commit/1feb118e87f302d030ceca03ce8f8c22d40d7f03))
+ * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - dial down log level for unparseable items again ([`2990f6b`](https://github.com/Byron/gitoxide/commit/2990f6bee433a9fdbe9caa88cc18ccf41a8df689))
+    - smart-release tries harder to wait for previously published packages ([`e175621`](https://github.com/Byron/gitoxide/commit/e1756218786fc1eb82bb4e74455bdf782a0e698c))
+    - consolidate naming of directories, use same convention as git2 ([`a7dbed1`](https://github.com/Byron/gitoxide/commit/a7dbed193cc25d05e03c4f2148d0fa9562a4a586))
+ * **Uncategorized**
+    - Merge branch 'svetli-n-refactor_git_config_tests' ([`babaa9f`](https://github.com/Byron/gitoxide/commit/babaa9f5725ab8cdf14e0c7e002c2e1de09de103))
+    - thanks clippy ([`3079e11`](https://github.com/Byron/gitoxide/commit/3079e114dc1d2552e023aa793dc10c28258b34da))
+    - adapt to breaking changes in git-actor ([`40c48c3`](https://github.com/Byron/gitoxide/commit/40c48c390eb796b427ebd516dde92e9538ce5fb7))
+    - fix clap warnings ([`aa51e05`](https://github.com/Byron/gitoxide/commit/aa51e05923695e20aecc16317331c7e26d49a2e7))
+    - Release git-tempfile v2.0.0, safety bump 6 crates ([`90b1c42`](https://github.com/Byron/gitoxide/commit/90b1c42d5487904a9f329362d185b035d0ddb975))
+    - adapt cargo-smart-release to changes in git-tempfile ([`46282ff`](https://github.com/Byron/gitoxide/commit/46282ff8eddae66a786334dd98e41c3fb36d1e36))
+    - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
+    - improve headline parsing for git-conventional messages. ([`f9daba4`](https://github.com/Byron/gitoxide/commit/f9daba439e2d669c8b0a6bcac9ff50cbf9d80371))
+    - highlight (non-fatal) errors when losslessly parsing changelogs ([`51d1c68`](https://github.com/Byron/gitoxide/commit/51d1c686763b4c036ec2c3c15d7c3ebb48e208de))
+    - Better not have items within items in changelogs ([`6946125`](https://github.com/Byron/gitoxide/commit/69461254b1bfda5e60911164096e4a061e241296))
+    - upgrade dependencies ([`968df47`](https://github.com/Byron/gitoxide/commit/968df4746729556dcf4f5039b1d1ed1a1da2705a))
+    - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
+</details>
+
 ## 0.8.0 (2022-01-23)
+
+### Chore
+
+ - <csr-id-a3caf3938bf0f1cea1bee0f55c082062dd250bed/> upgrade all dependencies
 
 ### New Features
 
@@ -35,9 +123,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 34 commits contributed to the release over the course of 51 calendar days.
+ - 32 commits contributed to the release over the course of 51 calendar days.
  - 55 days passed between releases.
- - 7 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#266](https://github.com/Byron/gitoxide/issues/266), [#270](https://github.com/Byron/gitoxide/issues/270), [#274](https://github.com/Byron/gitoxide/issues/274), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#308](https://github.com/Byron/gitoxide/issues/308)
 
 ### Thanks Clippy
@@ -73,6 +161,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#308](https://github.com/Byron/gitoxide/issues/308)**
     - more prominent message if 'bat' wasn't found in PATH ([`9c1e38b`](https://github.com/Byron/gitoxide/commit/9c1e38bfcffea372f06c78a44b2abc2284b7a87e))
  * **Uncategorized**
+    - Release cargo-smart-release v0.8.0 ([`fbe2c93`](https://github.com/Byron/gitoxide/commit/fbe2c93b13fc05414dc5c7d80f4197d279b6b81b))
     - Release git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`b286b24`](https://github.com/Byron/gitoxide/commit/b286b24a51878be7d2e0fd77ff0c5c99b439a6a0))
     - Release git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`42ebb53`](https://github.com/Byron/gitoxide/commit/42ebb536cd6086f096b8422291776c9720fa0948))
     - Release git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`1b76119`](https://github.com/Byron/gitoxide/commit/1b76119259b8168aeb99cbbec233f7ddaa2d7d2c))
@@ -80,9 +169,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Release git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`d78aab7`](https://github.com/Byron/gitoxide/commit/d78aab7b9c4b431d437ac70a0ef96263acb64e46))
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
-    - highlight (non-fatal) errors when losslessly parsing changelogs ([`51d1c68`](https://github.com/Byron/gitoxide/commit/51d1c686763b4c036ec2c3c15d7c3ebb48e208de))
-    - Better not have items within items in changelogs ([`6946125`](https://github.com/Byron/gitoxide/commit/69461254b1bfda5e60911164096e4a061e241296))
-    - upgrade dependencies ([`968df47`](https://github.com/Byron/gitoxide/commit/968df4746729556dcf4f5039b1d1ed1a1da2705a))
     - minor refactor ([`dae710f`](https://github.com/Byron/gitoxide/commit/dae710f902b8dbdc663cdcd2fb3918d76219ec5f))
     - upgrade to pulldown-cmark 0.9 ([`11f5fd8`](https://github.com/Byron/gitoxide/commit/11f5fd84a9a080cab4bed81cc073fc632c4d5646))
     - Commit statistics reveal the days passes between releases ([`4843b7b`](https://github.com/Byron/gitoxide/commit/4843b7bdcb1b05e2b99e199e168665be07123846))
@@ -133,6 +219,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## 0.6.0 (2021-11-16)
+
+### Other
+
+ - <csr-id-82075e8a101adb2fda0c11e6567e2148d2e66b8f/> try to auto-udpate crates index with lifetime crazyness
+   Even though it could work, it's too complicated.
 
 ### New Features
 
@@ -422,6 +513,16 @@ This release contains an important bugfix which may have caused panics when the 
 A release with breaking changes as the dependency engine was reworked to handle even more cases
 and make future improvements easier.
 
+### Other
+
+ - <csr-id-3519f9a1f4002232aec752dadf7d3737bd97ce3d/> try to assure that breaking changes are always published in correct order
+   The problem here is that even though we can turn non-publishable breaks
+   into publishable ones without loosing information, they will not be in
+   the correct order.
+   
+   The solution is to merge dependency trees instead of clearing them with
+   weird logic.
+
 ### New Features
 
  - <csr-id-6d4edfa3b2d2c6700e0956716a575831b940cb50/> Respect `publish=false` in cargo manifest
@@ -617,6 +718,106 @@ If you have 30 minutes, there is also [a long version of the video](https://yout
 And there is another one showing `cargo smart-release` releasing `gitoxide 0.9.0`, along with some explanation on how it works. 
 
 [![8 minute video releasing gitoxide](https://img.youtube.com/vi/ZS9fwPDYLpI/0.jpg)](https://www.youtube.com/watch?v=ZS9fwPDYLpI)
+
+### Refactor
+
+ - <csr-id-8fe461281842b58aa11437445637c6e587bedd63/> split data::output::count::objects into files
+
+### Other
+
+ - <csr-id-e16603b15b5488b81563c583cd8f5292ab9d24a2/> :remote_url() is now optional
+   Otherwise it wouldn't work on repos that don't have a remote set yet.
+   Instead of failing, we don't create links.
+ - <csr-id-fb750b65ca64c894ffb79cd0049f10a8db255ab6/> assure the current package version is actually breaking
+ - <csr-id-f6f2d1b2c1c50d36ee046ed58ffffed0444cd25a/> better verbosity handling when comparing to crates-index
+ - <csr-id-a040f7d882eb5f6db0d54ba7e32437da3579a075/> turn off safety bump with its own flag
+ - <csr-id-9b78c344ee287c4c2908ccbe64bd64c2c9648459/> improved safety bump log message
+ - <csr-id-b1a39046056bf4a862cebe69f44f3ea1e53a2069/> commit message reveals safety bumps
+ - <csr-id-ecf38b8c013e46a33aa0b2c1b4e9cf547c8393c4/> released crates only receive minor bumps…
+   …which signals a change while allowing decendents to pin themselves to
+   patch updates only.
+   
+   This would be users of "unstable" git-repository features for example.
+   which then also don't want to see new minor versions automatically
+   as it may cause breakage.
+ - <csr-id-342b443a4f49736a10c2b311d69841dbf581ceec/> update changelog
+ - <csr-id-0d30094f4d397f932288f8c04ffd01f956113dc8/> way more tests to nail current log output
+   This is the basis for adjusting the output verbosity or information
+   where it matters.
+ - <csr-id-a56bd7b134d315e22e5c8d01ca2d927de75955a9/> dependency upgrade works
+ - <csr-id-c50704a0595884c3fb20629aba0f22bf99893cbf/> calculate new version of dependent
+ - <csr-id-681d743e5579197d7262c40237dda0116fc4af1c/> don't claim "conservative" updates for major version change
+ - <csr-id-798b650ad848001b10018087ed6c5d8a4055ece8/> assure we can find non-sequential connections
+ - <csr-id-7ca029c73eee51302d6828c6f9e8862d3fd4fbd4/> all logic to calculate dependent version bumps
+ - <csr-id-73794a4e382404cb7b684c9054278fb4ff8a84ce/> an algorithm to collect dependencies by 'growing'
+ - <csr-id-d1145d1a6219ddafa7a41c82d6149b289f033640/> foundation for bumping versions
+   The idea is that the dependency traversal may also produce a new version
+   number, which is when it will naturally be set for all dependents later.
+ - <csr-id-443f000015de2117eae08fedf7d23f0d1ac6abff/> 
+ - <csr-id-0c355ed24eb230e9834e797d5c8dc72ae21f0c46/> add git-conventional
+ - <csr-id-5fc33266b2626a07b19d2f5bd075e2c600204a3d/> consider nom for custom parsing, but…
+   …realize that the easiest way is definitely the excellent
+   git-conventional crate.
+   
+   This also means we have to stop specifying crates in commit messages
+   or find another way to do that.
+ - <csr-id-17322fa378fdecad80ad1349292aaaee8bcd00f6/> refactor
+ - <csr-id-ac0696b8226a1478fa90b932306f35e5dbf464b1/> refactor
+ - <csr-id-87ebacc65f56f8765eb787fea1bd27f2c99dfd97/> refactor
+ - <csr-id-41afad3386461b658ee859225785b6de86d13cfb/> a seemingly slow version of path lookup, but…
+   …in debug mode it's faster than the fast path, despite doing more
+   and being the same when it comes to searching path components.
+ - <csr-id-ae7def47388aeb56c7df4a73fd13ff508cee7017/> fast filter by single-component path
+ - <csr-id-fbf267eeb424bf90649be278ee847fe3f2a3db80/> prepare for fast lookup of paths
+ - <csr-id-d422b9a31a37a03551bec4382039aaf3a7e49902/> configure caches with env vars using `apply_environment()`
+ - <csr-id-e7c061b10c263001eb4abf03098d6694b770f828/> refactor
+ - <csr-id-66292fd1076c2c9db4694c5ded09799a0be11a03/> set package cache via RepositoryAccessExt
+ - <csr-id-06996e032b1e451a674395ebaca94434fac46f05/> object-cache to allow for a speed boost…
+   …by avoiding duplicate accesses to hit the object database.
+   However, the cost for the cache are relatively high and involve some
+   memory copying, so hit rates of about 50% is certainly what is needed
+   to get any speed boost at all.
+ - <csr-id-422701be4ed6d2a61361af9b6eb0f4f470d1d782/> actually build the segment vec, without pruning for now
+ - <csr-id-daec7167df524b329daad7dabb1b9920b6ef8936/> build commit history for later use in changelog generation
+ - <csr-id-debe0094826f83839f907523715def929133fd58/> sketch history acquisition
+ - <csr-id-56e39fac54bfa3871c42bbf76a9f7c49486b85be/> add 'Head::peeled()' method
+ - <csr-id-1954b467cf1e97e22629c55487b4a66cb1380a89/> some performance logging
+ - <csr-id-9062a472ac63887900562ed341c7b68665b8587a/> build ref lookup table
+ - <csr-id-293bfc0278c5983c0beaec93253fb51f00d81156/> loose reference iteration with non-dir prefixes…
+   Previously it was expected for the prefix `Path` to always exist for
+   the prefix to be valid. This, however, is not similar to packed
+   prefixes, which allow non-dir prefixes as well.
+   
+   Now we will check if the prefix is actually a directory, and if not
+   split it into its parent directory and the filename portion. The latter
+   is then used for prefix matching file names within that directory.
+ - <csr-id-650241251a420602f74037babfc24c9f64df78d8/> Add 'references().all().peeled().'…
+   …to not only make typical usage of iterated references more convenient
+   but also work around a double-borrow error one would see otherwise.
+ - <csr-id-2b4a61589a7cba3f7600710e21304e731ae3b36a/> filter refs correctly, but…
+   …it needs a way to peel references right away without trying
+   to double-borrow. This means the Iterator needs to implement this.
+ - <csr-id-72e175209441b12f3d4630e5118e21a3156146df/> find tag references by name…
+   …even though it's clear that loose refs won't be found with prefixes
+   that aren't directories, but contain a partial file.
+   
+   This is more like a bug to be fixed, as that works naturally for
+   packed-refs for instance.
+ - <csr-id-90e6128727932f917c485f411e623fc6a9c2ad4d/> improve changelog format
+ - <csr-id-ff894e5b0257722c31578772ed694324194c0741/> sketch first step of info generation
+ - <csr-id-78d31d9de2710b4369862c1226f18d4a2d79a9c4/> changelog gets crates to work on
+ - <csr-id-0e02831fff83f6d6b0ea8889d54196e54e4e4aff/> handle unborn heads
+ - <csr-id-d66c5aea01a7d1df2cc539c52b789ad39a058ad2/> fmt
+ - <csr-id-d4ffb4f2ac935f6345bdc7d03cc1878007609503/> refactor
+ - <csr-id-9fc15f92ddec4ccfd0803d2b1231ed08d424cf33/> refactor
+ - <csr-id-9e430df135e87ee9e9673e7d52f072f39abaf4d9/> refactor
+ - <csr-id-a33dd5d21039441556ab89c997195f1bcc5bc543/> initial test for changelog
+   Which doesn't test that much.
+ - <csr-id-1a683a91a2850d663cf87fb326e5ab66ae86fc96/> very basic support for changelog command…
+   …which shows that it probably just wants to be separate for now before
+   being integrated?
+ - <csr-id-3677b782f8bc63a38d4d49b8555b5a6b9a618f84/> add 'cargo changelog' sub-command binary
+ - <csr-id-cdf41998360527161a1b04821bab377489f6c5f0/> add changelog to most tests
 
 ### Changelog Support in `cargo smart-release`
 
