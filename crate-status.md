@@ -343,6 +343,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
         * [x] path (incl. resolution)
         * [x] include
         * [ ] includeIf
+          * [ ] `gitdir`,  `gitdir/i`, `onbranch`
+          * [ ] `hasconfig`
 * [x] write
     * keep comments and whitespace, and only change lines that are affected by actual changes, to allow truly non-destructive editing
 * [ ] `Config` type which integrates multiple files into one interface to support system, user and repository levels for config files
