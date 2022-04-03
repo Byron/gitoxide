@@ -221,6 +221,7 @@ pub(crate) mod function {
         }))
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn parents_by_date_onto_queue_and_track_names<Find, E>(
         find: &mut Find,
         buf: &mut Vec<u8>,
@@ -235,7 +236,7 @@ pub(crate) mod function {
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let commit_iter = find(&commit, buf).map_err(|err| Error::Find {
+        let commit_iter = find(commit, buf).map_err(|err| Error::Find {
             err,
             oid: commit.to_owned(),
         })?;
