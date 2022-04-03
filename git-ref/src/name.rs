@@ -49,15 +49,26 @@ impl<'a> FullNameRef<'a> {
 
     /// Classify this name, or return `None` if it's unclassified.
     pub fn category(&self) -> Option<Category> {
-        for kind in &[
-            Category::Tag,
-            Category::LocalBranch,
-            Category::RemoteBranch,
-            Category::Note,
-        ] {
-            if self.0.starts_with(kind.prefix()) {
-                return (*kind).into();
+        self.category_and_short_name().map(|(cat, _)| cat)
+    }
+
+    /// Classify this name, or return `None` if it's unclassified. If `Some`,
+    /// the shortened name is returned as well.
+    pub fn category_and_short_name(&self) -> Option<(Category, &'a BStr)> {
+        for category in &[Category::Tag, Category::LocalBranch, Category::RemoteBranch] {
+            if let Some(shortened) = self.0.strip_prefix(category.prefix().as_ref()) {
+                return Some((*category, shortened.as_bstr()));
             }
+        }
+
+        if self.0.starts_with(Category::Note.prefix()) {
+            return Some((
+                Category::Note,
+                self.0
+                    .strip_prefix(b"refs/")
+                    .expect("we checked for refs/notes above")
+                    .as_bstr(),
+            ));
         }
         None
     }

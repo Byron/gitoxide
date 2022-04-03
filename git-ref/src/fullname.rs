@@ -117,6 +117,12 @@ impl FullName {
     pub fn category(&self) -> Option<crate::Category> {
         self.to_ref().category()
     }
+
+    /// Classify this name, or return `None` if it's unclassified. If `Some`,
+    /// the shortened name is returned as well.
+    pub fn category_and_short_name(&self) -> Option<(crate::Category, &BStr)> {
+        self.to_ref().category_and_short_name()
+    }
 }
 
 impl<'a> FullNameRef<'a> {

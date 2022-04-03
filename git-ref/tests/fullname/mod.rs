@@ -19,6 +19,10 @@ fn shorten_and_category() {
         assert_eq!(name.to_ref().shorten(), expected);
         assert_eq!(name.shorten(), expected);
         assert_eq!(name.category(), category);
+        assert_eq!(
+            name.category_and_short_name(),
+            category.map(|cat| (cat, expected.into()))
+        );
         assert_eq!(name.to_ref().category(), category);
     }
 
