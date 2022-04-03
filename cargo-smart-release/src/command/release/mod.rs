@@ -405,9 +405,20 @@ fn perform_release(ctx: &Context, options: Options, crates: &[traverse::Dependen
             false
         };
     let mut tag_names = Vec::new();
-    let mut successful_publishees_and_version = Vec::new();
+    let mut successful_publishees_and_version = Vec::<(&cargo_metadata::Package, &semver::Version)>::new();
     let mut publish_err = None;
     for (publishee, new_version) in crates.iter().filter_map(try_to_published_crate_and_new_version) {
+        if let Some((crate_, version)) = successful_publishees_and_version.last() {
+            if let Err(err) = wait_for_release(*crate_, version, options) {
+                log::warn!(
+                    "Failed to wait for crates-index update - trying to publish '{} v{}' anyway: {}.",
+                    publishee.name,
+                    new_version,
+                    err
+                );
+            }
+        }
+
         if let Err(err) = cargo::publish_crate(publishee, options) {
             publish_err = Some(err);
             break;
@@ -438,6 +449,55 @@ fn perform_release(ctx: &Context, options: Options, crates: &[traverse::Dependen
     }
 
     publish_err.map(Err).unwrap_or(Ok(()))
+}
+
+fn wait_for_release(
+    crate_: &cargo_metadata::Package,
+    crate_version: &semver::Version,
+    Options {
+        dry_run,
+        dry_run_cargo_publish,
+        skip_publish,
+        ..
+    }: Options,
+) -> anyhow::Result<()> {
+    use anyhow::Context;
+
+    if skip_publish || dry_run || dry_run_cargo_publish {
+        return Ok(());
+    }
+    let timeout = std::time::Duration::from_secs(60);
+    let start = std::time::Instant::now();
+    let sleep_time = std::time::Duration::from_secs(1);
+    let crate_version = crate_version.to_string();
+
+    log::info!("Waiting for '{} v{}' to arrive in index…", crate_.name, crate_version);
+    let mut crates_index = crates_index::Index::new_cargo_default()?;
+    let mut attempt = 0;
+    while start.elapsed() < timeout {
+        attempt += 1;
+        log::trace!("Updating crates index…");
+        crates_index.update()?;
+        let crate_ = crates_index.crate_(&crate_.name).with_context(|| {
+            format!(
+                "Couldn't find crate '{}' in index anymore - unexpected and fatal",
+                crate_.name
+            )
+        })?;
+
+        if crate_
+            .versions()
+            .iter()
+            .rev()
+            .any(|version| version.version() == crate_version)
+        {
+            break;
+        }
+
+        std::thread::sleep(sleep_time);
+        log::info!("attempt {}", attempt);
+    }
+    Ok(())
 }
 
 enum WriteMode {
